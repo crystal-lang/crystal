@@ -2,7 +2,6 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
   getter project_info
@@ -41,7 +40,6 @@ class Crystal::Doc::Generator
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
-    @is_crystal_repo = false
     compute_repository
   end
 
@@ -240,7 +238,7 @@ class Crystal::Doc::Generator
   end
 
   def crystal_builtin?(type)
-    return false unless @is_crystal_repo
+    return false unless project_info.crystal_stdlib?
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -396,8 +394,6 @@ class Crystal::Doc::Generator
     git_matches = remotes.each_line.compact_map do |line|
       GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
     end.to_a
-
-    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal(?:\.git)?\s} }
 
     origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
     return unless origin

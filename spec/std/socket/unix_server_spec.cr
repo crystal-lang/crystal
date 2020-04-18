@@ -1,6 +1,7 @@
 require "../spec_helper"
 require "socket"
 require "../../support/fibers"
+require "../../support/channel"
 require "../../support/tempfile"
 
 describe UNIXServer do
@@ -81,7 +82,7 @@ describe UNIXServer do
         ch = Channel(Symbol).new(1)
         exception = nil
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         f = spawn do
           begin
@@ -126,7 +127,7 @@ describe UNIXServer do
         ch = Channel(Symbol).new(1)
         ret = :initial
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         f = spawn do
           ch.send :begin

@@ -3,7 +3,7 @@
 require "c/dlfcn"
 require "c/stdio"
 require "c/string"
-require "callstack/lib_unwind"
+require "./lib_unwind"
 
 {% if flag?(:darwin) %}
   require "debug/mach_o"
@@ -19,12 +19,14 @@ require "callstack/lib_unwind"
   require "debug/dwarf"
 {% end %}
 
-def caller
-  CallStack.new.printable_backtrace
+# Returns the current execution stack as an array containing strings
+# usually in the form file:line:column or file:line:column in 'method'.
+def caller : Array(String)
+  Exception::CallStack.new.printable_backtrace
 end
 
 # :nodoc:
-struct CallStack
+struct Exception::CallStack
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
   CURRENT_DIR = begin
@@ -176,18 +178,6 @@ struct CallStack
       elsif frame = CallStack.decode_frame(ip)
         _, sname = frame
         function = String.new(sname)
-
-        # We ignore these because they are part of `raise`'s internals,
-        # and we can't rely on a correct filename being available
-        # (for example if on Mac and without running `dsymutil`)
-        #
-        # We also ignore `main` because it's always at the same place
-        # and adds no info.
-        if function.starts_with?("*raise<") ||
-           function.starts_with?("*CallStack::") ||
-           function.starts_with?("*CallStack#")
-          next
-        end
 
         # Crystal methods (their mangled name) start with `*`, so
         # we remove that to have less clutter in the output.

@@ -123,14 +123,16 @@ class Crystal::CodeGenVisitor
             args_offset = !is_fun_literal && self_type.passed_as_self? ? 2 : 1
             location = target_def.location
             context.vars.each do |name, var|
+              next if var.debug_variable_created
+
               # Self always comes as the first parameter, unless it's a closure:
               # then it will be fetched from the closure data.
               if name == "self" && !is_closure
-                declare_parameter(name, var.type, 1, var.pointer, location)
-              elsif arg_no = args.index { |arg| arg.name == name }
-                declare_parameter(name, var.type, arg_no + args_offset, var.pointer, location)
-              else
-                declare_variable(name, var.type, var.pointer, location)
+                declare_debug_for_function_argument(name, var.type, 1, var.pointer, location)
+                # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
+                # due to LLVM variable dominance issue in some closure cases
+              elsif args.none? { |arg| arg.name == name }
+                declare_variable(name, var.type, var.pointer, location, alloca_block)
               end
             end
           end
@@ -284,6 +286,16 @@ class Crystal::CodeGenVisitor
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
+    if @debug.variables?
+      context.fun_debug_params.clear
+      if context.fun
+        context.add_fun_debug_param(get_debug_type(target_def.type))
+        args.each do |arg|
+          context.add_fun_debug_param(get_debug_type(arg.type))
+        end
+      end
+    end
+
     if @single_module && !target_def.no_inline? && !target_def.is_a?(External)
       context.fun.linkage = LLVM::Linkage::Internal
     end
@@ -382,7 +394,12 @@ class Crystal::CodeGenVisitor
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
     context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
 
-    context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    if @debug.variables?
+      context.fun.add_attribute LLVM::Attribute::NoInline
+      context.fun.add_attribute LLVM::Attribute::OptimizeNone
+    else
+      context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    end
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
@@ -466,6 +483,7 @@ class Crystal::CodeGenVisitor
     return if arg.name == "_"
 
     target_def_var = target_def_vars.try &.[arg.name]
+    location = target_def_var.try(&.location) || target_def.location
 
     var_type = (target_def_var || arg).type
     return if var_type.void?
@@ -486,9 +504,11 @@ class Crystal::CodeGenVisitor
         pointer = alloca(llvm_type(var_type), arg.name)
         casted_pointer = bit_cast pointer, value.type.pointer
         store value, casted_pointer
+        pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
         return
       elsif arg.special_var?
+        value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
@@ -497,6 +517,7 @@ class Crystal::CodeGenVisitor
         needs_copy = target_def_var.try &.assigned_to?
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
+          pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?
@@ -511,9 +532,11 @@ class Crystal::CodeGenVisitor
             # is behind a pointer, as everywhere else
             pointer = alloca(llvm_type(var_type), arg.name)
             store value, pointer
+            pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
             context.vars[arg.name] = LLVMVar.new(pointer, var_type)
             return
           else
+            value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
             context.vars[arg.name] = LLVMVar.new(value, var_type, true)
             return
           end

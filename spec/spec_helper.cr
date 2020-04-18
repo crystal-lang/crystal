@@ -115,7 +115,7 @@ end
 def warnings_result(code, inject_primitives = true)
   code = inject_primitives(code) if inject_primitives
 
-  output_filename = Crystal.tempfile("crystal-spec-output")
+  output_filename = Crystal.temp_executable("crystal-spec-output")
 
   compiler = create_spec_compiler
   compiler.warnings = Warnings::All
@@ -161,9 +161,13 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, e
   result_pragmas.should eq(expected_pragmas) if expected_pragmas
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
+def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
   code = inject_primitives(code) if inject_primitives
-  node = parse code
+  parser = Parser.new(code)
+  parser.filename = filename
+  parser.wants_doc = false
+  node = parser.parse
+
   result = semantic node
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
@@ -244,7 +248,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     ast.expressions[-1] = exps
     code = ast.to_s
 
-    output_filename = Crystal.tempfile("crystal-spec-output")
+    output_filename = Crystal.temp_executable("crystal-spec-output")
 
     compiler = create_spec_compiler
     compiler.debug = debug

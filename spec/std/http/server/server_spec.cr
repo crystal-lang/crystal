@@ -2,6 +2,7 @@ require "../spec_helper"
 require "http/server"
 require "http/client/response"
 require "../../../support/ssl"
+require "../../../support/channel"
 
 # TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
@@ -72,7 +73,7 @@ describe HTTP::Server do
     end
     sleep 0.1
 
-    delay(1) { ch.send :timeout }
+    schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 

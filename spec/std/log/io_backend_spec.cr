@@ -78,6 +78,15 @@ describe Log::IOBackend do
     end
   end
 
+  it "allows setting formatter in initializer" do
+    formatter = Log::Formatter.new { |_entry, io| io }
+    backend = Log::IOBackend.new(formatter: formatter)
+
+    log = Log.new("foo", backend, :info)
+
+    log.backend.should eq(backend)
+  end
+
   it "yields message" do
     IO.pipe do |r, w|
       logger = io_logger(stdout: w, progname: "prog", source: "db")

@@ -344,6 +344,6 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
     Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   end
 
-  CallStack.print_backtrace
+  Exception::CallStack.print_backtrace
   LibC._exit(sig)
 end

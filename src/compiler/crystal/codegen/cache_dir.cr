@@ -31,9 +31,18 @@ module Crystal
     def directory_for(filename : String)
       dir = compute_dir
 
-      name = filename.gsub('/', '-')
-      while name.starts_with?('-')
-        name = name[1..-1]
+      filename = ::Path[filename]
+      name = String.build do |io|
+        filename.each_part do |part|
+          if io.empty?
+            if part == "#{filename.anchor}"
+              part = "#{filename.drive}"[..0]
+            end
+          else
+            io << '-'
+          end
+          io << part
+        end
       end
       output_dir = File.join(dir, name)
       Dir.mkdir_p(output_dir)

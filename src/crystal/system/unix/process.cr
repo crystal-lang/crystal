@@ -222,7 +222,7 @@ struct Crystal::System::Process
 
     if LibC.chdir("/") != 0
       errno = RuntimeError.from_errno("chdir after chroot failed")
-      errno.callstack = CallStack.new
+      errno.callstack = Exception::CallStack.new
       errno.inspect_with_backtrace(STDERR)
       abort("Unresolvable state, exiting...")
     end

@@ -22,7 +22,7 @@ describe Crystal::Doc::ProjectInfo do
     end
   end
 
-  describe ".new_with_defaults" do
+  describe "#fill_with_defaults" do
     it "empty folder" do
       assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, nil))
       assert_with_defaults(ProjectInfo.new("foo", "1.0"), ProjectInfo.new("foo", "1.0"))
@@ -118,7 +118,12 @@ describe Crystal::Doc::ProjectInfo do
     run_git "commit -m 'Initial commit' --no-gpg-sign"
     ProjectInfo.find_git_version.should eq "master"
 
+    # Other branch
+    run_git "checkout -b foo"
+    ProjectInfo.find_git_version.should eq "foo"
+
     # Non-tagged commit, dirty workdir
+    run_git "checkout master"
     File.write("file.txt", "bar")
     ProjectInfo.find_git_version.should eq "master-dev"
 
@@ -141,11 +146,7 @@ describe Crystal::Doc::ProjectInfo do
 
     # Multiple tags
     run_git "tag v0.2.0"
-    ProjectInfo.find_git_version.should eq "master"
-
-    # Other branch
-    run_git "checkout -b foo"
-    ProjectInfo.find_git_version.should eq "foo"
+    ProjectInfo.find_git_version.should eq "0.1.0"
   end
 
   describe ".read_shard_properties" do

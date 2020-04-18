@@ -13,7 +13,7 @@ module Crystal
     @crystal_path : Array(String)
 
     def initialize(path = CrystalPath.default_path, codegen_target = Config.default_target)
-      @crystal_path = path.split(':').reject &.empty?
+      @crystal_path = path.split(Process::PATH_DELIMITER).reject &.empty?
       add_target_path(codegen_target)
     end
 
@@ -66,7 +66,7 @@ module Crystal
       # Check if .cr file exists.
       relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
       if File.exists?(relative_filename_cr)
-        return make_relative_unless_absolute relative_filename_cr
+        return File.expand_path(relative_filename_cr)
       end
 
       filename_is_relative = filename.starts_with?('.')
@@ -75,24 +75,24 @@ module Crystal
         # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
         before_slash, after_slash = filename.split('/', 2)
 
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
         return absolute_filename if File.exists?(absolute_filename)
 
         # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
         basename = File.basename(relative_filename)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{filename}/#{basename}.cr")
+        absolute_filename = File.expand_path("#{relative_to}/#{filename}/#{basename}.cr")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
         return absolute_filename if File.exists?(absolute_filename)
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-        absolute_filename = make_relative_unless_absolute("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
         return absolute_filename if File.exists?(absolute_filename)
 
         return nil
@@ -101,12 +101,12 @@ module Crystal
       basename = File.basename(relative_filename)
 
       # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-      absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
+      absolute_filename = File.expand_path("#{relative_filename}/#{basename}.cr")
       return absolute_filename if File.exists?(absolute_filename)
 
       unless filename_is_relative
         # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-        absolute_filename = make_relative_unless_absolute("#{relative_filename}/src/#{basename}.cr")
+        absolute_filename = File.expand_path("#{relative_filename}/src/#{basename}.cr")
         return absolute_filename if File.exists?(absolute_filename)
       end
 
@@ -141,11 +141,6 @@ module Crystal
       dirs.each do |subdir|
         gather_dir_files("#{dir}/#{subdir}", files_accumulator, recursive)
       end
-    end
-
-    private def make_relative_unless_absolute(filename)
-      filename = "#{Dir.current}/#{filename}" unless filename.starts_with?('/')
-      File.expand_path(filename)
     end
 
     private def find_in_crystal_path(filename)

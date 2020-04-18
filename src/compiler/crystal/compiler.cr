@@ -73,7 +73,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -321,15 +321,16 @@ module Crystal
       stdout.puts command.sub(%("${@}"), args && Process.quote(args))
     end
 
-    private def linker_command(program : Program, object_names, output_filename, output_dir)
+    private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "windows"
+        lib_flags = program.lib_flags
+        # Execute and expand `subcommands`.
+        lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
+
         object_arg = Process.quote_windows(object_names)
         output_arg = Process.quote_windows("/Fe#{output_filename}")
-        if link_flags = @link_flags.presence
-          link_flags = "/link #{link_flags}"
-        end
 
-        args = %(#{object_arg} #{output_arg} #{program.lib_flags} #{link_flags})
+        args = %(#{object_arg} #{output_arg} #{lib_flags} #{@link_flags})
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -341,7 +342,7 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{CL} @#{args_filename}"
+          cmd = "#{CL} #{Process.quote_windows("@" + args_filename)}"
         end
 
         {cmd, nil}
@@ -398,7 +399,7 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir)
+          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
 
           process_wrapper(*linker_command) do |command, args|
             Process.run(command, args, shell: true,

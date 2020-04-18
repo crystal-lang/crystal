@@ -8,6 +8,10 @@ module Crystal::Doc
 
     def_equals_and_hash @name, @version
 
+    def crystal_stdlib?
+      name == "Crystal"
+    end
+
     def fill_with_defaults
       unless version?
         if git_version = ProjectInfo.find_git_version
@@ -30,15 +34,19 @@ module Crystal::Doc
       Process.run("git", ["rev-parse", "--is-inside-work-tree"]).success?
     end
 
+    VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
+
     def self.find_git_version
       if ref = git_ref
-        case git_clean?
-        when Nil
-        when true
-          ref
-        when false
-          "#{ref}-dev"
+        if ref.matches?(VERSION_TAG)
+          ref = ref.byte_slice(1)
         end
+
+        unless git_clean?
+          ref = "#{ref}-dev"
+        end
+
+        ref
       end
     end
 
@@ -60,10 +68,9 @@ module Crystal::Doc
       return unless status.success?
       io.rewind
       tags = io.to_s.lines
-      versions = tags.select(&.starts_with?("v"))
-      # Only accept when there's exactly one version tag pointing at HEAD.
-      if versions.size == 1
-        return versions.first.byte_slice(1)
+      # Return tag if commit is tagged, select first one if multiple
+      if tag = tags.first?
+        return tag
       end
 
       # Otherwise, return current branch name

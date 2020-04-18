@@ -79,7 +79,7 @@ module Crystal
             # If the argument types are compatible with the match's argument types,
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
-            # with with the same arguments but which returns Void.
+            # with the same arguments but which returns Void.
             arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
             if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
                match_named_args.size == signature_named_args.size
