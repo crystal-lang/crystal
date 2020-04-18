@@ -282,41 +282,31 @@ describe Crystal::Doc::ProjectInfo do
 
   describe "#source_url" do
     it "fails if refname is missing" do
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info = ProjectInfo.new("test", "v1.0", refname: nil, source_url_pattern: "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}")
       info.source_url(location).should be_nil
     end
 
     it "fails if pattern is missing" do
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info = ProjectInfo.new("test", "v1.0", refname: "master")
       info.source_url(location).should be_nil
     end
 
     it "builds url" do
       info = ProjectInfo.new("test", "v1.0", refname: "master", source_url_pattern: "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}")
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info.source_url(location).should eq "http://git.example.com/test.git/src/master/foo/bar.baz#L42"
     end
 
     it "returns nil for empty pattern" do
       info = ProjectInfo.new("test", "v1.0", refname: "master", source_url_pattern: "")
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
-      info.source_url(location).should be_nil
-    end
-  end
-
-  describe "#source_url" do
-    it "fails if refname is missing" do
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
-      info = ProjectInfo.new("test", "v1.0")
-      info.source_url_pattern = "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}"
-      info.refname = nil
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info.source_url(location).should be_nil
     end
 
     it "fails if pattern is missing" do
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info = ProjectInfo.new("test", "v1.0")
       info.refname = "master"
       info.source_url(location).should be_nil
@@ -326,7 +316,7 @@ describe Crystal::Doc::ProjectInfo do
       info = ProjectInfo.new("test", "v1.0")
       info.refname = "master"
       info.source_url_pattern = "http://git.example.com/test.git/src/%{refname}/%{path}#L%{line}"
-      location = Crystal::Doc::Generator::RelativeLocation.new("foo/bar.baz", 42, "", true)
+      location = Crystal::Doc::RelativeLocation.new("foo/bar.baz", 42)
       info.source_url(location).should eq "http://git.example.com/test.git/src/master/foo/bar.baz#L42"
     end
   end

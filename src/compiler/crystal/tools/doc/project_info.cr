@@ -43,7 +43,7 @@ module Crystal::Doc
       end
     end
 
-    def source_url(location : Generator::RelativeLocation)
+    def source_url(location : RelativeLocation)
       refname = self.refname
       url_pattern = source_url_pattern
 

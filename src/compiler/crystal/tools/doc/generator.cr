@@ -2,7 +2,6 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @repository : String? = nil
   getter project_info
 
   # Adding a flag and associated css class will add support in parser
@@ -16,17 +15,6 @@ class Crystal::Doc::Generator
   }
   FLAGS = FLAG_COLORS.keys
 
-  GIT_REMOTE_PATTERNS = {
-    /github\.com(?:\:|\/)(?<user>(?:\w|-|_)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
-      repository: "https://github.com/%{user}/%{repo}/blob/%{rev}",
-      repo_name:  "github.com/%{user}/%{repo}",
-    },
-    /gitlab\.com(?:\:|\/)(?<user>(?:\w|-|_|\.)+)\/(?<repo>(?:\w|-|_|\.)+?)(?:\.git)?\s/ => {
-      repository: "https://gitlab.com/%{user}/%{repo}/blob/%{rev}",
-      repo_name:  "gitlab.com/%{user}/%{repo}",
-    },
-  }
-
   def self.new(program : Program, included_dirs : Array(String))
     new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
   end
@@ -38,7 +26,6 @@ class Crystal::Doc::Generator
                  @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
-    compute_repository
   end
 
   def run
@@ -381,111 +368,37 @@ class Crystal::Doc::Generator
     end
   end
 
-  def compute_repository
-    # check whether inside git work-tree
-    `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
-    return unless $?.success?
-
-    remotes = `git remote -v`
-    return unless $?.success?
-
-    git_matches = remotes.each_line.compact_map do |line|
-      GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
-    end.to_a
-
-    origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
-    return unless origin
-
-    user = origin["user"]
-    repo = origin["repo"]
-    rev = `git rev-parse HEAD`.chomp
-
-    info = GIT_REMOTE_PATTERNS[origin.regex]
-    @repository = info[:repository] % {user: user, repo: repo, rev: rev}
-  end
-
   def source_link(node)
-    location = relative_location node
+    location = RelativeLocation.from(node, @base_dir)
     return unless location
-
-    filename = relative_filename location
-    return unless filename
-
-    "#{@repository}#{filename}#L#{location.line_number}"
-  end
-
-  def relative_location(node : ASTNode)
-    relative_location node.location
-  end
-
-  def relative_location(location : Location?)
-    return unless location
-
-    repository = @repository
-    return unless repository
-
-    filename = location.filename
-    if filename.is_a?(VirtualFile)
-      location = filename.expanded_location
-    end
-
-    location
-  end
-
-  def relative_filename(location)
-    filename = location.filename
-    return unless filename.is_a?(String)
-    return unless filename.starts_with? @base_dir
-    filename[@base_dir.size..-1]
-  end
-
-  class RelativeLocation
-    property show_line_number
-    getter filename, line_number, url
-
-    def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
-    end
-
-    def to_json(builder : JSON::Builder)
-      builder.object do
-        builder.field "filename", filename
-        builder.field "line_number", line_number
-        builder.field "url", url
-      end
-    end
+    project_info.source_url(location)
   end
 
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
-    repository = @repository
     locations = [] of RelativeLocation
     type.locations.try &.each do |location|
-      location = relative_location location
+      location = RelativeLocation.from(location, @base_dir)
       next unless location
-
-      filename = relative_filename location
+      filename = location.filename
       next unless filename
 
-      url = "#{repository}#{filename}" if repository
-
-      filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
-      filename = filename[4..-1] if filename.starts_with? SRC_SEP
+      url = project_info.source_url(location)
+      next unless url
+      location.url = url
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
-      next if locations.any? { |loc| loc.filename == filename && loc.line_number == location.line_number }
+      next if locations.includes?(location)
 
-      show_line_number = locations.any? do |location|
-        if location.filename == filename
-          location.show_line_number = true
-          true
-        else
-          false
-        end
+      same_file_location = locations.find { |loc| loc.filename == filename }
+      if same_file_location
+        location.show_line_number = true
+        same_file_location.show_line_number = true
       end
 
-      locations << RelativeLocation.new(filename, location.line_number, url, show_line_number)
+      locations << location
     end
-    locations
+    locations.sort
   end
 end
