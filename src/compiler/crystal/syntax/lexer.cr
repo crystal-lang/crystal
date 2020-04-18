@@ -1990,8 +1990,8 @@ module Crystal
             char = next_char
             next_char
             @token.type = :STRING
-            if string_end == '/' && char == '/'
-              @token.value = "/"
+            if char == '/' || char.ascii_whitespace?
+              @token.value = char.to_s
             else
               @token.value = "\\#{char}"
             end
