@@ -1,4 +1,6 @@
 require "../spec_helper"
+require "../../support/channel"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -857,7 +859,7 @@ describe IO do
           ch.send :end
         end
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         ch.receive.should eq(:start)
         wait_until_blocked f
@@ -880,7 +882,7 @@ describe IO do
           ch.send :end
         end
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         ch.receive.should eq(:start)
         wait_until_blocked f

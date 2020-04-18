@@ -22,7 +22,6 @@ require "./std/class_spec.cr"
 require "./std/colorize_spec.cr"
 require "./std/comparable_spec.cr"
 require "./std/complex_spec.cr"
-require "./std/concurrent/future_spec.cr"
 # require "./std/concurrent/select_spec.cr" (failed to run)
 require "./std/concurrent_spec.cr"
 # require "./std/crc32_spec.cr" (failed linking)
