@@ -133,6 +133,17 @@ jobs:
         run: |
           .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/F10000000
 
+      - name: Gather Crystal executable
+        run: |
+          mkdir crystal
+          cp crystal.exe crystal/
+          cp libs/* crystal/
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v1
+        with:
+          name: crystal
+          path: crystal
+
       - name: Build stdlib specs executable
         run: |
           .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_zlib -Dwithout_openssl -Di_know_what_im_doing
