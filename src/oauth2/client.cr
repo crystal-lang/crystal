@@ -65,7 +65,8 @@ class OAuth2::Client
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
-                 @redirect_uri : String? = nil)
+                 @redirect_uri : String? = nil,
+                 @auth_scheme = AuthScheme::HTTP_Basic)
   end
 
   # Builds an authorize URI, as specified by
@@ -145,16 +146,24 @@ class OAuth2::Client
   end
 
   private def get_access_token : AccessToken
-    body = HTTP::Params.build do |form|
-      form.add("client_id", @client_id)
-      form.add("client_secret", @client_secret)
-      yield form
-    end
-
     headers = HTTP::Headers{
       "Accept"       => "application/json",
       "Content-Type" => "application/x-www-form-urlencoded",
     }
+
+    body = HTTP::Params.build do |form|
+      case @auth_scheme
+      when .http_basic?
+        headers.add(
+          "Authorization",
+          "Basic #{Base64.strict_encode "#{@client_id}:#{@client_secret}"}"
+        )
+      when .request_body?
+        form.add("client_id", @client_id)
+        form.add("client_secret", @client_secret)
+      end
+      yield form
+    end
 
     response = HTTP::Client.post(token_uri, form: body, headers: headers)
     case response.status
