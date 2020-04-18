@@ -60,6 +60,12 @@ class OAuth2::Client
   # *token_uri* can be relative or absolute.
   # If they are relative, the given *host*, *port* and *scheme* will be used.
   # If they are absolute, the absolute URL will be used.
+  #
+  # As per https://tools.ietf.org/html/rfc6749#section-2.3.1,
+  # HTTP Basic is the default `auth_scheme` (the mechanism used to
+  #  transmit the client credentials to the server).
+  #  Request Body should only be used if the server does not support
+  #  HTTP Basic.
   def initialize(@host : String, @client_id : String, @client_secret : String,
                  @port : Int32? = nil,
                  @scheme = "https",
