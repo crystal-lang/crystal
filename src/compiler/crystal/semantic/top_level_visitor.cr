@@ -46,8 +46,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     scope, name, type = lookup_type_def(node)
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     created_new_type = false
 
@@ -210,8 +209,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     scope, name, type = lookup_type_def(node)
 
@@ -316,8 +314,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Def)
     check_outside_exp node, "declare def"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     process_def_annotations(node, annotations) do |annotation_type, ann|
       if annotation_type == @program.primitive_annotation
@@ -440,8 +437,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : LibDef)
     check_outside_exp node, "declare lib"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     scope = current_type_scope(node)
 
@@ -478,8 +474,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : CStructOrUnionDef)
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     packed = false
     unless node.union?
@@ -533,8 +528,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : EnumDef)
     check_outside_exp node, "declare enum"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     annotations_doc = annotations_doc(annotations)
 
@@ -844,8 +838,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "can only declare fun at lib or global scope"
     end
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
 
