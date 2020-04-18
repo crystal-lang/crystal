@@ -32,3 +32,4 @@ $crystal build $SCRIPT_ROOT/driver.cr -o $driver
 
 $driver $SCRIPT_ROOT/top_level.cr
 $driver $SCRIPT_ROOT/strings.cr
+$driver $SCRIPT_ROOT/blocks.cr
