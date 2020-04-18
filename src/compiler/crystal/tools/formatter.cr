@@ -680,6 +680,17 @@ module Crystal
     end
 
     def visit(node : RegexLiteral)
+      # Go back and tokenize again if slash is recognized as divide operator.
+      # In this case, slash is tokenized on comment skipping (#4626).
+      # However this slash must be a start delimiter of regex because
+      # this is parsed as regex literal once before.
+      if @token.type == :"/"
+        @lexer.reader.previous_char
+        @lexer.column_number -= 1
+        slash_is_regex!
+        next_token
+      end
+
       accept node.value
 
       false
