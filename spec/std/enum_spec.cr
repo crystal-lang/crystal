@@ -18,6 +18,11 @@ enum SpecEnumFlags
   Three
 end
 
+private enum PrivateEnum
+  FOO
+  BAR
+end
+
 enum SpecBigEnum : Int64
   TooBig = 4294967296i64 # == 2**32
 end
@@ -34,6 +39,10 @@ describe Enum do
       SpecEnumFlags::None.to_s.should eq("None")
       SpecEnumFlags::All.to_s.should eq("One | Two | Three")
       (SpecEnumFlags::One | SpecEnumFlags::Two).to_s.should eq("One | Two")
+    end
+
+    it "for private enum" do
+      PrivateEnum::FOO.to_s.should eq "FOO"
     end
   end
 

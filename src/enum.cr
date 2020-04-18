@@ -139,10 +139,9 @@ struct Enum
     {% if @type.has_attribute?("Flags") %}
       String.build { |io| to_s(io) }
     {% else %}
-      case value
-      {% for member in @type.constants %}
-      when {{@type}}::{{member}}.value
-        {{member.stringify}}
+      {% for member, i in @type.constants %}
+        {{ (i > 0 ? "elsif" : "if").id }} value == {{@type.constant(member)}}
+          {{member.stringify}}
       {% end %}
       else
         value.to_s
