@@ -9,6 +9,7 @@ lib LibC
   alias LPWCH = WCHAR*
 
   alias HANDLE = Void*
+  alias HMODULE = Void*
 
   INVALID_FILE_ATTRIBUTES      = DWORD.new!(-1)
   FILE_ATTRIBUTE_DIRECTORY     =  0x10
