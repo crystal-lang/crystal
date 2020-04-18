@@ -11,15 +11,17 @@ module Crystal
       {% end %}
     end
 
-    # Checks that the underlying value is `{{type}}`, and returns its value.
-    # Returns `nil` otherwise.
-    def as_{{short.id}}? : {{type}}?
-      {% if immutable == true %}
-        @raw.as?({{type}}).dup
-      {% else %}
-        @raw.as?({{type}})
-      {% end %}
-    end
+    {% if type.resolve != Nil %}
+      # Checks that the underlying value is `{{type}}`, and returns its value.
+      # Returns `nil` otherwise.
+      def as_{{short.id}}? : {{type}}?
+        {% if immutable == true %}
+          @raw.as?({{type}}).dup
+        {% else %}
+          @raw.as?({{type}})
+        {% end %}
+      end
+    {% end %}
   end
 
   # `Crystal.datum` macro is an internal helper to create data types that will hold
