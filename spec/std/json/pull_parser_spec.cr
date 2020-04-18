@@ -374,4 +374,10 @@ describe JSON::PullParser do
       end
     {% end %}
   end
+
+  # Added due to an issue with private enums not being inspectable.
+  it "can be inspected" do
+    pull = JSON::PullParser.new("null")
+    pull.inspect
+  end
 end
