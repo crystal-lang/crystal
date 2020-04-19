@@ -174,6 +174,7 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
+    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }
