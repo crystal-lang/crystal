@@ -30,7 +30,7 @@ struct LLVM::DIBuilder
   end
 
   def create_lexical_block_file(scope, file_scope, discriminator = 0)
-    LibLLVM.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
+    LibLLVMExt.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
   end
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
@@ -101,7 +101,7 @@ struct LLVM::DIBuilder
   end
 
   def create_unspecified_type(name : String)
-    LibLLVM.di_builder_create_unspecified_yype(self, name, name.size)
+    LibLLVMExt.di_builder_create_unspecified_type(self, name, name.size)
   end
 
   def get_or_create_array_subrange(lo, count)
