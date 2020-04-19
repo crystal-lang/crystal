@@ -639,13 +639,37 @@ describe "Enumerable" do
       str.should eq("2, 3, 4")
     end
 
-    it "(separator, io)" do
+    it "(io)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io)
+      io.to_s.should eq("123")
+    end
+
+    it "(io, separator)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(io, ", ")
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(separator, io) (deprecated)" do
       io = IO::Memory.new
       ["Ruby", "Crystal", "Python"].join(", ", io)
       io.to_s.should eq "Ruby, Crystal, Python"
     end
 
-    it "(separator, io, &)" do
+    it "(io, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io) { |x, io| io << x + 1 }
+      io.to_s.should eq("234")
+    end
+
+    it "(io, separator, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io, ", ") { |x, io| io << x + 1 }
+      io.to_s.should eq("2, 3, 4")
+    end
+
+    it "(separator, io, &) (deprecated)" do
       str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
