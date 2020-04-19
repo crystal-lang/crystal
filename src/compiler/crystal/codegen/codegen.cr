@@ -1525,6 +1525,10 @@ module Crystal
       false
     end
 
+    def visit(node : Unreachable)
+      builder.unreachable
+    end
+
     def check_proc_is_not_closure(value, type)
       check_fun_name = "~check_proc_is_not_closure"
       func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)

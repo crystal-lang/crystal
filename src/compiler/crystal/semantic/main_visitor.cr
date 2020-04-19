@@ -2843,7 +2843,7 @@ module Crystal
             end
           end
         else
-          # If there's no ensure, because all rescue/else end with unreacahble
+          # If there's no ensure, because all rescue/else end with unreachable
           # we know all the vars after the exception handler will have the types
           # after the handle (begin) block.
           @vars = after_exception_handler_vars
@@ -3157,6 +3157,10 @@ module Crystal
         restriction: node.restriction)
       node.bind_to(node.assign)
       false
+    end
+
+    def visit(node : Unreachable)
+      node.type = @program.no_return
     end
 
     # # Helpers
