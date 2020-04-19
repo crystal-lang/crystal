@@ -444,6 +444,7 @@ end
 # See also: `Process.fork`
 #
 # Available only on Unix-like operating systems.
+@[Deprecated("Use `Process.fork` instead")]
 def fork
   Process.fork { yield }
 end
@@ -451,6 +452,7 @@ end
 # See also: `Process.fork`
 #
 # Available only on Unix-like operating systems.
+@[Deprecated("Use `Process.fork` instead")]
 def fork
   Process.fork
 end
