@@ -404,7 +404,7 @@ struct Set(T)
   # Writes a string representation of the set to *io*.
   def to_s(io : IO) : Nil
     io << "Set{"
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 
