@@ -54,6 +54,16 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
+  private getter host, client_id, client_secret, port, scheme, authorize_uri,
+    token_uri, redirect_uri, auth_scheme
+
+  # returns the HTTP::Client instance with `basic_auth` set if appropriate
+  private getter http_client : HTTP::Client do
+    HTTP::Client.new(URI.new(@scheme, @host, @port)).tap do |client|
+      client.basic_auth(client_id, client_secret) if auth_scheme.http_basic?
+    end
+  end
+
   # Creates an OAuth client.
   #
   # Any or all of the customizable URIs *authorize_uri* and
@@ -72,7 +82,7 @@ class OAuth2::Client
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
                  @redirect_uri : String? = nil,
-                 @auth_scheme = AuthScheme::HTTPBasic)
+                 @auth_scheme : AuthScheme = AuthScheme::HTTPBasic)
   end
 
   # Builds an authorize URI, as specified by
@@ -87,16 +97,16 @@ class OAuth2::Client
   # Yields an `HTTP::Params::Builder` to add extra parameters other than those
   # defined by the standard.
   def get_authorize_uri(scope = nil, state = nil, &block : HTTP::Params::Builder ->) : String
-    uri = URI.parse(@authorize_uri)
+    uri = URI.parse(authorize_uri)
 
     # Use the default URI if it's not an absolute one
     unless uri.host
-      uri = URI.new(@scheme, @host, @port, @authorize_uri)
+      uri = URI.new(scheme, host, port, authorize_uri)
     end
 
     uri.query = HTTP::Params.build do |form|
-      form.add "client_id", @client_id
-      form.add "redirect_uri", @redirect_uri
+      form.add "client_id", client_id
+      form.add "redirect_uri", redirect_uri
       form.add "response_type", "code"
       form.add "scope", scope unless scope.nil?
       form.add "state", state unless state.nil?
@@ -115,7 +125,7 @@ class OAuth2::Client
   # [RFC 6749, Section 4.1.3](https://tools.ietf.org/html/rfc6749#section-4.1.3).
   def get_access_token_using_authorization_code(authorization_code : String) : AccessToken
     get_access_token do |form|
-      form.add("redirect_uri", @redirect_uri)
+      form.add("redirect_uri", redirect_uri)
       form.add("grant_type", "authorization_code")
       form.add("code", authorization_code)
     end
@@ -152,43 +162,25 @@ class OAuth2::Client
   end
 
   private def get_access_token : AccessToken
+    body = HTTP::Params.build do |form|
+      if auth_scheme.request_body?
+        form.add("client_id", client_id)
+        form.add("client_secret", client_secret)
+      end
+      yield form
+    end
+
     headers = HTTP::Headers{
       "Accept"       => "application/json",
       "Content-Type" => "application/x-www-form-urlencoded",
     }
 
-    body = HTTP::Params.build do |form|
-      case @auth_scheme
-      when .http_basic?
-        headers.add(
-          "Authorization",
-          "Basic #{Base64.strict_encode "#{@client_id}:#{@client_secret}"}"
-        )
-      when .request_body?
-        form.add("client_id", @client_id)
-        form.add("client_secret", @client_secret)
-      end
-      yield form
-    end
-
-    response = HTTP::Client.post(token_uri, form: body, headers: headers)
+    response = http_client.post(token_uri, form: body, headers: headers)
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
     else
       raise OAuth2::Error.new(response.body)
-    end
-  end
-
-  private def token_uri
-    uri = URI.parse(@token_uri)
-
-    if uri.host
-      # If it's an absolute URI, use that one
-      @token_uri
-    else
-      # Otherwise use the default one
-      URI.new(@scheme, @host, @port, @token_uri).to_s
     end
   end
 end
