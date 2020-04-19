@@ -81,6 +81,7 @@ lib LibGMP
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
 
   fun pow_ui = __gmpz_pow_ui(rop : MPZ*, base : MPZ*, exp : ULong)
+  fun fac_ui = __gmpz_fac_ui(rop : MPZ*, n : ULong)
 
   # # Bitwise operations
 
