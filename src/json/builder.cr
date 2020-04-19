@@ -131,7 +131,7 @@ class JSON::Builder
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10
-          ord.to_s(16, io)
+          ord.to_s(io, 16)
           reader.next_char
           start_pos = reader.pos
           next
