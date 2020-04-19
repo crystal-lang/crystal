@@ -520,7 +520,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def pushing_type(type : ModuleType)
     old_type = @current_type
     @current_type = type
+    read_annotations
     yield
     @current_type = old_type
+  end
+
+  # Returns the current annotations and clears them for subsequent readers.
+  def read_annotations
+    annotations = @annotations
+    @annotations = nil
+    annotations
   end
 end
