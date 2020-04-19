@@ -4,11 +4,13 @@ require "./spec_helper"
 {% end %}
 
 private def to_s_with_io(num)
-  String.build { |str| num.to_s(str) }
+  String.build { |io| num.to_s(io) }
 end
 
 private def to_s_with_io(num, base, upcase = false)
-  String.build { |str| num.to_s(base, str, upcase) }
+  String.build { |io| num.to_s(io, base, upcase: upcase) }
+  # Test deprecated overload:
+  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
