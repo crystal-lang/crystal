@@ -1,5 +1,6 @@
 require "spec"
 require "log"
+require "log/json"
 
 private def c(value)
   Log::Context.new(value)
@@ -136,6 +137,12 @@ describe Log::Context do
       extra = {b: 2}
       Log.context.set extra
       Log.context.should eq(c({a: 1, b: 2}))
+    end
+
+    it "can be output as JSON" do
+      raw_context_data = {name: "James"}
+      Log.context.set raw_context_data
+      Log.context.to_json.should eq(raw_context_data.to_json)
     end
   end
 end
