@@ -293,8 +293,7 @@ class OptionParser
     end
   end
 
-  # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  private def with_preserved_state
     old_flags = @flags.clone
     old_handlers = @handlers.clone
     old_banner = @banner
@@ -304,6 +303,22 @@ class OptionParser
     old_before_each = @before_each
 
     begin
+      yield
+    ensure
+      @flags = old_flags
+      @handlers = old_handlers
+      @stop = false
+      @banner = old_banner
+      @unknown_args = old_unknown_args
+      @missing_option = old_missing_option
+      @invalid_option = old_invalid_option
+      @before_each = old_before_each
+    end
+  end
+
+  # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
+  def parse(args = ARGV)
+    with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32
       double_dash_index = nil
@@ -426,15 +441,6 @@ class OptionParser
           @invalid_option.call(arg)
         end
       end
-    ensure
-      @flags = old_flags
-      @handlers = old_handlers
-      @stop = false
-      @banner = old_banner
-      @unknown_args = old_unknown_args
-      @missing_option = old_missing_option
-      @invalid_option = old_invalid_option
-      @before_each = old_before_each
     end
   end
 
