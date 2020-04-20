@@ -24,7 +24,7 @@ describe Log::Context do
   end
 
   it "validates hash" do
-    expect_raises(ArgumentError, "Expected hash context, not 1") do
+    expect_raises(ArgumentError, "Expected hash context, not Int32") do
       Log.context = c(1)
     end
   end
