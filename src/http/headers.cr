@@ -60,11 +60,10 @@ struct HTTP::Headers
   # ArgumentError will be raised if header includes invalid characters.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers["foo"] = "baz"
-  # headers #=> HTTP::Headers{"foo" => "baz"}
-  # headers["bar"] = "baz"
-  # headers #=> HTTP::Headers{"foo" => "baz", "bar" => "baz"}
+  # headers = HTTP::Headers{"host" => "crystal-lang.or"}
+  # headers["host"] = "crystal-lang.org"
+  # headers["accept"] = "text/html"
+  # headers #=> HTTP::Headers{"host" => "crystal-lang.org", "accept" => "http/html"}
   # ```
   def []=(key : String, value : String) : String
     check_invalid_header_content(value)
@@ -76,11 +75,11 @@ struct HTTP::Headers
   # ArgumentError will be raised if header includes invalid characters.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers["foo"] = ["bar", "baz"]
-  # headers #=> HTTP::Headers{"foo" => ["bar", "baz"]}
-  # headers["bar"] = ["foo", "baz"]
-  # headers #=> HTTP::Headers{"foo" => ["bar", "baz"], "bar" => ["foo", "baz"]}
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers["host"] = ["crystal-lang.org", "play.crystal-lang.org"]
+  # headers #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
+  # headers["accept"] = ["text/html", "application/json"]
+  # headers #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"], "accept" => ["text/html", "application/json"]}
   # ```
   def []=(key : String, value : Array(String)) : Array(String)
     value.each { |val| check_invalid_header_content val }
@@ -92,10 +91,10 @@ struct HTTP::Headers
   # ArgumentError will be raised if header includes invalid characters.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => ["foo", "baz"]}
-  # headers["foo"] #=> "baz"
-  # headers["bar"] #=> "foo,baz"
-  # headers["baz"] #=> raises KeyError
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept" => ["text/html", "application/json"]}
+  # headers["host"]   #=> "crystal-lang.org"
+  # headers["accept"] #=> "text/html,application/json"
+  # headers["accept-encoding"] #=> raises KeyError
   # ```
   def [](key : HTTP::Headers::Key | String) : String
     values = @hash[wrap(key)]
@@ -175,8 +174,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add("foo", ["bar", "baz"]) #=> HTTP::Headers{"foo" => ["bar", "baz"]}
-  # headers["foo"]                     #=> "bar,baz"
+  # headers.add("host", ["crystal-lang.org", "play.crystal-lang.org"]) #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
+  # headers["host"]                                                    #=> "crystal-lang.org,play.crystal-lang.org"
   # ```
   def add(key, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
@@ -189,8 +188,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add?("foo", "bar") #=> true
-  # headers["foo"]             #=> "bar"
+  # headers.add?("host", "crystal-lang.org")
+  # headers["host"] #=> "crystal-lang.org"
   # ```
   def add?(key, value : String) : Bool
     return false unless valid_value?(value)
@@ -203,8 +202,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add?("foo", ["bar", "baz"]) #=> true
-  # headers["foo"]                      #=> "bar,baz"
+  # headers.add?("accept-encoding", ["text/html", "application/json"])
+  # headers["accept-encoding"] #=> "text/html,application/json"
   # ```
   def add?(key, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
@@ -215,9 +214,9 @@ struct HTTP::Headers
   # Fetches a value for given key, or when not found the value given by default.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers.fetch("foo", "baz") #=> "bar"
-  # headers.fetch("bar", "baz") #=> "baz"
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.fetch("host", "foo") #=> "crystal-lang.org"
+  # headers.fetch("accept-encoding", "foo") #=> "foo"
   # ```
   def fetch(key : HTTP::Headers::Key | String, default : T) forall T
     fetch(wrap(key)) { default }
@@ -226,9 +225,9 @@ struct HTTP::Headers
   # Fetches a value for given key, otherwise executes the given block with the index and returns its value.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers.fetch("foo") { "baz" } #=> "bar"
-  # headers.fetch("bar") { "baz" } #=> "baz"
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.fetch("host") { "crystal-lang.org" } #=> "crystal-lang.org"
+  # headers.fetch("accept-encoding") { "foo" }   #=> "foo"
   # ```
   def fetch(key : String)
     values = @hash[wrap(key)]?
@@ -238,9 +237,9 @@ struct HTTP::Headers
   # Returns true if the header named key exists and false if it doesn't.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers.has_key?("foo") #=> true
-  # headers.has_key?("bar") #=> false
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.has_key?("host")            #=> true
+  # headers.has_key?("accept-encoding") #=> false
   # ```
   def has_key?(key) : Bool
     @hash.has_key? wrap(key)
@@ -250,7 +249,7 @@ struct HTTP::Headers
   # ```
   # headers = HTTP::Headers.new
   # headers.empty? #=> true
-  # headers.add("foo", "bar")
+  # headers.add("host", "crystal-lang.org")
   # headers.empty? #=> false
   # ```
   def empty? : Bool
@@ -260,9 +259,9 @@ struct HTTP::Headers
   # Removes the header named key. Returns the previous value if the header key existed, otherwise returns nil.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers.delete("foo") #=> "bar"
-  # headers.delete("bar") #=> nil
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.delete("host")            #=> "crystal-lang.org"
+  # headers.delete("accept-encoding") #=> nil
   # ```
   def delete(key) : String?
     values = @hash.delete wrap(key)
@@ -272,17 +271,17 @@ struct HTTP::Headers
   # Mofifies self with the keys and values of these headers and other combined
   #
   # ```
-  # headers1 = HTTP::Headers{"foo" => "baz"}
-  # headers2 = HTTP::Headers{"bar" => "baz"}
-  # headers1.merge!(headers2)     #=> HTTP::Headers{"foo" => "baz", "bar" => "baz"}
+  # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers2 = HTTP::Headers{"accept-encoding" => "text/html"}
+  # headers1.merge!(headers2) #=> HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # ```
   #
   # A hash can be used as well
   #
   # ```
-  # headers1 = HTTP::Headers{"foo" => "baz"}
-  # headers_hash = {"bar" => "baz"}
-  # headers1.merge!(headers_hash)     #=> HTTP::Headers{"foo" => "baz", "bar" => "baz"}
+  # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers_hash = {"accept-encoding" => "text/html"}
+  # headers1.merge!(headers_hash) #=> HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # ```
   def merge!(other) : self
     other.each do |key, value|
@@ -294,8 +293,8 @@ struct HTTP::Headers
   # Compares with other. Returns true if headers are the same.
   #
   # ```
-  # headers1 = HTTP::Headers{"foo" => "baz"}
-  # headers2 = HTTP::Headers{"bar" => "baz"}
+  # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers2 = HTTP::Headers{"accept-encoding" => "text/html"}
   #
   # headers1 == headers1     #=> true
   # headers1 == headers2     #=> false
@@ -307,10 +306,10 @@ struct HTTP::Headers
   # Compares with other. Returns true if all key-value pairs are the same.
   #
   # ```
-  # headers1 = HTTP::Headers{"foo" => "bar"}
-  # headers2 = HTTP::Headers{"foo" => ["bar", "baz"]}
-  # headers_hash1 = {"foo" => "bar"}
-  # headers_hash2 = {"foo" => ["bar", "baz"]}
+  # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers2 = HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
+  # headers_hash1 = {"host" => "crystal-lang.org"}
+  # headers_hash2 = {"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
   #
   # headers1 == headers1      #=> true
   # headers1 == headers_hash1 #=> true
@@ -342,24 +341,24 @@ struct HTTP::Headers
   # Returns an iterator over the header keys. Which behaves like an Iterator returning a Tuple consisting of the header key and value.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => "baz"}
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # iterator = headers.each
   #
-  # iterator.next #=> {HTTP::Headers::Key(@name="foo"), "baz"}
-  # iterator.next #=> {HTTP::Headers::Key(@name="bar"), "baz"}
+  # iterator.next #=> {HTTP::Headers::Key(@name="host"), "crystal-lang.org"}
+  # iterator.next #=> {HTTP::Headers::Key(@name="accept-encoding"), "text/html"}
   # ```
   #
   # A block can also be passed to each as well
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => "baz"}
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # header_hash = {} of String => String
   #
   # headers.each do |key, value|
   #   header_hash[key] = value.first
   # end
   #
-  # header_hash #=> {"foo" => "baz", "bar" => "baz"}
+  # header_hash #=> {"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # ```
   #
   # The enumeration follows the order the keys were inserted.
@@ -372,10 +371,10 @@ struct HTTP::Headers
   # Gets a value for given key and casts the value as an Array of Strings. If no value found a KeyError will be raised.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => ["foo", "baz"]}
-  # headers.get("foo") #=> ["baz"]
-  # headers.get("bar") #=> ["foo", "baz"]
-  # headers.get("baz") #=> raises KeyError
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
+  # headers.get("host")            #=> ["crystal-lang.org"]
+  # headers.get("accept-encoding") #=> ["text/text", "application/json"]
+  # headers.get("cache-control")   #=> raises KeyError
   # ```
   def get(key) : Array(String) | String
     cast @hash[wrap(key)]
@@ -384,10 +383,10 @@ struct HTTP::Headers
   # Gets a value for given key and casts the value as an Array of Strings. If no value found a nil will be returned.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => ["foo", "baz"]}
-  # headers.get("foo") #=> ["baz"]
-  # headers.get("bar") #=> ["foo", "baz"]
-  # headers.get("baz") #=> nil
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" =["text/html", "application/json"]}
+  # headers.get("host")            #=> ["crystal-lang.org"]
+  # headers.get("accept-encoding") #=> ["text/html", "application/json"]
+  # headers.get("connection")      #=> nil
   # ```
   def get?(key) : (Array(String) | String)?
     @hash[wrap(key)]?.try { |value| cast(value) }
@@ -396,8 +395,8 @@ struct HTTP::Headers
   # Duplicates the headers
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "bar"}
-  # headers.dup #=> HTTP::Headers{"foo" => "bar"}
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.dup #=> HTTP::Headers{"host" => "crystal-lang.org"}
   # ```
   def dup : self
     dup = HTTP::Headers.new
@@ -415,8 +414,8 @@ struct HTTP::Headers
   # Checks to see if the headers are same object in memory
   #
   # ```
-  # headers1 = HTTP::Headers{"foo" => "bar"}
-  # headers2 = HTTP::Headers{"foo" => "bar"}
+  # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers2 = HTTP::Headers{"host" => "crystal-lang.org"}
   #
   # headers1.same?(headers1) #=> true
   # headers1.same?(headers2) #=> false
@@ -471,8 +470,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.valid_value? "foo"       #=> true
-  # headers.valid_value? "fo\u{11}o" #=> false
+  # headers.valid_value? "host"       #=> true
+  # headers.valid_value? "ho\u{11}st" #=> false
   # ```
   def valid_value?(value) : Bool
     return invalid_value_char(value).nil?
