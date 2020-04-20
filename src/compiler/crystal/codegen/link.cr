@@ -98,7 +98,7 @@ module Crystal
           end
 
           if libname = ann.lib
-            flags << ' ' << libname << ".lib"
+            flags << ' ' << Process.quote_windows("#{libname}.lib")
           end
         end
       end
@@ -123,29 +123,29 @@ module Crystal
             static = has_flag?("static") || ann.static?
 
             if static && (static_lib = find_static_lib(libname, CrystalLibraryPath.paths))
-              flags << ' ' << static_lib
+              flags << ' ' << Process.quote_posix(static_lib)
             elsif has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
               flags << ' ' << libflags
             elsif static && (static_lib = find_static_lib(libname, library_path))
-              flags << ' ' << static_lib
+              flags << ' ' << Process.quote_posix(static_lib)
             else
-              flags << " -l" << libname
+              flags << " -l" << Process.quote_posix(libname)
             end
           end
 
           if framework = ann.framework
-            flags << " -framework " << framework
+            flags << " -framework " << Process.quote_posix(framework)
           end
         end
 
         # Append the CRYSTAL_LIBRARY_PATH values as -L flags.
         CrystalLibraryPath.paths.each do |path|
-          flags << " -L#{path}"
+          flags << " -L#{Process.quote_posix(path)}"
         end
         # Append the default paths as -L flags in case the linker doesn't know
         # about them (eg: FreeBSD won't search /usr/local/lib by default):
         library_path.each do |path|
-          flags << " -L#{path}"
+          flags << " -L#{Process.quote_posix(path)}"
         end
       end
     end
@@ -164,7 +164,11 @@ module Crystal
             if cfg.starts_with?("-L")
               library_path << cfg[2..-1]
             elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2..-1], library_path) || cfg)
+              if static_lib = find_static_lib(cfg[2..-1], library_path)
+                flags << Process.quote_posix(static_lib)
+              else
+                flags << cfg
+              end
             else
               flags << cfg
             end
