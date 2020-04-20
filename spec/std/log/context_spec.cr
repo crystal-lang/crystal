@@ -24,6 +24,12 @@ describe Log::Context do
     Log::Context.new.should eq(c(NamedTuple.new))
   end
 
+  it "validates hash" do
+    expect_raises(ArgumentError, "Expected hash context, not Int32") do
+      Log.context = c(1)
+    end
+  end
+
   it "immutability" do
     context = c({a: 1})
     other = context.as_h

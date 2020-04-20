@@ -53,5 +53,11 @@ end
 
 class Fiber
   # :nodoc:
-  property logging_context : Log::Context = Log::Context.new
+  getter logging_context : Log::Context = Log::Context.new
+
+  # :nodoc:
+  def logging_context=(value : Log::Context)
+    raise ArgumentError.new "Expected hash context, not #{value.raw.class}" unless value.as_h?
+    @logging_context = value
+  end
 end
