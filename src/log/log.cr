@@ -34,12 +34,13 @@ class Log
   end
 
   {% for method, severity in {
-                               debug:   Severity::Debug,
-                               verbose: Severity::Verbose,
-                               info:    Severity::Info,
-                               warn:    Severity::Warning,
-                               error:   Severity::Error,
-                               fatal:   Severity::Fatal,
+                               trace:  Severity::Trace,
+                               debug:  Severity::Debug,
+                               info:   Severity::Info,
+                               notice: Severity::Notice,
+                               warn:   Severity::Warning,
+                               error:  Severity::Error,
+                               fatal:  Severity::Fatal,
                              } %}
 
     # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.

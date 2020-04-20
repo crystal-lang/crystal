@@ -35,7 +35,7 @@ class Log
 
   private Top = Log.for("")
 
-  {% for method in %i(debug verbose info warn error fatal) %}
+  {% for method in %i(trace debug info notice warn error fatal) %}
     # See `Log#{{method.id}}`.
     def self.{{method.id}}(*, exception : Exception? = nil)
       Top.{{method.id}}(exception: exception) do
