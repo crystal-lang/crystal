@@ -35,6 +35,22 @@ describe Log::Context do
   it "merge" do
     c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
     c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
+    c({a: 1, b: 3}).merge(c({b: nil})).should eq(c({a: 1, b: nil}))
+  end
+
+  it "accessors" do
+    c(nil).as_nil.should be_nil
+
+    c(1).as_i.should eq(1)
+
+    c("a").as_s.should eq("a")
+    c(1).as_s?.should be_nil
+
+    c(true).as_bool.should eq(true)
+    c(false).as_bool.should eq(false)
+    c(true).as_bool?.should eq(true)
+    c(false).as_bool?.should eq(false)
+    c(nil).as_bool?.should be_nil
   end
 
   describe "implicit context" do
