@@ -256,7 +256,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, with_literals: with_literals
+    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
@@ -310,7 +310,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, with_literals
+    instantiate signature, matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
@@ -361,7 +361,19 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type, with_literals)
+  def instantiate(signature, matches, owner, self_type, with_literals)
+    if with_literals
+      # Now that we have all our matches, check if any of them matches exactly
+      # all types, assuming autocasted values will always match (because they
+      # matches and they were not ambiguous). If so, only keep matches up to
+      # that exact match. We need to do this here because with autocasting
+      # we consider all overloads to detect ambiguous usage.
+      stop_index = matches.index do |match|
+        signature.matches_exactly?(match, with_literals: true)
+      end
+      matches = matches[..stop_index] if stop_index
+    end
+
     matches.each &.remove_literals if with_literals
 
     block = @block
@@ -664,7 +676,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, with_literals: with_literals
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
