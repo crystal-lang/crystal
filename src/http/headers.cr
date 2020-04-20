@@ -17,12 +17,6 @@ struct HTTP::Headers
     end
 
     # Returns true if the normalized name of self is the same as the normalized value passed.
-    #
-    # ```
-    # key1 = HTTP::Headers::Key.new("foo")
-    # key2 = HTTP::Headers::Key.new("FOO")
-    # key1 == key2 #=> true    
-    # ```
     def ==(key2 : HTTP::Headers::Key) : Bool
       key1 = name
       key2 = key2.name
@@ -112,10 +106,10 @@ struct HTTP::Headers
   # ArgumentError will be raised if header includes invalid characters.
   #
   # ```
-  # headers = HTTP::Headers{"foo" => "baz", "bar" => ["foo", "baz"]}
-  # headers["foo"]? #=> "baz"
-  # headers["bar"]? #=> "foo,baz"
-  # headers["baz"]? #=> nil
+  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept" => ["text/html", "application/json"]}
+  # headers["host"]?            #=> "crystal-lang.org"
+  # headers["accept"]?          #=> "text/html,application/json"
+  # headers["accept-encoding"]? #=> nil
   # ```
   def []?(key : HTTP::Headers::Key | String) : String?
     fetch(key, nil).as(String?)
@@ -161,13 +155,14 @@ struct HTTP::Headers
     false
   end
 
-  # Inserts a key value pair into the header collection and returns the value of the added key.
+  # Inserts a key value pair into the header collection and returns the value of the added key.  If a key already exists the value is turned into an array.
   # ArgumentError will be raised if header includes invalid characters.
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add("foo", "bar") #=> HTTP::Headers{"foo" => "bar"}
-  # headers["foo"]            #=> "bar"
+  # headers.add("host", "crystal-lang.org"       #=> HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.add("host", "play.crystal-lang.org") #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
+  # headers["host"]                              #=> "crystal-lang.org,play.crystal-lang.org"
   # ```
   def add(key, value : String) : self
     check_invalid_header_content(value)
