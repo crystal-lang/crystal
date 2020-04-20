@@ -54,13 +54,13 @@ require "./std/dir_spec.cr"
 require "./std/double_spec.cr"
 require "./std/ecr/ecr_lexer_spec.cr"
 require "./std/ecr/ecr_spec.cr"
-require "./std/enumerable_spec.cr"
 require "./std/enum_spec.cr"
+require "./std/enumerable_spec.cr"
 require "./std/env_spec.cr"
 # require "./std/exception/call_stack_spec.cr"
 require "./std/exception_spec.cr"
-require "./std/file_spec.cr"
 require "./std/file/tempfile_spec.cr"
+require "./std/file_spec.cr"
 # require "./std/file_utils_spec.cr"
 require "./std/flate/flate_spec.cr"
 require "./std/float_printer/diy_fp_spec.cr"
@@ -130,10 +130,10 @@ require "./std/log/broadcast_backend_spec.cr"
 require "./std/log/builder_spec.cr"
 require "./std/log/context_spec.cr"
 require "./std/log/env_config_spec.cr"
-require "./std/logger_spec.cr"
 require "./std/log/io_backend_spec.cr"
 require "./std/log/log_spec.cr"
 require "./std/log/main_spec.cr"
+require "./std/logger_spec.cr"
 require "./std/match_data_spec.cr"
 # require "./std/math_spec.cr" (failed linking)
 require "./std/mime/media_type_spec.cr"
@@ -144,15 +144,15 @@ require "./std/mime_spec.cr"
 # require "./std/mutex_spec.cr" (failed codegen)
 require "./std/named_tuple_spec.cr"
 # require "./std/number_spec.cr" (failed linking)
-# require "./std/oauth2/access_token_spec.cr" (failed codegen)
-# require "./std/oauth2/client_spec.cr" (failed codegen)
-# require "./std/oauth2/session_spec.cr" (failed codegen)
 # require "./std/oauth/access_token_spec.cr" (failed codegen)
 # require "./std/oauth/authorization_header_spec.cr" (failed codegen)
 # require "./std/oauth/consumer_spec.cr" (failed codegen)
 # require "./std/oauth/params_spec.cr" (failed codegen)
 # require "./std/oauth/request_token_spec.cr" (failed codegen)
 # require "./std/oauth/signature_spec.cr" (failed codegen)
+# require "./std/oauth2/access_token_spec.cr" (failed codegen)
+# require "./std/oauth2/client_spec.cr" (failed codegen)
+# require "./std/oauth2/session_spec.cr" (failed codegen)
 require "./std/object_spec.cr"
 # require "./std/openssl/cipher_spec.cr" (failed codegen)
 # require "./std/openssl/digest_io_spec.cr" (failed codegen)
@@ -170,8 +170,8 @@ require "./std/path_spec.cr"
 require "./std/pointer_spec.cr"
 require "./std/pp_spec.cr"
 require "./std/pretty_print_spec.cr"
-require "./std/process_spec.cr"
 require "./std/proc_spec.cr"
+require "./std/process_spec.cr"
 require "./std/raise_spec.cr"
 require "./std/random/isaac_spec.cr"
 require "./std/random/pcg32_spec.cr"
@@ -197,19 +197,19 @@ require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"
 require "./std/spec/junit_formatter_spec.cr"
-require "./std/spec_spec.cr"
 require "./std/spec/tap_formatter_spec.cr"
+require "./std/spec_spec.cr"
 require "./std/static_array_spec.cr"
+require "./std/string/utf16_spec.cr"
 require "./std/string_builder_spec.cr"
 require "./std/string_pool_spec.cr"
 require "./std/string_scanner_spec.cr"
 require "./std/string_spec.cr"
-require "./std/string/utf16_spec.cr"
 require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
 # require "./std/system/group_spec.cr" (failed codegen)
-require "./std/system_spec.cr"
 # require "./std/system/user_spec.cr" (failed codegen)
+require "./std/system_spec.cr"
 # require "./std/thread/condition_variable_spec.cr" (failed codegen)
 # require "./std/thread/mutex_spec.cr" (failed codegen)
 # require "./std/thread_spec.cr" (failed codegen)
