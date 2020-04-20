@@ -85,6 +85,7 @@
 #
 # ```
 # backend = Log::IOBackend.new
+# Log.builder.clear
 # Log.builder.bind "*", :warning, backend
 # Log.builder.bind "db.*", :debug, backend
 # Log.builder.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
@@ -92,31 +93,33 @@
 #
 # ### Configure logging from environment variables
 #
-# Include the following line to allow configuration from environment variables.
-#
-# ```
-# Log.setup_from_env
-# ```
-#
-# The environment variables `CRYSTAL_LOG_LEVEL` and `CRYSTAL_LOG_SOURCES` are used to indicate
+# By default the environment variables `CRYSTAL_LOG_LEVEL` and `CRYSTAL_LOG_SOURCES` are used to indicate
 # which severity level to emit (defaults to `INFO`; use `NONE` to skip all messages) and to restrict
 # which sources you are interested in.
 #
 # The valid values for `CRYSTAL_LOG_SOURCES` are:
 #
-# * the empty string matches only the top-level source (default)
-# * `*` matches all the sources
+# * the empty string matches only the top-level source
+# * `*` matches all the sources (**default**)
 # * `foo.bar.*` matches `foo.bar` and every nested source
 # * `foo.bar` matches `foo.bar`, but not its nested sources
 # * Any comma separated combination of the above
 #
 # The logs are emitted to `STDOUT` using a `Log::IOBackend`.
 #
-# If `Log.setup_from_env` is called on startup you can tweak the logging as:
+# Include the following line to allow configuration from environment variables.
+#
+# ```console
+# $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=foo.* ./bin/app
+# ```
+#
+# You can tweak the default values (used when `CRYSTAL_LOG_` variables are not defined)
+# by calling `Log.setup_from_env` on startup:
 #
 # ```
-# $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=* ./bin/app
+# Log.setup_from_env(default_level: :error, default_sources: "foo.*")
 # ```
+#
 class Log
 end
 
@@ -131,3 +134,5 @@ require "./log/env_config"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
+
+Log.setup_from_env
