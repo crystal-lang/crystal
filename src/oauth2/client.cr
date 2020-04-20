@@ -55,14 +55,7 @@
 # tokens before each request.
 class OAuth2::Client
   private getter host, client_id, client_secret, port, scheme, authorize_uri,
-    token_uri, redirect_uri, auth_scheme
-
-  # returns the HTTP::Client instance with `basic_auth` set if appropriate
-  private getter http_client : HTTP::Client do
-    HTTP::Client.new(URI.new(@scheme, @host, @port)).tap do |client|
-      client.basic_auth(client_id, client_secret) if auth_scheme.http_basic?
-    end
-  end
+    redirect_uri, auth_scheme, token_uri
 
   # Creates an OAuth client.
   #
@@ -162,25 +155,40 @@ class OAuth2::Client
   end
 
   private def get_access_token : AccessToken
-    body = HTTP::Params.build do |form|
-      if auth_scheme.request_body?
-        form.add("client_id", client_id)
-        form.add("client_secret", client_secret)
-      end
-      yield form
-    end
-
     headers = HTTP::Headers{
       "Accept"       => "application/json",
       "Content-Type" => "application/x-www-form-urlencoded",
     }
 
-    response = http_client.post(token_uri, form: body, headers: headers)
+    body = HTTP::Params.build do |form|
+      case auth_scheme
+      when .request_body?
+        form.add("client_id", client_id)
+        form.add("client_secret", client_secret)
+      when .http_basic?
+        headers.add(
+          "Authorization",
+          "Basic #{Base64.strict_encode "#{@client_id}:#{@client_secret}"}"
+        )
+      end
+      yield form
+    end
+
+    response = HTTP::Client.post get_token_uri, form: body, headers: headers
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
     else
       raise OAuth2::Error.new(response.body)
+    end
+  end
+
+  private def get_token_uri : URI
+    uri = URI.parse(token_uri)
+    if uri.host
+      uri
+    else
+      URI.new(scheme, host, port)
     end
   end
 end
