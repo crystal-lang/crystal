@@ -1,5 +1,5 @@
 require "spec"
-require "zlib"
+require "compress/zlib"
 
 private def new_sample_io
   io = IO::Memory.new
@@ -9,7 +9,7 @@ private def new_sample_io
   io.rewind
 end
 
-module Zlib
+module Compress::Zlib
   describe Reader do
     it "should be able to read" do
       io = new_sample_io

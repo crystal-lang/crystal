@@ -6,9 +6,9 @@ require "./file_info"
 # ### Example
 #
 # ```
-# require "zip"
+# require "compress/zip"
 #
-# Zip::File.open("./file.zip") do |file|
+# Compress::Zip::File.open("./file.zip") do |file|
 #   # Iterate through all entries printing their filename and contents
 #   file.entries.each do |entry|
 #     p entry.filename
@@ -24,7 +24,7 @@ require "./file_info"
 #   end
 # end
 # ```
-class Zip::File
+class Compress::Zip::File
   # Returns all entries inside this zip file.
   getter entries : Array(Entry)
 
@@ -89,7 +89,7 @@ class Zip::File
     find_directory_end_offset(64) ||
       find_directory_end_offset(1024) ||
       find_directory_end_offset(65 * 1024) ||
-      raise Zip::Error.new("Couldn't find directory end signature in the last 65KB")
+      raise Compress::Zip::Error.new("Couldn't find directory end signature in the last 65KB")
   end
 
   private def find_directory_end_offset(buf_size)
@@ -188,7 +188,7 @@ class Zip::File
         # at least check that the signature is OK (these are 4 bytes)
         signature = read(io, UInt32)
         if signature != FileInfo::SIGNATURE
-          raise Zip::Error.new("Wrong local file header signature (expected 0x#{FileInfo::SIGNATURE.to_s(16)}, got 0x#{signature.to_s(16)})")
+          raise Compress::Zip::Error.new("Wrong local file header signature (expected 0x#{FileInfo::SIGNATURE.to_s(16)}, got 0x#{signature.to_s(16)})")
         end
 
         # Skip most of the headers except filename length and extra length

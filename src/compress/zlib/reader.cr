@@ -3,7 +3,7 @@
 # Instances of this class wrap another IO object. When you read from this instance
 # instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
-class Zlib::Reader < IO
+class Compress::Zlib::Reader < IO
   include IO::Buffered
 
   # Whether to close the enclosed `IO` when closing this reader.
@@ -14,8 +14,8 @@ class Zlib::Reader < IO
 
   # Creates a new reader from the given *io*.
   def initialize(@io : IO, @sync_close = false, dict : Bytes? = nil)
-    Zlib::Reader.read_header(io, dict)
-    @flate_io = Flate::Reader.new(@io, dict: dict)
+    Compress::Zlib::Reader.read_header(io, dict)
+    @flate_io = Compress::Deflate::Reader.new(@io, dict: dict)
     @adler32 = Digest::Adler32.initial
     @end = false
   end
@@ -46,13 +46,13 @@ class Zlib::Reader < IO
     fdict = flg.bit(5) == 1
     if fdict
       unless dict
-        raise Zlib::Error.new("Missing dictionary")
+        raise Compress::Zlib::Error.new("Missing dictionary")
       end
 
       checksum = io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
       dict_checksum = Digest::Adler32.checksum(dict)
       if checksum != dict_checksum
-        raise Zlib::Error.new("Dictionary ADLER-32 checksum mismatch")
+        raise Compress::Zlib::Error.new("Dictionary ADLER-32 checksum mismatch")
       end
     end
   end
@@ -71,7 +71,7 @@ class Zlib::Reader < IO
       @flate_io.close
       adler32 = @io.read_bytes(UInt32, IO::ByteFormat::BigEndian)
       if adler32 != @adler32
-        raise Zlib::Error.new("ADLER-32 checksum mismatch")
+        raise Compress::Zlib::Error.new("ADLER-32 checksum mismatch")
       end
     else
       # Update ADLER-32 checksum
@@ -82,11 +82,11 @@ class Zlib::Reader < IO
 
   # Always raises `IO::Error` because this is a read-only `IO`.
   def unbuffered_write(slice : Bytes)
-    raise IO::Error.new "Can't write to Zlib::Reader"
+    raise IO::Error.new "Can't write to Compress::Zlib::Reader"
   end
 
   def unbuffered_flush
-    raise IO::Error.new "Can't flush Zlib::Reader"
+    raise IO::Error.new "Can't flush Compress::Zlib::Reader"
   end
 
   def unbuffered_close
@@ -106,6 +106,6 @@ class Zlib::Reader < IO
   end
 
   protected def self.invalid_header
-    raise Zlib::Error.new("Invalid header")
+    raise Compress::Zlib::Error.new("Invalid header")
   end
 end

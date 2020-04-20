@@ -9,19 +9,19 @@
 # ### Example: compress a file
 #
 # ```
-# require "gzip"
+# require "compress/gzip"
 #
 # File.write("file.txt", "abc")
 #
 # File.open("./file.txt", "r") do |input_file|
 #   File.open("./file.gzip", "w") do |output_file|
-#     Gzip::Writer.open(output_file) do |gzip|
+#     Compress::Gzip::Writer.open(output_file) do |gzip|
 #       IO.copy(input_file, gzip)
 #     end
 #   end
 # end
 # ```
-class Gzip::Writer < IO
+class Compress::Gzip::Writer < IO
   # Whether to close the enclosed `IO` when closing this writer.
   property? sync_close = false
 
@@ -35,7 +35,7 @@ class Gzip::Writer < IO
   getter header = Header.new
 
   # Creates a new writer to the given *io*.
-  def initialize(@io : IO, @level = Gzip::DEFAULT_COMPRESSION, @sync_close = false)
+  def initialize(@io : IO, @level = Compress::Gzip::DEFAULT_COMPRESSION, @sync_close = false)
     # CRC32 of written data
     @crc32 = Digest::CRC32.initial
 
@@ -44,20 +44,20 @@ class Gzip::Writer < IO
   end
 
   # Creates a new writer to the given *filename*.
-  def self.new(filename : String, level = Gzip::DEFAULT_COMPRESSION)
+  def self.new(filename : String, level = Compress::Gzip::DEFAULT_COMPRESSION)
     new(::File.new(filename, "w"), level: level, sync_close: true)
   end
 
   # Creates a new writer to the given *io*, yields it to the given block,
   # and closes it at the end.
-  def self.open(io : IO, level = Gzip::DEFAULT_COMPRESSION, sync_close = false)
+  def self.open(io : IO, level = Compress::Gzip::DEFAULT_COMPRESSION, sync_close = false)
     writer = new(io, level: level, sync_close: sync_close)
     yield writer ensure writer.close
   end
 
   # Creates a new writer to the given *filename*, yields it to the given block,
   # and closes it at the end.
-  def self.open(filename : String, level = Gzip::DEFAULT_COMPRESSION)
+  def self.open(filename : String, level = Compress::Gzip::DEFAULT_COMPRESSION)
     writer = new(filename, level: level)
     yield writer ensure writer.close
   end
@@ -112,7 +112,7 @@ class Gzip::Writer < IO
   private def write_header
     flate_io = @flate_io
     unless flate_io
-      flate_io = @flate_io = Flate::Writer.new(@io, level: @level)
+      flate_io = @flate_io = Compress::Deflate::Writer.new(@io, level: @level)
       header.to_io(@io)
     end
     flate_io
