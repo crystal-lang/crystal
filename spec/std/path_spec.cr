@@ -727,4 +727,14 @@ describe Path do
     assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix)
     assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
   end
+
+  describe "#empty?" do
+    assert_paths_raw("", true, &.empty?)
+    assert_paths_raw(".", true, &.empty?)
+    assert_paths_raw("./", false, &.empty?)
+    assert_paths_raw("a", false, &.empty?)
+    assert_paths_raw("a/b", false, &.empty?)
+    assert_paths_raw("..", false, &.empty?)
+    assert_paths_raw("/", false, &.empty?)
+  end
 end
