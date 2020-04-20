@@ -188,7 +188,7 @@ class OAuth2::Client
     if uri.host
       uri
     else
-      URI.new(scheme, host, port)
+      URI.new(scheme, host, port, token_uri)
     end
   end
 end
