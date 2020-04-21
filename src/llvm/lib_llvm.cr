@@ -371,7 +371,4 @@ lib LibLLVM
   fun set_instr_param_alignment = LLVMSetInstrParamAlignment(instr : ValueRef, index : UInt, align : UInt)
 
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
-  fun di_builder_create_unspecified_yype = LLVMDIBuilderCreateUnspecifiedType(builder : LibLLVMExt::DIBuilder, name : Void*, size : LibC::SizeT) : LibLLVMExt::Metadata
-  fun di_builder_create_lexical_block_file = LLVMDIBuilderCreateLexicalBlockFile(builder : LibLLVMExt::DIBuilder,
-                                                                                 scope : LibLLVMExt::Metadata, file_scope : LibLLVMExt::Metadata, discriminator : UInt32) : LibLLVMExt::Metadata
 end
