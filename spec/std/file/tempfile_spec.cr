@@ -32,7 +32,7 @@ describe File do
       File.basename(path).starts_with?("foo").should be_false
     end
 
-    pending_win32 "accepts dir argument" do
+    it "accepts dir argument" do
       path = File.tempname(dir: "foo")
       File.dirname(path).should eq("foo")
     end
@@ -134,7 +134,7 @@ describe File do
         File.delete(tempfile.path) if tempfile
       end
 
-      pending_win32 "accepts dir argument" do
+      it "accepts dir argument" do
         tempfile = File.tempfile(dir: datapath) do |tempfile|
         end
         File.dirname(tempfile.path).should eq(datapath)

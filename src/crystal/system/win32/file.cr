@@ -27,7 +27,8 @@ module Crystal::System::File
   end
 
   def self.mktemp(prefix : String?, suffix : String?, dir : String) : {LibC::Int, String}
-    path = "#{Crystal::System::Dir.tempdir}\\#{prefix}.#{::Random::Secure.hex}#{suffix}"
+    dir = dir + ::File::SEPARATOR
+    path = "#{dir}#{prefix}.#{::Random::Secure.hex}#{suffix}"
 
     mode = LibC::O_RDWR | LibC::O_CREAT | LibC::O_EXCL | LibC::O_BINARY | LibC::O_NOINHERIT
     fd = LibC._wopen(to_windows_path(path), mode, ::File::DEFAULT_CREATE_PERMISSIONS)
