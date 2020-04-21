@@ -300,15 +300,15 @@ describe Process do
 
   describe "find_executable" do
     pwd = Process::INITIAL_PWD
-    crystal_path = File.join(pwd, "bin", "crystal")
+    crystal_path = Path.new(pwd, "bin", "crystal").to_s
 
     pending_win32 "resolves absolute executable" do
-      Process.find_executable(File.join(pwd, "bin", "crystal")).should eq(crystal_path)
+      Process.find_executable(Path.new(pwd, "bin", "crystal")).should eq(crystal_path)
     end
 
     pending_win32 "resolves relative executable" do
-      Process.find_executable(File.join("bin", "crystal")).should eq(crystal_path)
-      Process.find_executable(File.join("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
+      Process.find_executable(Path.new("bin", "crystal")).should eq(crystal_path)
+      Process.find_executable(Path.new("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
     end
 
     pending_win32 "searches within PATH" do
