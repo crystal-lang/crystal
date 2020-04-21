@@ -54,9 +54,9 @@ describe Enum do
       PrivateEnum::FOO.to_s.should eq "FOO"
       PrivateFlagsEnum::FOO.to_s.should eq "FOO"
       PrivateEnum::QUX.to_s.should eq "FOO"
-      String.build {|io| PrivateEnum::FOO.to_s(io)}.should eq "FOO"
-      String.build {|io| PrivateFlagsEnum::FOO.to_s(io)}.should eq "FOO"
-      String.build {|io| (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s(io)}.should eq "FOO | BAZ"
+      String.build { |io| PrivateEnum::FOO.to_s(io) }.should eq "FOO"
+      String.build { |io| PrivateFlagsEnum::FOO.to_s(io) }.should eq "FOO"
+      String.build { |io| (PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAZ).to_s(io) }.should eq "FOO | BAZ"
     end
   end
 
@@ -248,19 +248,19 @@ describe Enum do
 
   describe ".flags" do
     it "non-flags enum" do
-      SpecEnum.flags().should be_nil
+      SpecEnum.flags.should be_nil
       SpecEnum.flags(One).should eq SpecEnum::One
       SpecEnum.flags(One, Two).should eq SpecEnum::One | SpecEnum::Two
     end
 
     it "flags enum" do
-      SpecEnumFlags.flags().should be_nil
+      SpecEnumFlags.flags.should be_nil
       SpecEnumFlags.flags(One).should eq SpecEnumFlags::One
       SpecEnumFlags.flags(One, Two).should eq SpecEnumFlags::One | SpecEnumFlags::Two
     end
 
     it "private flags enum" do
-      PrivateFlagsEnum.flags().should be_nil
+      PrivateFlagsEnum.flags.should be_nil
       PrivateFlagsEnum.flags(FOO).should eq PrivateFlagsEnum::FOO
       PrivateFlagsEnum.flags(FOO, BAR).should eq PrivateFlagsEnum::FOO | PrivateFlagsEnum::BAR
     end
