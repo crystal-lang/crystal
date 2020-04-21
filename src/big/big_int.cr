@@ -171,7 +171,7 @@ struct BigInt < Int
     if self < 0
       raise ArgumentError.new("Factorial not defined for negative values")
     elsif self > LibGMP::ULong::MAX
-      raise ArgumentError.new("Factorial not supported for numbers bigger than UInt64:MAX")
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
     end
     BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
   end
