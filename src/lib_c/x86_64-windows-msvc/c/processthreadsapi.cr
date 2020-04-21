@@ -39,6 +39,8 @@ lib LibC
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
+                      lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end
