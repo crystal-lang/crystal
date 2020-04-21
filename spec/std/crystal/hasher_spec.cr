@@ -1,5 +1,7 @@
 require "spec"
 require "bit_array"
+require "../spec_helper"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -60,7 +62,7 @@ describe "Crystal::Hasher" do
 
     # TODO: remove fencing when 128bits support is added to non-native platforms
     {% if flag?(:bits64) %}
-      it "128bit types should be hashed ok" do
+      pending_win32 "128bit types should be hashed ok" do
         1.to_i128.hash.should eq(1_i8.hash)
         1.to_u128.hash.should eq(1_u8.hash)
       end

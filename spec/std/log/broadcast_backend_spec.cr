@@ -1,4 +1,5 @@
 require "spec"
+require "log"
 
 private def s(value : Log::Severity)
   value
