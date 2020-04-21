@@ -6,6 +6,15 @@
 class Log::Context
   Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true, target_type: Log::Context
 
+  @@empty = Log::Context.new
+
+  # Returns an empty `Log::Context`.
+  #
+  # NOTE: Since `Log::Context` is immutable, it's safe to share this instance.
+  def self.empty
+    @@empty
+  end
+
   # Creates an empty `Log::Context`.
   def initialize
     @raw = Hash(String, Context).new
@@ -43,6 +52,8 @@ class Log::Context
   # Returns a new `Log::Context` with the keys and values of this context and *other* combined.
   # A value in *other* takes precedence over the one in this context.
   def merge(other : Context)
+    return other if self.object_id == @@empty.object_id
+    return self if other.object_id == @@empty.object_id
     Context.new(self.as_h.merge(other.as_h).clone)
   end
 
@@ -53,7 +64,7 @@ end
 
 class Fiber
   # :nodoc:
-  getter logging_context : Log::Context = Log::Context.new
+  getter logging_context : Log::Context = Log::Context.empty
 
   # :nodoc:
   def logging_context=(value : Log::Context)

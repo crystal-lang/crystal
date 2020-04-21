@@ -24,6 +24,12 @@ describe Log::Context do
     Log::Context.new.should eq(c(NamedTuple.new))
   end
 
+  it "empty" do
+    Log::Context.empty.should eq(Log::Context.new)
+    Log::Context.empty.object_id.should_not eq(Log::Context.new.object_id)
+    Log::Context.empty.object_id.should eq(Log::Context.empty.object_id)
+  end
+
   it "validates hash" do
     expect_raises(ArgumentError, "Expected hash context, not Int32") do
       Log.context = c(1)
@@ -43,6 +49,12 @@ describe Log::Context do
     c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
     c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
     c({a: 1, b: 3}).merge(c({b: nil})).should eq(c({a: 1, b: nil}))
+  end
+
+  it "merge against Log::Context.empty without creating a new instance" do
+    c1 = c({a: 1, b: 3})
+    c1.merge(Log::Context.empty).should be(c1)
+    Log::Context.empty.merge(c1).should be(c1)
   end
 
   it "accessors" do
