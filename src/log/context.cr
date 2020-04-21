@@ -6,14 +6,10 @@
 class Log::Context
   Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true, target_type: Log::Context
 
-  @@empty = Log::Context.new
-
   # Returns an empty `Log::Context`.
   #
   # NOTE: Since `Log::Context` is immutable, it's safe to share this instance.
-  def self.empty
-    @@empty
-  end
+  class_getter empty : Log::Context = Log::Context.new
 
   # Creates an empty `Log::Context`.
   def initialize
