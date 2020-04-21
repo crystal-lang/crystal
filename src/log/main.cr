@@ -33,17 +33,6 @@ class Log
     ::Log.for(type, level)
   end
 
-  private Top = Log.for("")
-
-  {% for method in %i(trace debug info notice warn error fatal) %}
-    # See `Log#{{method.id}}`.
-    def self.{{method.id}}(*, exception : Exception? = nil)
-      Top.{{method.id}}(exception: exception) do
-        yield
-      end
-    end
-  {% end %}
-
   @@builder = Builder.new
 
   # Returns the default `Log::Builder` used for `Log.for` calls.
@@ -123,25 +112,15 @@ class Log
     # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => 3 } context) }
     # ```
     def set(**kwargs)
-      extend_fiber_context(Fiber.current, Log::Context.new(kwargs))
+      set kwargs
     end
 
     # :ditto:
-    def set(values : Hash(String, V)) forall V
+    def set(values : Hash(String | Symbol, _) | NamedTuple)
       extend_fiber_context(Fiber.current, Log::Context.new(values))
     end
 
-    # :ditto:
-    def set(values : Hash(Symbol, V)) forall V
-      extend_fiber_context(Fiber.current, Log::Context.new(values))
-    end
-
-    # :ditto:
-    def set(values : NamedTuple)
-      extend_fiber_context(Fiber.current, Log::Context.new(values))
-    end
-
-    private def extend_fiber_context(fiber : Fiber, values : Context)
+    private def extend_fiber_context(fiber : Fiber, values : self)
       context = fiber.logging_context
       fiber.logging_context = context.merge(values)
     end

@@ -46,6 +46,21 @@ describe Log do
     end
   end
 
+  # Just make sure these compile
+  describe Log.class do
+    it "logs with exception & hash" do
+      Log.info { "STR" }
+      Log.info(exception: Exception.new("err")) { "STR" }
+      Log.info(context: {"key" => "value"}) { "STR" }
+      Log.info(context: {key: "value"}) { "STR" }
+    end
+
+    it "logs with exception & named args" do
+      Log.info(key: "value", exception: Exception.new("err")) { "STR" }
+      Log.info(key: "value") { "STR" }
+    end
+  end
+
   it "filter messages to the backend above level only" do
     backend = Log::MemoryBackend.new
     log = Log.new("a", backend, :warning)

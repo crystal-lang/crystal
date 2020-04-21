@@ -114,7 +114,7 @@
 #
 # If `Log.setup_from_env` is called on startup you can tweak the logging as:
 #
-# ```
+# ```sh
 # $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=* ./bin/app
 # ```
 class Log

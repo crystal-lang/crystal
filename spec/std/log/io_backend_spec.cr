@@ -14,6 +14,16 @@ private def io_logger(*, stdout : IO, config = nil, source : String = "", progna
   builder.for(source)
 end
 
+private def assert_logged(expected : Regex, & : Log -> Nil)
+  IO.pipe do |r, w|
+    logger = io_logger(stdout: w)
+
+    yield logger
+
+    r.gets.should match expected
+  end
+end
+
 describe Log::IOBackend do
   it "logs messages" do
     IO.pipe do |r, w|
@@ -35,16 +45,62 @@ describe Log::IOBackend do
     end
   end
 
-  it "logs context" do
-    IO.pipe do |r, w|
-      logger = io_logger(stdout: w)
-      Log.context.clear
-      Log.with_context do
-        Log.context.set foo: "bar"
-        logger.info { "info:show" }
+  describe "logging context" do
+    it "via Log.context" do
+      assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+        Log.with_context do
+          Log.context.set foo: "bar"
+          logger.info { "info:show" }
+        end
+      end
+    end
+
+    describe Hash do
+      it "directly" do
+        assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+          logger.info context: {"foo" => "bar"} { "info:show" }
+        end
       end
 
-      r.gets.should match(/info:show -- {"foo" => "bar"}/)
+      it Exception do
+        assert_logged(/info:show -- {"foo" => "bar", "1" => 17, "true" => false}/) do |logger|
+          logger.info exception: Exception.new("ERR"), context: {"foo" => "bar", "1" => 17, "true" => false} { "info:show" }
+        end
+      end
+    end
+
+    describe NamedTuple do
+      it "directly" do
+        assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+          logger.info context: {foo: "bar"} { "info:show" }
+        end
+      end
+
+      it Exception do
+        assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+          logger.info exception: Exception.new("ERR"), context: {foo: "bar"} { "info:show" }
+        end
+      end
+    end
+
+    describe "with named args" do
+      it "without exception" do
+        assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+          logger.info(foo: "bar") { "info:show" }
+        end
+      end
+
+      it "with exception" do
+        assert_logged(/info:show -- {"foo" => "bar"}/) do |logger|
+          logger.info(foo: "bar", exception: Exception.new("ERR")) { "info:show" }
+        end
+      end
+    end
+
+    it Exception do
+      assert_logged(/info:show --/) do |logger|
+        logger.info(exception: Exception.new("ERR")) { "info:show" }
+      end
     end
   end
 

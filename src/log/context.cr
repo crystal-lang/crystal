@@ -11,26 +11,15 @@ class Log::Context
     @raw = Hash(String, Context).new
   end
 
-  # Creates `Log::Context` from the given *tuple*.
-  def initialize(tuple : NamedTuple)
-    @raw = raw = Hash(String, Context).new
-    tuple.each do |key, value|
-      raw[key.to_s] = to_context(value)
-    end
+  # Creates a `Log::Context` from the given *named_args*.
+  def self.new(**named_args : Type)
+    new named_args
   end
 
-  # Creates `Log::Context` from the given *hash*.
-  def initialize(hash : Hash(String, V)) forall V
+  # Creates `Log::Context` from the given *collection*.
+  def initialize(collection : Hash(String | Symbol, _) | NamedTuple)
     @raw = raw = Hash(String, Context).new
-    hash.each do |key, value|
-      raw[key] = to_context(value)
-    end
-  end
-
-  # Creates `Log::Context` from the given *hash*.
-  def initialize(hash : Hash(Symbol, V)) forall V
-    @raw = raw = Hash(String, Context).new
-    hash.each do |key, value|
+    collection.each do |key, value|
       raw[key.to_s] = to_context(value)
     end
   end
@@ -42,7 +31,7 @@ class Log::Context
 
   # Returns a new `Log::Context` with the keys and values of this context and *other* combined.
   # A value in *other* takes precedence over the one in this context.
-  def merge(other : Context)
+  def merge(other : self)
     Context.new(self.as_h.merge(other.as_h).clone)
   end
 
