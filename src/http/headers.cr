@@ -252,7 +252,7 @@ struct HTTP::Headers
     @hash.has_key? wrap(key)
   end
 
-  # returns `true` if there are no key value pairs
+  # Returns `true` if there are no key value pairs.
   # ```
   # headers = HTTP::Headers.new
   # headers.empty? #=> true
@@ -283,7 +283,7 @@ struct HTTP::Headers
   # headers1.merge!(headers2)     #=> HTTP::Headers{"host" => "crystal-lang.org", "content-encoding" => "text/html"}
   # ```
   #
-  # A hash can be used as well
+  # A hash can be used as well.
   #
   # ```
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
@@ -355,7 +355,7 @@ struct HTTP::Headers
   # iterator.next #=> {HTTP::Headers::Key(@name="accept-encoding"), "text/html"}
   # ```
   #
-  # A block can also be passed to each as well
+  # A block can also be passed to each as well.
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
@@ -399,7 +399,7 @@ struct HTTP::Headers
     @hash[wrap(key)]?.try { |value| cast(value) }
   end
 
-  # Duplicates the headers
+  # Duplicates the headers.
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
@@ -418,7 +418,7 @@ struct HTTP::Headers
     dup
   end
 
-  # Checks to see if the headers are same object in memory
+  # Checks to see if the headers are same object in memory.
   #
   # ```
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
