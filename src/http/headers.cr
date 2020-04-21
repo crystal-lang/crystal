@@ -21,7 +21,7 @@ struct HTTP::Headers
     # ```
     # key1 = HTTP::Headers::Key.new("host")
     # key2 = HTTP::Headers::Key.new("HOST")
-    # key1 == key2 #=> true
+    # key1 == key2 # => true
     # ```
     def ==(key2 : HTTP::Headers::Key) : Bool
       key1 = name
@@ -69,9 +69,9 @@ struct HTTP::Headers
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers["host"] = "play.crystal-lang.org"
-  # headers #=> HTTP::Headers{"host" => "play.crystal-lang.org"}
+  # headers # => HTTP::Headers{"host" => "play.crystal-lang.org"}
   # headers["accept-encoding"] = "text/html"
-  # headers #=> HTTP::Headers{"host" => "play.crystal-lang.org", "accept-encoding" => "text/html"}
+  # headers # => HTTP::Headers{"host" => "play.crystal-lang.org", "accept-encoding" => "text/html"}
   # ```
   def []=(key : String, value : String) : String
     check_invalid_header_content(value)
@@ -85,9 +85,9 @@ struct HTTP::Headers
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers["host"] = ["crystal-lang.org", "play.crystal-lang.org"]
-  # headers #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
+  # headers # => HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"]}
   # headers["accept-encoding"] = ["text/html", "application/json"]
-  # headers #=> HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"], "accept-encoding" => ["text/html", "application/json"]}
+  # headers # => HTTP::Headers{"host" => ["crystal-lang.org", "play.crystal-lang.org"], "accept-encoding" => ["text/html", "application/json"]}
   # ```
   def []=(key : String, value : Array(String)) : Array(String)
     value.each { |val| check_invalid_header_content val }
@@ -100,9 +100,9 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
-  # headers["host"] #=> "crystal-lang.org"
-  # headers["accept-encoding"] #=> "text/html,application/json"
-  # headers["user-agent"] #=> raises KeyError
+  # headers["host"]            # => "crystal-lang.org"
+  # headers["accept-encoding"] # => "text/html,application/json"
+  # headers["user-agent"]      # => raises KeyError
   # ```
   def [](key : HTTP::Headers::Key | String) : String
     values = @hash[wrap(key)]
@@ -114,9 +114,9 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
-  # headers["host"]? #=> "crystal-lang.org"
-  # headers["accept-encoding"]? #=> "text/html,application/json"
-  # headers["user-agent"]? #=> nil
+  # headers["host"]?            # => "crystal-lang.org"
+  # headers["accept-encoding"]? # => "text/html,application/json"
+  # headers["user-agent"]?      # => nil
   # ```
   def []?(key : HTTP::Headers::Key | String) : String?
     fetch(key, nil).as(String?) # TODO: fixup
@@ -167,8 +167,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add("host", "crystal-lang.org") #=> HTTP::Headers{"host" => "crystal-lang.org"}
-  # headers["host"]                         #=> "crystal-lang.org"
+  # headers.add("host", "crystal-lang.org") # => HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers["host"]                         # => "crystal-lang.org"
   # ```
   def add(key, value : String) : self
     check_invalid_header_content(value)
@@ -181,8 +181,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add("accept-encoding", ["text/html", "application/json"]) #=> HTTP::Headers{"accept-encoding" => ["text/html", "application/json"]}
-  # headers["accept-encoding"]                                        #=> "text/html,application/json"
+  # headers.add("accept-encoding", ["text/html", "application/json"]) # => HTTP::Headers{"accept-encoding" => ["text/html", "application/json"]}
+  # headers["accept-encoding"]                                        # => "text/html,application/json"
   # ```
   def add(key, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
@@ -195,8 +195,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add?("foo", "bar") #=> true
-  # headers["foo"]             #=> "bar"
+  # headers.add?("foo", "bar") # => true
+  # headers["foo"]             # => "bar"
   # ```
   def add?(key, value : String) : Bool
     return false unless valid_value?(value)
@@ -209,8 +209,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.add?("accept-encoding", ["text/html", "application/json"]) #=> true
-  # headers["accept-encoding"]                                         #=> "text/html,application/json"
+  # headers.add?("accept-encoding", ["text/html", "application/json"]) # => true
+  # headers["accept-encoding"]                                         # => "text/html,application/json"
   # ```
   def add?(key, value : Array(String)) : Bool
     value.each { |val| return false unless valid_value?(val) }
@@ -222,8 +222,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "play.crystal-lang.com"}
-  # headers.fetch("host", "crystal-lang.org")      #=> "play.crystal-lang.org"
-  # headers.fetch("content-encoding", "text/html") #=> "text/html"
+  # headers.fetch("host", "crystal-lang.org")      # => "play.crystal-lang.org"
+  # headers.fetch("content-encoding", "text/html") # => "text/html"
   # ```
   def fetch(key : HTTP::Headers::Key | String, default : T) forall T
     fetch(wrap(key)) { default }
@@ -233,8 +233,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "play.crystal-lang.org"}
-  # headers.fetch("host") { "crystal-lang.org" }      #=> "crystal-lang.org"
-  # headers.fetch("content-encoding") { "text/html" } #=> "text/html"
+  # headers.fetch("host") { "crystal-lang.org" }      # => "crystal-lang.org"
+  # headers.fetch("content-encoding") { "text/html" } # => "text/html"
   # ```
   def fetch(key : String)
     values = @hash[wrap(key)]?
@@ -245,8 +245,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "play.crystal-lang.org"}
-  # headers.has_key?("host")             #=> true
-  # headers.has_key?("content-encoding") #=> false
+  # headers.has_key?("host")             # => true
+  # headers.has_key?("content-encoding") # => false
   # ```
   def has_key?(key) : Bool
     @hash.has_key? wrap(key)
@@ -255,9 +255,9 @@ struct HTTP::Headers
   # Returns `true` if there are no key value pairs.
   # ```
   # headers = HTTP::Headers.new
-  # headers.empty? #=> true
+  # headers.empty? # => true
   # headers.add("host", "crystal-lang.org")
-  # headers.empty? #=> false
+  # headers.empty? # => false
   # ```
   def empty? : Bool
     @hash.empty?
@@ -267,8 +267,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
-  # headers.delete("host")             #=> "crystal-lang.org"
-  # headers.delete("content-encoding") #=> nil
+  # headers.delete("host")             # => "crystal-lang.org"
+  # headers.delete("content-encoding") # => nil
   # ```
   def delete(key) : String?
     values = @hash.delete wrap(key)
@@ -280,7 +280,7 @@ struct HTTP::Headers
   # ```
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers2 = HTTP::Headers{"content-encoding" => "text/html"}
-  # headers1.merge!(headers2)     #=> HTTP::Headers{"host" => "crystal-lang.org", "content-encoding" => "text/html"}
+  # headers1.merge!(headers2) # => HTTP::Headers{"host" => "crystal-lang.org", "content-encoding" => "text/html"}
   # ```
   #
   # A hash can be used as well.
@@ -288,7 +288,7 @@ struct HTTP::Headers
   # ```
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers_hash = {"content-encoding" => "text/html"}
-  # headers1.merge!(headers_hash) #=> HTTP::Headers{"host" => "crystal-lang.org", "content-encoding" => "text/html"}
+  # headers1.merge!(headers_hash) # => HTTP::Headers{"host" => "crystal-lang.org", "content-encoding" => "text/html"}
   # ```
   def merge!(other) : self
     other.each do |key, value|
@@ -303,8 +303,8 @@ struct HTTP::Headers
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers2 = HTTP::Headers{"content-encoding" => "text/html"}
   #
-  # headers1 == headers1 #=> true
-  # headers1 == headers2 #=> false
+  # headers1 == headers1 # => true
+  # headers1 == headers2 # => false
   # ```
   def ==(other : self) : Bool
     self == other.@hash
@@ -318,10 +318,10 @@ struct HTTP::Headers
   # headers_hash1 = {"host" => "text/html"}
   # headers_hash2 = {"host" => ["text/html", "application/json"]}
   #
-  # headers1 == headers1      #=> true
-  # headers1 == headers_hash1 #=> true
-  # headers1 == headers_hash2 #=> false
-  # headers2 == headers_hash2 #=> true
+  # headers1 == headers1      # => true
+  # headers1 == headers_hash1 # => true
+  # headers1 == headers_hash2 # => false
+  # headers2 == headers_hash2 # => true
   # ```
   def ==(other : Hash) : Bool
     return false unless @hash.size == other.size
@@ -351,8 +351,8 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # iterator = headers.each
   #
-  # iterator.next #=> {HTTP::Headers::Key(@name="host"), "crystal-lang.org"}
-  # iterator.next #=> {HTTP::Headers::Key(@name="accept-encoding"), "text/html"}
+  # iterator.next # => {HTTP::Headers::Key(@name="host"), "crystal-lang.org"}
+  # iterator.next # => {HTTP::Headers::Key(@name="accept-encoding"), "text/html"}
   # ```
   #
   # A block can also be passed to each as well.
@@ -365,7 +365,7 @@ struct HTTP::Headers
   #   header_hash[key] = value.first
   # end
   #
-  # header_hash #=> {"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
+  # header_hash # => {"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
   # ```
   #
   # The enumeration follows the order the keys were inserted.
@@ -379,9 +379,9 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
-  # headers.get("host")            #=> ["crystal-lang.org"]
-  # headers.get("accept-encoding") #=> ["text/html", "application/json"]
-  # headers.get("user-agent")      #=> raises KeyError
+  # headers.get("host")            # => ["crystal-lang.org"]
+  # headers.get("accept-encoding") # => ["text/html", "application/json"]
+  # headers.get("user-agent")      # => raises KeyError
   # ```
   def get(key) : Array(String) | String
     cast @hash[wrap(key)]
@@ -391,9 +391,9 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
-  # headers.get("host")            #=> ["crystal-lang.org"]
-  # headers.get("accept-encoding") #=> ["text/html", "application/json"]
-  # headers.get("user-agent")      #=> nil
+  # headers.get("host")            # => ["crystal-lang.org"]
+  # headers.get("accept-encoding") # => ["text/html", "application/json"]
+  # headers.get("user-agent")      # => nil
   # ```
   def get?(key) : (Array(String) | String)?
     @hash[wrap(key)]?.try { |value| cast(value) }
@@ -403,7 +403,7 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
-  # headers.dup #=> HTTP::Headers{"host" => "crystal-lang.org"}
+  # headers.dup # => HTTP::Headers{"host" => "crystal-lang.org"}
   # ```
   def dup : self
     dup = HTTP::Headers.new
@@ -424,8 +424,8 @@ struct HTTP::Headers
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers2 = HTTP::Headers{"host" => "crystal-lang.org"}
   #
-  # headers1.same?(headers1) #=> true
-  # headers1.same?(headers2) #=> false
+  # headers1.same?(headers1) # => true
+  # headers1.same?(headers2) # => false
   # ```
   def same?(other : HTTP::Headers) : Bool
     object_id == other.object_id
@@ -477,8 +477,8 @@ struct HTTP::Headers
   #
   # ```
   # headers = HTTP::Headers.new
-  # headers.valid_value? "crystal-lang.org"       #=> true
-  # headers.valid_value? "crystal-\u{11}lang.org" #=> false
+  # headers.valid_value? "crystal-lang.org"       # => true
+  # headers.valid_value? "crystal-\u{11}lang.org" # => false
   # ```
   def valid_value?(value) : Bool
     return invalid_value_char(value).nil?
