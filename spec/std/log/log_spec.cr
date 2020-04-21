@@ -112,4 +112,16 @@ describe Log do
 
     backend.entries.first.context.should eq(Log::Context.new({a: 1}))
   end
+
+  it "context can be changed within the block and is restored" do
+    Log.context.set a: 1
+
+    backend = Log::MemoryBackend.new
+    log = Log.new("a", backend, :debug)
+
+    log.info { Log.context.set(b: 2); "info message" }
+
+    backend.entries.first.context.should eq(Log::Context.new({a: 1, b: 2}))
+    Log.context.should eq(Log::Context.new({a: 1}))
+  end
 end
