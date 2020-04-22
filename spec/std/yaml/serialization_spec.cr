@@ -63,6 +63,10 @@ describe "YAML serialization" do
       String.from_yaml(%(1.2)).should eq ("1.2")
     end
 
+    it "does Path.from_yaml" do
+      Path.from_yaml(%("foo/bar")).should eq(Path.new("foo/bar"))
+    end
+
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
@@ -297,6 +301,10 @@ describe "YAML serialization" do
       ["1", "1.2", "true", "2010-11-12"].each do |string|
         string.to_yaml.should eq(%(--- "#{string}"\n))
       end
+    end
+
+    it "does for Path" do
+      Path.from_yaml(Path.new("foo", "bar", "baz").to_yaml).should eq(Path.new("foo", "bar", "baz"))
     end
 
     it "does for Array" do
