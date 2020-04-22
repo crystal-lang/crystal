@@ -269,7 +269,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64, &block : String::Builder ->) : self
+  def self.build(capacity = 64, & : String::Builder ->) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -347,7 +347,7 @@ class String
   # "12345".to_i { 0 } # => 12345
   # "hello".to_i { 0 } # => 0
   # ```
-  def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { yield }
   end
 
@@ -362,7 +362,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int8` or the block's value.
-  def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ i8, 127, 128
   end
 
@@ -377,7 +377,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt8` or the block's value.
-  def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u8(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ u8, 255
   end
 
@@ -392,7 +392,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int16` or the block's value.
-  def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ i16, 32767, 32768
   end
 
@@ -407,7 +407,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt16` or the block's value.
-  def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u16(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ u16, 65535
   end
 
@@ -422,7 +422,7 @@ class String
   end
 
   # Same as `#to_i`.
-  def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ i32, 2147483647, 2147483648
   end
 
@@ -437,7 +437,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt32` or the block's value.
-  def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u32(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ u32, 4294967295
   end
 
@@ -452,7 +452,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `Int64` or the block's value.
-  def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_i64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ i64, 9223372036854775807, 9223372036854775808
   end
 
@@ -467,7 +467,7 @@ class String
   end
 
   # Same as `#to_i` but returns an `UInt64` or the block's value.
-  def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
+  def to_u64(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &)
     gen_to_ u64
   end
 
@@ -767,7 +767,7 @@ class String
   # "hello"[6..7]? # => nil
   # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range(Int, Int)) : String?
+  def []?(range : Range) : String?
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
@@ -1540,7 +1540,7 @@ class String
   # ```
   # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
   # ```
-  def strip(&block : Char -> _) : String
+  def strip(& : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -1599,7 +1599,7 @@ class String
   # ```
   # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
   # ```
-  def rstrip(&block : Char -> _) : String
+  def rstrip(& : Char -> _) : String
     return self if empty?
 
     excess_right = calc_excess_right { |c| yield c }
@@ -1653,7 +1653,7 @@ class String
   # ```
   # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
   # ```
-  def lstrip(&block : Char -> _) : String
+  def lstrip(& : Char -> _) : String
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -1680,7 +1680,7 @@ class String
     end
   end
 
-  private def calc_excess_right(&block)
+  private def calc_excess_right(&)
     byte_index = bytesize
     reader = Char::Reader.new(at_end: self)
     while (yield reader.current_char)
@@ -1716,7 +1716,7 @@ class String
     end
   end
 
-  private def calc_excess_left(&block)
+  private def calc_excess_left(&)
     reader = Char::Reader.new(self)
     while (yield reader.current_char)
       reader.next_char
@@ -1816,7 +1816,7 @@ class String
   # "hello".sub { |char| char + 1 } # => "iello"
   # "hello".sub { "hi" }            # => "hiello"
   # ```
-  def sub(&block : Char -> Char | String) : String
+  def sub(& : Char -> _) : String
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -1834,7 +1834,7 @@ class String
   # "hello".sub('l', "lo")      # => "helolo"
   # "hello world".sub('o', 'a') # => "hella world"
   # ```
-  def sub(char : Char, replacement : Char | String) : String
+  def sub(char : Char, replacement : _) : String
     if includes?(char)
       String.build(bytesize) do |buffer|
         reader = Char::Reader.new(self)
@@ -1906,7 +1906,7 @@ class String
   #
   # Raises `IndexError` if a named group referenced in *replacement* is not present
   # in *pattern*.
-  def sub(pattern : Regex, replacement : Char | String, backreferences = true) : String
+  def sub(pattern : Regex, replacement, backreferences = true) : String
     if backreferences && replacement.is_a?(String) && replacement.has_back_references?
       sub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
     else
@@ -1938,7 +1938,7 @@ class String
   # ```
   # "hello yellow".sub("ll", "dd") # => "heddo yellow"
   # ```
-  def sub(string : String, replacement : String) : String
+  def sub(string : String, replacement) : String
     sub(string) { replacement }
   end
 
@@ -1948,7 +1948,7 @@ class String
   # ```
   # "hello yellow".sub("ll") { "dd" } # => "heddo yellow"
   # ```
-  def sub(string : String, &block : String -> Char | String) : String
+  def sub(string : String, & : String -> _) : String
     index = self.byte_index(string)
     return self unless index
 
@@ -1965,7 +1965,7 @@ class String
   # ```
   # "hello".sub({'a' => 'b', 'l' => 'd'}) # => "hedlo"
   # ```
-  def sub(hash : Hash(Char, Char | String)) : String
+  def sub(hash : Hash(Char, _)) : String
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -2171,7 +2171,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> _) : String
+  def gsub(& : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -2221,7 +2221,7 @@ class String
   # ```
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 101 108 108 111 "
   # ```
-  def gsub(pattern : Regex, &block) : String
+  def gsub(pattern : Regex, &) : String
     gsub_append(pattern) do |string, match, buffer|
       $~ = match
       buffer << yield string, match
@@ -2310,7 +2310,7 @@ class String
   # ```
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
-  def gsub(string : String, &block : String -> _) : String
+  def gsub(string : String, & : String -> _) : String
     byte_offset = 0
     index = self.byte_index(string, byte_offset)
     return self unless index
@@ -2363,7 +2363,7 @@ class String
     end
   end
 
-  private def gsub_append(pattern : Regex, &block)
+  private def gsub_append(pattern : Regex, &)
     byte_offset = 0
     match = pattern.match_at_byte_index(self, byte_offset)
     return self unless match
@@ -2402,7 +2402,7 @@ class String
   # ```
   # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
-  def count(&block : Char -> _) : Int32
+  def count(& : Char -> _) : Int32
     count = 0
     each_char do |char|
       count += 1 if yield char
@@ -2433,7 +2433,7 @@ class String
   # ```
   # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
-  def delete(&block : Char -> _) : String
+  def delete(& : Char -> _) : String
     String.build(bytesize) do |buffer|
       each_char do |char|
         buffer << char unless yield char
@@ -2470,7 +2470,7 @@ class String
   # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
   # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
-  def squeeze(&block : Char -> _) : String
+  def squeeze(& : Char -> _) : String
     previous = nil
     String.build(bytesize) do |buffer|
       each_char do |char|
@@ -3252,7 +3252,7 @@ class String
   # old_pond.split(3) { |s| ary << s }
   # ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit : Int32? = nil, &block : String -> _) : Nil
+  def split(limit : Int32? = nil, & : String -> _) : Nil
     if limit && limit <= 1
       yield self
       return
@@ -3567,7 +3567,7 @@ class String
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
   end
 
-  private def split_by_empty_separator(limit, &block : String -> _) : Nil
+  private def split_by_empty_separator(limit, & : String -> _) : Nil
     yielded = 0
 
     each_char do |c|
@@ -3604,7 +3604,7 @@ class String
   # # even the monkey seems to want
   # # a little coat of straw
   # ```
-  def each_line(chomp = true, &block : String ->) : Nil
+  def each_line(chomp = true, & : String ->) : Nil
     return if empty?
 
     offset = 0
@@ -4062,7 +4062,7 @@ class String
 
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
-  def scan(pattern : String, &block : String ->) : String
+  def scan(pattern : String, & : String ->) : String
     return self if pattern.empty?
     index = 0
     while index = byte_index(pattern, index)
@@ -4091,7 +4091,7 @@ class String
   # end
   # array # => ['a', 'b', '☃']
   # ```
-  def each_char(&block : Char ->) : Nil
+  def each_char(& : Char ->) : Nil
     if ascii_only?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
@@ -4158,7 +4158,7 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def each_codepoint(&block : Int32 ->)
+  def each_codepoint(& : Int32 ->)
     each_char do |char|
       yield char.ord
     end
@@ -4202,7 +4202,7 @@ class String
   # end
   # array # => [97, 98, 226, 152, 131]
   # ```
-  def each_byte(&block : UInt8 ->)
+  def each_byte(& : UInt8 ->)
     to_slice.each do |byte|
       yield byte
     end
