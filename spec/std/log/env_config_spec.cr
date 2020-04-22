@@ -25,7 +25,7 @@ end
 describe "Log.setup_from_env" do
   describe "backend" do
     it "is a IOBackend" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -34,7 +34,7 @@ describe "Log.setup_from_env" do
     end
 
     it "can be changed" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         backend = Log::MemoryBackend.new
         Log.setup_from_env(builder: builder, backend: backend)
@@ -46,7 +46,7 @@ describe "Log.setup_from_env" do
 
   describe "default_level" do
     it "is info" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -54,8 +54,8 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is used if no CRYSTAL_LOG_LEVEL is set" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+    it "is used if no LOG_LEVEL is set" do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_level: :warning)
 
@@ -63,8 +63,8 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is not used if CRYSTAL_LOG_LEVEL is set" do
-      with_env "CRYSTAL_LOG_LEVEL": "DEBUG", "CRYSTAL_LOG_SOURCES": nil do
+    it "is not used if LOG_LEVEL is set" do
+      with_env "LOG_LEVEL": "DEBUG", "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_level: :error)
 
@@ -75,7 +75,7 @@ describe "Log.setup_from_env" do
 
   describe "default_sources" do
     it "is *" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -84,8 +84,8 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is used if no CRYSTAL_LOG_SOURCES is set" do
-      with_env "CRYSTAL_LOG_LEVEL": nil, "CRYSTAL_LOG_SOURCES": nil do
+    it "is used if no LOG_SOURCES is set" do
+      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_sources: "foo.*")
 
@@ -97,8 +97,8 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is not used if CRYSTAL_LOG_SOURCES is set" do
-      with_env "CRYSTAL_LOG_LEVEL": "DEBUG", "CRYSTAL_LOG_SOURCES": "" do
+    it "is not used if LOG_SOURCES is set" do
+      with_env "LOG_LEVEL": "DEBUG", "LOG_SOURCES": "" do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_sources: "foo.*")
 
@@ -113,7 +113,7 @@ describe "Log.setup_from_env" do
 
   it "raises on invalid level" do
     expect_raises(ArgumentError) do
-      with_env "CRYSTAL_LOG_LEVEL": "invalid", "CRYSTAL_LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": "invalid", "LOG_SOURCES": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
       end
@@ -121,7 +121,7 @@ describe "Log.setup_from_env" do
   end
 
   it "splits sources by comma" do
-    with_env "CRYSTAL_LOG_LEVEL": "info", "CRYSTAL_LOG_SOURCES": "db, , foo.*  " do
+    with_env "LOG_LEVEL": "info", "LOG_SOURCES": "db, , foo.*  " do
       builder = Log::Builder.new
       Log.setup_from_env(builder: builder)
 

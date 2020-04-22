@@ -93,11 +93,11 @@
 #
 # ### Configure logging from environment variables
 #
-# By default the environment variables `CRYSTAL_LOG_LEVEL` and `CRYSTAL_LOG_SOURCES` are used to indicate
+# By default the environment variables `LOG_LEVEL` and `LOG_SOURCES` are used to indicate
 # which severity level to emit (defaults to `INFO`; use `NONE` to skip all messages) and to restrict
 # which sources you are interested in.
 #
-# The valid values for `CRYSTAL_LOG_SOURCES` are:
+# The valid values for `LOG_SOURCES` are:
 #
 # * the empty string matches only the top-level source
 # * `*` matches all the sources (**default**)
@@ -110,10 +110,10 @@
 # Include the following line to allow configuration from environment variables.
 #
 # ```console
-# $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=foo.* ./bin/app
+# $ LOG_LEVEL=DEBUG LOG_SOURCES=foo.* ./bin/app
 # ```
 #
-# You can tweak the default values (used when `CRYSTAL_LOG_` variables are not defined)
+# You can tweak the default values (used when `LOG_` variables are not defined)
 # by calling `Log.setup_from_env` on startup:
 #
 # ```
