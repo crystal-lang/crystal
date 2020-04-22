@@ -1,16 +1,16 @@
 require "log"
 
 # A handler that logs the request method, resource, status code, and
-# the time used to execute the next handler, to the log with source `http.server`.
+# the time used to execute the next handler
 class HTTP::LogHandler
   include HTTP::Handler
-  Log = ::Log.for("http.server")
 
-  @[Deprecated("Use `new` without arguments instead")]
+  @[Deprecated("Use `new([Log])` instead")]
   def initialize(io : IO)
+    @log = Log.for("http.server")
   end
 
-  def initialize
+  def initialize(@log = Log.for("http.server"))
   end
 
   def call(context)
@@ -24,7 +24,7 @@ class HTTP::LogHandler
 
       req = context.request
       res = context.response
-      Log.info { "#{req.remote_address || "-"} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
+      @log.info { "#{req.remote_address || "-"} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
     end
   end
 

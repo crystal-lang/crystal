@@ -21,6 +21,22 @@ describe HTTP::LogHandler do
     called.should be_true
   end
 
+  it "logs to custom logger" do
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(IO::Memory.new)
+    context = HTTP::Server::Context.new(request, response)
+
+    backend = Log::MemoryBackend.new
+    log = Log.new("custom", backend, :info)
+    handler = HTTP::LogHandler.new(log)
+    handler.next = ->(ctx : HTTP::Server::Context) {}
+    handler.call(context)
+
+    match_logs(backend.entries,
+      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
+  end
+
   it "log failed request" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")

@@ -28,6 +28,23 @@ describe HTTP::ErrorHandler do
     )
   end
 
+  it "logs to custom logger" do
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(IO::Memory.new)
+    context = HTTP::Server::Context.new(request, response)
+
+    exception = Exception.new("OH NO!")
+    backend = Log::MemoryBackend.new
+    log = Log.new("custom", backend, :info)
+    handler = HTTP::ErrorHandler.new(log: log)
+    handler.next = ->(ctx : HTTP::Server::Context) { raise exception }
+    handler.call(context)
+
+    match_logs(backend.entries,
+      {:error, "Unhandled exception", exception}
+    )
+  end
+
   it "can return a generic error message" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
