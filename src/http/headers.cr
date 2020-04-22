@@ -44,7 +44,6 @@ struct HTTP::Headers
       true
     end
 
-    # TODO: Error: method must return UInt8 but it is returning (Int32 | UInt8)
     private def normalize_byte(byte)
       char = byte.unsafe_chr
 
