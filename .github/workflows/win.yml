@@ -5,14 +5,10 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.34.0
+    container: crystallang/crystal:0.34.0-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
-
-      - name: Install LLVM
-        run: |
-          apt-get -q update; apt-get -qy install llvm-8-dev
 
       - name: Build LLVM extensions
         run: |
