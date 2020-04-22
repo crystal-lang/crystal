@@ -62,15 +62,15 @@ struct HTTP::Headers
     @hash = Hash(Key, String | Array(String)).new
   end
 
-  # Sets the value of key to the given value.
+  # Sets the given values of key to the given value.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
   # headers = HTTP::Headers{"host" => "crystal-lang.org"}
   # headers["host"] = "play.crystal-lang.org"
   # headers # => HTTP::Headers{"host" => "play.crystal-lang.org"}
-  # headers["accept-encoding"] = "text/html"
-  # headers # => HTTP::Headers{"host" => "play.crystal-lang.org", "accept-encoding" => "text/html"}
+  # headers["accept-encoding"] = ["text/html", "application/json"]
+  # headers # => HTTP::Headers{"host" => "play.crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
   # ```
   def []=(key : String, value : String) : String
     check_invalid_header_content(value)
@@ -228,7 +228,7 @@ struct HTTP::Headers
     fetch(wrap(key)) { default }
   end
 
-  # Fetches a value for given key, otherwise executes the given block with the index and returns its value.
+  # Fetches a value for given key, otherwise executes the given block and returns its value.
   #
   # ```
   # headers = HTTP::Headers{"host" => "play.crystal-lang.org"}
@@ -274,7 +274,7 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
-  # Mofifies `self` with the keys and values of these headers and other combined.
+  # Modifies `self` with the keys and values of these headers and other combined.
   #
   # ```
   # headers1 = HTTP::Headers{"host" => "crystal-lang.org"}
