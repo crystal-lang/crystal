@@ -248,10 +248,13 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(true)
-    logs = capture_logs("http.server", :info) do
+    logs = capture_logs("http.server") do
       processor.process(input, output)
     end
-    logs.should be_empty
+    match_logs(logs,
+      {:debug, "Error while writing data to the client"}
+    )
+    logs[0].exception.should be_a(IO::Error)
   end
 
   it "handles IO::Error while flushing" do
@@ -260,23 +263,34 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(false)
-    logs = capture_logs("http.server", :info) do
+    logs = capture_logs("http.server") do
       processor.process(input, output)
     end
-    logs.should be_empty
+    match_logs(logs,
+      {:debug, "Error while flushing data to the client"}
+    )
+    logs[0].exception.should be_a(IO::Error)
   end
 
   it "catches raised error on handler" do
-    processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
+    exception = Exception.new "OH NO"
+    processor = HTTP::Server::RequestProcessor.new { raise exception }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
-    logs = capture_logs("http.server", :info) do
+    logs = capture_logs("http.server") do
       processor.process(input, output)
     end
-    logs[0].severity.should eq(Log::Severity::Error)
-    logs[0].message.should eq("Unhandled exception on HTTP::Handler")
-    logs[0].exception.should_not be_nil
-    output.rewind.gets_to_end.should match(/Internal Server Error/)
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(500)
+    client_response.status_message.should eq("Internal Server Error")
+    client_response.headers["content-type"].should eq("text/plain")
+    client_response.headers.has_key?("content-length").should be_true
+    client_response.body.should eq("500 Internal Server Error\n")
+
+    match_logs(logs,
+      {:error, "Unhandled exception on HTTP::Handler", exception}
+    )
   end
 
   it "doesn't respond with error when headers were already sent" do
@@ -290,6 +304,10 @@ describe HTTP::Server::RequestProcessor do
     output = IO::Memory.new
     processor.process(input, output)
     output.rewind.gets_to_end.should_not match(/Internal Server Error/)
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(200)
+    client_response.body.should eq("Hello world")
   end
 
   it "flushes output buffer when an error happens and some content was already sent" do
