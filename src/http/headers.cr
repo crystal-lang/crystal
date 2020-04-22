@@ -270,7 +270,7 @@ struct HTTP::Headers
   # headers.delete("host")             # => "crystal-lang.org"
   # headers.delete("content-encoding") # => nil
   # ```
-  def delete(key) : String?
+  def delete(key : String) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
