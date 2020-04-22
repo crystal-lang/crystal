@@ -66,9 +66,23 @@
 # end
 # ```
 #
+# ### Default logging configuration
+#
+# By default entries from all sources with `Info` and above severity will
+# be logged to `STDOUT` using the `Log::IOBackend`.
+#
+# If you need to change the default level, backend or sources call `Log.setup` upon startup.
+#
+# ```
+# Log.setup(:debug)                     # Log debug and above for all sources to STDOUT
+# Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only
+# backend_with_formatter = Log::IOBackend.new(formatter: custom_formatter)
+# Log.setup(:debug, backend_with_formatter) # Log notice and above for myapp.* and http.* sources only
+# ```
+#
 # ### Configure logging explicitly in the code
 #
-# Use `Log.builder` to indicate which sources should go to which backends.
+# Use `Log.setup` methods to indicate which sources should go to which backends.
 #
 # You can indicate actual sources or patterns.
 #
@@ -84,18 +98,32 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# backend = Log::IOBackend.new
-# Log.builder.clear
-# Log.builder.bind "*", :warning, backend
-# Log.builder.bind "db.*", :debug, backend
-# Log.builder.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
+# Log.setup |c|
+#   backend = Log::IOBackend.new
+#
+#   c.bind "*", :warning, backend
+#   c.bind "db.*", :debug, backend
+#   c.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
+# end
 # ```
 #
 # ### Configure logging from environment variables
 #
-# By default the environment variables `LOG_LEVEL` and `LOG_SOURCES` are used to indicate
-# which severity level to emit (defaults to `INFO`; use `NONE` to skip all messages) and to restrict
-# which sources you are interested in.
+# Include the following line to allow configuration from environment variables.
+#
+# ```
+# Log.setup_from_env
+# ```
+#
+# The environment variables `LOG_LEVEL` and `LOG_SOURCES` are used to indicate
+# which severity level to emit. By default entries from all sources with `Info` and above severity will
+# be logged to `STDOUT` using the `Log::IOBackend`.
+#
+# To change the level and sources change the environment variables value:
+#
+# ```console
+# $ LOG_LEVEL=DEBUG LOG_SOURCES=myapp.* ./bin/app
+# ```
 #
 # The valid values for `LOG_SOURCES` are:
 #
@@ -105,19 +133,10 @@
 # * `foo.bar` matches `foo.bar`, but not its nested sources
 # * Any comma separated combination of the above
 #
-# The logs are emitted to `STDOUT` using a `Log::IOBackend`.
-#
-# Include the following line to allow configuration from environment variables.
-#
-# ```console
-# $ LOG_LEVEL=DEBUG LOG_SOURCES=foo.* ./bin/app
-# ```
-#
-# You can tweak the default values (used when `LOG_` variables are not defined)
-# by calling `Log.setup_from_env` on startup:
+# You can tweak the default values (used when `LOG_` variables are not defined):
 #
 # ```
-# Log.setup_from_env(default_level: :error, default_sources: "foo.*")
+# Log.setup_from_env(default_level: :error, default_sources: "myapp.*")
 # ```
 #
 class Log
@@ -130,9 +149,9 @@ require "./log/builder"
 require "./log/context"
 require "./log/entry"
 require "./log/main"
-require "./log/env_config"
+require "./log/setup"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
 
-Log.setup_from_env
+Log.setup
