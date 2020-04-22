@@ -106,7 +106,7 @@ class Log
     # Log.info { "message with empty context" }
     # ```
     def clear
-      Fiber.current.logging_context = Log::Context.new
+      Fiber.current.logging_context = Log::Context.empty
     end
 
     # Extends the current `Fiber` logging context.
