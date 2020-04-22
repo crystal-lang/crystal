@@ -303,7 +303,6 @@ describe HTTP::Server::RequestProcessor do
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
     processor.process(input, output)
-    output.rewind.gets_to_end.should_not match(/Internal Server Error/)
 
     client_response = HTTP::Client::Response.from_io(output.rewind)
     client_response.status_code.should eq(200)
@@ -321,6 +320,9 @@ describe HTTP::Server::RequestProcessor do
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
     processor.process(input, output)
-    output.rewind.gets_to_end.should match(/world/)
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(200)
+    client_response.body.should eq("Hello world")
   end
 end
