@@ -220,7 +220,7 @@ class HTTP::Server
         end
       rescue ex : IO::Error
         unbuffered_close
-        raise ex
+        raise ClientError.new("Error while writing data to the client", ex)
       end
 
       def closed?
@@ -266,8 +266,11 @@ class HTTP::Server
         @io.flush
       rescue ex : IO::Error
         unbuffered_close
-        raise ex
+        raise ClientError.new("Error while flushing data to the client", ex)
       end
     end
+  end
+
+  class ClientError < Exception
   end
 end

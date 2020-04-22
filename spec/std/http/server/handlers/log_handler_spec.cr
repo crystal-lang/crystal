@@ -7,45 +7,35 @@ describe HTTP::LogHandler do
   it "logs" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
+    request.remote_address = "192.168.0.1"
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
     called = false
     handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { called = true }
-    log = capture_log("http.server") { handler.call(context) }
-    log[0].severity.should eq(Log::Severity::Info)
-    log[0].message.should match %r(GET / - 200 \(\d+(\.\d+)?[mµn]s\))
+    logs = capture_logs("http.server") { handler.call(context) }
+    match_logs(logs,
+      {:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
     called.should be_true
   end
 
-  it "does log errors" do
+  it "log failed request" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    called = false
     handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    log = capture_log("http.server") do
+    logs = capture_logs("http.server") do
       expect_raises(Exception, "foo") do
         handler.call(context)
       end
     end
-    log[0].severity.should eq(Log::Severity::Error)
-    log[0].message.should match %r(GET / - Unhandled exception:)
-  end
-
-  it "doesn't log error when the response has been closed" do
-    io = RaiseIOError.new
-    request = HTTP::Request.new("GET", "/")
-    response = HTTP::Server::Response.new(io)
-    context = HTTP::Server::Context.new(request, response)
-
-    handler = HTTP::LogHandler.new
-    handler.next = ->(ctx : HTTP::Server::Context) { ctx.response.flush }
-    log = capture_log("http.server") { handler.call(context) rescue nil }
-    log.should be_empty
+    match_logs(logs,
+      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
   end
 end

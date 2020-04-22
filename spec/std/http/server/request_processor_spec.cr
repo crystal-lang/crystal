@@ -248,7 +248,7 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(true)
-    logs = capture_log("http.server", :info) do
+    logs = capture_logs("http.server", :info) do
       processor.process(input, output)
     end
     logs.should be_empty
@@ -260,7 +260,7 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(false)
-    logs = capture_log("http.server", :info) do
+    logs = capture_logs("http.server", :info) do
       processor.process(input, output)
     end
     logs.should be_empty
@@ -270,7 +270,7 @@ describe HTTP::Server::RequestProcessor do
     processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
-    logs = capture_log("http.server", :info) do
+    logs = capture_logs("http.server", :info) do
       processor.process(input, output)
     end
     logs[0].severity.should eq(Log::Severity::Error)

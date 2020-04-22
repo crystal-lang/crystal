@@ -14,15 +14,18 @@ class HTTP::LogHandler
   end
 
   def call(context)
-    elapsed = Time.measure { call_next(context) }
-    elapsed_text = elapsed_text(elapsed)
+    start = Time.monotonic
 
-    Log.info { "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})" }
-  rescue e
-    unless context.response.closed?
-      Log.error(exception: e) { "#{context.request.method} #{context.request.resource} - Unhandled exception:" }
+    begin
+      call_next(context)
+    ensure
+      elapsed = Time.monotonic - start
+      elapsed_text = elapsed_text(elapsed)
+
+      req = context.request
+      res = context.response
+      Log.info { "#{req.remote_address || "-"} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
     end
-    raise e
   end
 
   private def elapsed_text(elapsed)

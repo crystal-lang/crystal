@@ -6,6 +6,7 @@
 # Use the `HTTP::LogHandler` before this to log the exception on the server side.
 class HTTP::ErrorHandler
   include HTTP::Handler
+  Log = ::Log.for("http.server")
 
   def initialize(@verbose : Bool = false)
   end
@@ -13,14 +14,17 @@ class HTTP::ErrorHandler
   def call(context)
     begin
       call_next(context)
+    rescue ex : HTTP::Server::ClientError
+      Log.debug(exception: ex.cause) { ex.message }
     rescue ex : Exception
+      Log.error(exception: ex) { "Unhandled exception" }
       unless context.response.closed? || context.response.wrote_headers?
         if @verbose
           context.response.reset
           context.response.status = :internal_server_error
           context.response.content_type = "text/plain"
           context.response.print("ERROR: ")
-          ex.inspect_with_backtrace(context.response)
+          context.response.puts(ex.inspect_with_backtrace)
         else
           context.response.respond_with_status(:internal_server_error)
         end

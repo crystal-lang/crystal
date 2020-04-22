@@ -222,7 +222,7 @@ describe HTTP::Server::Response do
       response.flush
       io.close
       response.print("Hello")
-      expect_raises(IO::Error) { response.flush }
+      expect_raises(HTTP::Server::ClientError) { response.flush }
       response.closed?.should be_true
     end
   end
