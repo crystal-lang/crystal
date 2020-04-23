@@ -60,7 +60,7 @@ end
 
 class Fiber
   # :nodoc:
-  getter logging_context : Log::Context = Log::Context.empty
+  getter logging_context : Log::Context { Log::Context.empty }
 
   # :nodoc:
   def logging_context=(value : Log::Context)
