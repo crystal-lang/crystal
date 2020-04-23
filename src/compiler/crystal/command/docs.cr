@@ -44,6 +44,10 @@ class Crystal::Command
         output_format = value
       end
 
+      opts.on("--json_config_url=URL", "Set the URL pointing to a config file (used for discovering versions)") do |value|
+        project_info.json_config_url = value
+      end
+
       opts.on("--canonical-base-url=URL", "Deprecated option. Use --sitemap-base-url instead.") do |value|
         abort "Option --canonical-base-url is no longer supported.  Use --sitemap-base-url instead."
       end

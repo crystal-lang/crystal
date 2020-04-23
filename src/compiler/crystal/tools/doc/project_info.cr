@@ -2,11 +2,12 @@ module Crystal::Doc
   class ProjectInfo
     property! name : String
     property! version : String
+    property json_config_url : String? = nil
 
     def initialize(@name : String? = nil, @version : String? = nil)
     end
 
-    def_equals_and_hash @name, @version
+    def_equals_and_hash @name, @version, @json_config_url
 
     def crystal_stdlib?
       name == "Crystal"
