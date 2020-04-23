@@ -24,15 +24,36 @@ module HTTP
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name : String, value : String, @path : String = "/",
+    # A basic `HTTP::Cookie` can be created with a given *name* and *value*.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # HTTP::Cookie.new("session", "god")
+    # ```
+    #
+    # All properties can also be set through the initializer.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # HTTP::Cookies.new("session", "god", expires: Time.utc(3020, 1, 1), secure: true)
+    # ```
+    def initialize(@name : String, @value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
-      @name = name
-      @value = value
     end
 
-    def to_set_cookie_header
+    # Returns a `String` representing the Cookie as an HTTP header as in RFC 6265 https://tools.ietf.org/html/rfc6265#section-4.1
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookie = HTTP::Cookie.new("session", "12ab34cd", domain: "play.crystal-lang.org", secure: true)
+    # cookie.to_set_cookie_header # => "session=12ab34cd; domain=play.crystal-lang.org; path=/; Secure"
+    # ```
+    def to_set_cookie_header : String
       path = @path
       expires = @expires
       domain = @domain
@@ -49,19 +70,38 @@ module HTTP
       end
     end
 
-    def to_cookie_header
+    # Returns a `String` with the key value pairs represented in an HTTP header
+    #
+    # ````crystal
+    # require "http/cookie"
+    #
+    # cookie = HTTP::Cookie.new("session", "12ab34cd", domain: "play.crystal-lang.org", secure: true)
+    # cookie.to_cookie_header # => "session=12ab34cd"
+    # ```
+    def to_cookie_header : String
       String.build do |io|
         to_cookie_header(io)
       end
     end
 
-    def to_cookie_header(io)
+    # :nodoc:
+    private def to_cookie_header(io : IO) : String?
       URI.encode_www_form(@name, io)
       io << '='
       URI.encode_www_form(value, io)
     end
 
-    def expired?
+    # Returns `true` if the cookie is expired.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookie = HTTP::Cookie.new("session", "12ab34cd", expires: Time.utc(2020, 1, 1))
+    # cookie.expired? # => true
+    # cookie = HTTP::Cookie.new("session", "12ab34cd", expires: Time.utc(3020, 1, 1))
+    # cookie.expires? # => false
+    # ```
+    def expired? : Bool
       if e = expires
         e <= Time.utc
       else
@@ -104,19 +144,44 @@ module HTTP
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
       SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
 
-      def parse_cookies(header)
+      # Yeilds an `HTTP::Cookie` for each cookie in the header.
+      #
+      # ```crystal
+      # require "http/cookie"
+      #
+      # names = [] of String
+      # HTTP::Cookies::Parser.parse_cookies { |cookie| names << cookie.name }
+      # names # => ["session"]
+      # ```
+      def parse_cookies(header : String) : Nil
         header.scan(CookieString).each do |pair|
           yield Cookie.new(URI.decode_www_form(pair["name"]), URI.decode_www_form(pair["value"]))
         end
       end
 
-      def parse_cookies(header)
+      # Parses a `String` into an `HTTP::Cookie`.
+      #
+      # ```crystal
+      # require "http/cookie"
+      #
+      # cookie = HTTP::Cookies::Parser.parse_cookies("session=god")
+      # cookie # => [<HTTP::Cookie @name="session" @value"god" ...>]
+      # ```
+      def parse_cookies(header : String) : Array(Cookie)
         cookies = [] of Cookie
         parse_cookies(header) { |cookie| cookies << cookie }
         cookies
       end
 
-      def parse_set_cookie(header)
+      # Returns an `HTTP::Cookie` for a given `String` in the set cookie formate conforming to the RFC 6265 Section 4.1 https://tools.ietf.org/html/rfc6265#section-4.1
+      #
+      # ```crystal
+      # require "http/cookie"
+      #
+      # cookie = HTTP::Cookie::Parser.parse_set_cookie("session=god; path=/")
+      # cookie # => <HTTP::Cookie @name="session" @value="god" @path="/" ...>
+      # ```
+      def parse_set_cookie(header : String) : Cookie?
         match = header.match(SetCookieString)
         return unless match
 
@@ -156,13 +221,30 @@ module HTTP
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
-    def self.from_headers(headers) : self
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # headers = HTTP::Headers{"Cookie" => "session=god"}
+    # cookies = HTTP::Cookies.from_headers(headers)
+    # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
+    # ```
+    def self.from_headers(headers : Headers) : self
       new.tap { |cookies| cookies.fill_from_headers(headers) }
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
-    def fill_from_headers(headers)
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # headers = HTTP::Headers{"Cookie" => "session=key"}
+    # cookies = HTTP::Cookies.new
+    # cookies.fill_from_headers(headers)
+    # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
+    # ```
+    def fill_from_headers(headers : Headers) : self
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
@@ -187,12 +269,12 @@ module HTTP
     # no explicit domain restriction and the path `/`.
     #
     # ```
-    # require "http/client"
+    # require "http/cookie"
     #
-    # request = HTTP::Request.new "GET", "/"
-    # request.cookies["foo"] = "bar"
+    # cookies = HTTP::Cookies.new
+    # cookies["session"] = "god" # => <HTTP::Cookie @name="session" @value="god" ...>
     # ```
-    def []=(key, value : String)
+    def []=(key : String, value : String) : Cookie
       self[key] = Cookie.new(key, value)
     end
 
@@ -201,12 +283,13 @@ module HTTP
     # `ArgumentError` is raised.
     #
     # ```
-    # require "http/client"
+    # require "http/cookie"
     #
-    # response = HTTP::Client::Response.new(200)
-    # response.cookies["foo"] = HTTP::Cookie.new("foo", "bar", "/admin", Time.utc + 12.hours, secure: true)
+    # cookies = HTTP::Cookies.new
+    # cookies["session"] = HTTP::Cookie.new("session", "god") # => <HTTP::Cookie @name="session" @value="god" ...>
+    # cookies["user"] = HTTP::Cookie.new("session", "god")    # => raises ArgumentError
     # ```
-    def []=(key, value : Cookie)
+    def []=(key : String, value : Cookie) : Cookie
       unless key == value.name
         raise ArgumentError.new("Cookie name must match the given key")
       end
@@ -217,83 +300,161 @@ module HTTP
     # Gets the current `HTTP::Cookie` for the given *key*.
     #
     # ```
-    # request.cookies["foo"].value # => "bar"
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies{HTTP::Cookie.new("session", "god")}
+    # cookies["session"] # => <HTTP::Cookie @name="session", @value="god" ... >
+    # cookies["debug"]   # => raises KeyError
     # ```
-    def [](key)
+    def [](key : String) : Cookie
       @cookies[key]
     end
 
     # Gets the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
     #
     # ```
-    # require "http/client"
+    # require "http/cookie"
     #
-    # request = HTTP::Request.new "GET", "/"
-    # request.cookies["foo"]? # => nil
-    # request.cookies["foo"] = "bar"
-    # request.cookies["foo"]?.try &.value # > "bar"
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies["session"]? # => <HTTP::Cookie @name="session", @value="god" ... >
+    # cookies["debug"]?   # => false
     # ```
-    def []?(key)
+    def []?(key : String) : Cookie?
       @cookies[key]?
     end
 
     # Returns `true` if a cookie with the given *key* exists.
     #
     # ```
-    # request.cookies.has_key?("foo") # => true
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies.has_key?("session") # => true
+    # cookies.has_key?("user")    # => false
     # ```
-    def has_key?(key)
+    def has_key?(key : String) : Bool
       @cookies.has_key?(key)
     end
 
-    # Adds the given *cookie* to this collection, overrides an existing cookie
+    # Adds the given *cookie* to this collection indexed as the name of the cookie.  If another cookie is added with the same name it will overwrite the older cookie.
     # with the same name if present.
     #
     # ```
-    # response.cookies << HTTP::Cookie.new("foo", "bar", http_only: true)
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
+    # cookies << HTTP::Cookies.new("session", "master")
+    # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="master" ...>}>
     # ```
-    def <<(cookie : Cookie)
+    def <<(cookie : Cookie) : Cookie
       self[cookie.name] = cookie
     end
 
     # Clears the collection, removing all cookies.
-    def clear
+    #
+    # ```
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies.size # => 1
+    # cookies.clean
+    # cookies.size # => 0
+    # ```
+    def clear : Hash(String, Cookie)
       @cookies.clear
     end
 
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
     # *key* should match the name attribute of the desired `HTTP::Cookie`.
-    def delete(key)
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies.delete("session") # => <HTTP::Cookie @name="session" @value="god" ...>
+    # cookies.empty?            # => true
+    # ```
+    def delete(key : String) : Cookie?
       @cookies.delete(key)
     end
 
-    # Yields each `HTTP::Cookie` in the collection.
-    def each(&block : Cookie ->)
+    # Iterates over the headers yeilding each header as a `Tuple` of `String` and an `Array(String)`.
+    #
+    # ```
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies{HTTP::Cookie.new("session", "god")}
+    # cookies_hash = {} of String => String
+    #
+    # cookies.each do |cookie|
+    #   cookie    # => <HTTP::Cookie @name="session, @value="god" ...>
+    #   cookie_hash[cookie.name] = cookie.value
+    # end
+    #
+    # header_hash # => {"session" => "name"}
+    # ```
+    def each(&block : Cookie ->) : Nil
       @cookies.values.each do |cookie|
         yield cookie
       end
     end
 
-    # Returns an iterator over the cookies of this collection.
-    def each
+    # Returns an `Iterator` over the cookies of this collection.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies{HTTP::Cookie.new("session", "god")}
+    # cookies_iterator = cookies.each
+    # cookies_iterator.next # => <HTTP::Cookie @name="session" @value="god">
+    # ```
+    def each : Iterator
       @cookies.each_value
     end
 
-    # Returns the number of cookies contained in this collection.
-    def size
+    # Returns an `Int32` of cookies contained in this collection.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new
+    # cookies.size # => 0
+    # cookies << HTTP::Cookie.new("session", "god")
+    # cookies.size # => 1
+    # ```
+    def size : Int32
       @cookies.size
     end
 
-    # Whether the collection contains any cookies.
-    def empty?
+    # Returns `true` if the collection contains any cookies.
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new
+    # cookies.empty? # => true
+    # cookies << HTTP::Cookie.new("session", "god")
+    # cookies.empty? # => false
+    # ```
+    def empty? : Bool
       @cookies.empty?
     end
 
     # Adds `Cookie` headers for the cookies in this collection to the
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
-    def add_request_headers(headers)
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # headers = HTTP::Headers.new
+    # cookies = HTTP::Cookies{HTTP::Cookie.new("session", "god")}
+    # headers = cookies.add_request_headers(headers)
+    # headers # => HTTP::Headers{"Cookie" => "session=god"}
+    # ```
+    def add_request_headers(headers : Headers) : Headers
       headers.delete("Cookie")
       headers.add("Cookie", map(&.to_cookie_header).join("; ")) unless empty?
 
@@ -303,7 +464,16 @@ module HTTP
     # Adds `Set-Cookie` headers for the cookies in this collection to the
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Set-Cookie` headers in it.
-    def add_response_headers(headers)
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # headers = HTTP::Headers.new
+    # cookies = HTTP::Cookies{HTTP::Cookie.new("session", "god")}
+    # headers = cookies.add_response_headers(headers)
+    # headers # => HTTP::Headers{"Set-Cookie" => "session=god"}
+    # ```
+    def add_response_headers(headers : Headers) : Headers
       headers.delete("Set-Cookie")
       each do |cookie|
         headers.add("Set-Cookie", cookie.to_set_cookie_header)
@@ -313,7 +483,14 @@ module HTTP
     end
 
     # Returns this collection as a plain `Hash`.
-    def to_h
+    #
+    # ```crystal
+    # require "http/cookie"
+    #
+    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies.to_h # => {"session" => #<HTTP::Cookie:0x1083f9d20 @name="session", @value="god">}
+    # ```
+    def to_h : Hash(String, Cookie)
       @cookies.dup
     end
   end
