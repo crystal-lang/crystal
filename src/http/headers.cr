@@ -64,8 +64,10 @@ struct HTTP::Headers
     @hash = Hash(Key, String | Array(String)).new
   end
 
-  # Sets the given values of key to the given value.
-  # `ArgumentError` will be raised if header includes invalid characters.
+  # Sets the value of *key* header to *value*.
+  #
+  # Previous values are overriden.
+  # Raises `ArgumentError` if *value* includes invalid characters.
   #
   # ```
   # require "http/headers"
@@ -82,7 +84,9 @@ struct HTTP::Headers
     @hash[wrap(key)] = value
   end
 
-  # Sets the value of key to the given value.
+  # Sets the value of *key* header to *value*.
+  #
+  # Previous values are overriden.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
@@ -100,7 +104,9 @@ struct HTTP::Headers
     @hash[wrap(key)] = value
   end
 
-  # Returns the value for the key given by key, if there is multipel valuse the values are appended with a `,`.
+  # Returns the value of *key* header.
+  #
+  # If there are multiple values, they are joind to a comma-separated string.
   # If no value found a `KeyError` will be raised.  `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
