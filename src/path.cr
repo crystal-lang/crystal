@@ -946,6 +946,95 @@ struct Path
     end
   end
 
+  # Returns a relative path that is lexically equivalent to `self` when joined
+  # to *base* with an intervening separator.
+  #
+  # The returned path is in normalized form.
+  #
+  # That means with normalized paths `base.join(target.relative_to(base))` is
+  # equivalent to `target`.
+  #
+  # Returns `nil` if `self` cannot be expressed as relative to *base* or if
+  # knowing the current working directory would be necessary to resolve it. The
+  # latter can be avoided by expanding the paths first.
+  def relative_to?(base : Path) : Path?
+    base_anchor = base.anchor
+    target_anchor = self.anchor
+
+    # if paths have a different anchors, there can't be a relative path between
+    # them.
+    if base_anchor != target_anchor
+      return nil
+    end
+
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
+    # check for trivial case of equal paths
+    if base == target
+      return new_instance(".")
+    end
+
+    base_iterator = base.each_part
+    target_iterator = target.each_part
+
+    if target_anchor
+      # process anchors, we have already established they're equal
+      base_iterator.next
+      target_iterator.next
+    end
+
+    # consume both paths simultaneously as long as they have identical components
+    base_part = base_iterator.next
+    target_part = target_iterator.next
+    while base_part.is_a?(String) && target_part.is_a?(String)
+      if base_part.compare(target_part, case_insensitive: windows?) != 0
+        break
+      end
+
+      base_part = base_iterator.next
+      target_part = target_iterator.next
+    end
+
+    path = new_instance("")
+
+    # base_path is not consumed, so we go up before descending into target_path
+    if base_part.is_a?(String)
+      # Can't relativize upwards from current working directory without knowing
+      # its path
+      if base_part == ".."
+        return nil
+      end
+
+      path /= ".." unless base_part == "."
+      base_iterator.each do
+        path /= ".."
+      end
+    end
+
+    # target_path is not consumed, so we append what's left to the relative path
+    if target_part.is_a?(String)
+      path /= target_part
+      target_iterator.each do |part|
+        path /= part
+      end
+    end
+
+    return path
+  end
+
+  # :ditto:
+  def relative_to?(base : String) : Path?
+    relative_to?(new_instance(base))
+  end
+
+  # Same as `#relative_to` but returns `self` if `self` can't be expressed as
+  # relative path to *base*.
+  def relative_to(base : Path | String) : Path
+    relative_to?(base) || self
+  end
+
   # Compares this path to *other*.
   #
   # The comparison is performed strictly lexically: `foo` and `./foo` are *not*

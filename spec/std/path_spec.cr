@@ -54,6 +54,12 @@ private def assert_paths_raw(path, posix, windows = posix, label = nil, file = _
   end
 end
 
+private def it_relativizes(base, target, posix, windows = posix, file = __FILE__, line = __LINE__)
+  assert_paths target, posix, windows, %(on "#{base}":), file, line do |path|
+    path.relative_to?(base)
+  end
+end
+
 private def it_iterates_parts(path, posix, windows = posix, file = __FILE__, line = __LINE__)
   assert_paths_raw path, posix, windows, label: "block", file: file, line: line do |path|
     array = [] of String
@@ -743,8 +749,87 @@ describe Path do
     assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows)
   end
 
-  describe "to_posix" do
+  describe "#to_posix" do
     assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix)
     assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
+  end
+
+  describe "#relative_to?" do
+    it_relativizes("a/b", "a/b/c", "c")
+    it_relativizes("a/b", "a/b", ".")
+    it_relativizes("a/b/.", "a/b", ".")
+    it_relativizes("a/b", "a/b/.", ".")
+    it_relativizes("./a/b", "a/b", ".")
+    it_relativizes("a/b", "./a/b", ".")
+    it_relativizes("ab/cd", "ab/cde", "../cde", "..\\cde")
+    it_relativizes("ab/cd", "ab/c", "../c", "..\\c")
+    it_relativizes("a/b", "a/b/c/d", "c/d", "c\\d")
+    it_relativizes("a/b", "a/b/../c", "../c", "..\\c")
+    it_relativizes("a/b/../c", "a/b", "../b", "..\\b")
+    it_relativizes("a/b/c", "a/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("a/b", "c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("a/b/c/d", "a/b", "../..", "..\\..")
+    it_relativizes("a/b/c/d", "a/b/", "../..", "..\\..")
+    it_relativizes("a/b/c/d/", "a/b", "../..", "..\\..")
+    it_relativizes("a/b/c/d/", "a/b/", "../..", "..\\..")
+    it_relativizes("../../a/b", "../../a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/a/b", "/a/b", ".")
+    it_relativizes("/a/b/.", "/a/b", ".")
+    it_relativizes("/a/b", "/a/b/.", ".")
+    it_relativizes("/ab/cd", "/ab/cde", "../cde", "..\\cde")
+    it_relativizes("/ab/cd", "/ab/c", "../c", "..\\c")
+    it_relativizes("/a/b", "/a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/a/b", "/a/b/../c", "../c", "..\\c")
+    it_relativizes("/a/b/../c", "/a/b", "../b", "..\\b")
+    it_relativizes("/a/b/c", "/a/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("/a/b", "/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("/a/b/c/d", "/a/b", "../..", "..\\..")
+    it_relativizes("/a/b/c/d", "/a/b/", "../..", "..\\..")
+    it_relativizes("/a/b/c/d/", "/a/b", "../..", "..\\..")
+    it_relativizes("/a/b/c/d/", "/a/b/", "../..", "..\\..")
+    it_relativizes("/../../a/b", "/../../a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/", "/a/c", "a/c", "a\\c")
+    it_relativizes("/", "/", ".")
+    it_relativizes(".", "a/b", "a/b", "a\\b")
+    it_relativizes(".", "..", "..")
+    # can't do purely lexically
+    it_relativizes("..", ".", nil)
+    it_relativizes("..", "a", nil)
+    it_relativizes("../..", "..", nil)
+    it_relativizes("a", "/a", nil)
+
+    describe "special windows paths" do
+      it_relativizes("/a", "a", nil)
+      it_relativizes("C:a\\b\\c", "C:a/b/d", "../C:a/b/d", "..\\d")
+      it_relativizes("C:a\\b\\c", "c:a/b/d", "../c:a/b/d", "..\\d")
+      it_relativizes("C:\\", "D:\\", "../D:\\", nil)
+      it_relativizes("C:", "D:", "../D:", nil)
+      it_relativizes("C:\\Projects", "c:\\projects\\src", "../c:\\projects\\src", "src")
+      it_relativizes("C:\\Projects", "c:\\projects", "../c:\\projects", ".")
+      it_relativizes("C:\\Projects\\a\\..", "c:\\projects", "../c:\\projects", ".")
+    end
+  end
+
+  describe "#relative_to" do
+    it "relativizable paths" do
+      Path.posix("a/b/c").relative_to("a/b").should eq Path.posix("c")
+      Path.windows("a\\b\\c").relative_to("a\\b").should eq Path.windows("c")
+    end
+
+    it "mixed input paths" do
+      Path.posix("a/b/c").relative_to(Path.windows("a\\b")).should eq Path.posix("c")
+      Path.windows("a\\b\\c").relative_to(Path.posix("a/b")).should eq Path.windows("c")
+    end
+
+    it "paths that can't be relativized" do
+      path = Path.posix(".")
+      path.relative_to(Path.posix("/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("C:/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("C:cwd")).should eq path
+    end
   end
 end
