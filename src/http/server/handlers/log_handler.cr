@@ -7,7 +7,7 @@ class HTTP::LogHandler
 
   @[Deprecated("Use `new([Log])` instead")]
   def initialize(io : IO)
-    @log = Log.for("http.server")
+    @log = Log.new("http.server", Log::IOBackend.new(io), :info)
   end
 
   def initialize(@log = Log.for("http.server"))
