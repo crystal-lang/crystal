@@ -62,9 +62,7 @@ class Process
   end
 
   # Returns a `Tms` for the current process. For the children times, only those
-  # of terminated children are returned.
-  #
-  # Available only on Unix-like operating systems.
+  # of terminated children are returned on Unix; they are zero on Windows.
   def self.times : Tms
     Crystal::System::Process.times
   end
