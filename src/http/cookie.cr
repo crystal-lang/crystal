@@ -390,10 +390,10 @@ module HTTP
     #
     # cookies.each do |cookie|
     #   cookie    # => <HTTP::Cookie @name="session, @value="god" ...>
-    #   cookie_hash[cookie.name] = cookie.value
+    #   cookies_hash[cookie.name] = cookie.value
     # end
     #
-    # header_hash # => {"session" => "name"}
+    # cookies_hash # => {"session" => "name"}
     # ```
     def each(&block : Cookie ->) : Nil
       @cookies.values.each do |cookie|
