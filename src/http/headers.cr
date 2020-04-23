@@ -389,8 +389,8 @@ struct HTTP::Headers
   # header_hash = {} of String => Array(String)
   #
   # headers.each do |key, value|
-  #   key       # => "host"
-  #   value     # => ["crystal-lang.org"]
+  #   key   # => "host"
+  #   value # => ["crystal-lang.org"]
   #   header_hash[key] = value
   # end
   #
