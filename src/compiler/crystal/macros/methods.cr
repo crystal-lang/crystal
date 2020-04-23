@@ -1283,7 +1283,7 @@ module Crystal
       when "types"
         interpret_argless_method(method, args) { ArrayLiteral.new(@types) }
       when "nilable?"
-        interpret_argless_method(method, args) { BoolLiteral.new(@types.any? &.nil?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(interpreter.resolve(self).type.nilable?) }
       else
         super
       end

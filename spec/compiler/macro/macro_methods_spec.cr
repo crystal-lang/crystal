@@ -1970,6 +1970,24 @@ module Crystal
           assert_macro "", "{{Union(Int32, Nil, String).nilable?}}", [] of ASTNode, "true"
           assert_macro "", "{{Int32?.nilable?}}", [] of ASTNode, "true"
         end
+
+        it "method args" do
+          assert_type(%(
+            class Foo
+              def is_nilable(arg : Int32?)
+              end
+
+              def not_nilable(arg : Int32)
+              end
+            end
+
+            {% if Foo.methods[0].args.first.restriction.resolve.nilable? == true && Foo.methods[1].args.first.restriction.resolve.nilable? == false %}
+              1
+            {% else %}
+              'a'
+            {% end %}
+          )) { int32 }
+        end
       end
     end
 
