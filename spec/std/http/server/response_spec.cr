@@ -214,5 +214,16 @@ describe HTTP::Server::Response do
       response.respond_with_status(HTTP::Status::URI_TOO_LONG, "Request Error")
       io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
     end
+
+    it "closes when it fails to write" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.print("Hello")
+      response.flush
+      io.close
+      response.print("Hello")
+      expect_raises(HTTP::Server::ClientError) { response.flush }
+      response.closed?.should be_true
+    end
   end
 end
