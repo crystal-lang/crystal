@@ -45,7 +45,7 @@ module HTTP
                    @samesite : SameSite? = nil, @extension : String? = nil)
     end
 
-    # Returns a `String` representing the Cookie as an HTTP header as in RFC 6265 https://tools.ietf.org/html/rfc6265#section-4.1
+    # Returns a `String` representing the Cookie as a value for the `Set-Cookie` header as specified by [RFC 6265 §4.2](https://tools.ietf.org/html/rfc6265#section-4.1).
     #
     # ```crystal
     # require "http/cookie"
@@ -70,7 +70,7 @@ module HTTP
       end
     end
 
-    # Returns a `String` with the key value pairs represented in an HTTP header
+    # Returns a `String` representing the Cookie as a value for the `Cookie` header as specified by [RFC 6265 §4.2](https://tools.ietf.org/html/rfc6265#section-4.2).
     #
     # ````crystal
     # require "http/cookie"
@@ -144,7 +144,7 @@ module HTTP
       CookieString    = /(?:^|; )#{Regex::CookiePair}/
       SetCookieString = /^#{Regex::CookiePair}(?:;\s*#{Regex::CookieAV})*$/
 
-      # Yeilds an `HTTP::Cookie` for each cookie in the header.
+      # Yields an `HTTP::Cookie` for each cookie in the header.
       #
       # ```crystal
       # require "http/cookie"
@@ -336,7 +336,7 @@ module HTTP
       @cookies.has_key?(key)
     end
 
-    # Adds the given *cookie* to this collection indexed as the name of the cookie.  If another cookie is added with the same name it will overwrite the older cookie.
+    # Adds the given *cookie* to this collection indexed as the name of the cookie.  If another cookie with the same name already exists, it is overriden.
     # with the same name if present.
     #
     # ```
@@ -344,7 +344,7 @@ module HTTP
     #
     # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
     # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
-    # cookies << HTTP::Cookies.new("session", "master")
+    # cookies << HTTP::Cookie.new("session", "master")
     # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="master" ...>}>
     # ```
     def <<(cookie : Cookie) : Cookie
@@ -380,7 +380,7 @@ module HTTP
       @cookies.delete(key)
     end
 
-    # Iterates over the headers yeilding each header as a `Tuple` of `String` and an `Array(String)`.
+    # Iterates over the headers yielding each header as a `Tuple` of `String` and an `Array(String)`.
     #
     # ```
     # require "http/cookie"
@@ -414,7 +414,7 @@ module HTTP
       @cookies.each_value
     end
 
-    # Returns an `Int32` of cookies contained in this collection.
+    # Returns the number of cookies contained in this collection.
     #
     # ```crystal
     # require "http/cookie"
