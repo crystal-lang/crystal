@@ -14,7 +14,7 @@ require "./lib_unwind"
     fun _dyld_get_image_name(image_index : UInt32) : Char*
     fun _dyld_get_image_vmaddr_slide(image_index : UInt32) : Long
   end
-{% elsif flag?(:freebsd) || flag?(:linux) || flag?(:openbsd) %}
+{% elsif flag?(:bsd) || flag?(:linux) %}
   require "crystal/elf"
   require "crystal/dwarf"
 {% end %}
@@ -205,7 +205,7 @@ struct Exception::CallStack
     end
   end
 
-  {% if flag?(:darwin) || flag?(:freebsd) || flag?(:linux) || flag?(:openbsd) %}
+  {% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) %}
     @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
     @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
