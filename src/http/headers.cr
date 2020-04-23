@@ -16,7 +16,7 @@ struct HTTP::Headers
       hasher
     end
 
-    # Returns `true` if the normilized name of `self` is the same as the normalized value passed.
+    # Returns `true` if the normalized name of `self` is the same as the normalized value passed.
     #
     # ```
     # require "http/headers"
@@ -257,7 +257,7 @@ struct HTTP::Headers
   # headers.fetch("host") { "crystal-lang.org" }      # => "crystal-lang.org"
   # headers.fetch("content-encoding") { "text/html" } # => "text/html"
   # ```
-  def fetch(key : String)
+  def fetch(key : String, & : String ->)
     values = @hash[wrap(key)]?
     values ? concat(values) : yield key
   end
@@ -297,7 +297,7 @@ struct HTTP::Headers
   # headers.delete("host")             # => "crystal-lang.org"
   # headers.delete("content-encoding") # => nil
   # ```
-  def delete(key) : String?
+  def delete(key : String) : String?
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
@@ -328,7 +328,7 @@ struct HTTP::Headers
     self
   end
 
-  # Compares with other. Returns true if headers are the same.
+  # Returns `true` if other and `self` are equal.
   #
   # ```
   # require "http/headers"
@@ -343,7 +343,7 @@ struct HTTP::Headers
     self == other.@hash
   end
 
-  # Compares with other. Returns `true` if all key-value pairs are the same.
+  # Returns `true` if the key-value pairs of `other` and `self` are equal.
   #
   # ```
   # require "http/headers"
@@ -404,7 +404,8 @@ struct HTTP::Headers
     end
   end
 
-  # Gets a value for given key and casts the value as an `Array` of `Strings`. If no value found a `KeyError` will be raised.
+  # Returns the value for *key*. Single values are wrapped as `Array(String)`.
+  # Raises `KeyError` if the key does not exist.
   #
   # ```
   # require "http/headers"
@@ -412,13 +413,14 @@ struct HTTP::Headers
   # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => ["text/html", "application/json"]}
   # headers.get("host")            # => ["crystal-lang.org"]
   # headers.get("accept-encoding") # => ["text/html", "application/json"]
-  # headers.get("user-agent")      # => raises KeyError
+  # headers.get("user-agent")      # raises KeyError
   # ```
-  def get(key) : Array(String) | String
+  def get(key : String) : Array(String)
     cast @hash[wrap(key)]
   end
 
-  # Gets a value for given key and casts the value as an `Array` of `Strings`. If no value found a `nil` will be returned.
+  # Returns the value for *key*. Single values are wrapped as `Array(String)`.
+  # Returns `nil` if the key does not exist.
   #
   # ```
   # require "http/headers"
