@@ -1947,7 +1947,7 @@ module Crystal
       end
     end
 
-    describe "union methods" do
+    describe Union do
       it "executes types" do
         assert_macro "x", %({{x.types}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "[Int32, String]"
       end
@@ -1959,6 +1959,17 @@ module Crystal
       it "executes resolve?" do
         assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "String".path] of ASTNode)] of ASTNode, "(Int32 | String)"
         assert_macro "x", %({{x.resolve?}}), [Crystal::Union.new(["Int32".path, "Unknown".path] of ASTNode)] of ASTNode, "nil"
+      end
+
+      describe "#nilable?" do
+        it "without nil" do
+          assert_macro "", %({{Union(Int32, Bool, String).nilable?}}), [] of ASTNode, "false"
+        end
+
+        it "with nil" do
+          assert_macro "", "{{Union(Int32, Nil, String).nilable?}}", [] of ASTNode, "true"
+          assert_macro "", "{{Int32?.nilable?}}", [] of ASTNode, "true"
+        end
       end
     end
 
