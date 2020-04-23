@@ -315,7 +315,7 @@ module HTTP
     # ```
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies["session"]? # => <HTTP::Cookie @name="session", @value="god" ... >
     # cookies["debug"]?   # => false
     # ```
@@ -328,7 +328,7 @@ module HTTP
     # ```
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.has_key?("session") # => true
     # cookies.has_key?("user")    # => false
     # ```
@@ -342,7 +342,7 @@ module HTTP
     # ```
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
     # cookies << HTTP::Cookie.new("session", "master")
     # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="master" ...>}>
@@ -356,7 +356,7 @@ module HTTP
     # ```
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.size # => 1
     # cookies.clean
     # cookies.size # => 0
@@ -372,7 +372,7 @@ module HTTP
     # ```crystal
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.delete("session") # => <HTTP::Cookie @name="session" @value="god" ...>
     # cookies.empty?            # => true
     # ```
@@ -389,7 +389,7 @@ module HTTP
     # cookies_hash = {} of String => String
     #
     # cookies.each do |cookie|
-    #   cookie    # => <HTTP::Cookie @name="session, @value="god" ...>
+    #   cookie # => <HTTP::Cookie @name="session, @value="god" ...>
     #   cookies_hash[cookie.name] = cookie.value
     # end
     #
@@ -487,7 +487,7 @@ module HTTP
     # ```crystal
     # require "http/cookie"
     #
-    # cookies = HTTP::Cookies.new{HTTP::Cookie.new("session", "god")}
+    # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.to_h # => {"session" => #<HTTP::Cookie:0x1083f9d20 @name="session", @value="god">}
     # ```
     def to_h : Hash(String, Cookie)
