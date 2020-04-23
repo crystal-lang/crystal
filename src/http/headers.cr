@@ -100,8 +100,8 @@ struct HTTP::Headers
     @hash[wrap(key)] = value
   end
 
-  # Returns the value for the key given by key.  If no value found a `KeyError` will be raised.
-  # `ArgumentError` will be raised if header includes invalid characters.
+  # Returns the value for the key given by key, if there is multipel valuse the values are appended with a `,`.
+  # If no value found a `KeyError` will be raised.  `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
   # require "http/headers"
@@ -173,15 +173,14 @@ struct HTTP::Headers
     false
   end
 
-  # Inserts a key value pair into the header collection and returns the value of the added key.
+  # Appends a value to the key of a header and returns `self`.  If there is an existing value for the key the value will be converted to an `Array`
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
   # require "http/headers"
   #
-  # headers = HTTP::Headers.new
-  # headers.add("host", "crystal-lang.org") # => HTTP::Headers{"host" => "crystal-lang.org"}
-  # headers["host"]                         # => "crystal-lang.org"
+  # headers = HTTP::Headers{"accept-encoding" => "text/html"}
+  # headers.add("accept-encoding", "application/json") # => HTTP::Headers{"accept-encoding" => ["text/html", "application/json"]}
   # ```
   def add(key, value : String) : self
     check_invalid_header_content(value)
@@ -189,7 +188,7 @@ struct HTTP::Headers
     self
   end
 
-  # Inserts a key value pair into the header collection and returns the value of the added key.
+  # Inserts a key value pair into the header collection and returns `self`.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
@@ -197,7 +196,6 @@ struct HTTP::Headers
   #
   # headers = HTTP::Headers.new
   # headers.add("accept-encoding", ["text/html", "application/json"]) # => HTTP::Headers{"accept-encoding" => ["text/html", "application/json"]}
-  # headers["accept-encoding"]                                        # => "text/html,application/json"
   # ```
   def add(key, value : Array(String)) : self
     value.each { |val| check_invalid_header_content val }
@@ -212,8 +210,8 @@ struct HTTP::Headers
   # require "http/headers"
   #
   # headers = HTTP::Headers.new
-  # headers.add?("foo", "bar") # => true
-  # headers["foo"]             # => "bar"
+  # headers.add?("host", "crystal-lang.org") # => true
+  # headers["host"]                          # => "bar"
   # ```
   def add?(key, value : String) : Bool
     return false unless valid_value?(value)
@@ -382,31 +380,21 @@ struct HTTP::Headers
     true
   end
 
-  # Returns an `Iterator` over the header keys. Which behaves like an `Iterator` returning a `Tuple` consisting of the header key and value.
+  # Iterates over the headers yeilding each header as a `Tuple` of `String` and an `Array(String)`.
   #
   # ```
   # require "http/headers"
   #
-  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
-  # iterator = headers.each
-  #
-  # iterator.next # => {HTTP::Headers::Key(@name="host"), "crystal-lang.org"}
-  # iterator.next # => {HTTP::Headers::Key(@name="accept-encoding"), "text/html"}
-  # ```
-  #
-  # A block can also be passed to each as well.
-  #
-  # ```
-  # require "http/headers"
-  #
-  # headers = HTTP::Headers{"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
-  # header_hash = {} of String => String
+  # headers = HTTP::Headers{"host" => "crystal-lang.org"}
+  # header_hash = {} of String => Array(String)
   #
   # headers.each do |key, value|
-  #   header_hash[key] = value.first
+  #   key       # => "host"
+  #   value     # => ["crystal-lang.org"]
+  #   header_hash[key] = value
   # end
   #
-  # header_hash # => {"host" => "crystal-lang.org", "accept-encoding" => "text/html"}
+  # header_hash # => {"host" => ["crystal-lang.org"]}
   # ```
   #
   # The enumeration follows the order the keys were inserted.
