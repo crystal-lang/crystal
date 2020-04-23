@@ -203,7 +203,7 @@ struct HTTP::Headers
     self
   end
 
-  # Inserts a key value pair into the header collection and returns `true` if the pair was added.
+  # Attempts to inserts a header at the *key* into the headers. Returns `true` if the *value* was valid and returns `false` if *value* is invalid.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
