@@ -75,9 +75,9 @@
 #
 # ```
 # Log.setup(:debug)                     # Log debug and above for all sources to STDOUT
-# Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only
+# Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only, and log nothing for any other source.
 # backend_with_formatter = Log::IOBackend.new(formatter: custom_formatter)
-# Log.setup(:debug, backend_with_formatter) # Log notice and above for myapp.* and http.* sources only
+# Log.setup(:debug, backend_with_formatter) # Log debug and above for all sources to using a custom backend
 # ```
 #
 # ### Configure logging explicitly in the code
@@ -90,7 +90,7 @@
 # * `*` matches all the sources
 # * `foo.bar.*` matches `foo.bar` and every nested source
 # * `foo.bar` matches `foo.bar`, but not its nested sources
-#
+# * Any comma separated combination of the above
 #
 # The following configuration will setup for all sources to emit
 # warnings (or higher) to `STDOUT`, allow any of the `db.*` and
