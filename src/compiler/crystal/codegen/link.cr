@@ -117,7 +117,7 @@ module Crystal
 
           if libname = ann.lib
             if has_pkg_config.nil?
-              has_pkg_config = Process.run("which", {"pkg-config"}, output: Process::Redirect::Close).success?
+              has_pkg_config = Process.run("pkg-config", ["-h"]).success?
             end
 
             static = has_flag?("static") || ann.static?

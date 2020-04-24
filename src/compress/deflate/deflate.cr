@@ -6,7 +6,7 @@ require "./*"
 #
 # See `Gzip`, `Zip` and `Zlib` for modules that provide access
 # to DEFLATE-based file formats.
-module Flate
+module Compress::Deflate
   NO_COMPRESSION      =  0
   BEST_SPEED          =  1
   BEST_COMPRESSION    =  9
@@ -27,9 +27,9 @@ module Flate
 
       if msg
         error_msg = String.new(msg)
-        super("flate: #{error_msg}")
+        super("deflate: #{error_msg}")
       else
-        super("flate: #{ret}")
+        super("deflate: #{ret}")
       end
     end
   end

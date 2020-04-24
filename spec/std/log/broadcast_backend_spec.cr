@@ -1,4 +1,5 @@
 require "spec"
+require "log"
 
 private def s(value : Log::Severity)
   value
@@ -34,9 +35,9 @@ describe Log::BroadcastBackend do
     main.append(backend_b, s(:error))
 
     log = Log.new("", main, s(:info))
-    log.level = s(:verbose)
+    log.level = s(:info)
 
-    log.verbose { "lorem" }
+    log.info { "lorem" }
 
     backend_a.entries.should_not be_empty
     backend_b.entries.should_not be_empty

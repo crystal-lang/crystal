@@ -16,26 +16,29 @@ describe Log do
 
   describe Log::Severity do
     it "values are ordered" do
-      s(:debug).should be < s(:verbose)
-      s(:verbose).should be < s(:info)
-      s(:info).should be < s(:warning)
+      s(:trace).should be < s(:debug)
+      s(:debug).should be < s(:info)
+      s(:info).should be < s(:notice)
+      s(:notice).should be < s(:warning)
       s(:warning).should be < s(:error)
       s(:error).should be < s(:fatal)
       s(:fatal).should be < s(:none)
     end
 
     it "parses" do
+      Log::Severity.parse("trace").should eq s(:trace)
       Log::Severity.parse("debug").should eq s(:debug)
-      Log::Severity.parse("verbose").should eq s(:verbose)
       Log::Severity.parse("info").should eq s(:info)
+      Log::Severity.parse("notice").should eq s(:notice)
       Log::Severity.parse("warning").should eq s(:warning)
       Log::Severity.parse("error").should eq s(:error)
       Log::Severity.parse("fatal").should eq s(:fatal)
       Log::Severity.parse("none").should eq s(:none)
 
+      Log::Severity.parse("TRACE").should eq s(:trace)
       Log::Severity.parse("DEBUG").should eq s(:debug)
-      Log::Severity.parse("VERBOSE").should eq s(:verbose)
       Log::Severity.parse("INFO").should eq s(:info)
+      Log::Severity.parse("NOTICE").should eq s(:notice)
       Log::Severity.parse("WARNING").should eq s(:warning)
       Log::Severity.parse("ERROR").should eq s(:error)
       Log::Severity.parse("FATAL").should eq s(:fatal)
@@ -47,9 +50,10 @@ describe Log do
     backend = Log::MemoryBackend.new
     log = Log.new("a", backend, :warning)
 
+    log.trace { "trace message" }
     log.debug { "debug message" }
-    log.verbose { "verbose message" }
     log.info { "info message" }
+    log.notice { "notice message" }
     log.warn { "warning message" }
     log.error { "error message" }
     log.fatal { "fatal message" }
@@ -67,9 +71,10 @@ describe Log do
 
     log.level = :error
 
+    log.trace { "trace message" }
     log.debug { "debug message" }
-    log.verbose { "verbose message" }
     log.info { "info message" }
+    log.notice { "notice message" }
     log.warn { "warning message" }
     log.error { "error message" }
     log.fatal { "fatal message" }
@@ -86,9 +91,10 @@ describe Log do
     backend = Log::MemoryBackend.new
     log = Log.new("a", backend, :debug)
 
+    log.trace(exception: ex) { "trace message" }
     log.debug(exception: ex) { "debug message" }
-    log.verbose(exception: ex) { "verbose message" }
     log.info(exception: ex) { "info message" }
+    log.notice(exception: ex) { "notice message" }
     log.warn(exception: ex) { "warning message" }
     log.error(exception: ex) { "error message" }
     log.fatal(exception: ex) { "fatal message" }
@@ -105,5 +111,17 @@ describe Log do
     log.info { "info message" }
 
     backend.entries.first.context.should eq(Log::Context.new({a: 1}))
+  end
+
+  it "context can be changed within the block and is restored" do
+    Log.context.set a: 1
+
+    backend = Log::MemoryBackend.new
+    log = Log.new("a", backend, :debug)
+
+    log.info { Log.context.set(b: 2); "info message" }
+
+    backend.entries.first.context.should eq(Log::Context.new({a: 1, b: 2}))
+    Log.context.should eq(Log::Context.new({a: 1}))
   end
 end

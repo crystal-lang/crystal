@@ -62,13 +62,13 @@ class Process
   end
 
   # Returns a `Tms` for the current process. For the children times, only those
-  # of terminated children are returned.
-  #
-  # Available only on Unix-like operating systems.
+  # of terminated children are returned on Unix; they are zero on Windows.
   def self.times : Tms
     Crystal::System::Process.times
   end
 
+  # :nodoc:
+  #
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   #
@@ -90,6 +90,8 @@ class Process
     end
   end
 
+  # :nodoc:
+  #
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
@@ -230,6 +232,10 @@ class Process
     fork_input.close unless fork_input == input || fork_input == STDIN
     fork_output.close unless fork_output == output || fork_output == STDOUT
     fork_error.close unless fork_error == error || fork_error == STDERR
+  end
+
+  def finalize
+    @process_info.release
   end
 
   private def stdio_to_fd(stdio : Stdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
@@ -435,20 +441,6 @@ def `(command) : String
   status = process.wait
   $? = status
   output
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork { yield }
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork
 end
 
 require "./process/*"

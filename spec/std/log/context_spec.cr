@@ -1,5 +1,6 @@
 require "spec"
 require "log"
+require "log/json"
 
 private def c(value)
   Log::Context.new(value)
@@ -23,6 +24,18 @@ describe Log::Context do
     Log::Context.new.should eq(c(NamedTuple.new))
   end
 
+  it "empty" do
+    Log::Context.empty.should eq(Log::Context.new)
+    Log::Context.empty.object_id.should_not eq(Log::Context.new.object_id)
+    Log::Context.empty.object_id.should eq(Log::Context.empty.object_id)
+  end
+
+  it "validates hash" do
+    expect_raises(ArgumentError, "Expected hash context, not Int32") do
+      Log.context = c(1)
+    end
+  end
+
   it "immutability" do
     context = c({a: 1})
     other = context.as_h
@@ -35,6 +48,28 @@ describe Log::Context do
   it "merge" do
     c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
     c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
+    c({a: 1, b: 3}).merge(c({b: nil})).should eq(c({a: 1, b: nil}))
+  end
+
+  it "merge against Log::Context.empty without creating a new instance" do
+    c1 = c({a: 1, b: 3})
+    c1.merge(Log::Context.empty).should be(c1)
+    Log::Context.empty.merge(c1).should be(c1)
+  end
+
+  it "accessors" do
+    c(nil).as_nil.should be_nil
+
+    c(1).as_i.should eq(1)
+
+    c("a").as_s.should eq("a")
+    c(1).as_s?.should be_nil
+
+    c(true).as_bool.should eq(true)
+    c(false).as_bool.should eq(false)
+    c(true).as_bool?.should eq(true)
+    c(false).as_bool?.should eq(false)
+    c(nil).as_bool?.should be_nil
   end
 
   describe "implicit context" do
@@ -120,6 +155,12 @@ describe Log::Context do
       extra = {b: 2}
       Log.context.set extra
       Log.context.should eq(c({a: 1, b: 2}))
+    end
+
+    it "can be output as JSON" do
+      raw_context_data = {name: "James"}
+      Log.context.set raw_context_data
+      Log.context.to_json.should eq(raw_context_data.to_json)
     end
   end
 end

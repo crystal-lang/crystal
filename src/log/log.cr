@@ -34,12 +34,13 @@ class Log
   end
 
   {% for method, severity in {
-                               debug:   Severity::Debug,
-                               verbose: Severity::Verbose,
-                               info:    Severity::Info,
-                               warn:    Severity::Warning,
-                               error:   Severity::Error,
-                               fatal:   Severity::Fatal,
+                               trace:  Severity::Trace,
+                               debug:  Severity::Debug,
+                               info:   Severity::Info,
+                               notice: Severity::Notice,
+                               warn:   Severity::Warning,
+                               error:  Severity::Error,
+                               fatal:  Severity::Fatal,
                              } %}
 
     # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
@@ -47,8 +48,10 @@ class Log
       return unless backend = @backend
       severity = Severity.new({{severity}})
       return unless level <= severity
-      message = yield.to_s
-      entry = Entry.new @source, severity, message, exception
+      entry = Log.with_context do
+        message = yield.to_s
+        Entry.new @source, severity, message, exception
+      end
       backend.write entry
     end
   {% end %}

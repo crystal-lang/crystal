@@ -1,5 +1,5 @@
 # A header in a gzip stream.
-class Gzip::Header
+class Compress::Gzip::Header
   property modification_time : Time
   property os : UInt8
   property extra = Bytes.empty
