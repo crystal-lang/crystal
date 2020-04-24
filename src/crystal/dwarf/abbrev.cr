@@ -1,6 +1,6 @@
 require "../dwarf"
 
-module Debug
+module Crystal
   module DWARF
     enum TAG : UInt32
       ArrayType       = 0x01

@@ -1,4 +1,6 @@
-module Debug
+module Crystal
+  # :nodoc:
+  #
   # ELF reader.
   #
   # Documentation:
