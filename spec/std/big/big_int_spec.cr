@@ -153,7 +153,7 @@ describe "BigInt" do
 
   it "raises if factorial of negative" do
     expect_raises ArgumentError do
-      (-1.to_big_i.factorial)
+      -1.to_big_i.factorial
     end
 
     expect_raises ArgumentError do
