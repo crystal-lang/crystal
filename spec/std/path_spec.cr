@@ -54,6 +54,26 @@ private def assert_paths_raw(path, posix, windows = posix, label = nil, file = _
   end
 end
 
+private def it_iterates_parts(path, posix, windows = posix, file = __FILE__, line = __LINE__)
+  assert_paths_raw path, posix, windows, label: "block", file: file, line: line do |path|
+    array = [] of String
+    path.each_part do |part|
+      array << part
+    end
+    array
+  end
+  assert_paths_raw path, posix, windows, label: "iterator", file: file, line: line do |path|
+    array = [] of String
+    path.each_part.each do |part|
+      array << part
+    end
+    array
+  end
+  assert_paths_raw path, posix, windows, label: "#parts", file: file, line: line do |path|
+    path.parts
+  end
+end
+
 describe Path do
   describe ".new" do
     it { Path.new("foo").native?.should be_true }
@@ -256,57 +276,57 @@ describe Path do
     end
   end
 
-  describe "#parts" do
-    assert_paths_raw("/Users/foo/bar.cr", ["/", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("Users/foo/bar.cr", ["Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("foo/bar/", ["foo", "bar"], &.parts)
-    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
-    assert_paths_raw("foo", ["foo"], &.parts)
-    assert_paths_raw("foo/", ["foo"], &.parts)
-    assert_paths_raw("/", ["/"], &.parts)
-    assert_paths_raw("////", ["////"], &.parts)
-    assert_paths_raw("/.", ["/", "."], &.parts)
-    assert_paths_raw("/foo", ["/", "foo"], &.parts)
-    assert_paths_raw("", [] of String, &.parts)
-    assert_paths_raw("./foo", [".", "foo"], &.parts)
-    assert_paths_raw(".", ["."], &.parts)
-    assert_paths_raw("\\Users\\foo\\bar.cr", ["\\Users\\foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("\\Users/foo\\bar.cr", ["\\Users", "foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("C:\\Users\\foo\\bar.cr", ["C:\\Users\\foo\\bar.cr"], ["C:\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("\\\\some\\share\\", ["\\\\some\\share\\"], ["\\\\some\\share\\"], &.parts)
-    assert_paths_raw("\\\\some\\share", ["\\\\some\\share"], &.parts)
-    assert_paths_raw("\\\\some\\share\\bar.cr", ["\\\\some\\share\\bar.cr"], ["\\\\some\\share\\", "bar.cr"], &.parts)
-    assert_paths_raw("//some/share", ["//", "some", "share"], ["//some/share"], &.parts)
-    assert_paths_raw("//some/share/", ["//", "some", "share"], ["//some/share/"], &.parts)
-    assert_paths_raw("//some/share/bar.cr", ["//", "some", "share", "bar.cr"], ["//some/share/", "bar.cr"], &.parts)
-    assert_paths_raw("foo\\bar\\", ["foo\\bar\\"], ["foo", "bar"], &.parts)
-    assert_paths_raw("foo\\", ["foo\\"], ["foo"], &.parts)
-    assert_paths_raw("\\", ["\\"], ["\\"], &.parts)
-    assert_paths_raw(".\\foo", [".\\foo"], [".", "foo"], &.parts)
-    assert_paths_raw("foo/../bar/", ["foo", "..", "bar"], &.parts)
-    assert_paths_raw("foo/../bar/.", ["foo", "..", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/..", ["foo", "bar", ".."], &.parts)
-    assert_paths_raw("foo/bar/../.", ["foo", "bar", "..", "."], &.parts)
-    assert_paths_raw("foo/./bar/", ["foo", ".", "bar"], &.parts)
-    assert_paths_raw("foo/./bar/.", ["foo", ".", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/./.", ["foo", "bar", ".", "."], &.parts)
-    assert_paths_raw("m/.gitignore", ["m", ".gitignore"], &.parts)
-    assert_paths_raw("m", ["m"], &.parts)
-    assert_paths_raw("m/", ["m"], &.parts)
-    assert_paths_raw("m//", ["m"], &.parts)
-    assert_paths_raw("m\\", ["m\\"], ["m"], &.parts)
-    assert_paths_raw("m//a/b", ["m", "a", "b"], &.parts)
-    assert_paths_raw("m\\a/b", ["m\\a", "b"], ["m", "a", "b"], &.parts)
-    assert_paths_raw("/m", ["/", "m"], &.parts)
-    assert_paths_raw("/m/", ["/", "m"], &.parts)
-    assert_paths_raw("C:", ["C:"], &.parts)
-    assert_paths_raw("C:/", ["C:"], ["C:/"], &.parts)
-    assert_paths_raw("C:\\", ["C:\\"], &.parts)
-    assert_paths_raw("C:folder", ["C:folder"], ["C:", "folder"], &.parts)
-    assert_paths_raw("C:\\folder", ["C:\\folder"], ["C:\\", "folder"], &.parts)
-    assert_paths_raw("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"], &.parts)
-    assert_paths_raw("C:\\.", ["C:\\."], ["C:\\", "."], &.parts)
+  describe "#each_part" do
+    it_iterates_parts("/Users/foo/bar.cr", ["/", "Users", "foo", "bar.cr"])
+    it_iterates_parts("Users/foo/bar.cr", ["Users", "foo", "bar.cr"])
+    it_iterates_parts("foo/bar/", ["foo", "bar"])
+    it_iterates_parts("foo/bar/.", ["foo", "bar", "."])
+    it_iterates_parts("foo", ["foo"])
+    it_iterates_parts("foo/", ["foo"])
+    it_iterates_parts("/", ["/"])
+    it_iterates_parts("////", ["////"])
+    it_iterates_parts("/.", ["/", "."])
+    it_iterates_parts("/foo", ["/", "foo"])
+    it_iterates_parts("", [] of String)
+    it_iterates_parts("./foo", [".", "foo"])
+    it_iterates_parts(".", ["."])
+    it_iterates_parts("\\Users\\foo\\bar.cr", ["\\Users\\foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("\\Users/foo\\bar.cr", ["\\Users", "foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("C:\\Users\\foo\\bar.cr", ["C:\\Users\\foo\\bar.cr"], ["C:\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("\\\\some\\share\\", ["\\\\some\\share\\"], ["\\\\some\\share\\"])
+    it_iterates_parts("\\\\some\\share", ["\\\\some\\share"])
+    it_iterates_parts("\\\\some\\share\\bar.cr", ["\\\\some\\share\\bar.cr"], ["\\\\some\\share\\", "bar.cr"])
+    it_iterates_parts("//some/share", ["//", "some", "share"], ["//some/share"])
+    it_iterates_parts("//some/share/", ["//", "some", "share"], ["//some/share/"])
+    it_iterates_parts("//some/share/bar.cr", ["//", "some", "share", "bar.cr"], ["//some/share/", "bar.cr"])
+    it_iterates_parts("foo\\bar\\", ["foo\\bar\\"], ["foo", "bar"])
+    it_iterates_parts("foo\\", ["foo\\"], ["foo"])
+    it_iterates_parts("\\", ["\\"], ["\\"])
+    it_iterates_parts(".\\foo", [".\\foo"], [".", "foo"])
+    it_iterates_parts("foo/../bar/", ["foo", "..", "bar"])
+    it_iterates_parts("foo/../bar/.", ["foo", "..", "bar", "."])
+    it_iterates_parts("foo/bar/..", ["foo", "bar", ".."])
+    it_iterates_parts("foo/bar/../.", ["foo", "bar", "..", "."])
+    it_iterates_parts("foo/./bar/", ["foo", ".", "bar"])
+    it_iterates_parts("foo/./bar/.", ["foo", ".", "bar", "."])
+    it_iterates_parts("foo/bar/.", ["foo", "bar", "."])
+    it_iterates_parts("foo/bar/./.", ["foo", "bar", ".", "."])
+    it_iterates_parts("m/.gitignore", ["m", ".gitignore"])
+    it_iterates_parts("m", ["m"])
+    it_iterates_parts("m/", ["m"])
+    it_iterates_parts("m//", ["m"])
+    it_iterates_parts("m\\", ["m\\"], ["m"])
+    it_iterates_parts("m//a/b", ["m", "a", "b"])
+    it_iterates_parts("m\\a/b", ["m\\a", "b"], ["m", "a", "b"])
+    it_iterates_parts("/m", ["/", "m"])
+    it_iterates_parts("/m/", ["/", "m"])
+    it_iterates_parts("C:", ["C:"])
+    it_iterates_parts("C:/", ["C:"], ["C:/"])
+    it_iterates_parts("C:\\", ["C:\\"])
+    it_iterates_parts("C:folder", ["C:folder"], ["C:", "folder"])
+    it_iterates_parts("C:\\folder", ["C:\\folder"], ["C:\\", "folder"])
+    it_iterates_parts("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"])
+    it_iterates_parts("C:\\.", ["C:\\."], ["C:\\", "."])
   end
 
   describe "#extension" do

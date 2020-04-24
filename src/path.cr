@@ -479,7 +479,7 @@ struct Path
   # ```
   #
   # See `#parts` for more examples.
-  def each_part
+  def each_part(& : String ->)
     each_part_separator_index do |start_pos, length|
       yield @name.byte_slice(start_pos, length)
     end
@@ -501,6 +501,20 @@ struct Path
     parts
   end
 
+  # Returns an iterator over all components of this path.
+  #
+  # ```
+  # parts = Path.new("foo/bar/").each_part
+  # parts.next # => "foo"
+  # parts.next # => "bar"
+  # parts.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # See `#parts` for more examples.
+  def each_part : Iterator(String)
+    PartIterator.new(self)
+  end
+
   private def each_part_separator_index
     reader = Char::Reader.new(@name)
     start_pos = reader.pos
@@ -518,13 +532,27 @@ struct Path
     end
 
     last_was_separator = false
+    separators = self.separators
 
-    reader.each do |char|
+    while next_part = Path.next_part_separator_index(reader, last_was_separator, separators)
+      reader, last_was_separator, start_pos = next_part
+
+      break if reader.pos == start_pos
+      yield start_pos, reader.pos - start_pos
+    end
+  end
+
+  # :nodoc:
+  def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
+    start_pos = reader.pos
+
+    found = reader.each do |char|
       if separators.includes?(char)
-        next if last_was_separator
+        if last_was_separator
+          next
+        end
 
-        yield start_pos, reader.pos - start_pos
-        last_was_separator = true
+        return reader, true, start_pos
       elsif last_was_separator
         start_pos = reader.pos
         last_was_separator = false
@@ -532,10 +560,59 @@ struct Path
     end
 
     unless last_was_separator
-      size = reader.pos - start_pos
-      if size > 0
-        yield start_pos, size
+      {reader, false, start_pos}
+    end
+  end
+
+  # :nodoc:
+  class PartIterator
+    include Iterator(String)
+
+    def initialize(@path : Path)
+      @reader = Char::Reader.new(@path.@name)
+      @last_was_separator = false
+      @anchor_processed = false
+    end
+
+    def next
+      start_pos = next_pos
+
+      return stop unless start_pos
+      return stop if start_pos == @reader.pos
+
+      @path.@name.byte_slice(start_pos, @reader.pos - start_pos)
+    end
+
+    private def next_pos
+      unless @anchor_processed
+        @anchor_processed = true
+        if anchor_pos = process_anchor
+          return anchor_pos
+        end
       end
+
+      next_part = Path.next_part_separator_index(@reader, @last_was_separator, @path.separators)
+      return unless next_part
+
+      @reader, @last_was_separator, start_pos = next_part
+
+      start_pos
+    end
+
+    private def process_anchor
+      anchor = @path.anchor
+      return unless anchor
+
+      reader = @reader
+      reader.pos = anchor.@name.bytesize
+      # Path is absolute, consume leading separators
+      while @path.separators.includes?(reader.current_char)
+        return unless reader.has_next?
+        reader.next_char
+      end
+
+      @reader = reader
+      return 0
     end
   end
 
@@ -1073,7 +1150,8 @@ struct Path
     end
   end
 
-  private def separators
+  # :nodoc:
+  def separators
     Path.separators(@kind)
   end
 
