@@ -1224,6 +1224,22 @@ describe "File" do
     end
   end
 
+  describe ".same_content?" do
+    it "compares two equal files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.txt")
+      ).should be_true
+    end
+
+    it "compares two different files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.ini")
+      ).should be_false
+    end
+  end
+
   describe ".match?" do
     it "matches basics" do
       File.match?("abc", "abc").should be_true

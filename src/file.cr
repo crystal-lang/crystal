@@ -168,6 +168,24 @@ class File < IO::FileDescriptor
     info(path1.to_s, follow_symlinks).same_file? info(path2.to_s, follow_symlinks)
   end
 
+  # Compares two files *filename1* to *filename2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("file.cr", "1")
+  # File.write("bar.cr", "1")
+  # File.same_content?("file.cr", "bar.cr") # => true
+  # ```
+  def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
+    return false unless size(path1) == size(path2)
+
+    open(path1, "rb") do |file1|
+      open(path2, "rb") do |file2|
+        same_content?(file1, file2)
+      end
+    end
+  end
+
   # Returns the size of the file at *filename* in bytes.
   # Raises `File::NotFoundError` if the file at *filename* does not exist.
   #

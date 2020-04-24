@@ -1,27 +1,6 @@
 require "./spec_helper"
 require "file_utils"
 
-private class OneByOneIO < IO
-  @bytes : Bytes
-
-  def initialize(string)
-    @bytes = string.to_slice
-    @pos = 0
-  end
-
-  def read(slice : Bytes)
-    return 0 if slice.empty?
-    return 0 if @pos >= @bytes.size
-
-    slice[0] = @bytes[@pos]
-    @pos += 1
-    1
-  end
-
-  def write(slice : Bytes) : Nil
-  end
-end
-
 describe "FileUtils" do
   describe "cd" do
     it "should work" do
@@ -68,30 +47,6 @@ describe "FileUtils" do
         datapath("test_file.txt"),
         datapath("test_file.ini")
       ).should be_false
-    end
-
-    it "compares two ios, one way (true)" do
-      io1 = OneByOneIO.new("hello")
-      io2 = IO::Memory.new("hello")
-      FileUtils.cmp(io1, io2).should be_true
-    end
-
-    it "compares two ios, second way (true)" do
-      io1 = OneByOneIO.new("hello")
-      io2 = IO::Memory.new("hello")
-      FileUtils.cmp(io2, io1).should be_true
-    end
-
-    it "compares two ios, one way (false)" do
-      io1 = OneByOneIO.new("hello")
-      io2 = IO::Memory.new("hella")
-      FileUtils.cmp(io1, io2).should be_false
-    end
-
-    it "compares two ios, second way (false)" do
-      io1 = OneByOneIO.new("hello")
-      io2 = IO::Memory.new("hella")
-      FileUtils.cmp(io2, io1).should be_false
     end
   end
 
