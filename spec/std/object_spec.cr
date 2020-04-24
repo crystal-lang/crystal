@@ -112,6 +112,16 @@ private class TestObject
   def []=(key, value)
     {key, value}
   end
+
+  annotation TestAnnotation
+  end
+
+  @[TestAnnotation]
+  property(x : Int32) { 1 }
+
+  def self.test_annotation_count
+    {{ @type.instance_vars.select(&.annotation(TestObject::TestAnnotation)).size }}
+  end
 end
 
 private class DelegatedTestObject
@@ -481,5 +491,9 @@ describe Object do
     it "shouldn't return same hash for different property values" do
       HashedTestObject.new(1, 2).hash.should_not eq HashedTestObject.new(3, 4).hash
     end
+  end
+
+  it "applies annotation to lazy property (#9139)" do
+    TestObject.test_annotation_count.should eq(1)
   end
 end
