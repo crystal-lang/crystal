@@ -719,6 +719,23 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Copies the file *src* to the file *dst*.
+  # Permission bits are copied too.
+  #
+  # ```
+  # File.chmod("afile", 0o600)
+  # File.copy("afile", "afile_copy")
+  # File.info("afile_copy").permissions.value # => 0o600
+  # ```
+  def self.copy(src : String | Path, dst : String | Path)
+    open(src) do |s|
+      open(dst, "wb", s.info.permissions) do |d|
+        # TODO use sendfile or copy_file_range syscall. See #8926, #8919
+        IO.copy(s, d)
+      end
+    end
+  end
+
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.
   #
   # ```

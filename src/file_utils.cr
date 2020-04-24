@@ -88,12 +88,8 @@ module FileUtils
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : String, dest : String)
-    File.open(src_path) do |s|
-      dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, "wb", s.info.permissions) do |d|
-        IO.copy(s, d)
-      end
-    end
+    dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+    File.copy(src_path, dest)
   end
 
   # Copies a list of files *src* to *dest*.

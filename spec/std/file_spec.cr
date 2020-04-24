@@ -1240,6 +1240,29 @@ describe "File" do
     end
   end
 
+  describe ".copy" do
+    it "copies a file" do
+      src_path = datapath("test_file.txt")
+      with_tempfile("cp.txt") do |out_path|
+        File.copy(src_path, out_path)
+        File.exists?(out_path).should be_true
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    it "copies permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+  end
+
   describe ".match?" do
     it "matches basics" do
       File.match?("abc", "abc").should be_true
