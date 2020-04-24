@@ -14,7 +14,6 @@ require "./std/benchmark_spec.cr"
 require "./std/bit_array_spec.cr"
 require "./std/bool_spec.cr"
 require "./std/box_spec.cr"
-# require "./std/callstack_spec.cr"
 # require "./std/channel_spec.cr" (failed codegen)
 require "./std/char/reader_spec.cr"
 require "./std/char_spec.cr"
@@ -29,7 +28,6 @@ require "./std/compress/zip/zip_spec.cr"
 require "./std/compress/zlib/reader_spec.cr"
 require "./std/compress/zlib/stress_spec.cr"
 require "./std/compress/zlib/writer_spec.cr"
-# require "./std/concurrent/future_spec.cr" (failed codegen)
 # require "./std/concurrent/select_spec.cr" (failed to run)
 require "./std/concurrent_spec.cr"
 require "./std/crc32_spec.cr"
