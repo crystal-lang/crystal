@@ -25,7 +25,7 @@ end
 describe "Log.setup_from_env" do
   describe "backend" do
     it "is a IOBackend" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -34,7 +34,7 @@ describe "Log.setup_from_env" do
     end
 
     it "can be changed" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         backend = Log::MemoryBackend.new
         Log.setup_from_env(builder: builder, backend: backend)
@@ -46,7 +46,7 @@ describe "Log.setup_from_env" do
 
   describe "default_level" do
     it "is info" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -55,7 +55,7 @@ describe "Log.setup_from_env" do
     end
 
     it "is used if no LOG_LEVEL is set" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_level: :warning)
 
@@ -64,7 +64,7 @@ describe "Log.setup_from_env" do
     end
 
     it "is not used if LOG_LEVEL is set" do
-      with_env "LOG_LEVEL": "DEBUG", "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": "DEBUG" do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_level: :error)
 
@@ -75,7 +75,7 @@ describe "Log.setup_from_env" do
 
   describe "default_sources" do
     it "is *" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
 
@@ -84,8 +84,8 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is used if no LOG_SOURCES is set" do
-      with_env "LOG_LEVEL": nil, "LOG_SOURCES": nil do
+    it "is used" do
+      with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_sources: "foo.*")
 
@@ -97,39 +97,26 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is not used if LOG_SOURCES is set" do
-      with_env "LOG_LEVEL": "DEBUG", "LOG_SOURCES": "" do
+    it "is splited by comma" do
+      with_env "LOG_LEVEL": "info" do
         builder = Log::Builder.new
-        Log.setup_from_env(builder: builder, default_sources: "foo.*")
+        Log.setup_from_env(builder: builder, default_sources: "db, , foo.*  ")
 
+        builder.for("db").backend.should_not be_nil
         builder.for("").backend.should_not be_nil
-
-        builder.for("lorem.ipsum").backend.should be_nil
-        builder.for("foo").backend.should be_nil
-        builder.for("foo.bar").backend.should be_nil
+        builder.for("foo").backend.should_not be_nil
+        builder.for("foo.bar.baz").backend.should_not be_nil
+        builder.for("other").backend.should be_nil
       end
     end
   end
 
   it "raises on invalid level" do
     expect_raises(ArgumentError) do
-      with_env "LOG_LEVEL": "invalid", "LOG_SOURCES": nil do
+      with_env "LOG_LEVEL": "invalid" do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder)
       end
-    end
-  end
-
-  it "splits sources by comma" do
-    with_env "LOG_LEVEL": "info", "LOG_SOURCES": "db, , foo.*  " do
-      builder = Log::Builder.new
-      Log.setup_from_env(builder: builder)
-
-      builder.for("db").backend.should_not be_nil
-      builder.for("").backend.should_not be_nil
-      builder.for("foo").backend.should_not be_nil
-      builder.for("foo.bar.baz").backend.should_not be_nil
-      builder.for("other").backend.should be_nil
     end
   end
 end

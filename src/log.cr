@@ -115,28 +115,20 @@
 # Log.setup_from_env
 # ```
 #
-# The environment variables `LOG_LEVEL` and `LOG_SOURCES` are used to indicate
-# which severity level to emit. By default entries from all sources with `Info` and above severity will
+# The environment variable `LOG_LEVEL` is used to indicate which severity level to emit.
+# By default entries from all sources with `Info` and above severity will
 # be logged to `STDOUT` using the `Log::IOBackend`.
 #
-# To change the level and sources change the environment variables value:
+# To change the level and sources change the environment variable value:
 #
 # ```console
-# $ LOG_LEVEL=DEBUG LOG_SOURCES=myapp.* ./bin/app
+# $ LOG_LEVEL=DEBUG ./bin/app
 # ```
 #
-# The valid values for `LOG_SOURCES` are:
-#
-# * the empty string matches only the top-level source
-# * `*` matches all the sources (**default**)
-# * `foo.bar.*` matches `foo.bar` and every nested source
-# * `foo.bar` matches `foo.bar`, but not its nested sources
-# * Any comma separated combination of the above
-#
-# You can tweak the default values (used when `LOG_` variables are not defined):
+# You can tweak the default values (used when `LOG_LEVEL` variable is not defined):
 #
 # ```
-# Log.setup_from_env(default_level: :error, default_sources: "myapp.*")
+# Log.setup_from_env(default_level: :error)
 # ```
 #
 class Log
