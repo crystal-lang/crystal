@@ -457,7 +457,7 @@ module Crystal
               end
             end
 
-            codegen_process = fork do
+            codegen_process = Process.fork do
               pipe_w = pw
               slice.each do |unit|
                 unit.compile

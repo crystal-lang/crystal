@@ -67,6 +67,8 @@ class Process
     Crystal::System::Process.times
   end
 
+  # :nodoc:
+  #
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   #
@@ -88,6 +90,8 @@ class Process
     end
   end
 
+  # :nodoc:
+  #
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
@@ -437,20 +441,6 @@ def `(command) : String
   status = process.wait
   $? = status
   output
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork { yield }
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork
 end
 
 require "./process/*"
