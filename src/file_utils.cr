@@ -381,7 +381,7 @@ module FileUtils
         src = File.join(path, entry)
         rm_r(src)
       end
-      Dir.rmdir(path)
+      Dir.delete(path)
     else
       File.delete(path)
     end
@@ -447,7 +447,7 @@ module FileUtils
   #
   # NOTE: Alias of `Dir.rmdir`
   def rmdir(path : String) : Nil
-    Dir.rmdir(path)
+    Dir.delete(path)
   end
 
   # Removes all directories at the given *paths*.
@@ -459,7 +459,7 @@ module FileUtils
   # ```
   def rmdir(paths : Enumerable(String)) : Nil
     paths.each do |path|
-      Dir.rmdir(path)
+      Dir.delete(path)
     end
   end
 end

@@ -359,7 +359,7 @@ describe "File" do
         File.chmod(path, 0o664)
         File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
-        Dir.rmdir(path) if Dir.exists?(path)
+        Dir.delete(path) if Dir.exists?(path)
       end
     end
 
