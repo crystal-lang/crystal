@@ -70,6 +70,16 @@ class String
   end
 end
 
+struct Path
+  def to_json(json : JSON::Builder)
+    @name.to_json(json)
+  end
+
+  def to_json_object_key
+    @name
+  end
+end
+
 struct Symbol
   def to_json(json : JSON::Builder)
     json.string(to_s)

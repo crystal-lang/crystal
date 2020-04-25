@@ -49,7 +49,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, base_path : String do
+  record HeadTemplate, project_info : ProjectInfo, base_path : String do
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
@@ -67,6 +67,10 @@ module Crystal::Doc
 
   struct JsNavigatorTemplate
     ECR.def_to_s "#{__DIR__}/html/js/_navigator.js"
+  end
+
+  struct JsVersionsTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/_versions.js"
   end
 
   struct JsUsageModal

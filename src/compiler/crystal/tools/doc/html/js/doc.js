@@ -1,9 +1,10 @@
-window.CrystalDoc = (window.CrystalDoc || {});
+window.CrystalDocs = (window.CrystalDocs || {});
 
-CrystalDoc.base_path = (CrystalDoc.base_path || "");
+CrystalDocs.base_path = (CrystalDocs.base_path || "");
 
 <%= JsSearchTemplate.new %>
 <%= JsNavigatorTemplate.new %>
+<%= JsVersionsTemplate.new %>
 <%= JsUsageModal.new %>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -62,28 +63,28 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   var leaveSearchScope = function(){
-    CrystalDoc.toggleResultsList(false);
+    CrystalDocs.toggleResultsList(false);
     window.focus();
   }
 
   var navigator = new Navigator(document.querySelector('.types-list'), searchInput, document.querySelector(".search-results"), leaveSearchScope);
 
-  CrystalDoc.loadIndex();
+  CrystalDocs.loadIndex();
   var searchTimeout;
   var lastSearchText = false;
   var performSearch = function() {
-    document.dispatchEvent(new Event("CrystalDoc:searchDebounceStarted"));
+    document.dispatchEvent(new Event("CrystalDocs:searchDebounceStarted"));
 
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
 
       if(text == "") {
-        CrystalDoc.toggleResultsList(false);
+        CrystalDocs.toggleResultsList(false);
       }else if(text == lastSearchText){
-        document.dispatchEvent(new Event("CrystalDoc:searchDebounceStopped"));
+        document.dispatchEvent(new Event("CrystalDocs:searchDebounceStopped"));
       }else{
-        CrystalDoc.search(text);
+        CrystalDocs.search(text);
         navigator.highlightFirst();
         searchInput.focus();
       }
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var searchQuery = location.hash.substring(3);
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
     searchInput.value = searchQuery;
-    document.addEventListener('CrystalDoc:loaded', performSearch);
+    document.addEventListener('CrystalDocs:loaded', performSearch);
   }
 
   if (searchInput.value.length == 0) {

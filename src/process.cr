@@ -62,13 +62,13 @@ class Process
   end
 
   # Returns a `Tms` for the current process. For the children times, only those
-  # of terminated children are returned.
-  #
-  # Available only on Unix-like operating systems.
+  # of terminated children are returned on Unix; they are zero on Windows.
   def self.times : Tms
     Crystal::System::Process.times
   end
 
+  # :nodoc:
+  #
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   #
@@ -90,6 +90,8 @@ class Process
     end
   end
 
+  # :nodoc:
+  #
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
@@ -439,20 +441,6 @@ def `(command) : String
   status = process.wait
   $? = status
   output
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork { yield }
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork
 end
 
 require "./process/*"

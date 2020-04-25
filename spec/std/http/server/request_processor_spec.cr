@@ -1,18 +1,7 @@
 require "spec"
 require "http/server/request_processor"
-
-private class RaiseIOError < IO
-  def initialize
-  end
-
-  def read(slice : Bytes)
-    raise IO::Error.new("...")
-  end
-
-  def write(slice : Bytes) : Nil
-    raise "not implemented"
-  end
-end
+require "../../../support/log"
+require "../../../support/io"
 
 private def requestize(string)
   string.gsub('\n', "\r\n")
@@ -243,7 +232,7 @@ describe HTTP::Server::RequestProcessor do
     end
   end
 
-  it "handles IO::Error" do
+  it "handles IO::Error while reading" do
     processor = HTTP::Server::RequestProcessor.new { }
     input = RaiseIOError.new
     output = IO::Memory.new
@@ -251,12 +240,89 @@ describe HTTP::Server::RequestProcessor do
     output.rewind.gets_to_end.empty?.should be_true
   end
 
+  it "handles IO::Error while writing" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+      context.response.flush
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = RaiseIOError.new(true)
+    logs = capture_logs("http.server") do
+      processor.process(input, output)
+    end
+    match_logs(logs,
+      {:debug, "Error while writing data to the client"}
+    )
+    logs[0].exception.should be_a(IO::Error)
+  end
+
+  it "handles IO::Error while flushing" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.flush
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = RaiseIOError.new(false)
+    logs = capture_logs("http.server") do
+      processor.process(input, output)
+    end
+    match_logs(logs,
+      {:debug, "Error while flushing data to the client"}
+    )
+    logs[0].exception.should be_a(IO::Error)
+  end
+
   it "catches raised error on handler" do
-    processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
+    exception = Exception.new "OH NO"
+    processor = HTTP::Server::RequestProcessor.new { raise exception }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
-    error = IO::Memory.new
-    processor.process(input, output, error)
-    output.rewind.gets_to_end.should match(/Internal Server Error/)
+    logs = capture_logs("http.server") do
+      processor.process(input, output)
+    end
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(500)
+    client_response.status_message.should eq("Internal Server Error")
+    client_response.headers["content-type"].should eq("text/plain")
+    client_response.headers.has_key?("content-length").should be_true
+    client_response.body.should eq("500 Internal Server Error\n")
+
+    match_logs(logs,
+      {:error, "Unhandled exception on HTTP::Handler", exception}
+    )
+  end
+
+  it "doesn't respond with error when headers were already sent" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+      context.response.flush
+      raise "OH NO"
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = IO::Memory.new
+    processor.process(input, output)
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(200)
+    client_response.body.should eq("Hello world")
+  end
+
+  it "flushes output buffer when an error happens and some content was already sent" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.content_type = "text/plain"
+      context.response.print "Hello "
+      context.response.flush
+      context.response.print "world"
+      raise "OH NO"
+    end
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
+    output = IO::Memory.new
+    processor.process(input, output)
+
+    client_response = HTTP::Client::Response.from_io(output.rewind)
+    client_response.status_code.should eq(200)
+    client_response.body.should eq("Hello world")
   end
 end

@@ -15,6 +15,14 @@ end
 
 describe "JSON serialization" do
   describe "from_json" do
+    it "does String.from_json" do
+      String.from_json(%("foo bar")).should eq "foo bar"
+    end
+
+    it "does Path.from_json" do
+      Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
+    end
+
     it "does Array(Nil)#from_json" do
       Array(Nil).from_json("[null, null]").should eq([nil, nil])
     end
@@ -331,6 +339,11 @@ describe "JSON serialization" do
       "ab\u{19}cd".to_json.should eq(%q("ab\u0019cd"))
       "ab\u{19}cd\u{19}".to_json.should eq(%q("ab\u0019cd\u0019"))
       "ab\u{19}cd\u{19}e".to_json.should eq(%q("ab\u0019cd\u0019e"))
+    end
+
+    it "does for Path" do
+      Path.posix("foo", "bar", "baz").to_json.should eq(%("foo/bar/baz"))
+      Path.windows("foo", "bar", "baz").to_json.should eq(%("foo\\\\bar\\\\baz"))
     end
 
     it "does for Array" do
