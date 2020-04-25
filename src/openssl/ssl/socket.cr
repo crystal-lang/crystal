@@ -53,10 +53,13 @@ abstract class OpenSSL::SSL::Socket < IO
   class Server < Socket
     def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
       super(io, context, sync_close)
+    end
+
+    def accept
       begin
         ret = LibSSL.ssl_accept(@ssl)
         unless ret == 1
-          io.close if sync_close
+          @bio.io.close if @sync_close
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
         end
       rescue ex
