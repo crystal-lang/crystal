@@ -10,7 +10,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - name: Build LLVM extensions
+      - name: Build C extensions
         run: |
           make deps
       - name: Cross-compile Crystal
@@ -74,12 +74,38 @@ jobs:
         run: |
           cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON
           cmake --build . --config Release
+      - name: Download zlib
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: |
+          iwr https://github.com/madler/zlib/archive/v1.2.11.zip -OutFile zlib.zip
+          7z x zlib.zip
+          mv zlib-* zlib
+      - name: Build zlib
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./zlib
+        run: |
+          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build . --config Release
+      - name: Download libyaml
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: |
+          iwr https://github.com/yaml/libyaml/archive/0.2.4.zip -OutFile libyaml.zip
+          7z x libyaml.zip
+          mv libyaml-* libyaml
+      - name: Build libyaml
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./libyaml
+        run: |
+          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
           mkdir libs
           mv pcre/Release/pcre.lib libs/
           mv bdwgc/Release/gc.lib libs/
+          mv zlib/Release/zlibstatic.lib libs/z.lib
+          mv libyaml/Release/yaml.lib libs/
 
       - name: Cache LLVM
         id: cache-llvm
@@ -142,7 +168,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_zlib -Dwithout_openssl -Di_know_what_im_doing
+          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Di_know_what_im_doing
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
