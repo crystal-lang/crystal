@@ -1,7 +1,7 @@
 require "../dwarf"
 require "./abbrev"
 
-module Debug
+module Crystal
   module DWARF
     struct Info
       property unit_length : UInt32 | UInt64

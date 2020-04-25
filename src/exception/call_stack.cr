@@ -6,8 +6,8 @@ require "c/string"
 require "./lib_unwind"
 
 {% if flag?(:darwin) %}
-  require "debug/mach_o"
-  require "debug/dwarf"
+  require "crystal/mach_o"
+  require "crystal/dwarf"
 
   lib LibC
     fun _dyld_image_count : UInt32
@@ -15,8 +15,8 @@ require "./lib_unwind"
     fun _dyld_get_image_vmaddr_slide(image_index : UInt32) : Long
   end
 {% elsif flag?(:freebsd) || flag?(:linux) || flag?(:openbsd) %}
-  require "debug/elf"
-  require "debug/dwarf"
+  require "crystal/elf"
+  require "crystal/dwarf"
 {% end %}
 
 # Returns the current execution stack as an array containing strings
@@ -206,7 +206,7 @@ struct Exception::CallStack
   end
 
   {% if flag?(:darwin) || flag?(:freebsd) || flag?(:linux) || flag?(:openbsd) %}
-    @@dwarf_line_numbers : Debug::DWARF::LineNumbers?
+    @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
     @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
     protected def self.decode_line_number(pc)
@@ -236,12 +236,12 @@ struct Exception::CallStack
 
         attributes.each do |(at, form, value)|
           case at
-          when Debug::DWARF::AT::DW_AT_name
+          when Crystal::DWARF::AT::DW_AT_name
             value = strings.try(&.decode(value.as(UInt32 | UInt64))) if form.strp?
             name = value.as(String)
-          when Debug::DWARF::AT::DW_AT_low_pc
+          when Crystal::DWARF::AT::DW_AT_low_pc
             low_pc = value.as(LibC::SizeT)
-          when Debug::DWARF::AT::DW_AT_high_pc
+          when Crystal::DWARF::AT::DW_AT_high_pc
             if form.addr?
               high_pc = value.as(LibC::SizeT)
             elsif value.responds_to?(:to_i)
@@ -264,18 +264,18 @@ struct Exception::CallStack
       protected def self.read_dwarf_sections
         locate_dsym_bundle do |mach_o|
           mach_o.read_section?("__debug_line") do |sh, io|
-            @@dwarf_line_numbers = Debug::DWARF::LineNumbers.new(io, sh.size)
+            @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size)
           end
 
           strings = mach_o.read_section?("__debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
+            Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           mach_o.read_section?("__debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
             while (offset = io.pos - sh.offset) < sh.size
-              info = Debug::DWARF::Info.new(io, offset)
+              info = Crystal::DWARF::Info.new(io, offset)
 
               mach_o.read_section?("__debug_abbrev") do |sh, io|
                 info.read_abbreviations(io)
@@ -317,8 +317,8 @@ struct Exception::CallStack
         files.each do |dwarf|
           next unless File.exists?(dwarf)
 
-          Debug::MachO.open(program) do |mach_o|
-            Debug::MachO.open(dwarf) do |dsym|
+          Crystal::MachO.open(program) do |mach_o|
+            Crystal::MachO.open(dwarf) do |dsym|
               if dsym.uuid == mach_o.uuid
                 return yield dsym
               end
@@ -361,24 +361,24 @@ struct Exception::CallStack
       protected def self.read_dwarf_sections
         program = Process.executable_path
         return unless program && File.readable? program
-        Debug::ELF.open(program) do |elf|
+        Crystal::ELF.open(program) do |elf|
           elf.read_section?(".text") do |sh, _|
             @@base_address = sh.addr - sh.offset
           end
 
           elf.read_section?(".debug_line") do |sh, io|
-            @@dwarf_line_numbers = Debug::DWARF::LineNumbers.new(io, sh.size)
+            @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size)
           end
 
           strings = elf.read_section?(".debug_str") do |sh, io|
-            Debug::DWARF::Strings.new(io, sh.offset, sh.size)
+            Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
           end
 
           elf.read_section?(".debug_info") do |sh, io|
             names = [] of {LibC::SizeT, LibC::SizeT, String}
 
             while (offset = io.pos - sh.offset) < sh.size
-              info = Debug::DWARF::Info.new(io, offset)
+              info = Crystal::DWARF::Info.new(io, offset)
 
               elf.read_section?(".debug_abbrev") do |sh, io|
                 info.read_abbreviations(io)

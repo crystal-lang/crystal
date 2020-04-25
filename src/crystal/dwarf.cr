@@ -3,7 +3,13 @@ require "./dwarf/info"
 require "./dwarf/line_numbers"
 require "./dwarf/strings"
 
-module Debug
+module Crystal
+  # :nodoc:
+  #
+  # DWARF reader.
+  #
+  # Documentation:
+  # - <http://dwarfstd.org>
   module DWARF
     def self.read_unsigned_leb128(io : IO)
       result = 0_u32

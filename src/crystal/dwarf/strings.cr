@@ -1,4 +1,4 @@
-module Debug
+module Crystal
   module DWARF
     struct Strings
       def initialize(@io : IO::FileDescriptor, @offset : UInt32 | UInt64, size)

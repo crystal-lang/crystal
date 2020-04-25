@@ -1,4 +1,6 @@
-module Debug
+module Crystal
+  # :nodoc:
+  #
   # Mach-O parser.
   #
   # Documentation:
