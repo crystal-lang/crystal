@@ -37,7 +37,7 @@ class HTTP::Request
   #
   # HTTP::Request.new("GET", "/", HTTP::Headers{"host" => "crystal-lang.org", "hello crystal!"})
   # ```
-  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
+  def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1") : self
     # Duplicate headers to prevent the request from modifying data that the user might hold.
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end
@@ -71,11 +71,11 @@ class HTTP::Request
   # request.query_params["q"] = "crystal"
   # request.query_params # => HTTP::Params(@raw_params={"q" => ["crystal"]})
   # ```
-  def query_params
+  def query_params : HTTP::Params
     @query_params ||= parse_query_params
   end
 
-  #
+  # Returns the *resource* part of the `URI` that the Request will use.
   #
   # ```crystal
   # require "http/request"
@@ -85,7 +85,7 @@ class HTTP::Request
   # request.query_params["q"] = "crystal"
   # request.resource # => "/search?q=crystal"
   # ```
-  def resource
+  def resource : String
     update_uri
     @uri.try(&.full_path) || @resource
   end
@@ -196,7 +196,7 @@ class HTTP::Request
     @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
   end
 
-  # TODO: Writes a `Resquest` to an `IO` in the RFC
+  # Writes a `Resquest` to an `IO` in the socket protocol for an http request.
   #
   # ```crystal
   # require "http/request"
