@@ -76,9 +76,7 @@ class OpenSSL::SSL::Server
   end
 
   private def new_ssl_socket(io)
-    server = OpenSSL::SSL::Socket::Server.new(io, @context, sync_close: @sync_close)
-    server.accept if @start_immediately
-    server
+    OpenSSL::SSL::Socket::Server.new(io, @context, sync_close: @sync_close, accept: @start_immediately)
   end
 
   # Closes this SSL server.

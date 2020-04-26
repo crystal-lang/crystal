@@ -51,8 +51,18 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def initialize(io, context : Context::Server = Context::Server.new,
+                   sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
+
+      if accept
+        begin
+          self.accept
+        rescue ex
+          LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+          raise ex
+        end
+      end
     end
 
     def accept
