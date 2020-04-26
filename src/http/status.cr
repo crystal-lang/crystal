@@ -84,7 +84,7 @@ enum HTTP::Status
     previous_def(status_code)
   end
 
-  # Returns the number that repreents the HTTP status code.
+  # Returns the number that represents the HTTP status code.
   #
   # ```crystal
   # require "http/status"
