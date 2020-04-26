@@ -74,7 +74,7 @@ class HTTP::Request
     @query_params ||= parse_query_params
   end
 
-  # Returns the *resource* part of the `URI` that the Request will use.
+  # Returns the *resource* of this request.
   #
   # ```crystal
   # require "http/request"
@@ -103,13 +103,14 @@ class HTTP::Request
     HTTP.keep_alive?(self)
   end
 
-  # Returns `true` if request will not send a body.
+  # Returns `true` if the request type does not have a body.
+  # This applies to `HEAD` requests.
   #
   # ```crystal
   # require "http/request"
   #
   # request = HTTP::Request.new("HEAD", "/", version: "HTTP/1.0")
-  # p request.ignore_body? # => true
+  # request.ignore_body? # => true
   # request.method = "GET"
   # p request.ignore_body? # => false
   # ```
@@ -130,7 +131,7 @@ class HTTP::Request
     headers["Content-Length"] = length.to_s
   end
 
-  # Sets the content length of a request.  This can be differnt then the bytesize of the *body*
+  # Returns the content length of a request.  This can be differnt then the bytesize of the *body*
   #
   # ```crystal
   # require "http/request"
@@ -195,7 +196,7 @@ class HTTP::Request
     @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
   end
 
-  # Writes a `Resquest` to an `IO` in the socket protocol for an http request.
+  # Writes this request to *io* according to HTTP protocol specification.
   #
   # ```crystal
   # require "http/request"
