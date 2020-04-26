@@ -29,6 +29,14 @@ class HTTP::Request
   # This property is not used by `HTTP::Client`.
   property remote_address : String?
 
+
+  # Creates a new HTTP Request.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # HTTP::Request.new("GET", "/", HTTP::Headers{"host" => "crystal-lang.org", "hello crystal!"})
+  # ```
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
@@ -41,54 +49,165 @@ class HTTP::Request
 
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
-  def cookies
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("GET", "/")
+  # request.cookies << HTTP::Cookie.new("host", "crystal-lang.org")
+  # request.cookies # => <HTTP::Cookies @cookies={"host" => #<HTTP::Cookie @name="host", @value="crystal-lang.org" ...>}>
+  # ```
+  def cookies : Cookies
     @cookies ||= Cookies.from_headers(headers)
   end
 
   # Returns a convenience wrapper around querying and setting query params,
   # see `HTTP::Params`.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("GET", "/")
+  # request.query_params["q"] = "crystal"
+  # request.query_params # => HTTP::Params(@raw_params={"q" => ["crystal"]})
+  # ```
   def query_params
     @query_params ||= parse_query_params
   end
 
+  #
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("GET", "/search")
+  # request.resource # => "/search"
+  # request.query_params["q"] = "crystal"
+  # request.resource # => "/search?q=crystal"
+  # ```
   def resource
     update_uri
     @uri.try(&.full_path) || @resource
   end
 
-  def keep_alive?
+  # Returns `true` if the connection is persistence in compliance with [RFC 6223](https://tools.ietf.org/html/rfc6223) or [RFC 7230 §6.3](https://tools.ietf.org/html/rfc7230#section-6.3).
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("GET", "/search", version: "HTTP/1.0")
+  # p request.keep_alive? # => false
+  # request.version = "HTTP/1.1"
+  # p request.keep_alive? # => true
+  # ```
+  def keep_alive? : Bool
     HTTP.keep_alive?(self)
   end
 
-  def ignore_body?
+  # Returns `true` if request will not send a body.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/", version: "HTTP/1.0")
+  # p request.ignore_body? # => true
+  # request.method = "GET"
+  # p request.ignore_body? # => false
+  # ```
+  def ignore_body? : Bool
     @method == "HEAD"
   end
 
-  def content_length=(length : Int)
+  # Sets the content length of a request.  This can be differnt then the bytesize of the *body*
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/", body: "hello crystal!")
+  # request.content_length = 3
+  # request.content_length # => "3"
+  # ```
+  def content_length=(length : Int) : String
     headers["Content-Length"] = length.to_s
   end
 
-  def content_length
+  # Sets the content length of a request.  This can be differnt then the bytesize of the *body*
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/", body: "hello crystal!")
+  # request.content_length # => "14"
+  # ```
+  def content_length : String
     HTTP.content_length(headers)
   end
 
+  # Sets the *body* of a request by converting the `String` passed into an `IO`.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.body = "hello crystal!"
+  # request.body # => <IO::Memory @buffer=Pointer(UInt8), @bytesize=14 ...>
+  # ```
   def body=(body : String)
     @body = IO::Memory.new(body)
     self.content_length = body.bytesize
   end
 
+  # Sets the *body* of a request by converting the `Bytes` passed into an `IO`.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.body = Bytes[0x99, 0x114, 0x121, 0x115, 0x116, 0x97, 0x108]
+  # request.body # => <IO::Memory @buffer=Pointer(UInt8), @bytesize=14 ...>
+  # ```
   def body=(body : Bytes)
     @body = IO::Memory.new(body)
     self.content_length = body.size
   end
 
+  # Sets the *body* of a request to the `IO` object passed.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.body = IO::Memory.new("hello crystal!")
+  # request.body # => <IO::Memory @buffer=Pointer(UInt8), @bytesize=14 ...>
+  # ```
   def body=(@body : IO)
   end
 
+  # Sets the *body* of a request to `nil`
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.body = nil
+  # request.body # => nil
+  # ```
   def body=(@body : Nil)
     @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
   end
 
+  # TODO: Writes a `Resquest` to an `IO` in the RFC
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # io = IO::Memory.new
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.to_io(io)
+  #
+  # io.to_s # => "HEAD / HTTP/1.1\r\n\r\n"
+  # ```
   def to_io(io)
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
@@ -99,8 +218,14 @@ class HTTP::Request
   # :nodoc:
   record RequestLine, method : String, resource : String, http_version : String
 
-  # Returns a `HTTP::Request` instance if successfully parsed,
-  # `nil` on EOF or `HTTP::Status` otherwise.
+  # Returns a `HTTP::Request` instance if successfully parsed, `nil` on EOF or `HTTP::Status` otherwise.
+  #
+  # ```
+  # require "http/request"
+  #
+  # request = HTTP::Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n\r\n"))
+  # request # => <HTTP::Request @method="GET", @headers=HTTP::Headers{}, @version="HTTP/1.1", @resource="/" ...>
+  # ```
   def self.from_io(io, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
@@ -216,39 +341,85 @@ class HTTP::Request
     RequestLine.new method: method, resource: resource, http_version: http_version
   end
 
-  # Returns the request's path component.
-  def path
+  # Returns the request's *path* component.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/search")
+  # request.path # => "/search"
+  # ```
+  def path : String
     uri.path.presence || "/"
   end
 
-  # Sets request's path component.
-  def path=(path)
+  # Sets request's *path* component.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/")
+  # request.path = "/search"
+  # request.path # => "/search"
+  # ```
+  def path=(path : String) : String
     uri.path = path
   end
 
   # Lazily parses and returns the request's query component.
-  def query
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/search?q=crystal")
+  # request.query # => q=crystal
+  # ```
+  def query : String
     update_uri
     uri.query
   end
 
-  # Sets request's query component.
-  def query=(value)
+  # Sets request's *query* component.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/search")
+  # request.query = "q=crystal"
+  # request.resource # => "/search?q=crystal"
+  # ```
+  def query=(value : String) : String
     uri.query = value
     update_query_params
     value
   end
 
-  # Returns request host from headers.
-  def host
+  # Returns request *host* from headers.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/search?q=crystal")
+  # request.headers.add("host", "crystal-lang.com")
+  # request.host # => "crystal-lang.org"
+  # ```
+  def host : String?
     host = @headers["Host"]?
     return unless host
     index = host.index(":")
     index ? host[0...index] : host
   end
 
-  # Returns request host with port from headers.
-  def host_with_port
+  # Returns request *host* with port from headers.
+  #
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("HEAD", "/search?q=crystal")
+  # request.headers.add("host", "crystal-lang.com:80")
+  # request.host_with_port # => "crystal-lang.org:80"
+  # ```
+  def host_with_port : String?
     @headers["Host"]?
   end
 
@@ -270,10 +441,23 @@ class HTTP::Request
     uri.query = query_params.to_s
   end
 
+  # Returns the parsed "if-match" header.
+  #
+  # ```crystal
+  # request = HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => "*"})
+  # request.if_match # => ["*"]
+  # ```
   def if_match : Array(String)?
     parse_etags("If-Match")
   end
 
+  # Returns the parsed "if-none-match" header.
+  # ```crystal
+  # require "http/request"
+  #
+  # request = HTTP::Request.new("GET", "/", HTTP::Headers{"If-None-Match" => "*"})
+  # request.if_none_match # => ["*"]
+  # ```
   def if_none_match : Array(String)?
     parse_etags("If-None-Match")
   end
