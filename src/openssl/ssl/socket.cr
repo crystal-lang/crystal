@@ -56,15 +56,10 @@ abstract class OpenSSL::SSL::Socket < IO
     end
 
     def accept
-      begin
-        ret = LibSSL.ssl_accept(@ssl)
-        unless ret == 1
-          @bio.io.close if @sync_close
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
-        end
-      rescue ex
-        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
-        raise ex
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        @bio.io.close if @sync_close
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
 
