@@ -373,7 +373,7 @@ class HTTP::Request
   # request = HTTP::Request.new("HEAD", "/search?q=crystal")
   # request.query # => q=crystal
   # ```
-  def query : String
+  def query : String?
     update_uri
     uri.query
   end
