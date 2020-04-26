@@ -29,7 +29,6 @@ class HTTP::Request
   # This property is not used by `HTTP::Client`.
   property remote_address : String?
 
-
   # Creates a new HTTP Request.
   #
   # ```crystal
