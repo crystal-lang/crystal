@@ -421,7 +421,7 @@ describe HTTP::Server do
     server_context, client_context = ssl_context_pair
     address = server.bind_tls "localhost", server_context
 
-    run_server(server) do |server_done|
+    run_server(server) do
       ch = Channel(Nil).new
 
       spawn do
