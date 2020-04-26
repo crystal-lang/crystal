@@ -164,8 +164,8 @@ class File < IO::FileDescriptor
 
   # Returns `true` if *path1* and *path2* represents the same file.
   # The comparison take symlinks in consideration if *follow_symlinks* is `true`.
-  def self.same?(path1 : String, path2 : String, follow_symlinks = false) : Bool
-    info(path1, follow_symlinks).same_file? info(path2, follow_symlinks)
+  def self.same?(path1 : Path | String, path2 : Path | String, follow_symlinks = false) : Bool
+    info(path1.to_s, follow_symlinks).same_file? info(path2.to_s, follow_symlinks)
   end
 
   # Returns the size of the file at *filename* in bytes.
@@ -258,7 +258,7 @@ class File < IO::FileDescriptor
   # ```
   # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
-  def self.dirname(path) : String
+  def self.dirname(path : Path | String) : String
     Path.new(path).dirname
   end
 
@@ -267,7 +267,7 @@ class File < IO::FileDescriptor
   # ```
   # File.basename("/foo/bar/file.cr") # => "file.cr"
   # ```
-  def self.basename(path) : String
+  def self.basename(path : Path | String) : String
     Path.new(path).basename
   end
 
@@ -278,7 +278,7 @@ class File < IO::FileDescriptor
   # ```
   # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
-  def self.basename(path, suffix) : String
+  def self.basename(path : Path | String, suffix : String) : String
     Path.new(path).basename(suffix.check_no_null_byte)
   end
 
@@ -333,7 +333,7 @@ class File < IO::FileDescriptor
   # ```
   # File.extname("foo.cr") # => ".cr"
   # ```
-  def self.extname(filename) : String
+  def self.extname(filename : Path | String) : String
     Path.new(filename).extension
   end
 
@@ -349,7 +349,7 @@ class File < IO::FileDescriptor
   # File.expand_path("~/foo", home: "/bar") # => "/bar/foo"
   # File.expand_path("baz", "/foo/bar")     # => "/foo/bar/baz"
   # ```
-  def self.expand_path(path, dir = nil, *, home = false) : String
+  def self.expand_path(path : Path | String, dir = nil, *, home = false) : String
     Path.new(path).expand(dir || Dir.current, home: home).to_s
   end
 
@@ -563,23 +563,23 @@ class File < IO::FileDescriptor
   end
 
   # Resolves the real path of *path* by following symbolic links.
-  def self.real_path(path) : String
-    Crystal::System::File.real_path(path)
+  def self.real_path(path : Path | String) : String
+    Crystal::System::File.real_path(path.to_s)
   end
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
-  def self.link(old_path, new_path)
-    Crystal::System::File.link(old_path, new_path)
+  def self.link(old_path : Path | String, new_path : Path | String)
+    Crystal::System::File.link(old_path.to_s, new_path.to_s)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
-  def self.symlink(old_path, new_path)
-    Crystal::System::File.symlink(old_path, new_path)
+  def self.symlink(old_path : Path | String, new_path : Path | String)
+    Crystal::System::File.symlink(old_path.to_s, new_path.to_s)
   end
 
   # Returns `true` if the *path* is a symbolic link.
-  def self.symlink?(path) : Bool
+  def self.symlink?(path : Path | String) : Bool
     if info = info?(path, follow_symlinks: false)
       info.type.symlink?
     else
@@ -588,8 +588,8 @@ class File < IO::FileDescriptor
   end
 
   # Returns value of a symbolic link .
-  def self.readlink(path) : String
-    Crystal::System::File.readlink(path)
+  def self.readlink(path : Path | String) : String
+    Crystal::System::File.readlink(path.to_s)
   end
 
   # Opens the file named by *filename*. If a file is being created, its initial
@@ -620,7 +620,7 @@ class File < IO::FileDescriptor
   # File.write("bar", "foo")
   # File.read("bar") # => "foo"
   # ```
-  def self.read(filename, encoding = nil, invalid = nil) : String
+  def self.read(filename : Path | String, encoding = nil, invalid = nil) : String
     open(filename, "r") do |file|
       if encoding
         file.set_encoding(encoding, invalid: invalid)
@@ -649,7 +649,7 @@ class File < IO::FileDescriptor
   # end
   # array # => ["foo", "bar"]
   # ```
-  def self.each_line(filename, encoding = nil, invalid = nil, chomp = true)
+  def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true)
     open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line(chomp: chomp) do |line|
         yield line
@@ -663,7 +663,7 @@ class File < IO::FileDescriptor
   # File.write("foobar", "foo\nbar")
   # File.read_lines("foobar") # => ["foo", "bar"]
   # ```
-  def self.read_lines(filename, encoding = nil, invalid = nil, chomp = true) : Array(String)
+  def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true) : Array(String)
     lines = [] of String
     each_line(filename, encoding: encoding, invalid: invalid, chomp: chomp) do |line|
       lines << line
@@ -688,7 +688,7 @@ class File < IO::FileDescriptor
   # (the result of invoking `to_s` on *content*).
   #
   # See `self.new` for what *mode* can be.
-  def self.write(filename, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
+  def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w")
     open(filename, mode, perm, encoding: encoding, invalid: invalid) do |file|
       case content
       when Bytes
@@ -733,20 +733,20 @@ class File < IO::FileDescriptor
   # File.exists?("afile")    # => false
   # File.exists?("afile.cr") # => true
   # ```
-  def self.rename(old_filename, new_filename) : Nil
-    Crystal::System::File.rename(old_filename, new_filename)
+  def self.rename(old_filename : Path | String, new_filename : Path | String) : Nil
+    Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
   end
 
   # Sets the access and modification times of *filename*.
-  def self.utime(atime : Time, mtime : Time, filename : String) : Nil
-    Crystal::System::File.utime(atime, mtime, filename)
+  def self.utime(atime : Time, mtime : Time, filename : Path | String) : Nil
+    Crystal::System::File.utime(atime, mtime, filename.to_s)
   end
 
   # Attempts to set the access and modification times of the file named
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : String, time : Time = Time.utc)
+  def self.touch(filename : Path | String, time : Time = Time.utc)
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end

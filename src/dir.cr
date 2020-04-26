@@ -14,19 +14,20 @@ class Dir
   getter path : String
 
   # Returns a new directory object for the named directory.
-  def initialize(@path)
+  def initialize(path : Path | String)
+    @path = path.to_s
     @dir = Crystal::System::Dir.open(@path)
     @closed = false
   end
 
   # Alias for `new(path)`
-  def self.open(path) : self
+  def self.open(path : Path | String) : self
     new path
   end
 
   # Opens a directory and yields it, closing it at the end of the block.
   # Returns the value of the block.
-  def self.open(path)
+  def self.open(path : Path | String, & : self ->)
     dir = new path
     begin
       yield dir
@@ -53,13 +54,13 @@ class Dir
   # Got ..
   # Got config.h
   # ```
-  def each : Nil
+  def each(& : String ->) : Nil
     while entry = read
       yield entry
     end
   end
 
-  def each
+  def each : Iterator(String)
     EntryIterator.new(self)
   end
 
@@ -88,14 +89,14 @@ class Dir
   # ```text
   # Got config.h
   # ```
-  def each_child : Nil
+  def each_child(& : String ->) : Nil
     excluded = {".", ".."}
     while entry = read
       yield entry unless excluded.includes?(entry)
     end
   end
 
-  def each_child
+  def each_child : Iterator(String)
     ChildIterator.new(self)
   end
 
@@ -119,18 +120,18 @@ class Dir
   # end
   # array.sort # => [".", "..", "config.h"]
   # ```
-  def read
+  def read : String?
     Crystal::System::Dir.next(@dir, path)
   end
 
   # Repositions this directory to the first entry.
-  def rewind
+  def rewind : self
     Crystal::System::Dir.rewind(@dir)
     self
   end
 
   # Closes the directory stream.
-  def close
+  def close : Nil
     return if @closed
     Crystal::System::Dir.close(@dir, path)
     @closed = true
@@ -142,14 +143,14 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
-  def self.cd(path)
-    Crystal::System::Dir.current = path
+  def self.cd(path : Path | String) : String
+    Crystal::System::Dir.current = path.to_s
   end
 
   # Changes the current working directory of the process to the given string
   # and invokes the block, restoring the original working directory
   # when the block exits.
-  def self.cd(path)
+  def self.cd(path : Path | String, &)
     old = current
     begin
       cd(path)
@@ -169,7 +170,7 @@ class Dir
   end
 
   # See `#each`.
-  def self.each(dirname)
+  def self.each(dirname : Path | String, & : String ->)
     Dir.open(dirname) do |dir|
       dir.each do |filename|
         yield filename
@@ -178,14 +179,14 @@ class Dir
   end
 
   # See `#entries`.
-  def self.entries(dirname) : Array(String)
+  def self.entries(dirname : Path | String) : Array(String)
     Dir.open(dirname) do |dir|
       return dir.entries
     end
   end
 
   # See `#each_child`.
-  def self.each_child(dirname)
+  def self.each_child(dirname : Path | String, & : String ->)
     Dir.open(dirname) do |dir|
       dir.each_child do |filename|
         yield filename
@@ -194,14 +195,14 @@ class Dir
   end
 
   # See `#children`.
-  def self.children(dirname) : Array(String)
+  def self.children(dirname : Path | String) : Array(String)
     Dir.open(dirname) do |dir|
       return dir.children
     end
   end
 
   # Returns `true` if the given path exists and is a directory
-  def self.exists?(path) : Bool
+  def self.exists?(path : Path | String) : Bool
     if info = File.info?(path)
       info.type.directory?
     else
@@ -218,7 +219,7 @@ class Dir
   # File.write("bar/a_file", "The content")
   # Dir.empty?("bar") # => false
   # ```
-  def self.empty?(path) : Bool
+  def self.empty?(path : Path | String) : Bool
     each_child(path) do |f|
       return false
     end
@@ -229,14 +230,14 @@ class Dir
   # can be specified, with a default of 777 (0o777).
   #
   # NOTE: *mode* is ignored on windows.
-  def self.mkdir(path, mode = 0o777)
+  def self.mkdir(path : Path | String, mode = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
   end
 
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
-  def self.mkdir_p(path, mode = 0o777) : Nil
+  def self.mkdir_p(path : Path | String, mode = 0o777) : Nil
     return if Dir.exists?(path)
 
     path = Path.new path
@@ -248,7 +249,7 @@ class Dir
   end
 
   # Removes the directory at the given path.
-  def self.rmdir(path)
+  def self.rmdir(path : Path | String) : Nil
     Crystal::System::Dir.delete(path)
   end
 

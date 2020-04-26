@@ -362,9 +362,17 @@ describe "Dir" do
   end
 
   describe "cd" do
-    it "should work" do
+    it "accepts string" do
       cwd = Dir.current
       Dir.cd("..")
+      Dir.current.should_not eq(cwd)
+      Dir.cd(cwd)
+      Dir.current.should eq(cwd)
+    end
+
+    it "accepts path" do
+      cwd = Dir.current
+      Dir.cd(Path.new(".."))
       Dir.current.should_not eq(cwd)
       Dir.cd(cwd)
       Dir.current.should eq(cwd)
@@ -376,7 +384,17 @@ describe "Dir" do
       end
     end
 
-    it "accepts a block" do
+    it "accepts a block with path" do
+      cwd = Dir.current
+
+      Dir.cd(Path.new("..")) do
+        Dir.current.should_not eq(cwd)
+      end
+
+      Dir.current.should eq(cwd)
+    end
+
+    it "accepts a block with string" do
       cwd = Dir.current
 
       Dir.cd("..") do
@@ -385,6 +403,10 @@ describe "Dir" do
 
       Dir.current.should eq(cwd)
     end
+  end
+
+  it ".current" do
+    Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
   end
 
   describe ".tempdir" do
@@ -435,6 +457,14 @@ describe "Dir" do
     end
 
     filenames.includes?("f1.txt").should be_true
+  end
+
+  describe "#path" do
+    it "returns init value" do
+      path = datapath("dir")
+      dir = Dir.new(path)
+      dir.path.should eq path
+    end
   end
 
   it "lists entries" do
