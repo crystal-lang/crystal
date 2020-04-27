@@ -61,7 +61,7 @@ class IO::Sized < IO
     peek
   end
 
-  def skip(bytes_count)
+  def skip(bytes_count : UInt64) : UInt64
     check_open
 
     if bytes_count <= @read_remaining

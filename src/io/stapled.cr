@@ -51,7 +51,7 @@ class IO::Stapled < IO
   end
 
   # Skips `reader`.
-  def skip(bytes_count : Int) : Nil
+  def skip(bytes_count : UInt64) : UInt64
     check_open
 
     @reader.skip(bytes_count)
