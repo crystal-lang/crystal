@@ -5,7 +5,7 @@
 # some in `tools`, some here, and some create a Compiler and
 # manipulate it.
 #
-# Other commands create a `Compiler` and use it to to build
+# Other commands create a `Compiler` and use it to build
 # an executable.
 
 require "json"
@@ -21,12 +21,15 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
-        play                     starts crystal playground server
+        play                     starts Crystal playground server
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool
         help, --help, -h         show this help
         version, --version, -v   show version
+
+    Run a command followed by --help to see command specific information, ex:
+        crystal <command> --help
     USAGE
 
   COMMANDS_USAGE = <<-USAGE
@@ -42,8 +45,6 @@ class Crystal::Command
         --help, -h               show this help
     USAGE
 
-  VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
-
   def self.run(options = ARGV)
     new(options).run
   end
@@ -51,7 +52,8 @@ class Crystal::Command
   private getter options
 
   def initialize(@options : Array(String))
-    @color = true
+    @color = ENV["TERM"]? != "dumb"
+    @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
 
@@ -66,10 +68,19 @@ class Crystal::Command
       init
     when "build".starts_with?(command)
       options.shift
-      build
+      use_crystal_opts
+      result = build
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
+      result
     when "play".starts_with?(command)
       options.shift
-      playground
+      {% if flag?(:without_playground) %}
+        puts "Crystal was compiled without playground support"
+        exit 1
+      {% else %}
+        playground
+      {% end %}
     when "deps".starts_with?(command)
       STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
       exit 1
@@ -81,12 +92,15 @@ class Crystal::Command
       env
     when command == "eval"
       options.shift
+      use_crystal_opts
       eval
     when "run".starts_with?(command)
       options.shift
+      use_crystal_opts
       run_command(single_file: false)
     when "spec/".starts_with?(command)
       options.shift
+      use_crystal_opts
       spec
     when "tool".starts_with?(command)
       options.shift
@@ -98,14 +112,20 @@ class Crystal::Command
       puts Crystal::Config.description
       exit
     when File.file?(command)
+      use_crystal_opts
       run_command(single_file: true)
     else
-      error "unknown command: #{command}"
+      if command.ends_with?(".cr")
+        error "file '#{command}' does not exist"
+      else
+        error "unknown command: #{command}"
+      end
     end
   rescue ex : Crystal::LocationlessException
     error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
+    ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
     else
@@ -170,15 +190,20 @@ class Crystal::Command
   private def run_command(single_file = false)
     config = create_compiler "run", run: true, single_file: single_file
     if config.specified_output
-      config.compile
+      result = config.compile
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
       return
     end
 
-    output_filename = Crystal.tempfile(config.output_filename)
+    output_filename = Crystal.temp_executable(config.output_filename)
 
     result = config.compile output_filename
 
     unless config.compiler.no_codegen?
+      report_warnings result
+      exit 1 if warnings_fail_on_exit?(result)
+
       execute output_filename, config.arguments, config.compiler
     end
   end
@@ -199,22 +224,24 @@ class Crystal::Command
     {config, result}
   end
 
-  private def execute(output_filename, run_args, compiler)
-    time? = @time && !@progress_tracker.stats?
+  private def execute(output_filename, run_args, compiler, *, error_on_exit = false)
+    time = @time && !@progress_tracker.stats?
     status, elapsed_time = @progress_tracker.stage("Execute") do
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            # Ignore the signal so we don't exit the running process
-            # (the running process can still handle this signal)
-            ::Signal::INT.ignore # do
+            {% unless flag?(:win32) %}
+              # Ignore the signal so we don't exit the running process
+              # (the running process can still handle this signal)
+              ::Signal::INT.ignore # do
+            {% end %}
           end
         end
         {$?, elapsed}
       ensure
         File.delete(output_filename) rescue nil
 
-        # Delete related dwarf generated by dsymutil, if any exists
+        # Delete related dwarf generated by dsymutil, if any exist
         {% if flag?(:darwin) %}
           unless compiler.debug.none?
             File.delete("#{output_filename}.dwarf") rescue nil
@@ -223,26 +250,28 @@ class Crystal::Command
       end
     end
 
-    if time?
+    if time
       puts "Execute: #{elapsed_time}"
     end
 
-    if status.normal_exit?
-      exit status.exit_code
-    else
-      case status.exit_signal
-      when ::Signal::KILL
+    case status
+    when .normal_exit?
+      exit error_on_exit ? 1 : status.exit_code
+    when .signal_exit?
+      case signal = status.exit_signal
+      when .kill?
         STDERR.puts "Program was killed"
-      when ::Signal::SEGV
+      when .segv?
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when ::Signal::INT
+      when .int?
         # OK, bubbled from the sub-program
       else
-        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+        STDERR.puts "Program received and didn't handle signal #{signal} (#{signal.value})"
       end
-
-      exit 1
+    else
+      STDERR.puts "Program exited abnormally, the cause is unknown"
     end
+    exit 1
   end
 
   record CompilerConfig,
@@ -297,10 +326,10 @@ class Crystal::Command
           compiler.debug = Crystal::Debug::None
         end
         {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
-        opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
-          error "--lto=thin is the only lto supported option" unless flag == "thin"
-          compiler.thin_lto = true
-        end
+          opts.on("--lto=FLAG", "Use ThinLTO --lto=thin") do |flag|
+            error "--lto=thin is the only lto supported option" unless flag == "thin"
+            compiler.thin_lto = true
+          end
         {% end %}
       end
 
@@ -309,7 +338,10 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--emit [#{VALID_EMIT_VALUES.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+        valid_emit_values = Compiler::EmitTarget.names
+        valid_emit_values.map! { |v| v.gsub('_', '-').downcase }
+
+        opts.on("--emit [#{valid_emit_values.join('|')}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
           compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
         end
       end
@@ -332,6 +364,7 @@ class Crystal::Command
 
       opts.on("--error-trace", "Show full error trace") do
         compiler.show_error_trace = true
+        @error_trace = true
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -352,6 +385,19 @@ class Crystal::Command
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features
         end
+        opts.on("--mcmodel MODEL", "Target specific code model") do |mcmodel|
+          compiler.mcmodel = case mcmodel
+                             when "default" then LLVM::CodeModel::Default
+                             when "small"   then LLVM::CodeModel::Small
+                             when "kernel"  then LLVM::CodeModel::Kernel
+                             when "medium"  then LLVM::CodeModel::Medium
+                             when "large"   then LLVM::CodeModel::Large
+                             else
+                               error "--mcmodel should be one of: default, kernel, small, medium, large"
+                               raise "unreachable"
+                             end
+        end
+        setup_compiler_warning_options(opts, compiler)
       end
 
       opts.on("--no-color", "Disable colored output") do
@@ -400,7 +446,7 @@ class Crystal::Command
         end
         unless run
           opts.on("--target TRIPLE", "Target triple") do |triple|
-            compiler.target_triple = triple
+            compiler.codegen_target = Codegen::Target.new(triple)
           end
         end
         opts.on("--verbose", "Display executed commands") do
@@ -428,8 +474,8 @@ class Crystal::Command
     filenames += opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if single_file && filenames.size > 1
-      arguments = filenames[1..-1] + arguments
+    if single_file && (files = filenames[1..-1]?)
+      arguments = files + arguments
       filenames = [filenames[0]]
     end
 
@@ -454,7 +500,7 @@ class Crystal::Command
 
     output_filename ||= original_output_filename
     output_format ||= "text"
-    if !["text", "json"].includes?(output_format)
+    unless output_format.in?("text", "json")
       error "You have input an invalid format, only text and JSON are supported"
     end
 
@@ -470,7 +516,7 @@ class Crystal::Command
   private def gather_sources(filenames)
     filenames.map do |filename|
       unless File.file?(filename)
-        error "File #{filename} does not exist"
+        error "file '#{filename}' does not exist"
       end
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
@@ -488,6 +534,7 @@ class Crystal::Command
       compiler.flags << flag
     end
     opts.on("--error-trace", "Show full error trace") do
+      @error_trace = true
       compiler.show_error_trace = true
     end
     opts.on("--release", "Compile in release mode") do
@@ -510,21 +557,56 @@ class Crystal::Command
       @color = false
       compiler.color = false
     end
+    setup_compiler_warning_options(opts, compiler)
     opts.invalid_option { }
   end
 
+  private def setup_compiler_warning_options(opts, compiler)
+    compiler.warnings_exclude << Crystal.normalize_path "lib"
+    warnings_exclude_default = true
+    opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
+      compiler.warnings = case w
+                          when "all"
+                            Crystal::Warnings::All
+                          when "none"
+                            Crystal::Warnings::None
+                          else
+                            error "--warnings should be all, or none"
+                            raise "unreachable"
+                          end
+    end
+    opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
+      compiler.error_on_warnings = true
+    end
+    opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
+      if warnings_exclude_default
+        # if an --exclude-warnings is used explicitly, then we remove the default value
+        compiler.warnings_exclude.clear
+        warnings_exclude_default = false
+      end
+      compiler.warnings_exclude << Crystal.normalize_path f
+    end
+  end
+
   private def validate_emit_values(values)
+    emit_targets = Compiler::EmitTarget::None
     values.each do |value|
-      unless VALID_EMIT_VALUES.includes?(value)
+      if target = Compiler::EmitTarget.parse?(value.gsub('-', '_'))
+        emit_targets |= target
+      else
         error "invalid emit value '#{value}'"
       end
     end
-    values
+    emit_targets
   end
 
   private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color")
+    @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
     Crystal.error msg, @color, exit_code: exit_code
+  end
+
+  private def use_crystal_opts
+    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
   end
 end

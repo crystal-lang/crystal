@@ -36,7 +36,7 @@ module Crystal
       # `new` must only be searched in ancestors if this type itself doesn't define
       # an `initialize` or `self.new` method. This was already computed in `new.cr`
       # and can be known by invoking `lookup_new_in_ancestors?`
-      if my_parents && !(!lookup_new_in_ancestors? && is_new)
+      if my_parents && !(is_new && !lookup_new_in_ancestors?)
         my_parents.each do |parent|
           matches = parent.lookup_matches(signature, owner, parent, matches_array)
           if matches.cover_all?
@@ -44,6 +44,11 @@ module Crystal
           else
             matches_array = matches.matches
           end
+
+          # If this is a `new` method, once a parent defines an `initialize`
+          # method and we couldn't find any matches we must not go up in the
+          # hierarchy.
+          break if is_new && parent.has_def_without_parents?(signature.name)
         end
       end
 
@@ -74,20 +79,8 @@ module Crystal
             # If the argument types are compatible with the match's argument types,
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
-            # with with the same arguments but which returns Void.
-            arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
-            if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
-               match_named_args.size == signature_named_args.size
-              match_named_args = match_named_args.sort_by &.name
-              signature_named_args = signature_named_args.sort_by &.name
-              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
-                x.name == y.name && x.type.compatible_with?(y.type)
-              end
-            else
-              named_arg_types_equal = !match.named_arg_types && !signature.named_args
-            end
-
-            if arg_types_equal && named_arg_types_equal
+            # with the same arguments but which returns Void.
+            if signature.matches_exactly?(match)
               return Matches.new(matches_array, true, owner)
             end
 
@@ -296,7 +289,7 @@ module Crystal
         end
       end
 
-      # If there's a restriction on a double splat, zero matching named arguments don't matc
+      # If there's a restriction on a double splat, zero matching named arguments don't match
       if double_splat && double_splat_restriction &&
          !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
         return nil
@@ -307,6 +300,33 @@ module Crystal
       context = context.clone if context.free_vars
 
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
+    end
+
+    def matches_exactly?(match : Match, *, with_literals : Bool = false)
+      arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
+        if with_literals && x.is_a?(LiteralType)
+          x = x.match || x.remove_literal
+        end
+
+        x.compatible_with?(y)
+      end
+      if (match_named_args = match.named_arg_types) && (signature_named_args = self.named_args) &&
+         match_named_args.size == signature_named_args.size
+        match_named_args = match_named_args.sort_by &.name
+        signature_named_args = signature_named_args.sort_by &.name
+        named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
+          x_type = x.type
+          if with_literals && x_type.is_a?(LiteralType)
+            x_type = x_type.match || x_type.remove_literal
+          end
+
+          x.name == y.name && x_type.compatible_with?(y.type)
+        end
+      else
+        named_arg_types_equal = !match.named_arg_types && !self.named_args
+      end
+
+      arg_types_equal && named_arg_types_equal
     end
   end
 
@@ -351,7 +371,7 @@ module Crystal
         # Check matches but without parents: only included modules
         subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
-        # For Foo+:Class#new we need to check that this subtype doesn't define
+        # For Foo+.class#new we need to check that this subtype doesn't define
         # an incompatible initialize: if so, we return empty matches, because
         # all subtypes must have an initialize with the same number of arguments.
         if is_new && subtype_matches.empty?

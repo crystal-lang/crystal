@@ -190,7 +190,7 @@ describe "Code gen: if" do
       else
         n
       end
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 
@@ -284,6 +284,36 @@ describe "Code gen: if" do
         end
       end
       1
+      ))
+  end
+
+  it "doesn't crash no NoReturn var (true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if true || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
+      ))
+  end
+
+  it "doesn't crash no NoReturn var (non-true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if 1 == 2 || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
       ))
   end
 end

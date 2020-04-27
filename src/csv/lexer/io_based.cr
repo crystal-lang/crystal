@@ -8,6 +8,7 @@ class CSV::Lexer::IOBased < CSV::Lexer
   end
 
   def rewind
+    super
     @io.rewind
     @current_char = @io.read_char || '\0'
   end

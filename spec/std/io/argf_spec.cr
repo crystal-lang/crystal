@@ -38,6 +38,18 @@ describe IO::ARGF do
     str.should eq("12345")
   end
 
+  it "reads when is more data left to read" do
+    argf = IO::ARGF.new [datapath("argf_test_file_3.xml")], IO::Memory.new
+    argf.read(Bytes.new(4))
+    buf = Bytes.new(4096)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z = argf.read(buf)
+    z.should_not eq 0
+    String.new(buf[0...z]).should_not be_empty
+  end
+
   describe "gets" do
     it "reads from STDIN if ARGV isn't specified" do
       argv = [] of String

@@ -5,7 +5,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   getter program : Program
 
   # At every point there's a current type.
-  # In the beginnig this is the `Program` (top-level), but when
+  # In the beginning this is the `Program` (top-level), but when
   # a class definition is visited this changes to that type, and so on.
   property current_type : ModuleType
 
@@ -71,7 +71,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   rescue ex : Crystal::Exception
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
-    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    raise ::Exception.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
@@ -238,13 +238,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def lookup_type(node : ASTNode,
                   free_vars = nil,
-                  lazy_self = false,
                   find_root_generic_type_parameters = true)
     current_type.lookup_type(
       node,
       free_vars: free_vars,
       allow_typeof: false,
-      lazy_self: lazy_self,
       find_root_generic_type_parameters: find_root_generic_type_parameters
     )
   end
@@ -295,12 +293,12 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     args = expand_macro_arguments(node, expansion_scope)
 
     @exp_nest -= 1
-    generated_nodes = expand_macro(the_macro, node) do
+    generated_nodes = expand_macro(the_macro, node, visibility: node.visibility) do
       old_args = node.args
       node.args = args
-      expanded = @program.expand_macro the_macro, node, expansion_scope, @path_lookup, @untyped_def
+      expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
       node.args = old_args
-      expanded
+      {expanded_macro, macro_expansion_pragmas}
     end
     @exp_nest += 1
 
@@ -311,25 +309,30 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     true
   end
 
-  def expand_macro(the_macro, node, mode = nil)
-    expanded_macro =
+  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility)
+    expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
       end
 
     mode ||= if @in_c_struct_or_union
-               Program::MacroExpansionMode::Normal
+               Parser::ParseMode::LibStructOrUnion
              elsif @in_lib
-               Program::MacroExpansionMode::Lib
+               Parser::ParseMode::Lib
              else
-               Program::MacroExpansionMode::Normal
+               Parser::ParseMode::Normal
              end
 
-    generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
-      inside_def: !!@typed_def,
+    # We could do Set.new(@vars.keys) but that creates an intermediate array
+    local_vars = Set(String).new(initial_capacity: @vars.size)
+    @vars.each_key { |key| local_vars << key }
+
+    generated_nodes = @program.parse_macro_source(expanded_macro, macro_expansion_pragmas, the_macro, node, local_vars,
+      current_def: @typed_def,
       inside_type: !current_type.is_a?(Program),
       inside_exp: @exp_nest > 0,
       mode: mode,
+      visibility: visibility,
     )
 
     if node_doc = node.doc
@@ -346,7 +349,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     def initialize(@doc)
     end
 
-    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign | Call)
       node.doc ||= @doc
       false
     end
@@ -373,6 +376,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
               expanded = expanded_type.value
             when Type
               expanded = TypeNode.new(expanded_type)
+            else
+              # go on
             end
           end
           expanded
@@ -397,12 +402,12 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     skip_macro_exception = nil
 
-    generated_nodes = expand_macro(the_macro, node, mode: mode) do
+    generated_nodes = expand_macro(the_macro, node, mode: mode, visibility: :public) do
       begin
         @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
       rescue ex : SkipMacroException
         skip_macro_exception = ex
-        ex.expanded_before_skip
+        {ex.expanded_before_skip, ex.macro_expansion_pragmas}
       end
     end
 
@@ -487,24 +492,25 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise "can't declare variable of generic non-instantiated type #{type}"
     end
 
-    Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
+    Crystal.check_type_can_be_stored(node, type, "can't use #{type} as the type of #{variable_kind}")
 
     declared_type
   end
 
   def class_var_owner(node)
     scope = (@scope || current_type).class_var_owner
-    case scope
-    when Program
+
+    if scope.is_a?(Program)
       node.raise "can't use class variables at the top level"
     end
 
     scope.as(ClassVarContainer)
   end
 
-  def interpret_enum_value(node : ASTNode, target_type = nil)
-    interpreter = MathInterpreter.new(current_type, self)
-    interpreter.interpret(node, target_type)
+  def interpret_enum_value(node : ASTNode, target_type : IntegerType? = nil)
+    MathInterpreter
+      .new(current_type, self, target_type)
+      .interpret(node)
   end
 
   def inside_exp?
@@ -514,7 +520,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def pushing_type(type : ModuleType)
     old_type = @current_type
     @current_type = type
+    read_annotations
     yield
     @current_type = old_type
+  end
+
+  # Returns the current annotations and clears them for subsequent readers.
+  def read_annotations
+    annotations = @annotations
+    @annotations = nil
+    annotations
   end
 end

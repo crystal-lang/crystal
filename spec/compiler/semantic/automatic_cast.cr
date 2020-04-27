@@ -82,6 +82,16 @@ describe "Semantic: automatic cast" do
       )) { float32 }
   end
 
+  it "casts literal integer in private top-level method (#7016)" do
+    assert_type(%(
+      private def foo(x : Int64)
+        x
+      end
+
+      foo(12345)
+      )) { int64 }
+  end
+
   it "matches correct overload" do
     assert_type(%(
       def foo(x : Int32)
@@ -118,9 +128,13 @@ describe "Semantic: automatic cast" do
         x
       end
 
+      def foo(x : Int16)
+        x
+      end
+
       foo(1)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8, Int16"
   end
 
   it "says ambiguous call for integer (2)" do
@@ -131,7 +145,20 @@ describe "Semantic: automatic cast" do
 
       foo(1)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
+  end
+
+  it "says ambiguous call for integer on alias (#6620)" do
+    assert_error %(
+      alias A = Int8 | UInt8
+
+      def foo(x : A)
+        x
+      end
+
+      foo(1)
+      ),
+      "ambiguous call, implicit cast of 1 matches all of Int8, UInt8"
   end
 
   it "casts symbol literal to enum" do
@@ -208,7 +235,7 @@ describe "Semantic: automatic cast" do
 
       foo(:one)
       ),
-      "ambiguous"
+      "ambiguous call, implicit cast of :one matches all of Foo, Foo2"
   end
 
   it "casts Int32 to Int64 in ivar assignment" do
@@ -366,5 +393,103 @@ describe "Semantic: automatic cast" do
 
       Foo(Int64).new.x
       )) { int64 }
+  end
+
+  it "can match multiple times with the same argument type (#7578)" do
+    assert_type(%(
+      def foo(unused, foo : Int64)
+        unused
+      end
+
+      def foo(foo : Int64)
+        foo
+      end
+
+      foo(foo: 1)
+      )) { int64 }
+  end
+
+  it "doesn't say 'ambiguous call' when there's an exact match for integer (#6601)" do
+    assert_error %(
+      class Zed
+        def +(other : Char)
+        end
+      end
+
+      a = 1 || Zed.new
+      a + 2
+      ),
+      "no overload matches"
+  end
+
+  it "doesn't say 'ambiguous call' when there's an exact match for symbol (#6601)" do
+    assert_error %(
+      enum Color1
+        Red
+      end
+
+      enum Color2
+        Red
+      end
+
+      struct Int
+        def +(x : Color1)
+        end
+
+        def +(x : Color2)
+        end
+      end
+
+      class Zed
+        def +(other : Char)
+        end
+      end
+
+      a = 1 || Zed.new
+      a + :red
+      ),
+      "no overload matches"
+  end
+
+  it "can use automatic cast with `with ... yield` (#7736)" do
+    assert_type(%(
+      def foo
+        with 1 yield
+      end
+
+      struct Int32
+        def bar(x : Int64)
+          x
+        end
+      end
+
+      foo do
+        bar(1)
+      end
+      )) { int64 }
+  end
+
+  it "doesn't do multidispatch if an overload matches exactly (#8217)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      def foo(*xs : Int64)
+        xs
+      end
+
+      foo(1)
+      )) { int64 }
+  end
+
+  it "autocasts first argument and second matches without autocast" do
+    assert_type(%(
+      def fill(x : Float64, y : Int)
+        x
+      end
+
+      fill(0, 0)
+      )) { float64 }
   end
 end

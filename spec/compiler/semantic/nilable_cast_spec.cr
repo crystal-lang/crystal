@@ -36,4 +36,15 @@ describe "Semantic: nilable cast" do
       Bar.new.as?(Foo)
       )) { nilable types["Foo"].virtual_type! }
   end
+
+  it "doesn't crash with typeof no-type (#7441)" do
+    assert_type(%(
+      a = 1
+      if a.is_a?(Char)
+        1.as?(typeof(a))
+      else
+        ""
+      end
+      )) { string }
+  end
 end

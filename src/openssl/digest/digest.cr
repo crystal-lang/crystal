@@ -55,7 +55,7 @@ module OpenSSL
     end
 
     def update(data : String | Slice)
-      LibCrypto.evp_digestupdate(self, data, data.size)
+      LibCrypto.evp_digestupdate(self, data, data.bytesize)
       self
     end
 

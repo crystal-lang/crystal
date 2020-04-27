@@ -1,6 +1,6 @@
 module Crystal::Doc
   record Main, body : String, program : Type, repository_name : String do
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       to_json(io)
     end
 

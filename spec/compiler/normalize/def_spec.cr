@@ -161,19 +161,19 @@ module Crystal
     it "expands a def with double splat and two named args" do
       a_def = parse("def foo(**options); options; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y"])
-      other_def.to_s.should eq("def foo:x:y(x, y)\n  options = {x: x, y: y}\n  options\nend")
+      other_def.to_s.should eq("def foo:x:y(x __temp_1, y __temp_2)\n  options = {x: __temp_1, y: __temp_2}\n  options\nend")
     end
 
     it "expands a def with double splat and two named args and regular args" do
       a_def = parse("def foo(y, **options); y + options; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y", "z"])
-      other_def.to_s.should eq("def foo:x:y:z(x, y, z)\n  options = {x: x, z: z}\n  y + options\nend")
+      other_def.to_s.should eq("def foo:x:y:z(x __temp_1, y, z __temp_3)\n  options = {x: __temp_1, z: __temp_3}\n  y + options\nend")
     end
 
     it "expands a def with splat and double splat" do
       a_def = parse("def foo(*args, **options); args + options; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 2, ["x", "y"])
-      other_def.to_s.should eq("def foo:x:y(__temp_1, __temp_2, x, y)\n  args = {__temp_1, __temp_2}\n  options = {x: x, y: y}\n  args + options\nend")
+      other_def.to_s.should eq("def foo:x:y(__temp_1, __temp_2, x __temp_3, y __temp_4)\n  args = {__temp_1, __temp_2}\n  options = {x: __temp_3, y: __temp_4}\n  args + options\nend")
     end
 
     it "expands arg with default value after splat" do
@@ -218,6 +218,18 @@ module Crystal
       actual = a_def.expand_default_arguments(Program.new, 1)
       expected = parse("def foo(x x1); y1 = 1; z1 = 2; yield x1 + y1 + z1; end")
       actual.should eq(expected)
+    end
+
+    it "expands a new def with double splat and two named args and regular args" do
+      a_def = parse("def new(y, **options); y + options; end").as(Def)
+      other_def = a_def.expand_new_default_arguments(Program.new, 0, ["x", "y", "z"])
+      other_def.to_s.should eq("def new:x:y:z(x __temp_1, y __temp_2, z __temp_3)\n  _ = allocate\n  _.initialize(x: __temp_1, y: __temp_2, z: __temp_3)\n  if _.responds_to?(:finalize)\n    ::GC.add_finalizer(_)\n  end\n  _\nend")
+    end
+
+    it "expands def with reserved external name (#6559)" do
+      a_def = parse("def foo(abstract __arg0, **options); @abstract = __arg0; end").as(Def)
+      other_def = a_def.expand_default_arguments(Program.new, 0, ["abstract"])
+      other_def.to_s.should eq("def foo:abstract(abstract __arg0)\n  options = {}\n  @abstract = __arg0\nend")
     end
   end
 end

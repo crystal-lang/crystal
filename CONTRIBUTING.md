@@ -97,7 +97,7 @@ as the standard library. Otherwise the barebones `crystal` executable uses the s
 your installation.
 
 Next, make changes to the standard library, making sure you also provide corresponding specs. To run
-the specs for the standard library, run `make std_spec`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
+the specs for the standard library, run `make std_spec`. To run a particular spec: `bin/crystal spec spec/std/array_spec.cr`.
 You can use `make help` for a list of available make targets.
 
 Note: at this point you might get long compile error that include "library not found for: ...". This means
@@ -167,6 +167,17 @@ your own projects; a not so clean history is to prefer once a commit landed ther
 
 ```sh
 git push -f origin my_feature_branch
+```
+
+## Git pre-commit hook
+
+Code submitted to this repository should be formatted according to `crystal tool format`.
+A pre-commit hook can be installed into the local git repo to ensure the formatter validates every commit: https://github.com/crystal-lang/crystal/blob/master/scripts/git/pre-commit
+
+Install the pre-commit hook:
+
+```sh
+ln -s scripts/git/pre-commit .git/hooks
 ```
 
 ## Code of Conduct

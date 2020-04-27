@@ -26,15 +26,6 @@ require "comparable"
 # '\v' # vertical tab
 # ```
 #
-# You can use a backslash followed by at most three digits to denote a code point written in octal:
-#
-# ```
-# '\101' # == 'A'
-# '\123' # == 'S'
-# '\12'  # == '\n'
-# '\1'   # code point 1
-# ```
-#
 # You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
 # ```
@@ -58,7 +49,7 @@ struct Char
   # The maximum valid codepoint for a character.
   MAX_CODEPOINT = 0x10ffff
 
-  # The replacement character, used on invalid utf-8 byte sequences
+  # The replacement character, used on invalid UTF-8 byte sequences.
   REPLACEMENT = '\ufffd'
 
   # Returns the difference of the codepoint values of this char and *other*.
@@ -112,10 +103,16 @@ struct Char
     (ord - other).chr
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
+  #
+  # Returns the difference of the codepoint values of `self` and *other*.
+  # The result is either negative, `0` or positive based on whether `other`'s codepoint is
+  # less, equal, or greater than `self`'s codepoint.
   #
   # ```
   # 'a' <=> 'c' # => -2
+  # 'z' <=> 'z' # => 0
+  # 'c' <=> 'a' # => 2
   # ```
   def <=>(other : Char)
     self - other
@@ -334,6 +331,8 @@ struct Char
         else # at the beginning of the set or escaped
           return not_negated if self == char
         end
+      else
+        # go on
       end
 
       if range && previous
@@ -474,7 +473,7 @@ struct Char
   # 'あ'.inspect      # => "'あ'"
   # '\u0012'.inspect # => "'\\u{12}'"
   # ```
-  def inspect
+  def inspect : String
     dump_or_inspect do |io|
       if ascii_control?
         io << "\\u{"
@@ -489,7 +488,7 @@ struct Char
   # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See also: `#inspect`.
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << inspect
   end
 
@@ -564,13 +563,13 @@ struct Char
   # in *base*, `nil` otherwise.
   #
   # ```
-  # '1'.to_i     # => 1
-  # '8'.to_i     # => 8
-  # 'c'.to_i     # raises ArgumentError
-  # '1'.to_i(16) # => 1
-  # 'a'.to_i(16) # => 10
-  # 'f'.to_i(16) # => 15
-  # 'z'.to_i(16) # raises ArgumentError
+  # '1'.to_i?     # => 1
+  # '8'.to_i?     # => 8
+  # 'c'.to_i?     # => nil
+  # '1'.to_i?(16) # => 1
+  # 'a'.to_i?(16) # => 10
+  # 'f'.to_i?(16) # => 15
+  # 'z'.to_i?(16) # => nil
   # ```
   def to_i?(base : Int = 10) : Int32?
     raise ArgumentError.new "Invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
@@ -614,9 +613,9 @@ struct Char
   # raises otherwise.
   #
   # ```
-  # '1'.to_i # => 1.0
-  # '8'.to_i # => 8.0
-  # 'c'.to_i # raises ArgumentError
+  # '1'.to_f # => 1.0
+  # '8'.to_f # => 8.0
+  # 'c'.to_f # raises ArgumentError
   # ```
   def to_f
     to_f64
@@ -626,9 +625,9 @@ struct Char
   # `nil` otherwise.
   #
   # ```
-  # '1'.to_i # => 1.0
-  # '8'.to_i # => 8.0
-  # 'c'.to_i # raises ArgumentError
+  # '1'.to_f? # => 1.0
+  # '8'.to_f? # => 8.0
+  # 'c'.to_f? # => nil
   # ```
   def to_f?
     to_f64?
@@ -754,7 +753,7 @@ struct Char
   # 'a'.to_s # => "a"
   # 'あ'.to_s # => "あ"
   # ```
-  def to_s
+  def to_s : String
     String.new(4) do |buffer|
       appender = buffer.appender
       each_byte { |byte| appender << byte }
@@ -765,12 +764,12 @@ struct Char
   # Appends this char to the given `IO`.
   #
   # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     if ascii?
       byte = ord.to_u8
 
       # Optimization: writing a slice is much slower than writing a byte
-      if io.@encoding
+      if io.has_non_utf8_encoding?
         io.write_utf8 Slice.new(pointerof(byte), 1)
       else
         io.write_byte byte

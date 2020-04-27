@@ -53,7 +53,7 @@ describe "Semantic: macro" do
 
       Foo.new.foo
       ),
-      "type must be Int32, not Char"
+      "method must return Int32 but it is returning Char"
   end
 
   it "allows subclasses of return type for macro def" do
@@ -143,7 +143,7 @@ describe "Semantic: macro" do
       end
 
       Bar.new.bar
-    }, "type must be Foo(String), not Foo(Int32)",
+    }, "method must return Foo(String) but it is returning Foo(Int32)",
       inject_primitives: false
   end
 
@@ -293,9 +293,20 @@ describe "Semantic: macro" do
       end
 
       foo(1)
-      ), "OH\nNO"
+      ), "OH"
 
+    ex.to_s.should contain "NO"
     ex.to_s.should_not contain("expanding macro")
+  end
+
+  it "executes raise inside macro, with empty message (#8631)" do
+    assert_error %(
+      macro foo
+        {{ raise "" }}
+      end
+
+      foo
+      ), ""
   end
 
   it "can specify tuple as return type" do
@@ -566,16 +577,16 @@ describe "Semantic: macro" do
       )) { types["Foo"] }
   end
 
-  it "allows declaring class with macro expression" do
+  it "allows declaring class with inline macro expression (#1333)" do
     assert_type(%(
-      {{ `echo "class Foo; end"` }}
+      {{ "class Foo; end".id }}
 
       Foo.new
       )) { types["Foo"] }
   end
 
   it "errors if requires inside class through macro expansion" do
-    assert_error %(
+    str = %(
       macro req
         require "bar"
       end
@@ -583,8 +594,10 @@ describe "Semantic: macro" do
       class Foo
         req
       end
-      ),
-      "can't require inside type declarations"
+    )
+    expect_raises SyntaxException, "can't require inside type declarations" do
+      semantic parse str
+    end
   end
 
   it "errors if requires inside if through macro expansion" do
@@ -672,25 +685,29 @@ describe "Semantic: macro" do
   end
 
   it "show macro trace in errors (1)" do
-    assert_error %(
+    ex = assert_error %(
       macro foo
         Bar
       end
 
       foo
     ),
-      "Error in line 6: expanding macro",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 6"
   end
 
   it "show macro trace in errors (2)" do
-    assert_error %(
+    ex = assert_error %(
       {% begin %}
         Bar
       {% end %}
     ),
-      "Error in line 2: expanding macro",
+      "Error: expanding macro",
       inject_primitives: false
+
+    ex.to_s.should contain "error in line 2"
   end
 
   it "errors if using macro that is defined later" do
@@ -1238,6 +1255,48 @@ describe "Semantic: macro" do
     )) { int32 }
   end
 
+  it "can lookup type parameter when macro is called inside class (#5343)" do
+    assert_type(%(
+      class Foo(T)
+        macro foo
+          {{T}}
+        end
+      end
+
+      alias FooInt32 = Foo(Int32)
+
+      class Bar
+        def self.foo
+          FooInt32.foo
+        end
+      end
+
+      Bar.foo
+    )) { int32.metaclass }
+  end
+
+  it "cannot lookup type defined in caller class" do
+    assert_error %(
+      class Foo
+        macro foo
+          {{Baz}}
+        end
+      end
+
+      class Bar
+        def self.foo
+          Foo.foo
+        end
+
+        class Baz
+        end
+      end
+
+      Bar.foo
+      ),
+      "undefined constant Baz"
+  end
+
   it "clones default value before expanding" do
     assert_type(%(
       FOO = {} of String => String?
@@ -1278,5 +1337,130 @@ describe "Semantic: macro" do
         1
       {% end %}
       )) { int32 }
+  end
+
+  it "evaluates yield expression (#2924)" do
+    assert_type(%(
+      macro a(b)
+        {{yield b}}
+      end
+
+      a("foo") do |c|
+        {{c}}
+      end
+      )) { string }
+  end
+
+  it "finds generic in macro code" do
+    assert_type(%(
+      {% begin %}
+        {{ Array(String) }}
+      {% end %}
+      )) { array_of(string).metaclass }
+  end
+
+  it "finds generic in macro code using free var" do
+    assert_type(%(
+      class Foo(T)
+        def self.foo
+          {% begin %}
+            {{ Array(T) }}
+          {% end %}
+        end
+      end
+
+      Foo(Int32).foo
+      )) { array_of(int32).metaclass }
+  end
+
+  it "expands multiline macro expression in verbatim (#6643)" do
+    assert_type(%(
+      {% verbatim do %}
+        {{
+          if true
+            1
+            "2"
+            3
+          end
+        }}
+      {% end %}
+    )) { int32 }
+  end
+
+  it "can use macro in instance var initializer (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x : String = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
+
+  it "can use macro in instance var initializer (just assignment) (#7666)" do
+    assert_type(%(
+      class Foo
+        macro m
+          "test"
+        end
+
+        @x = m
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { string }
+  end
+
+  it "shows correct error message in macro expansion (#7083)" do
+    assert_error %(
+      abstract class Foo
+        {% begin %}
+          def self.new
+            allocate
+          end
+        {% end %}
+      end
+
+      Foo.new
+      ),
+      "can't instantiate abstract class Foo"
+  end
+
+  it "doesn't crash on syntax error inside macro (regression, #8038)" do
+    expect_raises(Crystal::SyntaxException, "unterminated array literal") do
+      semantic(%(
+        {% begin %}[{% end %}
+        ))
+    end
+  end
+
+  it "has correct location after expanding assignment after instance var" do
+    result = semantic(%( #  1
+      macro foo(x)       #  2
+        @{{x}}           #  3
+                         #  4
+        def bar          #  5
+        end              #  6
+      end                #  7
+                         #  8
+      class Foo          #  9
+        foo(x = 1)       # 10
+      end
+    ), inject_primitives: false)
+
+    method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
+    method.location.not_nil!.original_location.not_nil!.line_number.should eq(10)
   end
 end

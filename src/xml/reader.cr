@@ -57,8 +57,8 @@ struct XML::Reader
     end
   end
 
-  # Returns the `XML::Type` of the node.
-  def node_type
+  # Returns the `XML::Reader::Type` of the node.
+  def node_type : XML::Reader::Type
     LibXML.xmlTextReaderNodeType(@reader)
   end
 
@@ -83,17 +83,17 @@ struct XML::Reader
     LibXML.xmlTextReaderAttributeCount(@reader)
   end
 
-  # Moves to the first `XML::Type::ATTRIBUTE_NODE` of the node.
+  # Moves to the first `XML::Reader::Type::ATTRIBUTE` of the node.
   def move_to_first_attribute
     LibXML.xmlTextReaderMoveToFirstAttribute(@reader) == 1
   end
 
-  # Moves to the next `XML::Type::ATTRIBUTE_NODE` of the node.
+  # Moves to the next `XML::Reader::Type::ATTRIBUTE` of the node.
   def move_to_next_attribute
     LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
   end
 
-  # Moves to the `XML::Type::ATTRIBUTE_NODE` with the specified name.
+  # Moves to the `XML::Reader::Type::ATTRIBUTE` with the specified name.
   def move_to_attribute(name : String)
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
@@ -111,7 +111,7 @@ struct XML::Reader
     String.new(value) if value
   end
 
-  # Moves from the `XML::Type::ATTRIBUTE_NODE` to its containing `XML::Type::ELEMENT_NODE`.
+  # Moves from the `XML::Reader::Type::ATTRIBUTE` to its containing `XML::Reader::Type::ELEMENT`.
   def move_to_element
     LibXML.xmlTextReaderMoveToElement(@reader) == 1
   end
@@ -129,13 +129,33 @@ struct XML::Reader
 
   # Returns the XML for the node and its content including subtrees.
   def read_outer_xml
+    # On a NONE type libxml2 2.9.9 is giving a segfault:
+    #
+    #   https://gitlab.gnome.org/GNOME/libxml2/issues/43
+    #
+    # so we avoid the issue by returning early here.
+    #
+    # FIXME: if that issue is fixed we should revert this line
+    # to avoid doing an extra C call each time.
+    return "" if node_type.none?
+
     xml = LibXML.xmlTextReaderReadOuterXml(@reader)
     xml ? String.new(xml) : ""
   end
 
-  # Expand the node to a `XML::Node` that can be searched with XPath etc.
+  # Expands the node to a `XML::Node` that can be searched with XPath etc.
   # The returned `XML::Node` is only valid until the next call to `#read`.
-  def expand
+  #
+  # Raises a `XML::Error` if the node could not be expanded.
+  def expand : XML::Node
+    expand? || raise XML::Error.new LibXML.xmlGetLastError
+  end
+
+  # Expands the node to a `XML::Node` that can be searched with XPath etc.
+  # The returned `XML::Node` is only valid until the next call to `#read`.
+  #
+  # Returns `nil` if the node could not be expanded.
+  def expand? : XML::Node?
     xml = LibXML.xmlTextReaderExpand(@reader)
     XML::Node.new(xml) if xml
   end

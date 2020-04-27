@@ -1,3 +1,6 @@
+require "socket"
+require "uri"
+
 class Socket
   abstract struct Address
     getter family : Family
@@ -18,6 +21,31 @@ class Socket
       end
     end
 
+    # Parses a `Socket::Address` from an URI.
+    #
+    # Supported formats:
+    # * `ip://<host>:<port>`
+    # * `tcp://<host>:<port>`
+    # * `udp://<host>:<port>`
+    # * `unix://<path>`
+    #
+    # See `IPAddress.parse` and `UNIXAddress.parse` for details.
+    def self.parse(uri : URI)
+      case uri.scheme
+      when "ip", "tcp", "udp"
+        IPAddress.parse uri
+      when "unix"
+        UNIXAddress.parse uri
+      else
+        raise Socket::Error.new "Unsupported address type: #{uri.scheme}"
+      end
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
+    end
+
     def initialize(@family : Family, @size : Int32)
     end
 
@@ -36,6 +64,8 @@ class Socket
   #
   # Example:
   # ```
+  # require "socket"
+  #
   # Socket::IPAddress.new("127.0.0.1", 8080)
   # Socket::IPAddress.new("fe80::2ab2:bdff:fe59:8e2c", 1234)
   # ```
@@ -44,6 +74,13 @@ class Socket
   # resolve an IP, or don't know whether a `String` constains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
+    UNSPECIFIED  = "0.0.0.0"
+    UNSPECIFIED6 = "::"
+    LOOPBACK     = "127.0.0.1"
+    LOOPBACK6    = "::1"
+    BROADCAST    = "255.255.255.255"
+    BROADCAST6   = "ff0X::1"
+
     getter port : Int32
 
     @address : String?
@@ -73,6 +110,40 @@ class Socket
       else
         raise "Unsupported family type: #{family} (#{family.value})"
       end
+    end
+
+    # Parses a `Socket::IPAddress` from an URI.
+    #
+    # It expects the URI to include `<scheme>://<host>:<port>` where `scheme` as
+    # well as any additional URI components (such as `path` or `query`) are ignored.
+    #
+    # `host` must be an IP address (v4 or v6), otherwise `Socket::Error` will be
+    # raised. Domain names will not be resolved.
+    #
+    # ```
+    # require "socket"
+    #
+    # Socket::IPAddress.parse("tcp://127.0.0.1:8080") # => Socket::IPAddress.new("127.0.0.1", 8080)
+    # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
+    # ```
+    def self.parse(uri : URI) : IPAddress
+      host = uri.host.presence
+      raise Socket::Error.new("Invalid IP address: missing host") unless host
+
+      port = uri.port
+      raise Socket::Error.new("Invalid IP address: missing port") unless port
+
+      # remove ipv6 brackets
+      if host.starts_with?('[') && host.ends_with?(']')
+        host = host.byte_slice(1, host.bytesize - 2)
+      end
+
+      new(host, port)
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
@@ -117,7 +188,7 @@ class Socket
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -126,10 +197,47 @@ class Socket
     private def address(addr : LibC::InAddr)
       String.new(16) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
+    end
+
+    # Returns `true` if this IP is a loopback address.
+    #
+    # In the IPv4 family, loopback addresses are all addresses in the subnet
+    # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
+    def loopback? : Bool
+      if addr = @addr4
+        addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+      elsif addr = @addr6
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+      else
+        raise "unreachable!"
+      end
+    end
+
+    # Returns `true` if this IP is an unspecified address, either the IPv4 address `0.0.0.0` or the IPv6 address `::`.
+    def unspecified? : Bool
+      if addr = @addr4
+        addr.s_addr == 0_u32
+      elsif addr = @addr6
+        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+      else
+        raise "unreachable!"
+      end
+    end
+
+    private def ipv6_addr8(addr : LibC::In6Addr)
+      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+        addr.__u6_addr.__u6_addr8
+      {% elsif flag?(:linux) && flag?(:musl) %}
+        addr.__in6_union.__s6_addr
+      {% elsif flag?(:linux) %}
+        addr.__in6_u.__u6_addr8
+      {% else %}
+        {% raise "Unsupported platform" %}
+      {% end %}
     end
 
     def ==(other : IPAddress)
@@ -138,12 +246,22 @@ class Socket
         address == other.address
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       if family == Family::INET6
         io << '[' << address << ']' << ':' << port
       else
         io << address << ':' << port
       end
+    end
+
+    def inspect(io : IO) : Nil
+      io << "Socket::IPAddress("
+      to_s(io)
+      io << ")"
+    end
+
+    def pretty_print(pp)
+      pp.text inspect
     end
 
     def to_unsafe : LibC::Sockaddr*
@@ -181,6 +299,8 @@ class Socket
   #
   # Example:
   # ```
+  # require "socket"
+  #
   # Socket::UNIXAddress.new("/tmp/my.sock")
   # ```
   struct UNIXAddress < Address
@@ -202,6 +322,45 @@ class Socket
       new(sockaddr.as(LibC::SockaddrUn*), addrlen.to_i)
     end
 
+    # Parses a `Socket::UNIXAddress` from an URI.
+    #
+    # It expects the URI to include `<scheme>://<path>` where `scheme` as well
+    # as any additional URI components (such as `fragment` or `query`) are ignored.
+    #
+    # If `host` is not empty, it will be prepended to `path` to form a relative
+    # path.
+    #
+    # ```
+    # require "socket"
+    #
+    # Socket::UNIXAddress.parse("unix:///foo.sock") # => Socket::UNIXAddress.new("/foo.sock")
+    # Socket::UNIXAddress.parse("unix://foo.sock")  # => Socket::UNIXAddress.new("foo.sock")
+    # ```
+    def self.parse(uri : URI) : UNIXAddress
+      unix_path = String.build do |io|
+        io << uri.host
+        if port = uri.port
+          io << ':' << port
+        end
+        if path = uri.path.presence
+          io << path
+        end
+      end
+
+      raise Socket::Error.new("Invalid UNIX address: missing path") if unix_path.empty?
+
+      {% if flag?(:unix) %}
+        UNIXAddress.new(unix_path)
+      {% else %}
+        raise NotImplementedError.new("UNIX address not available")
+      {% end %}
+    end
+
+    # :ditto:
+    def self.parse(uri : String)
+      parse URI.parse(uri)
+    end
+
     protected def initialize(sockaddr : LibC::SockaddrUn*, size)
       @family = Family::UNIX
       @path = String.new(sockaddr.value.sun_path.to_unsafe)
@@ -212,7 +371,7 @@ class Socket
       path == other.path
     end
 
-    def to_s(io)
+    def to_s(io : IO) : Nil
       io << path
     end
 

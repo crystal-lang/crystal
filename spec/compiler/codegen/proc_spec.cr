@@ -6,7 +6,7 @@ describe "Code gen: proc" do
   end
 
   it "call proc literal with arguments" do
-    run("f = ->(x : Int32) { x + 1 }; f.call(41)").to_i.should eq(42)
+    run("f = ->(x : Int32) { x &+ 1 }; f.call(41)").to_i.should eq(42)
   end
 
   it "call proc pointer" do
@@ -16,7 +16,7 @@ describe "Code gen: proc" do
   it "call proc pointer with args" do
     run("
       def foo(x, y)
-        x + y
+        x &+ y
       end
 
       f = ->foo(Int32, Int32)
@@ -87,8 +87,14 @@ describe "Code gen: proc" do
 
   it "codegens proc that accepts a union and is called with a single type" do
     run("
-      f = ->(x : Int32 | Float64) { x + 1 }
-      f.call(1).to_i
+      struct Float
+        def &+(other)
+          self + other
+        end
+      end
+
+      f = ->(x : Int32 | Float64) { x &+ 1 }
+      f.call(1).to_i!
       ").to_i.should eq(2)
   end
 
@@ -155,7 +161,7 @@ describe "Code gen: proc" do
       end
 
       f = ->(x : Int32 | Float64) { x.abs }
-      f.call(1 || 1.5).to_i
+      f.call(1 || 1.5).to_i!
       ").to_i.should eq(1)
   end
 
@@ -373,7 +379,7 @@ describe "Code gen: proc" do
   it "allows invoking proc literal with smaller type" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -381,7 +387,7 @@ describe "Code gen: proc" do
       f = ->(x : Int32 | Nil) {
         x
       }
-      f.call(1).to_i
+      f.call(1).to_i!
       ").to_i.should eq(1)
   end
 
@@ -390,7 +396,7 @@ describe "Code gen: proc" do
       alias Func = Int32 -> Int32
 
       a = 2
-      f = Func.new { |x| x + a }
+      f = Func.new { |x| x &+ a }
       f.call(1)
       ").to_i.should eq(3)
   end
@@ -471,7 +477,7 @@ describe "Code gen: proc" do
 
       foo = ->(x : Int32 | Float64) { x }
       foo.call(a)
-      foo.call(a).to_i
+      foo.call(a).to_i!
       )).to_i.should eq(1)
   end
 
@@ -589,6 +595,8 @@ describe "Code gen: proc" do
 
   it "codegens proc to implicit self in constant (#647)" do
     run(%(
+      require "prelude"
+
       module Foo
         def self.blah
           1
@@ -600,7 +608,7 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
-  it "passes proc as &-> to method that yields" do
+  it "passes proc as &->expr to method that yields" do
     run(%(
       def foo
         yield
@@ -724,7 +732,7 @@ describe "Code gen: proc" do
       class Foo
         @f : -> Int32 = ->foo
 
-        def foo
+        def self.foo
           42
         end
       end
@@ -744,5 +752,71 @@ describe "Code gen: proc" do
       f = ->(x : Gen(Int32)) {}
       f.call(Foo.new)
       ))
+  end
+
+  it "executes proc pointer on primitive" do
+    run(%(
+      a = 1
+      f = ->a.&+(Int32)
+      f.call(20)
+      )).to_i.should eq(21)
+  end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    run(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      a = 1
+      proc = foo(->{ a = 2 })
+      proc.call
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block = ->{ a = 2 }
+
+      Foo.new(block).call
+
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, using union type (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block1 = ->{ a = 2 }
+      block2 = ->{ a = 3; nil }
+
+      Foo.new(block2 || block1).call
+
+      a
+      )).to_i.should eq(3)
   end
 end

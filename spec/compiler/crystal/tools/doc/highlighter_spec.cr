@@ -41,7 +41,8 @@ describe "Crystal::Doc::Highlighter#highlight" do
     case when select then of rescue ensure is_a? alias sizeof
     as as? typeof for in with self super private asm
     nil? abstract pointerof
-    protected uninitialized instance_sizeof
+    protected uninitialized instance_sizeof offsetof
+    annotation verbatim
   ).each do |kw|
     it_highlights kw, %(<span class="k">#{kw}</span>)
   end
@@ -53,7 +54,7 @@ describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
   %w(
-    + - * / = == < <= > >= ! != =~ !~ & | ^ ~ **
+    + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
     >> << % [] []? []= <=> ===
   ).each do |op|
     it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)

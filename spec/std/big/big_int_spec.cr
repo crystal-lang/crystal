@@ -22,6 +22,7 @@ describe "BigInt" do
 
   it "creates from string" do
     BigInt.new("12345678").to_s.should eq("12345678")
+    BigInt.new("123_456_78").to_s.should eq("12345678")
     BigInt.new("+12345678").to_s.should eq("12345678")
     BigInt.new("-12345678").to_s.should eq("-12345678")
   end
@@ -55,7 +56,7 @@ describe "BigInt" do
     [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.to_big_i.divmod(3.to_big_i).should eq({3, 2})
     11.to_big_i.divmod(-3.to_big_i).should eq({-4, -1})
 
@@ -87,6 +88,15 @@ describe "BigInt" do
     (5.to_big_i + Int64::MAX).should eq(Int64::MAX.to_big_i + 5)
 
     (2 + 1.to_big_i).should eq(3.to_big_i)
+
+    (1.to_big_i &+ 2.to_big_i).should eq(3.to_big_i)
+    (1.to_big_i &+ 2).should eq(3.to_big_i)
+    (1.to_big_i &+ 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &+ (-2_i64)).should eq(3.to_big_i)
+    (5.to_big_i &+ Int64::MAX).should be > Int64::MAX.to_big_i
+    (5.to_big_i &+ Int64::MAX).should eq(Int64::MAX.to_big_i &+ 5)
+
+    (2 &+ 1.to_big_i).should eq(3.to_big_i)
   end
 
   it "subs" do
@@ -99,6 +109,16 @@ describe "BigInt" do
 
     (5 - 1.to_big_i).should eq(4.to_big_i)
     (-5 - 1.to_big_i).should eq(-6.to_big_i)
+
+    (5.to_big_i &- 2.to_big_i).should eq(3.to_big_i)
+    (5.to_big_i &- 2).should eq(3.to_big_i)
+    (5.to_big_i &- 2_u8).should eq(3.to_big_i)
+    (5.to_big_i &- (-2_i64)).should eq(7.to_big_i)
+    (-5.to_big_i &- Int64::MAX).should be < -Int64::MAX.to_big_i
+    (-5.to_big_i &- Int64::MAX).should eq(-Int64::MAX.to_big_i &- 5)
+
+    (5 &- 1.to_big_i).should eq(4.to_big_i)
+    (-5 &- 1.to_big_i).should eq(-6.to_big_i)
   end
 
   it "negates" do
@@ -112,32 +132,83 @@ describe "BigInt" do
     (3 * 2.to_big_i).should eq(6.to_big_i)
     (3_u8 * 2.to_big_i).should eq(6.to_big_i)
     (2.to_big_i * Int64::MAX).should eq(2.to_big_i * Int64::MAX.to_big_i)
+
+    (2.to_big_i &* 3.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* 3).should eq(6.to_big_i)
+    (2.to_big_i &* 3_u8).should eq(6.to_big_i)
+    (3 &* 2.to_big_i).should eq(6.to_big_i)
+    (3_u8 &* 2.to_big_i).should eq(6.to_big_i)
+    (2.to_big_i &* Int64::MAX).should eq(2.to_big_i &* Int64::MAX.to_big_i)
   end
 
   it "gets absolute value" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
-    (10.to_big_i / 3.to_big_i).should eq(3.to_big_i)
-    (10.to_big_i / 3).should eq(3.to_big_i)
-    (10 / 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
+    (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
+    (10 / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.to_big_i)
   end
 
-  it "divides with negative numbers" do
-    (7.to_big_i / 2).should eq(3.to_big_i)
-    (7.to_big_i / 2.to_big_i).should eq(3.to_big_i)
-    (7.to_big_i / -2).should eq(-4.to_big_i)
-    (7.to_big_i / -2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / 2).should eq(-4.to_big_i)
-    (-7.to_big_i / 2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / -2).should eq(3.to_big_i)
-    (-7.to_big_i / -2.to_big_i).should eq(3.to_big_i)
+  it "divides" do
+    (10.to_big_i // 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i // 3).should eq(3.to_big_i)
+    (10 // 3.to_big_i).should eq(3.to_big_i)
+    ((Int64::MAX.to_big_i * 2.to_big_i) // Int64::MAX).should eq(2.to_big_i)
+  end
 
-    (-6.to_big_i / 2).should eq(-3.to_big_i)
-    (6.to_big_i / -2).should eq(-3.to_big_i)
-    (-6.to_big_i / -2).should eq(3.to_big_i)
+  it "divides with negative numbers" do
+    (7.to_big_i / 2).should eq(3.5.to_big_f)
+    (7.to_big_i / 2.to_big_i).should eq(3.5.to_big_f)
+    (7.to_big_i / -2).should eq(-3.5.to_big_f)
+    (7.to_big_i / -2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / -2).should eq(3.5.to_big_f)
+    (-7.to_big_i / -2.to_big_i).should eq(3.5.to_big_f)
+
+    (-6.to_big_i / 2).should eq(-3.to_big_f)
+    (6.to_big_i / -2).should eq(-3.to_big_f)
+    (-6.to_big_i / -2).should eq(3.to_big_f)
+  end
+
+  it "divides with negative numbers" do
+    (7.to_big_i // 2).should eq(3.to_big_i)
+    (7.to_big_i // 2.to_big_i).should eq(3.to_big_i)
+    (7.to_big_i // -2).should eq(-4.to_big_i)
+    (7.to_big_i // -2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // 2).should eq(-4.to_big_i)
+    (-7.to_big_i // 2.to_big_i).should eq(-4.to_big_i)
+    (-7.to_big_i // -2).should eq(3.to_big_i)
+    (-7.to_big_i // -2.to_big_i).should eq(3.to_big_i)
+
+    (-6.to_big_i // 2).should eq(-3.to_big_i)
+    (6.to_big_i // -2).should eq(-3.to_big_i)
+    (-6.to_big_i // -2).should eq(3.to_big_i)
   end
 
   it "tdivs" do
@@ -223,6 +294,20 @@ describe "BigInt" do
     end
   end
 
+  it "raises if divides by zero" do
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0.to_big_i
+    end
+
+    expect_raises DivisionByZeroError do
+      10.to_big_i // 0
+    end
+
+    expect_raises DivisionByZeroError do
+      10 // 0.to_big_i
+    end
+  end
+
   it "raises if mods by zero" do
     expect_raises DivisionByZeroError do
       10.to_big_i % 0.to_big_i
@@ -259,7 +344,7 @@ describe "BigInt" do
   end
 
   describe "#inspect" do
-    it { "2".to_big_i.inspect.should eq("2_big_i") }
+    it { "2".to_big_i.inspect.should eq("2") }
   end
 
   it "does gcd and lcm" do
@@ -271,19 +356,15 @@ describe "BigInt" do
     a_17 = a * 17
 
     (abc * b).gcd(abc * c).should eq(abc)
+    abc.gcd(a_17).should eq(a)
     (abc * b).lcm(abc * c).should eq(abc * b * c)
     (abc * b).gcd(abc * c).should be_a(BigInt)
 
     (a_17).gcd(17).should eq(17)
-    (17).gcd(a_17).should eq(17)
     (-a_17).gcd(17).should eq(17)
-    (-17).gcd(a_17).should eq(17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (17).gcd(a_17).should be_a(Int::Unsigned)
-
     (a_17).lcm(17).should eq(a_17)
-    (17).lcm(a_17).should eq(a_17)
   end
 
   it "can use Number::[]" do
@@ -295,14 +376,16 @@ describe "BigInt" do
   it "can be casted into other Number types" do
     big = BigInt.new(1234567890)
     big.to_i.should eq(1234567890)
-    big.to_i8.should eq(-46)
-    big.to_i16.should eq(722)
+    big.to_i8!.should eq(-46)
+    big.to_i16!.should eq(722)
     big.to_i32.should eq(1234567890)
     big.to_i64.should eq(1234567890)
     big.to_u.should eq(1234567890)
-    big.to_u8.should eq(210)
-    big.to_u16.should eq(722)
+    big.to_u8!.should eq(210)
+    big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
+
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
 
     u64 = big.to_u64
     u64.should eq(1234567890)
@@ -325,6 +408,10 @@ describe "BigInt" do
     5.to_big_i.popcount.should eq(2)
   end
 
+  it "#trailing_zeros_count" do
+    "00000000000000001000000000001000".to_big_i(base: 2).trailing_zeros_count.should eq(3)
+  end
+
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
@@ -337,6 +424,15 @@ describe "BigInt" do
   it "clones" do
     x = 1.to_big_i
     x.clone.should eq(x)
+  end
+
+  describe "#humanize_bytes" do
+    it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
+    it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
   end
 end
 

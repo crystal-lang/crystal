@@ -13,6 +13,23 @@ struct Number
     self
   end
 
+  # Divides `self` by *other* using floored division.
+  #
+  # The result will be of the same type as `self`.
+  def //(other)
+    self.class.new((self / other).floor)
+  end
+
+  # :nodoc:
+  macro expand_div(rhs_types, result_type)
+    {% for rhs in rhs_types %}
+      @[AlwaysInline]
+      def /(other : {{rhs}}) : {{result_type}}
+        {{result_type}}.new(self) / {{result_type}}.new(other)
+      end
+    {% end %}
+  end
+
   # Creates an `Array` of `self` with the given values, which will be casted
   # to this type with the `new` method (defined in each `Number` type).
   #
@@ -47,7 +64,7 @@ struct Number
   macro slice(*nums, read_only = false)
     %slice = Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
     {% for num, i in nums %}
-      %slice.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %slice.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %slice
   end
@@ -65,7 +82,7 @@ struct Number
   macro static_array(*nums)
     %array = uninitialized StaticArray({{@type}}, {{nums.size}})
     {% for num, i in nums %}
-      %array.to_unsafe[{{i}}] = {{@type}}.new({{num}})
+      %array.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
     {% end %}
     %array
   end
@@ -158,13 +175,21 @@ struct Number
   # 11.divmod(-3) # => {-4, -1}
   # ```
   def divmod(number)
-    {(self / number).floor, self % number}
+    {(self // number).floor, self % number}
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # See also: `Object#<=>`.
-  def <=>(other)
+  # Returns:
+  # - `-1` if `self` is less than *other*
+  # - `0` if `self` is equal to *other*
+  # - `-1` if `self` is greater than *other*
+  # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
+  def <=>(other) : Int32?
+    # NaN can't be compared to other numbers
+    return nil if self.is_a?(Float) && self.nan?
+    return nil if other.is_a?(Float) && other.nan?
+
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
@@ -212,37 +237,12 @@ struct Number
   def round(digits = 0, base = 10)
     x = self.to_f
     if digits < 0
-      y = base ** (-digits)
+      y = base.to_f ** digits.abs
       self.class.new((x / y).round * y)
     else
-      y = base ** digits
+      y = base.to_f ** digits
       self.class.new((x * y).round / y)
     end
-  end
-
-  # Clamps a value within *range*.
-  #
-  # ```
-  # 5.clamp(10..100)   # => 10
-  # 50.clamp(10..100)  # => 50
-  # 500.clamp(10..100) # => 100
-  # ```
-  def clamp(range : Range)
-    raise ArgumentError.new("Can't clamp an exclusive range") if range.exclusive?
-    clamp range.begin, range.end
-  end
-
-  # Clamps a value between *min* and *max*.
-  #
-  # ```
-  # 5.clamp(10, 100)   # => 10
-  # 50.clamp(10, 100)  # => 50
-  # 500.clamp(10, 100) # => 100
-  # ```
-  def clamp(min, max)
-    return max if self > max
-    return min if self < min
-    self
   end
 
   # Returns `true` if value is equal to zero.
@@ -283,11 +283,6 @@ struct Number
         @n += @by
         value
       end
-    end
-
-    def rewind
-      @n = @original
-      self
     end
   end
 end

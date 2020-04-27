@@ -68,8 +68,8 @@ private def h_mean(mean)
 end
 
 describe Benchmark::IPS::Entry, "#human_mean" do
-  it { h_mean(0.01234567890123).should eq("  0.01 ") }
-  it { h_mean(0.12345678901234).should eq("  0.12 ") }
+  it { h_mean(0.01234567890123).should eq(" 12.35m") }
+  it { h_mean(0.12345678901234).should eq("123.46m") }
 
   it { h_mean(1.23456789012345).should eq("  1.23 ") }
   it { h_mean(12.3456789012345).should eq(" 12.35 ") }
@@ -94,7 +94,7 @@ private def h_ips(seconds)
 end
 
 describe Benchmark::IPS::Entry, "#human_iteration_time" do
-  it { h_ips(1234.567_890_123).should eq("1234.57s ") }
+  it { h_ips(1234.567_890_123).should eq("1,234.57s ") }
   it { h_ips(123.456_789_012_3).should eq("123.46s ") }
   it { h_ips(12.345_678_901_23).should eq(" 12.35s ") }
   it { h_ips(1.234_567_890_123).should eq("  1.23s ") }

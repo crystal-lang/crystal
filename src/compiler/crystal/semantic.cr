@@ -69,9 +69,15 @@ class Crystal::Program
     node, processor = @progress_tracker.stage("Semantic (type declarations)") do
       TypeDeclarationProcessor.new(self).process(node)
     end
-    @progress_tracker.stage("Semantic (abstract def check)") do
-      AbstractDefChecker.new(self).run
+
+    # TODO: remove this check a couple of versions after 0.30.0 once
+    # we are sure it's working fine for everyone
+    unless has_flag?("skip_abstract_def_check")
+      @progress_tracker.stage("Semantic (abstract def check)") do
+        AbstractDefChecker.new(self).run
+      end
     end
+
     {node, processor}
   end
 end

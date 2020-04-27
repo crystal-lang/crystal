@@ -65,14 +65,14 @@ module Crystal
         block: block_node.is_a?(Block) ? block_node : nil)
       fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
 
-      expanded_macro = program.expand_macro method_missing, fake_call, self, self
+      expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self
 
       # Check if the expanded macro is a def. We do this
       # by just lexing the result and seeing if the first
       # token is `def`
       expands_to_def = starts_with_def?(expanded_macro)
       generated_nodes =
-        program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
+        program.parse_macro_source(expanded_macro, macro_expansion_pragmas, method_missing, method_missing, args_nodes_names) do |parser|
           if expands_to_def
             parser.parse
           else

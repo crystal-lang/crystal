@@ -1,4 +1,5 @@
 # IEEE is ported from the C++ "double-conversions" library.
+#
 # The following is their license:
 #   Copyright 2012 the V8 project authors. All rights reserved.
 #   Redistribution and use in source and binary forms, with or without
@@ -30,20 +31,21 @@
 module Float::Printer::IEEE
   extend self
 
-  EXPONENT_MASK_64             = 0x7FF0000000000000_u64
-  SIGNIFICAND_MASK_64          = 0x000FFFFFFFFFFFFF_u64
-  HIDDEN_BIT_64                = 0x0010000000000000_u64
-  PHYSICAL_SIGNIFICAND_SIZE_64 =                     52 # Excludes the hidden bit
-  SIGNIFICAND_SIZE_64          =                     53
+  EXPONENT_MASK_64    = 0x7FF0000000000000_u64
+  SIGNIFICAND_MASK_64 = 0x000FFFFFFFFFFFFF_u64
+  HIDDEN_BIT_64       = 0x0010000000000000_u64
+  # Excludes the hidden bit
+  PHYSICAL_SIGNIFICAND_SIZE_64 = 52
+  SIGNIFICAND_SIZE_64          = 53
   EXPONENT_BIAS_64             = 0x3FF + PHYSICAL_SIGNIFICAND_SIZE_64
   DENORMAL_EXPONENT_64         = -EXPONENT_BIAS_64 + 1
   SIGN_MASK_64                 = 0x8000000000000000_u64
-
-  EXPONENT_MASK_32             = 0x7F800000_u32
-  SIGNIFICAND_MASK_32          = 0x007FFFFF_u32
-  HIDDEN_BIT_32                = 0x00800000_u32
-  PHYSICAL_SIGNIFICAND_SIZE_32 =             23 # Excludes the hidden bit
-  SIGNIFICAND_SIZE_32          =             24
+  EXPONENT_MASK_32             =         0x7F800000_u32
+  SIGNIFICAND_MASK_32          =         0x007FFFFF_u32
+  HIDDEN_BIT_32                =         0x00800000_u32
+  # Excludes the hidden bit
+  PHYSICAL_SIGNIFICAND_SIZE_32 = 23
+  SIGNIFICAND_SIZE_32          = 24
   EXPONENT_BIAS_32             = 0x7F + PHYSICAL_SIGNIFICAND_SIZE_32
   DENORMAL_EXPONENT_32         = -EXPONENT_BIAS_32 + 1
   SIGN_MASK_32                 = 0x80000000_u32
@@ -89,9 +91,11 @@ module Float::Printer::IEEE
   end
 
   # Computes the two boundaries of *v*.
-  # The bigger boundary (m_plus) is normalized. The lower boundary has the same
-  # exponent as m_plus.
-  # Precondition: the value encoded by this Flaot must be greater than 0.
+  #
+  # The bigger boundary (*m_plus*) is normalized. The lower boundary has the same
+  # exponent as *m_plus*.
+  #
+  # Precondition: the value encoded by this `Float` must be greater than 0.
   def normalized_boundaries(v : Float64)
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
@@ -109,7 +113,7 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d64 & SIGNIFICAND_MASK_64) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT_64)
-    calcualted_exp = exponent(d64)
+    calculated_exp = exponent(d64)
     calc_denormal = denormal?(d64)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
@@ -129,7 +133,7 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d32 & SIGNIFICAND_MASK_32) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d32) != DENORMAL_EXPONENT_32)
-    calcualted_exp = exponent(d32)
+    calculated_exp = exponent(d32)
     calc_denormal = denormal?(d32)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
@@ -148,7 +152,7 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_64
     else
       frac = (d64 & SIGNIFICAND_MASK_64) + HIDDEN_BIT_64
-      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) - EXPONENT_BIAS_64).to_i
+      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) &- EXPONENT_BIAS_64).to_i!
     end
 
     {frac, exp}
@@ -162,7 +166,7 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_32
     else
       frac = (d32 & SIGNIFICAND_MASK_32) + HIDDEN_BIT_32
-      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) - EXPONENT_BIAS_32).to_i
+      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) &- EXPONENT_BIAS_32).to_i!
     end
 
     {frac.to_u64, exp}

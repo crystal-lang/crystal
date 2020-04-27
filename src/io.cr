@@ -29,7 +29,7 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes)
+#   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
 #     nil
@@ -76,15 +76,6 @@ abstract class IO
   @encoding : EncodingOptions?
   @encoder : Encoder?
   @decoder : Decoder?
-
-  # Raised when an `IO` operation times out.
-  #
-  # ```
-  # STDIN.read_timeout = 1
-  # STDIN.gets # raises IO::Timeout (after 1 second)
-  # ```
-  class Timeout < Exception
-  end
 
   # Reads at most *slice.size* bytes from this `IO` into *slice*.
   # Returns the number of bytes read, which is 0 if and only if there is no
@@ -274,7 +265,7 @@ abstract class IO
     printf format_string, args
   end
 
-  # ditto
+  # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
     nil
@@ -621,7 +612,7 @@ abstract class IO
     ascii = delimiter.ascii?
     decoder = decoder()
 
-    # # If the char's representation is a single byte and we have an encoding,
+    # If the char's representation is a single byte and we have an encoding,
     # search the delimiter in the buffer
     if ascii && decoder
       return decoder.gets(self, delimiter.ord.to_u8, limit: limit, chomp: chomp)
@@ -908,17 +899,13 @@ abstract class IO
   # ```
   # io = IO::Memory.new("hello\nworld")
   # io.each_line do |line|
-  #   puts line.chomp.reverse
+  #   puts line
   # end
+  # # output:
+  # # hello
+  # # world
   # ```
-  #
-  # Output:
-  #
-  # ```text
-  # olleh
-  # dlrow
-  # ```
-  def each_line(*args, **options) : Nil
+  def each_line(*args, **options, &block : String ->) : Nil
     while line = gets(*args, **options)
       yield line
     end
@@ -1023,7 +1010,10 @@ abstract class IO
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
   def set_encoding(encoding : String, invalid : Symbol? = nil)
-    if (encoding == "UTF-8") && (invalid != :skip)
+    if invalid != :skip && (
+         encoding.compare("UTF-8", case_insensitive: true) == 0 ||
+         encoding.compare("UTF8", case_insensitive: true) == 0
+       )
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
@@ -1038,6 +1028,11 @@ abstract class IO
   # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
+  end
+
+  # :nodoc:
+  def has_non_utf8_encoding?
+    !!@encoding
   end
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.
@@ -1119,14 +1114,14 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst)
+  def self.copy(src, dst) : UInt64
     buffer = uninitialized UInt8[4096]
-    count = 0
+    count = 0_u64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
       count += len
     end
-    len < 0 ? len : count
+    count
   end
 
   # Copy at most *limit* bytes from *src* to *dst*.
@@ -1139,8 +1134,10 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int)
+  def self.copy(src, dst, limit : Int) : UInt64
     raise ArgumentError.new("Negative limit") if limit < 0
+
+    limit = limit.to_u64
 
     buffer = uninitialized UInt8[4096]
     remaining = limit
@@ -1160,11 +1157,6 @@ abstract class IO
     def next
       @io.gets(*@args, **@nargs) || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct CharIterator(I)
@@ -1176,11 +1168,6 @@ abstract class IO
     def next
       @io.read_char || stop
     end
-
-    def rewind
-      @io.rewind
-      self
-    end
   end
 
   private struct ByteIterator(I)
@@ -1191,11 +1178,6 @@ abstract class IO
 
     def next
       @io.read_byte || stop
-    end
-
-    def rewind
-      @io.rewind
-      self
     end
   end
 end

@@ -53,7 +53,11 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Client)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    context.modes.should eq(OpenSSL::SSL::Modes::None)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
+    {% else %}
+      context.modes.should eq(OpenSSL::SSL::Modes::None)
+    {% end %}
 
     OpenSSL::SSL::Context::Client.insecure(LibSSL.tlsv1_method)
   end
@@ -63,7 +67,11 @@ describe OpenSSL::SSL::Context do
     context.should be_a(OpenSSL::SSL::Context::Server)
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
-    context.modes.should eq(OpenSSL::SSL::Modes::None)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
+      context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
+    {% else %}
+      context.modes.should eq(OpenSSL::SSL::Modes::None)
+    {% end %}
 
     OpenSSL::SSL::Context::Server.insecure(LibSSL.tlsv1_method)
   end
@@ -88,6 +96,12 @@ describe OpenSSL::SSL::Context do
     context = OpenSSL::SSL::Context::Client.new
     expect_raises(OpenSSL::Error) { context.private_key = datapath("nonexistent.key") }
     expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
+  end
+
+  pending "uses intermediate default ciphers" do
+    # Can't be checked because `Context#ciphers` is not implemented.
+    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+    OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
   end
 
   it "sets ciphers" do
@@ -154,11 +168,11 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
   end
 
-  {% if LibSSL::OPENSSL_102 %}
-  it "alpn_protocol=" do
-    context = OpenSSL::SSL::Context::Client.insecure
-    context.alpn_protocol = "h2"
-  end
+  {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+    it "alpn_protocol=" do
+      context = OpenSSL::SSL::Context::Client.insecure
+      context.alpn_protocol = "h2"
+    end
   {% end %}
 
   it "calls #finalize on insecure client context" do
@@ -167,5 +181,55 @@ describe OpenSSL::SSL::Context do
 
   it "calls #finalize on insecure server context" do
     assert_finalizes(:insecure_server_ctx) { OpenSSL::SSL::Context::Server.insecure }
+  end
+
+  describe ".from_hash" do
+    it "builds" do
+      private_key = datapath("openssl", "openssl.key")
+      certificate = datapath("openssl", "openssl.crt")
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "none"})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::NONE
+
+      context = OpenSSL::SSL::Context::Server.from_hash({"key" => private_key, "cert" => certificate})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::NONE
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => certificate})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::PEER
+
+      context = OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => File.dirname(certificate)})
+      context.verify_mode.should eq OpenSSL::SSL::VerifyMode::PEER
+    end
+
+    it "errors" do
+      private_key = datapath("openssl", "openssl.key")
+      certificate = datapath("openssl", "openssl.crt")
+      nonexistent = datapath("openssl", "nonexistent")
+
+      expect_raises(ArgumentError, "missing private key") do
+        OpenSSL::SSL::Context::Client.from_hash({} of String => String)
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_use_PrivateKey_file: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => nonexistent})
+      end
+      expect_raises(ArgumentError, "missing certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key})
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_use_certificate_chain_file: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => nonexistent})
+      end
+      expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate})
+      end
+      expect_raises(ArgumentError, %(Invalid SSL context: unknown verify mode "foo")) do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "foo"})
+      end
+      expect_raises(ArgumentError, "Invalid SSL context: missing CA certificate") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "verify_mode" => "peer"})
+      end
+      expect_raises(OpenSSL::Error, "SSL_CTX_load_verify_locations: error:02001002:system library:fopen:No such file or directory") do
+        OpenSSL::SSL::Context::Client.from_hash({"key" => private_key, "cert" => certificate, "ca" => nonexistent})
+      end
+    end
   end
 end

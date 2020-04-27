@@ -28,6 +28,8 @@ module HTML
   # the given *io*.
   #
   # ```
+  # require "html"
+  #
   # io = IO::Memory.new
   # HTML.escape("Crystal & You", io) # => nil
   # io.to_s                          # => "Crystal &amp; You"
@@ -84,6 +86,8 @@ module HTML
   # without a trailing semicolon (such as `&copy`).
   #
   # ```
+  # require "html"
+  #
   # HTML.unescape("Crystal &amp; You") # => "Crystal & You"
   # ```
   def self.unescape(string : String) : String
@@ -149,7 +153,7 @@ module HTML
              # last two of each plane (nonchars) disallowed
              codepoint & 0xFFFF >= 0xFFFE ||
              # unicode control characters expect space
-             (codepoint < 0x0020 && !{0x0009, 0x000A, 0x000C}.includes?(codepoint))
+             (codepoint < 0x0020 && !codepoint.in?(0x0009, 0x000A, 0x000C))
         codepoint.unsafe_chr
       end
     end

@@ -1,14 +1,11 @@
 # The `Logger` class provides a simple but sophisticated logging utility that you can use to output messages.
 #
 # The messages have associated levels, such as `INFO` or `ERROR` that indicate their importance.
-# You can then give the `Logger` a level, and only messages at that level of higher will be printed.
+# You can then give the `Logger` a level, and only messages at that level or higher will be printed.
 #
 # For instance, in a production system, you may have your `Logger` set to `INFO` or even `WARN`.
 # When you are developing the system, however, you probably want to know about the program’s internal state,
 # and would set the `Logger` to `DEBUG`.
-#
-# If logging to multiple locations is required, an `IO::MultiWriter` can be
-# used.
 #
 # ### Example
 #
@@ -36,6 +33,19 @@
 #   log.fatal(err)
 # end
 # ```
+#
+# If logging to multiple locations is required, an `IO::MultiWriter` can be
+# used.
+#
+# ```
+# file = File.new("production.log", "a")
+# writer = IO::MultiWriter.new(file, STDOUT)
+#
+# log = Logger.new(writer)
+# log.level = Logger::DEBUG
+# log.debug("Created logger")
+# ```
+@[Deprecated("Use `Log` module instead")]
 class Logger
   property level : Severity
   property progname : String
@@ -110,9 +120,10 @@ class Logger
 
   # Creates a new logger that will log to the given *io*.
   # If *io* is `nil` then all log calls will be silently ignored.
+  @[Deprecated("Use `Log` module instead")]
   def initialize(@io : IO?, @level = Severity::INFO, @formatter = DEFAULT_FORMATTER, @progname = "")
     @closed = false
-    @mutex = Mutex.new
+    @mutex = Mutex.new(:unchecked)
   end
 
   # Calls the *close* method on the object passed to `initialize`.
@@ -150,17 +161,19 @@ class Logger
 
   # Logs *message* if *severity* is higher or equal with the logger's current
   # severity. *progname* overrides a default progname set in this logger.
+  @[Deprecated("Use `Log` module instead")]
   def log(severity, message, progname = nil)
     return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, message)
+    write(severity, Time.local, progname || @progname, message)
   end
 
   # Logs the message as returned from the given block if *severity*
   # is higher or equal with the loggers current severity. The block is not run
   # if *severity* is lower. *progname* overrides a default progname set in this logger.
+  @[Deprecated("Use `Log` module instead")]
   def log(severity, progname = nil)
     return if severity < level || !@io
-    write(severity, Time.now, progname || @progname, yield)
+    write(severity, Time.local, progname || @progname, yield)
   end
 
   private def write(severity, datetime, progname, message)
@@ -169,6 +182,7 @@ class Logger
 
     progname_to_s = progname.to_s
     message_to_s = message.to_s
+
     @mutex.synchronize do
       formatter.call(severity, datetime, progname_to_s, message_to_s, io)
       io.puts

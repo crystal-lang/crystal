@@ -67,7 +67,7 @@ class Crystal::RecursiveStructChecker
       end
 
       msg = <<-MSG
-        recursive struct #{target} detected#{alias_message}:
+        recursive struct #{target} detected#{alias_message}
 
           #{path_to_s(path)}
 

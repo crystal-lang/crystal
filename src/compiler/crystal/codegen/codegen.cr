@@ -6,13 +6,15 @@ require "../program"
 require "./llvm_builder_helper"
 
 module Crystal
-  MAIN_NAME          = "__crystal_main"
-  RAISE_NAME         = "__crystal_raise"
-  MALLOC_NAME        = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME = "__crystal_malloc_atomic64"
-  REALLOC_NAME       = "__crystal_realloc64"
-  PERSONALITY_NAME   = "__crystal_personality"
-  GET_EXCEPTION_NAME = "__crystal_get_exception"
+  MAIN_NAME           = "__crystal_main"
+  RAISE_NAME          = "__crystal_raise"
+  RAISE_OVERFLOW_NAME = "__crystal_raise_overflow"
+  MALLOC_NAME         = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME  = "__crystal_malloc_atomic64"
+  REALLOC_NAME        = "__crystal_realloc64"
+  GET_EXCEPTION_NAME  = "__crystal_get_exception"
+  ONCE_INIT           = "__crystal_once_init"
+  ONCE                = "__crystal_once"
 
   class Program
     def run(code, filename = nil, debug = Debug::Default)
@@ -69,18 +71,38 @@ module Crystal
       visitor.modules
     end
 
+    def llvm_id
+      @llvm_id ||= LLVMId.new(self)
+    end
+
     def llvm_typer
       @llvm_typer ||= LLVMTyper.new(self, LLVM::Context.new)
     end
 
     def size_of(type)
-      size = llvm_typer.size_of(llvm_typer.llvm_type(type))
-      size = 1 if size == 0
-      size
+      if type.void?
+        # We need `sizeof(Void)` to be 1 because doing
+        # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`,
+        # that is, consider Void like the size of a byte.
+        1
+      elsif type.is_a?(BoolType)
+        # LLVM reports 0 for bool (i1) but it must be 1 because it does occupy memory
+        1
+      else
+        llvm_typer.size_of(llvm_typer.llvm_type(type))
+      end
     end
 
     def instance_size_of(type)
       llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
+    end
+
+    def offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_type(type), element_index)
+    end
+
+    def instance_offset_of(type, element_index)
+      llvm_typer.offset_of(llvm_typer.llvm_struct_type(type), element_index + 1)
     end
   end
 
@@ -97,6 +119,7 @@ module Crystal
     getter llvm_typer : LLVMTyper
     getter alloca_block : LLVM::BasicBlock
     getter entry_block : LLVM::BasicBlock
+    getter personality_name : String
     property last : LLVM::Value
 
     class LLVMVar
@@ -108,12 +131,13 @@ module Crystal
       # an "Reference**" llvm value and you need to load that value
       # to access it.
       # However, the "self" argument is not copied to a local variable:
-      # it's accessed from the arguments list, and it a "Reference*"
+      # it's accessed from the arguments list, and is a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      getter debug_variable_created : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_variable_created = false)
       end
     end
 
@@ -129,6 +153,7 @@ module Crystal
     @argv : LLVM::Value
     @empty_md_list : LLVM::Value
     @rescue_block : LLVM::BasicBlock?
+    @catch_pad : LLVM::Value?
     @malloc_fun : LLVM::Function?
     @malloc_atomic_fun : LLVM::Function?
     @c_malloc_fun : LLVM::Function?
@@ -136,10 +161,12 @@ module Crystal
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
     @c_realloc_fun : LLVM::Function?
+    @raise_overflow_fun : LLVM::Function?
     @main_llvm_context : LLVM::Context
     @main_llvm_typer : LLVMTyper
     @main_module_info : ModuleInfo
     @main_builder : CrystalLLVMBuilder
+    @call_location : Location?
 
     def initialize(@program : Program, @node : ASTNode, single_module = false, @debug = Debug::Default)
       @single_module = !!single_module
@@ -151,10 +178,16 @@ module Crystal
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
-      @llvm_id = LLVMId.new(@program)
       @main_ret_type = node.type? || @program.nil_type
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
+
+      if @program.has_flag? "windows"
+        @personality_name = "__CxxFrameHandler3"
+        @main.personality_function = windows_personality_fun
+      else
+        @personality_name = "__crystal_personality"
+      end
 
       emit_main_def_debug_metadata(@main, "??") unless @debug.none?
 
@@ -214,43 +247,33 @@ module Crystal
 
       initialize_argv_and_argc
 
-      initialize_simple_class_vars_and_constants
-
-      if @debug.line_numbers? && (filename = @program.filename)
-        set_current_debug_location Location.new(filename, 1, 1)
+      if @debug.line_numbers?
+        set_current_debug_location Location.new(@program.filename || "(no name)", 1, 1)
       end
+
+      once_init
+      initialize_simple_constants
 
       alloca_vars @program.vars, @program
 
       emit_vars_debug_info(@program.vars) if @debug.variables?
     end
 
-    getter llvm_typer
     getter llvm_context
 
     def new_builder(llvm_context)
       wrap_builder(llvm_context.new_builder)
     end
 
-    # Here we only initialize simple constants and class variables, those
+    # Here we only initialize simple constants, those
     # that has simple values like 1, "foo" and other literals.
-    def initialize_simple_class_vars_and_constants
-      @program.class_var_and_const_initializers.each do |initializer|
-        case initializer
-        when Const
-          # Simple constants are never initialized: they are always inlined
-          next if initializer.compile_time_value
-          next unless initializer.simple?
+    def initialize_simple_constants
+      @program.const_initializers.each do |initializer|
+        # Simple constants are never initialized: they are always inlined
+        next if initializer.compile_time_value
+        next unless initializer.simple?
 
-          initialize_simple_const(initializer)
-        when ClassVarInitializer
-          next unless initializer.node.simple_literal?
-
-          class_var = initializer.owner.class_vars[initializer.name]
-          next if class_var.thread_local?
-
-          initialize_class_var(initializer.owner, initializer.name, initializer.meta_vars, initializer.node)
-        end
+        initialize_simple_const(initializer)
       end
     end
 
@@ -282,9 +305,14 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
+        when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
+             @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
+             ONCE_INIT, ONCE
           @codegen.accept node
+        else
+          # go on
         end
+
         false
       end
 
@@ -364,7 +392,7 @@ module Crystal
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
-          # But, apparenty, llvm requires us to define them so that
+          # But, apparently, llvm requires us to define them so that
           # calls can find them, so we do so.
           codegen_fun node.real_name, node.external, @program, is_exported_fun: false
           @unused_fun_defs << node
@@ -431,9 +459,9 @@ module Crystal
         # TODO: implement String#to_u128 and use it
         @last = int128(node.value.to_u64)
       when :f32
-        @last = llvm_context.float.const_float(node.value)
+        @last = float32(node.value)
       when :f64
-        @last = llvm_context.double.const_double(node.value)
+        @last = float64(node.value)
       else
         node.raise "Bug: unhandled number kind: #{node.kind}"
       end
@@ -484,7 +512,7 @@ module Crystal
                 if node_exp.var.initializer
                   initialize_class_var(node_exp)
                 end
-                get_global class_var_global_name(node_exp.var.owner, node_exp.var.name), node_exp.type, node_exp.var
+                get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
                 get_global node_exp.name, node_exp.type, node_exp.var
               when Path
@@ -561,9 +589,17 @@ module Crystal
 
     def visit(node : ProcPointer)
       owner = node.call.target_def.owner
+
       if obj = node.obj
         accept obj
-        call_self = @last
+
+        # If obj is a primitive like an integer we need to pass
+        # the variable as is (without loading it)
+        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
+          call_self = context.vars[obj.name].pointer
+        else
+          call_self = @last
+        end
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -815,7 +851,9 @@ module Crystal
     end
 
     def visit(node : Not)
-      accept node.exp
+      request_value do
+        accept node.exp
+      end
       @last = codegen_cond node.exp.type.remove_indirection
       @last = not @last
       false
@@ -1073,6 +1111,8 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
+      else
+        # go on
       end
 
       @last = llvm_nil
@@ -1177,7 +1217,12 @@ module Crystal
           @last = cast_to last_value, to_type
         end
       elsif obj_type.pointer?
-        @last = cast_to last_value, to_type
+        # Special case: for `ptr.as(Nil)` there's no bitcast involved
+        if to_type.nil_type?
+          @last = llvm_nil
+        else
+          @last = cast_to last_value, to_type
+        end
       else
         resulting_type = node.type
         if node.upcast?
@@ -1215,13 +1260,17 @@ module Crystal
       to_type = node.to.type
 
       resulting_type = node.type
-      non_nilable_type = node.non_nilable_type
 
       filtered_type = obj_type.filter_by(to_type)
 
-      if !filtered_type
+      unless filtered_type
         @last = upcast llvm_nil, resulting_type, @program.nil
-      elsif node.upcast?
+        return
+      end
+
+      non_nilable_type = node.non_nilable_type
+
+      if node.upcast?
         @last = upcast last_value, non_nilable_type, obj_type
         @last = upcast @last, resulting_type, non_nilable_type
       elsif obj_type != non_nilable_type
@@ -1300,7 +1349,17 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= begin
+        pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
+        debug_variable_created =
+          if context.fun.naked?
+            # Naked functions must not have debug info associated with them
+            false
+          else
+            declare_variable(var.name, var.type, pointer, var.location)
+          end
+        LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
+      end
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1466,6 +1525,10 @@ module Crystal
       false
     end
 
+    def visit(node : Unreachable)
+      builder.unreachable
+    end
+
     def check_proc_is_not_closure(value, type)
       check_fun_name = "~check_proc_is_not_closure"
       func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
@@ -1518,9 +1581,12 @@ module Crystal
       old_fun = context.fun
       old_ensure_exception_handlers = @ensure_exception_handlers
       old_rescue_block = @rescue_block
+      old_catch_pad = @catch_pad
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_needs_value = @needs_value
+      old_debug_location = @current_debug_location
+
       @llvm_mod = @main_mod
       @llvm_context = @main_llvm_context
       @llvm_typer = @main_llvm_typer
@@ -1528,6 +1594,9 @@ module Crystal
 
       @ensure_exception_handlers = nil
       @rescue_block = nil
+      @catch_pad = nil
+
+      clear_current_debug_location if @debug.line_numbers?
 
       block_value = yield
 
@@ -1539,10 +1608,12 @@ module Crystal
       @llvm_typer = old_llvm_typer
       @ensure_exception_handlers = old_ensure_exception_handlers
       @rescue_block = old_rescue_block
+      @catch_pad = old_catch_pad
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @needs_value = old_needs_value
       context.fun = old_fun
+      set_current_debug_location old_debug_location if @debug.line_numbers?
 
       block_value
     end
@@ -1659,8 +1730,20 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = builder.alloca llvm_type(var_type), name
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            ptr = alloca llvm_type(var_type), name
+
+            location = var.location
+            if location.nil? && obj.is_a?(ASTNode)
+              location = obj.location
+            end
+
+            debug_variable_created =
+              if location && !context.fun.naked?
+                declare_variable name, var_type, ptr, location, alloca_block
+              else
+                false
+              end
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -1772,7 +1855,43 @@ module Crystal
     end
 
     def printf(format, args = [] of LLVM::Value)
-      call @program.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
+      call @program.printf(@llvm_mod, llvm_context), [builder.global_string_pointer(format)] + args
+    end
+
+    # Emits a debug message that shows the current llvm basic block name,
+    # the location within the codegen that was used to emit this log.
+    #
+    # The message is only generated if `CRYSTAL_DEBUG_CODEGEN` is set
+    #
+    # The block given to this method should yield `printf` arguments to show
+    # additional information. The following forms are all valid and helps to
+    # allocate the arguments only if the message is to be generated.
+    #
+    # ```
+    # debug_codegen_log
+    # debug_codegen_log { }
+    # debug_codegen_log { "Lorem" }
+    # debug_codegen_log { {"Lorem"} }
+    # debug_codegen_log { {"Lorem %d", [an_int_llvm_value] of LLVM::Value} }
+    # ```
+    #
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      return unless ENV["CRYSTAL_DEBUG_CODEGEN"]?
+      printf_args = yield || ""
+      printf_args = {printf_args, [] of LLVM::Value} if printf_args.is_a?(String)
+      printf_args = {printf_args[0], [] of LLVM::Value} if printf_args.is_a?({String})
+      msg, args = printf_args
+      printf("<block: #{insert_block.name || "???"} @ #{Crystal.relative_filename(file)}:#{line}> #{msg}\n", args)
+    end
+
+    # :ditto:
+    def debug_codegen_log(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { }
+    end
+
+    def unreachable(file = __FILE__, line = __LINE__)
+      debug_codegen_log(file, line) { "Reached the unreachable!" }
+      builder.unreachable
     end
 
     def allocate_aggregate(type)
@@ -1831,9 +1950,8 @@ module Crystal
         with_cloned_context do
           # Instance var initializers must run with "self"
           # properly set up to the type being allocated
-          context.type = real_type
+          context.type = real_type.metaclass
           context.vars = LLVMVars.new
-          context.vars["self"] = LLVMVar.new(type_ptr, real_type)
           alloca_vars init.meta_vars
 
           accept init.value
@@ -1912,6 +2030,15 @@ module Crystal
       end
     end
 
+    def crystal_raise_overflow_fun
+      @raise_overflow_fun ||= @main_mod.functions[RAISE_OVERFLOW_NAME]?
+      if raise_overflow_fun = @raise_overflow_fun
+        check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
+      else
+        raise "BUG: __crystal_raise_overflow is not defined"
+      end
+    end
+
     # We only use C's malloc in tests that don't require the prelude,
     # so they don't require the GC. Outside tests these are not used,
     # and __crystal_* functions are invoked instead.
@@ -1945,12 +2072,37 @@ module Crystal
     end
 
     def memset(pointer, value, size)
+      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+
       pointer = cast_to_void_pointer pointer
-      call @program.memset(@llvm_mod, llvm_context), [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+      res = call @program.memset(@llvm_mod, llvm_context),
+        if LibLLVM::IS_LT_70
+          [pointer, value, len_arg, int32(4), int1(0)]
+        else
+          [pointer, value, len_arg, int1(0)]
+        end
+
+      unless LibLLVM::IS_LT_70
+        LibLLVM.set_instr_param_alignment(res, 1, 4)
+      end
+
+      res
     end
 
     def memcpy(dest, src, len, align, volatile)
-      call @program.memcpy(@llvm_mod, llvm_context), [dest, src, len, align, volatile]
+      res = call @program.memcpy(@llvm_mod, llvm_context),
+        if LibLLVM::IS_LT_70
+          [dest, src, len, int32(align), volatile]
+        else
+          [dest, src, len, volatile]
+        end
+
+      unless LibLLVM::IS_LT_70
+        LibLLVM.set_instr_param_alignment(res, 1, align)
+        LibLLVM.set_instr_param_alignment(res, 2, align)
+      end
+
+      res
     end
 
     def realloc(buffer, size)
@@ -1967,14 +2119,6 @@ module Crystal
 
     def to_rhs(value, type)
       type.passed_by_value? ? load value : value
-    end
-
-    def union_type_id(union_pointer)
-      aggregate_index union_pointer, 0
-    end
-
-    def union_value(union_pointer)
-      aggregate_index union_pointer, 1
     end
 
     def aggregate_index(ptr, index)
@@ -1994,9 +2138,9 @@ module Crystal
 
       if type.is_a?(VirtualType)
         if type.struct?
-          if type.remove_indirection.is_a?(UnionType)
+          if (_type = type.remove_indirection).is_a?(UnionType)
             # For a struct we need to cast the second part of the union to the base type
-            value_ptr = gep(pointer, 0, 1)
+            _, value_ptr = union_type_and_value_pointer(pointer, _type)
             pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
           else
             # Nothing, there's only one subclass so it's the struct already
@@ -2085,11 +2229,35 @@ module Crystal
     end
 
     def memset(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1], llvm_context.void)
+      name = bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
+        arg_types =
+          if LibLLVM::IS_LT_70
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
+          else
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
+          end
+
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
+      end
     end
 
     def memcpy(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1], llvm_context.void)
+      name = bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
+        arg_types =
+          if LibLLVM::IS_LT_70
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
+          else
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
+          end
+
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
+      end
     end
   end
 end

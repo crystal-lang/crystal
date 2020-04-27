@@ -38,12 +38,16 @@ abstract class CSV::Lexer
     @last_empty_column = false
   end
 
+  # Rewinds this lexer to the beginning
+  def rewind
+    @column_number = 1
+    @line_number = 1
+    @last_empty_column = false
+  end
+
   private abstract def consume_unquoted_cell
   private abstract def next_char_no_column_increment
   private abstract def current_char
-
-  # Rewinds this lexer to its beginning.
-  abstract def rewind
 
   # Returns the next `Token` in this CSV.
   def next_token
@@ -118,6 +122,8 @@ abstract class CSV::Lexer
     case next_char
     when '\r', '\n', '\0'
       @last_empty_column = true
+    else
+      # not empty
     end
   end
 

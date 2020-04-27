@@ -1,16 +1,25 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_allowed_in_generics(node, type, msg)
-    return if type.allowed_in_generics?
+  def self.check_type_can_be_stored(node, type, msg)
+    return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.allowed_in_generics? } if type.is_a?(UnionType)
+    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
   class ASTNode
     def raise(message, inner = nil, exception_type = Crystal::TypeException)
       ::raise exception_type.for_node(self, message, inner)
+    end
+
+    def warning(message, inner = nil, exception_type = Crystal::TypeException)
+      # TODO extract message formatting from exceptions
+      String.build do |io|
+        exception = exception_type.for_node(self, message, inner)
+        exception.warning = true
+        exception.append_to_s(nil, io)
+      end
     end
 
     def simple_literal?
@@ -139,7 +148,7 @@ module Crystal
     property? new = false
 
     # Annotations on this def
-    property annotations : Hash(AnnotationType, Annotation)?
+    property annotations : Hash(AnnotationType, Array(Annotation))?
 
     @macro_owner : Type?
 
@@ -172,12 +181,18 @@ module Crystal
 
     # Adds an annotation with the given type and value
     def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Annotation
-      annotations[annotation_type] = value
+      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
+      annotations[annotation_type] ||= [] of Annotation
+      annotations[annotation_type] << value
     end
 
-    # Returns the annotation with the given type, if any, or nil otherwise
+    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
     def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]?.try &.last?
+    end
+
+    # Returns all annotations with the given type, if any, or `nil` otherwise
+    def annotations(annotation_type) : Array(Annotation)?
       @annotations.try &.[annotation_type]?
     end
 
@@ -208,6 +223,7 @@ module Crystal
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
       a_def.naked = naked?
+      a_def.annotations = annotations
       a_def.new = new?
       a_def
     end
@@ -456,7 +472,7 @@ module Crystal
       self
     end
 
-    def inspect(io)
+    def inspect(io : IO) : Nil
       io << name
       if type = type?
         io << " : "
@@ -487,6 +503,10 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    # Flag used during codegen to indicate the initializer is simple
+    # and doesn't require a call to a function
+    property? simple_initializer = false
+
     # Is this variable thread local? Only applicable
     # to global and class variables.
     property? thread_local = false
@@ -495,7 +515,7 @@ module Crystal
     property? uninitialized = false
 
     # Annotations of this instance var
-    property annotations : Hash(AnnotationType, Annotation)?
+    property annotations : Hash(AnnotationType, Array(Annotation))?
 
     def kind
       case name[0]
@@ -516,12 +536,18 @@ module Crystal
 
     # Adds an annotation with the given type and value
     def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Annotation
-      annotations[annotation_type] = value
+      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
+      annotations[annotation_type] ||= [] of Annotation
+      annotations[annotation_type] << value
     end
 
-    # Returns the annotation with the given type, if any, or nil otherwise
+    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
     def annotation(annotation_type) : Annotation?
+      @annotations.try &.[annotation_type]?.try &.last?
+    end
+
+    # Returns all annotations with the given type, if any, or `nil` otherwise
+    def annotations(annotation_type) : Array(Annotation)?
       @annotations.try &.[annotation_type]?
     end
   end
@@ -538,6 +564,7 @@ module Crystal
 
   class Path
     property target_const : Const?
+    property target_type : Type?
     property syntax_replacement : ASTNode?
   end
 
@@ -598,7 +625,7 @@ module Crystal
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
-                   SizeOf InstanceSizeOf Global Require Select) %}
+                   SizeOf InstanceSizeOf OffsetOf Global Require Select) %}
     class {{name.id}}
       include ExpandableNode
     end
@@ -679,7 +706,7 @@ module Crystal
   end
 
   class Asm
-    property ptrof : PointerOf?
+    property output_ptrofs : Array(PointerOf)?
   end
 
   # Fictitious node that means "all these nodes come from this file"
@@ -745,7 +772,7 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node representing a variable in macros
+  # Fictitious node representing a variable in macros
   class MetaMacroVar < ASTNode
     property name : String
     property default_value : ASTNode?
@@ -778,6 +805,14 @@ module Crystal
       else
         false
       end
+    end
+  end
+
+  # Ficticious node to mean a location in code shouldn't be reached.
+  # This is used in the implicit `else` branch of a case.
+  class Unreachable < ASTNode
+    def clone_without_location
+      Unreachable.new
     end
   end
 end

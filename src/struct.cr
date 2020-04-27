@@ -106,7 +106,6 @@ struct Struct
       @{{ivar.id}}.inspect(io)
     {% end %}
     io << ')'
-    nil
   end
 
   def pretty_print(pp) : Nil
@@ -132,7 +131,7 @@ struct Struct
   end
 
   # Same as `#inspect(io)`.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 end

@@ -108,8 +108,5 @@ describe CSV do
     iter.next.should eq(["1", "2"])
     iter.next.should eq(["3", "4"])
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(["1", "2"])
   end
 end

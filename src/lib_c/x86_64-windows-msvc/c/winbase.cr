@@ -4,6 +4,7 @@ require "c/int_safe"
 
 lib LibC
   fun GetLastError : DWORD
+  fun SetLastError(dwErrCode : DWORD)
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
   FORMAT_MESSAGE_IGNORE_INSERTS  = 0x00000200_u32
@@ -12,9 +13,8 @@ lib LibC
   FORMAT_MESSAGE_FROM_SYSTEM     = 0x00001000_u32
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
 
-  # TODO: Use LPWSTR
-  fun FormatMessageA(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
-                     lpBuffer : LPSTR, nSize : DWORD, arguments : Void*) : DWORD
+  fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
+                     lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
 
   struct FILETIME
     dwLowDateTime : DWORD
@@ -85,4 +85,28 @@ lib LibC
   INVALID_HANDLE_VALUE = HANDLE.new(-1)
 
   fun CloseHandle(hObject : HANDLE) : BOOL
+
+  fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
+  fun GetEnvironmentStringsW : LPWCH
+  fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
+  fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
+
+  INFINITE = 0xFFFFFFFF
+
+  STILL_ACTIVE = 0x103
+
+  STARTF_USESTDHANDLES = 0x00000100
+
+  fun DuplicateHandle(hSourceProcessHandle : HANDLE, hSourceHandle : HANDLE,
+                      hTargetProcessHandle : HANDLE, lpTargetHandle : HANDLE*,
+                      dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwOptions : DWORD) : BOOL
+
+  MOVEFILE_REPLACE_EXISTING      =  0x1_u32
+  MOVEFILE_COPY_ALLOWED          =  0x2_u32
+  MOVEFILE_DELAY_UNTIL_REBOOT    =  0x4_u32
+  MOVEFILE_WRITE_THROUGH         =  0x8_u32
+  MOVEFILE_CREATE_HARDLINK       = 0x10_u32
+  MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
+
+  fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
 end

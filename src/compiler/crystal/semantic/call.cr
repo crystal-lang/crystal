@@ -43,9 +43,11 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
+    else
+      # Nothing
     end
 
-    # Check if it's call inside LibFoo
+    # Check if its call is inside LibFoo
     # (can happen when assigning the call to a constant)
     if !obj && (lib_type = scope()).is_a?(LibType)
       return recalculate_lib_call lib_type
@@ -53,7 +55,27 @@ class Crystal::Call
 
     check_not_lib_out_args
 
+    # We can't type a call if any argument has a NoReturn type
+    #
+    # Note: we could make `NoReturn` match any type and instantiate methods,
+    # but it's a bit pointless because the call will never be made if we got
+    # there with something that's NoReturn.
+    #
+    # The only problem is that we might be missing out some errors, for example:
+    #
+    # ```
+    # def foo(x, y : Int32)
+    # end
+    #
+    # x = exit
+    #
+    # # Here the second argument should produce an error, but it doesn't
+    # foo(x, "y")
+    # ```
+    #
+    # So this is definitely a tradeoff.
     return if args.any? &.type?.try &.no_return?
+    return if named_args.try &.any? &.value.type?.try &.no_return?
 
     return unless obj_and_args_types_set?
 
@@ -107,7 +129,15 @@ class Crystal::Call
     else
       arg_types = args.map(&.type(with_literals: with_literals))
       named_args_types = NamedArgumentType.from_args(named_args, with_literals)
-      lookup_matches_without_splat arg_types, named_args_types, with_literals
+      matches = lookup_matches_without_splat arg_types, named_args_types, with_literals
+
+      # If we checked for automatic casts, see if an ambigous call was produced
+      if with_literals
+        arg_types.each &.check_restriction_exception
+        named_args_types.try &.each &.type.check_restriction_exception
+      end
+
+      matches
     end
   end
 
@@ -226,7 +256,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, with_literals: with_literals
+    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
@@ -265,7 +295,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_literals: with_literals)
       end
     end
@@ -280,7 +310,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, with_literals
+    instantiate signature, matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
@@ -331,7 +361,19 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type, with_literals)
+  def instantiate(signature, matches, owner, self_type, with_literals)
+    if with_literals
+      # Now that we have all our matches, check if any of them matches exactly
+      # all types, assuming autocasted values will always match (because they
+      # matches and they were not ambiguous). If so, only keep matches up to
+      # that exact match. We need to do this here because with autocasting
+      # we consider all overloads to detect ambiguous usage.
+      stop_index = matches.index do |match|
+        signature.matches_exactly?(match, with_literals: true)
+      end
+      matches = matches[..stop_index] if stop_index
+    end
+
     matches.each &.remove_literals if with_literals
 
     block = @block
@@ -486,14 +528,9 @@ class Crystal::Call
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    arg = args.first
-
-    case arg
+    case arg = args.first
     when SymbolLiteral, StringLiteral
       name = arg.value
-    end
-
-    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
@@ -502,8 +539,9 @@ class Crystal::Call
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
+    else
+      nil
     end
-    nil
   end
 
   def replace_splats
@@ -638,7 +676,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, with_literals: with_literals
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
@@ -671,6 +709,8 @@ class Crystal::Call
         return result
       when Type::DefInMacroLookup
         return nil
+      else
+        # Check next target
       end
     end
   end
@@ -744,16 +784,16 @@ class Crystal::Call
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
-      block_arg_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
-      unless block_arg_type.is_a?(ProcInstanceType)
-        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
+      block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
+      unless block_arg_restriction_type.is_a?(ProcInstanceType)
+        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
         return nil, nil
       end
 
-      yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
+      yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
         Var.new("var#{i}", input)
       end
-      output = block_arg_type.return_type
+      output = block_arg_restriction_type.return_type
       output_type = output
       output_type = program.nil if output_type.void?
     end
@@ -794,7 +834,7 @@ class Crystal::Call
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
-          Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
+          Crystal.check_type_can_be_stored(output, output_type, "can't use #{output_type} as a block return type")
           output_type = output_type.virtual_type
         end
       end
@@ -950,7 +990,7 @@ class Crystal::Call
   end
 
   private def cant_infer_block_return_type
-    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
+    raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
   end
 
   private def lookup_node_type(context, node)

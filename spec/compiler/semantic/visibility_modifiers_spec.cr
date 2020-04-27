@@ -400,4 +400,45 @@ describe "Visibility modifiers" do
       ),
       "undefined local variable or method 'foo'"
   end
+
+  it "defines protected initialize (#7501)" do
+    assert_error %(
+      class Foo
+        protected def initialize
+        end
+      end
+
+      Foo.new
+      ),
+      "protected method 'new' called for Foo.class"
+  end
+
+  it "handles virtual types (#8561)" do
+    semantic %(
+      module Namespace
+        class Foo
+          protected def foo
+          end
+        end
+
+        class Bar
+          def bar
+            Foo.new.foo
+          end
+        end
+
+        class Baz < Bar
+          def initialize
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar.bar
+          end
+        end
+      end
+
+      Namespace::Baz.new.bar
+    )
+  end
 end

@@ -15,12 +15,12 @@ module Math
       LibM.{{name.id}}_f32(value)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value : Float64)
       LibM.{{name.id}}_f64(value)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value)
       {{name.id}}(value.to_f)
     end
@@ -36,12 +36,12 @@ module Math
       {% end %}
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value : Float64)
       LibM.{{name.id}}_f64(value)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value)
       {{name.id}}(value.to_f)
     end
@@ -55,12 +55,12 @@ module Math
     LibM.tgamma_f32(value)
   end
 
-  # ditto
+  # :ditto:
   def gamma(value : Float64)
     LibM.tgamma_f64(value)
   end
 
-  # ditto
+  # :ditto:
   def gamma(value)
     gamma(value.to_f)
   end
@@ -82,12 +82,12 @@ module Math
     {% end %}
   end
 
-  # ditto
+  # :ditto:
   def lgamma(value : Float64)
     LibM.gamma_f64(value)
   end
 
-  # ditto
+  # :ditto:
   def lgamma(value)
     lgamma(value.to_f)
   end
@@ -98,12 +98,12 @@ module Math
       LibM.{{name.id}}_f32(value1, value2)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1 : Float64, value2 : Float64)
       LibM.{{name.id}}_f64(value1, value2)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1, value2)
       {{name.id}}(value1.to_f, value2.to_f)
     end
@@ -150,12 +150,12 @@ module Math
       {% end %}
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1 : Int32, value2 : Float64)
       LibM.{{name.id}}_f64(value1, value2)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1, value2)
       {{name.id}}(value1.to_i32, value1.to_f)
     end
@@ -167,12 +167,12 @@ module Math
       LibM.{{name.id}}_f32(value1, value2)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1 : Float64, value2 : Int32)
       LibM.{{name.id}}_f64(value1, value2)
     end
 
-    # ditto
+    # :ditto:
     def {{name.id}}(value1, value2)
       {{name.id}}(value1.to_f, value2.to_i32)
     end
@@ -183,12 +183,12 @@ module Math
     LibM.scalbln_f32(value, exp)
   end
 
-  # ditto
+  # :ditto:
   def scalbln(value : Float64, exp : Int64)
     LibM.scalbln_f64(value, exp)
   end
 
-  # ditto
+  # :ditto:
   def scalbln(value, exp)
     scalbln(value.to_f, exp.to_i64)
   end
@@ -199,13 +199,13 @@ module Math
     {frac, exp}
   end
 
-  # ditto
+  # :ditto:
   def frexp(value : Float64)
     frac = LibM.frexp_f64(value, out exp)
     {frac, exp}
   end
 
-  # ditto
+  # :ditto:
   def frexp(value)
     frexp(value.to_f)
   end

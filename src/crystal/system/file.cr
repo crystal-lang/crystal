@@ -4,7 +4,7 @@ module Crystal::System::File
   # calls.
   private def self.open_flag(mode)
     if mode.size == 0
-      raise "Invalid access mode #{mode}"
+      raise "No file open mode specified"
     end
 
     m = 0
@@ -19,7 +19,7 @@ module Crystal::System::File
       m = LibC::O_WRONLY
       o = LibC::O_CREAT | LibC::O_APPEND
     else
-      raise "Invalid access mode #{mode}"
+      raise "Invalid file open mode: '#{mode}'"
     end
 
     case mode.size
@@ -32,14 +32,21 @@ module Crystal::System::File
       when 'b'
         # Nothing
       else
-        raise "Invalid access mode #{mode}"
+        raise "Invalid file open mode: '#{mode}'"
       end
     else
-      raise "Invalid access mode #{mode}"
+      raise "Invalid file open mode: '#{mode}'"
     end
 
     oflag = m | o
   end
+
+  # Closes the internal file descriptor without notifying libevent.
+  # This is directly used after the fork of a process to close the
+  # parent's Crystal::Signal.@@pipe reference before re initializing
+  # the event loop. In the case of a fork that will exec there is even
+  # no need to initialize the event loop at all.
+  # def file_descriptor_close
 end
 
 {% if flag?(:unix) %}

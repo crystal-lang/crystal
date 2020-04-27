@@ -1,7 +1,20 @@
 require "spec"
 require "complex"
+require "../support/number"
 
 describe "Complex" do
+  describe "as numbers" do
+    it_can_convert_between([Complex], [Complex])
+    it_can_convert_between({{BUILTIN_NUMBER_TYPES_LTE_64}}, [Complex])
+    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES_LTE_64}})
+    # TODO pending conversion between Int128
+
+    division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
+    division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
+
+    division_between_returns [Complex], [Complex], Complex
+  end
+
   it "i" do
     a = 4.5 + 6.7.i
     b = Complex.new(4.5, 6.7)
@@ -104,6 +117,10 @@ describe "Complex" do
   end
 
   describe "+" do
+    it "+ complex" do
+      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(5.43, 27.12))
+    end
+
     it "complex + complex" do
       (Complex.new(2.2, 7) + Complex.new(10.1, 1.34)).should eq(Complex.new(12.3, 8.34))
     end
@@ -179,5 +196,10 @@ describe "Complex" do
     Complex.new(0, 3.4).zero?.should eq false
     Complex.new(1.2, 0).zero?.should eq false
     Complex.new(1.2, 3.4).zero?.should eq false
+  end
+
+  it "rounds" do
+    (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.13, 0.88))
+    (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
   end
 end

@@ -90,6 +90,8 @@ class Crystal::Doc::Type
       superclass = type.superclass
     when GenericClassInstanceType
       superclass = type.superclass
+    else
+      # go on
     end
 
     if superclass
@@ -110,10 +112,6 @@ class Crystal::Doc::Type
 
   def locations
     @generator.relative_locations(@type)
-  end
-
-  def repository_name
-    @generator.repository_name
   end
 
   def program?
@@ -162,14 +160,10 @@ class Crystal::Doc::Type
         defs = [] of Method
         @type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
-            case def_with_metadata.def.visibility
-            when .private?, .protected?
-              next
-            end
+            next unless def_with_metadata.def.visibility.public?
+            next unless @generator.must_include? def_with_metadata.def
 
-            if @generator.must_include? def_with_metadata.def
-              defs << method(def_with_metadata.def, false)
-            end
+            defs << method(def_with_metadata.def, false)
           end
         end
         defs.sort_by! &.name.downcase
@@ -185,17 +179,12 @@ class Crystal::Doc::Type
       @type.metaclass.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          case a_def.visibility
-          when .private?, .protected?
-            next
-          end
+          next unless a_def.visibility.public?
 
           body = a_def.body
 
           # Skip auto-generated allocate method
-          if body.is_a?(Crystal::Primitive) && body.name == "allocate"
-            next
-          end
+          next if body.is_a?(Crystal::Primitive) && body.name == "allocate"
 
           if @generator.must_include? a_def
             class_methods << method(a_def, true)
@@ -279,6 +268,8 @@ class Crystal::Doc::Type
             next
           when NonGenericClassType
             next if subclass.extern?
+          else
+            # go on
           end
 
           next unless @generator.must_include?(subclass)
@@ -425,11 +416,11 @@ class Crystal::Doc::Type
   end
 
   def lookup_class_method(name)
-    lookup_in_methods class_methods, name
+    lookup_in_methods all_class_methods, name
   end
 
   def lookup_class_method(name, args_size)
-    lookup_in_methods class_methods, name, args_size
+    lookup_in_methods all_class_methods, name, args_size
   end
 
   def lookup_macro(name)
@@ -449,7 +440,7 @@ class Crystal::Doc::Type
       methods.find { |method| method.name == name && method.args.size == args_size }
     else
       methods = methods.select { |method| method.name == name }
-      (methods.find { |method| method.args.empty? }) || methods.first?
+      methods.find(&.args.empty?) || methods.first?
     end
   end
 
@@ -461,12 +452,12 @@ class Crystal::Doc::Type
     @generator.macro(self, a_macro)
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << name
     append_type_vars io
   end
 
-  private def append_type_vars(io)
+  private def append_type_vars(io : IO) : Nil
     type = @type
     if type_vars = type_vars()
       io << '('
@@ -576,7 +567,11 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node, io, links = true)
-    io << node
+    io << Highlighter.highlight(node.to_s)
+  end
+
+  def node_to_html(node : Underscore, io, links = true)
+    io << '_'
   end
 
   def type_to_html(type)
@@ -791,7 +786,7 @@ class Crystal::Doc::Type
         end
       end
       builder.field "locations", locations
-      builder.field "repository_name", repository_name
+      builder.field "repository_name", @generator.repository_name
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
@@ -836,5 +831,9 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
     end
+  end
+
+  def annotations(annotation_type)
+    @type.annotations(annotation_type)
   end
 end

@@ -1,4 +1,3 @@
-require "./syscall"
 require "crystal/system/file_descriptor"
 
 # An `IO` over a file descriptor.
@@ -6,16 +5,54 @@ class IO::FileDescriptor < IO
   include Crystal::System::FileDescriptor
   include IO::Buffered
 
-  # The raw file-descriptor. It is defined to be an `Int`, but it's size is
+  # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  getter fd
+  def fd
+    @volatile_fd.get
+  end
 
-  def initialize(@fd, blocking = false)
-    @closed = false
+  def initialize(fd, blocking = nil)
+    @volatile_fd = Atomic.new(fd)
+    @closed = system_closed?
+
+    if blocking.nil?
+      blocking =
+        case system_info.type
+        when .pipe?, .socket?, .character_device?
+          false
+        else
+          true
+        end
+    end
 
     unless blocking || {{flag?(:win32)}}
       self.blocking = false
     end
+  end
+
+  # :nodoc:
+  def self.from_stdio(fd)
+    {% if flag?(:win32) %}
+      new(fd)
+    {% else %}
+      # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
+      # We need to reopen it to use O_NONBLOCK without causing other programs to break
+
+      # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
+      # For non-tty we set flush_on_newline to true for reasons described in STDOUT and STDERR docs.
+      path = uninitialized UInt8[256]
+      ret = LibC.ttyname_r(fd, path, 256)
+      return new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
+
+      clone_fd = LibC.open(path, LibC::O_RDWR)
+      return new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
+
+      # We don't buffer output for TTY devices to see their output right away
+      io = new(clone_fd)
+      io.close_on_exec = true
+      io.sync = true
+      io
+    {% end %}
   end
 
   def blocking
@@ -40,7 +77,7 @@ class IO::FileDescriptor < IO
     end
 
     def fcntl(cmd, arg = 0)
-      Crystal::System::FileDescriptor.fcntl(@fd, cmd, arg)
+      Crystal::System::FileDescriptor.fcntl(fd, cmd, arg)
     end
   {% end %}
 
@@ -131,20 +168,20 @@ class IO::FileDescriptor < IO
   end
 
   def reopen(other : IO::FileDescriptor)
+    return other if self.fd == other.fd
     system_reopen(other)
 
     other
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#<IO::FileDescriptor:"
     if closed?
       io << "(closed)"
     else
-      io << " fd=" << @fd
+      io << " fd=" << fd
     end
     io << '>'
-    io
   end
 
   def pretty_print(pp)
@@ -158,7 +195,11 @@ class IO::FileDescriptor < IO
   private def unbuffered_close
     return if @closed
 
-    system_close ensure @closed = true
+    # Set before the @closed state so the pending
+    # IO::Evented readers and writers can be cancelled
+    # knowing the IO is in a closed state.
+    @closed = true
+    system_close
   end
 
   private def unbuffered_flush

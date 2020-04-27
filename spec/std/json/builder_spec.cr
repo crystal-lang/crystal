@@ -278,4 +278,47 @@ describe JSON::Builder do
       end
     end
   end
+
+  it "errors on max nesting (array)" do
+    io = IO::Memory.new
+    builder = JSON::Builder.new(io)
+    builder.max_nesting = 3
+    builder.start_document
+    3.times do
+      builder.start_array
+    end
+
+    expect_raises(JSON::Error, "Nesting of 4 is too deep") do
+      builder.start_array
+    end
+  end
+
+  it "errors on max nesting (object)" do
+    io = IO::Memory.new
+    builder = JSON::Builder.new(io)
+    builder.max_nesting = 3
+    builder.start_document
+    3.times do
+      builder.start_object
+      builder.string "key"
+    end
+
+    expect_raises(JSON::Error, "Nesting of 4 is too deep") do
+      builder.start_object
+    end
+  end
+
+  it "#next_is_object_key?" do
+    io = IO::Memory.new
+    builder = JSON::Builder.new(io)
+    builder.next_is_object_key?.should be_false
+    builder.start_document
+    builder.next_is_object_key?.should be_false
+    builder.start_object
+    builder.next_is_object_key?.should be_true
+    builder.scalar("foo")
+    builder.next_is_object_key?.should be_false
+    builder.scalar("bar")
+    builder.next_is_object_key?.should be_true
+  end
 end

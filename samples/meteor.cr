@@ -1,4 +1,4 @@
-# Translated from: https://github.com/mozilla/rust/blob/master/src/test/bench/shootout-meteor.rs
+# Translated from: https://gitlab.redox-os.org/redox-os/rust/blob/a59de37e99060162a2674e3ff45409ac73595c0e/src/test/bench/shootout-meteor.rs
 
 alias Masks = Array(Array(Array(UInt64)))
 alias Point = Tuple(Int32, Int32)
@@ -44,7 +44,7 @@ end
 def mask(dy, dx, id, p)
   m = bo(50 + id)
   p.each do |(y, x)|
-    x2 = x + dx + (y + (dy % 2)) / 2
+    x2 = x + dx + (y + (dy % 2)) // 2
     return if x2 < 0 || x2 > 4
     y2 = y + dy
     return if y2 < 0 || y2 > 9
@@ -130,8 +130,8 @@ def print_sol(str)
   i = 0
   str.each_byte do |c|
     puts if i % 5 == 0
-    print " " if (i + 5) % 10 == 0
-    print " "
+    print ' ' if (i + 5) % 10 == 0
+    print ' '
     print c.chr
     i += 1
   end

@@ -29,14 +29,14 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
-  def initialize(host : String, port : Int, backlog = SOMAXCONN, dns_timeout = nil, reuse_port = false)
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = bind(addrinfo) { |errno| errno }
+      if errno = bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
         next errno
       end
@@ -46,6 +46,11 @@ class TCPServer < TCPSocket
         next errno
       end
     end
+  end
+
+  # Creates a TCPServer from an already configured raw file descriptor
+  def initialize(*, fd : Int32, family : Family = Family::INET)
+    super(fd: fd, family: family)
   end
 
   # Creates a new TCP server, listening on all local interfaces (`::`).
@@ -98,9 +103,9 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept?
+  def accept? : TCPSocket?
     if client_fd = accept_impl
-      sock = TCPSocket.new(client_fd, family, type, protocol)
+      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
       sock.sync = sync?
       sock
     end

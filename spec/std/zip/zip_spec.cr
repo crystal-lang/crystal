@@ -35,7 +35,7 @@ describe Zip do
   it "writes entry" do
     io = IO::Memory.new
 
-    time = Time.new(2017, 1, 14, 2, 3, 4)
+    time = Time.utc(2017, 1, 14, 2, 3, 4)
     extra = Bytes[1, 2, 3, 4]
 
     Zip::Writer.open(io) do |zip|
@@ -59,7 +59,7 @@ describe Zip do
     io = IO::Memory.new
 
     text = "contents of foo"
-    crc32 = CRC32.checksum(text)
+    crc32 = Digest::CRC32.checksum(text)
 
     Zip::Writer.open(io) do |zip|
       entry = Zip::Writer::Entry.new("foo.txt")
@@ -91,6 +91,31 @@ describe Zip do
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("bar.txt")
       entry.io.gets_to_end.should eq(text)
+    end
+  end
+
+  it "writes entry uncompressed and reads with Zip::File" do
+    io = IO::Memory.new
+
+    text = "contents of foo"
+    crc32 = Digest::CRC32.checksum(text)
+
+    Zip::Writer.open(io) do |zip|
+      entry = Zip::Writer::Entry.new("foo.txt")
+      entry.compression_method = Zip::CompressionMethod::STORED
+      entry.crc32 = crc32
+      entry.compressed_size = text.bytesize.to_u32
+      entry.uncompressed_size = text.bytesize.to_u32
+      zip.add entry, &.print(text)
+    end
+
+    io.rewind
+
+    Zip::File.open(io) do |zip|
+      zip.entries.size.should eq(1)
+      entry = zip.entries.first
+      entry.filename.should eq("foo.txt")
+      entry.open(&.gets_to_end).should eq(text)
     end
   end
 

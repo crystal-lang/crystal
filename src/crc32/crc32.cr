@@ -1,20 +1,23 @@
-require "lib_z"
+require "digest"
 
 module CRC32
+  @[Deprecated("Use `Digest::CRC32.initial` instead")]
   def self.initial : UInt32
-    LibZ.crc32(0, nil, 0).to_u32
+    Digest::CRC32.initial
   end
 
+  @[Deprecated("Use `Digest::CRC32.checksum` instead")]
   def self.checksum(data) : UInt32
-    update(data, initial)
+    Digest::CRC32.checksum(data)
   end
 
+  @[Deprecated("Use `Digest::CRC32.update` instead")]
   def self.update(data, crc32 : UInt32) : UInt32
-    slice = data.to_slice
-    LibZ.crc32(crc32, slice, slice.size).to_u32
+    Digest::CRC32.update(data, crc32)
   end
 
+  @[Deprecated("Use `Digest::CRC32.combine` instead")]
   def self.combine(crc1 : UInt32, crc2 : UInt32, len) : UInt32
-    LibZ.crc32_combine(crc1, crc2, len).to_u32
+    Digest::CRC32.combine(crc1, crc2, len)
   end
 end

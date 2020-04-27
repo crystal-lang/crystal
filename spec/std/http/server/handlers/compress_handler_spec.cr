@@ -9,7 +9,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -28,7 +28,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -38,13 +38,9 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Flate::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
-
-    body.to_slice.should eq(io2.to_slice)
+    io2 = IO::Memory.new(body)
+    flate = Compress::Deflate::Reader.new(io2)
+    flate.gets_to_end.should eq("Hello")
   end
 
   it "deflates gzip if has deflate in 'deflate' Accept-Encoding header" do
@@ -56,7 +52,7 @@ describe HTTP::CompressHandler do
     context = HTTP::Server::Context.new(request, response)
 
     handler = HTTP::CompressHandler.new
-    handler.next = HTTP::Handler::Proc.new do |ctx|
+    handler.next = HTTP::Handler::HandlerProc.new do |ctx|
       ctx.response.print "Hello"
     end
     handler.call(context)
@@ -66,12 +62,8 @@ describe HTTP::CompressHandler do
     response2 = HTTP::Client::Response.from_io(io, decompress: false)
     body = response2.body
 
-    io2 = IO::Memory.new
-    deflate = Gzip::Writer.new(io2)
-    deflate.print "Hello"
-    deflate.close
-    io2.rewind
-
-    body.to_slice.should eq(io2.to_slice)
+    io2 = IO::Memory.new(body)
+    gzip = Compress::Gzip::Reader.new(io2)
+    gzip.gets_to_end.should eq("Hello")
   end
 end

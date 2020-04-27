@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: no return" do
   it "codegens if with NoReturn on then and union on else" do
-    run("lib LibC; fun exit(c : Int32) : NoReturn; end; (if 1 == 2; LibC.exit(1); else; 1 || 2.5; end).to_i").to_i.should eq(1)
+    run("lib LibC; fun exit(c : Int32) : NoReturn; end; (if 1 == 2; LibC.exit(1); else; 1 || 2.5; end).to_i!").to_i.should eq(1)
   end
 
   it "codegens Pointer(NoReturn).malloc" do

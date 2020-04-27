@@ -654,4 +654,36 @@ describe "Semantic: exception" do
       end
     )) { nil_type }
   end
+
+  it "correctly types variables inside conditional inside exception handler with no-return rescue (#8012)" do
+    assert_type(%(
+      def foo
+        begin
+          x = 99 if false
+        rescue
+          return 10
+        end
+
+        x
+      end
+
+      foo
+    )) { nilable int32 }
+  end
+
+  it "gets a non-nilable type if all rescue are unreachable (#8751)" do
+    semantic(%(
+      while true
+        begin
+          foo = 1
+          break
+        rescue
+          foo
+          break
+        end
+
+        foo &+ 2
+      end
+      ))
+  end
 end

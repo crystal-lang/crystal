@@ -51,7 +51,7 @@ require "./spec/dsl"
 # and run the specs of a project by running `crystal spec`.
 #
 # ```console
-# # Run  all specs in files matching spec/**/*_spec.cr
+# # Run all specs in files matching spec/**/*_spec.cr
 # crystal spec
 #
 # # Run all specs in files matching spec/my/test/**/*_spec.cr
@@ -62,11 +62,40 @@ require "./spec/dsl"
 #
 # # Run the spec or group defined in line 14 of spec/my/test/file_spec.cr
 # crystal spec spec/my/test/file_spec.cr:14
+#
+# # Run all specs tagged with "fast"
+# crystal spec --tag 'fast'
+#
+# # Run all specs not tagged with "slow"
+# crystal spec --tag '~slow'
 # ```
+#
+# ## Focusing on a group of specs
+#
+# A `describe`, `context` or `it` can be marked with `focus: true`, like this:
+#
+# ```
+# it "adds", focus: true do
+#   (2 + 2).should_not eq(5)
+# end
+# ```
+#
+# If any such thing is marked with `focus: true` then only those examples will run.
+#
+# ## Randomizing order of specs
+#
+# Specs, by default, run in the order defined, but can be run in a random order
+# by passing `--order random` to `crystal spec`.
+#
+# Specs run in random order will display a seed value upon completion. This seed
+# value can be used to rerun the specs in that same order by passing the seed
+# value to `--order`.
 module Spec
 end
 
-OptionParser.parse! do |opts|
+Colorize.on_tty_only!
+
+OptionParser.parse do |opts|
   opts.banner = "crystal spec runner"
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
@@ -88,16 +117,31 @@ OptionParser.parse! do |opts|
       exit 1
     end
   end
-  opts.on("--junit_output OUTPUT_DIR", "generate JUnit XML output") do |output_dir|
-    junit_formatter = Spec::JUnitFormatter.file(output_dir)
+  opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
+    Spec.add_tag tag
+  end
+  opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
+    if mode == "default" || mode == "random"
+      Spec.order = mode
+    elsif seed = mode.to_u64?
+      Spec.order = seed
+    else
+      abort("order must be either 'default', 'random', or a numeric seed value")
+    end
+  end
+  opts.on("--junit_output OUTPUT_PATH", "generate JUnit XML output within the given OUTPUT_PATH") do |output_path|
+    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path))
     Spec.add_formatter(junit_formatter)
   end
-  opts.on("--help", "show this help") do |pattern|
+  opts.on("-h", "--help", "show this help") do |pattern|
     puts opts
     exit
   end
   opts.on("-v", "--verbose", "verbose output") do
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
+  end
+  opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
+    Spec.override_default_formatter(Spec::TAPFormatter.new)
   end
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false
@@ -115,6 +159,11 @@ if ENV["SPEC_VERBOSE"]? == "1"
   Spec.override_default_formatter(Spec::VerboseFormatter.new)
 end
 
-Signal::INT.trap { Spec.abort! }
+Spec.add_split_filter ENV["SPEC_SPLIT"]?
+
+{% unless flag?(:win32) %}
+  # TODO(windows): re-enable this once Signal is ported
+  Signal::INT.trap { Spec.abort! }
+{% end %}
 
 Spec.run

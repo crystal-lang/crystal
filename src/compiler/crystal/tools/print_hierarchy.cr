@@ -9,6 +9,8 @@ module Crystal
       HierarchyPrinter.new(program, exp).execute
     when "json"
       JSONHierarchyPrinter.new(program, exp).execute
+    else
+      raise "Unknown hierarchy format: #{format}"
     end
   end
 
@@ -263,7 +265,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@program.color?)
+      Colorize.with.toggle(@program.color?)
     end
   end
 

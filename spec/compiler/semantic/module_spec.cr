@@ -250,7 +250,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ") { types["Baz"].metaclass }
+      ") { generic_class("Bar", int32).metaclass }
   end
 
   it "includes generic module with self (check argument type, success)" do
@@ -303,15 +303,15 @@ describe "Semantic: module" do
       class Baz1 < Bar(Int32)
       end
 
-      class Baz2 < Bar(Int32)
+      class Baz2 < Bar(Float64)
       end
 
       Baz1.new.foo Baz2.new
       ", "no overload matches"
   end
 
-  it "includes generic module with self (check argument superclass type, error)" do
-    assert_error "
+  it "includes generic module with self (check argument superclass type, success)" do
+    assert_type("
       module Foo(T)
         def foo(x : T)
           x
@@ -322,11 +322,14 @@ describe "Semantic: module" do
         include Foo(self)
       end
 
-      class Baz < Bar(Int32)
+      class Baz1 < Bar(Int32)
       end
 
-      Baz.new.foo Bar(Int32).new
-      ", "no overload matches"
+      class Baz2 < Bar(Int32)
+      end
+
+      Baz1.new.foo Baz2.new
+      ") { types["Baz2"] }
   end
 
   it "includes generic module with self (check return type, success)" do
@@ -376,11 +379,11 @@ describe "Semantic: module" do
         include Foo(self)
       end
 
-      class Baz < Bar(Int32)
+      class Baz < Bar(Float64)
       end
 
       Baz.new.foo
-      ", "type must be Baz, not Bar(Int32)"
+      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -398,11 +401,11 @@ describe "Semantic: module" do
       class Baz1 < Bar(Int32)
       end
 
-      class Baz2 < Bar(Int32)
+      class Baz2 < Bar(Float64)
       end
 
       Baz1.new.foo
-      ", "type must be Baz1, not Baz2"
+      ", "method must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
@@ -904,6 +907,26 @@ describe "Semantic: module" do
       "undefined method 'new' for Moo:Module"
   end
 
+  it "gives error when trying to instantiate with new" do
+    assert_error %(
+      module Moo
+        def initialize
+        end
+      end
+      Moo.new),
+      "undefined local variable or method 'allocate' for Moo:Module (modules cannot be instantiated)"
+  end
+
+  it "gives error when trying to instantiate with allocate" do
+    assert_error %(
+      module Moo
+        def initialize
+        end
+      end
+      Moo.allocate),
+      "undefined method 'allocate' for Moo:Module (modules cannot be instantiated)"
+  end
+
   it "uses type declaration inside module" do
     assert_type(%(
       module Moo
@@ -1257,7 +1280,7 @@ describe "Semantic: module" do
         extend Foo
       end
       ),
-      "can't declare instance variables in Bar:Class"
+      "can't declare instance variables in Bar.class"
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do
@@ -1280,5 +1303,69 @@ describe "Semantic: module" do
       Gen(Foo.class).foo(Moo)
       ),
       "no overload matches"
+  end
+
+  it "extends module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Gen(T)
+        extend Foo
+      end
+
+      Gen(Int32).foo
+      )) { int32 }
+  end
+
+  it "extends generic module from generic class and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "extends generic module from generic module and calls class method (#7167)" do
+    assert_type(%(
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      module Gen(U)
+        extend Foo(U)
+      end
+
+      Gen(Int32).foo
+      )) { int32.metaclass }
+  end
+
+  it "doesn't look up initialize past module that defines initialize (#7007)" do
+    assert_error %(
+      module Moo
+        def initialize(x)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new
+      ),
+      "wrong number of arguments"
   end
 end

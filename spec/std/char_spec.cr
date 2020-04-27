@@ -261,14 +261,13 @@ describe "Char" do
   describe "+" do
     it "does for both ascii" do
       str = 'f' + "oo"
-      str.bytesize.should eq(3)
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("foo")
     end
 
     it "does for both unicode" do
       str = '青' + "旅路"
-      str.@length.should eq(3)
+      str.@length.should eq(3) # Check that it was precomputed
       str.should eq("青旅路")
     end
   end
@@ -374,10 +373,10 @@ describe "Char" do
   end
 
   it "does number?" do
-    it { '1'.number?.should be_true }
-    it { '٠'.number?.should be_true }
-    it { '٢'.number?.should be_true }
-    it { 'a'.number?.should be_false }
+    '1'.number?.should be_true
+    '٠'.number?.should be_true
+    '٢'.number?.should be_true
+    'a'.number?.should be_false
   end
 
   it "does ascii_control?" do

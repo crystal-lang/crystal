@@ -10,6 +10,10 @@ describe Digest::MD5 do
     Digest::MD5.hexdigest("foo").should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 
+  it "calculates hash from unicode string" do
+    Digest::MD5.hexdigest("fooø").should eq("d841c4eb31535db11faab98d10316b29")
+  end
+
   it "calculates hash from UInt8 slices" do
     s = Bytes[0x66, 0x6f, 0x6f] # f,o,o
     Digest::MD5.hexdigest(s).should eq("acbd18db4cc2f85cedef654fccc4a4d8")

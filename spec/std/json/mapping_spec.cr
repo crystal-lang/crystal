@@ -1,8 +1,10 @@
-require "spec"
+require "../spec_helper"
 require "json"
 require "uuid"
 require "uuid/json"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "big/json"
+{% end %}
 
 private class JSONPerson
   JSON.mapping({
@@ -38,9 +40,11 @@ private class JSONWithUUID
   JSON.mapping value: UUID
 end
 
-private class JSONWithBigDecimal
-  JSON.mapping value: BigDecimal
-end
+{% unless flag?(:win32) %}
+  private class JSONWithBigDecimal
+    JSON.mapping value: BigDecimal
+  end
+{% end %}
 
 private class JSONWithTime
   JSON.mapping({
@@ -130,6 +134,18 @@ end
 private class JSONWithRaw
   JSON.mapping({
     value: {type: String, converter: String::RawConverter},
+  })
+end
+
+private class JSONWithArrayConverter
+  JSON.mapping({
+    values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+  })
+end
+
+private class JSONWithJSONHashValueConverter
+  JSON.mapping({
+    birthdays: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
   })
 end
 
@@ -250,7 +266,7 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected begin_object but was string at 1:1
+      Expected BeginObject but was String at 1:1
         parsing StrictJSONPerson at 0:0
       MSG
     ex = expect_raises JSON::MappingError, error_message do
@@ -263,7 +279,7 @@ describe "JSON mapping" do
 
   it "raises if data type does not match" do
     error_message = <<-'MSG'
-      Expected int but was string at 3:15
+      Expected Int but was String at 3:15
         parsing StrictJSONPerson#age at 3:3
       MSG
     ex = expect_raises JSON::MappingError, error_message do
@@ -330,11 +346,9 @@ describe "JSON mapping" do
   end
 
   it "outputs JSON with properties key" do
-    input = {
-      properties: {"foo" => "bar"},
-    }.to_json
-    json = JSONWithPropertiesKey.from_json(input)
-    json.to_json.should eq(input)
+    string = %({"properties":{"foo":"bar"}})
+    json = JSONWithPropertiesKey.from_json(string)
+    json.to_json.should eq(string)
   end
 
   it "parses json with keywords" do
@@ -445,7 +459,7 @@ describe "JSON mapping" do
     string = %({"value":1459859781})
     json = JSONWithTimeEpoch.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch(1459859781))
+    json.value.should eq(Time.unix(1459859781))
     json.to_json.should eq(string)
   end
 
@@ -453,7 +467,23 @@ describe "JSON mapping" do
     string = %({"value":1459860483856})
     json = JSONWithTimeEpochMillis.from_json(string)
     json.value.should be_a(Time)
-    json.value.should eq(Time.epoch_ms(1459860483856))
+    json.value.should eq(Time.unix_ms(1459860483856))
+    json.to_json.should eq(string)
+  end
+
+  it "uses JSON::ArrayConverter" do
+    string = %({"values":[1459859781,1567628762]})
+    json = JSONWithArrayConverter.from_json(string)
+    json.values.should be_a(Array(Time))
+    json.values.should eq([Time.unix(1459859781), Time.unix(1567628762)])
+    json.to_json.should eq(string)
+  end
+
+  it "uses JSON::HashValueConverter" do
+    string = %({"birthdays":{"foo":1459859781,"bar":1567628762}})
+    json = JSONWithJSONHashValueConverter.from_json(string)
+    json.birthdays.should be_a(Hash(String, Time))
+    json.birthdays.should eq({"foo" => Time.unix(1459859781), "bar" => Time.unix(1567628762)})
     json.to_json.should eq(string)
   end
 
@@ -586,7 +616,7 @@ describe "JSON mapping" do
     end
   end
 
-  describe "BigDecimal" do
+  pending_win32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))

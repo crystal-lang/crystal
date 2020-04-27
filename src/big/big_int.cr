@@ -1,5 +1,6 @@
 require "c/string"
 require "big"
+require "random"
 
 # A `BigInt` can represent arbitrarily large integers.
 #
@@ -14,6 +15,7 @@ struct BigInt < Int
   #
   # ```
   # require "big"
+  #
   # BigInt.new # => 0
   # ```
   def initialize
@@ -25,12 +27,17 @@ struct BigInt < Int
   # Raises `ArgumentError` if the string doesn't denote a valid integer.
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789123456789123456789123456789") # => 123456789123456789123456789123456789
+  # BigInt.new("123_456_789_123_456_789_123_456_789")  # => 123456789123456789123456789
   # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
   # ```
   def initialize(str : String, base = 10)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
+    # Strip '_' to make it compatible with int literals like "1_000_000"
+    str = str.delete('_')
     err = LibGMP.init_set_str(out @mpz, str, base)
     if err == -1
       raise ArgumentError.new("Invalid BigInt: #{str}")
@@ -46,7 +53,7 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, num)
@@ -55,9 +62,24 @@ struct BigInt < Int
     end
   end
 
-  # ditto
-  def initialize(num : Float)
+  # :ditto:
+  def initialize(num : Float::Primitive)
     LibGMP.init_set_d(out @mpz, num)
+  end
+
+  # :ditto:
+  def self.new(num : BigFloat)
+    num.to_big_i
+  end
+
+  # :ditto:
+  def self.new(num : BigDecimal)
+    num.to_big_i
+  end
+
+  # :ditto:
+  def self.new(num : BigRational)
+    num.to_big_i
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
@@ -115,6 +137,10 @@ struct BigInt < Int
     end
   end
 
+  def &+(other) : BigInt
+    self + other
+  end
+
   def -(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.sub(mpz, self, other) }
   end
@@ -129,12 +155,25 @@ struct BigInt < Int
     end
   end
 
+  def &-(other) : BigInt
+    self - other
+  end
+
   def - : BigInt
     BigInt.new { |mpz| LibGMP.neg(mpz, self) }
   end
 
   def abs : BigInt
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
+  end
+
+  def factorial : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
   end
 
   def *(other : BigInt) : BigInt
@@ -153,7 +192,20 @@ struct BigInt < Int
     self * other.to_big_i
   end
 
-  def /(other : Int) : BigInt
+  def &*(other) : BigInt
+    self * other
+  end
+
+  Number.expand_div [BigInt], BigFloat
+  Number.expand_div [BigDecimal], BigDecimal
+  Number.expand_div [BigRational], BigRational
+
+  def //(other : Int::Unsigned) : BigInt
+    check_division_by_zero other
+    unsafe_floored_div(other)
+  end
+
+  def //(other : Int) : BigInt
     check_division_by_zero other
 
     if other < 0
@@ -312,6 +364,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
+  # :nodoc:
+  #
+  # Because every Int needs this method.
+  def unsafe_shr(count : Int) : self
+    self >> count
+  end
+
   def <<(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
   end
@@ -340,9 +399,8 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
-  def inspect(io)
-    to_s io
-    io << "_big_i"
+  def bit_length : Int32
+    LibGMP.sizeinbase(self, 2).to_i
   end
 
   # TODO: improve this
@@ -351,14 +409,16 @@ struct BigInt < Int
   # Returns a string representation of self.
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
   # ```
-  def to_s
+  def to_s : String
     String.new(to_cstr)
   end
 
-  # ditto
-  def to_s(io)
+  # :ditto:
+  def to_s(io : IO) : Nil
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
@@ -366,11 +426,13 @@ struct BigInt < Int
   # Returns a string containing the representation of big radix base (2 through 36).
   #
   # ```
+  # require "big"
+  #
   # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
   # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
-  def to_s(base : Int)
+  def to_s(base : Int) : String
     raise "Invalid base #{base}" unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
     String.new(cstr)
@@ -384,6 +446,10 @@ struct BigInt < Int
 
   def popcount
     LibGMP.popcount(self)
+  end
+
+  def trailing_zeros_count
+    LibGMP.scan1(self, 0)
   end
 
   def to_i
@@ -403,8 +469,32 @@ struct BigInt < Int
   end
 
   def to_i64
-    if LibGMP::Long == Int64 || (self <= Int32::MAX && self >= Int32::MIN)
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
       LibGMP.get_si(self).to_i64
+    else
+      to_s.to_i64
+    end
+  end
+
+  def to_i!
+    to_i32!
+  end
+
+  def to_i8!
+    LibGMP.get_si(self).to_i8!
+  end
+
+  def to_i16!
+    LibGMP.get_si(self).to_i16!
+  end
+
+  def to_i32!
+    LibGMP.get_si(self).to_i32!
+  end
+
+  def to_i64!
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
+      LibGMP.get_si(self).to_i64!
     else
       to_s.to_i64
     end
@@ -423,12 +513,37 @@ struct BigInt < Int
   end
 
   def to_u32
-    LibGMP.get_ui(self).to_u32
+    to_u64.to_u32
   end
 
   def to_u64
-    if LibGMP::ULong == UInt64 || (self <= UInt32::MAX && self >= UInt32::MIN)
+    raise OverflowError.new if self < 0
+    if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
       LibGMP.get_ui(self).to_u64
+    else
+      to_s.to_u64
+    end
+  end
+
+  def to_u!
+    to_u32!
+  end
+
+  def to_u8!
+    LibGMP.get_ui(self).to_u8!
+  end
+
+  def to_u16!
+    LibGMP.get_ui(self).to_u16!
+  end
+
+  def to_u32!
+    LibGMP.get_ui(self).to_u32!
+  end
+
+  def to_u64!
+    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
+      LibGMP.get_ui(self).to_u64!
     else
       to_s.to_u64
     end
@@ -446,12 +561,32 @@ struct BigInt < Int
     LibGMP.get_d(self)
   end
 
+  def to_f!
+    to_f64!
+  end
+
+  def to_f32!
+    LibGMP.get_d(self).to_f32!
+  end
+
+  def to_f64!
+    LibGMP.get_d(self)
+  end
+
   def to_big_i
     self
   end
 
   def to_big_f
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
+  end
+
+  def to_big_d
+    BigDecimal.new(self)
+  end
+
+  def to_big_r
+    BigRational.new(self)
   end
 
   def clone
@@ -488,6 +623,10 @@ struct Int
     other + self
   end
 
+  def &+(other : BigInt) : BigInt
+    self + other
+  end
+
   def -(other : BigInt) : BigInt
     if self < 0
       -(abs + other)
@@ -501,12 +640,16 @@ struct Int
     end
   end
 
+  def &-(other : BigInt) : BigInt
+    self - other
+  end
+
   def *(other : BigInt) : BigInt
     other * self
   end
 
-  def /(other : BigInt) : BigInt
-    to_big_i / other
+  def &*(other : BigInt) : BigInt
+    self * other
   end
 
   def %(other : BigInt) : BigInt
@@ -522,6 +665,11 @@ struct Int
   end
 
   # Returns a `BigInt` representing this integer.
+  # ```
+  # require "big"
+  #
+  # 123.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -535,6 +683,11 @@ struct Float
   end
 
   # Returns a `BigInt` representing this float (rounded using `floor`).
+  # ```
+  # require "big"
+  #
+  # 1212341515125412412412421.0.to_big_i
+  # ```
   def to_big_i : BigInt
     BigInt.new(self)
   end
@@ -544,14 +697,68 @@ class String
   # Returns a `BigInt` from this string, in the given *base*.
   #
   # Raises `ArgumentError` if this string doesn't denote a valid integer.
+  # ```
+  # require "big"
+  #
+  # "3a060dbf8d1a5ac3e67bc8f18843fc48".to_big_i(16)
+  # ```
   def to_big_i(base = 10) : BigInt
     BigInt.new(self, base)
   end
 end
 
 module Math
+  # Returns the sqrt of a `BigInt`.
+  #
+  # ```
+  # require "big"
+  #
+  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
+  end
+end
+
+module Random
+  private def rand_int(max : BigInt) : BigInt
+    # This is a copy of the algorithm in random.cr but with fewer special cases.
+    unless max > 0
+      raise ArgumentError.new "Invalid bound for rand: #{max}"
+    end
+
+    rand_max = BigInt.new(1) << (sizeof(typeof(next_u))*8)
+    needed_parts = 1
+    while rand_max < max && rand_max > 0
+      rand_max <<= sizeof(typeof(next_u))*8
+      needed_parts += 1
+    end
+
+    limit = rand_max // max * max
+
+    loop do
+      result = BigInt.new(next_u)
+      (needed_parts - 1).times do
+        result <<= sizeof(typeof(next_u))*8
+        result |= BigInt.new(next_u)
+      end
+
+      # For a uniform distribution we may need to throw away some numbers.
+      if result < limit
+        return result % max
+      end
+    end
+  end
+
+  private def rand_range(range : Range(BigInt, BigInt)) : BigInt
+    span = range.end - range.begin
+    unless range.excludes_end?
+      span += 1
+    end
+    unless span > 0
+      raise ArgumentError.new "Invalid range for rand: #{range}"
+    end
+    range.begin + rand_int(span)
   end
 end
 

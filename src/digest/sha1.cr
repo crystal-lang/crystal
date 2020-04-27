@@ -67,8 +67,8 @@ class Digest::SHA1 < Digest::Base
     e = @intermediate_hash[4]
 
     {% for t in (0...20) %}
-      temp = circular_shift(5, a) +
-        ((b & c) | ((~b) & d)) + e + w[{{t}}] + k[0]
+      temp = circular_shift(5, a) &+
+        ((b & c) | ((~b) & d)) &+ e &+ w[{{t}}] &+ k[0]
       e = d
       d = c
       c = circular_shift(30, b)
@@ -77,7 +77,7 @@ class Digest::SHA1 < Digest::Base
     {% end %}
 
     {% for t in (20...40) %}
-      temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[1]
+      temp = circular_shift(5, a) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[1]
       e = d
       d = c
       c = circular_shift(30, b)
@@ -86,8 +86,8 @@ class Digest::SHA1 < Digest::Base
     {% end %}
 
     {% for t in (40...60) %}
-      temp = circular_shift(5, a) +
-        ((b & c) | (b & d) | (c & d)) + e + w[{{t}}] + k[2]
+      temp = circular_shift(5, a) &+
+        ((b & c) | (b & d) | (c & d)) &+ e &+ w[{{t}}] &+ k[2]
       e = d
       d = c
       c = circular_shift(30, b)
@@ -96,7 +96,7 @@ class Digest::SHA1 < Digest::Base
     {% end %}
 
     {% for t in (60...80) %}
-      temp = circular_shift(5, a) + (b ^ c ^ d) + e + w[{{t}}] + k[3]
+      temp = circular_shift(5, a) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[3]
       e = d
       d = c
       c = circular_shift(30, b)
@@ -104,11 +104,11 @@ class Digest::SHA1 < Digest::Base
       a = temp
     {% end %}
 
-    @intermediate_hash[0] += a
-    @intermediate_hash[1] += b
-    @intermediate_hash[2] += c
-    @intermediate_hash[3] += d
-    @intermediate_hash[4] += e
+    @intermediate_hash[0] &+= a
+    @intermediate_hash[1] &+= b
+    @intermediate_hash[2] &+= c
+    @intermediate_hash[3] &+= d
+    @intermediate_hash[4] &+= e
 
     @message_block_index = 0
   end
@@ -127,7 +127,7 @@ class Digest::SHA1 < Digest::Base
     @length_low = 0_u32
     @length_high = 0_u32
     {% for i in 0...20 %}
-      message_digest[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8
+      message_digest[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8!
     {% end %}
 
     message_digest
@@ -157,14 +157,14 @@ class Digest::SHA1 < Digest::Base
       end
     end
 
-    @message_block[56] = (@length_high >> 24).to_u8
-    @message_block[57] = (@length_high >> 16).to_u8
-    @message_block[58] = (@length_high >> 8).to_u8
-    @message_block[59] = (@length_high).to_u8
-    @message_block[60] = (@length_low >> 24).to_u8
-    @message_block[61] = (@length_low >> 16).to_u8
-    @message_block[62] = (@length_low >> 8).to_u8
-    @message_block[63] = (@length_low).to_u8
+    @message_block[56] = (@length_high >> 24).to_u8!
+    @message_block[57] = (@length_high >> 16).to_u8!
+    @message_block[58] = (@length_high >> 8).to_u8!
+    @message_block[59] = (@length_high).to_u8!
+    @message_block[60] = (@length_low >> 24).to_u8!
+    @message_block[61] = (@length_low >> 16).to_u8!
+    @message_block[62] = (@length_low >> 8).to_u8!
+    @message_block[63] = (@length_low).to_u8!
 
     process_message_block
   end

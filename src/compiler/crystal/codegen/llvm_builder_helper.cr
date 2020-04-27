@@ -32,6 +32,25 @@ module Crystal
       llvm_type(type).const_int(n)
     end
 
+    def float32(value)
+      llvm_context.float.const_float(value)
+    end
+
+    def float64(value)
+      llvm_context.double.const_double(value)
+    end
+
+    def float(value, type)
+      case type.kind
+      when :f32
+        float32(value.to_f32)
+      when :f64
+        float64(value.to_f64)
+      else
+        raise "Unsupported float type"
+      end
+    end
+
     def llvm_nil
       llvm_typer.nil_value
     end
@@ -76,9 +95,37 @@ module Crystal
       builder.inbounds_gep ptr, index0, index1, name
     end
 
-    delegate ptr2int, int2ptr, and, or, not, call, bit_cast,
-      trunc, load, store, br, insert_block, position_at_end, unreachable,
-      cond, phi, extract_value, to: builder
+    def call(func, name : String = "")
+      call(func, [] of LLVM::Value, name)
+    end
+
+    def call(func, arg : LLVM::Value, name : String = "")
+      call(func, [arg], name)
+    end
+
+    def call(func, args : Array(LLVM::Value), name : String = "")
+      if catch_pad = @catch_pad
+        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
+      else
+        funclet = LLVM::OperandBundleDef.null
+      end
+
+      builder.call(func, args, bundle: funclet, name: name)
+    end
+
+    def invoke(func, args : Array(LLVM::Value), a_then, a_catch, name : String = "")
+      if catch_pad = @catch_pad
+        funclet = builder.build_operand_bundle_def("funclet", [catch_pad])
+      else
+        funclet = LLVM::OperandBundleDef.null
+      end
+
+      builder.invoke(func, args, a_then, a_catch, bundle: funclet, name: name)
+    end
+
+    delegate ptr2int, int2ptr, and, or, not, bit_cast,
+      trunc, load, store, load_volatile, store_volatile, br, insert_block, position_at_end,
+      cond, phi, extract_value, switch, to: builder
 
     def ret
       builder.ret
@@ -149,10 +196,6 @@ module Crystal
 
     def llvm_struct_size(type)
       llvm_struct_type(type).size
-    end
-
-    def llvm_union_value_type(type)
-      llvm_typer.union_value_type(type)
     end
   end
 end

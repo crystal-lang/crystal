@@ -12,6 +12,12 @@ end
 private class B2 < A
 end
 
+private class ClassWithRedefinedName
+  def self.name
+    "OtherName"
+  end
+end
+
 describe Class do
   it "does ===" do
     (Int32 === 1).should be_true
@@ -48,6 +54,15 @@ describe Class do
     Nil.nilable?.should be_true
     (Int32 | String).nilable?.should be_false
     Int32?.nilable?.should be_true
+  end
+
+  it "does to_s" do
+    Int32.to_s.should eq("Int32")
+  end
+
+  it "does to_s with name redefined (#7292)" do
+    ClassWithRedefinedName.name.should eq("OtherName")
+    ClassWithRedefinedName.to_s.should eq("ClassWithRedefinedName")
   end
 
   describe "comparison operators" do

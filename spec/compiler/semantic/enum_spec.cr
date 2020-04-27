@@ -421,4 +421,75 @@ describe "Semantic: enum" do
       ),
       "can't declare type inside enum"
   end
+
+  it "attaches annotation to enum method (#6690)" do
+    result = semantic(%(
+      enum Foo
+        X
+
+        @[AlwaysInline]
+        def bar
+        end
+      end
+      ))
+
+    method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
+    method.always_inline?.should be_true
+  end
+
+  it "errors if defining initialize in Enum (#7238)" do
+    assert_error %(
+      enum Foo
+        FOO = 1
+
+        def initialize
+        end
+      end
+      ),
+      "enums can't define an `initialize` method, try using `def self.new`"
+  end
+
+  it "can redefine Enum.new" do
+    assert_type(%(
+      enum Foo
+        FOO = 1
+
+        def self.new(x : Int32)
+          "hello"
+        end
+      end
+
+      Foo.new(1)
+      )) { string }
+  end
+
+  it "gives error on enum overflow" do
+    assert_error %(
+      @[Flags]
+      enum Foo : UInt8
+        #{Array.new(9) { |i| "V#{i + 1}" }.join "\n"}
+      end
+      ),
+      "value of enum member V9 would overflow the base type UInt8"
+  end
+
+  it "doesn't overflow when going from negative to zero (#7874)" do
+    semantic(%(
+      enum Nums
+        Zero  = -2
+        One
+        Two
+      end
+    ))
+  end
+
+  it "doesn't overflow on flags member (#7877)" do
+    semantic(%(
+      @[Flags]
+      enum Filter
+        A = 1 << 29
+        B
+      end
+    ))
+  end
 end

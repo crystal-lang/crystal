@@ -608,38 +608,38 @@ describe "Semantic: lib" do
       )) { float64 }
   end
 
-  it "errors if invoking to_i32 and got error in that call" do
+  it "errors if invoking to_i32! and got error in that call" do
     assert_error %(
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           1 + 'a'
         end
       end
 
       LibFoo.foo Foo.new
       ),
-      "converting from Foo to Int32 by invoking 'to_i32'"
+      "converting from Foo to Int32 by invoking 'to_i32!'"
   end
 
-  it "errors if invoking to_i32 and got wrong type" do
+  it "errors if invoking to_i32! and got wrong type" do
     assert_error %(
       lib LibFoo
         fun foo(x : Int32) : Float64
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           'a'
         end
       end
 
       LibFoo.foo Foo.new
       ),
-      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+      "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
   end
 
   it "defines lib funs before funs with body" do
@@ -745,7 +745,7 @@ describe "Semantic: lib" do
       "argument 'x' already specified"
   end
 
-  it "errors if missing arugment" do
+  it "errors if missing argument" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8) : Int32
@@ -756,7 +756,7 @@ describe "Semantic: lib" do
       "missing argument: y"
   end
 
-  it "errors if missing arugments" do
+  it "errors if missing arguments" do
     assert_error %(
       lib LibC
         fun foo(x : Int32, y : UInt8, z: Int32) : Int32

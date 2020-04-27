@@ -27,7 +27,7 @@ module Benchmark
         @items = [] of Entry
       end
 
-      # Add code to be benchmarked
+      # Adds code to be benchmarked
       def report(label = "", &action)
         item = Entry.new(label, action)
         @items << item
@@ -43,15 +43,15 @@ module Benchmark
       def report
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
-        max_bytes_per_op = ran_items.max_of &.bytes_per_op.to_s.size
+        max_bytes_per_op = ran_items.max_of &.bytes_per_op.humanize(base: 1024).size
 
         ran_items.each do |item|
-          printf "%s %s (%s) (±%5.2f%%)  %s B/op  %s\n",
+          printf "%s %s (%s) (±%5.2f%%)  %sB/op  %s\n",
             item.label.rjust(max_label),
             item.human_mean,
             item.human_iteration_time,
             item.relative_stddev,
-            item.bytes_per_op.to_s.rjust(max_bytes_per_op),
+            item.bytes_per_op.humanize(base: 1024).rjust(max_bytes_per_op),
             item.human_compare.rjust(max_compare)
         end
       end
@@ -87,18 +87,20 @@ module Benchmark
           target = Time.monotonic + @calculation_time
 
           loop do
-            bytes_before_measure = GC.stats.total_bytes
-            elapsed = Time.measure { item.call_for_100ms }
-            bytes += (GC.stats.total_bytes - bytes_before_measure).to_i64
+            elapsed = nil
+            bytes_taken = Benchmark.memory do
+              elapsed = Time.measure { item.call_for_100ms }
+            end
+            bytes += bytes_taken
             cycles += item.cycles
-            measurements << elapsed
+            measurements << elapsed.not_nil!
             break if Time.monotonic >= target
           end
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
 
-          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_i
+          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_u64
 
           if @interactive
             run_comparison
@@ -150,7 +152,7 @@ module Benchmark
       property! slower : Float64
 
       # Number of bytes allocated per operation
-      property! bytes_per_op : Int32
+      property! bytes_per_op : UInt64
 
       @ran : Bool
       @ran = false
@@ -185,43 +187,16 @@ module Benchmark
       end
 
       def human_mean
-        case Math.log10(mean)
-        when Float64::MIN..3
-          digits = mean
-          suffix = ' '
-        when 3..6
-          digits = mean / 1000
-          suffix = 'k'
-        when 6..9
-          digits = mean / 1_000_000
-          suffix = 'M'
-        else
-          digits = mean / 1_000_000_000
-          suffix = 'G'
-        end
-
-        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
+        mean.humanize(precision: 2, significant: false, prefixes: Number::SI_PREFIXES_PADDED).rjust(7)
       end
 
       def human_iteration_time
         iteration_time = 1.0 / mean
 
-        case Math.log10(iteration_time)
-        when 0..Float64::MAX
-          digits = iteration_time
-          suffix = "s "
-        when -3..0
-          digits = iteration_time * 1000
-          suffix = "ms"
-        when -6..-3
-          digits = iteration_time * 1_000_000
-          suffix = "µs"
-        else
-          digits = iteration_time * 1_000_000_000
-          suffix = "ns"
-        end
-
-        "#{digits.round(2).to_s.rjust(6)}#{suffix}"
+        iteration_time.humanize(precision: 2, significant: false) do |magnitude, _|
+          magnitude = Number.prefix_index(magnitude).clamp(-9..0)
+          {magnitude, magnitude == 0 ? "s " : "#{Number.si_prefix(magnitude)}s"}
+        end.rjust(8)
       end
 
       def human_compare

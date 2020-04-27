@@ -27,7 +27,7 @@ module JSON
   #
   # houses = Array(House).from_json(%([{"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}]))
   # houses.size    # => 1
-  # houses.to_json # => [{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}]
+  # houses.to_json # => %([{"address":"Crystal Road 1234","location":{"lat":12.3,"lng":34.5}}])
   # ```
   #
   # ### Usage
@@ -110,7 +110,7 @@ module JSON
       rescue exc : ::JSON::ParseException
         raise ::JSON::MappingError.new(exc.message, self.class.to_s, nil, *%location, exc)
       end
-      while %pull.kind != :end_object
+      until %pull.kind.end_object?
         %key_location = %pull.location
         key = %pull.read_object_key
         case key

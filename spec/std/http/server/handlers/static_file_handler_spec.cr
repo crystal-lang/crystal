@@ -1,5 +1,6 @@
 require "../../../spec_helper"
-require "http/server"
+require "http/server/handler"
+require "http/client/response"
 
 private def handle(request, fallthrough = true, directory_listing = true, ignore_body = false)
   io = IO::Memory.new
@@ -28,11 +29,12 @@ describe HTTP::StaticFileHandler do
 
   it "adds Last-Modified header" do
     response = handle HTTP::Request.new("GET", "/test.txt")
-    response.headers["Last-Modified"].should eq(HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time))
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    HTTP.parse_time(response.headers["Last-Modified"]).should eq(modification_time.at_beginning_of_second)
   end
 
   context "with If-Modified-Since header" do
-    it "returns 304 Not Modified if file mtime is equal" do
+    it "returns 304 Not Modified for equal to Last-Modified" do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
 
       headers = HTTP::Headers.new
@@ -43,21 +45,31 @@ describe HTTP::StaticFileHandler do
 
       response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.headers["Content-Type"]?.should be_nil
+      response.body.should eq ""
     end
 
-    it "returns 304 Not Modified if file mtime is older" do
+    it "returns 304 Not Modified for younger than Last-Modified" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time + 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(last_modified + 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
 
+      response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.status_code.should eq(304)
+      response.body.should eq ""
     end
 
-    it "serves file if file mtime is younger" do
+    it "serves content for older than Last-Modified" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+
       headers = HTTP::Headers.new
-      headers["If-Modified-Since"] = HTTP.format_time(File.info(datapath("static_file_handler", "test.txt")).modification_time - 1.hour)
+      headers["If-Modified-Since"] = HTTP.format_time(last_modified - 1.hour)
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
 
+      response.headers["Last-Modified"].should eq initial_response.headers["Last-Modified"]
       response.status_code.should eq(200)
       response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
     end
@@ -76,6 +88,51 @@ describe HTTP::StaticFileHandler do
     it "serves file if header does not match etag" do
       headers = HTTP::Headers.new
       headers["If-None-Match"] = "some random etag"
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
+
+    it "returns 304 Not Modified if header is *" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = "*"
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+    end
+
+    it "serves file if header is empty" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = ""
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
+
+    it "serves file if header does not contain valid etag" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = ", foo"
+
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
+      response.status_code.should eq(200)
+      response.body.should eq(File.read(datapath("static_file_handler", "test.txt")))
+    end
+  end
+
+  context "with multiple If-None-Match header" do
+    it "returns 304 Not Modified if at least one header matches etag" do
+      initial_response = handle HTTP::Request.new("GET", "/test.txt")
+
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = %(,, ,W/"1234567"   , , #{initial_response.headers["Etag"]},"12345678",%)
+      response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: true
+      response.status_code.should eq(304)
+    end
+
+    it "serves file if no header matches etag" do
+      headers = HTTP::Headers.new
+      headers["If-None-Match"] = "some random etag, 1234567"
 
       response = handle HTTP::Request.new("GET", "/test.txt", headers), ignore_body: false
       response.status_code.should eq(200)

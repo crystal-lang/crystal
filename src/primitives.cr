@@ -86,7 +86,7 @@ struct Char
   # '\u007f'.ord # => 127
   # '☃'.ord      # => 9731
   # ```
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def ord : Int32
   end
 
@@ -117,7 +117,7 @@ struct Symbol
   end
 
   # Returns a unique number for this symbol.
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def to_i : Int32
   end
 
@@ -270,7 +270,7 @@ end
   {% ints = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   {% floats = %w(Float32 Float64) %}
   {% nums = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
-  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
+  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying"} %}
 
   {% for num in nums %}
     struct {{num.id}}
@@ -281,8 +281,16 @@ end
                              to_f32: Float32, to_f64: Float64,
                            } %}
         # Returns `self` converted to `{{type}}`.
-        @[Primitive(:cast)]
+        # Raises `OverflowError` in case of overflow.
+        @[Primitive(:convert)]
+        @[Raises]
         def {{name.id}} : {{type}}
+        end
+
+        # Returns `self` converted to `{{type}}`.
+        # In case of overflow a wrapping is performed.
+        @[Primitive(:unchecked_convert)]
+        def {{name.id}}! : {{type}}
         end
       {% end %}
 
@@ -316,18 +324,24 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:cast)]
+      @[Primitive(:convert)]
       def unsafe_chr : Char
       end
 
       {% for int2 in ints %}
         {% for op, desc in binaries %}
-          {% if op != "/" %}
-            # Returns the result of {{desc.id}} `self` and *other*.
-            @[Primitive(:binary)]
-            def {{op.id}}(other : {{int2.id}}) : self
-            end
-          {% end %}
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # Raises `OverflowError` in case of overflow.
+          @[Primitive(:binary)]
+          @[Raises]
+          def {{op.id}}(other : {{int2.id}}) : self
+          end
+
+          # Returns the result of {{desc.id}} `self` and *other*.
+          # In case of overflow a wrapping is performed.
+          @[Primitive(:binary)]
+          def &{{op.id}}(other : {{int2.id}}) : self
+          end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
@@ -386,7 +400,17 @@ end
           def {{op.id}}(other : {{num.id}}) : self
           end
         {% end %}
+
+        # Returns the float division of `self` and *other*.
+        @[Primitive(:binary)]
+        def fdiv(other : {{num.id}}) : self
+        end
       {% end %}
+
+      # Returns the result of division `self` and *other*.
+      @[Primitive(:binary)]
+      def /(other : {{float.id}}) : {{float.id}}
+      end
     end
   {% end %}
 {% end %}

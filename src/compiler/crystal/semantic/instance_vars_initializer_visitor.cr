@@ -66,6 +66,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       initializers << Initializer.new(current_type, target, value, MetaVars.new)
       node.type = @program.nil
       return
+    else
+      # TODO: can this happen?
     end
   end
 
@@ -103,7 +105,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       end
 
       ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
-      ivar_visitor.scope = scope
+      ivar_visitor.scope = scope.metaclass
       value.accept ivar_visitor
     end
   end

@@ -110,7 +110,7 @@ describe "Code gen: virtual type" do
 
       class Bar < Foo
         def foo
-          @x + 1
+          @x &+ 1
         end
       end
 
@@ -249,7 +249,7 @@ describe "Code gen: virtual type" do
       end
 
       f = Bar.new || nil
-      f.foo.to_i
+      f.foo.to_i!
       ").to_i.should eq(1)
   end
 

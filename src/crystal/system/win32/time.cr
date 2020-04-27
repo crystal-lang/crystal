@@ -10,7 +10,7 @@ module Crystal::System::Time
   NANOSECONDS_PER_FILETIME_TICK = 100
 
   NANOSECONDS_PER_SECOND    = 1_000_000_000
-  FILETIME_TICKS_PER_SECOND = NANOSECONDS_PER_SECOND / NANOSECONDS_PER_FILETIME_TICK
+  FILETIME_TICKS_PER_SECOND = NANOSECONDS_PER_SECOND // NANOSECONDS_PER_FILETIME_TICK
 
   BIAS_TO_OFFSET_FACTOR = -60
 
@@ -35,10 +35,14 @@ module Crystal::System::Time
     ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
   end
 
+  def self.filetime_to_f64secs(filetime) : Float64
+    ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
+  end
+
   @@performance_frequency : Int64 = begin
     ret = LibC.QueryPerformanceFrequency(out frequency)
     if ret == 0
-      raise WinError.new("QueryPerformanceFrequency")
+      raise RuntimeError.from_winerror("QueryPerformanceFrequency")
     end
 
     frequency
@@ -46,10 +50,10 @@ module Crystal::System::Time
 
   def self.monotonic : {Int64, Int32}
     if LibC.QueryPerformanceCounter(out ticks) == 0
-      raise WinError.new("QueryPerformanceCounter")
+      raise RuntimeError.from_winerror("QueryPerformanceCounter")
     end
 
-    {ticks / @@performance_frequency, (ticks.remainder(NANOSECONDS_PER_SECOND) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
+    {ticks // @@performance_frequency, (ticks.remainder(@@performance_frequency) * NANOSECONDS_PER_SECOND / @@performance_frequency).to_i32}
   end
 
   def self.load_localtime : ::Time::Location?
@@ -88,7 +92,7 @@ module Crystal::System::Time
 
     transitions = [] of ::Time::Location::ZoneTransition
 
-    current_year = ::Time.utc_now.year
+    current_year = ::Time.utc.year
 
     (current_year - 100).upto(current_year + 100) do |year|
       tstamp = calculate_switchdate_in_year(year, first_date) - (zones[second_index].offset)
@@ -114,7 +118,7 @@ module Crystal::System::Time
     day = 1
 
     time = ::Time.utc(year, systemtime.wMonth.to_i32, day, systemtime.wHour.to_i32, systemtime.wMinute.to_i32, systemtime.wSecond.to_i32)
-    i = systemtime.wDayOfWeek.to_i32 - time.day_of_week.to_i32
+    i = systemtime.wDayOfWeek.to_i32 - (time.day_of_week.to_i32 % 7)
 
     if i < 0
       i += 7
@@ -136,18 +140,18 @@ module Crystal::System::Time
 
     time += (day - 1).days
 
-    time.epoch
+    time.to_unix
   end
 
   # Normalizes the names of the standard and dst zones.
   private def self.normalize_zone_names(info : LibC::TIME_ZONE_INFORMATION) : Tuple(String, String)
-    stdname = String.from_utf16(info.standardName.to_unsafe)
+    stdname = String.from_utf16(info.standardName.to_slice)
 
     if normalized_names = WINDOWS_ZONE_NAMES[stdname]?
       return normalized_names
     end
 
-    dstname = String.from_utf16(info.daylightName.to_unsafe)
+    dstname = String.from_utf16(info.daylightName.to_slice)
 
     if english_name = translate_zone_name(stdname, dstname)
       if normalized_names = WINDOWS_ZONE_NAMES[english_name]?

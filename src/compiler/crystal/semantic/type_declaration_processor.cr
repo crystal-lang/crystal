@@ -211,7 +211,7 @@ struct Crystal::TypeDeclarationProcessor
     # Check if var is uninitialized
     var.uninitialized = true if info.uninitialized
 
-    # If the variable is gueseed to be nilable because it is not initialized
+    # If the variable is guessed to be nilable because it is not initialized
     # in all of the initialize methods, and the explicit type is not nilable,
     # give an error right now
     if check_nilable && instance_var && !var.type.includes_type?(@program.nil)
@@ -408,6 +408,8 @@ struct Crystal::TypeDeclarationProcessor
         process_owner_guessed_instance_var_declaration(including_type, name, type_info)
         remove_error including_type, name
       end
+    else
+      # TODO: can this be reached?
     end
   end
 
@@ -476,7 +478,7 @@ struct Crystal::TypeDeclarationProcessor
             next if initialized_outside?(owner, name)
 
             unless info.try &.instance_vars.try &.includes?(name)
-              # Rememebr that this variable wasn't initialized here, and later error
+              # Remember that this variable wasn't initialized here, and later error
               # if it turns out to be non-nilable
               nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
               nilable_vars[name] = info
@@ -518,7 +520,7 @@ struct Crystal::TypeDeclarationProcessor
 
         unless info.try(&.instance_vars.try(&.includes?(instance_var)))
           all_assigned = false
-          # Rememebr that this variable wasn't initialized here, and later error
+          # Remember that this variable wasn't initialized here, and later error
           # if it turns out to be non-nilable
           nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
           nilable_vars[instance_var] = info
@@ -638,11 +640,13 @@ struct Crystal::TypeDeclarationProcessor
       entries.each do |name, error|
         case name
         when .starts_with?("$")
-          error.node.raise "can't use #{error.type} as the type of global variable #{name}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of global variable '#{name}', use a more specific type"
         when .starts_with?("@@")
-          error.node.raise "can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of class variable '#{name}' of #{type}, use a more specific type"
         when .starts_with?("@")
-          error.node.raise "can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
+          error.node.raise "can't use #{error.type} as the type of instance variable '#{name}' of #{type}, use a more specific type"
+        else
+          # TODO: can this be reached?
         end
       end
     end

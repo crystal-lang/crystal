@@ -261,7 +261,7 @@ describe "Code gen: struct" do
       end
 
       point = LibC::Point.new x: 1, y: 2
-      point.x + point.y
+      point.x &+ point.y
       )).to_i.should eq(3)
   end
 

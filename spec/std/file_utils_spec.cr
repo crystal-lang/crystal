@@ -33,7 +33,7 @@ describe "FileUtils" do
     end
 
     it "raises" do
-      expect_raises(Errno, "No such file or directory") do
+      expect_raises(File::NotFoundError, "Error while changing directory: '/nope'") do
         FileUtils.cd("/nope")
       end
     end
@@ -96,7 +96,7 @@ describe "FileUtils" do
   end
 
   describe "touch" do
-    it "creates file if it doesn't exists" do
+    it "creates file if it doesn't exist" do
       with_tempfile("touch.txt") do |path|
         File.exists?(path).should be_false
         FileUtils.touch(path)
@@ -136,7 +136,7 @@ describe "FileUtils" do
       end
     end
 
-    it "raises an error if the directory doesn't exists" do
+    it "raises an error if the directory doesn't exist" do
       expect_raises(ArgumentError, "No such directory : not_existing_dir") do
         FileUtils.cp({datapath("test_file.txt")}, "not_existing_dir")
       end
@@ -229,6 +229,12 @@ describe "FileUtils" do
     end
 
     it "doesn't return error on non existing file" do
+      with_tempfile("rm_rf-nonexistent") do |path|
+        FileUtils.rm_rf(path).should be_nil
+      end
+    end
+
+    it "doesn't return error on non existing files" do
       with_tempfile("rm_rf-nonexistent") do |path1|
         path2 = File.join(path1, "a")
         FileUtils.mkdir(path1)
@@ -252,7 +258,7 @@ describe "FileUtils" do
 
     it "raises an error if non correct arguments" do
       with_tempfile("mv-nonexitent") do |path|
-        expect_raises Errno do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{File.join(path, "a")}' -> '#{File.join(path, "b")}'") do
           FileUtils.mv(File.join(path, "a"), File.join(path, "b"))
         end
       end
@@ -322,30 +328,20 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises Errno do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises Errno do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
       FileUtils.mkdir([datapath, datapath], 0o700)
     end
 
     with_tempfile("mkdir-nonexisting") do |path|
-      expect_raises Errno do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
         FileUtils.mkdir([path, datapath], 0o700)
       end
-    end
-  end
-
-  it "tests mkdir_p with a new path" do
-    with_tempfile("mkdir_p-new") do |path1|
-      FileUtils.mkdir_p(path1).should be_nil
-      Dir.exists?(path1).should be_true
-      path2 = File.join({path1, "a", "b", "c"})
-      FileUtils.mkdir_p(path2).should be_nil
-      Dir.exists?(path2).should be_true
     end
   end
 
@@ -362,17 +358,10 @@ describe "FileUtils" do
     end
   end
 
-  it "tests mkdir_p with an existing path" do
-    FileUtils.mkdir_p(datapath).should be_nil
-    expect_raises Errno do
-      FileUtils.mkdir_p(datapath("test_file.txt"))
-    end
-  end
-
   it "tests mkdir_p with multiple existing path" do
     FileUtils.mkdir_p([datapath, datapath]).should be_nil
     with_tempfile("mkdir_p-existing") do |path|
-      expect_raises Errno do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt")}'") do
         FileUtils.mkdir_p([datapath("test_file.txt"), path])
       end
     end
@@ -380,7 +369,7 @@ describe "FileUtils" do
 
   it "tests rmdir with an non existing path" do
     with_tempfile("rmdir-nonexisting") do |path|
-      expect_raises Errno do
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}'") do
         FileUtils.rmdir(path)
       end
     end
@@ -388,20 +377,20 @@ describe "FileUtils" do
 
   it "tests rmdir with multiple non existing path" do
     with_tempfile("rmdir-nonexisting") do |path|
-      expect_raises Errno do
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}1'") do
         FileUtils.rmdir(["#{path}1", "#{path}2"])
       end
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises Errno do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath}'") do
       FileUtils.rmdir(datapath)
     end
   end
 
   it "tests rmdir with multiple path that cannot be removed" do
-    expect_raises Errno do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath}'") do
       FileUtils.rmdir([datapath, datapath])
     end
   end
@@ -416,7 +405,7 @@ describe "FileUtils" do
 
   it "tests rm with non existing path" do
     with_tempfile("rm-nonexistinent") do |path|
-      expect_raises Errno do
+      expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
         FileUtils.rm(path)
       end
     end
@@ -437,7 +426,7 @@ describe "FileUtils" do
       File.write(path1, "")
       File.write(path2, "")
 
-      expect_raises Errno do
+      expect_raises(File::NotFoundError, "Error deleting file: '#{path2}'") do
         FileUtils.rm([path1, path2, path2])
       end
     end
@@ -498,11 +487,9 @@ describe "FileUtils" do
       path1 = "/tmp/crystal_ln_test_#{Process.pid}"
       path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
 
-      ex = expect_raises Errno do
+      ex = expect_raises(File::NotFoundError, "Error creating link: '#{path1}' -> '#{path2}'") do
         FileUtils.ln(path1, path2)
       end
-
-      ex.errno.should eq(Errno::ENOENT)
     end
 
     it "fails with an extant destination" do
@@ -512,11 +499,9 @@ describe "FileUtils" do
       begin
         FileUtils.touch([path1, path2])
 
-        ex = expect_raises Errno do
+        expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1}' -> '#{path2}'") do
           FileUtils.ln(path1, path2)
         end
-
-        ex.errno.should eq(Errno::EEXIST)
       ensure
         FileUtils.rm_rf([path1, path2])
       end
@@ -583,11 +568,9 @@ describe "FileUtils" do
         File.exists?(path2).should be_false
         File.symlink?(path2).should be_true
 
-        ex = expect_raises Errno do
+        expect_raises(File::NotFoundError, "Error resolving real path: '#{path2}'") do
           File.real_path(path2)
         end
-
-        ex.errno.should eq(Errno::ENOENT)
       ensure
         FileUtils.rm_rf(path2)
       end
@@ -600,11 +583,9 @@ describe "FileUtils" do
       begin
         FileUtils.touch([path1, path2])
 
-        ex = expect_raises Errno do
+        expect_raises(File::AlreadyExistsError, "Error creating symlink: '#{path1}' -> '#{path2}'") do
           FileUtils.ln_s(path1, path2)
         end
-
-        ex.errno.should eq(Errno::EEXIST)
       ensure
         FileUtils.rm_rf([path1, path2])
       end

@@ -1,8 +1,11 @@
 require "../../support/syntax"
 
-private def it_lexes(string, type)
+private def it_lexes(string, type, *, slash_is_regex : Bool? = nil)
   it "lexes #{string.inspect}" do
     lexer = Lexer.new string
+    unless (v = slash_is_regex).nil?
+      lexer.slash_is_regex = v
+    end
     token = lexer.next_token
     token.type.should eq(type)
   end
@@ -99,7 +102,7 @@ end
 
 private def it_lexes_operators(ops)
   ops.each do |op|
-    it_lexes op.to_s, op
+    it_lexes op.to_s, op, slash_is_regex: false
   end
 end
 
@@ -122,7 +125,7 @@ end
 private def it_lexes_symbols(symbols)
   symbols.each do |symbol|
     value = symbol[1, symbol.size - 1]
-    value = value[1, value.size - 2] if value.starts_with?("\"")
+    value = value[1, value.size - 2] if value.starts_with?('"')
     it_lexes symbol, :SYMBOL, value
   end
 end
@@ -144,7 +147,7 @@ describe "Lexer" do
                      :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break,
                      :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                      :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
-                     :pointerof, :sizeof, :instance_sizeof, :as, :as?, :typeof, :for, :in,
+                     :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                      :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?,
                      :annotation, :verbatim]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
@@ -219,6 +222,8 @@ describe "Lexer" do
   it_lexes_i64 ["2147483648", "-2147483649"]
   it_lexes_i64 [["2147483648.foo", "2147483648"]]
   it_lexes_u64 ["18446744073709551615", "14146167139683460000", "9223372036854775808"]
+  it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
+
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
   it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
@@ -244,23 +249,27 @@ describe "Lexer" do
   it_lexes_char "'\\\\'", '\\'
   assert_syntax_error "'", "unterminated char literal"
   assert_syntax_error "'\\", "unterminated char literal"
-  it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
+  it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"/", :"//", :"(", :")",
                       :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
+                      :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"//=", :"&=",
                       :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
                       :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
-                      :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~"]
+                      :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~",
+                      :"&+", :"&-", :"&*", :"&**", :"&+=", :"&-=", :"&*="]
   it_lexes "!@foo", :"!"
   it_lexes "+@foo", :"+"
   it_lexes "-@foo", :"-"
+  it_lexes "&+@foo", :"&+"
+  it_lexes "&-@foo", :"&-"
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123"]
-  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
+  it_lexes_symbols [":foo", ":foo!", ":foo?", ":foo=", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", "://",
                     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
                     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
-  ]
+                    ":&+", ":&-", ":&*", ":&**"]
+
   it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
 
   it_lexes "$~", :"$~"
@@ -287,8 +296,12 @@ describe "Lexer" do
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
+  assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
+  assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
+
   assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
   assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64"
   assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
   assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
@@ -299,6 +312,14 @@ describe "Lexer" do
   assert_syntax_error "0123", "octal constants should be prefixed with 0o"
   assert_syntax_error "00", "octal constants should be prefixed with 0o"
   assert_syntax_error "01_i64", "octal constants should be prefixed with 0o"
+
+  assert_syntax_error "4f33", "invalid float suffix"
+  assert_syntax_error "4f65", "invalid float suffix"
+  assert_syntax_error "4f22", "invalid float suffix"
+  # Tests for #8782
+  assert_syntax_error "4F32", "unexpected token: F32"
+  assert_syntax_error "4F64", "unexpected token: F64"
+  assert_syntax_error "0F32", "unexpected token: F32"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -493,13 +514,6 @@ describe "Lexer" do
     token.value.should eq ("a")
   end
 
-  it "lexes /=" do
-    lexer = Lexer.new("/=")
-    lexer.slash_is_regex = false
-    token = lexer.next_token
-    token.type.should eq(:"/=")
-  end
-
   it "lexes != after identifier (#4815)" do
     lexer = Lexer.new("some_method!=5")
     token = lexer.next_token
@@ -529,4 +543,6 @@ describe "Lexer" do
   it_lexes_string %("\\xFF"), String.new(Bytes[0xFF])
   assert_syntax_error %("\\xz"), "invalid hex escape"
   assert_syntax_error %("\\x1z"), "invalid hex escape"
+
+  assert_syntax_error %("hi\\)
 end

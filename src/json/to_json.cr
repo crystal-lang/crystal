@@ -28,6 +28,10 @@ struct Nil
   def to_json(json : JSON::Builder)
     json.null
   end
+
+  def to_json_object_key
+    ""
+  end
 end
 
 struct Bool
@@ -40,11 +44,19 @@ struct Int
   def to_json(json : JSON::Builder)
     json.number(self)
   end
+
+  def to_json_object_key
+    to_s
+  end
 end
 
 struct Float
   def to_json(json : JSON::Builder)
     json.number(self)
+  end
+
+  def to_json_object_key
+    to_s
   end
 end
 
@@ -52,15 +64,41 @@ class String
   def to_json(json : JSON::Builder)
     json.string(self)
   end
+
+  def to_json_object_key
+    self
+  end
+end
+
+struct Path
+  def to_json(json : JSON::Builder)
+    @name.to_json(json)
+  end
+
+  def to_json_object_key
+    @name
+  end
 end
 
 struct Symbol
   def to_json(json : JSON::Builder)
     json.string(to_s)
   end
+
+  def to_json_object_key
+    to_s
+  end
 end
 
 class Array
+  def to_json(json : JSON::Builder)
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
+class Deque
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -77,10 +115,15 @@ struct Set
 end
 
 class Hash
+  # Serializes this Hash into JSON.
+  #
+  # Keys are serialized by invoking `to_json_object_key` on them.
+  # Values are serialized with the usual `to_json(json : JSON::Builder)`
+  # method.
   def to_json(json : JSON::Builder)
     json.object do
       each do |key, value|
-        json.field key do
+        json.field key.to_json_object_key do
           value.to_json(json)
         end
       end
@@ -136,9 +179,63 @@ struct Time
   end
 end
 
+# Converter to be used with `JSON.mapping`
+# to serialize the `Array(T)` elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.to_json # => %({"dates":[1459859781,1567628762]})
+# ```
+module JSON::ArrayConverter(Converter)
+  def self.to_json(values : Array, builder : JSON::Builder)
+    builder.array do
+      values.each do |value|
+        Converter.to_json(value, builder)
+      end
+    end
+  end
+end
+
+# Converter to be used with `JSON.mapping`
+# to serialize the `Hash(K, V)` values elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class Timestamp
+#   JSON.mapping({
+#     values: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# ```
+module JSON::HashValueConverter(Converter)
+  def self.to_json(values : Hash, builder : JSON::Builder)
+    builder.object do
+      values.each do |key, value|
+        builder.field key.to_json_object_key do
+          Converter.to_json(value, builder)
+        end
+      end
+    end
+  end
+end
+
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of seconds
-# since the unix epoch. See `Time.epoch`.
+# since the unix epoch. See `Time#to_unix`.
 #
 # ```
 # require "json"
@@ -155,13 +252,13 @@ end
 # ```
 module Time::EpochConverter
   def self.to_json(value : Time, json : JSON::Builder)
-    json.number(value.epoch)
+    json.number(value.to_unix)
   end
 end
 
 # Converter to be used with `JSON.mapping` and `YAML.mapping`
 # to serialize a `Time` instance as the number of milliseconds
-# since the unix epoch. See `Time.epoch_ms`.
+# since the unix epoch. See `Time#to_unix_ms`.
 #
 # ```
 # require "json"
@@ -178,7 +275,7 @@ end
 # ```
 module Time::EpochMillisConverter
   def self.to_json(value : Time, json : JSON::Builder)
-    json.number(value.epoch_ms)
+    json.number(value.to_unix_ms)
   end
 end
 

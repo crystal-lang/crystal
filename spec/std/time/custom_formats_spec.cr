@@ -5,6 +5,7 @@ describe "Time::Format" do
     it "parses regular format" do
       time = Time.utc(2016, 2, 15)
       Time::Format::RFC_3339.format(time).should eq "2016-02-15T00:00:00Z"
+      Time::Format::RFC_3339.format(Time.local(2016, 2, 15, location: Time::Location.fixed(3600))).should eq "2016-02-15T00:00:00+01:00"
       Time::Format::RFC_3339.parse("2016-02-15T00:00:00+00:00").should eq time
       Time::Format::RFC_3339.parse("2016-02-15t00:00:00+00:00").should eq time
       Time::Format::RFC_3339.parse("2016-02-15 00:00:00+00:00").should eq time

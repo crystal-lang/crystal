@@ -75,10 +75,10 @@ describe "Deque" do
     it "works the same as array when inserting at 1/8 size and deleting at 3/4 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size / 8, i) }
+          step { c.insert(c.size // 8, i) }
         end
         1000.times do
-          step { c.delete_at(c.size * 3 / 4) }
+          step { c.delete_at(c.size * 3 // 4) }
         end
       end
     end
@@ -86,10 +86,10 @@ describe "Deque" do
     it "works the same as array when inserting at 3/4 size and deleting at 1/8 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size * 3 / 4, i) }
+          step { c.insert(c.size * 3 // 4, i) }
         end
         1000.times do
-          step { c.delete_at(c.size / 8) }
+          step { c.delete_at(c.size // 8) }
         end
       end
     end
@@ -175,10 +175,6 @@ describe "Deque" do
     it "gets nilable" do
       Deque{1, 2, 3}[2]?.should eq(3)
       Deque{1, 2, 3}[3]?.should be_nil
-    end
-
-    it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
     end
   end
 
@@ -549,7 +545,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}")
     end
 
     it "does with recursive" do
@@ -574,9 +570,6 @@ describe "Deque" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -603,9 +596,6 @@ describe "Deque" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
 
     it "works while modifying deque" do
@@ -628,9 +618,6 @@ describe "Deque" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 

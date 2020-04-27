@@ -96,16 +96,15 @@ module LLVM::ValueMethods
   end
 
   def to_value
-    LLVM::Value.new unwrap
+    LLVM::Value.new @unwrap
   end
 
   def dump
     LibLLVM.dump_value self
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
   end
 
   def to_unsafe

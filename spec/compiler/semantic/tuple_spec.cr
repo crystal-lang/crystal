@@ -287,6 +287,47 @@ describe "Semantic: tuples" do
         pos += {0, 0}
       end
       ),
-      "tuple too big"
+      "tuple size cannot be greater than 300 (size is 302)"
+  end
+
+  it "errors on named tuple too big" do
+    named_tuple_keys = String.build do |io|
+      333.times { |i| io << "key" << i << ": 0, " }
+    end
+
+    assert_error %(
+      { #{named_tuple_keys} }
+      ),
+      "named tuple size cannot be greater than 300 (size is 333)"
+  end
+
+  it "doesn't unify tuple metaclasses (#5384)" do
+    assert_type(%(
+      Tuple(Int32) || Tuple(String)
+      )) {
+      union_of(
+        tuple_of([int32] of Type).metaclass,
+        tuple_of([string] of Type).metaclass,
+      )
+    }
+  end
+
+  it "doesn't crash on tuple in not executed block (#6718)" do
+    assert_type(%(
+      require "prelude"
+
+      def pending(&block)
+      end
+
+      def untyped(x = nil)
+      end
+
+      # To reproduce this bug, it is needed to the expression that is
+      # not typed on main phase but is typed on cleanup phase.
+      # `untyped(untyped)` is just one.
+      pending do
+        {untyped(untyped)}
+      end
+    )) { nil_type }
   end
 end

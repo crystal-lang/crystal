@@ -27,6 +27,8 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                   check_array(type)
                 when Type::Kind::Struct
                   check_struct(type)
+                else
+                  # go on
                 end
 
     # Ensure we have at most four uniquely addressable members
@@ -101,7 +103,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(rty, cast)
       else
@@ -130,7 +132,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(aty, cast)
       else

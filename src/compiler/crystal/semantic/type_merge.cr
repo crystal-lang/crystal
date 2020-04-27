@@ -13,6 +13,8 @@ module Crystal
         first, second = types
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
+      else
+        # combined_union_of
       end
 
       combined_union_of compact_types(types)
@@ -29,6 +31,8 @@ module Crystal
         first, second = nodes
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge
+      else
+        # combined_union_of
       end
 
       combined_union_of compact_types(nodes, &.type?)
@@ -120,19 +124,6 @@ module Crystal
     end
 
     def type_combine(types)
-      # Modules and types at a higher level in the hierarchy are the ones
-      # that will "delete" deeper types and combine them into virtual
-      # types (or just modules), so we put them in the front for the algorithm.
-      types.sort! do |t1, t2|
-        if t1.module?
-          -1
-        elsif t2.module?
-          1
-        else
-          t1.depth <=> t2.depth
-        end
-      end
-
       all_types = [types.shift] of Type
 
       types.each do |t2|
@@ -252,12 +243,14 @@ module Crystal
 
   class GenericClassInstanceMetaclassType
     def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      if instance_type.module? || other.instance_type.module?
-        nil
-      else
-        common = instance_type.common_ancestor(other.instance_type)
-        common.try &.metaclass
-      end
+      # Modules are never unified
+      return nil if instance_type.module? || other.instance_type.module?
+
+      # Tuple instances might be unified, but never tuple metaclasses
+      return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
+
+      common = instance_type.common_ancestor(other.instance_type)
+      common.try &.metaclass
     end
   end
 
@@ -282,10 +275,12 @@ module Crystal
 
   class ProcInstanceType
     def common_ancestor(other : ProcInstanceType)
+      # For Proc(..., NoReturn), Proc(..., T) we keep Proc(..., T)
       if return_type.no_return? && arg_types == other.arg_types
         return other
       end
 
+      # Same but the other way around
       if other.return_type.no_return? && arg_types == other.arg_types
         return self
       end
@@ -339,25 +334,29 @@ private def class_common_ancestor(t1, t2)
 
   case t1
   when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
-    return nil
+    nil
   when t2
-    return t1
-  end
+    t1
+  else
+    if t1.depth == t2.depth
+      t1_superclass = t1.superclass
+      t2_superclass = t2.superclass
 
-  # If one type is deeper than the other, check if going up we find
-  # the one in the top, and if so we combine them.
-  # But if they are at the same depth we don't go up.
-  if t1.depth > t2.depth
-    t1_superclass = t1.superclass
-    if t1_superclass
-      return t1_superclass.common_ancestor(t2)
+      if t1_superclass && t2_superclass
+        return t1_superclass.common_ancestor(t2_superclass)
+      end
+    elsif t1.depth > t2.depth
+      t1_superclass = t1.superclass
+      if t1_superclass
+        return t1_superclass.common_ancestor(t2)
+      end
+    elsif t1.depth < t2.depth
+      t2_superclass = t2.superclass
+      if t2_superclass
+        return t1.common_ancestor(t2_superclass)
+      end
     end
-  elsif t1.depth < t2.depth
-    t2_superclass = t2.superclass
-    if t2_superclass
-      return t1.common_ancestor(t2_superclass)
-    end
-  end
 
-  nil
+    nil
+  end
 end

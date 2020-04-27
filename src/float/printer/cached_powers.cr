@@ -157,7 +157,7 @@ module Float::Printer::CachedPowers
     min_exp = MIN_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     max_exp = MAX_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     k = ((min_exp + DiyFP::SIGNIFICAND_SIZE - 1) * D_1_LOG2_10).ceil
-    index = ((CACHED_POWER_OFFSET + k.to_i - 1) / CACHED_EXP_STEP) + 1
+    index = ((CACHED_POWER_OFFSET + k.to_i - 1) // CACHED_EXP_STEP) + 1
     pow = PowCache[index]
     return DiyFP.new(pow.significand, pow.binary_exp), pow.decimal_exp.to_i
   end

@@ -21,28 +21,22 @@ progress ?=     ## Enable progress output
 threads ?=      ## Maximum number of threads to use
 debug ?=        ## Add symbolic debug info
 verbose ?=      ## Run specs in verbose mode
-junit_output ?= ## Directory to output junit results
+junit_output ?= ## Path to output junit results
 static ?=       ## Enable static linking
 
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
+SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src")
+CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
+EXPORTS := \
+  $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") \
+  CRYSTAL_CONFIG_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)" \
+  CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)"
 SHELL = sh
-LLVM_CONFIG_FINDER := \
-  [ -n "$(LLVM_CONFIG)" ] && command -v "$(LLVM_CONFIG)" || \
-  command -v llvm-config-5.0 || command -v llvm-config50 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-4.0 || command -v llvm-config40 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.9 || command -v llvm-config39 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config-3.8 || command -v llvm-config38 || \
-    (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-  command -v llvm-config
-LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
+LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
@@ -51,6 +45,11 @@ LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
 DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
 CFLAGS += -fPIC $(if $(debug),-g -O0)
 CXXFLAGS += $(if $(debug),-g -O0)
+CRYSTAL_VERSION ?= $(shell cat src/VERSION)
+
+ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
+  EXPORT_CC ?= CC="cc -fuse-ld=lld"
+endif
 
 ifeq (${LLVM_CONFIG},)
   $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
@@ -92,7 +91,7 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 
 .PHONY: docs
 docs: ## Generate standard library documentation
-	$(BUILD_PATH) ./bin/crystal docs -b https://crystal-lang.org/api/latest src/docs_main.cr
+	$(BUILD_PATH) ./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION)
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
@@ -105,15 +104,15 @@ libcrystal: $(LIB_CRYSTAL_TARGET)
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
+	$(EXPORT_CC) $(BUILD_PATH) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
 $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/std_spec.cr
+	$(EXPORT_CC) $(BUILD_PATH) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/std_spec.cr
 
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/compiler_spec.cr
+	$(EXPORT_CC) $(BUILD_PATH) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
@@ -134,3 +133,7 @@ clean: clean_crystal ## Clean up built directories and files
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+
+.PHONY: clean_cache
+clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
+	rm -rf $(shell ./bin/crystal env CRYSTAL_CACHE_DIR)

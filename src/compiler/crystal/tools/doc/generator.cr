@@ -2,9 +2,9 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  @is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
+  getter project_info
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
@@ -28,38 +28,41 @@ class Crystal::Doc::Generator
     },
   }
 
-  def initialize(@program : Program, @included_dirs : Array(String), @output_dir : String, @canonical_base_url : String?)
+  def self.new(program : Program, included_dirs : Array(String))
+    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
+  end
+
+  def initialize(@program : Program, @included_dirs : Array(String),
+                 @output_dir : String, @output_format : String,
+                 @sitemap_base_url : String?,
+                 @sitemap_priority : String, @sitemap_changefreq : String,
+                 @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
-    @is_crystal_repo = false
     compute_repository
   end
 
   def run
-    Dir.mkdir_p @output_dir
-
     types = collect_subtypes(@program)
 
     program_type = type(@program)
-    if program_type.class_methods.any? { |method| must_include? method }
+    if must_include_toplevel? program_type
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types
+    if @output_format == "json"
+      generate_docs_json program_type, types
+    else
+      generate_docs_html program_type, types
+    end
   end
 
   def program_type
     type(@program)
   end
 
-  def generate_docs(program_type, types)
-    copy_files
-    generate_types_docs types, @output_dir, types
-    generate_readme program_type, types
-  end
-
-  def generate_readme(program_type, types)
+  def read_readme
     if File.file?("README.md")
       filename = "README.md"
     elsif File.file?("Readme.md")
@@ -67,18 +70,42 @@ class Crystal::Doc::Generator
     end
 
     if filename
-      raw_body = File.read(filename)
-      body = doc(program_type, raw_body)
+      content = File.read(filename)
     else
-      raw_body = ""
-      body = ""
+      content = ""
     end
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name, @canonical_base_url)
+    content
+  end
+
+  def generate_docs_json(program_type, types)
+    readme = read_readme
+    json = Main.new(readme, Type.new(self, @program), repository_name)
+    puts json
+  end
+
+  def generate_docs_html(program_type, types)
+    copy_files
+    generate_types_docs types, @output_dir, types
+    generate_readme program_type, types
+    generate_sitemap types
+  end
+
+  def generate_readme(program_type, types)
+    raw_body = read_readme
+    body = doc(program_type, raw_body)
+
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
     File.write File.join(@output_dir, "search-index.js"), main_index.to_jsonp
+  end
+
+  def generate_sitemap(types)
+    if sitemap_base_url = @sitemap_base_url
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+    end
   end
 
   def copy_files
@@ -97,7 +124,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types, @canonical_base_url)
+      File.write filename, TypeTemplate.new(type, all_types, project_info)
 
       next if type.program?
 
@@ -116,7 +143,7 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if type.private?
-    return false if nodoc?(type)
+    return false if nodoc?(type, type.locations.try(&.first?))
     return true if crystal_builtin?(type)
 
     # Don't include lib types or types inside a lib type
@@ -132,19 +159,30 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    return false if nodoc?(a_def)
+    return false if nodoc?(a_def, a_def.location)
 
     must_include? a_def.location
   end
 
-  def must_include?(a_macro : Macro)
+  def must_include?(a_macro : Doc::Macro)
     must_include? a_macro.macro
   end
 
   def must_include?(a_macro : Crystal::Macro)
-    return false if nodoc?(a_macro)
+    return false if nodoc?(a_macro, a_macro.location)
 
     must_include? a_macro.location
+  end
+
+  def must_include?(constant : Constant)
+    must_include? constant.const
+  end
+
+  def must_include?(const : Crystal::Const)
+    return false if nodoc?(const, const.locations.try(&.first?))
+    return true if crystal_builtin?(const)
+
+    const.locations.try &.any? { |location| must_include? location }
   end
 
   def must_include?(location : Crystal::Location)
@@ -162,16 +200,45 @@ class Crystal::Doc::Generator
     false
   end
 
-  def nodoc?(str : String?)
-    str == ":nodoc:" || str == "nodoc"
+  def must_include_toplevel?(program_type : Type)
+    toplevel_items = [] of Method | Macro | Constant
+    toplevel_items.concat program_type.class_methods
+    toplevel_items.concat program_type.macros
+    toplevel_items.concat program_type.constants
+
+    toplevel_items.any? { |item| must_include? item }
   end
 
-  def nodoc?(obj)
-    nodoc? obj.doc.try &.strip
+  # TODO: remove after 0.34.0
+  # Needed because there are multiple passes while generating docs
+  # and we want to avoid duplicate warnings per location
+  @nodoc_warnings_locations = Set(String).new
+
+  def nodoc?(str : String?, location : Location?) : Bool
+    return false if !str || !@program.wants_doc?
+
+    # TODO: remove after 0.34.0
+    if str.starts_with?("nodoc")
+      if location
+        # Show one line above to highlight the nodoc line
+        location = Location.new(location.filename, location.line_number - 1, location.column_number)
+      end
+
+      if !location || @nodoc_warnings_locations.add?(location.to_s)
+        @program.report_warning_at location, "`nodoc` is no longer supported. Use `:nodoc:` instead"
+      end
+      return true
+    end
+
+    str.starts_with?(":nodoc:")
+  end
+
+  def nodoc?(obj, location : Location?)
+    nodoc? obj.doc.try(&.strip), location
   end
 
   def crystal_builtin?(type)
-    return false unless @is_crystal_repo
+    return false unless project_info.crystal_stdlib?
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -181,7 +248,8 @@ class Crystal::Doc::Generator
     return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
-     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION"}.each do |name|
+     "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
+     "LIBRARY_PATH"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -203,13 +271,20 @@ class Crystal::Doc::Generator
   def collect_subtypes(parent)
     types = [] of Type
 
+    # AliasType has defined `types?` to be the types
+    # of the aliased type, but for docs we don't want
+    # to list the nested types for aliases.
+    if parent.is_a?(AliasType)
+      return types
+    end
+
     parent.types?.try &.each_value do |type|
       case type
       when Const, LibType
         next
+      else
+        types << type(type) if must_include? type
       end
-
-      types << type(type) if must_include? type
     end
 
     types.sort_by! &.name.downcase
@@ -219,7 +294,7 @@ class Crystal::Doc::Generator
     types = [] of Constant
 
     parent.type.types?.try &.each_value do |type|
-      if type.is_a?(Const) && must_include? type
+      if type.is_a?(Const) && must_include?(type) && !type.private?
         types << Constant.new(self, parent, type)
       end
     end
@@ -230,14 +305,14 @@ class Crystal::Doc::Generator
 
   def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
 
-    summary obj, doc
+    return if !doc && !obj.annotations(@program.deprecated_annotation)
+
+    summary obj, doc || ""
   end
 
   def summary(context, string)
-    line = fetch_doc_lines(string).lines.first?
-    return nil unless line
+    line = fetch_doc_lines(string).lines.first? || ""
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
@@ -249,27 +324,23 @@ class Crystal::Doc::Generator
 
   def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
-    return nil unless doc
 
-    doc obj, doc
+    return if !doc && !obj.annotations(@program.deprecated_annotation)
+
+    doc obj, doc || ""
   end
 
   def doc(context, string)
     string = isolate_flag_lines string
+    string += build_flag_lines_from_annotations context
     markdown = String.build do |io|
-      Markdown.parse string, MarkdownDocRenderer.new(context, io)
+      Markdown.parse string, Markdown::DocRenderer.new(context, io)
     end
     generate_flags markdown
   end
 
-  def fetch_doc_lines(doc)
-    doc.gsub /\n+/ do |match|
-      if match.size == 1
-        " "
-      else
-        "\n"
-      end
-    end
+  def fetch_doc_lines(doc : String) : String
+    doc.gsub /\n+/ { |match| match.size == 1 ? " " : "\n" }
   end
 
   # Replaces flag keywords with html equivalent
@@ -299,6 +370,19 @@ class Crystal::Doc::Generator
     end
   end
 
+  def build_flag_lines_from_annotations(context)
+    first = true
+    String.build do |io|
+      if anns = context.annotations(@program.deprecated_annotation)
+        anns.each do |ann|
+          io << "\n\n" if first
+          first = false
+          io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
+        end
+      end
+    end
+  end
+
   def compute_repository
     # check whether inside git work-tree
     `git rev-parse --is-inside-work-tree >/dev/null 2>&1`
@@ -310,8 +394,6 @@ class Crystal::Doc::Generator
     git_matches = remotes.each_line.compact_map do |line|
       GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
     end.to_a
-
-    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal(?:\.git)?\s} }
 
     origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
     return unless origin
@@ -360,7 +442,13 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, line_number : Int32, url : String? do
+  class RelativeLocation
+    property show_line_number
+    getter filename, line_number, url
+
+    def initialize(@filename : String, @line_number : Int32, @url : String?, @show_line_number : Bool)
+    end
+
     def to_json(builder : JSON::Builder)
       builder.object do
         builder.field "filename", filename
@@ -369,6 +457,7 @@ class Crystal::Doc::Generator
       end
     end
   end
+
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
@@ -386,7 +475,19 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
-      locations << RelativeLocation.new(filename, location.line_number, url)
+      # Prevent identical link generation in the "Defined in:" section in the docs because of macros
+      next if locations.any? { |loc| loc.filename == filename && loc.line_number == location.line_number }
+
+      show_line_number = locations.any? do |location|
+        if location.filename == filename
+          location.show_line_number = true
+          true
+        else
+          false
+        end
+      end
+
+      locations << RelativeLocation.new(filename, location.line_number, url, show_line_number)
     end
     locations
   end
