@@ -4055,16 +4055,16 @@ module Crystal
           call.has_parentheses = has_parentheses
           call
         else
-          if args
+          if args || named_args
             maybe_var = !force_call && is_var && !has_parentheses
-            if maybe_var && args.size == 0
+            if maybe_var && (!args || args.size == 0) && !named_args
               Var.new(name)
-            elsif maybe_var && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
+            elsif maybe_var && !named_args && (args && args.size == 1) && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
               sign = num.value[0].to_s
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
             else
-              call = Call.new(nil, name, args, nil, block_arg, named_args, global)
+              call = Call.new(nil, name, (args || [] of ASTNode), nil, block_arg, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call

@@ -405,6 +405,16 @@ module Crystal
     it_parses "foo(a: 1\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
     it_parses "foo(\na: 1,\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
 
+    it_parses "a = 1; a b: 2", [
+      Assign.new("a".var, 1.int32),
+      Call.new(nil, "a", named_args: [NamedArgument.new("b", 2.int32)]),
+    ]
+
+    it_parses "a = 1; a -1, b: 2", [
+      Assign.new("a".var, 1.int32),
+      Call.new(nil, "a", args: [-1.int32] of ASTNode, named_args: [NamedArgument.new("b", 2.int32)]),
+    ]
+
     it_parses %(foo("foo bar": 1, "baz": 2)), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
     it_parses %(foo "foo bar": 1, "baz": 2), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
 
