@@ -95,9 +95,9 @@ class HTTP::Request
   # require "http/request"
   #
   # request = HTTP::Request.new("GET", "/search", version: "HTTP/1.0")
-  # p request.keep_alive? # => false
+  # request.keep_alive? # => false
   # request.version = "HTTP/1.1"
-  # p request.keep_alive? # => true
+  # request.keep_alive? # => true
   # ```
   def keep_alive? : Bool
     HTTP.keep_alive?(self)
@@ -112,7 +112,7 @@ class HTTP::Request
   # request = HTTP::Request.new("HEAD", "/", version: "HTTP/1.0")
   # request.ignore_body? # => true
   # request.method = "GET"
-  # p request.ignore_body? # => false
+  # request.ignore_body? # => false
   # ```
   def ignore_body? : Bool
     @method == "HEAD"
