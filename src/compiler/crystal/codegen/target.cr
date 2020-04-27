@@ -88,8 +88,12 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def bsd?
+    freebsd? || dragonfly? || openbsd?
+  end
+
   def unix?
-    macos? || freebsd? || dragonfly? || openbsd? || linux?
+    macos? || bsd? || linux?
   end
 
   def gnu?
