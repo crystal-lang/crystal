@@ -814,22 +814,26 @@ abstract class IO
   # io.gets    # => "world"
   # io.skip(1) # raises IO::EOFError
   # ```
-  def skip(bytes_count : Int) : Nil
+  def skip(bytes_count : Int) : Int
+    remaining = bytes_count
     buffer = uninitialized UInt8[4096]
-    while bytes_count > 0
-      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
+    while remaining > 0
+      read_count = read(buffer.to_slice[0, Math.min(remaining, 4096)])
       raise IO::EOFError.new if read_count == 0
-
-      bytes_count -= read_count
+      remaining -= read_count
     end
+    bytes_count
   end
 
   # Reads and discards bytes from `self` until there
   # are no more bytes.
-  def skip_to_end : Nil
+  def skip_to_end : Int
+    bytes_count = 0
     buffer = uninitialized UInt8[4096]
-    while read(buffer.to_slice) > 0
+    while (len = read(buffer.to_slice)) > 0
+      bytes_count += len
     end
+    bytes_count
   end
 
   # Writes a single byte into this `IO`.

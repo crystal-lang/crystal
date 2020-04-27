@@ -203,6 +203,7 @@ class IO::Memory < IO
     else
       raise IO::EOFError.new
     end
+    bytes_count
   end
 
   # :nodoc:

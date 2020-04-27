@@ -61,7 +61,7 @@ class IO::Sized < IO
     peek
   end
 
-  def skip(bytes_count) : Nil
+  def skip(bytes_count)
     check_open
 
     if bytes_count <= @read_remaining
@@ -70,6 +70,8 @@ class IO::Sized < IO
     else
       raise IO::EOFError.new
     end
+
+    bytes_count
   end
 
   def write(slice : Bytes) : NoReturn
