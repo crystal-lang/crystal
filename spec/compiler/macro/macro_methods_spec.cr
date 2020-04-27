@@ -556,7 +556,7 @@ module Crystal
       end
     end
 
-    describe "array methods" do
+    describe ArrayLiteral do
       it "executes index 0" do
         assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
       end
@@ -633,6 +633,56 @@ module Crystal
         context "without either argument" do
           it "returns the resulting array" do
             assert_macro "", %({{[1, 2, 3].map_with_index { 7 }}}), [] of ASTNode, %([7, 7, 7])
+          end
+        end
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
+      end
+
+      describe "#each_with_index" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 3, 5])
+            )
+          end
+        end
+
+        context "without the index argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 2, 3])
+            )
+          end
+        end
+
+        context "without the element argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([0, 1, 2])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { values << 7 } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([7, 7, 7])
+            )
           end
         end
       end
@@ -768,7 +818,7 @@ module Crystal
       end
     end
 
-    describe "hash methods" do
+    describe HashLiteral do
       it "executes size" do
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
       end
@@ -855,9 +905,51 @@ module Crystal
       it "executes double splat with arg" do
         assert_macro "", %({{{1 => 2, 3 => 4}.double_splat(", ")}}), [] of ASTNode, "1 => 2, 3 => 4, "
       end
+
+      describe "#each" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k1", "v1"}, {"k2", "v2"}])
+            )
+          end
+        end
+
+        context "without the value argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k| values << k } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["k1", "k2"])
+            )
+          end
+        end
+
+        context "without the key argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["v1", "v2"])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k3", "v3"}, {"k3", "v3"}])
+            )
+          end
+        end
+      end
     end
 
-    describe "named tuple literal methods" do
+    describe NamedTupleLiteral do
       it "executes size" do
         assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
       end
@@ -923,9 +1015,51 @@ module Crystal
       it "executes double splat with arg" do
         assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
       end
+
+      describe "#each" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{k1, "v1"}, {k2, "v2"}])
+            )
+          end
+        end
+
+        context "without the value argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k| values << k } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([k1, k2])
+            )
+          end
+        end
+
+        context "without the key argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["v1", "v2"])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k3", "v3"}, {"k3", "v3"}])
+            )
+          end
+        end
+      end
     end
 
-    describe "tuple methods" do
+    describe TupleLiteral do
       it "executes index 0" do
         assert_macro "", %({{ {1, 2, 3}[0] }}), [] of ASTNode, "1"
       end
@@ -988,6 +1122,56 @@ module Crystal
         context "without either argument" do
           it "returns the resulting tuple" do
             assert_macro "", %({{{1, 2, 3}.map_with_index { 7 }}}), [] of ASTNode, %({7, 7, 7})
+          end
+        end
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
+      end
+
+      describe "#each_with_index" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 3, 5])
+            )
+          end
+        end
+
+        context "without the index argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 2, 3])
+            )
+          end
+        end
+
+        context "without the element argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([0, 1, 2])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { values << 7 } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([7, 7, 7])
+            )
           end
         end
       end
@@ -1962,7 +2146,7 @@ module Crystal
       end
     end
 
-    describe "range methods" do
+    describe RangeLiteral do
       it "executes begin" do
         assert_macro "x", %({{x.begin}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "1"
       end
@@ -1983,6 +2167,14 @@ module Crystal
       it "executes to_a" do
         assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %([1, 2, 3])
         assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %([1, 2])
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% (1..3).each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
       end
     end
 
