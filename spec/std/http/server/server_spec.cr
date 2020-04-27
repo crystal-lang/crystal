@@ -413,6 +413,35 @@ describe HTTP::Server do
     end
   end
 
+  it "can process simultaneous SSL handshakes" do
+    server = HTTP::Server.new do |context|
+      context.response.print "ok"
+    end
+
+    server_context, client_context = ssl_context_pair
+    address = server.bind_tls "localhost", server_context
+
+    run_server(server) do
+      ch = Channel(Nil).new
+
+      spawn do
+        TCPSocket.open(address.address, address.port) do |socket|
+          ch.send nil
+          ch.receive
+        end
+      end
+
+      begin
+        ch.receive
+        client = HTTP::Client.new(address.address, address.port, client_context)
+        client.read_timeout = client.connect_timeout = 3
+        client.get("/").body.should eq "ok"
+      ensure
+        ch.send nil
+      end
+    end
+  end
+
   describe "#close" do
     it "closes gracefully" do
       server = HTTP::Server.new do |context|

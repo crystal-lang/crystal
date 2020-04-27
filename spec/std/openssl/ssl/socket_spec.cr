@@ -4,6 +4,43 @@ require "../../spec_helper"
 require "../../../support/ssl"
 
 describe OpenSSL::SSL::Socket do
+  describe OpenSSL::SSL::Socket::Server do
+    it "auto accept client by default" do
+      TCPServer.open(0) do |tcp_server|
+        server_context, client_context = ssl_context_pair
+
+        spawn do
+          OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+            socket.print "hello"
+          end
+        end
+
+        socket = tcp_server.accept
+        ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context)
+        ssl_server.gets.should eq("hello")
+        ssl_server.close
+      end
+    end
+
+    it "doesn't accept client when specified" do
+      TCPServer.open(0) do |tcp_server|
+        server_context, client_context = ssl_context_pair
+
+        spawn do
+          OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+            socket.print "hello"
+          end
+        end
+
+        socket = tcp_server.accept
+        ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context, accept: false)
+        ssl_server.accept
+        ssl_server.gets.should eq("hello")
+        ssl_server.close
+      end
+    end
+  end
+
   it "returns the cipher that is currently in use" do
     tcp_server = TCPServer.new(0)
     server_context, client_context = ssl_context_pair
