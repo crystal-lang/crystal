@@ -814,7 +814,7 @@ abstract class IO
   # io.gets    # => "world"
   # io.skip(1) # raises IO::EOFError
   # ```
-  def skip(bytes_count : Int) : Int
+  def skip(bytes_count : UInt64) : UInt64
     remaining = bytes_count
     buffer = uninitialized UInt8[4096]
     while remaining > 0
@@ -827,8 +827,8 @@ abstract class IO
 
   # Reads and discards bytes from `self` until there
   # are no more bytes.
-  def skip_to_end : Int
-    bytes_count = 0
+  def skip_to_end : UInt64
+    bytes_count = 0_u64
     buffer = uninitialized UInt8[4096]
     while (len = read(buffer.to_slice)) > 0
       bytes_count += len

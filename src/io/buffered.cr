@@ -110,7 +110,7 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count) : Int
+  def skip(bytes_count : UInt64) : UInt64
     check_open
 
     if bytes_count <= @in_buffer_rem.size

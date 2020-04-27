@@ -194,7 +194,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count)
+  def skip(bytes_count : UInt64) : UInt64
     check_open
 
     available = @bytesize - @pos
@@ -207,10 +207,12 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip_to_end
+  def skip_to_end : UInt64
     check_open
 
+    skipped = @bytesize - @pos
     @pos = @bytesize
+    skipped.to_u64
   end
 
   # :nodoc:
