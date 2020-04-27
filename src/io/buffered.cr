@@ -110,18 +110,20 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count) : Int
     check_open
 
     if bytes_count <= @in_buffer_rem.size
       @in_buffer_rem += bytes_count
-      return
+      return bytes_count
     end
 
-    bytes_count -= @in_buffer_rem.size
+    remaining = bytes_count
+    remaining -= @in_buffer_rem.size
     @in_buffer_rem = Bytes.empty
 
-    super(bytes_count)
+    super(remaining)
+    bytes_count
   end
 
   # Buffered implementation of `IO#write(slice)`.
