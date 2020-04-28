@@ -958,7 +958,7 @@ class Array(T)
   # [1, 2, 3].first(2) # => [1, 2]
   # [1, 2, 3].first(4) # => [1, 2, 3]
   # ```
-  def first(n : Int) : Array(T)
+  def first(n : Int) : self
     self[0, n]
   end
 
@@ -973,7 +973,7 @@ class Array(T)
   # a.insert(2, "y")  # => ["x", "a", "y", "b", "c"]
   # a.insert(-1, "z") # => ["x", "a", "y", "b", "c", "z"]
   # ```
-  def insert(index : Int, object : T) : Array(T)
+  def insert(index : Int, object : T) : self
     check_needs_resize
 
     if index < 0
@@ -1001,7 +1001,7 @@ class Array(T)
   # [1, 2, 3].last(2) # => [2, 3]
   # [1, 2, 3].last(4) # => [1, 2, 3]
   # ```
-  def last(n : Int) : Array(T)
+  def last(n : Int) : self
     if n < @size
       self[@size - n, n]
     else
@@ -1010,7 +1010,7 @@ class Array(T)
   end
 
   # :nodoc:
-  protected def size=(size : Int) : Int
+  protected def size=(size : Int) : Int32
     @size = size.to_i
   end
 
@@ -1255,7 +1255,7 @@ class Array(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false) : PermutationIterator
+  def each_permutation(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
 
     PermutationIterator.new(self, size.to_i, reuse)
@@ -1355,7 +1355,7 @@ class Array(T)
   # if reuse if truthy, the method will create a new `Array` and reuse it.
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_combination(size : Int = self.size, reuse = false) : CombinationIterator
+  def each_combination(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
 
     CombinationIterator.new(self, size.to_i, reuse)
@@ -1395,8 +1395,7 @@ class Array(T)
   # arr.repeated_combinations(2) # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
   # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]
   # ```
-  def repeated_combinations(size : Int = self.size) forall Array
-    (T)
+  def repeated_combinations(size : Int = self.size) forall Array(T)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
@@ -1468,7 +1467,7 @@ class Array(T)
   # if reuse if truthy, the method will create a new `Array` and reuse it.
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_repeated_combination(size : Int = self.size, reuse = false) : RepeatedCombinationIterator
+  def each_repeated_combination(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
 
     RepeatedCombinationIterator.new(self, size.to_i, reuse)
