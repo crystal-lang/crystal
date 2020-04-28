@@ -223,7 +223,7 @@ module Crystal
         nodes = sources.map do |source|
           # We add the source to the list of required file,
           # so it can't be required again
-          program.add_to_requires source.filename
+          program.requires.add source.filename
           parse(program, source).as(ASTNode)
         end
         nodes = Expressions.from(nodes)

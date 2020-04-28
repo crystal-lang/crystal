@@ -429,18 +429,6 @@ module Crystal
       static_array.instantiate([type, NumberLiteral.new(size)] of TypeVar)
     end
 
-    # Adds *filename* to the list of all required files.
-    # Returns `true` if the file was added, `false` if it was
-    # already required.
-    def add_to_requires(filename)
-      if requires.includes? filename
-        false
-      else
-        requires.add filename
-        true
-      end
-    end
-
     record RecordedRequire, filename : String, relative_to : String? do
       include JSON::Serializable
     end
