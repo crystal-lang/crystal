@@ -86,7 +86,9 @@ class Crystal::Call
 
     @target_defs = nil
 
-    if block_arg = @block_arg
+    # Only replace block arg if it's not something like call(..., &->proc).
+    # We handle that case later on.
+    if (block_arg = @block_arg) && !(block_arg.is_a?(ProcPointer) && block_arg.args.empty?)
       replace_block_arg_with_block(block_arg)
     end
 
@@ -377,6 +379,18 @@ class Crystal::Call
     matches.each &.remove_literals if with_literals
 
     block = @block
+
+    # If we had a block arg of the form call(..., &->proc) this is when we fill out
+    # the block's contents.
+    if block && (block_arg = @block_arg) && (block_arg.is_a?(ProcPointer) && block_arg.args.empty?)
+      args_count = matches.map { |match| match.def.yields || 0 }.max? || 0
+      block.args = Array.new(args_count) { |i| Var.new("__arg#{i}") }
+      block.body = Call.new(
+        block_arg.obj.clone, block_arg.name,
+        Array(ASTNode).new(args_count) { |i| Var.new("__arg#{i}") }
+      ).at(block_arg)
+      @block_arg = nil
+    end
 
     typed_defs = Array(Def).new(matches.size)
 

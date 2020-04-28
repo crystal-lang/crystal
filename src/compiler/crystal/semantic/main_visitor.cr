@@ -1318,7 +1318,18 @@ module Crystal
         end
 
         args.each &.accept(self)
-        block_arg.try &.accept self
+
+        # For `call(..., &->proc)` we will expand the proc pointer to a block
+        # in the call and fill out the missing arguments so the user doesn't
+        # have to specify the types.
+        if block_arg.is_a?(ProcPointer) && block_arg.args.empty?
+          # We create a new block that we'll fill out later when we resolve
+          # the call matches.
+          node.block = Block.new.tap { |block| block.call = node }
+        else
+          block_arg.try &.accept self
+        end
+
         named_args.try &.each &.value.accept self
       end
 

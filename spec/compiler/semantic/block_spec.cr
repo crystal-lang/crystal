@@ -1443,4 +1443,51 @@ describe "Block inference" do
       end
       ))
   end
+
+  it "autofills args when using &->foo as block arg" do
+    assert_type(%(
+      def foo(x)
+        x + 1
+      end
+
+      def bar
+        yield 1
+      end
+
+      bar(&->foo)
+      )) { int32 }
+  end
+
+  it "autofills args when using &->Type.foo as block arg" do
+    assert_type(%(
+      class Foo
+        def self.foo(x)
+          x + 1
+        end
+      end
+
+      def bar
+        yield 1
+      end
+
+      bar(&->Foo.foo)
+      )) { int32 }
+  end
+
+  it "autofills args when using &->obj.foo as block arg" do
+    assert_type(%(
+      class Foo
+        def foo(x)
+          x + 1
+        end
+      end
+
+      def bar
+        yield 1
+      end
+
+      x = Foo.new
+      bar(&->x.foo)
+      )) { int32 }
+  end
 end
