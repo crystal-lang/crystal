@@ -326,7 +326,7 @@ jobs:
       - run:
           name: Setup environment
           command: |
-            brew unlink python@2 || echo "ignore"
+            brew unlink python@2 || true
 
             ruby-install ruby 2.5.6
 

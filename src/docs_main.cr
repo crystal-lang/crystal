@@ -5,6 +5,7 @@
 require "./annotations"
 require "./big"
 require "./compiler/crystal/macros"
+require "./compress/**"
 require "./crypto/**"
 require "./csv"
 require "./digest/**"

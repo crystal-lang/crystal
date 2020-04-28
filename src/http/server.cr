@@ -317,6 +317,7 @@ class HTTP::Server
     def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
+      server.start_immediately = false
 
       begin
         bind(server)
@@ -497,6 +498,17 @@ class HTTP::Server
     if io.is_a?(IO::Buffered)
       io.sync = false
     end
+
+    {% unless flag?(:without_openssl) %}
+      if io.is_a?(OpenSSL::SSL::Socket::Server)
+        begin
+          io.accept
+        rescue ex
+          Log.debug(exception: ex) { "Error during SSL handshake" }
+          return
+        end
+      end
+    {% end %}
 
     @processor.process(io, io)
   end

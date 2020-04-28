@@ -569,11 +569,11 @@ module Crystal::Macros
   # An array literal.
   class ArrayLiteral < ASTNode
     # Similar to `Enumerable#any?`
-    def any?(&block) : BoolLiteral
+    def any?(&) : BoolLiteral
     end
 
     # Similar to `Enumerable#all?`
-    def all?(&block) : BoolLiteral
+    def all?(&) : BoolLiteral
     end
 
     # Returns a `MacroId` with all of this array's elements joined
@@ -595,7 +595,7 @@ module Crystal::Macros
     end
 
     # Similar to `Enumerable#find`
-    def find(&block) : ASTNode | NilLiteral
+    def find(&) : ASTNode | NilLiteral
     end
 
     # Similar to `Array#first`, but returns a `NilLiteral` if the array is empty.
@@ -619,27 +619,35 @@ module Crystal::Macros
     end
 
     # Similar to `Enumerable#map`
-    def map(&block) : ArrayLiteral
+    def map(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#map_with_index`
-    def map_with_index(&block) : ArrayLiteral
+    def map_with_index(&) : ArrayLiteral
+    end
+
+    # Similar to `Array#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `Enumerable#each_with_index`
+    def each_with_index(&) : Nil
     end
 
     # Similar to `Enumerable#select`
-    def select(&block) : ArrayLiteral
+    def select(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#reject`
-    def reject(&block) : ArrayLiteral
+    def reject(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#reduce`
-    def reduce(&block) : ASTNode
+    def reduce(&) : ASTNode
     end
 
     # Similar to `Enumerable#reduce`
-    def reduce(memo : ASTNode, &block) : ASTNode
+    def reduce(memo : ASTNode, &) : ASTNode
     end
 
     # Similar to `Array#shuffle`
@@ -651,7 +659,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#sort_by`
-    def sort_by(&block) : ArrayLiteral
+    def sort_by(&) : ArrayLiteral
     end
 
     # Similar to `Array#uniq`
@@ -699,6 +707,10 @@ module Crystal::Macros
   class HashLiteral < ASTNode
     # Similar to `Hash#clear`
     def clear : HashLiteral
+    end
+
+    # Similar to `Hash#each`
+    def each(&) : Nil
     end
 
     # Similar to `Hash#empty?`
@@ -764,6 +776,14 @@ module Crystal::Macros
 
   # A named tuple literal.
   class NamedTupleLiteral < ASTNode
+    # Similar to `NamedTuple#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `NamedTuple#each_with_index`
+    def each_with_index(&) : Nil
+    end
+
     # Similar to `NamedTuple#empty?`
     def empty? : BoolLiteral
     end
@@ -807,6 +827,10 @@ module Crystal::Macros
     def begin : ASTNode
     end
 
+    # Similar to `Range#each`
+    def each(&) : Nil
+    end
+
     # Similar to `Range#end`
     def end : ASTNode
     end
@@ -817,7 +841,7 @@ module Crystal::Macros
 
     # Similar to `Enumerable#map` for a `Range`.
     # Only works on ranges of `NumberLiteral`s considered as integers.
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#to_a` for a `Range`.

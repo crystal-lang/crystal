@@ -1,4 +1,4 @@
-require "gzip"
+require "compress/gzip"
 require "spec"
 
 # This spec tests piping a file with a size of more than
@@ -13,7 +13,7 @@ it "Gzip file larger than UInt32::MAX" do
   spawn do
     slice = Slice.new(1024, 0_u8, read_only: true)
 
-    Gzip::Writer.open(write) do |writer|
+    Compress::Gzip::Writer.open(write) do |writer|
       target_bytes = UInt32::MAX.to_i64 + 1
       while bytes_written < target_bytes
         writer.write(slice)
@@ -24,7 +24,7 @@ it "Gzip file larger than UInt32::MAX" do
     write.close
   end
 
-  Gzip::Reader.open(read) do |reader|
+  Compress::Gzip::Reader.open(read) do |reader|
     slice = Slice.new(1024, 0_u8)
 
     while true

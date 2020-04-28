@@ -491,6 +491,8 @@ end
 
 {% unless flag?(:preview_mt) %}
   class Process
+    # :nodoc:
+    #
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [

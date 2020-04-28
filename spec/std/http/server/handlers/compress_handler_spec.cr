@@ -39,7 +39,7 @@ describe HTTP::CompressHandler do
     body = response2.body
 
     io2 = IO::Memory.new(body)
-    flate = Flate::Reader.new(io2)
+    flate = Compress::Deflate::Reader.new(io2)
     flate.gets_to_end.should eq("Hello")
   end
 
@@ -63,7 +63,7 @@ describe HTTP::CompressHandler do
     body = response2.body
 
     io2 = IO::Memory.new(body)
-    gzip = Gzip::Reader.new(io2)
+    gzip = Compress::Gzip::Reader.new(io2)
     gzip.gets_to_end.should eq("Hello")
   end
 end

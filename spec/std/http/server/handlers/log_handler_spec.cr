@@ -1,35 +1,71 @@
 require "spec"
 require "http/server/handler"
+require "../../../../support/log"
+require "../../../../support/io"
 
 describe HTTP::LogHandler do
   it "logs" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
+    request.remote_address = "192.168.0.1"
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
     called = false
-    log_io = IO::Memory.new
-    handler = HTTP::LogHandler.new(log_io)
+    handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { called = true }
-    handler.call(context)
-    log_io.to_s.should match %r(GET / - 200 \(\d+(\.\d+)?[mµn]s\))
+    logs = capture_logs("http.server") { handler.call(context) }
+    match_logs(logs,
+      {:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
     called.should be_true
   end
 
-  it "does log errors" do
+  it "logs to custom logger" do
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(IO::Memory.new)
+    context = HTTP::Server::Context.new(request, response)
+
+    backend = Log::MemoryBackend.new
+    log = Log.new("custom", backend, :info)
+    handler = HTTP::LogHandler.new(log)
+    handler.next = ->(ctx : HTTP::Server::Context) {}
+    handler.call(context)
+
+    match_logs(backend.entries,
+      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
+  end
+
+  it "logs to io" do
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(IO::Memory.new)
+    context = HTTP::Server::Context.new(request, response)
+
+    backend = Log::MemoryBackend.new
+    io = IO::Memory.new
+    handler = HTTP::LogHandler.new(io)
+    handler.next = ->(ctx : HTTP::Server::Context) {}
+    handler.call(context)
+
+    io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+  end
+
+  it "log failed request" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
-    called = false
-    log_io = IO::Memory.new
-    handler = HTTP::LogHandler.new(log_io)
+    handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    expect_raises(Exception, "foo") do
-      handler.call(context)
+    logs = capture_logs("http.server") do
+      expect_raises(Exception, "foo") do
+        handler.call(context)
+      end
     end
-    (log_io.to_s =~ %r(GET / - Unhandled exception:)).should be_truthy
+    match_logs(logs,
+      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
+    )
   end
 end

@@ -12,7 +12,9 @@ struct Crystal::System::Process
   end
 
   def release
+    return if @process_handle == LibC::HANDLE.null
     close_handle(@process_handle)
+    @process_handle = LibC::HANDLE.null
   end
 
   def wait
@@ -81,7 +83,14 @@ struct Crystal::System::Process
   end
 
   def self.times
-    raise NotImplementedError.new("Process.times")
+    if LibC.GetProcessTimes(LibC.GetCurrentProcess, out create, out exit, out kernel, out user) == 0
+      raise RuntimeError.from_winerror("GetProcessTimes")
+    end
+    ::Process::Tms.new(
+      Crystal::System::Time.filetime_to_f64secs(user),
+      Crystal::System::Time.filetime_to_f64secs(kernel),
+      0,
+      0)
   end
 
   def self.fork

@@ -175,9 +175,67 @@ module Crystal
       @exhaustiveness_checker.check(node)
 
       if expanded = node.expanded
+        unless node.else
+          replace_unreachable_if_needed(node, expanded)
+        end
+
         return expanded.transform(self)
       end
+
       node
+    end
+
+    # If any of the types checked in `case` is an enum, it can happen that
+    # the unreachable can be reached by doing `SomeEnum.new(some_value)`.
+    # In that case we replace the Unreachable node with `raise "..."`.
+    # In the future we should disallow creating such values unless the
+    # enum is marked as "open".
+    def replace_unreachable_if_needed(node, expanded)
+      cond = node.cond
+      return unless cond
+
+      if cond.is_a?(TupleLiteral)
+        return unless cond.elements.all?(&.type?) &&
+                      cond.elements.any? { |element| has_enum_type?(element.type) }
+      else
+        cond_type = cond.type?
+        return unless cond_type && has_enum_type?(cond_type)
+      end
+
+      an_if = find_unreachable_parent(expanded)
+      unless an_if
+        node.raise "BUG: expected to find Unreachable node"
+      end
+
+      an_if.else = build_raise("Unhandled case: enum value outside of defined enum members", node)
+    end
+
+    def has_enum_type?(type)
+      if type.is_a?(UnionType)
+        type.union_types.any? &.is_a?(EnumType)
+      else
+        type.is_a?(EnumType)
+      end
+    end
+
+    def find_unreachable_parent(expanded)
+      # An expanded case is either a series of if/else, or
+      # a bunch of assignments and then a series of if/else.
+      # The if/else chain always comes last.
+      if expanded.is_a?(Expressions)
+        expanded = expanded.expressions.last
+      end
+
+      while expanded.is_a?(If)
+        if an_else = expanded.else
+          if an_else.is_a?(Unreachable)
+            return expanded
+          else
+            expanded = an_else
+          end
+        end
+      end
+      nil
     end
 
     def transform(node : ExpandableNode)
@@ -504,7 +562,7 @@ module Crystal
       build_raise ex_msg, node
     end
 
-    def build_raise(msg, node)
+    def build_raise(msg : String, node : ASTNode)
       call = Call.global("raise", StringLiteral.new(msg).at(node)).at(node)
       call.accept MainVisitor.new(@program)
       call

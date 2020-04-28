@@ -145,6 +145,28 @@ describe "BigInt" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)

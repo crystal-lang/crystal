@@ -56,6 +56,7 @@ body {
   padding: 0 0 30px;
   box-shadow: inset -3px 0 4px rgba(0,0,0,.35);
   line-height: 1.2;
+  z-index: 0;
 }
 
 .sidebar .search-box {
@@ -107,9 +108,7 @@ body {
 }
 
 .project-summary {
-  display: inline-block;
   padding: 9px 15px 30px 30px;
-  text-align: right;
 }
 
 .project-name {
@@ -121,7 +120,39 @@ body {
 
 .project-version {
   margin-top: 5px;
-  display: block;
+  display: inline-block;
+  position: relative;
+}
+
+.project-version > form::after {
+  position: absolute;
+  right: 0;
+  top: 0;
+  content: "\25BC";
+  font-size: .6em;
+  line-height: 1.2rem;
+  z-index: -1;
+}
+
+.project-versions-nav {
+  cursor: pointer;
+  margin: 0;
+  padding: 0 .9em 0 0;
+  border: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+.project-versions-nav:focus {
+  outline: none;
+}
+
+.project-versions-nav > option {
+  color: initial;
 }
 
 .sidebar ul {
