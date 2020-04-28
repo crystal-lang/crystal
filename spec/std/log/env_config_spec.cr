@@ -97,7 +97,7 @@ describe "Log.setup_from_env" do
       end
     end
 
-    it "is splited by comma" do
+    it "splits sources by comma" do
       with_env "LOG_LEVEL": "info" do
         builder = Log::Builder.new
         Log.setup_from_env(builder: builder, default_sources: "db, , foo.*  ")
