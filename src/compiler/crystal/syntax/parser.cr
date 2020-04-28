@@ -4064,7 +4064,7 @@ module Crystal
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
             elsif maybe_var && args.size == 1 && (arg = args[0]) && arg.is_a?(Call) && !arg.obj.nil? &&
-                  ({"+", "-"}.includes? arg.name) && (!arg.args || arg.args.size == 0)
+                  arg.name.in?("+", "-") && (!arg.args || arg.args.size == 0)
               Call.new(Var.new(name), arg.name, arg.obj.not_nil!)
             else
               call = Call.new(nil, name, args, nil, block_arg, named_args, global)
