@@ -1,4 +1,4 @@
-{% skip_file if flag?(:bsd) %}
+{% skip_file if flag?(:openbsd) || flag?(:freebsd) || flag?(:dragonfly) %}
 
 require "c/unistd"
 

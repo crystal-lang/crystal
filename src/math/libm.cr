@@ -1,4 +1,4 @@
-{% if flag?(:linux) || flag?(:bsd) %}
+{% if flag?(:linux) || flag?(:freebsd) || flag?(:openbsd) || flag?(:dragonfly) %}
   @[Link("m")]
 {% end %}
 
