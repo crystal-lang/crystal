@@ -4063,6 +4063,11 @@ module Crystal
               sign = num.value[0].to_s
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
+            elsif maybe_var && args.size == 1 && (arg = args[0]) && arg.is_a?(Call) && !arg.obj.nil? && 
+                     ({"+", "-"}.includes? arg.name) && (!arg.args || arg.args.size == 0)
+              sign  = arg.name 
+              value = arg.obj 
+              Call.new(Var.new(name), sign, [value] of ASTNode) 
             else
               call = Call.new(nil, name, args, nil, block_arg, named_args, global)
               call.name_location = name_location
