@@ -89,7 +89,7 @@ class Crystal::Codegen::Target
   end
 
   def bsd?
-    freebsd? || dragonfly? || openbsd?
+    freebsd? || openbsd? || dragonfly?
   end
 
   def unix?
