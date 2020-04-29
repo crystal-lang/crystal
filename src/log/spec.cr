@@ -30,7 +30,7 @@ class Log
   # end
   # ```
   #
-  # By default logs of all sources and with severity `Severity::Info` or above will be captured.
+  # By default logs of all sources and severities  will be captured.
   #
   # Use *level* to only capture of the given severity or above.
   #
@@ -52,7 +52,7 @@ class Log
   #
   # Invocations can be nested in order to capture each source in their own `EntriesChecker`.
   #
-  def self.capture(source : String = "*", level : Severity = :info, *, builder = Log.builder)
+  def self.capture(source : String = "*", level : Severity = Log::Severity::Trace, *, builder = Log.builder)
     mem_backend = Log::MemoryBackend.new
     builder.bind(source, level, mem_backend)
     begin
@@ -65,7 +65,7 @@ class Log
   end
 
   # :ditto:
-  def self.capture(level : Log::Severity = Log::Severity::Info,
+  def self.capture(level : Log::Severity = Log::Severity::Trace,
                    *, builder : Log::Builder = Log.builder)
     capture("*", level, builder: builder) do |dsl|
       yield dsl

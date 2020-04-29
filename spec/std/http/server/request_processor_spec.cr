@@ -248,7 +248,7 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(true)
-    logs = Log.capture("http.server", :debug) do
+    logs = Log.capture("http.server") do
       processor.process(input, output)
     end
     logs.check(:debug, "Error while writing data to the client")
@@ -261,7 +261,7 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(false)
-    logs = Log.capture("http.server", :debug) do
+    logs = Log.capture("http.server") do
       processor.process(input, output)
     end
     logs.check(:debug, "Error while flushing data to the client")

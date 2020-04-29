@@ -12,7 +12,7 @@ describe "log/spec" do
   end
 
   it "allows matching logs" do
-    Log.capture("*", :info) {
+    Log.capture {
       Log.error { "this is an error" }
       Log.fatal { "this is a fatal" }
     }.itself
@@ -22,7 +22,7 @@ describe "log/spec" do
   end
 
   it "can get the entry matched by check" do
-    Log.capture("*", :info) {
+    Log.capture {
       Log.error { "this is an error" }
       Log.fatal { "this is a fatal" }
     }.itself
@@ -34,7 +34,7 @@ describe "log/spec" do
   end
 
   it "allows matching non-consecutive logs" do
-    Log.capture("*", :info) {
+    Log.capture {
       Log.error { "ignored" }
       Log.error { "this is an error" }
       Log.fatal { "also ignored" }
@@ -46,7 +46,7 @@ describe "log/spec" do
   end
 
   it "allows matching logs strictly" do
-    Log.capture("*", :info) {
+    Log.capture {
       Log.error { "this is an error" }
       Log.fatal { "this is a fatal" }
     }.itself
@@ -56,7 +56,7 @@ describe "log/spec" do
   end
 
   it "can get the entry matched by next" do
-    Log.capture("*", :info) {
+    Log.capture {
       Log.error { "this is an error" }
       Log.fatal { "this is a fatal" }
     }.itself
@@ -69,7 +69,7 @@ describe "log/spec" do
 
   it "fails on non-consecutive logs" do
     expect_raises(Spec::AssertionFailed, /No matching entries found expected Fatal with "this is a second fatal", but got Fatal with "this is a fatal"/) do
-      Log.capture("*", :info) {
+      Log.capture {
         Log.error { "this is an error" }
         Log.fatal { "this is a fatal" }
         Log.fatal { "this is a second fatal" }
@@ -82,7 +82,7 @@ describe "log/spec" do
 
   it "fails on non-empty logs" do
     expect_raises(Spec::AssertionFailed, /Expected no entries, but got Error with "this is an error" in a total of 1 entries/) do
-      Log.capture("*", :info) {
+      Log.capture {
         Log.error { "this is an error" }
       }.itself
         .empty
@@ -90,7 +90,7 @@ describe "log/spec" do
   end
 
   it "entries can be cleared" do
-    Log.capture("*", :info) do |l|
+    Log.capture do |l|
       Log.error { "this is an error" }
       l.clear
       l.empty
@@ -98,7 +98,7 @@ describe "log/spec" do
   end
 
   it "allows matching with regex" do
-    Log.capture("*", :info) do |l|
+    Log.capture do |l|
       Log.error { "this is an error" }
       Log.error { "this is a second error" }
 
@@ -138,6 +138,7 @@ describe "log/spec" do
 
   it "can capture from all sources" do
     Log.capture(:info) do |logs|
+      Log.for("foo").debug { "ignored" }
       Log.for("foo").error { "error in foo" }
       Log.for("bar").error { "error in bar" }
       Log.for("foo.nested").error { "error in foo.nested" }

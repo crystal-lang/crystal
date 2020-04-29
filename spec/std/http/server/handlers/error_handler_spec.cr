@@ -74,7 +74,7 @@ describe HTTP::ErrorHandler do
 
     handler = HTTP::ErrorHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { ctx.response.print "Hi!"; ctx.response.flush }
-    logs = Log.capture("http.server", :debug) { handler.call(context) }
+    logs = Log.capture("http.server") { handler.call(context) }
 
     logs.check(:debug, "Error while writing data to the client")
     logs.entry.exception.should be_a(IO::Error)
