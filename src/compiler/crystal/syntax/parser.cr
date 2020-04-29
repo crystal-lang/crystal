@@ -4006,7 +4006,6 @@ module Crystal
       next_token
 
       stop_on_comma = false
-      space_consumed = false
       case @token.type
       when :"("
         # nothing
@@ -4016,12 +4015,12 @@ module Crystal
         # with that name that accepts a regex as a first argument).
         # This allows us to write: a = 1; b = 2; a /b
         @wants_regex = !is_var
-        # space_consumed = true
+        
         if current_char.in?('+', '-') && !peek_next_char.ascii_whitespace?
           stop_on_comma = is_var && !force_call && @call_args_nest > 1
         end
       else 
-        # nothing
+        # nothingma
       end
 
       case name
