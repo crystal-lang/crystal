@@ -74,10 +74,10 @@ module Crystal
       # This flag tells the parser to stop on comma while parsing call
       # when there is an ambiguous suffix `+` or `-`
       # ```
-      # def m(x,y)
+      # def m(x, y)
       #   ...
       # end
-      # 
+      #
       # m = 10
       # puts m -2, 3
       # ```
@@ -4015,11 +4015,11 @@ module Crystal
         # with that name that accepts a regex as a first argument).
         # This allows us to write: a = 1; b = 2; a /b
         @wants_regex = !is_var
-        
+
         if current_char.in?('+', '-') && !peek_next_char.ascii_whitespace?
           stop_on_comma = is_var && !force_call && @call_args_nest > 1
         end
-      else 
+      else
         # nothingma
       end
 
