@@ -70,6 +70,20 @@ module Crystal
       #
       # then this flag is set to `true` when parsing `foo`'s arguments.
       @stop_on_do = false
+
+      # This flag tells the parser to stop on comma while parsing call
+      # when there is an ambiguous suffix `+` or `-`
+      # ```
+      # def m(x,y)
+      #   ...
+      # end
+      # 
+      # m = 10
+      # puts m -2, 3
+      # ```
+      # We want this to be parsed as `puts(m - 2, 3)` and not as `puts m(-2, 3)`.
+      # This has no effect on `puts m 2, 3` that is assumed to be `puts m(2, 3)`
+      @stop_on_comma = false
       @assigned_vars = [] of String
     end
 
@@ -3991,12 +4005,21 @@ module Crystal
       @wants_regex = false
       next_token
 
-      if @token.type == :SPACE
+      stop_on_comma = false
+      space_consumed = false
+      case @token.type
+      when :"("
+        # nothing
+      when :SPACE
         # We don't want the next token to be a regex literal if the call's name is
         # a variable in the current scope (it's unlikely that there will be a method
         # with that name that accepts a regex as a first argument).
         # This allows us to write: a = 1; b = 2; a /b
         @wants_regex = !is_var
+        # space_consumed = true
+        if current_char.in?('+', '-') && !peek_next_char.ascii_whitespace?
+          stop_on_comma = is_var && !force_call && @call_args_nest > 1
+        end
       end
 
       case name
@@ -4010,7 +4033,9 @@ module Crystal
         # Not a special call
       end
 
-      call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
+      call_args = preserve_stop_on_comma(stop_on_comma) do
+        preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
+      end
 
       if call_args
         args = call_args.args
@@ -4102,6 +4127,14 @@ module Crystal
       @stop_on_do = new_value
       value = yield
       @stop_on_do = old_stop_on_do
+      value
+    end
+
+    def preserve_stop_on_comma(new_value = false)
+      old_stop_on_comma = @stop_on_comma
+      @stop_on_comma = new_value
+      value = yield
+      @stop_on_comma = old_stop_on_comma
       value
     end
 
@@ -4427,6 +4460,7 @@ module Crystal
         skip_space
 
         if @token.type == :","
+          break if @stop_on_comma
           location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
