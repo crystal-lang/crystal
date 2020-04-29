@@ -1,6 +1,6 @@
 require "spec"
+require "log/spec"
 require "http/server/handler"
-require "../../../../support/log"
 require "../../../../support/io"
 
 describe HTTP::ErrorHandler do

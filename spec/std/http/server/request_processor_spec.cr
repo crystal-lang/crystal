@@ -1,6 +1,6 @@
 require "spec"
+require "log/spec"
 require "http/server/request_processor"
-require "../../../support/log"
 require "../../../support/io"
 
 private def requestize(string)

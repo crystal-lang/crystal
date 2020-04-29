@@ -1,6 +1,6 @@
 require "spec"
 require "log"
-require "../../support/log"
+require "log/spec"
 
 private def s(value : Log::Severity)
   value
@@ -26,7 +26,7 @@ end
 describe "Log.setup_from_env" do
   after_all do
     # Setup logging in specs (again) since these specs perform Log.setup
-    log_setup_on_specs
+    Spec.log_setup
   end
 
   describe "backend" do

@@ -1,5 +1,5 @@
 require "spec"
-require "../../support/log"
+require "log/spec"
 
 describe "log/spec" do
   it "yield and returns the dsl" do
