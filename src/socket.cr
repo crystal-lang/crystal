@@ -301,11 +301,25 @@ class Socket < IO
   end
 
   # Zero-copy implementation of sending *limit* bytes of *file*
-  # to the socket
-  # Returns the number of bytes sent
-  def sendfile(file : IO::FileDescriptor, limit : Int) : UInt64
+  # to the socket. The read buffer and write buffers will be flushed
+  # before sending the file.
+  # Returns the number of bytes sent with the sendfile call,
+  # not including what was in the read and write buffers.
+  def sendfile(file : IO::FileDescriptor, limit : Int, pos : Int? = nil) : UInt64
+    return 0_u64 if limit.zero?
+    if file.read_buffering?
+      raise ArgumentError.new("Can't allow sendfile from pos if read buffering isn't disabled") if pos
+      buf = file.peek(fill: false)
+      unless buf.empty?
+        len = Math.min(limit, buf.size)
+        write(buf[0, len])
+        skip(len) # empty the read buffer
+        limit -= len
+      end
+    end
+    flush
     evented_sendfile(limit, "sendfile") do |remaining|
-      LibC.sendfile(fd, file.fd, nil, remaining)
+      LibC.sendfile(fd, file.fd, pos, remaining)
     end
   end
 
