@@ -39,7 +39,7 @@ describe HTTP::ErrorHandler do
     handler.next = ->(ctx : HTTP::Server::Context) { raise exception }
     handler.call(context)
 
-    logs = Log::ArrayEntriesChecker.new(backend.entries)
+    logs = Log::EntriesChecker.new(backend.entries)
     logs.check(:error, "Unhandled exception")
     logs.entry.exception.should eq(exception)
   end

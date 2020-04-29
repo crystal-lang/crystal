@@ -56,7 +56,7 @@ class Log
     mem_backend = Log::MemoryBackend.new
     builder.bind(source, level, mem_backend)
     begin
-      dsl = Log::ArrayEntriesChecker.new(mem_backend.entries).as(EntriesChecker)
+      dsl = Log::EntriesChecker.new(mem_backend.entries)
       yield dsl
       dsl
     ensure
@@ -73,52 +73,14 @@ class Log
   end
 
   # DSL for `Log.capture`
-  module EntriesChecker
-    # :nodoc:
-    abstract def check(description : String, file = __FILE__, line = __LINE__, & : Entry -> Bool) : self
-
-    # :nodoc:
-    abstract def next(description : String, file = __FILE__, line = __LINE__, & : Entry -> Bool) : self
-
-    # Returns the last entry matched by `#check` or `#next`
-    abstract def entry : Entry
-
-    # Validates that at some point the indicated entry was emitted
-    def check(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
-      self.check("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
-    end
-
-    # Validates that at some point the indicated entry was emitted
-    def check(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
-      self.check("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
-    end
-
-    # Validates that the indicated entry was the next one to be emitted
-    def next(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
-      self.next("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
-    end
-
-    # Validates that at some point the indicated entry was emitted
-    def next(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
-      self.next("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
-    end
-
-    # Clears the emitted entries so far
-    abstract def clear
-
-    # Validates that there are no outstanding entries to be validated
-    abstract def empty(file = __FILE__, line = __LINE__)
-  end
-
-  # :nodoc:
-  class ArrayEntriesChecker
-    include Log::EntriesChecker
-
+  class EntriesChecker
     def initialize(@entries : Array(Log::Entry))
     end
 
+    # Returns the last entry matched by `#check` or `#next`
     getter! entry : Entry
 
+    # :nodoc:
     def check(description, file = __FILE__, line = __LINE__, & : Entry -> Bool) : self
       fail("No entries found expected #{description}", file, line) if @entries.empty?
       original_size = @entries.size
@@ -134,6 +96,17 @@ class Log
       fail("No matching entries found expected #{description}, skipped (#{original_size})", file, line)
     end
 
+    # Validates that at some point the indicated entry was emitted
+    def check(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
+      self.check("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
+    end
+
+    # :ditto:
+    def check(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
+      self.check("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
+    end
+
+    # :nodoc:
     def next(description, file = __FILE__, line = __LINE__, & : Entry -> Bool) : self
       if entry = @entries.shift?
         matches = yield entry
@@ -148,12 +121,24 @@ class Log
       end
     end
 
+    # Validates that the indicated entry was the next one to be emitted
+    def next(level : Severity, message : String, file = __FILE__, line = __LINE__) : self
+      self.next("#{level} with #{message.inspect}", file, line) { |e| e.severity == level && e.message == message }
+    end
+
+    # :ditto:
+    def next(level : Severity, pattern : Regex, file = __FILE__, line = __LINE__) : self
+      self.next("#{level} matching #{pattern.inspect}", file, line) { |e| e.severity == level && e.message.matches?(pattern) }
+    end
+
+    # Clears the emitted entries so far
     def clear
       @entry = nil
       @entries.clear
       self
     end
 
+    # Validates that there are no outstanding entries
     def empty(file = __FILE__, line = __LINE__)
       @entry = nil
       if first = @entries.first?

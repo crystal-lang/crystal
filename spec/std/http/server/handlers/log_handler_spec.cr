@@ -30,7 +30,7 @@ describe HTTP::LogHandler do
     handler.next = ->(ctx : HTTP::Server::Context) {}
     handler.call(context)
 
-    logs = Log::ArrayEntriesChecker.new(backend.entries)
+    logs = Log::EntriesChecker.new(backend.entries)
     logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 
