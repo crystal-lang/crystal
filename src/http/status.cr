@@ -71,7 +71,7 @@ enum HTTP::Status
   # Create a new status instance with the given status code, or raise an
   # error if the status code given is not inside 100..999.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status.new(100)  # => CONTINUE
@@ -86,7 +86,7 @@ enum HTTP::Status
 
   # Returns the number that represents the HTTP status code.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # status = HTTP::Status::NO_CONTENT
@@ -98,7 +98,7 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 100 and 199.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status::SWITCHING_PROTOCOLS.informational?   # => true
@@ -110,7 +110,7 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 200 and 299.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status::NO_CONTENT.success?            # => true
@@ -122,7 +122,7 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 300 and 399.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status::SWITCH_PROXY.redirection?          # => true
@@ -134,7 +134,7 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 400 and 499.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status::METHOD_NOT_ALLOWED.client_error?    # => true
@@ -146,7 +146,7 @@ enum HTTP::Status
 
   # Returns `true` if the response status code is between 500 and 599.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status::INTERNAL_SERVER_ERROR.server_error? # => true
@@ -158,7 +158,7 @@ enum HTTP::Status
 
   # Returns the default status description of the given HTTP status code.
   #
-  # ```crystal
+  # ```
   # require "http/status"
   #
   # HTTP::Status.new(123).description               # => nil
