@@ -53,12 +53,20 @@ class Log
 
   # Returns the current fiber logging context.
   def self.context : Log::Context
-    Fiber.current.logging_context
+    Log::Context.new(Fiber.current.logging_context)
   end
 
   # Sets the current fiber logging context.
-  def self.context=(value : Log::Context)
+  def self.context=(value : Log::Metadata)
     Fiber.current.logging_context = value
+  end
+
+  # :ditto:
+  def self.context=(value : Log::Context)
+    # NOTE: There is a need for `Metadata` and `Context` setters in
+    # becuase `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
+    # but if the metadata is built manually the construct `Log.context = metadata` will be used.
+    Log.context = value.metadata
   end
 
   # Returns the current fiber logging context.
@@ -67,7 +75,7 @@ class Log
   end
 
   # Sets the current fiber logging context.
-  def context=(value : Log::Context)
+  def context=(value : Log::Metadata | Log::Context)
     Log.context = value
   end
 
@@ -98,7 +106,12 @@ class Log
     end
   end
 
-  class Context
+  struct Context
+    getter metadata : Metadata
+
+    def initialize(@metadata : Metadata)
+    end
+
     # Clears the current `Fiber` logging context.
     #
     # ```
@@ -106,7 +119,7 @@ class Log
     # Log.info { "message with empty context" }
     # ```
     def clear
-      Fiber.current.logging_context = Log::Context.empty
+      Fiber.current.logging_context = @metadata = Log::Metadata.empty
     end
 
     # Extends the current `Fiber` logging context.
@@ -123,27 +136,27 @@ class Log
     # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => 3 } context) }
     # ```
     def set(**kwargs)
-      extend_fiber_context(Fiber.current, Log::Context.new(kwargs))
+      extend_fiber_context(Fiber.current, Log::Metadata.new(kwargs))
     end
 
     # :ditto:
     def set(values : Hash(String, V)) forall V
-      extend_fiber_context(Fiber.current, Log::Context.new(values))
+      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
     end
 
     # :ditto:
     def set(values : Hash(Symbol, V)) forall V
-      extend_fiber_context(Fiber.current, Log::Context.new(values))
+      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
     end
 
     # :ditto:
     def set(values : NamedTuple)
-      extend_fiber_context(Fiber.current, Log::Context.new(values))
+      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
     end
 
-    private def extend_fiber_context(fiber : Fiber, values : Context)
+    private def extend_fiber_context(fiber : Fiber, values : Metadata)
       context = fiber.logging_context
-      fiber.logging_context = context.merge(values)
+      fiber.logging_context = @metadata = context.merge(values)
     end
   end
 end

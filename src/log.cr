@@ -138,7 +138,7 @@ end
 require "./log/backend"
 require "./log/broadcast_backend"
 require "./log/builder"
-require "./log/context"
+require "./log/metadata"
 require "./log/entry"
 require "./log/main"
 require "./log/setup"
