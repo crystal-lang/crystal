@@ -32,10 +32,8 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
-
 module Crystal
   describe "Parser" do
-
     it_parses "nil", NilLiteral.new
 
     it_parses "true", true.bool
@@ -1041,7 +1039,7 @@ module Crystal
     it_parses "foo(out @x); @x", [Call.new(nil, "foo", Out.new("@x".instance_var)), "@x".instance_var]
     it_parses "foo out _", Call.new(nil, "foo", Out.new(Underscore.new))
     it_parses "foo z: out x; x", [Call.new(nil, "foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
-    
+
     it_parses "foo = b = 10;puts foo -1, b", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
     it_parses "foo = b = 10;puts(foo -1, b)", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
     it_parses "foo = b = 10;puts(foo +1, b)", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "+", 1.int32), "b".var] of ASTNode)]
@@ -1960,6 +1958,6 @@ module Crystal
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
       end
-    end    
+    end
   end
 end
