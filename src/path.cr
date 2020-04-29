@@ -488,7 +488,7 @@ struct Path
   # Returns the components of this path as an `Array(String)`.
   #
   # ```
-  # Path.new("foo/bar/").parts                   # => ["foo", "bar]
+  # Path.new("foo/bar/").parts                   # => ["foo", "bar"]
   # Path.new("/Users/foo/bar.cr").parts          # => ["/", "Users", "foo", "bar.cr"]
   # Path.windows("C:\\Users\\foo\\bar.cr").parts # => ["C:\\", "Users", "foo", "bar.cr"]
   # Path.posix("C:\\Users\\foo\\bar.cr").parts   # => ["C:\\Users\\foo\\bar.cr"]
