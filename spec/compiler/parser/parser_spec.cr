@@ -32,8 +32,10 @@ private def assert_end_location(source, line_number = 1, column_number = source.
   end
 end
 
+
 module Crystal
   describe "Parser" do
+
     it_parses "nil", NilLiteral.new
 
     it_parses "true", true.bool
@@ -1039,6 +1041,16 @@ module Crystal
     it_parses "foo(out @x); @x", [Call.new(nil, "foo", Out.new("@x".instance_var)), "@x".instance_var]
     it_parses "foo out _", Call.new(nil, "foo", Out.new(Underscore.new))
     it_parses "foo z: out x; x", [Call.new(nil, "foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
+    
+    it_parses "foo = b = 10;puts foo -1, b", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
+    it_parses "foo = b = 10;puts(foo -1, b)", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
+    it_parses "foo = b = 10;puts(foo +1, b)", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "+", 1.int32), "b".var] of ASTNode)]
+    it_parses "foo = b = 10;puts foo 1, b", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", Call.new(nil, "foo", [1.int32, "b".var] of ASTNode))]
+    it_parses "foo = b = 10;puts(foo 1, b)", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", Call.new(nil, "foo", [1.int32, "b".var] of ASTNode))]
+    it_parses "foo = b = 10;puts foo -1, b: 2", [Assign.new("foo".var, Assign.new("b".var, 10.int32)), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32)] of ASTNode, named_args: [NamedArgument.new("b", 2.int32)])]
+    it_parses "b = 0;puts foo -1, b", [Assign.new("b".var, 0.int32), Call.new(nil, "puts", [Call.new(nil, "foo", [-1.int32, "b".var] of ASTNode)] of ASTNode)]
+    it_parses "m = 0;m -1", [Assign.new("m".var, 0.int32), Call.new("m".var, "-", 1.int32)]
+    it_parses "m -1", Call.new(nil, "m", -1.int32)
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
     it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
@@ -1849,14 +1861,6 @@ module Crystal
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
-      it_parses "foo = 10;puts foo -1, b", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
-      it_parses "foo = 10;puts(foo -1, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), "b".var] of ASTNode)]
-      it_parses "foo = 10;puts(foo +1, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "+", 1.int32), "b".var] of ASTNode)]
-      it_parses "foo = 10; puts foo 1, b", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", [1.int32, "b".var] of ASTNode))]
-      it_parses "foo = 10; puts(foo 1, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", [1.int32, "b".var] of ASTNode))]
-      it_parses "foo = 10; puts foo -1, b: 2", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", 1.int32), NamedArgument.new("b", 2.int32)] of ASTNode)]
-      it_parses "puts foo -1, b", [Call.new(nil, "puts", Call.new(nil, "foo", [Call.new(1.int32, "-"), "b".var] of ASTNode))]
-
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
         loc = node.location.not_nil!
@@ -1956,6 +1960,6 @@ module Crystal
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
       end
-    end
+    end    
   end
 end
