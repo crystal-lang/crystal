@@ -1196,11 +1196,9 @@ class Array(T)
   # sums                                        # => [3, 4, 3, 5, 4, 5]
   # ```
   #
-  # By default, a new array is created and yielded for each permutation.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_permutation(size : Int = self.size, reuse = false) : Nil
     n = self.size
@@ -1249,11 +1247,9 @@ class Array(T)
   # iter.next # => #<Iterator::Stop>
   # ```
   #
-  # By default, a new array is created and returned for each permutation.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_permutation(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1287,10 +1283,9 @@ class Array(T)
   # result # => [[1, 2], [1, 3], [2, 3], [5, 6], [5, 6], [5, 6]]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
@@ -1350,10 +1345,9 @@ class Array(T)
   # combo_iter.next # => [2, 3]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1393,7 +1387,8 @@ class Array(T)
   # arr = [1, 2, 3]
   # arr.repeated_combinations(0) # => [[]]
   # arr.repeated_combinations(2) # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
-  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]
+  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3],
+  #                              #     [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]
   # ```
   def repeated_combinations(size : Int = self.size) forall Array(T)
     ary = [] of Array(T)
@@ -1413,10 +1408,9 @@ class Array(T)
   # result # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3], [6, 6], [6, 6], [6, 6], [6, 6], [6, 6], [6, 6]]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
@@ -1452,7 +1446,8 @@ class Array(T)
     end
   end
 
-  # Returns an `Iterator` that returns an `Array` of with all combinations including repeating elements of *self* in an `Array`s of *size*.
+  # Returns an `Iterator` that returns an `Array` of with all combinations including repeating
+  # elements of *self* in an `Array`s of *size*.
   #
   # ```crystal
   # arr = [1, 2, 3]
@@ -1462,10 +1457,9 @@ class Array(T)
   # combo_iter.next # => [1, 3]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def each_repeated_combination(size : Int = self.size, reuse = false) : Iterator
     raise ArgumentError.new("Size must be positive") if size < 0
@@ -1510,10 +1504,9 @@ class Array(T)
   # results # => [[1, 3], [1, 4], [2, 3], [2, 4], [6, 8], [6, 8], [6, 8], [6, 8]]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def self.each_product(arrays : Array(Array), reuse = false)
     lens = arrays.map &.size
@@ -1562,10 +1555,9 @@ class Array(T)
   # results # => [[1, 3], [1, 4], [2, 3], [2, 4], [6, 8], [6, 8], [6, 8], [6, 8]]
   # ```
   #
-  # By default, a new `Array` is created and returned for each combination.
-  # If reuse is given, the `Array` can be reused: if reuse is an `Array`, this `Array` will be reused;
-  # if reuse if truthy, the method will create a new `Array` and reuse it.
-  # This can be used to prevent many memory allocations when each slice of
+  # By default, a new `Array` is created and returned for each combination. If reuse is given, the `Array`
+  # can be reused: if reuse is an `Array`, this `Array` will be reused; if reuse if truthy, the method will
+  # create a new `Array` and reuse it. This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   def self.each_product(*arrays : Array, reuse = false)
     each_product(arrays.to_a, reuse: reuse) do |result|
