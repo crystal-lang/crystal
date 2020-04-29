@@ -1849,13 +1849,13 @@ module Crystal
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
-      it_parses "def foo(x,y);end;foo = 10;puts foo -a, b", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "b".var), "b".var] of ASTNode)]
-      it_parses "def foo(x,y);end;foo = 10;puts(foo -a, b)", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "b".var), "b".var] of ASTNode)]
-      it_parses "def foo(x,y);end;foo = 10;puts(foo +a, b)", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "+", "b".var), "b".var] of ASTNode)]
-      it_parses "def foo(x,y);end;foo = 10; puts foo a, b", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", ["a".var, "b".var] of ASTNode))]
-      it_parses "def foo(x,y);end;foo = 10; puts(foo a, b)", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", ["a".var, "b".var] of ASTNode))]
-      it_parses "def foo(x,y);end;foo = 10; puts foo -a, b: 2", [Def.new("foo", ["x".arg, "y".arg] of Arg), Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "a".var), NamedArgument.new("b", 2.int32)] of ASTNode)]
-      it_parses "def foo(x,y);end; puts foo -a, b", [Def.new("foo", ["x".arg, "y".arg] of Arg), Call.new(nil, "puts", Call.new(nil, "foo", ["a".var, "b".var] of ASTNode))]
+      it_parses "foo = 10;puts foo -a, b", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "b".var), "b".var] of ASTNode)]
+      it_parses "foo = 10;puts(foo -a, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "b".var), "b".var] of ASTNode)]
+      it_parses "foo = 10;puts(foo +a, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "+", "b".var), "b".var] of ASTNode)]
+      it_parses "foo = 10; puts foo a, b", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", ["a".var, "b".var] of ASTNode))]
+      it_parses "foo = 10; puts(foo a, b)", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", Call.new(nil, "foo", ["a".var, "b".var] of ASTNode))]
+      it_parses "foo = 10; puts foo -a, b: 2", [Assign.new("foo".var, 10.int32), Call.new(nil, "puts", [Call.new("foo".var, "-", "a".var), NamedArgument.new("b", 2.int32)] of ASTNode)]
+      it_parses "puts foo -a, b", [Call.new(nil, "puts", Call.new(nil, "foo", [Call.new("a".var,"-"), "b".var] of ASTNode))]
 
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
