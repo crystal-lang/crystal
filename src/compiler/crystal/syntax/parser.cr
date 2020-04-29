@@ -4020,6 +4020,8 @@ module Crystal
         if current_char.in?('+', '-') && !peek_next_char.ascii_whitespace?
           stop_on_comma = is_var && !force_call && @call_args_nest > 1
         end
+      else 
+        # nothing
       end
 
       case name
