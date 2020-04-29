@@ -3,9 +3,9 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io : IO) : Nil
-      to_s(io)
-    end
+    # def inspect(io : IO) : Nil
+    #   to_s(io)
+    # end
 
     def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
       visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
