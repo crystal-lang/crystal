@@ -2286,7 +2286,7 @@ class Array(T)
     self
   end
 
-  # Returns *self* with *index* modified to be the value *yieled*.
+  # Modifies *self* at *index* to the value *yieled* block and returns the result of the block. 
   # Raises IndexError if the index is out or range.
   #
   # arr = [1, 2, 3]
