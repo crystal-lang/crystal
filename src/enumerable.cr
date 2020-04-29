@@ -479,18 +479,38 @@ module Enumerable(T)
     if_none
   end
 
-  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
-  # if the collection is empty.
+  # Returns the first element in the collection,
+  # If the collection is empty, calls the block and returns its value.
+  #
+  # ```
+  # ([1, 2, 3]).first { 4 }   # => 1
+  # ([] of Int32).first { 4 } # => 4
+  # ```
   def first
     each { |e| return e }
-    raise Enumerable::EmptyError.new
+    yield
+  end
+
+  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
+  # if the collection is empty.
+  #
+  # ```
+  # ([1, 2, 3]).first   # => 1
+  # ([] of Int32).first # raises Enumerable::EmptyError
+  # ```
+  def first
+    first { raise Enumerable::EmptyError.new }
   end
 
   # Returns the first element in the collection.
   # When the collection is empty, returns `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).first?   # => 1
+  # ([] of Int32).first? # => nil
+  # ```
   def first?
-    each { |e| return e }
-    nil
+    first { nil }
   end
 
   # Returns a new array with the concatenated results of running the block

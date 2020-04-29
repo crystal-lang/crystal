@@ -781,7 +781,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).first
       end
     end
