@@ -1,8 +1,5 @@
 require "spec"
-require "log"
-require "log/spec"
-
-Log.setup(:none)
+require "../../support/log"
 
 describe "log/spec" do
   it "yield and returns the dsl" do
