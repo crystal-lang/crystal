@@ -1,9 +1,17 @@
 require "weak_ref"
 
+# Used in `Log.setup` methods to configure the binding to be used.
+module Log::Configuration
+  # Binds a *source* pattern to a *backend* for all logs that are of severity equal or higher to *level*.
+  abstract def bind(source : String, level : Severity, backend : Backend)
+end
+
 # A `Log::Builder` creates `Log` instances for a given source.
 # It allows you to bind sources and patterns to a given backend.
 # Already created `Log` will be reconfigured as needed.
 class Log::Builder
+  include Configuration
+
   @mutex = Mutex.new(:unchecked)
   @logs = Hash(String, WeakRef(Log)).new
 

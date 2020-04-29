@@ -5,30 +5,118 @@ private def s(value : Log::Severity)
   value
 end
 
-describe "Log.setup_from_env" do
-  it "uses stdio" do
-    builder = Log::Builder.new
-    Log.setup_from_env(builder: builder, level: "info", sources: "")
+private def with_env(**values)
+  old_values = {} of String => String?
+  begin
+    values.each do |key, value|
+      key = key.to_s
+      old_values[key] = ENV[key]?
+      ENV[key] = value
+    end
 
-    builder.for("").backend.should be_a(Log::IOBackend)
+    yield
+  ensure
+    old_values.each do |key, old_value|
+      ENV[key] = old_value
+    end
   end
+end
 
-  it "raises on invalid level" do
-    builder = Log::Builder.new
+describe "Log.setup_from_env" do
+  describe "backend" do
+    it "is a IOBackend" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
 
-    expect_raises(ArgumentError) do
-      Log.setup_from_env(builder: builder, level: "invalid", sources: "")
+        builder.for("").backend.should be_a(Log::IOBackend)
+      end
+    end
+
+    it "can be changed" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        backend = Log::MemoryBackend.new
+        Log.setup_from_env(builder: builder, backend: backend)
+
+        builder.for("").backend.should be(backend)
+      end
     end
   end
 
-  it "splits sources by comma" do
-    builder = Log::Builder.new
-    Log.setup_from_env(builder: builder, level: "info", sources: "db, , foo.*  ")
+  describe "default_level" do
+    it "is info" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
 
-    builder.for("db").backend.should_not be_nil
-    builder.for("").backend.should_not be_nil
-    builder.for("foo").backend.should_not be_nil
-    builder.for("foo.bar.baz").backend.should_not be_nil
-    builder.for("other").backend.should be_nil
+        builder.for("").initial_level.should eq(s(:info))
+      end
+    end
+
+    it "is used if no LOG_LEVEL is set" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder, default_level: :warning)
+
+        builder.for("").initial_level.should eq(s(:warning))
+      end
+    end
+
+    it "is not used if LOG_LEVEL is set" do
+      with_env "LOG_LEVEL": "DEBUG" do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder, default_level: :error)
+
+        builder.for("").initial_level.should eq(s(:debug))
+      end
+    end
+  end
+
+  describe "default_sources" do
+    it "is *" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+
+        builder.for("lorem.ipsum").backend.should_not be_nil
+        builder.for("").backend.should_not be_nil
+      end
+    end
+
+    it "is used" do
+      with_env "LOG_LEVEL": nil do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder, default_sources: "foo.*")
+
+        builder.for("").backend.should be_nil
+        builder.for("lorem.ipsum").backend.should be_nil
+
+        builder.for("foo").backend.should_not be_nil
+        builder.for("foo.bar").backend.should_not be_nil
+      end
+    end
+
+    it "splits sources by comma" do
+      with_env "LOG_LEVEL": "info" do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder, default_sources: "db, , foo.*  ")
+
+        builder.for("db").backend.should_not be_nil
+        builder.for("").backend.should_not be_nil
+        builder.for("foo").backend.should_not be_nil
+        builder.for("foo.bar.baz").backend.should_not be_nil
+        builder.for("other").backend.should be_nil
+      end
+    end
+  end
+
+  it "raises on invalid level" do
+    expect_raises(ArgumentError) do
+      with_env "LOG_LEVEL": "invalid" do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+      end
+    end
   end
 end
