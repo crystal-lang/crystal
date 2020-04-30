@@ -226,11 +226,11 @@ module Crystal
     it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)])
     it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
     it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", restriction: Self.new)])
-    it_parses "def foo(var : self?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new([Self.new, Path.global("Nil")] of ASTNode))])
+    it_parses "def foo(var : self?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Generic.new(Path.global("Union"), [Self.new, Path.global("Nil")] of ASTNode))])
     it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", restriction: Metaclass.new(Self.new))])
     it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", restriction: Self.new.pointer_of)])
     it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Double".path] of ASTNode))])
-    it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Nil".path(true)] of ASTNode))])
+    it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Generic.new(Path.global("Union"), ["Int".path, "Nil".path(true)] of ASTNode))])
     it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of)])
     it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of.pointer_of)])
     it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path))])
@@ -537,7 +537,7 @@ module Crystal
     it_parses "Foo(T)", Generic.new("Foo".path, ["T".path] of ASTNode)
     it_parses "Foo(T | U)", Generic.new("Foo".path, [Crystal::Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)
     it_parses "Foo(Bar(T | U))", Generic.new("Foo".path, [Generic.new("Bar".path, [Crystal::Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)] of ASTNode)
-    it_parses "Foo(T?)", Generic.new("Foo".path, [Crystal::Union.new(["T".path, Path.global("Nil")] of ASTNode)] of ASTNode)
+    it_parses "Foo(T?)", Generic.new("Foo".path, [Crystal::Generic.new(Path.global("Union"), ["T".path, Path.global("Nil")] of ASTNode)] of ASTNode)
     it_parses "Foo(1)", Generic.new("Foo".path, [1.int32] of ASTNode)
     it_parses "Foo(T, 1)", Generic.new("Foo".path, ["T".path, 1.int32] of ASTNode)
     it_parses "Foo(T, U, 1)", Generic.new("Foo".path, ["T".path, "U".path, 1.int32] of ASTNode)
@@ -773,7 +773,7 @@ module Crystal
     it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC", [FunDef.new("getchar")] of ASTNode)
     it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC", [FunDef.new("getchar", varargs: true)] of ASTNode)
     it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: Crystal::Generic.new(Path.global("Union"), [ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
     it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)
@@ -1882,6 +1882,17 @@ module Crystal
       it_parses "annotation Foo::Bar\n\nend", AnnotationDef.new(Path.new(["Foo", "Bar"]))
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
+
+      assert_syntax_error "def foo(x : *Int32); end", "invalid type splat"
+      assert_syntax_error "def foo(x : (*Int32)); end", "invalid type splat"
+      assert_syntax_error "def foo(x : Int32, Int32); end"
+      assert_syntax_error "def foo(x : (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : (Int32, Int32) | Int32); end"
+      assert_syntax_error "def foo(x : Int32 | (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : {Int32, (Int32, Int32)}); end"
+      assert_syntax_error "def foo(x : 1); end"
+      assert_syntax_error "def foo(x : {sizeof(Int32), 2}); end"
+      assert_syntax_error "def foo(x : Array({sizeof(Int32), 2})); end"
 
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
