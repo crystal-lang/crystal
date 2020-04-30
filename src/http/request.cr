@@ -27,7 +27,7 @@ class HTTP::Request
   # Middlewares can overwrite this value.
   #
   # This property is not used by `HTTP::Client`.
-  property remote_address : String?
+  property remote_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
@@ -110,7 +110,7 @@ class HTTP::Request
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
       if io.responds_to?(:remote_address)
-        request.remote_address = io.remote_address.try &.to_s
+        request.remote_address = io.remote_address
       end
 
       return request

@@ -7,7 +7,7 @@ describe HTTP::LogHandler do
   it "logs" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")
-    request.remote_address = "192.168.0.1"
+    request.remote_address = Socket::IPAddress.new("192.168.0.1", 1234)
     response = HTTP::Server::Response.new(io)
     context = HTTP::Server::Context.new(request, response)
 
