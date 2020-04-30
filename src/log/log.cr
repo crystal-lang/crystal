@@ -48,10 +48,8 @@ class Log
       return unless backend = @backend
       severity = Severity.new({{severity}})
       return unless level <= severity
-      entry = Log.with_context do
-        message = yield.to_s
-        Entry.new @source, severity, message, exception
-      end
+      message = yield.to_s
+      entry = Entry.new @source, severity, message, exception
       backend.write entry
     end
   {% end %}

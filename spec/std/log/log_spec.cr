@@ -113,7 +113,7 @@ describe Log do
     backend.entries.first.context.should eq(Log::Metadata.new({a: 1}))
   end
 
-  it "context can be changed within the block and is restored" do
+  it "context can be changed within the block, yet it's not restored" do
     Log.context.set a: 1
 
     backend = Log::MemoryBackend.new
@@ -122,6 +122,6 @@ describe Log do
     log.info { Log.context.set(b: 2); "info message" }
 
     backend.entries.first.context.should eq(Log::Metadata.new({a: 1, b: 2}))
-    Log.context.metadata.should eq(Log::Metadata.new({a: 1}))
+    Log.context.metadata.should eq(Log::Metadata.new({a: 1, b: 2}))
   end
 end
