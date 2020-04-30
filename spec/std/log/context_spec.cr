@@ -1,7 +1,7 @@
 require "spec"
 require "log"
 
-private def c(value)
+private def m(value)
   Log::Metadata.new(value)
 end
 
@@ -16,7 +16,7 @@ describe "Log.context" do
 
   it "validates hash" do
     expect_raises(ArgumentError, "Expected hash context, not Int32") do
-      Log.context = c(1)
+      Log.context = m(1)
     end
   end
 
@@ -24,7 +24,7 @@ describe "Log.context" do
     Log.context.metadata.should eq(Log::Metadata.new)
 
     Log.context.set a: 1
-    Log.context.metadata.should eq(c({a: 1}))
+    Log.context.metadata.should eq(m({a: 1}))
 
     Log.context.clear
     Log.context.metadata.should eq(Log::Metadata.new)
@@ -33,13 +33,13 @@ describe "Log.context" do
   it "is extended by set" do
     Log.context.set a: 1
     Log.context.set b: 2
-    Log.context.metadata.should eq(c({a: 1, b: 2}))
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 
   it "existing keys are overwritten by set" do
     Log.context.set a: 1, b: 1
     Log.context.set b: 2, c: 3
-    Log.context.metadata.should eq(c({a: 1, b: 2, c: 3}))
+    Log.context.metadata.should eq(m({a: 1, b: 2, c: 3}))
   end
 
   it "is restored after with_context" do
@@ -47,10 +47,10 @@ describe "Log.context" do
 
     Log.with_context do
       Log.context.set b: 2
-      Log.context.metadata.should eq(c({a: 1, b: 2}))
+      Log.context.metadata.should eq(m({a: 1, b: 2}))
     end
 
-    Log.context.metadata.should eq(c({a: 1}))
+    Log.context.metadata.should eq(m({a: 1}))
   end
 
   it "is restored after with_context of Log instance" do
@@ -59,10 +59,10 @@ describe "Log.context" do
 
     log.with_context do
       log.context.set b: 2
-      log.context.metadata.should eq(c({a: 1, b: 2}))
+      log.context.metadata.should eq(m({a: 1, b: 2}))
     end
 
-    log.context.metadata.should eq(c({a: 1}))
+    log.context.metadata.should eq(m({a: 1}))
   end
 
   it "is per fiber" do
@@ -72,14 +72,14 @@ describe "Log.context" do
     f = spawn do
       Log.context.metadata.should eq(Log::Metadata.new)
       Log.context.set b: 2
-      Log.context.metadata.should eq(c({b: 2}))
+      Log.context.metadata.should eq(m({b: 2}))
 
       done.receive
       done.receive
     end
 
     done.send nil
-    Log.context.metadata.should eq(c({a: 1}))
+    Log.context.metadata.should eq(m({a: 1}))
     done.send nil
   end
 
@@ -87,20 +87,20 @@ describe "Log.context" do
     Log.context.set a: 1
     extra = {:b => 2}
     Log.context.set extra
-    Log.context.metadata.should eq(c({a: 1, b: 2}))
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 
   it "is assignable from a hash with string keys" do
     Log.context.set a: 1
     extra = {"b" => 2}
     Log.context.set extra
-    Log.context.metadata.should eq(c({a: 1, b: 2}))
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 
   it "is assignable from a named tuple" do
     Log.context.set a: 1
     extra = {b: 2}
     Log.context.set extra
-    Log.context.metadata.should eq(c({a: 1, b: 2}))
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 end
