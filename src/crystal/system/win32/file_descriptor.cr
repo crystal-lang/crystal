@@ -162,4 +162,8 @@ module Crystal::System::FileDescriptor
 
     bytes_read
   end
+
+  def self.from_stdio(fd)
+    IO::FileDescriptor.new(fd)
+  end
 end
