@@ -5,7 +5,7 @@ class Log
   # were emitted.
   #
   # This capture will even work if there are currently no backends configured, effectively
-  # adding a momentarily backend.
+  # adding a temporary backend.
   #
   # ```
   # require "spec"
@@ -38,11 +38,11 @@ class Log
   #
   # The `EntriesChecker` will hold a list of emitted entries.
   #
-  # `EntriesChecker#check`  will look for the first entry that matches the level and message.
-  # `EntriesChecker#next` will validate if the following entry in the list matches the given level and message.
+  # `EntriesChecker#check` will find the next entry which matches the level and message.
+  # `EntriesChecker#next` will validate that the following entry in the list matches the given level and message.
   # `EntriesChecker#clear` will clear the emitted and captured entries.
   #
-  # With these methods it is possible to express expected traces in a strict and loosely way, yet always ordered.
+  # With these methods it is possible to express expected traces in either a strict or loose way, while checking ordering.
   #
   # `EntriesChecker#entry` returns the last matched `Entry`. Useful to check additional entry properties other than the message.
   #
@@ -82,7 +82,7 @@ class Log
 
     # :nodoc:
     def check(description, file = __FILE__, line = __LINE__, & : Entry -> Bool) : self
-      fail("No entries found expected #{description}", file, line) if @entries.empty?
+      fail("No entries found, expected #{description}", file, line) if @entries.empty?
       original_size = @entries.size
 
       while entry = @entries.shift?
@@ -93,7 +93,7 @@ class Log
         end
       end
 
-      fail("No matching entries found expected #{description}, skipped (#{original_size})", file, line)
+      fail("No matching entries found, expected #{description}, skipped (#{original_size})", file, line)
     end
 
     # Validates that at some point the indicated entry was emitted
@@ -114,10 +114,10 @@ class Log
           @entry = entry
           return self
         else
-          fail("No matching entries found expected #{description}, but got #{entry.severity} with #{entry.message.inspect}", file, line)
+          fail("No matching entries found, expected #{description}, but got #{entry.severity} with #{entry.message.inspect}", file, line)
         end
       else
-        fail("No entries found expected #{description}", file, line)
+        fail("No entries found, expected #{description}", file, line)
       end
     end
 

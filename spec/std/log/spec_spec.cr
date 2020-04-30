@@ -69,7 +69,7 @@ describe "log/spec" do
   end
 
   it "fails on non-consecutive logs" do
-    expect_raises(Spec::AssertionFailed, /No matching entries found expected Fatal with "this is a second fatal", but got Fatal with "this is a fatal"/) do
+    expect_raises(Spec::AssertionFailed, /No matching entries found, expected Fatal with "this is a second fatal", but got Fatal with "this is a fatal"/) do
       Log.capture {
         Log.error { "this is an error" }
         Log.fatal { "this is a fatal" }
