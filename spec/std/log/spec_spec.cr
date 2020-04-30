@@ -1,5 +1,6 @@
 require "spec"
 require "log/spec"
+require "log"
 
 describe "log/spec" do
   it "yield and returns the dsl" do
@@ -138,7 +139,6 @@ describe "log/spec" do
 
   it "can capture from all sources" do
     Log.capture(:info) do |logs|
-      Log.for("foo").debug { "ignored" }
       Log.for("foo").error { "error in foo" }
       Log.for("bar").error { "error in bar" }
       Log.for("foo.nested").error { "error in foo.nested" }
@@ -146,6 +146,20 @@ describe "log/spec" do
       logs.next(:error, "error in foo")
       logs.next(:error, "error in bar")
       logs.next(:error, "error in foo.nested")
+      logs.empty
+    end
+  end
+
+  it "it does not capture below level" do
+    Log.capture(:info) do |logs|
+      Log.debug { "ignored" }
+      Log.error { "first error" }
+      Log.debug { "ignored" }
+      Log.error { "second error" }
+      Log.debug { "ignored" }
+
+      logs.next(:error, "first error")
+      logs.next(:error, "second error")
       logs.empty
     end
   end
