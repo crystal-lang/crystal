@@ -193,5 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   };
+  window.addEventListener("hashchange", scrollToEntryFromLocationHash, false);
   scrollToEntryFromLocationHash();
 });
