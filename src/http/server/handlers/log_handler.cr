@@ -32,7 +32,7 @@ class HTTP::LogHandler
         when Socket::IPAddress
           remote_address.address
         else
-          remote_address.to_s
+          remote_address
         end
 
       @log.info { "#{addr} - #{req.method} #{req.resource} #{req.version} - #{res.status_code} (#{elapsed_text})" }
