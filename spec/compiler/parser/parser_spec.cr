@@ -356,6 +356,10 @@ module Crystal
     it_parses "foo = 1; foo(+1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", 1.int32)]
     it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "-", 1.int32)]
     it_parses "foo = 1; foo(-1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", -1.int32)]
+    it_parses "foo = 1; b = 2; foo -b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "foo = 1; b = 2; foo +b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo -b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo +b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
 
     it_parses "foo(&block)", Call.new(nil, "foo", block_arg: "block".call)
     it_parses "foo &block", Call.new(nil, "foo", block_arg: "block".call)
