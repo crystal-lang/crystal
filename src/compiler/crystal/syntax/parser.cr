@@ -993,6 +993,10 @@ module Crystal
         end
         location = @token.location
         node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
+      when :IMPLICIT_BLOCK_ARGUMENT
+        number = @token.value.as(Int32)
+        location = @token.location
+        node_and_next_token ImplicitBlockArgument.new(number).at(location)
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when :__END_LINE__
@@ -4365,7 +4369,13 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?", :GLOBAL_MATCH_DATA_INDEX, :REGEX, :"(", :"!", :"[", :"[]", :"~", :"->", :"{{", :__LINE__, :__END_LINE__, :__FILE__, :__DIR__, :UNDERSCORE
+      when :CHAR, :STRING, :DELIMITER_START, :STRING_ARRAY_START,
+           :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR,
+           :CLASS_VAR, :CONST, :GLOBAL, :"$~", :"$?",
+           :GLOBAL_MATCH_DATA_INDEX, :REGEX,
+           :"(", :"!", :"[", :"[]", :"~", :"->", :"{{",
+           :__LINE__, :__END_LINE__, :__FILE__, :__DIR__,
+           :UNDERSCORE, :IMPLICIT_BLOCK_ARGUMENT
         # Nothing
       when :"*", :"**"
         if current_char.ascii_whitespace?

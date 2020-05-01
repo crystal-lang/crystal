@@ -136,6 +136,15 @@ private def it_lexes_global_match_data_index(globals)
   end
 end
 
+private def it_lexes_implicit_block_argument(code, number)
+  it "lexes #{code}" do
+    lexer = Lexer.new code
+    token = lexer.next_token
+    token.type.should eq(:IMPLICIT_BLOCK_ARGUMENT)
+    token.value.should eq(number)
+  end
+end
+
 describe "Lexer" do
   it_lexes "", :EOF
   it_lexes " ", :SPACE
@@ -274,6 +283,10 @@ describe "Lexer" do
 
   it_lexes "$~", :"$~"
   it_lexes "$?", :"$?"
+
+  it_lexes_implicit_block_argument "_1", 1
+  it_lexes_implicit_block_argument "_2", 2
+  it_lexes_implicit_block_argument "_42", 42
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"

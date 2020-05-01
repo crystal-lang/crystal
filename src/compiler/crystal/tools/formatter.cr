@@ -4136,6 +4136,15 @@ module Crystal
       false
     end
 
+    def visit(node : ImplicitBlockArgument)
+      write "_"
+      write node.number
+
+      next_token
+
+      false
+    end
+
     def visit(node : Block)
       # Handled in format_block
       return false

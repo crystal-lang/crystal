@@ -331,6 +331,10 @@ module Crystal
       node
     end
 
+    def transform(node : ImplicitBlockArgument)
+      node
+    end
+
     def transform(node : ProcLiteral)
       node.def.body = node.def.body.transform(self)
       node

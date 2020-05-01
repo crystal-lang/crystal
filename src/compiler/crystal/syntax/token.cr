@@ -3,7 +3,7 @@ require "./location"
 module Crystal
   class Token
     property type : Symbol
-    property value : Char | String | Symbol | Nil
+    property value : Char | String | Symbol | Int32 | Nil
     property number_kind : Symbol
     property line_number : Int32
     property column_number : Int32

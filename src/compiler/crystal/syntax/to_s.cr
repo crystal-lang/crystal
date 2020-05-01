@@ -1085,6 +1085,12 @@ module Crystal
       false
     end
 
+    def visit(node : ImplicitBlockArgument)
+      @str << '_' << node.number
+
+      false
+    end
+
     def visit(node : Include)
       @str << keyword("include")
       @str << ' '

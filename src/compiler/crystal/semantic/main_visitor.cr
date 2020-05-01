@@ -1154,6 +1154,16 @@ module Crystal
       false
     end
 
+    def visit(node : ImplicitBlockArgument)
+      node.raise "implcit block argument can only be used inside a block"
+    end
+
+    def expand_implicit_block_arguments(block : Block)
+      if ImplicitBlockArgumentDetector.has_implicit_block_arguments?(block)
+        ImplicitBlockArgumentTransformer.transform(@program, block)
+      end
+    end
+
     def bind_block_var(node, target, meta_vars, before_block_vars)
       meta_var = new_meta_var(target.name, context: node)
       meta_var.bind_to(target)
@@ -1329,11 +1339,15 @@ module Crystal
 
       check_super_or_previous_def_in_initialize node
 
+      block = node.block
+
+      expand_implicit_block_arguments(block) if block
+
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting
       # the block we will bind more variables to these ones if variables
       # are reassigned.
-      if node.block || block_arg
+      if block || block_arg
         before_vars = MetaVars.new
         after_vars = MetaVars.new
 

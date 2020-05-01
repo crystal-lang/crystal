@@ -1650,4 +1650,7 @@ describe Crystal::Formatter do
     1 # foo
     / #{1} /
     CODE
+
+  assert_format "_1"
+  assert_format "_42"
 end

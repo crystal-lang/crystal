@@ -1237,7 +1237,8 @@ module Crystal
         end
         scan_ident(start)
       when '_'
-        case next_char
+        char = next_char
+        case char
         when '_'
           case next_char
           when 'D'
@@ -1284,9 +1285,20 @@ module Crystal
             # scan_ident
           end
         else
-          unless ident_part?(current_char)
-            @token.type = :UNDERSCORE
+          if char.ascii_number?
+            number = 0
+            while char.ascii_number?
+              number = number * 10 + char.to_i
+              char = next_char
+            end
+            @token.type = :IMPLICIT_BLOCK_ARGUMENT
+            @token.value = number
             return @token
+          else
+            unless ident_part?(current_char)
+              @token.type = :UNDERSCORE
+              return @token
+            end
           end
         end
 

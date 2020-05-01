@@ -526,6 +526,19 @@ module Crystal
     def_equals_and_hash args, body, splat_index
   end
 
+  class ImplicitBlockArgument < ASTNode
+    property number : Int32
+
+    def initialize(@number : Int32)
+    end
+
+    def clone_without_location
+      ImplicitBlockArgument.new(@number)
+    end
+
+    def_equals_and_hash number
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
