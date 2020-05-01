@@ -158,7 +158,7 @@ struct Crystal::System::Process
           raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
         end
 
-        {% if flag?(:freebsd) %}
+        {% if flag?(:freebsd) || flag?(:dragonfly) %}
           shell_args << ""
         {% end %}
 
