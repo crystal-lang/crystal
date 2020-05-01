@@ -3844,7 +3844,7 @@ class String
     io << self
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*.
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".center(8)      # => " Purple "
@@ -3856,7 +3856,7 @@ class String
     just len, char, 0
   end
 
-  # Adds spaces to left ond right of the string until it is at least size of *len*,
+  # Adds spaces to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
@@ -3868,7 +3868,7 @@ class String
     center(len, ' ', io)
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
