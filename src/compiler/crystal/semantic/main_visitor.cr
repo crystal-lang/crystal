@@ -1158,9 +1158,11 @@ module Crystal
       node.raise "implcit block argument can only be used inside a block"
     end
 
-    def expand_implicit_block_arguments(block : Block)
-      if ImplicitBlockArgumentDetector.has_implicit_block_arguments?(block)
-        ImplicitBlockArgumentTransformer.transform(@program, block)
+    def expand_implicit_block_arguments(node : ASTNode)
+      if ImplicitBlockArgumentDetector.has_implicit_block_arguments?(node)
+        ImplicitBlockArgumentExpander.expand(@program, node)
+      else
+        nil
       end
     end
 
@@ -1313,8 +1315,18 @@ module Crystal
 
       obj = node.obj
       args = node.args
+      block = node.block
       block_arg = node.block_arg
       named_args = node.named_args
+
+      if block_arg
+        expanded_block = expand_implicit_block_arguments(block_arg)
+        if expanded_block
+          expanded_block.call = node
+          node.block_arg = block_arg = nil
+          node.block = block = expanded_block
+        end
+      end
 
       ignoring_type_filters do
         if obj
@@ -1338,10 +1350,6 @@ module Crystal
       named_args.try &.each &.value.set_enclosing_call(node)
 
       check_super_or_previous_def_in_initialize node
-
-      block = node.block
-
-      expand_implicit_block_arguments(block) if block
 
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting

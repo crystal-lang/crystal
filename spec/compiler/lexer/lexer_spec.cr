@@ -284,9 +284,9 @@ describe "Lexer" do
   it_lexes "$~", :"$~"
   it_lexes "$?", :"$?"
 
-  it_lexes_implicit_block_argument "_1", 1
-  it_lexes_implicit_block_argument "_2", 2
-  it_lexes_implicit_block_argument "_42", 42
+  it_lexes_implicit_block_argument "&1", 1
+  it_lexes_implicit_block_argument "&2", 2
+  it_lexes_implicit_block_argument "&42", 42
 
   assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
   assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"

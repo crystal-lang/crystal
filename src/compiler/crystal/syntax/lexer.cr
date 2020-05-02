@@ -648,7 +648,8 @@ module Crystal
           @token.type = :"."
         end
       when '&'
-        case next_char
+        char = next_char
+        case char
         when '&'
           case next_char
           when '='
@@ -689,7 +690,18 @@ module Crystal
             @token.type = :"&*"
           end
         else
-          @token.type = :"&"
+          if char.ascii_number?
+            number = 0
+            while char.ascii_number?
+              number = number * 10 + char.to_i
+              char = next_char
+            end
+            @token.type = :IMPLICIT_BLOCK_ARGUMENT
+            @token.value = number
+            return @token
+          else
+            @token.type = :"&"
+          end
         end
       when '|'
         case next_char
@@ -1285,20 +1297,9 @@ module Crystal
             # scan_ident
           end
         else
-          if char.ascii_number?
-            number = 0
-            while char.ascii_number?
-              number = number * 10 + char.to_i
-              char = next_char
-            end
-            @token.type = :IMPLICIT_BLOCK_ARGUMENT
-            @token.value = number
+          unless ident_part?(current_char)
+            @token.type = :UNDERSCORE
             return @token
-          else
-            unless ident_part?(current_char)
-              @token.type = :UNDERSCORE
-              return @token
-            end
           end
         end
 

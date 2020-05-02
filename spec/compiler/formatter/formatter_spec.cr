@@ -1651,6 +1651,6 @@ describe Crystal::Formatter do
     / #{1} /
     CODE
 
-  assert_format "_1"
-  assert_format "_42"
+  assert_format "&1"
+  assert_format "&42"
 end

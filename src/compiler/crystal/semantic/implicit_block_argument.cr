@@ -1,8 +1,8 @@
 module Crystal
   class ImplicitBlockArgumentDetector < Visitor
-    def self.has_implicit_block_arguments?(block : Block)
+    def self.has_implicit_block_arguments?(node : ASTNode)
       detector = new
-      block.body.accept(detector)
+      node.accept(detector)
       detector.has_implicit_block_arguments?
     end
 
@@ -21,25 +21,25 @@ module Crystal
       end
     end
 
-    def visit(node : Block)
-      false
-    end
-
     def visit(node : ASTNode)
       !@has_implicit_block_arguments
     end
   end
 
-  class ImplicitBlockArgumentTransformer < Transformer
-    def self.transform(program : Program, block : Block)
-      transformer = new(program, block)
-      block.body = block.body.transform(transformer)
+  class ImplicitBlockArgumentExpander < Transformer
+    def self.expand(program : Program, node : ASTNode)
+      transformer = new(program)
+      node.transform(transformer)
+      block = transformer.block
+      block.body = node
+      block.at(node)
+      block
     end
 
-    @initial_block_args_size : Int32
+    getter block : Block
 
-    def initialize(@program : Program, @block : Block)
-      @initial_block_args_size = @block.args.try(&.size) || 0
+    def initialize(@program : Program)
+      @block = Block.new
     end
 
     def transform(node : ExpandableNode | Call)
@@ -48,6 +48,7 @@ module Crystal
         node.expanded = expanded.transform(self)
         node
       else
+        # TODO: don't go inside Call block_arg
         super
       end
     end
@@ -59,10 +60,6 @@ module Crystal
 
     def transform(node : ImplicitBlockArgument)
       number = node.number
-
-      if @initial_block_args_size >= number
-        node.raise "an explicit block argument at position #{number} already exists"
-      end
 
       args = @block.args ||= [] of Var
 

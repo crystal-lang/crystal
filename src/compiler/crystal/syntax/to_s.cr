@@ -1086,7 +1086,7 @@ module Crystal
     end
 
     def visit(node : ImplicitBlockArgument)
-      @str << '_' << node.number
+      @str << '&' << node.number
 
       false
     end

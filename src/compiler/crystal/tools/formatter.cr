@@ -4137,7 +4137,7 @@ module Crystal
     end
 
     def visit(node : ImplicitBlockArgument)
-      write "_"
+      write "&"
       write node.number
 
       next_token
