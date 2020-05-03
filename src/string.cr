@@ -3110,7 +3110,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index("izzy")     # => 1
   # "Dizzy Miss Lizzy".byte_index("izzy", 2)  # => 12
   # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => 12
-  # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => nil
+  # "Dizzy Miss Lizzy".byte_index("izzy", -3) # => nil
   # ```
   def byte_index(search : String, offset = 0) : Int32?
     offset += bytesize if offset < 0
@@ -4442,7 +4442,7 @@ class String
   # "22hello".starts_with?(/[0-9]/) # => true
   # "22hello".starts_with?(/[a-z]/) # => false
   # "h22".starts_with?(/[a-z]/)     # => true
-  # "h22".starts_with?(/[A-Z]/)     # => true
+  # "h22".starts_with?(/[A-Z]/)     # => false
   # "h22".starts_with?(/[a-z]{2}/)  # => false
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
@@ -4491,7 +4491,7 @@ class String
   # "22hello".ends_with?(/[0-9]/) # => false
   # "22hello".ends_with?(/[a-z]/) # => true
   # "22h".ends_with?(/[a-z]/)     # => true
-  # "22h".ends_with?(/[A-Z]/)     # => true
+  # "22h".ends_with?(/[A-Z]/)     # => false
   # "22h".ends_with?(/[a-z]{2}/)  # => false
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```
