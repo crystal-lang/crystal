@@ -41,4 +41,32 @@ describe "Semantic: implicit block argument" do
       foo &{&1, &2, &3}
     )) { tuple_of [int32, char, bool] }
   end
+
+  it "errors if 'it' variable outside of block (assign)" do
+    assert_error %(
+      it = 1
+      ),
+      "implcit block argument 'it' can only be used inside a block"
+  end
+
+  it "errors if 'it' argless call outside of block (assign)" do
+    assert_error %(
+      it
+      ),
+      "implcit block argument 'it' can only be used inside a block"
+  end
+
+  it "uses implicit block argument 'it' with call" do
+    assert_type(%(
+      def foo
+        yield 1
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo &bar(it)
+    )) { int32 }
+  end
 end

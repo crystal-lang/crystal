@@ -753,6 +753,10 @@ module Crystal
     end
 
     def type_assign(target : Var, value, node, restriction = nil)
+      if target.name == "it"
+        node.raise "implcit block argument 'it' can only be used inside a block"
+      end
+
       value.accept self
 
       var_name = target.name
@@ -1291,6 +1295,10 @@ module Crystal
     end
 
     def visit(node : Call)
+      if node.args.empty? && !node.named_args && !node.block && !node.block_arg && node.name == "it"
+        node.raise "implcit block argument 'it' can only be used inside a block"
+      end
+
       prepare_call(node)
 
       if expand_macro(node)

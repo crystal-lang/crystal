@@ -21,6 +21,15 @@ module Crystal
       end
     end
 
+    def visit(node : Call)
+      if node.args.empty? && !node.named_args && node.name == "it"
+        @has_implicit_block_arguments = true
+        false
+      else
+        true
+      end
+    end
+
     def visit(node : ASTNode)
       !@has_implicit_block_arguments
     end
@@ -42,7 +51,22 @@ module Crystal
       @block = Block.new
     end
 
-    def transform(node : ExpandableNode | Call)
+    def transform(node : Call)
+      if node.is_a?(Call) && node.args.empty? && !node.named_args && !node.block && !node.block_arg && node.name == "it"
+        return replace(node, 1)
+      end
+
+      expanded = node.expanded
+      if expanded
+        node.expanded = expanded.transform(self)
+        node
+      else
+        # TODO: don't go inside Call block_arg
+        super
+      end
+    end
+
+    def transform(node : ExpandableNode)
       expanded = node.expanded
       if expanded
         node.expanded = expanded.transform(self)
@@ -59,8 +83,10 @@ module Crystal
     end
 
     def transform(node : ImplicitBlockArgument)
-      number = node.number
+      replace(node, node.number)
+    end
 
+    def replace(node, number)
       args = @block.args ||= [] of Var
 
       (number - args.size).times do |i|
