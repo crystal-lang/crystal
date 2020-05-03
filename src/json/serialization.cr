@@ -434,7 +434,7 @@ module JSON
             when {{key.id.stringify}}
           {% else %}
             {% if key.is_a?(StringLiteral) %}
-              when {{key.id.stringify}}
+              when {{key}}
             {% elsif key.is_a?(NumberLiteral) || key.is_a?(BoolLiteral) %}
               when {{key.id}}
             {% elsif key.is_a?(Path) %}
