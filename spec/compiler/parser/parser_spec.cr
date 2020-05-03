@@ -853,6 +853,9 @@ module Crystal
     it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
+    assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
+    assert_syntax_error "{% unless 1 %} 2 {% elsif 3 %} 3 {% end %}"
+
     it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
     it_parses "{{ //.options }}", MacroExpression.new(Expressions.from([Call.new(RegexLiteral.new(StringLiteral.new("")), "options")] of ASTNode))
 
@@ -992,7 +995,9 @@ module Crystal
     it_parses "a = /=/", Assign.new("a".var, regex("="))
     it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
     it_parses "a; if / /\n/ /\nelsif / /\n/ /\nend", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
-    it_parses "a; while / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
+    it_parses "a; unless / /; / /; else; / /; end", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nunless / /\n/ /\nelse\n/ /\nend", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nwhile / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "a\nwhile / /\n/ /\nend", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "[/ /, / /]", ArrayLiteral.new([regex(" "), regex(" ")] of ASTNode)
     it_parses "{/ / => / /, / / => / /}", HashLiteral.new([HashLiteral::Entry.new(regex(" "), regex(" ")), HashLiteral::Entry.new(regex(" "), regex(" "))])
