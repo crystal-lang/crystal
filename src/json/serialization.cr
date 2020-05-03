@@ -393,7 +393,7 @@ module JSON
       def self.new(pull : ::JSON::PullParser)
         location = pull.location
 
-        discriminator_value = nil
+        discriminator_value : String | Int64 | Bool | Nil = nil
 
         # Try to find the discriminator while also getting the raw
         # string value of the parsed JSON, so then we can pass it
@@ -403,8 +403,19 @@ module JSON
             builder.start_object
             pull.read_object do |key|
               if key == {{field.id.stringify}}
-                discriminator_value = pull.read_string
+                value_kind = pull.kind
+                case value_kind
+                when .string?
+                  discriminator_value = pull.string_value
+                when .int?
+                  discriminator_value = pull.int_value
+                when .bool?
+                  discriminator_value = pull.bool_value
+                else
+                  raise ::JSON::MappingError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
+                end
                 builder.field(key, discriminator_value)
+                pull.read_next
               else
                 builder.field(key) { pull.read_raw(builder) }
               end
@@ -419,8 +430,20 @@ module JSON
 
         case discriminator_value
         {% for key, value in mapping %}
-          when {{key.id.stringify}}
-            {{value.id}}.from_json(json)
+          {% if mapping.is_a?(NamedTupleLiteral) %}
+            when {{key.id.stringify}}
+          {% else %}
+            {% if key.is_a?(StringLiteral) %}
+              when {{key.id.stringify}}
+            {% elsif key.is_a?(NumberLiteral) || key.is_a?(BoolLiteral) %}
+              when {{key.id}}
+            {% elsif key.is_a?(Path) %}
+              when {{key.resolve}}
+            {% else %}
+              {% key.raise "mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
+            {% end %}
+          {% end %}
+          {{value.id}}.from_json(json)
         {% end %}
         else
           raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
