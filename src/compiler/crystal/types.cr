@@ -1980,26 +1980,28 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       generic_type.append_full_name(io)
-      io << '('
-      type_vars.each_value.with_index do |type_var, i|
-        io << ", " if i > 0
-        if type_var.is_a?(Var)
-          if i == splat_index
-            tuple = type_var.type.as(TupleInstanceType)
-            tuple.tuple_types.join(", ", io) do |tuple_type|
-              tuple_type = tuple_type.devirtualize unless codegen
-              tuple_type.to_s_with_options(io, codegen: codegen)
+      if generic_args
+        io << '('
+        type_vars.each_value.with_index do |type_var, i|
+          io << ", " if i > 0
+          if type_var.is_a?(Var)
+            if i == splat_index
+              tuple = type_var.type.as(TupleInstanceType)
+              tuple.tuple_types.join(", ", io) do |tuple_type|
+                tuple_type = tuple_type.devirtualize unless codegen
+                tuple_type.to_s_with_options(io, codegen: codegen)
+              end
+            else
+              type_var_type = type_var.type
+              type_var_type = type_var_type.devirtualize unless codegen
+              type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
-            type_var_type = type_var.type
-            type_var_type = type_var_type.devirtualize unless codegen
-            type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+            type_var.to_s(io)
           end
-        else
-          type_var.to_s(io)
         end
+        io << ')'
       end
-      io << ')'
     end
   end
 

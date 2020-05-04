@@ -1423,6 +1423,10 @@ module Crystal
               [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
             end
           end
+
+          it "includes the generic_args of the instantiated type by default" do
+            assert_macro("", "{{Array(Int32).name}}", [] of ASTNode, "Array(Int32)")
+          end
         end
 
         describe :generic_args do
@@ -1432,6 +1436,10 @@ module Crystal
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
             end
+
+            it "includes the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: true)}}", [] of ASTNode, "Array(Int32)")
+            end
           end
 
           describe false do
@@ -1439,6 +1447,10 @@ module Crystal
               assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
+            end
+
+            it "does not include the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: false)}}", [] of ASTNode, "Array")
             end
           end
 
