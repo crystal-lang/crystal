@@ -1,5 +1,6 @@
 require "spec"
 require "log"
+require "log/spec"
 
 private def s(value : Log::Severity)
   value
@@ -23,6 +24,11 @@ private def with_env(**values)
 end
 
 describe "Log.setup_from_env" do
+  after_all do
+    # Setup logging in specs (again) since these specs perform Log.setup
+    Spec.log_setup
+  end
+
   describe "backend" do
     it "is a IOBackend" do
       with_env "LOG_LEVEL": nil do

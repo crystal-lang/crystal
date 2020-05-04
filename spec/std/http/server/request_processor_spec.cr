@@ -1,6 +1,6 @@
 require "spec"
+require "log/spec"
 require "http/server/request_processor"
-require "../../../support/log"
 require "../../../support/io"
 
 private def requestize(string)
@@ -248,13 +248,11 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(true)
-    logs = capture_logs("http.server") do
+    logs = Log.capture("http.server") do
       processor.process(input, output)
     end
-    match_logs(logs,
-      {:debug, "Error while writing data to the client"}
-    )
-    logs[0].exception.should be_a(IO::Error)
+    logs.check(:debug, "Error while writing data to the client")
+    logs.entry.exception.should be_a(IO::Error)
   end
 
   it "handles IO::Error while flushing" do
@@ -263,13 +261,11 @@ describe HTTP::Server::RequestProcessor do
     end
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = RaiseIOError.new(false)
-    logs = capture_logs("http.server") do
+    logs = Log.capture("http.server") do
       processor.process(input, output)
     end
-    match_logs(logs,
-      {:debug, "Error while flushing data to the client"}
-    )
-    logs[0].exception.should be_a(IO::Error)
+    logs.check(:debug, "Error while flushing data to the client")
+    logs.entry.exception.should be_a(IO::Error)
   end
 
   it "catches raised error on handler" do
@@ -277,7 +273,7 @@ describe HTTP::Server::RequestProcessor do
     processor = HTTP::Server::RequestProcessor.new { raise exception }
     input = IO::Memory.new("GET / HTTP/1.1\r\n\r\n")
     output = IO::Memory.new
-    logs = capture_logs("http.server") do
+    logs = Log.capture("http.server") do
       processor.process(input, output)
     end
 
@@ -288,9 +284,8 @@ describe HTTP::Server::RequestProcessor do
     client_response.headers.has_key?("content-length").should be_true
     client_response.body.should eq("500 Internal Server Error\n")
 
-    match_logs(logs,
-      {:error, "Unhandled exception on HTTP::Handler", exception}
-    )
+    logs.check(:error, "Unhandled exception on HTTP::Handler")
+    logs.entry.exception.should eq(exception)
   end
 
   it "doesn't respond with error when headers were already sent" do

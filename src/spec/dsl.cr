@@ -264,6 +264,7 @@ module Spec
     @@start_time = Time.monotonic
 
     at_exit do
+      log_setup
       maybe_randomize
       run_filters
       run_before_suite_hooks
@@ -271,6 +272,34 @@ module Spec
       run_after_suite_hooks
     ensure
       finish_run
+    end
+  end
+
+  # :nodoc:
+  #
+  # Workaround for #8914
+  private macro defined?(t)
+    {% if t.resolve? %}
+      {{ yield }}
+    {% end %}
+  end
+
+  # :nodoc:
+  def self.log_setup
+  end
+
+  # :nodoc:
+  macro finished
+    # :nodoc:
+    #
+    # Initialized the log module for the specs.
+    # If the "log" module is required it is configured to emit no entries by default.
+    def self.log_setup
+      defined?(::Log) do
+        if Log.responds_to?(:setup)
+          Log.setup_from_env(default_level: :none)
+        end
+      end
     end
   end
 
