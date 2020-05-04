@@ -4657,7 +4657,7 @@ module Crystal
     end
 
     # Parse a **bare** proc type like `A, B, C -> D`.
-    # Generally it is entyr point of type parsing and
+    # Generally it is entry point of type parsing and
     # it is used on the context expected type (e.g. type restrictions, rhs of `alias` and more)
     def parse_bare_proc_type
       type = parse_type_splat { parse_union_type }
