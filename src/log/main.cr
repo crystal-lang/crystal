@@ -38,8 +38,8 @@ class Log
   {% for method in %i(trace debug info notice warn error fatal) %}
     # See `Log#{{method.id}}`.
     def self.{{method.id}}(*, exception : Exception? = nil)
-      Top.{{method.id}}(exception: exception) do
-        yield
+      Top.{{method.id}}(exception: exception) do |dsl|
+        yield dsl
       end
     end
   {% end %}
@@ -136,27 +136,52 @@ class Log
     # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => 3 } context) }
     # ```
     def set(**kwargs)
-      extend_fiber_context(Fiber.current, Log::Metadata.new(kwargs))
+      extend_fiber_context(Fiber.current, Log::Metadata.build(kwargs))
     end
 
     # :ditto:
-    def set(values : Hash(String, V)) forall V
-      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
-    end
-
-    # :ditto:
-    def set(values : Hash(Symbol, V)) forall V
-      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
-    end
-
-    # :ditto:
-    def set(values : NamedTuple)
-      extend_fiber_context(Fiber.current, Log::Metadata.new(values))
+    def set(values)
+      extend_fiber_context(Fiber.current, Log::Metadata.build(values))
     end
 
     private def extend_fiber_context(fiber : Fiber, values : Metadata)
       context = fiber.logging_context
       fiber.logging_context = @metadata = context.merge(values)
+    end
+  end
+
+  # Helper DSL module for emitting log entries with data.
+  struct Emitter
+    # :nodoc:
+    def initialize(@source : String, @severity : Severity, @exception : Exception?)
+    end
+
+    # Emits a logs entry with a message, and data attached to
+    #
+    # ```
+    # Log.info &.emit("Program started")                          # No data, same as Log.info { "Program started" }
+    # Log.info &.emit("User logged in", user_id: 42)              # With entry data
+    # Log.info &.emit(action: "Logged in", user_id: 42)           # Empty string message, only data
+    # Log.error exception: ex, &.emit("Oopps", account: {id: 42}) # With data and exception
+    # ```
+    def emit(message : String) : Entry
+      emit(message, Metadata.empty)
+    end
+
+    def emit(message : String, **kwargs) : Entry
+      emit(message, kwargs)
+    end
+
+    def emit(message : String, data : Metadata | Hash | NamedTuple) : Entry
+      Entry.new(@source, @severity, message, Metadata.build(data), @exception)
+    end
+
+    def emit(**kwargs) : Entry
+      emit(kwargs)
+    end
+
+    def emit(data : Metadata | Hash | NamedTuple) : Entry
+      emit("", Metadata.build(data))
     end
   end
 end

@@ -56,6 +56,32 @@ class Log::Metadata
   private def to_metadata(value)
     value.is_a?(Metadata) ? value : Metadata.new(value)
   end
+
+  # Returns a `Metadata` with the information of the argument.
+  # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
+  def self.build(value : Nil)
+    Metadata.empty
+  end
+
+  # :ditto:
+  def self.build(value : NamedTuple)
+    Metadata.new(value)
+  end
+
+  # :ditto:
+  def self.build(value : Hash(String, V)) forall V
+    Metadata.new(value)
+  end
+
+  # :ditto:
+  def self.build(value : Hash(Symbol, V)) forall V
+    Metadata.new(value)
+  end
+
+  # :ditto:
+  def self.build(value : Metadata)
+    value
+  end
 end
 
 class Fiber

@@ -39,8 +39,9 @@ struct Log::Entry
   getter message : String
   getter timestamp = Time.local
   getter context : Metadata = Log.context.metadata
+  getter data : Metadata
   getter exception : Exception?
 
-  def initialize(@source : String, @severity : Severity, @message : String, @exception : Exception?)
+  def initialize(@source : String, @severity : Severity, @message : String, @data : Log::Metadata, @exception : Exception?)
   end
 end
