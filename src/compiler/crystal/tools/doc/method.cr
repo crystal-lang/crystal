@@ -194,7 +194,7 @@ class Crystal::Doc::Method
   end
 
   def html_id
-    HTML.escape(id)
+    id
   end
 
   def anchor
