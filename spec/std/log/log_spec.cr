@@ -257,5 +257,14 @@ describe Log do
       entry.data.should eq(m({a: 1}))
       entry.exception.should be_nil
     end
+
+    it "validates hash" do
+      expect_raises(ArgumentError, "Expected hash data, not Int32") do
+        backend = Log::MemoryBackend.new
+        log = Log.new("a", backend, :notice)
+
+        log.notice &.emit(m(1))
+      end
+    end
   end
 end
