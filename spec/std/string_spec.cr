@@ -563,6 +563,16 @@ describe "String" do
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
   end
 
+  describe "titleize" do
+    it { "hEllO tAb\tworld".titleize.should eq("Hello Tab\tWorld") }
+    it { "  spaces before".titleize.should eq("  Spaces Before") }
+    it { "testa-se muito".titleize.should eq("Testa-se Muito") }
+    it { "hÉllÕ tAb\tworld".titleize.should eq("Héllõ Tab\tWorld") }
+    it { "  spáçes before".titleize.should eq("  Spáçes Before") }
+    it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
+    it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+  end
+
   describe "chomp" do
     it { "hello\n".chomp.should eq("hello") }
     it { "hello\r".chomp.should eq("hello") }

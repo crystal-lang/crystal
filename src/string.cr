@@ -1147,6 +1147,39 @@ class String
     end
   end
 
+  # Returns a new `String` with the first letter after any space converted to uppercase and every
+  # other letter converted to lowercase.
+  #
+  # ```
+  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
+  # "  spaces before".titleize       # => "  Spaces Before"
+  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # ```
+  def titleize(options = Unicode::CaseOptions::None)
+    return self if empty?
+
+    upcase_next = true
+    if ascii_only? && (options.none? || options.ascii?)
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          char = to_unsafe[i].unsafe_chr
+          replaced_char = upcase_next ? char.upcase : char.downcase
+          buffer[i] = replaced_char.ord.to_u8
+          upcase_next = char.whitespace?
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char_with_index do |char, i|
+          replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
+          io << replaced_char
+          upcase_next = char.whitespace?
+        end
+      end
+    end
+  end
+
   # Returns a new `String` with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
