@@ -946,17 +946,7 @@ struct Path
     end
   end
 
-  # Returns `true` if this path is empty.
-  #
-  # `Path[""]` and `Path["."]` are considered empty.
-  #
-  # ```
-  # Path[""].empty?  # => true
-  # Path["."].empty? # => true
-  # Path["a"].empty? # => false
-  # Path["/"].empty? # => false
-  # ```
-  def empty?
+  private def empty?
     @name.empty? || @name == "."
   end
 

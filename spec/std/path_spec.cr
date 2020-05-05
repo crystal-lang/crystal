@@ -754,16 +754,6 @@ describe Path do
     assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
   end
 
-  describe "#empty?" do
-    assert_paths_raw("", true, &.empty?)
-    assert_paths_raw(".", true, &.empty?)
-    assert_paths_raw("./", false, &.empty?)
-    assert_paths_raw("a", false, &.empty?)
-    assert_paths_raw("a/b", false, &.empty?)
-    assert_paths_raw("..", false, &.empty?)
-    assert_paths_raw("/", false, &.empty?)
-  end
-
   describe "#relative_to?" do
     it_relativizes("a/b", "a/b/c", "c")
     it_relativizes("a/b", "a/b", ".")
