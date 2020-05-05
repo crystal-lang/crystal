@@ -1261,7 +1261,7 @@ class Array(T)
     PermutationIterator.new(self, size.to_i, reuse)
   end
 
-  # Returns an `Array` of with all combinations of *self* in an `Array`s of *size*.
+  # Returns an `Array` with all combinations of the elements in *self* of length *size*
   #
   # ```
   # arr = [1, 2, 3]
