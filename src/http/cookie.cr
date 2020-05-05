@@ -85,7 +85,7 @@ module HTTP
     end
 
     # :nodoc:
-    private def to_cookie_header(io : IO) : String?
+    def to_cookie_header(io : IO) : String?
       URI.encode_www_form(@name, io)
       io << '='
       URI.encode_www_form(value, io)
@@ -173,7 +173,7 @@ module HTTP
         cookies
       end
 
-      # Returns an `HTTP::Cookie` for a given `String` in the set cookie formate conforming to the RFC 6265 Section 4.1 https://tools.ietf.org/html/rfc6265#section-4.1
+      # Parses an `HTTP::Cookie` from *header* as a value for the `Set-Cookie` header as specified by [RFC 6265 §4.2](https://tools.ietf.org/html/rfc6265#section-4.1).
       #
       # ```crystal
       # require "http/cookie"
@@ -239,7 +239,7 @@ module HTTP
     # ```crystal
     # require "http/cookie"
     #
-    # headers = HTTP::Headers{"Cookie" => "session=key"}
+    # headers = HTTP::Headers{"Cookie" => "session=god"}
     # cookies = HTTP::Cookies.new
     # cookies.fill_from_headers(headers)
     # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
@@ -317,7 +317,7 @@ module HTTP
     #
     # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies["session"]? # => <HTTP::Cookie @name="session", @value="god" ... >
-    # cookies["debug"]?   # => false
+    # cookies["debug"]?   # => nil
     # ```
     def []?(key : String) : Cookie?
       @cookies[key]?
