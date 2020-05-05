@@ -9,7 +9,6 @@
 #
 # Therefore, HTTP Basic is preferred, and Request Body should only
 # be used if the server does not support HTTP Basic.
-#  
 enum OAuth2::AuthScheme
   HTTPBasic
   RequestBody
