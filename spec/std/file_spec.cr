@@ -1250,7 +1250,7 @@ describe "File" do
       end
     end
 
-    it "copies permissions" do
+    pending_win32 "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
         File.chmod(src_path, 0o700)
@@ -1262,7 +1262,7 @@ describe "File" do
       end
     end
 
-    it "overwrites existing destination and permissions" do
+    pending_win32 "overwrites existing destination and permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
         File.chmod(src_path, 0o700)
