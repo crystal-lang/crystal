@@ -3,7 +3,6 @@
 [![Travis CI Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
 [![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
-[![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://salt.bountysource.com/teams/crystal-lang)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
@@ -38,7 +37,7 @@ Project Status
 
 Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
 
-The development is possible thanks to the community's effort, [84codes](https://www.84codes.com/)' support, and every [BountySource supporter](https://crystal-lang.org/sponsors).
+The development is possible thanks to the community's effort and the continued support of [84codes](https://www.84codes.com/), [Nikola Motor Company](https://nikolamotor.com/) and every other [sponsor](https://crystal-lang.org/sponsors).
 
 Installing
 ----------
