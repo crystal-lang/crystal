@@ -380,7 +380,7 @@ module HTTP
       @cookies.delete(key)
     end
 
-    # Iterates over the headers yielding each header as a `Tuple` of `String` and an `Array(String)`.
+    # Iterates over all the *cookies* yielding each `Cookie` to the block.
     #
     # ```
     # require "http/cookie"
