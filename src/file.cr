@@ -177,10 +177,10 @@ class File < IO::FileDescriptor
   # File.same_content?("file.cr", "bar.cr") # => true
   # ```
   def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
-    return false unless size(path1) == size(path2)
-
     open(path1, "rb") do |file1|
       open(path2, "rb") do |file2|
+        return false unless file1.size == file2.size
+
         same_content?(file1, file2)
       end
     end
