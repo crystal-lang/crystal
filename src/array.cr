@@ -1393,9 +1393,10 @@ class Array(T)
   # arr = [1, 2, 3]
   # arr.repeated_combinations(0) # => [[]]
   # arr.repeated_combinations(2) # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
-  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2] ...]
+  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]
   # ```
-  def repeated_combinations(size : Int = self.size) forall Array(T)
+  def repeated_combinations(size : Int = self.size) forall Array
+    (T)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
