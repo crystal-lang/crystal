@@ -55,7 +55,7 @@ describe OAuth2::Client do
           client = OAuth2::Client.new "[::1]", "client_id", "client_secret", port: address.port, scheme: "http"
 
           token = client.get_access_token_using_authorization_code(authorization_code: "SDFhw39fwfg23flSfpawbef")
-          token.extra.not_nil!["body"].should eq expected
+          token.extra.not_nil!["body"].should eq %("redirect_uri=&grant_type=authorization_code&code=SDFhw39fwfg23flSfpawbef")
           token.access_token.should eq "access_token"
         end
       end
