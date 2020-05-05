@@ -154,7 +154,7 @@ module Crystal
 
     def end_visit_any(node)
       case node
-      when StringLiteral, StringInterpolation
+      when StringInterpolation
         # Nothing
       else
         @last_is_heredoc = false
@@ -447,8 +447,6 @@ module Crystal
     end
 
     def visit(node : StringLiteral)
-      @last_is_heredoc = false
-
       column = @column
 
       if @token.type == :__FILE__ || @token.type == :__DIR__
@@ -459,12 +457,6 @@ module Crystal
 
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
-      is_heredoc = @token.delimiter_state.kind == :heredoc
-      @last_is_heredoc = is_heredoc
-
-      indent_difference = @token.column_number - (@column + 1)
-      heredoc_line = @line
-      heredoc_end = @line
 
       write @token.raw
       next_string_token
@@ -488,7 +480,6 @@ module Crystal
           write "}"
           next_string_token
         when :DELIMITER_END
-          heredoc_end = @line
           break
         else
           raise "Bug: unexpected token: #{@token.type}"
@@ -497,16 +488,6 @@ module Crystal
 
       write @token.raw
       format_regex_modifiers if is_regex
-
-      if is_heredoc
-        if indent_difference > 0
-          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
-        (heredoc_line...heredoc_end).each do |line|
-          @no_rstrip_lines.add line
-        end
-        write_line
-      end
 
       if space_slash_newline?
         old_indent = @indent
