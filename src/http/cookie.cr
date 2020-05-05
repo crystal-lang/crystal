@@ -173,7 +173,7 @@ module HTTP
         cookies
       end
 
-      # Returns an `HTTP::Cookie` for a given `String` in the set cookie formate conforming to the RFC 6265 Section 4.1 https://tools.ietf.org/html/rfc6265#section-4.1
+      # Parses an `HTTP::Cookie` from *header* as a value for the `Set-Cookie` header as specified by [RFC 6265 §4.2](https://tools.ietf.org/html/rfc6265#section-4.1).
       #
       # ```crystal
       # require "http/cookie"
