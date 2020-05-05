@@ -184,7 +184,7 @@ struct XML::Builder
   # Emits the start of a `CDATA` section, invokes the block
   # and then emits the end of the `CDATA` section.
   #
-  # NOTE: CDATA end sequences written within the block
+  # NOTE: `CDATA` end sequences written within the block
   # need to be escaped manually.
   def cdata(&)
     start_cdata
