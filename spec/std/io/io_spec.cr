@@ -507,7 +507,7 @@ describe IO do
     it "skips a few bytes" do
       io = SimpleIOMemory.new
       io << "hello world"
-      io.skip(6)
+      io.skip(6).should eq(6)
       io.gets_to_end.should eq("world")
     end
 
@@ -522,14 +522,14 @@ describe IO do
     it "skips more than 4096 bytes" do
       io = SimpleIOMemory.new
       io << "a" * 4100
-      io.skip(4099)
+      io.skip(4099).should eq(4099)
       io.gets_to_end.should eq("a")
     end
 
     it "skips to end" do
       io = SimpleIOMemory.new
       io << "hello"
-      io.skip_to_end
+      io.skip_to_end.should eq(5)
       io.read_byte.should be_nil
     end
 
