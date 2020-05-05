@@ -191,7 +191,7 @@ struct XML::Builder
     yield.tap { end_cdata }
   end
 
-  # Emits a `CDATA` section.  Escapes nested CDATA end sequences.
+  # Emits a `CDATA` section.  Escapes nested `CDATA` end sequences.
   def cdata(text : String) : Nil
     call WriteCDATA, string_to_unsafe(text.gsub(CDATA_END, CDATA_ESCAPE))
   end
