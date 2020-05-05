@@ -1126,7 +1126,7 @@ class Array(T)
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
   #
-  # ```crystal
+  # ```
   # input = [1, 2, 3, 4, 5]
   # results = input.map_with_index { |e, i| e + i }
   # results # => [1, 3, 5, 7, 9]
@@ -1140,7 +1140,7 @@ class Array(T)
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.map_with_index! { |e, i| e + i }
   # arr # => [1, 3, 5, 7, 9]
@@ -1263,7 +1263,7 @@ class Array(T)
 
   # Returns an `Array` of with all combinations of *self* in an `Array`s of *size*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3]
   # arr.combinations(0) # => [[]]
   # arr.combinations(2) # => [[1, 2], [1, 3], [2, 3]]
@@ -1279,7 +1279,7 @@ class Array(T)
 
   # Yields an `Array` of *size* of a combination of elements from *self*.
   #
-  # ```crystal
+  # ```
   # result = [] of Array(Int32)
   # [1, 2, 3].each_combination(2) { |e| result << e }
   # result # => [[1, 2], [1, 3], [2, 3]]
@@ -1342,7 +1342,7 @@ class Array(T)
 
   # Returns an `Iterator` that returns an `Array` of a combination of elements from *self*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3]
   # combo_iter = arr.each_combination(2)
   # combo_iter.next # => [1, 2]
@@ -1389,7 +1389,7 @@ class Array(T)
 
   # Returns an `Array` of with all combinations including repeating elements of *self* in an `Array`s of *size*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3]
   # arr.repeated_combinations(0) # => [[]]
   # arr.repeated_combinations(2) # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
@@ -1406,7 +1406,7 @@ class Array(T)
 
   # Yields an `Array` of *size* with all combinations including repeating elements of *self*.
   #
-  # ```crystal
+  # ```
   # result = [] of Array(Int32)
   # [1, 2, 3].each_repeated_combination(2) { |e| result << e }
   # result # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
@@ -1456,7 +1456,7 @@ class Array(T)
   # Returns an `Iterator` that returns an `Array` of with all combinations including repeating
   # elements of *self* in an `Array`s of *size*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3]
   # combo_iter = arr.each_repeated_combination(2)
   # combo_iter.next # => [1, 1]
@@ -1478,7 +1478,7 @@ class Array(T)
   # Returns an `Array` of all combinations of elements from all `Array`.
   # Passing a single `Array` will throw an ArgumentError.
   #
-  # ```crystal
+  # ```
   # Array.product([[1, 2], [3, 4]])           # => [[1, 3], [1, 4], [2, 3], [2, 4]]
   # Array.product([[] of Int32, [] of Int32]) # => []
   # Array.product([1, 2, 3])                  # => raises error
@@ -1493,7 +1493,7 @@ class Array(T)
 
   # Returns an `Array` of all combinations of elements from all `Array`.
   #
-  # ```crystal
+  # ```
   # Array.product([1, 2], [3, 4]) # => [[1, 3], [1, 4], [2, 3], [2, 4]]
   # ```
   def self.product(*arrays : Array)
@@ -1502,7 +1502,7 @@ class Array(T)
 
   # Yields an `Array` of all combinations of elements from all `Array`.
   #
-  # ```crystal
+  # ```
   # results = [] of Array(Int32)
   #
   # Array.each_product([[1, 2], [3, 4]]) { |e| results << e }
@@ -1554,7 +1554,7 @@ class Array(T)
 
   # Yields an `Array` of all combinations of elements from all `Array`.
   #
-  # ```crystal
+  # ```
   # results = [] of Array(Int32)
   #
   # Array.each_product([1, 2], [3, 4]) { |e| results << e }
@@ -1577,7 +1577,7 @@ class Array(T)
 
   # Returns an `Array` with all possible permutations included repeats of *size*.
   #
-  # ```crystal
+  # ```
   # input = [1, 2, 3]
   # results = input.repeated_permutations(2)
   # results # => [[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3], [3, 1], [3, 2], [3, 3]]
@@ -1592,7 +1592,7 @@ class Array(T)
 
   # Yields an `Array` of all combinations of *self* in an `Array`s of *size*.
   #
-  # ```crystal
+  # ```
   # sums = [] of Int32
   # [1, 2, 3].each_repeated_permutation(2) { |a| sums << a.sum }
   # sums # => [2, 3, 4, 3, 4, 5, 4, 5, 6]
@@ -1682,7 +1682,7 @@ class Array(T)
 
   # Returns an `Array` of all combinations of elements from all `Array` and *self*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2]
   # arr.product([3, 4]) # => [{2, 3}, {2, 4}, {3, 3}, {3, 4}]
   # ```
@@ -1696,7 +1696,7 @@ class Array(T)
 
   # Yields an `Array` of all combinations of elements from all `Array` and *self*.
   #
-  # ```crystal
+  # ```
   # input = [1, 2, 3]
   # results = [] of Int32
   # input.product([4, 5]) { |a, b| results << a << b }
@@ -1746,7 +1746,7 @@ class Array(T)
 
   # Sets the value of *self* to the other `Array`.
   #
-  # ```crystal
+  # ```
   # arr1 = [1, 2, 3]
   # arr2 = [4, 5, 6]
   #
@@ -1773,7 +1773,7 @@ class Array(T)
 
   # Reverses in-place all the elements of `self`.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.reverse!
   # arr # => [5, 4, 3, 2, 1]
@@ -1785,7 +1785,7 @@ class Array(T)
 
   # Returns *self* with *n* elements from the end of *self* to the beginning of *self*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.rotate!(2)
   # arr # => [3, 4, 5, 1, 2]
@@ -1812,7 +1812,7 @@ class Array(T)
 
   # Returns a new `Array` with *n* elements from the end of *self* to the beginning of *self*.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.rotate(2) # => [3, 4, 5, 1, 2]
   # arr           # => [1, 2, 3, 4, 5]
@@ -1883,7 +1883,7 @@ class Array(T)
   # Removes the first value of `self`, at index 0. This method returns the removed *value*.
   # If the `Array` is empty, it returns the *value* returned from the block.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2]
   # arr.shift { "n/a"} # => 1
   # arr.shift { "n/a"} # => 2
@@ -1950,7 +1950,7 @@ class Array(T)
   # Returns an array with all the elements in the collection randomized
   # using the given *random* number generator.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.shuffle # => [4, 2, 3, 5, 1]
   # ```
@@ -1961,7 +1961,7 @@ class Array(T)
   # Modifies `self` by randomizing the order of elements in the collection
   # using the given *random* number generator. Returns `self`.
   #
-  # ```crystal
+  # ```
   # arr = [1, 2, 3, 4, 5]
   # arr.shuffle!
   # arr # => [4, 2, 3, 5, 1]
