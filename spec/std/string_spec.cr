@@ -530,7 +530,7 @@ describe "String" do
     end
   end
 
-  describe "downcase" do
+  describe "#downcase" do
     it { "HELLO!".downcase.should eq("hello!") }
     it { "HELLO MAN!".downcase.should eq("hello man!") }
     it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
@@ -541,9 +541,22 @@ describe "String" do
     it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
     it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
     it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
+
+    describe "with IO" do
+      it { with_io_memory { |io| "HELLO!".downcase io }.should eq "hello!" }
+      it { with_io_memory { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
+      it { with_io_memory { |io| "ÁÉÍÓÚĀ".downcase io }.should eq "áéíóúā" }
+      it { with_io_memory { |io| "AEIİOU".downcase io, Unicode::CaseOptions::Turkic }.should eq "aeıiou" }
+      it { with_io_memory { |io| "ÁEÍOÚ".downcase io, Unicode::CaseOptions::ASCII }.should eq "ÁeÍoÚ" }
+      it { with_io_memory { |io| "İ".downcase io }.should eq "i̇" }
+      it { with_io_memory { |io| "Baﬄe".downcase io, Unicode::CaseOptions::Fold }.should eq "baffle" }
+      it { with_io_memory { |io| "ﬀ".downcase io, Unicode::CaseOptions::Fold }.should eq "ff" }
+      it { with_io_memory { |io| "tschüß".downcase io, Unicode::CaseOptions::Fold }.should eq "tschüss" }
+      it { with_io_memory { |io| "ΣίσυφοςﬁÆ".downcase io, Unicode::CaseOptions::Fold }.should eq "σίσυφοσfiæ" }
+    end
   end
 
-  describe "upcase" do
+  describe "#upcase" do
     it { "hello!".upcase.should eq("HELLO!") }
     it { "hello man!".upcase.should eq("HELLO MAN!") }
     it { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
@@ -553,17 +566,37 @@ describe "String" do
     it { "baﬄe".upcase.should eq("BAFFLE") }
     it { "ﬀ".upcase.should eq("FF") }
     it { "ňž".upcase.should eq("ŇŽ") } # #7922
+
+    describe "with IO" do
+      it { with_io_memory { |io| "hello!".upcase io }.should eq "HELLO!" }
+      it { with_io_memory { |io| "hello man!".upcase io }.should eq "HELLO MAN!" }
+      it { with_io_memory { |io| "áéíóúā".upcase io }.should eq "ÁÉÍÓÚĀ" }
+      it { with_io_memory { |io| "aeıiou".upcase io, Unicode::CaseOptions::Turkic }.should eq "AEIİOU" }
+      it { with_io_memory { |io| "áeíoú".upcase io, Unicode::CaseOptions::ASCII }.should eq "áEíOú" }
+      it { with_io_memory { |io| "aeiou".upcase io, Unicode::CaseOptions::Turkic }.should eq "AEİOU" }
+      it { with_io_memory { |io| "baﬄe".upcase io }.should eq "BAFFLE" }
+      it { with_io_memory { |io| "ff".upcase io }.should eq "FF" }
+      it { with_io_memory { |io| "ňž".upcase io }.should eq "ŇŽ" }
+    end
   end
 
-  describe "capitalize" do
+  describe "#capitalize" do
     it { "HELLO!".capitalize.should eq("Hello!") }
     it { "HELLO MAN!".capitalize.should eq("Hello man!") }
     it { "".capitalize.should eq("") }
     it { "ﬄİ".capitalize.should eq("FFLi̇") }
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
+
+    describe "with IO" do
+      it { with_io_memory { |io| "HELLO!".capitalize io }.should eq "Hello!" }
+      it { with_io_memory { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
+      it { with_io_memory { |io| "".capitalize io }.should be_empty }
+      it { with_io_memory { |io| "ﬄİ".capitalize io }.should eq "FFLi̇" }
+      it { with_io_memory { |io| "iO".capitalize io, Unicode::CaseOptions::Turkic }.should eq "İo" }
+    end
   end
 
-  describe "titleize" do
+  describe "#titleize" do
     it { "hEllO tAb\tworld".titleize.should eq("Hello Tab\tWorld") }
     it { "  spaces before".titleize.should eq("  Spaces Before") }
     it { "testa-se muito".titleize.should eq("Testa-se Muito") }
@@ -571,6 +604,16 @@ describe "String" do
     it { "  spáçes before".titleize.should eq("  Spáçes Before") }
     it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
     it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+
+    describe "with IO" do
+      it { with_io_memory { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
+      it { with_io_memory { |io| "  spaces before".titleize io }.should eq "  Spaces Before" }
+      it { with_io_memory { |io| "testa-se muito".titleize io }.should eq "Testa-se Muito" }
+      it { with_io_memory { |io| "hÉllÕ tAb\tworld".titleize io }.should eq "Héllõ Tab\tWorld" }
+      it { with_io_memory { |io| "  spáçes before".titleize io }.should eq "  Spáçes Before" }
+      it { with_io_memory { |io| "testá-se múitô".titleize io }.should eq "Testá-se Múitô" }
+      it { with_io_memory { |io| "iO iO".titleize io, Unicode::CaseOptions::Turkic }.should eq "İo İo" }
+    end
   end
 
   describe "chomp" do
@@ -1869,32 +1912,58 @@ describe "String" do
     end
   end
 
-  it "does underscore" do
-    "Foo".underscore.should eq("foo")
-    "FooBar".underscore.should eq("foo_bar")
-    "ABCde".underscore.should eq("ab_cde")
-    "FOO_bar".underscore.should eq("foo_bar")
-    "Char_S".underscore.should eq("char_s")
-    "Char_".underscore.should eq("char_")
-    "C_".underscore.should eq("c_")
-    "HTTP".underscore.should eq("http")
-    "HTTP_CLIENT".underscore.should eq("http_client")
-    "CSS3".underscore.should eq("css3")
-    "HTTP1.1".underscore.should eq("http1.1")
-    "3.14IsPi".underscore.should eq("3.14_is_pi")
-    "I2C".underscore.should eq("i2_c")
+  describe "#underscore" do
+    it { "Foo".underscore.should eq "foo" }
+    it { "FooBar".underscore.should eq "foo_bar" }
+    it { "ABCde".underscore.should eq "ab_cde" }
+    it { "FOO_bar".underscore.should eq "foo_bar" }
+    it { "Char_S".underscore.should eq "char_s" }
+    it { "Char_".underscore.should eq "char_" }
+    it { "C_".underscore.should eq "c_" }
+    it { "HTTP".underscore.should eq "http" }
+    it { "HTTP_CLIENT".underscore.should eq "http_client" }
+    it { "CSS3".underscore.should eq "css3" }
+    it { "HTTP1.1".underscore.should eq "http1.1" }
+    it { "3.14IsPi".underscore.should eq "3.14_is_pi" }
+    it { "I2C".underscore.should eq "i2_c" }
+
+    describe "with IO" do
+      it { with_io_memory { |io| "Foo".underscore io }.should eq "foo" }
+      it { with_io_memory { |io| "FooBar".underscore io }.should eq "foo_bar" }
+      it { with_io_memory { |io| "ABCde".underscore io }.should eq "ab_cde" }
+      it { with_io_memory { |io| "FOO_bar".underscore io }.should eq "foo_bar" }
+      it { with_io_memory { |io| "Char_S".underscore io }.should eq "char_s" }
+      it { with_io_memory { |io| "Char_".underscore io }.should eq "char_" }
+      it { with_io_memory { |io| "C_".underscore io }.should eq "c_" }
+      it { with_io_memory { |io| "HTTP".underscore io }.should eq "http" }
+      it { with_io_memory { |io| "HTTP_CLIENT".underscore io }.should eq "http_client" }
+      it { with_io_memory { |io| "CSS3".underscore io }.should eq "css3" }
+      it { with_io_memory { |io| "HTTP1.1".underscore io }.should eq "http1.1" }
+      it { with_io_memory { |io| "3.14IsPi".underscore io }.should eq "3.14_is_pi" }
+      it { with_io_memory { |io| "I2C".underscore io }.should eq "i2_c" }
+    end
   end
 
-  it "does camelcase" do
-    "foo".camelcase.should eq("Foo")
-    "foo_bar".camelcase.should eq("FooBar")
-    "foo".camelcase(lower: true).should eq("foo")
-    "foo_bar".camelcase(lower: true).should eq("fooBar")
+  describe "#camelcase" do
+    it { "foo".camelcase.should eq "Foo" }
+    it { "foo_bar".camelcase.should eq "FooBar" }
+    it { "foo".camelcase(lower: true).should eq "foo" }
+    it { "foo_bar".camelcase(lower: true).should eq "fooBar" }
+    it { "Foo".camelcase.should eq "Foo" }
+    it { "Foo_bar".camelcase.should eq "FooBar" }
+    it { "Foo".camelcase(lower: true).should eq "foo" }
+    it { "Foo_bar".camelcase(lower: true).should eq "fooBar" }
 
-    "Foo".camelcase.should eq("Foo")
-    "Foo_bar".camelcase.should eq("FooBar")
-    "Foo".camelcase(lower: true).should eq("foo")
-    "Foo_bar".camelcase(lower: true).should eq("fooBar")
+    describe "with IO" do
+      it { with_io_memory { |io| "foo".camelcase io }.should eq "Foo" }
+      it { with_io_memory { |io| "foo_bar".camelcase io }.should eq "FooBar" }
+      it { with_io_memory { |io| "foo".camelcase io, lower: true }.should eq "foo" }
+      it { with_io_memory { |io| "foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+      it { with_io_memory { |io| "Foo".camelcase io }.should eq "Foo" }
+      it { with_io_memory { |io| "Foo_bar".camelcase io }.should eq "FooBar" }
+      it { with_io_memory { |io| "Foo".camelcase io, lower: true }.should eq "foo" }
+      it { with_io_memory { |io| "Foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+    end
   end
 
   it "answers ascii_only?" do
