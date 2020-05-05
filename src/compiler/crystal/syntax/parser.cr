@@ -4301,7 +4301,7 @@ module Crystal
               return parse_call_block_arg(args, true)
             end
 
-            if @token.type == :IDENT && current_char == ':'
+            if named_tuple_start?
               return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true)
             else
               arg = parse_call_arg(found_double_splat)
