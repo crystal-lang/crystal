@@ -1255,7 +1255,7 @@ class Array(T)
   # the method will create a new array and reuse it. This can be
   # used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false) : Iterator
+  def each_permutation(size : Int = self.size, reuse = false) : Iterator(Array(T))
     raise ArgumentError.new("Size must be positive") if size < 0
 
     PermutationIterator.new(self, size.to_i, reuse)
