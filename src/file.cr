@@ -729,10 +729,13 @@ class File < IO::FileDescriptor
   # ```
   def self.copy(src : String | Path, dst : String | Path)
     open(src) do |s|
-      open(dst, "wb", s.info.permissions) do |d|
+      open(dst, "wb") do |d|
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
         IO.copy(s, d)
       end
+
+      # Set the permissions after the content is written in case src permissions is read-only
+      chmod(dst, s.info.permissions)
     end
   end
 

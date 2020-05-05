@@ -1261,6 +1261,21 @@ describe "File" do
         File.same_content?(src_path, out_path).should be_true
       end
     end
+
+    it "overwrites existing destination and permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.write(out_path, "bar")
+        File.chmod(out_path, 0o777)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
   end
 
   describe ".match?" do
