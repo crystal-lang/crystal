@@ -814,7 +814,8 @@ abstract class IO
   # io.gets    # => "world"
   # io.skip(1) # raises IO::EOFError
   # ```
-  def skip(bytes_count : UInt64) : UInt64
+  def skip(bytes_count : Int) : UInt64
+    bytes_count = bytes_count.to_u64
     remaining = bytes_count
     buffer = uninitialized UInt8[4096]
     while remaining > 0
