@@ -29,10 +29,10 @@ describe Log do
   end
 
   it "can build with level override" do
-    top = Log.for("", :info)
+    top = Log.for("qux", :info)
     top.level.should eq(Log::Severity::Info)
 
-    Log.for("", :warning)
+    Log.for("qux", :warning)
     top.level.should eq(Log::Severity::Warning)
   end
 

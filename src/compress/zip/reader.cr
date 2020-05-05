@@ -13,14 +13,12 @@ require "./file_info"
 # ```
 # require "compress/zip"
 #
-# Compress::File.open("./file.zip") do |file|
-#   Zip::Reader.open(file) do |zip|
-#     zip.each_entry do |entry|
-#       p entry.filename
-#       p entry.file?
-#       p entry.dir?
-#       p entry.io.gets_to_end
-#     end
+# Compress::Zip::Reader.open("./file.zip") do |zip|
+#   zip.each_entry do |entry|
+#     p entry.filename
+#     p entry.file?
+#     p entry.dir?
+#     p entry.io.gets_to_end
 #   end
 # end
 # ```

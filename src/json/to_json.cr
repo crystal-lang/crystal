@@ -185,14 +185,14 @@ end
 # ```
 # require "json"
 #
-# class Timestamp
+# class TimestampArray
 #   JSON.mapping({
-#     values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+#     dates: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
 #   })
 # end
 #
-# timestamp = Timestamp.from_json(%({"dates":[1459859781,1567628762]}))
-# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp = TimestampArray.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.dates   # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
 module JSON::ArrayConverter(Converter)
@@ -211,15 +211,15 @@ end
 # ```
 # require "json"
 #
-# class Timestamp
+# class TimestampHash
 #   JSON.mapping({
-#     values: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+#     birthdays: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
 #   })
 # end
 #
-# timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
 # ```
 module JSON::HashValueConverter(Converter)
   def self.to_json(values : Hash, builder : JSON::Builder)

@@ -66,9 +66,23 @@
 # end
 # ```
 #
+# ### Default logging configuration
+#
+# By default entries from all sources with `Info` and above severity will
+# be logged to `STDOUT` using the `Log::IOBackend`.
+#
+# If you need to change the default level, backend or sources call `Log.setup` upon startup.
+#
+# ```
+# Log.setup(:debug)                     # Log debug and above for all sources to STDOUT
+# Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only, and log nothing for any other source.
+# backend_with_formatter = Log::IOBackend.new(formatter: custom_formatter)
+# Log.setup(:debug, backend_with_formatter) # Log debug and above for all sources to using a custom backend
+# ```
+#
 # ### Configure logging explicitly in the code
 #
-# Use `Log.builder` to indicate which sources should go to which backends.
+# Use `Log.setup` methods to indicate which sources should go to which backends.
 #
 # You can indicate actual sources or patterns.
 #
@@ -76,7 +90,7 @@
 # * `*` matches all the sources
 # * `foo.bar.*` matches `foo.bar` and every nested source
 # * `foo.bar` matches `foo.bar`, but not its nested sources
-#
+# * Any comma separated combination of the above
 #
 # The following configuration will setup for all sources to emit
 # warnings (or higher) to `STDOUT`, allow any of the `db.*` and
@@ -84,10 +98,13 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# backend = Log::IOBackend.new
-# Log.builder.bind "*", :warning, backend
-# Log.builder.bind "db.*", :debug, backend
-# Log.builder.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
+# Log.setup |c|
+#   backend = Log::IOBackend.new
+#
+#   c.bind "*", :warning, backend
+#   c.bind "db.*", :debug, backend
+#   c.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
+# end
 # ```
 #
 # ### Configure logging from environment variables
@@ -98,25 +115,22 @@
 # Log.setup_from_env
 # ```
 #
-# The environment variables `CRYSTAL_LOG_LEVEL` and `CRYSTAL_LOG_SOURCES` are used to indicate
-# which severity level to emit (defaults to `INFO`; use `NONE` to skip all messages) and to restrict
-# which sources you are interested in.
+# The environment variable `LOG_LEVEL` is used to indicate which severity level to emit.
+# By default entries from all sources with `Info` and above severity will
+# be logged to `STDOUT` using the `Log::IOBackend`.
 #
-# The valid values for `CRYSTAL_LOG_SOURCES` are:
+# To change the level and sources change the environment variable value:
 #
-# * the empty string matches only the top-level source (default)
-# * `*` matches all the sources
-# * `foo.bar.*` matches `foo.bar` and every nested source
-# * `foo.bar` matches `foo.bar`, but not its nested sources
-# * Any comma separated combination of the above
+# ```console
+# $ LOG_LEVEL=DEBUG ./bin/app
+# ```
 #
-# The logs are emitted to `STDOUT` using a `Log::IOBackend`.
-#
-# If `Log.setup_from_env` is called on startup you can tweak the logging as:
+# You can tweak the default values (used when `LOG_LEVEL` variable is not defined):
 #
 # ```
-# $ CRYSTAL_LOG_LEVEL=DEBUG CRYSTAL_LOG_SOURCES=* ./bin/app
+# Log.setup_from_env(default_level: :error)
 # ```
+#
 class Log
 end
 
@@ -127,7 +141,9 @@ require "./log/builder"
 require "./log/context"
 require "./log/entry"
 require "./log/main"
-require "./log/env_config"
+require "./log/setup"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
+
+Log.setup

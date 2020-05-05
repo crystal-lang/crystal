@@ -1147,6 +1147,39 @@ class String
     end
   end
 
+  # Returns a new `String` with the first letter after any space converted to uppercase and every
+  # other letter converted to lowercase.
+  #
+  # ```
+  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
+  # "  spaces before".titleize       # => "  Spaces Before"
+  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # ```
+  def titleize(options = Unicode::CaseOptions::None)
+    return self if empty?
+
+    upcase_next = true
+    if ascii_only? && (options.none? || options.ascii?)
+      String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          char = to_unsafe[i].unsafe_chr
+          replaced_char = upcase_next ? char.upcase : char.downcase
+          buffer[i] = replaced_char.ord.to_u8
+          upcase_next = char.whitespace?
+        end
+        {@bytesize, @length}
+      end
+    else
+      String.build(bytesize) do |io|
+        each_char_with_index do |char, i|
+          replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
+          io << replaced_char
+          upcase_next = char.whitespace?
+        end
+      end
+    end
+  end
+
   # Returns a new `String` with the last carriage return removed (that is, it
   # will remove \n, \r, and \r\n).
   #
@@ -3110,7 +3143,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index("izzy")     # => 1
   # "Dizzy Miss Lizzy".byte_index("izzy", 2)  # => 12
   # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => 12
-  # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => nil
+  # "Dizzy Miss Lizzy".byte_index("izzy", -3) # => nil
   # ```
   def byte_index(search : String, offset = 0) : Int32?
     offset += bytesize if offset < 0
@@ -3844,7 +3877,7 @@ class String
     io << self
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*.
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*.
   #
   # ```
   # "Purple".center(8)      # => " Purple "
@@ -3856,7 +3889,7 @@ class String
     just len, char, 0
   end
 
-  # Adds spaces to left ond right of the string until it is at least size of *len*,
+  # Adds spaces to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
@@ -3868,7 +3901,7 @@ class String
     center(len, ' ', io)
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
@@ -4442,7 +4475,7 @@ class String
   # "22hello".starts_with?(/[0-9]/) # => true
   # "22hello".starts_with?(/[a-z]/) # => false
   # "h22".starts_with?(/[a-z]/)     # => true
-  # "h22".starts_with?(/[A-Z]/)     # => true
+  # "h22".starts_with?(/[A-Z]/)     # => false
   # "h22".starts_with?(/[a-z]{2}/)  # => false
   # "hh22".starts_with?(/[a-z]{2}/) # => true
   # ```
@@ -4491,7 +4524,7 @@ class String
   # "22hello".ends_with?(/[0-9]/) # => false
   # "22hello".ends_with?(/[a-z]/) # => true
   # "22h".ends_with?(/[a-z]/)     # => true
-  # "22h".ends_with?(/[A-Z]/)     # => true
+  # "22h".ends_with?(/[A-Z]/)     # => false
   # "22h".ends_with?(/[a-z]{2}/)  # => false
   # "22hh".ends_with?(/[a-z]{2}/) # => true
   # ```

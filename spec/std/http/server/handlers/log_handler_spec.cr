@@ -1,6 +1,6 @@
 require "spec"
+require "log/spec"
 require "http/server/handler"
-require "../../../../support/log"
 require "../../../../support/io"
 
 describe HTTP::LogHandler do
@@ -14,10 +14,8 @@ describe HTTP::LogHandler do
     called = false
     handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { called = true }
-    logs = capture_logs("http.server") { handler.call(context) }
-    match_logs(logs,
-      {:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
+    logs = Log.capture("http.server") { handler.call(context) }
+    logs.check(:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
     called.should be_true
   end
 
@@ -32,9 +30,8 @@ describe HTTP::LogHandler do
     handler.next = ->(ctx : HTTP::Server::Context) {}
     handler.call(context)
 
-    match_logs(backend.entries,
-      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
+    logs = Log::EntriesChecker.new(backend.entries)
+    logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 
   it "logs to io" do
@@ -59,13 +56,11 @@ describe HTTP::LogHandler do
 
     handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    logs = capture_logs("http.server") do
+    logs = Log.capture("http.server") do
       expect_raises(Exception, "foo") do
         handler.call(context)
       end
     end
-    match_logs(logs,
-      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
+    logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 end

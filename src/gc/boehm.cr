@@ -6,7 +6,7 @@
   @[Link("pthread")]
 {% end %}
 
-{% if flag?(:freebsd) %}
+{% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
   @[Link("gc", static: true)]

@@ -189,7 +189,11 @@ module Crystal::System::File
       if flush_metadata
         LibC.fsync(fd)
       else
-        LibC.fdatasync(fd)
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
       end
 
     if ret != 0
