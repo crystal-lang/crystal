@@ -1393,10 +1393,10 @@ class Array(T)
   # arr = [1, 2, 3]
   # arr.repeated_combinations(0) # => [[]]
   # arr.repeated_combinations(2) # => [[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]
-  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3],
-  #                              #     [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]
+  # arr.repeated_combinations    # => [[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2] ...]
   # ```
-  def repeated_combinations(size : Int = self.size) forall Array(T)
+  def repeated_combinations(size : Int = self.size) forall Array
+    (T)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
@@ -1885,9 +1885,9 @@ class Array(T)
   #
   # ```
   # arr = [1, 2]
-  # arr.shift { "n/a"} # => 1
-  # arr.shift { "n/a"} # => 2
-  # arr.shift { "n/a"} # => "n/a"
+  # arr.shift { "n/a" } # => 1
+  # arr.shift { "n/a" } # => 2
+  # arr.shift { "n/a" } # => "n/a"
   # ```
   def shift
     if @size == 0
@@ -2286,7 +2286,7 @@ class Array(T)
     self
   end
 
-  # Modifies *self* at *index* to the value *yieled* block and returns the result of the block. 
+  # Modifies *self* at *index* to the value *yieled* block and returns the result of the block.
   # Raises IndexError if the index is out or range.
   #
   # arr = [1, 2, 3]
