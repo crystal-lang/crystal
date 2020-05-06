@@ -26,7 +26,7 @@ module HTTP
 
     # A basic `HTTP::Cookie` can be created with a given *name* and *value*.
     #
-    # ```crystal
+    # ```
     # require "http/cookie"
     #
     # HTTP::Cookie.new("session", "god")
@@ -227,7 +227,7 @@ module HTTP
     #
     # headers = HTTP::Headers{"Cookie" => "session=god"}
     # cookies = HTTP::Cookies.from_headers(headers)
-    # cookies # => <HTTP::Cookies @cookies={"session" => <HTTP::Cookie @name="session", @value="god" ...>}>
+    # cookies # => #<HTTP::Cookies @cookies={"session" => #<HTTP::Cookie @name="session", @value="god" ...>}>
     # ```
     def self.from_headers(headers : Headers) : self
       new.tap { |cookies| cookies.fill_from_headers(headers) }
@@ -358,7 +358,7 @@ module HTTP
     #
     # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.size # => 1
-    # cookies.clean
+    # cookies.clear
     # cookies.size # => 0
     # ```
     def clear : Hash(String, Cookie)
@@ -374,7 +374,7 @@ module HTTP
     #
     # cookies = HTTP::Cookies.new { HTTP::Cookie.new("session", "god") }
     # cookies.delete("session") # => <HTTP::Cookie @name="session" @value="god" ...>
-    # cookies.empty?            # => true
+    # cookies["session"]?       # => nil
     # ```
     def delete(key : String) : Cookie?
       @cookies.delete(key)
