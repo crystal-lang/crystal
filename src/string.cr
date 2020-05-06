@@ -1069,6 +1069,15 @@ class String
   def downcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
+    if ascii_only? && (options.none? || options.ascii?)
+      return String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    end
+
     String.build(bytesize) { |io| downcase io, options }
   end
 
@@ -1080,15 +1089,9 @@ class String
   # io.to_s # => hello
   # ```
   def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
-    if ascii_only? && (options.none? || options.ascii?)
-      bytesize.times do |i|
-        io.write_byte unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
-      end
-    else
-      each_char do |char|
-        char.downcase(options) do |res|
-          io << res
-        end
+    each_char do |char|
+      char.downcase(options) do |res|
+        io << res
       end
     end
   end
@@ -1101,6 +1104,15 @@ class String
   def upcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
+    if ascii_only? && (options.none? || options.ascii?)
+      return String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+        end
+        {@bytesize, @length}
+      end
+    end
+
     String.build(bytesize) { |io| upcase io, options }
   end
 
@@ -1112,15 +1124,9 @@ class String
   # io.to_s # => HELLO
   # ```
   def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
-    if ascii_only? && (options.none? || options.ascii?)
-      bytesize.times do |i|
-        io.write_byte unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
-      end
-    else
-      each_char do |char|
-        char.upcase(options) do |res|
-          io << res
-        end
+    each_char do |char|
+      char.upcase(options) do |res|
+        io << res
       end
     end
   end
@@ -1134,6 +1140,21 @@ class String
   def capitalize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
+    if ascii_only? && (options.none? || options.ascii?)
+      return String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          byte = if i.zero?
+                   unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+                 else
+                   unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+                 end
+
+          buffer[i] = byte
+        end
+        {@bytesize, @length}
+      end
+    end
+
     String.build(bytesize) { |io| capitalize io, options }
   end
 
@@ -1145,23 +1166,11 @@ class String
   # io.to_s # => Hello
   # ```
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
-    if ascii_only? && (options.none? || options.ascii?)
-      bytesize.times do |i|
-        byte = if i.zero?
-                 unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
-               else
-                 unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
-               end
-
-        io.write_byte byte
-      end
-    else
-      each_char_with_index do |char, i|
-        if i.zero?
-          char.upcase(options) { |c| io << c }
-        else
-          char.downcase(options) { |c| io << c }
-        end
+    each_char_with_index do |char, i|
+      if i.zero?
+        char.upcase(options) { |c| io << c }
+      else
+        char.downcase(options) { |c| io << c }
       end
     end
   end
@@ -1177,6 +1186,20 @@ class String
   def titleize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
+    if ascii_only? && (options.none? || options.ascii?)
+      upcase_next = true
+
+      return String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          char = unsafe_byte_at(i).unsafe_chr
+          replaced_char = upcase_next ? char.upcase : char.downcase
+          buffer[i] = replaced_char.ord.to_u8
+          upcase_next = char.whitespace?
+        end
+        {@bytesize, @length}
+      end
+    end
+
     String.build(bytesize) { |io| titleize io, options }
   end
 
@@ -1189,19 +1212,11 @@ class String
   # ```
   def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     upcase_next = true
-    if ascii_only? && (options.none? || options.ascii?)
-      bytesize.times do |i|
-        char = unsafe_byte_at(i).unsafe_chr
-        replaced_char = upcase_next ? char.upcase : char.downcase
-        io.write_byte replaced_char.ord.to_u8
-        upcase_next = char.whitespace?
-      end
-    else
-      each_char_with_index do |char, i|
-        replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
-        io << replaced_char
-        upcase_next = char.whitespace?
-      end
+
+    each_char_with_index do |char, i|
+      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
+      io << replaced_char
+      upcase_next = char.whitespace?
     end
   end
 
