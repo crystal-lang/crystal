@@ -54,7 +54,6 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
-
   # Creates an OAuth client.
   #
   # Any or all of the customizable URIs *authorize_uri* and
