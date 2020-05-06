@@ -54,8 +54,6 @@
 # You can also use an `OAuth2::Session` to automatically refresh expired
 # tokens before each request.
 class OAuth2::Client
-  private getter host, client_id, client_secret, port, scheme, authorize_uri,
-    redirect_uri, auth_scheme
 
   # Creates an OAuth client.
   #
@@ -89,16 +87,16 @@ class OAuth2::Client
   # Yields an `HTTP::Params::Builder` to add extra parameters other than those
   # defined by the standard.
   def get_authorize_uri(scope = nil, state = nil, &block : HTTP::Params::Builder ->) : String
-    uri = URI.parse(authorize_uri)
+    uri = URI.parse(@authorize_uri)
 
     # Use the default URI if it's not an absolute one
     unless uri.host
-      uri = URI.new(scheme, host, port, authorize_uri)
+      uri = URI.new(@scheme, @host, @port, @authorize_uri)
     end
 
     uri.query = HTTP::Params.build do |form|
-      form.add "client_id", client_id
-      form.add "redirect_uri", redirect_uri
+      form.add "client_id", @client_id
+      form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
       form.add "scope", scope unless scope.nil?
       form.add "state", state unless state.nil?
@@ -117,7 +115,7 @@ class OAuth2::Client
   # [RFC 6749, Section 4.1.3](https://tools.ietf.org/html/rfc6749#section-4.1.3).
   def get_access_token_using_authorization_code(authorization_code : String) : AccessToken
     get_access_token do |form|
-      form.add("redirect_uri", redirect_uri)
+      form.add("redirect_uri", @redirect_uri)
       form.add("grant_type", "authorization_code")
       form.add("code", authorization_code)
     end
@@ -160,14 +158,14 @@ class OAuth2::Client
     }
 
     body = HTTP::Params.build do |form|
-      case auth_scheme
+      case @auth_scheme
       when .request_body?
-        form.add("client_id", client_id)
-        form.add("client_secret", client_secret)
+        form.add("client_id", @client_id)
+        form.add("client_secret", @client_secret)
       when .http_basic?
         headers.add(
           "Authorization",
-          "Basic #{Base64.strict_encode("#{client_id}:#{client_secret}")}"
+          "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
         )
       end
       yield form
@@ -187,7 +185,7 @@ class OAuth2::Client
     if uri.host
       uri
     else
-      URI.new(scheme, host, port, @token_uri)
+      URI.new(@scheme, @host, @port, @token_uri)
     end
   end
 end
