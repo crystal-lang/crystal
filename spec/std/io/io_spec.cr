@@ -46,7 +46,7 @@ private class SimpleIOMemory < IO
     count
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -56,7 +56,7 @@ private class SimpleIOMemory < IO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    nil
+    slice.size.to_u64
   end
 
   def to_slice
@@ -99,7 +99,8 @@ private class OneByOneIO < IO
     1
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
+    slice.size.to_u64
   end
 end
 

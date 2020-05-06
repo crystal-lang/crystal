@@ -72,10 +72,10 @@ class IO::Stapled < IO
   end
 
   # Writes a slice to `writer`.
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
     check_open
 
-    return if slice.empty?
+    return 0u64 if slice.empty?
 
     @writer.write(slice)
   end

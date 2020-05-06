@@ -82,13 +82,13 @@ class IO::Memory < IO
 
   # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
     check_writeable
     check_open
 
     count = slice.size
 
-    return if count == 0
+    return 0u64 if count == 0
 
     new_bytesize = @pos + count
     if new_bytesize > @capacity
@@ -105,7 +105,7 @@ class IO::Memory < IO
     @pos += count
     @bytesize = @pos if @pos > @bytesize
 
-    nil
+    slice.size.to_u64
   end
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,

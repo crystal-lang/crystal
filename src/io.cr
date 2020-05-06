@@ -14,7 +14,7 @@ require "c/errno"
 # these two methods:
 #
 # * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
-# * `write(slice : Bytes)`: write the whole *slice* into the IO
+# * `write(slice : Bytes)`: write the whole *slice* into the IO and return the number of bytes written
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
 #
@@ -29,10 +29,10 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes) : Nil
+#   def write(slice : Bytes) : UInt64
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     nil
+#     slice.size.to_u64
 #   end
 # end
 #
@@ -100,7 +100,7 @@ abstract class IO
   # io.write(slice)
   # io.to_s # => "abcd"
   # ```
-  abstract def write(slice : Bytes) : Nil
+  abstract def write(slice : Bytes) : UInt64
 
   # Closes this `IO`.
   #
@@ -465,13 +465,12 @@ abstract class IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes)
+  def write_utf8(slice : Bytes) : UInt64
     if encoder = encoder()
       encoder.write(self, slice)
     else
       write(slice)
     end
-    nil
   end
 
   private def encoder
@@ -844,7 +843,7 @@ abstract class IO
   # io.write_byte 97_u8
   # io.to_s # => "a"
   # ```
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : UInt64
     x = byte
     write Slice.new(pointerof(x), 1)
   end
@@ -863,8 +862,10 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
-    object.to_io(self, format)
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64
+    io = BytesCounter.new(self)
+    object.to_io(io, format)
+    io.bytes_written
   end
 
   # Reads an instance of the given *type* from this `IO` using the specified *format*.
@@ -1206,6 +1207,25 @@ abstract class IO
 
     def next
       @io.read_byte || stop
+    end
+  end
+
+  # :nodoc:
+  #
+  # Helper to keep the accounting of bytes written in a `IO`
+  class BytesCounter < IO
+    getter bytes_written : UInt64 = 0u64
+    getter io : IO
+
+    def initialize(@io : IO)
+    end
+
+    def write(slice : Bytes) : UInt64
+      @io.write(slice).tap { |res| @bytes_written += res }
+    end
+
+    def read(slice : Bytes)
+      @io.read(slice)
     end
   end
 end
