@@ -55,7 +55,7 @@
 # tokens before each request.
 class OAuth2::Client
   private getter host, client_id, client_secret, port, scheme, authorize_uri,
-    redirect_uri, auth_scheme, token_uri
+    redirect_uri, auth_scheme
 
   # Creates an OAuth client.
   #
@@ -173,7 +173,7 @@ class OAuth2::Client
       yield form
     end
 
-    response = HTTP::Client.post get_token_uri, form: body, headers: headers
+    response = HTTP::Client.post token_uri, form: body, headers: headers
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
@@ -182,12 +182,12 @@ class OAuth2::Client
     end
   end
 
-  private def get_token_uri : URI
-    uri = URI.parse(token_uri)
+  private def token_uri : URI
+    uri = URI.parse(@token_uri)
     if uri.host
       uri
     else
-      URI.new(scheme, host, port, token_uri)
+      URI.new(scheme, host, port, @token_uri)
     end
   end
 end
