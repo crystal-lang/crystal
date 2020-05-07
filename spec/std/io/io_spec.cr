@@ -544,6 +544,42 @@ describe IO do
         end
       end
     end
+
+    describe "counts written bytes" do
+      it "directly" do
+        with_tempfile("create.txt") do |path|
+          File.open(path, "w") do |io|
+            io.write("hello world".to_slice).should eq(11)
+          end
+        end
+      end
+
+      it "using formatter" do
+        with_tempfile("create.txt") do |path|
+          File.open(path, "w") do |io|
+            # Print "           1234.5679"
+            io.printf("%20.8g", 1234.56789).should eq(20)
+          end
+        end
+      end
+
+      pending_win32 "with encoding" do
+        with_tempfile("create.txt") do |path|
+          File.open(path, "w", File::DEFAULT_CREATE_PERMISSIONS, "CP1252") do |io|
+            # In UTF-8 ñ will use 2 bytes
+            io.printf("mañana").should eq(6)
+          end
+        end
+      end
+
+      it "with byte format" do
+        io = SimpleIOMemory.new
+
+        io.write_bytes(1u64).should eq(8)
+        io.write_bytes(1u32).should eq(4)
+        io.write_bytes(1u8).should eq(1)
+      end
+    end
   end
 
   pending_win32 describe: "encoding" do

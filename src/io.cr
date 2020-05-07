@@ -261,14 +261,15 @@ abstract class IO
 
   # Writes a formatted string to this IO.
   # For details on the format string, see `Kernel::sprintf`.
-  def printf(format_string, *args) : Nil
+  def printf(format_string, *args) : UInt64
     printf format_string, args
   end
 
   # :ditto:
-  def printf(format_string, args : Array | Tuple) : Nil
-    String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
+  def printf(format_string, args : Array | Tuple) : UInt64
+    io = BytesCounter.new(self)
+    String::Formatter(typeof(args)).new(format_string, args, io).format
+    io.bytes_written
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -1218,6 +1219,7 @@ abstract class IO
     getter io : IO
 
     def initialize(@io : IO)
+      @encoding = @io.@encoding
     end
 
     def write(slice : Bytes) : UInt64
