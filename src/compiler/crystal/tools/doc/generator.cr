@@ -8,12 +8,13 @@ class Crystal::Doc::Generator
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
-    "BUG"        => "red",
-    "DEPRECATED" => "red",
-    "FIXME"      => "yellow",
-    "NOTE"       => "purple",
-    "OPTIMIZE"   => "green",
-    "TODO"       => "orange",
+    "BUG"          => "red",
+    "DEPRECATED"   => "red",
+    "EXPERIMENTAL" => "lime",
+    "FIXME"        => "yellow",
+    "NOTE"         => "purple",
+    "OPTIMIZE"     => "green",
+    "TODO"         => "orange",
   }
   FLAGS = FLAG_COLORS.keys
 
@@ -306,7 +307,7 @@ class Crystal::Doc::Generator
   def summary(obj : Type | Method | Macro | Constant)
     doc = obj.doc
 
-    return if !doc && !obj.annotations(@program.deprecated_annotation)
+    return if !doc && !has_doc_annotations?(obj)
 
     summary obj, doc || ""
   end
@@ -325,9 +326,13 @@ class Crystal::Doc::Generator
   def doc(obj : Type | Method | Macro | Constant)
     doc = obj.doc
 
-    return if !doc && !obj.annotations(@program.deprecated_annotation)
+    return if !doc && !has_doc_annotations?(obj)
 
     doc obj, doc || ""
+  end
+
+  def has_doc_annotations?(obj)
+    obj.annotations(@program.deprecated_annotation) || obj.annotations(@program.experimental_annotation)
   end
 
   def doc(context, string)
@@ -378,6 +383,14 @@ class Crystal::Doc::Generator
           io << "\n\n" if first
           first = false
           io << "DEPRECATED: #{DeprecatedAnnotation.from(ann).message}\n\n"
+        end
+      end
+
+      if anns = context.annotations(@program.experimental_annotation)
+        anns.each do |ann|
+          io << "\n\n" if first
+          first = false
+          io << "EXPERIMENTAL: #{ExperimentalAnnotation.from(ann).message}\n\n"
         end
       end
     end
