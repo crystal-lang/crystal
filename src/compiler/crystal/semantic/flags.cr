@@ -13,7 +13,7 @@ class Crystal::Program
   end
 
   def host_flags
-    @host_flags ||= flags_for_target(Config.default_target)
+    @host_flags ||= flags_for_target(Config.host_target)
   end
 
   # Returns `true` if *name* is in the program's flags.

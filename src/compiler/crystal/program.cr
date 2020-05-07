@@ -116,7 +116,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # Which kind of warnings wants to be detected.
     property warnings : Warnings = Warnings::All
