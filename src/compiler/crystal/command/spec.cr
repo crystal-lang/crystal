@@ -69,7 +69,7 @@ class Crystal::Command
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join('\n')
     sources = [Compiler::Source.new(source_filename, source)]
 
-    output_filename = Crystal.tempfile "spec"
+    output_filename = Crystal.temp_executable "spec"
 
     result = compiler.compile sources, output_filename
     report_warnings result

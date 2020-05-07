@@ -22,7 +22,7 @@ class Crystal::CodeGenVisitor
 
     call_args, has_out = prepare_call_args node, owner
 
-    # It can happen that one of the arguments caused an unreacahble
+    # It can happen that one of the arguments caused an unreachable
     # to happen, so we must stop here
     return false if @builder.end
 
@@ -360,7 +360,11 @@ class Crystal::CodeGenVisitor
           end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
-            result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))
+            if autocast_literal?(node_arg)
+              # Matches, so nothing to do
+            else
+              result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))
+            end
           end
 
           current_def_label, next_def_label = new_blocks "current_def", "next_def"
@@ -389,6 +393,16 @@ class Crystal::CodeGenVisitor
     end
 
     @needs_value = old_needs_value
+  end
+
+  def autocast_literal?(call_arg)
+    # If a call argument is a literal like 1 or :foo then
+    # it will match all the multidispatch overloads because
+    # it has a single type and there's no way some overload
+    # (from the ones we decided that match) won't match,
+    # because if it doesn't match then we wouldn't have included
+    # it in the match list.
+    call_arg.is_a?(NumberLiteral) || call_arg.is_a?(SymbolLiteral)
   end
 
   def codegen_call(node, target_def, self_type, call_args)

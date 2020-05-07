@@ -48,7 +48,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     if filenames
       nodes = Array(ASTNode).new(filenames.size)
       filenames.each do |filename|
-        if @program.add_to_requires(filename)
+        if @program.requires.add?(filename)
           parser = Parser.new File.read(filename), @program.string_pool
           parser.filename = filename
           parser.wants_doc = @program.wants_doc?
@@ -520,7 +520,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def pushing_type(type : ModuleType)
     old_type = @current_type
     @current_type = type
+    read_annotations
     yield
     @current_type = old_type
+  end
+
+  # Returns the current annotations and clears them for subsequent readers.
+  def read_annotations
+    annotations = @annotations
+    @annotations = nil
+    annotations
   end
 end

@@ -1,7 +1,9 @@
 require "spec"
 require "yaml"
-require "big"
-require "big/yaml"
+{% unless flag?(:win32) %}
+  require "big"
+  require "big/yaml"
+{% end %}
 
 enum YAMLSpecEnum
   Zero
@@ -61,6 +63,10 @@ describe "YAML serialization" do
 
     it "can parse string that looks like a number" do
       String.from_yaml(%(1.2)).should eq ("1.2")
+    end
+
+    it "does Path.from_yaml" do
+      Path.from_yaml(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
     it "does Float32#from_yaml" do
@@ -150,19 +156,19 @@ describe "YAML serialization" do
       tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    it "does for BigDecimal" do
+    pending_win32 "does for BigDecimal" do
       big = BigDecimal.from_yaml("1234.567891011121314")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.567891011121314"))
@@ -299,6 +305,10 @@ describe "YAML serialization" do
       end
     end
 
+    it "does for Path" do
+      Path.from_yaml(Path.new("foo", "bar", "baz").to_yaml).should eq(Path.new("foo", "bar", "baz"))
+    end
+
     it "does for Array" do
       Array(Int32).from_yaml([1, 2, 3].to_yaml).should eq([1, 2, 3])
     end
@@ -323,12 +333,12 @@ describe "YAML serialization" do
       {x: 1, y: "hello"}.to_yaml.should eq({:x => 1, :y => "hello"}.to_yaml)
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       BigInt.from_yaml(big.to_yaml).should eq(big)
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end

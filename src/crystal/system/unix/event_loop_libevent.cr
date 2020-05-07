@@ -5,6 +5,7 @@ class Thread
   getter(event_base) { Crystal::Event::Base.new }
 end
 
+# :nodoc:
 module Crystal::EventLoop
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.

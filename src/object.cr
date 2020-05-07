@@ -916,8 +916,6 @@ class Object
 
         \{% name = names[0] %}
 
-        {{macro_prefix}}setter \{{name}}
-
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
@@ -928,6 +926,9 @@ class Object
               value
             end
           end
+
+          def {{method_prefix}}\{{name.var.id}}=({{var_prefix}}\{{name.var.id}} : \{{name.type}})
+          end
         \{% else %}
           def {{method_prefix}}\{{name.id}}
             if (value = {{var_prefix}}\{{name.id}}).nil?
@@ -935,6 +936,9 @@ class Object
             else
               value
             end
+          end
+
+          def {{method_prefix}}\{{name.id}}=({{var_prefix}}\{{name.id}})
           end
         \{% end %}
       \{% else %}

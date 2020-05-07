@@ -1639,4 +1639,15 @@ describe Crystal::Formatter do
       end
     %}
     CODE
+
+  # #4626
+  assert_format <<-CODE
+    1 # foo
+    / 1 /
+    CODE
+
+  assert_format <<-CODE
+    1 # foo
+    / #{1} /
+    CODE
 end

@@ -218,6 +218,9 @@ class HTTP::Server
         else
           @io.write(slice)
         end
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while writing data to the client", ex)
       end
 
       def closed?
@@ -234,6 +237,11 @@ class HTTP::Server
         ensure_headers_written
 
         super
+
+        if @chunked
+          @io << "0\r\n\r\n"
+          @io.flush
+        end
       end
 
       private def ensure_headers_written
@@ -247,7 +255,6 @@ class HTTP::Server
       end
 
       private def unbuffered_close
-        @io << "0\r\n\r\n" if @chunked
         @closed = true
       end
 
@@ -257,7 +264,13 @@ class HTTP::Server
 
       private def unbuffered_flush
         @io.flush
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while flushing data to the client", ex)
       end
     end
+  end
+
+  class ClientError < Exception
   end
 end

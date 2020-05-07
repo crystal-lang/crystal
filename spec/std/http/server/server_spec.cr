@@ -2,6 +2,7 @@ require "../spec_helper"
 require "http/server"
 require "http/client/response"
 require "../../../support/ssl"
+require "../../../support/channel"
 
 # TODO: replace with `HTTP::Client` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
@@ -72,7 +73,7 @@ describe HTTP::Server do
     end
     sleep 0.1
 
-    delay(1) { ch.send :timeout }
+    schedule_timeout ch
 
     TCPSocket.open(address.address, address.port) { }
 
@@ -408,6 +409,35 @@ describe HTTP::Server do
       when ret = server_done.receive
         fail("Server finished with #{ret}")
       else
+      end
+    end
+  end
+
+  it "can process simultaneous SSL handshakes" do
+    server = HTTP::Server.new do |context|
+      context.response.print "ok"
+    end
+
+    server_context, client_context = ssl_context_pair
+    address = server.bind_tls "localhost", server_context
+
+    run_server(server) do
+      ch = Channel(Nil).new
+
+      spawn do
+        TCPSocket.open(address.address, address.port) do |socket|
+          ch.send nil
+          ch.receive
+        end
+      end
+
+      begin
+        ch.receive
+        client = HTTP::Client.new(address.address, address.port, client_context)
+        client.read_timeout = client.connect_timeout = 3
+        client.get("/").body.should eq "ok"
+      ensure
+        ch.send nil
       end
     end
   end

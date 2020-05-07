@@ -421,7 +421,7 @@ struct XML::Node
   end
 
   # :nodoc:
-  SAVE_MUTEX = Thread::Mutex.new
+  SAVE_MUTEX = ::Mutex.new
 
   # Serialize this Node as XML to *io* using default options.
   #

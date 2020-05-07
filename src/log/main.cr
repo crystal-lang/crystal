@@ -35,7 +35,7 @@ class Log
 
   private Top = Log.for("")
 
-  {% for method in %i(debug verbose info warn error fatal) %}
+  {% for method in %i(trace debug info notice warn error fatal) %}
     # See `Log#{{method.id}}`.
     def self.{{method.id}}(*, exception : Exception? = nil)
       Top.{{method.id}}(exception: exception) do
@@ -91,6 +91,13 @@ class Log
     end
   end
 
+  # :ditto:
+  def with_context
+    self.class.with_context do
+      yield
+    end
+  end
+
   class Context
     # Clears the current `Fiber` logging context.
     #
@@ -99,7 +106,7 @@ class Log
     # Log.info { "message with empty context" }
     # ```
     def clear
-      Fiber.current.logging_context = Log::Context.new
+      Fiber.current.logging_context = Log::Context.empty
     end
 
     # Extends the current `Fiber` logging context.

@@ -2,9 +2,9 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
-  property is_crystal_repo : Bool
   @repository : String? = nil
   getter repository_name = ""
+  getter project_info
 
   # Adding a flag and associated css class will add support in parser
   FLAG_COLORS = {
@@ -29,17 +29,17 @@ class Crystal::Doc::Generator
   }
 
   def self.new(program : Program, included_dirs : Array(String))
-    new(program, included_dirs, ".", "html", nil, "1.0", "never")
+    new(program, included_dirs, ".", "html", nil, "1.0", "never", ProjectInfo.new("test", "0.0.0-test"))
   end
 
   def initialize(@program : Program, @included_dirs : Array(String),
                  @output_dir : String, @output_format : String,
                  @sitemap_base_url : String?,
-                 @sitemap_priority : String, @sitemap_changefreq : String)
+                 @sitemap_priority : String, @sitemap_changefreq : String,
+                 @project_info : ProjectInfo)
     @base_dir = Dir.current.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
-    @is_crystal_repo = false
     compute_repository
   end
 
@@ -95,7 +95,7 @@ class Crystal::Doc::Generator
     raw_body = read_readme
     body = doc(program_type, raw_body)
 
-    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, repository_name)
+    File.write File.join(@output_dir, "index.html"), MainTemplate.new(body, types, project_info)
 
     main_index = Main.new(raw_body, Type.new(self, @program), repository_name)
     File.write File.join(@output_dir, "index.json"), main_index
@@ -124,7 +124,7 @@ class Crystal::Doc::Generator
         filename = File.join(dir, "#{type.name}.html")
       end
 
-      File.write filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types, project_info)
 
       next if type.program?
 
@@ -238,7 +238,7 @@ class Crystal::Doc::Generator
   end
 
   def crystal_builtin?(type)
-    return false unless @is_crystal_repo
+    return false unless project_info.crystal_stdlib?
     return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
 
     crystal_type = @program.types["Crystal"]
@@ -394,8 +394,6 @@ class Crystal::Doc::Generator
     git_matches = remotes.each_line.compact_map do |line|
       GIT_REMOTE_PATTERNS.each_key.compact_map(&.match(line)).first?
     end.to_a
-
-    @is_crystal_repo = git_matches.any? { |gr| gr.string =~ %r{github\.com[/:]crystal-lang/crystal(?:\.git)?\s} }
 
     origin = git_matches.find(&.string.starts_with?("origin")) || git_matches.first?
     return unless origin

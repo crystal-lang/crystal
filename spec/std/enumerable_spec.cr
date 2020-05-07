@@ -443,6 +443,10 @@ describe "Enumerable" do
   end
 
   describe "first" do
+    it "calls block if empty" do
+      (1...1).first { 10 }.should eq(10)
+    end
+
     it "gets first" do
       (1..3).first.should eq(1)
     end

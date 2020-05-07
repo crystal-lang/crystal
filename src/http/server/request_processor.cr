@@ -1,6 +1,9 @@
 require "./handler"
+require "log"
 
 class HTTP::Server::RequestProcessor
+  Log = ::Log.for("http.server")
+
   # Maximum permitted size of the request line in an HTTP request.
   property max_request_line_size = HTTP::MAX_REQUEST_LINE_SIZE
 
@@ -19,7 +22,7 @@ class HTTP::Server::RequestProcessor
     @wants_close = true
   end
 
-  def process(input, output, error = STDERR)
+  def process(input, output)
     must_close = true
     response = Response.new(output)
 
@@ -46,11 +49,18 @@ class HTTP::Server::RequestProcessor
 
         begin
           @handler.call(context)
+        rescue ex : ClientError
+          Log.debug(exception: ex.cause) { ex.message }
         rescue ex
-          response.respond_with_status(:internal_server_error)
-          error.puts "Unhandled exception on HTTP::Handler"
-          ex.inspect_with_backtrace(error)
+          Log.error(exception: ex) { "Unhandled exception on HTTP::Handler" }
+          unless response.closed?
+            unless response.wrote_headers?
+              response.respond_with_status(:internal_server_error)
+            end
+          end
           return
+        ensure
+          response.output.close
         end
 
         if response.upgraded?
@@ -58,7 +68,6 @@ class HTTP::Server::RequestProcessor
           return
         end
 
-        response.output.close
         output.flush
 
         break unless request.keep_alive?

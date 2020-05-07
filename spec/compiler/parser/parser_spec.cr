@@ -278,6 +278,7 @@ module Crystal
     it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
     it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
     assert_syntax_error "def foo(x, *); 1; end", "named arguments must follow bare *"
+    it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
     assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
     assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
@@ -355,6 +356,10 @@ module Crystal
     it_parses "foo = 1; foo(+1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", 1.int32)]
     it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "-", 1.int32)]
     it_parses "foo = 1; foo(-1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", -1.int32)]
+    it_parses "foo = 1; b = 2; foo -b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "foo = 1; b = 2; foo +b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo -b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo +b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
 
     it_parses "foo(&block)", Call.new(nil, "foo", block_arg: "block".call)
     it_parses "foo &block", Call.new(nil, "foo", block_arg: "block".call)
@@ -848,6 +853,9 @@ module Crystal
     it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
 
+    assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
+    assert_syntax_error "{% unless 1 %} 2 {% elsif 3 %} 3 {% end %}"
+
     it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
     it_parses "{{ //.options }}", MacroExpression.new(Expressions.from([Call.new(RegexLiteral.new(StringLiteral.new("")), "options")] of ASTNode))
 
@@ -987,7 +995,9 @@ module Crystal
     it_parses "a = /=/", Assign.new("a".var, regex("="))
     it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
     it_parses "a; if / /\n/ /\nelsif / /\n/ /\nend", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
-    it_parses "a; while / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
+    it_parses "a; unless / /; / /; else; / /; end", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nunless / /\n/ /\nelse\n/ /\nend", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nwhile / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "a\nwhile / /\n/ /\nend", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "[/ /, / /]", ArrayLiteral.new([regex(" "), regex(" ")] of ASTNode)
     it_parses "{/ / => / /, / / => / /}", HashLiteral.new([HashLiteral::Entry.new(regex(" "), regex(" ")), HashLiteral::Entry.new(regex(" "), regex(" "))])
@@ -995,7 +1005,10 @@ module Crystal
     it_parses "begin; / /; end", Expressions.new([regex(" ")] of ASTNode)
     it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
     it_parses "/\\//", regex("/")
+    it_parses "/\\ /", regex(" ")
     it_parses "%r(/)", regex("/")
+    it_parses "%r(\\/)", regex("/")
+    it_parses "%r(\\ )", regex(" ")
     it_parses "a()/3", Call.new("a".call, "/", 3.int32)
     it_parses "a() /3", Call.new("a".call, "/", 3.int32)
     it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)

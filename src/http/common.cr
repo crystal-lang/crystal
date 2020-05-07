@@ -1,7 +1,7 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "flate"
-  require "gzip"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 module HTTP
@@ -61,9 +61,9 @@ module HTTP
           {% else %}
             case encoding
             when "gzip"
-              body = Gzip::Reader.new(body, sync_close: true)
+              body = Compress::Gzip::Reader.new(body, sync_close: true)
             when "deflate"
-              body = Flate::Reader.new(body, sync_close: true)
+              body = Compress::Deflate::Reader.new(body, sync_close: true)
             else
               # not a format we support
             end

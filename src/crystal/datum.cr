@@ -11,15 +11,17 @@ module Crystal
       {% end %}
     end
 
-    # Checks that the underlying value is `{{type}}`, and returns its value.
-    # Returns `nil` otherwise.
-    def as_{{short.id}}? : {{type}}?
-      {% if immutable == true %}
-        @raw.as?({{type}}).dup
-      {% else %}
-        @raw.as?({{type}})
-      {% end %}
-    end
+    {% if type.resolve != Nil %}
+      # Checks that the underlying value is `{{type}}`, and returns its value.
+      # Returns `nil` otherwise.
+      def as_{{short.id}}? : {{type}}?
+        {% if immutable == true %}
+          @raw.as?({{type}}).dup
+        {% else %}
+          @raw.as?({{type}})
+        {% end %}
+      end
+    {% end %}
   end
 
   # `Crystal.datum` macro is an internal helper to create data types that will hold
@@ -28,16 +30,18 @@ module Crystal
   # * **types**: contains a named tuple of prefixes and datatypes of each leaf
   # * **hash_key_type** specifies the type used as the key of `Hash`
   # * **immutable**: will generate honor immutability of the values via `.dup`
+  # * **target_type**: is the type where the macro is invoked (it's a workaround for #9099).
 
   # :nodoc:
-  macro datum(*, types, hash_key_type, immutable)
-    # All possible `{{@type}}` types.
+  macro datum(*, types, hash_key_type, immutable, target_type)
+
+    # All possible `{{target_type}}` types.
     alias Type = {% for short, type in types %}{{type}} | {% end %}Array(self) | Hash({{hash_key_type}}, self)
 
-    # Returns the raw underlying value, a `Raw`.
+    # Returns the raw underlying value, a `Type`.
     getter raw : Type
 
-    # Creates a `{{@type}}` that wraps the given `Raw`.
+    # Creates a `{{target_type}}` that wraps the given `Type`.
     def initialize(@raw : Type)
     end
 
@@ -157,12 +161,12 @@ module Crystal
     # See `Object#hash(hasher)`
     def_hash raw
 
-    # Returns a new `{{@type}}` instance with the `raw` value `dup`ed.
+    # Returns a new `{{target_type}}` instance with the `raw` value `dup`ed.
     def dup
       self.class.new(raw.dup)
     end
 
-    # Returns a new `{{@type}}` instance with the `raw` value `clone`ed.
+    # Returns a new `{{target_type}}` instance with the `raw` value `clone`ed.
     def clone
       self.class.new(raw.clone)
     end

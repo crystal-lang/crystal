@@ -3168,17 +3168,7 @@ module Crystal
         when :if
           return parse_macro_if(start_location, macro_state)
         when :unless
-          macro_if = parse_macro_if(start_location, macro_state)
-          case macro_if
-          when MacroIf
-            macro_if.then, macro_if.else = macro_if.else, macro_if.then
-          when MacroExpression
-            exp = macro_if.exp.as(If)
-            macro_if.exp = Unless.new(exp.cond, exp.then, exp.else).at(exp)
-          else
-            # Nothing special to do
-          end
-          return macro_if
+          return parse_macro_if(start_location, macro_state, is_unless: true)
         when :begin
           next_token_skip_space
           check :"%}"
@@ -3223,7 +3213,7 @@ module Crystal
       MacroExpression.new(exps, output: false).at_end(token_end_location)
     end
 
-    def parse_macro_if(start_location, macro_state, check_end = true)
+    def parse_macro_if(start_location, macro_state, check_end = true, is_unless = false)
       location = @token.location
 
       next_token_skip_space
@@ -3233,8 +3223,12 @@ module Crystal
       @in_macro_expression = false
 
       if @token.type != :"%}" && check_end
-        an_if = parse_if_after_condition cond, location, true
-        return MacroExpression.new(an_if, output: false).at_end(token_end_location)
+        if is_unless
+          node = parse_unless_after_condition cond, location
+        else
+          node = parse_if_after_condition cond, location, true
+        end
+        return MacroExpression.new(node, output: false).at_end(token_end_location)
       end
 
       check :"%}"
@@ -3259,6 +3253,7 @@ module Crystal
             check :"%}"
           end
         when :elsif
+          unexpected_token if is_unless
           a_else = parse_macro_if(start_location, macro_state, false)
 
           if check_end
@@ -3278,6 +3273,7 @@ module Crystal
         unexpected_token
       end
 
+      a_then, a_else = a_else, a_then if is_unless
       return MacroIf.new(cond, a_then, a_else).at_end(token_end_location)
     end
 
@@ -3570,8 +3566,16 @@ module Crystal
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
         skip_space_or_newline
-        if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
-          raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
+        # When block_arg.name is empty, this is an anonymous argument.
+        # An anonymous argument should not conflict other arguments names.
+        # (In fact `args` may contain anonymous splat argument. See #9108).
+        # So check is skipped.
+        unless block_arg.name.empty?
+          conflict_arg = args.any?(&.name.==(block_arg.name))
+          conflict_double_splat = found_double_splat && found_double_splat.name == block_arg.name
+          if conflict_arg || conflict_double_splat
+            raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
+          end
         end
         return ArgExtras.new(block_arg, false, false, false)
       end
@@ -3912,9 +3916,17 @@ module Crystal
     end
 
     def parse_unless
+      location = @token.location
+
+      slash_is_regex!
       next_token_skip_space_or_newline
 
       cond = parse_op_assign_no_control allow_suffix: false
+      parse_unless_after_condition(cond, location)
+    end
+
+    def parse_unless_after_condition(cond, location)
+      slash_is_regex!
       skip_statement_end
 
       a_then = parse_expressions
@@ -3930,7 +3942,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      Unless.new(cond, a_then, a_else).at_end(end_location)
+      Unless.new(cond, a_then, a_else).at(location).at_end(end_location)
     end
 
     def set_visibility(node)
@@ -4055,6 +4067,9 @@ module Crystal
               sign = num.value[0].to_s
               num.value = num.value.byte_slice(1)
               Call.new(Var.new(name), sign, args)
+            elsif maybe_var && args.size == 1 && (arg = args[0]) && arg.is_a?(Call) && !arg.obj.nil? &&
+                  arg.name.in?("+", "-") && (!arg.args || arg.args.size == 0)
+              Call.new(Var.new(name), arg.name, arg.obj.not_nil!)
             else
               call = Call.new(nil, name, args, nil, block_arg, named_args, global)
               call.name_location = name_location

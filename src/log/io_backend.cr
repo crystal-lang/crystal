@@ -2,9 +2,9 @@
 class Log::IOBackend < Log::Backend
   property io : IO
   property progname : String
-  property formatter : Formatter? = nil
+  property formatter : Formatter?
 
-  def initialize(@io = STDOUT)
+  def initialize(@io = STDOUT, @formatter = nil)
     @mutex = Mutex.new(:unchecked)
     @progname = File.basename(PROGRAM_NAME)
   end
@@ -33,7 +33,7 @@ class Log::IOBackend < Log::Backend
     io << label[0] << ", ["
     entry.timestamp.to_rfc3339(io)
     io << " #" << Process.pid << "] "
-    label.rjust(7, io)
+    label.rjust(6, io)
     io << " -- " << @progname << ":" << entry.source << ": " << entry.message
     if entry.context.size > 0
       io << " -- " << entry.context
