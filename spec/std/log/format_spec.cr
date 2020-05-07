@@ -60,8 +60,8 @@ class Log
     end
   end
 
-  format TestFormatter, "#{severity} #{source(before: '[', after: "] ")}#{progname} #{message}" \
-                        "#{context(before: " (", after: ')')}#{exception}"
+  define_formatter TestFormatter, "#{severity} #{source(before: '[', after: "] ")}#{progname} #{message}" \
+                                  "#{context(before: " (", after: ')')}#{exception}"
   Log.progname = "test"
 
   describe TestFormatter do
