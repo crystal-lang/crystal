@@ -178,3 +178,19 @@ class Thread
     @th
   end
 end
+
+# In musl (alpine) the calls to unwind API segfaults
+# when the binary is statically linked. This is because
+# some symbols like `pthread_once` are defined as "weak"
+# and, for some reason, not linked into the final binary.
+# Adding an explicit reference to the symbol ensures it's
+# included in the statically linked binary.
+{% if flag?(:musl) && flag?(:static) %}
+  lib LibC
+    fun pthread_once(Void*, Void*)
+  end
+
+  fun __crystal_static_musl_workaround
+    LibC.pthread_once(nil, nil)
+  end
+{% end %}
