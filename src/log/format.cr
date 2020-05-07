@@ -50,9 +50,9 @@ class Log
   # There is also a helper macro to generate these formatters. Here's
   # an example that generates the same result:
   # ```
-  # Log.format MyFormat, "- #{severity}: #{message}"
+  # Log.define_formatter MyFormat, "- #{severity}: #{message}"
   # ```
-  abstract struct StaticFormat
+  abstract struct StaticFormatter
     extend Formatter
 
     def initialize(@entry : Log::Entry, @io : IO)
@@ -145,16 +145,16 @@ class Log
     abstract def run
   end
 
-  # Generate subclasses of `Log::StaticFormat` from a string with interpolations
+  # Generate subclasses of `Log::StaticFormatter` from a string with interpolations
   #
   # Example:
   # ```
-  # Log.format MyFormat, "- #{severity}: #{message}"
+  # Log.define_formatter MyFormat, "- #{severity}: #{message}"
   # ```
-  # See `Log::StaticFormat` for the available methods that can
+  # See `Log::StaticFormatter` for the available methods that can
   # be called within the interpolations.
-  macro format(name, pattern)
-    struct {{name}} < ::Log::StaticFormat
+  macro define_formatter(name, pattern)
+    struct {{name}} < ::Log::StaticFormatter
       def run
         {% for part in pattern.expressions %}
           {% if part.is_a?(StringLiteral) %}
@@ -186,5 +186,5 @@ end
 # Oh, no (Exception)
 #   from ...
 # ```
-Log.format Log::ShortFormat, "#{timestamp} #{severity} - #{source(after: ": ")}#{message}" \
-                             "#{data(before: " -- ")}#{context(before: " -- ")}#{exception}"
+Log.define_formatter Log::ShortFormat, "#{timestamp} #{severity} - #{source(after: ": ")}#{message}" \
+                                       "#{data(before: " -- ")}#{context(before: " -- ")}#{exception}"
