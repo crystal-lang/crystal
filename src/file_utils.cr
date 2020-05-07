@@ -118,7 +118,7 @@ module FileUtils
   # ```
   def cp_r(src_path : String, dest_path : String)
     if Dir.exists?(src_path)
-      Dir.mkdir(dest_path)
+      Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
         src = File.join(src_path, entry)
         dest = File.join(dest_path, entry)

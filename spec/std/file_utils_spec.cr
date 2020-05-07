@@ -125,6 +125,23 @@ describe "FileUtils" do
         File.exists?(File.join(dest_path, "b/c")).should be_true
       end
     end
+
+    it "copies a directory recursively if destination exists leaving existing files" do
+      with_tempfile("cp_r-test", "cp_r-test-copied") do |src_path, dest_path|
+        Dir.mkdir_p(dest_path)
+        File.write(File.join(dest_path, "d"), "")
+
+        Dir.mkdir_p(src_path)
+        File.write(File.join(src_path, "a"), "")
+        Dir.mkdir(File.join(src_path, "b"))
+        File.write(File.join(src_path, "b/c"), "")
+
+        FileUtils.cp_r(src_path, dest_path)
+        File.exists?(File.join(dest_path, "a")).should be_true
+        File.exists?(File.join(dest_path, "b/c")).should be_true
+        File.exists?(File.join(dest_path, "d")).should be_true
+      end
+    end
   end
 
   describe "rm_r" do
