@@ -1,14 +1,22 @@
 class Log
+  # The program name used for log entries
+  #
+  # Defaults to the executable name
   class_property progname = File.basename(PROGRAM_NAME)
 
+  # Base interface to convert log entries and write them to an `IO`
   module Formatter
+    # Writes a `Log::Entry` through an `IO`
     abstract def format(entry : Log::Entry, io : IO)
 
+    # Creates an instance of a `Log::Formatter` that calls
+    # the specified `Proc` for every entry
     def self.new(&proc : (Log::Entry, IO) ->)
       ProcFormatter.new proc
     end
   end
 
+  # :nodoc:
   private struct ProcFormatter
     include Formatter
 
@@ -20,46 +28,101 @@ class Log
     end
   end
 
+  # Base implementation of `Log::Formatter` to convert
+  # log entries into text representation
+  #
+  # This can be used to create efficient formatters:
+  # ```
+  # struct MyFormat < Log::StaticFormat
+  #   def run
+  #     string "- "
+  #     severity
+  #     string ": "
+  #     message
+  #   end
+  # end
+  #
+  # Log.setup(:info, Log::IOBackend.new(formatter: MyFormat))
+  # Log.info { "Hello" }    # => -    INFO: Hello
+  # Log.error { "Oh, no!" } # => -   ERROR: Oh, no!
+  # ```
+  #
+  # There is also a helper macro to generate these formatters. Here's
+  # an example that generates the same result:
+  # ```
+  # Log.format MyFormat, "- #{severity}: #{message}"
+  # ```
   abstract struct StaticFormat
     extend Formatter
 
     def initialize(@entry : Log::Entry, @io : IO)
     end
 
+    # Write the entry timestamp in RFC3339 format
     def timestamp
       @entry.timestamp.to_rfc3339(@io)
     end
 
+    # Write a fixed string
     def string(str)
       @io << str
     end
 
+    # Write the message of the entry
     def message
       @io << @entry.message
     end
 
+    # Write the severity
+    #
+    # This writes the severity in uppercase and left padded
+    # with enough space so all the severities fit
     def severity
       @entry.severity.label.rjust(7, @io)
     end
 
+    # Write the source for non-root entries
+    #
+    # It doesn't write any output for entries generated from the root logger.
+    # Parameters `before` and `after` can be provided to be written around
+    # the value.
+    # ```
+    # source(before: '[', after: ']') # => [http.server]
+    # ```
     def source(*, before = nil, after = nil)
       if @entry.source.size > 0
         @io << before << @entry.source << after
       end
     end
 
+    # Write all the values from the entry data
+    #
+    # It doesn't write any output if the entry data is empty.
+    # Parameters `before` and `after` can be provided to be written around
+    # the value.
     def data(*, before = nil, after = nil)
       if @entry.data.size > 0
         @io << before << @entry.data << after
       end
     end
 
+    # Write all the values from the context
+    #
+    # It doesn't write any output if the context is empty.
+    # Parameters `before` and `after` can be provided to be written around
+    # the value.
     def context(*, before = nil, after = nil)
       if @entry.context.size > 0
         @io << before << @entry.context << after
       end
     end
 
+    # Write the exception, including backtrace
+    #
+    # It doesn't write any output unless there is an exception in the entry.
+    # Parameters `before` and `after` can be provided to be written around
+    # the value. `before` defaults to `'\n'` so the exception is written
+    # on a separate line
     def exception(*, before = '\n', after = nil)
       if ex = @entry.exception
         @io << before
@@ -68,17 +131,28 @@ class Log
       end
     end
 
+    # Write the program name. See `Log.progname`.
     def progname
       @io << Log.progname
     end
 
+    # Write the `Log::Entry` to the `IO` using this pattern
     def self.format(entry, io)
       new(entry, io).run
     end
 
+    # Subclasses must implement this method to define the output pattern
     abstract def run
   end
 
+  # Generate subclasses of `Log::StaticFormat` from a string with interpolations
+  #
+  # Example:
+  # ```
+  # Log.format MyFormat, "- #{severity}: #{message}"
+  # ```
+  # See `Log::StaticFormat` for the available methods that can
+  # be called within the interpolations.
   macro format(name, pattern)
     struct {{name}} < ::Log::StaticFormat
       def run
@@ -94,5 +168,23 @@ class Log
   end
 end
 
+# Default short format
+#
+# It writes log entries with the following format:
+# ```
+# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything
+# ```
+#
+# When the entries have context data it's also written to the output:
+# ```
+# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything -- {"data" => 123}
+# ```
+#
+# Exceptions are written in a separate line:
+# ```
+# 2020-05-07T17:40:07.994508000Z   ERROR - my.source: Something failed
+# Oh, no (Exception)
+#   from ...
+# ```
 Log.format Log::ShortFormat, "#{timestamp} #{severity} - #{source(after: ": ")}#{message}" \
                              "#{data(before: " -- ")}#{context(before: " -- ")}#{exception}"
