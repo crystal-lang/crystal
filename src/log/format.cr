@@ -4,6 +4,9 @@ class Log
   # Defaults to the executable name
   class_property progname = File.basename(PROGRAM_NAME)
 
+  # The current process PID
+  protected class_getter pid : String = Process.pid.to_s
+
   # Base interface to convert log entries and write them to an `IO`
   module Formatter
     # Writes a `Log::Entry` through an `IO`
@@ -134,6 +137,11 @@ class Log
     # Write the program name. See `Log.progname`.
     def progname
       @io << Log.progname
+    end
+
+    # Write the current process identifier
+    def pid(*, before = '#', after = nil)
+      @io << before << Log.pid << after
     end
 
     # Write the `Log::Entry` to the `IO` using this pattern
