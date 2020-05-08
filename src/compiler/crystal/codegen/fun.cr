@@ -518,6 +518,12 @@ class Crystal::CodeGenVisitor
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
           pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
+
+          if var_type.is_a?(ProcInstanceType) && value.type != llvm_typer.proc_type
+            value = bit_cast(value, llvm_context.void_pointer)
+            value = make_fun(var_type, value, llvm_context.void_pointer.null)
+          end
+
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?

@@ -506,4 +506,12 @@ describe "Code gen: pointer" do
         x + y + z
       ), &.to_i.should eq(111))
   end
+
+  it "takes pointerof function pointer" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        pointerof(a).value.call(Pointer(Void).new(0_u64))
+      end
+    ))
+  end
 end
