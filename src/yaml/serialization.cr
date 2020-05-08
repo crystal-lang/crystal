@@ -1,3 +1,5 @@
+require "./to_yaml"
+
 module YAML
   annotation Field
   end
@@ -124,6 +126,8 @@ module YAML
   #
   # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
   module Serializable
+    include ::YAML::Serializable::Helper
+
     annotation Options
     end
 

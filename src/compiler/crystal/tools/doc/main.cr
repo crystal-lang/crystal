@@ -1,5 +1,7 @@
 module Crystal::Doc
   record Main, body : String, program : Type, repository_name : String do
+    include JSON::Serializable::Helper
+
     def to_s(io : IO) : Nil
       to_json(io)
     end

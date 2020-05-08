@@ -1,3 +1,5 @@
+require "./to_json"
+
 module JSON
   annotation Field
   end
@@ -125,6 +127,8 @@ module JSON
   #
   # You can use `JSON::Serializable.use_json_discriminator` for this use case.
   module Serializable
+    include ::JSON::Serializable::Helper
+
     annotation Options
     end
 

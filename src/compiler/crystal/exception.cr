@@ -1,8 +1,11 @@
 require "./util"
 require "colorize"
+require "json"
 
 module Crystal
   abstract class Exception < ::Exception
+    include JSON::Serializable::Helper
+
     property? color = false
     property? error_trace = false
 

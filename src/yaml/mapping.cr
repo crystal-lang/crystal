@@ -65,9 +65,14 @@ module YAML
   #
   # The macro basically defines a constructor accepting a `YAML::PullParser` that reads from
   # it and initializes this type's instance variables.
+  # It also includes `YAML::Serializable` and defines a `to_yaml(YAML::Nodes::Builder)` method
+  # by invoking `to_yaml(YAML::Nodes::Builder)` on each of the properties (unless a converter is specified, in
+  # which case `to_yaml(value, YAML::Nodes::Builder)` is invoked).
   #
   # This macro also declares instance variables of the types given in the mapping.
   macro mapping(_properties_, strict = false)
+    include YAML::Serializable
+
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
