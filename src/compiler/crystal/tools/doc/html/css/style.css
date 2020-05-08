@@ -146,6 +146,7 @@ body {
   color: inherit;
   font-family: inherit;
   font-size: inherit;
+  line-height: inherit;
 }
 .project-versions-nav:focus {
   outline: none;
