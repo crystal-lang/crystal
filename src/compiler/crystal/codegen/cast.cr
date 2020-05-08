@@ -549,6 +549,9 @@ class Crystal::CodeGenVisitor
 
     if to_type != from_type
       value = upcast_distinct(value, to_type, from_type)
+    elsif to_type.is_a?(ProcInstanceType) && value.type != llvm_typer.proc_type
+      value = bit_cast(value, llvm_context.void_pointer)
+      value = make_fun(to_type, value, llvm_context.void_pointer.null)
     end
     value
   end

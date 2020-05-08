@@ -411,4 +411,12 @@ describe "Code gen: cast" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "casts from function pointer to proc" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        Pointer(Proc((Void* -> Void*), Void*)).new(0_u64).value.call(a)
+      end
+    ))
+  end
 end
