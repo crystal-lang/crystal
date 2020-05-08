@@ -1,4 +1,5 @@
 require "c/io"
+require "c/consoleapi"
 
 module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
@@ -161,5 +162,25 @@ module Crystal::System::FileDescriptor
     end
 
     bytes_read
+  end
+
+  def self.from_stdio(fd)
+    console_handle = false
+    handle = LibC._get_osfhandle(fd)
+    if handle != -1
+      if LibC.GetConsoleMode(LibC::HANDLE.new(handle), out _) != 0
+        console_handle = true
+      end
+    end
+
+    io = IO::FileDescriptor.new(fd)
+    # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
+    # See https://crystal-lang.org/api/toplevel.html#STDERR
+    if console_handle
+      io.sync = true
+    else
+      io.flush_on_newline = true
+    end
+    io
   end
 end
