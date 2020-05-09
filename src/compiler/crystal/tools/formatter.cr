@@ -3573,7 +3573,7 @@ module Crystal
       align_number = node.whens.all? { |a_when| a_when.conds.size === 1 && a_when.conds.first.is_a?(NumberLiteral) }
 
       node.whens.each_with_index do |a_when, i|
-        format_when(node, a_when, last?(i, node.whens), align_number, node.exhaustive?)
+        format_when(node, a_when, last?(i, node.whens), align_number)
         skip_space_or_newline(@indent + 2)
       end
 
@@ -3608,12 +3608,12 @@ module Crystal
       false
     end
 
-    def format_when(case_node, node, is_last, align_number, exhaustive)
+    def format_when(case_node, node, is_last, align_number)
       skip_space_or_newline
 
       slash_is_regex!
       write_indent
-      write_keyword(exhaustive ? :in : :when, " ")
+      write_keyword(node.exhaustive? ? :in : :when, " ")
       base_indent = @column
       when_start_line = @line
       when_start_column = @column
