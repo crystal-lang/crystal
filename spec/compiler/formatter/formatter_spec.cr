@@ -542,6 +542,8 @@ describe Crystal::Formatter do
   assert_format "case\nend"
   assert_format "case\nelse\n  1\nend"
 
+  assert_format "case  1 \n in Int32 \n 3 \n end", "case 1\nin Int32\n  3\nend"
+
   assert_format <<-CODE
     case 0
     when 0 then 1; 2

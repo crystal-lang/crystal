@@ -1344,7 +1344,7 @@ module Crystal
       end
       newline
       node.whens.each do |wh|
-        wh.accept self
+        visit_when(wh, node.exhaustive?)
       end
       if node_else = node.else
         append_indent
@@ -1357,13 +1357,17 @@ module Crystal
       false
     end
 
-    def visit(node : When)
+    def visit_when(node, exhaustive)
       append_indent
-      @str << keyword("when")
+      @str << keyword(exhaustive ? "in" : "when")
       @str << ' '
       node.conds.join(", ", @str, &.accept self)
       newline
       accept_with_indent node.body
+    end
+
+    def visit(node : When)
+      # Handled by visit(node : Case)
       false
     end
 

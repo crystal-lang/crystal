@@ -465,7 +465,11 @@ module Crystal
         a_if = wh_if
       end
 
-      a_if.not_nil!.else = node.else || Unreachable.new
+      if node.exhaustive?
+        a_if.not_nil!.else = node.else || Unreachable.new
+      elsif node_else = node.else
+        a_if.not_nil!.else = node_else
+      end
 
       final_if = final_if.not_nil!
       final_exp = if assigns && !assigns.empty?
@@ -524,7 +528,7 @@ module Crystal
       call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
-      a_case = Case.new(case_cond, case_whens, case_else).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)
       Expressions.from([multi, a_case] of ASTNode).at(node)
     end
 
@@ -631,11 +635,11 @@ module Crystal
         case obj
         when Path
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         else
           # no special treatment
