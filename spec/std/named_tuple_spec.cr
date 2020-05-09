@@ -352,6 +352,11 @@ describe "NamedTuple" do
     tup.keys.should eq({:a, :b})
   end
 
+  it "does sorted_keys" do
+    tup = {foo: 1, bar: 2, baz: 3}
+    tup.sorted_keys.should eq({:bar, :baz, :foo})
+  end
+
   it "does values" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
