@@ -1990,7 +1990,7 @@ module Crystal
     end
 
     describe "case methods" do
-      case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32)
+      case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
 
       it "executes cond" do
         assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
