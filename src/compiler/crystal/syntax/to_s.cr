@@ -21,6 +21,7 @@ module Crystal
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
+      @inside_exhaustive_case = false
     end
 
     def visit_any(node)
@@ -1343,9 +1344,16 @@ module Crystal
         cond.accept self
       end
       newline
+
+      old_inside_exhaustive_case = @inside_exhaustive_case
+      @inside_exhaustive_case = node.exhaustive?
+
       node.whens.each do |wh|
-        visit_when(wh, node.exhaustive?)
+        wh.accept self
       end
+
+      @inside_exhaustive_case = old_inside_exhaustive_case
+
       if node_else = node.else
         append_indent
         @str << keyword("else")
@@ -1357,17 +1365,13 @@ module Crystal
       false
     end
 
-    def visit_when(node, exhaustive)
+    def visit(node : When)
       append_indent
-      @str << keyword(exhaustive ? "in" : "when")
+      @str << keyword(@inside_exhaustive_case ? "in" : "when")
       @str << ' '
       node.conds.join(", ", @str, &.accept self)
       newline
       accept_with_indent node.body
-    end
-
-    def visit(node : When)
-      # Handled by visit(node : Case)
       false
     end
 
