@@ -7,14 +7,45 @@ describe Spec do
         require "prelude"
         require "spec"
 
-        before_all { puts "top:before_all" }
-        before_each { puts "top:before_each" }
-        after_all { puts "top:after_all" }
-        after_each { puts "top:after_each" }
-        around_each do |example|
-          puts "top:around_each:before"
+        begin
+          before_all {}
+        rescue exc
+          puts exc.message
+        end
+        begin
+          before_each {}
+        rescue exc
+          puts exc.message
+        end
+        begin
+          after_all {}
+        rescue exc
+          puts exc.message
+        end
+        begin
+          after_each {}
+        rescue exc
+          puts exc.message
+        end
+        begin
+          around_all {}
+        rescue exc
+          puts exc.message
+        end
+        begin
+          around_each {}
+        rescue exc
+          puts exc.message
+        end
+
+        Spec.before_suite { puts "Spec:before_suite" }
+        Spec.before_each { puts "Spec:before_each" }
+        Spec.after_suite { puts "Spec:after_all" }
+        Spec.after_each { puts "Spec:after_each" }
+        Spec.around_each do |example|
+          puts "Spec:around_each:before"
           example.run
-          puts "top:around_each:after"
+          puts "Spec:around_each:after"
         end
 
         describe "foo" do
@@ -60,48 +91,54 @@ describe Spec do
           it {}
         end
         CR
-        top:before_all
+        Can't call `before_all` outside of a describe/context
+        Can't call `before_each` outside of a describe/context
+        Can't call `after_all` outside of a describe/context
+        Can't call `after_each` outside of a describe/context
+        Can't call `around_all` outside of a describe/context
+        Can't call `around_each` outside of a describe/context
+        Spec:before_suite
         foo:around_all:before
         foo:before_all
-        top:around_each:before
+        Spec:around_each:before
         foo:around_each:before
-        top:before_each
+        Spec:before_each
         foo:before_each
         .foo:after_each
-        top:after_each
+        Spec:after_each
         foo:around_each:after
-        top:around_each:after
-        top:around_each:before
+        Spec:around_each:after
+        Spec:around_each:before
         foo:around_each:before
-        top:before_each
+        Spec:before_each
         foo:before_each
         .foo:after_each
-        top:after_each
+        Spec:after_each
         foo:around_each:after
-        top:around_each:after
-        top:around_each:before
+        Spec:around_each:after
+        Spec:around_each:before
         foo:around_each:before
-        top:before_each
+        Spec:before_each
         foo:before_each
         .foo:after_each
-        top:after_each
+        Spec:after_each
         foo:around_each:after
-        top:around_each:after
+        Spec:around_each:after
         foo:after_all
         foo:around_all:after
         bar:around_all:before
         bar:before_all
-        top:around_each:before
+        Spec:around_each:before
         bar:around_each:before
-        top:before_each
+        Spec:before_each
         bar:before_each
         .bar:after_each
-        top:after_each
+        Spec:after_each
         bar:around_each:after
-        top:around_each:after
+        Spec:around_each:after
         bar:after_all
         bar:around_all:after
-        top:after_all
+        Spec:after_all
         OUT
     end
   end

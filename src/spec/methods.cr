@@ -89,10 +89,6 @@ module Spec::Methods
   # ```
   # require "spec
   #
-  # before_each do
-  #   puts "runs before each sample"
-  # end
-  #
   # it "sample_a" {}
   #
   # describe "nested_context" do
@@ -104,6 +100,9 @@ module Spec::Methods
   # end
   # ```
   def before_each(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `before_each` outside of a describe/context"
+    end
     Spec.current_context.before_each(&block)
   end
 
@@ -120,14 +119,10 @@ module Spec::Methods
   # ```
   # require "spec
   #
-  # before_each do
-  #   puts "runs after each sample"
-  # end
-  #
   # it "sample_a" {}
   #
   # describe "nested_context" do
-  #   before_each do
+  #   after_each do
   #     puts "runs after sample_b"
   #   end
   #
@@ -135,6 +130,9 @@ module Spec::Methods
   # end
   # ```
   def after_each(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `after_each` outside of a describe/context"
+    end
     Spec.current_context.after_each(&block)
   end
 
@@ -151,10 +149,6 @@ module Spec::Methods
   # ```
   # require "spec
   #
-  # before_all do
-  #   puts "runs at start of spec suite"
-  # end
-  #
   # it "sample_a" {}
   #
   # describe "nested_context" do
@@ -166,6 +160,9 @@ module Spec::Methods
   # end
   # ```
   def before_all(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `before_all` outside of a describe/context"
+    end
     Spec.current_context.before_all(&block)
   end
 
@@ -182,10 +179,6 @@ module Spec::Methods
   # ```
   # require "spec
   #
-  # after_all do
-  #   puts "runs at end of spec suite"
-  # end
-  #
   # it "sample_a" {}
   #
   # describe "nested_context" do
@@ -197,6 +190,9 @@ module Spec::Methods
   # end
   # ```
   def after_all(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `after_all` outside of a describe/context"
+    end
     Spec.current_context.after_all(&block)
   end
 
@@ -219,12 +215,6 @@ module Spec::Methods
   # ```
   # require "spec
   #
-  # around_each do |example|
-  #   puts "runs before each sample"
-  #   example.run
-  #   puts "runs after each sample"
-  # end
-  #
   # it "sample_a" {}
   #
   # describe "nested_context" do
@@ -238,6 +228,9 @@ module Spec::Methods
   # end
   # ```
   def around_each(&block : Example::Procsy ->)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `around_each` outside of a describe/context"
+    end
     Spec.current_context.around_each(&block)
   end
 
@@ -280,6 +273,9 @@ module Spec::Methods
   # end
   # ```
   def around_all(&block : ExampleGroup::Procsy ->)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `around_all` outside of a describe/context"
+    end
     Spec.current_context.around_all(&block)
   end
 end
