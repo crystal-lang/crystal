@@ -28,11 +28,7 @@ struct Crystal::ExhaustivenessChecker
     targets = cond_types.map { |cond_type| compute_target(cond_type) }
 
     # Is any type a @[Flags] enum?
-    cond_types.each do |type|
-      if type.is_a?(EnumType) && type.flags?
-        cond.raise "can't prove case is exhaustive for @[Flags] enum #{type} (@[Flags] enums can't be exhaustively checked)"
-      end
-    end
+    flags_enum = cond_types.find { |type| type.is_a?(EnumType) && type.flags? }
 
     # Are all patterns Path types?
     all_patterns_are_types = true
@@ -76,21 +72,27 @@ struct Crystal::ExhaustivenessChecker
         MSG
     when EnumTarget
       node.raise <<-MSG
-        case is not exhaustive for enum #{single_target.type}.
+      case is not exhaustive for enum #{single_target.type}.
 
-        Missing members:
-         - #{single_target.members.map(&.name).join("\n - ")}
-        MSG
+      Missing members:
+       - #{single_target.members.map(&.name).join("\n - ")}
+      MSG
     else
       # No specific error messages for non-single types
     end
 
-    node.raise <<-MSG
+    msg = <<-MSG
       case is not exhaustive.
 
       Missing cases:
        - #{targets.flat_map(&.missing_cases).join("\n - ")}
       MSG
+
+    if flags_enum
+      msg += "\n\n" + flags_enum_message(flags_enum)
+    end
+
+    node.raise msg
   end
 
   private def check_tuple_exp(node, cond)
@@ -103,14 +105,21 @@ struct Crystal::ExhaustivenessChecker
     element_types = elements.map &.type
 
     all_expanded_types = element_types.map do |element_type|
-      if element_type.is_a?(EnumType) && element_type.flags?
-        cond.raise "can't prove case is exhaustive for @[Flags] enum #{element_type} (@[Flags] enums can't be exhaustively checked)"
-      end
-
       expand_types(element_type)
     end
 
-    # Compute all the targets that we must cover
+    # Is any type a @[Flags] enum?
+    flags_enum = nil
+    all_expanded_types.each do |types|
+      types.each do |type|
+        if type.is_a?(EnumType) && type.flags?
+          flags_enum = type
+          break
+        end
+      end
+      break if flags_enum
+    end
+
     targets = compute_targets(all_expanded_types)
 
     # Start checking each `when`...
@@ -141,11 +150,24 @@ struct Crystal::ExhaustivenessChecker
       .map { |cases| "{#{cases}}" }
       .join("\n - ")
 
-    node.raise <<-MSG
+    msg = <<-MSG
       case is not exhaustive.
 
       Missing cases:
        - #{missing_cases}
+      MSG
+
+    if flags_enum
+      msg += "\n\n" + flags_enum_message(flags_enum)
+    end
+
+    node.raise msg
+  end
+
+  private def flags_enum_message(flags_enum)
+    <<-MSG
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum #{flags_enum} can't be proved to be exhaustive like that.
       MSG
   end
 

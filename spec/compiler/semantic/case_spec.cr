@@ -258,6 +258,8 @@ describe "semantic: case" do
 
   it "can't prove case is exhaustive for @[Flags] enum" do
     assert_error %(
+        #{enum_eq}
+
         struct Enum
           def includes?(other : self)
             false
@@ -276,11 +278,39 @@ describe "semantic: case" do
         in .red?
         end
       ),
-      "can't prove case is exhaustive for @[Flags] enum Color (@[Flags] enums can't be exhaustively checked)"
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - Color
+
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum Color can't be proved to be exhaustive like that.
+      ERROR
   end
 
-  it "can't prove case is exhaustive for @[Flags] enum (tuple case)" do
+  it "can prove case is exhaustive for @[Flags] enum when matching type" do
+    assert_no_errors %(
+        require "prelude"
+
+        @[Flags]
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        e = Color::Red
+        case e
+        in Color
+        end
+      )
+  end
+
+  it "can't prove case is exhaustive for @[Flags] enum, tuple case" do
     assert_error %(
+        #{enum_eq}
+
         struct Enum
           def includes?(other : self)
             false
@@ -299,7 +329,15 @@ describe "semantic: case" do
         in {.red?}
         end
       ),
-      "can't prove case is exhaustive for @[Flags] enum Color (@[Flags] enums can't be exhaustively checked)"
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - {Color}
+
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum Color can't be proved to be exhaustive like that.
+      ERROR
   end
 
   it "checks exhaustiveness of enum combined with another type" do
