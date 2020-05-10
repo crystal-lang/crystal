@@ -1,18 +1,23 @@
 require "crystal/elf"
 
 struct Exception::CallStack
-  @@base_address : UInt64 | UInt32 | Nil
+  protected def self.load_dwarf
+    phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|
+      # HACK: this assumes the first entry is the header for the current program
+      read_dwarf_sections(info.value.addr)
+      1
+    end
 
-  protected def self.read_dwarf_sections
+    LibC.dl_iterate_phdr(phdr_callback, nil)
+    @@dwarf_loaded = true
+  end
+
+  protected def self.read_dwarf_sections(base_address = 0)
     program = Process.executable_path
     return unless program && File.readable? program
     Crystal::ELF.open(program) do |elf|
-      elf.read_section?(".text") do |sh, _|
-        @@base_address = sh.addr - sh.offset
-      end
-
       elf.read_section?(".debug_line") do |sh, io|
-        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size)
+        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, base_address)
       end
 
       strings = elf.read_section?(".debug_str") do |sh, io|
@@ -29,8 +34,8 @@ struct Exception::CallStack
             info.read_abbreviations(io)
           end
 
-          parse_function_names_from_dwarf(info, strings) do |name, low_pc, high_pc|
-            names << {name, low_pc, high_pc}
+          parse_function_names_from_dwarf(info, strings) do |low_pc, high_pc, name|
+            names << {low_pc + base_address, high_pc + base_address, name}
           end
         end
 
@@ -39,18 +44,30 @@ struct Exception::CallStack
     end
   end
 
-  # DWARF uses fixed addresses but some platforms (e.g., OpenBSD or Linux
-  # with the [PaX patch](https://en.wikipedia.org/wiki/PaX)) load
-  # executables at a random address, so we must remove the load offset from
-  # the IP to match the addresses in DWARF sections.
-  #
-  # See https://en.wikipedia.org/wiki/Address_space_layout_randomization
   protected def self.decode_address(ip)
-    if LibC.dladdr(ip, out info) != 0
-      unless info.dli_fbase.address == @@base_address
-        return ip.address - info.dli_fbase.address
-      end
-    end
     ip.address
   end
+end
+
+lib LibC
+  struct DlPhdrInfo
+    addr : LibC::SizeT
+    name : Char*
+    phdr : DlPhdr*
+    phnum : LibC::UInt16T
+  end
+
+  struct DlPhdr
+    p_type : LibC::UInt32T   # Segment type
+    p_offset : LibC::UInt64T # Segment file offset
+    p_vaddr : LibC::UInt64T  # Segment virtual address
+    p_paddr : LibC::UInt64T  # Segment physical address
+    p_filesz : LibC::UInt32T # Segment size in file
+    p_memsz : LibC::UInt32T  # Segment size in memory
+    p_flags : LibC::UInt32T  # Segment flags
+    p_align : LibC::UInt32T  # Segment alignment
+  end
+
+  alias DlPhdrCallback = (DlPhdrInfo*, LibC::SizeT, Void*) -> LibC::Int
+  fun dl_iterate_phdr(callback : DlPhdrCallback, data : Void*)
 end

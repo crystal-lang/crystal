@@ -6,11 +6,12 @@ require "crystal/dwarf"
 {% end %}
 
 struct Exception::CallStack
+  @@dwarf_loaded = false
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
 
   protected def self.decode_line_number(pc)
-    read_dwarf_sections unless @@dwarf_line_numbers
+    load_dwarf unless @@dwarf_loaded
     if ln = @@dwarf_line_numbers
       if row = ln.find(pc)
         path = "#{row.directory}/#{row.file}"
@@ -21,7 +22,7 @@ struct Exception::CallStack
   end
 
   protected def self.decode_function_name(pc)
-    read_dwarf_sections unless @@dwarf_function_names
+    load_dwarf unless @@dwarf_loaded
     if fn = @@dwarf_function_names
       fn.each do |(low_pc, high_pc, function_name)|
         return function_name if low_pc <= pc <= high_pc

@@ -9,6 +9,11 @@ end
 struct Exception::CallStack
   @@image_slide : LibC::Long?
 
+  protected def self.load_dwarf
+    read_dwarf_sections
+    @@dwarf_loaded = true
+  end
+
   protected def self.read_dwarf_sections
     locate_dsym_bundle do |mach_o|
       mach_o.read_section?("__debug_line") do |sh, io|
