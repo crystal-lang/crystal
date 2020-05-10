@@ -1652,15 +1652,300 @@ module Crystal
         end
       end
 
-      it "executes nilable? (false)" do
-        assert_macro("x", "{{x.nilable?}}", "false") do |program|
-          [TypeNode.new(program.string)] of ASTNode
+      describe "#abstract?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.abstract?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.abstract?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          describe "class" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.abstract = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+
+          describe "struct" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.abstract = true
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+        end
+
+        describe GenericClassType do
+          describe "class" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.abstract = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+
+          describe "struct" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.abstract = true
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
         end
       end
 
-      it "executes nilable? (true)" do
-        assert_macro("x", "{{x.nilable?}}", "true") do |program|
-          [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+      describe "#union?" do
+        it true do
+          assert_macro("x", "{{x.union?}}", "true") do |program|
+            [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+          end
+        end
+
+        it false do
+          assert_macro("x", "{{x.union?}}", "false") do |program|
+            [TypeNode.new(program.string)] of ASTNode
+          end
+        end
+      end
+
+      describe "#module?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.module?}}", "true") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.module?}}", "true") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+
+      describe "#class?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.class?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.class?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.class?}}", "true") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.class?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.class?}}", "true") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.class?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+
+      describe "#struct?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.struct?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.struct?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.struct?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.struct?}}", "true") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.struct?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.struct?}}", "true") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+      describe "#nilable?" do
+        it false do
+          assert_macro("x", "{{x.nilable?}}", "false") do |program|
+            [TypeNode.new(program.string)] of ASTNode
+          end
+        end
+
+        it true do
+          assert_macro("x", "{{x.nilable?}}", "true") do |program|
+            [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+          end
         end
       end
 

@@ -1728,24 +1728,99 @@ module Crystal::Macros
 
   # Represents a type in the program, like `Int32` or `String`.
   class TypeNode < ASTNode
-    # Returns `true` if this type is abstract.
+    # Returns `true` if `self` is abstract, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # abstract struct Two; end
+    #
+    # class Three; end
+    #
+    # abstract class Four; end
+    #
+    # {{One.abstract?}}   # => false
+    # {{Two.abstract?}}   # => true
+    # {{Three.abstract?}} # => false
+    # {{Four.abstract?}}  # => true
+    # ```
     def abstract? : BoolLiteral
     end
 
-    # Returns `true` if this type is a union type, `false` otherwise.
+    # Returns `true` if `self` is a union type, otherwise `false`.
     #
-    # See also: `union_types`.
+    # See also: `#union_types`.
+    #
+    # ```
+    # {{String.union?}}              # => false
+    # {{String?.union?}}             # => true
+    # {{Union(String, Bool).union?}} # => true
+    # ```
     def union? : BoolLiteral
     end
 
-    # Returns `true` if this type is nilable (if it has `Nil` amongst its types).
+    # Returns `true` if `self` is nilable (if it has `Nil` amongst its types), otherwise `false`.
+    #
+    # ```
+    # {{String.nilable?}}                   # => false
+    # {{String?.nilable?}}                  # => true
+    # {{Union(String, Bool, Nil).nilable?}} # => true
+    # ```
     def nilable? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `module`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.module?}}   # => true
+    # {{Two.module?}}   # => false
+    # {{Three.module?}} # => false
+    # ```
+    def module? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `class`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.class?}}   # => false
+    # {{Two.class?}}   # => true
+    # {{Three.class?}} # => false
+    # ```
+    def class? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `struct`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.stuct?}}   # => false
+    # {{Two.stuct?}}   # => false
+    # {{Three.stuct?}} # => true
+    # ```
+    def struct? : BoolLiteral
     end
 
     # Returns the types forming a union type, if this is a union type.
     # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
-    # See also: `union?`.
+    # See also: `#union?`.
     def union_types : ArrayLiteral(TypeNode)
     end
 

@@ -1555,6 +1555,12 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "module?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.module?) }
+      when "class?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && !type.struct?) }
+      when "struct?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && type.struct?) }
       when "nilable?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
