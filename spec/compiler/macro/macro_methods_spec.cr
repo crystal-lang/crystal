@@ -430,6 +430,10 @@ module Crystal
         assert_macro "", %({{"FooBar".underscore}}), [] of ASTNode, %("foo_bar")
       end
 
+      it "executes titleize" do
+        assert_macro "", %({{"hello world".titleize}}), [] of ASTNode, %("Hello World")
+      end
+
       it "executes to_i" do
         assert_macro "", %({{"1234".to_i}}), [] of ASTNode, %(1234)
       end

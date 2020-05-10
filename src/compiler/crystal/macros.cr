@@ -456,6 +456,10 @@ module Crystal::Macros
     def strip : StringLiteral
     end
 
+    # Similar to `String#titleize`.
+    def titleize : StringLiteral
+    end
+
     # Similar to `String#to_i`.
     def to_i(base = 10)
     end
@@ -555,6 +559,10 @@ module Crystal::Macros
 
     # Similar to `String#strip`.
     def strip : SymbolLiteral
+    end
+
+    # Similar to `String#titleize`.
+    def titleize : SymbolLiteral
     end
 
     # Similar to `String#tr`.
@@ -1715,6 +1723,10 @@ module Crystal::Macros
 
     # Similar to `String#strip`.
     def strip : MacroId
+    end
+
+    # Similar to `String#titleize`.
+    def titleize : MacroId
     end
 
     # Similar to `String#tr`.
