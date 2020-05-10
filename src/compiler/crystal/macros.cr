@@ -1810,9 +1810,9 @@ module Crystal::Macros
     #
     # struct Three; end
     #
-    # {{One.stuct?}}   # => false
-    # {{Two.stuct?}}   # => false
-    # {{Three.stuct?}} # => true
+    # {{One.struct?}}   # => false
+    # {{Two.struct?}}   # => false
+    # {{Three.struct?}} # => true
     # ```
     def struct? : BoolLiteral
     end
