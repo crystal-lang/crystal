@@ -168,7 +168,7 @@ module Crystal
 
       @offset : LibC::OffT
 
-      def initialize(@io : IO::FileDescriptor, size, @base_address = 0_u64)
+      def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0)
         @offset = @io.tell
         @matrix = Array(Array(Row)).new
         decode_sequences(size)
