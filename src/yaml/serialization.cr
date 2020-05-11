@@ -2,6 +2,28 @@ module YAML
   annotation Field
   end
 
+  # This exception is raised when `YAML::Serializable` encounters an error while
+  # parsing YAML.
+  class MappingError < ParseException
+    getter klass : String
+    getter attribute : String?
+
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause : Exception? = nil)
+      message = String.build do |io|
+        io << message
+        io << "\n  parsing "
+        io << klass
+        if attribute = @attribute
+          io << '#' << attribute
+        end
+      end
+      super(message, line_number, column_number, cause: cause)
+      if cause
+        @line_number, @column_number = cause.location
+      end
+    end
+  end
+
   # The `YAML::Serializable` module automatically generates methods for YAML serialization when included.
   #
   # ### Example
@@ -188,7 +210,7 @@ module YAML
         when YAML::Nodes::Mapping
           YAML::Schema::Core.each(node) do |key_node, value_node|
             unless key_node.is_a?(YAML::Nodes::Scalar)
-              key_node.raise "Expected scalar as key for mapping"
+              ::raise YAML::MappingError.new("Expected scalar as key for mapping", self.class.to_s, nil, *key_node.location)
             end
 
             key = key_node.value
@@ -210,6 +232,8 @@ module YAML
                     {% end %}
 
                   {% if value[:nilable] || value[:has_default] %} } {% end %}
+                rescue exc : ::YAML::ParseException
+                  ::raise ::YAML::MappingError.new(exc.message, self.class.to_s, {{value[:key]}},  *value_node.location, cause: exc)
                 end
             {% end %}
             else
@@ -220,16 +244,16 @@ module YAML
           if node.value.empty? && node.style.plain? && !node.tag
             # We consider an empty scalar as an empty mapping
           else
-            node.raise "Expected mapping, not #{node.class}"
+            ::raise YAML::MappingError.new("Expected mapping, not #{node.class}", self.class.to_s, nil, *node.location)
           end
         else
-          node.raise "Expected mapping, not #{node.class}"
+          ::raise YAML::MappingError.new("Expected mapping, not #{node.class}", self.class.to_s, nil, *node.location)
         end
 
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
             if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
-              node.raise "Missing YAML attribute: {{value[:key].id}}"
+              ::raise YAML::MappingError.new("Missing YAML attribute: {{value[:key].id}}", self.class.to_s, nil, *node.location)
             end
           {% end %}
 
@@ -313,7 +337,7 @@ module YAML
 
     module Strict
       protected def on_unknown_yaml_attribute(ctx, key, key_node, value_node)
-        key_node.raise "Unknown yaml attribute: #{key}"
+        ::raise YAML::MappingError.new("Unknown attribute: #{key}", self.class.to_s, nil, *key_node.location)
       end
     end
 
@@ -387,7 +411,7 @@ module YAML
         end
 
         unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
+          ::raise YAML::MappingError.new("Expected mapping, not #{node.class}", self.class.to_s, nil, *node.location)
         end
 
         node.each do |key, value|
@@ -401,11 +425,11 @@ module YAML
               return {{value.id}}.new(ctx, node)
           {% end %}
           else
-            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
+            ::raise YAML::MappingError.new("Unknown discriminator value: #{discriminator_value.inspect}", to_s, {{field}}, *value.location)
           end
         end
 
-        node.raise "Missing YAML discriminator field '{{field.id}}'"
+        ::raise YAML::MappingError.new("Missing discriminator field '{{field.id}}'", to_s, nil, *node.location)
       end
     end
   end
