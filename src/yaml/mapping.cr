@@ -67,6 +67,7 @@ module YAML
   # it and initializes this type's instance variables.
   #
   # This macro also declares instance variables of the types given in the mapping.
+  @[Deprecated("use YAML::Serializable instead")]
   macro mapping(_properties_, strict = false)
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
@@ -217,6 +218,7 @@ module YAML
 
   # This is a convenience method to allow invoking `YAML.mapping`
   # with named arguments instead of with a hash/named-tuple literal.
+  @[Deprecated("use YAML::Serializable instead")]
   macro mapping(**_properties_)
     ::YAML.mapping({{_properties_}})
   end
