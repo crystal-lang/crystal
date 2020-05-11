@@ -43,6 +43,6 @@ struct Log::Entry
   getter exception : Exception?
 
   def initialize(@source : String, @severity : Severity, @message : String, @data : Log::Metadata, @exception : Exception?)
-    raise ArgumentError.new "Expected hash data, not #{data.raw.class}" unless data.as_h?
+    raise ArgumentError.new "Expected hash data, not #{data.raw.class}" unless data.raw.as?(Hash)
   end
 end

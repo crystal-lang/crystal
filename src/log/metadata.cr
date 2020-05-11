@@ -61,7 +61,7 @@ class Fiber
 
   # :nodoc:
   def logging_context=(value : Log::Metadata)
-    raise ArgumentError.new "Expected hash context, not #{value.raw.class}" unless value.as_h?
+    raise ArgumentError.new "Expected hash context, not #{value.raw.class}" unless value.raw.as?(Hash)
     @logging_context = value
   end
 end
