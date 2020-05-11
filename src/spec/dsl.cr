@@ -250,8 +250,8 @@ module Spec
   #   puts "runs after each sample"
   # end
   #
-  # it {}
-  # it {}
+  # it { }
+  # it { }
   # ```
   def self.around_each(&block : Example::Procsy ->)
     root_context.around_each(&block)
