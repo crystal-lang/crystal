@@ -1,5 +1,5 @@
 {% if flag?(:win32) %}
-  @[Link("libcmt")]
+  @[Link("msvcrt")]
 {% end %}
 lib LibC
   alias Char = UInt8

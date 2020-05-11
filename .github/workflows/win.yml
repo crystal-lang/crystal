@@ -60,7 +60,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./bdwgc
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON
           cmake --build . --config Release
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -72,7 +72,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./pcre
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON
+          cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON
           cmake --build . --config Release
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -84,7 +84,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./zlib
         run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake .
           cmake --build . --config Release
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -96,7 +96,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libyaml
         run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake .
           cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -112,7 +112,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: llvm
-          key: llvm-libs-10.0.0
+          key: llvm-libs-10.0.0-v2
       - name: Download LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
@@ -124,7 +124,7 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
         run: |
-          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF
+          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DBUILD_SHARED_LIBS=OFF
           cmake --build . --config Release
       - name: Gather LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'
@@ -146,10 +146,10 @@ jobs:
           name: objs
       - name: Build LLVM extensions
         run: |
-          cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.o
+          cl /MD /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.o
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl objs\crystal.o /Fecrystal-cross src\llvm\ext\llvm_ext.o $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl objs\crystal.o /Fecrystal-cross src\llvm\ext\llvm_ext.o $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib msvcrt.lib legacy_stdio_definitions.lib /F10000000"
 
       - name: Re-build Crystal
         run: |
