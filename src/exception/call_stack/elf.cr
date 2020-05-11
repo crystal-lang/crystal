@@ -4,7 +4,7 @@ require "c/link"
 struct Exception::CallStack
   protected def self.load_dwarf
     phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|
-      # HACK: this assumes the first entry is the header for the current program
+      # The first entry is the header for the current program
       read_dwarf_sections(info.value.addr)
       1
     end
