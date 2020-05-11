@@ -416,7 +416,7 @@ describe "YAML::Serializable" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    error_message = "Missing YAML attribute: name at line 2, column 1"
+    error_message = "Missing YAML attribute: name at 2:1"
     ex = expect_raises YAML::ParseException, error_message do
       YAMLAttrPerson.from_yaml <<-YAML
         ---
@@ -467,7 +467,7 @@ describe "YAML::Serializable" do
   end
 
   it "raises if not an object" do
-    error_message = "Expected mapping, not YAML::Nodes::Scalar at line 1, column 1"
+    error_message = "Expected mapping, not YAML::Nodes::Scalar at 1:1"
     ex = expect_raises YAML::ParseException, error_message do
       StrictYAMLAttrPerson.from_yaml <<-YAML
         "foo"
@@ -477,7 +477,7 @@ describe "YAML::Serializable" do
   end
 
   it "raises if data type does not match" do
-    error_message = "Couldn't parse (Int32 | Nil) at line 3, column 10"
+    error_message = "Couldn't parse (Int32 | Nil) at 3:10"
     ex = expect_raises YAML::ParseException, error_message do
       StrictYAMLAttrPerson.from_yaml <<-YAML
         {
@@ -789,7 +789,7 @@ describe "YAML::Serializable" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      error_message = "Missing YAML attribute: foo at line 1, column 1"
+      error_message = "Missing YAML attribute: foo at 1:1"
       ex = expect_raises YAML::ParseException, error_message do
         YAMLAttrWithQueryAttributes.from_yaml(%({"is_bar": true}))
       end
