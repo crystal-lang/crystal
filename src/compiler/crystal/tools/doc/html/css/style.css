@@ -460,6 +460,12 @@ span.flag.purple {
   border-color: #1F0B37;
 }
 
+span.flag.lime {
+  background-color: #a3ff00;
+  color: #222222;
+  border-color: #00ff1e;
+}
+
 .tooltip>span {
   position: absolute;
   opacity: 0;

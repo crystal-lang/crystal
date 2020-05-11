@@ -1098,6 +1098,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         # arguments makes sense here.
         DeprecatedAnnotation.from(ann)
         yield annotation_type, ann
+      when @program.experimental_annotation
+        # ditto DeprecatedAnnotation
+        ExperimentalAnnotation.from(ann)
+        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

@@ -51,3 +51,16 @@ end
 # using `ldflags`: `@[Link(ldflags: "-Lvendor/bin")]`.
 annotation Link
 end
+
+# This annotation marks methods, classes, constants, and macros as experimental.
+#
+# Experimental features are subject to change or be removed despite the
+# [https://semver.org/](https://semver.org/) guarantees.
+#
+# ```
+# @[Experimental("Join discussion about this topic at ...")]
+# def foo
+# end
+# ```
+annotation Experimental
+end
