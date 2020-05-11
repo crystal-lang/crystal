@@ -416,7 +416,7 @@ describe "YAML::Serializable" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    error_message = "Missing YAML attribute: name\n  parsing YAMLAttrPerson at 2:1"
+    error_message = "Missing attribute: name\n  parsing YAMLAttrPerson#name at 2:1"
     ex = expect_raises YAML::MappingError, error_message do
       YAMLAttrPerson.from_yaml <<-YAML
         ---
@@ -792,7 +792,7 @@ describe "YAML::Serializable" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      error_message = "Missing YAML attribute: foo\n  parsing YAMLAttrWithQueryAttributes at 1:1"
+      error_message = "Missing attribute: foo\n  parsing YAMLAttrWithQueryAttributes#foo at 1:1"
       ex = expect_raises YAML::MappingError, error_message do
         YAMLAttrWithQueryAttributes.from_yaml(%({"is_bar": true}))
       end

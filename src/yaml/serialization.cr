@@ -233,7 +233,7 @@ module YAML
 
                   {% if value[:nilable] || value[:has_default] %} } {% end %}
                 rescue exc : ::YAML::ParseException
-                  ::raise ::YAML::MappingError.new(exc.message, self.class.to_s, {{value[:key]}},  *value_node.location, cause: exc)
+                  ::raise ::YAML::MappingError.new(exc.message, self.class.to_s, {{name.stringify}},  *value_node.location, cause: exc)
                 end
             {% end %}
             else
@@ -253,7 +253,7 @@ module YAML
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
             if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
-              ::raise YAML::MappingError.new("Missing YAML attribute: {{value[:key].id}}", self.class.to_s, nil, *node.location)
+              ::raise YAML::MappingError.new("Missing attribute: {{value[:key].id}}", self.class.to_s, {{name.stringify}}, *node.location)
             end
           {% end %}
 
