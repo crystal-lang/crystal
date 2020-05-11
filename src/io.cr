@@ -995,6 +995,15 @@ abstract class IO
     ByteIterator.new(self)
   end
 
+  # Invokes the given block with each bit (`Bool`) in this IO
+  def each_bit
+    each_byte do |byte|
+      8.times do |i|
+        yield byte.bits_set? 1 << i
+      end
+    end
+  end
+
   # Rewinds this `IO`. By default this method raises, but including types
   # may implement it.
   def rewind

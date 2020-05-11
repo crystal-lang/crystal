@@ -352,6 +352,15 @@ describe IO do
       bytes.should eq ['a'.ord.to_u8, 'b'.ord.to_u8, 'c'.ord.to_u8]
     end
 
+    it "does each_bit" do
+      bits = Array(Bool).new
+      io = SimpleIOMemory.new "\x0F"
+      io.each_bit do |b|
+        bits << b
+      end
+      bits.should eq Array(Bool).new 8, &.< 4
+    end
+
     it "raises on EOF with read_line" do
       str = SimpleIOMemory.new("hello")
       str.read_line.should eq("hello")
