@@ -168,6 +168,24 @@ class File < IO::FileDescriptor
     info(path1.to_s, follow_symlinks).same_file? info(path2.to_s, follow_symlinks)
   end
 
+  # Compares two files *filename1* to *filename2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("file.cr", "1")
+  # File.write("bar.cr", "1")
+  # File.same_content?("file.cr", "bar.cr") # => true
+  # ```
+  def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
+    open(path1, "rb") do |file1|
+      open(path2, "rb") do |file2|
+        return false unless file1.size == file2.size
+
+        same_content?(file1, file2)
+      end
+    end
+  end
+
   # Returns the size of the file at *filename* in bytes.
   # Raises `File::NotFoundError` if the file at *filename* does not exist.
   #
@@ -698,6 +716,26 @@ class File < IO::FileDescriptor
       else
         file.print(content)
       end
+    end
+  end
+
+  # Copies the file *src* to the file *dst*.
+  # Permission bits are copied too.
+  #
+  # ```
+  # File.chmod("afile", 0o600)
+  # File.copy("afile", "afile_copy")
+  # File.info("afile_copy").permissions.value # => 0o600
+  # ```
+  def self.copy(src : String | Path, dst : String | Path)
+    open(src) do |s|
+      open(dst, "wb") do |d|
+        # TODO use sendfile or copy_file_range syscall. See #8926, #8919
+        IO.copy(s, d)
+      end
+
+      # Set the permissions after the content is written in case src permissions is read-only
+      chmod(dst, s.info.permissions)
     end
   end
 

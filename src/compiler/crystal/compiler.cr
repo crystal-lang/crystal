@@ -675,7 +675,7 @@ module Crystal
 
         if can_reuse_previous_compilation
           memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
+          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
 
           # If the user cancelled a previous compilation
           # it might be that the .o file is empty
