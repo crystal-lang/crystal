@@ -1,4 +1,5 @@
 require "crystal/elf"
+require "c/link"
 
 struct Exception::CallStack
   protected def self.load_dwarf
@@ -47,27 +48,4 @@ struct Exception::CallStack
   protected def self.decode_address(ip)
     ip.address
   end
-end
-
-lib LibC
-  struct DlPhdrInfo
-    addr : LibC::SizeT
-    name : Char*
-    phdr : DlPhdr*
-    phnum : LibC::UInt16T
-  end
-
-  struct DlPhdr
-    p_type : LibC::UInt32T   # Segment type
-    p_offset : LibC::UInt64T # Segment file offset
-    p_vaddr : LibC::UInt64T  # Segment virtual address
-    p_paddr : LibC::UInt64T  # Segment physical address
-    p_filesz : LibC::UInt32T # Segment size in file
-    p_memsz : LibC::UInt32T  # Segment size in memory
-    p_flags : LibC::UInt32T  # Segment flags
-    p_align : LibC::UInt32T  # Segment alignment
-  end
-
-  alias DlPhdrCallback = (DlPhdrInfo*, LibC::SizeT, Void*) -> LibC::Int
-  fun dl_iterate_phdr(callback : DlPhdrCallback, data : Void*)
 end
