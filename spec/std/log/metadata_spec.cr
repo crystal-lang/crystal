@@ -31,6 +31,15 @@ describe Log::Metadata do
     context.should eq(m({a: 1}))
   end
 
+  it "nested immutability" do
+    context = m({a: {b: 1}})
+    other = context.as_h
+    other["a"].raw.as(Hash)["b"] = m(2)
+
+    other.should eq({"a" => m({"b" => 2})})
+    context.should eq({"a" => m({"b" => 1})})
+  end
+
   it "merge" do
     m({a: 1}).merge(m({b: 2})).should eq(m({a: 1, b: 2}))
     m({a: 1, b: 3}).merge(m({b: 2})).should eq(m({a: 1, b: 2}))
