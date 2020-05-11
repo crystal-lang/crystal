@@ -95,7 +95,7 @@ module Crystal
 
     # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
