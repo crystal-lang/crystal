@@ -16,24 +16,9 @@ class Log::Metadata
     @raw = Hash(String, Metadata).new
   end
 
-  # Creates `Log::Metadata` from the given *tuple*.
-  def initialize(tuple : NamedTuple)
-    @raw = raw = Hash(String, Metadata).new
-    tuple.each do |key, value|
-      raw[key.to_s] = to_metadata(value)
-    end
-  end
-
-  # Creates `Log::Metadata` from the given *hash*.
-  def initialize(hash : Hash(String, V)) forall V
-    @raw = raw = Hash(String, Metadata).new
-    hash.each do |key, value|
-      raw[key] = to_metadata(value)
-    end
-  end
-
-  # Creates `Log::Metadata` from the given *hash*.
-  def initialize(hash : Hash(Symbol, V)) forall V
+  # Creates `Log::Metadata` from the given *values*.
+  # All keys are converted to `String`
+  def initialize(hash : NamedTuple | Hash)
     @raw = raw = Hash(String, Metadata).new
     hash.each do |key, value|
       raw[key.to_s] = to_metadata(value)
@@ -45,42 +30,28 @@ class Log::Metadata
     @raw = ary.map { |e| to_metadata(e) }
   end
 
-  # Returns a new `Log::Metadata` with the keys and values of this context and *other* combined.
-  # A value in *other* takes precedence over the one in this context.
-  def merge(other : Metadata)
-    return other if self.object_id == @@empty.object_id
-    return self if other.object_id == @@empty.object_id
-    Metadata.new(self.as_h.merge(other.as_h).clone)
-  end
-
   private def to_metadata(value)
     value.is_a?(Metadata) ? value : Metadata.new(value)
   end
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
-  def self.build(value : Nil)
-    Metadata.empty
-  end
-
-  # :ditto:
-  def self.build(value : NamedTuple)
+  def self.build(value : NamedTuple | Hash)
+    return @@empty if value.empty?
     Metadata.new(value)
   end
 
-  # :ditto:
-  def self.build(value : Hash(String, V)) forall V
-    Metadata.new(value)
-  end
-
-  # :ditto:
-  def self.build(value : Hash(Symbol, V)) forall V
-    Metadata.new(value)
-  end
-
-  # :ditto:
   def self.build(value : Metadata)
     value
+  end
+
+  # Returns a `Log::Metadata` with all the entries of *self*
+  # and *other*. If a key is defined in both, the values in *other* are used.
+  def extend(other : NamedTuple | Hash) : Metadata
+    return Metadata.build(other) if self.object_id == @@empty.object_id
+    return self if other.empty?
+
+    Metadata.build(self.raw.as(Hash).merge(other.to_h))
   end
 end
 

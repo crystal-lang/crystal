@@ -40,16 +40,16 @@ describe Log::Metadata do
     context.should eq({"a" => m({"b" => 1})})
   end
 
-  it "merge" do
-    m({a: 1}).merge(m({b: 2})).should eq(m({a: 1, b: 2}))
-    m({a: 1, b: 3}).merge(m({b: 2})).should eq(m({a: 1, b: 2}))
-    m({a: 1, b: 3}).merge(m({b: nil})).should eq(m({a: 1, b: nil}))
+  it "extend" do
+    m({a: 1}).extend({b: 2}).should eq(m({a: 1, b: 2}))
+    m({a: 1, b: 3}).extend({b: 2}).should eq(m({a: 1, b: 2}))
+    m({a: 1, b: 3}).extend({b: nil}).should eq(m({a: 1, b: nil}))
   end
 
-  it "merge against Log::Metadata.empty without creating a new instance" do
+  it "extend against empty values without creating a new instance" do
     c1 = m({a: 1, b: 3})
-    c1.merge(Log::Metadata.empty).should be(c1)
-    Log::Metadata.empty.merge(c1).should be(c1)
+    c1.extend(NamedTuple.new).should be(c1)
+    c1.extend(Hash(String, String).new).should be(c1)
   end
 
   it "accessors" do
