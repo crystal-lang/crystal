@@ -1,7 +1,7 @@
 require "json"
 
-class Log::Context
-  # Returns `Log::Context` as JSON value.
+class Log::Metadata
+  # Returns `Log::Metadata` as JSON value.
   #
   # NOTE: `require "log/json"` is required to opt-in to this feature.
   #

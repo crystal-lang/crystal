@@ -5,7 +5,7 @@ module Crystal
     # Raises otherwise.
     def as_{{short.id}} : {{type}}
       {% if immutable == true %}
-        @raw.as({{type}}).dup
+        @raw.as({{type}}).clone
       {% else %}
         @raw.as({{type}})
       {% end %}
@@ -16,7 +16,7 @@ module Crystal
       # Returns `nil` otherwise.
       def as_{{short.id}}? : {{type}}?
         {% if immutable == true %}
-          @raw.as?({{type}}).dup
+          @raw.as?({{type}}).clone
         {% else %}
           @raw.as?({{type}})
         {% end %}
@@ -29,7 +29,7 @@ module Crystal
   #
   # * **types**: contains a named tuple of prefixes and datatypes of each leaf
   # * **hash_key_type** specifies the type used as the key of `Hash`
-  # * **immutable**: will generate honor immutability of the values via `.dup`
+  # * **immutable**: will generate honor immutability of the values via `.clone`
   # * **target_type**: is the type where the macro is invoked (it's a workaround for #9099).
 
   # :nodoc:

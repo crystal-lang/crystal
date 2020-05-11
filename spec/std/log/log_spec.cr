@@ -5,6 +5,10 @@ private def s(value : Log::Severity)
   value
 end
 
+private def m(value)
+  Log::Metadata.new(value)
+end
+
 describe Log do
   before_each do
     Log.context.clear
@@ -110,10 +114,10 @@ describe Log do
 
     log.info { "info message" }
 
-    backend.entries.first.context.should eq(Log::Context.new({a: 1}))
+    backend.entries.first.context.should eq(Log::Metadata.new({a: 1}))
   end
 
-  it "context can be changed within the block and is restored" do
+  it "context can be changed within the block, yet it's not restored" do
     Log.context.set a: 1
 
     backend = Log::MemoryBackend.new
@@ -121,7 +125,146 @@ describe Log do
 
     log.info { Log.context.set(b: 2); "info message" }
 
-    backend.entries.first.context.should eq(Log::Context.new({a: 1, b: 2}))
-    Log.context.should eq(Log::Context.new({a: 1}))
+    backend.entries.first.context.should eq(Log::Metadata.new({a: 1, b: 2}))
+    Log.context.metadata.should eq(Log::Metadata.new({a: 1, b: 2}))
+  end
+
+  describe "emitter dsl" do
+    it "can be used with message" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :debug)
+
+      log.info &.emit("info message")
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:info))
+      entry.message.should eq("info message")
+      entry.data.should eq(Log::Metadata.empty)
+      entry.exception.should be_nil
+    end
+
+    it "can be used with message and exception" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :debug)
+      ex = Exception.new "the attached exception"
+
+      log.debug exception: ex, &.emit("debug message")
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:debug))
+      entry.message.should eq("debug message")
+      entry.data.should eq(Log::Metadata.empty)
+      entry.exception.should eq(ex)
+    end
+
+    it "can be used with message and metada explicitly" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice &.emit("notice message", m({a: 1}))
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:notice))
+      entry.message.should eq("notice message")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "can be used with message and data via named arguments" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :fatal)
+
+      log.fatal &.emit("fatal message", a: 1)
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:fatal))
+      entry.message.should eq("fatal message")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "can be used with message and data via named tuple" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :fatal)
+
+      log.fatal &.emit("fatal message", {a: 1})
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:fatal))
+      entry.message.should eq("fatal message")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "can be used with exception" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :fatal)
+      ex = Exception.new "the attached exception"
+
+      log.fatal exception: ex, &.emit("fatal message", a: 1)
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:fatal))
+      entry.message.should eq("fatal message")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should eq(ex)
+    end
+
+    it "can be used with data only explicitly" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice &.emit(m({a: 1}))
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:notice))
+      entry.message.should eq("")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "can be used with data only via named arguments" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice &.emit(a: 1)
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:notice))
+      entry.message.should eq("")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "can be used with data only via named tuple" do
+      backend = Log::MemoryBackend.new
+      log = Log.new("a", backend, :notice)
+
+      log.notice &.emit(a: 1)
+
+      entry = backend.entries.first
+      entry.source.should eq("a")
+      entry.severity.should eq(s(:notice))
+      entry.message.should eq("")
+      entry.data.should eq(m({a: 1}))
+      entry.exception.should be_nil
+    end
+
+    it "validates hash" do
+      expect_raises(ArgumentError, "Expected hash data, not Int32") do
+        backend = Log::MemoryBackend.new
+        log = Log.new("a", backend, :notice)
+
+        log.notice &.emit(m(1))
+      end
+    end
   end
 end

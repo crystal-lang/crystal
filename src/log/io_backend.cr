@@ -35,6 +35,9 @@ class Log::IOBackend < Log::Backend
     io << " #" << Process.pid << "] "
     label.rjust(6, io)
     io << " -- " << @progname << ":" << entry.source << ": " << entry.message
+    if entry.data.size > 0
+      io << " -- " << entry.data
+    end
     if entry.context.size > 0
       io << " -- " << entry.context
     end
