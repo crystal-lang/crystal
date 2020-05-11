@@ -1990,26 +1990,36 @@ module Crystal
     end
 
     describe "case methods" do
-      case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32)
+      describe "when" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
 
-      it "executes cond" do
-        assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        it "executes cond" do
+          assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        end
+
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
+        end
+
+        it "executes when conds" do
+          assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
+        end
+
+        it "executes when body" do
+          assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
+        end
+
+        it "executes else" do
+          assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        end
       end
 
-      it "executes whens" do
-        assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
-      end
+      describe "in" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: true)
 
-      it "executes when conds" do
-        assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
-      end
-
-      it "executes when body" do
-        assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
-      end
-
-      it "executes else" do
-        assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[in 2, 3\n  4\n]"
+        end
       end
     end
 

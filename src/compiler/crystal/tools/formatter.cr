@@ -3613,7 +3613,7 @@ module Crystal
 
       slash_is_regex!
       write_indent
-      write_keyword :when, " "
+      write_keyword(node.exhaustive? ? :in : :when, " ")
       base_indent = @column
       when_start_line = @line
       when_start_column = @column

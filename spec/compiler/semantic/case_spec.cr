@@ -1,48 +1,75 @@
 require "../../spec_helper"
 
 describe "semantic: case" do
-  it "checks exhaustiveness of union type" do
-    assert_error %(
+  it "doesn't check ehxaustiveness when using 'when'" do
+    assert_no_errors %(
         a = 1 || nil
         case a
         when Int32
         end
-      ),
-      "case is not exhaustive.\n\nMissing types:\n - Nil"
+      )
   end
 
   it "checks exhaustiveness of single type" do
     assert_error %(
         case 1
-        when Nil
+        in Nil
         end
       ),
       "case is not exhaustive.\n\nMissing types:\n - Int32"
+  end
+
+  it "checks exhaustiveness of single type (T.class)" do
+    assert_no_errors %(
+        case Int32
+        in Int32.class
+        end
+      )
+  end
+
+  it "checks exhaustiveness of single type (Foo(T).class)" do
+    assert_no_errors %(
+        class Foo(T)
+        end
+
+        case Foo(Int32)
+        in Foo(Int32).class
+        end
+      )
+  end
+
+  it "checks exhaustiveness of single type (generic)" do
+    assert_no_errors %(
+        class Foo(T)
+        end
+
+        case Foo(Int32).new
+        in Foo(Int32)
+        end
+      )
+  end
+
+  it "errors if casing against a constant" do
+    assert_error %(
+        #{bool_case_eq}
+
+        FOO = false
+
+        case true
+        in FOO
+        end
+      ),
+      "can't use constant values in exhaustive case, only constant types"
   end
 
   it "covers all types" do
     assert_no_errors %(
         a = 1 || nil
         case a
-        when Int32
-        when Nil
+        in Int32
+        in Nil
         end
       )
-  end
-
-  it "can't prove exhaustiveness" do
-    assert_error %(
-        struct Int32
-          def ===(other)
-            true
-          end
-        end
-
-        case 1
-        when 2
-        end
-      ),
-      "can't prove case is exhaustive.\n\nPlease add an `else` clause."
   end
 
   it "checks exhaustiveness of bool type (missing true)" do
@@ -50,7 +77,7 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case false
-        when false
+        in false
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - true"
@@ -61,7 +88,7 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case false
-        when true
+        in true
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - false"
@@ -79,7 +106,7 @@ describe "semantic: case" do
 
         e = Color::Red
         case e
-        when .red?
+        in .red?
         end
       ),
       "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
@@ -97,7 +124,7 @@ describe "semantic: case" do
 
         e = Color::Red
         case e
-        when Color::Red
+        in Color::Red
         end
       ),
       "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
@@ -115,9 +142,9 @@ describe "semantic: case" do
 
         e = Color::Red
         case e
-        when .red?
-        when .green?
-        when .blue?
+        in .red?
+        in .green?
+        in .blue?
         end
       )
   end
@@ -137,9 +164,9 @@ describe "semantic: case" do
         end
 
         case foo
-        when .red?
-        when .green?
-        when .blue?
+        in .red?
+        in .green?
+        in .blue?
         end
       )
   end
@@ -149,9 +176,9 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case 1 || true
-        when Int32
-        when true
-        when false
+        in Int32
+        in true
+        in false
         end
       )
   end
@@ -166,13 +193,13 @@ describe "semantic: case" do
 
         a = 1 || Foo.new || Bar.new
         case a
-        when Foo
+        in Foo
         end
       ),
       "case is not exhaustive.\n\nMissing types:\n - Int32"
   end
 
-  it "checks exhaustiveness, covers when base type covers" do
+  it "checks exhaustiveness, covers in base type covers" do
     assert_no_errors %(
         class Foo
         end
@@ -182,19 +209,19 @@ describe "semantic: case" do
 
         a = Bar.new
         case a
-        when Foo
+        in Foo
         end
       )
   end
 
-  it "checks exhaustiveness, covers when base type covers (generic type)" do
+  it "checks exhaustiveness, covers in base type covers (generic type)" do
     assert_no_errors %(
         class Foo(T)
         end
 
         a = Foo(Int32).new
         case a
-        when Foo
+        in Foo
         end
       )
   end
@@ -208,7 +235,7 @@ describe "semantic: case" do
         end
 
         case nil
-        when nil
+        in nil
         end
       )
   end
@@ -223,22 +250,67 @@ describe "semantic: case" do
 
         a = 1 || nil
         case a
-        when nil
-        when Int32
+        in nil
+        in Int32
         end
       )
   end
 
-  it "never warns on condless case without else" do
+  it "can't prove case is exhaustive for @[Flags] enum" do
+    assert_error %(
+        #{enum_eq}
+
+        struct Enum
+          def includes?(other : self)
+            false
+          end
+        end
+
+        @[Flags]
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        e = Color::Red
+        case e
+        in .red?
+        end
+      ),
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - Color
+
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum Color can't be proved to be exhaustive like that.
+      ERROR
+  end
+
+  it "can prove case is exhaustive for @[Flags] enum when matching type" do
     assert_no_errors %(
-        case
-        when 1 == 2
+        require "prelude"
+
+        @[Flags]
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        e = Color::Red
+        case e
+        in Color
         end
       )
   end
 
-  it "always requires an else for Flags enum (no coverage)" do
+  it "can't prove case is exhaustive for @[Flags] enum, tuple case" do
     assert_error %(
+        #{enum_eq}
+
         struct Enum
           def includes?(other : self)
             false
@@ -253,36 +325,19 @@ describe "semantic: case" do
         end
 
         e = Color::Red
-        case e
-        when .red?
+        case {e}
+        in {.red?}
         end
       ),
-      "can't prove case is exhaustive.\n\nPlease add an `else` clause."
-  end
+      <<-ERROR
+      case is not exhaustive.
 
-  it "always requires an else for Flags enum (all members covered but doesn't count)" do
-    assert_error %(
-        struct Enum
-          def includes?(other : self)
-            false
-          end
-        end
+      Missing cases:
+       - {Color}
 
-        @[Flags]
-        enum Color
-          Red
-          Green
-          Blue
-        end
-
-        e = Color::Red
-        case e
-        when .red?
-        when .green?
-        when .blue?
-        end
-      ),
-      "can't prove case is exhaustive.\n\nPlease add an `else` clause."
+      Note that @[Flags] enum can't be proved to be exhaustive by matching against enum members.
+      In particular, the enum Color can't be proved to be exhaustive like that.
+      ERROR
   end
 
   it "checks exhaustiveness of enum combined with another type" do
@@ -297,8 +352,8 @@ describe "semantic: case" do
 
         e = Color::Red || 1
         case e
-        when Int32
-        when .red?
+        in Int32
+        in .red?
         end
       ),
       "case is not exhaustive for enum Color.\n\nMissing members:\n - Green\n - Blue"
@@ -310,7 +365,7 @@ describe "semantic: case" do
 
         e = 1 || true
         case e
-        when true
+        in true
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - false\n - Int32"
@@ -322,10 +377,10 @@ describe "semantic: case" do
         b = 1 || 'a'
 
         case {a, b}
-        when {Int32, Char}
-        when {Int32, Int32}
-        when {Char, Int32}
-        when {Char, Char}
+        in {Int32, Char}
+        in {Int32, Int32}
+        in {Char, Int32}
+        in {Char, Char}
         end
       )
   end
@@ -335,9 +390,9 @@ describe "semantic: case" do
         a = 1 || 'a'
 
         case {a, a}
-        when {Int32, Char}
-        when {Int32, Int32}
-        when {Char, Char}
+        in {Int32, Char}
+        in {Int32, Int32}
+        in {Char, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32}"
@@ -348,12 +403,12 @@ describe "semantic: case" do
         a = 1 || 'a'
 
         case {a, a, a}
-        when {Int32, Int32, Int32}
-        when {Int32, Char, Int32}
-        when {Int32, Char, Char}
-        when {Char, Int32, Int32}
-        when {Char, Char, Int32}
-        when {Char, Char, Char}
+        in {Int32, Int32, Int32}
+        in {Int32, Char, Int32}
+        in {Int32, Char, Char}
+        in {Char, Int32, Int32}
+        in {Char, Char, Int32}
+        in {Char, Char, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Int32, Char}\n - {Int32, Int32, Char}"
@@ -364,7 +419,7 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case {true, 'a'}
-        when {true, Char}
+        in {true, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
@@ -381,8 +436,8 @@ describe "semantic: case" do
         end
 
         case {Color::Red, 'a'}
-        when {.red?, Char}
-        when {.blue?, Char}
+        in {.red?, Char}
+        in {.blue?, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}"
@@ -393,7 +448,7 @@ describe "semantic: case" do
         a = 1 || 'a'
 
         case {a, a}
-        when {_, Int32}
+        in {_, Int32}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Int32, Char}"
@@ -404,7 +459,7 @@ describe "semantic: case" do
         a = 1 || 'a'
 
         case {a, a}
-        when {Int32, _}
+        in {Int32, _}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Char}\n - {Char, Int32}"
@@ -415,7 +470,7 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case {true, 1 || 'a'}
-        when {_, Int32}
+        in {_, Int32}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Bool, Char}"
@@ -426,8 +481,8 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case {true, 1 || 'a'}
-        when {_, Int32}
-        when {false, Char}
+        in {_, Int32}
+        in {false, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {true, Char}"
@@ -438,7 +493,7 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case {1 || 'a', true}
-        when {Int32, _}
+        in {Int32, _}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Bool}"
@@ -449,8 +504,8 @@ describe "semantic: case" do
         #{bool_case_eq}
 
         case {1 || 'a', true}
-        when {Int32, _}
-        when {Char, false}
+        in {Int32, _}
+        in {Char, false}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, true}"
@@ -467,7 +522,7 @@ describe "semantic: case" do
         end
 
         case {Color::Red, 1 || 'a'}
-        when {_, Int32}
+        in {_, Int32}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Color, Char}"
@@ -484,8 +539,8 @@ describe "semantic: case" do
         end
 
         case {Color::Red, 1 || 'a'}
-        when {_, Int32}
-        when {.blue?, Char}
+        in {_, Int32}
+        in {.blue?, Char}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Color::Red, Char}\n - {Color::Green, Char}"
@@ -502,7 +557,7 @@ describe "semantic: case" do
         end
 
         case {1 || 'a', Color::Red}
-        when {Int32, _}
+        in {Int32, _}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Color}"
@@ -519,8 +574,8 @@ describe "semantic: case" do
         end
 
         case {1 || 'a', Color::Red}
-        when {Int32, _}
-        when {Char, .blue?}
+        in {Int32, _}
+        in {Char, .blue?}
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Char, Color::Red}\n - {Char, Color::Green}"
@@ -537,10 +592,10 @@ describe "semantic: case" do
         foo = 1
 
         case {foo.bar, foo.bar}
-        when {Int32, Char}
-        when {Int32, Int32}
-        when {Char, Int32}
-        when {Char, Char}
+        in {Int32, Char}
+        in {Int32, Int32}
+        in {Char, Int32}
+        in {Char, Char}
         end
       )
   end

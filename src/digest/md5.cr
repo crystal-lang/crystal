@@ -24,7 +24,7 @@ class Digest::MD5 < Digest::Base
   end
 
   def update(inBuf, inLen)
-    in = uninitialized UInt32[16]
+    tmp_in = uninitialized UInt32[16]
 
     # compute number of bytes mod 64
     mdi = (@i[0] >> 3) & 0x3F
@@ -44,13 +44,13 @@ class Digest::MD5 < Digest::Base
       if mdi == 0x40
         ii = 0
         16.times do |i|
-          in[i] = (@in[ii + 3].to_u32 << 24) |
-                  (@in[ii + 2].to_u32 << 16) |
-                  (@in[ii + 1].to_u32 << 8) |
-                  (@in[ii])
+          tmp_in[i] = (@in[ii + 3].to_u32 << 24) |
+                      (@in[ii + 2].to_u32 << 16) |
+                      (@in[ii + 1].to_u32 << 8) |
+                      (@in[ii])
           ii += 4
         end
-        transform in
+        transform tmp_in
         mdi = 0
       end
     end
@@ -208,11 +208,11 @@ class Digest::MD5 < Digest::Base
   end
 
   def final
-    in = uninitialized UInt32[16]
+    tmp_in = uninitialized UInt32[16]
 
     # save number of bits
-    in[14] = @i[0]
-    in[15] = @i[1]
+    tmp_in[14] = @i[0]
+    tmp_in[15] = @i[1]
 
     # compute number of bytes mod 64
     mdi = ((@i[0] >> 3) & 0x3F).to_i32
@@ -224,13 +224,13 @@ class Digest::MD5 < Digest::Base
     # append length in bits and transform
     ii = 0
     14.times do |i|
-      in[i] = (@in[ii + 3].to_u32 << 24) |
-              (@in[ii + 2].to_u32 << 16) |
-              (@in[ii + 1].to_u32 << 8) |
-              (@in[ii])
+      tmp_in[i] = (@in[ii + 3].to_u32 << 24) |
+                  (@in[ii + 2].to_u32 << 16) |
+                  (@in[ii + 1].to_u32 << 8) |
+                  (@in[ii])
       ii += 4
     end
-    transform in
+    transform tmp_in
 
     # store buffer in digest
     ii = 0
