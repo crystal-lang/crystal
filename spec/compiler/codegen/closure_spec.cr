@@ -681,4 +681,51 @@ describe "Code gen: closure" do
       f1.call &+ f2.call
     ))
   end
+
+  it "ensures it can raise from the closure check" do
+    expect_raises(Exception, "::raise must be of NoReturn return type!") do
+      codegen(%(
+        def raise(m : String)
+        end
+
+        fun a(a : -> Int32)
+        end
+
+        value = 1
+        p = ->{ value }
+        a(p)
+      ))
+    end
+  end
+
+  it "allows passing an external function along" do
+    codegen(%(
+      lib LibC
+        fun exit(c : Int32) : NoReturn
+      end
+
+      def raise(a) : NoReturn
+        LibC.exit(1)
+      end
+
+      lib LibA
+        fun a(a : Void* -> Void*)
+      end
+
+      fun b(a : Void* -> Void*)
+        LibA.a(a)
+      end
+    ))
+
+    codegen(%(
+      lib LibFoo
+        struct S
+          callback : ->
+        end
+      end
+
+      s = LibFoo::S.new
+      s.callback = nil
+    ))
+  end
 end
