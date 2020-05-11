@@ -44,7 +44,7 @@ class Crystal::Command
         output_format = value
       end
 
-      opts.on("--json_config_url=URL", "Set the URL pointing to a config file (used for discovering versions)") do |value|
+      opts.on("--json-config-url=URL", "Set the URL pointing to a config file (used for discovering versions)") do |value|
         project_info.json_config_url = value
       end
 
