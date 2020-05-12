@@ -148,9 +148,22 @@ struct Time::Format
     end
 
     def second_fraction?(fraction_digits = nil)
-      unless time.nanosecond == 0 || fraction_digits == 0
-        char '.'
-        second_fraction
+      if fraction_digits
+        if fraction_digits > 0
+          char '.'
+          case fraction_digits
+          when 3 then milliseconds
+          when 6 then microseconds
+          when 9 then nanoseconds
+          else
+            raise ArgumentError.new("Invalid fraction digits: #{fraction_digits}")
+          end
+        end
+      else
+        unless time.nanosecond == 0
+          char '.'
+          second_fraction
+        end
       end
     end
 
