@@ -15,12 +15,21 @@ class Log::Metadata
   class_getter empty : Log::Metadata = Log::Metadata.new
 
   @parent : Metadata?
+  # The maximum size this metadata would need.
+  # Initially is the parent.max_total_size + entries.size .
+  # When the metadata is defragmented max_total_size will be updated with size
+  protected getter max_total_size : Int32
+  @max_total_size = uninitialized Int32
+  # How many entries are stored from @first.
+  # Initially are the one explictly overriden in entries argument.
+  # When the metadata is defragmented @size will be increased up to
+  # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 
   def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
-    data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size - 1, 0}.max
+    data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size + (parent.try(&.max_total_size) || 0) - 1, 0}.max
     data = GC.malloc(data_size).as(self)
     data.setup(parent, entries)
     data
@@ -28,6 +37,7 @@ class Log::Metadata
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = entries.size
+    @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
     ptr_entries = pointerof(@first)
 
     if entries.is_a?(NamedTuple)
@@ -68,27 +78,45 @@ class Log::Metadata
     @size == 0 && (parent.nil? || parent.empty?)
   end
 
-  def each(&block : {Symbol, Value} -> _)
+  # Removes the reference to *parent*. Flattening the entries from it into *self*.
+  # *self* was originally allocated with enough entries to perform this action.
+  protected def defrag
+    parent = @parent
+    return if parent.nil?
+
+    total_size = @size
+    overriden_entries_size = @size
+    ptr_entries = pointerof(@first)
+    next_free_entry = ptr_entries + overriden_entries_size
+
+    parent.each do |(key, value)|
+      overriden = false
+      overriden_entries_size.times do |i|
+        if ptr_entries[i][:key] == key
+          overriden = true
+          break
+        end
+      end
+
+      unless overriden
+        next_free_entry.value = {key: key, value: value}
+        next_free_entry += 1
+        total_size += 1
+      end
+    end
+
+    @size = total_size
+    @max_total_size = total_size
+    @parent = nil
+  end
+
+  def each(& : {Symbol, Value} ->)
+    defrag
     ptr_entries = pointerof(@first)
 
     @size.times do |i|
       entry = ptr_entries[i]
-      block.call({entry[:key], entry[:value]})
-    end
-
-    if parent = @parent
-      parent.each do |(key, value)|
-        # return it if it's not already returned by the previous circle
-        already_yielded = false
-        @size.times do |i|
-          if ptr_entries[i][:key] == key
-            already_yielded = true
-            break
-          end
-        end
-
-        block.call({key, value}) unless already_yielded
-      end
+      yield({entry[:key], entry[:value]})
     end
   end
 

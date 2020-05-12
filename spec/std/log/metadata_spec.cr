@@ -57,6 +57,21 @@ describe Log::Metadata do
     m({a: 1}).to_json.should eq(%({"a":1}))
     m({a: 1, b: 1}).extend({b: 2}).to_json.should eq(%({"b":2,"a":1}))
   end
+
+  it "defrags" do
+    parent = m({a: 1, b: 2}).extend({a: 2})
+    md = parent.extend({a: 3})
+
+    md.@size.should eq(1)
+    md.@max_total_size.should eq(4)
+    md.@parent.should be(parent)
+
+    md.should eq(m({a: 3, b: 2}))
+
+    md.@size.should eq(2)
+    md.@max_total_size.should eq(2)
+    md.@parent.should be_nil
+  end
 end
 
 describe Log::Metadata::Value do
