@@ -15,22 +15,28 @@ class Log::Metadata
   class_getter empty : Log::Metadata = Log::Metadata.new
 
   @parent : Metadata?
-  @size : Int32
-  @entries : Pointer(Entry)
+  @size = uninitialized Int32
+  # @first needs to be the last ivar of Metadata. The entries are allocated together with self
+  @first = uninitialized Entry
 
-  # :nodoc:
-  def initialize(@parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
-    # Workaround for Slice(Entry).new(entries.size)
+  def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
+    data_size = instance_sizeof(self) + sizeof(Entry) * (entries.size - 1)
+    data = GC.malloc(data_size).as(self)
+    data.setup(parent, entries)
+    data
+  end
+
+  protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
     @size = entries.size
-    @entries = Pointer(Entry).malloc(@size)
+    ptr_entries = pointerof(@first)
 
     if entries.is_a?(NamedTuple)
       entries.each_with_index do |key, value, i|
-        @entries[i] = {key: key, value: Value.to_metadata_value(value)}
+        ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     else
       entries.each_with_index do |(key, value), i|
-        @entries[i] = {key: key, value: Value.to_metadata_value(value)}
+        ptr_entries[i] = {key: key, value: Value.to_metadata_value(value)}
       end
     end
   end
@@ -64,8 +70,10 @@ class Log::Metadata
   end
 
   def each(&block : {Symbol, Value} -> _)
+    ptr_entries = pointerof(@first)
+
     @size.times do |i|
-      entry = @entries[i]
+      entry = ptr_entries[i]
       block.call({entry[:key], entry[:value]})
     end
 
@@ -74,7 +82,7 @@ class Log::Metadata
         # return it if it's not already returned by the previous circle
         already_yielded = false
         @size.times do |i|
-          if @entries[i][:key] == key
+          if ptr_entries[i][:key] == key
             already_yielded = true
             break
           end
