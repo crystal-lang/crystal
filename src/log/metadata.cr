@@ -4,43 +4,45 @@
 #
 # NOTE: If you'd like to format the context as JSON, remember to `require "log/json"`.
 class Log::Metadata
-  Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: true, target_type: Log::Metadata
+  struct Value; end
+
+  include Enumerable({Symbol, Log::Metadata::Value})
+  alias Entry = {key: Symbol, value: Value}
 
   # Returns an empty `Log::Metadata`.
   #
   # NOTE: Since `Log::Metadata` is immutable, it's safe to share this instance.
   class_getter empty : Log::Metadata = Log::Metadata.new
 
-  # Creates an empty `Log::Metadata`.
-  def initialize
-    @raw = Hash(String, Metadata).new
-  end
-
-  # Creates `Log::Metadata` from the given *values*.
-  # All keys are converted to `String`
-  def initialize(hash : NamedTuple | Hash)
-    @raw = raw = Hash(String, Metadata).new
-    hash.each do |key, value|
-      raw[key.to_s] = to_metadata(value)
-    end
-  end
+  @parent : Metadata?
+  @size : Int32
+  @entries : Pointer(Entry)
 
   # :nodoc:
-  def initialize(ary : Array)
-    @raw = ary.map { |e| to_metadata(e) }
-  end
+  def initialize(@parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
+    # Workaround for Slice(Entry).new(entries.size)
+    @size = entries.size
+    @entries = Pointer(Entry).malloc(@size)
 
-  private def to_metadata(value)
-    value.is_a?(Metadata) ? value : Metadata.new(value)
+    if entries.is_a?(NamedTuple)
+      entries.each_with_index do |key, value, i|
+        @entries[i] = {key: key, value: Value.to_metadata_value(value)}
+      end
+    else
+      entries.each_with_index do |(key, value), i|
+        @entries[i] = {key: key, value: Value.to_metadata_value(value)}
+      end
+    end
   end
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
   def self.build(value : NamedTuple | Hash)
     return @@empty if value.empty?
-    Metadata.new(value)
+    Metadata.new(nil, value)
   end
 
+  # :ditto:
   def self.build(value : Metadata)
     value
   end
@@ -51,7 +53,95 @@ class Log::Metadata
     return Metadata.build(other) if self.object_id == @@empty.object_id
     return self if other.empty?
 
-    Metadata.build(self.raw.as(Hash).merge(other.to_h))
+    Metadata.new(self, other)
+  end
+
+  def empty?
+    # TODO: Add specs
+    parent = @parent
+
+    @size == 0 && (parent.nil? || parent.empty?)
+  end
+
+  def each(&block : {Symbol, Value} -> _)
+    @size.times do |i|
+      entry = @entries[i]
+      block.call({entry[:key], entry[:value]})
+    end
+
+    if parent = @parent
+      parent.each do |(key, value)|
+        # return it if it's not already returned by the previous circle
+        already_yielded = false
+        @size.times do |i|
+          if @entries[i][:key] == key
+            already_yielded = true
+            break
+          end
+        end
+
+        block.call({key, value}) unless already_yielded
+      end
+    end
+  end
+
+  def ==(other : Metadata)
+    # TODO: Add specs
+    self_kv = self.to_a
+    other_kv = other.to_a
+
+    return false if self_kv.size != other_kv.size
+
+    # sort kv tuples by key
+    self_kv.sort_by!(&.[0])
+    other_kv.sort_by!(&.[0])
+
+    self_kv.each_with_index do |(key, value), i|
+      return false unless key == other_kv[i][0] && value == other_kv[i][1]
+    end
+
+    true
+  end
+
+  # :nodoc:
+  def ==(other)
+    false
+  end
+
+  def to_s(io : IO) : Nil
+    io << '{'
+    found_one = false
+    each do |(key, value)|
+      io << ", " if found_one
+      key.inspect(io)
+      io << " => "
+      value.inspect(io)
+      found_one = true
+    end
+    io << '}'
+  end
+
+  struct Value
+    Crystal.datum types: {nil: Nil, bool: Bool, i: Int32, i64: Int64, f: Float32, f64: Float64, s: String, time: Time}, hash_key_type: String, immutable: false, target_type: Log::Metadata::Value
+
+    # Creates `Log::Metadata` from the given *values*.
+    # All keys are converted to `String`
+    def initialize(hash : NamedTuple | Hash)
+      @raw = raw = Hash(String, Value).new
+      hash.each do |key, value|
+        raw[key.to_s] = Value.to_metadata_value(value)
+      end
+    end
+
+    # :nodoc:
+    def initialize(ary : Array)
+      @raw = ary.map { |e| Value.to_metadata_value(e) }
+    end
+
+    # :nodoc:
+    def self.to_metadata_value(value)
+      value.is_a?(Value) ? value : Value.new(value)
+    end
   end
 end
 
@@ -61,7 +151,6 @@ class Fiber
 
   # :nodoc:
   def logging_context=(value : Log::Metadata)
-    raise ArgumentError.new "Expected hash context, not #{value.raw.class}" unless value.raw.as?(Hash)
     @logging_context = value
   end
 end

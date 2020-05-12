@@ -43,7 +43,7 @@ describe Log::IOBackend do
         logger.info { "info:show" }
       end
 
-      r.gets.should match(/info:show -- {"foo" => "bar"}/)
+      r.gets.should match(/info:show -- {:foo => "bar"}/)
     end
   end
 
