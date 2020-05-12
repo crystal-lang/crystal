@@ -17,6 +17,17 @@ describe Log::Metadata do
     Log::Metadata.empty.object_id.should eq(Log::Metadata.empty.object_id)
   end
 
+  it "empty?" do
+    Log::Metadata.empty.should be_empty
+    m({} of Symbol => String).should be_empty
+    Log::Metadata.new.should be_empty
+    m({} of Symbol => String).extend({} of Symbol => String).should be_empty
+
+    m({a: 1}).should_not be_empty
+    m({} of Symbol => String).extend({a: 1}).should_not be_empty
+    m({a: 1}).extend({} of Symbol => String).should_not be_empty
+  end
+
   it "extend" do
     m({a: 1}).extend({b: 2}).should eq(m({a: 1, b: 2}))
     m({a: 1, b: 3}).extend({b: 2}).should eq(m({a: 1, b: 2}))
@@ -27,6 +38,19 @@ describe Log::Metadata do
     c1 = m({a: 1, b: 3})
     c1.extend(NamedTuple.new).should be(c1)
     c1.extend(Hash(Symbol, String).new).should be(c1)
+  end
+
+  it "==" do
+    m({} of Symbol => String).should eq(m({} of Symbol => String))
+    m({a: 1}).should eq(m({a: 1}))
+    m({a: 1, b: 2}).should eq(m({b: 2, a: 1}))
+
+    m({a: 1}).should_not eq(m({a: 2}))
+    m({a: 1}).should_not eq(m({b: 1}))
+
+    m({a: 1}).extend({b: 2}).should eq(m({b: 2}).extend({a: 1}))
+    m({a: 1, b: 1}).extend({b: 2}).should eq(m({b: 2}).extend({a: 1}))
+    m({a: 1, b: 2}).extend({b: 1}).should eq(m({a: 1, b: 1}))
   end
 
   it "json" do

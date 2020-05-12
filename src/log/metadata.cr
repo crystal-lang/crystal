@@ -20,7 +20,7 @@ class Log::Metadata
   @first = uninitialized Entry
 
   def self.new(parent : Metadata? = nil, entries : NamedTuple | Hash = NamedTuple.new)
-    data_size = instance_sizeof(self) + sizeof(Entry) * (entries.size - 1)
+    data_size = instance_sizeof(self) + sizeof(Entry) * {entries.size - 1, 0}.max
     data = GC.malloc(data_size).as(self)
     data.setup(parent, entries)
     data
@@ -56,14 +56,13 @@ class Log::Metadata
   # Returns a `Log::Metadata` with all the entries of *self*
   # and *other*. If a key is defined in both, the values in *other* are used.
   def extend(other : NamedTuple | Hash) : Metadata
-    return Metadata.build(other) if self.object_id == @@empty.object_id
+    return Metadata.build(other) if self.empty?
     return self if other.empty?
 
     Metadata.new(self, other)
   end
 
   def empty?
-    # TODO: Add specs
     parent = @parent
 
     @size == 0 && (parent.nil? || parent.empty?)
@@ -94,7 +93,6 @@ class Log::Metadata
   end
 
   def ==(other : Metadata)
-    # TODO: Add specs
     self_kv = self.to_a
     other_kv = other.to_a
 
