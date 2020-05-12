@@ -128,6 +128,36 @@ class Log::Metadata
     end
   end
 
+  def [](key : Symbol) : Value
+    fetch(key) { raise KeyError.new "Missing metadata key: #{key.inspect}" }
+  end
+
+  def []?(key : Symbol) : Value?
+    fetch(key) { nil }
+  end
+
+  def fetch(key)
+    entry = find_entry(key)
+    entry ? entry[:value] : yield key
+  end
+
+  protected def find_entry(key) : Entry?
+    # checking the @parent before @size ensures that if other
+    # thread is doing defrag, the results will be consistent
+    # without locking.
+
+    parent = @parent
+
+    ptr_entries = pointerof(@first)
+    @size.times do |i|
+      return ptr_entries[i] if ptr_entries[i][:key] == key
+    end
+
+    return parent.find_entry(key) if parent
+
+    nil
+  end
+
   def ==(other : Metadata)
     self_kv = self.to_a
     other_kv = other.to_a
