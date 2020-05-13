@@ -1,18 +1,5 @@
 require "./spec_helper"
 
-private def compile_and_run_source(source)
-  with_tempfile("executable_file", "source_file") do |executable_file, source_file|
-    File.write(source_file, source)
-    Process.run("bin/crystal", ["build", "--debug", "-o", executable_file, source_file])
-    File.exists?(executable_file).should be_true
-
-    output, error = IO::Memory.new, IO::Memory.new
-    Process.run executable_file, output: output, error: error
-
-    {output.to_s, error.to_s}
-  end
-end
-
 describe Spec do
   describe "hooks" do
     it "runs in correct order" do
