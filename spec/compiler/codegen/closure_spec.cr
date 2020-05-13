@@ -702,9 +702,6 @@ describe "Code gen: closure" do
     codegen(%(
       require "prelude"
 
-      lib LibC
-        fun exit(c : Int32) : NoReturn
-      end
 
       lib LibA
         fun a(a : Void* -> Void*)
