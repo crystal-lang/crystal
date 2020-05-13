@@ -1109,7 +1109,7 @@ struct Time
   # Number of seconds decimals can be selected with *fraction_digits*.
   # Values accepted are 0 (no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
   # The default value `nil` prints all the available decimals (currently 9).
-  def to_rfc3339(fraction_digits : Int? = nil)
+  def to_rfc3339(*, fraction_digits : Int? = nil)
     Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
@@ -1120,7 +1120,7 @@ struct Time
   # Number of seconds decimals can be selected with *fraction_digits*.
   # Values accepted are 0 (no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
   # The default value `nil` prints all the available decimals (currently 9).
-  def to_rfc3339(io : IO, fraction_digits : Int? = nil)
+  def to_rfc3339(io : IO, *, fraction_digits : Int? = nil)
     Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
