@@ -82,6 +82,27 @@ private class SimpleIOMemory < IO
   end
 end
 
+private class OneByOneIO < IO
+  @bytes : Bytes
+
+  def initialize(string)
+    @bytes = string.to_slice
+    @pos = 0
+  end
+
+  def read(slice : Bytes)
+    return 0 if slice.empty?
+    return 0 if @pos >= @bytes.size
+
+    slice[0] = @bytes[@pos]
+    @pos += 1
+    1
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 describe IO do
   describe "partial read" do
     pending_win32 "doesn't block on first read.  blocks on 2nd read" do
@@ -396,6 +417,32 @@ describe IO do
         expect_raises(IO::Error, "File not open for reading") do
           w.gets
         end
+      end
+    end
+
+    describe ".same_content?" do
+      it "compares two ios, one way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_true
+      end
+
+      it "compares two ios, second way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io2, io1).should be_true
+      end
+
+      it "compares two ios, one way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "compares two ios, second way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io2, io1).should be_false
       end
     end
   end

@@ -7,24 +7,29 @@ require "./base"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
 class Digest::MD5 < Digest::Base
+  @i = StaticArray(UInt32, 2).new(0_u32)
+  @buf = StaticArray(UInt32, 4).new(0_u32)
+  @in = StaticArray(UInt8, 64).new(0_u8)
+
   def initialize
-    @i = StaticArray(UInt32, 2).new(0_u32)
-    @buf = StaticArray(UInt32, 4).new(0_u32)
+    reset
+  end
+
+  private def reset_impl : Nil
+    @i[0] = 0_u32
+    @i[1] = 0_u32
     @buf[0] = 0x67452301_u32
     @buf[1] = 0xEFCDAB89_u32
     @buf[2] = 0x98BADCFE_u32
     @buf[3] = 0x10325476_u32
-    @in = StaticArray(UInt8, 64).new(0_u8)
-    @digest = uninitialized UInt8[16]
   end
 
-  def update(data)
-    slice = data.to_slice
-    update(slice.to_unsafe, slice.bytesize.to_u32)
+  private def update_impl(data : Bytes) : Nil
+    update(data.to_unsafe, data.bytesize.to_u32)
   end
 
-  def update(inBuf, inLen)
-    in = uninitialized UInt32[16]
+  private def update(inBuf, inLen)
+    tmp_in = uninitialized UInt32[16]
 
     # compute number of bytes mod 64
     mdi = (@i[0] >> 3) & 0x3F
@@ -44,13 +49,13 @@ class Digest::MD5 < Digest::Base
       if mdi == 0x40
         ii = 0
         16.times do |i|
-          in[i] = (@in[ii + 3].to_u32 << 24) |
-                  (@in[ii + 2].to_u32 << 16) |
-                  (@in[ii + 1].to_u32 << 8) |
-                  (@in[ii])
+          tmp_in[i] = (@in[ii + 3].to_u32 << 24) |
+                      (@in[ii + 2].to_u32 << 16) |
+                      (@in[ii + 1].to_u32 << 8) |
+                      (@in[ii])
           ii += 4
         end
-        transform in
+        transform tmp_in
         mdi = 0
       end
     end
@@ -76,57 +81,57 @@ class Digest::MD5 < Digest::Base
   S43 = 15
   S44 = 21
 
-  PADDING = begin
+  private PADDING = begin
     padding = StaticArray(UInt8, 64).new(0_u8)
     padding[0] = 0x80_u8
     padding
   end
 
-  def f(x, y, z)
+  private def f(x, y, z)
     (x & y) | ((~x) & z)
   end
 
-  def g(x, y, z)
+  private def g(x, y, z)
     (x & z) | (y & (~z))
   end
 
-  def h(x, y, z)
+  private def h(x, y, z)
     x ^ y ^ z
   end
 
-  def i(x, y, z)
+  private def i(x, y, z)
     y ^ (x | (~z))
   end
 
-  def rotate_left(x, n)
+  private def rotate_left(x, n)
     (x << n) | (x >> (32 - n))
   end
 
-  def ff(a, b, c, d, x, s, ac)
+  private def ff(a, b, c, d, x, s, ac)
     a &+= f(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def gg(a, b, c, d, x, s, ac)
+  private def gg(a, b, c, d, x, s, ac)
     a &+= g(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def hh(a, b, c, d, x, s, ac)
+  private def hh(a, b, c, d, x, s, ac)
     a &+= h(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def ii(a, b, c, d, x, s, ac)
+  private def ii(a, b, c, d, x, s, ac)
     a &+= i(b, c, d) &+ x &+ ac.to_u32
     a = rotate_left a, s
     a &+= b
   end
 
-  def transform(in)
+  private def transform(in)
     a, b, c, d = @buf
 
     # Round 1
@@ -207,12 +212,12 @@ class Digest::MD5 < Digest::Base
     @buf[3] &+= d
   end
 
-  def final
-    in = uninitialized UInt32[16]
+  private def final_impl(dst : Bytes) : Nil
+    tmp_in = uninitialized UInt32[16]
 
     # save number of bits
-    in[14] = @i[0]
-    in[15] = @i[1]
+    tmp_in[14] = @i[0]
+    tmp_in[15] = @i[1]
 
     # compute number of bytes mod 64
     mdi = ((@i[0] >> 3) & 0x3F).to_i32
@@ -224,26 +229,26 @@ class Digest::MD5 < Digest::Base
     # append length in bits and transform
     ii = 0
     14.times do |i|
-      in[i] = (@in[ii + 3].to_u32 << 24) |
-              (@in[ii + 2].to_u32 << 16) |
-              (@in[ii + 1].to_u32 << 8) |
-              (@in[ii])
+      tmp_in[i] = (@in[ii + 3].to_u32 << 24) |
+                  (@in[ii + 2].to_u32 << 16) |
+                  (@in[ii + 1].to_u32 << 8) |
+                  (@in[ii])
       ii += 4
     end
-    transform in
+    transform tmp_in
 
     # store buffer in digest
     ii = 0
     4.times do |i|
-      @digest[ii] = (@buf[i] & 0xff).to_u8
-      @digest[ii + 1] = ((@buf[i] >> 8) & 0xFF).to_u8
-      @digest[ii + 2] = ((@buf[i] >> 16) & 0xFF).to_u8
-      @digest[ii + 3] = ((@buf[i] >> 24) & 0xFF).to_u8
+      dst[ii] = (@buf[i] & 0xff).to_u8
+      dst[ii + 1] = ((@buf[i] >> 8) & 0xFF).to_u8
+      dst[ii + 2] = ((@buf[i] >> 16) & 0xFF).to_u8
+      dst[ii + 3] = ((@buf[i] >> 24) & 0xFF).to_u8
       ii += 4
     end
   end
 
-  def result
-    @digest
+  def digest_size : Int32
+    16
   end
 end

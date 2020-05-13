@@ -192,7 +192,7 @@ struct XML::Node
     end
 
     io << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
 
     if text?
       io << ' '

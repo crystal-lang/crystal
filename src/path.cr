@@ -9,8 +9,8 @@
 # A `Path` can represent a root, a root and a sequence of names, or simply one or
 # more name elements.
 # A `Path` is considered to be an empty path if it consists solely of one name
-# element that is empty. Accessing a file using an empty path is equivalent
-# to accessing the default directory of the process.
+# element that is empty or equal to `"."`. Accessing a file using an empty path
+# is equivalent to accessing the default directory of the process.
 #
 # # Examples
 #
@@ -230,7 +230,7 @@ struct Path
 
   # Returns the parent path of this path.
   #
-  # If the path is empty or `"."`, it returns `"."`. If the path is rooted
+  # If the path is empty, it returns `"."`. If the path is rooted
   # and in the top-most hierarchy, the root path is returned.
   #
   # ```
@@ -267,7 +267,7 @@ struct Path
   # # Path["foo/bar"]
   # ```
   def each_parent(&block : Path ->)
-    return if @name.empty? || @name == "."
+    return if empty?
 
     first_char = @name.char_at(0)
     unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_chr)) || (windows? && (windows_drive? || unc_share?))
@@ -398,7 +398,7 @@ struct Path
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
-    return new_instance "." if @name.empty?
+    return new_instance "." if empty?
 
     drive, root = drive_and_root
     reader = Char::Reader.new(@name)
@@ -944,6 +944,10 @@ struct Path
     else
       raise Error.new("Can't resolve sibling for a path without parent directory")
     end
+  end
+
+  private def empty?
+    @name.empty? || @name == "."
   end
 
   # Returns a relative path that is lexically equivalent to `self` when joined

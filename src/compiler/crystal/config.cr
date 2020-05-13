@@ -20,7 +20,7 @@ module Crystal
         Crystal #{version} #{formatted_sha}(#{date})
 
         LLVM: #{llvm_version}
-        Default target: #{self.default_target}
+        Default target: #{self.host_target}
         DOC
     end
 
@@ -36,10 +36,10 @@ module Crystal
       Time.unix(time).to_s("%Y-%m-%d")
     end
 
-    @@default_target : Crystal::Codegen::Target?
+    @@host_target : Crystal::Codegen::Target?
 
-    def self.default_target : Crystal::Codegen::Target
-      @@default_target ||= begin
+    def self.host_target : Crystal::Codegen::Target
+      @@host_target ||= begin
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?

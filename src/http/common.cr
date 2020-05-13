@@ -293,7 +293,7 @@ module HTTP
   def self.serialize_chunked_body(io, body)
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
-      buf_length.to_s(16, io)
+      buf_length.to_s(io, 16)
       io << "\r\n"
       io.write(buf.to_slice[0, buf_length])
       io << "\r\n"

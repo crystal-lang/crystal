@@ -1148,6 +1148,29 @@ abstract class IO
     limit - remaining
   end
 
+  # Compares two streams *stream1* to *stream2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("afile", "123")
+  # stream1 = File.open("afile")
+  # stream2 = IO::Memory.new("123")
+  # IO.same_content?(stream1, stream2) # => true
+  # ```
+  def self.same_content?(stream1 : IO, stream2 : IO)
+    buf1 = uninitialized UInt8[1024]
+    buf2 = uninitialized UInt8[1024]
+
+    while true
+      read1 = stream1.read(buf1.to_slice)
+      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
+      return false unless read2
+
+      return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
+      return true if read1 == 0
+    end
+  end
+
   private struct LineIterator(I, A, N)
     include Iterator(String)
 

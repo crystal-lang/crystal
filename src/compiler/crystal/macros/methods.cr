@@ -51,7 +51,7 @@ module Crystal
         interpret_debug(node)
       when "env"
         interpret_env(node)
-      when "flag?"
+      when "flag?", "host_flag?"
         interpret_flag?(node)
       when "puts"
         interpret_puts(node)
@@ -145,10 +145,18 @@ module Crystal
     def interpret_flag?(node)
       if node.args.size == 1
         node.args[0].accept self
-        flag = @last.to_macro_id
-        @last = BoolLiteral.new(@program.has_flag?(flag))
+        flag_name = @last.to_macro_id
+        flags = case node.name
+                when "flag?"
+                  @program.flags
+                when "host_flag?"
+                  @program.host_flags
+                else
+                  raise "Bug: unexpected macro method #{node.name}"
+                end
+        @last = BoolLiteral.new(flags.includes?(flag_name))
       else
-        node.wrong_number_of_arguments "macro call 'flag?'", node.args.size, 1
+        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end
     end
 

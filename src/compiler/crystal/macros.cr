@@ -36,6 +36,16 @@ module Crystal::Macros
   def flag?(name) : BoolLiteral
   end
 
+  # Returns whether a [compile-time flag](https://crystal-lang.org/docs/syntax_and_semantics/compile_time_flags.html)
+  # is set for the *host* platform, which can differ from the target platform
+  # (`flag?`) during cross-compilation.
+  #
+  # ```
+  # {{ host_flag?(:win32) }} # true or false
+  # ```
+  def host_flag?(name) : BoolLiteral
+  end
+
   # Prints AST nodes at compile-time. Useful for debugging macros.
   def puts(*expressions) : Nop
   end

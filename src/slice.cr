@@ -596,11 +596,11 @@ struct Slice(T)
     if T == UInt8
       io << "Bytes["
       # Inspect using to_s because we know this is a UInt8.
-      join ", ", io, &.to_s(io)
+      join io, ", ", &.to_s(io)
       io << ']'
     else
       io << "Slice["
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << ']'
     end
   end

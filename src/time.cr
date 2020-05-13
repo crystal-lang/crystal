@@ -1084,8 +1084,16 @@ struct Time
   # Formats this `Time` according to the pattern in *format* to the given *io*.
   #
   # See `Time::Format` for details.
-  def to_s(format : String, io : IO) : Nil
+  def to_s(io : IO, format : String) : Nil
     Format.new(format).format(self, io)
+  end
+
+  # Formats this `Time` according to the pattern in *format* to the given *io*.
+  #
+  # See `Time::Format` for details.
+  @[Deprecated("Use `#to_s(io : IO, format : String)` instead")]
+  def to_s(format : String, io : IO) : Nil
+    to_s(io, format)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
@@ -1296,7 +1304,7 @@ struct Time
     if local?
       self
     else
-      in(Location.local)
+      self.in(Location.local)
     end
   end
 

@@ -1423,6 +1423,10 @@ module Crystal
               [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
             end
           end
+
+          it "includes the generic_args of the instantiated type by default" do
+            assert_macro("", "{{Array(Int32).name}}", [] of ASTNode, "Array(Int32)")
+          end
         end
 
         describe :generic_args do
@@ -1432,6 +1436,10 @@ module Crystal
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
             end
+
+            it "includes the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: true)}}", [] of ASTNode, "Array(Int32)")
+            end
           end
 
           describe false do
@@ -1439,6 +1447,10 @@ module Crystal
               assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
+            end
+
+            it "does not include the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: false)}}", [] of ASTNode, "Array")
             end
           end
 
@@ -1978,26 +1990,36 @@ module Crystal
     end
 
     describe "case methods" do
-      case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32)
+      describe "when" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
 
-      it "executes cond" do
-        assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        it "executes cond" do
+          assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        end
+
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
+        end
+
+        it "executes when conds" do
+          assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
+        end
+
+        it "executes when body" do
+          assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
+        end
+
+        it "executes else" do
+          assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        end
       end
 
-      it "executes whens" do
-        assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
-      end
+      describe "in" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: true)
 
-      it "executes when conds" do
-        assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
-      end
-
-      it "executes when body" do
-        assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
-      end
-
-      it "executes else" do
-        assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[in 2, 3\n  4\n]"
+        end
       end
     end
 

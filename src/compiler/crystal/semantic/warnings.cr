@@ -15,7 +15,7 @@ module Crystal
         message = String.build do |io|
           exception = SyntaxException.new message, location.line_number, location.column_number, location.filename
           exception.warning = true
-          exception.append_to_s(nil, io)
+          exception.append_to_s(io, nil)
         end
       end
 

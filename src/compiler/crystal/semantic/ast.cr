@@ -18,7 +18,7 @@ module Crystal
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
         exception.warning = true
-        exception.append_to_s(nil, io)
+        exception.append_to_s(io, nil)
       end
     end
 

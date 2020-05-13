@@ -95,7 +95,7 @@ module Crystal
 
     # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -675,7 +675,7 @@ module Crystal
 
         if can_reuse_previous_compilation
           memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
+          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
 
           # If the user cancelled a previous compilation
           # it might be that the .o file is empty
