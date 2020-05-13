@@ -1111,12 +1111,6 @@ module Crystal
       end
 
       if node.question?
-        if @token.type == :IDENT && @token.value == "self?" && node.type_vars.first.is_a?(Self)
-          write "self?"
-          next_token
-          return false
-        end
-
         node.type_vars[0].accept self
         skip_space
         write_token :"?"
