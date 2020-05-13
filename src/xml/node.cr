@@ -284,7 +284,7 @@ struct XML::Node
   end
 
   # Returns the namespace for this node or `nil` if not found.
-  def namespace
+  def namespace : Namespace?
     case type
     when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
       nil
@@ -301,7 +301,7 @@ struct XML::Node
   # Default namespaces for ancestors, however, are not.
   #
   # See also `#namespaces`
-  def namespace_scopes
+  def namespace_scopes : Array(Namespace)
     scopes = [] of Namespace
 
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
@@ -326,7 +326,7 @@ struct XML::Node
   #
   # NOTE: Note that the keys in this hash XML attributes that would be used to
   # define this namespace, such as `"xmlns:prefix"`, not just the prefix.
-  def namespaces
+  def namespaces : Hash(String, String?)
     namespaces = {} of String => String?
     each_namespace do |namespace|
       prefix = namespace.prefix ? "xmlns:#{namespace.prefix}" : "xmlns"
