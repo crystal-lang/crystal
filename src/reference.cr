@@ -70,7 +70,7 @@ class Reference
   # ```
   def inspect(io : IO) : Nil
     io << "#<" << {{@type.name.id.stringify}} << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
 
     executed = exec_recursive(:inspect) do
       {% for ivar, i in @type.instance_vars %}
@@ -129,7 +129,7 @@ class Reference
   # ```
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
     io << '>'
   end
 

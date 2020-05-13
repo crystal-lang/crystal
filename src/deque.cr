@@ -336,7 +336,7 @@ class Deque(T)
   def inspect(io : IO) : Nil
     executed = exec_recursive(:inspect) do
       io << "Deque{"
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << '}'
     end
     io << "Deque{...}" unless executed

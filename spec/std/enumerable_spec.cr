@@ -620,25 +620,59 @@ describe "Enumerable" do
     end
   end
 
-  describe "join" do
-    it "joins with separator and block" do
-      str = [1, 2, 3].join(", ") { |x| x + 1 }
-      str.should eq("2, 3, 4")
+  describe "#join" do
+    it "()" do
+      [1, 2, 3].join.should eq("123")
     end
 
-    it "joins without separator and block" do
+    it "(separator)" do
+      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
+    end
+
+    it "(&)" do
       str = [1, 2, 3].join { |x| x + 1 }
       str.should eq("234")
     end
 
-    it "joins with io and block" do
+    it "(separator, &)" do
+      str = [1, 2, 3].join(", ") { |x| x + 1 }
+      str.should eq("2, 3, 4")
+    end
+
+    it "(io)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io)
+      io.to_s.should eq("123")
+    end
+
+    it "(io, separator)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(io, ", ")
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(separator, io) (deprecated)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(", ", io)
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(io, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io) { |x, io| io << x + 1 }
+      io.to_s.should eq("234")
+    end
+
+    it "(io, separator, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io, ", ") { |x, io| io << x + 1 }
+      io.to_s.should eq("2, 3, 4")
+    end
+
+    it "(separator, io, &) (deprecated)" do
       str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
-    end
-
-    it "joins with only separator" do
-      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
     end
   end
 

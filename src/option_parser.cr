@@ -274,7 +274,7 @@ class OptionParser
       io << banner
       io << '\n'
     end
-    @flags.join '\n', io
+    @flags.join io, '\n'
   end
 
   private def append_flag(flag, description)
