@@ -181,16 +181,14 @@ class Log::Metadata
   end
 
   def to_s(io : IO) : Nil
-    io << '{'
     found_one = false
     each do |(key, value)|
       io << ", " if found_one
-      key.inspect(io)
-      io << " => "
+      io << key
+      io << ": "
       value.inspect(io)
       found_one = true
     end
-    io << '}'
   end
 
   struct Value
