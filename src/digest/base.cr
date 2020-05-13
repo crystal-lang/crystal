@@ -22,7 +22,7 @@ abstract class Digest::Base
     #   ctx.update "f"
     #   ctx.update "oo"
     # end
-    # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
+    # digest.hexfinal # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
     def self.digest(& : Digest::Base -> _) : Bytes
       context = new
@@ -118,11 +118,50 @@ abstract class Digest::Base
     final dst
   end
 
+  # Writes the final digest output to `dst`.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # Faster than the `Bytes` allocating version.
+  # Use when hashing in loops.
+  #
+  # NOTE: `.dup.final(dst)` call may be used to get an intermediate hash value.
   def final(dst : Bytes) : Bytes
     check_finished
     @finished = true
     final_impl dst
     dst
+  end
+
+  # Returns a hexadecimal-encoded digest in a new `String`.
+  def hexfinal : String
+    dsize = digest_size
+    sary = uninitialized StaticArray(UInt8, 64)
+    tmp = sary.to_slice[0, dsize]
+    final tmp
+    tmp.hexstring
+  end
+
+  # Writes a hexadecimal-encoded digest to `dst`.
+  #
+  # Faster than the `String` allocating version.
+  # Use when hashing in loops.
+  def hexfinal(dst : Bytes) : Nil
+    dsize = digest_size
+    raise ArgumentError.new("dst size incorrect #{dst.bytesize}, expected #{dsize}") unless dst.bytesize == dsize * 2
+
+    sary = uninitialized StaticArray(UInt8, 64)
+    tmp = sary.to_slice[0, dsize]
+    final tmp
+    tmp.hexstring dst
+  end
+
+  # Writes a hexadecimal-encoded digest to `IO`.
+  def hexfinal(io : ::IO) : Nil
+    sary = uninitialized StaticArray(UInt8, 128)
+    tmp = sary.to_slice[0, digest_size * 2]
+    hexfinal tmp
+    io << tmp
   end
 
   def reset : self

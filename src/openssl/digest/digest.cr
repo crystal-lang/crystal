@@ -62,7 +62,7 @@ module OpenSSL
     end
 
     private def final_impl(data : Bytes) : Nil
-      raise ArgumentError.new("data size incorrect") unless data.bytesize == digest_size
+      raise ArgumentError.new("data size incorrect #{data.bytesize}, expected #{digest_size}") unless data.bytesize == digest_size
       if LibCrypto.evp_digestfinal_ex(@ctx, data, nil) != 1
         raise Error.new "EVP_DigestFinal_ex"
       end

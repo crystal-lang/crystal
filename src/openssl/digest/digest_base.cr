@@ -29,7 +29,7 @@ module OpenSSL
       Base64.strict_encode(digest)
     end
 
-    @[Deprecated("Use `io << final.hexstring` instead.")]
+    @[Deprecated("Use `hexfinal(io)` instead.")]
     def to_s(io : IO) : Nil
       io << hexdigest
     end
