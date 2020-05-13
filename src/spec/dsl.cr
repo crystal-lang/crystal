@@ -162,7 +162,7 @@ module Spec
   class_property? focus = false
 
   # Instructs the spec runner to execute the given block
-  # before each spec, regardless of where this method is invoked.
+  # before each spec in the spec suite.
   #
   # If multiple blocks are registered they run in the order
   # that they are given.
@@ -176,12 +176,11 @@ module Spec
   #
   # will print, just before each spec, 1 and then 2.
   def self.before_each(&block)
-    before_each = @@before_each ||= [] of ->
-    before_each << block
+    root_context.before_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
-  # after each spec, regardless of where this method is invoked.
+  # after each spec spec in the spec suite.
   #
   # If multiple blocks are registered they run in the reversed
   # order that they are given.
@@ -195,8 +194,7 @@ module Spec
   #
   # will print, just after each spec, 2 and then 1.
   def self.after_each(&block)
-    after_each = @@after_each ||= [] of ->
-    after_each << block
+    root_context.after_each(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -214,8 +212,7 @@ module Spec
   #
   # will print, just before the spec suite starts, 1 and then 2.
   def self.before_suite(&block)
-    before_suite = @@before_suite ||= [] of ->
-    before_suite << block
+    root_context.before_all(&block)
   end
 
   # Instructs the spec runner to execute the given block
@@ -233,28 +230,31 @@ module Spec
   #
   # will print, just after the spec suite ends, 2 and then 1.
   def self.after_suite(&block)
-    after_suite = @@after_suite ||= [] of ->
-    after_suite << block
+    root_context.after_all(&block)
   end
 
-  # :nodoc:
-  def self.run_before_each_hooks
-    @@before_each.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_each_hooks
-    @@after_each.try &.reverse_each &.call
-  end
-
-  # :nodoc:
-  def self.run_before_suite_hooks
-    @@before_suite.try &.each &.call
-  end
-
-  # :nodoc:
-  def self.run_after_suite_hooks
-    @@after_suite.try &.reverse_each &.call
+  # Instructs the spec runner to execute the given block when each spec in the
+  # spec suite runs.
+  #
+  # The block must call `run` on the given `Example::Procsy` object.
+  #
+  # If multiple blocks are registered they run in the reversed
+  # order that they are given.
+  #
+  # ```
+  # require "spec"
+  #
+  # Spec.around_each do |example|
+  #   puts "runs before each sample"
+  #   example.run
+  #   puts "runs after each sample"
+  # end
+  #
+  # it { }
+  # it { }
+  # ```
+  def self.around_each(&block : Example::Procsy ->)
+    root_context.around_each(&block)
   end
 
   @@start_time : Time::Span? = nil
@@ -267,9 +267,7 @@ module Spec
       log_setup
       maybe_randomize
       run_filters
-      run_before_suite_hooks
       root_context.run
-      run_after_suite_hooks
     ensure
       finish_run
     end
