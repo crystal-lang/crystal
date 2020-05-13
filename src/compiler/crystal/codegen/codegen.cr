@@ -1531,12 +1531,10 @@ module Crystal
     end
 
     def check_proc_is_not_closure(value, type)
-      if value.type == llvm_typer.proc_type
-        check_fun_name = "~check_proc_is_not_closure"
-        func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
-        func = check_main_fun check_fun_name, func
-        value = call func, [value] of LLVM::Value
-      end
+      check_fun_name = "~check_proc_is_not_closure"
+      func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
+      func = check_main_fun check_fun_name, func
+      value = call func, [value] of LLVM::Value
       bit_cast value, llvm_proc_type(type)
     end
 
