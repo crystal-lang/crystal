@@ -91,7 +91,7 @@ compiler_spec: $(O)/compiler_spec ## Run compiler specs
 
 .PHONY: docs
 docs: ## Generate standard library documentation
-	$(BUILD_PATH) ./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION)
+	$(BUILD_PATH) ./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
 
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler

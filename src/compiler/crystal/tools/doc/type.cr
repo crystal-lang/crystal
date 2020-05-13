@@ -758,7 +758,7 @@ class Crystal::Doc::Type
   end
 
   def html_id
-    "#{@generator.repository_name}/" + (
+    "#{@generator.project_info.name}/" + (
       if program?
         "toplevel"
       elsif namespace = self.namespace
@@ -786,7 +786,7 @@ class Crystal::Doc::Type
         end
       end
       builder.field "locations", locations
-      builder.field "repository_name", @generator.repository_name
+      builder.field "repository_name", @generator.project_info.name
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
