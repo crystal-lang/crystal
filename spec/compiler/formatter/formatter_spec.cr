@@ -1043,6 +1043,7 @@ describe Crystal::Formatter do
   assert_format "module Readline\n  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil\nend"
   assert_format "alias A = (B(C, (C | D)) | E)"
   assert_format "alias A = ((B(C | D) | E) | F)"
+  assert_format "alias A = ({A, (B)})"
 
   assert_format "foo : A(B)\nbar : C"
   assert_format "foo : (A -> B)\nbar : C"

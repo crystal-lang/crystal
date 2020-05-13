@@ -226,11 +226,11 @@ module Crystal
     it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)])
     it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", restriction: "Int".path)])
     it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", restriction: Self.new)])
-    it_parses "def foo(var : self?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Generic.new(Path.global("Union"), [Self.new, Path.global("Nil")] of ASTNode))])
+    it_parses "def foo(var : self?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new([Self.new, Path.global("Nil")] of ASTNode))])
     it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", restriction: Metaclass.new(Self.new))])
     it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", restriction: Self.new.pointer_of)])
     it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Double".path] of ASTNode))])
-    it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Generic.new(Path.global("Union"), ["Int".path, "Nil".path(true)] of ASTNode))])
+    it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Nil".path(true)] of ASTNode))])
     it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of)])
     it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of.pointer_of)])
     it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path))])
@@ -537,7 +537,7 @@ module Crystal
     it_parses "Foo(T)", Generic.new("Foo".path, ["T".path] of ASTNode)
     it_parses "Foo(T | U)", Generic.new("Foo".path, [Crystal::Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)
     it_parses "Foo(Bar(T | U))", Generic.new("Foo".path, [Generic.new("Bar".path, [Crystal::Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)] of ASTNode)
-    it_parses "Foo(T?)", Generic.new("Foo".path, [Crystal::Generic.new(Path.global("Union"), ["T".path, Path.global("Nil")] of ASTNode)] of ASTNode)
+    it_parses "Foo(T?)", Generic.new("Foo".path, [Crystal::Union.new(["T".path, Path.global("Nil")] of ASTNode)] of ASTNode)
     it_parses "Foo(1)", Generic.new("Foo".path, [1.int32] of ASTNode)
     it_parses "Foo(T, 1)", Generic.new("Foo".path, ["T".path, 1.int32] of ASTNode)
     it_parses "Foo(T, U, 1)", Generic.new("Foo".path, ["T".path, "U".path, 1.int32] of ASTNode)
@@ -554,6 +554,7 @@ module Crystal
 
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
+    it_parses "Foo(X: U, Y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("X", "U".path), NamedArgument.new("Y", "V".path)])
     assert_syntax_error "Foo(T, x: U)"
     assert_syntax_error "Foo(x: T y: U)"
 
@@ -562,6 +563,7 @@ module Crystal
 
     it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
+    it_parses "Foo({X: X, Y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("X", "X".path), NamedArgument.new("Y", "Y".path)])] of ASTNode)
     it_parses "Foo(T, {x: X})", Generic.new("Foo".path, ["T".path, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
 
@@ -773,7 +775,7 @@ module Crystal
     it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC", [FunDef.new("getchar")] of ASTNode)
     it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC", [FunDef.new("getchar", varargs: true)] of ASTNode)
     it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: Crystal::Generic.new(Path.global("Union"), [ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC", [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
     it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC", [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)

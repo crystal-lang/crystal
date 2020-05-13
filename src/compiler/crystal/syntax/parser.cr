@@ -1231,7 +1231,7 @@ module Crystal
     end
 
     def parse_generic_or_custom_literal
-      type = parse_generic
+      type = parse_generic(expression: true)
       parse_custom_literal type
     end
 
@@ -4649,7 +4649,7 @@ module Crystal
       when :IDENT
         set_visibility parse_var_or_call global: true
       when :CONST
-        ident = parse_generic global: true, location: location
+        ident = parse_generic global: true, location: location, expression: true
         parse_custom_literal ident
       else
         unexpected_token
@@ -4782,7 +4782,7 @@ module Crystal
     # Parse generic type path like `A::B(C, D)?`.
     # This method is used to parse not only a type, but also an expression represents type.
     # And it also consumes prefix `::` to specify global path.
-    def parse_generic
+    def parse_generic(expression = false)
       location = @token.location
 
       global = false
@@ -4791,10 +4791,10 @@ module Crystal
         global = true
       end
 
-      parse_generic global, location
+      parse_generic global, location, expression
     end
 
-    def parse_generic(global, location)
+    def parse_generic(global, location, expression)
       path = parse_path(global, location)
       type = parse_type_args(path)
 
@@ -4802,9 +4802,9 @@ module Crystal
       # for expression represents nilable type. Typically such an expression
       # is appeared in macro expression. (e.g. `{% if T <= Int32? %} ... {% end %}`)
       # Note that the parser cannot consume any spaces because it conflicts ternary operator.
-      while @token.type == :"?"
+      while expression && @token.type == :"?"
         next_token
-        type = make_nilable_type(type)
+        type = make_nilable_expression(type)
       end
 
       skip_space
@@ -4990,6 +4990,10 @@ module Crystal
     end
 
     def make_nilable_type(type)
+      Union.new([type, Path.global("Nil").at(type)]).at(type)
+    end
+
+    def make_nilable_expression(type)
       type = Generic.new(Path.global("Union").at(type), [type, Path.global("Nil").at(type)]).at(type)
       type.question = true
       type
@@ -5040,6 +5044,7 @@ module Crystal
             false
           end
         when :CONST
+          return false if named_tuple_start?
           next_token_skip_space
           return true unless @token.type == :"."
           next_token_skip_space_or_newline

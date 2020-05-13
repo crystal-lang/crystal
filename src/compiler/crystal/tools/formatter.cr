@@ -1247,6 +1247,14 @@ module Crystal
     def visit(node : Union)
       check_open_paren
 
+      if @token.type == :IDENT && @token.value == "self?" && node.types.size == 2 &&
+         node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
+        write "self?"
+        next_token
+        check_close_paren
+        return false
+      end
+
       paren_count = @paren_count
       column = @column
 
