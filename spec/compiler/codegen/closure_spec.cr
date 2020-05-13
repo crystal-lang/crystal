@@ -706,10 +706,6 @@ describe "Code gen: closure" do
         fun exit(c : Int32) : NoReturn
       end
 
-      def raise(a) : NoReturn
-        LibC.exit(1)
-      end
-
       lib LibA
         fun a(a : Void* -> Void*)
       end
