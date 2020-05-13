@@ -81,7 +81,7 @@ class Log
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
     def severity
-      @entry.severity.label.rjust(7, @io)
+      @entry.severity.label.rjust(@io, 7)
     end
 
     # Write the source for non-root entries
