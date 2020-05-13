@@ -23,8 +23,8 @@ describe Log do
       s(:trace).should be < s(:debug)
       s(:debug).should be < s(:info)
       s(:info).should be < s(:notice)
-      s(:notice).should be < s(:warning)
-      s(:warning).should be < s(:error)
+      s(:notice).should be < s(:warn)
+      s(:warn).should be < s(:error)
       s(:error).should be < s(:fatal)
       s(:fatal).should be < s(:none)
     end
@@ -34,7 +34,7 @@ describe Log do
       Log::Severity.parse("debug").should eq s(:debug)
       Log::Severity.parse("info").should eq s(:info)
       Log::Severity.parse("notice").should eq s(:notice)
-      Log::Severity.parse("warning").should eq s(:warning)
+      Log::Severity.parse("warn").should eq s(:warn)
       Log::Severity.parse("error").should eq s(:error)
       Log::Severity.parse("fatal").should eq s(:fatal)
       Log::Severity.parse("none").should eq s(:none)
@@ -43,7 +43,7 @@ describe Log do
       Log::Severity.parse("DEBUG").should eq s(:debug)
       Log::Severity.parse("INFO").should eq s(:info)
       Log::Severity.parse("NOTICE").should eq s(:notice)
-      Log::Severity.parse("WARNING").should eq s(:warning)
+      Log::Severity.parse("WARN").should eq s(:warn)
       Log::Severity.parse("ERROR").should eq s(:error)
       Log::Severity.parse("FATAL").should eq s(:fatal)
       Log::Severity.parse("NONE").should eq s(:none)
@@ -52,7 +52,7 @@ describe Log do
 
   it "filter messages to the backend above level only" do
     backend = Log::MemoryBackend.new
-    log = Log.new("a", backend, :warning)
+    log = Log.new("a", backend, :warn)
 
     log.trace { "trace message" }
     log.debug { "debug message" }
@@ -63,7 +63,7 @@ describe Log do
     log.fatal { "fatal message" }
 
     backend.entries.map { |e| {e.severity, e.message} }.should eq([
-      {s(:warning), "warning message"},
+      {s(:warn), "warning message"},
       {s(:error), "error message"},
       {s(:fatal), "fatal message"},
     ])
@@ -71,7 +71,7 @@ describe Log do
 
   it "level can be changed" do
     backend = Log::MemoryBackend.new
-    log = Log.new("a", backend, :warning)
+    log = Log.new("a", backend, :warn)
 
     log.level = :error
 

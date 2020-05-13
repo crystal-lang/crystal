@@ -63,9 +63,9 @@ describe "Log.setup_from_env" do
     it "is used if no LOG_LEVEL is set" do
       with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
-        Log.setup_from_env(builder: builder, default_level: :warning)
+        Log.setup_from_env(builder: builder, default_level: :warn)
 
-        builder.for("").initial_level.should eq(s(:warning))
+        builder.for("").initial_level.should eq(s(:warn))
       end
     end
 

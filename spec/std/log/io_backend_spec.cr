@@ -23,7 +23,7 @@ describe Log::IOBackend do
       logger.level = s(:debug)
       logger.debug { "debug:show" }
 
-      logger.level = s(:warning)
+      logger.level = s(:warn)
       logger.debug { "debug:skip:again" }
       logger.info { "info:skip" }
       logger.error { "error:show" }
@@ -61,7 +61,7 @@ describe Log::IOBackend do
       logger = io_logger(stdout: w, source: "db.pool")
       logger.warn { "message" }
 
-      r.gets(chomp: false).should match(/.+? WARNING - db.pool: message\n/)
+      r.gets(chomp: false).should match(/.+? WARN - db.pool: message\n/)
     end
   end
 

@@ -79,9 +79,9 @@ class Log
       TestFormatter.format(Entry.new("source", :error, "Oh, no", Log::Metadata.empty, exception), io)
       io.rewind
 
-      io.gets.should eq("   INFO [source] test message ({\"a\" => 1, \"b\" => 2})")
-      io.gets.should eq("   INFO test message")
-      io.gets.should eq("  ERROR [source] test Oh, no")
+      io.gets.should eq("  INFO [source] test message ({\"a\" => 1, \"b\" => 2})")
+      io.gets.should eq("  INFO test message")
+      io.gets.should eq(" ERROR [source] test Oh, no")
       io.gets_to_end.should eq(exception.inspect_with_backtrace)
     end
   end

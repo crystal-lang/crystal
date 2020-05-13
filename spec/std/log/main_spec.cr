@@ -32,16 +32,16 @@ describe Log do
     top = Log.for("qux", :info)
     top.level.should eq(Log::Severity::Info)
 
-    Log.for("qux", :warning)
-    top.level.should eq(Log::Severity::Warning)
+    Log.for("qux", :warn)
+    top.level.should eq(Log::Severity::Warn)
   end
 
   it "can build nested with level override" do
     foo_bar = Log.for("foo").for("bar", :info)
     foo_bar.level.should eq(Log::Severity::Info)
 
-    Log.for("foo.bar", :warning)
-    foo_bar.level.should eq(Log::Severity::Warning)
+    Log.for("foo.bar", :warn)
+    foo_bar.level.should eq(Log::Severity::Warn)
   end
 
   it "can build for module type" do
