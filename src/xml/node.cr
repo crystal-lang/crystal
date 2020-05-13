@@ -328,19 +328,22 @@ struct XML::Node
   # define this namespace, such as `"xmlns:prefix"`, not just the prefix.
   def namespaces
     namespaces = {} of String => String?
+    each_namespace do |namespace|
+      prefix = namespace.prefix ? "xmlns:#{namespace.prefix}" : "xmlns"
+      namespaces[prefix] = namespace.href
+    end
+    namespaces
+  end
 
+  protected def each_namespace(& : Namespace ->)
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
 
     if ns_list
       while ns_list.value
-        namespace = Namespace.new(document, ns_list.value)
-        prefix = namespace.prefix
-        namespaces[prefix ? "xmlns:#{prefix}" : "xmlns"] = namespace.href
+        yield Namespace.new(document, ns_list.value)
         ns_list += 1
       end
     end
-
-    namespaces
   end
 
   # Returns the address of underlying `LibXML::Node*` in memory.
@@ -483,7 +486,15 @@ struct XML::Node
   # Raises `XML::Error` on evaluation error.
   def xpath(path, namespaces = nil, variables = nil)
     ctx = XPathContext.new(self)
-    ctx.register_namespaces namespaces if namespaces
+
+    if namespaces
+      ctx.register_namespaces namespaces
+    else
+      root.try &.each_namespace do |namespace|
+        ctx.register_namespace namespace.prefix || "xmlns", namespace.href
+      end
+    end
+
     ctx.register_variables variables if variables
     ctx.evaluate(path)
   end
