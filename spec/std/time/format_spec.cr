@@ -161,6 +161,7 @@ describe Time::Format do
     time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.123456Z"
     time.to_rfc3339(fraction_digits: 9).should eq "2016-02-15T08:23:45.123456789Z"
     expect_raises(ArgumentError, "Invalid fraction digits: 5") { time.to_rfc3339(fraction_digits: 5) }
+    expect_raises(ArgumentError, "Invalid fraction digits: -1") { time.to_rfc3339(fraction_digits: -1) }
 
     time = Time.utc(2016, 2, 15, 8, 23, 45)
     time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
