@@ -261,15 +261,13 @@ abstract class IO
 
   # Writes a formatted string to this IO.
   # For details on the format string, see `Kernel::sprintf`.
-  def printf(format_string, *args) : UInt64
+  def printf(format_string, *args) : Nil
     printf format_string, args
   end
 
   # :ditto:
-  def printf(format_string, args : Array | Tuple) : UInt64
-    io = BytesCounter.new(self)
-    String::Formatter(typeof(args)).new(format_string, args, io).format
-    io.bytes_written
+  def printf(format_string, args : Array | Tuple) : Nil
+    String::Formatter(typeof(args)).new(format_string, args, self).format
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -852,7 +850,7 @@ abstract class IO
   # Writes the given object to this `IO` using the specified *format*.
   #
   # This ends up invoking `object.to_io(self, format)`, so any object defining a
-  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
+  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64`
   # method can be written in this way.
   #
   # See `Int#to_io` and `Float#to_io`.
@@ -864,9 +862,7 @@ abstract class IO
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
   def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64
-    io = BytesCounter.new(self)
-    object.to_io(io, format)
-    io.bytes_written
+    object.to_io(self, format)
   end
 
   # Reads an instance of the given *type* from this `IO` using the specified *format*.
@@ -1208,26 +1204,6 @@ abstract class IO
 
     def next
       @io.read_byte || stop
-    end
-  end
-
-  # :nodoc:
-  #
-  # Helper to keep the accounting of bytes written in a `IO`
-  class BytesCounter < IO
-    getter bytes_written : UInt64 = 0u64
-    getter io : IO
-
-    def initialize(@io : IO)
-      @encoding = @io.@encoding
-    end
-
-    def write(slice : Bytes) : UInt64
-      @io.write(slice).tap { |res| @bytes_written += res }
-    end
-
-    def read(slice : Bytes)
-      @io.read(slice)
     end
   end
 end

@@ -28,7 +28,7 @@ class IO
     end
 
     def write(io, slice : Bytes) : UInt64
-      io = BytesCounter.new(io)
+      bytes_written = 0u64
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -39,9 +39,9 @@ class IO
         if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
-        io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
+        bytes_written += io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
-      io.bytes_written
+      bytes_written
     end
 
     def close

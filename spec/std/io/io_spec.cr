@@ -550,15 +550,7 @@ describe IO do
         with_tempfile("create.txt") do |path|
           File.open(path, "w") do |io|
             io.write("hello world".to_slice).should eq(11)
-          end
-        end
-      end
-
-      it "using formatter" do
-        with_tempfile("create.txt") do |path|
-          File.open(path, "w") do |io|
-            # Print "           1234.5679"
-            io.printf("%20.8g", 1234.56789).should eq(20)
+            io.write_utf8("mañana".to_slice).should eq(7)
           end
         end
       end
@@ -567,7 +559,7 @@ describe IO do
         with_tempfile("create.txt") do |path|
           File.open(path, "w", File::DEFAULT_CREATE_PERMISSIONS, "CP1252") do |io|
             # In UTF-8 ñ will use 2 bytes
-            io.printf("mañana").should eq(6)
+            io.write_utf8("mañana".to_slice).should eq(6)
           end
         end
       end
