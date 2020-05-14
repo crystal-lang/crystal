@@ -120,7 +120,7 @@ struct Time::Format
       year_month_day
       char ' '
       twenty_four_hour_time_with_seconds
-      second_fraction?
+      second_fraction?(9)
 
       unless time.utc?
         time_zone_z_or_offset(force_colon: true)

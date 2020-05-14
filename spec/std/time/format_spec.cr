@@ -155,7 +155,7 @@ describe Time::Format do
 
   it "formats rfc3339 with different fraction digits" do
     time = Time.utc(2016, 2, 15, 8, 23, 45, nanosecond: 123456789)
-    time.to_rfc3339.should eq "2016-02-15T08:23:45.123456789Z"
+    time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
     time.to_rfc3339(fraction_digits: 0).should eq "2016-02-15T08:23:45Z"
     time.to_rfc3339(fraction_digits: 3).should eq "2016-02-15T08:23:45.123Z"
     time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.123456Z"

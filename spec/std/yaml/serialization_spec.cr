@@ -1,3 +1,4 @@
+require "../spec_helper"
 require "spec"
 require "yaml"
 {% unless flag?(:win32) %}
@@ -349,7 +350,7 @@ describe "YAML serialization" do
 
     it "does for utc time" do
       time = Time.utc(2010, 11, 12, 1, 2, 3)
-      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.000000000\n")
     end
 
     it "does for time at date" do
