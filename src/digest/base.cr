@@ -148,7 +148,9 @@ abstract class Digest::Base
   # Use when hashing in loops.
   def hexfinal(dst : Bytes) : Nil
     dsize = digest_size
-    raise ArgumentError.new("dst size incorrect #{dst.bytesize}, expected #{dsize}") unless dst.bytesize == dsize * 2
+    unless dst.bytesize == dsize * 2
+      raise ArgumentError.new("Incorrect dst size: #{dst.bytesize}, expected: #{dsize * 2}")
+    end
 
     sary = uninitialized StaticArray(UInt8, 64)
     tmp = sary.to_slice[0, dsize]
