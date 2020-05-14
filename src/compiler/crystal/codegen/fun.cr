@@ -512,12 +512,23 @@ class Crystal::CodeGenVisitor
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
+        # If an argument is a Proc inside a C function, we need to cast it to Proc
+        fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
+
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
         needs_copy = target_def_var.try &.assigned_to?
+        needs_copy ||= fun_proc
+
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
           pointer = declare_debug_for_function_argument(arg.name, var_type, index + 1, pointer, location) unless target_def.naked?
+
+          if fun_proc
+            value = bit_cast(value, llvm_context.void_pointer)
+            value = make_fun(var_type, value, llvm_context.void_pointer.null)
+          end
+
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)
 
           if arg.type.passed_by_value? && !context.fun.attributes(index + 1).by_val?
