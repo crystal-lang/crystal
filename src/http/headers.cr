@@ -25,7 +25,7 @@ struct HTTP::Headers
     # key2 = HTTP::Headers::Key.new("HOST")
     # key1 == key2 # => true
     # ```
-    def ==(key2 : HTTP::Headers::Key) : Bool
+    def ==(key2 : Key) : Bool
       key1 = name
       key2 = key2.name
 
@@ -66,7 +66,7 @@ struct HTTP::Headers
 
   # Sets the value of *key* header to *value*.
   #
-  # Previous values are overriden.
+  # Previous values are overridden.
   # Raises `ArgumentError` if *value* includes invalid characters.
   #
   # ```
@@ -86,7 +86,7 @@ struct HTTP::Headers
 
   # Sets the value of *key* header to *value*.
   #
-  # Previous values are overriden.
+  # Previous values are overridden.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
@@ -106,7 +106,7 @@ struct HTTP::Headers
 
   # Returns the value of *key* header.
   #
-  # If there are multiple values, they are joind to a comma-separated string.
+  # In case of multiple values, they are returned as a comma-separated string.
   # If no value found a `KeyError` will be raised.  `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
@@ -194,7 +194,7 @@ struct HTTP::Headers
     self
   end
 
-  # Inserts a key value pair into the header collection and returns `self`.
+  # Inserts a key-value pair into the header collection and returns `self`.
   # `ArgumentError` will be raised if header includes invalid characters.
   #
   # ```
@@ -209,8 +209,8 @@ struct HTTP::Headers
     self
   end
 
-  # Attempts to inserts a header at the *key* into the headers. Returns `true` if the *value* was valid and returns `false` if *value* is invalid.
-  # `ArgumentError` will be raised if header includes invalid characters.
+  # Attempts to insert a header at the *key* into the headers. Returns `true` if the *value* is valid and `false` otherwise.
+  # raises `ArgumentError`  if header includes invalid characters.
   #
   # ```
   # require "http/headers"
@@ -241,7 +241,7 @@ struct HTTP::Headers
     true
   end
 
-  # Fetches a value for given key, or when not found the value given by default.
+  # Returns the value for a given *key* or *default* if not found.
   #
   # ```
   # require "http/headers"
@@ -282,6 +282,7 @@ struct HTTP::Headers
   end
 
   # Returns `true` if there are no key value pairs.
+  #
   # ```
   # require "http/headers"
   #
