@@ -38,11 +38,10 @@ class Log
                                debug:  Severity::Debug,
                                info:   Severity::Info,
                                notice: Severity::Notice,
-                               warn:   Severity::Warning,
+                               warn:   Severity::Warn,
                                error:  Severity::Error,
                                fatal:  Severity::Fatal,
                              } %}
-
     # Logs a message if the logger's current severity is lower or equal to `{{severity}}`.
     def {{method.id}}(*, exception : Exception? = nil)
       return unless backend = @backend

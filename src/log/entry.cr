@@ -9,7 +9,7 @@ enum Log::Severity
   # Used for normal but significant conditions.
   Notice
   # Used for conditions that can potentially cause application oddities, but that can be automatically recovered.
-  Warning
+  Warn
   # Used for any error that is fatal to the operation, but not to the service or application.
   Error
   # Used for any error that is forcing a shutdown of the service or application
@@ -19,14 +19,14 @@ enum Log::Severity
 
   def label
     case self
-    when Trace   then "TRACE"
-    when Debug   then "DEBUG"
-    when Info    then "INFO"
-    when Notice  then "NOTICE"
-    when Warning then "WARNING"
-    when Error   then "ERROR"
-    when Fatal   then "FATAL"
-    when None    then "NONE"
+    when Trace  then "TRACE"
+    when Debug  then "DEBUG"
+    when Info   then "INFO"
+    when Notice then "NOTICE"
+    when Warn   then "WARN"
+    when Error  then "ERROR"
+    when Fatal  then "FATAL"
+    when None   then "NONE"
     else
       raise "unreachable"
     end

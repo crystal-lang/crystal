@@ -108,7 +108,7 @@
 # Log.setup |c|
 #   backend = Log::IOBackend.new
 #
-#   c.bind "*", :warning, backend
+#   c.bind "*", :warn, backend
 #   c.bind "db.*", :debug, backend
 #   c.bind "*", :error, ElasticSearchBackend.new("http://localhost:9200")
 # end

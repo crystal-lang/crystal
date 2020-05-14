@@ -46,8 +46,8 @@ class Log
   # end
   #
   # Log.setup(:info, Log::IOBackend.new(formatter: MyFormat))
-  # Log.info { "Hello" }    # => -    INFO: Hello
-  # Log.error { "Oh, no!" } # => -   ERROR: Oh, no!
+  # Log.info { "Hello" }    # => -   INFO: Hello
+  # Log.error { "Oh, no!" } # => -  ERROR: Oh, no!
   # ```
   #
   # There is also a helper macro to generate these formatters. Here's
@@ -81,7 +81,7 @@ class Log
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
     def severity
-      @entry.severity.label.rjust(@io, 7)
+      @entry.severity.label.rjust(@io, 6)
     end
 
     # Write the source for non-root entries
@@ -180,17 +180,17 @@ end
 #
 # It writes log entries with the following format:
 # ```
-# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything
+# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything
 # ```
 #
 # When the entries have context data it's also written to the output:
 # ```
-# 2020-05-07T17:40:07.994508000Z    INFO - my.source: Initializing everything -- {"data" => 123}
+# 2020-05-07T17:40:07.994508000Z   INFO - my.source: Initializing everything -- {"data" => 123}
 # ```
 #
 # Exceptions are written in a separate line:
 # ```
-# 2020-05-07T17:40:07.994508000Z   ERROR - my.source: Something failed
+# 2020-05-07T17:40:07.994508000Z  ERROR - my.source: Something failed
 # Oh, no (Exception)
 #   from ...
 # ```
