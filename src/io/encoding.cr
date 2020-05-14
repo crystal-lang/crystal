@@ -39,7 +39,7 @@ class IO
         if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
-        bytes_written += io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
+        bytes_written &+= io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
       bytes_written
     end

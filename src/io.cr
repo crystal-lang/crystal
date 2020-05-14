@@ -830,7 +830,7 @@ abstract class IO
     bytes_count = 0_u64
     buffer = uninitialized UInt8[4096]
     while (len = read(buffer.to_slice)) > 0
-      bytes_count += len
+      bytes_count &+= len
     end
     bytes_count
   end
