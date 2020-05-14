@@ -157,7 +157,7 @@ abstract class Digest::Base
   end
 
   # Writes a hexadecimal-encoded digest to `IO`.
-  def hexfinal(io : ::IO) : Nil
+  def hexfinal(io : IO) : Nil
     sary = uninitialized StaticArray(UInt8, 128)
     tmp = sary.to_slice[0, digest_size * 2]
     hexfinal tmp
