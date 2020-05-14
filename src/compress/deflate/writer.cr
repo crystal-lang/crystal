@@ -52,7 +52,6 @@ class Compress::Deflate::Writer < IO
     @stream.next_in = slice
     consume_output LibZ::Flush::NO_FLUSH
 
-    # CHECK: should we return the bytes written in the consume_output?
     slice.size.to_u64
   end
 

@@ -54,7 +54,6 @@ class Compress::Zlib::Writer < IO
     @flate_io.write(slice)
     @adler32 = Digest::Adler32.update(slice, @adler32)
 
-    # CHECK: should we return the bytes written in the flate_io (also by the write_header)?
     slice.size.to_u64
   end
 

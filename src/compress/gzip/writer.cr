@@ -83,7 +83,6 @@ class Compress::Gzip::Writer < IO
     # uncompressed data size can be bigger.
     @isize &+= slice.size
 
-    # CHECK: should we return the bytes written in the flate_io (also by the write_header)?
     slice.size.to_u64
   end
 
