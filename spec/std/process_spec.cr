@@ -1,7 +1,6 @@
 require "spec"
 require "process"
 require "./spec_helper"
-require "../spec_helper"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
@@ -138,7 +137,7 @@ describe Process do
   end
 
   pending_win32 "chroot raises when unprivileged" do
-    status, output = build_and_run <<-'CODE'
+    status, output = compile_and_run_source <<-'CODE'
       begin
         Process.chroot("/usr")
         puts "FAIL"
