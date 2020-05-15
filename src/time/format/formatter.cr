@@ -147,7 +147,7 @@ struct Time::Format
       nanoseconds
     end
 
-    def second_fraction?(fraction_digits : Int = 0)
+    def second_fraction?(fraction_digits : Int = 9)
       case fraction_digits
       when 0
       when 3 then char '.'; milliseconds
