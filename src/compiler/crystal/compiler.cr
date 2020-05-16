@@ -274,7 +274,7 @@ module Crystal
       units = llvm_modules.map do |type_name, info|
         llvm_mod = info.mod
         llvm_mod.target = target_triple
-        CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
+        CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
       if @cross_compile
@@ -304,7 +304,7 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = "#{output_filename}.o"
+      object_name = output_filename + program.object_extension
 
       optimize llvm_mod if @release
 
@@ -327,7 +327,7 @@ module Crystal
         # Execute and expand `subcommands`.
         lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
 
-        args = %(#{object_names.join(" ")} "/Fe#{output_filename}" #{lib_flags} #{@link_flags})
+        args = %(/nologo #{object_names.join(" ")} "/Fe#{output_filename}" #{lib_flags} #{@link_flags})
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -597,9 +597,10 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
+      @object_extension : String
 
-      def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
-                     @output_dir : String, @bc_flags_changed : Bool)
+      def initialize(@compiler : Compiler, program : Program, @name : String,
+                     @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
         @original_name = @name
         @name = String.build do |str|
@@ -621,6 +622,8 @@ module Crystal
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
           @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
         end
+
+        @object_extension = program.object_extension
       end
 
       def compile
@@ -721,7 +724,7 @@ module Crystal
           llvm_mod.print_to_file "#{output_filename}.ll"
         end
         if emit_target.obj?
-          FileUtils.cp(object_name, "#{output_filename}.o")
+          FileUtils.cp(object_name, output_filename + @object_extension)
         end
       end
 
@@ -730,7 +733,7 @@ module Crystal
       end
 
       def object_filename
-        "#{@name}.o"
+        @name + @object_extension
       end
 
       def temporary_object_name

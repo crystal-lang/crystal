@@ -16,12 +16,13 @@ jobs:
       - name: Cross-compile Crystal
         run: |
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
+          mv crystal.o crystal.obj || true  # TODO: Remove this after 0.35.0
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v1
         with:
           name: objs
-          path: crystal.o
+          path: crystal.obj
 
   windows-job:
     needs: linux-job
@@ -146,10 +147,10 @@ jobs:
           name: objs
       - name: Build LLVM extensions
         run: |
-          cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.o
+          cl /MT /c src\llvm\ext\llvm_ext.cc -I llvm\include /Fosrc\llvm\ext\llvm_ext.obj
       - name: Link Crystal executable
         run: |
-          Invoke-Expression "cl objs\crystal.o /Fecrystal-cross src\llvm\ext\llvm_ext.o $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
+          Invoke-Expression "cl objs\crystal.obj /Fecrystal-cross src\llvm\ext\llvm_ext.obj $(llvm\bin\llvm-config.exe --libs) libs\pcre.lib libs\gc.lib advapi32.lib libcmt.lib legacy_stdio_definitions.lib /F10000000"
 
       - name: Re-build Crystal
         run: |
