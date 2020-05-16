@@ -272,4 +272,10 @@ describe "Regex::MatchData" do
     hash.should eq(re.match("a").hash)
     hash.should_not eq(re.match("b").hash)
   end
+
+  it "#matches_full_string?" do
+    /foo/.match("foo").not_nil!.matches_full_string?.should be_true
+    /foo/.match("fooo").not_nil!.matches_full_string?.should be_false
+    /foo/.match("ofoo").not_nil!.matches_full_string?.should be_false
+  end
 end

@@ -114,6 +114,17 @@ class Regex
       @ovector[n * 2 + 1]
     end
 
+    # Returns `true` if `string` was matched entirely from start to end.
+    #
+    # ```
+    # /foo/.match("foo").try(&.matches_full_string?) # => true
+    # /foo/.match("fooo").try(&.matches_full_string?) # => false
+    # /foo/.match("ofoo").try(&.matches_full_string?) # => false
+    # ```
+    def matches_full_string?
+      byte_begin(0) == 0 && byte_end(0) == string.bytesize
+    end
+
     # Returns the match of the *n*th capture group, or `nil` if there isn't
     # an *n*th capture group.
     #
