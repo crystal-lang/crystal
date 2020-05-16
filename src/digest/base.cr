@@ -135,9 +135,8 @@ abstract class Digest::Base
 
   # Returns a hexadecimal-encoded digest in a new `String`.
   def hexfinal : String
-    dsize = digest_size
     sary = uninitialized StaticArray(UInt8, 64)
-    tmp = sary.to_slice[0, dsize]
+    tmp = sary.to_slice[0, digest_size]
     final tmp
     tmp.hexstring
   end
