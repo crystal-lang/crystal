@@ -75,7 +75,9 @@ describe "ENV" do
     ENV.delete("BAR")
   end
 
-  it "does not have empty keys" do
+  it "does not have an empty key" do
+    # Setting an empty key is invalid on both POSIX and Windows. So reporting an empty key
+    # would always be a bug. And there *was* a bug - see win32/ Crystal::System::Env.each
     ENV.keys.should_not contain("")
   end
 
