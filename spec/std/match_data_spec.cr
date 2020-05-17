@@ -277,5 +277,7 @@ describe "Regex::MatchData" do
     /foo/.match("foo").not_nil!.matches_full_string?.should be_true
     /foo/.match("fooo").not_nil!.matches_full_string?.should be_false
     /foo/.match("ofoo").not_nil!.matches_full_string?.should be_false
+    /(\A)?pattern(\z)?/.match("pattern").not_nil!.matches_full_string?.should be_true
+    /(\A)?pattern(\z)?/.match("_pattern_").not_nil!.matches_full_string?.should be_false
   end
 end

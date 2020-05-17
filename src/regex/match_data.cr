@@ -117,7 +117,7 @@ class Regex
     # Returns `true` if `string` was matched entirely from start to end.
     #
     # ```
-    # /foo/.match("foo").try(&.matches_full_string?) # => true
+    # /foo/.match("foo").try(&.matches_full_string?)  # => true
     # /foo/.match("fooo").try(&.matches_full_string?) # => false
     # /foo/.match("ofoo").try(&.matches_full_string?) # => false
     # ```
