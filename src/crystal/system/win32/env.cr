@@ -66,6 +66,8 @@ module Crystal::System::Env
       while !pointer.value.zero?
         string, pointer = String.from_utf16(pointer)
         key, _, value = string.partition('=')
+        # The actual env variables are preceded by these weird lines in the output:
+        # "=::=::\", "=C:=c:\foo\bar", "=ExitCode=00000000" -- skip them.
         next if key.empty?
         yield key, value
       end
