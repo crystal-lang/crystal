@@ -33,6 +33,15 @@ private def stdin_to_stdout_command
   {% end %}
 end
 
+private def print_env_command
+  {% if flag?(:win32) %}
+    # cmd adds these by itself, clear them out before printing.
+    shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set")
+  {% else %}
+    {"env", [] of String}
+  {% end %}
+end
+
 private def standing_command
   {% if flag?(:win32) %}
     {"cmd.exe"}
@@ -189,28 +198,99 @@ describe Process do
   end
 
   describe "environ" do
-    pending_win32 "clears the environment" do
-      value = Process.run("env", clear_env: true) do |proc|
+    it "clears the environment" do
+      value = Process.run(*print_env_command, clear_env: true) do |proc|
         proc.output.gets_to_end
       end
       value.should eq("")
     end
 
-    pending_win32 "sets an environment variable" do
-      env = {"FOO" => "bar"}
-      value = Process.run("env", clear_env: true, env: env) do |proc|
+    it "clears and sets an environment variable" do
+      value = Process.run(*print_env_command, clear_env: true, env: {"FOO" => "bar"}) do |proc|
         proc.output.gets_to_end
       end
-      value.should eq("FOO=bar\n")
+      value.should eq("FOO=bar#{newline}")
     end
 
-    pending_win32 "deletes an environment variable" do
-      env = {"HOME" => nil}
-      value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
+    it "sets an environment variable" do
+      value = Process.run(*print_env_command, env: {"FOO" => "bar"}) do |proc|
         proc.output.gets_to_end
       end
-      value.should eq("")
+      value.should match /(*ANYCRLF)^FOO=bar$/m
     end
+
+    it "sets an empty environment variable" do
+      value = Process.run(*print_env_command, env: {"FOO" => ""}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=$/m
+    end
+
+    it "deletes existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should_not match /(*ANYCRLF)^FOO=/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    {% if flag?(:win32) %}
+      it "deletes existing environment variable case-insensitive" do
+        ENV["FOO"] = "bar"
+        value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
+          proc.output.gets_to_end
+        end
+        value.should_not match /(*ANYCRLF)^FOO=/mi
+      ensure
+        ENV.delete("FOO")
+      end
+    {% end %}
+
+    it "preserves existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=bar$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    it "preserves and sets an environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=bar$/m
+      value.should match /(*ANYCRLF)^FOO2=bar2$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    it "overrides existing environment variable" do
+      ENV["FOO"] = "bar"
+      value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should match /(*ANYCRLF)^FOO=different$/m
+    ensure
+      ENV.delete("FOO")
+    end
+
+    {% if flag?(:win32) %}
+      it "overrides existing environment variable case-insensitive" do
+        ENV["FOO"] = "bar"
+        value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
+          proc.output.gets_to_end
+        end
+        value.should_not match /(*ANYCRLF)^FOO=/m
+        value.should match /(*ANYCRLF)^fOo=different$/m
+      ensure
+        ENV.delete("FOO")
+      end
+    {% end %}
   end
 
   describe "signal" do

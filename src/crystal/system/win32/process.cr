@@ -111,10 +111,6 @@ struct Crystal::System::Process
   end
 
   def self.spawn(command_args, env, clear_env, input, output, error, chdir)
-    if env || clear_env
-      raise NotImplementedError.new("Process.new with env or clear_env options")
-    end
-
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
@@ -126,8 +122,8 @@ struct Crystal::System::Process
     process_info = LibC::PROCESS_INFORMATION.new
 
     if LibC.CreateProcessW(
-         nil, command_args.check_no_null_byte.to_utf16, nil, nil, true, 0,
-         nil, chdir.try &.check_no_null_byte.to_utf16,
+         nil, command_args.check_no_null_byte.to_utf16, nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
+         make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       raise RuntimeError.from_winerror("Error executing process")
@@ -189,6 +185,29 @@ struct Crystal::System::Process
 
   def self.chroot(path)
     raise NotImplementedError.new("Process.chroot")
+  end
+
+  protected def self.make_env_block(env, clear_env : Bool) : UInt16*
+    # If neither clearing nor adding anything, use the default behavior of inheriting everything.
+    return Pointer(UInt16).null if !env && !clear_env
+
+    # Emulate case-insensitive behavior using a Hash like {"KEY" => {"kEy", "value"}, ...}
+    final_env = {} of String => {String, String}
+    unless clear_env
+      Crystal::System::Env.each do |key, val|
+        final_env[key.upcase] = {key, val}
+      end
+    end
+    env.try &.each do |(key, val)|
+      if val
+        # Note: in the case of overriding, the last "case-spelling" of the key wins.
+        final_env[key.upcase] = {key, val}
+      else
+        final_env.delete key.upcase
+      end
+    end
+    # The "values" we're passing are actually key-value pairs.
+    Crystal::System::Env.make_env_block(final_env.each_value)
   end
 end
 
