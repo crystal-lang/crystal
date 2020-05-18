@@ -258,7 +258,7 @@ describe Crystal::Doc::ProjectInfo do
     ProjectInfo.find_source_url_pattern("http://example.com/foo/bar").should be_nil
 
     ProjectInfo.find_source_url_pattern("git@github.com:foo/bar/").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
-    ProjectInfo.find_source_url_pattern("git@github.com:foo/bar.git").should eq "https://github.com/foo/bar.git/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("git@github.com:foo/bar.git").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
 
     ProjectInfo.find_source_url_pattern("git@github.com:foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
     ProjectInfo.find_source_url_pattern("http://github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
@@ -266,18 +266,21 @@ describe Crystal::Doc::ProjectInfo do
     ProjectInfo.find_source_url_pattern("http://www.github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
     ProjectInfo.find_source_url_pattern("https://www.github.com/foo/bar").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
 
-    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.git").should eq "https://github.com/foo/bar.git/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.git").should eq "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
     ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.cr").should eq "https://github.com/foo/bar.cr/blob/%{refname}/%{path}#L%{line}"
-    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.cr.git").should eq "https://github.com/foo/bar.cr.git/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("https://github.com/foo/bar.cr.git").should eq "https://github.com/foo/bar.cr/blob/%{refname}/%{path}#L%{line}"
 
     ProjectInfo.find_source_url_pattern("git@gitlab.com:foo/bar").should eq "https://gitlab.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
     ProjectInfo.find_source_url_pattern("http://gitlab.com/foo/bar").should eq "https://gitlab.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://gitlab.com/foo/bar.git").should eq "https://gitlab.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
 
     ProjectInfo.find_source_url_pattern("git@bitbucket.com:foo/bar").should eq "https://bitbucket.com/foo/bar/src/%{refname}/%{path}#%{filename}-%{line}"
     ProjectInfo.find_source_url_pattern("http://bitbucket.com/foo/bar").should eq "https://bitbucket.com/foo/bar/src/%{refname}/%{path}#%{filename}-%{line}"
+    ProjectInfo.find_source_url_pattern("http://bitbucket.com/foo/bar.git").should eq "https://bitbucket.com/foo/bar/src/%{refname}/%{path}#%{filename}-%{line}"
 
     ProjectInfo.find_source_url_pattern("git@git.sr.ht:~foo/bar").should eq "https://git.sr.ht/~foo/bar/tree/%{refname}/%{path}#L%{line}"
     ProjectInfo.find_source_url_pattern("http://git.sr.ht/~foo/bar").should eq "https://git.sr.ht/~foo/bar/tree/%{refname}/%{path}#L%{line}"
+    ProjectInfo.find_source_url_pattern("http://git.sr.ht/~foo/bar.git").should eq "https://git.sr.ht/~foo/bar.git/tree/%{refname}/%{path}#L%{line}"
   end
 
   describe "#source_url" do

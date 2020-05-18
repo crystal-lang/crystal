@@ -92,12 +92,20 @@ module Crystal::Doc
 
       case host
       when "github.com", "www.github.com"
+        # GitHub only resolves URLs with the canonical repo name without .git extension.
+        path = path.rchop(".git")
         "https://github.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "gitlab.com", "www.gitlab.com"
+        # Gitlab only resolves URLs with the canonical repo name without .git extension.
+        path = path.rchop(".git")
         "https://gitlab.com/#{path}/blob/%{refname}/%{path}#L%{line}"
       when "bitbucket.com", "www.bitbucket.com"
+        # Bitbucket does resolve URLs the URL with .git extension, but without it
+        # the canonical form and should be preferred.
+        path = path.rchop(".git")
         "https://bitbucket.com/#{path}/src/%{refname}/%{path}#%{filename}-%{line}"
       when "git.sr.ht"
+        # On git.sr.ht ~foo/bar and ~foo/bar.git seem to mean different repos.
         "https://git.sr.ht/#{path}/tree/%{refname}/%{path}#L%{line}"
       else
         # Unknown remote host, can't determine source url pattern
