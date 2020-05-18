@@ -5,7 +5,8 @@ private class NoPeekIO < IO
     0
   end
 
-  def write(bytes : Bytes) : Nil
+  def write(bytes : Bytes) : UInt64
+    0u64
   end
 
   def peek
@@ -138,7 +139,7 @@ describe "IO::Sized" do
   it "skips" do
     io = IO::Memory.new "123456789"
     sized = IO::Sized.new(io, read_size: 6)
-    sized.skip(3)
+    sized.skip(3).should eq(3)
     sized.read_char.should eq('4')
 
     expect_raises(IO::EOFError) do

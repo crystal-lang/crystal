@@ -110,30 +110,36 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count) : Nil
+  def skip(bytes_count : Int) : UInt64
+    bytes_count = bytes_count.to_u64
     check_open
 
     if bytes_count <= @in_buffer_rem.size
       @in_buffer_rem += bytes_count
-      return
+      return bytes_count
     end
 
-    bytes_count -= @in_buffer_rem.size
+    remaining = bytes_count
+    remaining -= @in_buffer_rem.size
     @in_buffer_rem = Bytes.empty
 
-    super(bytes_count)
+    super(remaining)
+    bytes_count
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
+    # NOTE: It returns the bytes written without differencing whether
+    # they are kept in the buffer or sent to the underlying IO.
     check_open
 
-    return if slice.empty?
+    return 0u64 if slice.empty?
 
     count = slice.size
 
     if sync?
-      return unbuffered_write(slice)
+      unbuffered_write(slice)
+      return slice.size.to_u64
     end
 
     if flush_on_newline?
@@ -149,7 +155,8 @@ module IO::Buffered
 
     if count >= @buffer_size
       flush
-      return unbuffered_write slice[0, count]
+      unbuffered_write slice[0, count]
+      return slice.size.to_u64
     end
 
     if count > @buffer_size - @out_count
@@ -158,11 +165,12 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
-    nil
+
+    slice.size.to_u64
   end
 
   # :nodoc:
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : UInt64
     check_open
 
     if sync?
@@ -178,6 +186,8 @@ module IO::Buffered
     if flush_on_newline? && byte === '\n'
       flush
     end
+
+    1u64
   end
 
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
