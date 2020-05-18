@@ -4687,7 +4687,8 @@ class String
     regex.matches? self, pos, options: options
   end
 
-  # Returns `true` if the regular expression *regex* matches this string entirely.
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
   # It also updates `$~` with the result.
   #
   # ```

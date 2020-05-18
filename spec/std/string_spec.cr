@@ -2351,7 +2351,7 @@ describe "String" do
     "_pattern_".matches_full?(/(\A)?pattern(\z)?/).should be_false
   end
 
-  it "#match_full?" do
+  it "#match_full" do
     "foo".match_full(/foo/).not_nil![0].should eq "foo"
     "fooo".match_full(/foo/).should be_nil
     "ofoo".match_full(/foo/).should be_nil
