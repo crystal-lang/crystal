@@ -104,7 +104,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     def data(*, before = nil, after = nil)
-      if @entry.data.size > 0
+      unless @entry.data.empty?
         @io << before << @entry.data << after
       end
     end
@@ -115,7 +115,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     def context(*, before = nil, after = nil)
-      if @entry.context.size > 0
+      unless @entry.context.empty?
         @io << before << @entry.context << after
       end
     end
