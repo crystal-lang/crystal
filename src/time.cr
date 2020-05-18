@@ -1105,14 +1105,21 @@ struct Time
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
   # freedom to rigidly define a fixed format intended for use in internet
   # protocols and standards.
-  def to_rfc3339
-    Format::RFC_3339.format(to_utc)
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(*, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
-  def to_rfc3339(io : IO)
-    Format::RFC_3339.format(to_utc, io)
+  #
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(io : IO, *, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).

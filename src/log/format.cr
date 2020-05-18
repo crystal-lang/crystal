@@ -63,7 +63,7 @@ class Log
 
     # Write the entry timestamp in RFC3339 format
     def timestamp
-      @entry.timestamp.to_rfc3339(@io)
+      @entry.timestamp.to_rfc3339(@io, fraction_digits: 6)
     end
 
     # Write a fixed string
