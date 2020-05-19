@@ -378,7 +378,6 @@ module XML
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
-    io.flush
     v
   end
 end
