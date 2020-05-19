@@ -131,7 +131,7 @@
 - Fix parsing of ambiguous '+' and '-'. ([#9194](https://github.com/crystal-lang/crystal/pull/9194), thanks @max-codeware)
 - Fix parsing of capitalized named argument. ([#9232](https://github.com/crystal-lang/crystal/pull/9232), thanks @asterite)
 - Fix cast fun function pointer to Proc. ([#9287](https://github.com/crystal-lang/crystal/pull/9287), thanks @asterite)
-- Miscellaneous Windows-related fixes in the compiler. ([#9054](https://github.com/crystal-lang/crystal/pull/9054), [#9062](https://github.com/crystal-lang/crystal/pull/9062), [#9095](https://github.com/crystal-lang/crystal/pull/9095), [#9106](https://github.com/crystal-lang/crystal/pull/9106), [#9307](https://github.com/crystal-lang/crystal/pull/9307), thanks @oprypin, @Sija)
+- Make the compiler able to run on Windows and compile itself. ([#9054](https://github.com/crystal-lang/crystal/pull/9054), [#9062](https://github.com/crystal-lang/crystal/pull/9062), [#9095](https://github.com/crystal-lang/crystal/pull/9095), [#9106](https://github.com/crystal-lang/crystal/pull/9106), [#9307](https://github.com/crystal-lang/crystal/pull/9307), thanks @oprypin, @Sija)
 - Add docs regarding `CRYSTAL_OPTS`. ([#9018](https://github.com/crystal-lang/crystal/pull/9018), thanks @straight-shoota)
 - Remove `Process.run("which")` from compiler. ([#9141](https://github.com/crystal-lang/crystal/pull/9141), thanks @straight-shoota)
 - Refactor type parser. ([#9208](https://github.com/crystal-lang/crystal/pull/9208), thanks @MakeNowJust)
