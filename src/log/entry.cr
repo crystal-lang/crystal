@@ -10,6 +10,8 @@ enum Log::Severity
   Notice
   # Used for conditions that can potentially cause application oddities, but that can be automatically recovered.
   Warn
+  # DEPRECATED: Use `Warn`.
+  Warning = Warn
   # Used for any error that is fatal to the operation, but not to the service or application.
   Error
   # Used for any error that is forcing a shutdown of the service or application

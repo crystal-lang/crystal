@@ -61,10 +61,10 @@ class Process
   # Process.quote_windows(files) # => %("my file.txt" another.txt)
   # ```
   def self.quote_windows(args : Enumerable(String)) : String
-    String.build { |io| quote_windows(args, io) }
+    String.build { |io| quote_windows(io, args) }
   end
 
-  private def self.quote_windows(args, io : IO)
+  private def self.quote_windows(io : IO, args)
     args.join(' ', io) do |arg|
       need_quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
 
