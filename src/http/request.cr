@@ -2,6 +2,16 @@ require "./common"
 require "uri"
 require "http/params"
 
+# TODO: Remove this once `Socket` is working on Windows
+{% begin %}
+private alias RemoteAddressType =
+  {% if flag?(:win32) %}
+    String?
+  {% else %}
+    Socket::Address?
+  {% end %}
+{% end %}
+
 # An HTTP request.
 #
 # It serves both to perform requests by an `HTTP::Client` and to
@@ -27,7 +37,7 @@ class HTTP::Request
   # Middlewares can overwrite this value.
   #
   # This property is not used by `HTTP::Client`.
-  property remote_address : String?
+  property remote_address : RemoteAddressType
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
@@ -109,9 +119,11 @@ class HTTP::Request
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
-      if io.responds_to?(:remote_address)
-        request.remote_address = io.remote_address.try &.to_s
-      end
+      {% unless flag?(:win32) %}
+        if io.responds_to?(:remote_address)
+          request.remote_address = io.remote_address
+        end
+      {% end %}
 
       return request
     end

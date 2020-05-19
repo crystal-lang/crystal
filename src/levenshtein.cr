@@ -107,12 +107,13 @@ module Levenshtein
   # ```
   # require "levenshtein"
   #
-  # Levenshtein.find("hello") do |l|
+  # best_match = Levenshtein.find("hello") do |l|
   #   l.test "hulk"
   #   l.test "holk"
   #   l.test "halka"
   #   l.test "ello"
-  # end # => "ello"
+  # end
+  # best_match # => "ello"
   # ```
   def self.find(name, tolerance = nil)
     Finder.find(name, tolerance) do |sn|

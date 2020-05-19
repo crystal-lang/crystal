@@ -38,39 +38,10 @@ module FileUtils
   # File.write("bar.cr", "1")
   # FileUtils.cmp("file.cr", "bar.cr") # => true
   # ```
+  #
+  # NOTE: Alias of `File.same_content?`
   def cmp(filename1 : String, filename2 : String)
-    return false unless File.size(filename1) == File.size(filename2)
-
-    File.open(filename1, "rb") do |file1|
-      File.open(filename2, "rb") do |file2|
-        cmp(file1, file2)
-      end
-    end
-  end
-
-  # Compares two streams *stream1* to *stream2* to determine if they are identical.
-  # Returns `true` if content are the same, `false` otherwise.
-  #
-  # ```
-  # require "file_utils"
-  #
-  # File.write("afile", "123")
-  # stream1 = File.open("afile")
-  # stream2 = IO::Memory.new("123")
-  # FileUtils.cmp(stream1, stream2) # => true
-  # ```
-  def cmp(stream1 : IO, stream2 : IO)
-    buf1 = uninitialized UInt8[1024]
-    buf2 = uninitialized UInt8[1024]
-
-    while true
-      read1 = stream1.read(buf1.to_slice)
-      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
-      return false unless read2
-
-      return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
-      return true if read1 == 0
-    end
+    File.same_content?(filename1, filename2)
   end
 
   # Attempts to set the access and modification times of the file named
@@ -117,12 +88,8 @@ module FileUtils
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : String, dest : String)
-    File.open(src_path) do |s|
-      dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
-      File.open(dest, "wb", s.info.permissions) do |d|
-        IO.copy(s, d)
-      end
-    end
+    dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+    File.copy(src_path, dest)
   end
 
   # Copies a list of files *src* to *dest*.
@@ -151,7 +118,7 @@ module FileUtils
   # ```
   def cp_r(src_path : String, dest_path : String)
     if Dir.exists?(src_path)
-      Dir.mkdir(dest_path)
+      Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
         src = File.join(src_path, entry)
         dest = File.join(dest_path, entry)
@@ -414,7 +381,7 @@ module FileUtils
         src = File.join(path, entry)
         rm_r(src)
       end
-      Dir.rmdir(path)
+      Dir.delete(path)
     else
       File.delete(path)
     end
@@ -480,7 +447,7 @@ module FileUtils
   #
   # NOTE: Alias of `Dir.rmdir`
   def rmdir(path : String) : Nil
-    Dir.rmdir(path)
+    Dir.delete(path)
   end
 
   # Removes all directories at the given *paths*.
@@ -492,7 +459,7 @@ module FileUtils
   # ```
   def rmdir(paths : Enumerable(String)) : Nil
     paths.each do |path|
-      Dir.rmdir(path)
+      Dir.delete(path)
     end
   end
 end

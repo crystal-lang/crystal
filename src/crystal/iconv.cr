@@ -10,7 +10,7 @@ struct Crystal::Iconv
     original_from, original_to = from, to
 
     @skip_invalid = invalid == :skip
-    {% unless flag?(:freebsd) || flag?(:musl) %}
+    {% unless flag?(:freebsd) || flag?(:musl) || flag?(:dragonfly) %}
       if @skip_invalid
         from = "#{from}//IGNORE"
         to = "#{to}//IGNORE"
@@ -44,7 +44,7 @@ struct Crystal::Iconv
   end
 
   def convert(inbuf : UInt8**, inbytesleft : LibC::SizeT*, outbuf : UInt8**, outbytesleft : LibC::SizeT*)
-    {% if flag?(:freebsd) %}
+    {% if flag?(:freebsd) || flag?(:dragonfly) %}
       if @skip_invalid
         return LibC.__iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft, LibC::ICONV_F_HIDE_INVALID, out invalids)
       end

@@ -14,7 +14,7 @@ require "c/errno"
 # these two methods:
 #
 # * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
-# * `write(slice : Bytes)`: write the whole *slice* into the IO
+# * `write(slice : Bytes)`: write the whole *slice* into the IO and return the number of bytes written
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
 #
@@ -29,10 +29,10 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes) : Nil
+#   def write(slice : Bytes) : UInt64
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     nil
+#     slice.size.to_u64
 #   end
 # end
 #
@@ -100,7 +100,7 @@ abstract class IO
   # io.write(slice)
   # io.to_s # => "abcd"
   # ```
-  abstract def write(slice : Bytes) : Nil
+  abstract def write(slice : Bytes) : UInt64
 
   # Closes this `IO`.
   #
@@ -268,7 +268,6 @@ abstract class IO
   # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -465,13 +464,12 @@ abstract class IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes)
+  def write_utf8(slice : Bytes) : UInt64
     if encoder = encoder()
       encoder.write(self, slice)
     else
       write(slice)
     end
-    nil
   end
 
   private def encoder
@@ -814,22 +812,27 @@ abstract class IO
   # io.gets    # => "world"
   # io.skip(1) # raises IO::EOFError
   # ```
-  def skip(bytes_count : Int) : Nil
+  def skip(bytes_count : Int) : UInt64
+    bytes_count = bytes_count.to_u64
+    remaining = bytes_count
     buffer = uninitialized UInt8[4096]
-    while bytes_count > 0
-      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
+    while remaining > 0
+      read_count = read(buffer.to_slice[0, Math.min(remaining, 4096)])
       raise IO::EOFError.new if read_count == 0
-
-      bytes_count -= read_count
+      remaining -= read_count
     end
+    bytes_count
   end
 
   # Reads and discards bytes from `self` until there
   # are no more bytes.
-  def skip_to_end : Nil
+  def skip_to_end : UInt64
+    bytes_count = 0_u64
     buffer = uninitialized UInt8[4096]
-    while read(buffer.to_slice) > 0
+    while (len = read(buffer.to_slice)) > 0
+      bytes_count &+= len
     end
+    bytes_count
   end
 
   # Writes a single byte into this `IO`.
@@ -839,7 +842,7 @@ abstract class IO
   # io.write_byte 97_u8
   # io.to_s # => "a"
   # ```
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : UInt64
     x = byte
     write Slice.new(pointerof(x), 1)
   end
@@ -847,7 +850,7 @@ abstract class IO
   # Writes the given object to this `IO` using the specified *format*.
   #
   # This ends up invoking `object.to_io(self, format)`, so any object defining a
-  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
+  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64`
   # method can be written in this way.
   #
   # See `Int#to_io` and `Float#to_io`.
@@ -858,7 +861,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64
     object.to_io(self, format)
   end
 
@@ -1146,6 +1149,29 @@ abstract class IO
       remaining -= len
     end
     limit - remaining
+  end
+
+  # Compares two streams *stream1* to *stream2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("afile", "123")
+  # stream1 = File.open("afile")
+  # stream2 = IO::Memory.new("123")
+  # IO.same_content?(stream1, stream2) # => true
+  # ```
+  def self.same_content?(stream1 : IO, stream2 : IO)
+    buf1 = uninitialized UInt8[1024]
+    buf2 = uninitialized UInt8[1024]
+
+    while true
+      read1 = stream1.read(buf1.to_slice)
+      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
+      return false unless read2
+
+      return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
+      return true if read1 == 0
+    end
   end
 
   private struct LineIterator(I, A, N)

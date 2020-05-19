@@ -1,6 +1,11 @@
 <meta charset="utf-8" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Crystal Docs <%= Crystal::VERSION %>">
+<meta name="crystal_docs.project_version" content="<%= project_info.version %>">
+<meta name="crystal_docs.project_name" content="<%= project_info.name %>">
+<% if json_config_url = project_info.json_config_url %>
+  <meta name="crystal_docs.json_config_url" content="<%= json_config_url %>">
+<% end %>
 
 <link href="<%= base_path %>css/style.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="<%= base_path %>js/doc.js"></script>

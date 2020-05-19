@@ -542,6 +542,8 @@ describe Crystal::Formatter do
   assert_format "case\nend"
   assert_format "case\nelse\n  1\nend"
 
+  assert_format "case  1 \n in Int32 \n 3 \n end", "case 1\nin Int32\n  3\nend"
+
   assert_format <<-CODE
     case 0
     when 0 then 1; 2
@@ -846,6 +848,7 @@ describe Crystal::Formatter do
   assert_format "if 1\n  ((1) + 2)\nend"
 
   assert_format "def   foo(x   :  self ?) \n  end", "def foo(x : self?)\nend"
+  assert_format "def foo(x : (self)?)\nend"
 
   assert_format "  macro foo\n  end\n\n  :+", "macro foo\n  end\n\n:+"
   assert_format "[\n1, # a\n2, # b\n 3 # c\n]", "[\n  1, # a\n  2, # b\n  3, # c\n]"
@@ -1028,6 +1031,7 @@ describe Crystal::Formatter do
 
   assert_format "foo : self?"
   assert_format "foo : self? | A"
+  assert_format "foo : (self)?"
 
   assert_format "foo : (A) | D"
   assert_format "foo : (F(A)) | D"
@@ -1039,6 +1043,7 @@ describe Crystal::Formatter do
   assert_format "module Readline\n  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil\nend"
   assert_format "alias A = (B(C, (C | D)) | E)"
   assert_format "alias A = ((B(C | D) | E) | F)"
+  assert_format "alias A = ({A, (B)})"
 
   assert_format "foo : A(B)\nbar : C"
   assert_format "foo : (A -> B)\nbar : C"

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new("") %>
+  <%= HeadTemplate.new(project_info, "") %>
   <meta id="repository-name" content="<%= project_info.name %>">
   <title><%= project_info.name %> <%= project_info.version %></title>
   <script type="text/javascript">
-  CrystalDoc.base_path = "";
+  CrystalDocs.base_path = "";
   </script>
 </head>
 <body>

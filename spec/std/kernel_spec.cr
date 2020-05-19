@@ -1,14 +1,14 @@
 require "spec"
-require "../spec_helper"
+require "./spec_helper"
 
 describe "exit" do
   it "exits normally with status 0" do
-    status, _ = build_and_run "exit"
+    status, _ = compile_and_run_source "exit"
     status.success?.should be_true
   end
 
   it "exits with given error code" do
-    status, _ = build_and_run "exit 42"
+    status, _ = compile_and_run_source "exit 42"
     status.success?.should be_false
     status.exit_code.should eq(42)
   end
@@ -16,7 +16,7 @@ end
 
 describe "at_exit" do
   it "runs handlers on normal program ending" do
-    status, output = build_and_run <<-CODE
+    status, output = compile_and_run_source <<-CODE
       at_exit do
         puts "handler code"
       end
@@ -27,7 +27,7 @@ describe "at_exit" do
   end
 
   it "runs handlers on explicit program ending" do
-    status, output = build_and_run <<-'CODE'
+    status, output = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "handler code, exit code: #{exit_code}"
       end
@@ -40,7 +40,7 @@ describe "at_exit" do
   end
 
   it "runs handlers in reverse order" do
-    status, output = build_and_run <<-CODE
+    status, output = compile_and_run_source <<-CODE
       at_exit do
         puts "first handler code"
       end
@@ -59,7 +59,7 @@ describe "at_exit" do
   end
 
   it "runs all handlers maximum once" do
-    status, output = build_and_run <<-CODE
+    status, output = compile_and_run_source <<-CODE
       at_exit do
         puts "first handler code"
       end
@@ -86,7 +86,7 @@ describe "at_exit" do
   end
 
   it "allows handlers to change the exit code with explicit `exit` call" do
-    status, output = build_and_run <<-'CODE'
+    status, output = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
       end
@@ -114,7 +114,7 @@ describe "at_exit" do
   end
 
   it "allows handlers to change the exit code with explicit `exit` call (2)" do
-    status, output = build_and_run <<-'CODE'
+    status, output = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
       end
@@ -144,7 +144,7 @@ describe "at_exit" do
   end
 
   it "changes final exit code when an handler raises an error" do
-    status, output, error = build_and_run <<-'CODE'
+    status, output, error = compile_and_run_source <<-'CODE'
       at_exit do |exit_code|
         puts "first handler code, exit code: #{exit_code}"
       end
@@ -173,7 +173,7 @@ describe "at_exit" do
   end
 
   it "errors when used in an at_exit handler" do
-    status, output, error = build_and_run <<-CODE
+    status, output, error = compile_and_run_source <<-CODE
       at_exit do
         at_exit {}
       end
@@ -184,7 +184,7 @@ describe "at_exit" do
   end
 
   it "shows unhandled exceptions after at_exit handlers" do
-    status, _, error = build_and_run <<-CODE
+    status, _, error = compile_and_run_source <<-CODE
       at_exit do
         STDERR.puts "first handler code"
       end
@@ -205,7 +205,7 @@ describe "at_exit" do
   end
 
   it "can get unhandled exception in at_exit handler" do
-    status, _, error = build_and_run <<-CODE
+    status, _, error = compile_and_run_source <<-CODE
       at_exit do |_, ex|
         STDERR.puts ex.try &.message
       end
@@ -223,7 +223,7 @@ end
 
 describe "seg fault" do
   it "reports SIGSEGV" do
-    status, _, error = build_and_run <<-'CODE'
+    status, _, error = compile_and_run_source <<-'CODE'
       puts Pointer(Int64).null.value
     CODE
 
@@ -241,7 +241,7 @@ describe "seg fault" do
       # the default stack size is 0.5G.  Setting a
       # smaller stack size with `ulimit -s 8192`
       # will address this.
-      status, _, error = build_and_run <<-'CODE'
+      status, _, error = compile_and_run_source <<-'CODE'
       def foo
         y = StaticArray(Int8,512).new(0)
         foo
@@ -255,7 +255,7 @@ describe "seg fault" do
   {% end %}
 
   it "detects stack overflow on a fiber stack" do
-    status, _, error = build_and_run <<-'CODE'
+    status, _, error = compile_and_run_source <<-'CODE'
       def foo
         y = StaticArray(Int8,512).new(0)
         foo

@@ -172,10 +172,10 @@ module Crystal
     end
 
     def transform(node : Case)
-      @exhaustiveness_checker.check(node)
+      @exhaustiveness_checker.check(node) if node.exhaustive?
 
       if expanded = node.expanded
-        unless node.else
+        if node.exhaustive?
           replace_unreachable_if_needed(node, expanded)
         end
 
@@ -188,8 +188,7 @@ module Crystal
     # If any of the types checked in `case` is an enum, it can happen that
     # the unreachable can be reached by doing `SomeEnum.new(some_value)`.
     # In that case we replace the Unreachable node with `raise "..."`.
-    # In the future we should disallow creating such values unless the
-    # enum is marked as "open".
+    # In the future we should disallow creating such values.
     def replace_unreachable_if_needed(node, expanded)
       cond = node.cond
       return unless cond

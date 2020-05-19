@@ -14,9 +14,9 @@ describe Log::BroadcastBackend do
     main.append(backend_a, s(:info))
     main.append(backend_b, s(:error))
 
-    debug_entry = Log::Entry.new("", s(:debug), "", nil)
-    info_entry = Log::Entry.new("", s(:info), "", nil)
-    error_entry = Log::Entry.new("", s(:error), "", nil)
+    debug_entry = Log::Entry.new("", s(:debug), "", Log::Metadata.empty, nil)
+    info_entry = Log::Entry.new("", s(:info), "", Log::Metadata.empty, nil)
+    error_entry = Log::Entry.new("", s(:error), "", Log::Metadata.empty, nil)
 
     main.write debug_entry
     main.write info_entry
@@ -68,15 +68,15 @@ describe Log::BroadcastBackend do
 
     it "single backend" do
       main = Log::BroadcastBackend.new
-      main.append(Log::MemoryBackend.new, s(:warning))
+      main.append(Log::MemoryBackend.new, s(:warn))
 
-      main.min_level.should eq(s(:warning))
+      main.min_level.should eq(s(:warn))
     end
 
     it "multiple backends" do
       main = Log::BroadcastBackend.new
       main.append(Log::MemoryBackend.new, s(:info))
-      main.append(Log::MemoryBackend.new, s(:warning))
+      main.append(Log::MemoryBackend.new, s(:warn))
 
       main.min_level.should eq(s(:info))
     end

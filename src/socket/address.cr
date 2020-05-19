@@ -149,13 +149,23 @@ class Socket
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr6 = sockaddr.value.sin6_addr
-      @port = LibC.ntohs(sockaddr.value.sin6_port).to_i
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin6_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin6_port).to_i
+        {% end %}
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr4 = sockaddr.value.sin_addr
-      @port = LibC.ntohs(sockaddr.value.sin_port).to_i
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin_port).to_i
+        {% end %}
     end
 
     private def ip6?(address)
@@ -229,7 +239,7 @@ class Socket
     end
 
     private def ipv6_addr8(addr : LibC::In6Addr)
-      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) || flag?(:dragonfly) %}
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
@@ -278,7 +288,11 @@ class Socket
     private def to_sockaddr_in6
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      sockaddr.value.sin6_port = LibC.htons(port)
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin6_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin6_port = LibC.htons(port)
+      {% end %}
       sockaddr.value.sin6_addr = @addr6.not_nil!
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -286,7 +300,11 @@ class Socket
     private def to_sockaddr_in
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      sockaddr.value.sin_port = LibC.htons(port)
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin_port = LibC.htons(port)
+      {% end %}
       sockaddr.value.sin_addr = @addr4.not_nil!
       sockaddr.as(LibC::Sockaddr*)
     end

@@ -1112,6 +1112,7 @@ module Crystal
 
       if node.question?
         node.type_vars[0].accept self
+        skip_space
         write_token :"?"
         return false
       end
@@ -1232,21 +1233,21 @@ module Crystal
       # Restore the old parentheses count
       @paren_count = old_paren_count
 
-      check_close_paren
-
       false
+    ensure
+      check_close_paren
     end
 
     def visit(node : Union)
+      check_open_paren
+
       if @token.type == :IDENT && @token.value == "self?" && node.types.size == 2 &&
-         node.types.any?(&.is_a?(Self)) &&
-         node.types.any? { |t| t.to_s == "::Nil" }
+         node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
+        check_close_paren
         return false
       end
-
-      check_open_paren
 
       paren_count = @paren_count
       column = @column
@@ -2339,7 +2340,9 @@ module Crystal
     end
 
     def visit(node : Self)
+      check_open_paren
       write_keyword :self
+      check_close_paren
       false
     end
 
@@ -3613,7 +3616,7 @@ module Crystal
 
       slash_is_regex!
       write_indent
-      write_keyword :when, " "
+      write_keyword(node.exhaustive? ? :in : :when, " ")
       base_indent = @column
       when_start_line = @line
       when_start_column = @column

@@ -86,6 +86,10 @@ module Crystal
   end
 
   class Program
+    def object_extension
+      has_flag?("windows") ? ".obj" : ".o"
+    end
+
     def lib_flags
       has_flag?("windows") ? lib_flags_windows : lib_flags_posix
     end

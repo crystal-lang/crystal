@@ -430,6 +430,10 @@ module Crystal
         assert_macro "", %({{"FooBar".underscore}}), [] of ASTNode, %("foo_bar")
       end
 
+      it "executes titleize" do
+        assert_macro "", %({{"hello world".titleize}}), [] of ASTNode, %("Hello World")
+      end
+
       it "executes to_i" do
         assert_macro "", %({{"1234".to_i}}), [] of ASTNode, %(1234)
       end
@@ -477,6 +481,7 @@ module Crystal
         assert_macro "x", %({{x.starts_with?("hel")}}), [MacroId.new("hello")] of ASTNode, %(true)
         assert_macro "x", %({{x.chomp}}), [MacroId.new("hello\n")] of ASTNode, %(hello)
         assert_macro "x", %({{x.upcase}}), [MacroId.new("hello")] of ASTNode, %(HELLO)
+        assert_macro "x", %({{x.titleize}}), [MacroId.new("hello world")] of ASTNode, %(Hello World)
         assert_macro "x", %({{x.includes?("el")}}), [MacroId.new("hello")] of ASTNode, %(true)
         assert_macro "x", %({{x.includes?("he")}}), [MacroId.new("hello")] of ASTNode, %(true)
         assert_macro "x", %({{x.includes?("EL")}}), [MacroId.new("hello")] of ASTNode, %(false)
@@ -519,6 +524,7 @@ module Crystal
         assert_macro "x", %({{x.starts_with?("hel")}}), ["hello".symbol] of ASTNode, %(true)
         assert_macro "x", %({{x.chomp}}), [SymbolLiteral.new("hello\n")] of ASTNode, %(:hello)
         assert_macro "x", %({{x.upcase}}), ["hello".symbol] of ASTNode, %(:HELLO)
+        assert_macro "x", %({{x.titleize}}), ["hello world".symbol] of ASTNode, %(:"Hello World")
         assert_macro "x", %({{x.includes?("el")}}), ["hello".symbol] of ASTNode, %(true)
         assert_macro "x", %({{x.includes?("he")}}), ["hello".symbol] of ASTNode, %(true)
         assert_macro "x", %({{x.includes?("EL")}}), ["hello".symbol] of ASTNode, %(false)
@@ -556,7 +562,7 @@ module Crystal
       end
     end
 
-    describe "array methods" do
+    describe ArrayLiteral do
       it "executes index 0" do
         assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
       end
@@ -633,6 +639,56 @@ module Crystal
         context "without either argument" do
           it "returns the resulting array" do
             assert_macro "", %({{[1, 2, 3].map_with_index { 7 }}}), [] of ASTNode, %([7, 7, 7])
+          end
+        end
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
+      end
+
+      describe "#each_with_index" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 3, 5])
+            )
+          end
+        end
+
+        context "without the index argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 2, 3])
+            )
+          end
+        end
+
+        context "without the element argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([0, 1, 2])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { values << 7 } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([7, 7, 7])
+            )
           end
         end
       end
@@ -768,7 +824,7 @@ module Crystal
       end
     end
 
-    describe "hash methods" do
+    describe HashLiteral do
       it "executes size" do
         assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
       end
@@ -855,9 +911,51 @@ module Crystal
       it "executes double splat with arg" do
         assert_macro "", %({{{1 => 2, 3 => 4}.double_splat(", ")}}), [] of ASTNode, "1 => 2, 3 => 4, "
       end
+
+      describe "#each" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k1", "v1"}, {"k2", "v2"}])
+            )
+          end
+        end
+
+        context "without the value argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k| values << k } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["k1", "k2"])
+            )
+          end
+        end
+
+        context "without the key argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["v1", "v2"])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k3", "v3"}, {"k3", "v3"}])
+            )
+          end
+        end
+      end
     end
 
-    describe "named tuple literal methods" do
+    describe NamedTupleLiteral do
       it "executes size" do
         assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
       end
@@ -923,9 +1021,51 @@ module Crystal
       it "executes double splat with arg" do
         assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
       end
+
+      describe "#each" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{k1, "v1"}, {k2, "v2"}])
+            )
+          end
+        end
+
+        context "without the value argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k| values << k } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([k1, k2])
+            )
+          end
+        end
+
+        context "without the key argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %(["v1", "v2"])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([{"k3", "v3"}, {"k3", "v3"}])
+            )
+          end
+        end
+      end
     end
 
-    describe "tuple methods" do
+    describe TupleLiteral do
       it "executes index 0" do
         assert_macro "", %({{ {1, 2, 3}[0] }}), [] of ASTNode, "1"
       end
@@ -988,6 +1128,56 @@ module Crystal
         context "without either argument" do
           it "returns the resulting tuple" do
             assert_macro "", %({{{1, 2, 3}.map_with_index { 7 }}}), [] of ASTNode, %({7, 7, 7})
+          end
+        end
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
+      end
+
+      describe "#each_with_index" do
+        context "with both arguments" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 3, 5])
+            )
+          end
+        end
+
+        context "without the index argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v| values << v } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([1, 2, 3])
+            )
+          end
+        end
+
+        context "without the element argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([0, 1, 2])
+            )
+          end
+        end
+
+        context "without either argument" do
+          it "builds the correct array" do
+            assert_macro("",
+              %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { values << 7 } %}{{values}}{% end %}),
+              [] of ASTNode,
+              %([7, 7, 7])
+            )
           end
         end
       end
@@ -1239,6 +1429,10 @@ module Crystal
               [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
             end
           end
+
+          it "includes the generic_args of the instantiated type by default" do
+            assert_macro("", "{{Array(Int32).name}}", [] of ASTNode, "Array(Int32)")
+          end
         end
 
         describe :generic_args do
@@ -1248,6 +1442,10 @@ module Crystal
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
             end
+
+            it "includes the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: true)}}", [] of ASTNode, "Array(Int32)")
+            end
           end
 
           describe false do
@@ -1255,6 +1453,10 @@ module Crystal
               assert_macro("klass", "{{klass.name(generic_args: false)}}", "SomeType") do |program|
                 [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
               end
+            end
+
+            it "does not include the generic_args of the instantiated type" do
+              assert_macro("", "{{Array(Int32).name(generic_args: false)}}", [] of ASTNode, "Array")
             end
           end
 
@@ -1456,15 +1658,300 @@ module Crystal
         end
       end
 
-      it "executes nilable? (false)" do
-        assert_macro("x", "{{x.nilable?}}", "false") do |program|
-          [TypeNode.new(program.string)] of ASTNode
+      describe "#abstract?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.abstract?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.abstract?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          describe "class" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.abstract = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+
+          describe "struct" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.abstract = true
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+        end
+
+        describe GenericClassType do
+          describe "class" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.abstract = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
+
+          describe "struct" do
+            it "abstract" do
+              assert_macro("type", "{{type.abstract?}}", "true") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.abstract = true
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+
+            it "non-abstract" do
+              assert_macro("type", "{{type.abstract?}}", "false") do |program|
+                klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+                klass.struct = true
+
+                [TypeNode.new(klass)] of ASTNode
+              end
+            end
+          end
         end
       end
 
-      it "executes nilable? (true)" do
-        assert_macro("x", "{{x.nilable?}}", "true") do |program|
-          [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+      describe "#union?" do
+        it true do
+          assert_macro("x", "{{x.union?}}", "true") do |program|
+            [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+          end
+        end
+
+        it false do
+          assert_macro("x", "{{x.union?}}", "false") do |program|
+            [TypeNode.new(program.string)] of ASTNode
+          end
+        end
+      end
+
+      describe "#module?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.module?}}", "true") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.module?}}", "true") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.module?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+
+      describe "#class?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.class?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.class?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.class?}}", "true") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.class?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.class?}}", "true") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.class?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+
+      describe "#struct?" do
+        it NonGenericModuleType do
+          assert_macro("type", "{{type.struct?}}", "false") do |program|
+            mod = NonGenericModuleType.new(program, program, "SomeModule")
+
+            [TypeNode.new(mod)] of ASTNode
+          end
+        end
+
+        it GenericModuleType do
+          assert_macro("type", "{{type.struct?}}", "false") do |program|
+            generic_mod = GenericModuleType.new(program, program, "SomeGenericModule", ["T"])
+
+            [TypeNode.new(generic_mod)] of ASTNode
+          end
+        end
+
+        describe NonGenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.struct?}}", "false") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.struct?}}", "true") do |program|
+              klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+
+        describe GenericClassType do
+          it "class" do
+            assert_macro("type", "{{type.struct?}}", "false") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+
+          it "struct" do
+            assert_macro("type", "{{type.struct?}}", "true") do |program|
+              klass = GenericClassType.new(program, program, "SomeGenericType", program.reference, ["T"])
+              klass.struct = true
+
+              [TypeNode.new(klass)] of ASTNode
+            end
+          end
+        end
+      end
+      describe "#nilable?" do
+        it false do
+          assert_macro("x", "{{x.nilable?}}", "false") do |program|
+            [TypeNode.new(program.string)] of ASTNode
+          end
+        end
+
+        it true do
+          assert_macro("x", "{{x.nilable?}}", "true") do |program|
+            [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
+          end
         end
       end
 
@@ -1794,26 +2281,36 @@ module Crystal
     end
 
     describe "case methods" do
-      case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32)
+      describe "when" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: false)
 
-      it "executes cond" do
-        assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        it "executes cond" do
+          assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+        end
+
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
+        end
+
+        it "executes when conds" do
+          assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
+        end
+
+        it "executes when body" do
+          assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
+        end
+
+        it "executes else" do
+          assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        end
       end
 
-      it "executes whens" do
-        assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[when 2, 3\n  4\n]"
-      end
+      describe "in" do
+        case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32, exhaustive: true)
 
-      it "executes when conds" do
-        assert_macro "x", %({{x.whens[0].conds}}), [case_node] of ASTNode, "[2, 3]"
-      end
-
-      it "executes when body" do
-        assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
-      end
-
-      it "executes else" do
-        assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        it "executes whens" do
+          assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[in 2, 3\n  4\n]"
+        end
       end
     end
 
@@ -1962,7 +2459,7 @@ module Crystal
       end
     end
 
-    describe "range methods" do
+    describe RangeLiteral do
       it "executes begin" do
         assert_macro "x", %({{x.begin}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "1"
       end
@@ -1983,6 +2480,14 @@ module Crystal
       it "executes to_a" do
         assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %([1, 2, 3])
         assert_macro "x", %({{x.to_a}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %([1, 2])
+      end
+
+      it "#each" do
+        assert_macro("",
+          %({% begin %}{% values = [] of Nil %}{% (1..3).each { |v| values << v } %}{{values}}{% end %}),
+          [] of ASTNode,
+          %([1, 2, 3])
+        )
       end
     end
 

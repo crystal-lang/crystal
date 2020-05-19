@@ -31,20 +31,28 @@ class Process
   # Searches an executable, checking for an absolute path, a path relative to
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
-  def self.find_executable(name, path = ENV["PATH"]?, pwd = Dir.current)
-    if name.starts_with?(File::SEPARATOR)
-      return name
+  def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
+    name = Path.new(name)
+    if name.absolute?
+      return name.to_s
     end
 
-    if name.includes?(File::SEPARATOR)
-      return File.expand_path(name, pwd)
+    # check if the name includes a separator
+    count_parts = 0
+    name.each_part do
+      count_parts += 1
+      break if count_parts > 1
+    end
+
+    if count_parts > 1
+      return name.expand(pwd).to_s
     end
 
     return unless path
 
-    path.split(PATH_DELIMITER).each do |path|
-      executable = File.join(path, name)
-      return executable if File.exists?(executable)
+    path.split(PATH_DELIMITER).each do |path_entry|
+      executable = Path.new(path_entry, name)
+      return executable.to_s if File.exists?(executable)
     end
 
     nil
@@ -70,7 +78,7 @@ end
       String.new(buf)
     end
   end
-{% elsif flag?(:freebsd) %}
+{% elsif flag?(:freebsd) || flag?(:dragonfly) %}
   require "c/sysctl"
 
   class Process
