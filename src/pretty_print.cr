@@ -191,6 +191,8 @@ class PrettyPrint
     end
     @buffer.clear
     @buffer_width = 0
+
+    @output.flush
   end
 
   private class Text
