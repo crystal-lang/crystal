@@ -120,10 +120,10 @@ abstract class Digest::Base
 
   # Writes the final digest output to `dst`.
   #
-  # This method can only be called once and raises `FinalizedError` on subsequent calls.
-  #
   # Faster than the `Bytes` allocating version.
   # Use when hashing in loops.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
   #
   # NOTE: `.dup.final(dst)` call may be used to get an intermediate hash value.
   def final(dst : Bytes) : Bytes
@@ -134,6 +134,10 @@ abstract class Digest::Base
   end
 
   # Returns a hexadecimal-encoded digest in a new `String`.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def hexfinal : String
     sary = uninitialized StaticArray(UInt8, 64)
     tmp = sary.to_slice[0, digest_size]
@@ -145,6 +149,10 @@ abstract class Digest::Base
   #
   # Faster than the `String` allocating version.
   # Use when hashing in loops.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def hexfinal(dst : Bytes) : Nil
     dsize = digest_size
     unless dst.bytesize == dsize * 2
@@ -158,6 +166,12 @@ abstract class Digest::Base
   end
 
   # Writes a hexadecimal-encoded digest to `IO`.
+  #
+  # Faster than the `String` allocating version.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
   def hexfinal(io : IO) : Nil
     sary = uninitialized StaticArray(UInt8, 128)
     tmp = sary.to_slice[0, digest_size * 2]
@@ -165,6 +179,7 @@ abstract class Digest::Base
     io << tmp
   end
 
+  # Resets the state of this object.  Use to get another hash value without creating a new object.
   def reset : self
     reset_impl
     @finished = false
