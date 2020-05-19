@@ -152,7 +152,7 @@ struct Crystal::System::Process
   end
 
   private def self.args_to_string(args, io : IO)
-    args.join(' ', io) do |arg|
+    args.join(io, ' ') do |arg|
       quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
 
       io << '"' if quotes
