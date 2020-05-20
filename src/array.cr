@@ -1615,31 +1615,33 @@ class Array(T)
     # This is broken into cases for perfromance (#8515)
     n %= size
 
-    if n == 0
-      # ignore
-    elsif n == 1
+    puts "n: #{n}, SMALL_ARRAY_SIZE: #{SMALL_ARRAY_SIZE}"
+
+    if n == 0 # ignore
+      # NOOP
+    elsif n == 1 # shift left 1
       tmp = self[0]
       @buffer.move_from(@buffer + n, size - n)
       self[-1] = tmp
-    elsif n == (size - 1)
+    elsif n == (size - 1) # shift right 1
       tmp = self[-1]
       (@buffer + size - n).move_from(@buffer, n)
       self[0] = tmp
-    elsif n <= SMALL_ARRAY_SIZE // 2 # shift right
+    elsif n <= SMALL_ARRAY_SIZE # shift left 16
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from(@buffer, n)
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
-    elsif size - n <= SMALL_ARRAY_SIZE # shift left
+    elsif size - n <= SMALL_ARRAY_SIZE # shift right 16
       tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
       tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
       (@buffer + size - n).move_from(@buffer, n)
       @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
-    elsif n <= size // 2 # shift right
+    elsif n <= size // 2 # shift left
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
-    else # shift left
+    else # shift right
       tmp = self[n..-1]
       (@buffer + size - n).move_from(@buffer, n)
       @buffer.copy_from(tmp.to_unsafe, size - n)
