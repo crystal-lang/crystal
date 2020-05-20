@@ -1091,4 +1091,66 @@ describe "Semantic: class" do
       ),
       "can't read instance variables of union types (@x of (Bar | Foo))"
   end
+
+  it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo
+        abstract def foo?
+      end
+
+      abstract class Bar < Foo
+      end
+
+      Pointer(Foo).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on abstract class with generic subclasses but no instances (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo
+        abstract def foo?
+      end
+
+      class Bar(T) < Foo
+        def foo?
+          true
+        end
+      end
+
+      Pointer(Foo).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on abstract generic class (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+        abstract def foo?
+      end
+
+      Pointer(Foo(Int32)).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on generic class with subclasses (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+        abstract def foo?
+      end
+
+      abstract class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32)
+
+      Pointer(Foo(Int32)).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
 end

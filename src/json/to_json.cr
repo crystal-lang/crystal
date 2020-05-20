@@ -70,6 +70,16 @@ class String
   end
 end
 
+struct Path
+  def to_json(json : JSON::Builder)
+    @name.to_json(json)
+  end
+
+  def to_json_object_key
+    @name
+  end
+end
+
 struct Symbol
   def to_json(json : JSON::Builder)
     json.string(to_s)
@@ -81,6 +91,14 @@ struct Symbol
 end
 
 class Array
+  def to_json(json : JSON::Builder)
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
+class Deque
   def to_json(json : JSON::Builder)
     json.array do
       each &.to_json(json)
@@ -158,6 +176,60 @@ struct Time
   # See `#from_json` for reference.
   def to_json(json : JSON::Builder)
     json.string(Time::Format::RFC_3339.format(self, fraction_digits: 0))
+  end
+end
+
+# Converter to be used with `JSON.mapping`
+# to serialize the `Array(T)` elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class TimestampArray
+#   JSON.mapping({
+#     dates: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = TimestampArray.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.dates   # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.to_json # => %({"dates":[1459859781,1567628762]})
+# ```
+module JSON::ArrayConverter(Converter)
+  def self.to_json(values : Array, builder : JSON::Builder)
+    builder.array do
+      values.each do |value|
+        Converter.to_json(value, builder)
+      end
+    end
+  end
+end
+
+# Converter to be used with `JSON.mapping`
+# to serialize the `Hash(K, V)` values elements with the custom converter.
+#
+# ```
+# require "json"
+#
+# class TimestampHash
+#   JSON.mapping({
+#     birthdays: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
+#   })
+# end
+#
+# timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# ```
+module JSON::HashValueConverter(Converter)
+  def self.to_json(values : Hash, builder : JSON::Builder)
+    builder.object do
+      values.each do |key, value|
+        builder.field key.to_json_object_key do
+          Converter.to_json(value, builder)
+        end
+      end
+    end
   end
 end
 

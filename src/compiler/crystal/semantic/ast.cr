@@ -18,7 +18,7 @@ module Crystal
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
         exception.warning = true
-        exception.append_to_s(nil, io)
+        exception.append_to_s(io, nil)
       end
     end
 
@@ -805,6 +805,14 @@ module Crystal
       else
         false
       end
+    end
+  end
+
+  # Ficticious node to mean a location in code shouldn't be reached.
+  # This is used in the implicit `else` branch of a case.
+  class Unreachable < ASTNode
+    def clone_without_location
+      Unreachable.new
     end
   end
 end

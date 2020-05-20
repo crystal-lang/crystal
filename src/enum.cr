@@ -89,6 +89,11 @@
 struct Enum
   include Comparable(self)
 
+  # Returns *value*.
+  def self.new(value : self)
+    value
+  end
+
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.
@@ -100,7 +105,7 @@ struct Enum
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{@type}}::{{member}}.value != 0 && value.bits_set? {{@type}}::{{member}}.value
+            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
               io << " | " if found
               io << {{member.stringify}}
               found = true
@@ -134,14 +139,15 @@ struct Enum
     {% if @type.has_attribute?("Flags") %}
       String.build { |io| to_s(io) }
     {% else %}
-      case value
-      {% for member in @type.constants %}
-      when {{@type}}::{{member}}.value
-        {{member.stringify}}
+      # Can't use `case` here because case with duplicate values do
+      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+      {% for member, i in @type.constants %}
+        if value == {{@type.constant(member)}}
+          return {{member.stringify}}
+        end
       {% end %}
-      else
-        value.to_s
-      end
+
+      value.to_s
     {% end %}
   end
 
@@ -302,8 +308,8 @@ struct Enum
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" %}
-          if includes?({{@type}}::{{member}})
-            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          if includes?(self.class.new({{@type.constant(member)}}))
+            yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
           end
         {% end %}
       {% end %}
@@ -354,7 +360,7 @@ struct Enum
       return new(value)
     {% else %}
       {% for member in @type.constants %}
-        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+        return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value
       {% end %}
     {% end %}
     nil
@@ -371,6 +377,21 @@ struct Enum
   # ```
   def self.from_value(value : Int) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
+  end
+
+  # Returns `true` if the given *value* is an enum member, otherwise `false`.
+  # `false` if not member.
+  #
+  # ```
+  # Color.valid?(Color::Red)   # => true
+  # Color.valid?(Color.new(4)) # => false
+  # ```
+  #
+  # NOTE: This is a class method, not an instance method because
+  # an instance method `valid?` is defined by the language when a user
+  # defines an enum member named `Valid`.
+  def self.valid?(value : self) : Bool
+    !!from_value?(value.value)
   end
 
   # def self.to_h : Hash(String, self)
@@ -414,7 +435,7 @@ struct Enum
       case string.camelcase.downcase
       {% for member in @type.constants %}
         when {{member.stringify.camelcase.downcase}}
-          {{@type}}::{{member}}
+          new({{@type.constant(member)}})
       {% end %}
       else
         nil
@@ -450,7 +471,7 @@ struct Enum
   def self.each
     {% for member in @type.constants %}
       {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
-        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+        yield new({{@type.constant(member)}}), {{@type.constant(member)}}
       {% end %}
     {% end %}
   end

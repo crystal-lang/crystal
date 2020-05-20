@@ -29,12 +29,14 @@ class IO::MultiWriter < IO
     @writers = writers.map(&.as(IO)).to_a
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
     check_open
 
-    return if slice.empty?
+    return 0u64 if slice.empty?
 
     @writers.each { |writer| writer.write(slice) }
+
+    slice.size.to_u64
   end
 
   def read(slice : Bytes)

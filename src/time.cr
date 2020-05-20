@@ -431,16 +431,6 @@ struct Time
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
   end
 
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
-    local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
-  end
-
   # Creates a new `Time` instance representing the given date-time in UTC.
   #
   # ```
@@ -539,20 +529,6 @@ struct Time
     seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
-  # system clock observed in *location* (defaults to local time zone).
-  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
-  def self.now(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
-  # system clock in UTC.
-  @[Deprecated("Use `Time.utc` instead.")]
-  def self.utc_now : Time
-    utc
   end
 
   # Creates a new `Time` instance with the same local date-time representation
@@ -673,7 +649,7 @@ struct Time
   # Positive values result in a later time, negative values in an earlier time.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenation of the result will be apart by the specified amounts, but the
+  # representation of the result will be apart by the specified amounts, but the
   # elapsed time between both instances might not equal to the combined default
   # durations
   # This is the case for example when adding a day over a daylight-savings time
@@ -743,7 +719,8 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += offset_seconds % SECONDS_PER_DAY
+      seconds += @seconds % SECONDS_PER_DAY
+      seconds += offset
     end
 
     # FIXME: These operations currently don't have overflow checks applied.
@@ -931,7 +908,7 @@ struct Time
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
   #
   # ```
-  # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
+  # time.time_of_day == Time::Span.new(hours: time.hour, minutes: time.minute, seconds: time.second, nanoseconds: time.nanosecond)
   # ```
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
@@ -1057,13 +1034,13 @@ struct Time
   #
   # The name of the location is appended unless it is a fixed zone offset.
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s "%F %T", io
+    to_s io, "%F %T"
 
     if with_nanoseconds
       if @nanoseconds == 0
         io << ".0"
       else
-        to_s ".%N", io
+        to_s io, ".%N"
       end
     end
 
@@ -1083,7 +1060,7 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s("%F %T ", io)
+    to_s(io, "%F %T ")
 
     if utc?
       io << "UTC"
@@ -1107,8 +1084,16 @@ struct Time
   # Formats this `Time` according to the pattern in *format* to the given *io*.
   #
   # See `Time::Format` for details.
-  def to_s(format : String, io : IO) : Nil
+  def to_s(io : IO, format : String) : Nil
     Format.new(format).format(self, io)
+  end
+
+  # Formats this `Time` according to the pattern in *format* to the given *io*.
+  #
+  # See `Time::Format` for details.
+  @[Deprecated("Use `#to_s(io : IO, format : String)` instead")]
+  def to_s(format : String, io : IO) : Nil
+    to_s(io, format)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
@@ -1120,14 +1105,21 @@ struct Time
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
   # freedom to rigidly define a fixed format intended for use in internet
   # protocols and standards.
-  def to_rfc3339
-    Format::RFC_3339.format(to_utc)
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(*, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
-  def to_rfc3339(io : IO)
-    Format::RFC_3339.format(to_utc, io)
+  #
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(io : IO, *, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
@@ -1319,7 +1311,7 @@ struct Time
     if local?
       self
     else
-      in(Location.local)
+      self.in(Location.local)
     end
   end
 
@@ -1518,6 +1510,8 @@ struct Time
         zone = location.lookup(range[0] - 1)
       when .>=(range[1])
         zone = location.lookup(range[1])
+      else
+        # in range
       end
     end
 

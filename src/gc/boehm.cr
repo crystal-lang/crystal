@@ -6,7 +6,7 @@
   @[Link("pthread")]
 {% end %}
 
-{% if flag?(:freebsd) %}
+{% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
   @[Link("gc", static: true)]
@@ -221,7 +221,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise Errno.new("pthread_join", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 
@@ -299,22 +299,20 @@ module GC
   end
 
   # pushes the stack of pending fibers when the GC wants to collect memory:
-  {% unless flag?(:win32) %}
-    GC.before_collect do
-      Fiber.unsafe_each do |fiber|
-        fiber.push_gc_roots unless fiber.running?
-      end
-
-      {% if flag?(:preview_mt) %}
-        Thread.unsafe_each do |thread|
-          if scheduler = thread.@scheduler
-            fiber = scheduler.@current
-            GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
-          end
-        end
-      {% end %}
-
-      GC.unlock_write
+  GC.before_collect do
+    Fiber.unsafe_each do |fiber|
+      fiber.push_gc_roots unless fiber.running?
     end
-  {% end %}
+
+    {% if flag?(:preview_mt) %}
+      Thread.unsafe_each do |thread|
+        if scheduler = thread.@scheduler
+          fiber = scheduler.@current
+          GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack_bottom)
+        end
+      end
+    {% end %}
+
+    GC.unlock_write
+  end
 end

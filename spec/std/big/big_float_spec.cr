@@ -188,6 +188,9 @@ describe "BigFloat" do
     it { 1.34.to_big_f.to_u.should eq(1) }
     it { 123.to_big_f.to_u.should eq(123) }
     it { 4321.to_big_f.to_u.should eq(4321) }
+    it do
+      expect_raises(OverflowError) { -123.34.to_big_f.to_u }
+    end
   end
 
   describe "to_u!" do

@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "../../support/env"
 
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
@@ -113,5 +114,19 @@ describe Crystal::CrystalPath do
     end
 
     ex.message.not_nil!.should_not contain "If you're trying to require a shard"
+  end
+
+  it "includes 'lib' by default" do
+    with_env("CRYSTAL_PATH": nil) do
+      crystal_path = Crystal::CrystalPath.new
+      crystal_path.entries[0].should eq("lib")
+    end
+  end
+
+  it "overrides path with environment variable" do
+    with_env("CRYSTAL_PATH": "foo:bar") do
+      crystal_path = Crystal::CrystalPath.new
+      crystal_path.entries.should eq(%w(foo bar))
+    end
   end
 end

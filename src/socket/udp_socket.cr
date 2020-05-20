@@ -39,17 +39,15 @@ require "./ip_socket"
 # server.close
 # ```
 #
-# The `send` methods may sporadically fail with `Errno::ECONNREFUSED` when sending datagrams
+# The `send` methods may sporadically fail with `Socket::ConnectError` when sending datagrams
 # to a non-listening server.
 # Wrap with an exception handler to prevent raising. Example:
 #
 # ```
 # begin
 #   client.send(message, @destination)
-# rescue ex : Errno
-#   if ex.errno == Errno::ECONNREFUSED
-#     p ex.inspect
-#   end
+# rescue ex : Socket::ConnectError
+#   p ex.inspect
 # end
 # ```
 class UDPSocket < IPSocket
@@ -138,7 +136,7 @@ class UDPSocket < IPSocket
   # The multicast hops option controls the `hoplimit` field on uni-cast packets.
   # If `-1` is specified, the kernel will use a default value.
   # If a value of `0` to `255` is specified, the packet will have the specified
-  # value as `hoplimit`. Other values are considered invalid and `Errno` will be raised.
+  # value as `hoplimit`. Other values are considered invalid and `Socket::Error` will be raised.
   # Datagrams with a `hoplimit` of `1` are not forwarded beyond the local network.
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the

@@ -7,6 +7,12 @@ class CSV::Lexer::IOBased < CSV::Lexer
     @current_char = @io.read_char || '\0'
   end
 
+  def rewind
+    super
+    @io.rewind
+    @current_char = @io.read_char || '\0'
+  end
+
   private def consume_unquoted_cell
     @buffer.clear
     while true

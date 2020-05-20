@@ -82,7 +82,7 @@ module Crystal
       @last = Nop.new
     end
 
-    def define_var(name, value)
+    def define_var(name : String, value : ASTNode) : Nil
       @vars[name] = value
     end
 
@@ -242,7 +242,7 @@ module Crystal
             {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
-          exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
+          exp.raise "can't iterate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
         node.exp.raise "`for` expression must be an array, hash, tuple, named tuple or a range literal, not #{exp.class_desc}:\n\n#{exp}"
@@ -363,9 +363,10 @@ module Crystal
         end
 
         args = node.args.map { |arg| accept arg }
+        named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
-          @last = receiver.interpret(node.name, args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, node.block, self)
         rescue ex : MacroRaiseException
           raise ex
         rescue ex : Crystal::Exception
@@ -450,6 +451,7 @@ module Crystal
           else
             produce_tuple = false
           end
+
           if produce_tuple
             case matched_type
             when TupleInstanceType
@@ -461,6 +463,8 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
+            else
+              # go on
             end
           end
         end
@@ -511,13 +515,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
       false
     end
 
@@ -533,12 +537,12 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target.devirtualize)
+        @last = TypeNode.new(target.devirtualize)
       when "@def"
-        return @last = @def || NilLiteral.new
+        @last = @def || NilLiteral.new
+      else
+        node.raise "unknown macro instance var: '#{node.name}'"
       end
-
-      node.raise "unknown macro instance var: '#{node.name}'"
     end
 
     def visit(node : TupleLiteral)

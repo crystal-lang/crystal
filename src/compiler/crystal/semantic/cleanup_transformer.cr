@@ -33,6 +33,8 @@ module Crystal
         end
       when ClassType
         cleanup_single_type(type, transformer)
+      else
+        # no need to clean up
       end
     end
 
@@ -57,8 +59,11 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
+    @transformed : Set(Def)
+
     def initialize(@program : Program)
-      @transformed = Set(UInt64).new
+      @transformed = Set(Def).new.compare_by_identity
+      @exhaustiveness_checker = ExhaustivenessChecker.new(@program)
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
@@ -164,6 +169,72 @@ module Crystal
         end
       end
       false
+    end
+
+    def transform(node : Case)
+      @exhaustiveness_checker.check(node) if node.exhaustive?
+
+      if expanded = node.expanded
+        if node.exhaustive?
+          replace_unreachable_if_needed(node, expanded)
+        end
+
+        return expanded.transform(self)
+      end
+
+      node
+    end
+
+    # If any of the types checked in `case` is an enum, it can happen that
+    # the unreachable can be reached by doing `SomeEnum.new(some_value)`.
+    # In that case we replace the Unreachable node with `raise "..."`.
+    # In the future we should disallow creating such values.
+    def replace_unreachable_if_needed(node, expanded)
+      cond = node.cond
+      return unless cond
+
+      if cond.is_a?(TupleLiteral)
+        return unless cond.elements.all?(&.type?) &&
+                      cond.elements.any? { |element| has_enum_type?(element.type) }
+      else
+        cond_type = cond.type?
+        return unless cond_type && has_enum_type?(cond_type)
+      end
+
+      an_if = find_unreachable_parent(expanded)
+      unless an_if
+        node.raise "BUG: expected to find Unreachable node"
+      end
+
+      an_if.else = build_raise("Unhandled case: enum value outside of defined enum members", node)
+    end
+
+    def has_enum_type?(type)
+      if type.is_a?(UnionType)
+        type.union_types.any? &.is_a?(EnumType)
+      else
+        type.is_a?(EnumType)
+      end
+    end
+
+    def find_unreachable_parent(expanded)
+      # An expanded case is either a series of if/else, or
+      # a bunch of assignments and then a series of if/else.
+      # The if/else chain always comes last.
+      if expanded.is_a?(Expressions)
+        expanded = expanded.expressions.last
+      end
+
+      while expanded.is_a?(If)
+        if an_else = expanded.else
+          if an_else.is_a?(Unreachable)
+            return expanded
+          else
+            expanded = an_else
+          end
+        end
+      end
+      nil
     end
 
     def transform(node : ExpandableNode)
@@ -295,7 +366,7 @@ module Crystal
       # It might happen that a call was made on a module or an abstract class
       # and we don't know the type because there are no including classes or subclasses.
       # In that case, turn this into an untyped expression.
-      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
+      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract? || obj_type.is_a?(GenericType))
         return untyped_expression(node, "`#{node}` has no type")
       end
 
@@ -361,9 +432,7 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          unless @transformed.includes?(target_def.object_id)
-            @transformed.add(target_def.object_id)
-
+          if @transformed.add?(target_def)
             node.bubbling_exception do
               @def_nest_count += 1
               target_def.body = target_def.body.transform(self)
@@ -448,6 +517,8 @@ module Crystal
           if owner.passed_as_self?
             arg.raise "#{message} (closured vars: self)"
           end
+        else
+          # nothing to do
         end
       end
     end
@@ -490,7 +561,7 @@ module Crystal
       build_raise ex_msg, node
     end
 
-    def build_raise(msg, node)
+    def build_raise(msg : String, node : ASTNode)
       call = Call.global("raise", StringLiteral.new(msg).at(node)).at(node)
       call.accept MainVisitor.new(@program)
       call
@@ -549,6 +620,8 @@ module Crystal
         node.truthy = true
       when cond_is_falsey
         node.falsey = true
+      else
+        # Not a special condition
       end
 
       if node.falsey?
@@ -711,7 +784,7 @@ module Crystal
 
       if exp_type
         instance_type = exp_type.instance_type.devirtualize
-        if instance_type.struct? || instance_type.module?
+        if instance_type.struct? || instance_type.module? || instance_type.is_a?(UnionType)
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
@@ -783,7 +856,10 @@ module Crystal
       node = super
 
       unless node.type?
-        node.unbind_from node.dependencies
+        if dependencies = node.dependencies?
+          node.unbind_from node.dependencies
+        end
+
         node.bind_to node.expressions
       end
 

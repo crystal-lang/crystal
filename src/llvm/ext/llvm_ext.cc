@@ -237,6 +237,30 @@ LLVMMetadataRef LLVMExtDIBuilderCreateStructType(
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMExtDIBuilderCreateUnionType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    LLVMMetadataRef Elements) {
+  DICompositeType *CT = Dref->createUnionType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, Flags,
+      DINodeArray(unwrapDI<MDTuple>(Elements)));
+  return wrap(CT);
+}
+
+LLVMMetadataRef LLVMExtDIBuilderCreateArrayType(
+    DIBuilderRef Dref, uint64_t Size, uint64_t AlignInBits,
+    LLVMMetadataRef Type, LLVMMetadataRef Subs) {
+      return wrap(Dref->createArrayType(Size, AlignInBits, unwrapDI<DIType>(Type), DINodeArray(unwrapDI<MDTuple>(Subs))));
+}
+
+
 LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
   DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
   LLVMMetadataRef File, unsigned Line) {
@@ -246,6 +270,21 @@ LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
                                                              unwrapDI<DIFile>(File),
                                                              Line);
   return wrap(CT);
+}
+
+// LLVM 7.0 LLVMDIBuilderCreateUnspecifiedType
+LLVMMetadataRef LLVMExtDIBuilderCreateUnspecifiedType(
+  DIBuilderRef Dref, const char *Name, size_t NameLen) {
+  return wrap(Dref->createUnspecifiedType({Name, NameLen}));
+}
+
+// LLVM 7.0 LLVMDIBuilderCreateLexicalBlockFile
+LLVMMetadataRef LLVMExtDIBuilderCreateLexicalBlockFile(
+  DIBuilderRef Dref,
+  LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Discriminator) {
+  return wrap(Dref->createLexicalBlockFile(unwrapDI<DIScope>(Scope),
+                                           unwrapDI<DIFile>(File),
+                                           Discriminator));
 }
 
 void LLVMExtDIBuilderReplaceTemporary(
@@ -403,6 +442,7 @@ LLVMValueRef LLVMExtBuildInvoke(
 #endif
 }
 
+
 void LLVMExtWriteBitcodeWithSummaryToFile(LLVMModuleRef mref, const char *File) {
 #if LLVM_VERSION_GE(4, 0)
   // https://github.com/ldc-developers/ldc/pull/1840/files
@@ -433,6 +473,12 @@ char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
 #else
   return NULL;
 #endif
+}
+
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrange(
+  DIBuilderRef Dref, uint64_t Lo,
+  uint64_t Count) {
+    return wrap(Dref->getOrCreateSubrange(Lo, Count));
 }
 
 }

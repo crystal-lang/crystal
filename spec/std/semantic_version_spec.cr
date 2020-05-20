@@ -42,4 +42,21 @@ describe SemanticVersion do
       pair[0].should eq(pair[1])
     end
   end
+
+  describe SemanticVersion::Prerelease do
+    it "compares <" do
+      sprereleases = %w[
+        alpha.1
+        beta.1
+        beta.2
+      ]
+      prereleases = sprereleases.map { |s|
+        SemanticVersion::Prerelease.parse(s)
+      }
+
+      prereleases.each_cons(2) do |pair|
+        pair[0].should be < pair[1]
+      end
+    end
+  end
 end

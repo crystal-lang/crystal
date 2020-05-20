@@ -43,11 +43,7 @@ module MIME::Multipart
     type = MIME::MediaType.parse?(content_type)
 
     if type && type.type == "multipart"
-      boundary = type["boundary"]?
-
-      if boundary && !boundary.empty?
-        boundary
-      end
+      type["boundary"]?.presence
     end
   end
 

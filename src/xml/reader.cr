@@ -145,7 +145,17 @@ struct XML::Reader
 
   # Expands the node to a `XML::Node` that can be searched with XPath etc.
   # The returned `XML::Node` is only valid until the next call to `#read`.
-  def expand
+  #
+  # Raises a `XML::Error` if the node could not be expanded.
+  def expand : XML::Node
+    expand? || raise XML::Error.new LibXML.xmlGetLastError
+  end
+
+  # Expands the node to a `XML::Node` that can be searched with XPath etc.
+  # The returned `XML::Node` is only valid until the next call to `#read`.
+  #
+  # Returns `nil` if the node could not be expanded.
+  def expand? : XML::Node?
     xml = LibXML.xmlTextReaderExpand(@reader)
     XML::Node.new(xml) if xml
   end

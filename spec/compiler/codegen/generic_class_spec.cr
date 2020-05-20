@@ -357,4 +357,48 @@ describe "Code gen: generic class type" do
       end
       ))
   end
+
+  it "doesn't crash on generic type restriction with initially no subtypes (#8411)" do
+    codegen(%(
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+
+      Baz(Int32).new
+      ))
+  end
+
+  it "doesn't crash on generic type restriction with no subtypes (#7583)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+      ))
+  end
 end

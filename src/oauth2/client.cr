@@ -60,12 +60,18 @@ class OAuth2::Client
   # *token_uri* can be relative or absolute.
   # If they are relative, the given *host*, *port* and *scheme* will be used.
   # If they are absolute, the absolute URL will be used.
+  #
+  # As per https://tools.ietf.org/html/rfc6749#section-2.3.1,
+  # `AuthScheme::HTTPBasic` is the default *auth_scheme* (the mechanism used to
+  # transmit the client credentials to the server). `AuthScheme::RequestBody` should
+  # only be used if the server does not support HTTP Basic.
   def initialize(@host : String, @client_id : String, @client_secret : String,
                  @port : Int32? = nil,
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
-                 @redirect_uri : String? = nil)
+                 @redirect_uri : String? = nil,
+                 @auth_scheme : AuthScheme = :http_basic)
   end
 
   # Builds an authorize URI, as specified by
@@ -145,18 +151,26 @@ class OAuth2::Client
   end
 
   private def get_access_token : AccessToken
-    body = HTTP::Params.build do |form|
-      form.add("client_id", @client_id)
-      form.add("client_secret", @client_secret)
-      yield form
-    end
-
     headers = HTTP::Headers{
       "Accept"       => "application/json",
       "Content-Type" => "application/x-www-form-urlencoded",
     }
 
-    response = HTTP::Client.post(token_uri, form: body, headers: headers)
+    body = HTTP::Params.build do |form|
+      case @auth_scheme
+      when .request_body?
+        form.add("client_id", @client_id)
+        form.add("client_secret", @client_secret)
+      when .http_basic?
+        headers.add(
+          "Authorization",
+          "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
+        )
+      end
+      yield form
+    end
+
+    response = HTTP::Client.post token_uri, form: body, headers: headers
     case response.status
     when .ok?, .created?
       OAuth2::AccessToken.from_json(response.body)
@@ -165,15 +179,12 @@ class OAuth2::Client
     end
   end
 
-  private def token_uri
+  private def token_uri : URI
     uri = URI.parse(@token_uri)
-
     if uri.host
-      # If it's an absolute URI, use that one
-      @token_uri
+      uri
     else
-      # Otherwise use the default one
-      URI.new(@scheme, @host, @port, @token_uri).to_s
+      URI.new(@scheme, @host, @port, @token_uri)
     end
   end
 end

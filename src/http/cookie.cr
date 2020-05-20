@@ -63,7 +63,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.utc
+        e <= Time.utc
       else
         false
       end
@@ -121,7 +121,7 @@ module HTTP
         return unless match
 
         expires = if max_age = match["max_age"]?
-                    Time.utc + max_age.to_i.seconds
+                    Time.utc + max_age.to_i64.seconds
                   else
                     parse_time(match["expires"]?)
                   end
@@ -263,7 +263,7 @@ module HTTP
 
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
-    # *key* should match the the name attribute of the desired `HTTP::Cookie`.
+    # *key* should match the name attribute of the desired `HTTP::Cookie`.
     def delete(key)
       @cookies.delete(key)
     end
@@ -291,7 +291,7 @@ module HTTP
     end
 
     # Adds `Cookie` headers for the cookies in this collection to the
-    # given `HTTP::Header` instance and returns it. Removes any existing
+    # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
     def add_request_headers(headers)
       headers.delete("Cookie")
@@ -301,7 +301,7 @@ module HTTP
     end
 
     # Adds `Set-Cookie` headers for the cookies in this collection to the
-    # given `HTTP::Header` instance and returns it. Removes any existing
+    # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Set-Cookie` headers in it.
     def add_response_headers(headers)
       headers.delete("Set-Cookie")

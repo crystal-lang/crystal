@@ -3,6 +3,9 @@
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 require "spec"
+
+{% skip_file if flag?(:win32) %}
+
 require "../src/compiler/crystal/**"
 require "./support/syntax"
 
@@ -109,10 +112,14 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
+def assert_no_errors(*args)
+  semantic(*args)
+end
+
 def warnings_result(code, inject_primitives = true)
   code = inject_primitives(code) if inject_primitives
 
-  output_filename = Crystal.tempfile("crystal-spec-output")
+  output_filename = Crystal.temp_executable("crystal-spec-output")
 
   compiler = create_spec_compiler
   compiler.warnings = Warnings::All
@@ -129,6 +136,11 @@ def assert_warning(code, message, inject_primitives = true)
   warning_failures = warnings_result(code, inject_primitives)
   warning_failures.size.should eq(1)
   warning_failures[0].should start_with(message)
+end
+
+def assert_no_warnings(code, inject_primitives = true)
+  warning_failures = warnings_result(code, inject_primitives)
+  warning_failures.size.should eq(0)
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
@@ -153,9 +165,13 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, e
   result_pragmas.should eq(expected_pragmas) if expected_pragmas
 end
 
-def codegen(code, inject_primitives = true, debug = Crystal::Debug::None)
+def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
   code = inject_primitives(code) if inject_primitives
-  node = parse code
+  parser = Parser.new(code)
+  parser.filename = filename
+  parser.wants_doc = false
+  node = parser.parse
+
   result = semantic node
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
@@ -236,7 +252,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     ast.expressions[-1] = exps
     code = ast.to_s
 
-    output_filename = Crystal.tempfile("crystal-spec-output")
+    output_filename = Crystal.temp_executable("crystal-spec-output")
 
     compiler = create_spec_compiler
     compiler.debug = debug
@@ -253,7 +269,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
-def build_and_run(code)
+def build(code)
   code_file = File.tempname("build_and_run_code")
 
   # write code to the temp file
@@ -264,13 +280,19 @@ def build_and_run(code)
   `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
   File.exists?(binary_file).should be_true
 
-  out_io, err_io = IO::Memory.new, IO::Memory.new
-  status = Process.run(binary_file, output: out_io, error: err_io)
-
-  {status, out_io.to_s, err_io.to_s}
+  yield binary_file
 ensure
   File.delete(code_file) if code_file
   File.delete(binary_file) if binary_file
+end
+
+def build_and_run(code)
+  build(code) do |binary_file|
+    out_io, err_io = IO::Memory.new, IO::Memory.new
+    status = Process.run(binary_file, output: out_io, error: err_io)
+
+    {status, out_io.to_s, err_io.to_s}
+  end
 end
 
 def test_c(c_code, crystal_code)

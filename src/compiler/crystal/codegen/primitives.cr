@@ -19,9 +19,6 @@ class Crystal::CodeGenVisitor
     @last = case node.name
             when "binary"
               codegen_primitive_binary node, target_def, call_args
-            when "cast"
-              # TODO 0.28.0 delete :cast
-              codegen_primitive_convert node, target_def, call_args, checked: !target_def.name.ends_with?('!')
             when "convert"
               codegen_primitive_convert node, target_def, call_args, checked: true
             when "unchecked_convert"
@@ -78,6 +75,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_store_atomic call, node, target_def, call_args
             when "throw_info"
               cast_to void_ptr_throwinfo, @program.pointer_of(@program.void)
+            when "va_arg"
+              codegen_va_arg call, node, target_def, call_args
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
@@ -129,6 +128,7 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
+    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
@@ -177,9 +177,6 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_add(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.32.0
-    return codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2)) if @program.has_flag?("disable_overflow")
-
     llvm_fun = case t.kind
                when :i8
                  binary_overflow_fun "llvm.sadd.with.overflow.i8", llvm_context.int8
@@ -209,9 +206,6 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_sub(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.32
-    return codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2)) if @program.has_flag?("disable_overflow")
-
     llvm_fun = case t.kind
                when :i8
                  binary_overflow_fun "llvm.ssub.with.overflow.i8", llvm_context.int8
@@ -241,9 +235,6 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_mul(t : IntegerType, t1, t2, p1, p2)
-    # TODO remove on 0.32
-    return codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2)) if @program.has_flag?("disable_overflow")
-
     llvm_fun = case t.kind
                when :i8
                  binary_overflow_fun "llvm.smul.with.overflow.i8", llvm_context.int8
@@ -669,72 +660,53 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_convert(from_type : IntegerType, to_type : IntegerType, arg, *, checked : Bool)
-    if from_type.normal_rank == to_type.normal_rank
+    case
+    when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-
-      # TODO remove conditional after 0.32
-      unless @program.has_flag?("disable_overflow")
-        if checked
-          overflow = codegen_out_of_range(to_type, from_type, arg)
-          codegen_raise_overflow_cond(overflow)
-        end
+      if checked
+        overflow = codegen_out_of_range(to_type, from_type, arg)
+        codegen_raise_overflow_cond(overflow)
       end
-
       arg
-    elsif from_type.rank < to_type.rank
+    when from_type.rank < to_type.rank
       extend_int from_type, to_type, arg
     else
-      # TODO remove conditional after 0.32
-      unless @program.has_flag?("disable_overflow")
-        if checked
-          overflow = codegen_out_of_range(to_type, from_type, arg)
-          codegen_raise_overflow_cond(overflow)
-        end
+      if checked
+        overflow = codegen_out_of_range(to_type, from_type, arg)
+        codegen_raise_overflow_cond(overflow)
       end
-
       trunc arg, llvm_type(to_type)
     end
   end
 
   def codegen_convert(from_type : IntegerType, to_type : FloatType, arg, *, checked : Bool)
-    # TODO remove conditional after 0.32
-    unless @program.has_flag?("disable_overflow")
-      if checked
-        if from_type.kind == :u128 && to_type.kind == :f32
-          overflow = codegen_out_of_range(to_type, from_type, arg)
-          codegen_raise_overflow_cond(overflow)
-        end
-      end
-    end
-
-    int_to_float from_type, to_type, arg
-  end
-
-  def codegen_convert(from_type : FloatType, to_type : IntegerType, arg, *, checked : Bool)
-    # TODO remove conditional after 0.32
-    unless @program.has_flag?("disable_overflow")
-      if checked
+    if checked
+      if from_type.kind == :u128 && to_type.kind == :f32
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
     end
+    int_to_float from_type, to_type, arg
+  end
 
+  def codegen_convert(from_type : FloatType, to_type : IntegerType, arg, *, checked : Bool)
+    if checked
+      overflow = codegen_out_of_range(to_type, from_type, arg)
+      codegen_raise_overflow_cond(overflow)
+    end
     float_to_int from_type, to_type, arg
   end
 
   def codegen_convert(from_type : FloatType, to_type : FloatType, arg, *, checked : Bool)
-    if from_type.rank < to_type.rank
+    case
+    when from_type.rank < to_type.rank
       extend_float to_type, arg
-    elsif from_type.rank > to_type.rank
-      # TODO remove conditional after 0.32
-      unless @program.has_flag?("disable_overflow")
-        if checked
-          overflow = codegen_out_of_range(to_type, from_type, arg)
-          codegen_raise_overflow_cond(overflow)
-        end
+    when from_type.rank > to_type.rank
+      if checked
+        overflow = codegen_out_of_range(to_type, from_type, arg)
+        codegen_raise_overflow_cond(overflow)
       end
-
       trunc_float to_type, arg
     else
       arg
@@ -888,12 +860,10 @@ class Crystal::CodeGenVisitor
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
-    # Check nil to pointer
+    # Check assigning nil to a field of type pointer or Proc
     if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
-    end
-
-    if field_type.proc?
+    elsif field_type.proc?
       call_arg = check_proc_is_not_closure(call_arg, field_type)
     end
 
@@ -1243,6 +1213,11 @@ class Crystal::CodeGenVisitor
     inst
   end
 
+  def codegen_va_arg(call, node, target_def, call_args)
+    ptr = call_args.first
+    builder.va_arg(ptr, llvm_type(node.type))
+  end
+
   def check_atomic_call(call, target_def)
     # This could only happen when taking a proc pointer to an atomic
     # primitive: it could be fixed but it's probably not important for now.
@@ -1301,32 +1276,45 @@ class Crystal::CodeGenVisitor
   def void_ptr_type_descriptor
     void_ptr_type_descriptor_name = "\u{1}??_R0PEAX@8"
 
-    @llvm_mod.globals[void_ptr_type_descriptor_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_type_descriptor_name]?
+      return existing
+    end
+
+    type_descriptor = llvm_context.struct([
+      llvm_context.void_pointer.pointer,
+      llvm_context.void_pointer,
+      llvm_context.int8.array(6),
+    ])
+
+    if !@main_mod.globals[void_ptr_type_descriptor_name]?
       base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
 
       # .PEAX is void*
-      void_ptr_type_descriptor = @llvm_mod.globals.add(
-        llvm_context.struct([
-          llvm_context.void_pointer.pointer,
-          llvm_context.void_pointer,
-          llvm_context.int8.array(6),
-        ]), void_ptr_type_descriptor_name)
+      void_ptr_type_descriptor = @main_mod.globals.add(
+        type_descriptor, void_ptr_type_descriptor_name)
       void_ptr_type_descriptor.initializer = llvm_context.const_struct [
         base_type_descriptor,
         llvm_context.void_pointer.null,
         llvm_context.const_string(".PEAX"),
       ]
-
-      void_ptr_type_descriptor
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_type_descriptor
+    external_constant(type_descriptor, void_ptr_type_descriptor_name)
   end
 
   def void_ptr_throwinfo
     void_ptr_throwinfo_name = "_TI1PEAX"
 
-    @llvm_mod.globals[void_ptr_throwinfo_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_throwinfo_name]?
+      return existing
+    end
+
+    eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+
+    if !@main_mod.globals[void_ptr_throwinfo_name]?
       catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_catchable_type = @llvm_mod.globals.add(
+      void_ptr_catchable_type = @main_mod.globals.add(
         catchable_type, "_CT??_R0PEAX@88")
       void_ptr_catchable_type.initializer = llvm_context.const_struct [
         int32(1),
@@ -1339,15 +1327,14 @@ class Crystal::CodeGenVisitor
       ]
 
       catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
-      catchable_void_ptr = @llvm_mod.globals.add(
+      catchable_void_ptr = @main_mod.globals.add(
         catchable_type_array, "_CTA1PEAX")
       catchable_void_ptr.initializer = llvm_context.const_struct [
         int32(1),
         llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
       ]
 
-      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_throwinfo = @llvm_mod.globals.add(
+      void_ptr_throwinfo = @main_mod.globals.add(
         eh_throwinfo, void_ptr_throwinfo_name)
       void_ptr_throwinfo.initializer = llvm_context.const_struct [
         int32(0),
@@ -1355,9 +1342,10 @@ class Crystal::CodeGenVisitor
         int32(0),
         sub_image_base(catchable_void_ptr),
       ]
-
-      void_ptr_throwinfo
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_throwinfo
+    external_constant(eh_throwinfo, void_ptr_throwinfo_name)
   end
 
   def external_constant(type, name)

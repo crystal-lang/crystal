@@ -162,6 +162,8 @@ module HTTP::FormData
         size = value.to_u64
       when "name"
         name = value
+      else
+        # not a field we are interested in
       end
     end
 

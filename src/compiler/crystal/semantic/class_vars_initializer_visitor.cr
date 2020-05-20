@@ -163,6 +163,8 @@ module Crystal
           node_to_discard.discarded = true
         when TypeDeclaration
           node_to_discard.discarded = true
+        else
+          # nothing to do
         end
       end
     end

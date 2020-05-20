@@ -114,6 +114,15 @@ module YAML
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Discriminator field
+  #
+  # A very common YAML serialization strategy for handling different objects
+  # under a same hierarchy is to use a discriminator field. For example in
+  # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
+  # field, and the rest of the fields, and their meaning, depend on its value.
+  #
+  # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -123,6 +132,10 @@ module YAML
       # so it overloads well with other possible initializes
 
       def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        new_from_yaml_node(ctx, node)
+      end
+
+      private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
@@ -141,7 +154,7 @@ module YAML
 
       macro inherited
         def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-          super
+          new_from_yaml_node(ctx, node)
         end
       end
     end
@@ -317,6 +330,82 @@ module YAML
           key.to_yaml(yaml)
           value.to_yaml(yaml)
         end
+      end
+    end
+
+    # Tells this class to decode YAML by using a field as a discriminator.
+    #
+    # - *field* must be the field name to use as a discriminator
+    # - *mapping* must be a hash or named tuple where each key-value pair
+    #   maps a discriminator value to a class to deserialize
+    #
+    # For example:
+    #
+    # ```
+    # require "yaml"
+    #
+    # abstract class Shape
+    #   include YAML::Serializable
+    #
+    #   use_yaml_discriminator "type", {point: Point, circle: Circle}
+    #
+    #   property type : String
+    # end
+    #
+    # class Point < Shape
+    #   property x : Int32
+    #   property y : Int32
+    # end
+    #
+    # class Circle < Shape
+    #   property x : Int32
+    #   property y : Int32
+    #   property radius : Int32
+    # end
+    #
+    # Shape.from_yaml(%(
+    #   type: point
+    #   x: 1
+    #   y: 2
+    # )) # => #<Point:0x10373ae20 @type="point", @x=1, @y=2>
+    #
+    # Shape.from_yaml(%(
+    #   type: circle
+    #   x: 1
+    #   y: 2
+    #   radius: 3
+    # )) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
+    # ```
+    macro use_yaml_discriminator(field, mapping)
+      {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
+        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+      {% end %}
+
+      private def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        ctx.read_alias(node, \{{@type}}) do |obj|
+          return obj
+        end
+
+        unless node.is_a?(YAML::Nodes::Mapping)
+          node.raise "expected YAML mapping, not #{node.class}"
+        end
+
+        node.each do |key, value|
+          next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+          next unless key.value == {{field.id.stringify}}
+
+          discriminator_value = value.value
+          case discriminator_value
+          {% for key, value in mapping %}
+            when {{key.id.stringify}}
+              return {{value.id}}.new(ctx, node)
+          {% end %}
+          else
+            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
+          end
+        end
+
+        node.raise "Missing YAML discriminator field '{{field.id}}'"
       end
     end
   end

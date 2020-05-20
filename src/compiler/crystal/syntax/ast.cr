@@ -341,6 +341,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
+    end
+
     def accept_children(visitor)
       @name.try &.accept visitor
       elements.each &.accept visitor
@@ -450,6 +454,10 @@ module Crystal
 
     def self.map(values)
       new(values.map { |value| (yield value).as(ASTNode) })
+    end
+
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
     end
 
     def accept_children(visitor)
@@ -1172,8 +1180,9 @@ module Crystal
   class When < ASTNode
     property conds : Array(ASTNode)
     property body : ASTNode
+    property? exhaustive : Bool
 
-    def initialize(@conds, body = nil)
+    def initialize(@conds : Array(ASTNode), body : ASTNode? = nil, @exhaustive = false)
       @body = Expressions.from body
     end
 
@@ -1183,18 +1192,22 @@ module Crystal
     end
 
     def clone_without_location
-      When.new(@conds.clone, @body.clone)
+      When.new(@conds.clone, @body.clone, @exhaustive)
     end
 
-    def_equals_and_hash @conds, @body
+    def_equals_and_hash @conds, @body, @exhaustive
   end
 
   class Case < ASTNode
     property cond : ASTNode?
     property whens : Array(When)
     property else : ASTNode?
+    property? exhaustive : Bool
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@cond : ASTNode?, @whens : Array(When), @else : ASTNode?, @exhaustive : Bool)
+      @whens.each do |wh|
+        wh.exhaustive = self.exhaustive?
+      end
     end
 
     def accept_children(visitor)
@@ -1204,10 +1217,10 @@ module Crystal
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@cond.clone, @whens.clone, @else.clone, @exhaustive)
     end
 
-    def_equals_and_hash @cond, @whens, @else
+    def_equals_and_hash @exhaustive, @cond, @whens, @else
   end
 
   class Select < ASTNode

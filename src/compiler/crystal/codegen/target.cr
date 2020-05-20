@@ -14,6 +14,9 @@ class Crystal::Codegen::Target
     # triple with the architecture, vendor and OS in the correct place.
     target_triple = LLVM.normalize_triple(target_triple.downcase)
 
+    if target_triple.count('-') < 2
+      raise Target::Error.new("Invalid target triple: #{target_triple}")
+    end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
 
     # Perform additional normalisation and parsing
@@ -24,6 +27,8 @@ class Crystal::Codegen::Target
       @architecture = "x86_64"
     when .starts_with?("arm")
       @architecture = "arm"
+    else
+      # no need to tweak the architecture
     end
   end
 
@@ -46,6 +51,8 @@ class Crystal::Codegen::Target
       "darwin"
     when .freebsd?
       "freebsd"
+    when .dragonfly?
+      "dragonfly"
     when .openbsd?
       "openbsd"
     else
@@ -69,6 +76,10 @@ class Crystal::Codegen::Target
     end
   end
 
+  def dragonfly?
+    @environment.starts_with?("dragonfly")
+  end
+
   def openbsd?
     @environment.starts_with?("openbsd")
   end
@@ -77,16 +88,20 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def bsd?
+    freebsd? || openbsd? || dragonfly?
+  end
+
   def unix?
-    macos? || freebsd? || openbsd? || linux?
+    macos? || bsd? || linux?
   end
 
   def gnu?
-    environment_parts.any? { |part| {"gnu", "gnueabi", "gnueabihf"}.includes? part }
+    environment_parts.any? &.in?("gnu", "gnueabi", "gnueabihf")
   end
 
   def musl?
-    environment_parts.any? { |part| {"musl", "musleabi", "musleabihf"}.includes? part }
+    environment_parts.any? &.in?("musl", "musleabi", "musleabihf")
   end
 
   def windows?
@@ -102,10 +117,11 @@ class Crystal::Codegen::Target
   end
 
   def armhf?
-    environment_parts.includes?("gnueabihf") || environment_parts.includes?("musleabihf")
+    environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
-  def to_target_machine(cpu = "", features = "", release = false) : LLVM::TargetMachine
+  def to_target_machine(cpu = "", features = "", release = false,
+                        code_model = LLVM::CodeModel::Default) : LLVM::TargetMachine
     case @architecture
     when "i386", "x86_64"
       LLVM.init_x86
@@ -127,7 +143,7 @@ class Crystal::Codegen::Target
     opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None
 
     target = LLVM::Target.from_triple(self.to_s)
-    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level).not_nil!
+    target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, code_model: code_model).not_nil!
   end
 
   def to_s(io : IO) : Nil

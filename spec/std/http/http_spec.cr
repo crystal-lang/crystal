@@ -44,7 +44,7 @@ describe HTTP do
     end
 
     it "with local time zone" do
-      time = Time.local(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.load("Europe/Berlin"))
+      time = Time.local(1994, 11, 6, 8, 49, 37, nanosecond: 0, location: Time::Location.fixed(3600))
       HTTP.format_time(time).should eq(time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT"))
     end
   end

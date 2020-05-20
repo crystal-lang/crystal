@@ -1,7 +1,7 @@
 require "spec"
 require "http/client/response"
 
-class HTTP::Client
+class HTTP::Client::Response
   describe Response do
     it "parses response with body" do
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
@@ -121,6 +121,12 @@ class HTTP::Client
       response.headers["content-type"].should eq("text/plain")
       response.headers["content-length"].should eq("0")
       response.body.should eq("")
+    end
+
+    it "parses response without body but Content-Length == 0, block form (#8461)" do
+      Response.from_io(IO::Memory.new("HTTP/1.1 301 OK\r\nContent-Length: 0\r\n\r\n")) do |response|
+        response.body_io.gets_to_end.should eq("")
+      end
     end
 
     it "parses long request lines" do
@@ -282,6 +288,11 @@ class HTTP::Client
       response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
+    end
+
+    it "returns content type as nil when empty (#8398)" do
+      response = Response.new(:ok, "", headers: HTTP::Headers{"Content-Type" => ""})
+      response.content_type.should be_nil
     end
 
     it "returns status_code" do

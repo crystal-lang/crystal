@@ -1,12 +1,16 @@
-require "spec"
-require "big"
+require "./spec_helper"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
 
 private def to_s_with_io(num)
-  String.build { |str| num.to_s(str) }
+  String.build { |io| num.to_s(io) }
 end
 
 private def to_s_with_io(num, base, upcase = false)
-  String.build { |str| num.to_s(base, str, upcase) }
+  String.build { |io| num.to_s(io, base, upcase: upcase) }
+  # Test deprecated overload:
+  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
@@ -136,6 +140,23 @@ describe "Int" do
     end
   end
 
+  describe "gcd" do
+    it { 14.gcd(0).should eq(14) }
+    it { 14.gcd(1).should eq(1) }
+    it { 10.gcd(75).should eq(5) }
+    it { 10.gcd(-75).should eq(5) }
+    it { -10.gcd(75).should eq(5) }
+
+    it { 7.gcd(5).should eq(1) }   # prime
+    it { 14.gcd(25).should eq(1) } # coprime
+    it { 24.gcd(40).should eq(8) } # common divisor
+
+    it "doesn't silently overflow" { 614_889_782_588_491_410_i64.gcd(53).should eq(1) }
+    it "raises on too big result to fit in result type" do
+      expect_raises(OverflowError, "Arithmetic overflow") { Int64::MIN.gcd(1) }
+    end
+  end
+
   describe "lcm" do
     it { 2.lcm(2).should eq(2) }
     it { 3.lcm(-7).should eq(21) }
@@ -153,6 +174,7 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
+    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }
@@ -250,6 +272,39 @@ describe "Int" do
     it { Int64::MAX.bit(63).should eq(0) }
     it { UInt64::MAX.bit(63).should eq(1) }
     it { UInt64::MAX.bit(64).should eq(0) }
+  end
+
+  describe "#bits" do
+    # Basic usage
+    it { 0b10011.bits(0..0).should eq(0b1) }
+    it { 0b10011.bits(0..1).should eq(0b11) }
+    it { 0b10011.bits(0..2).should eq(0b11) }
+    it { 0b10011.bits(0..3).should eq(0b11) }
+    it { 0b10011.bits(0..4).should eq(0b10011) }
+    it { 0b10011.bits(0..5).should eq(0b10011) }
+    it { 0b10011.bits(1..5).should eq(0b1001) }
+
+    # no range start indicated
+    it { 0b10011.bits(..1).should eq(0b11) }
+    it { 0b10011.bits(..2).should eq(0b11) }
+    it { 0b10011.bits(..3).should eq(0b11) }
+    it { 0b10011.bits(..4).should eq(0b10011) }
+
+    # Check against limits
+    it { 0b10011_u8.bits(0..16).should eq(0b10011_u8) }
+    it { 0b10011_u8.bits(1..16).should eq(0b1001_u8) }
+
+    # Will work with signed values
+    it { -5_i8.bits(0..16).should eq(-5_i8) }
+    it { -5_i8.bits(1..16).should eq(-3_i8) }
+    it { -5_i8.bits(2..16).should eq(-2_i8) }
+    it { -5_i8.bits(3..16).should eq(-1_i8) }
+
+    it "raises when invalid indexes are provided" do
+      expect_raises(IndexError) { 0b10011.bits(0..-1) }
+      expect_raises(IndexError) { 0b10011.bits(-1..3) }
+      expect_raises(IndexError) { 0b10011.bits(4..2) }
+    end
   end
 
   describe "divmod" do
@@ -509,12 +564,24 @@ describe "Int" do
     (-13 % -4).should eq(-1)
   end
 
+  it "returns 0 when doing IntN::MIN % -1 (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN % -1_i{{n}}).should eq(0)
+    {% end %}
+  end
+
   it "does remainder" do
     7.remainder(5).should eq(2)
     -7.remainder(5).should eq(-2)
 
     13.remainder(-4).should eq(1)
     -13.remainder(-4).should eq(-1)
+  end
+
+  it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
+    {% for n in [8, 16, 32, 64] %}
+      (Int{{n}}::MIN.remainder(-1_i{{n}})).should eq(0)
+    {% end %}
   end
 
   it "does upto" do
@@ -667,7 +734,7 @@ describe "Int" do
     {% end %}
   end
 
-  it "compares signed vs. unsigned integers" do
+  pending_win32 "compares signed vs. unsigned integers" do
     signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
     unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, UInt128::MAX, 0_u8, 0_u16, 0_u32, 0_u64, 0_u128]
 
@@ -685,17 +752,15 @@ describe "Int" do
     end
   end
 
-  {% if compare_versions(Crystal::VERSION, "0.26.1") > 0 %}
-    it "compares equality and inequality of signed vs. unsigned integers" do
-      x = -1
-      y = x.unsafe_as(UInt32)
+  it "compares equality and inequality of signed vs. unsigned integers" do
+    x = -1
+    y = x.unsafe_as(UInt32)
 
-      (x == y).should be_false
-      (y == x).should be_false
-      (x != y).should be_true
-      (y != x).should be_true
-    end
-  {% end %}
+    (x == y).should be_false
+    (y == x).should be_false
+    (x != y).should be_true
+    (y != x).should be_true
+  end
 
   it "clones" do
     [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|
@@ -714,5 +779,24 @@ describe "Int" do
   it "#unsafe_chr" do
     65.unsafe_chr.should eq('A')
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+  end
+
+  describe "#bit_length" do
+    it "for primitve integers" do
+      0.bit_length.should eq(0)
+      0b1.bit_length.should eq(1)
+      0b1001.bit_length.should eq(4)
+      0b1001001_i64.bit_length.should eq(7)
+      0b1111111111.bit_length.should eq(10)
+      0b1000000000.bit_length.should eq(10)
+      -1.bit_length.should eq(0)
+      -10.bit_length.should eq(4)
+    end
+
+    pending_win32 "for BigInt" do
+      (10.to_big_i ** 20).bit_length.should eq(67)
+      (10.to_big_i ** 309).bit_length.should eq(1027)
+      (10.to_big_i ** 3010).bit_length.should eq(10000)
+    end
   end
 end

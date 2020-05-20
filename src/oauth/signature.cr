@@ -52,8 +52,7 @@ struct OAuth::Signature
         str << "%3A"
         str << port
       end
-      uri_path = request.path || "/"
-      uri_path = "/" if uri_path.empty?
+      uri_path = request.path.presence || "/"
       URI.encode_www_form(uri_path, str, space_to_plus: false)
       str << '&'
       str << params

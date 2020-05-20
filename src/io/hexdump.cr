@@ -32,31 +32,13 @@ class IO::Hexdump < IO
     end
   end
 
-  def write(buf : Bytes) : Nil
-    return if buf.empty?
+  def write(buf : Bytes) : UInt64
+    return 0u64 if buf.empty?
 
     @io.write(buf).tap do
       @output.puts buf.hexdump if @write
     end
   end
 
-  def peek
-    @io.peek
-  end
-
-  def closed?
-    @io.closed?
-  end
-
-  def close
-    @io.close
-  end
-
-  def flush
-    @io.flush
-  end
-
-  def tty?
-    @io.tty?
-  end
+  delegate :peek, :close, :closed?, :flush, :tty?, :pos, :pos=, :seek, to: @io
 end

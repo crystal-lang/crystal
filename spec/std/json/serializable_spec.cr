@@ -1,10 +1,12 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "big"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "yaml"
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
-require "yaml"
 
 record JSONAttrPoint, x : Int32, y : Int32 do
   include JSON::Serializable
@@ -94,11 +96,13 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-class JSONAttrWithBigDecimal
-  include JSON::Serializable
+{% unless flag?(:win32) %}
+  class JSONAttrWithBigDecimal
+    include JSON::Serializable
 
-  property value : BigDecimal
-end
+    property value : BigDecimal
+  end
+{% end %}
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -297,35 +301,56 @@ class JSONAttrModuleTest2 < JSONAttrModuleTest
   end
 end
 
-struct JSONAttrPersonWithYAML
-  include JSON::Serializable
-  include YAML::Serializable
+{% unless flag?(:win32) %}
+  struct JSONAttrPersonWithYAML
+    include JSON::Serializable
+    include YAML::Serializable
 
-  property name : String
-  property age : Int32?
+    property name : String
+    property age : Int32?
 
-  def initialize(@name : String, @age : Int32? = nil)
+    def initialize(@name : String, @age : Int32? = nil)
+    end
   end
+
+  struct JSONAttrPersonWithYAMLInitializeHook
+    include JSON::Serializable
+    include YAML::Serializable
+
+    property name : String
+    property age : Int32?
+
+    def initialize(@name : String, @age : Int32? = nil)
+      after_initialize
+    end
+
+    @[JSON::Field(ignore: true)]
+    @[YAML::Field(ignore: true)]
+    property msg : String?
+
+    def after_initialize
+      @msg = "Hello " + name
+    end
+  end
+{% end %}
+
+abstract class JSONShape
+  include JSON::Serializable
+
+  use_json_discriminator "type", {point: JSONPoint, circle: JSONCircle}
+
+  property type : String
 end
 
-struct JSONAttrPersonWithYAMLInitializeHook
-  include JSON::Serializable
-  include YAML::Serializable
+class JSONPoint < JSONShape
+  property x : Int32
+  property y : Int32
+end
 
-  property name : String
-  property age : Int32?
-
-  def initialize(@name : String, @age : Int32? = nil)
-    after_initialize
-  end
-
-  @[JSON::Field(ignore: true)]
-  @[YAML::Field(ignore: true)]
-  property msg : String?
-
-  def after_initialize
-    @msg = "Hello " + name
-  end
+class JSONCircle < JSONShape
+  property x : Int32
+  property y : Int32
+  property radius : Int32
 end
 
 describe "JSON mapping" do
@@ -762,7 +787,7 @@ describe "JSON mapping" do
     end
   end
 
-  describe "BigDecimal" do
+  pending_win32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
@@ -791,7 +816,7 @@ describe "JSON mapping" do
     it { JSONAttrModuleTest2.from_json(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
   end
 
-  it "works together with yaml" do
+  pending_win32 "works together with yaml" do
     person = JSONAttrPersonWithYAML.new("Vasya", 30)
     person.to_json.should eq "{\"name\":\"Vasya\",\"age\":30}"
     person.to_yaml.should eq "---\nname: Vasya\nage: 30\n"
@@ -800,7 +825,7 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAML.from_yaml(person.to_yaml).should eq person
   end
 
-  it "yaml and json with after_initialize hook" do
+  pending_win32 "yaml and json with after_initialize hook" do
     person = JSONAttrPersonWithYAMLInitializeHook.new("Vasya", 30)
     person.msg.should eq "Hello Vasya"
 
@@ -809,5 +834,30 @@ describe "JSON mapping" do
 
     JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+  end
+
+  describe "use_json_discriminator" do
+    it "deserializes with discriminator" do
+      point = JSONShape.from_json(%({"type": "point", "x": 1, "y": 2})).as(JSONPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
+
+      circle = JSONShape.from_json(%({"type": "circle", "x": 1, "y": 2, "radius": 3})).as(JSONCircle)
+      circle.x.should eq(1)
+      circle.y.should eq(2)
+      circle.radius.should eq(3)
+    end
+
+    it "raises if missing discriminator" do
+      expect_raises(JSON::MappingError, "Missing JSON discriminator field 'type'") do
+        JSONShape.from_json("{}")
+      end
+    end
+
+    it "raises if unknown discriminator value" do
+      expect_raises(JSON::MappingError, %(Unknown 'type' discriminator value: "unknown")) do
+        JSONShape.from_json(%({"type": "unknown"}))
+      end
+    end
   end
 end

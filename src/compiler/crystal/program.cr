@@ -46,7 +46,7 @@ module Crystal
     # associated to a def's object id (the UInt64), and on an instantiation
     # we compare the new type with the previous one and check if it contains
     # the previous type.
-    getter splat_expansions = {} of UInt64 => Type
+    getter splat_expansions : Hash(Def, Type) = ({} of Def => Type).compare_by_identity
 
     # All FileModules indexed by their filename.
     # These store file-private defs, and top-level variables in files other
@@ -116,7 +116,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # Which kind of warnings wants to be detected.
     property warnings : Warnings = Warnings::All
@@ -242,6 +242,7 @@ module Crystal
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
       types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
+      types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
     end
@@ -318,7 +319,7 @@ module Crystal
       named_tuple_of(entries)
     end
 
-    # ditto
+    # :ditto:
     def named_tuple_of(entries : Array(NamedArgumentType))
       named_tuple.instantiate_named_args(entries)
     end
@@ -429,18 +430,6 @@ module Crystal
       static_array.instantiate([type, NumberLiteral.new(size)] of TypeVar)
     end
 
-    # Adds *filename* to the list of all required files.
-    # Returns `true` if the file was added, `false` if it was
-    # already required.
-    def add_to_requires(filename)
-      if requires.includes? filename
-        false
-      else
-        requires.add filename
-        true
-      end
-    end
-
     record RecordedRequire, filename : String, relative_to : String? do
       include JSON::Serializable
     end
@@ -463,7 +452,7 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation experimental_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

@@ -109,6 +109,8 @@ struct SemanticVersion
 
   # Contains the pre-release version related to this semantic version
   struct Prerelease
+    include Comparable(self)
+
     # Parses a `Prerelease` from the given pre-release version string
     #
     # ```
@@ -145,7 +147,7 @@ struct SemanticVersion
     # semver.prerelease.to_s # => "rc.1"
     # ```
     def to_s(io : IO) : Nil
-      identifiers.join('.', io)
+      identifiers.join(io, '.')
     end
 
     # The comparison operator.

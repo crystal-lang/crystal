@@ -1,4 +1,3 @@
-require "../client"
 require "../common"
 require "mime/media_type"
 
@@ -63,7 +62,7 @@ class HTTP::Client::Response
   end
 
   def mime_type : MIME::MediaType?
-    if content_type = headers["Content-Type"]?
+    if content_type = headers["Content-Type"]?.presence
       MIME::MediaType.parse(content_type)
     end
   end

@@ -94,16 +94,16 @@ class Crystal::Type
         if @raise
           node.raise "#{type_var} is not a type, it's a constant"
         else
-          return nil
+          nil
         end
       when Type
-        return type_var
-      end
-
-      if @raise
-        raise_undefined_constant(node)
+        type_var
       else
-        nil
+        if @raise
+          raise_undefined_constant(node)
+        else
+          nil
+        end
       end
     end
 
@@ -246,6 +246,8 @@ class Crystal::Type
             type_var.raise "can only splat tuple type, not #{splat_type}"
           end
           next
+        else
+          # go on
         end
 
         # Check the case of T resolving to a number
@@ -264,6 +266,8 @@ class Crystal::Type
           when ASTNode
             type_vars << type
             next
+          else
+            # go on
           end
         end
 
@@ -274,6 +278,8 @@ class Crystal::Type
         case instance_type
         when GenericUnionType, PointerType, StaticArrayType, TupleType, ProcType
           check_type_can_be_stored(type_var, type, "can't use #{type} as a generic type argument")
+        else
+          # go on
         end
 
         type_vars << type.virtual_type

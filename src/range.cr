@@ -259,12 +259,10 @@ struct Range(B, E)
     begin_value = @begin
     end_value = @end
 
-    # TODO: change to `nil?` after removing the `nil?` error related to `Pointer`
-
     # begin passes
-    (begin_value.is_a?(Nil) || value >= begin_value) &&
+    (begin_value.nil? || value >= begin_value) &&
       # end passes
-      (end_value.is_a?(Nil) ||
+      (end_value.nil? ||
         (@exclusive ? value < end_value : value <= end_value))
   end
 
@@ -348,6 +346,10 @@ struct Range(B, E)
 
   # :nodoc:
   def size
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't calculate size of an open range" %}
+    {% end %}
+
     b = self.begin
     e = self.end
 
@@ -357,6 +359,9 @@ struct Range(B, E)
       n = e - b + 1
       n < 0 ? 0 : n
     else
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't calculate size of an open range")
+      end
       super
     end
   end

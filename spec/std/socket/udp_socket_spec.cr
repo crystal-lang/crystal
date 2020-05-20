@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../../support/errno"
 require "socket"
 
 describe UDPSocket do
@@ -98,7 +97,13 @@ describe UDPSocket do
         udp.multicast_loopback?.should eq(true)
 
         udp.send("testing", addr)
-        udp.receive[0].should eq("testing")
+        udp.read_timeout = 1.second
+        begin
+          udp.receive[0].should eq("testing")
+        rescue IO::TimeoutError
+          # Since this test doesn't run over the loopback interface, this test
+          # fails when there is a firewall in use. Don't fail in that case.
+        end
 
         udp.leave_group(addr)
         udp.send("testing", addr)
@@ -108,7 +113,7 @@ describe UDPSocket do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises_errno(Errno::EBADF, "Error receiving datagram: Bad file descriptor") { udp.receive }
+        expect_raises(IO::Error, "Closed stream") { udp.receive }
       end
     end
   end

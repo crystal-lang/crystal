@@ -147,7 +147,7 @@ module Crystal::Signal
   @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
-  @@mutex = Mutex.new
+  @@mutex = Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -195,7 +195,7 @@ module Crystal::Signal
     spawn(name: "Signal Loop") do
       loop do
         value = reader.read_bytes(Int32)
-      rescue Errno
+      rescue IO::Error
         next
       else
         process(::Signal.new(value))
@@ -220,7 +220,7 @@ module Crystal::Signal
   # Replaces the signal pipe so the child process won't share the file
   # descriptors of the parent process and send it received signals.
   def self.after_fork
-    @@pipe.each(&.close)
+    @@pipe.each(&.file_descriptor_close)
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
@@ -242,7 +242,9 @@ module Crystal::Signal
       LibC.signal(signal, LibC::SIG_DFL) if signal.set?
     end
   ensure
-    @@pipe.each(&.close)
+    {% unless flag?(:preview_mt) %}
+      @@pipe.each(&.file_descriptor_close)
+    {% end %}
   end
 
   private def self.reader
@@ -270,7 +272,7 @@ module Crystal::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel(Int32)
-  @@mutex = Mutex.new
+  @@mutex = Mutex.new(:unchecked)
 
   def self.wait(pid : LibC::PidT) : Channel(Int32)
     channel = Channel(Int32).new(1)
@@ -297,17 +299,17 @@ module Crystal::SignalChildHandler
         return
       when -1
         return if Errno.value == Errno::ECHILD
-        raise Errno.new("waitpid")
-      end
-
-      @@mutex.lock
-      if channel = @@waiting.delete(pid)
-        @@mutex.unlock
-        channel.send(exit_code)
-        channel.close
+        raise RuntimeError.from_errno("waitpid")
       else
-        @@pending[pid] = exit_code
-        @@mutex.unlock
+        @@mutex.lock
+        if channel = @@waiting.delete(pid)
+          @@mutex.unlock
+          channel.send(exit_code)
+          channel.close
+        else
+          @@pending[pid] = exit_code
+          @@mutex.unlock
+        end
       end
     end
   end
@@ -326,14 +328,22 @@ fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
   # Determine if the SEGV was inside or 'near' the top of the stack
   # to check for potential stack overflow. 'Near' is a small
   # amount larger than a typical stack frame, 4096 bytes here.
-  stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
+  is_stack_overflow =
+    begin
+      stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
+      stack_bottom = Fiber.current.@stack_bottom
+      stack_top <= addr < stack_bottom
+    rescue e
+      Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+      false
+    end
 
-  if stack_top <= addr < Fiber.current.@stack_bottom
-    LibC.dprintf 2, "Stack overflow (e.g., infinite or very deep recursion)\n"
+  if is_stack_overflow
+    Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
   else
-    LibC.dprintf 2, "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+    Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
   end
 
-  CallStack.print_backtrace
+  Exception::CallStack.print_backtrace
   LibC._exit(sig)
 end

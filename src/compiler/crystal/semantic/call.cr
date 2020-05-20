@@ -43,6 +43,8 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
+    else
+      # Nothing
     end
 
     # Check if its call is inside LibFoo
@@ -254,7 +256,7 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, with_literals: with_literals
+    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
@@ -293,7 +295,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_literals: with_literals)
       end
     end
@@ -308,7 +310,7 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, with_literals
+    instantiate signature, matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
@@ -359,7 +361,19 @@ class Crystal::Call
     end
   end
 
-  def instantiate(matches, owner, self_type, with_literals)
+  def instantiate(signature, matches, owner, self_type, with_literals)
+    if with_literals
+      # Now that we have all our matches, check if any of them matches exactly
+      # all types, assuming autocasted values will always match (because they
+      # matches and they were not ambiguous). If so, only keep matches up to
+      # that exact match. We need to do this here because with autocasting
+      # we consider all overloads to detect ambiguous usage.
+      stop_index = matches.index do |match|
+        signature.matches_exactly?(match, with_literals: true)
+      end
+      matches = matches[..stop_index] if stop_index
+    end
+
     matches.each &.remove_literals if with_literals
 
     block = @block
@@ -514,14 +528,9 @@ class Crystal::Call
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    arg = args.first
-
-    case arg
+    case arg = args.first
     when SymbolLiteral, StringLiteral
       name = arg.value
-    end
-
-    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
@@ -530,8 +539,9 @@ class Crystal::Call
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
+    else
+      nil
     end
-    nil
   end
 
   def replace_splats
@@ -666,7 +676,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, with_literals: with_literals
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
@@ -699,6 +709,8 @@ class Crystal::Call
         return result
       when Type::DefInMacroLookup
         return nil
+      else
+        # Check next target
       end
     end
   end
@@ -978,7 +990,7 @@ class Crystal::Call
   end
 
   private def cant_infer_block_return_type
-    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
+    raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
   end
 
   private def lookup_node_type(context, node)

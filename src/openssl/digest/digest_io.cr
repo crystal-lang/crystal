@@ -12,7 +12,7 @@ module OpenSSL
   # io = OpenSSL::DigestIO.new(underlying_io, "SHA256")
   # buffer = Bytes.new(256)
   # io.read(buffer)
-  # io.digest.hexstring # => "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+  # io.final.hexstring # => "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
   # ```
   class DigestIO < IO
     getter io : IO
@@ -42,8 +42,8 @@ module OpenSSL
       read_bytes
     end
 
-    def write(slice : Bytes) : Nil
-      return if slice.empty?
+    def write(slice : Bytes) : UInt64
+      return 0u64 if slice.empty?
 
       if @mode.write?
         digest_algorithm.update(slice)

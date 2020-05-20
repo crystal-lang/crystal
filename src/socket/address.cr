@@ -127,10 +127,11 @@ class Socket
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
     def self.parse(uri : URI) : IPAddress
-      host = uri.host
-      raise Socket::Error.new("Invalid IP address: missing host") if !host || host.empty?
+      host = uri.host.presence
+      raise Socket::Error.new("Invalid IP address: missing host") unless host
 
-      port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
+      port = uri.port
+      raise Socket::Error.new("Invalid IP address: missing port") unless port
 
       # remove ipv6 brackets
       if host.starts_with?('[') && host.ends_with?(']')
@@ -148,13 +149,23 @@ class Socket
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
       @addr6 = sockaddr.value.sin6_addr
-      @port = LibC.ntohs(sockaddr.value.sin6_port).to_i
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin6_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin6_port).to_i
+        {% end %}
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
       @addr4 = sockaddr.value.sin_addr
-      @port = LibC.ntohs(sockaddr.value.sin_port).to_i
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin_port).to_i
+        {% end %}
     end
 
     private def ip6?(address)
@@ -187,7 +198,7 @@ class Socket
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -196,7 +207,7 @@ class Socket
     private def address(addr : LibC::InAddr)
       String.new(16) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -228,7 +239,7 @@ class Socket
     end
 
     private def ipv6_addr8(addr : LibC::In6Addr)
-      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) || flag?(:dragonfly) %}
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
@@ -277,7 +288,11 @@ class Socket
     private def to_sockaddr_in6
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      sockaddr.value.sin6_port = LibC.htons(port)
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin6_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin6_port = LibC.htons(port)
+      {% end %}
       sockaddr.value.sin6_addr = @addr6.not_nil!
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -285,7 +300,11 @@ class Socket
     private def to_sockaddr_in
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      sockaddr.value.sin_port = LibC.htons(port)
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin_port = LibC.htons(port)
+      {% end %}
       sockaddr.value.sin_addr = @addr4.not_nil!
       sockaddr.as(LibC::Sockaddr*)
     end
@@ -341,7 +360,7 @@ class Socket
         if port = uri.port
           io << ':' << port
         end
-        if (path = uri.path) && !path.empty?
+        if path = uri.path.presence
           io << path
         end
       end

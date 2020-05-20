@@ -2,11 +2,11 @@ require "../semantic"
 
 class Crystal::FixMissingTypes < Crystal::Visitor
   @program : Program
-  @fixed : Set(UInt64)
+  @fixed : Set(Def)
 
   def initialize(mod)
     @program = mod
-    @fixed = Set(typeof(object_id)).new
+    @fixed = Set(Def).new.compare_by_identity
   end
 
   def visit(node : Def)
@@ -71,8 +71,7 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     end
 
     node.target_defs.try &.each do |target_def|
-      unless @fixed.includes?(target_def.object_id)
-        @fixed.add(target_def.object_id)
+      if @fixed.add?(target_def)
         target_def.type = @program.no_return unless target_def.type?
         target_def.accept_children self
       end

@@ -215,7 +215,7 @@ class URI
 
   # Returns `true` if this URI is opaque.
   #
-  # A URI is considered opaque if it has a `scheme` but no hierachical part,
+  # A URI is considered opaque if it has a `scheme` but no hierarchical part,
   # i.e. no `host` and the first character of `path` is not a slash (`/`).
   def opaque? : Bool
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
@@ -446,7 +446,7 @@ class URI
       elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
         String.build do |io|
           io << "./"
-          dst_path.join('/', io)
+          dst_path.join(io, '/')
         end
       else
         string = dst_path.join('/')
@@ -459,7 +459,7 @@ class URI
     else
       String.build do |io|
         base_path.size.times { io << "../" }
-        dst_path.join('/', io)
+        dst_path.join(io, '/')
       end
     end
   end

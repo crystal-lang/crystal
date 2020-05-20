@@ -1,44 +1,26 @@
 {% begin %}
 lib LibLLVM
-  LLVM_CONFIG = {{
-                  `[ -n "$LLVM_CONFIG" ] && command -v "$LLVM_CONFIG" || \
-                   command -v llvm-config-8 || command -v llvm-config-8.0 || command -v llvm-config80 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 8.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.1*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-7.0 || command -v llvm-config70 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 7.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-6.0 || command -v llvm-config60 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 6.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-5.0 || command -v llvm-config50 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 5.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-4.0 || command -v llvm-config40 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 4.0*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.9 || command -v llvm-config39 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.9*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config-3.8 || command -v llvm-config38 || \
-                   (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || \
-                   command -v llvm-config
-                  `.chomp.stringify
-                }}
+  LLVM_CONFIG = {{ env("LLVM_CONFIG") || `#{__DIR__}/ext/find-llvm-config`.stringify }}
 end
 {% end %}
 
 {% begin %}
-  @[Link("stdc++")]
-  {% if flag?(:static) %}
-    @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags --link-static 2> /dev/null`")]
-  {% else %}
-    @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
+  {% unless flag?(:win32) %}
+    @[Link("stdc++")]
   {% end %}
+  @[Link(ldflags: {{"`#{LibLLVM::LLVM_CONFIG} --libs --system-libs --ldflags#{" --link-static".id if flag?(:static)}#{" 2> /dev/null".id unless flag?(:win32)}`"}})]
   lib LibLLVM
     VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify}}
-    BUILT_TARGETS = {{ `#{LibLLVM::LLVM_CONFIG} --targets-built`.strip.downcase.split(' ').map(&.id.symbolize) }}
+    BUILT_TARGETS = {{ (
+                         env("LLVM_TARGETS") || `#{LibLLVM::LLVM_CONFIG} --targets-built`
+                       ).strip.downcase.split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
 {% begin %}
   lib LibLLVM
+    IS_100 = {{LibLLVM::VERSION.starts_with?("10.0")}}
+    IS_90 = {{LibLLVM::VERSION.starts_with?("9.0")}}
     IS_80 = {{LibLLVM::VERSION.starts_with?("8.0")}}
     IS_71 = {{LibLLVM::VERSION.starts_with?("7.1")}}
     IS_70 = {{LibLLVM::VERSION.starts_with?("7.0")}}
@@ -89,6 +71,7 @@ lib LibLLVM
   fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun build_va_arg = LLVMBuildVAArg(builder : BuilderRef, list : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
@@ -174,6 +157,7 @@ lib LibLLVM
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
+  fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
@@ -256,6 +240,8 @@ lib LibLLVM
   fun is_multithreaded = LLVMIsMultithreaded : Int32
   fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef?
   fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef?
+  fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
+  fun get_next_instruction = LLVMGetNextInstruction(inst : ValueRef) : ValueRef
   fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef
   fun initialize_core = LLVMInitializeCore(r : PassRegistryRef)
   fun initialize_transform_utils = LLVMInitializeTransformUtils(r : PassRegistryRef)

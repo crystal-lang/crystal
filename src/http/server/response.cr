@@ -1,3 +1,7 @@
+require "http/headers"
+require "http/status"
+require "http/cookie"
+
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.
   #
@@ -10,7 +14,6 @@ class HTTP::Server
   #
   # A response can be upgraded with the `upgrade` method. Once invoked, headers
   # are written and the connection `IO` (a socket) is yielded to the given block.
-  # The block must invoke `close` afterwards, the server won't do it in this case.
   # This is useful to implement protocol upgrades, such as websockets.
   class Response < IO
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
@@ -31,11 +34,15 @@ class HTTP::Server
     property status : HTTP::Status
 
     # :nodoc:
+    property upgrade_handler : (IO ->)?
+
+    @cookies : HTTP::Cookies?
+
+    # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
       @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = output = @original_output = Output.new(@io)
       output.response = self
     end
@@ -47,7 +54,6 @@ class HTTP::Server
       @cookies = nil
       @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = @original_output
       @original_output.reset
     end
@@ -74,8 +80,8 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Bytes) : Nil
-      return if slice.empty?
+    def write(slice : Bytes) : UInt64
+      return 0u64 if slice.empty?
 
       @output.write(slice)
     end
@@ -91,18 +97,10 @@ class HTTP::Server
     end
 
     # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
-    # The block must invoke `close` afterwards, the server won't do it in this case.
     # This is useful to implement protocol upgrades, such as websockets.
-    def upgrade
-      @upgraded = true
+    def upgrade(&block : IO ->)
       write_headers
-      flush
-      yield @io
-    end
-
-    # :nodoc:
-    def upgraded?
-      @upgraded
+      @upgrade_handler = block
     end
 
     # Flushes the output. This method must be implemented if wrapping the response output.
@@ -121,14 +119,6 @@ class HTTP::Server
     # Returns `true` if this response has been closed.
     def closed?
       @output.closed?
-    end
-
-    # Sends an error response.
-    #
-    # Calls `#reset`, writes the given status, and closes the response.
-    @[Deprecated("Use #respond_with_status instead")]
-    def respond_with_error(message = "Internal Server Error", code = 500)
-      respond_with_status(code, message)
     end
 
     @status_message : String?
@@ -191,6 +181,7 @@ class HTTP::Server
         @in_buffer_rem = Bytes.empty
         @out_count = 0
         @sync = false
+        @flush_on_newline = false
         @chunked = false
         @closed = false
       end
@@ -212,13 +203,16 @@ class HTTP::Server
         ensure_headers_written
 
         if @chunked
-          slice.size.to_s(16, @io)
+          slice.size.to_s(@io, 16)
           @io << "\r\n"
           @io.write(slice)
           @io << "\r\n"
         else
           @io.write(slice)
         end
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while writing data to the client", ex)
       end
 
       def closed?
@@ -235,6 +229,11 @@ class HTTP::Server
         ensure_headers_written
 
         super
+
+        if @chunked
+          @io << "0\r\n\r\n"
+          @io.flush
+        end
       end
 
       private def ensure_headers_written
@@ -248,7 +247,6 @@ class HTTP::Server
       end
 
       private def unbuffered_close
-        @io << "0\r\n\r\n" if @chunked
         @closed = true
       end
 
@@ -258,7 +256,13 @@ class HTTP::Server
 
       private def unbuffered_flush
         @io.flush
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while flushing data to the client", ex)
       end
     end
+  end
+
+  class ClientError < Exception
   end
 end

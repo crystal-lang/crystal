@@ -1,10 +1,14 @@
+require "path"
+
 module Crystal
   def self.relative_filename(filename)
     return filename unless filename.is_a?(String)
 
     if base_file = filename.lchop? Dir.current
-      if file_prefix = base_file.lchop? '/'
-        return file_prefix
+      ::Path::SEPARATORS.each do |sep|
+        if file_prefix = base_file.lchop? sep
+          return file_prefix
+        end
       end
       return base_file
     end
@@ -19,6 +23,14 @@ module Crystal
 
   def self.tempfile(basename)
     CacheDir.instance.join("crystal-run-#{basename}.tmp")
+  end
+
+  def self.temp_executable(basename)
+    name = tempfile(basename)
+    {% if flag?(:win32) %}
+      name += ".exe"
+    {% end %}
+    name
   end
 
   def self.with_line_numbers(

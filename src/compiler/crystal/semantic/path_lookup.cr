@@ -38,7 +38,7 @@ module Crystal
       (path.global? ? program : self).lookup_path(path.names, lookup_in_namespace, include_private, location)
     end
 
-    # ditto
+    # :ditto:
     def lookup_path(names : Array(String), lookup_in_namespace = true, include_private = false, location = nil) : Type | ASTNode | Nil
       type = self
       names.each_with_index do |name, i|

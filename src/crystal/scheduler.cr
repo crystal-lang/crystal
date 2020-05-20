@@ -1,7 +1,8 @@
-require "./event_loop"
+require "crystal/system/event_loop"
+require "crystal/system/print_error"
 require "./fiber_channel"
 require "fiber"
-require "thread"
+require "crystal/system/thread"
 
 # :nodoc:
 #
@@ -118,8 +119,12 @@ class Crystal::Scheduler
   end
 
   private def fatal_resume_error(fiber, message)
-    LibC.dprintf 2, "\nFATAL: #{message}: #{fiber}\n"
-    caller.each { |line| LibC.dprintf(2, "  from #{line}\n") }
+    Crystal::System.print_error "\nFATAL: #{message}: #{fiber}\n"
+    {% unless flag?(:win32) %}
+      # FIXME: Enable when caller is supported on win32
+      caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    {% end %}
+
     exit 1
   end
 
@@ -238,14 +243,14 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          LibC.dprintf 2, "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
           exit 1
         end
 
         workers
       else
-        # TODO: default worker count, currenlty hardcoded to 4 that seems to be something
-        # that is benefitial for many scenarios without adding too much contention.
+        # TODO: default worker count, currently hardcoded to 4 that seems to be something
+        # that is beneficial for many scenarios without adding too much contention.
         # In the future we could use the number of cores or something associated to it.
         4
       end

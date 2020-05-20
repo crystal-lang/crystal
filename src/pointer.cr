@@ -326,7 +326,7 @@ struct Pointer(T)
       io << ".null"
     else
       io << "@0x"
-      address.to_s(16, io)
+      address.to_s(io, 16)
     end
   end
 

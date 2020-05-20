@@ -124,22 +124,40 @@ module Colorize
   # ```
   class_property? enabled : Bool = true
 
-  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
+  # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
+  # This is determined by the environment variable called `TERM`.
+  # If `TERM=dumb`, color won't be enabled.
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty?
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
   end
 
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
+
+  # Helper method to use colorize with `IO`.
+  #
+  # ```
+  # io = IO::Memory.new
+  # io << "not-green"
+  # Colorize.with.green.bold.surround(io) do
+  #   io << "green and bold if Colorize.enabled"
+  # end
+  # ```
+  def self.with
+    "".colorize
+  end
 end
 
+@[Deprecated("Use `Colorize.with`")]
 def with_color
-  "".colorize
+  Colorize.with
 end
 
+@[Deprecated("Use `Colorize.with.fore(color)`")]
 def with_color(color : Symbol)
-  "".colorize(color)
+  Colorize.with.fore(color)
 end
 
 module Colorize::ObjectExtensions
@@ -206,12 +224,16 @@ module Colorize
     blue : UInt8 do
     def fore(io : IO) : Nil
       io << "38;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
 
     def back(io : IO) : Nil
       io << "48;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
   end
 end

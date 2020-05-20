@@ -155,14 +155,18 @@ struct Int
   #
   # See `Int#/` for more details.
   def %(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    elsif (self < 0) == (other < 0)
-      self.unsafe_mod(other)
-    else
-      me = self.unsafe_mod(other)
-      me == 0 ? me : me + other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      elsif (self < 0) == (other < 0)
+        self.unsafe_mod(other)
+      else
+        me = self.unsafe_mod(other)
+        me == 0 ? me : me + other
+      end
+    {% end %}
   end
 
   # Returns `self` remainder *other*.
@@ -171,11 +175,15 @@ struct Int
   #
   # See `Int#tdiv` for more details.
   def remainder(other : Int)
-    if other == 0
-      raise DivisionByZeroError.new
-    else
-      unsafe_mod other
-    end
+    {% begin %}
+      if other == 0
+        raise DivisionByZeroError.new
+      elsif self < 0 && self == {{@type}}::MIN && other == -1
+        self.class.new(0)
+      else
+        unsafe_mod other
+      end
+    {% end %}
   end
 
   # Returns the result of shifting this number's bits *count* positions to the right.
@@ -331,6 +339,51 @@ struct Int
     self >> bit & 1
   end
 
+  # Returns the requested range of bits
+  #
+  # ```
+  # 0b10011.bits(0..1) # => 0b11
+  # 0b10011.bits(0..2) # => 0b11
+  # 0b10011.bits(0..3) # => 0b11
+  # 0b10011.bits(0..4) # => 0b10011
+  # 0b10011.bits(0..5) # => 0b10011
+  # 0b10011.bits(1..4) # => 0b1001
+  # ```
+  def bits(range : Range)
+    start_index = range.begin
+    if start_index
+      raise IndexError.new("start index (#{start_index}) must be positive") if start_index < 0
+    else
+      start_index = 0
+    end
+
+    end_index = range.end
+    if end_index
+      raise IndexError.new("end index (#{end_index}) must be positive") if end_index < 0
+      end_index += 1 unless range.exclusive?
+      raise IndexError.new("end index (#{end_index}) must be greater than start index (#{start_index})") if end_index <= start_index
+    else
+      # if there is no end index then we only need to shift
+      return self >> start_index
+    end
+
+    # Generates a mask `count` bits long maintaining the correct type
+    count = end_index - start_index
+    mask = (self.class.new(1) << count) &- 1
+
+    if self < 0
+      # Special case for negative to ensure the shift and mask work as expected
+      # The result is always negative
+      offset = (~self) >> start_index
+      result = offset & mask
+      ~result
+    else
+      # Shifts out the bits we want to ignore before applying the mask
+      offset = self >> start_index
+      offset & mask
+    end
+  end
+
   # Returns `true` if all bits in *mask* are set on `self`.
   #
   # ```
@@ -342,8 +395,84 @@ struct Int
     (self & mask) == mask
   end
 
-  def gcd(other : Int)
-    self == 0 ? other.abs : (other % self).gcd(self)
+  # Returns the number of bits of this int value.
+  #
+  # “The number of bits” means that the bit position of the highest bit
+  # which is different to the sign bit.
+  # (The bit position of the bit 2**n is n+1.)
+  # If there is no such bit (zero or minus one), zero is returned.
+  #
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self + 1))`.
+  #
+  # ```
+  # 0.bit_length # => 0
+  # 1.bit_length # => 1
+  # 2.bit_length # => 2
+  # 3.bit_length # => 2
+  # 4.bit_length # => 3
+  # 5.bit_length # => 3
+  #
+  # # The above is the same as
+  # 0b0.bit_length   # => 0
+  # 0b1.bit_length   # => 1
+  # 0b10.bit_length  # => 2
+  # 0b11.bit_length  # => 2
+  # 0b100.bit_length # => 3
+  # 0b101.bit_length # => 3
+  # ```
+  def bit_length : Int32
+    x = self < 0 ? ~self : self
+
+    if x.is_a?(Int::Primitive)
+      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
+    else
+      # Safe fallback for any non-primitive Int type
+      to_s(2).size
+    end
+  end
+
+  # Returns the greatest common divisor of `self` and `other`. Signed
+  # integers may raise overflow if either has value equal to `MIN` of
+  # its type.
+  #
+  # ```
+  # 5.gcd(10) # => 5
+  # 5.gcd(7)  # => 1
+  # ```
+  def gcd(other : self) : self
+    # Implementation heavily inspired by
+    # https://en.wikipedia.org/wiki/Binary_GCD_algorithm#Iterative_version_in_C
+    u = self.abs
+    v = other.abs
+    return v if u == 0
+    return u if v == 0
+
+    shift = self.class.zero
+    # Let shift := lg K, where K is the greatest power of 2
+    # dividing both u and v.
+    while (u | v) & 1 == 0
+      shift &+= 1
+      u = u.unsafe_shr 1
+      v = v.unsafe_shr 1
+    end
+    while u & 1 == 0
+      u = u.unsafe_shr 1
+    end
+    # From here on, u is always odd.
+    loop do
+      # remove all factors of 2 in v -- they are not common
+      # note: v is not zero, so while will terminate
+      while v & 1 == 0
+        v = v.unsafe_shr 1
+      end
+      # Now u and v are both odd. Swap if necessary so u <= v,
+      # then set v = v - u (which is even).
+      u, v = v, u if u > v
+      v &-= u
+      break if v.zero?
+    end
+    # restore common factors of 2
+    u.unsafe_shl shift
   end
 
   def lcm(other : Int)
@@ -437,46 +566,46 @@ struct Int
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s : String
-    to_s(10)
-  end
-
-  def to_s(io : IO) : Nil
-    to_s(10, io)
-  end
-
-  def to_s(base : Int, upcase : Bool = false) : String
+  def to_s(base : Int = 10, *, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
-      return "0"
+      "0"
     when 1
-      return "1"
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      String.new(ptr, count, count)
+      "1"
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        String.new(ptr, count, count)
+      end
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+  @[Deprecated("Use `#to_s(base : Int, *, upcase : Bool = false)` instead")]
+  def to_s(base : Int, _upcase : Bool) : String
+    to_s(base, upcase: _upcase)
+  end
+
+  def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
       io << '0'
-      return
     when 1
       io << '1'
-      return
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        io.write_utf8 Slice.new(ptr, count)
+      end
     end
+  end
 
-    internal_to_s(base, upcase) do |ptr, count|
-      io.write_utf8 Slice.new(ptr, count)
-    end
+  @[Deprecated("Use `#to_s(io : IO, base : Int, *, upcase : Bool = false)` instead")]
+  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+    to_s(io, base, upcase: upcase)
   end
 
   private def internal_to_s(base, upcase = false)
@@ -509,7 +638,7 @@ struct Int
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat)
+  def to_io(io : IO, format : IO::ByteFormat) : UInt64
     format.encode(self, io)
   end
 
