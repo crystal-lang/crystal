@@ -5088,7 +5088,7 @@ module Crystal
         # They are conflicted with operators, so more look-ahead is needed.
         next_token_skip_space
         delimiter_or_type_suffix?
-      when :"->", :"|", :",", :NEWLINE, :EOF, :";", :"(", :")", :"[", :"]"
+      when :"->", :"|", :",", :NEWLINE, :EOF, :"=", :";", :"(", :")", :"[", :"]"
         true
       else
         false
