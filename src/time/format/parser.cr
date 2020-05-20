@@ -37,7 +37,15 @@ struct Time::Format
     end
 
     def time(location : Location? = nil)
-      @hour += 12 if @pm
+      if @pm
+        unless @hour == 12
+          @hour += 12
+        end
+      else
+        if @hour == 12
+          @hour = 0
+        end
+      end
 
       if unix_seconds = @unix_seconds
         return Time.unix(unix_seconds)

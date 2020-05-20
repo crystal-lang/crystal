@@ -218,6 +218,10 @@ describe Time::Format do
     parse_time(" 9", "%l").hour.should eq(9)
     parse_time("9pm", "%l%p").hour.should eq(21)
     parse_time("9PM", "%l%P").hour.should eq(21)
+    parse_time("12PM", "%l%P").hour.should eq(12)
+    parse_time("9am", "%l%p").hour.should eq(9)
+    parse_time("9AM", "%l%P").hour.should eq(9)
+    parse_time("12AM", "%l%P").hour.should eq(0)
     parse_time("09", "%M").minute.should eq(9)
     parse_time("09", "%S").second.should eq(9)
     parse_time("123", "%L").millisecond.should eq(123)
@@ -265,6 +269,17 @@ describe Time::Format do
     parse_time("2009-W53-5", "%G-W%V-%u").should eq(Time.utc(2010, 1, 1))
     parse_time("2009-W53-6", "%G-W%V-%u").should eq(Time.utc(2010, 1, 2))
     parse_time("2009-W53-7", "%G-W%V-%u").should eq(Time.utc(2010, 1, 3))
+  end
+
+  it "parses am/pm" do
+    parse_time("12:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 am", "%I:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 am", "%I:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 pm", "%I:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 pm", "%I:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("01:00 pm", "%I:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("11:00 pm", "%I:%M %P").to_s("%H:%M").should eq("23:00")
   end
 
   it "parses timezone" do
