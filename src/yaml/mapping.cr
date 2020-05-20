@@ -67,7 +67,7 @@ module YAML
   # it and initializes this type's instance variables.
   #
   # This macro also declares instance variables of the types given in the mapping.
-  @[Deprecated("use YAML::Serializable instead")]
+  @[Deprecated("use YAML::Serializable instead (the legacy behaviour is also available in a shard at github:crystal-lang/yaml_mapping)")]
   macro mapping(_properties_, strict = false)
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}

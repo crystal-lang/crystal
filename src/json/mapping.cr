@@ -65,7 +65,7 @@ module JSON
   # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
-  @[Deprecated("use JSON::Serializable instead")]
+  @[Deprecated("use JSON::Serializable instead (the legacy behaviour is also available in a shard at github:crystal-lang/json_mapping)")]
   macro mapping(_properties_, strict = false)
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
