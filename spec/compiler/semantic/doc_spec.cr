@@ -399,4 +399,92 @@ describe "Semantic: doc" do
     type = program.types["MyClass1"]
     type.doc.should eq("Some description")
   end
+
+  context "doc before annotation" do
+    it "attached to struct/class" do
+      result = semantic %(
+        # Some description
+        @[Packed]
+        struct Foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to module" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        module Foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to enum" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        enum Foo
+          One
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to constant" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        Foo = 1
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to alias" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        alias Foo = Int32
+      ), wants_doc: true
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+    end
+
+    it "attached to def" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        def foo
+        end
+      ), wants_doc: true
+      program = result.program
+      a_def = program.lookup_defs("foo").first
+      a_def.doc.should eq("Some description")
+    end
+  end
 end
