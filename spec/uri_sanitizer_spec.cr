@@ -2,11 +2,11 @@ require "../src/uri_sanitizer"
 require "spec"
 require "uri"
 
-private def assert_sanitize(source : String, expected : String? = source, sanitizer = Sanitize::URISanitizer.new)
+private def assert_sanitize(source : String, expected : String? = source, sanitizer = Sanitize::URISanitizer.new, *, file = __FILE__, line = __LINE__)
   if expected
     expected = URI.parse(expected)
   end
-  sanitizer.sanitize(URI.parse(source)).should eq expected
+  sanitizer.sanitize(URI.parse(source)).should eq(expected), file: file, line: line
 end
 
 describe Sanitize::URISanitizer do
@@ -53,6 +53,23 @@ describe Sanitize::URISanitizer do
 
       assert_sanitize("foo", "https://example.com/base/foo", sanitizer: sanitizer)
       assert_sanitize("/foo", "https://example.com/foo", sanitizer: sanitizer)
+    end
+
+    it "doesn't base fragment-only URLs" do
+      sanitizer = Sanitize::URISanitizer.new
+      sanitizer.base_url = URI.parse("https://example.com/base/")
+
+      assert_sanitize("#foo", sanitizer: sanitizer)
+      assert_sanitize("#", sanitizer: sanitizer)
+      assert_sanitize("https:#", sanitizer: sanitizer)
+      assert_sanitize("?#foo", "https://example.com/base/?#foo", sanitizer: sanitizer)
+      assert_sanitize("/#", "https://example.com/#", sanitizer: sanitizer)
+      assert_sanitize("https://#", "https://#", sanitizer: sanitizer)
+
+      sanitizer.resolve_fragment_urls = true
+      assert_sanitize("#foo", "https://example.com/base/#foo", sanitizer: sanitizer)
+      assert_sanitize("#", "https://example.com/base/#", sanitizer: sanitizer)
+      assert_sanitize("https:#", "https:#", sanitizer: sanitizer)
     end
   end
 

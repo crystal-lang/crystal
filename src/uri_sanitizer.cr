@@ -31,6 +31,18 @@ class Sanitize::URISanitizer
   # If `nil`, relative URLs are not resolved.
   property base_url : URI?
 
+  # Configures whether fragment-only URIs are resolved on `base_url`.
+  #
+  # ```cr
+  # sanitizer = Sanitize::URISanitizer.new
+  # sanitizer.base_url = URI.parse("https://example.com/base/")
+  # sanitizer.sanitize(URI.parse("#foo")) # => "#foo"
+  #
+  # sanitizer.resolve_fragment_urls = true
+  # sanitizer.sanitize(URI.parse("#foo")) # => "https://example.com/base/#foo"
+  # ```
+  property resolve_fragment_urls = false
+
   def initialize(@accepted_schemes : Set(String)? = Set{"http", "https", "mailto", "tel"})
   end
 
@@ -82,10 +94,14 @@ class Sanitize::URISanitizer
 
   def resolve_base_url(uri)
     if base_url = self.base_url
-      unless uri.absolute?
+      unless uri.absolute? || (!resolve_fragment_urls && fragment_url?(uri))
         uri = base_url.resolve(uri)
       end
     end
     uri
+  end
+
+  private def fragment_url?(uri)
+    uri.path.empty? && uri.host.nil? && uri.query.nil? && !uri.fragment.nil?
   end
 end
