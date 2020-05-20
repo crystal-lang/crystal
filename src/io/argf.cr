@@ -11,17 +11,16 @@ class IO::ARGF < IO
   end
 
   def read(slice : Bytes)
-    count = slice.size
     first_initialize unless @initialized
 
     if current_io = @current_io
-      read_count = read_from_current_io(current_io, slice, count)
+      read_count = read_from_current_io(current_io, slice)
     elsif !@read_from_stdin && !@argv.empty?
       # If there's no current_io it means we read all of ARGV.
       # It might be the case that the user put more strings into
       # ARGV, so in this case we need to read from that.
       read_next_argv
-      read_count = read slice[0, count]
+      read_count = read slice
     else
       read_count = 0
     end
@@ -74,8 +73,8 @@ class IO::ARGF < IO
     end
   end
 
-  private def read_from_current_io(current_io, slice, count)
-    read_count = current_io.read slice[0, count]
+  private def read_from_current_io(current_io, slice)
+    read_count = current_io.read slice
     if read_count.zero?
       unless @read_from_stdin
         current_io.close
@@ -83,7 +82,7 @@ class IO::ARGF < IO
           @current_io = nil
         else
           read_next_argv
-          read_count = read slice[0, count]
+          read_count = read slice
         end
       end
     end

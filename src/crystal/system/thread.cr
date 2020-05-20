@@ -21,6 +21,9 @@ class Thread
 
   # Associates the Thread object to the running system thread.
   # def self.current=(thread : Thread)
+
+  # Holds the GC thread handler
+  property gc_thread_handler : Void* = Pointer(Void).null
 end
 
 require "./thread_linked_list"

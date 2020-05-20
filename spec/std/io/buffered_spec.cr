@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 private class BufferedWrapper < IO
   include IO::Buffered
@@ -283,6 +283,30 @@ describe "IO::Buffered" do
     str.to_s.should eq("hello" * 10_000)
   end
 
+  describe "flush_on_newline" do
+    it "flushes on \n" do
+      str = IO::Memory.new
+      io = BufferedWrapper.new(str)
+      io.flush_on_newline = true
+
+      io << "hello\nworld"
+      str.to_s.should eq("hello\n")
+      io.flush
+      str.to_s.should eq("hello\nworld")
+    end
+
+    it "doesn't write past count" do
+      str = IO::Memory.new
+      io = BufferedWrapper.new(str)
+      io.flush_on_newline = true
+
+      slice = Slice.new(10) { |i| i == 9 ? '\n'.ord.to_u8 : ('a'.ord + i).to_u8 }
+      io.write slice[0, 4]
+      io.flush
+      str.to_s.should eq("abcd")
+    end
+  end
+
   describe "sync" do
     it "syncs (write)" do
       str = IO::Memory.new
@@ -405,18 +429,18 @@ describe "IO::Buffered" do
   it "skips" do
     str = IO::Memory.new("123456789")
     io = BufferedWrapper.new(str)
-    io.skip(3)
+    io.skip(3).should eq(3)
     io.read_char.should eq('4')
   end
 
   it "skips big" do
     str = IO::Memory.new(("a" * 10_000) + "b")
     io = BufferedWrapper.new(str)
-    io.skip(10_000)
+    io.skip(10_000).should eq(10_000)
     io.read_char.should eq('b')
   end
 
-  describe "encoding" do
+  pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200
@@ -457,13 +481,13 @@ describe "IO::Buffered" do
         end
       end
 
-      it "gets big GB2312 string" do
-        str = ("你好我是人\n" * 1000).encode("GB2312")
+      it "gets big EUC-JP string" do
+        str = ("好我是人\n" * 1000).encode("EUC-JP")
         base_io = IO::Memory.new(str)
         io = BufferedWrapper.new(base_io)
-        io.set_encoding("GB2312")
+        io.set_encoding("EUC-JP")
         1000.times do
-          io.gets(chomp: false).should eq("你好我是人\n")
+          io.gets(chomp: false).should eq("好我是人\n")
         end
       end
 

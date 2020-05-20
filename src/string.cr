@@ -1,5 +1,8 @@
 require "c/stdlib"
 require "c/string"
+{% unless flag?(:win32) %}
+  require "crystal/iconv"
+{% end %}
 
 # A `String` represents an immutable sequence of UTF-8 characters.
 #
@@ -538,6 +541,8 @@ class String
       ptr += 1
     when '+'
       ptr += 1
+    else
+      # no sign prefix
     end
 
     found_digit = false
@@ -720,9 +725,11 @@ class String
     end
   end
 
-  # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
+  # Returns the `Char` at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the string.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
   #
   # ```
   # "hello"[0]  # => 'h'
@@ -739,7 +746,7 @@ class String
   # as character indices. Indices can be negative to start
   # counting from the end of the string.
   #
-  # Raises `IndexError` if the range's start is out of range.
+  # Raises `IndexError` if the range's start is out of bounds.
   #
   # ```
   # "hello"[0..2]   # => "hel"
@@ -752,28 +759,29 @@ class String
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of bounds.
   #
   # ```
   # "hello"[6..7]? # => nil
+  # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range(Int, Int))
+  def []?(range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
   # Returns a substring starting from the *start* character of size *count*.
   #
-  # The *start* argument can be negative to start counting
+  # *start* can can be negative to start counting
   # from the end of the string.
   #
-  # Raises `IndexError` if the *start* index is out of range.
+  # Raises `IndexError` if the *start* index is out of bounds.
   #
   # Raises `ArgumentError` if *count* is negative.
   def [](start : Int, count : Int)
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
   def []?(start : Int, count : Int)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return byte_slice?(start, count) if ascii_only?
@@ -843,21 +851,35 @@ class String
     self[regex, group]?.not_nil!
   end
 
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index)
-  end
-
-  @[Deprecated("Use `String#char_at` instead.")]
-  def at(index : Int)
-    char_at(index) { yield }
-  end
-
-  def char_at(index : Int)
+  # Returns the `Char` at the given *index*.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # ```
+  # "hello".char_at(0)  # => 'h'
+  # "hello".char_at(1)  # => 'e'
+  # "hello".char_at(-1) # => 'o'
+  # "hello".char_at(-2) # => 'l'
+  # "hello".char_at(5)  # raises IndexError
+  # ```
+  def char_at(index : Int) : Char
     char_at(index) { raise IndexError.new }
   end
 
-  def char_at(index : Int)
+  # Returns the `Char` at the given *index*, or result of running the given block if out of bounds.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # ```
+  # "hello".char_at(4) { 'x' }  # => 'o'
+  # "hello".char_at(5) { 'x' }  # => 'x'
+  # "hello".char_at(-1) { 'x' } # => 'o'
+  # "hello".char_at(-5) { 'x' } # => 'h'
+  # "hello".char_at(-6) { 'x' } # => 'x'
+  # ```
+  def char_at(index : Int, &)
     if ascii_only?
       byte = byte_at?(index)
       if byte
@@ -878,11 +900,53 @@ class String
     end
   end
 
-  def byte_slice(start : Int, count : Int)
+  # Returns a new string built from *count* bytes starting at *start* byte.
+  #
+  # *start* can can be negative to start counting
+  # from the end of the string.
+  # If *count* is bigger than the number of bytes from *start* to `#bytesize`,
+  # only remaining bytes are returned.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Raises `IndexError` if the *start* index is out of bounds.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # "hello".byte_slice(0, 2)   # => "he"
+  # "hello".byte_slice(0, 100) # => "hello"
+  # "hello".byte_slice(-2, 3)  # => "he"
+  # "hello".byte_slice(-2, 5)  # => "he"
+  # "hello".byte_slice(-2, 5)  # => "he"
+  # "¥hello".byte_slice(0, 2)  # => "¥"
+  # "¥hello".byte_slice(2, 2)  # => "he"
+  # "¥hello".byte_slice(0, 1)  # => "�" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 1)  # => "�" (invalid UTF-8 character)
+  # "¥hello".byte_slice(1, 2)  # => "�h" (invalid UTF-8 character)
+  # "hello".byte_slice(6, 2)   # raises IndexError
+  # "hello".byte_slice(-6, 2)  # raises IndexError
+  # "hello".byte_slice(0, -2)  # raises ArgumentError
+  # ```
+  def byte_slice(start : Int, count : Int) : String
     byte_slice?(start, count) || raise IndexError.new
   end
 
-  def byte_slice?(start : Int, count : Int)
+  # Like `byte_slice(Int, Int)` but returns `Nil` if the *start* index is out of bounds.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # "hello".byte_slice?(0, 2)   # => "he"
+  # "hello".byte_slice?(0, 100) # => "hello"
+  # "hello".byte_slice?(6, 2)   # => nil
+  # "hello".byte_slice?(-6, 2)  # => nil
+  # "hello".byte_slice?(0, -2)  # raises ArgumentError
+  # ```
+  def byte_slice?(start : Int, count : Int) : String | Nil
     raise ArgumentError.new "Negative count" if count < 0
 
     start += bytesize if start < 0
@@ -903,24 +967,87 @@ class String
     end
   end
 
-  def byte_slice(start : Int)
-    byte_slice start, bytesize - start
+  # Returns a substring starting from the *start* byte.
+  #
+  # *start* can can be negative to start counting
+  # from the end of the string.
+  #
+  # This method should be avoided,
+  # unless the string is proven to be ASCII-only (for example `#ascii_only?`),
+  # or the byte positions are known to be at character boundaries.
+  # Otherwise, multi-byte characters may be split, leading to an invalid UTF-8 encoding.
+  #
+  # Raises `IndexError` if *start* index is out of bounds.
+  #
+  # ```
+  # "hello".byte_slice(0)  # => "hello"
+  # "hello".byte_slice(2)  # => "llo"
+  # "hello".byte_slice(-2) # => "lo"
+  # "¥hello".byte_slice(2) # => "hello"
+  # "¥hello".byte_slice(1) # => "�hello" (invalid UTF-8 character)
+  # "hello".byte_slice(6)  # raises IndexError
+  # "hello".byte_slice(-6) # raises IndexError
+  # ```
+  def byte_slice(start : Int) : String
+    count = bytesize - start
+    raise IndexError.new if start > 0 && count < 0
+    byte_slice start, count
   end
 
-  @[Deprecated("Use .char_at(index).ord instead")]
-  def codepoint_at(index)
+  # Returns the codepoint of the character at the given *index*.
+  #
+  # Negative indices can be used to start counting from the end of the string.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # See also: `Char#ord`.
+  #
+  # ```
+  # "hello".codepoint_at(0)  # => 104
+  # "hello".codepoint_at(-1) # => 111
+  # "hello".codepoint_at(5)  # raises IndexError
+  # ```
+  def codepoint_at(index) : Int32
     char_at(index).ord
   end
 
-  def byte_at(index)
+  # Returns the byte at the given *index*.
+  #
+  # Raises `IndexError` if the *index* is out of bounds.
+  #
+  # ```
+  # "¥hello".byte_at(0)  # => 194
+  # "¥hello".byte_at(1)  # => 165
+  # "¥hello".byte_at(2)  # => 104
+  # "¥hello".byte_at(-1) # => 111
+  # "¥hello".byte_at(6)  # => 111
+  # "¥hello".byte_at(7)  # raises IndexError
+  # ```
+  def byte_at(index) : UInt8
     byte_at(index) { raise IndexError.new }
   end
 
-  def byte_at?(index)
+  # Returns the byte at the given *index*, or `nil` if out of bounds.
+  #
+  # ```
+  # "¥hello".byte_at?(0)  # => 194
+  # "¥hello".byte_at?(1)  # => 165
+  # "¥hello".byte_at?(2)  # => 104
+  # "¥hello".byte_at?(-1) # => 111
+  # "¥hello".byte_at?(6)  # => 111
+  # "¥hello".byte_at?(7)  # => nil
+  # ```
+  def byte_at?(index) : UInt8 | Nil
     byte_at(index) { nil }
   end
 
-  def byte_at(index)
+  # Returns the byte at the given *index*, or yields if out of bounds.
+  #
+  # ```
+  # "¥hello".byte_at(6) { "OUT OF BOUNDS" } # => 111
+  # "¥hello".byte_at(7) { "OUT OF BOUNDS" } # => "OUT OF BOUNDS"
+  # ```
+  def byte_at(index, &)
     index += bytesize if index < 0
     if 0 <= index < bytesize
       to_unsafe[index]
@@ -929,60 +1056,77 @@ class String
     end
   end
 
-  def unsafe_byte_at(index)
+  # Returns the byte at the given *index* without bounds checking.
+  def unsafe_byte_at(index : Int) : UInt8
     to_unsafe[index]
   end
 
-  # Returns a new `String` with each uppercase letter replaced with its lowercase
-  # counterpart.
+  # Returns a new `String` with each uppercase letter replaced with its lowercase counterpart.
   #
   # ```
   # "hEllO".downcase # => "hello"
   # ```
-  def downcase(options = Unicode::CaseOptions::None)
+  def downcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char do |char|
-          char.downcase(options) do |res|
-            io << res
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| downcase io, options }
+  end
+
+  # Writes a downcased version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".downcase io
+  # io.to_s # => hello
+  # ```
+  def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char do |char|
+      char.downcase(options) do |res|
+        io << res
       end
     end
   end
 
-  # Returns a new `String` with each lowercase letter replaced with its uppercase
-  # counterpart.
+  # Returns a new `String` with each lowercase letter replaced with its uppercase counterpart.
   #
   # ```
   # "hEllO".upcase # => "HELLO"
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char do |char|
-          char.upcase(options) do |res|
-            io << res
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| upcase io, options }
+  end
+
+  # Writes a upcased version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".upcase io
+  # io.to_s # => HELLO
+  # ```
+  def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char do |char|
+      char.upcase(options) do |res|
+        io << res
       end
     end
   end
@@ -993,30 +1137,86 @@ class String
   # ```
   # "hEllO".capitalize # => "Hello"
   # ```
-  def capitalize(options = Unicode::CaseOptions::None)
+  def capitalize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          if i == 0
-            buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-          else
-            buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-          end
+          byte = if i.zero?
+                   unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+                 else
+                   unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+                 end
+
+          buffer[i] = byte
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char_with_index do |char, i|
-          if i == 0
-            char.upcase(options) { |c| io << c }
-          else
-            char.downcase(options) { |c| io << c }
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| capitalize io, options }
+  end
+
+  # Writes a capitalized version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".capitalize io
+  # io.to_s # => Hello
+  # ```
+  def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char_with_index do |char, i|
+      if i.zero?
+        char.upcase(options) { |c| io << c }
+      else
+        char.downcase(options) { |c| io << c }
       end
+    end
+  end
+
+  # Returns a new `String` with the first letter after any space converted to uppercase and every
+  # other letter converted to lowercase.
+  #
+  # ```
+  # "hEllO tAb\tworld".titleize      # => "Hello Tab\tWorld"
+  # "  spaces before".titleize       # => "  Spaces Before"
+  # "x-men: the last stand".titleize # => "X-men: The Last Stand"
+  # ```
+  def titleize(options : Unicode::CaseOptions = :none) : String
+    return self if empty?
+
+    if ascii_only? && (options.none? || options.ascii?)
+      upcase_next = true
+
+      return String.new(bytesize) do |buffer|
+        bytesize.times do |i|
+          char = unsafe_byte_at(i).unsafe_chr
+          replaced_char = upcase_next ? char.upcase : char.downcase
+          buffer[i] = replaced_char.ord.to_u8
+          upcase_next = char.whitespace?
+        end
+        {@bytesize, @length}
+      end
+    end
+
+    String.build(bytesize) { |io| titleize io, options }
+  end
+
+  # Writes a titleized version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "x-men: the last stand".titleize io
+  # io.to_s # => X-men: The Last Stand
+  # ```
+  def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    upcase_next = true
+
+    each_char_with_index do |char, i|
+      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
+      io << replaced_char
+      upcase_next = char.whitespace?
     end
   end
 
@@ -1218,12 +1418,12 @@ class String
     inbytesleft = LibC::SizeT.new(slice.size)
     outbuf = uninitialized UInt8[1024]
 
-    Iconv.new(from, to, invalid) do |iconv|
+    Crystal::Iconv.new(from, to, invalid) do |iconv|
       while inbytesleft > 0
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == Iconv::ERROR
+        if err == Crystal::Iconv::ERROR
           iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -1391,18 +1591,18 @@ class String
 
     case chars.size
     when 0
-      return self
+      self
     when 1
-      return strip(chars[0])
-    end
+      strip(chars[0])
+    else
+      excess_left = calc_excess_left(chars)
+      if excess_left == bytesize
+        return ""
+      end
 
-    excess_left = calc_excess_left(chars)
-    if excess_left == bytesize
-      return ""
+      excess_right = calc_excess_right(chars)
+      remove_excess(excess_left, excess_right)
     end
-
-    excess_right = calc_excess_right(chars)
-    remove_excess(excess_left, excess_right)
   end
 
   # Returns a new string where leading and trailing characters for which
@@ -1852,9 +2052,8 @@ class String
         end
       end
 
-      buffer << reader.current_char
-
       if reader.has_next?
+        buffer << reader.current_char
         reader.next_char
         buffer.write unsafe_byte_slice(reader.pos)
       end
@@ -2026,6 +2225,8 @@ class String
         buffer << capture
         index = end_index + 1
         first_index = index
+      else
+        # Nothing
       end
     end
 
@@ -2270,7 +2471,7 @@ class String
   # returns the number of times the block returned a truthy value.
   #
   # ```
-  # "aabbcc".count { |c| ['a', 'b'].includes?(c) } # => 4
+  # "aabbcc".count &.in?('a', 'b') # => 4
   # ```
   def count
     count = 0
@@ -2301,7 +2502,7 @@ class String
   # block returned a truthy value removed.
   #
   # ```
-  # "aabbcc".delete { |c| ['a', 'b'].includes?(c) } # => "cc"
+  # "aabbcc".delete &.in?('a', 'b') # => "cc"
   # ```
   def delete
     String.build(bytesize) do |buffer|
@@ -2337,8 +2538,8 @@ class String
   # block returned a truthy value.
   #
   # ```
-  # "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) } # => "abccc"
-  # "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) } # => "abbbc"
+  # "aaabbbccc".squeeze &.in?('a', 'b') # => "abccc"
+  # "aaabbbccc".squeeze &.in?('a', 'c') # => "abbbc"
   # ```
   def squeeze
     previous = nil
@@ -2422,7 +2623,12 @@ class String
     self if !blank?
   end
 
-  def ==(other : self)
+  # Returns `true` if this string is equal to `*other*.
+  # Comparison is done byte-per-byte: if a byte is different from the corresponding
+  # byte, `false` is returned and so on.
+  #
+  # See `#compare` for more comparison options.
+  def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
     to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
@@ -2536,7 +2742,7 @@ class String
     match.try &.begin(0)
   end
 
-  # ditto
+  # :ditto:
   def =~(other)
     nil
   end
@@ -2564,7 +2770,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def +(char : Char)
     bytes, count = String.char_bytes_and_bytesize(char)
     size = bytesize + count
@@ -2628,7 +2834,7 @@ class String
     {% end %}
   end
 
-  # Returns the index of *search* in the string, or `nil` if the string is not present.
+  # Returns the index of the _first_ occurrence of *search* in the string, or `nil` if not present.
   # If *offset* is present, it defines the position to start the search.
   #
   # ```
@@ -2657,7 +2863,7 @@ class String
     nil
   end
 
-  # ditto
+  # :ditto:
   def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
@@ -2728,7 +2934,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def index(search : Regex, offset = 0)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2775,7 +2981,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : String, offset = size - search.size)
     offset += size if offset < 0
     return if offset < 0
@@ -2828,7 +3034,7 @@ class String
     end
   end
 
-  # ditto
+  # :ditto:
   def rindex(search : Regex, offset = size - 1)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
@@ -2867,7 +3073,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def partition(search : Regex) : Tuple(String, String, String)
     pre = mid = post = ""
     case m = self.match(search)
@@ -2910,7 +3116,7 @@ class String
     {pre, mid, post}
   end
 
-  # ditto
+  # :ditto:
   def rpartition(search : Regex) : Tuple(String, String, String)
     match_result = nil
     pos = self.size - 1
@@ -2939,7 +3145,25 @@ class String
     {pre, mid, post}
   end
 
-  def byte_index(byte : Int, offset = 0)
+  # Returns the index of the _first_ ocurrence of *byte* in the string, or `nil` if not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "Hello, World".byte_index(0x6f)             # => 4
+  # "Hello, World".byte_index(0x5a)             # => nil
+  # "Hello, World".byte_index(0x6f, 5)          # => 8
+  # "💣".byte_index(0xA3)                        # => 3
+  # "Dizzy Miss Lizzy".byte_index('z'.ord)      # => 2
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, 3)   # => 3
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, -4)  # => 13
+  # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
+  # ```
+  def byte_index(byte : Int, offset = 0) : Int32?
+    offset += bytesize if offset < 0
+    return if offset < 0
+
     offset.upto(bytesize - 1) do |i|
       if to_unsafe[i] == byte
         return i
@@ -2948,7 +3172,20 @@ class String
     nil
   end
 
-  def byte_index(search : String, offset = 0)
+  # Returns the byte index of *search* in the string, or `nil` if the string is not present.
+  # If *offset* is present, it defines the position to start the search.
+  #
+  # Negative *offset* can be used to start the search from the end of the string.
+  #
+  # ```
+  # "¥hello".byte_index("hello")              # => 2
+  # "hello".byte_index("world")               # => nil
+  # "Dizzy Miss Lizzy".byte_index("izzy")     # => 1
+  # "Dizzy Miss Lizzy".byte_index("izzy", 2)  # => 12
+  # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => 12
+  # "Dizzy Miss Lizzy".byte_index("izzy", -3) # => nil
+  # ```
+  def byte_index(search : String, offset = 0) : Int32?
     offset += bytesize if offset < 0
     return if offset < 0
 
@@ -3475,74 +3712,83 @@ class String
   # "3.14IsPi".underscore                                       # => "3.14_is_pi"
   # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
-  def underscore(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
+  def underscore(options : Unicode::CaseOptions = :none) : String
+    String.build(bytesize + 10) { |io| underscore io, options }
+  end
+
+  # Writes an underscored version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "DoesWhatItSaysOnTheTin".underscore io
+  # io.to_s # => "does_what_it_says_on_the_tin"
+  # ```
+  def underscore(io : IO, options : Unicode::CaseOptions = :none) : Nil
     first = true
     last_is_downcase = false
     last_is_upcase = false
     last_is_digit = false
-    mem = nil
+    mem : Char? = nil
 
-    String.build(bytesize + 10) do |str|
-      each_char do |char|
-        digit = char.ascii_number?
+    each_char do |char|
+      digit = char.ascii_number?
 
-        if options.none?
-          downcase = digit || char.ascii_lowercase?
-          upcase = char.ascii_uppercase?
-        else
-          downcase = digit || char.lowercase?
-          upcase = char.uppercase?
-        end
-
-        if first
-          str << char.downcase(options)
-        elsif last_is_downcase && upcase
-          if mem
-            # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
-            #                       ^
-            # because 'mem' is digit surely) before putting this char as downcase.
-            str << mem
-            mem = nil
-          end
-          # This is the case of AbcDe, we need to put an underscore before the 'D'
-          #                        ^
-          str << '_'
-          str << char.downcase(options)
-        elsif (last_is_upcase || last_is_digit) && (upcase || digit)
-          # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
-          #                          ^         ^           ^
-          # 1) we need to append this char as downcase
-          # 2) we need to append an underscore and then the char as downcase, so we save this char
-          #    in 'mem' and decide later
-          # 3) we need to append this char as downcase and then a single underscore
-          if mem
-            # case 2
-            str << mem.downcase(options)
-          end
-          mem = char
-        else
-          if mem
-            if char == '_'
-              # case 3
-            elsif last_is_upcase && downcase
-              # case 1
-              str << '_'
-            end
-            str << mem.downcase(options)
-            mem = nil
-          end
-
-          str << char.downcase(options)
-        end
-
-        last_is_downcase = downcase
-        last_is_upcase = upcase
-        last_is_digit = digit
-        first = false
+      if options.none?
+        downcase = digit || char.ascii_lowercase?
+        upcase = char.ascii_uppercase?
+      else
+        downcase = digit || char.lowercase?
+        upcase = char.uppercase?
       end
 
-      str << mem.downcase(options) if mem
+      if first
+        io << char.downcase(options)
+      elsif last_is_downcase && upcase
+        if mem
+          # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
+          #                       ^
+          # because 'mem' is digit surely) before putting this char as downcase.
+          io << mem
+          mem = nil
+        end
+        # This is the case of AbcDe, we need to put an underscore before the 'D'
+        #                        ^
+        io << '_'
+        io << char.downcase(options)
+      elsif (last_is_upcase || last_is_digit) && (upcase || digit)
+        # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
+        #                          ^         ^           ^
+        # 1) we need to append this char as downcase
+        # 2) we need to append an underscore and then the char as downcase, so we save this char
+        #    in 'mem' and decide later
+        # 3) we need to append this char as downcase and then a single underscore
+        if mem
+          # case 2
+          io << mem.downcase(options)
+        end
+        mem = char
+      else
+        if mem
+          if char == '_'
+            # case 3
+          elsif last_is_upcase && downcase
+            # case 1
+            io << '_'
+          end
+          io << mem.downcase(options)
+          mem = nil
+        end
+
+        io << char.downcase(options)
+      end
+
+      last_is_downcase = downcase
+      last_is_upcase = upcase
+      last_is_digit = digit
+      first = false
     end
+
+    io << mem.downcase(options) if mem
   end
 
   # Converts underscores to camelcase boundaries.
@@ -3554,26 +3800,37 @@ class String
   # "empire_state_building".camelcase(lower: true)                      # => "empireStateBuilding"
   # "isolated_integer".camelcase(options: Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false) : String
     return self if empty?
 
+    String.build(bytesize) { |io| camelcase io, options, lower: lower }
+  end
+
+  # Writes an camelcased version of `self` to the given *io*.
+  #
+  # If *lower* is true, lower camelcase will be written (the first letter is downcased).
+  #
+  # ```
+  # io = IO::Memory.new
+  # "eiffel_tower".camelcase io
+  # io.to_s # => "EiffelTower"
+  # ```
+  def camelcase(io : IO, options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false) : Nil
     first = true
     last_is_underscore = false
 
-    String.build(bytesize) do |str|
-      each_char do |char|
-        if first
-          str << (lower ? char.downcase(options) : char.upcase(options))
-        elsif char == '_'
-          last_is_underscore = true
-        elsif last_is_underscore
-          str << char.upcase(options)
-          last_is_underscore = false
-        else
-          str << char
-        end
-        first = false
+    each_char do |char|
+      if first
+        io << (lower ? char.downcase(options) : char.upcase(options))
+      elsif char == '_'
+        last_is_underscore = true
+      elsif last_is_underscore
+        io << char.upcase(options)
+        last_is_underscore = false
+      else
+        io << char
       end
+      first = false
     end
   end
 
@@ -3615,8 +3872,47 @@ class String
   # "Purple".ljust(8, '-') # => "Purple--"
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
-  def ljust(len, char : Char = ' ')
-    just len, char, true
+  def ljust(len : Int, char : Char = ' ')
+    just len, char, -1
+  end
+
+  # Adds spaces to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(8, io)
+  # io.to_s # => "Purple  "
+  # ```
+  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
+  def ljust(len : Int, io : IO) : Nil
+    ljust(io, len)
+  end
+
+  # Adds instances of *char* to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(io, 8, '-')
+  # io.to_s # => "Purple--"
+  # ```
+  def ljust(io : IO, len : Int, char : Char = ' ') : Nil
+    io << self
+    (len - size).times { io << char }
+  end
+
+  # Adds instances of *char* to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(8, '-', io)
+  # io.to_s # => "Purple--"
+  # ```
+  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
+  def ljust(len : Int, char : Char, io : IO) : Nil
+    ljust(io, len, char)
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3626,38 +3922,151 @@ class String
   # "Purple".rjust(8, '-') # => "--Purple"
   # "Aubergine".rjust(8)   # => "Aubergine"
   # ```
-  def rjust(len, char : Char = ' ')
-    just len, char, false
+  def rjust(len : Int, char : Char = ' ')
+    just len, char, 1
   end
 
-  private def just(len, char, left)
+  # Adds spaces to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, io)
+  # io.to_s # => "  Purple"
+  # ```
+  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
+  def rjust(len : Int, io : IO) : Nil
+    rjust(io, len)
+  end
+
+  # Adds instances of *char* to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, '-', io)
+  # io.to_s # => "--Purple"
+  # ```
+  def rjust(io : IO, len : Int, char : Char = ' ') : Nil
+    (len - size).times { io << char }
+    io << self
+  end
+
+  # Adds instances of *char* to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, '-', io)
+  # io.to_s # => "--Purple"
+  # ```
+  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
+  def rjust(len : Int, char : Char, io : IO) : Nil
+    rjust(io, len, char)
+  end
+
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*.
+  #
+  # ```
+  # "Purple".center(8)      # => " Purple "
+  # "Purple".center(8, '-') # => "-Purple-"
+  # "Purple".center(9, '-') # => "-Purple--"
+  # "Aubergine".center(8)   # => "Aubergine"
+  # ```
+  def center(len : Int, char : Char = ' ')
+    just len, char, 0
+  end
+
+  # Adds spaces to left and right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, io)
+  # io.to_s # => " Purple  "
+  # ```
+  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
+  def center(len : Int, io : IO) : Nil
+    center(io, len)
+  end
+
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, '-', io)
+  # io.to_s # => "-Purple--"
+  # ```
+  def center(io : IO, len : Int, char : Char = ' ') : Nil
+    difference = len - size
+
+    if difference <= 0
+      io << self
+      return
+    end
+
+    left_padding = difference // 2
+    right_padding = difference - left_padding
+
+    left_padding.times { io << char }
+    io << self
+    right_padding.times { io << char }
+  end
+
+  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, '-', io)
+  # io.to_s # => "-Purple--"
+  # ```
+  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
+  def center(len : Int, char : Char, io : IO) : Nil
+    center(io, len, char)
+  end
+
+  private def just(len, char, justify)
     return self if size >= len
 
     bytes, count = String.char_bytes_and_bytesize(char)
-
-    difference = len - size
-    new_bytesize = bytesize + difference * count
+    padding = (len - size)
+    new_bytesize = bytesize + padding * count
+    case justify
+    when .< 0
+      leftpadding, rightpadding = 0, padding
+    when .> 0
+      leftpadding, rightpadding = padding, 0
+    else
+      leftpadding = padding // 2
+      rightpadding = padding - leftpadding
+    end
 
     String.new(new_bytesize) do |buffer|
-      if left
-        buffer.copy_from(to_unsafe, bytesize)
-        buffer += bytesize
-      end
-
-      if count == 1
-        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, false)
-        buffer += difference
-      else
-        difference.times do
-          buffer.copy_from(bytes.to_unsafe, count)
-          buffer += count
+      if leftpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, leftpadding.to_u32, false)
+          buffer += leftpadding
+        else
+          leftpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
         end
       end
-
-      unless left
-        buffer.copy_from(to_unsafe, bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
+      buffer += bytesize
+      if rightpadding > 0
+        if count == 1
+          Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, rightpadding.to_u32, false)
+        else
+          rightpadding.times do
+            buffer.copy_from(bytes.to_unsafe, count)
+            buffer += count
+          end
+        end
       end
-
       {new_bytesize, len}
     end
   end
@@ -3728,10 +4137,33 @@ class String
   end
 
   # Finds match of *regex*, starting at *pos*.
+  # It also updates `$~` with the result.
+  #
+  # ```
+  # "foo".match(/foo/) # => Regex::MatchData("foo")
+  # $~                 # => Regex::MatchData("foo")
+  #
+  # "foo".match(/bar/) # => nil
+  # $~                 # raises Exception
+  # ```
   def match(regex : Regex, pos = 0) : Regex::MatchData?
     match = regex.match self, pos
     $~ = match
     match
+  end
+
+  # Finds match of *regex* like `#match`, but it returns `Bool` value.
+  # It neither returns `MatchData` nor assigns it to the `$~` variable.
+  #
+  # ```
+  # "foo".matches?(/bar/) # => false
+  # "foo".matches?(/foo/) # => true
+  #
+  # # `$~` is not set even if last match succeeds.
+  # $~ # raises Exception
+  # ```
+  def matches?(regex : Regex, pos = 0) : Bool
+    regex.matches? self, pos
   end
 
   # Searches the string for instances of *pattern*,
@@ -4100,7 +4532,7 @@ class String
   private def dump_hex(char, io)
     io << "\\x"
     io << '0' if char < 0x0F
-    char.to_s(16, io, upcase: true)
+    char.to_s(io, 16, upcase: true)
   end
 
   private def dump_unicode(char, io)
@@ -4109,16 +4541,29 @@ class String
     io << '0' if char.ord < 0x1000
     io << '0' if char.ord < 0x0100
     io << '0' if char.ord < 0x0010
-    char.ord.to_s(16, io, upcase: true)
+    char.ord.to_s(io, 16, upcase: true)
     io << '}' if char.ord > 0xFFFF
   end
 
-  def starts_with?(str : String)
+  # Returns `true` if this string starts with the given *str*.
+  #
+  # ```
+  # "hello".starts_with?("h")  # => true
+  # "hello".starts_with?("he") # => true
+  # "hello".starts_with?("hu") # => false
+  # ```
+  def starts_with?(str : String) : Bool
     return false if str.bytesize > bytesize
     to_unsafe.memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
-  def starts_with?(char : Char)
+  # Returns `true` if this string starts with the given *char*.
+  #
+  # ```
+  # "hello".starts_with?('h') # => true
+  # "hello".starts_with?('e') # => false
+  # ```
+  def starts_with?(char : Char) : Bool
     each_char do |c|
       return c == char
     end
@@ -4126,16 +4571,39 @@ class String
     false
   end
 
-  def starts_with?(re : Regex)
+  # Returns `true` if the regular expression *re* matches at the start of this string.
+  #
+  # ```
+  # "22hello".starts_with?(/[0-9]/) # => true
+  # "22hello".starts_with?(/[a-z]/) # => false
+  # "h22".starts_with?(/[a-z]/)     # => true
+  # "h22".starts_with?(/[A-Z]/)     # => false
+  # "h22".starts_with?(/[a-z]{2}/)  # => false
+  # "hh22".starts_with?(/[a-z]{2}/) # => true
+  # ```
+  def starts_with?(re : Regex) : Bool
     !!($~ = re.match_at_byte_index(self, 0, Regex::Options::ANCHORED))
   end
 
-  def ends_with?(str : String)
+  # Returns `true` if this string ends with the given *str*.
+  #
+  # ```
+  # "hello".ends_with?("o")  # => true
+  # "hello".ends_with?("lo") # => true
+  # "hello".ends_with?("ll") # => false
+  # ```
+  def ends_with?(str : String) : Bool
     return false if str.bytesize > bytesize
     (to_unsafe + bytesize - str.bytesize).memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
-  def ends_with?(char : Char)
+  # Returns `true` if this string ends with the given *char*.
+  #
+  # ```
+  # "hello".ends_with?('o') # => true
+  # "hello".ends_with?('l') # => false
+  # ```
+  def ends_with?(char : Char) : Bool
     return false unless bytesize > 0
 
     if char.ascii? || ascii_only?
@@ -4152,7 +4620,17 @@ class String
     true
   end
 
-  def ends_with?(re : Regex)
+  # Returns `true` if the regular expression *re* matches at the end of this string.
+  #
+  # ```
+  # "22hello".ends_with?(/[0-9]/) # => false
+  # "22hello".ends_with?(/[a-z]/) # => true
+  # "22h".ends_with?(/[a-z]/)     # => true
+  # "22h".ends_with?(/[A-Z]/)     # => false
+  # "22h".ends_with?(/[a-z]{2}/)  # => false
+  # "22hh".ends_with?(/[a-z]{2}/) # => true
+  # ```
+  def ends_with?(re : Regex) : Bool
     !!($~ = /#{re}\z/.match(self))
   end
 
@@ -4291,23 +4769,27 @@ class String
     char_index
   end
 
-  def clone
+  # Returns `self`.
+  def clone : String
     self
   end
 
-  def dup
+  # :ditto:
+  def dup : String
     self
   end
 
+  # :ditto:
   def to_s : String
     self
   end
 
+  # Appends `self` to *io*.
   def to_s(io : IO) : Nil
     io.write_utf8(to_slice)
   end
 
-  # Returns the underlying bytes of this String in an **unsafe** way.
+  # Returns the underlying bytes of this String.
   #
   # The returned slice is read-only.
   def to_slice : Bytes
@@ -4319,11 +4801,17 @@ class String
     pointerof(@c)
   end
 
-  def unsafe_byte_slice(byte_offset, count)
+  # Returns *count* of underlying bytes of this String starting at given *byte_offset*.
+  #
+  # The returned slice is read-only.
+  def unsafe_byte_slice(byte_offset, count) : Slice
     Slice.new(to_unsafe + byte_offset, count, read_only: true)
   end
 
-  def unsafe_byte_slice(byte_offset)
+  # Returns the underlying bytes of this String starting at given *byte_offset*.
+  #
+  # The returned slice is read-only.
+  def unsafe_byte_slice(byte_offset) : Slice
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset, read_only: true)
   end
 

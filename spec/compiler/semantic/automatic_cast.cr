@@ -468,4 +468,28 @@ describe "Semantic: automatic cast" do
       end
       )) { int64 }
   end
+
+  it "doesn't do multidispatch if an overload matches exactly (#8217)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      def foo(*xs : Int64)
+        xs
+      end
+
+      foo(1)
+      )) { int64 }
+  end
+
+  it "autocasts first argument and second matches without autocast" do
+    assert_type(%(
+      def fill(x : Float64, y : Int)
+        x
+      end
+
+      fill(0, 0)
+      )) { float64 }
+  end
 end

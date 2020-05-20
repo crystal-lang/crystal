@@ -1,6 +1,8 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "yaml"
+{% unless flag?(:win32) %}
+  require "yaml"
+{% end %}
 
 describe JSON::Any do
   describe "casts" do
@@ -108,6 +110,11 @@ describe JSON::Any do
       obj.dig?("bar", "baz").should be_nil
       obj.dig?("").should be_nil
     end
+
+    it "returns nil for non-Hash/Array intermediary values" do
+      JSON::Any.new(nil).dig?("foo").should be_nil
+      JSON::Any.new(0.0).dig?("foo").should be_nil
+    end
   end
 
   describe "dig" do
@@ -165,7 +172,7 @@ describe JSON::Any do
     any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
   end
 
-  it "#to_yaml" do
+  pending_win32 "#to_yaml" do
     any = JSON.parse <<-JSON
       {
         "foo": "bar",

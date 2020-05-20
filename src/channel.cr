@@ -18,7 +18,7 @@ require "crystal/pointer_linked_list"
 # channel.receive # => 1
 # ```
 #
-# NOTE: Althought a `Channel(Nil)` or any other nilable types like `Channel(Int32?)` are valid
+# NOTE: Although a `Channel(Nil)` or any other nilable types like `Channel(Int32?)` are valid
 # they are discouraged since from certain methods or constructs it receiving a `nil` as data
 # will be indistinguishable from a closed channel.
 #
@@ -33,7 +33,7 @@ class Channel(T)
     abstract def execute : DeliveryState
     abstract def wait(context : SelectContext(S))
     abstract def wait_result_impl(context : SelectContext(S))
-    abstract def unwait
+    abstract def unwait_impl(context : SelectContext(S))
     abstract def result : S
     abstract def lock_object_id
     abstract def lock
@@ -54,6 +54,15 @@ class Channel(T)
 
     def wait_result(context : SelectContext(S))
       wait_result_impl(context)
+    end
+
+    # idem wait_result/wait_result_impl
+    def unwait(context : SelectContext)
+      raise "BUG: Unexpected call to #{typeof(self)}#unwait(context : #{typeof(context)})"
+    end
+
+    def unwait(context : SelectContext(S))
+      unwait_impl(context)
     end
 
     # Implementor that returns `Channel::UseDefault` in `#execute`
@@ -167,6 +176,13 @@ class Channel(T)
     end
   end
 
+  # Closes the channel.
+  # The method prevents any new value from being sent to / received from the channel.
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  #
+  # Both awaiting and subsequent calls to `#send` will consider the channel closed.
+  # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
+  # Calling `#close` on a closed channel does not have any effect.
   def close : Nil
     sender_list = Crystal::PointerLinkedList(Sender(T)).new
     receiver_list = Crystal::PointerLinkedList(Receiver(T)).new
@@ -186,6 +202,11 @@ class Channel(T)
     @closed
   end
 
+  # Sends a value to the channel.
+  # If the channel has spare capacity, then the method returns immediately.
+  # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
+  #
+  # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
   def send(value : T)
     sender = Sender(T).new
 
@@ -237,13 +258,15 @@ class Channel(T)
   end
 
   # Receives a value from the channel.
-  # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
+  # If there is a value waiting, then it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
   #
   # ```
   # channel = Channel(Int32).new
-  # channel.send(1)
+  # spawn do
+  #   channel.send(1)
+  # end
   # channel.receive # => 1
   # ```
   def receive
@@ -434,9 +457,10 @@ class Channel(T)
     ops_locks.each &.unlock
     Crystal::Scheduler.reschedule
 
-    ops.each do |op|
+    contexts.each_with_index do |context, index|
+      op = ops[index]
       op.lock
-      op.unwait
+      op.unwait(context)
       op.unlock
     end
 
@@ -506,7 +530,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(T))
       if !@channel.closed? && @receiver.state.none?
         @channel.@receivers.delete pointerof(@receiver)
       end
@@ -571,7 +595,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(T))
       if !@channel.closed? && @receiver.state.none?
         @channel.@receivers.delete pointerof(@receiver)
       end
@@ -631,7 +655,7 @@ class Channel(T)
       end
     end
 
-    def unwait
+    def unwait_impl(context : SelectContext(Nil))
       if !@channel.closed? && @sender.state.none?
         @channel.@senders.delete pointerof(@sender)
       end
@@ -653,4 +677,72 @@ class Channel(T)
       raise ClosedError.new
     end
   end
+
+  # :nodoc:
+  class TimeoutAction
+    include SelectAction(Nil)
+
+    # Total amount of time to wait
+    @timeout : Time::Span
+    @select_context : SelectContext(Nil)?
+
+    def initialize(@timeout : Time::Span)
+    end
+
+    def execute : DeliveryState
+      DeliveryState::None
+    end
+
+    def result : Nil
+      nil
+    end
+
+    def wait(context : SelectContext(Nil))
+      @select_context = context
+      Fiber.timeout(@timeout, self)
+    end
+
+    def wait_result_impl(context : SelectContext(Nil))
+      nil
+    end
+
+    def unwait_impl(context : SelectContext(Nil))
+      Fiber.cancel_timeout
+    end
+
+    def lock_object_id
+      self.object_id
+    end
+
+    def lock
+    end
+
+    def unlock
+    end
+
+    def time_expired(fiber : Fiber) : Nil
+      if @select_context.try &.try_trigger
+        Crystal::Scheduler.enqueue fiber
+      end
+    end
+  end
+end
+
+# Timeout keyword for use in `select`.
+#
+# ```
+# select
+# when x = ch.receive
+#   puts "got #{x}"
+# when timeout(1.seconds)
+#   puts "timeout"
+# end
+# ```
+#
+# NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
+#
+# NOTE: Using negative amounts will cause the timeout to not trigger.
+#
+def timeout_select_action(timeout : Time::Span)
+  Channel::TimeoutAction.new(timeout)
 end

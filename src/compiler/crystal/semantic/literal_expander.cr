@@ -293,7 +293,33 @@ module Crystal
     #
     #     String.interpolation("foo", bar, "baz", qux)
     def expand(node : StringInterpolation)
-      Call.new(Path.global("String").at(node), "interpolation", node.expressions).at(node)
+      # We could do `node.expressions.dup` for more purity,
+      # but the string interpolation isn't used later on so this is fine,
+      # and having pieces in a different representation but same end
+      # result is just fine.
+      pieces = node.expressions
+      combine_contiguous_string_literals(pieces)
+      Call.new(Path.global("String").at(node), "interpolation", pieces).at(node)
+    end
+
+    private def combine_contiguous_string_literals(pieces)
+      i = 0
+      pieces.reject! do |piece|
+        delete =
+          if i < pieces.size - 1
+            next_piece = pieces[i + 1]
+            if piece.is_a?(StringLiteral) && next_piece.is_a?(StringLiteral)
+              pieces[i + 1] = StringLiteral.new(piece.value + next_piece.value)
+              true
+            else
+              false
+            end
+          else
+            false
+          end
+        i += 1
+        delete
+      end
     end
 
     # Convert a Case into a series of if ... elseif ... end:
@@ -439,7 +465,9 @@ module Crystal
         a_if = wh_if
       end
 
-      if node_else = node.else
+      if node.exhaustive?
+        a_if.not_nil!.else = node.else || Unreachable.new
+      elsif node_else = node.else
         a_if.not_nil!.else = node_else
       end
 
@@ -500,7 +528,7 @@ module Crystal
       call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
-      a_case = Case.new(case_cond, case_whens, case_else).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)
       Expressions.from([multi, a_case] of ASTNode).at(node)
     end
 
@@ -607,13 +635,17 @@ module Crystal
         case obj
         when Path
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
+        else
+          # no special treatment
         end
+      else
+        # no special treatment
       end
 
       Call.new(cond, "===", right_side)

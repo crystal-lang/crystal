@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 describe "String" do
   describe "[]" do
@@ -188,6 +188,15 @@ describe "String" do
       "hello"[1, 3]?.should eq("ell")
       "hello"[6, 3]?.should be_nil
     end
+
+    it "gets with range without end" do
+      "hello"[1..nil]?.should eq("ello")
+      "hello"[6..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      "hello"[nil..2]?.should eq("hel")
+    end
   end
 
   describe "byte_slice" do
@@ -219,6 +228,15 @@ describe "String" do
 
     it "gets byte_slice with negative index" do
       "hello".byte_slice(-2, 3).should eq("lo")
+    end
+
+    it "gets byte_slice(Int) with start out of bounds" do
+      expect_raises(IndexError) do
+        "hello".byte_slice(10)
+      end
+      expect_raises(IndexError) do
+        "hello".byte_slice(-10)
+      end
     end
   end
 
@@ -512,7 +530,7 @@ describe "String" do
     end
   end
 
-  describe "downcase" do
+  describe "#downcase" do
     it { "HELLO!".downcase.should eq("hello!") }
     it { "HELLO MAN!".downcase.should eq("hello man!") }
     it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
@@ -523,9 +541,22 @@ describe "String" do
     it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
     it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
     it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
+
+    describe "with IO" do
+      it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
+      it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
+      it { String.build { |io| "ÁÉÍÓÚĀ".downcase io }.should eq "áéíóúā" }
+      it { String.build { |io| "AEIİOU".downcase io, Unicode::CaseOptions::Turkic }.should eq "aeıiou" }
+      it { String.build { |io| "ÁEÍOÚ".downcase io, Unicode::CaseOptions::ASCII }.should eq "ÁeÍoÚ" }
+      it { String.build { |io| "İ".downcase io }.should eq "i̇" }
+      it { String.build { |io| "Baﬄe".downcase io, Unicode::CaseOptions::Fold }.should eq "baffle" }
+      it { String.build { |io| "ﬀ".downcase io, Unicode::CaseOptions::Fold }.should eq "ff" }
+      it { String.build { |io| "tschüß".downcase io, Unicode::CaseOptions::Fold }.should eq "tschüss" }
+      it { String.build { |io| "ΣίσυφοςﬁÆ".downcase io, Unicode::CaseOptions::Fold }.should eq "σίσυφοσfiæ" }
+    end
   end
 
-  describe "upcase" do
+  describe "#upcase" do
     it { "hello!".upcase.should eq("HELLO!") }
     it { "hello man!".upcase.should eq("HELLO MAN!") }
     it { "áéíóúā".upcase.should eq("ÁÉÍÓÚĀ") }
@@ -535,14 +566,54 @@ describe "String" do
     it { "baﬄe".upcase.should eq("BAFFLE") }
     it { "ﬀ".upcase.should eq("FF") }
     it { "ňž".upcase.should eq("ŇŽ") } # #7922
+
+    describe "with IO" do
+      it { String.build { |io| "hello!".upcase io }.should eq "HELLO!" }
+      it { String.build { |io| "hello man!".upcase io }.should eq "HELLO MAN!" }
+      it { String.build { |io| "áéíóúā".upcase io }.should eq "ÁÉÍÓÚĀ" }
+      it { String.build { |io| "aeıiou".upcase io, Unicode::CaseOptions::Turkic }.should eq "AEIİOU" }
+      it { String.build { |io| "áeíoú".upcase io, Unicode::CaseOptions::ASCII }.should eq "áEíOú" }
+      it { String.build { |io| "aeiou".upcase io, Unicode::CaseOptions::Turkic }.should eq "AEİOU" }
+      it { String.build { |io| "baﬄe".upcase io }.should eq "BAFFLE" }
+      it { String.build { |io| "ff".upcase io }.should eq "FF" }
+      it { String.build { |io| "ňž".upcase io }.should eq "ŇŽ" }
+    end
   end
 
-  describe "capitalize" do
+  describe "#capitalize" do
     it { "HELLO!".capitalize.should eq("Hello!") }
     it { "HELLO MAN!".capitalize.should eq("Hello man!") }
     it { "".capitalize.should eq("") }
     it { "ﬄİ".capitalize.should eq("FFLi̇") }
     it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
+
+    describe "with IO" do
+      it { String.build { |io| "HELLO!".capitalize io }.should eq "Hello!" }
+      it { String.build { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
+      it { String.build { |io| "".capitalize io }.should be_empty }
+      it { String.build { |io| "ﬄİ".capitalize io }.should eq "FFLi̇" }
+      it { String.build { |io| "iO".capitalize io, Unicode::CaseOptions::Turkic }.should eq "İo" }
+    end
+  end
+
+  describe "#titleize" do
+    it { "hEllO tAb\tworld".titleize.should eq("Hello Tab\tWorld") }
+    it { "  spaces before".titleize.should eq("  Spaces Before") }
+    it { "testa-se muito".titleize.should eq("Testa-se Muito") }
+    it { "hÉllÕ tAb\tworld".titleize.should eq("Héllõ Tab\tWorld") }
+    it { "  spáçes before".titleize.should eq("  Spáçes Before") }
+    it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
+    it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+
+    describe "with IO" do
+      it { String.build { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
+      it { String.build { |io| "  spaces before".titleize io }.should eq "  Spaces Before" }
+      it { String.build { |io| "testa-se muito".titleize io }.should eq "Testa-se Muito" }
+      it { String.build { |io| "hÉllÕ tAb\tworld".titleize io }.should eq "Héllõ Tab\tWorld" }
+      it { String.build { |io| "  spáçes before".titleize io }.should eq "  Spáçes Before" }
+      it { String.build { |io| "testá-se múitô".titleize io }.should eq "Testá-se Múitô" }
+      it { String.build { |io| "iO iO".titleize io, Unicode::CaseOptions::Turkic }.should eq "İo İo" }
+    end
   end
 
   describe "chomp" do
@@ -911,6 +982,14 @@ describe "String" do
     it { "foo".byte_index('o'.ord).should eq(1) }
     it { "foo bar booz".byte_index('o'.ord, 3).should eq(9) }
     it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('a'.ord).should be_nil }
+    it { "foo".byte_index('o'.ord, 3).should be_nil }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z'.ord).should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
+    }
 
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
@@ -1308,6 +1387,26 @@ describe "String" do
     it "subs beginless range with string" do
       "hello".sub(nil..2, "ye").should eq("yelo")
     end
+
+    it "subs the last char" do
+      str = "hello"
+      str.sub('o', 'a').should eq("hella")
+      str.sub('o', "ad").should eq("hellad")
+      str.sub(4, 'a').should eq("hella")
+      str.sub(4, "ad").should eq("hellad")
+      str.sub(4..4, 'a').should eq("hella")
+      str.sub(4..4, "ad").should eq("hellad")
+      str.sub({'a' => 'b', 'o' => 'a'}).should eq("hella")
+      str.sub({'a' => 'b', 'o' => "ad"}).should eq("hellad")
+      str.sub(/o/, 'a').should eq("hella")
+      str.sub(/o/, "ad").should eq("hellad")
+      str.sub(/o/) { 'a' }.should eq("hella")
+      str.sub(/o/) { "ad" }.should eq("hellad")
+      str.sub(/(o)/, {"o" => 'a'}).should eq("hella")
+      str.sub(/(o)/, {"o" => "ad"}).should eq("hellad")
+      str.sub(/(o)/) { 'a' }.should eq("hella")
+      str.sub(/(o)/) { "ad" }.should eq("hellad")
+    end
   end
 
   describe "gsub" do
@@ -1498,7 +1597,7 @@ describe "String" do
   it "#dump" do
     "a".dump.should eq %("a")
     "\\".dump.should eq %("\\\\")
-    "\"".dump.should eq %("\\\"")
+    "\"".dump.should eq %("\\"")
     "\a".dump.should eq %("\\a")
     "\b".dump.should eq %("\\b")
     "\e".dump.should eq %("\\e")
@@ -1526,7 +1625,7 @@ describe "String" do
   it "#inspect" do
     "a".inspect.should eq %("a")
     "\\".inspect.should eq %("\\\\")
-    "\"".inspect.should eq %("\\\"")
+    "\"".inspect.should eq %("\\"")
     "\a".inspect.should eq %("\\a")
     "\b".inspect.should eq %("\\b")
     "\e".inspect.should eq %("\\e")
@@ -1668,6 +1767,11 @@ describe "String" do
     ("こんに%xちは" % 123).should eq("こんに7bちは")
     ("こんに%Xちは" % 123).should eq("こんに7Bちは")
 
+    span = 1.second
+    ("%s" % span).should eq(span.to_s)
+  end
+
+  pending_win32 "does % with floats" do
     ("%f" % 123).should eq("123.000000")
 
     ("%g" % 123).should eq("123")
@@ -1687,9 +1791,6 @@ describe "String" do
     ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
     ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
-
-    span = 1.second
-    ("%s" % span).should eq(span.to_s)
 
     ("%.2f" % 2.536_f32).should eq("2.54")
     ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
@@ -1811,32 +1912,58 @@ describe "String" do
     end
   end
 
-  it "does underscore" do
-    "Foo".underscore.should eq("foo")
-    "FooBar".underscore.should eq("foo_bar")
-    "ABCde".underscore.should eq("ab_cde")
-    "FOO_bar".underscore.should eq("foo_bar")
-    "Char_S".underscore.should eq("char_s")
-    "Char_".underscore.should eq("char_")
-    "C_".underscore.should eq("c_")
-    "HTTP".underscore.should eq("http")
-    "HTTP_CLIENT".underscore.should eq("http_client")
-    "CSS3".underscore.should eq("css3")
-    "HTTP1.1".underscore.should eq("http1.1")
-    "3.14IsPi".underscore.should eq("3.14_is_pi")
-    "I2C".underscore.should eq("i2_c")
+  describe "#underscore" do
+    it { "Foo".underscore.should eq "foo" }
+    it { "FooBar".underscore.should eq "foo_bar" }
+    it { "ABCde".underscore.should eq "ab_cde" }
+    it { "FOO_bar".underscore.should eq "foo_bar" }
+    it { "Char_S".underscore.should eq "char_s" }
+    it { "Char_".underscore.should eq "char_" }
+    it { "C_".underscore.should eq "c_" }
+    it { "HTTP".underscore.should eq "http" }
+    it { "HTTP_CLIENT".underscore.should eq "http_client" }
+    it { "CSS3".underscore.should eq "css3" }
+    it { "HTTP1.1".underscore.should eq "http1.1" }
+    it { "3.14IsPi".underscore.should eq "3.14_is_pi" }
+    it { "I2C".underscore.should eq "i2_c" }
+
+    describe "with IO" do
+      it { String.build { |io| "Foo".underscore io }.should eq "foo" }
+      it { String.build { |io| "FooBar".underscore io }.should eq "foo_bar" }
+      it { String.build { |io| "ABCde".underscore io }.should eq "ab_cde" }
+      it { String.build { |io| "FOO_bar".underscore io }.should eq "foo_bar" }
+      it { String.build { |io| "Char_S".underscore io }.should eq "char_s" }
+      it { String.build { |io| "Char_".underscore io }.should eq "char_" }
+      it { String.build { |io| "C_".underscore io }.should eq "c_" }
+      it { String.build { |io| "HTTP".underscore io }.should eq "http" }
+      it { String.build { |io| "HTTP_CLIENT".underscore io }.should eq "http_client" }
+      it { String.build { |io| "CSS3".underscore io }.should eq "css3" }
+      it { String.build { |io| "HTTP1.1".underscore io }.should eq "http1.1" }
+      it { String.build { |io| "3.14IsPi".underscore io }.should eq "3.14_is_pi" }
+      it { String.build { |io| "I2C".underscore io }.should eq "i2_c" }
+    end
   end
 
-  it "does camelcase" do
-    "foo".camelcase.should eq("Foo")
-    "foo_bar".camelcase.should eq("FooBar")
-    "foo".camelcase(lower: true).should eq("foo")
-    "foo_bar".camelcase(lower: true).should eq("fooBar")
+  describe "#camelcase" do
+    it { "foo".camelcase.should eq "Foo" }
+    it { "foo_bar".camelcase.should eq "FooBar" }
+    it { "foo".camelcase(lower: true).should eq "foo" }
+    it { "foo_bar".camelcase(lower: true).should eq "fooBar" }
+    it { "Foo".camelcase.should eq "Foo" }
+    it { "Foo_bar".camelcase.should eq "FooBar" }
+    it { "Foo".camelcase(lower: true).should eq "foo" }
+    it { "Foo_bar".camelcase(lower: true).should eq "fooBar" }
 
-    "Foo".camelcase.should eq("Foo")
-    "Foo_bar".camelcase.should eq("FooBar")
-    "Foo".camelcase(lower: true).should eq("foo")
-    "Foo_bar".camelcase(lower: true).should eq("fooBar")
+    describe "with IO" do
+      it { String.build { |io| "foo".camelcase io }.should eq "Foo" }
+      it { String.build { |io| "foo_bar".camelcase io }.should eq "FooBar" }
+      it { String.build { |io| "foo".camelcase io, lower: true }.should eq "foo" }
+      it { String.build { |io| "foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+      it { String.build { |io| "Foo".camelcase io }.should eq "Foo" }
+      it { String.build { |io| "Foo_bar".camelcase io }.should eq "FooBar" }
+      it { String.build { |io| "Foo".camelcase io, lower: true }.should eq "foo" }
+      it { String.build { |io| "Foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+    end
   end
 
   it "answers ascii_only?" do
@@ -1935,6 +2062,11 @@ describe "String" do
     match[0].should eq("")
   end
 
+  it "matches, but returns Bool" do
+    "foo".matches?(/foo/).should eq(true)
+    "foo".matches?(/bar/).should eq(false)
+  end
+
   it "has size (same as size)" do
     "テスト".size.should eq(3)
   end
@@ -1950,12 +2082,12 @@ describe "String" do
     it { "hello world\\r\\n".count("\\A").should eq(0) }
     it { "hello world\\r\\n".count("X-\\w").should eq(3) }
     it { "aabbcc".count('a').should eq(2) }
-    it { "aabbcc".count { |c| ['a', 'b'].includes?(c) }.should eq(4) }
+    it { "aabbcc".count(&.in?('a', 'b')).should eq(4) }
   end
 
   describe "squeeze" do
-    it { "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) }.should eq("abccc") }
-    it { "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
+    it { "aaabbbccc".squeeze(&.in?('a', 'b')).should eq("abccc") }
+    it { "aaabbbccc".squeeze(&.in?('a', 'c')).should eq("abbbc") }
     it { "a       bbb".squeeze.should eq("a b") }
     it { "a    bbb".squeeze(' ').should eq("a bbb") }
     it { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
@@ -1966,6 +2098,20 @@ describe "String" do
     it { "123".ljust(5).should eq("123  ") }
     it { "12".ljust(7, '-').should eq("12-----") }
     it { "12".ljust(7, 'あ').should eq("12あああああ") }
+
+    describe "to io" do
+      it { String.build { |io| "123".ljust(io, 2) }.should eq("123") }
+      it { String.build { |io| "123".ljust(io, 5) }.should eq("123  ") }
+      it { String.build { |io| "12".ljust(io, 7, '-') }.should eq("12-----") }
+      it { String.build { |io| "12".ljust(io, 7, 'あ') }.should eq("12あああああ") }
+    end
+
+    describe "to io (deprecated)" do
+      it { String.build { |io| "123".ljust(2, io) }.should eq("123") }
+      it { String.build { |io| "123".ljust(5, io) }.should eq("123  ") }
+      it { String.build { |io| "12".ljust(7, '-', io) }.should eq("12-----") }
+      it { String.build { |io| "12".ljust(7, 'あ', io) }.should eq("12あああああ") }
+    end
   end
 
   describe "rjust" do
@@ -1973,6 +2119,41 @@ describe "String" do
     it { "123".rjust(5).should eq("  123") }
     it { "12".rjust(7, '-').should eq("-----12") }
     it { "12".rjust(7, 'あ').should eq("あああああ12") }
+
+    describe "to io" do
+      it { String.build { |io| "123".rjust(io, 2) }.should eq("123") }
+      it { String.build { |io| "123".rjust(io, 5) }.should eq("  123") }
+      it { String.build { |io| "12".rjust(io, 7, '-') }.should eq("-----12") }
+      it { String.build { |io| "12".rjust(io, 7, 'あ') }.should eq("あああああ12") }
+    end
+
+    describe "to io (deprecated)" do
+      it { String.build { |io| "123".rjust(2, io) }.should eq("123") }
+      it { String.build { |io| "123".rjust(5, io) }.should eq("  123") }
+      it { String.build { |io| "12".rjust(7, '-', io) }.should eq("-----12") }
+      it { String.build { |io| "12".rjust(7, 'あ', io) }.should eq("あああああ12") }
+    end
+  end
+
+  describe "center" do
+    it { "123".center(2).should eq("123") }
+    it { "123".center(5).should eq(" 123 ") }
+    it { "12".center(7, '-').should eq("--12---") }
+    it { "12".center(7, 'あ').should eq("ああ12あああ") }
+
+    describe "to io" do
+      it { String.build { |io| "123".center(io, 2) }.should eq("123") }
+      it { String.build { |io| "123".center(io, 5) }.should eq(" 123 ") }
+      it { String.build { |io| "12".center(io, 7, '-') }.should eq("--12---") }
+      it { String.build { |io| "12".center(io, 7, 'あ') }.should eq("ああ12あああ") }
+    end
+
+    describe "to io (deprecated)" do
+      it { String.build { |io| "123".center(2, io) }.should eq("123") }
+      it { String.build { |io| "123".center(5, io) }.should eq(" 123 ") }
+      it { String.build { |io| "12".center(7, '-', io) }.should eq("--12---") }
+      it { String.build { |io| "12".center(7, 'あ', io) }.should eq("ああ12あああ") }
+    end
   end
 
   describe "succ" do
@@ -2030,7 +2211,7 @@ describe "String" do
     sprintf("Hello %d world", [123]).should eq("Hello 123 world")
   end
 
-  it "formats floats (#1562)" do
+  pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
   end
 
@@ -2045,6 +2226,8 @@ describe "String" do
         c.should eq('b')
       when 2
         c.should eq('c')
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -2097,6 +2280,8 @@ describe "String" do
         b.should eq('b'.ord)
       when 2
         b.should eq('c'.ord)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -2184,7 +2369,7 @@ describe "String" do
     "ab☃".codepoints.should eq [97, 98, 9731]
   end
 
-  it "gets size of \0 string" do
+  it "gets size of \\0 string" do
     "\0\0".size.should eq(2)
   end
 
@@ -2262,7 +2447,7 @@ describe "String" do
       end
     end
 
-    it "applies formatting to %<...> placeholder" do
+    pending_win32 "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
 
@@ -2352,7 +2537,7 @@ describe "String" do
     end
   end
 
-  describe "encode" do
+  pending_win32 describe: "encode" do
     it "encodes" do
       bytes = "Hello".encode("UCS-2LE")
       bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
@@ -2372,22 +2557,22 @@ describe "String" do
 
     it "raises if illegal byte sequence" do
       expect_raises ArgumentError, "Invalid multibyte sequence" do
-        "ñ".encode("GB2312")
+        "\xff".encode("EUC-JP")
       end
     end
 
     it "doesn't raise on invalid byte sequence" do
-      "好ñ是".encode("GB2312", invalid: :skip).to_a.should eq([186, 195, 202, 199])
+      "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
     end
 
     it "raises if incomplete byte sequence" do
       expect_raises ArgumentError, "Incomplete multibyte sequence" do
-        "好".byte_slice(0, 1).encode("GB2312")
+        "好".byte_slice(0, 1).encode("EUC-JP")
       end
     end
 
     it "doesn't raise if incomplete byte sequence" do
-      ("好".byte_slice(0, 1) + "是").encode("GB2312", invalid: :skip).to_a.should eq([202, 199])
+      ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
     end
 
     it "decodes" do
@@ -2396,8 +2581,8 @@ describe "String" do
     end
 
     it "decodes with skip" do
-      bytes = Bytes[186, 195, 140, 202, 199]
-      String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
+      bytes = Bytes[186, 195, 255, 202, 199]
+      String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
     end
   end
 

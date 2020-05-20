@@ -51,17 +51,25 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def initialize(io, context : Context::Server = Context::Server.new,
+                   sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
-      begin
-        ret = LibSSL.ssl_accept(@ssl)
-        unless ret == 1
-          io.close if sync_close
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+
+      if accept
+        begin
+          self.accept
+        rescue ex
+          LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+          raise ex
         end
-      rescue ex
-        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
-        raise ex
+      end
+    end
+
+    def accept
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        @bio.io.close if @sync_close
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
 
@@ -115,7 +123,13 @@ abstract class OpenSSL::SSL::Socket < IO
 
     LibSSL.ssl_read(@ssl, slice.to_unsafe, count).tap do |bytes|
       if bytes <= 0 && !LibSSL.ssl_get_error(@ssl, bytes).zero_return?
-        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        ex = OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+        if ex.underlying_eof?
+          # underlying BIO terminated gracefully, without terminating SSL aspect gracefully first
+          # some misbehaving servers "do this" so treat as EOF even though it's a protocol error
+          return 0
+        end
+        raise ex
       end
     end
   end
@@ -130,7 +144,6 @@ abstract class OpenSSL::SSL::Socket < IO
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
-    nil
   end
 
   def unbuffered_flush
@@ -154,7 +167,8 @@ abstract class OpenSSL::SSL::Socket < IO
       loop do
         begin
           ret = LibSSL.ssl_shutdown(@ssl)
-          break if ret == 1
+          break if ret == 1                # done bidirectional
+          break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
         rescue e : OpenSSL::SSL::Error
           case e.error

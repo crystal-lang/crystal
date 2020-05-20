@@ -267,7 +267,7 @@ describe "Semantic: ssa" do
         LibC.exit
       end
       a
-      )) { union_of [int32, char, string] of Type }
+      )) { string }
   end
 
   it "types a var after rescue as being nilable" do

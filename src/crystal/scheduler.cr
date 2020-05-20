@@ -243,14 +243,14 @@ class Crystal::Scheduler
       if env_workers && !env_workers.empty?
         workers = env_workers.to_i?
         if !workers || workers < 1
-          LibC.dprintf 2, "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
+          Crystal::System.print_error "FATAL: Invalid value for CRYSTAL_WORKERS: #{env_workers}\n"
           exit 1
         end
 
         workers
       else
-        # TODO: default worker count, currenlty hardcoded to 4 that seems to be something
-        # that is benefitial for many scenarios without adding too much contention.
+        # TODO: default worker count, currently hardcoded to 4 that seems to be something
+        # that is beneficial for many scenarios without adding too much contention.
         # In the future we could use the number of cores or something associated to it.
         4
       end

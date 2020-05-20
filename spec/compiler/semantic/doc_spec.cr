@@ -82,7 +82,7 @@ describe "Semantic: doc" do
         def bar
         end
 
-        # ditto
+        # :ditto:
         def bar2
         end
       end

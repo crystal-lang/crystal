@@ -386,6 +386,8 @@ while true
         speed_down[3] = true
       when LibSDL::Key::L
         turn_right[3] = true
+      else
+        # ignore
       end
     when LibSDL::KEYUP
       case event.key.key_sym.sym
@@ -421,7 +423,11 @@ while true
         speed_down[3] = false
       when LibSDL::Key::L
         turn_right[3] = false
+      else
+        # ignore
       end
+    else
+      # ignore
     end
   end
 

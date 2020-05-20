@@ -297,6 +297,8 @@ struct Time::Format
         next_char
       when '+'
         next_char
+      else
+        # no sign prefix
       end
 
       @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
@@ -332,7 +334,7 @@ struct Time::Format
     end
 
     def time_zone_z
-      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+      raise "Invalid timezone" unless current_char.in?('Z', 'z')
 
       @location = Location::UTC
       next_char

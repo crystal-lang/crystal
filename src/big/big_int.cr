@@ -53,7 +53,7 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, num)
@@ -62,22 +62,22 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Float::Primitive)
     LibGMP.init_set_d(out @mpz, num)
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigFloat)
     num.to_big_i
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigDecimal)
     num.to_big_i
   end
 
-  # ditto
+  # :ditto:
   def self.new(num : BigRational)
     num.to_big_i
   end
@@ -165,6 +165,15 @@ struct BigInt < Int
 
   def abs : BigInt
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
+  end
+
+  def factorial : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
   end
 
   def *(other : BigInt) : BigInt
@@ -355,6 +364,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
+  # :nodoc:
+  #
+  # Because every Int needs this method.
+  def unsafe_shr(count : Int) : self
+    self >> count
+  end
+
   def <<(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
   end
@@ -383,6 +399,10 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
+  def bit_length : Int32
+    LibGMP.sizeinbase(self, 2).to_i
+  end
+
   # TODO: improve this
   def_hash to_u64
 
@@ -397,7 +417,7 @@ struct BigInt < Int
     String.new(to_cstr)
   end
 
-  # ditto
+  # :ditto:
   def to_s(io : IO) : Nil
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
@@ -493,10 +513,11 @@ struct BigInt < Int
   end
 
   def to_u32
-    LibGMP.get_ui(self).to_u32
+    to_u64.to_u32
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
       LibGMP.get_ui(self).to_u64
     else

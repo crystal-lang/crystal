@@ -193,6 +193,8 @@ describe "NamedTuple" do
       when 1
         key.should eq(:b)
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -208,6 +210,8 @@ describe "NamedTuple" do
         key.should eq(:a)
       when 1
         key.should eq(:b)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -223,6 +227,8 @@ describe "NamedTuple" do
         value.should eq(1)
       when 1
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -242,6 +248,8 @@ describe "NamedTuple" do
         key.should eq(:b)
         value.should eq("hello")
         index.should eq(1)
+      else
+        fail "shouldn't happen"
       end
       i += 1
     end.should be_nil
@@ -342,6 +350,11 @@ describe "NamedTuple" do
   it "does keys" do
     tup = {a: 1, b: 2}
     tup.keys.should eq({:a, :b})
+  end
+
+  it "does sorted_keys" do
+    tup = {foo: 1, bar: 2, baz: 3}
+    tup.sorted_keys.should eq({:bar, :baz, :foo})
   end
 
   it "does values" do

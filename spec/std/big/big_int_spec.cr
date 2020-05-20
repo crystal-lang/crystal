@@ -145,6 +145,28 @@ describe "BigInt" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
@@ -363,6 +385,8 @@ describe "BigInt" do
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
+
     u64 = big.to_u64
     u64.should eq(1234567890)
     u64.should be_a(UInt64)
@@ -405,6 +429,10 @@ describe "BigInt" do
   describe "#humanize_bytes" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
   end
 end
 

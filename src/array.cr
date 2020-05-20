@@ -536,13 +536,14 @@ class Array(T)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
-  # Like `#[Range(Int, Int)]`, but returns `nil` if the range's start is out of range.
+  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[6..10]? # => nil
+  # a[6..]?   # => nil
   # ```
-  def []?(range : Range(Int, Int))
+  def []?(range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
@@ -664,7 +665,7 @@ class Array(T)
     self
   end
 
-  # ditto
+  # :ditto:
   def concat(other : Enumerable)
     left_before_resize = @capacity - @size
     len = @size
@@ -859,7 +860,17 @@ class Array(T)
   # a.fill(9) # => [9, 9, 9]
   # ```
   def fill(value : T)
-    fill { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        to_unsafe.clear(size)
+
+        self
+      else
+        fill { value }
+      end
+    {% else %}
+      fill { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
@@ -871,7 +882,21 @@ class Array(T)
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
   def fill(value : T, from : Int)
-    fill(from) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size
+
+        (to_unsafe + from).clear(size - from)
+
+        self
+      else
+        fill(from) { value }
+      end
+    {% else %}
+      fill(from) { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from* and only *count* times,
@@ -884,7 +909,23 @@ class Array(T)
   # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, from : Int, count : Int)
-    fill(from, count) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        return self if count <= 0
+
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size && from + count <= size
+
+        (to_unsafe + from).clear(count)
+
+        self
+      else
+        fill(from, count) { value }
+      end
+    {% else %}
+      fill(from, count) { value }
+    {% end %}
   end
 
   # Replaces every element in *range* with *value*. Returns `self`.
@@ -896,7 +937,17 @@ class Array(T)
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, range : Range)
-    fill(range) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        fill(value, *Indexable.range_to_index_and_count(range, size))
+
+        self
+      else
+        fill(range) { value }
+      end
+    {% else %}
+      fill(range) { value }
+    {% end %}
   end
 
   # Returns the first *n* elements of the array.
@@ -1868,7 +1919,7 @@ class Array(T)
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << ']'
     end
     io << "[...]" unless executed

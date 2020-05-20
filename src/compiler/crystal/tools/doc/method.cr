@@ -20,7 +20,7 @@ class Crystal::Doc::Method
 
   def name
     name = @def.name
-    if @generator.is_crystal_repo
+    if @generator.project_info.crystal_stdlib?
       name.lchop(PSEUDO_METHOD_PREFIX)
     else
       name
@@ -148,7 +148,7 @@ class Crystal::Doc::Method
         end
       end
     end
-    {type.name, "self"}.includes?(return_type.to_s)
+    return_type.to_s.in?(type.name, "self")
   end
 
   def abstract?
@@ -194,7 +194,7 @@ class Crystal::Doc::Method
   end
 
   def html_id
-    HTML.escape(id)
+    id
   end
 
   def anchor
@@ -250,6 +250,8 @@ class Crystal::Doc::Method
     end
 
     case return_type
+    when Nil
+      # Nothing to do
     when ASTNode
       io << " : "
       node_to_html return_type, io, links: links
@@ -260,7 +262,7 @@ class Crystal::Doc::Method
 
     if free_vars = @def.free_vars
       io << " forall "
-      free_vars.join(", ", io)
+      free_vars.join(io, ", ")
     end
 
     io
@@ -268,7 +270,7 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
-      name = arg.external_name.empty? ? "_" : arg.external_name
+      name = arg.external_name.presence || "_"
       if Symbol.needs_quotes? name
         HTML.escape name.inspect, io
       else

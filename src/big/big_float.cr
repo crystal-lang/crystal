@@ -132,7 +132,7 @@ struct BigFloat < Float
   end
 
   def /(other : BigFloat)
-    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinitiy
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other) }
   end
@@ -234,6 +234,7 @@ struct BigFloat < Float
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     LibGMP.mpf_get_ui(self)
   end
 

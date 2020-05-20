@@ -99,7 +99,7 @@ module Iterator(T)
     Iterator.stop
   end
 
-  # ditto
+  # :ditto:
   def self.stop
     Stop::INSTANCE
   end
@@ -314,7 +314,7 @@ module Iterator(T)
   # Returns an iterator that returns consecutive pairs of adjacent items.
   #
   # ```
-  # iter = (1..5).each.cons
+  # iter = (1..5).each.cons_pair
   # iter.next # => {1, 2}
   # iter.next # => {2, 3}
   # iter.next # => {3, 4}

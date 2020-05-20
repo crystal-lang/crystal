@@ -135,8 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      getter debug_variable_created : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_variable_created = false)
       end
     end
 
@@ -183,9 +184,7 @@ module Crystal
 
       if @program.has_flag? "windows"
         @personality_name = "__CxxFrameHandler3"
-
-        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
-        @main.personality_function = personality_function
+        @main.personality_function = windows_personality_fun
       else
         @personality_name = "__crystal_personality"
       end
@@ -310,7 +309,10 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
+        else
+          # go on
         end
+
         false
       end
 
@@ -1109,6 +1111,8 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
+      else
+        # go on
       end
 
       @last = llvm_nil
@@ -1320,6 +1324,7 @@ module Crystal
         location = Location.new(@program.filename, 1, 1)
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
         @program.visit_main call
+        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call
       end
     end
@@ -1345,7 +1350,17 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= begin
+        pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
+        debug_variable_created =
+          if context.fun.naked?
+            # Naked functions must not have debug info associated with them
+            false
+          else
+            declare_variable(var.name, var.type, pointer, var.location)
+          end
+        LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
+      end
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1509,6 +1524,10 @@ module Crystal
       end
 
       false
+    end
+
+    def visit(node : Unreachable)
+      builder.unreachable
     end
 
     def check_proc_is_not_closure(value, type)
@@ -1712,8 +1731,20 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = builder.alloca llvm_type(var_type), name
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            ptr = alloca llvm_type(var_type), name
+
+            location = var.location
+            if location.nil? && obj.is_a?(ASTNode)
+              location = obj.location
+            end
+
+            debug_variable_created =
+              if location && !context.fun.naked?
+                declare_variable name, var_type, ptr, location, alloca_block
+              else
+                false
+              end
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -2042,12 +2073,14 @@ module Crystal
     end
 
     def memset(pointer, value, size)
+      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+
       pointer = cast_to_void_pointer pointer
       res = call @program.memset(@llvm_mod, llvm_context),
         if LibLLVM::IS_LT_70
-          [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+          [pointer, value, len_arg, int32(4), int1(0)]
         else
-          [pointer, value, trunc(size, llvm_context.int32), int1(0)]
+          [pointer, value, len_arg, int1(0)]
         end
 
       unless LibLLVM::IS_LT_70
@@ -2177,7 +2210,7 @@ module Crystal
             str << char
           else
             str << '.'
-            char.ord.to_s(16, str, upcase: true)
+            char.ord.to_s(str, 16, upcase: true)
             str << '.'
           end
         end
@@ -2197,28 +2230,34 @@ module Crystal
     end
 
     def memset(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memset.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
 
     def memcpy(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
   end

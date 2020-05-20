@@ -761,4 +761,90 @@ describe "Code gen: proc" do
       f.call(20)
       )).to_i.should eq(21)
   end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    run(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      a = 1
+      proc = foo(->{ a = 2 })
+      proc.call
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block = ->{ a = 2 }
+
+      Foo.new(block).call
+
+      a
+      )).to_i.should eq(2)
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, using union type (#3655)" do
+    run(%(
+      class Foo
+        @block : -> Nil
+
+        def initialize(@block)
+        end
+
+        def call
+          @block.call
+        end
+      end
+
+      a = 1
+      block1 = ->{ a = 2 }
+      block2 = ->{ a = 3; nil }
+
+      Foo.new(block2 || block1).call
+
+      a
+      )).to_i.should eq(3)
+  end
+
+  it "calls function pointer" do
+    run(%(
+      require "prelude"
+
+      fun foo(f : Int32 -> Int32) : Int32
+        f.call(1)
+      end
+
+      foo(->(x : Int32) { x &+ 1 })
+    )).to_i.should eq(2)
+  end
+
+  it "casts from function pointer to proc" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        Pointer(Proc((Void* -> Void*), Void*)).new(0_u64).value.call(a)
+      end
+    ))
+  end
+
+  it "takes pointerof function pointer" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        pointerof(a).value.call(Pointer(Void).new(0_u64))
+      end
+    ))
+  end
 end

@@ -216,7 +216,7 @@ class Crystal::Call
             str << ".."
             str << all_arguments_sizes.last
           else
-            all_arguments_sizes.join ", ", str
+            all_arguments_sizes.join str, ", "
           end
 
           str << '+' if min_splat != Int32::MAX
@@ -268,7 +268,7 @@ class Crystal::Call
           msg << " with type"
           msg << 's' if arg_types.size > 1 || named_args_types
           msg << ' '
-          arg_types.join(", ", msg)
+          arg_types.join(msg, ", ")
         end
 
         if named_args_types
@@ -459,7 +459,7 @@ class Crystal::Call
       str << '*' if a_def.splat_index == i
 
       if arg.external_name != arg.name
-        str << (arg.external_name.empty? ? '_' : arg.external_name)
+        str << (arg.external_name.presence || '_')
         str << ' '
       end
 
@@ -629,9 +629,11 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      unless scope_type.has_protected_acces_to?(owner_type)
+      unless scope_type.has_protected_access_to?(owner_type)
         raise "protected method '#{match.def.name}' called for #{match.def.owner}"
       end
+    when .public?
+      # okay
     end
   end
 

@@ -51,7 +51,7 @@ module Crystal
         interpret_debug(node)
       when "env"
         interpret_env(node)
-      when "flag?"
+      when "flag?", "host_flag?"
         interpret_flag?(node)
       when "puts"
         interpret_puts(node)
@@ -145,10 +145,18 @@ module Crystal
     def interpret_flag?(node)
       if node.args.size == 1
         node.args[0].accept self
-        flag = @last.to_macro_id
-        @last = BoolLiteral.new(@program.has_flag?(flag))
+        flag_name = @last.to_macro_id
+        flags = case node.name
+                when "flag?"
+                  @program.flags
+                when "host_flag?"
+                  @program.host_flags
+                else
+                  raise "Bug: unexpected macro method #{node.name}"
+                end
+        @last = BoolLiteral.new(flags.includes?(flag_name))
       else
-        node.wrong_number_of_arguments "macro call 'flag?'", node.args.size, 1
+        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end
     end
 
@@ -752,6 +760,8 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "titleize"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.titleize) }
       when "to_i"
         case args.size
         when 0
@@ -840,6 +850,21 @@ module Crystal
         end
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
+      when "each"
+        interpret_argless_method(method, args) do
+          raise "each expects a block" unless block
+
+          block_arg_key = block.args[0]?
+          block_arg_value = block.args[1]?
+
+          entries.each do |entry|
+            interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
+            interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+            interpreter.accept block.body
+          end
+
+          NilLiteral.new
+        end
       when "map"
         interpret_argless_method(method, args) do
           raise "map expects a block" unless block
@@ -934,6 +959,21 @@ module Crystal
         end
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
+      when "each"
+        interpret_argless_method(method, args) do
+          raise "each expects a block" unless block
+
+          block_arg_key = block.args[0]?
+          block_arg_value = block.args[1]?
+
+          entries.each do |entry|
+            interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
+            interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+            interpreter.accept block.body
+          end
+
+          NilLiteral.new
+        end
       when "map"
         interpret_argless_method(method, args) do
           raise "map expects a block" unless block
@@ -1045,6 +1085,17 @@ module Crystal
         interpret_argless_method(method, args) { self.to }
       when "excludes_end?"
         interpret_argless_method(method, args) { BoolLiteral.new(self.exclusive?) }
+      when "each"
+        raise "each expects a block" unless block
+
+        block_arg = block.args.first?
+
+        interpret_to_range(interpreter).each do |num|
+          interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+          interpreter.accept block.body
+        end
+
+        NilLiteral.new
       when "map"
         raise "map expects a block" unless block
 
@@ -1458,20 +1509,20 @@ module Crystal
         case arg = args.first?
         when StringLiteral, SymbolLiteral
           if method == "=="
-            return BoolLiteral.new(@value == arg.value)
+            BoolLiteral.new(@value == arg.value)
           else
-            return BoolLiteral.new(@value != arg.value)
+            BoolLiteral.new(@value != arg.value)
           end
         else
-          return super
+          super
         end
       when "stringify", "class_name", "symbolize"
-        return super
+        super
+      else
+        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
+        value = MacroId.new(value.value) if value.is_a?(StringLiteral)
+        value
       end
-
-      value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
-      value = MacroId.new(value.value) if value.is_a?(StringLiteral)
-      value
     rescue UndefinedMacroMethodError
       raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
@@ -1488,20 +1539,20 @@ module Crystal
         case arg = args.first?
         when MacroId
           if method == "=="
-            return BoolLiteral.new(@value == arg.value)
+            BoolLiteral.new(@value == arg.value)
           else
-            return BoolLiteral.new(@value != arg.value)
+            BoolLiteral.new(@value != arg.value)
           end
         else
-          return super
+          super
         end
       when "stringify", "class_name", "symbolize"
-        return super
+        super
+      else
+        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
+        value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
+        value
       end
-
-      value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter)
-      value = SymbolLiteral.new(value.value) if value.is_a?(StringLiteral)
-      value
     rescue UndefinedMacroMethodError
       raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
     end
@@ -1514,12 +1565,28 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "module?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.module?) }
+      when "class?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && !type.struct?) }
+      when "struct?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && type.struct?) }
       when "nilable?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
         interpret_argless_method(method, args) { TypeNode.union_types(self) }
       when "name"
-        interpret_argless_method(method, args) { MacroId.new(type.devirtualize.to_s) }
+        interpret_argless_method(method, args) do
+          generic_args = if named_args && (generic_arg = named_args["generic_args"]?)
+                           generic_arg
+                         else
+                           BoolLiteral.new true
+                         end
+
+          raise "named argument 'generic_args' to TypeNode#name must be a bool, not #{generic_args.class_desc}" unless generic_args.is_a?(BoolLiteral)
+
+          MacroId.new(type.devirtualize.to_s(generic_args: generic_args.value))
+        end
       when "type_vars"
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
@@ -1534,6 +1601,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.subclasses(type) }
       when "all_subclasses"
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
+      when "includers"
+        interpret_argless_method(method, args) { TypeNode.includers(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
       when "constant"
@@ -1663,6 +1732,19 @@ module Crystal
         interpret_argless_method(method, args) { self }
       else
         super
+      end
+    end
+
+    def self.includers(type)
+      case type
+      when NonGenericModuleType, GenericModuleType
+        types = type.raw_including_types
+        return empty_no_return_array unless types
+        ArrayLiteral.map(types) do |including_type|
+          TypeNode.new including_type
+        end
+      else
+        empty_no_return_array
       end
     end
 
@@ -2192,6 +2274,8 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
           Crystal::MacroId.new((object.elements.join ", ") + arg.value)
         end
       end
+    else
+      object.wrong_number_of_arguments "#{klass}#splat", args.size, "0..1"
     end
   when "empty?"
     object.interpret_argless_method(method, args) { Crystal::BoolLiteral.new(object.elements.empty?) }
@@ -2221,6 +2305,34 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
     object.interpret_argless_method(method, args) { object.elements.last? || Crystal::NilLiteral.new }
   when "size"
     object.interpret_argless_method(method, args) { Crystal::NumberLiteral.new(object.elements.size) }
+  when "each"
+    object.interpret_argless_method(method, args) do
+      raise "each expects a block" unless block
+
+      block_arg = block.args.first?
+
+      object.elements.each do |elem|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        interpreter.accept block.body
+      end
+
+      Crystal::NilLiteral.new
+    end
+  when "each_with_index"
+    object.interpret_argless_method(method, args) do
+      raise "each_with_index expects a block" unless block
+
+      block_arg = block.args[0]?
+      index_arg = block.args[1]?
+
+      object.elements.each_with_index do |elem, idx|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        interpreter.define_var(index_arg.name, Crystal::NumberLiteral.new idx) if index_arg
+        interpreter.accept block.body
+      end
+
+      Crystal::NilLiteral.new
+    end
   when "map"
     object.interpret_argless_method(method, args) do
       raise "map expects a block" unless block

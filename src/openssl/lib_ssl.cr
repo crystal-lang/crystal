@@ -206,6 +206,12 @@ lib LibSSL
   # Hostname validation for OpenSSL <= 1.0.1
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 
+  # control TLS 1.3 session ticket generation
+  {% if compare_versions(OPENSSL_VERSION, "1.1.1") >= 0 %}
+    fun ssl_ctx_set_num_tickets = SSL_CTX_set_num_tickets(ctx : SSLContext, larg : LibC::SizeT) : Int
+    fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
+  {% end %}
+
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
   {% else %}

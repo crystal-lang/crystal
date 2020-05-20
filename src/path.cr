@@ -9,8 +9,8 @@
 # A `Path` can represent a root, a root and a sequence of names, or simply one or
 # more name elements.
 # A `Path` is considered to be an empty path if it consists solely of one name
-# element that is empty. Accessing a file using an empty path is equivalent
-# to accessing the default directory of the process.
+# element that is empty or equal to `"."`. Accessing a file using an empty path
+# is equivalent to accessing the default directory of the process.
 #
 # # Examples
 #
@@ -97,22 +97,27 @@ struct Path
     new(name.check_no_null_byte, Kind.native)
   end
 
-  # ditto
-  def self.new(name : String, *parts) : Path
+  # :ditto:
+  def self.new(path : Path) : Path
+    path.to_native
+  end
+
+  # :ditto:
+  def self.new(name : String | Path, *parts : String | Path) : Path
     new(name).join(*parts)
   end
 
-  # ditto
-  def self.[](name : String, *parts) : Path
+  # :ditto:
+  def self.[](name : String | Path, *parts) : Path
     new(name, *parts)
   end
 
-  # ditto
+  # :ditto:
   def self.new(parts : Enumerable) : Path
     new("").join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.[](parts : Enumerable) : Path
     new(parts)
   end
@@ -122,12 +127,17 @@ struct Path
     new(name.check_no_null_byte, Kind::POSIX)
   end
 
-  # ditto
-  def self.posix(name : String, *parts) : Path
+  # :ditto:
+  def self.posix(path : Path) : Path
+    path.to_posix
+  end
+
+  # :ditto:
+  def self.posix(name : String | Path, *parts : String | Path) : Path
     posix(name).join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.posix(parts : Enumerable) : Path
     posix("").join(parts)
   end
@@ -137,12 +147,17 @@ struct Path
     new(name.check_no_null_byte, Kind::WINDOWS)
   end
 
-  # ditto
-  def self.windows(name : String, *parts) : Path
+  # :ditto:
+  def self.windows(path : Path) : Path
+    path.to_windows
+  end
+
+  # :ditto:
+  def self.windows(name : String | Path, *parts : String | Path) : Path
     windows(name).join(parts)
   end
 
-  # ditto
+  # :ditto:
   def self.windows(parts : Enumerable) : Path
     windows("").join(parts)
   end
@@ -210,12 +225,12 @@ struct Path
       return anchor.to_s
     end
 
-    @name.byte_slice(0, reader.pos + 1)
+    @name.byte_slice(0, reader.pos + reader.current_char_width)
   end
 
   # Returns the parent path of this path.
   #
-  # If the path is empty or `"."`, it returns `"."`. If the path is rooted
+  # If the path is empty, it returns `"."`. If the path is rooted
   # and in the top-most hierarchy, the root path is returned.
   #
   # ```
@@ -252,7 +267,7 @@ struct Path
   # # Path["foo/bar"]
   # ```
   def each_parent(&block : Path ->)
-    return if @name.empty? || @name == "."
+    return if empty?
 
     first_char = @name.char_at(0)
     unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_chr)) || (windows? && (windows_drive? || unc_share?))
@@ -383,7 +398,7 @@ struct Path
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
-    return new_instance "." if @name.empty?
+    return new_instance "." if empty?
 
     drive, root = drive_and_root
     reader = Char::Reader.new(@name)
@@ -464,7 +479,7 @@ struct Path
   # ```
   #
   # See `#parts` for more examples.
-  def each_part
+  def each_part(& : String ->)
     each_part_separator_index do |start_pos, length|
       yield @name.byte_slice(start_pos, length)
     end
@@ -473,7 +488,7 @@ struct Path
   # Returns the components of this path as an `Array(String)`.
   #
   # ```
-  # Path.new("foo/bar/").parts                   # => ["foo", "bar]
+  # Path.new("foo/bar/").parts                   # => ["foo", "bar"]
   # Path.new("/Users/foo/bar.cr").parts          # => ["/", "Users", "foo", "bar.cr"]
   # Path.windows("C:\\Users\\foo\\bar.cr").parts # => ["C:\\", "Users", "foo", "bar.cr"]
   # Path.posix("C:\\Users\\foo\\bar.cr").parts   # => ["C:\\Users\\foo\\bar.cr"]
@@ -484,6 +499,20 @@ struct Path
       parts << part
     end
     parts
+  end
+
+  # Returns an iterator over all components of this path.
+  #
+  # ```
+  # parts = Path.new("foo/bar/").each_part
+  # parts.next # => "foo"
+  # parts.next # => "bar"
+  # parts.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # See `#parts` for more examples.
+  def each_part : Iterator(String)
+    PartIterator.new(self)
   end
 
   private def each_part_separator_index
@@ -503,13 +532,27 @@ struct Path
     end
 
     last_was_separator = false
+    separators = self.separators
 
-    reader.each do |char|
+    while next_part = Path.next_part_separator_index(reader, last_was_separator, separators)
+      reader, last_was_separator, start_pos = next_part
+
+      break if reader.pos == start_pos
+      yield start_pos, reader.pos - start_pos
+    end
+  end
+
+  # :nodoc:
+  def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
+    start_pos = reader.pos
+
+    found = reader.each do |char|
       if separators.includes?(char)
-        next if last_was_separator
+        if last_was_separator
+          next
+        end
 
-        yield start_pos, reader.pos - start_pos
-        last_was_separator = true
+        return reader, true, start_pos
       elsif last_was_separator
         start_pos = reader.pos
         last_was_separator = false
@@ -517,15 +560,69 @@ struct Path
     end
 
     unless last_was_separator
-      size = reader.pos - start_pos
-      if size > 0
-        yield start_pos, size
+      {reader, false, start_pos}
+    end
+  end
+
+  # :nodoc:
+  class PartIterator
+    include Iterator(String)
+
+    def initialize(@path : Path)
+      @reader = Char::Reader.new(@path.@name)
+      @last_was_separator = false
+      @anchor_processed = false
+    end
+
+    def next
+      start_pos = next_pos
+
+      return stop unless start_pos
+      return stop if start_pos == @reader.pos
+
+      @path.@name.byte_slice(start_pos, @reader.pos - start_pos)
+    end
+
+    private def next_pos
+      unless @anchor_processed
+        @anchor_processed = true
+        if anchor_pos = process_anchor
+          return anchor_pos
+        end
       end
+
+      next_part = Path.next_part_separator_index(@reader, @last_was_separator, @path.separators)
+      return unless next_part
+
+      @reader, @last_was_separator, start_pos = next_part
+
+      start_pos
+    end
+
+    private def process_anchor
+      anchor = @path.anchor
+      return unless anchor
+
+      reader = @reader
+      reader.pos = anchor.@name.bytesize
+      # Path is absolute, consume leading separators
+      while @path.separators.includes?(reader.current_char)
+        return unless reader.has_next?
+        reader.next_char
+      end
+
+      @reader = reader
+      return 0
     end
   end
 
   private def windows_drive?
     @name.byte_at?(1) === ':' && @name.char_at(0).ascii_letter?
+  end
+
+  # Converts this path to a native path.
+  def to_native : Path
+    to_kind(Kind.native)
   end
 
   # Converts this path to a Windows path.
@@ -550,7 +647,7 @@ struct Path
   # ```
   #
   # It returns a copy of this instance if it already has POSIX kind. Otherwise
-  # a new instance is created with `Kind::POSIX` and all occurences of
+  # a new instance is created with `Kind::POSIX` and all occurrences of
   # backslash file separators (`\\`) replaced by forward slash (`/`).
   def to_posix : Path
     if posix?
@@ -662,6 +759,7 @@ struct Path
     case home
     when String then home = Path[home]
     when Bool   then home = Path.home
+    when Path # no transformation needed
     end
 
     home.to_kind(@kind).normalize
@@ -712,6 +810,8 @@ struct Path
       # No separators on any side so we need to add one
       bytesize += 1
       add_separator = true
+    else
+      # There's at least on separator in the middle, so nothing to do
     end
 
     new_name = String.new(bytesize) do |buffer|
@@ -761,6 +861,8 @@ struct Path
   # ```
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
+      return self if parts.empty?
+
       # If it's just a single part we can avoid one allocation of String.build
       return join(parts.first) if parts.size == 1
 
@@ -810,6 +912,8 @@ struct Path
           byte_count -= 1
         when {false, false}
           str << separators[0] unless str.bytesize == 0
+        else
+          # There's one separator, so nothing to do
         end
 
         last_ended_with_separator = ends_with_separator?(part)
@@ -840,6 +944,99 @@ struct Path
     else
       raise Error.new("Can't resolve sibling for a path without parent directory")
     end
+  end
+
+  private def empty?
+    @name.empty? || @name == "."
+  end
+
+  # Returns a relative path that is lexically equivalent to `self` when joined
+  # to *base* with an intervening separator.
+  #
+  # The returned path is in normalized form.
+  #
+  # That means with normalized paths `base.join(target.relative_to(base))` is
+  # equivalent to `target`.
+  #
+  # Returns `nil` if `self` cannot be expressed as relative to *base* or if
+  # knowing the current working directory would be necessary to resolve it. The
+  # latter can be avoided by expanding the paths first.
+  def relative_to?(base : Path) : Path?
+    base_anchor = base.anchor
+    target_anchor = self.anchor
+
+    # if paths have a different anchors, there can't be a relative path between
+    # them.
+    if base_anchor != target_anchor
+      return nil
+    end
+
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
+    # check for trivial case of equal paths
+    if base == target
+      return new_instance(".")
+    end
+
+    base_iterator = base.each_part
+    target_iterator = target.each_part
+
+    if target_anchor
+      # process anchors, we have already established they're equal
+      base_iterator.next
+      target_iterator.next
+    end
+
+    # consume both paths simultaneously as long as they have identical components
+    base_part = base_iterator.next
+    target_part = target_iterator.next
+    while base_part.is_a?(String) && target_part.is_a?(String)
+      if base_part.compare(target_part, case_insensitive: windows?) != 0
+        break
+      end
+
+      base_part = base_iterator.next
+      target_part = target_iterator.next
+    end
+
+    path = new_instance("")
+
+    # base_path is not consumed, so we go up before descending into target_path
+    if base_part.is_a?(String)
+      # Can't relativize upwards from current working directory without knowing
+      # its path
+      if base_part == ".."
+        return nil
+      end
+
+      path /= ".." unless base_part == "."
+      base_iterator.each do
+        path /= ".."
+      end
+    end
+
+    # target_path is not consumed, so we append what's left to the relative path
+    if target_part.is_a?(String)
+      path /= target_part
+      target_iterator.each do |part|
+        path /= part
+      end
+    end
+
+    return path
+  end
+
+  # :ditto:
+  def relative_to?(base : String) : Path?
+    relative_to?(new_instance(base))
+  end
+
+  # Same as `#relative_to` but returns `self` if `self` can't be expressed as
+  # relative path to *base*.
+  def relative_to(base : Path | String) : Path
+    relative_to?(base) || self
   end
 
   # Compares this path to *other*.
@@ -1046,7 +1243,8 @@ struct Path
     end
   end
 
-  private def separators
+  # :nodoc:
+  def separators
     Path.separators(@kind)
   end
 

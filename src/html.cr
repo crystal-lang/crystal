@@ -153,7 +153,7 @@ module HTML
              # last two of each plane (nonchars) disallowed
              codepoint & 0xFFFF >= 0xFFFE ||
              # unicode control characters expect space
-             (codepoint < 0x0020 && !{0x0009, 0x000A, 0x000C}.includes?(codepoint))
+             (codepoint < 0x0020 && !codepoint.in?(0x0009, 0x000A, 0x000C))
         codepoint.unsafe_chr
       end
     end

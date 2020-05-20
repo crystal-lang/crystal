@@ -245,43 +245,6 @@ struct Number
     end
   end
 
-  # Clamps a value within *range*.
-  #
-  # ```
-  # 5.clamp(10..100)   # => 10
-  # 50.clamp(10..100)  # => 50
-  # 500.clamp(10..100) # => 100
-  #
-  # 5.clamp(10..)  # => 10
-  # 50.clamp(10..) # => 50
-  #
-  # 5.clamp(..10)  # => 5
-  # 50.clamp(..10) # => 10
-  # ```
-  def clamp(range : Range)
-    raise ArgumentError.new("Can't clamp an exclusive range") if !range.end.nil? && range.exclusive?
-    clamp range.begin, range.end
-  end
-
-  # Clamps a value between *min* and *max*.
-  #
-  # ```
-  # 5.clamp(10, 100)   # => 10
-  # 50.clamp(10, 100)  # => 50
-  # 500.clamp(10, 100) # => 100
-  #
-  # 5.clamp(10, nil)  # => 10
-  # 50.clamp(10, nil) # => 50
-  #
-  # 5.clamp(nil, 10)  # => 5
-  # 50.clamp(nil, 10) # => 10
-  # ```
-  def clamp(min, max)
-    return max if !max.nil? && self > max
-    return min if !min.nil? && self < min
-    self
-  end
-
   # Returns `true` if value is equal to zero.
   #
   # ```

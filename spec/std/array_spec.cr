@@ -281,6 +281,15 @@ describe "Array" do
       [1, 2, 3][1, 3]?.should eq([2, 3])
       [1, 2, 3][4, 0]?.should be_nil
     end
+
+    it "gets with range without end" do
+      [1, 2, 3][1..nil]?.should eq([2, 3])
+      [1, 2, 3][4..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      [1, 2, 3][nil..1]?.should eq([1, 2])
+    end
   end
 
   describe "[]=" do
@@ -639,29 +648,59 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'x']
       a.fill('x').should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 0]
+      a.fill(0).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 0]
+      a.fill(0).should eq(expected)
     end
 
     it "replaces only values between index and size" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', 0, 2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, 0, 2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, 0, 2).should eq(expected)
     end
 
     it "replaces only values between index and size (2)" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', 1, 2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, 1, 2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, 1, 2).should eq(expected)
     end
 
     it "replaces all values from index onwards" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', -2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, -2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, -2).should eq(expected)
     end
 
     it "raises when given big negative number (#4539)" do
       expect_raises(IndexError) do
         ['a', 'b', 'c'].fill('x', -4)
+      end
+      expect_raises(IndexError) do
+        [1, 2, 3].fill(0, -4)
+      end
+      expect_raises(IndexError) do
+        [1.0, 2.0, 3.0].fill(0, -4)
       end
     end
 
@@ -669,11 +708,23 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
       a.fill('x', -1, 1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 2, 0]
+      a.fill(0, -1, 1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 2, 0]
+      a.fill(0, -1, 1).should eq(expected)
     end
 
     it "raises when given big negative number in from/count (#4539)" do
       expect_raises(IndexError) do
         ['a', 'b', 'c'].fill('x', -4, 1)
+      end
+      expect_raises(IndexError) do
+        [1, 2, 3].fill(0, -4, 1)
+      end
+      expect_raises(IndexError) do
+        [1.0, 2.0, 3.0].fill(0, -4, 1)
       end
     end
 
@@ -681,18 +732,36 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', -3..1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, -3..1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, -3..1).should eq(expected)
     end
 
     it "replaces only values in range without end" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', 1..nil).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, 1..nil).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, 1..nil).should eq(expected)
     end
 
     it "replaces only values in range begin" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', nil..1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, nil..1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, nil..1).should eq(expected)
     end
 
     it "works with a block" do
@@ -712,7 +781,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).first
       end
     end
@@ -1471,6 +1540,15 @@ describe "Array" do
           r.should be_a(Array({Int32, Char, Char}))
           r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
         end
+
+        it "zips union type (#8608)" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(a || b || c)
+          r.should be_a(Array({Int32, Int32 | Char}))
+          r.should eq([{1, 1}, {2, 2}, {3, 3}])
+        end
       end
     end
   end
@@ -1538,6 +1616,15 @@ describe "Array" do
             r = a.zip?(b, c)
             r.should be_a(Array({Int32, Char?, Char?}))
             r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
+          end
+
+          it "zips union type (#8608)" do
+            a = [1, 2, 3]
+            b = 'a'..'c'
+            c = ('x'..'z').each
+            r = a.zip?(a || b || c)
+            r.should be_a(Array({Int32, Int32 | Char | Nil}))
+            r.should eq([{1, 1}, {2, 2}, {3, 3}])
           end
         end
       end

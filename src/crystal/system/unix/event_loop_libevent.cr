@@ -5,6 +5,7 @@ class Thread
   getter(event_base) { Crystal::Event::Base.new }
 end
 
+# :nodoc:
 module Crystal::EventLoop
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
@@ -26,6 +27,19 @@ module Crystal::EventLoop
   def self.create_resume_event(fiber : Fiber) : Crystal::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       Crystal::Scheduler.enqueue data.as(Fiber)
+    end
+  end
+
+  # Creates a timeout_event.
+  def self.create_timeout_event(fiber) : Crystal::Event
+    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
+      f = data.as(Fiber)
+      if (select_action = f.timeout_select_action)
+        f.timeout_select_action = nil
+        select_action.time_expired(f)
+      else
+        Crystal::Scheduler.enqueue f
+      end
     end
   end
 
