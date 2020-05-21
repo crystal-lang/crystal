@@ -38,14 +38,10 @@ struct Time::Format
     end
 
     def time(location : Location? = nil)
-      if @pm
-        unless @hour == 12
-          @hour += 12
-        end
-      elsif @am
-        if @hour == 12
-          @hour = 0
-        end
+      if @pm && @hour != 12
+        @hour += 12
+      elsif @am && @hour == 12
+        @hour = 0
       end
 
       if unix_seconds = @unix_seconds
