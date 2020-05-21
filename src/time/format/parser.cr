@@ -34,14 +34,25 @@ struct Time::Format
       @nanosecond = 0
       @am = false
       @pm = false
+      @hour_is_12 = false
       @nanosecond_offset = 0_i64
     end
 
     def time(location : Location? = nil)
-      if @pm && @hour != 12
-        @hour += 12
-      elsif @am && @hour == 12
-        @hour = 0
+      if @hour_is_12
+        if @pm
+          if @hour != 12
+            @hour += 12
+          end
+        else
+          if !@am && @hour == 0
+            raise ArgumentError.new("Invalid hour for 12-hour clock")
+          end
+
+          if @hour == 12
+            @hour = 0
+          end
+        end
       end
 
       if unix_seconds = @unix_seconds
@@ -208,18 +219,22 @@ struct Time::Format
     end
 
     def hour_24_zero_padded
+      @hour_is_12 = false
       @hour = consume_number(2)
     end
 
     def hour_24_blank_padded
+      @hour_is_12 = false
       @hour = consume_number_blank_padded(2)
     end
 
     def hour_12_zero_padded
       hour_24_zero_padded
+      @hour_is_12 = true
     end
 
     def hour_12_blank_padded
+      @hour_is_12 = true
       @hour = consume_number_blank_padded(2)
     end
 
