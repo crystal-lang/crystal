@@ -1,4 +1,5 @@
 module JSON
+  @[Deprecated("use JSON::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/json_mapping`.")]
   # The `JSON.mapping` macro defines how an object is mapped to JSON.
   #
   # ### Example
@@ -65,8 +66,10 @@ module JSON
   # If *strict* is `true`, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
-  @[Deprecated("use JSON::Serializable instead (the legacy behaviour is also available in a shard at github:crystal-lang/json_mapping)")]
+  #
+  # DEPRECATED: Use JSON::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/json_mapping`.
   macro mapping(_properties_, strict = false)
+    {% puts "JSON.mapping is deprecated, use JSON::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/json_mapping`." %}
     {% for key, value in _properties_ %}
       {% _properties_[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
@@ -226,9 +229,11 @@ module JSON
     end
   end
 
+  @[Deprecated("use JSON::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/json_mapping`.")]
   # This is a convenience method to allow invoking `JSON.mapping`
   # with named arguments instead of with a hash/named-tuple literal.
-  @[Deprecated("use JSON::Serializable instead")]
+  #
+  # DEPRECATED: Use JSON::Serializable instead. The legacy behaviour is also available as shard at `github:crystal-lang/json_mapping`.
   macro mapping(**_properties_)
     ::JSON.mapping({{_properties_}})
   end
