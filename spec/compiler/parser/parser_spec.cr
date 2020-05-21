@@ -1995,6 +1995,12 @@ module Crystal
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
       end
+
+      it "doesn't override yield with macro yield" do
+        parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
+        a_def = parser.parse.as(Def)
+        a_def.yields.should eq(1)
+      end
     end
   end
 end
