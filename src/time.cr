@@ -410,7 +410,10 @@ struct Time
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
-           0 <= hour <= 23 &&
+           (
+             0 <= hour <= 23 ||
+             (hour == 24 && minute == 0 && second == 0 && nanosecond == 0)
+           ) &&
            0 <= minute <= 59 &&
            0 <= second <= 59 &&
            0 <= nanosecond <= 999_999_999

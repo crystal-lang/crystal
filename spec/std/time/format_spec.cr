@@ -308,6 +308,8 @@ describe Time::Format do
     parse_time("12:01", "%H:%M").to_s("%H:%M").should eq("12:01")
     parse_time("13:00", "%H:%M").to_s("%H:%M").should eq("13:00")
     parse_time("23:00", "%H:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%H:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %H:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
 
     parse_time(" 0:00", "%k:%M").to_s("%H:%M").should eq("00:00")
     parse_time(" 0:01", "%k:%M").to_s("%H:%M").should eq("00:01")
@@ -317,6 +319,8 @@ describe Time::Format do
     parse_time("12:01", "%k:%M").to_s("%H:%M").should eq("12:01")
     parse_time("13:00", "%k:%M").to_s("%H:%M").should eq("13:00")
     parse_time("23:00", "%k:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%k:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %k:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
   end
 
   it "parses timezone" do
