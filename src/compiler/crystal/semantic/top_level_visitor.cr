@@ -192,7 +192,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.add_annotation(annotation_type, ann)
     end
 
-    attach_doc type, node
+    attach_doc type, node, annotations
 
     pushing_type(type) do
       run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
@@ -235,7 +235,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.resolved_type = type
 
-    attach_doc type, node
+    attach_doc type, node, annotations
 
     process_annotations(annotations) do |annotation_type, ann|
       type.add_annotation(annotation_type, ann)
@@ -262,13 +262,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    attach_doc type, node
+    attach_doc type, node, annotations: nil
 
     false
   end
 
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
+
+    annotations = read_annotations
 
     scope, name, existing_type = lookup_type_def(node)
 
@@ -281,7 +283,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     alias_type = AliasType.new(@program, scope, name, node.value)
-    attach_doc alias_type, node
+    attach_doc alias_type, node, annotations
     scope.types[name] = alias_type
 
     alias_type.private = true if node.visibility.private?
@@ -530,8 +532,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     annotations = read_annotations
 
-    annotations_doc = annotations_doc(annotations)
-
     scope, name, enum_type = lookup_type_def(node)
 
     if enum_type
@@ -561,9 +561,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     node.resolved_type = enum_type
-    attach_doc enum_type, node
-
-    enum_type.doc ||= annotations_doc(annotations)
+    attach_doc enum_type, node, annotations
 
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
@@ -741,6 +739,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare constant"
     @exp_nest += 1
 
+    annotations = read_annotations
+
     scope, name = lookup_type_def_name(target)
     if current_type.is_a?(Program)
       scope = program.check_private(target) || scope
@@ -755,7 +755,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const.private = true if target.visibility.private?
 
     check_ditto node, node.location
-    attach_doc const, node
+    attach_doc const, node, annotations
 
     scope.types[name] = const
 
@@ -1047,9 +1047,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     call_convention
   end
 
-  def attach_doc(type, node)
+  def attach_doc(type, node, annotations)
     if @program.wants_doc?
       type.doc ||= node.doc
+      type.doc ||= annotations_doc(annotations) if annotations
     end
 
     if node_location = node.location
