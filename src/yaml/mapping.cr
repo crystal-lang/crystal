@@ -1,5 +1,5 @@
 module YAML
-  @[Deprecated("use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping`.")]
+  @[Deprecated("use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping.cr`.")]
   # The `YAML.mapping` macro defines how an object is mapped to YAML.
   #
   # It takes named arguments, a named tuple literal or a hash literal as argument,
@@ -69,7 +69,7 @@ module YAML
   #
   # This macro also declares instance variables of the types given in the mapping.
   #
-  # DEPRECATED: use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping`.
+  # DEPRECATED: use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping.cr`.
   macro mapping(_properties_, strict = false)
     {% puts "YAML.mapping is deprecated, use JSON::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/json_mapping`." %}
     {% for key, value in _properties_ %}
@@ -219,11 +219,11 @@ module YAML
     end
   end
 
-  @[Deprecated("use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping`.")]
+  @[Deprecated("use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping.cr`.")]
   # This is a convenience method to allow invoking `YAML.mapping`
   # with named arguments instead of with a hash/named-tuple literal.
   #
-  # DEPRECATED: use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping`.
+  # DEPRECATED: use YAML::Serializable instead. The legacy behaviour is also available as a shard at `github:crystal-lang/yaml_mapping.cr`.
   macro mapping(**_properties_)
     ::YAML.mapping({{_properties_}})
   end
