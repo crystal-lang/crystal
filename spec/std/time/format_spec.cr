@@ -285,6 +285,13 @@ describe Time::Format do
     parse_time("01:00 pm", "%I:%M %P").to_s("%H:%M").should eq("13:00")
     parse_time("11:00 pm", "%I:%M %P").to_s("%H:%M").should eq("23:00")
 
+    parse_time("00:00", "%I:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01", "%I:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("12:00", "%I:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%I:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("01:00", "%I:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%I:%M").to_s("%H:%M").should eq("11:00")
+
     parse_time(" 0:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
     parse_time(" 0:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
     parse_time("12:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
@@ -297,6 +304,13 @@ describe Time::Format do
     parse_time("12:01 pm", "%l:%M %P").to_s("%H:%M").should eq("12:01")
     parse_time(" 1:00 pm", "%l:%M %P").to_s("%H:%M").should eq("13:00")
     parse_time("11:00 pm", "%l:%M %P").to_s("%H:%M").should eq("23:00")
+
+    parse_time(" 0:00", "%l:%M").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01", "%l:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("12:00", "%l:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%l:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("01:00", "%l:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%l:%M").to_s("%H:%M").should eq("11:00")
   end
 
   it "parses 24h clock" do
