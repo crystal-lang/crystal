@@ -32,6 +32,7 @@ struct Time::Format
       @minute = 0
       @second = 0
       @nanosecond = 0
+      @am = false
       @pm = false
       @nanosecond_offset = 0_i64
     end
@@ -41,7 +42,7 @@ struct Time::Format
         unless @hour == 12
           @hour += 12
         end
-      else
+      elsif @am
         if @hour == 12
           @hour = 0
         end
@@ -277,7 +278,7 @@ struct Time::Format
       string = consume_string
       case string.downcase
       when "am"
-        # skip
+        @am = true
       when "pm"
         @pm = true
       else
