@@ -71,7 +71,7 @@ describe Process do
 
   it "raises if command doesn't exist" do
     expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
-      Process.new("foobarbaz", ["foo"])
+      Process.new("foobarbaz")
     end
   end
 
