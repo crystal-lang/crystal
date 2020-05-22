@@ -296,6 +296,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Macro)
     check_outside_exp node, "declare macro"
 
+    annotations = read_annotations
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
+    node.doc ||= annotations_doc(annotations)
+    check_ditto node, node.location
+
     node.set_type @program.nil
 
     if node.name == "finished"
@@ -1058,7 +1065,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node : Def | Assign | FunDef | Const, location : Location?) : Nil
+  def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
     if stripped_doc == ":ditto:"

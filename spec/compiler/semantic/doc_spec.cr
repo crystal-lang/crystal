@@ -148,6 +148,21 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for macro when using ditto" do
+    result = semantic %(
+      # Hello
+      macro bar
+      end
+
+      # :ditto:
+      macro bar2
+      end
+    ), wants_doc: true
+    program = result.program
+    bar2 = program.lookup_macros("bar2").as(Array(Macro)).first
+    bar2.doc.should eq("Hello")
+  end
+
   {% for def_type in %w[def macro].map &.id %}
     it "overwrites doc for {{def_type}} when redefining" do
       result = semantic %(
@@ -485,6 +500,21 @@ describe "Semantic: doc" do
       program = result.program
       a_def = program.lookup_defs("foo").first
       a_def.doc.should eq("Some description")
+    end
+
+    it "attached to macro" do
+      result = semantic %(
+        annotation Ann
+        end
+
+        # Some description
+        @[Ann]
+        macro foo
+        end
+      ), wants_doc: true
+      program = result.program
+      type = program.lookup_macros("foo").as(Array(Macro)).first
+      type.doc.should eq("Some description")
     end
   end
 end
