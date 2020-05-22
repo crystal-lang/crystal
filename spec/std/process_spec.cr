@@ -357,6 +357,12 @@ describe Process do
         File.exists?(path).should be_true
       end
     end
+
+    it "gets error from exec" do
+      expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+        Process.exec("foobarbaz")
+      end
+    end
   {% end %}
 
   pending_win32 "checks for existence" do

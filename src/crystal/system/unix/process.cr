@@ -124,7 +124,7 @@ struct Crystal::System::Process
       begin
         reader_pipe.close
         writer_pipe.close_on_exec = true
-        self.replace(command_args, env, clear_env, input, output, error, chdir)
+        self.try_replace(command_args, env, clear_env, input, output, error, chdir)
         writer_pipe.write_byte(1)
         writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
@@ -153,12 +153,7 @@ struct Crystal::System::Process
       when 1
         # Errno coming
         errno = Errno.new(reader_pipe.read_bytes(Int32))
-        case errno
-        when Errno::EACCES, Errno::ENOENT
-          raise ::File::Error.from_errno("Error executing process", errno, file: command_args[0])
-        else
-          raise IO::Error.from_errno("Error executing process: '#{command_args[0]}'", errno)
-        end
+        self.raise_exception_from_errno(command_args[0], errno)
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -194,7 +189,7 @@ struct Crystal::System::Process
     end
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+  private def self.try_replace(command_args, env, clear_env, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
@@ -215,6 +210,20 @@ struct Crystal::System::Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
+  end
+
+  def self.replace(command_args, env, clear_env, input, output, error, chdir)
+    try_replace(command_args, env, clear_env, input, output, error, chdir)
+    raise_exception_from_errno(command_args[0])
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    case errno
+    when Errno::EACCES, Errno::ENOENT
+      raise ::File::Error.from_errno("Error executing process", errno, file: command)
+    else
+      raise IO::Error.from_errno("Error executing process: '#{command}'", errno)
+    end
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
