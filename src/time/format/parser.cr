@@ -45,7 +45,7 @@ struct Time::Format
             @hour += 12
           end
         else
-          if !@am && @hour == 0
+          if @hour == 0
             raise ArgumentError.new("Invalid hour for 12-hour clock")
           end
 

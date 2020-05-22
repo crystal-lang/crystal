@@ -272,8 +272,12 @@ describe Time::Format do
   end
 
   it "parses am/pm" do
-    parse_time("00:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
-    parse_time("00:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
+    end
     parse_time("12:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
     parse_time("12:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
     parse_time("01:00 am", "%I:%M %P").to_s("%H:%M").should eq("01:00")
@@ -296,8 +300,12 @@ describe Time::Format do
     parse_time("01:00", "%I:%M").to_s("%H:%M").should eq("01:00")
     parse_time("11:00", "%I:%M").to_s("%H:%M").should eq("11:00")
 
-    parse_time(" 0:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
-    parse_time(" 0:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
+    end
     parse_time("12:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
     parse_time("12:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
     parse_time(" 1:00 am", "%l:%M %P").to_s("%H:%M").should eq("01:00")
