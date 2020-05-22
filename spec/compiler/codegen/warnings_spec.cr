@@ -255,7 +255,7 @@ describe "Code gen: warnings" do
       "Error: wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
-  it "errors if missing link arguments" do
+  it "errors if invalid named arguments" do
     assert_error %(
       @[Deprecated(invalid: "Do not use me")]
       def foo
