@@ -83,12 +83,11 @@
 
 ### Logging
 
-- **(breaking-change)** Rename `Log::Severity::Warning` to `Warn`. ([#9293](https://github.com/crystal-lang/crystal/pull/9293), thanks @bcardiff)
+- **(breaking-change)** Rename `Log::Severity::Warning` to `Warn`. Drop `Verbose`. Add `Trace` and `Notice`. ([#9293](https://github.com/crystal-lang/crystal/pull/9293), [#9107](https://github.com/crystal-lang/crystal/pull/9107), thanks @bcardiff, @paulcsmith)
 - **(breaking-change)** Allow local data on entries via `Log::Metadata` and redesign `Log::Context`. ([#9118](https://github.com/crystal-lang/crystal/pull/9118), [#9227](https://github.com/crystal-lang/crystal/pull/9227), [#9150](https://github.com/crystal-lang/crystal/pull/9150), [#9157](https://github.com/crystal-lang/crystal/pull/9157), thanks @bcardiff, @waj)
 - **(breaking-change)** Split top-level `Log::Metadata` from `Log::Metadata::Value`, drop immutability via clone, improve performance. ([#9295](https://github.com/crystal-lang/crystal/pull/9295), thanks @bcardiff)
 - **(breaking-change)** Rework `Log.setup_from_env` and defaults. ([#9145](https://github.com/crystal-lang/crystal/pull/9145), [#9240](https://github.com/crystal-lang/crystal/pull/9240),  thanks @bcardiff)
 - Redesign `Log::Formatter`. ([#9211](https://github.com/crystal-lang/crystal/pull/9211), thanks @waj)
-- Move verbose to a lower level than debug. ([#9107](https://github.com/crystal-lang/crystal/pull/9107), thanks @paulcsmith)
 - Add `to_json` for `Log::Context`. ([#9101](https://github.com/crystal-lang/crystal/pull/9101), thanks @paulcsmith)
 - Add `Log::IOBackend#new` with formatter. ([#9105](https://github.com/crystal-lang/crystal/pull/9105), thanks @paulcsmith)
 - Allow `nil` as context raw values. ([#9121](https://github.com/crystal-lang/crystal/pull/9121), thanks @bcardiff)
@@ -148,6 +147,7 @@
 
 - Improve debugging support. ([#8538](https://github.com/crystal-lang/crystal/pull/8538), thanks @skuznetsov)
 - Move recent additions to `DIBuilder` to `LLVMExt`. ([#9114](https://github.com/crystal-lang/crystal/pull/9114), thanks @bcardiff)
+
 ## Tools
 
 ### Formatter
