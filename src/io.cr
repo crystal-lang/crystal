@@ -1118,6 +1118,12 @@ abstract class IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst) : UInt64
+    if socket = dst.as?(Socket)
+      if file = src.as?(File)
+        return socket.sendfile file, file.size - file.pos
+      end
+    end
+
     buffer = uninitialized UInt8[4096]
     count = 0_u64
     while (len = src.read(buffer.to_slice).to_i32) > 0
@@ -1141,6 +1147,12 @@ abstract class IO
     raise ArgumentError.new("Negative limit") if limit < 0
 
     limit = limit.to_u64
+
+    if socket = dst.as?(Socket)
+      if file = src.as?(IO::FileDescriptor)
+        return socket.sendfile file, limit
+      end
+    end
 
     buffer = uninitialized UInt8[4096]
     remaining = limit

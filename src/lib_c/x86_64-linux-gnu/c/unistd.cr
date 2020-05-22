@@ -43,4 +43,5 @@ lib LibC
   fun sysconf(name : Int) : Long
   fun unlink(name : Char*) : Int
   fun write(fd : Int, buf : Void*, n : SizeT) : SSizeT
+  fun sendfile(fd_out : Int, fd_in : Int, offset : OffT*, count : SizeT) : SSizeT
 end
