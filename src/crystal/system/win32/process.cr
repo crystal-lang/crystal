@@ -126,7 +126,13 @@ struct Crystal::System::Process
          make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
-      raise RuntimeError.from_winerror("Error executing process")
+      error = WinError.value
+      case error.to_errno
+      when Errno::EACCES, Errno::ENOENT
+        raise ::File::Error.from_winerror("Error executing process", error, file: command_args)
+      else
+        raise IO::Error.from_winerror("Error executing process: '#{command_args}'", error)
+      end
     end
 
     close_handle(process_info.hThread)

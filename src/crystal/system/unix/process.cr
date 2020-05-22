@@ -2,6 +2,7 @@ require "c/signal"
 require "c/stdlib"
 require "c/sys/resource"
 require "c/unistd"
+require "file/error"
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
@@ -124,7 +125,10 @@ struct Crystal::System::Process
         reader_pipe.close
         writer_pipe.close_on_exec = true
         self.replace(command_args, env, clear_env, input, output, error, chdir)
+        writer_pipe.write_byte(1)
+        writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
+        writer_pipe.write_byte(0)
         writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
         writer_pipe << ex.message
         writer_pipe.close
@@ -134,16 +138,33 @@ struct Crystal::System::Process
     end
 
     writer_pipe.close
-    bytes = uninitialized UInt8[4]
-    if reader_pipe.read(bytes.to_slice) == 4
-      message_size = IO::ByteFormat::SystemEndian.decode(Int32, bytes.to_slice)
-      if message_size > 0
-        message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+    begin
+      case reader_pipe.read_byte
+      when nil
+        # Pipe was closed, no error
+      when 0
+        # Error message coming
+        message_size = reader_pipe.read_bytes(Int32)
+        if message_size > 0
+          message = String.build(message_size) { |io| IO.copy(reader_pipe, io, message_size) }
+        end
+        reader_pipe.close
+        raise RuntimeError.new("Error executing process: '#{command_args[0]}': #{message}")
+      when 1
+        # Errno coming
+        errno = Errno.new(reader_pipe.read_bytes(Int32))
+        case errno
+        when Errno::EACCES, Errno::ENOENT
+          raise ::File::Error.from_errno("Error executing process", errno, file: command_args[0])
+        else
+          raise IO::Error.from_errno("Error executing process: '#{command_args[0]}'", errno)
+        end
+      else
+        raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
+    ensure
       reader_pipe.close
-      raise RuntimeError.new("Error executing process: #{message}")
     end
-    reader_pipe.close
 
     pid
   end
@@ -173,7 +194,7 @@ struct Crystal::System::Process
     end
   end
 
-  def self.replace(command_args, env, clear_env, input, output, error, chdir) : NoReturn
+  def self.replace(command_args, env, clear_env, input, output, error, chdir)
     reopen_io(input, ORIGINAL_STDIN)
     reopen_io(output, ORIGINAL_STDOUT)
     reopen_io(error, ORIGINAL_STDERR)
@@ -194,7 +215,6 @@ struct Crystal::System::Process
     argv << Pointer(UInt8).null
 
     LibC.execvp(command, argv)
-    raise RuntimeError.from_errno
   end
 
   private def self.reopen_io(src_io : IO::FileDescriptor, dst_io : IO::FileDescriptor)
