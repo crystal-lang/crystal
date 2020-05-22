@@ -75,7 +75,7 @@ describe Process do
     end
   end
 
-  it "raises if command is not executable" do
+  pending_win32 "raises if command is not executable" do
     with_tempfile("crystal-spec-run") do |path|
       File.touch path
       expect_raises(File::AccessDeniedError, "Error executing process: '#{path}'") do
@@ -84,7 +84,7 @@ describe Process do
     end
   end
 
-  it "raises if command could not be executed" do
+  pending_win32 "raises if command could not be executed" do
     with_tempfile("crystal-spec-run") do |path|
       File.touch path
       command = File.join(path, "foo")
