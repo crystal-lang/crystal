@@ -1,7 +1,5 @@
 require "../spec_helper"
-{% unless flag?(:win32) %}
-  require "xml"
-{% end %}
+require "xml"
 
 class Spec::JUnitFormatter
   property started_at
@@ -123,7 +121,7 @@ describe "JUnit Formatter" do
     classname.should eq(now.to_rfc3339)
   end
 
-  pending_win32 "escapes spec names" do
+  it "escapes spec names" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, %(complicated " <n>'&ame), __FILE__, __LINE__, nil, nil)
       f.report Spec::Result.new(:success, %(ctrl characters follow - \r\n), __FILE__, __LINE__, nil, nil)
@@ -136,7 +134,7 @@ describe "JUnit Formatter" do
     name.should eq(%(ctrl characters follow - \\r\\n))
   end
 
-  pending_win32 "report failure stacktrace if present" do
+  it "report failure stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
@@ -151,7 +149,7 @@ describe "JUnit Formatter" do
     backtrace.should eq(cause.backtrace.join('\n'))
   end
 
-  pending_win32 "report error stacktrace if present" do
+  it "report error stacktrace if present" do
     cause = exception_with_backtrace("Something happened")
 
     output = build_report do |f|
