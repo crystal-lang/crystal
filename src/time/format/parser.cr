@@ -32,7 +32,6 @@ struct Time::Format
       @minute = 0
       @second = 0
       @nanosecond = 0
-      @am = false
       @pm = false
       @hour_is_12 = false
       @nanosecond_offset = 0_i64
@@ -40,18 +39,18 @@ struct Time::Format
 
     def time(location : Location? = nil)
       if @hour_is_12
+        if @hour > 12
+          raise ArgumentError.new("Invalid hour for 12-hour clock")
+        end
+
         if @pm
-          if @hour != 12
-            @hour += 12
-          end
+          @hour += 12 unless @hour == 12
         else
           if @hour == 0
             raise ArgumentError.new("Invalid hour for 12-hour clock")
           end
 
-          if @hour == 12
-            @hour = 0
-          end
+          @hour = 0 if @hour == 12
         end
       end
 
@@ -289,7 +288,7 @@ struct Time::Format
       string = consume_string
       case string.downcase
       when "am"
-        @am = true
+        @pm = false
       when "pm"
         @pm = true
       else
