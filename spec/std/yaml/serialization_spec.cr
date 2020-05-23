@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "../../spec_helper"
 require "spec"
 require "yaml"
 {% unless flag?(:win32) %}

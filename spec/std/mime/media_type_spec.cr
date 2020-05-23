@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "../../spec_helper"
 require "mime/media_type"
 
 private def parse(string)

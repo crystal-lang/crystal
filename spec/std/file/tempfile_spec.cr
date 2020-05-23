@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../spec_helper"
 
 describe File do
   describe ".tempname" do

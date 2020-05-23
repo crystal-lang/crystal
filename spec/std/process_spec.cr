@@ -1,6 +1,6 @@
 require "spec"
 require "process"
-require "./spec_helper"
+require "../spec_helper"
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}

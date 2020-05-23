@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "../../spec_helper"
 
 private class BufferedWrapper < IO
   include IO::Buffered
