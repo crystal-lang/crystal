@@ -78,17 +78,17 @@ describe Process do
   pending_win32 "raises if command is not executable" do
     with_tempfile("crystal-spec-run") do |path|
       File.touch path
-      expect_raises(File::AccessDeniedError, "Error executing process: '#{path}'") do
+      expect_raises(File::AccessDeniedError, "Error executing process: '#{path.inspect_unquoted}'") do
         Process.new(path)
       end
     end
   end
 
-  pending_win32 "raises if command could not be executed" do
+  it "raises if command could not be executed" do
     with_tempfile("crystal-spec-run") do |path|
       File.touch path
       command = File.join(path, "foo")
-      expect_raises(IO::Error, "Error executing process: '#{command}'") do
+      expect_raises(IO::Error, "Error executing process: '#{command.inspect_unquoted}'") do
         Process.new(command)
       end
     end
