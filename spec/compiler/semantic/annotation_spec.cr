@@ -12,6 +12,40 @@ describe "Semantic: annotation" do
     type.name.should eq("Foo")
   end
 
+  describe "#name" do
+    it "returns the name of an annotation" do
+      assert_type(%(
+        annotation Foo; end
+
+        @[Foo]
+        class Bar
+        end
+
+        {% if Bar.annotation(Foo).name == Foo.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "returns the name of an annotation within a namespace" do
+      assert_type(%(
+        annotation Test::Foo; end
+
+        @[Test::Foo]
+        class Bar
+        end
+
+        {% if Bar.annotation(Test::Foo).name == Test::Foo.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+  end
+
   describe "arguments" do
     describe "#args" do
       it "returns an empty TupleLiteral if there are none defined" do
@@ -95,6 +129,205 @@ describe "Semantic: annotation" do
         end
 
         {% if Moo.annotation(Foo).args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+  end
+
+  describe "#all_annotations" do
+    it "returns an empty array if there are none defined" do
+      assert_type(%(
+        annotation Foo; end
+
+        module Moo
+        end
+
+        {% if Moo.all_annotations.empty? %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations on a module" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        @[Bar]
+        module Moo
+        end
+
+        {% if Moo.all_annotations.size == 2 && Moo.all_annotations[0].name == Foo.id && Moo.all_annotations[1].name == Bar.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations on a class" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        @[Bar]
+        class Moo
+        end
+
+        {% if Moo.all_annotations.size == 2 && Moo.all_annotations[0].name == Foo.id && Moo.all_annotations[1].name == Bar.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations on a struct" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        @[Bar]
+        struct Moo
+        end
+
+        {% if Moo.all_annotations.size == 2 && Moo.all_annotations[0].name == Foo.id && Moo.all_annotations[1].name == Bar.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations on a enum" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        @[Bar]
+        enum Moo
+          A = 1
+        end
+
+        {% if Moo.all_annotations.size == 2 && Moo.all_annotations[0].name == Foo.id && Moo.all_annotations[1].name == Bar.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations on a lib" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo]
+        @[Bar]
+        lib Moo
+          A = 1
+        end
+
+        {% if Moo.all_annotations.size == 2 && Moo.all_annotations[0].name == Foo.id && Moo.all_annotations[1].name == Bar.id %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations in instance var (declaration)" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        class Moo
+          @[Foo]
+          @[Bar]
+          @x : Int32 = 1
+
+          def foo
+            {% if @type.instance_vars.first.all_annotations.size == 2 %}
+              1
+            {% else %}
+              'a'
+            {% end %}
+          end
+        end
+
+        Moo.new.foo
+    )) { int32 }
+    end
+
+    it "finds annotations in instance var (declaration, generic)" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        class Moo(T)
+          @[Foo]
+          @[Bar]
+          @x : T
+
+          def initialize(@x : T)
+          end
+
+          def foo
+            {% if @type.instance_vars.first.all_annotations.size == 2 %}
+              1
+            {% else %}
+              'a'
+            {% end %}
+          end
+        end
+
+        Moo.new(1).foo
+    )) { int32 }
+    end
+
+    it "adds annotations on def" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        class Moo
+          @[Foo]
+          @[Bar]
+          def foo
+          end
+        end
+
+        {% if Moo.methods.first.all_annotations.size == 2 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+
+    it "finds annotations in generic parent (#7885)" do
+      assert_type(%(
+        annotation Foo; end
+        annotation Bar; end
+
+        @[Foo(1)]
+        @[Bar(2)]
+        class Parent(T)
+        end
+
+        class Child < Parent(Int32)
+        end
+
+        {% if Child.superclass.all_annotations[0][0] == 1 && Child.superclass.all_annotations[1][0] == 2 %}
           1
         {% else %}
           'a'
