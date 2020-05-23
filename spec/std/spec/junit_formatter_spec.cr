@@ -101,7 +101,7 @@ describe "JUnit Formatter" do
     output.should eq(expected)
   end
 
-  pending_win32 "encodes class names from the relative file path" do
+  it "encodes class names from the relative file path" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "foo", __FILE__, __LINE__, nil, nil)
     end
@@ -110,7 +110,7 @@ describe "JUnit Formatter" do
     classname.should eq("spec.std.spec.junit_formatter_spec")
   end
 
-  pending_win32 "outputs timestamp according to RFC 3339" do
+  it "outputs timestamp according to RFC 3339" do
     now = Time.utc
 
     output = build_report(timestamp: now) do |f|
