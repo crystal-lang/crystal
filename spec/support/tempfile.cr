@@ -34,6 +34,15 @@ def with_tempfile(*paths, file = __FILE__)
   end
 end
 
+def with_temp_executable(name, file = __FILE__)
+  {% if flag?(:win32) %}
+    name += ".exe"
+  {% end %}
+  with_tempfile(name, file: file) do |tempname|
+    yield tempname
+  end
+end
+
 if SPEC_TEMPFILE_CLEANUP
   at_exit do
     FileUtils.rm_r(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)

@@ -74,8 +74,8 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
   end
 end
 
-def compile_file(source_file, flags = %w(--debug))
-  with_tempfile("executable_file") do |executable_file|
+def compile_file(source_file, flags = %w(--debug), *, file = __FILE__)
+  with_temp_executable("executable_file", file: file) do |executable_file|
     Process.run("bin/crystal", ["build"] + flags + ["-o", executable_file, source_file])
     File.exists?(executable_file).should be_true
 
@@ -83,17 +83,17 @@ def compile_file(source_file, flags = %w(--debug))
   end
 end
 
-def compile_source(source, flags = %w(--debug))
-  with_tempfile("source_file") do |source_file|
+def compile_source(source, flags = %w(--debug), *, file = __FILE__)
+  with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_file(source_file, flags) do |executable_file|
+    compile_file(source_file, flags, file: file) do |executable_file|
       yield executable_file
     end
   end
 end
 
-def compile_and_run_file(source_file, flags = %w(--debug))
-  compile_file(source_file) do |executable_file|
+def compile_and_run_file(source_file, flags = %w(--debug), *, file = __FILE__)
+  compile_file(source_file, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
     status = Process.run executable_file, output: output, error: error
 
@@ -101,9 +101,9 @@ def compile_and_run_file(source_file, flags = %w(--debug))
   end
 end
 
-def compile_and_run_source(source, flags = %w(--debug))
-  with_tempfile("source_file") do |source_file|
+def compile_and_run_source(source, flags = %w(--debug), *, file = __FILE__)
+  with_tempfile("source_file", file: file) do |source_file|
     File.write(source_file, source)
-    compile_and_run_file(source_file, flags)
+    compile_and_run_file(source_file, flags, file: file)
   end
 end

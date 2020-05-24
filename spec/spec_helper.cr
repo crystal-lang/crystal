@@ -6,6 +6,7 @@ require "spec"
 
 require "../src/compiler/crystal/**"
 require "./support/syntax"
+require "./support/tempfile"
 
 class Crystal::Program
   def union_of(type1, type2, type3)
@@ -114,10 +115,8 @@ def assert_no_errors(*args)
   semantic(*args)
 end
 
-def warnings_result(code, inject_primitives = true)
+def warnings_result(code, inject_primitives = true, *, file = __FILE__)
   code = inject_primitives(code) if inject_primitives
-
-  output_filename = Crystal.temp_executable("crystal-spec-output")
 
   compiler = create_spec_compiler
   compiler.warnings = Warnings::All
@@ -125,19 +124,22 @@ def warnings_result(code, inject_primitives = true)
   compiler.prelude = "empty" # avoid issues in the current std lib
   compiler.color = false
   apply_program_flags(compiler.flags)
-  result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
 
-  result.program.warning_failures
+  with_temp_executable("crystal-spec-output", file: file) do |output_filename|
+    result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
+
+    return result.program.warning_failures
+  end
 end
 
-def assert_warning(code, message, inject_primitives = true)
-  warning_failures = warnings_result(code, inject_primitives)
+def assert_warning(code, message, inject_primitives = true, *, file = __FILE__)
+  warning_failures = warnings_result(code, inject_primitives, file: file)
   warning_failures.size.should eq(1)
   warning_failures[0].should start_with(message)
 end
 
-def assert_no_warnings(code, inject_primitives = true)
-  warning_failures = warnings_result(code, inject_primitives)
+def assert_no_warnings(code, inject_primitives = true, *, file = __FILE__)
+  warning_failures = warnings_result(code, inject_primitives, file: file)
   warning_failures.size.should eq(0)
 end
 
@@ -233,7 +235,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -250,53 +252,24 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     ast.expressions[-1] = exps
     code = ast.to_s
 
-    output_filename = Crystal.temp_executable("crystal-spec-output")
-
     compiler = create_spec_compiler
     compiler.debug = debug
     compiler.flags.concat flags if flags
     apply_program_flags(compiler.flags)
-    compiler.compile Compiler::Source.new("spec", code), output_filename
 
-    output = `#{output_filename}`
-    File.delete(output_filename)
+    with_temp_executable("crystal-spec-output", file: file) do |output_filename|
+      compiler.compile Compiler::Source.new("spec", code), output_filename
 
-    SpecRunOutput.new(output)
+      output = `#{output_filename}`
+      return SpecRunOutput.new(output)
+    end
   else
     new_program.run(code, filename: filename, debug: debug)
   end
 end
 
-def build(code)
-  code_file = File.tempname("build_and_run_code")
-
-  # write code to the temp file
-  File.write(code_file, code)
-
-  binary_file = File.tempname("build_and_run_bin")
-
-  `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
-  File.exists?(binary_file).should be_true
-
-  yield binary_file
-ensure
-  File.delete(code_file) if code_file
-  File.delete(binary_file) if binary_file
-end
-
-def build_and_run(code)
-  build(code) do |binary_file|
-    out_io, err_io = IO::Memory.new, IO::Memory.new
-    status = Process.run(binary_file, output: out_io, error: err_io)
-
-    {status, out_io.to_s, err_io.to_s}
-  end
-end
-
-def test_c(c_code, crystal_code)
-  c_filename = "#{__DIR__}/temp_abi.c"
-  o_filename = "#{__DIR__}/temp_abi.o"
-  begin
+def test_c(c_code, crystal_code, *, file = __FILE__)
+  with_tempfile("temp_abi.c", "temp_abi.o", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
     `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
@@ -304,12 +277,9 @@ def test_c(c_code, crystal_code)
     yield run(%(
     require "prelude"
 
-    @[Link(ldflags: "#{o_filename}")]
+    @[Link(ldflags: #{o_filename.inspect})]
     #{crystal_code}
     ))
-  ensure
-    File.delete(c_filename)
-    File.delete(o_filename)
   end
 end
 
