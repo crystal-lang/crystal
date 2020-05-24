@@ -149,7 +149,8 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "::set-env name=CRYSTAL_PATH::src"
+          echo "::set-env name=CRYSTAL_PATH::$(pwd)\src"
+          echo "::set-env name=CRYSTAL::$(pwd)\crystal.exe"
           echo "::set-env name=LIB::${env:LIB};$(pwd)\libs"
           echo "::set-env name=TERM::dumb"
           echo "::set-env name=LLVM_CONFIG::$(pwd)\llvm\bin\llvm-config.exe"
@@ -183,7 +184,14 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Di_know_what_im_doing
+          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
+
+      - name: Build compiler specs executable
+        run: |
+          .\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+      - name: Run compiler specs
+        run: |
+          .\compiler_spec.exe

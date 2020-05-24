@@ -257,10 +257,15 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 end
 
 def test_c(c_code, crystal_code, *, file = __FILE__)
-  with_tempfile("temp_abi.c", "temp_abi.o", file: file) do |c_filename, o_filename|
+  obj_ext = {{ flag?(:win32) ? ".obj" : ".o" }}
+  with_tempfile("temp_abi.c", "temp_abi#{obj_ext}", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
-    `#{Crystal::Compiler::CC} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
+    {% if flag?(:win32) %}
+      `#{Crystal::Compiler::CL} /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
+    {% else %}
+      `#{Crystal::Compiler::CC} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
+    {% end %}
 
     yield run(%(
     require "prelude"

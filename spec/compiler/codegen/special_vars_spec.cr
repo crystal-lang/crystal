@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Codegen: special vars" do
   ["$~", "$?"].each do |name|
-    it "codegens #{name}" do
+    pending_win32 "codegens #{name}" do
       run(%(
         class Object; def not_nil!; self; end; end
 
@@ -15,7 +15,7 @@ describe "Codegen: special vars" do
         )).to_string.should eq("hey")
     end
 
-    it "codegens #{name} with nilable (1)" do
+    pending_win32 "codegens #{name} with nilable (1)" do
       run(%(
         require "prelude"
 
@@ -35,7 +35,7 @@ describe "Codegen: special vars" do
         )).to_string.should eq("ouch")
     end
 
-    it "codegens #{name} with nilable (2)" do
+    pending_win32 "codegens #{name} with nilable (2)" do
       run(%(
         require "prelude"
 
@@ -74,7 +74,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "works lazily" do
+  pending_win32 "works lazily" do
     run(%(
       require "prelude"
 
@@ -145,7 +145,7 @@ describe "Codegen: special vars" do
       )).to_string.should eq("hey")
   end
 
-  it "codegens after block" do
+  pending_win32 "codegens after block" do
     run(%(
       require "prelude"
 
