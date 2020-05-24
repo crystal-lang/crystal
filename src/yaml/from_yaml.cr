@@ -76,6 +76,10 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 end
 
+def Path.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  new(String.new(ctx, node))
+end
+
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   parse_scalar(ctx, node, Float64).to_f32!
 end
@@ -196,6 +200,8 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
             %var{key.id} = {{type}}.new(ctx, value)
             %found{key.id} = true
         {% end %}
+      else
+        # ignore the key
       end
     end
 

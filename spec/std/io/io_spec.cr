@@ -1,4 +1,6 @@
 require "../spec_helper"
+require "../../support/channel"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -44,7 +46,7 @@ private class SimpleIOMemory < IO
     count
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : UInt64
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -54,7 +56,7 @@ private class SimpleIOMemory < IO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    nil
+    slice.size.to_u64
   end
 
   def to_slice
@@ -80,6 +82,28 @@ private class SimpleIOMemory < IO
   end
 end
 
+private class OneByOneIO < IO
+  @bytes : Bytes
+
+  def initialize(string)
+    @bytes = string.to_slice
+    @pos = 0
+  end
+
+  def read(slice : Bytes)
+    return 0 if slice.empty?
+    return 0 if @pos >= @bytes.size
+
+    slice[0] = @bytes[@pos]
+    @pos += 1
+    1
+  end
+
+  def write(slice : Bytes) : UInt64
+    slice.size.to_u64
+  end
+end
+
 describe IO do
   describe "partial read" do
     pending_win32 "doesn't block on first read.  blocks on 2nd read" do
@@ -90,7 +114,7 @@ describe IO do
         read.read_timeout = 1
         read.read(slice).should eq(6)
 
-        expect_raises(IO::Timeout) do
+        expect_raises(IO::TimeoutError) do
           read.read_timeout = 0.0000001
           read.read(slice)
         end
@@ -396,6 +420,32 @@ describe IO do
         end
       end
     end
+
+    describe ".same_content?" do
+      it "compares two ios, one way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_true
+      end
+
+      it "compares two ios, second way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io2, io1).should be_true
+      end
+
+      it "compares two ios, one way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "compares two ios, second way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io2, io1).should be_false
+      end
+    end
   end
 
   describe "write operations" do
@@ -458,7 +508,7 @@ describe IO do
     it "skips a few bytes" do
       io = SimpleIOMemory.new
       io << "hello world"
-      io.skip(6)
+      io.skip(6).should eq(6)
       io.gets_to_end.should eq("world")
     end
 
@@ -473,14 +523,14 @@ describe IO do
     it "skips more than 4096 bytes" do
       io = SimpleIOMemory.new
       io << "a" * 4100
-      io.skip(4099)
+      io.skip(4099).should eq(4099)
       io.gets_to_end.should eq("a")
     end
 
     it "skips to end" do
       io = SimpleIOMemory.new
       io << "hello"
-      io.skip_to_end
+      io.skip_to_end.should eq(5)
       io.read_byte.should be_nil
     end
 
@@ -492,6 +542,34 @@ describe IO do
         expect_raises(IO::Error, "File not open for writing") do
           r << "hello"
         end
+      end
+    end
+
+    describe "counts written bytes" do
+      it "directly" do
+        with_tempfile("create.txt") do |path|
+          File.open(path, "w") do |io|
+            io.write("hello world".to_slice).should eq(11)
+            io.write_utf8("mañana".to_slice).should eq(7)
+          end
+        end
+      end
+
+      pending_win32 "with encoding" do
+        with_tempfile("create.txt") do |path|
+          File.open(path, "w", File::DEFAULT_CREATE_PERMISSIONS, "CP1252") do |io|
+            # In UTF-8 ñ will use 2 bytes
+            io.write_utf8("mañana".to_slice).should eq(6)
+          end
+        end
+      end
+
+      it "with byte format" do
+        io = SimpleIOMemory.new
+
+        io.write_bytes(1u64).should eq(8)
+        io.write_bytes(1u32).should eq(4)
+        io.write_bytes(1u8).should eq(1)
       end
     end
   end
@@ -857,7 +935,7 @@ describe IO do
           ch.send :end
         end
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         ch.receive.should eq(:start)
         wait_until_blocked f
@@ -880,7 +958,7 @@ describe IO do
           ch.send :end
         end
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         ch.receive.should eq(:start)
         wait_until_blocked f

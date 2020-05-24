@@ -173,7 +173,7 @@ class Object
   # typeof(a.as?(Int32)) # => Int32 | Nil
   # a.as?(Int32)         # => 1
   #
-  # typeof(a.as?(Bool)) # => Nil
+  # typeof(a.as?(Bool)) # => Bool | Nil
   # a.as?(Bool)         # => nil
   #
   # typeof(a.as?(String)) # => String | Nil

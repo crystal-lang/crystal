@@ -1,14 +1,16 @@
-require "spec"
+require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
 
 private def to_s_with_io(num)
-  String.build { |str| num.to_s(str) }
+  String.build { |io| num.to_s(io) }
 end
 
 private def to_s_with_io(num, base, upcase = false)
-  String.build { |str| num.to_s(base, str, upcase) }
+  String.build { |io| num.to_s(io, base, upcase: upcase) }
+  # Test deprecated overload:
+  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
@@ -172,6 +174,7 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
+    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }
@@ -776,5 +779,24 @@ describe "Int" do
   it "#unsafe_chr" do
     65.unsafe_chr.should eq('A')
     (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+  end
+
+  describe "#bit_length" do
+    it "for primitve integers" do
+      0.bit_length.should eq(0)
+      0b1.bit_length.should eq(1)
+      0b1001.bit_length.should eq(4)
+      0b1001001_i64.bit_length.should eq(7)
+      0b1111111111.bit_length.should eq(10)
+      0b1000000000.bit_length.should eq(10)
+      -1.bit_length.should eq(0)
+      -10.bit_length.should eq(4)
+    end
+
+    pending_win32 "for BigInt" do
+      (10.to_big_i ** 20).bit_length.should eq(67)
+      (10.to_big_i ** 309).bit_length.should eq(1027)
+      (10.to_big_i ** 3010).bit_length.should eq(10000)
+    end
   end
 end

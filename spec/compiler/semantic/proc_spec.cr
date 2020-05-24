@@ -881,15 +881,23 @@ describe "Semantic: proc" do
       )) { proc_of(int32) }
   end
 
-  it "merges Proc that returns Nil with another one that returns something else (#3655)" do
+  it "*doesn't* merge Proc that returns Nil with another one that returns something else (#3655) (this was reverted)" do
     assert_type(%(
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       a || b
-      )) { proc_of(int32, nil_type) }
+      )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
-  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+  it "merges return type" do
+    assert_type(%(
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { nil }
+      (a || b).call(1)
+      )) { nilable int32 }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
     assert_type(%(
       class Foo
         @block : -> Nil
@@ -904,6 +912,36 @@ describe "Semantic: proc" do
       end
 
       Foo.new.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with class var (#3655)" do
+    assert_type(%(
+      module Moo
+        @@block : -> Nil = ->{ nil }
+
+        def self.block=(@@block)
+        end
+
+        def self.block
+          @@block
+        end
+      end
+
+      Moo.block = ->{ 1 }
+      Moo.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with local var (#3655)" do
+    assert_type(%(
+      proc : -> Nil
+
+      a = ->{ 1 }
+      b = ->{ nil }
+      proc = a || b
+
+      proc
       )) { proc_of(nil_type) }
   end
 
@@ -1000,5 +1038,35 @@ describe "Semantic: proc" do
 
       ->foo(Foo)
       )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+  end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      foo(->{ 1 })
+      )) { proc_of nil_type }
+  end
+
+  it "can pass Proc(X, T) to Proc(X, Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(String, Nil))
+        x
+      end
+
+      foo(->(x : String) { 1 })
+      )) { proc_of string, nil_type }
+  end
+
+  it "casts to Proc(Nil) when specified in return type" do
+    assert_type(%(
+      def foo : Proc(Nil)
+        ->{ 1 }
+      end
+
+      foo
+      )) { proc_of nil_type }
   end
 end

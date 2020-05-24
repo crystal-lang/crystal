@@ -8,7 +8,7 @@ module Crystal::System::Fiber
     {% end %}
 
     pointer = LibC.mmap(nil, stack_size, LibC::PROT_READ | LibC::PROT_WRITE, flags, -1, 0)
-    raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+    raise RuntimeError.from_errno("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
 
     {% if flag?(:linux) %}
       LibC.madvise(pointer, stack_size, LibC::MADV_NOHUGEPAGE)

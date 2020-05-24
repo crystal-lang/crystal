@@ -353,11 +353,11 @@ describe IO::Memory do
 
   it "skips" do
     io = IO::Memory.new("hello")
-    io.skip(2)
+    io.skip(2).should eq(2)
     io.gets_to_end.should eq("llo")
 
     io.rewind
-    io.skip(5)
+    io.skip(5).should eq(5)
     io.gets_to_end.should eq("")
 
     io.rewind
@@ -369,7 +369,7 @@ describe IO::Memory do
 
   it "skips_to_end" do
     io = IO::Memory.new("hello")
-    io.skip_to_end
+    io.skip_to_end.should eq(5)
     io.gets_to_end.should eq("")
   end
 

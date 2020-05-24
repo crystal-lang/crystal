@@ -5,7 +5,7 @@
 # some in `tools`, some here, and some create a Compiler and
 # manipulate it.
 #
-# Other commands create a `Compiler` and use it to to build
+# Other commands create a `Compiler` and use it to build
 # an executable.
 
 require "json"
@@ -68,13 +68,19 @@ class Crystal::Command
       init
     when "build".starts_with?(command)
       options.shift
+      use_crystal_opts
       result = build
       report_warnings result
       exit 1 if warnings_fail_on_exit?(result)
       result
     when "play".starts_with?(command)
       options.shift
-      playground
+      {% if flag?(:without_playground) %}
+        puts "Crystal was compiled without playground support"
+        exit 1
+      {% else %}
+        playground
+      {% end %}
     when "deps".starts_with?(command)
       STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
       exit 1
@@ -86,12 +92,15 @@ class Crystal::Command
       env
     when command == "eval"
       options.shift
+      use_crystal_opts
       eval
     when "run".starts_with?(command)
       options.shift
+      use_crystal_opts
       run_command(single_file: false)
     when "spec/".starts_with?(command)
       options.shift
+      use_crystal_opts
       spec
     when "tool".starts_with?(command)
       options.shift
@@ -103,6 +112,7 @@ class Crystal::Command
       puts Crystal::Config.description
       exit
     when File.file?(command)
+      use_crystal_opts
       run_command(single_file: true)
     else
       if command.ends_with?(".cr")
@@ -186,7 +196,7 @@ class Crystal::Command
       return
     end
 
-    output_filename = Crystal.tempfile(config.output_filename)
+    output_filename = Crystal.temp_executable(config.output_filename)
 
     result = config.compile output_filename
 
@@ -220,9 +230,11 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            # Ignore the signal so we don't exit the running process
-            # (the running process can still handle this signal)
-            ::Signal::INT.ignore # do
+            {% unless flag?(:win32) %}
+              # Ignore the signal so we don't exit the running process
+              # (the running process can still handle this signal)
+              ::Signal::INT.ignore # do
+            {% end %}
           end
         end
         {$?, elapsed}
@@ -242,22 +254,24 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    if status.normal_exit?
+    case status
+    when .normal_exit?
       exit error_on_exit ? 1 : status.exit_code
-    else
-      case status.exit_signal
-      when ::Signal::KILL
+    when .signal_exit?
+      case signal = status.exit_signal
+      when .kill?
         STDERR.puts "Program was killed"
-      when ::Signal::SEGV
+      when .segv?
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when ::Signal::INT
+      when .int?
         # OK, bubbled from the sub-program
       else
-        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+        STDERR.puts "Program received and didn't handle signal #{signal} (#{signal.value})"
       end
-
-      exit 1
+    else
+      STDERR.puts "Program exited abnormally, the cause is unknown"
     end
+    exit 1
   end
 
   record CompilerConfig,
@@ -549,6 +563,7 @@ class Crystal::Command
 
   private def setup_compiler_warning_options(opts, compiler)
     compiler.warnings_exclude << Crystal.normalize_path "lib"
+    warnings_exclude_default = true
     opts.on("--warnings all|none", "Which warnings detect. (default: all)") do |w|
       compiler.warnings = case w
                           when "all"
@@ -564,6 +579,11 @@ class Crystal::Command
       compiler.error_on_warnings = true
     end
     opts.on("--exclude-warnings <path>", "Exclude warnings from path (default: lib)") do |f|
+      if warnings_exclude_default
+        # if an --exclude-warnings is used explicitly, then we remove the default value
+        compiler.warnings_exclude.clear
+        warnings_exclude_default = false
+      end
       compiler.warnings_exclude << Crystal.normalize_path f
     end
   end
@@ -584,5 +604,9 @@ class Crystal::Command
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color") || ENV["TERM"]? == "dumb"
     Crystal.error msg, @color, exit_code: exit_code
+  end
+
+  private def use_crystal_opts
+    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
   end
 end

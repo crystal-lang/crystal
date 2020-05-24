@@ -68,6 +68,12 @@ class String
   end
 end
 
+struct Path
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    @name.to_yaml(yaml)
+  end
+end
+
 struct Number
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.scalar self.to_s

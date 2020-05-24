@@ -41,8 +41,9 @@ struct XML::XPathContext
     end
   end
 
-  def register_namespace(prefix, uri)
-    LibXML.xmlXPathRegisterNs(self, prefix.to_s, uri.to_s)
+  def register_namespace(prefix : String, uri : String?)
+    prefix = prefix.lchop("xmlns:")
+    LibXML.xmlXPathRegisterNs(self, prefix, uri.to_s)
   end
 
   def register_variables(variables)

@@ -50,6 +50,8 @@ class JSON::Builder
       raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
       raise JSON::Error.new("Unterminated JSON object")
+    when DocumentEndState
+      # okay
     end
   end
 
@@ -129,7 +131,7 @@ class JSON::Builder
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10
-          ord.to_s(16, io)
+          ord.to_s(io, 16)
           reader.next_char
           start_pos = reader.pos
           next
@@ -295,6 +297,8 @@ class JSON::Builder
   private def start_scalar(string = false)
     object_value = false
     case state = @state.last
+    when DocumentStartState
+      # okay
     when StartState
       raise JSON::Error.new("Write before start_document")
     when DocumentEndState
@@ -320,6 +324,8 @@ class JSON::Builder
     when ObjectState
       colon if state.name
       @state[-1] = ObjectState.new(empty: false, name: !state.name)
+    else
+      raise "Bug: unexpected state: #{state.class}"
     end
   end
 
@@ -402,11 +408,12 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil)
+  def self.build(io : IO, indent = nil) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do
       yield builder
     end
+    io.flush
   end
 end

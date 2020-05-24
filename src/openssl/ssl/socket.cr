@@ -51,17 +51,25 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   class Server < Socket
-    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def initialize(io, context : Context::Server = Context::Server.new,
+                   sync_close : Bool = false, accept : Bool = true)
       super(io, context, sync_close)
-      begin
-        ret = LibSSL.ssl_accept(@ssl)
-        unless ret == 1
-          io.close if sync_close
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+
+      if accept
+        begin
+          self.accept
+        rescue ex
+          LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
+          raise ex
         end
-      rescue ex
-        LibSSL.ssl_free(@ssl) # GC never calls finalize, avoid mem leak
-        raise ex
+      end
+    end
+
+    def accept
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        @bio.io.close if @sync_close
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
 
@@ -136,7 +144,6 @@ abstract class OpenSSL::SSL::Socket < IO
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
-    nil
   end
 
   def unbuffered_flush
@@ -178,7 +185,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
         # ret == 0, retry, shutdown is not complete yet
       end
-    rescue IO::Error | Errno
+    rescue IO::Error
     ensure
       @bio.io.close if @sync_close
     end

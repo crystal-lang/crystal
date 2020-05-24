@@ -34,4 +34,26 @@ describe Digest::MD5 do
   it "calculates base64'd hash from string" do
     Digest::MD5.base64digest("foo").should eq("rL0Y20zC+Fzt72VPzMSk2A==")
   end
+
+  it "resets" do
+    digest = Digest::MD5.new
+    digest.update "foo"
+    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+
+    digest.reset
+    digest.update "foo"
+    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+  end
+
+  it "can't call final twice" do
+    digest = Digest::MD5.new
+    digest.final
+    expect_raises(Digest::FinalizedError) do
+      digest.final
+    end
+  end
+
+  it "return the digest size" do
+    Digest::MD5.new.digest_size.should eq 16
+  end
 end

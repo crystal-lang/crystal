@@ -10,13 +10,20 @@ class Digest::SHA1 < Digest::Base
   # This is a direct translation of https://tools.ietf.org/html/rfc3174#section-7
   # but we use loop unrolling for faster execution (about 1.07x slower than OpenSSL::SHA1).
 
+  @intermediate_hash = uninitialized UInt32[5]
+  @length_low = 0_u32
+  @length_high = 0_u32
+  @message_block_index = 0
+  @message_block = StaticArray(UInt8, 64).new(0_u8) # uninitialized UInt8[64]
+
   def initialize
-    @intermediate_hash = uninitialized UInt32[5]
+    reset
+  end
+
+  private def reset_impl : Nil
     @length_low = 0_u32
     @length_high = 0_u32
-    @message_block = StaticArray(UInt8, 64).new(0_u8) # uninitialized UInt8[64]
     @message_block_index = 0
-
     @intermediate_hash[0] = 0x67452301_u32
     @intermediate_hash[1] = 0xEFCDAB89_u32
     @intermediate_hash[2] = 0x98BADCFE_u32
@@ -24,9 +31,8 @@ class Digest::SHA1 < Digest::Base
     @intermediate_hash[4] = 0xC3D2E1F0_u32
   end
 
-  def update(data)
-    message_array = data.to_slice
-    message_array.each do |byte|
+  private def update_impl(data : Bytes) : Nil
+    data.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1
       @length_low += 8
@@ -44,7 +50,17 @@ class Digest::SHA1 < Digest::Base
     end
   end
 
-  def process_message_block
+  private def final_impl(dst : Bytes) : Nil
+    pad_message
+
+    @length_low = 0_u32
+    @length_high = 0_u32
+    {% for i in 0...20 %}
+      dst[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8!
+    {% end %}
+  end
+
+  private def process_message_block
     k = {0x5A827999_u32, 0x6ED9EBA1_u32, 0x8F1BBCDC_u32, 0xCA62C1D6_u32}
 
     w = uninitialized UInt32[80]
@@ -113,27 +129,11 @@ class Digest::SHA1 < Digest::Base
     @message_block_index = 0
   end
 
-  def circular_shift(bits, word)
+  private def circular_shift(bits, word)
     (word << bits) | (word >> (32 - bits))
   end
 
-  def final
-  end
-
-  def result
-    message_digest = uninitialized UInt8[20]
-    pad_message
-
-    @length_low = 0_u32
-    @length_high = 0_u32
-    {% for i in 0...20 %}
-      message_digest[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8!
-    {% end %}
-
-    message_digest
-  end
-
-  def pad_message
+  private def pad_message
     if @message_block_index > 55
       @message_block[@message_block_index] = 0x80_u8
       @message_block_index += 1
@@ -167,5 +167,9 @@ class Digest::SHA1 < Digest::Base
     @message_block[63] = (@length_low).to_u8!
 
     process_message_block
+  end
+
+  def digest_size : Int32
+    20
   end
 end

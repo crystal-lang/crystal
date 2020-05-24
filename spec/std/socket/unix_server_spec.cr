@@ -1,6 +1,7 @@
-require "spec"
+require "../spec_helper"
 require "socket"
-require "../../support/errno"
+require "../../support/fibers"
+require "../../support/channel"
 require "../../support/tempfile"
 
 describe UNIXServer do
@@ -39,7 +40,7 @@ describe UNIXServer do
         server = UNIXServer.new(path)
 
         begin
-          expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+          expect_raises(Socket::BindError) do
             UNIXServer.new(path)
           end
         ensure
@@ -53,7 +54,7 @@ describe UNIXServer do
         File.write(path, "")
         File.exists?(path).should be_true
 
-        expect_raises_errno(Errno::EADDRINUSE, "bind: ") do
+        expect_raises(Socket::BindError) do
           UNIXServer.new(path)
         end
 
@@ -81,7 +82,7 @@ describe UNIXServer do
         ch = Channel(Symbol).new(1)
         exception = nil
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         f = spawn do
           begin
@@ -126,7 +127,7 @@ describe UNIXServer do
         ch = Channel(Symbol).new(1)
         ret = :initial
 
-        delay(1) { ch.send :timeout }
+        schedule_timeout ch
 
         f = spawn do
           ch.send :begin

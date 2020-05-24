@@ -5,6 +5,9 @@
 # without a matching `start_element`, or trying to use
 # a non-string value as an object's field name)
 struct XML::Builder
+  private CDATA_END    = "]]>"
+  private CDATA_ESCAPE = "]]]]><![CDATA[>"
+
   @box : Void*
 
   # Creates a builder that writes to the given *io*.
@@ -180,14 +183,17 @@ struct XML::Builder
 
   # Emits the start of a `CDATA` section, invokes the block
   # and then emits the end of the `CDATA` section.
-  def cdata
+  #
+  # NOTE: `CDATA` end sequences written within the block
+  # need to be escaped manually.
+  def cdata(&)
     start_cdata
     yield.tap { end_cdata }
   end
 
-  # Emits a `CDATA` section.
+  # Emits a `CDATA` section.  Escapes nested `CDATA` end sequences.
   def cdata(text : String) : Nil
-    call WriteCDATA, string_to_unsafe(text)
+    call WriteCDATA, string_to_unsafe(text.gsub(CDATA_END, CDATA_ESCAPE))
   end
 
   # Emits the start of a comment.
@@ -349,7 +355,7 @@ module XML
   # Writes XML document into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML document (see `#document`) including XML declaration (`<?xml?>`).
-  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil)
+  def self.build(io : IO, version : String? = nil, encoding : String? = nil, indent = nil, quote_char = nil) : Nil
     build_fragment(io, indent: indent, quote_char: quote_char) do |xml|
       xml.start_document version, encoding
       yield xml
@@ -360,7 +366,7 @@ module XML
   # Writes XML fragment into the given `IO`. An `XML::Builder` is yielded to the block.
   #
   # Builds an XML fragment without XML declaration (`<?xml?>`).
-  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil)
+  def self.build_fragment(io : IO, *, indent = nil, quote_char = nil) : Nil
     xml = XML::Builder.new(io)
     xml.indent = indent if indent
     xml.quote_char = quote_char if quote_char
@@ -370,6 +376,7 @@ module XML
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
+    io.flush
     v
   end
 end

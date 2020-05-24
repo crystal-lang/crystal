@@ -36,7 +36,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = bind(addrinfo) { |errno| errno }
+      if errno = bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
         next errno
       end

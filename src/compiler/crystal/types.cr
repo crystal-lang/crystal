@@ -3,6 +3,8 @@ require "./syntax/ast"
 module Crystal
   # Abstract base class of all types
   abstract class Type
+    include Annotatable
+
     # Returns the program where this type belongs.
     getter program
 
@@ -39,6 +41,25 @@ module Crystal
     # Returns `true` if this type is abstract.
     def abstract?
       false
+    end
+
+    # Returns `true` if this type is abstract and it has no
+    # concrete subclasses. This can happen if this type has abstract
+    # subclasses, or non-abstract generic subclasses without instantiations.
+    def abstract_leaf?
+      type = self.devirtualize
+
+      case type
+      when GenericType
+        (type.abstract? && type.generic_types.empty?) ||
+          (type.generic_types.all? { |name, type| type.abstract_leaf? })
+      when GenericClassInstanceType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      when ClassType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      else
+        false
+      end
     end
 
     # Returns `true` if this type is a struct.
@@ -691,23 +712,6 @@ module Crystal
       end
     end
 
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
-    end
-
     def get_instance_var_initializer(name)
       nil
     end
@@ -904,6 +908,8 @@ module Crystal
         if a_macro.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
+      else
+        # normal macro
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
@@ -1380,7 +1386,7 @@ module Crystal
 
   abstract class LiteralType < Type
     # The most exact match type, or the first match otherwise
-    @match : Type?
+    getter match : Type?
 
     # All matches. It's nil if `@match` is an exact match.
     @all_matches : Set(Type)?
@@ -1772,7 +1778,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1832,7 +1838,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1959,26 +1965,28 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       generic_type.append_full_name(io)
-      io << '('
-      type_vars.each_value.with_index do |type_var, i|
-        io << ", " if i > 0
-        if type_var.is_a?(Var)
-          if i == splat_index
-            tuple = type_var.type.as(TupleInstanceType)
-            tuple.tuple_types.join(", ", io) do |tuple_type|
-              tuple_type = tuple_type.devirtualize unless codegen
-              tuple_type.to_s_with_options(io, codegen: codegen)
+      if generic_args
+        io << '('
+        type_vars.each_value.with_index do |type_var, i|
+          io << ", " if i > 0
+          if type_var.is_a?(Var)
+            if i == splat_index
+              tuple = type_var.type.as(TupleInstanceType)
+              tuple.tuple_types.join(io, ", ") do |tuple_type|
+                tuple_type = tuple_type.devirtualize unless codegen
+                tuple_type.to_s_with_options(io, codegen: codegen)
+              end
+            else
+              type_var_type = type_var.type
+              type_var_type = type_var_type.devirtualize unless codegen
+              type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
-            type_var_type = type_var.type
-            type_var_type = type_var_type.devirtualize unless codegen
-            type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+            type_var.to_s(io)
           end
-        else
-          type_var.to_s(io)
         end
+        io << ')'
       end
-      io << ')'
     end
   end
 
@@ -2373,7 +2381,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "Tuple("
-      @tuple_types.join(", ", io) do |tuple_type|
+      @tuple_types.join(io, ", ") do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
@@ -2490,7 +2498,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
-      @entries.join(", ", io) do |entry|
+      @entries.join(io, ", ") do |entry|
         if Symbol.needs_quotes?(entry.name)
           entry.name.inspect(io)
         else
@@ -3040,7 +3048,7 @@ module Crystal
         union_types = @union_types.dup
         union_types << union_types.delete_at(nil_type_index)
       end
-      union_types.join(" | ", io) do |type|
+      union_types.join(io, " | ") do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end
@@ -3379,6 +3387,8 @@ private def add_instance_var_initializer(including_types, name, value, meta_vars
       type.add_instance_var_initializer(name, value, meta_vars)
     when Crystal::GenericModuleType
       type.add_instance_var_initializer(name, value, meta_vars)
+    else
+      # skip
     end
   end
 end

@@ -56,10 +56,11 @@ body {
   padding: 0 0 30px;
   box-shadow: inset -3px 0 4px rgba(0,0,0,.35);
   line-height: 1.2;
+  z-index: 0;
 }
 
 .sidebar .search-box {
-  padding: 8px 9px;
+  padding: 13px 9px;
 }
 
 .sidebar input {
@@ -106,6 +107,55 @@ body {
   text-indent: 2px;
 }
 
+.project-summary {
+  padding: 9px 15px 30px 30px;
+}
+
+.project-name {
+  font-size: 1.4rem;
+  margin: 0;
+  color: #f4f4f4;
+  font-weight: 600;
+}
+
+.project-version {
+  margin-top: 5px;
+  display: inline-block;
+  position: relative;
+}
+
+.project-version > form::after {
+  position: absolute;
+  right: 0;
+  top: 0;
+  content: "\25BC";
+  font-size: .6em;
+  line-height: 1.2rem;
+  z-index: -1;
+}
+
+.project-versions-nav {
+  cursor: pointer;
+  margin: 0;
+  padding: 0 .9em 0 0;
+  border: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.project-versions-nav:focus {
+  outline: none;
+}
+
+.project-versions-nav > option {
+  color: initial;
+}
+
 .sidebar ul {
   margin: 0;
   padding: 0;
@@ -146,10 +196,6 @@ body {
 .sidebar .current > a,
 .sidebar a:hover {
   color: #866BA6;
-}
-
-.repository-links {
-  padding: 5px 15px 5px 30px;
 }
 
 .types-list li ul {
@@ -412,6 +458,12 @@ span.flag.purple {
   background-color: #2E1052;
   color: #ECE1F9;
   border-color: #1F0B37;
+}
+
+span.flag.lime {
+  background-color: #a3ff00;
+  color: #222222;
+  border-color: #00ff1e;
 }
 
 .tooltip>span {

@@ -6,7 +6,7 @@
   @[Link("pthread")]
 {% end %}
 
-{% if flag?(:freebsd) %}
+{% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
   @[Link("gc", static: true)]
@@ -221,7 +221,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise Errno.new("pthread_join", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 

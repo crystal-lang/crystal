@@ -124,6 +124,8 @@ module Crystal::Doc::Highlighter
         break
       when :EOF
         raise "Unterminated symbol array literal"
+      else
+        raise "Bug: shouldn't happen"
       end
     end
   end

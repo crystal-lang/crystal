@@ -21,7 +21,7 @@ module Crystal::System::Group
       ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
 
-    raise Errno.new("getgrnam_r") if ret != 0
+    raise RuntimeError.from_errno("getgrnam_r") if ret != 0
 
     from_struct(grp) if grp_pointer
   end
@@ -41,7 +41,7 @@ module Crystal::System::Group
       ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
 
-    raise Errno.new("getgrgid_r") if ret != 0
+    raise RuntimeError.from_errno("getgrgid_r") if ret != 0
 
     from_struct(grp) if grp_pointer
   end

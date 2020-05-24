@@ -576,7 +576,7 @@ describe Playground::AgentInstrumentorTransformer do
 end
 
 private def assert_compile(source)
-  sources = Playground::Session.instrument_and_prelude("", "", 0, source, Logger.new(nil))
+  sources = Playground::Session.instrument_and_prelude("", "", 0, source)
   compiler = Compiler.new
   compiler.no_codegen = true
   result = compiler.compile sources, "fake-no-build"

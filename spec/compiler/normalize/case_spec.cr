@@ -120,4 +120,8 @@ describe "Normalize: case" do
   it "normalizes case without cond, when but else" do
     assert_expand "case; else; y; end", "y"
   end
+
+  it "normalizes case with Path.class to is_a? (in)" do
+    assert_expand_second "x = 1; case x; in Foo.class; 'b'; end", "if x.is_a?(Foo.class)\n  'b'\nelse\n  raise \"unreachable\"\nend"
+  end
 end

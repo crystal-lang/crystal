@@ -76,6 +76,22 @@ describe IO::Stapled do
     io.peek.should eq Bytes.empty
   end
 
+  it "#skip delegates to reader" do
+    reader = IO::Memory.new "cletus"
+    io = IO::Stapled.new reader, IO::Memory.new
+    io.peek.should eq "cletus".to_slice
+    io.skip(4).should eq(4)
+    io.peek.should eq "us".to_slice
+  end
+
+  it "#skip_to_end delegates to reader" do
+    reader = IO::Memory.new "cletus"
+    io = IO::Stapled.new reader, IO::Memory.new
+    io.peek.should eq "cletus".to_slice
+    io.skip_to_end.should eq(6)
+    io.peek.should eq Bytes.empty
+  end
+
   describe ".pipe" do
     it "creates a bidirectional pipe" do
       a, b = IO::Stapled.pipe

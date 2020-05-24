@@ -167,6 +167,15 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
   end
 
+  def factorial : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
+  end
+
   def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
@@ -388,6 +397,10 @@ struct BigInt < Int
 
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
+  end
+
+  def bit_length : Int32
+    LibGMP.sizeinbase(self, 2).to_i
   end
 
   # TODO: improve this

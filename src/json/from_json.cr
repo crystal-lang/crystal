@@ -132,6 +132,10 @@ def String.new(pull : JSON::PullParser)
   pull.read_string
 end
 
+def Path.new(pull : JSON::PullParser)
+  new(pull.read_string)
+end
+
 def String.from_json_object_key?(key : String)
   key
 end
@@ -279,6 +283,8 @@ def Union.new(pull : JSON::PullParser)
       value = pull.read?({{type}})
       return value unless value.nil?
     {% end %}
+    else
+      # no priority type
     end
   {% end %}
 

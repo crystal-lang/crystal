@@ -63,7 +63,7 @@ module HTTP
 
     def expired?
       if e = expires
-        e < Time.utc
+        e <= Time.utc
       else
         false
       end
@@ -263,7 +263,7 @@ module HTTP
 
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
-    # *key* should match the the name attribute of the desired `HTTP::Cookie`.
+    # *key* should match the name attribute of the desired `HTTP::Cookie`.
     def delete(key)
       @cookies.delete(key)
     end

@@ -23,13 +23,15 @@ module Crystal
       if with_literals
         case self
         when NumberLiteral
-          return NumberLiteralType.new(type.program, self)
+          NumberLiteralType.new(type.program, self)
         when SymbolLiteral
-          return SymbolLiteralType.new(type.program, self)
+          SymbolLiteralType.new(type.program, self)
+        else
+          type
         end
+      else
+        type
       end
-
-      type
     end
 
     def set_type(type : Type)
@@ -131,6 +133,10 @@ module Crystal
       end
       new_type = map_type(new_type) if new_type
 
+      if new_type && (freeze_type = @freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
+
       return if @type.same? new_type
       return unless new_type
 
@@ -189,6 +195,10 @@ module Crystal
       new_type = Type.merge dependencies
       new_type = map_type(new_type) if new_type
 
+      if new_type && (freeze_type = @freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
+
       return if @type.same? new_type
 
       if new_type
@@ -210,6 +220,22 @@ module Crystal
     end
 
     def map_type(type)
+      type
+    end
+
+    # Computes the type resulting from assigning type to freeze_type,
+    # in the case where freeze_type is not nil.
+    #
+    # Special cases are listed inside the method body.
+    def restrict_type_to_freeze_type(freeze_type, type)
+      # We allow assigning Proc(*T, R) to Proc(*T, Nil)
+      if freeze_type.is_a?(ProcInstanceType) && freeze_type.return_type.nil_type?
+        if (type.is_a?(UnionType) && type.union_types.all?(&.implements?(freeze_type))) ||
+           type.implements?(freeze_type)
+          return freeze_type
+        end
+      end
+
       type
     end
 

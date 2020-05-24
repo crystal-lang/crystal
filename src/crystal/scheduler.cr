@@ -249,8 +249,8 @@ class Crystal::Scheduler
 
         workers
       else
-        # TODO: default worker count, currenlty hardcoded to 4 that seems to be something
-        # that is benefitial for many scenarios without adding too much contention.
+        # TODO: default worker count, currently hardcoded to 4 that seems to be something
+        # that is beneficial for many scenarios without adding too much contention.
         # In the future we could use the number of cores or something associated to it.
         4
       end

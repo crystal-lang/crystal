@@ -69,8 +69,8 @@ class Socket
           end
 
           unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
+            if error.is_a?(Socket::ConnectError)
+              raise Socket::ConnectError.from_errno("Error connecting to '#{domain}:#{service}'")
             else
               raise error if error
             end
@@ -189,6 +189,8 @@ class Socket
         addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(pointerof(@addr).as(LibC::SockaddrIn6*), 1)
       when Family::INET
         addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(pointerof(@addr).as(LibC::SockaddrIn*), 1)
+      else
+        # TODO: (asterite) UNSPEC and UNIX unsupported?
       end
     end
 

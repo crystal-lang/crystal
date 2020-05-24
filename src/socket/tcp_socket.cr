@@ -90,9 +90,7 @@ class TCPSocket < IPSocket
       setsockopt optname, val, level: Protocol::TCP
       val
     end
-  {% end %}
 
-  {% unless flag?(:openbsd) || flag?(:netbsd) %}
     # The amount of time in seconds between keepalive probes.
     def tcp_keepalive_interval
       getsockopt LibC::TCP_KEEPINTVL, 0, level: Protocol::TCP

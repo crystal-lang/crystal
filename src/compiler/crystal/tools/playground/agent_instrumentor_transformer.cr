@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
     class MacroDefNameCollector < Visitor

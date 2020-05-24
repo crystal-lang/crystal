@@ -1,40 +1,45 @@
 require "crystal/at_exit_handlers"
 
-{% if flag?(:win32) %}
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.new(0)
-
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  STDOUT = IO::FileDescriptor.new(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  STDERR = IO::FileDescriptor.new(2)
-{% else %}
+{% unless flag?(:win32) %}
   require "c/unistd"
-
-  # The standard input file descriptor. Contains data piped to the program.
-  STDIN = IO::FileDescriptor.from_stdio(0)
-
-  # The standard output file descriptor.
-  #
-  # Typically used to output data and information.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDOUT = IO::FileDescriptor.from_stdio(1)
-
-  # The standard error file descriptor.
-  #
-  # Typically used to output error messages and diagnostics.
-  #
-  # When this is a TTY device, `sync` will be true for it
-  # at the start of the program.
-  STDERR = IO::FileDescriptor.from_stdio(2)
 {% end %}
+
+# The standard input file descriptor. Contains data piped to the program.
+STDIN = IO::FileDescriptor.from_stdio(0)
+
+# The standard output file descriptor.
+#
+# Typically used to output data and information.
+#
+# At the start of the program STDOUT is configured like this:
+# - if it's a TTY device (like the console) then `sync` is `true`,
+#   meaning that output will be outputted as soon as it is written
+#   to STDOUT. This is so users can see real time output data.
+# - if it's not a TTY device (like a file, or because the output
+#   was piped to a file) then `sync` is `false` but `flush_on_newline`
+#   is `true`. This is so that if you pipe the output to a file, and,
+#   for example, you `tail -f`, you can see data on a line-per-line basis.
+#   This is convenient but slower than with `flush_on_newline` set to `false`.
+#   If you need a bit more performance and you don't care about near real-time
+#   output you can do `STDOUT.flush_on_newline = false`.
+STDOUT = IO::FileDescriptor.from_stdio(1)
+
+# The standard error file descriptor.
+#
+# Typically used to output error messages and diagnostics.
+#
+# At the start of the program STDERR is configured like this:
+# - if it's a TTY device (like the console) then `sync` is `true`,
+#   meaning that output will be outputted as soon as it is written
+#   to STDERR. This is so users can see real time output data.
+# - if it's not a TTY device (like a file, or because the output
+#   was piped to a file) then `sync` is `false` but `flush_on_newline`
+#   is `true`. This is so that if you pipe the output to a file, and,
+#   for example, you `tail -f`, you can see data on a line-per-line basis.
+#   This is convenient but slower than with `flush_on_newline` set to `false`.
+#   If you need a bit more performance and you don't care about near real-time
+#   output you can do `STDERR.flush_on_newline = false`.
+STDERR = IO::FileDescriptor.from_stdio(2)
 
 # The name, the program was called with.
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
@@ -66,7 +71,7 @@ ARGV = Array.new(ARGC_UNSAFE - 1) { |i| String.new(ARGV_UNSAFE[1 + i]) }
 # $ echo "hello" | ./program
 # hello
 # $ ./program unknown
-# Unhandled exception: Error opening file 'unknown' with mode 'r': No such file or directory (Errno)
+# Unhandled exception: Error opening file with mode 'r': 'unknown': No such file or directory (File::NotFoundError)
 # ...
 # ```
 #
@@ -486,6 +491,8 @@ end
 
 {% unless flag?(:preview_mt) %}
   class Process
+    # :nodoc:
+    #
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [

@@ -26,6 +26,7 @@ lib LibIntrinsics
 
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
+  fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
 
   fun popcount8 = "llvm.ctpop.i8"(src : Int8) : Int8
   fun popcount16 = "llvm.ctpop.i16"(src : Int16) : Int16
@@ -94,6 +95,10 @@ module Intrinsics
 
   def self.bswap32(id)
     LibIntrinsics.bswap32(id)
+  end
+
+  def self.bswap16(id)
+    LibIntrinsics.bswap16(id)
   end
 
   def self.popcount8(src)

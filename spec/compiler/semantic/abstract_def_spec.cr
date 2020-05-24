@@ -636,4 +636,42 @@ describe "Semantic: abstract def" do
       end
     ))
   end
+
+  it "can implement even if yield comes later in macro code" do
+    semantic(%(
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+
+        def each
+          yield 1
+
+          {% if true %}
+            yield 2
+          {% end %}
+        end
+      end
+    ))
+  end
+
+  it "can implement by block signature even if yield comes later in macro code" do
+    semantic(%(
+      module Moo
+        abstract def each(& : Int32 -> _)
+      end
+
+      class Foo
+        include Moo
+
+        def each(& : Int32 -> _)
+          {% if true %}
+            yield 2
+          {% end %}
+        end
+      end
+    ))
+  end
 end

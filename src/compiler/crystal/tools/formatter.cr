@@ -154,7 +154,7 @@ module Crystal
 
     def end_visit_any(node)
       case node
-      when StringLiteral, StringInterpolation
+      when StringInterpolation
         # Nothing
       else
         @last_is_heredoc = false
@@ -447,8 +447,6 @@ module Crystal
     end
 
     def visit(node : StringLiteral)
-      @last_is_heredoc = false
-
       column = @column
 
       if @token.type == :__FILE__ || @token.type == :__DIR__
@@ -459,12 +457,6 @@ module Crystal
 
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
-      is_heredoc = @token.delimiter_state.kind == :heredoc
-      @last_is_heredoc = is_heredoc
-
-      indent_difference = @token.column_number - (@column + 1)
-      heredoc_line = @line
-      heredoc_end = @line
 
       write @token.raw
       next_string_token
@@ -488,23 +480,14 @@ module Crystal
           write "}"
           next_string_token
         when :DELIMITER_END
-          heredoc_end = @line
           break
+        else
+          raise "Bug: unexpected token: #{@token.type}"
         end
       end
 
       write @token.raw
       format_regex_modifiers if is_regex
-
-      if is_heredoc
-        if indent_difference > 0
-          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
-        (heredoc_line...heredoc_end).each do |line|
-          @no_rstrip_lines.add line
-        end
-        write_line
-      end
 
       if space_slash_newline?
         old_indent = @indent
@@ -678,6 +661,17 @@ module Crystal
     end
 
     def visit(node : RegexLiteral)
+      # Go back and tokenize again if slash is recognized as divide operator.
+      # In this case, slash is tokenized on comment skipping (#4626).
+      # However this slash must be a start delimiter of regex because
+      # this is parsed as regex literal once before.
+      if @token.type == :"/"
+        @lexer.reader.previous_char
+        @lexer.column_number -= 1
+        slash_is_regex!
+        next_token
+      end
+
       accept node.value
 
       false
@@ -767,6 +761,8 @@ module Crystal
             write @token.raw
             next_token
             break
+          else
+            raise "Bug: unexpected token #{@token.type}"
           end
           count += 1
         end
@@ -1097,6 +1093,7 @@ module Crystal
 
       if node.question?
         node.type_vars[0].accept self
+        skip_space
         write_token :"?"
         return false
       end
@@ -1217,21 +1214,21 @@ module Crystal
       # Restore the old parentheses count
       @paren_count = old_paren_count
 
-      check_close_paren
-
       false
+    ensure
+      check_close_paren
     end
 
     def visit(node : Union)
+      check_open_paren
+
       if @token.type == :IDENT && @token.value == "self?" && node.types.size == 2 &&
-         node.types.any?(&.is_a?(Self)) &&
-         node.types.any? { |t| t.to_s == "::Nil" }
+         node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
+        check_close_paren
         return false
       end
-
-      check_open_paren
 
       paren_count = @paren_count
       column = @column
@@ -2324,7 +2321,9 @@ module Crystal
     end
 
     def visit(node : Self)
+      check_open_paren
       write_keyword :self
+      check_close_paren
       false
     end
 
@@ -3028,6 +3027,8 @@ module Crystal
         else
           clear_object(node.obj)
         end
+      else
+        # nothing to do
       end
     end
 
@@ -3290,6 +3291,8 @@ module Crystal
         write_keyword :private, " "
       when .protected?
         write_keyword :protected, " "
+      when .public?
+        # no keyword needed
       end
       accept node.exp
 
@@ -3594,7 +3597,7 @@ module Crystal
 
       slash_is_regex!
       write_indent
-      write_keyword :when, " "
+      write_keyword(node.exhaustive? ? :in : :when, " ")
       base_indent = @column
       when_start_line = @line
       when_start_column = @column
