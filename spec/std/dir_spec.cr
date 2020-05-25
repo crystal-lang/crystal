@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../spec_helper"
 
 private def unset_tempdir
   {% if flag?(:windows) %}

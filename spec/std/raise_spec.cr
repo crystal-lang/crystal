@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "./spec_helper"
 
 describe "raise" do
   callstack_on_rescue = nil

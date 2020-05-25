@@ -1,6 +1,6 @@
 require "spec"
 require "bit_array"
-require "../../spec_helper"
+require "../spec_helper"
 
 {% unless flag?(:win32) %}
   require "big"

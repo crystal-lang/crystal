@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../spec_helper"
 
 private def base
   Dir.current

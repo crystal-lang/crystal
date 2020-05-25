@@ -1,4 +1,4 @@
-require "../spec_helper"
+require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}

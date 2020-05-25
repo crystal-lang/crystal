@@ -1,5 +1,4 @@
 require "../spec_helper"
-require "../../spec_helper"
 require "../../support/channel"
 
 {% unless flag?(:win32) %}

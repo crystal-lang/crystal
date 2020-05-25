@@ -169,7 +169,7 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Dwithout_playground -Di_know_what_im_doing
+          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Di_know_what_im_doing
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
