@@ -47,7 +47,7 @@ describe Doc::Type do
 
   describe "#node_to_html" do
     it "shows relative path" do
-      program = semantic(<<-CODE, wants_doc: true).program
+      program = semantic(<<-CODE).program
         class Foo
           class Bar
           end
@@ -60,7 +60,7 @@ describe Doc::Type do
     end
 
     it "shows relative generic" do
-      program = semantic(<<-CODE, wants_doc: true).program
+      program = semantic(<<-CODE).program
         class Foo
           class Bar(T)
           end
@@ -73,7 +73,7 @@ describe Doc::Type do
     end
 
     it "shows generic path with necessary colons" do
-      program = semantic(<<-CODE, wants_doc: true).program
+      program = semantic(<<-CODE).program
         class Foo
           class Foo
           end
@@ -86,7 +86,7 @@ describe Doc::Type do
     end
 
     it "shows generic path with unnecessary colons" do
-      program = semantic(<<-CODE, wants_doc: true).program
+      program = semantic(<<-CODE).program
         class Foo
           class Bar
           end
