@@ -135,13 +135,13 @@ describe Doc::Method do
 
   describe "doc" do
     it "gets doc from underlying method" do
-      program = semantic("
+      program = top_level_semantic("
         class Foo
           # Some docs
           def foo
           end
         end
-        ", wants_doc: true).program
+        ").program
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
       method.doc.should eq("Some docs")
@@ -149,7 +149,7 @@ describe Doc::Method do
     end
 
     it "inherits doc from ancestor (no extra comment)" do
-      program = semantic("
+      program = top_level_semantic("
         class Foo
           # Some docs
           def foo
@@ -161,7 +161,7 @@ describe Doc::Method do
             super
           end
         end
-        ", wants_doc: true).program
+        ").program
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
       method.doc.should eq("Some docs")
@@ -169,7 +169,7 @@ describe Doc::Method do
     end
 
     it "inherits doc from previous def (no extra comment)" do
-      program = semantic("
+      program = top_level_semantic("
         class Foo
           # Some docs
           def foo
@@ -179,7 +179,7 @@ describe Doc::Method do
             previous_def
           end
         end
-        ", wants_doc: true).program
+        ").program
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
       method.doc.should eq("Some docs")
@@ -187,7 +187,7 @@ describe Doc::Method do
     end
 
     it "inherits doc from ancestor (use :inherit:)" do
-      program = semantic("
+      program = top_level_semantic("
         class Foo
           # Some docs
           def foo
@@ -200,7 +200,7 @@ describe Doc::Method do
             super
           end
         end
-        ", wants_doc: true).program
+        ").program
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
       method.doc.should eq("Some docs")
@@ -208,7 +208,7 @@ describe Doc::Method do
     end
 
     it "inherits doc from ancestor (use :inherit: plus more content)" do
-      program = semantic("
+      program = top_level_semantic("
         class Foo
           # Some docs
           def foo
@@ -225,7 +225,7 @@ describe Doc::Method do
             super
           end
         end
-        ", wants_doc: true).program
+        ").program
       generator = Doc::Generator.new program, [""]
       method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
       method.doc.should eq("Before\n\nSome docs\n\nAfter")

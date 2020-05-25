@@ -68,6 +68,23 @@ def semantic_result(str, flags = nil, inject_primitives = true)
   SemanticResult.new(program, input, input_type)
 end
 
+record TopLevelSemanticResult,
+  program : Program,
+  node : ASTNode
+
+def top_level_semantic(code : String, wants_doc = true, inject_primitives = false)
+  code = inject_primitives(code) if inject_primitives
+  top_level_semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+end
+
+def top_level_semantic(node : ASTNode, wants_doc = true)
+  program = new_program
+  program.wants_doc = wants_doc
+  node = program.normalize node
+  node, _ = program.top_level_semantic node
+  TopLevelSemanticResult.new(program, node)
+end
+
 def assert_normalize(from, to, flags = nil)
   program = new_program
   program.flags.concat(flags.split) if flags

@@ -2,7 +2,7 @@ require "../../../spec_helper"
 
 describe Doc::Type do
   it "doesn't show types for alias type" do
-    result = semantic(%(
+    result = top_level_semantic(%(
       class Foo
         class Bar
         end
@@ -30,7 +30,7 @@ describe Doc::Type do
   end
 
   it "finds construct when searching class method (#8095)" do
-    result = semantic(%(
+    result = top_level_semantic(%(
       class Foo
         def initialize(x)
         end
