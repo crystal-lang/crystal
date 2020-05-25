@@ -1,7 +1,7 @@
 require "../spec_helper"
 require "json"
+require "yaml"
 {% unless flag?(:win32) %}
-  require "yaml"
   require "big"
   require "big/json"
 {% end %}
@@ -301,38 +301,36 @@ class JSONAttrModuleTest2 < JSONAttrModuleTest
   end
 end
 
-{% unless flag?(:win32) %}
-  struct JSONAttrPersonWithYAML
-    include JSON::Serializable
-    include YAML::Serializable
+struct JSONAttrPersonWithYAML
+  include JSON::Serializable
+  include YAML::Serializable
 
-    property name : String
-    property age : Int32?
+  property name : String
+  property age : Int32?
 
-    def initialize(@name : String, @age : Int32? = nil)
-    end
+  def initialize(@name : String, @age : Int32? = nil)
+  end
+end
+
+struct JSONAttrPersonWithYAMLInitializeHook
+  include JSON::Serializable
+  include YAML::Serializable
+
+  property name : String
+  property age : Int32?
+
+  def initialize(@name : String, @age : Int32? = nil)
+    after_initialize
   end
 
-  struct JSONAttrPersonWithYAMLInitializeHook
-    include JSON::Serializable
-    include YAML::Serializable
+  @[JSON::Field(ignore: true)]
+  @[YAML::Field(ignore: true)]
+  property msg : String?
 
-    property name : String
-    property age : Int32?
-
-    def initialize(@name : String, @age : Int32? = nil)
-      after_initialize
-    end
-
-    @[JSON::Field(ignore: true)]
-    @[YAML::Field(ignore: true)]
-    property msg : String?
-
-    def after_initialize
-      @msg = "Hello " + name
-    end
+  def after_initialize
+    @msg = "Hello " + name
   end
-{% end %}
+end
 
 abstract class JSONShape
   include JSON::Serializable
@@ -816,7 +814,7 @@ describe "JSON mapping" do
     it { JSONAttrModuleTest2.from_json(%({"bar": 30, "moo": 40})).to_tuple.should eq({40, 15, 30}) }
   end
 
-  pending_win32 "works together with yaml" do
+  it "works together with yaml" do
     person = JSONAttrPersonWithYAML.new("Vasya", 30)
     person.to_json.should eq "{\"name\":\"Vasya\",\"age\":30}"
     person.to_yaml.should eq "---\nname: Vasya\nage: 30\n"
@@ -825,7 +823,7 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAML.from_yaml(person.to_yaml).should eq person
   end
 
-  pending_win32 "yaml and json with after_initialize hook" do
+  it "yaml and json with after_initialize hook" do
     person = JSONAttrPersonWithYAMLInitializeHook.new("Vasya", 30)
     person.msg.should eq "Hello Vasya"
 

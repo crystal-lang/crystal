@@ -222,11 +222,11 @@ require "./std/uri/punycode_spec.cr"
 require "./std/uri_spec.cr"
 require "./std/uuid_spec.cr"
 require "./std/weak_ref_spec.cr"
-# require "./std/xml/builder_spec.cr" (failed linking)
-# require "./std/xml/html_spec.cr" (failed linking)
-# require "./std/xml/reader_spec.cr" (failed linking)
-# require "./std/xml/xml_spec.cr" (failed linking)
-# require "./std/xml/xpath_spec.cr" (failed linking)
+require "./std/xml/builder_spec.cr"
+require "./std/xml/html_spec.cr"
+require "./std/xml/reader_spec.cr"
+require "./std/xml/xml_spec.cr"
+require "./std/xml/xpath_spec.cr"
 require "./std/yaml/any_spec.cr"
 require "./std/yaml/builder_spec.cr"
 require "./std/yaml/mapping_spec.cr"
