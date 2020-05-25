@@ -47,54 +47,62 @@ describe Doc::Type do
 
   describe "#node_to_html" do
     it "shows relative path" do
-      program = semantic(<<-CODE, wants_doc: true).program
-        class Foo
-          class Bar
-          end
-        end
-        CODE
-
+      program = Program.new
       generator = Doc::Generator.new program, [""]
-      foo = generator.type(program.types["Foo"])
+
+      foo_class = NonGenericClassType.new program, program, "Foo", nil
+      bar_class = NonGenericClassType.new program, foo_class, "Bar", nil
+      foo_class.add_location Location.new("", 0, 0)
+      bar_class.add_location Location.new("", 0, 0)
+      program.types["Foo"] = foo_class
+      foo_class.types["Bar"] = bar_class
+
+      foo = generator.type(foo_class)
       foo.node_to_html("Bar".path).should eq(%(<a href="Foo/Bar.html">Bar</a>))
     end
 
     it "shows relative generic" do
-      program = semantic(<<-CODE, wants_doc: true).program
-        class Foo
-          class Bar(T)
-          end
-        end
-        CODE
-
+      program = Program.new
       generator = Doc::Generator.new program, [""]
-      foo = generator.type(program.types["Foo"])
+
+      foo_class = NonGenericClassType.new program, program, "Foo", nil
+      bar_class = GenericClassType.new program, foo_class, "Bar", nil, %w[T]
+      foo_class.add_location Location.new("", 0, 0)
+      bar_class.add_location Location.new("", 0, 0)
+      program.types["Foo"] = foo_class
+      foo_class.types["Bar"] = bar_class
+
+      foo = generator.type(foo_class)
       foo.node_to_html(Generic.new("Bar".path, ["Foo".path] of ASTNode)).should eq(%(<a href="Foo/Bar.html">Bar</a>(<a href="Foo.html">Foo</a>)))
     end
 
     it "shows generic path with necessary colons" do
-      program = semantic(<<-CODE, wants_doc: true).program
-        class Foo
-          class Foo
-          end
-        end
-        CODE
-
+      program = Program.new
       generator = Doc::Generator.new program, [""]
-      foo = generator.type(program.types["Foo"])
+
+      outer_foo_class = NonGenericClassType.new program, program, "Foo", nil
+      inter_foo_class = NonGenericClassType.new program, outer_foo_class, "Foo", nil
+      outer_foo_class.add_location Location.new("", 0, 0)
+      inter_foo_class.add_location Location.new("", 0, 0)
+      program.types["Foo"] = outer_foo_class
+      outer_foo_class.types["Foo"] = inter_foo_class
+
+      foo = generator.type(outer_foo_class)
       foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">::Foo</a>))
     end
 
     it "shows generic path with unnecessary colons" do
-      program = semantic(<<-CODE, wants_doc: true).program
-        class Foo
-          class Bar
-          end
-        end
-        CODE
-
+      program = Program.new
       generator = Doc::Generator.new program, [""]
-      foo = generator.type(program.types["Foo"])
+
+      foo_class = NonGenericClassType.new program, program, "Foo", nil
+      bar_class = NonGenericClassType.new program, foo_class, "Bar", nil
+      foo_class.add_location Location.new("", 0, 0)
+      bar_class.add_location Location.new("", 0, 0)
+      program.types["Foo"] = foo_class
+      foo_class.types["Bar"] = bar_class
+
+      foo = generator.type(foo_class)
       foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">Foo</a>))
     end
   end
