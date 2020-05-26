@@ -895,6 +895,8 @@ module Crystal
     end
 
     def add_macro(a_macro)
+      a_macro.owner = self
+
       case a_macro.name
       when "inherited"
         return add_hook :inherited, a_macro

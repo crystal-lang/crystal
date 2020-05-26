@@ -16,6 +16,8 @@ class Crystal::Program
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
+    check_call_to_deprecated_macro a_macro, call
+
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}

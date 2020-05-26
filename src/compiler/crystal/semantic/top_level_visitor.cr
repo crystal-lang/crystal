@@ -1100,16 +1100,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
-      when @program.deprecated_annotation
-        # Check whether a DeprecatedAnnotation can be built.
-        # There is no need to store it, but enforcing
-        # arguments makes sense here.
-        DeprecatedAnnotation.from(ann)
-        yield annotation_type, ann
-      when @program.experimental_annotation
-        # ditto DeprecatedAnnotation
-        ExperimentalAnnotation.from(ann)
-        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

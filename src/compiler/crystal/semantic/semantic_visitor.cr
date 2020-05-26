@@ -429,7 +429,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def process_annotations(annotations)
     annotations.try &.each do |ann|
-      yield lookup_annotation(ann), ann
+      annotation_type = lookup_annotation(ann)
+      validate_annotation(annotation_type, ann)
+      yield annotation_type, ann
     end
   end
 
@@ -454,6 +456,21 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     type
+  end
+
+  def validate_annotation(annotation_type, ann)
+    case annotation_type
+    when @program.deprecated_annotation
+      # Check whether a DeprecatedAnnotation can be built.
+      # There is no need to store it, but enforcing
+      # arguments makes sense here.
+      DeprecatedAnnotation.from(ann)
+    when @program.experimental_annotation
+      # ditto DeprecatedAnnotation
+      ExperimentalAnnotation.from(ann)
+    else
+      # go on
+    end
   end
 
   def check_class_var_annotations
