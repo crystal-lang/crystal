@@ -1634,6 +1634,7 @@ module Enumerable(T)
   # a.zip(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, 6, 6}]
   # ```
   def zip(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip(*others) { |e| break e }.not_nil!)).new(size)
     zip(*others) { |e| pairs << e }
     pairs
@@ -1704,6 +1705,7 @@ module Enumerable(T)
   # a.zip?(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, nil, nil}]
   # ```
   def zip?(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip?(*others) { |e| break e }.not_nil!)).new(size)
     zip?(*others) { |e| pairs << e }
     pairs

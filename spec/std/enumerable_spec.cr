@@ -17,6 +17,17 @@ private class SpecEmptyEnumerable
   end
 end
 
+private class SpecCountUpIterator
+  include Iterator(Int32)
+
+  def initialize(@size : Int32, @count = 0)
+  end
+
+  def next
+    (@count += 1) <= @size ? (@count - 1) : stop
+  end
+end
+
 describe "Enumerable" do
   describe "all? with block" do
     it "returns true" do
@@ -1038,6 +1049,18 @@ describe "Enumerable" do
 
     it "with block" do
       (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
+    end
+  end
+
+  describe "zip" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip(1..3, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, 3, 4}])
+    end
+  end
+
+  describe "zip?" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip?(1..2, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, nil, 4}])
     end
   end
 end
