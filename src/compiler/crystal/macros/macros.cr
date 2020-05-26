@@ -158,7 +158,7 @@ class Crystal::Program
       begin
         files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
         required_files.concat(files) if files
-      rescue Crystal::CrystalPath::Error
+      rescue Crystal::CrystalPath::NotFoundError
         # Maybe the file is gone
         next
       end
