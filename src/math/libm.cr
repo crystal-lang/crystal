@@ -1,4 +1,4 @@
-{% unless flag?(:darwin) || flag?(:win32) %}
+{% if flag?(:linux) || flag?(:bsd) %}
   @[Link("m")]
 {% end %}
 
