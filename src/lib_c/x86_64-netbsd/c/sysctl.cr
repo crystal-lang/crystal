@@ -4,6 +4,7 @@ lib LibC
 
   CTL_KERN           =  1
   KERN_PROC          = 14
+  KERN_PROC_ARGS     = 48
   KERN_PROC_PATHNAME =  5
 
   PATH_MAX = 1024
