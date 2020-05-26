@@ -1764,6 +1764,14 @@ module Crystal
 
     assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
+    it_parses "{[] of Foo, Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "new")] of ASTNode)
+    it_parses "{[] of Foo, ::Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz], global: true), "new")] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz + 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "+", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz * 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "*", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz ** 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "**", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
+    it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"

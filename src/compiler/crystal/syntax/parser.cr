@@ -4665,7 +4665,7 @@ module Crystal
       # To determine to consume comma, looking-ahead is needed.
       # Consider `[ [] of Int32, Foo.new ]`, we want to parse it as `[ ([] of Int32), Foo.new ]` of course.
       # If the parser consumes comma afrer Int32 quickly, it may cause parsing error.
-      unless @token.type == :"->" || (@token.type == :"," && type_start?)
+      unless @token.type == :"->" || (@token.type == :"," && type_start?(consume_newlines: true))
         if type.is_a?(Splat)
           raise "invalid type splat", type.location.not_nil!
         end
@@ -4677,7 +4677,7 @@ module Crystal
         loop do
           next_token_skip_space_or_newline
           input_types << parse_type_splat { parse_union_type }
-          break unless @token.type == :"," && type_start?
+          break unless @token.type == :"," && type_start?(consume_newlines: true)
         end
       end
 
@@ -5016,50 +5016,82 @@ module Crystal
     end
 
     # Looks ahead next tokens to check whether they indicate type.
-    def type_start?(consume_newlines = true)
+    def type_start?(*, consume_newlines)
       old_pos, old_line, old_column = current_pos, @line_number, @column_number
       @temp_token.copy_from(@token)
 
-      if consume_newlines
-        next_token_skip_space_or_newline
-      else
-        next_token_skip_space
-      end
+      begin
+        if consume_newlines
+          next_token_skip_space_or_newline
+        else
+          next_token_skip_space
+        end
 
+        type_start?
+      ensure
+        @token.copy_from(@temp_token)
+        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+      end
+    end
+
+    def type_start?
       while @token.type == :"(" || @token.type == :"{"
         next_token_skip_space_or_newline
       end
 
       # TODO: the below conditions are not complete, and there are many false-positive or true-negative examples.
-      # For example, `[ [] of Int32, Foo::Bar.new ]` should be parsed to `[ ([] of Int32), Foo::Bar.new ]`,
-      # however, the current implementation mistakes `Foo::Bar` as type name, so parsing is failed.
 
-      begin
-        case @token.type
-        when :IDENT
-          case @token.value
-          when :typeof, :self, "self?"
-            true
-          else
-            false
-          end
-        when :CONST
-          return false if named_tuple_start?
-          next_token_skip_space
-          return true unless @token.type == :"."
-          next_token_skip_space_or_newline
-          @token.keyword?(:class)
-        when :"::"
-          next_token
-          @token.type == :CONST
-        when :UNDERSCORE, :"->"
+      case @token.type
+      when :IDENT
+        case @token.value
+        when :typeof
           true
+        when :self, "self?"
+          next_token_skip_space
+          delimiter_or_type_suffix?
         else
           false
         end
-      ensure
-        @token.copy_from(@temp_token)
-        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+      when :CONST
+        return false if named_tuple_start?
+        type_path_start?
+      when :"::"
+        next_token
+        type_path_start?
+      when :UNDERSCORE, :"->"
+        true
+      when :"*"
+        next_token_skip_space_or_newline
+        type_start?
+      else
+        false
+      end
+    end
+
+    def type_path_start?
+      while @token.type == :CONST
+        next_token
+        break unless @token.type == :"::"
+        next_token_skip_space_or_newline
+      end
+
+      skip_space
+      delimiter_or_type_suffix?
+    end
+
+    def delimiter_or_type_suffix?
+      case @token.type
+      when :"."
+        next_token_skip_space_or_newline
+        @token.keyword?(:class)
+      when :"?", :"*", :"**"
+        # They are conflicted with operators, so more look-ahead is needed.
+        next_token_skip_space
+        delimiter_or_type_suffix?
+      when :"->", :"|", :",", :NEWLINE, :EOF, :"=", :";", :"(", :")", :"[", :"]"
+        true
+      else
+        false
       end
     end
 
