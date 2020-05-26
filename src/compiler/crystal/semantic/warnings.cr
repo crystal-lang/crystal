@@ -29,7 +29,7 @@ module Crystal
 
       if (ann = a_macro.annotation(self.deprecated_annotation)) &&
          (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        call_location = call.location.try(&.user_location) || call.location
+        call_location = call.location.try(&.macro_location) || call.location
 
         return if self.ignore_warning_due_to_location?(call_location)
         short_reference = a_macro.short_reference
