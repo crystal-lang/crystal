@@ -4,8 +4,8 @@ require "./virtual_file"
 record Crystal::Location,
   filename : String | VirtualFile | Nil,
   line_number : Int32,
-  column_number : Int32 do
-
+  column_number : Int32,
+  size : Int32 = 0 do
   include Comparable(self)
 
   # Returns the directory name of this location's filename. If
@@ -49,11 +49,20 @@ record Crystal::Location,
     when Nil
     end
     io << ':' << line_number << ':' << column_number
+
+    unless size.zero?
+      io << '+' << size
+    end
+
     io << ')'
   end
 
   def to_s(io : IO) : Nil
     io << filename << ':' << line_number << ':' << column_number
+
+    unless size.zero?
+      io << '+' << size
+    end
   end
 
   def pretty_print(pp)

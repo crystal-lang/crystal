@@ -1,3 +1,5 @@
+require "./ast"
+
 # A VirtualFile is used as a Location's filename when
 # expanding a macro. It contains the macro expanded source
 # code so the user can debug it as if there was a file in the

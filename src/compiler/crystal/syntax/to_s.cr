@@ -1,5 +1,6 @@
 require "./ast"
 require "./visitor"
+require "./lexer"
 
 module Crystal
   class ASTNode
