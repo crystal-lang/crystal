@@ -73,8 +73,10 @@ class TCPSocket < IPSocket
   {% unless flag?(:openbsd) %}
     # The amount of time in seconds the connection must be idle before sending keepalive probes.
     def tcp_keepalive_idle
-      optname = {% if flag?(:darwin) || flag?(:netbsd) %}
+      optname = {% if flag?(:darwin) %}
         LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}
@@ -82,8 +84,10 @@ class TCPSocket < IPSocket
     end
 
     def tcp_keepalive_idle=(val : Int)
-      optname = {% if flag?(:darwin) || flag?(:netbsd) %}
+      optname = {% if flag?(:darwin) %}
         LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}
