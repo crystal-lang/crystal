@@ -2188,7 +2188,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      (location.try(&.original_location) || location).try(&.line_number) || 0
+      (location.try(&.expanded_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)
