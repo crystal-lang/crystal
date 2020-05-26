@@ -41,7 +41,7 @@ end
 # `@[Link("pcre", pkg_config: "libpcre")]` will lookup for a shared library.
 # 1. will lookup `libpcre` using `pkg-config`, if not found
 # 2. will lookup `pcre` using `pkg-config`, if not found
-# 2. will pass `-lpcre` to the linker.
+# 3. will pass `-lpcre` to the linker.
 #
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
 #
