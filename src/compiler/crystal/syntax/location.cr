@@ -1,13 +1,12 @@
-# A location of an `ASTnode`, including its filename, line number and column number.
-class Crystal::Location
+require "./virtual_file"
+
+# A location of an `ASTNode`, including its filename, line number, column number and (optional) size.
+record Crystal::Location,
+  filename : String | VirtualFile | Nil,
+  line_number : Int32,
+  column_number : Int32 do
+
   include Comparable(self)
-
-  getter line_number
-  getter column_number
-  getter filename
-
-  def initialize(@filename : String | VirtualFile | Nil, @line_number : Int32, @column_number : Int32)
-  end
 
   # Returns the directory name of this location's filename. If
   # the filename is a VirtualFile, this is invoked on its expanded
@@ -41,7 +40,16 @@ class Crystal::Location
   end
 
   def inspect(io : IO) : Nil
-    to_s(io)
+    io << "Location("
+    case filename = @filename
+    when String
+      filename.inspect_unquoted(io)
+    when VirtualFile
+      io << filename
+    when Nil
+    end
+    io << ':' << line_number << ':' << column_number
+    io << ')'
   end
 
   def to_s(io : IO) : Nil
