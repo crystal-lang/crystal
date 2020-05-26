@@ -359,7 +359,6 @@ module Crystal
 
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        link_flags += " -static" if static?
 
         { %(#{cc} "${@}" -o '#{output_filename}' #{link_flags} #{program.lib_flags}), object_names }
       end
