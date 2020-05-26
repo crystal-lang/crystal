@@ -5,7 +5,9 @@ lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 1
 
   fun pthread_attr_destroy(attr : PthreadAttrT*) : Int
+  fun pthread_attr_get_np(x0 : PthreadT, x1 : PthreadAttrT*) : Int
   fun pthread_attr_getstack(addr : PthreadAttrT*, stackaddr : Void**, stacksize : SizeT*) : Int
+  fun pthread_attr_init(attr : PthreadAttrT*) : Int
   fun pthread_condattr_destroy(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_init(x0 : PthreadCondattrT*) : Int
   fun pthread_condattr_setclock(x0 : PthreadCondattrT*, x1 : ClockidT) : Int
