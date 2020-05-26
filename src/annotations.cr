@@ -27,7 +27,7 @@ end
 annotation Flags
 end
 
-# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, static : Bool, framework : String, pkg_config : String)]`
+# A `lib` can be marked with `@[Link(lib : String, *, ldflags : String, framework : String, pkg_config : String)]`
 # to declare the library that should be linked when compiling the program.
 #
 # At least one of the *lib*, *ldflags*, *framework* arguments needs to be specified.
@@ -46,9 +46,9 @@ end
 # `@[Link(framework: "Cocoa")]` will pass `-framework Cocoa` to the linker.
 #
 # When an `-l` option is passed to the linker, it will lookup the libraries in
-# paths passed with the `-L` option. `CRYSTAL_LIBRARY_PATH`, `/usr/lib`,
-# and `/usr/local/lib` are added by default. Custom paths can be passed
-# using `ldflags`: `@[Link(ldflags: "-Lvendor/bin")]`.
+# paths passed with the `-L` option. Any paths in `CRYSTAL_LIBRARY_PATH` are
+# added by default. Custom paths can be passed using `ldflags`:
+# `@[Link(ldflags: "-Lvendor/bin")]`.
 annotation Link
 end
 
