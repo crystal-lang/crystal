@@ -2447,7 +2447,7 @@ describe "String" do
       end
     end
 
-    pending_win32 "applies formatting to %<...> placeholder" do
+    it "applies formatting to %<...> placeholder" do
       res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
 

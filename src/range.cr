@@ -112,12 +112,22 @@ struct Range(B, E)
       raise ArgumentError.new("Can't each beginless range")
     end
 
-    end_value = @end
-    while end_value.nil? || current < end_value
-      yield current
-      current = current.succ
-    end
-    yield current if !@exclusive && current == end_value
+    # TODO: This typeof and the macro interpolations are a workaround until #9324 is fixed.
+    typeof(yield current)
+
+    {% if E == Nil %}
+      while true
+        {{ "yield current".id }}
+        current = current.succ
+      end
+    {% else %}
+      end_value = @end
+      while end_value.nil? || current < end_value
+        {{ "yield current".id }}
+        current = current.succ
+      end
+      {{ "yield current".id }} if !@exclusive && current == end_value
+    {% end %}
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -159,10 +169,19 @@ struct Range(B, E)
     yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
     current = end_value
 
-    while begin_value.nil? || begin_value < current
-      current = current.pred
-      yield current
-    end
+    # TODO: The macro interpolations are a workaround until #9324 is fixed.
+
+    {% if B == Nil %}
+      while true
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% else %}
+      while begin_value.nil? || begin_value < current
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% end %}
   end
 
   # Returns a reverse `Iterator` over the elements of this range.

@@ -104,10 +104,10 @@ def assert_after_cleanup(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
-def assert_error(str, message, inject_primitives = true)
+def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
-  expect_raises TypeException, message do
+  expect_raises TypeException, message, file, line do
     semantic nodes
   end
 end
@@ -132,15 +132,15 @@ def warnings_result(code, inject_primitives = true)
   result.program.warning_failures
 end
 
-def assert_warning(code, message, inject_primitives = true)
+def assert_warning(code, message, inject_primitives = true, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, inject_primitives)
-  warning_failures.size.should eq(1)
-  warning_failures[0].should start_with(message)
+  warning_failures.size.should eq(1), file, line
+  warning_failures[0].should start_with(message), file, line
 end
 
-def assert_no_warnings(code, inject_primitives = true)
+def assert_no_warnings(code, inject_primitives = true, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, inject_primitives)
-  warning_failures.size.should eq(0)
+  warning_failures.size.should eq(0), file, line
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
