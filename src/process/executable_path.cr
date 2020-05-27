@@ -28,12 +28,33 @@ class Process
     end
   end
 
+  private def self.is_executable_file?(path)
+    unless File.info?(path, follow_symlinks: true).try &.file?
+      return false
+    end
+    {% if flag?(:win32) %}
+      true
+    {% else %}
+      File.executable?(path)
+    {% end %}
+  end
+
   # Searches an executable, checking for an absolute path, a path relative to
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
   def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
     name = Path.new(name)
-    if name.absolute?
+    return nil if "#{name}".empty?
+
+    {% if flag?(:win32) %}
+      basename = name.ends_with_separator? ? "" : name.basename
+      basename = "" if basename == "#{name.anchor}"
+      if (basename.empty? ? !name.anchor : !basename.includes?("."))
+        name = Path.new("#{name}.exe")
+      end
+    {% end %}
+
+    if name.absolute? && is_executable_file?(name)
       return name.to_s
     end
 
@@ -43,16 +64,19 @@ class Process
       count_parts += 1
       break if count_parts > 1
     end
+    has_separator = (count_parts > 1)
 
-    if count_parts > 1
-      return name.expand(pwd).to_s
+    check_pwd = {{ flag?(:win32) }} || has_separator
+    if check_pwd && is_executable_file?(r = name.expand(pwd))
+      return r.to_s
     end
 
-    return unless path
-
-    path.split(PATH_DELIMITER).each do |path_entry|
-      executable = Path.new(path_entry, name)
-      return executable.to_s if File.exists?(executable)
+    if path && !has_separator
+      path.split(PATH_DELIMITER).each do |path_entry|
+        if is_executable_file?(r = Path.new(path_entry, name))
+          return r.to_s
+        end
+      end
     end
 
     nil
