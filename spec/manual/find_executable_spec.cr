@@ -1,4 +1,8 @@
 # Verifies that find_executable's specs match the behavior of Process.new
+# This doesn't actually test find_executable, only takes all the test cases
+# directly from spec/std/process/find_executable_spec.cr and checks that
+# *they* match what the OS actually does when finding an executable for the
+# purpose of running it.
 
 require "spec"
 require "digest/sha1"
