@@ -41,7 +41,7 @@ module HTTP
       super
     end
 
-    def skip(bytes_count : Int) : UInt64
+    def skip(bytes_count : Int) : Int64
       ensure_send_continue
       super
     end
@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count : Int) : UInt64
+    def skip(bytes_count : Int) : Int64
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -164,8 +164,8 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count : Int) : UInt64
-      bytes_count = bytes_count.to_u64
+    def skip(bytes_count : Int) : Int64
+      bytes_count = bytes_count.to_i64
       ensure_send_continue
 
       if bytes_count <= @chunk_remaining

@@ -43,16 +43,16 @@ class Compress::Deflate::Writer < IO
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Int64
     check_open
 
-    return 0u64 if slice.empty?
+    return 0i64 if slice.empty?
 
     @stream.avail_in = slice.size
     @stream.next_in = slice
     consume_output LibZ::Flush::NO_FLUSH
 
-    slice.size.to_u64
+    slice.size.to_i64
   end
 
   # See `IO#flush`.

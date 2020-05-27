@@ -8,10 +8,10 @@ class RaiseIOError < IO
     raise IO::Error.new("...")
   end
 
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Int64
     @writes += 1
     raise IO::Error.new("...") if @raise_on_write
-    slice.size.to_u64
+    slice.size.to_i64
   end
 
   def flush

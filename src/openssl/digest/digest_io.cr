@@ -42,8 +42,8 @@ module OpenSSL
       read_bytes
     end
 
-    def write(slice : Bytes) : UInt64
-      return 0u64 if slice.empty?
+    def write(slice : Bytes) : Int64
+      return 0i64 if slice.empty?
 
       if @mode.write?
         digest_algorithm.update(slice)

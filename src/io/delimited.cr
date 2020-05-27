@@ -107,7 +107,7 @@ class IO::Delimited < IO
     read_bytes
   end
 
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Int64
     raise IO::Error.new "Can't write to IO::Delimited"
   end
 

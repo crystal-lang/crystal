@@ -27,8 +27,8 @@ class IO
       @closed = false
     end
 
-    def write(io, slice : Bytes) : UInt64
-      bytes_written = 0u64
+    def write(io, slice : Bytes) : Int64
+      bytes_written = 0i64
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
