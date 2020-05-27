@@ -74,7 +74,7 @@
 
 - **(security)** Update SSL server secure defaults. ([#9026](https://github.com/crystal-lang/crystal/pull/9026), thanks @straight-shoota)
 - **(breaking-change)** Make `IO#skip`, `IO#write` returns the number of bytes it skipped/written. ([#9233](https://github.com/crystal-lang/crystal/pull/9233), thanks @bcardiff)
-- **(breaking-change)** Improve error handling and logging in `HTTP::Server`. ([#9115](https://github.com/crystal-lang/crystal/pull/9115), thanks @waj)
+- **(breaking-change)** Improve error handling and logging in `HTTP::Server`. ([#9115](https://github.com/crystal-lang/crystal/pull/9115), [#9034](https://github.com/crystal-lang/crystal/pull/9034), thanks @waj, @straight-shoota)
 - **(breaking-change)** Change `HTTP::Request#remote_address` type to `Socket::Address?`. ([#9210](https://github.com/crystal-lang/crystal/pull/9210), thanks @waj)
 - Fix `HTTP::Server` sporadic failure in SSL handshake. ([#9177](https://github.com/crystal-lang/crystal/pull/9177), thanks @waj)
 - Treat cookies which expire in this instant as expired. ([#9061](https://github.com/crystal-lang/crystal/pull/9061), thanks @RX14)
@@ -93,6 +93,7 @@
 - **(breaking-change)** Allow local data on entries via `Log::Metadata` and redesign `Log::Context`. ([#9118](https://github.com/crystal-lang/crystal/pull/9118), [#9227](https://github.com/crystal-lang/crystal/pull/9227), [#9150](https://github.com/crystal-lang/crystal/pull/9150), [#9157](https://github.com/crystal-lang/crystal/pull/9157), thanks @bcardiff, @waj)
 - **(breaking-change)** Split top-level `Log::Metadata` from `Log::Metadata::Value`, drop immutability via clone, improve performance. ([#9295](https://github.com/crystal-lang/crystal/pull/9295), thanks @bcardiff)
 - **(breaking-change)** Rework `Log.setup_from_env` and defaults. ([#9145](https://github.com/crystal-lang/crystal/pull/9145), [#9240](https://github.com/crystal-lang/crystal/pull/9240),  thanks @bcardiff)
+- Add `Log.capture` spec helper. ([#9201](https://github.com/crystal-lang/crystal/pull/9201), thanks @bcardiff)
 - Redesign `Log::Formatter`. ([#9211](https://github.com/crystal-lang/crystal/pull/9211), thanks @waj)
 - Add `to_json` for `Log::Context`. ([#9101](https://github.com/crystal-lang/crystal/pull/9101), thanks @paulcsmith)
 - Add `Log::IOBackend#new` with formatter. ([#9105](https://github.com/crystal-lang/crystal/pull/9105), thanks @paulcsmith)
@@ -109,6 +110,7 @@
 
 - **(breaking-change)** Deprecate `Process#kill`, use `Process#signal`. ([#9006](https://github.com/crystal-lang/crystal/pull/9006), thanks @oprypin, @jan-zajic)
 - Implement `Process` support on Windows. ([#9047](https://github.com/crystal-lang/crystal/pull/9047), [#9021](https://github.com/crystal-lang/crystal/pull/9021), [#9122](https://github.com/crystal-lang/crystal/pull/9122), [#9112](https://github.com/crystal-lang/crystal/pull/9112), [#9149](https://github.com/crystal-lang/crystal/pull/9149), [#9310](https://github.com/crystal-lang/crystal/pull/9310), thanks @oprypin, @RX14, @kubo, @jan-zajic)
+- Use `Int64` as portable `Process.pid` type. ([#9019](https://github.com/crystal-lang/crystal/pull/9019), thanks @oprypin)
 
 ### Runtime
 
@@ -193,6 +195,7 @@
 - Improve grammar in comments. ([#9087](https://github.com/crystal-lang/crystal/pull/9087), [#9212](https://github.com/crystal-lang/crystal/pull/9212), thanks @MakeNowJust)
 - Advertise full `crystal spec` command for running a particular spec. ([#9103](https://github.com/crystal-lang/crystal/pull/9103), thanks @paulcsmith)
 - Update README. ([#9225](https://github.com/crystal-lang/crystal/pull/9225), [#9163](https://github.com/crystal-lang/crystal/pull/9163), thanks @danimiba, @straight-shoota)
+- Fix LICENSE and add NOTICE file. ([#3903](https://github.com/crystal-lang/crystal/pull/3903), thanks @MakeNowJust)
 
 # 0.34.0 (2020-04-06)
 
