@@ -18,7 +18,7 @@ describe "Semantic: require" do
       error.message.not_nil!.should_not contain "If you're trying to require a shard:"
     end
 
-    it "wildecard" do
+    it "wildcard" do
       error = assert_error %(require "file_that_doesnt_exist/*"),
         "can't find file 'file_that_doesnt_exist/*'",
         inject_primitives: false
@@ -26,7 +26,7 @@ describe "Semantic: require" do
       error.message.not_nil!.should contain "If you're trying to require a shard:"
     end
 
-    it "relative wildecard" do
+    it "relative wildcard" do
       error = assert_error %(require "./file_that_doesnt_exist/*"),
         "can't find file './file_that_doesnt_exist/*'",
         inject_primitives: false
