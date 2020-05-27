@@ -2,7 +2,7 @@ require "spec"
 require "../../support/tempfile"
 
 {% if flag?(:win32) %}
-  def find_executable_executables
+  def find_executable_test_files
     {[
       "inbase.exe",
       "not_exe",
@@ -24,7 +24,7 @@ require "../../support/tempfile"
     ], [] of String}
   end
 
-  def find_executable_cases(pwd)
+  def find_executable_test_cases(pwd)
     pwd_nodrive = "\\#{pwd.relative_to(pwd.anchor.not_nil!)}"
     {
       "inbase.exe"     => "inbase.exe",
@@ -52,6 +52,7 @@ require "../../support/tempfile"
       "./inpath"       => nil,
       "sub"            => nil,
       "#{pwd}\\sub"    => nil,
+      "#{pwd}\\sub\\"  => nil,
       # 'C:\Temp\base\inbase', 'C:\Temp\base\.exe', 'C:\Temp\base\'
       "#{pwd}\\inbase" => "inbase.exe",
       "#{pwd}\\.exe"   => ".exe",
@@ -60,6 +61,7 @@ require "../../support/tempfile"
       "#{pwd.drive}inbase" => "inbase.exe",
       "#{pwd.drive}.exe"   => ".exe",
       "#{pwd.drive}"       => nil,
+      "#{pwd.drive}sub\\"  => nil,
       # '\Temp\base\inbase', '\Temp\base\.exe', '\Temp\base\'
       "#{pwd_nodrive}\\inbase" => "inbase.exe",
       "#{pwd_nodrive}\\.exe"   => ".exe",
@@ -67,7 +69,7 @@ require "../../support/tempfile"
     }
   end
 {% else %}
-  def find_executable_executables
+  def find_executable_test_files
     {[
       "inbase",
       "sub/insub",
@@ -79,7 +81,7 @@ require "../../support/tempfile"
     ]}
   end
 
-  def find_executable_cases(pwd)
+  def find_executable_test_cases(pwd)
     {
       "./inbase"       => "inbase",
       "inbase"         => nil,
@@ -108,7 +110,7 @@ describe "Process.find_executable" do
   path_dir = Path[test_dir] / "path"
 
   around_all do |all|
-    exe_names, file_names = find_executable_executables
+    exe_names, file_names = find_executable_test_files
     (exe_names + file_names).each do |name|
       Dir.mkdir_p((base_dir / name).parent)
       File.write(base_dir / name, "")
@@ -122,7 +124,7 @@ describe "Process.find_executable" do
     FileUtils.rm_r(test_dir.to_s)
   end
 
-  find_executable_cases(base_dir).each do |(command, exp)|
+  find_executable_test_cases(base_dir).each do |(command, exp)|
     if exp
       it "finds '#{command}' as '#{exp}'" do
         Process.find_executable(command, path: path_dir.to_s, pwd: base_dir).should eq File.expand_path(exp.not_nil!, base_dir)

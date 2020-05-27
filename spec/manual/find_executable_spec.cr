@@ -13,7 +13,7 @@ describe "Process.run" do
   around_all do |all|
     Dir.mkdir_p(test_dir)
 
-    exe_names, file_names = find_executable_executables
+    exe_names, file_names = find_executable_test_files
 
     exe_names.map do |name|
       src = "print #{name.inspect}"
@@ -42,7 +42,7 @@ describe "Process.run" do
     FileUtils.rm_r(test_dir.to_s)
   end
 
-  find_executable_cases(base_dir).each do |(command, exp)|
+  find_executable_test_cases(base_dir).each do |(command, exp)|
     if exp
       it "runs '#{command}' as '#{exp}'" do
         process = Process.new(command, output: Process::Redirect::Pipe)
