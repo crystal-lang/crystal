@@ -65,7 +65,7 @@ class Process
   end
 
   private def self.quote_windows(io : IO, args)
-    args.join(' ', io) do |arg|
+    args.join(io, ' ') do |arg|
       need_quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
 
       io << '"' if need_quotes
