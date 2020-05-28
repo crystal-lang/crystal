@@ -13,13 +13,14 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def warning(message, inner = nil, exception_type = Crystal::TypeException)
-      # TODO extract message formatting from exceptions
-      String.build do |io|
-        exception = exception_type.for_node(self, message, inner)
-        exception.warning = true
-        exception.append_to_s(io, nil)
+    def warning(message)
+      if location = name_location || self.location
+        message = String.build do |io|
+          io << "warning in line " << location.line_number << "\nWarning: "
+          io << message.sub("\n", "\n\n")
+        end
       end
+      message
     end
 
     def simple_literal?
