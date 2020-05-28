@@ -99,10 +99,8 @@ def assert_expand_third(from : String, to)
 end
 
 def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
-  str = inject_primitives(str) if inject_primitives
-  nodes = parse str
   expect_raises TypeException, message, file, line do
-    semantic nodes
+    semantic str, inject_primitives: inject_primitives
   end
 end
 
