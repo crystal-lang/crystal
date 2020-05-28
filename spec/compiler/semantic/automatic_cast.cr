@@ -492,4 +492,58 @@ describe "Semantic: automatic cast" do
       fill(0, 0)
       )) { float64 }
   end
+
+  it "can autocast to union in default value" do
+    assert_type(%(
+      def fill(x : Int64 | String = 1)
+        x
+      end
+
+      fill()
+      )) { int64 }
+  end
+
+  it "can autocast to alias in default value" do
+    assert_type(%(
+      alias X = Int64 | String
+
+      def fill(x : X = 1)
+        x
+      end
+
+      fill()
+      )) { int64 }
+  end
+
+  it "can autocast to union in default value (symbol and int)" do
+    assert_type(%(
+      enum Color
+        Red
+      end
+
+      def fill(x : Int64 | Color = :red)
+        x
+      end
+
+      fill()
+      )) { types["Color"] }
+  end
+
+  it "can autocast to union in default value (multiple enums)" do
+    assert_type(%(
+      enum Color
+        Red
+      end
+
+      enum AnotherColor
+        Blue
+      end
+
+      def fill(x : Color | AnotherColor = :blue)
+        x
+      end
+
+      fill()
+      )) { types["AnotherColor"] }
+  end
 end
