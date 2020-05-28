@@ -107,7 +107,7 @@ module Crystal
           end
 
           if libname = ann.lib
-            flags << ' ' << libname << ".lib"
+            flags << ' ' << Process.quote_windows("#{libname}.lib")
           end
         end
       end
@@ -123,7 +123,7 @@ module Crystal
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
       CrystalLibraryPath.paths.each do |path|
-        flags << "'-L#{path}'"
+        flags << Process.quote_posix("-L#{path}")
       end
 
       link_annotations.reverse_each do |ann|
@@ -138,11 +138,11 @@ module Crystal
         elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
           flags << flag
         elsif (lib_name = ann.lib)
-          flags << "-l#{lib_name}"
+          flags << Process.quote_posix("-l#{lib_name}")
         end
 
         if framework = ann.framework
-          flags << "-framework" << framework
+          flags << "-framework" << Process.quote_posix(framework)
         end
       end
 

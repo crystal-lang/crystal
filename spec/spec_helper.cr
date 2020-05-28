@@ -260,7 +260,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     apply_program_flags(compiler.flags)
     compiler.compile Compiler::Source.new("spec", code), output_filename
 
-    output = `#{output_filename}`
+    output = `#{Process.quote(output_filename)}`
     File.delete(output_filename)
 
     SpecRunOutput.new(output)
@@ -277,7 +277,7 @@ def build(code)
 
   binary_file = File.tempname("build_and_run_bin")
 
-  `bin/crystal build #{encode_program_flags} #{code_file.path.inspect} -o #{binary_file.path.inspect}`
+  `bin/crystal build #{encode_program_flags} #{Process.quote(code_file.path.to_s)} -o #{Process.quote(binary_file.path.to_s)}`
   File.exists?(binary_file).should be_true
 
   yield binary_file
@@ -301,7 +301,7 @@ def test_c(c_code, crystal_code)
   begin
     File.write(c_filename, c_code)
 
-    `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
+    `#{Crystal::Compiler::CC} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
 
     yield run(%(
     require "prelude"

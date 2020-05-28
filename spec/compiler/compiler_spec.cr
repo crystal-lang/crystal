@@ -12,7 +12,7 @@ describe "Compiler" do
 
       File.exists?(path).should be_true
 
-      `#{path}`.should eq("Hello!")
+      `#{Process.quote(path)}`.should eq("Hello!")
     end
   end
 
@@ -23,7 +23,7 @@ describe "Compiler" do
 
         File.exists?(path).should be_true
 
-        `#{path}`.should eq("Hello!")
+        `#{Process.quote(path)}`.should eq("Hello!")
       end
     end
   end
