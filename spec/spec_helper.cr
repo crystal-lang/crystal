@@ -33,40 +33,33 @@ end
 
 record SemanticResult,
   program : Program,
-  node : ASTNode,
-  type : Type
+  node : ASTNode
 
-def assert_type(str, flags = nil, inject_primitives = true)
-  result = semantic_result(str, flags, inject_primitives: inject_primitives)
+def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, line = __LINE__)
+  result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
-  result.type.should eq(expected_type)
+  node = result.node
+  if node.is_a?(Expressions)
+    node = node.last
+  end
+  node.type.should eq(expected_type), file: file, line: line
   result
 end
 
-def semantic(code : String, wants_doc = false, inject_primitives = true, filename = nil)
+def semantic(code : String, wants_doc = false, inject_primitives = true, flags = nil, filename = nil)
   code = inject_primitives(code) if inject_primitives
   node = parse(code, wants_doc: wants_doc, filename: filename)
-  semantic node, wants_doc: wants_doc
+  semantic node, wants_doc: wants_doc, flags: flags
 end
 
-def semantic(node : ASTNode, wants_doc = false)
+def semantic(node : ASTNode, wants_doc = false, flags = nil)
   program = new_program
+  program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
-  SemanticResult.new(program, node, node.type)
-end
-
-def semantic_result(str, flags = nil, inject_primitives = true)
-  str = inject_primitives(str) if inject_primitives
-  program = new_program
-  program.flags.concat(flags.split) if flags
-  input = parse str
-  input = program.normalize input
-  input = program.semantic input
-  input_type = input.is_a?(Expressions) ? input.last.type : input.type
-  SemanticResult.new(program, input, input_type)
+  SemanticResult.new(program, node)
 end
 
 def assert_normalize(from, to, flags = nil)
