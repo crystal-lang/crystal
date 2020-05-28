@@ -33,27 +33,27 @@
 # io.to_slice # => Bytes[0x34, 0x12]
 # ```
 module IO::ByteFormat
-  abstract def encode(int : Int8, io : IO) : UInt64
-  abstract def encode(int : UInt8, io : IO) : UInt64
-  abstract def encode(int : Int16, io : IO) : UInt64
-  abstract def encode(int : UInt16, io : IO) : UInt64
-  abstract def encode(int : Int32, io : IO) : UInt64
-  abstract def encode(int : UInt32, io : IO) : UInt64
-  abstract def encode(int : Int64, io : IO) : UInt64
-  abstract def encode(int : UInt64, io : IO) : UInt64
-  abstract def encode(int : Int128, io : IO) : UInt64
-  abstract def encode(int : UInt128, io : IO) : UInt64
+  abstract def encode(int : Int8, io : IO) : Int64
+  abstract def encode(int : UInt8, io : IO) : Int64
+  abstract def encode(int : Int16, io : IO) : Int64
+  abstract def encode(int : UInt16, io : IO) : Int64
+  abstract def encode(int : Int32, io : IO) : Int64
+  abstract def encode(int : UInt32, io : IO) : Int64
+  abstract def encode(int : Int64, io : IO) : Int64
+  abstract def encode(int : UInt64, io : IO) : Int64
+  abstract def encode(int : Int128, io : IO) : Int64
+  abstract def encode(int : UInt128, io : IO) : Int64
 
-  abstract def encode(int : Int8, bytes : Bytes) : UInt64
-  abstract def encode(int : UInt8, bytes : Bytes) : UInt64
-  abstract def encode(int : Int16, bytes : Bytes) : UInt64
-  abstract def encode(int : UInt16, bytes : Bytes) : UInt64
-  abstract def encode(int : Int32, bytes : Bytes) : UInt64
-  abstract def encode(int : UInt32, bytes : Bytes) : UInt64
-  abstract def encode(int : Int64, bytes : Bytes) : UInt64
-  abstract def encode(int : UInt64, bytes : Bytes) : UInt64
-  abstract def encode(int : Int128, bytes : Bytes) : UInt64
-  abstract def encode(int : UInt128, bytes : Bytes) : UInt64
+  abstract def encode(int : Int8, bytes : Bytes) : Int64
+  abstract def encode(int : UInt8, bytes : Bytes) : Int64
+  abstract def encode(int : Int16, bytes : Bytes) : Int64
+  abstract def encode(int : UInt16, bytes : Bytes) : Int64
+  abstract def encode(int : Int32, bytes : Bytes) : Int64
+  abstract def encode(int : UInt32, bytes : Bytes) : Int64
+  abstract def encode(int : Int64, bytes : Bytes) : Int64
+  abstract def encode(int : UInt64, bytes : Bytes) : Int64
+  abstract def encode(int : Int128, bytes : Bytes) : Int64
+  abstract def encode(int : UInt128, bytes : Bytes) : Int64
 
   abstract def decode(int : Int8.class, io : IO)
   abstract def decode(int : UInt8.class, io : IO)
@@ -77,11 +77,11 @@ module IO::ByteFormat
   abstract def decode(int : Int128.class, bytes : Bytes)
   abstract def decode(int : UInt128.class, bytes : Bytes)
 
-  def encode(float : Float32, io : IO) : UInt64
+  def encode(float : Float32, io : IO) : Int64
     encode(float.unsafe_as(Int32), io)
   end
 
-  def encode(float : Float32, bytes : Bytes) : UInt64
+  def encode(float : Float32, bytes : Bytes) : Int64
     encode(float.unsafe_as(Int32), bytes)
   end
 
@@ -93,11 +93,11 @@ module IO::ByteFormat
     decode(Int32, bytes).unsafe_as(Float32)
   end
 
-  def encode(float : Float64, io : IO) : UInt64
+  def encode(float : Float64, io : IO) : Int64
     encode(float.unsafe_as(Int64), io)
   end
 
-  def encode(float : Float64, bytes : Bytes) : UInt64
+  def encode(float : Float64, bytes : Bytes) : Int64
     encode(float.unsafe_as(Int64), bytes)
   end
 
@@ -125,18 +125,18 @@ module IO::ByteFormat
       {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Int128 UInt128) %}
         {% bytesize = 2 ** (i // 2) %}
 
-        def self.encode(int : {{type.id}}, io : IO) : UInt64
+        def self.encode(int : {{type.id}}, io : IO) : Int64
           buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
           buffer.reverse! unless SystemEndian == self
           io.write(buffer.to_slice)
-          UInt64.new({{bytesize}})
+          Int64.new({{bytesize}})
         end
 
-        def self.encode(int : {{type.id}}, bytes : Bytes) : UInt64
+        def self.encode(int : {{type.id}}, bytes : Bytes) : Int64
           buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
           buffer.reverse! unless SystemEndian == self
           buffer.to_slice.copy_to(bytes)
-          UInt64.new({{bytesize}})
+          Int64.new({{bytesize}})
         end
 
         def self.decode(type : {{type.id}}.class, io : IO)
