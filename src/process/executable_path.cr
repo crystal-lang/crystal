@@ -43,8 +43,16 @@ class Process
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
   def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
-    name = Path.new(name)
-    return nil if "#{name}".empty?
+    find_executable_possibilities(Path.new(name), path, pwd) do |p|
+      if is_executable_file?(p)
+        return p.to_s
+      end
+    end
+    nil
+  end
+
+  private def self.find_executable_possibilities(name, path, pwd)
+    return if "#{name}".empty?
 
     {% if flag?(:win32) %}
       basename = name.ends_with_separator? ? "" : name.basename
@@ -54,8 +62,8 @@ class Process
       end
     {% end %}
 
-    if name.absolute? && is_executable_file?(name)
-      return name.to_s
+    if name.absolute?
+      yield name
     end
 
     # check if the name includes a separator
@@ -66,20 +74,15 @@ class Process
     end
     has_separator = (count_parts > 1)
 
-    check_pwd = {{ flag?(:win32) }} || has_separator
-    if check_pwd && is_executable_file?(r = name.expand(pwd))
-      return r.to_s
+    if {{ flag?(:win32) }} || has_separator
+      yield name.expand(pwd)
     end
 
     if path && !has_separator
       path.split(PATH_DELIMITER).each do |path_entry|
-        if is_executable_file?(r = Path.new(path_entry, name))
-          return r.to_s
-        end
+        yield Path.new(path_entry, name)
       end
     end
-
-    nil
   end
 end
 
