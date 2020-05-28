@@ -82,13 +82,13 @@ class IO::Memory < IO
 
   # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Int64
     check_writeable
     check_open
 
     count = slice.size
 
-    return 0u64 if count == 0
+    return 0i64 if count == 0
 
     new_bytesize = @pos + count
     if new_bytesize > @capacity
@@ -105,12 +105,12 @@ class IO::Memory < IO
     @pos += count
     @bytesize = @pos if @pos > @bytesize
 
-    slice.size.to_u64
+    slice.size.to_i64
   end
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Int64
     check_writeable
     check_open
 
@@ -129,7 +129,7 @@ class IO::Memory < IO
     @pos += 1
     @bytesize = @pos if @pos > @bytesize
 
-    nil
+    1i64
   end
 
   # :nodoc:
@@ -194,8 +194,8 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip(bytes_count : Int) : UInt64
-    bytes_count = bytes_count.to_u64
+  def skip(bytes_count : Int) : Int64
+    bytes_count = bytes_count.to_i64
     check_open
 
     available = @bytesize - @pos
@@ -208,12 +208,12 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip_to_end : UInt64
+  def skip_to_end : Int64
     check_open
 
     skipped = @bytesize - @pos
     @pos = @bytesize
-    skipped.to_u64
+    skipped.to_i64
   end
 
   # :nodoc:

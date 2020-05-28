@@ -110,8 +110,8 @@ module IO::Buffered
   end
 
   # :nodoc:
-  def skip(bytes_count : Int) : UInt64
-    bytes_count = bytes_count.to_u64
+  def skip(bytes_count : Int) : Int64
+    bytes_count = bytes_count.to_i64
     check_open
 
     if bytes_count <= @in_buffer_rem.size
@@ -128,18 +128,18 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Bytes) : UInt64
+  def write(slice : Bytes) : Int64
     # NOTE: It returns the bytes written without differencing whether
     # they are kept in the buffer or sent to the underlying IO.
     check_open
 
-    return 0u64 if slice.empty?
+    return 0i64 if slice.empty?
 
     count = slice.size
 
     if sync?
       unbuffered_write(slice)
-      return slice.size.to_u64
+      return slice.size.to_i64
     end
 
     if flush_on_newline?
@@ -156,7 +156,7 @@ module IO::Buffered
     if count >= @buffer_size
       flush
       unbuffered_write slice[0, count]
-      return slice.size.to_u64
+      return slice.size.to_i64
     end
 
     if count > @buffer_size - @out_count
@@ -166,11 +166,11 @@ module IO::Buffered
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
 
-    slice.size.to_u64
+    slice.size.to_i64
   end
 
   # :nodoc:
-  def write_byte(byte : UInt8) : UInt64
+  def write_byte(byte : UInt8) : Int64
     check_open
 
     if sync?
@@ -187,7 +187,7 @@ module IO::Buffered
       flush
     end
 
-    1u64
+    1i64
   end
 
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
