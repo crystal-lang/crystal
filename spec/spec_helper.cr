@@ -44,9 +44,10 @@ def assert_type(str, flags = nil, inject_primitives = true)
   result
 end
 
-def semantic(code : String, wants_doc = false, inject_primitives = true)
+def semantic(code : String, wants_doc = false, inject_primitives = true, filename = nil)
   code = inject_primitives(code) if inject_primitives
-  semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+  node = parse(code, wants_doc: wants_doc, filename: filename)
+  semantic node, wants_doc: wants_doc
 end
 
 def semantic(node : ASTNode, wants_doc = false)
@@ -154,13 +155,7 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, e
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
-  code = inject_primitives(code) if inject_primitives
-  parser = Parser.new(code)
-  parser.filename = filename
-  parser.wants_doc = false
-  node = parser.parse
-
-  result = semantic node
+  result = semantic code, inject_primitives: inject_primitives, filename: filename
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
 
