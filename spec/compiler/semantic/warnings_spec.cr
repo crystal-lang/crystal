@@ -1,10 +1,10 @@
 require "../spec_helper"
 
-describe "Code gen: warnings" do
-  it "detects top-level deprecated methods" do
+describe "Semantic: warnings" do
+  it "detects top-level deprecated marcos" do
     assert_warning %(
       @[Deprecated("Do not use me")]
-      def foo
+      macro foo
       end
 
       foo
@@ -15,7 +15,7 @@ describe "Code gen: warnings" do
   it "deprecation reason is optional" do
     assert_warning %(
       @[Deprecated]
-      def foo
+      macro foo
       end
 
       foo
@@ -23,24 +23,11 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
-  it "detects deprecated instance methods" do
+  it "detects deprecated class macros" do
     assert_warning %(
       class Foo
         @[Deprecated("Do not use me")]
-        def m
-        end
-      end
-
-      Foo.new.m
-    ), "warning in line 8\nWarning: Deprecated Foo#m. Do not use me",
-      inject_primitives: false
-  end
-
-  it "detects deprecated class methods" do
-    assert_warning %(
-      class Foo
-        @[Deprecated("Do not use me")]
-        def self.m
+        macro m
         end
       end
 
@@ -49,37 +36,24 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
-  it "detects deprecated generic instance methods" do
+  it "detects deprecated generic class macros" do
     assert_warning %(
       class Foo(T)
         @[Deprecated("Do not use me")]
-        def m
+        macro m
         end
       end
 
-      Foo(Int32).new.m
-    ), "warning in line 8\nWarning: Deprecated Foo(Int32)#m. Do not use me",
+      Foo.m
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
       inject_primitives: false
   end
 
-  it "detects deprecated generic class methods" do
-    assert_warning %(
-      class Foo(T)
-        @[Deprecated("Do not use me")]
-        def self.m
-        end
-      end
-
-      Foo(Int32).m
-    ), "warning in line 8\nWarning: Deprecated Foo(Int32).m. Do not use me",
-      inject_primitives: false
-  end
-
-  it "detects deprecated module methods" do
+  it "detects deprecated module macros" do
     assert_warning %(
       module Foo
         @[Deprecated("Do not use me")]
-        def self.m
+        macro m
         end
       end
 
@@ -88,40 +62,14 @@ describe "Code gen: warnings" do
       inject_primitives: false
   end
 
-  it "detects deprecated methods with named arguments" do
+  it "detects deprecated macros with named arguments" do
     assert_warning %(
       @[Deprecated]
-      def foo(*, a)
+      macro foo(*, a)
       end
 
       foo(a: 2)
-    ), "warning in line 6\nWarning: Deprecated top-level foo:a.",
-      inject_primitives: false
-  end
-
-  it "detects deprecated initialize" do
-    assert_warning %(
-      class Foo
-        @[Deprecated]
-        def initialize
-        end
-      end
-
-      Foo.new
-    ), "warning in line 8\nWarning: Deprecated Foo.new.",
-      inject_primitives: false
-  end
-
-  it "detects deprecated initialize with named arguments" do
-    assert_warning %(
-      class Foo
-        @[Deprecated]
-        def initialize(*, a)
-        end
-      end
-
-      Foo.new(a: 2)
-    ), "warning in line 8\nWarning: Deprecated Foo.new:a.",
+    ), "warning in line 6\nWarning: Deprecated top-level foo.",
       inject_primitives: false
   end
 
@@ -129,16 +77,16 @@ describe "Code gen: warnings" do
     warning_failures = warnings_result %(
       class Foo
         @[Deprecated("Do not use me")]
-        def m
+        macro m
         end
 
-        def b
-          m
+        macro b
+          Foo.m
         end
       end
 
-      Foo.new.b
-      Foo.new.b
+      Foo.b
+      Foo.b
     ), inject_primitives: false
 
     warning_failures.size.should eq(1)
@@ -148,50 +96,12 @@ describe "Code gen: warnings" do
     warning_failures = warnings_result %(
       class Foo
         @[Deprecated("Do not use me")]
-        def m
+        macro m
         end
       end
 
-      Foo.new.m
-      Foo.new.m
-    ), inject_primitives: false
-
-    warning_failures.size.should eq(2)
-  end
-
-  it "informs warnings once per yield" do
-    warning_failures = warnings_result %(
-      class Foo
-        @[Deprecated("Do not use me")]
-        def m
-        end
-      end
-
-      def twice
-        yield
-        yield
-      end
-
-      twice { Foo.new.m }
-    ), inject_primitives: false
-
-    warning_failures.size.should eq(1)
-  end
-
-  it "informs warnings once per target type" do
-    warning_failures = warnings_result %(
-      class Foo(T)
-        @[Deprecated("Do not use me")]
-        def m
-        end
-
-        def b
-          m
-        end
-      end
-
-      Foo(Int32).new.b
-      Foo(Int64).new.b
+      Foo.m
+      Foo.m
     ), inject_primitives: false
 
     warning_failures.size.should eq(2)
@@ -218,10 +128,10 @@ describe "Code gen: warnings" do
         )
         File.write File.join(path, "lib", "foo.cr"), %(
           @[Deprecated("Do not use me")]
-          def foo
+          macro foo
           end
 
-          def bar
+          macro bar
             foo
           end
         )
@@ -240,7 +150,7 @@ describe "Code gen: warnings" do
   it "errors if invalid argument type" do
     assert_error %(
       @[Deprecated(42)]
-      def foo
+      macro foo
       end
       ),
       "Error: first argument must be a String"
@@ -249,16 +159,16 @@ describe "Code gen: warnings" do
   it "errors if too many arguments" do
     assert_error %(
       @[Deprecated("Do not use me", "extra arg")]
-      def foo
+      macro foo
       end
       ),
       "Error: wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
-  it "errors if invalid named arguments" do
+  it "errors if invalid named argument" do
     assert_error %(
       @[Deprecated(invalid: "Do not use me")]
-      def foo
+      macro foo
       end
       ),
       "Error: too many named arguments (given 1, expected maximum 0)"

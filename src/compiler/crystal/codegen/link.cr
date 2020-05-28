@@ -1,10 +1,11 @@
 module Crystal
   struct LinkAnnotation
     getter lib : String?
+    getter pkg_config : String?
     getter ldflags : String?
     getter framework : String?
 
-    def initialize(@lib = nil, @ldflags = nil, @static = false, @framework = nil)
+    def initialize(@lib = nil, @pkg_config = @lib, @ldflags = nil, @static = false, @framework = nil)
     end
 
     def static?
@@ -22,6 +23,7 @@ module Crystal
       lib_name = nil
       lib_ldflags = nil
       lib_static = false
+      lib_pkg_config = nil
       lib_framework = nil
       count = 0
 
@@ -66,12 +68,15 @@ module Crystal
           named_arg.raise "'framework' link argument already specified" if count > 3
           named_arg.raise "'framework' link argument must be a String" unless value.is_a?(StringLiteral)
           lib_framework = value.value
+        when "pkg_config"
+          named_arg.raise "'pkg_config' link argument must be a String" unless value.is_a?(StringLiteral)
+          lib_pkg_config = value.value
         else
-          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+          named_arg.raise "unknown link argument: '#{named_arg.name}' (valid arguments are 'lib', 'ldflags', 'static', 'pkg_config' and 'framework')"
         end
       end
 
-      new(lib_name, lib_ldflags, lib_static, lib_framework)
+      new(lib_name, lib_pkg_config, lib_ldflags, lib_static, lib_framework)
     end
   end
 
@@ -102,90 +107,75 @@ module Crystal
           end
 
           if libname = ann.lib
-            flags << ' ' << libname << ".lib"
+            flags << ' ' << Process.quote_windows("#{libname}.lib")
           end
         end
       end
     end
 
     private def lib_flags_posix
-      library_path = ENV["LIBRARY_PATH"]?.try(&.split(':', remove_empty: true)) ||
-                     ["/usr/lib", "/usr/local/lib"]
-      has_pkg_config = nil
+      flags = [] of String
+      static_build = has_flag?("static")
 
-      String.build do |flags|
-        link_annotations.reverse_each do |ann|
-          if ldflags = ann.ldflags
-            flags << ' ' << ldflags
-          end
+      # Instruct the linker to link statically if the user asks
+      flags << "-static" if static_build
 
-          if libname = ann.lib
-            if has_pkg_config.nil?
-              has_pkg_config = Process.run("pkg-config", ["-h"]).success?
-            end
+      # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
+      # searches user-given library paths.
+      CrystalLibraryPath.paths.each do |path|
+        flags << Process.quote_posix("-L#{path}")
+      end
 
-            static = has_flag?("static") || ann.static?
-
-            if static && (static_lib = find_static_lib(libname, CrystalLibraryPath.paths))
-              flags << ' ' << static_lib
-            elsif has_pkg_config && (libflags = pkg_config_flags(libname, static, library_path))
-              flags << ' ' << libflags
-            elsif static && (static_lib = find_static_lib(libname, library_path))
-              flags << ' ' << static_lib
-            else
-              flags << " -l" << libname
-            end
-          end
-
-          if framework = ann.framework
-            flags << " -framework " << framework
-          end
+      link_annotations.reverse_each do |ann|
+        if ldflags = ann.ldflags
+          flags << ldflags
         end
 
-        # Append the CRYSTAL_LIBRARY_PATH values as -L flags.
-        CrystalLibraryPath.paths.each do |path|
-          flags << " -L#{path}"
+        # First, check pkg-config for the pkg-config module name if provided, then
+        # check pkg-config with the lib name, then fall back to -lname
+        if (pkg_config_name = ann.pkg_config) && (flag = pkg_config(pkg_config_name, static_build))
+          flags << flag
+        elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
+          flags << flag
+        elsif (lib_name = ann.lib)
+          flags << Process.quote_posix("-l#{lib_name}")
         end
-        # Append the default paths as -L flags in case the linker doesn't know
-        # about them (eg: FreeBSD won't search /usr/local/lib by default):
-        library_path.each do |path|
-          flags << " -L#{path}"
+
+        if framework = ann.framework
+          flags << "-framework" << Process.quote_posix(framework)
         end
+      end
+
+      flags.join(" ")
+    end
+
+    PKG_CONFIG_PATH = Process.find_executable("pkg-config")
+
+    # Returns the result of running `pkg-config mod` but returns nil if
+    # pkg-config is not installed, or the module does not exist.
+    private def pkg_config(mod, static = false) : String?
+      return unless pkg_config_path = PKG_CONFIG_PATH
+      return unless Process.run(pkg_config_path, {mod}).success?
+
+      args = ["--libs"]
+      args << "--static" if static
+      args << mod
+
+      process = Process.new(pkg_config_path, args, input: :close, output: :pipe, error: :inherit)
+      flags = process.output.gets_to_end.chomp
+      status = process.wait
+      if status.success?
+        flags
+      else
+        nil
       end
     end
 
+    # Returns every @[Link] annotation in the program parsed as `LinkAnnotation`
     def link_annotations
       annotations = [] of LinkAnnotation
       add_link_annotations @types, annotations
       annotations
-    end
-
-    private def pkg_config_flags(libname, static, library_path)
-      if system("pkg-config #{libname}")
-        if static
-          flags = [] of String
-          `pkg-config #{libname} --libs --static`.split.each do |cfg|
-            if cfg.starts_with?("-L")
-              library_path << cfg[2..-1]
-            elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2..-1], library_path) || cfg)
-            else
-              flags << cfg
-            end
-          end
-          flags.join ' '
-        else
-          `pkg-config #{libname} --libs`.chomp
-        end
-      end
-    end
-
-    private def find_static_lib(libname, library_path)
-      library_path.each do |libdir|
-        static_lib = "#{libdir}/lib#{libname}.a"
-        return static_lib if File.exists?(static_lib)
-      end
-      nil
     end
 
     private def add_link_annotations(types, annotations)

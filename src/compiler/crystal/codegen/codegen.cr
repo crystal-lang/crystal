@@ -563,7 +563,7 @@ module Crystal
     end
 
     def fun_literal_name(node : ProcLiteral)
-      location = node.location.try &.original_location
+      location = node.location.try &.expanded_location
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename.as(String)
@@ -1305,7 +1305,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)

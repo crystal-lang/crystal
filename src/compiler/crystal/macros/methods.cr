@@ -265,7 +265,7 @@ module Crystal
       if result.status.success?
         @last = MacroId.new(result.stdout)
       else
-        command = "#{original_filename} #{run_args.map(&.inspect).join " "}"
+        command = "#{Process.quote(original_filename)} #{Process.quote(run_args)}"
 
         message = IO::Memory.new
         message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"
@@ -352,22 +352,22 @@ module Crystal
         end
       when "line_number"
         interpret_argless_method("line_number", args) do
-          line_number = location.try &.original_location.try &.line_number
+          line_number = location.try &.expanded_location.try &.line_number
           line_number ? NumberLiteral.new(line_number) : NilLiteral.new
         end
       when "column_number"
         interpret_argless_method("column_number", args) do
-          column_number = location.try &.original_location.try &.column_number
+          column_number = location.try &.expanded_location.try &.column_number
           column_number ? NumberLiteral.new(column_number) : NilLiteral.new
         end
       when "end_line_number"
         interpret_argless_method("end_line_number", args) do
-          line_number = end_location.try &.original_location.try &.line_number
+          line_number = end_location.try &.expanded_location.try &.line_number
           line_number ? NumberLiteral.new(line_number) : NilLiteral.new
         end
       when "end_column_number"
         interpret_argless_method("end_column_number", args) do
-          column_number = end_location.try &.original_location.try &.column_number
+          column_number = end_location.try &.expanded_location.try &.column_number
           column_number ? NumberLiteral.new(column_number) : NilLiteral.new
         end
       when "=="

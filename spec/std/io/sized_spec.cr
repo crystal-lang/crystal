@@ -5,8 +5,8 @@ private class NoPeekIO < IO
     0
   end
 
-  def write(bytes : Bytes) : UInt64
-    0u64
+  def write(bytes : Bytes) : Int64
+    0i64
   end
 
   def peek

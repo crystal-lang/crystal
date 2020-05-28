@@ -464,7 +464,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
-        type.add_link_annotation(LinkAnnotation.from(ann))
+        link_annotation = LinkAnnotation.from(ann)
+
+        if link_annotation.static?
+          @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
+        end
+
+        if ann.args.size > 1
+          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+        end
+
+        type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
         type.call_convention = parse_call_convention(ann, type.call_convention)
       else
@@ -967,25 +977,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def process_lib_annotations
-    link_annotations = nil
-    call_convention = nil
-
-    process_annotations do |annotation_type, ann|
-      case annotation_type
-      when @program.link
-        link_annotations ||= [] of LinkAnnotation
-        link_annotations << LinkAnnotation.from(ann)
-      when @program.call_convention
-        call_convention = parse_call_convention(ann, call_convention)
-      end
-    end
-
-    @annotations = nil
-
-    {link_annotations, call_convention}
-  end
-
   def include_in(current_type, node, kind)
     node_name = node.name
 
@@ -1100,16 +1091,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
-      when @program.deprecated_annotation
-        # Check whether a DeprecatedAnnotation can be built.
-        # There is no need to store it, but enforcing
-        # arguments makes sense here.
-        DeprecatedAnnotation.from(ann)
-        yield annotation_type, ann
-      when @program.experimental_annotation
-        # ditto DeprecatedAnnotation
-        ExperimentalAnnotation.from(ann)
-        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

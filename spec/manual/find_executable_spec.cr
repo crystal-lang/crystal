@@ -56,7 +56,7 @@ describe "Process.run" do
       end
     else
       it "fails to run '#{command}'" do
-        expect_raises RuntimeError do
+        expect_raises IO::Error do
           Process.run(command)
         end
       end
