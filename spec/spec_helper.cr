@@ -48,9 +48,22 @@ def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, 
 end
 
 def semantic(code : String, wants_doc = false, inject_primitives = true, flags = nil, filename = nil)
-  code = inject_primitives(code) if inject_primitives
   node = parse(code, wants_doc: wants_doc, filename: filename)
+  node = inject_primitives(node) if inject_primitives
   semantic node, wants_doc: wants_doc, flags: flags
+end
+
+private def inject_primitives(node : ASTNode)
+  req = Crystal::Require.new("primitives")
+  case node
+  when Crystal::Expressions
+    node.expressions.unshift req
+    node
+  when Crystal::Nop
+    node
+  else
+    Crystal::Expressions.new [req, node] of ASTNode
+  end
 end
 
 def semantic(node : ASTNode, wants_doc = false, flags = nil)
@@ -210,7 +223,9 @@ def create_spec_compiler
 end
 
 def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil)
-  code = inject_primitives(code) if inject_primitives
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
   # because of missing linked functions (which are available
@@ -287,8 +302,4 @@ def test_c(c_code, crystal_code)
     File.delete(c_filename)
     File.delete(o_filename)
   end
-end
-
-private def inject_primitives(code)
-  %(require "primitives"\n) + code
 end
