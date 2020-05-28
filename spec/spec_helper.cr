@@ -114,7 +114,7 @@ def assert_no_errors(*args)
   semantic(*args)
 end
 
-def warnings_result(code, inject_primitives = true)
+def warnings_result(code)
   output_filename = Crystal.temp_executable("crystal-spec-output")
 
   compiler = create_spec_compiler
@@ -123,17 +123,13 @@ def warnings_result(code, inject_primitives = true)
   compiler.prelude = "empty" # avoid issues in the current std lib
   compiler.color = false
   apply_program_flags(compiler.flags)
-  source = [Compiler::Source.new("code.cr", code)]
-  if inject_primitives
-    source.unshift Compiler::Source.new("inject_primitives", %(require "primitives"))
-  end
-  result = compiler.compile source, output_filename
+  result = compiler.compile Compiler::Source.new("code.cr", code), output_filename
 
   result.program.warning_failures
 end
 
-def assert_warning(code, message, inject_primitives = true, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, inject_primitives)
+def assert_warning(code, message, file = __FILE__, line = __LINE__)
+  warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file, line
   warning_failures[0].should start_with(message), file, line
 end

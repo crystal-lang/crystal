@@ -9,8 +9,7 @@ describe "Code gen: warnings" do
 
       foo
       CR
-      "warning in line 5\nWarning: Deprecated top-level foo. Do not use me",
-      inject_primitives: false
+      "warning in line 5\nWarning: Deprecated top-level foo. Do not use me"
   end
 
   it "deprecation reason is optional" do
@@ -21,8 +20,7 @@ describe "Code gen: warnings" do
 
       foo
       CR
-      "warning in line 5\nWarning: Deprecated top-level foo.",
-      inject_primitives: false
+      "warning in line 5\nWarning: Deprecated top-level foo."
   end
 
   it "detects deprecated instance methods" do
@@ -35,8 +33,7 @@ describe "Code gen: warnings" do
 
       Foo.new.m
       CR
-      "warning in line 7\nWarning: Deprecated Foo#m. Do not use me",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo#m. Do not use me"
   end
 
   it "detects deprecated class methods" do
@@ -49,8 +46,7 @@ describe "Code gen: warnings" do
 
       Foo.m
       CR
-      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated generic instance methods" do
@@ -63,8 +59,7 @@ describe "Code gen: warnings" do
 
       Foo(Int32).new.m
       CR
-      "warning in line 7\nWarning: Deprecated Foo(Int32)#m. Do not use me",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo(Int32)#m. Do not use me"
   end
 
   it "detects deprecated generic class methods" do
@@ -77,8 +72,7 @@ describe "Code gen: warnings" do
 
       Foo(Int32).m
       CR
-      "warning in line 7\nWarning: Deprecated Foo(Int32).m. Do not use me",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo(Int32).m. Do not use me"
   end
 
   it "detects deprecated module methods" do
@@ -91,8 +85,7 @@ describe "Code gen: warnings" do
 
       Foo.m
       CR
-      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated methods with named arguments" do
@@ -103,8 +96,7 @@ describe "Code gen: warnings" do
 
       foo(a: 2)
       CR
-      "warning in line 5\nWarning: Deprecated top-level foo:a.",
-      inject_primitives: false
+      "warning in line 5\nWarning: Deprecated top-level foo:a."
   end
 
   it "detects deprecated initialize" do
@@ -117,8 +109,7 @@ describe "Code gen: warnings" do
 
       Foo.new
       CR
-      "warning in line 7\nWarning: Deprecated Foo.new.",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo.new."
   end
 
   it "detects deprecated initialize with named arguments" do
@@ -131,12 +122,11 @@ describe "Code gen: warnings" do
 
       Foo.new(a: 2)
       CR
-      "warning in line 7\nWarning: Deprecated Foo.new:a.",
-      inject_primitives: false
+      "warning in line 7\nWarning: Deprecated Foo.new:a."
   end
 
   it "informs warnings once per call site location (a)" do
-    warning_failures = warnings_result <<-CR, inject_primitives: false
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -154,7 +144,7 @@ describe "Code gen: warnings" do
   end
 
   it "informs warnings once per call site location (b)" do
-    warning_failures = warnings_result <<-CR, inject_primitives: false
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -169,7 +159,7 @@ describe "Code gen: warnings" do
   end
 
   it "informs warnings once per yield" do
-    warning_failures = warnings_result <<-CR, inject_primitives: false
+    warning_failures = warnings_result <<-CR
       class Foo
         @[Deprecated("Do not use me")]
         def m
@@ -188,7 +178,7 @@ describe "Code gen: warnings" do
   end
 
   it "informs warnings once per target type" do
-    warning_failures = warnings_result <<-CR, inject_primitives: false
+    warning_failures = warnings_result <<-CR
       class Foo(T)
         @[Deprecated("Do not use me")]
         def m
@@ -233,7 +223,7 @@ describe "Code gen: warnings" do
           def bar
             foo
           end
-        CR
+          CR
 
         compiler = create_spec_compiler
         compiler.warnings = Warnings::All
