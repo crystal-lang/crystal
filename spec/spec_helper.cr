@@ -97,13 +97,6 @@ def assert_expand_third(from : String, to)
   assert_expand node, to
 end
 
-def assert_after_cleanup(before, after)
-  # before = inject_primitives(before)
-  node = Parser.parse(before)
-  result = semantic node
-  result.node.to_s.strip.should eq(after.strip)
-end
-
 def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
