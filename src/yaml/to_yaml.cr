@@ -136,16 +136,17 @@ module Time::EpochMillisConverter
   end
 end
 
-# Converter to be used with `YAML.mapping`
+# Converter to be used with `YAML::Serializable`
 # to serialize the `Array(T)` elements with the custom converter.
 #
 # ```
 # require "yaml"
 #
 # class Timestamp
-#   YAML.mapping({
-#     values: {type: Array(Time), converter: YAML::ArrayConverter(Time::EpochConverter)},
-#   })
+#   include YAML::Serializable
+#
+#   @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+#   values : Array(Time)
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))
