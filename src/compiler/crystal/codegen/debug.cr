@@ -318,7 +318,7 @@ module Crystal
     end
 
     private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
-      location = location.try &.original_location
+      location = location.try &.expanded_location
       return false unless location
 
       file, dir = file_and_dir(location.filename)
@@ -435,7 +435,7 @@ module Crystal
     end
 
     def set_current_debug_location(location)
-      location = location.try &.original_location
+      location = location.try &.expanded_location
       return unless location
 
       @current_debug_location = location
@@ -464,7 +464,7 @@ module Crystal
     end
 
     def emit_def_debug_metadata(target_def)
-      location = target_def.location.try &.original_location
+      location = target_def.location.try &.expanded_location
       return unless location
 
       file, dir = file_and_dir(location.filename)

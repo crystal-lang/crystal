@@ -104,10 +104,10 @@ def assert_after_cleanup(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
-def assert_error(str, message, inject_primitives = true)
+def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
-  expect_raises TypeException, message do
+  expect_raises TypeException, message, file, line do
     semantic nodes
   end
 end
@@ -116,7 +116,7 @@ def assert_no_errors(*args)
   semantic(*args)
 end
 
-def warnings_result(code, inject_primitives = true, *, file = __FILE__)
+def warnings_result(code, inject_primitives = true, file = __FILE__)
   code = inject_primitives(code) if inject_primitives
 
   compiler = create_spec_compiler
@@ -133,15 +133,15 @@ def warnings_result(code, inject_primitives = true, *, file = __FILE__)
   end
 end
 
-def assert_warning(code, message, inject_primitives = true, *, file = __FILE__)
+def assert_warning(code, message, inject_primitives = true, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, inject_primitives, file: file)
-  warning_failures.size.should eq(1)
-  warning_failures[0].should start_with(message)
+  warning_failures.size.should eq(1), file, line
+  warning_failures[0].should start_with(message), file, line
 end
 
-def assert_no_warnings(code, inject_primitives = true, *, file = __FILE__)
+def assert_no_warnings(code, inject_primitives = true, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, inject_primitives, file: file)
-  warning_failures.size.should eq(0)
+  warning_failures.size.should eq(0), file, line
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
@@ -236,7 +236,7 @@ def create_spec_compiler
   compiler
 end
 
-def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__)
+def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, file = __FILE__)
   code = inject_primitives(code) if inject_primitives
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
@@ -261,7 +261,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
     with_temp_executable("crystal-spec-output", file: file) do |output_filename|
       compiler.compile Compiler::Source.new("spec", code), output_filename
 
-      output = `#{output_filename}`
+      output = `#{Process.quote(output_filename)}`
       return SpecRunOutput.new(output)
     end
   else
@@ -269,11 +269,11 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
   end
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__)
+def test_c(c_code, crystal_code, file = __FILE__)
   with_tempfile("temp_abi.c", "temp_abi.o", file: file) do |c_filename, o_filename|
     File.write(c_filename, c_code)
 
-    `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
+    `#{Crystal::Compiler::CC} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
 
     yield run(%(
     require "prelude"

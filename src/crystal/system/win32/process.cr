@@ -1,4 +1,5 @@
 require "c/processthreadsapi"
+require "process/shell"
 
 struct Crystal::System::Process
   getter pid : LibC::DWORD
@@ -126,7 +127,13 @@ struct Crystal::System::Process
          make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
          pointerof(startup_info), pointerof(process_info)
        ) == 0
-      raise RuntimeError.from_winerror("Error executing process")
+      error = WinError.value
+      case error.to_errno
+      when Errno::EACCES, Errno::ENOENT
+        raise ::File::Error.from_winerror("Error executing process", error, file: command_args)
+      else
+        raise IO::Error.from_winerror("Error executing process: '#{command_args}'", error)
+      end
     end
 
     close_handle(process_info.hThread)
@@ -147,35 +154,7 @@ struct Crystal::System::Process
     else
       command_args = [command]
       command_args.concat(args) if args
-      String.build { |io| args_to_string(command_args, io) }
-    end
-  end
-
-  private def self.args_to_string(args, io : IO)
-    args.join(io, ' ') do |arg|
-      quotes = arg.empty? || arg.includes?(' ') || arg.includes?('\t')
-
-      io << '"' if quotes
-
-      slashes = 0
-      arg.each_char do |c|
-        case c
-        when '\\'
-          slashes += 1
-        when '"'
-          (slashes + 1).times { io << '\\' }
-          slashes = 0
-        else
-          slashes = 0
-        end
-
-        io << c
-      end
-
-      if quotes
-        slashes.times { io << '\\' }
-        io << '"'
-      end
+      ::Process.quote_windows(command_args)
     end
   end
 

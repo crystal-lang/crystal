@@ -234,6 +234,8 @@ module Crystal
   class Macro
     include Annotatable
 
+    property! owner : Type
+
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments matching the given objects, taking into account this
     # macro's splat index.

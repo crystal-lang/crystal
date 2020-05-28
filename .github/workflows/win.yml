@@ -99,6 +99,19 @@ jobs:
         run: |
           cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
           cmake --build . --config Release
+      - name: Download libxml2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: GNOME/libxml2
+          ref: a230b728f1289dd24c1666856ac4fb55579c6dfb  # master @ 2020-05-04
+          path: libxml2
+      - name: Build libxml2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        working-directory: ./libxml2
+        run: |
+          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: |
@@ -107,6 +120,7 @@ jobs:
           mv bdwgc/Release/gc.lib libs/
           mv zlib/Release/zlibstatic.lib libs/z.lib
           mv libyaml/Release/yaml.lib libs/
+          mv libxml2/Release/libxml2s.lib libs/xml2.lib
 
       - name: Cache LLVM
         id: cache-llvm

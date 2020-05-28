@@ -156,7 +156,7 @@ class Process
   #
   # Available only on Unix-like operating systems.
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
