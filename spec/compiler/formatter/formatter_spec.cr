@@ -971,6 +971,10 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  \#{1}x\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  z\n  HTML"
+  assert_format %(<<-HTML\n  \#{"foo"}\n  HTML)
+  assert_format %(<<-HTML\n  \#{__FILE__}\n  HTML)
+  assert_format %(<<-HTML\n  \#{"fo\#{"o"}"}\n  HTML)
+  assert_format %(<<-HTML\n  \#{"foo"}\#{1}\n  HTML)
 
   assert_format "  <<-HTML\n   foo\n  HTML", "<<-HTML\n foo\nHTML"
   assert_format "  <<-HTML\n   \#{1}\n  HTML", "<<-HTML\n \#{1}\nHTML"

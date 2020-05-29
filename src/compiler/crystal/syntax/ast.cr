@@ -293,6 +293,16 @@ module Crystal
     def_equals_and_hash value
   end
 
+  class StringInterpolationContent < StringLiteral
+    def class_desc
+      "StringLiteral"
+    end
+
+    def clone_without_location
+      StringInterpolationContent.new(@value)
+    end
+  end
+
   class StringInterpolation < ASTNode
     property expressions : Array(ASTNode)
 

@@ -558,23 +558,11 @@ module Crystal
           next_string_token
         end
 
-        if exp.is_a?(StringLiteral)
-          # It might be #{__DIR__}, for example
-          if @token.type == :INTERPOLATION_START
-            write "\#{"
-            delimiter_state = @token.delimiter_state
-            next_token_skip_space_or_newline
-            indent(@column, exp)
-            skip_space_or_newline
-            check :"}"
-            write "}"
-            @token.delimiter_state = delimiter_state
+        if exp.is_a?(StringInterpolationContent)
+          if @token.invalid_escape
+            write @token.value
           else
-            if @token.invalid_escape
-              write @token.value
-            else
-              write @token.raw
-            end
+            write @token.raw
           end
           next_string_token
         else

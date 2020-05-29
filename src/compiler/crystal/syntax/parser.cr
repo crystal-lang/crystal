@@ -1926,7 +1926,7 @@ module Crystal
     end
 
     record Piece,
-      value : String | ASTNode,
+      node : ASTNode,
       line_number : Int32
 
     def parse_delimiter(want_skip_space = true)
@@ -2002,19 +2002,16 @@ module Crystal
       if needs_heredoc_indent_removed?(delimiter_state)
         remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
       else
-        pieces.map do |piece|
-          value = piece.value
-          value.is_a?(String) ? StringLiteral.new(value) : value
-        end
+        pieces.map(&.node)
       end
     end
 
     private def combine_pieces(pieces, delimiter_state)
       if needs_heredoc_indent_removed?(delimiter_state)
         pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-        pieces.join { |piece| piece.as(StringLiteral).value }
+        pieces.join(&.as(StringLiteral).value)
       else
-        pieces.map(&.value).join
+        pieces.join(&.node.as(StringLiteral).value)
       end
     end
 
@@ -2024,7 +2021,7 @@ module Crystal
       while true
         case @token.type
         when :STRING
-          pieces << Piece.new(@token.value.to_s, @token.line_number)
+          pieces << Piece.new(StringInterpolationContent.new(@token.value.to_s), @token.line_number)
 
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
@@ -2056,12 +2053,10 @@ module Crystal
 
           # We cannot reduce `StringLiteral` of interpolation inside heredoc into `String`
           # because heredoc try to remove its indentation.
-          if exp.is_a?(StringLiteral) && delimiter_state.kind != :heredoc
-            pieces << Piece.new(exp.value, line_number)
-          else
-            pieces << Piece.new(exp, line_number)
+          if !exp.is_a?(StringLiteral) || delimiter_state.kind == :heredoc
             has_interpolation = true
           end
+          pieces << Piece.new(exp, line_number)
 
           skip_space_or_newline
           if @token.type != :"}"
@@ -2124,7 +2119,7 @@ module Crystal
         node.expressions.concat(pieces)
       else
         string = combine_pieces(pieces, delimiter_state)
-        node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
+        node.expressions.push(StringInterpolationContent.new(string).at(node.location).at_end(token_end_location))
       end
 
       node.end_location = token_end_location
@@ -2140,12 +2135,13 @@ module Crystal
       new_pieces = [] of ASTNode | String
       previous_line_number = 0
       pieces.each_with_index do |piece, i|
-        value = piece.value
+        node = piece.node
         line_number = piece.line_number
 
         this_piece_is_in_new_line = line_number != previous_line_number
         next_piece_is_in_new_line = i == pieces.size - 1 || pieces[i + 1].line_number != line_number
-        if value.is_a?(String)
+        if node.is_a?(StringInterpolationContent)
+          value = node.value
           if value == "\n" || value == "\r\n"
             current_line << value
             if this_piece_is_in_new_line || next_piece_is_in_new_line
@@ -2175,7 +2171,7 @@ module Crystal
               line = line[indent..-1]
             end
             add_heredoc_piece new_pieces, line unless line.empty?
-            add_heredoc_piece new_pieces, value
+            add_heredoc_piece new_pieces, node
             remove_indent = false
             current_line.clear
           else
@@ -2185,7 +2181,7 @@ module Crystal
               current_line.clear
             end
 
-            add_heredoc_piece new_pieces, value
+            add_heredoc_piece new_pieces, node
           end
         end
         previous_line_number = line_number
@@ -2197,7 +2193,7 @@ module Crystal
       end
       new_pieces.map do |piece|
         if piece.is_a?(String)
-          StringLiteral.new(piece)
+          StringInterpolationContent.new(piece)
         else
           piece
         end
