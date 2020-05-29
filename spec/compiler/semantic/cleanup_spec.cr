@@ -1,5 +1,11 @@
 require "../../spec_helper"
 
+private def assert_after_cleanup(before, after)
+  node = Parser.parse(before)
+  result = semantic node
+  result.node.to_s.strip.should eq(after.strip)
+end
+
 describe "cleanup" do
   it "errors if assigning var to itself" do
     assert_error "a = 1; a = a", "expression has no effect"

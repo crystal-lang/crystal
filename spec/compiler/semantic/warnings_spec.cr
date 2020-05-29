@@ -8,8 +8,7 @@ describe "Semantic: warnings" do
       end
 
       foo
-    ), "warning in line 6\nWarning: Deprecated top-level foo. Do not use me",
-      inject_primitives: false
+    ), "warning in line 6\nWarning: Deprecated top-level foo. Do not use me"
   end
 
   it "deprecation reason is optional" do
@@ -19,8 +18,7 @@ describe "Semantic: warnings" do
       end
 
       foo
-    ), "warning in line 6\nWarning: Deprecated top-level foo.",
-      inject_primitives: false
+    ), "warning in line 6\nWarning: Deprecated top-level foo."
   end
 
   it "detects deprecated class macros" do
@@ -32,8 +30,7 @@ describe "Semantic: warnings" do
       end
 
       Foo.m
-    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated generic class macros" do
@@ -45,8 +42,7 @@ describe "Semantic: warnings" do
       end
 
       Foo.m
-    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated module macros" do
@@ -58,8 +54,7 @@ describe "Semantic: warnings" do
       end
 
       Foo.m
-    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me",
-      inject_primitives: false
+    ), "warning in line 8\nWarning: Deprecated Foo.m. Do not use me"
   end
 
   it "detects deprecated macros with named arguments" do
@@ -69,8 +64,7 @@ describe "Semantic: warnings" do
       end
 
       foo(a: 2)
-    ), "warning in line 6\nWarning: Deprecated top-level foo.",
-      inject_primitives: false
+    ), "warning in line 6\nWarning: Deprecated top-level foo."
   end
 
   it "informs warnings once per call site location (a)" do
@@ -87,7 +81,7 @@ describe "Semantic: warnings" do
 
       Foo.b
       Foo.b
-    ), inject_primitives: false
+    )
 
     warning_failures.size.should eq(1)
   end
@@ -102,7 +96,7 @@ describe "Semantic: warnings" do
 
       Foo.m
       Foo.m
-    ), inject_primitives: false
+    )
 
     warning_failures.size.should eq(2)
   end

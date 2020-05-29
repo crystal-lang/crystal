@@ -377,21 +377,21 @@ describe "Semantic: lib" do
   end
 
   it "warns if @[Link(static: true)] is specified" do
-    assert_warning %(
+    assert_warning <<-CR,
       @[Link("foo", static: true)]
       lib Foo
       end
-      ),
-      "warning in line 3\nWarning: specifying static linking for individual libraries is deprecated"
+      CR
+      "warning in line 1\nWarning: specifying static linking for individual libraries is deprecated"
   end
 
   it "warns if Link annotations use positional arguments" do
-    assert_warning %(
+    assert_warning <<-CR,
       @[Link("foo", "bar")]
       lib Foo
       end
-      ),
-      "warning in line 3\nWarning: using non-named arguments for Link annotations is deprecated"
+      CR
+      "warning in line 1\nWarning: using non-named arguments for Link annotations is deprecated"
   end
 
   it "allows invoking lib call without obj inside lib" do
