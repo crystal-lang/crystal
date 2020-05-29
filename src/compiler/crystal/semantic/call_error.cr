@@ -146,35 +146,8 @@ class Crystal::Call
       owner_trace = inner_exception
     end
 
-    arg_names = [] of Array(String)
-
     message = String.build do |msg|
-      if message = single_def_error_message(defs, named_args_types)
-        msg << message
-      else
-        msg << "no overload matches '#{full_name(owner, def_name)}'"
-        unless args.empty?
-          msg << " with type"
-          msg << 's' if arg_types.size > 1 || named_args_types
-          msg << ' '
-          arg_types.join(msg, ", ")
-        end
-
-        if named_args_types
-          named_args_types.each do |named_arg|
-            msg << ", "
-            msg << named_arg.name
-            msg << ": "
-            msg << named_arg.type
-          end
-        end
-
-        msg << '\n'
-
-        defs.each do |a_def|
-          arg_names << a_def.args.map(&.name)
-        end
-      end
+      no_overload_matches_message(msg, full_name(owner, def_name), defs, args, arg_types, named_args_types)
 
       msg << "Overloads are:"
       append_matches(defs, arg_types, msg)
@@ -183,7 +156,8 @@ class Crystal::Call
         cover = matches.cover
         if cover.is_a?(Cover)
           missing = cover.missing
-          uniq_arg_names = arg_names.uniq!
+
+          uniq_arg_names = defs.map(&.args.map(&.name)).uniq!
           uniq_arg_names = uniq_arg_names.size == 1 ? uniq_arg_names.first : nil
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
@@ -210,6 +184,32 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
+    if message = single_def_error_message(defs, named_args_types)
+      io << message
+      return
+    end
+
+    io << "no overload matches '#{full_name}'"
+    unless args.empty?
+      io << " with type"
+      io << 's' if arg_types.size > 1 || named_args_types
+      io << ' '
+      arg_types.join(io, ", ")
+    end
+
+    if named_args_types
+      named_args_types.each do |named_arg|
+        io << ", "
+        io << named_arg.name
+        io << ": "
+        io << named_arg.type
+      end
+    end
+
+    io << '\n'
   end
 
   private def raise_undefined_method(owner, def_name, obj)
