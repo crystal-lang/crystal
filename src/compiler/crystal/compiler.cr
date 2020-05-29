@@ -1,6 +1,5 @@
 require "option_parser"
 require "file_utils"
-require "socket"
 require "colorize"
 require "digest/md5"
 
@@ -23,7 +22,7 @@ module Crystal
   # optionally generates an executable.
   class Compiler
     CC = ENV["CC"]? || "cc"
-    CL = "cl"
+    CL = "cl.exe"
 
     # A source to the compiler: its filename and source code.
     record Source,
@@ -74,7 +73,7 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) %} 1 {% else %} 8 {% end %}
+    property n_threads : Int32 = {% if flag?(:preview_mt) || flag?(:win32) %} 1 {% else %} 8 {% end %}
 
     # Default prelude file to use. This ends up adding a
     # `require "prelude"` (or whatever name is set here) to
@@ -96,7 +95,7 @@ module Crystal
 
     # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -224,7 +223,7 @@ module Crystal
         nodes = sources.map do |source|
           # We add the source to the list of required file,
           # so it can't be required again
-          program.add_to_requires source.filename
+          program.requires.add source.filename
           parse(program, source).as(ASTNode)
         end
         nodes = Expressions.from(nodes)
@@ -275,7 +274,7 @@ module Crystal
       units = llvm_modules.map do |type_name, info|
         llvm_mod = info.mod
         llvm_mod.target = target_triple
-        CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
+        CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
       if @cross_compile
@@ -305,7 +304,7 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = "#{output_filename}.o"
+      object_name = output_filename + program.object_extension
 
       optimize llvm_mod if @release
 
@@ -315,22 +314,38 @@ module Crystal
 
       target_machine.emit_obj_to_file llvm_mod, object_name
 
-      stdout.puts linker_command(program, object_name, output_filename, nil)
+      print_command(*linker_command(program, [object_name], output_filename, nil))
     end
 
-    private def linker_command(program : Program, object_name, output_filename, output_dir)
+    private def print_command(command, args)
+      stdout.puts command.sub(%("${@}"), args && Process.quote(args))
+    end
+
+    private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
       if program.has_flag? "windows"
-        if object_name
-          object_name = %("#{object_name}")
-        else
-          object_name = %(%*)
+        lib_flags = program.lib_flags
+        # Execute and expand `subcommands`.
+        lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
+
+        object_arg = Process.quote_windows(object_names)
+        output_arg = Process.quote_windows("/Fe#{output_filename}")
+
+        args = %(/nologo #{object_arg} #{output_arg} #{lib_flags} #{@link_flags})
+        cmd = "#{CL} #{args}"
+
+        if cmd.to_utf16.size > 32000
+          # The command line would be too big, pass the args through a UTF-16-encoded file instead.
+          # TODO: Use a proper way to write encoded text to a file when that's supported.
+          # The first character is the BOM; it will be converted in the same endianness as the rest.
+          args_16 = "\ufeff#{args}".to_utf16
+          args_bytes = args_16.to_unsafe.as(UInt8*).to_slice(args_16.bytesize)
+
+          args_filename = "#{output_dir}/linker_args.txt"
+          File.write(args_filename, args_bytes)
+          cmd = "#{CL} #{Process.quote_windows("@" + args_filename)}"
         end
 
-        if link_flags = @link_flags.presence
-          link_flags = "/link #{link_flags}"
-        end
-
-        %(#{CL} #{object_name} "/Fe#{output_filename}" #{program.lib_flags} #{link_flags})
+        {cmd, nil}
       else
         if thin_lto
           clang = ENV["CLANG"]? || "clang"
@@ -345,17 +360,10 @@ module Crystal
           cc = CC
         end
 
-        if object_name
-          object_name = %('#{object_name}')
-        else
-          object_name = %("${@}")
-        end
-
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        link_flags += " -static" if static?
 
-        %(#{cc} #{object_name} -o '#{output_filename}' #{link_flags} #{program.lib_flags})
+        { %(#{cc} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
       end
     end
 
@@ -390,9 +398,9 @@ module Crystal
 
       @progress_tracker.stage("Codegen (linking)") do
         Dir.cd(output_dir) do
-          linker_command = linker_command(program, nil, output_filename, output_dir)
+          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
 
-          process_wrapper(linker_command, object_names) do |command, args|
+          process_wrapper(*linker_command) do |command, args|
             Process.run(command, args, shell: true,
               input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
               process.error.each_line(chomp: false) do |line|
@@ -451,7 +459,7 @@ module Crystal
               end
             end
 
-            codegen_process = fork do
+            codegen_process = Process.fork do
               pipe_w = pw
               slice.each do |unit|
                 unit.compile
@@ -564,15 +572,8 @@ module Crystal
       end
     end
 
-    private def system(command, args = nil)
-      process_wrapper(command, args) do
-        ::system(command, args)
-        $?
-      end
-    end
-
     private def process_wrapper(command, args = nil)
-      stdout.puts "#{command} #{args.join " "}" if verbose?
+      print_command(command, args) if verbose?
 
       status = yield command, args
 
@@ -598,9 +599,10 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
+      @object_extension : String
 
-      def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
-                     @output_dir : String, @bc_flags_changed : Bool)
+      def initialize(@compiler : Compiler, program : Program, @name : String,
+                     @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
         @original_name = @name
         @name = String.build do |str|
@@ -622,6 +624,8 @@ module Crystal
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
           @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
         end
+
+        @object_extension = program.object_extension
       end
 
       def compile
@@ -676,7 +680,7 @@ module Crystal
 
         if can_reuse_previous_compilation
           memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !FileUtils.cmp(bc_file, memory_io) }
+          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
 
           # If the user cancelled a previous compilation
           # it might be that the .o file is empty
@@ -722,7 +726,7 @@ module Crystal
           llvm_mod.print_to_file "#{output_filename}.ll"
         end
         if emit_target.obj?
-          FileUtils.cp(object_name, "#{output_filename}.o")
+          FileUtils.cp(object_name, output_filename + @object_extension)
         end
       end
 
@@ -731,7 +735,7 @@ module Crystal
       end
 
       def object_filename
-        "#{@name}.o"
+        @name + @object_extension
       end
 
       def temporary_object_name

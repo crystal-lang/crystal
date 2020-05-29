@@ -5,7 +5,7 @@
 # some in `tools`, some here, and some create a Compiler and
 # manipulate it.
 #
-# Other commands create a `Compiler` and use it to to build
+# Other commands create a `Compiler` and use it to build
 # an executable.
 
 require "json"
@@ -75,7 +75,12 @@ class Crystal::Command
       result
     when "play".starts_with?(command)
       options.shift
-      playground
+      {% if flag?(:without_playground) %}
+        puts "Crystal was compiled without playground support"
+        exit 1
+      {% else %}
+        playground
+      {% end %}
     when "deps".starts_with?(command)
       STDERR.puts "Please use 'shards': 'crystal deps' has been removed"
       exit 1
@@ -191,7 +196,7 @@ class Crystal::Command
       return
     end
 
-    output_filename = Crystal.tempfile(config.output_filename)
+    output_filename = Crystal.temp_executable(config.output_filename)
 
     result = config.compile output_filename
 
@@ -225,9 +230,11 @@ class Crystal::Command
       begin
         elapsed = Time.measure do
           Process.run(output_filename, args: run_args, input: Process::Redirect::Inherit, output: Process::Redirect::Inherit, error: Process::Redirect::Inherit) do |process|
-            # Ignore the signal so we don't exit the running process
-            # (the running process can still handle this signal)
-            ::Signal::INT.ignore # do
+            {% unless flag?(:win32) %}
+              # Ignore the signal so we don't exit the running process
+              # (the running process can still handle this signal)
+              ::Signal::INT.ignore # do
+            {% end %}
           end
         end
         {$?, elapsed}
@@ -247,22 +254,24 @@ class Crystal::Command
       puts "Execute: #{elapsed_time}"
     end
 
-    if status.normal_exit?
+    case status
+    when .normal_exit?
       exit error_on_exit ? 1 : status.exit_code
-    else
-      case status.exit_signal
-      when ::Signal::KILL
+    when .signal_exit?
+      case signal = status.exit_signal
+      when .kill?
         STDERR.puts "Program was killed"
-      when ::Signal::SEGV
+      when .segv?
         STDERR.puts "Program exited because of a segmentation fault (11)"
-      when ::Signal::INT
+      when .int?
         # OK, bubbled from the sub-program
       else
-        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+        STDERR.puts "Program received and didn't handle signal #{signal} (#{signal.value})"
       end
-
-      exit 1
+    else
+      STDERR.puts "Program exited abnormally, the cause is unknown"
     end
+    exit 1
   end
 
   record CompilerConfig,

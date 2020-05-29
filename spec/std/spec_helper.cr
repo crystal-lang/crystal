@@ -91,3 +91,37 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
     fail "Failed to stress expected path", file, line
   end
 end
+
+def compile_file(source_file, flags = %w(--debug))
+  with_tempfile("executable_file") do |executable_file|
+    Process.run("bin/crystal", ["build"] + flags + ["-o", executable_file, source_file])
+    File.exists?(executable_file).should be_true
+
+    yield executable_file
+  end
+end
+
+def compile_source(source, flags = %w(--debug))
+  with_tempfile("source_file") do |source_file|
+    File.write(source_file, source)
+    compile_file(source_file, flags) do |executable_file|
+      yield executable_file
+    end
+  end
+end
+
+def compile_and_run_file(source_file, flags = %w(--debug))
+  compile_file(source_file) do |executable_file|
+    output, error = IO::Memory.new, IO::Memory.new
+    status = Process.run executable_file, output: output, error: error
+
+    {status, output.to_s, error.to_s}
+  end
+end
+
+def compile_and_run_source(source, flags = %w(--debug))
+  with_tempfile("source_file") do |source_file|
+    File.write(source_file, source)
+    compile_and_run_file(source_file, flags)
+  end
+end

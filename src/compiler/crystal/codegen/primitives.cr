@@ -860,12 +860,10 @@ class Crystal::CodeGenVisitor
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
-    # Check nil to pointer
+    # Check assigning nil to a field of type pointer or Proc
     if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
-    end
-
-    if field_type.proc?
+    elsif field_type.proc?
       call_arg = check_proc_is_not_closure(call_arg, field_type)
     end
 

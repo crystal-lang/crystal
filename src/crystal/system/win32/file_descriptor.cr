@@ -1,4 +1,5 @@
 require "c/io"
+require "c/consoleapi"
 
 module Crystal::System::FileDescriptor
   @volatile_fd : Atomic(LibC::Int)
@@ -78,7 +79,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = LibC._lseek(fd, offset, whence)
+    seek_value = LibC._lseeki64(fd, offset, whence)
 
     if seek_value == -1
       raise IO::Error.from_errno "Unable to seek"
@@ -86,7 +87,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC._lseek(fd, 0, IO::Seek::Current)
+    pos = LibC._lseeki64(fd, 0, IO::Seek::Current)
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
@@ -135,7 +136,7 @@ module Crystal::System::FileDescriptor
 
   def self.pipe(read_blocking, write_blocking)
     pipe_fds = uninitialized StaticArray(LibC::Int, 2)
-    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY) != 0
+    if LibC._pipe(pipe_fds, 8192, LibC::O_BINARY | LibC::O_NOINHERIT) != 0
       raise IO::Error.from_errno("Could not create pipe")
     end
 
@@ -161,5 +162,25 @@ module Crystal::System::FileDescriptor
     end
 
     bytes_read
+  end
+
+  def self.from_stdio(fd)
+    console_handle = false
+    handle = LibC._get_osfhandle(fd)
+    if handle != -1
+      if LibC.GetConsoleMode(LibC::HANDLE.new(handle), out _) != 0
+        console_handle = true
+      end
+    end
+
+    io = IO::FileDescriptor.new(fd)
+    # Set sync or flush_on_newline as described in STDOUT and STDERR docs.
+    # See https://crystal-lang.org/api/toplevel.html#STDERR
+    if console_handle
+      io.sync = true
+    else
+      io.flush_on_newline = true
+    end
+    io
   end
 end

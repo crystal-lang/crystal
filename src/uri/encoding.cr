@@ -222,7 +222,7 @@ class URI
       else
         io.write_byte '%'.ord.to_u8
         io.write_byte '0'.ord.to_u8 if byte < 16
-        byte.to_s(16, io, upcase: true)
+        byte.to_s(io, 16, upcase: true)
       end
     end
     io

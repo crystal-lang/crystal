@@ -1,17 +1,7 @@
-# `Punycode` provides an interface for IDNA encoding (RFC 5980),
-# which is defined in RFC 3493
-#
-# Implementation based on Mathias Bynens `punnycode.js` project
-# https://github.com/bestiejs/punycode.js/
-#
-# RFC 3492:
-# Method to use non-ascii characters as host name of URI
-# https://www.ietf.org/rfc/rfc3492.txt
-#
-# RFC 5980:
-# Internationalized Domain Names in Application
-# https://www.ietf.org/rfc/rfc5980.txt
 class URI
+  # `Punycode` provides an interface for IDNA encoding ([RFC 5980](https://tools.ietf.org/html/rfc5980)), defined in [RFC 3492](https://tools.ietf.org/html/rfc3492).
+  #
+  # Implementation based on Mathias Bynens' [punnycode.js](https://github.com/bestiejs/punycode.js) project.
   class Punycode
     private BASE         =  36
     private TMIN         =   1

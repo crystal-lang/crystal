@@ -20,7 +20,7 @@ module Crystal
         Crystal #{version} #{formatted_sha}(#{date})
 
         LLVM: #{llvm_version}
-        Default target: #{self.default_target}
+        Default target: #{self.host_target}
         DOC
     end
 
@@ -32,14 +32,18 @@ module Crystal
     end
 
     def self.date
-      time = {{ (env("SOURCE_DATE_EPOCH") || `date +%s`).to_i }}
-      Time.unix(time).to_s("%Y-%m-%d")
+      source_date_epoch = {{ (t = env("SOURCE_DATE_EPOCH")) && !t.empty? ? t.to_i : nil }}
+      if source_date_epoch
+        Time.unix(source_date_epoch).to_s("%Y-%m-%d")
+      else
+        ""
+      end
     end
 
-    @@default_target : Crystal::Codegen::Target?
+    @@host_target : Crystal::Codegen::Target?
 
-    def self.default_target : Crystal::Codegen::Target
-      @@default_target ||= begin
+    def self.host_target : Crystal::Codegen::Target
+      @@host_target ||= begin
         target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
 
         if target.linux?

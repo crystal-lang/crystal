@@ -173,6 +173,22 @@ describe Time do
         end
       end
     end
+
+    it "accepts midnight 24:00" do
+      Time.utc(2020, 5, 21, 24, 0, 0).should eq Time.utc(2020, 5, 22, 0, 0, 0)
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 0, nanosecond: 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 1, 0)
+      end
+    end
   end
 
   it "UNIX_EPOCH" do

@@ -46,6 +46,10 @@ module Crystal::System::File
     end
   end
 
+  def self.info(path, follow_symlinks)
+    info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
+  end
+
   def self.exists?(path)
     accessible?(path, LibC::F_OK)
   end
@@ -185,7 +189,11 @@ module Crystal::System::File
       if flush_metadata
         LibC.fsync(fd)
       else
-        LibC.fdatasync(fd)
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
       end
 
     if ret != 0
