@@ -18,6 +18,7 @@ lib LibC
   O_RDONLY   =    0x0000
   O_RDWR     =    0x0002
   O_WRONLY   =    0x0001
+  AT_FDCWD   =        -2
 
   struct Flock
     l_start : OffT
