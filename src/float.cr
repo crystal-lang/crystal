@@ -132,7 +132,7 @@ struct Float32
   # Smallest representable positive value
   MIN_POSITIVE = 1.17549435e-38_f32
 
-  # Returns a `Float32` by invoking `String#to_f32` on *value*.
+  # Casts the *value* by invoking `String#to_f32` on it.
   #
   # ```
   # Float32.new "20"                        # => 20.0
@@ -142,17 +142,17 @@ struct Float32
     value.to_f32 whitespace: whitespace, strict: strict
   end
 
-  # Returns a `Float32` by invoking `to_f32` on *value*.
+  # Casts the *value* by invoking `to_f32` on it.
   def self.new(value)
     value.to_f32
   end
 
-  # Returns a `Float32` by invoking `to_f32!` on *value*.
+  # Casts the *value* by invoking `to_f32!` on it.
   def self.new!(value) : self
     value.to_f32!
   end
 
-  # Returns a `Float32` by invoking `to_f32?` on *value*.
+  # Casts the *value* by invoking `to_f32?` on it.
   def self.new?(value)
     value.to_f32?
   end
@@ -254,7 +254,7 @@ struct Float64
   # Smallest representable positive value
   MIN_POSITIVE = 2.2250738585072014e-308_f64
 
-  # Returns a `Float64` by invoking `String#to_f64` on *value*.
+  # Casts the *value* by invoking `String#to_f64` on it.
   #
   # ```
   # Float64.new "20"                        # => 20.0
@@ -264,17 +264,17 @@ struct Float64
     value.to_f64 whitespace: whitespace, strict: strict
   end
 
-  # Returns a `Float64` by invoking `to_f64` on *value*.
+  # Casts the *value* by invoking `to_f64!` on it.
   def Float64.new(value)
     value.to_f64
   end
 
-  # Returns a `Float64` by invoking `to_f64!` on *value*.
+  # Casts the *value* by invoking `to_f64!` on it.
   def Float64.new!(value) : Float64
     value.to_f64!
   end
 
-  # Returns a `Float64` by invoking `to_f64?` on *value*.
+  # Casts the *value* by invoking `to_f64!` on it.
   def Float64.new?(value)
     value.to_f64?
   end
