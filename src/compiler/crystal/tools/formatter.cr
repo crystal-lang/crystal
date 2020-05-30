@@ -538,7 +538,7 @@ module Crystal
       heredoc_end = @line
 
       # To detect the first content of interpolation of string literal correctly,
-      # we should consume the first stirng token if this token contains only removed indentation of heredoc.
+      # we should consume the first string token if this token contains only removed indentation of heredoc.
       if is_heredoc && @token.type == :STRING
         token_is_indent = @token.raw.bytesize == node.heredoc_indent && @token.raw.each_char.all? &.ascii_whitespace?
         if token_is_indent
