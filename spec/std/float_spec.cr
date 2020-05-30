@@ -235,11 +235,17 @@ describe "Float" do
   end
 
   it "casts" do
-    Float32.new(1_f64).should be_a(Float32)
-    Float32.new(1_f64).should eq(1)
+    {Float32, Float64}.each do |type|
+      (type.new(1).class == type).should be_true
+      type.new(1).should eq(1)
 
-    Float64.new(1_f32).should be_a(Float64)
-    Float64.new(1_f32).should eq(1)
+      (type.new!(1).class == type).should be_true
+      type.new!(1).should eq(1)
+
+      (type.new?("1").class == type).should be_true
+      type.new?("1").should eq(1)
+      type.new?("a").should be_nil
+    end
   end
 
   it "does nan?" do
