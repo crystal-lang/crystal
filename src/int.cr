@@ -860,6 +860,11 @@ struct Int8
     value.to_i8!
   end
 
+  # Returns an `Int8` or `Nil` by invoking `to_i8?` on *value*.
+  def self.new?(value)
+    value.to_i8?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
@@ -909,6 +914,11 @@ struct Int16
   # Returns an `Int16` by invoking `to_i16!` on *value*.
   def self.new!(value) : self
     value.to_i16!
+  end
+
+  # Returns an `Int16` or `Nil` by invoking `to_i16?` on *value*.
+  def self.new?(value)
+    value.to_i16?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -962,6 +972,11 @@ struct Int32
     value.to_i32!
   end
 
+  # Returns an `Int32` or `Nil` by invoking `to_i32?` on *value*.
+  def self.new?(value)
+    value.to_i32?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
@@ -1011,6 +1026,11 @@ struct Int64
   # Returns an `Int64` by invoking `to_i64!` on *value*.
   def self.new!(value) : self
     value.to_i64!
+  end
+
+  # Returns an `Int64` or `Nil` by invoking `to_i64?` on *value*.
+  def self.new?(value)
+    value.to_i64?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1065,6 +1085,11 @@ struct Int128
     value.to_i128!
   end
 
+  # Returns an `Int128` or `Nil` by invoking `to_i128?` on *value*.
+  def self.new?(value)
+    value.to_i128?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
@@ -1115,6 +1140,11 @@ struct UInt8
   # Returns an `UInt8` by invoking `to_u8!` on *value*.
   def self.new!(value) : self
     value.to_u8!
+  end
+
+  # Returns an `UInt8` or `Nil` by invoking `to_u8?` on *value*.
+  def self.new?(value)
+    value.to_u8?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1172,6 +1202,11 @@ struct UInt16
     value.to_u16!
   end
 
+  # Returns an `UInt16` or `Nil` by invoking `to_u16?` on *value*.
+  def self.new?(value)
+    value.to_u16?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
@@ -1225,6 +1260,11 @@ struct UInt32
   # Returns an `UInt32` by invoking `to_u32!` on *value*.
   def self.new!(value) : self
     value.to_u32!
+  end
+
+  # Returns an `UInt32` or `Nil` by invoking `to_u32?` on *value*.
+  def self.new?(value)
+    value.to_u32?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
@@ -1282,6 +1322,11 @@ struct UInt64
     value.to_u64!
   end
 
+  # Returns an `UInt64` or `Nil` by invoking `to_u64?` on *value*.
+  def self.new?(value)
+    value.to_u64?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
@@ -1336,6 +1381,11 @@ struct UInt128
   # Returns an `UInt128` by invoking `to_u128!` on *value*.
   def self.new!(value) : self
     value.to_u128!
+  end
+
+  # Returns an `UInt128` or `Nil` by invoking `to_u128?` on *value*.
+  def self.new?(value)
+    value.to_u128?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64

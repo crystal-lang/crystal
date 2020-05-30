@@ -152,6 +152,11 @@ struct Float32
     value.to_f32!
   end
 
+  # Returns a `Float32` by invoking `to_f32?` on *value*.
+  def self.new?(value)
+    value.to_f32?
+  end
+
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
 
@@ -267,6 +272,11 @@ struct Float64
   # Returns a `Float64` by invoking `to_f64!` on *value*.
   def Float64.new!(value) : Float64
     value.to_f64!
+  end
+
+  # Returns a `Float64` by invoking `to_f64?` on *value*.
+  def Float64.new?(value)
+    value.to_f64?
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64

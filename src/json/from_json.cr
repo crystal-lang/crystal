@@ -73,16 +73,7 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-{% for type, method in {
-                         "Int8"   => "i8",
-                         "Int16"  => "i16",
-                         "Int32"  => "i32",
-                         "Int64"  => "i64",
-                         "UInt8"  => "u8",
-                         "UInt16" => "u16",
-                         "UInt32" => "u32",
-                         "UInt64" => "u64",
-                       } %}
+{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(pull : JSON::PullParser)
     location = pull.location
     value =
@@ -92,14 +83,14 @@ end
         pull.read_int
       {% end %}
     begin
-      value.to_{{method.id}}
+      new value
     rescue ex : OverflowError | ArgumentError
       raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
     end
   end
 
   def {{type.id}}.from_json_object_key?(key : String)
-    key.to_{{method.id}}?
+    new? key
   end
 {% end %}
 
