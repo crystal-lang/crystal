@@ -2,8 +2,8 @@ require "spec"
 require "../../support/tempfile"
 
 {% if flag?(:win32) %}
-  def find_executable_test_files
-    {[
+  FIND_EXECUTABLE_TEST_FILES = {
+    [
       "inbase.exe",
       "not_exe",
       ".exe",
@@ -21,8 +21,8 @@ require "../../support/tempfile"
       "../path/not_exe",
       "../path/.exe",
       "../path/inboth.exe",
-    ], [] of String}
-  end
+    ], [] of String,
+  }
 
   def find_executable_test_cases(pwd)
     pwd_nodrive = "\\#{pwd.relative_to(pwd.anchor.not_nil!)}"
@@ -69,8 +69,8 @@ require "../../support/tempfile"
     }
   end
 {% else %}
-  def find_executable_test_files
-    {[
+  FIND_EXECUTABLE_TEST_FILES = {
+    [
       "inbase",
       "sub/insub",
       "../path/inpath",
@@ -78,8 +78,8 @@ require "../../support/tempfile"
       "not_exe",
       "sub/not_exe",
       "../path/not_exe",
-    ]}
-  end
+    ],
+  }
 
   def find_executable_test_cases(pwd)
     {
@@ -110,8 +110,8 @@ describe "Process.find_executable" do
   path_dir = Path[test_dir] / "path"
 
   around_all do |all|
-    exe_names, file_names = find_executable_test_files
-    (exe_names + file_names).each do |name|
+    exe_names, non_exe_names = FIND_EXECUTABLE_TEST_FILES
+    (exe_names + non_exe_names).each do |name|
       Dir.mkdir_p((base_dir / name).parent)
       File.write(base_dir / name, "")
     end
@@ -126,8 +126,9 @@ describe "Process.find_executable" do
 
   find_executable_test_cases(base_dir).each do |(command, exp)|
     if exp
+      exp_path = File.expand_path(exp, base_dir)
       it "finds '#{command}' as '#{exp}'" do
-        Process.find_executable(command, path: path_dir.to_s, pwd: base_dir).should eq File.expand_path(exp.not_nil!, base_dir)
+        Process.find_executable(command, path: path_dir.to_s, pwd: base_dir).should eq exp_path
       end
     else
       it "fails to find '#{command}'" do

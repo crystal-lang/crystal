@@ -1,4 +1,4 @@
-# Verifies that find_executable's specs match the behavior of Process.new
+# Verifies that find_executable's specs match the behavior of Process.run.
 # This doesn't actually test find_executable, only takes all the test cases
 # directly from spec/std/process/find_executable_spec.cr and checks that
 # *they* match what the OS actually does when finding an executable for the
@@ -6,6 +6,7 @@
 
 require "spec"
 require "digest/sha1"
+require "../support/env"
 require "../support/tempfile"
 require "../std/process/find_executable_spec"
 
@@ -17,7 +18,7 @@ describe "Process.run" do
   around_all do |all|
     Dir.mkdir_p(test_dir)
 
-    exe_names, file_names = find_executable_test_files
+    exe_names, non_exe_names = FIND_EXECUTABLE_TEST_FILES
 
     exe_names.map do |name|
       src = "print #{name.inspect}"
@@ -32,16 +33,15 @@ describe "Process.run" do
       File.rename(exe_fn, base_dir / name)
     end
 
-    file_names.each do |name|
+    non_exe_names.each do |name|
       File.write(base_dir / name, "")
     end
 
-    old_path = ENV["PATH"]
-    ENV["PATH"] += "#{Process::PATH_DELIMITER}#{path_dir}"
-    Dir.cd(base_dir) do
-      all.run
+    with_env "PATH": {ENV["PATH"], path_dir}.join(Process::PATH_DELIMITER) do
+      Dir.cd(base_dir) do
+        all.run
+      end
     end
-    ENV["PATH"] = old_path
 
     FileUtils.rm_r(test_dir.to_s)
   end
@@ -49,9 +49,8 @@ describe "Process.run" do
   find_executable_test_cases(base_dir).each do |(command, exp)|
     if exp
       it "runs '#{command}' as '#{exp}'" do
-        process = Process.new(command, output: Process::Redirect::Pipe)
-        output = process.output.gets_to_end
-        process.wait.success?.should be_true
+        output = Process.run command, &.output.gets_to_end
+        $?.success?.should be_true
         output.should eq exp
       end
     else

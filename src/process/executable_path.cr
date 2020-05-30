@@ -55,6 +55,9 @@ class Process
     return if "#{name}".empty?
 
     {% if flag?(:win32) %}
+      # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw#parameters
+      # > If the file name does not contain an extension, .exe is appended.
+      # See find_executable_spec.cr for cases this needs to match, based on CreateProcessW behavior.
       basename = name.ends_with_separator? ? "" : name.basename
       basename = "" if basename == "#{name.anchor}"
       if (basename.empty? ? !name.anchor : !basename.includes?("."))
