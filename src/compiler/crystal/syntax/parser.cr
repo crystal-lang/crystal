@@ -2127,6 +2127,8 @@ module Crystal
         node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
       end
 
+      node.heredoc_indent = delimiter_state.heredoc_indent
+
       node.end_location = token_end_location
     end
 
