@@ -431,9 +431,9 @@ describe "Codegen: extern struct" do
       test_c(
         %(
             struct Struct {
-              long x;
-              long y;
-              long z;
+              long long x;
+              long long y;
+              long long z;
             };
 
             struct Struct foo(struct Struct (*callback)(struct Struct)) {

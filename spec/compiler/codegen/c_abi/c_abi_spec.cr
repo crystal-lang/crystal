@@ -32,11 +32,11 @@ describe "Code gen: C ABI" do
     test_c(
       %(
         struct s {
-          long x;
+          long long x;
           short y;
         };
 
-        long foo(struct s a) {
+        long long foo(struct s a) {
           return a.x + a.y;
         }
       ),
@@ -59,12 +59,12 @@ describe "Code gen: C ABI" do
     test_c(
       %(
         struct s {
-          long x;
-          long y;
+          long long x;
+          long long y;
           char z;
         };
 
-        long foo(struct s a) {
+        long long foo(struct s a) {
           return a.x + a.y + a.z;
         }
       ),
@@ -116,7 +116,7 @@ describe "Code gen: C ABI" do
     test_c(
       %(
         struct s {
-          long x;
+          long long x;
           short y;
         };
 
@@ -144,8 +144,8 @@ describe "Code gen: C ABI" do
     test_c(
       %(
         struct s {
-          long x;
-          long y;
+          long long x;
+          long long y;
           char z;
         };
 
