@@ -729,18 +729,18 @@ struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
-  # Returns an `Int8` by invoking `to_i8` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_i8` on it.
+  def self.new(value) : Int8
     value.to_i8
   end
 
-  # Returns an `Int8` by invoking `to_i8!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_i8!` on it.
+  def self.new!(value) : Int8
     value.to_i8!
   end
 
-  # Returns an `Int8` or `Nil` by invoking `to_i8?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_i8?` on it.
+  def self.new?(value) : Int8?
     value.to_i8?
   end
 
@@ -774,18 +774,18 @@ struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
 
-  # Returns an `Int16` by invoking `to_i16` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_i16` on it.
+  def self.new(value) : Int16
     value.to_i16
   end
 
-  # Returns an `Int16` by invoking `to_i16!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_i16` on it.
+  def self.new!(value) : Int16
     value.to_i16!
   end
 
-  # Returns an `Int16` or `Nil` by invoking `to_i16?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_i16` on it.
+  def self.new?(value) : Int16?
     value.to_i16?
   end
 
@@ -819,18 +819,18 @@ struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
-  # Returns an `Int32` by invoking `to_i32` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_i32` on it.
+  def self.new(value) : Int32
     value.to_i32
   end
 
-  # Returns an `Int32` by invoking `to_i32!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_i32!` on it.
+  def self.new!(value) : Int32
     value.to_i32!
   end
 
-  # Returns an `Int32` or `Nil` by invoking `to_i32?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_i32?` on it.
+  def self.new?(value) : Int32?
     value.to_i32?
   end
 
@@ -864,18 +864,18 @@ struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
 
-  # Returns an `Int64` by invoking `to_i64` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_i64` on it.
+  def self.new(value) : Int64
     value.to_i64
   end
 
-  # Returns an `Int64` by invoking `to_i64!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_i64!` on it.
+  def self.new!(value) : Int64
     value.to_i64!
   end
 
-  # Returns an `Int64` or `Nil` by invoking `to_i64?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_i64?` on it.
+  def self.new?(value) : Int64?
     value.to_i64?
   end
 
@@ -910,18 +910,18 @@ struct Int128
   MIN = new(1) << 127
   MAX = ~MIN
 
-  # Returns an `Int128` by invoking `to_i128` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_u128` on it.
+  def self.new(value) : Int128
     value.to_i128
   end
 
-  # Returns an `Int128` by invoking `to_i128!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_u128!` on it.
+  def self.new!(value) : Int128
     value.to_i128!
   end
 
-  # Returns an `Int128` or `Nil` by invoking `to_i128?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_u128?` on it.
+  def self.new?(value) : Int128?
     value.to_i128?
   end
 
@@ -956,18 +956,18 @@ struct UInt8
   MIN =   0_u8
   MAX = 255_u8
 
-  # Returns an `UInt8` by invoking `to_u8` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_u8` on it.
+  def self.new(value) : UInt8
     value.to_u8
   end
 
-  # Returns an `UInt8` by invoking `to_u8!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_u8!` on it.
+  def self.new!(value) : UInt8
     value.to_u8!
   end
 
-  # Returns an `UInt8` or `Nil` by invoking `to_u8?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_u8?` on it.
+  def self.new?(value) : UInt8?
     value.to_u8?
   end
 
@@ -1001,18 +1001,18 @@ struct UInt16
   MIN =     0_u16
   MAX = 65535_u16
 
-  # Returns an `UInt16` by invoking `to_u16` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_u16` on it.
+  def self.new(value) : UInt16
     value.to_u16
   end
 
-  # Returns an `UInt16` by invoking `to_u16!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_u16!` on it.
+  def self.new!(value) : UInt16
     value.to_u16!
   end
 
-  # Returns an `UInt16` or `Nil` by invoking `to_u16?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_u16?` on it.
+  def self.new?(value) : UInt16?
     value.to_u16?
   end
 
@@ -1046,18 +1046,18 @@ struct UInt32
   MIN =          0_u32
   MAX = 4294967295_u32
 
-  # Returns an `UInt32` by invoking `to_u32` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_u32` on it.
+  def self.new(value) : UInt32
     value.to_u32
   end
 
-  # Returns an `UInt32` by invoking `to_u32!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_u32!` on it.
+  def self.new!(value) : UInt32
     value.to_u32!
   end
 
-  # Returns an `UInt32` or `Nil` by invoking `to_u32?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_u32?` on it.
+  def self.new?(value) : UInt32?
     value.to_u32?
   end
 
@@ -1091,18 +1091,18 @@ struct UInt64
   MIN =                    0_u64
   MAX = 18446744073709551615_u64
 
-  # Returns an `UInt64` by invoking `to_u64` on *value*.
-  def self.new(value)
+  # Casts the *value* by invoking `to_u64` on it.
+  def self.new(value) : UInt64
     value.to_u64
   end
 
-  # Returns an `UInt64` by invoking `to_u64!` on *value*.
-  def self.new!(value)
+  # Casts the *value* by invoking `to_u64!` on it.
+  def self.new!(value) : UInt64
     value.to_u64!
   end
 
-  # Returns an `UInt64` or `Nil` by invoking `to_u64?` on *value*.
-  def self.new?(value)
+  # Casts the *value* by invoking `to_u64?` on it.
+  def self.new?(value) : UInt64?
     value.to_u64?
   end
 
