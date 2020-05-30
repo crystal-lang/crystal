@@ -977,23 +977,27 @@ module Crystal
 
     # See if we can automatically cast the value if the types don't exactly match
     def check_automatic_cast(value, var_type, assign = nil)
-      MainVisitor.check_automatic_cast(value, var_type, assign)
+      MainVisitor.check_automatic_cast(@program, value, var_type, assign)
     end
 
-    def self.check_automatic_cast(value, var_type, assign = nil)
-      if value.is_a?(NumberLiteral) && value.type != var_type && (var_type.is_a?(IntegerType) || var_type.is_a?(FloatType))
-        if value.can_be_autocast_to?(var_type)
-          value.type = var_type
-          value.kind = var_type.kind
+    def self.check_automatic_cast(program, value, var_type, assign = nil)
+      if value.is_a?(NumberLiteral) && value.type != var_type
+        literal_type = NumberLiteralType.new(program, value)
+        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
+          value.type = restricted
+          value.kind = restricted.kind
           assign.value = value if assign
           return value
         end
-      elsif value.is_a?(SymbolLiteral) && var_type.is_a?(EnumType)
-        member = var_type.find_member(value.value)
-        if member
+      elsif value.is_a?(SymbolLiteral) && value.type != var_type
+        literal_type = SymbolLiteralType.new(program, value)
+        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        if restricted.is_a?(EnumType)
+          member = restricted.find_member(value.value).not_nil!
           path = Path.new(member.name)
           path.target_const = member
-          path.type = var_type
+          path.type = restricted
           value = path
           assign.value = value if assign
           return value

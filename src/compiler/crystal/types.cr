@@ -1618,7 +1618,7 @@ module Crystal
       # Check if automatic cast can be done
       if instance_var.type != value.type &&
          (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral))
-        if casted_value = MainVisitor.check_automatic_cast(value, instance_var.type)
+        if casted_value = MainVisitor.check_automatic_cast(@program, value, instance_var.type)
           value = casted_value
         end
       end

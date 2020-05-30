@@ -33,39 +33,46 @@ end
 
 record SemanticResult,
   program : Program,
-  node : ASTNode,
-  type : Type
+  node : ASTNode
 
-def assert_type(str, flags = nil, inject_primitives = true)
-  result = semantic_result(str, flags, inject_primitives: inject_primitives)
+def assert_type(str, *, inject_primitives = true, flags = nil, file = __FILE__, line = __LINE__)
+  result = semantic(str, flags: flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
-  result.type.should eq(expected_type)
+  node = result.node
+  if node.is_a?(Expressions)
+    node = node.last
+  end
+  node.type.should eq(expected_type), file: file, line: line
   result
 end
 
-def semantic(code : String, wants_doc = false, inject_primitives = true)
-  code = inject_primitives(code) if inject_primitives
-  semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+def semantic(code : String, wants_doc = false, inject_primitives = true, flags = nil, filename = nil)
+  node = parse(code, wants_doc: wants_doc, filename: filename)
+  node = inject_primitives(node) if inject_primitives
+  semantic node, wants_doc: wants_doc, flags: flags
 end
 
-def semantic(node : ASTNode, wants_doc = false)
+private def inject_primitives(node : ASTNode)
+  req = Crystal::Require.new("primitives")
+  case node
+  when Crystal::Expressions
+    node.expressions.unshift req
+    node
+  when Crystal::Nop
+    node
+  else
+    Crystal::Expressions.new [req, node] of ASTNode
+  end
+end
+
+def semantic(node : ASTNode, wants_doc = false, flags = nil)
   program = new_program
+  program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
-  SemanticResult.new(program, node, node.type)
-end
-
-def semantic_result(str, flags = nil, inject_primitives = true)
-  str = inject_primitives(str) if inject_primitives
-  program = new_program
-  program.flags.concat(flags.split) if flags
-  input = parse str
-  input = program.normalize input
-  input = program.semantic input
-  input_type = input.is_a?(Expressions) ? input.last.type : input.type
-  SemanticResult.new(program, input, input_type)
+  SemanticResult.new(program, node)
 end
 
 def assert_normalize(from, to, flags = nil)
@@ -97,18 +104,9 @@ def assert_expand_third(from : String, to)
   assert_expand node, to
 end
 
-def assert_after_cleanup(before, after)
-  # before = inject_primitives(before)
-  node = Parser.parse(before)
-  result = semantic node
-  result.node.to_s.strip.should eq(after.strip)
-end
-
 def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
-  str = inject_primitives(str) if inject_primitives
-  nodes = parse str
   expect_raises TypeException, message, file, line do
-    semantic nodes
+    semantic str, inject_primitives: inject_primitives
   end
 end
 
@@ -116,9 +114,7 @@ def assert_no_errors(*args)
   semantic(*args)
 end
 
-def warnings_result(code, inject_primitives = true, file = __FILE__)
-  code = inject_primitives(code) if inject_primitives
-
+def warnings_result(code, file = __FILE__)
   compiler = create_spec_compiler
   compiler.warnings = Warnings::All
   compiler.error_on_warnings = false
@@ -133,15 +129,10 @@ def warnings_result(code, inject_primitives = true, file = __FILE__)
   end
 end
 
-def assert_warning(code, message, inject_primitives = true, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, inject_primitives, file: file)
+def assert_warning(code, message, file = __FILE__, line = __LINE__)
+  warning_failures = warnings_result(code, file: file)
   warning_failures.size.should eq(1), file, line
   warning_failures[0].should start_with(message), file, line
-end
-
-def assert_no_warnings(code, inject_primitives = true, file = __FILE__, line = __LINE__)
-  warning_failures = warnings_result(code, inject_primitives, file: file)
-  warning_failures.size.should eq(0), file, line
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
@@ -167,13 +158,7 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, e
 end
 
 def codegen(code, inject_primitives = true, debug = Crystal::Debug::None, filename = __FILE__)
-  code = inject_primitives(code) if inject_primitives
-  parser = Parser.new(code)
-  parser.filename = filename
-  parser.wants_doc = false
-  node = parser.parse
-
-  result = semantic node
+  result = semantic code, inject_primitives: inject_primitives, filename: filename
   result.program.codegen(result.node, single_module: false, debug: debug)[""].mod
 end
 
@@ -237,7 +222,9 @@ def create_spec_compiler
 end
 
 def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, file = __FILE__)
-  code = inject_primitives(code) if inject_primitives
+  if inject_primitives
+    code = %(require "primitives"\n#{code})
+  end
 
   # Code that requires the prelude doesn't run in LLVM's MCJIT
   # because of missing linked functions (which are available
@@ -282,8 +269,4 @@ def test_c(c_code, crystal_code, file = __FILE__)
     #{crystal_code}
     ))
   end
-end
-
-private def inject_primitives(code)
-  %(require "primitives"\n) + code
 end
