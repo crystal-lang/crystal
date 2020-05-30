@@ -102,20 +102,17 @@ describe "Semantic: did you mean" do
   end
 
   it "doesn't suggest for operator" do
-    nodes = parse %(
+    error = assert_error <<-CR,
       class Foo
         def +
         end
       end
 
       Foo.new.a
-      )
-    begin
-      semantic nodes
-      fail "TypeException wasn't raised"
-    rescue ex : Crystal::TypeException
-      ex.to_s.includes?("Did you mean").should be_false
-    end
+      CR
+      inject_primitives: false
+
+    error.to_s.should_not contain("Did you mean")
   end
 
   it "says did you mean for named argument" do
