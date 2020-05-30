@@ -19,20 +19,14 @@ describe "Process.run" do
     Dir.mkdir_p(test_dir)
 
     exe_names, non_exe_names = FIND_EXECUTABLE_TEST_FILES
-
-    exe_names.map do |name|
-      src = "print #{name.inspect}"
-      digest = Digest::SHA1.hexdigest(src)
-      src_fn = test_dir / "#{digest}.cr"
-      exe_fn = test_dir / "#{digest}.exe"
-      File.write(src_fn, src)
-      {name, exe_fn, Process.new("crystal", ["build", "-o", exe_fn.to_s, src_fn.to_s])}
-    end.each do |(name, exe_fn, process)|
-      process.wait
+    exe_names.each do |name|
+      src_fn = test_dir / "self_printer.cr"
+      exe_fn = test_dir / "self_printer.exe"
+      File.write(src_fn, "print #{name.inspect}")
+      Process.run("crystal", ["build", "-o", exe_fn.to_s, src_fn.to_s])
       Dir.mkdir_p((base_dir / name).parent)
       File.rename(exe_fn, base_dir / name)
     end
-
     non_exe_names.each do |name|
       File.write(base_dir / name, "")
     end
