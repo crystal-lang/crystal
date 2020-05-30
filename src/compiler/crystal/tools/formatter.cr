@@ -586,7 +586,7 @@ module Crystal
               write @token.invalid_escape ? @token.value : @token.raw
               next_string_token
 
-              # On heredoc, the piece of content is combined due to removing indentation.
+              # On heredoc, pieces of contents are combined due to removing indentation.
               # Thus, we should consume continuous string tokens at once.
               break if !is_heredoc || @token.type != :STRING
             end
