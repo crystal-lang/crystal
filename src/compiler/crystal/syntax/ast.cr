@@ -1269,7 +1269,6 @@ module Crystal
   class Path < ASTNode
     property names : Array(String)
     property? global : Bool
-    property name_size = 0
     property visibility = Visibility::Public
 
     def initialize(@names : Array, @global = false)
@@ -1283,6 +1282,10 @@ module Crystal
       new names, true
     end
 
+    def name_size
+      names.sum(&.size) + (names.size + (global? ? 0 : -1)) * 2
+    end
+
     # Returns true if this path has a single component
     # with the given name
     def single?(name)
@@ -1291,7 +1294,6 @@ module Crystal
 
     def clone_without_location
       ident = Path.new(@names.clone, @global)
-      ident.name_size = name_size
       ident
     end
 
