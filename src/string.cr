@@ -1056,60 +1056,77 @@ class String
     end
   end
 
-  def unsafe_byte_at(index)
+  # Returns the byte at the given *index* without bounds checking.
+  def unsafe_byte_at(index : Int) : UInt8
     to_unsafe[index]
   end
 
-  # Returns a new `String` with each uppercase letter replaced with its lowercase
-  # counterpart.
+  # Returns a new `String` with each uppercase letter replaced with its lowercase counterpart.
   #
   # ```
   # "hEllO".downcase # => "hello"
   # ```
-  def downcase(options = Unicode::CaseOptions::None)
+  def downcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char do |char|
-          char.downcase(options) do |res|
-            io << res
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| downcase io, options }
+  end
+
+  # Writes a downcased version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".downcase io
+  # io.to_s # => hello
+  # ```
+  def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char do |char|
+      char.downcase(options) do |res|
+        io << res
       end
     end
   end
 
-  # Returns a new `String` with each lowercase letter replaced with its uppercase
-  # counterpart.
+  # Returns a new `String` with each lowercase letter replaced with its uppercase counterpart.
   #
   # ```
   # "hEllO".upcase # => "HELLO"
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
+          buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char do |char|
-          char.upcase(options) do |res|
-            io << res
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| upcase io, options }
+  end
+
+  # Writes a upcased version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".upcase io
+  # io.to_s # => HELLO
+  # ```
+  def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char do |char|
+      char.upcase(options) do |res|
+        io << res
       end
     end
   end
@@ -1120,29 +1137,40 @@ class String
   # ```
   # "hEllO".capitalize # => "Hello"
   # ```
-  def capitalize(options = Unicode::CaseOptions::None)
+  def capitalize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          if i == 0
-            buffer[i] = to_unsafe[i].unsafe_chr.upcase.ord.to_u8
-          else
-            buffer[i] = to_unsafe[i].unsafe_chr.downcase.ord.to_u8
-          end
+          byte = if i.zero?
+                   unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
+                 else
+                   unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
+                 end
+
+          buffer[i] = byte
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char_with_index do |char, i|
-          if i == 0
-            char.upcase(options) { |c| io << c }
-          else
-            char.downcase(options) { |c| io << c }
-          end
-        end
+    end
+
+    String.build(bytesize) { |io| capitalize io, options }
+  end
+
+  # Writes a capitalized version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "hEllO".capitalize io
+  # io.to_s # => Hello
+  # ```
+  def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    each_char_with_index do |char, i|
+      if i.zero?
+        char.upcase(options) { |c| io << c }
+      else
+        char.downcase(options) { |c| io << c }
       end
     end
   end
@@ -1155,28 +1183,40 @@ class String
   # "  spaces before".titleize       # => "  Spaces Before"
   # "x-men: the last stand".titleize # => "X-men: The Last Stand"
   # ```
-  def titleize(options = Unicode::CaseOptions::None)
+  def titleize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    upcase_next = true
     if ascii_only? && (options.none? || options.ascii?)
-      String.new(bytesize) do |buffer|
+      upcase_next = true
+
+      return String.new(bytesize) do |buffer|
         bytesize.times do |i|
-          char = to_unsafe[i].unsafe_chr
+          char = unsafe_byte_at(i).unsafe_chr
           replaced_char = upcase_next ? char.upcase : char.downcase
           buffer[i] = replaced_char.ord.to_u8
           upcase_next = char.whitespace?
         end
         {@bytesize, @length}
       end
-    else
-      String.build(bytesize) do |io|
-        each_char_with_index do |char, i|
-          replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
-          io << replaced_char
-          upcase_next = char.whitespace?
-        end
-      end
+    end
+
+    String.build(bytesize) { |io| titleize io, options }
+  end
+
+  # Writes a titleized version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "x-men: the last stand".titleize io
+  # io.to_s # => X-men: The Last Stand
+  # ```
+  def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    upcase_next = true
+
+    each_char_with_index do |char, i|
+      replaced_char = upcase_next ? char.upcase(options) : char.downcase(options)
+      io << replaced_char
+      upcase_next = char.whitespace?
     end
   end
 
@@ -3672,74 +3712,83 @@ class String
   # "3.14IsPi".underscore                                       # => "3.14_is_pi"
   # "InterestingImage".underscore(Unicode::CaseOptions::Turkic) # => "ınteresting_ımage"
   # ```
-  def underscore(options : Unicode::CaseOptions = Unicode::CaseOptions::None)
+  def underscore(options : Unicode::CaseOptions = :none) : String
+    String.build(bytesize + 10) { |io| underscore io, options }
+  end
+
+  # Writes an underscored version of `self` to the given *io*.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "DoesWhatItSaysOnTheTin".underscore io
+  # io.to_s # => "does_what_it_says_on_the_tin"
+  # ```
+  def underscore(io : IO, options : Unicode::CaseOptions = :none) : Nil
     first = true
     last_is_downcase = false
     last_is_upcase = false
     last_is_digit = false
-    mem = nil
+    mem : Char? = nil
 
-    String.build(bytesize + 10) do |str|
-      each_char do |char|
-        digit = char.ascii_number?
+    each_char do |char|
+      digit = char.ascii_number?
 
-        if options.none?
-          downcase = digit || char.ascii_lowercase?
-          upcase = char.ascii_uppercase?
-        else
-          downcase = digit || char.lowercase?
-          upcase = char.uppercase?
-        end
-
-        if first
-          str << char.downcase(options)
-        elsif last_is_downcase && upcase
-          if mem
-            # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
-            #                       ^
-            # because 'mem' is digit surely) before putting this char as downcase.
-            str << mem
-            mem = nil
-          end
-          # This is the case of AbcDe, we need to put an underscore before the 'D'
-          #                        ^
-          str << '_'
-          str << char.downcase(options)
-        elsif (last_is_upcase || last_is_digit) && (upcase || digit)
-          # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
-          #                          ^         ^           ^
-          # 1) we need to append this char as downcase
-          # 2) we need to append an underscore and then the char as downcase, so we save this char
-          #    in 'mem' and decide later
-          # 3) we need to append this char as downcase and then a single underscore
-          if mem
-            # case 2
-            str << mem.downcase(options)
-          end
-          mem = char
-        else
-          if mem
-            if char == '_'
-              # case 3
-            elsif last_is_upcase && downcase
-              # case 1
-              str << '_'
-            end
-            str << mem.downcase(options)
-            mem = nil
-          end
-
-          str << char.downcase(options)
-        end
-
-        last_is_downcase = downcase
-        last_is_upcase = upcase
-        last_is_digit = digit
-        first = false
+      if options.none?
+        downcase = digit || char.ascii_lowercase?
+        upcase = char.ascii_uppercase?
+      else
+        downcase = digit || char.lowercase?
+        upcase = char.uppercase?
       end
 
-      str << mem.downcase(options) if mem
+      if first
+        io << char.downcase(options)
+      elsif last_is_downcase && upcase
+        if mem
+          # This is the case of A1Bcd, we need to put 'mem' (not to need to convert as downcase
+          #                       ^
+          # because 'mem' is digit surely) before putting this char as downcase.
+          io << mem
+          mem = nil
+        end
+        # This is the case of AbcDe, we need to put an underscore before the 'D'
+        #                        ^
+        io << '_'
+        io << char.downcase(options)
+      elsif (last_is_upcase || last_is_digit) && (upcase || digit)
+        # This is the case of 1) A1Bcd, 2) A1BCd or 3) A1B_cd:if the next char is upcase (case 1) we need
+        #                          ^         ^           ^
+        # 1) we need to append this char as downcase
+        # 2) we need to append an underscore and then the char as downcase, so we save this char
+        #    in 'mem' and decide later
+        # 3) we need to append this char as downcase and then a single underscore
+        if mem
+          # case 2
+          io << mem.downcase(options)
+        end
+        mem = char
+      else
+        if mem
+          if char == '_'
+            # case 3
+          elsif last_is_upcase && downcase
+            # case 1
+            io << '_'
+          end
+          io << mem.downcase(options)
+          mem = nil
+        end
+
+        io << char.downcase(options)
+      end
+
+      last_is_downcase = downcase
+      last_is_upcase = upcase
+      last_is_digit = digit
+      first = false
     end
+
+    io << mem.downcase(options) if mem
   end
 
   # Converts underscores to camelcase boundaries.
@@ -3751,26 +3800,37 @@ class String
   # "empire_state_building".camelcase(lower: true)                      # => "empireStateBuilding"
   # "isolated_integer".camelcase(options: Unicode::CaseOptions::Turkic) # => "İsolatedİnteger"
   # ```
-  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false)
+  def camelcase(options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false) : String
     return self if empty?
 
+    String.build(bytesize) { |io| camelcase io, options, lower: lower }
+  end
+
+  # Writes an camelcased version of `self` to the given *io*.
+  #
+  # If *lower* is true, lower camelcase will be written (the first letter is downcased).
+  #
+  # ```
+  # io = IO::Memory.new
+  # "eiffel_tower".camelcase io
+  # io.to_s # => "EiffelTower"
+  # ```
+  def camelcase(io : IO, options : Unicode::CaseOptions = Unicode::CaseOptions::None, *, lower : Bool = false) : Nil
     first = true
     last_is_underscore = false
 
-    String.build(bytesize) do |str|
-      each_char do |char|
-        if first
-          str << (lower ? char.downcase(options) : char.upcase(options))
-        elsif char == '_'
-          last_is_underscore = true
-        elsif last_is_underscore
-          str << char.upcase(options)
-          last_is_underscore = false
-        else
-          str << char
-        end
-        first = false
+    each_char do |char|
+      if first
+        io << (lower ? char.downcase(options) : char.upcase(options))
+      elsif char == '_'
+        last_is_underscore = true
+      elsif last_is_underscore
+        io << char.upcase(options)
+        last_is_underscore = false
+      else
+        io << char
       end
+      first = false
     end
   end
 
@@ -3824,8 +3884,22 @@ class String
   # "Purple".ljust(8, io)
   # io.to_s # => "Purple  "
   # ```
+  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
   def ljust(len : Int, io : IO) : Nil
-    ljust(len, ' ', io)
+    ljust(io, len)
+  end
+
+  # Adds instances of *char* to right of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".ljust(io, 8, '-')
+  # io.to_s # => "Purple--"
+  # ```
+  def ljust(io : IO, len : Int, char : Char = ' ') : Nil
+    io << self
+    (len - size).times { io << char }
   end
 
   # Adds instances of *char* to right of the string until it is at least size of *len*,
@@ -3836,9 +3910,9 @@ class String
   # "Purple".ljust(8, '-', io)
   # io.to_s # => "Purple--"
   # ```
+  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
   def ljust(len : Int, char : Char, io : IO) : Nil
-    io << self
-    (len - size).times { io << char }
+    ljust(io, len, char)
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*.
@@ -3860,8 +3934,9 @@ class String
   # "Purple".rjust(8, io)
   # io.to_s # => "  Purple"
   # ```
+  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
   def rjust(len : Int, io : IO) : Nil
-    rjust(len, ' ', io)
+    rjust(io, len)
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*,
@@ -3872,9 +3947,22 @@ class String
   # "Purple".rjust(8, '-', io)
   # io.to_s # => "--Purple"
   # ```
-  def rjust(len : Int, char : Char, io : IO) : Nil
+  def rjust(io : IO, len : Int, char : Char = ' ') : Nil
     (len - size).times { io << char }
     io << self
+  end
+
+  # Adds instances of *char* to left of the string until it is at least size of *len*,
+  # and then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".rjust(8, '-', io)
+  # io.to_s # => "--Purple"
+  # ```
+  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
+  def rjust(len : Int, char : Char, io : IO) : Nil
+    rjust(io, len, char)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*.
@@ -3897,8 +3985,9 @@ class String
   # "Purple".center(9, io)
   # io.to_s # => " Purple  "
   # ```
+  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
   def center(len : Int, io : IO) : Nil
-    center(len, ' ', io)
+    center(io, len)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*,
@@ -3909,7 +3998,7 @@ class String
   # "Purple".center(9, '-', io)
   # io.to_s # => "-Purple--"
   # ```
-  def center(len : Int, char : Char, io : IO) : Nil
+  def center(io : IO, len : Int, char : Char = ' ') : Nil
     difference = len - size
 
     if difference <= 0
@@ -3923,6 +4012,19 @@ class String
     left_padding.times { io << char }
     io << self
     right_padding.times { io << char }
+  end
+
+  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # then appends the result to the given IO.
+  #
+  # ```
+  # io = IO::Memory.new
+  # "Purple".center(9, '-', io)
+  # io.to_s # => "-Purple--"
+  # ```
+  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
+  def center(len : Int, char : Char, io : IO) : Nil
+    center(io, len, char)
   end
 
   private def just(len, char, justify)
@@ -4430,7 +4532,7 @@ class String
   private def dump_hex(char, io)
     io << "\\x"
     io << '0' if char < 0x0F
-    char.to_s(16, io, upcase: true)
+    char.to_s(io, 16, upcase: true)
   end
 
   private def dump_unicode(char, io)
@@ -4439,7 +4541,7 @@ class String
     io << '0' if char.ord < 0x1000
     io << '0' if char.ord < 0x0100
     io << '0' if char.ord < 0x0010
-    char.ord.to_s(16, io, upcase: true)
+    char.ord.to_s(io, 16, upcase: true)
     io << '}' if char.ord > 0xFFFF
   end
 

@@ -12,10 +12,11 @@ private class ReverseResponseOutput < IO
   def initialize(@output : IO)
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : Int64
     slice.reverse_each do |byte|
       @output.write_byte(byte)
     end
+    slice.size.to_i64
   end
 
   def read(slice : Bytes)

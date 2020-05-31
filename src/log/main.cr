@@ -136,17 +136,17 @@ class Log
     # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => 3 } context) }
     # ```
     def set(**kwargs)
-      extend_fiber_context(Fiber.current, Log::Metadata.build(kwargs))
+      extend_fiber_context(Fiber.current, kwargs)
     end
 
     # :ditto:
     def set(values)
-      extend_fiber_context(Fiber.current, Log::Metadata.build(values))
+      extend_fiber_context(Fiber.current, values)
     end
 
-    private def extend_fiber_context(fiber : Fiber, values : Metadata)
+    private def extend_fiber_context(fiber : Fiber, values)
       context = fiber.logging_context
-      fiber.logging_context = @metadata = context.merge(values)
+      fiber.logging_context = @metadata = context.extend(values)
     end
   end
 

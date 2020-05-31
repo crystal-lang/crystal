@@ -44,15 +44,17 @@ class Compress::Zlib::Writer < IO
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : Int64
     check_open
 
-    return if slice.empty?
+    return 0i64 if slice.empty?
 
     write_header unless @wrote_header
 
     @flate_io.write(slice)
     @adler32 = Digest::Adler32.update(slice, @adler32)
+
+    slice.size.to_i64
   end
 
   # Flushes data, forcing writing the zlib header if no

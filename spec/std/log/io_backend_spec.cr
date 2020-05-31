@@ -5,10 +5,9 @@ private def s(value : Log::Severity)
   value
 end
 
-private def io_logger(*, stdout : IO, config = nil, source : String = "", progname : String? = nil)
+private def io_logger(*, stdout : IO, config = nil, source : String = "")
   builder = Log::Builder.new
   backend = Log::IOBackend.new
-  backend.progname = progname if progname
   backend.io = stdout
   builder.bind("*", s(:info), backend)
   builder.for(source)
@@ -24,7 +23,7 @@ describe Log::IOBackend do
       logger.level = s(:debug)
       logger.debug { "debug:show" }
 
-      logger.level = s(:warning)
+      logger.level = s(:warn)
       logger.debug { "debug:skip:again" }
       logger.info { "info:skip" }
       logger.error { "error:show" }
@@ -44,7 +43,7 @@ describe Log::IOBackend do
         logger.info { "info:show" }
       end
 
-      r.gets.should match(/info:show -- {"foo" => "bar"}/)
+      r.gets.should match(/info:show -- foo: "bar"/)
     end
   end
 
@@ -59,10 +58,10 @@ describe Log::IOBackend do
 
   it "formats message" do
     IO.pipe do |r, w|
-      logger = io_logger(progname: "the-program", stdout: w, source: "db.pool")
+      logger = io_logger(stdout: w, source: "db.pool")
       logger.warn { "message" }
 
-      r.gets(chomp: false).should match(/W, \[.+? #\d+\] WARNING -- the-program:db.pool: message\n/)
+      r.gets(chomp: false).should match(/.+? WARN - db.pool: message\n/)
     end
   end
 
@@ -89,12 +88,12 @@ describe Log::IOBackend do
 
   it "yields message" do
     IO.pipe do |r, w|
-      logger = io_logger(stdout: w, progname: "prog", source: "db")
+      logger = io_logger(stdout: w, source: "db")
       logger.error { "message" }
       logger.fatal { "another message" }
 
-      r.gets(chomp: false).should match(/ERROR -- prog:db: message\n/)
-      r.gets(chomp: false).should match(/FATAL -- prog:db: another message\n/)
+      r.gets(chomp: false).should match(/ERROR - db: message\n/)
+      r.gets(chomp: false).should match(/FATAL - db: another message\n/)
     end
   end
 end

@@ -563,7 +563,7 @@ module Crystal
     end
 
     def fun_literal_name(node : ProcLiteral)
-      location = node.location.try &.original_location
+      location = node.location.try &.expanded_location
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename.as(String)
@@ -1305,7 +1305,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1531,12 +1531,10 @@ module Crystal
     end
 
     def check_proc_is_not_closure(value, type)
-      if value.type == llvm_typer.proc_type
-        check_fun_name = "~check_proc_is_not_closure"
-        func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
-        func = check_main_fun check_fun_name, func
-        value = call func, [value] of LLVM::Value
-      end
+      check_fun_name = "~check_proc_is_not_closure"
+      func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
+      func = check_main_fun check_fun_name, func
+      value = call func, [value] of LLVM::Value
       bit_cast value, llvm_proc_type(type)
     end
 
@@ -2212,7 +2210,7 @@ module Crystal
             str << char
           else
             str << '.'
-            char.ord.to_s(16, str, upcase: true)
+            char.ord.to_s(str, 16, upcase: true)
             str << '.'
           end
         end

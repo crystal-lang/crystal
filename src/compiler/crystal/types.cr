@@ -3,6 +3,8 @@ require "./syntax/ast"
 module Crystal
   # Abstract base class of all types
   abstract class Type
+    include Annotatable
+
     # Returns the program where this type belongs.
     getter program
 
@@ -710,23 +712,6 @@ module Crystal
       end
     end
 
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
-    end
-
     def get_instance_var_initializer(name)
       nil
     end
@@ -910,6 +895,8 @@ module Crystal
     end
 
     def add_macro(a_macro)
+      a_macro.owner = self
+
       case a_macro.name
       when "inherited"
         return add_hook :inherited, a_macro
@@ -1631,7 +1618,7 @@ module Crystal
       # Check if automatic cast can be done
       if instance_var.type != value.type &&
          (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral))
-        if casted_value = MainVisitor.check_automatic_cast(value, instance_var.type)
+        if casted_value = MainVisitor.check_automatic_cast(@program, value, instance_var.type)
           value = casted_value
         end
       end
@@ -1793,7 +1780,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1853,7 +1840,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1987,7 +1974,7 @@ module Crystal
           if type_var.is_a?(Var)
             if i == splat_index
               tuple = type_var.type.as(TupleInstanceType)
-              tuple.tuple_types.join(", ", io) do |tuple_type|
+              tuple.tuple_types.join(io, ", ") do |tuple_type|
                 tuple_type = tuple_type.devirtualize unless codegen
                 tuple_type.to_s_with_options(io, codegen: codegen)
               end
@@ -2396,7 +2383,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "Tuple("
-      @tuple_types.join(", ", io) do |tuple_type|
+      @tuple_types.join(io, ", ") do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
@@ -2513,7 +2500,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
-      @entries.join(", ", io) do |entry|
+      @entries.join(io, ", ") do |entry|
         if Symbol.needs_quotes?(entry.name)
           entry.name.inspect(io)
         else
@@ -3063,7 +3050,7 @@ module Crystal
         union_types = @union_types.dup
         union_types << union_types.delete_at(nil_type_index)
       end
-      union_types.join(" | ", io) do |type|
+      union_types.join(io, " | ") do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end

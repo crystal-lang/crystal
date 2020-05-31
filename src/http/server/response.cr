@@ -80,8 +80,8 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Bytes) : Nil
-      return if slice.empty?
+    def write(slice : Bytes) : Int64
+      return 0i64 if slice.empty?
 
       @output.write(slice)
     end
@@ -203,7 +203,7 @@ class HTTP::Server
         ensure_headers_written
 
         if @chunked
-          slice.size.to_s(16, @io)
+          slice.size.to_s(@io, 16)
           @io << "\r\n"
           @io.write(slice)
           @io << "\r\n"

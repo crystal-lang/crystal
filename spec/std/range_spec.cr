@@ -28,6 +28,18 @@ struct RangeSpecIntWrapper
   end
 end
 
+private def range_endless_each
+  (2..).each do |x|
+    return x
+  end
+end
+
+private def range_beginless_reverse_each
+  (..2).reverse_each do |x|
+    return x
+  end
+end
+
 describe "Range" do
   it "initialized with new method" do
     Range.new(1, 10).should eq(1..10)
@@ -214,6 +226,14 @@ describe "Range" do
       expect_raises(ArgumentError, "Can't each beginless range") do
         range.each { }
       end
+    end
+
+    it "doesn't have Nil as a type for endless each" do
+      typeof(range_endless_each).should eq(Int32)
+    end
+
+    it "doesn't have Nil as a type for beginless each" do
+      typeof(range_beginless_reverse_each).should eq(Int32)
     end
   end
 

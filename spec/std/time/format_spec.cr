@@ -153,6 +153,24 @@ describe Time::Format do
     Time.parse_rfc2822(time.to_rfc2822).should eq time
   end
 
+  it "formats rfc3339 with different fraction digits" do
+    time = Time.utc(2016, 2, 15, 8, 23, 45, nanosecond: 123456789)
+    time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
+    time.to_rfc3339(fraction_digits: 0).should eq "2016-02-15T08:23:45Z"
+    time.to_rfc3339(fraction_digits: 3).should eq "2016-02-15T08:23:45.123Z"
+    time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.123456Z"
+    time.to_rfc3339(fraction_digits: 9).should eq "2016-02-15T08:23:45.123456789Z"
+    expect_raises(ArgumentError, "Invalid fraction digits: 5") { time.to_rfc3339(fraction_digits: 5) }
+    expect_raises(ArgumentError, "Invalid fraction digits: -1") { time.to_rfc3339(fraction_digits: -1) }
+
+    time = Time.utc(2016, 2, 15, 8, 23, 45)
+    time.to_rfc3339.should eq "2016-02-15T08:23:45Z"
+    time.to_rfc3339(fraction_digits: 0).should eq "2016-02-15T08:23:45Z"
+    time.to_rfc3339(fraction_digits: 3).should eq "2016-02-15T08:23:45.000Z"
+    time.to_rfc3339(fraction_digits: 6).should eq "2016-02-15T08:23:45.000000Z"
+    time.to_rfc3339(fraction_digits: 9).should eq "2016-02-15T08:23:45.000000000Z"
+  end
+
   it "parses empty" do
     t = Time.parse("", "", Time::Location.local)
     t.year.should eq(1)
@@ -200,6 +218,10 @@ describe Time::Format do
     parse_time(" 9", "%l").hour.should eq(9)
     parse_time("9pm", "%l%p").hour.should eq(21)
     parse_time("9PM", "%l%P").hour.should eq(21)
+    parse_time("12PM", "%l%P").hour.should eq(12)
+    parse_time("9am", "%l%p").hour.should eq(9)
+    parse_time("9AM", "%l%P").hour.should eq(9)
+    parse_time("12AM", "%l%P").hour.should eq(0)
     parse_time("09", "%M").minute.should eq(9)
     parse_time("09", "%S").second.should eq(9)
     parse_time("123", "%L").millisecond.should eq(123)
@@ -247,6 +269,148 @@ describe Time::Format do
     parse_time("2009-W53-5", "%G-W%V-%u").should eq(Time.utc(2010, 1, 1))
     parse_time("2009-W53-6", "%G-W%V-%u").should eq(Time.utc(2010, 1, 2))
     parse_time("2009-W53-7", "%G-W%V-%u").should eq(Time.utc(2010, 1, 3))
+  end
+
+  it "parses am/pm" do
+    parse_time("12:00 am", "%I:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01 am", "%I:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 am", "%I:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 am", "%I:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("00:00 pm", "%I:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("00:01 pm", "%I:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("12:00 pm", "%I:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 pm", "%I:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("01:00 pm", "%I:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("11:00 pm", "%I:%M %P").to_s("%H:%M").should eq("23:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:00 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:01 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 am", "%I:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 pm", "%I:%M %P")
+    end
+
+    parse_time("12:00", "%I:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01", "%I:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%I:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%I:%M").to_s("%H:%M").should eq("11:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:00", "%I:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("00:01", "%I:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00", "%I:%M")
+    end
+
+    parse_time("12:00 am", "%l:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01 am", "%l:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 am", "%l:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 am", "%l:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time(" 0:00 pm", "%l:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time(" 0:01 pm", "%l:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("12:00 pm", "%l:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 pm", "%l:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time(" 1:00 pm", "%l:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("11:00 pm", "%l:%M %P").to_s("%H:%M").should eq("23:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:00 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:01 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 am", "%l:%M %P")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00 pm", "%l:%M %P")
+    end
+
+    parse_time("12:00", "%l:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("12:01", "%l:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%l:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%l:%M").to_s("%H:%M").should eq("11:00")
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:00", "%l:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time(" 0:01", "%l:%M")
+    end
+    expect_raises Time::Format::Error, "Invalid hour for 12-hour clock" do
+      parse_time("13:00", "%l:%M")
+    end
+  end
+
+  it "parses 24h clock" do
+    parse_time("00:00", "%H:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01", "%H:%M").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00", "%H:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%H:%M").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00", "%H:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%H:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00", "%H:%M").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00", "%H:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%H:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %H:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
+
+    parse_time(" 0:00", "%k:%M").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01", "%k:%M").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00", "%k:%M").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00", "%k:%M").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00", "%k:%M").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01", "%k:%M").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00", "%k:%M").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00", "%k:%M").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00", "%k:%M").to_s("%H:%M").should eq("00:00")
+    parse_time("2020-05-21 24:00", "%F %k:%M").should eq(Time.utc(2020, 5, 22, 0, 0))
+  end
+
+  it "parses 24h clock with am/pm" do
+    parse_time("00:00 AM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01 AM", "%H:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 AM", "%H:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 AM", "%H:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 AM", "%H:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 AM", "%H:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 AM", "%H:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 AM", "%H:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 AM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time(" 0:00 AM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01 AM", "%k:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 AM", "%k:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 AM", "%k:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 AM", "%k:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 AM", "%k:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 AM", "%k:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 AM", "%k:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 AM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time("00:00 PM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time("00:01 PM", "%H:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time("01:00 PM", "%H:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 PM", "%H:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 PM", "%H:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 PM", "%H:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 PM", "%H:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 PM", "%H:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 PM", "%H:%M %P").to_s("%H:%M").should eq("00:00")
+
+    parse_time(" 0:00 PM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
+    parse_time(" 0:01 PM", "%k:%M %P").to_s("%H:%M").should eq("00:01")
+    parse_time(" 1:00 PM", "%k:%M %P").to_s("%H:%M").should eq("01:00")
+    parse_time("11:00 PM", "%k:%M %P").to_s("%H:%M").should eq("11:00")
+    parse_time("12:00 PM", "%k:%M %P").to_s("%H:%M").should eq("12:00")
+    parse_time("12:01 PM", "%k:%M %P").to_s("%H:%M").should eq("12:01")
+    parse_time("13:00 PM", "%k:%M %P").to_s("%H:%M").should eq("13:00")
+    parse_time("23:00 PM", "%k:%M %P").to_s("%H:%M").should eq("23:00")
+    parse_time("24:00 PM", "%k:%M %P").to_s("%H:%M").should eq("00:00")
   end
 
   it "parses timezone" do

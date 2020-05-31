@@ -31,7 +31,7 @@ module Crystal
       end
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       msg = @message.to_s
       error_message_lines = msg.lines
       default_message = "syntax error in #{@filename}:#{@line_number}"
@@ -42,8 +42,8 @@ module Crystal
       io << remaining error_message_lines
     end
 
-    def to_s_with_source(source, io)
-      append_to_s source, io
+    def to_s_with_source(io : IO, source)
+      append_to_s io, source
     end
 
     def deepest_error_message

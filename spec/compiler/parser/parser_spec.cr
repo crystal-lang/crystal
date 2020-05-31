@@ -554,6 +554,7 @@ module Crystal
 
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
+    it_parses "Foo(X: U, Y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("X", "U".path), NamedArgument.new("Y", "V".path)])
     assert_syntax_error "Foo(T, x: U)"
     assert_syntax_error "Foo(x: T y: U)"
 
@@ -562,6 +563,7 @@ module Crystal
 
     it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
+    it_parses "Foo({X: X, Y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("X", "X".path), NamedArgument.new("Y", "Y".path)])] of ASTNode)
     it_parses "Foo(T, {x: X})", Generic.new("Foo".path, ["T".path, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
 
@@ -1762,6 +1764,14 @@ module Crystal
 
     assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
+    it_parses "{[] of Foo, Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "new")] of ASTNode)
+    it_parses "{[] of Foo, ::Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz], global: true), "new")] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz + 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "+", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz * 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "*", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz ** 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "**", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
+    it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
@@ -1883,6 +1893,17 @@ module Crystal
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
+      assert_syntax_error "def foo(x : *Int32); end", "invalid type splat"
+      assert_syntax_error "def foo(x : (*Int32)); end", "invalid type splat"
+      assert_syntax_error "def foo(x : Int32, Int32); end"
+      assert_syntax_error "def foo(x : (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : (Int32, Int32) | Int32); end"
+      assert_syntax_error "def foo(x : Int32 | (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : {Int32, (Int32, Int32)}); end"
+      assert_syntax_error "def foo(x : 1); end"
+      assert_syntax_error "def foo(x : {sizeof(Int32), 2}); end"
+      assert_syntax_error "def foo(x : Array({sizeof(Int32), 2})); end"
+
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
         loc = node.location.not_nil!
@@ -1981,6 +2002,12 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "doesn't override yield with macro yield" do
+        parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
+        a_def = parser.parse.as(Def)
+        a_def.yields.should eq(1)
       end
     end
   end

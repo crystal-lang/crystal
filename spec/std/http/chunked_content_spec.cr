@@ -34,7 +34,7 @@ describe HTTP::ChunkedContent do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
 
-    content.skip(2)
+    content.skip(2).should eq(2)
     content.read_char.should eq('3')
 
     expect_raises(IO::EOFError) do

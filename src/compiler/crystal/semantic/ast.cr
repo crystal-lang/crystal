@@ -18,7 +18,7 @@ module Crystal
       String.build do |io|
         exception = exception_type.for_node(self, message, inner)
         exception.warning = true
-        exception.append_to_s(nil, io)
+        exception.append_to_s(io, nil)
       end
     end
 
@@ -119,6 +119,8 @@ module Crystal
   end
 
   class Def
+    include Annotatable
+
     property! owner : Type
     property! original_owner : Type
     property vars : MetaVars?
@@ -147,9 +149,6 @@ module Crystal
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 
-    # Annotations on this def
-    property annotations : Hash(AnnotationType, Array(Annotation))?
-
     @macro_owner : Type?
 
     def macro_owner=(@macro_owner)
@@ -177,23 +176,6 @@ module Crystal
           end
         end
       end
-    end
-
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
     end
 
     # Returns the minimum and maximum number of arguments that must
@@ -250,6 +232,10 @@ module Crystal
   end
 
   class Macro
+    include Annotatable
+
+    property! owner : Type
+
     # Yields `arg, arg_index, object, object_index` corresponding
     # to arguments matching the given objects, taking into account this
     # macro's splat index.
@@ -494,6 +480,8 @@ module Crystal
   # A variable belonging to a type: a global,
   # class or instance variable (globals belong to the program).
   class MetaTypeVar < Var
+    include Annotatable
+
     property nil_reason : NilReason?
 
     # The owner of this variable, useful for showing good
@@ -514,9 +502,6 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
-    # Annotations of this instance var
-    property annotations : Hash(AnnotationType, Array(Annotation))?
-
     def kind
       case name[0]
       when '@'
@@ -532,23 +517,6 @@ module Crystal
 
     def global?
       kind == :global
-    end
-
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
     end
   end
 

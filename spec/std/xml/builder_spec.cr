@@ -170,19 +170,29 @@ describe XML::Builder do
     end
   end
 
-  it "writes cdata" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata("hello")
+  describe "#cdata" do
+    it "writes cdata" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("hello")
+        end
       end
     end
-  end
 
-  it "writes cdata with block" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata do
-          text "hello"
+    it "escapes ]]> sequences" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[One]]]]><![CDATA[>Two]]]]><![CDATA[>Three]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("One]]>Two]]>Three")
+        end
+      end
+    end
+
+    it "writes cdata with block" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata do
+            text "hello"
+          end
         end
       end
     end
