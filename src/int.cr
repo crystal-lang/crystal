@@ -587,7 +587,7 @@ struct Int
 
     num = self
 
-    digits_count = (Math.log(self + 1) / Math.log(base)).ceil.to_i
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
     Array.new(digits_count) do
       value = num.remainder(base).to_i
       num = num.tdiv(base)
