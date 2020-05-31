@@ -1607,6 +1607,9 @@ describe Crystal::Formatter do
     CODE
 
   assert_format "a.!"
+  assert_format "a &.!"
+  assert_format "a &.a.!"
+  assert_format "a &.!.!"
 
   assert_format <<-CODE
     ->{

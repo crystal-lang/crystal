@@ -2987,6 +2987,14 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when Not
+          if body.exp.is_a?(Var)
+            call = Call.new(nil, "!")
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
           raise "BUG: unexpected node for &. argument, at #{node.location}, not #{body.class}"
         end
@@ -3026,6 +3034,12 @@ module Crystal
           node.obj = Nop.new
         else
           clear_object(node.obj)
+        end
+      when Not
+        if node.exp.is_a?(Var)
+          node.exp = Nop.new
+        else
+          clear_object(node.exp)
         end
       else
         # nothing to do
