@@ -588,11 +588,13 @@ struct Int
     num = self
 
     digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
-    Array.new(digits_count) do
-      value = num.remainder(base).to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
       num = num.tdiv(base)
-      value
     end
+    ary
   end
 
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
