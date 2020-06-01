@@ -296,7 +296,11 @@ module Crystal
   class StringInterpolation < ASTNode
     property expressions : Array(ASTNode)
 
-    def initialize(@expressions : Array(ASTNode))
+    # Removed indentation size.
+    # This property is only available when this is created from heredoc.
+    property heredoc_indent : Int32
+
+    def initialize(@expressions : Array(ASTNode), @heredoc_indent = 0)
     end
 
     def accept_children(visitor)
