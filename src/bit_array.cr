@@ -32,10 +32,17 @@ struct BitArray
 
   def ==(other : BitArray)
     return false if size != other.size
-    # NOTE: If BitArray implements resizing, there may be more than 1 binary
-    # representation and their hashes for equivalent BitArrays after a downsize as the
-    # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
+    return true if size == 0
+    return false if LibC.memcmp(@bits, other.@bits, malloc_size - 1) != 0
+    last = @bits[malloc_size - 1]
+    other_last = other.@bits[malloc_size - 1]
+    return true if last == other_last
+    trailing = 32 - size % 32
+    if trailing != 32
+      last << trailing == other_last << trailing
+    else
+      false
+    end
   end
 
   def ==(other)
@@ -133,7 +140,7 @@ struct BitArray
       bits = @bits[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= (1 << count) &- 1
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
     elsif size <= 64
@@ -141,10 +148,10 @@ struct BitArray
       bits = @bits.as(UInt64*)[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= (1 << count) &- 1
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32! }
       else
         BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
       end
@@ -162,7 +169,7 @@ struct BitArray
         bits = @bits[start_bit_index + i + 1]
 
         high_bits = bits
-        high_bits &= (1 << start_sub_index) - 1
+        high_bits &= (1 << start_sub_index) &- 1
         high_bits <<= 32 - start_sub_index
 
         ba.@bits[i] = low_bits | high_bits
@@ -239,7 +246,13 @@ struct BitArray
   # See `Object#hash(hasher)`
   def hash(hasher)
     hasher = size.hash(hasher)
-    hasher = to_slice.hash(hasher)
+    bytes, bits = @size.divmod(8)
+    if bytes > 0
+      hasher = Slice.new(@bits.as(Pointer(UInt8)), bytes).hash(hasher)
+    end
+    if bits != 0
+      hasher = (@bits.as(Pointer(UInt8))[bytes] << 8 - bits).hash(hasher)
+    end
     hasher
   end
 
