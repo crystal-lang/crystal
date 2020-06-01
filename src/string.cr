@@ -900,7 +900,24 @@ class String
     end
   end
 
-  # Returns a new string that result from deleting the character
+  # Returns a new string that results from deleting characters
+  # at the given range.
+  #
+  # ```
+  # "abcdef".delete_at(1..3) # => "aef"
+  # ```
+  #
+  # Negative indices can be used to start counting from the end of the string:
+  #
+  # ```
+  # "abcdef".delete_at(-3..-2) # => "abcf"
+  # ```
+  #
+  # Raises `IndexError` if any index is outside the bounds of this string.
+  def delete_at(range : Range)
+    delete_at(*Indexable.range_to_index_and_count(range, size))
+  end
+
   # Returns a new string that results from deleting the character
   # at the given *index*.
   #

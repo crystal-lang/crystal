@@ -2772,5 +2772,21 @@ describe "String" do
         }
       end
     end
+
+    describe "range" do
+      it { "abcdefg".delete_at(0..1).should eq("cdefg") }
+      it { "abcdefg".delete_at(0...2).should eq("cdefg") }
+      it { "abcdefg".delete_at(1..3).should eq("aefg") }
+      it { "abcdefg".delete_at(3..10).should eq("abc") }
+      it { "abcdefg".delete_at(-3..-2).should eq("abcdg") }
+      it { "abcdefg".delete_at(3..).should eq("abc") }
+      it { "abcdefg".delete_at(..-3).should eq("fg") }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(8..1) } }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(-8..1) } }
+
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4...10).should eq("セキロ：ダイ トゥワイス") }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
+    end
   end
 end
