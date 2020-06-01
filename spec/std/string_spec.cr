@@ -2724,4 +2724,23 @@ describe "String" do
       String.interpolation("a", 123, "b", 456, "cde").should eq("a123b456cde")
     end
   end
+
+  describe "delete_at" do
+    describe "char" do
+      it { "abcde".delete_at(0).should eq("bcde") }
+      it { "abcde".delete_at(1).should eq("acde") }
+      it { "abcde".delete_at(2).should eq("abde") }
+      it { "abcde".delete_at(4).should eq("abcd") }
+      it { "abcde".delete_at(-2).should eq("abce") }
+      it { expect_raises(IndexError) { "abcde".delete_at(5) } }
+      it { expect_raises(IndexError) { "abcde".delete_at(-6) } }
+
+      it { "二ノ国".delete_at(0).should eq("ノ国") }
+      it { "二ノ国".delete_at(1).should eq("二国") }
+      it { "二ノ国".delete_at(2).should eq("二ノ") }
+      it { "二ノ国".delete_at(-2).should eq("二国") }
+      it { expect_raises(IndexError) { "二ノ国".delete_at(3) } }
+      it { expect_raises(IndexError) { "二ノ国".delete_at(-4) } }
+    end
+  end
 end

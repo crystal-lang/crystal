@@ -900,6 +900,47 @@ class String
     end
   end
 
+  # Returns a new string that result from deleting the character
+  # at the given *index*.
+  #
+  # ```
+  # "abcde".delete_at(0) # => "bcde"
+  # "abcde".delete_at(2) # => "abde"
+  # "abcde".delete_at(4) # => "abcd"
+  # ```
+  #
+  # A negative index counts from the end of the string:
+  #
+  # ```
+  # "abcde".delete_at(-2) # => "abce"
+  # ```
+  #
+  # If *index* is outside the bounds of the string, `IndexError` is raised.
+  def delete_at(index : Int) : String
+    index += size if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    if byte_index && byte_index < @bytesize
+      char_bytesize = char_bytesize_at(byte_index)
+
+      new_bytesize = self.bytesize - char_bytesize
+      String.new(new_bytesize) do |buffer|
+        # Copy left part
+        buffer.copy_from(to_unsafe, byte_index)
+
+        # Copy right part
+        (buffer + byte_index).copy_from(
+          to_unsafe + byte_index + char_bytesize,
+          self.bytesize - byte_index - char_bytesize,
+        )
+
+        {new_bytesize, size - 1}
+      end
+    else
+      raise IndexError.new
+    end
+  end
+
   # Returns a new string built from *count* bytes starting at *start* byte.
   #
   # *start* can can be negative to start counting
