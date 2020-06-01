@@ -44,4 +44,58 @@ describe Doc::Type do
     foo.lookup_class_method("new").should_not be_nil
     foo.lookup_class_method("new", 1).should_not be_nil
   end
+
+  describe "#node_to_html" do
+    it "shows relative path" do
+      program = semantic(<<-CODE).program
+        class Foo
+          class Bar
+          end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      foo.node_to_html("Bar".path).should eq(%(<a href="Foo/Bar.html">Bar</a>))
+    end
+
+    it "shows relative generic" do
+      program = semantic(<<-CODE).program
+        class Foo
+          class Bar(T)
+          end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      foo.node_to_html(Generic.new("Bar".path, ["Foo".path] of ASTNode)).should eq(%(<a href="Foo/Bar.html">Bar</a>(<a href="Foo.html">Foo</a>)))
+    end
+
+    it "shows generic path with necessary colons" do
+      program = semantic(<<-CODE).program
+        class Foo
+          class Foo
+          end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">::Foo</a>))
+    end
+
+    it "shows generic path with unnecessary colons" do
+      program = semantic(<<-CODE).program
+        class Foo
+          class Bar
+          end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">Foo</a>))
+    end
+  end
 end
