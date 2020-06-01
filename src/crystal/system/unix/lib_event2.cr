@@ -13,7 +13,11 @@ require "c/netdb"
   @[Link("event")]
 {% end %}
 {% if flag?(:preview_mt) %}
-  @[Link("event_pthreads")]
+  {% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
+    @[Link("event_pthreads", pkg_config: "libevent_pthreads")]
+  {% else %}
+    @[Link("event_pthreads")]
+  {% end %}
 {% end %}
 lib LibEvent2
   alias Int = LibC::Int
