@@ -1905,6 +1905,18 @@ module Crystal
         check :"."
         name = consume_def_or_macro_name
         next_token_skip_space
+      when :INSTANCE_VAR
+        obj = InstanceVar.new(@token.value.to_s)
+        next_token_skip_space
+        check :"."
+        name = consume_def_or_macro_name
+        next_token_skip_space
+      when :CLASS_VAR
+        obj = ClassVar.new(@token.value.to_s)
+        next_token_skip_space
+        check :"."
+        name = consume_def_or_macro_name
+        next_token_skip_space
       else
         unexpected_token
       end
