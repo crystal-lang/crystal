@@ -752,6 +752,9 @@ class Array(T)
   # ```
   def delete_at(index : Int, count : Int)
     index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
 
     val = self[index, count]
     count = index + count <= size ? count : size - index
