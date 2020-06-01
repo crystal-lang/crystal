@@ -909,7 +909,7 @@ class String
   # "abcde".delete_at(4) # => "abcd"
   # ```
   #
-  # A negative index counts from the end of the string:
+  # A negative *index* counts from the end of the string:
   #
   # ```
   # "abcde".delete_at(-2) # => "abce"
