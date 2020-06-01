@@ -1006,26 +1006,26 @@ class String
       return ""
     else
       if ascii_only?
-        byte_delete_at(index, count)
+        byte_delete_at(index, count, count)
       else
         unicode_delete_at(index, count)
       end
     end
   end
 
-  private def byte_delete_at(start, count)
-    new_bytesize = bytesize - count
+  private def byte_delete_at(start, count, byte_count)
+    new_bytesize = bytesize - byte_count
     String.new(new_bytesize) do |buffer|
       # Copy left part
       buffer.copy_from(to_unsafe, start)
 
       # Copy right part
       (buffer + start).copy_from(
-        to_unsafe + start + count,
-        bytesize - start - count,
+        to_unsafe + start + byte_count,
+        bytesize - start - byte_count,
       )
 
-      {new_bytesize, new_bytesize}
+      {new_bytesize, size - count}
     end
   end
 
@@ -1054,19 +1054,7 @@ class String
     end_pos ||= reader.pos
 
     byte_count = end_pos - start_pos
-    new_bytesize = bytesize - byte_count
-    String.new(new_bytesize) do |buffer|
-      # Copy left part
-      buffer.copy_from(to_unsafe, start_pos)
-
-      # Copy right part
-      (buffer + start_pos).copy_from(
-        to_unsafe + start_pos + byte_count,
-        bytesize - start_pos - byte_count,
-      )
-
-      {new_bytesize, size - count}
-    end
+    byte_delete_at(start_pos, count, byte_count)
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
