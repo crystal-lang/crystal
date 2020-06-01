@@ -1,4 +1,4 @@
-class INI
+module INI
   # Exception thrown on an INI parse error.
   class ParseException < Exception
     getter line_number : Int32
