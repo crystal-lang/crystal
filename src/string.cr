@@ -788,24 +788,7 @@ class String
 
     start += size if start < 0
 
-    start_pos = nil
-    end_pos = nil
-
-    reader = Char::Reader.new(self)
-    i = 0
-
-    reader.each do |char|
-      if i == start
-        start_pos = reader.pos
-      elsif count >= 0 && i == start + count
-        end_pos = reader.pos
-        i += 1
-        break
-      end
-      i += 1
-    end
-
-    end_pos ||= reader.pos
+    start_pos, end_pos, end_index = find_start_end_and_index(start, count)
 
     if start_pos
       return "" if count == 0
@@ -817,7 +800,7 @@ class String
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
       end
-    elsif start == i
+    elsif start == end_index
       ""
     end
   end
@@ -1030,8 +1013,16 @@ class String
   end
 
   private def unicode_delete_at(start, count)
-    reader = Char::Reader.new(self)
+    start_pos, end_pos, _ = find_start_end_and_index(start, count)
 
+    # That start is in bounds was already verified in `delete_at`
+    start_pos = start_pos.not_nil!
+
+    byte_count = end_pos - start_pos.not_nil!
+    byte_delete_at(start_pos, count, byte_count)
+  end
+
+  private def find_start_end_and_index(start, count)
     start_pos = nil
     end_pos = nil
 
@@ -1049,12 +1040,9 @@ class String
       i += 1
     end
 
-    # That start is in bounds was already verified in `delete_at`
-    start_pos = start_pos.not_nil!
     end_pos ||= reader.pos
 
-    byte_count = end_pos - start_pos
-    byte_delete_at(start_pos, count, byte_count)
+    {start_pos, end_pos, i}
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
