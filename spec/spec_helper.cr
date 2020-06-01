@@ -75,36 +75,36 @@ def semantic(node : ASTNode, wants_doc = false, flags = nil)
   SemanticResult.new(program, node)
 end
 
-def assert_normalize(from, to, flags = nil)
+def assert_normalize(from, to, flags = nil, *, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = program.normalize(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
   to_nodes
 end
 
-def assert_expand(from : String, to)
-  assert_expand Parser.parse(from), to
+def assert_expand(from : String, to, *, file = __FILE__, line = __LINE__)
+  assert_expand Parser.parse(from), to, file: file, line: line
 end
 
-def assert_expand(from_nodes : ASTNode, to)
+def assert_expand(from_nodes : ASTNode, to, *, file = __FILE__, line = __LINE__)
   to_nodes = LiteralExpander.new(new_program).expand(from_nodes)
-  to_nodes.to_s.strip.should eq(to.strip)
+  to_nodes.to_s.strip.should eq(to.strip), file: file, line: line
 end
 
-def assert_expand_second(from : String, to)
+def assert_expand_second(from : String, to, *, file = __FILE__, line = __LINE__)
   node = (Parser.parse(from).as(Expressions))[1]
-  assert_expand node, to
+  assert_expand node, to, file: file, line: line
 end
 
-def assert_expand_third(from : String, to)
+def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
   node = (Parser.parse(from).as(Expressions))[2]
-  assert_expand node, to
+  assert_expand node, to, file: file, line: line
 end
 
-def assert_error(str, message, inject_primitives = true, file = __FILE__, line = __LINE__)
+def assert_error(str, message, *, inject_primitives = true, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives
   end
@@ -128,31 +128,31 @@ def warnings_result(code)
   result.program.warning_failures
 end
 
-def assert_warning(code, message, file = __FILE__, line = __LINE__)
+def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code)
   warning_failures.size.should eq(1), file, line
   warning_failures[0].should start_with(message), file, line
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil)
-  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags) { call_args }
+def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
+  assert_macro(macro_args, macro_body, expected, expected_pragmas, flags, file: file, line: line) { call_args }
 end
 
-def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil)
+def assert_macro(macro_args, macro_body, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
   program = new_program
   program.flags.concat(flags.split) if flags
   sub_node = yield program
-  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas
+  assert_macro_internal program, sub_node, macro_args, macro_body, expected, expected_pragmas, file: file, line: line
 end
 
-def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas)
+def assert_macro_internal(program, sub_node, macro_args, macro_body, expected, expected_pragmas, file = __FILE__, line = __LINE__)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
   a_macro = Parser.parse(macro_def).as(Macro)
 
   call = Call.new(nil, "", sub_node)
   result, result_pragmas = program.expand_macro a_macro, call, program, program
   result = result.chomp(';')
-  result.should eq(expected)
+  result.should eq(expected), file: file, line: line
   result_pragmas.should eq(expected_pragmas) if expected_pragmas
 end
 
