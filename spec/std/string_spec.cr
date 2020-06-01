@@ -2742,5 +2742,35 @@ describe "String" do
       it { expect_raises(IndexError) { "二ノ国".delete_at(3) } }
       it { expect_raises(IndexError) { "二ノ国".delete_at(-4) } }
     end
+
+    describe "start, count" do
+      it { "abcdefg".delete_at(0, 2).should eq("cdefg") }
+      it { "abcdefg".delete_at(1, 2).should eq("adefg") }
+      it { "abcdefg".delete_at(3, 10).should eq("abc") }
+      it { "abcdefg".delete_at(-3, 2).should eq("abcdg") }
+      it { "abcdefg".delete_at(7, 10).should eq("abcdefg") }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(8, 1) } }
+      it { expect_raises(IndexError) { "abcdefg".delete_at(-8, 1) } }
+
+      it "raises on negative count" do
+        expect_raises(ArgumentError, "Negative count: -1") {
+          "abcdefg".delete_at(1, -1)
+        }
+      end
+
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4, 6).should eq("セキロ：ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(0, 4).should eq("シャドウズ ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(3, 20).should eq("セキロ") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-14, 6).should eq("セキロ：ダイ トゥワイス") }
+      it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(18, 3).should eq("セキロ：シャドウズ ダイ トゥワイス") }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19, 1) } }
+      it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19, 1) } }
+
+      it "raises on negative count" do
+        expect_raises(ArgumentError, "Negative count: -1") {
+          "セキロ：シャドウズ ダイ トゥワイス".delete_at(1, -1)
+        }
+      end
+    end
   end
 end
