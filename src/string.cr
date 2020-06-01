@@ -901,6 +901,7 @@ class String
   end
 
   # Returns a new string that result from deleting the character
+  # Returns a new string that results from deleting the character
   # at the given *index*.
   #
   # ```
