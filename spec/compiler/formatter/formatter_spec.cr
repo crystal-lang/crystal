@@ -722,6 +722,9 @@ describe Crystal::Formatter do
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
 
+  assert_format "->@foo.foo"
+  assert_format "->@@foo.foo"
+
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"
   end
@@ -971,6 +974,12 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  \#{1}x\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  z\n  HTML"
+  assert_format %(<<-HTML\n  \#{"foo"}\n  HTML)
+  assert_format %(<<-HTML\n  \#{__FILE__}\n  HTML)
+  assert_format %(<<-HTML\n  \#{"fo\#{"o"}"}\n  HTML)
+  assert_format %(<<-HTML\n  \#{"foo"}\#{1}\n  HTML)
+  assert_format %(<<-HTML\n  foo\n  \#{"foo"}\n  HTML)
+  assert_format %(<<-HTML\n  \#{"foo"}\n  \#{"bar"}\n  HTML)
 
   assert_format "  <<-HTML\n   foo\n  HTML", "<<-HTML\n foo\nHTML"
   assert_format "  <<-HTML\n   \#{1}\n  HTML", "<<-HTML\n \#{1}\nHTML"
@@ -1607,6 +1616,9 @@ describe Crystal::Formatter do
     CODE
 
   assert_format "a.!"
+  assert_format "a &.!"
+  assert_format "a &.a.!"
+  assert_format "a &.!.!"
 
   assert_format <<-CODE
     ->{

@@ -60,6 +60,7 @@ class Compress::Deflate::Writer < IO
     return if @closed
 
     consume_output LibZ::Flush::SYNC_FLUSH
+    @output.flush
   end
 
   # Closes this writer. Must be invoked after all data has been written.

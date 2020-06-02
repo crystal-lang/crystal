@@ -537,6 +537,16 @@ module Crystal
       heredoc_line = @line
       heredoc_end = @line
 
+      # To detect the first content of interpolation of string literal correctly,
+      # we should consume the first string token if this token contains only removed indentation of heredoc.
+      if is_heredoc && @token.type == :STRING
+        token_is_indent = @token.raw.bytesize == node.heredoc_indent && @token.raw.each_char.all? &.ascii_whitespace?
+        if token_is_indent
+          write @token.raw
+          next_string_token
+        end
+      end
+
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
           # Heredoc cannot contain string continuation,
@@ -569,17 +579,19 @@ module Crystal
             check :"}"
             write "}"
             @token.delimiter_state = delimiter_state
+            next_string_token
           else
-            if @token.invalid_escape
-              write @token.value
-            else
-              write @token.raw
+            loop do
+              check :STRING
+              write @token.invalid_escape ? @token.value : @token.raw
+              next_string_token
+
+              # On heredoc, pieces of contents are combined due to removing indentation.
+              # Thus, we should consume continuous string tokens at once.
+              break if !is_heredoc || @token.type != :STRING
             end
           end
-          next_string_token
         else
-          skip_strings
-
           check :INTERPOLATION_START
           write "\#{"
           delimiter_state = @token.delimiter_state
@@ -606,8 +618,6 @@ module Crystal
         end
       end
 
-      skip_strings
-
       heredoc_end = @line
 
       check :DELIMITER_END
@@ -630,15 +640,6 @@ module Crystal
       @indent = old_indent unless is_heredoc
 
       false
-    end
-
-    private def skip_strings
-      # Heredocs might indice some spaces that are removed
-      # because of indentation
-      while @token.type == :STRING
-        write @token.raw
-        next_string_token
-      end
     end
 
     private def consume_heredocs
@@ -2987,6 +2988,14 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when Not
+          if body.exp.is_a?(Var)
+            call = Call.new(nil, "!")
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
           raise "BUG: unexpected node for &. argument, at #{node.location}, not #{body.class}"
         end
@@ -3026,6 +3035,12 @@ module Crystal
           node.obj = Nop.new
         else
           clear_object(node.obj)
+        end
+      when Not
+        if node.exp.is_a?(Var)
+          node.exp = Nop.new
+        else
+          clear_object(node.exp)
         end
       else
         # nothing to do
