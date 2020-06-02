@@ -327,7 +327,7 @@ describe "Semantic: annotation" do
         class Child < Parent(Int32)
         end
 
-        {% if Child.superclass.all_annotations[0][0] == 1 && Child.superclass.all_annotations[1][0] == 2 %}
+        {% if Child.superclass.all_annotations.map(&.[0]) == [1, 2] %}
           1
         {% else %}
           'a'
