@@ -2,6 +2,18 @@ require "spec"
 require "../spec_helper"
 require "../../support/fibers"
 
+private def wait_for(timeout = 5.seconds)
+  now = Time.monotonic
+
+  until yield
+    Fiber.yield
+
+    if (Time.monotonic - now) > timeout
+      raise "server failed to start within #{timeout}"
+    end
+  end
+end
+
 # Helper method which runs *server*
 # 1. Spawns `server.listen` in a new fiber.
 # 2. Waits until `server.listening?`.
@@ -23,6 +35,7 @@ def run_server(server)
   end
 
   begin
+    wait_for { server.listening? }
     wait_until_blocked f
 
     yield server_done
