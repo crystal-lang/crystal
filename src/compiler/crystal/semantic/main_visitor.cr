@@ -1235,50 +1235,22 @@ module Crystal
 
     def visit(node : ProcPointer)
       obj = node.obj
+      obj.accept self if obj
 
-      if obj
-        obj.accept self
-      end
-
-      # The call might have been created if this is a proc pointer at the top-level
-      call = node.call? || Call.new(obj, node.name).at(obj)
-      prepare_call(call)
-
-      # A proc pointer like `->foo` where `foo` is a macro is invalid
-      if expand_macro(call)
-        node.raise(String.build do |io|
-          io << "undefined method '#{node.name}'"
-          (io << " for " << obj.type) if obj
-          io << "\n\n'" << node.name << "' exists as a macro, but macros can't be used in proc pointers"
-        end)
-      end
-
-      # Check if it's ->LibFoo.foo, so we deduce the type from that method
       if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
         matching_fun = obj_type.lookup_first_def(node.name, false)
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
-        call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
-        end
-      else
-        call.args = node.args.map_with_index do |arg, i|
-          arg.accept self
-          arg_type = arg.type.instance_type
-          MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
+        if matching_fun.args.size > 0
+          expand(node) do
+            args = matching_fun.args.map { |arg| TypeNode.new(arg.type).as(ASTNode) }
+            ProcPointer.new(node.obj, node.name, args)
+          end
+          return false
         end
       end
 
-      begin
-        call.recalculate
-      rescue ex : Crystal::Exception
-        node.raise "error instantiating #{node}", ex
-      end
-
-      node.call = call
-      node.bind_to call
-
+      expand(node)
       false
     end
 

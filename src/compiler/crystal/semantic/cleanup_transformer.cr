@@ -508,35 +508,10 @@ module Crystal
 
             arg.raise message
           end
-        when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
-          end
-
-          owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
-          end
         else
           # nothing to do
         end
       end
-    end
-
-    def transform(node : ProcPointer)
-      super
-
-      if call = node.call?
-        result = call.transform(self)
-
-        # If the transform didn't end up in a Call, it means the
-        # call will never be executed.
-        if result.is_a?(Call)
-          node.call = result
-        end
-      end
-
-      node
     end
 
     def transform(node : ProcLiteral)

@@ -613,6 +613,19 @@ module Crystal
       end
     end
 
+    def expand(node : ProcPointer)
+      args = [] of Arg
+      arg_vars = [] of ASTNode
+      node.args.each do |arg|
+        arg_var = new_temp_var.at(arg)
+        arg_vars << arg_var
+        args << Arg.new(arg_var.name, restriction: arg).at(arg)
+      end
+      body = Call.new(node.obj, node.name, arg_vars).at(node)
+      a_def = Def.new("->", args, body).at(node)
+      ProcLiteral.new(a_def).at(node)
+    end
+
     private def case_when_comparison(temp_var, cond)
       return cond unless temp_var
 

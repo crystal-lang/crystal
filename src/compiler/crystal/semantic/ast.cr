@@ -593,7 +593,8 @@ module Crystal
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
-                   SizeOf InstanceSizeOf OffsetOf Global Require Select) %}
+                   SizeOf InstanceSizeOf OffsetOf Global Require Select
+                   ProcPointer) %}
     class {{name.id}}
       include ExpandableNode
     end

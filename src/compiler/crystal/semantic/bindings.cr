@@ -466,19 +466,6 @@ module Crystal
     end
   end
 
-  class ProcPointer
-    property! call : Call
-
-    def map_type(type)
-      return nil unless call.type?
-
-      arg_types = call.args.map &.type.virtual_type
-      arg_types.push call.type.virtual_type
-
-      call.type.program.proc_of(arg_types)
-    end
-  end
-
   class Generic
     property! instance_type : GenericType
     property scope : Type?

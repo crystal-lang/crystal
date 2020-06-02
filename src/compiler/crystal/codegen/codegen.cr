@@ -587,37 +587,6 @@ module Crystal
       fun_literal_name
     end
 
-    def visit(node : ProcPointer)
-      owner = node.call.target_def.owner
-
-      if obj = node.obj
-        accept obj
-
-        # If obj is a primitive like an integer we need to pass
-        # the variable as is (without loading it)
-        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
-          call_self = context.vars[obj.name].pointer
-        else
-          call_self = @last
-        end
-      elsif owner.passed_as_self?
-        call_self = llvm_self
-      end
-
-      last_fun = target_def_fun(node.call.target_def, owner)
-
-      set_current_debug_location(node) if @debug.line_numbers?
-      fun_ptr = bit_cast(last_fun, llvm_context.void_pointer)
-      if call_self && !owner.metaclass? && !owner.is_a?(LibType)
-        ctx_ptr = bit_cast(call_self, llvm_context.void_pointer)
-      else
-        ctx_ptr = llvm_context.void_pointer.null
-      end
-      @last = make_fun node.type, fun_ptr, ctx_ptr
-
-      false
-    end
-
     def visit(node : Expressions)
       old_needs_value = @needs_value
       @needs_value = false

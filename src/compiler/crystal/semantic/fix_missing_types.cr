@@ -41,19 +41,6 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     false
   end
 
-  def visit(node : ProcPointer)
-    node.call?.try &.accept self
-    false
-  end
-
-  def end_visit(node : ProcPointer)
-    if !node.type? && node.call?
-      arg_types = node.call.args.map &.type
-      arg_types.push @program.no_return
-      node.type = node.call.type = @program.proc_of(arg_types)
-    end
-  end
-
   def visit(node : ExpandableNode)
     node.expanded.try &.accept self
     false
