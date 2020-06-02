@@ -1,3 +1,5 @@
+{% skip_file unless compare_versions(Crystal::VERSION, "0.35.0-0") > 0 %}
+
 require "big"
 require "spec"
 
