@@ -155,6 +155,14 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
+    if op == "*"
+      if t1.unsigned? && t2.signed?
+        return codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
+      elsif t1.signed? && t2.unsigned?
+        return codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
+      end
+    end
+
     calc_signed = t1.signed? || t2.signed?
     calc_width = {t1, t2}.map { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }.max
     calc_type = llvm_context.int(calc_width)
@@ -188,6 +196,35 @@ class Crystal::CodeGenVisitor
     codegen_raise_overflow_cond overflow
 
     trunc result, llvm_type(t1)
+  end
+
+  def codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
+    overflow = and(
+      codegen_binary_op_ne(t1, t1, p1, int(0, t1)), # self != 0
+      codegen_binary_op_lt(t2, t2, p2, int(0, t2))  # other < 0
+    )
+    codegen_raise_overflow_cond overflow
+
+    return codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
+  end
+
+  def codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
+    negative = codegen_binary_op_lt(t1, t1, p1, int(0, t1)) # self < 0
+    minus_p1 = builder.sub int(0, t1), p1
+    abs = builder.select negative, minus_p1, p1
+    u1 = @program.int_type(false, t1.bytes)
+
+    # tmp is the abs value of the result
+    # there is overflow when |result| > max + (negative ? 1 : 0)
+    tmp = codegen_binary_op_with_overflow("*", u1, t2, abs, p2)
+    _, max = t1.range
+    max_result = builder.add(int(max, t1), builder.zext(negative, llvm_type(t1)))
+    overflow = codegen_binary_op_gt(u1, u1, tmp, max_result)
+    codegen_raise_overflow_cond overflow
+
+    # negate back the result if p1 was negative
+    minus_tmp = builder.sub int(0, t1), tmp
+    builder.select negative, minus_tmp, tmp
   end
 
   def codegen_binary_extend_int(t1, t2, p1, p2)

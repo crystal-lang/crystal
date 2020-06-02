@@ -35,9 +35,15 @@ macro run_op_tests(t, u, op)
   end
 end
 
+{% if flag?(:darwin) %}
+  private OVERFLOW_TEST_TYPES = [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128]
+{% else %}
+  private OVERFLOW_TEST_TYPES = [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64]
+{% end %}
+
 describe "overflow" do
-  {% for t in Int::Primitive.union_types %}
-    {% for u in Int::Primitive.union_types %}
+  {% for t in OVERFLOW_TEST_TYPES %}
+    {% for u in OVERFLOW_TEST_TYPES %}
       run_op_tests {{t}}, {{u}}, :+
       run_op_tests {{t}}, {{u}}, :-
       run_op_tests {{t}}, {{u}}, :*

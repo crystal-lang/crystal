@@ -413,36 +413,4 @@ end
       end
     end
   {% end %}
-
-  {% for sint in Int::Signed.union_types %}
-    {% for uint in Int::Unsigned.union_types %}
-      struct {{sint}}
-        def *(other : {{uint}})
-          if self >= 0
-            tmp = U{{sint}}.new!(self) * other
-            if tmp > U{{sint}}.new!({{sint}}::MAX)
-              __crystal_raise_overflow
-            end
-            {{sint}}.new!(tmp)
-          else
-            tmp = (~U{{sint}}.new!(self) &+ 1) * other
-            if tmp > U{{sint}}.new!({{sint}}::MIN)
-              __crystal_raise_overflow
-            end
-            ~{{sint}}.new!(tmp) &+ 1
-          end
-        end
-      end
-
-      struct {{uint}}
-        def *(other : {{sint}})
-          if self != 0 && other < 0
-            __crystal_raise_overflow
-          else
-            self * U{{sint}}.new!(other)
-          end
-        end
-      end
-    {% end %}
-  {% end %}
 {% end %}
