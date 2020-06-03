@@ -208,6 +208,7 @@ module Crystal
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
+      program.link_flags = @link_flags
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout

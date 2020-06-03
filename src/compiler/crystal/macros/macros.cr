@@ -119,6 +119,10 @@ class Crystal::Program
     # No need to generate debug info for macro run programs
     compiler.debug = Crystal::Debug::None
 
+    # Set compile flags and link flags the same as the external compiler
+    compiler.flags = flags.to_a
+    compiler.link_flags = link_flags
+
     result = compiler.compile Compiler::Source.new(filename, source), executable_path
 
     # Write the new files from which 'filename' depends into the cache dir
