@@ -486,6 +486,30 @@ module Crystal
       end
     end
 
+    def int_type(signed, size)
+      if signed
+        case size
+        when  1 then int8
+        when  2 then int16
+        when  4 then int32
+        when  8 then int64
+        when 16 then int128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
+      else
+        case size
+        when  1 then uint8
+        when  2 then uint16
+        when  4 then uint32
+        when  8 then uint64
+        when 16 then uint128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
+      end
+    end
+
     # Returns the `IntegerType` that matches the given Int value
     def int?(int)
       case int
