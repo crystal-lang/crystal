@@ -24,9 +24,9 @@ lib LibC
     ai_family : Int
     ai_socktype : Int
     ai_protocol : Int
+    ai_addrlen : SocklenT
     ai_canonname : Char*
     ai_addr : Void*
-    ai_addrlen : SocklenT
     ai_next : Addrinfo*
   end
 
