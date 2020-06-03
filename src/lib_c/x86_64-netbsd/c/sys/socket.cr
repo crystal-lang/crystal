@@ -29,7 +29,7 @@ lib LibC
   SOCK_CLOEXEC   = 0x10000000
 
   alias SocklenT = UInt
-  alias SaFamilyT = Char
+  alias SaFamilyT = UInt8
 
   struct Sockaddr
     sa_len : UInt8
@@ -41,7 +41,7 @@ lib LibC
     ss_len : UInt8
     ss_family : SaFamilyT
     __ss_pad1 : StaticArray(Char, 6)
-    __ss_pad2 : UInt16
+    __ss_pad2 : UInt64
     __ss_pad3 : StaticArray(Char, 240)
   end
 
