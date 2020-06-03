@@ -2,7 +2,6 @@ require "../stddef"
 require "../stdint"
 
 lib LibC
-
   alias BlkcntT = Int64
   alias BlksizeT = Int32
   alias ClockT = UInt
@@ -48,9 +47,9 @@ lib LibC
     ptm_magic : UInt
     ptm_errorcheck : UInt8
     ptm_pad1 : UInt8[3]
-    ptm_ceiling: UInt8
+    ptm_ceiling : UInt8
     ptm_pad2 : UInt8[2]
-    ptm_owner: PthreadT
+    ptm_owner : PthreadT
     ptm_waiters : PthreadT*
     ptm_recursed : UInt
     ptm_spare2 : Void*

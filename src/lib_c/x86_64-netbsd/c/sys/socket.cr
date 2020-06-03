@@ -21,11 +21,11 @@ lib LibC
   AF_INET        =  2
   AF_INET6       = 24
   AF_UNIX        = LibC::AF_LOCAL
-  AF_UNSPEC      =      0
-  AF_LOCAL       =      1
-  SHUT_RD        =      0
-  SHUT_WR        =      1
-  SHUT_RDWR      =      2
+  AF_UNSPEC      =          0
+  AF_LOCAL       =          1
+  SHUT_RD        =          0
+  SHUT_WR        =          1
+  SHUT_RDWR      =          2
   SOCK_CLOEXEC   = 0x10000000
 
   alias SocklenT = UInt

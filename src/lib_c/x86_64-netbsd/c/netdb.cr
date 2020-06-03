@@ -7,17 +7,17 @@ lib LibC
   AI_CANONNAME   =   0x2
   AI_NUMERICHOST =   0x4
   AI_NUMERICSERV =   0x8
-  AI_ADDRCONFIG  =   0x400
-  EAI_AGAIN      =   2
-  EAI_BADFLAGS   =   3
-  EAI_FAIL       =   4
-  EAI_FAMILY     =   5
-  EAI_MEMORY     =   6
-  EAI_NONAME     =   8
-  EAI_SERVICE    =   9
-  EAI_SOCKTYPE   =   10
-  EAI_SYSTEM     =   11
-  EAI_OVERFLOW   =   14
+  AI_ADDRCONFIG  = 0x400
+  EAI_AGAIN      =     2
+  EAI_BADFLAGS   =     3
+  EAI_FAIL       =     4
+  EAI_FAMILY     =     5
+  EAI_MEMORY     =     6
+  EAI_NONAME     =     8
+  EAI_SERVICE    =     9
+  EAI_SOCKTYPE   =    10
+  EAI_SYSTEM     =    11
+  EAI_OVERFLOW   =    14
 
   struct Addrinfo
     ai_flags : Int
