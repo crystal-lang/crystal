@@ -9,8 +9,8 @@ lib LibC
   IPPROTO_TCP  =   6
   IPPROTO_UDP  =  17
 
-  alias InPortT = UShort
-  alias InAddrT = UInt
+  alias InPortT = UInt16
+  alias InAddrT = UInt32
 
   struct InAddr
     s_addr : InAddrT
@@ -31,7 +31,7 @@ lib LibC
     sin_family : SaFamilyT
     sin_port : InPortT
     sin_addr : InAddr
-    sin_zero : StaticArray(Char, 8)
+    sin_zero : StaticArray(Int8, 8)
   end
 
   struct SockaddrIn6
