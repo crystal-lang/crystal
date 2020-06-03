@@ -550,7 +550,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node, io, links = true)
-    io << Highlighter.highlight(node.to_s)
+    io << highlight(node.to_s)
   end
 
   def node_to_html(node : Underscore, io, links = true)

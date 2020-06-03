@@ -8,10 +8,7 @@ module Crystal::Doc::Highlighter
     lexer.wants_raw = true
 
     String.build do |io|
-      begin
-        highlight_normal_state lexer, io
-      rescue Crystal::SyntaxException
-      end
+      highlight_normal_state lexer, io
     end
   end
 
@@ -28,9 +25,9 @@ module Crystal::Doc::Highlighter
           highlight_delimiter_state lexer, token, io, heredoc: true
           unless i == heredoc_stack.size - 1
             # Next token to heredoc's end is either NEWLINE or EOF.
-            # We can't continue highlighting when it is EOF even though
-            # heredoc tokens still remain.
-            break if lexer.next_token.type == :EOF
+            if lexer.next_token.type == :EOF
+              raise "Unterminated heredoc"
+            end
             io.puts
           end
         end
@@ -121,7 +118,7 @@ module Crystal::Doc::Highlighter
         HTML.escape(token.raw, io)
       end
     end
-  ensure # This ensure is necessary to handle unterminated string literal.
+
     end_highlight_class io
   end
 
@@ -139,7 +136,11 @@ module Crystal::Doc::Highlighter
         end_highlight_class io
         break
       when :EOF
-        raise "Unterminated symbol array literal"
+        if token.delimiter_state.kind == :string_array
+          raise "Unterminated string array literal"
+        else # == :symbol_array
+          raise "Unterminated symbol array literal"
+        end
       else
         raise "Bug: shouldn't happen"
       end

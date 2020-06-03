@@ -26,7 +26,7 @@ class Crystal::Doc::Constant
   end
 
   def formatted_value
-    Highlighter.highlight value.to_s
+    highlight value.to_s
   end
 
   def to_json(builder : JSON::Builder)
