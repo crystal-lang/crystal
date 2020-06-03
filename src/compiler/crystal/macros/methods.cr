@@ -1749,7 +1749,7 @@ module Crystal
     end
 
     def self.type_vars(type)
-      if type.is_a?(GenericClassInstanceType)
+      if type.is_a?(GenericClassInstanceType) || type.is_a?(GenericModuleInstanceType)
         if type.is_a?(TupleInstanceType)
           if type.tuple_types.empty?
             empty_no_return_array
