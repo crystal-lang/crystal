@@ -326,10 +326,18 @@ module Crystal
 
     # Returns the `Type` for `type | Nil`
     def nilable(type)
-      # Nil | Nil # => Nil
-      return self.nil if type == self.nil
-
-      union_of self.nil, type
+      case type
+      when self.nil
+        # Nil | Nil # => Nil
+        return self.nil
+      when UnionType
+        types = Array(Type).new(type.union_types.size + 1)
+        types.concat type.union_types
+        types << self.nil
+        Type.merge(types)
+      else
+        union_of self.nil, type
+      end
     end
 
     # Returns the `Type` for `type1 | type2`
