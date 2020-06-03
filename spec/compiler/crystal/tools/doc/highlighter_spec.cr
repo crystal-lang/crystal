@@ -11,11 +11,10 @@ private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   end
 end
 
-private def assert_highlight_error(code, message, file = __FILE__, line = __LINE__)
-  it "says highlight error on #{code.inspect}", file, line do
-    expect_raises(Exception, message, file, line) do
-      Crystal::Doc::Highlighter.highlight code
-    end
+private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
+  it "does not highlight #{code.inspect} due to error", file, line do
+    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted.should eq(code), file, line
   end
 end
 
@@ -99,18 +98,18 @@ describe "Crystal::Doc::Highlighter#highlight" do
       BAR</span>
     HTML
 
-  assert_highlight_error <<-CR, "Unterminated heredoc"
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
       FOO
     CR
 
-  assert_highlight_error <<-CR, "Unterminated heredoc"
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
     CR
 
-  assert_highlight_error "\"foo", "Unterminated string literal"
-  assert_highlight_error "%w[foo", "Unterminated string array literal"
-  assert_highlight_error "%i[foo", "Unterminated symbol array literal"
+  it_does_not_highlight "\"foo"
+  it_does_not_highlight "%w[foo"
+  it_does_not_highlight "%i[foo"
 end

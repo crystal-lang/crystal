@@ -7,8 +7,10 @@ module Crystal::Doc::Highlighter
     lexer.count_whitespace = true
     lexer.wants_raw = true
 
-    String.build do |io|
-      highlight_normal_state lexer, io
+    begin
+      String.build { |io| highlight_normal_state lexer, io }
+    rescue
+      code
     end
   end
 
