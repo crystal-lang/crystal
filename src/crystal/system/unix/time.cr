@@ -14,7 +14,7 @@ module Crystal::System::Time
   UnixEpochInSeconds = 62135596800_i64
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    {% if LibC.methods.includes?("clock_gettime".id) %}
+    {% if LibC.has_method?("clock_gettime") %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise RuntimeError.from_errno("clock_gettime") unless ret == 0
       {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec.to_i}

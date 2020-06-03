@@ -97,7 +97,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    {% if LibC.methods.includes? "dup3".id %}
+    {% if LibC.has_method?("dup3") %}
       # dup doesn't copy the CLOEXEC flag, so copy it manually using dup3
       flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
       if LibC.dup3(other.fd, self.fd, flags) == -1
