@@ -132,18 +132,17 @@ module Crystal::Doc::Highlighter
       consume_space_or_newline(lexer, io)
       token = lexer.next_string_array_token
       case token.type
-      when :STRING
-        HTML.escape(token.raw, io)
       when :STRING_ARRAY_END
         HTML.escape(token.raw, io)
-        end_highlight_class io
         break
       when :EOF
-        raise "Unterminated symbol array literal"
+        break
       else
-        raise "Bug: shouldn't happen"
+        HTML.escape(token.raw, io)
       end
     end
+  ensure # This ensure is necessary to handle unterminated string array literal.
+    end_highlight_class io
   end
 
   def consume_space_or_newline(lexer, io)
