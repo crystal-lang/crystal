@@ -128,12 +128,12 @@ struct YAML::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(index_or_key, *subkeys)
+  def dig?(index_or_key, *subkeys) : YAML::Any?
     self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(index_or_key)
+  def dig?(index_or_key) : YAML::Any?
     case @raw
     when Hash, Array
       self[index_or_key]?
@@ -143,12 +143,12 @@ struct YAML::Any
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(index_or_key, *subkeys)
+  def dig(index_or_key, *subkeys) : YAML::Any
     self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(index_or_key)
+  def dig(index_or_key) : YAML::Any
     self[index_or_key]
   end
 
