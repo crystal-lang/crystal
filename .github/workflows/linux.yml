@@ -1,0 +1,24 @@
+name: Linux CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_OS_NAME: linux
+  ARCH: x86_64
+  ARCH_CMD: linux64
+
+jobs:
+  test_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci build
