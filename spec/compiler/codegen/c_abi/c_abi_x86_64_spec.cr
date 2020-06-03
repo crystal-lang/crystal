@@ -1,6 +1,6 @@
 require "../../../spec_helper"
 
-{% if flag?(:x86_64) %}
+{% if flag?(:x86_64) && !flag?(:win32) %}
   describe "Code gen: C ABI x86_64" do
     it "passes struct less than 64 bits as { i64 }" do
       mod = codegen(%(

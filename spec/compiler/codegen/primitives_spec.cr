@@ -239,22 +239,25 @@ describe "Code gen: primitives" do
   end
 
   describe "va_arg" do
-    it "uses llvm's va_arg instruction" do
-      mod = codegen(%(
-        struct VaList
-          @[Primitive(:va_arg)]
-          def next(type)
+    # On Windows llvm's va_arg instruction works incorrectly.
+    {% unless flag?(:win32) %}
+      it "uses llvm's va_arg instruction" do
+        mod = codegen(%(
+          struct VaList
+            @[Primitive(:va_arg)]
+            def next(type)
+            end
           end
-        end
 
-        list = VaList.new
-        list.next(Int32)
-      ))
-      str = mod.to_s
-      str.should contain("va_arg %VaList* %list")
-    end
+          list = VaList.new
+          list.next(Int32)
+        ))
+        str = mod.to_s
+        str.should contain("va_arg %VaList* %list")
+      end
+    {% end %}
 
-    it "works with C code" do
+    pending_win32 "works with C code" do
       test_c(
         %(
           extern int foo_f(int,...);
