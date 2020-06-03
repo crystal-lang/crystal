@@ -100,7 +100,7 @@ module Benchmark
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
           item.calculate_stats(ips)
 
-          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_i
+          item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_u64
 
           if @interactive
             run_comparison
@@ -152,7 +152,7 @@ module Benchmark
       property! slower : Float64
 
       # Number of bytes allocated per operation
-      property! bytes_per_op : Int32
+      property! bytes_per_op : UInt64
 
       @ran : Bool
       @ran = false

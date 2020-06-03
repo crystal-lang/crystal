@@ -29,6 +29,19 @@ module Termios
       TAB0   = LibC::TAB0
       TAB3   = LibC::TAB3
     end
+  {% elsif flag?(:dragonfly) %}
+    # FIXME: Verify
+    @[Flags]
+    enum OutputMode
+      OPOST  = LibC::OPOST
+      ONLCR  = LibC::ONLCR
+      OCRNL  = LibC::OCRNL
+      ONOCR  = LibC::ONOCR
+      ONLRET = LibC::ONLRET
+      TABDLY = LibC::TABDLY
+      TAB0   = LibC::TAB0
+      TAB3   = LibC::TAB3
+    end
   {% elsif flag?(:openbsd) %}
     @[Flags]
     enum OutputMode

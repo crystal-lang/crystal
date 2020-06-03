@@ -114,10 +114,6 @@ class Crystal::Doc::Type
     @generator.relative_locations(@type)
   end
 
-  def repository_name
-    @generator.repository_name
-  end
-
   def program?
     @type.is_a?(Program)
   end
@@ -500,26 +496,9 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_path(node.name.as(Path))
-    if match
-      if match.must_be_included?
-        if links
-          io << %(<a href=")
-          io << match.path_from(self)
-          io << %(">)
-        end
-        match.full_name_without_type_vars(io)
-        if links
-          io << "</a>"
-        end
-      else
-        io << node.name
-      end
-    else
-      io << node.name
-    end
+    node_to_html node.name, io, links: links
     io << '('
-    node.type_vars.join(", ", io) do |type_var|
+    node.type_vars.join(io, ", ") do |type_var|
       node_to_html type_var, io, links: links
     end
     io << ')'
@@ -527,7 +506,7 @@ class Crystal::Doc::Type
 
   def node_to_html(node : ProcNotation, io, links = true)
     if inputs = node.inputs
-      inputs.join(", ", io) do |input|
+      inputs.join(io, ", ") do |input|
         node_to_html input, io, links: links
       end
     end
@@ -548,7 +527,7 @@ class Crystal::Doc::Type
       end
     end
 
-    node.types.join(" | ", io) do |elem|
+    node.types.join(io, " | ") do |elem|
       node_to_html elem, io, links: links
     end
   end
@@ -601,7 +580,7 @@ class Crystal::Doc::Type
       separator = " | "
     end
 
-    type.union_types.join(separator, io) do |union_type|
+    type.union_types.join(io, separator) do |union_type|
       type_to_html union_type, io, text, links: links
     end
 
@@ -609,7 +588,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
-    type.arg_types.join(", ", io) do |arg_type|
+    type.arg_types.join(io, ", ") do |arg_type|
       type_to_html arg_type, io, links: links
     end
     io << " -> "
@@ -619,7 +598,7 @@ class Crystal::Doc::Type
 
   def type_to_html(type : Crystal::TupleInstanceType, io, text = nil, links = true)
     io << '{'
-    type.tuple_types.join(", ", io) do |tuple_type|
+    type.tuple_types.join(io, ", ") do |tuple_type|
       type_to_html tuple_type, io, links: links
     end
     io << '}'
@@ -627,7 +606,7 @@ class Crystal::Doc::Type
 
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
     io << '{'
-    type.entries.join(", ", io) do |entry|
+    type.entries.join(io, ", ") do |entry|
       if Symbol.needs_quotes?(entry.name)
         entry.name.inspect(io)
       else
@@ -659,7 +638,7 @@ class Crystal::Doc::Type
     io << "</a>" if must_be_included && links && has_link_in_type_vars
 
     io << '('
-    type.type_vars.values.join(", ", io) do |type_var|
+    type.type_vars.values.join(io, ", ") do |type_var|
       case type_var
       when Var
         type_to_html type_var.type, io, links: links
@@ -762,7 +741,7 @@ class Crystal::Doc::Type
   end
 
   def html_id
-    "#{@generator.repository_name}/" + (
+    "#{@generator.project_info.name}/" + (
       if program?
         "toplevel"
       elsif namespace = self.namespace
@@ -790,7 +769,7 @@ class Crystal::Doc::Type
         end
       end
       builder.field "locations", locations
-      builder.field "repository_name", repository_name
+      builder.field "repository_name", @generator.project_info.name
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?

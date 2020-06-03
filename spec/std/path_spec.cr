@@ -54,6 +54,32 @@ private def assert_paths_raw(path, posix, windows = posix, label = nil, file = _
   end
 end
 
+private def it_relativizes(base, target, posix, windows = posix, file = __FILE__, line = __LINE__)
+  assert_paths target, posix, windows, %(on "#{base}":), file, line do |path|
+    path.relative_to?(base)
+  end
+end
+
+private def it_iterates_parts(path, posix, windows = posix, file = __FILE__, line = __LINE__)
+  assert_paths_raw path, posix, windows, label: "block", file: file, line: line do |path|
+    array = [] of String
+    path.each_part do |part|
+      array << part
+    end
+    array
+  end
+  assert_paths_raw path, posix, windows, label: "iterator", file: file, line: line do |path|
+    array = [] of String
+    path.each_part.each do |part|
+      array << part
+    end
+    array
+  end
+  assert_paths_raw path, posix, windows, label: "#parts", file: file, line: line do |path|
+    path.parts
+  end
+end
+
 describe Path do
   describe ".new" do
     it { Path.new("foo").native?.should be_true }
@@ -256,57 +282,57 @@ describe Path do
     end
   end
 
-  describe "#parts" do
-    assert_paths_raw("/Users/foo/bar.cr", ["/", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("Users/foo/bar.cr", ["Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("foo/bar/", ["foo", "bar"], &.parts)
-    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
-    assert_paths_raw("foo", ["foo"], &.parts)
-    assert_paths_raw("foo/", ["foo"], &.parts)
-    assert_paths_raw("/", ["/"], &.parts)
-    assert_paths_raw("////", ["////"], &.parts)
-    assert_paths_raw("/.", ["/", "."], &.parts)
-    assert_paths_raw("/foo", ["/", "foo"], &.parts)
-    assert_paths_raw("", [] of String, &.parts)
-    assert_paths_raw("./foo", [".", "foo"], &.parts)
-    assert_paths_raw(".", ["."], &.parts)
-    assert_paths_raw("\\Users\\foo\\bar.cr", ["\\Users\\foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("\\Users/foo\\bar.cr", ["\\Users", "foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("C:\\Users\\foo\\bar.cr", ["C:\\Users\\foo\\bar.cr"], ["C:\\", "Users", "foo", "bar.cr"], &.parts)
-    assert_paths_raw("\\\\some\\share\\", ["\\\\some\\share\\"], ["\\\\some\\share\\"], &.parts)
-    assert_paths_raw("\\\\some\\share", ["\\\\some\\share"], &.parts)
-    assert_paths_raw("\\\\some\\share\\bar.cr", ["\\\\some\\share\\bar.cr"], ["\\\\some\\share\\", "bar.cr"], &.parts)
-    assert_paths_raw("//some/share", ["//", "some", "share"], ["//some/share"], &.parts)
-    assert_paths_raw("//some/share/", ["//", "some", "share"], ["//some/share/"], &.parts)
-    assert_paths_raw("//some/share/bar.cr", ["//", "some", "share", "bar.cr"], ["//some/share/", "bar.cr"], &.parts)
-    assert_paths_raw("foo\\bar\\", ["foo\\bar\\"], ["foo", "bar"], &.parts)
-    assert_paths_raw("foo\\", ["foo\\"], ["foo"], &.parts)
-    assert_paths_raw("\\", ["\\"], ["\\"], &.parts)
-    assert_paths_raw(".\\foo", [".\\foo"], [".", "foo"], &.parts)
-    assert_paths_raw("foo/../bar/", ["foo", "..", "bar"], &.parts)
-    assert_paths_raw("foo/../bar/.", ["foo", "..", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/..", ["foo", "bar", ".."], &.parts)
-    assert_paths_raw("foo/bar/../.", ["foo", "bar", "..", "."], &.parts)
-    assert_paths_raw("foo/./bar/", ["foo", ".", "bar"], &.parts)
-    assert_paths_raw("foo/./bar/.", ["foo", ".", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/.", ["foo", "bar", "."], &.parts)
-    assert_paths_raw("foo/bar/./.", ["foo", "bar", ".", "."], &.parts)
-    assert_paths_raw("m/.gitignore", ["m", ".gitignore"], &.parts)
-    assert_paths_raw("m", ["m"], &.parts)
-    assert_paths_raw("m/", ["m"], &.parts)
-    assert_paths_raw("m//", ["m"], &.parts)
-    assert_paths_raw("m\\", ["m\\"], ["m"], &.parts)
-    assert_paths_raw("m//a/b", ["m", "a", "b"], &.parts)
-    assert_paths_raw("m\\a/b", ["m\\a", "b"], ["m", "a", "b"], &.parts)
-    assert_paths_raw("/m", ["/", "m"], &.parts)
-    assert_paths_raw("/m/", ["/", "m"], &.parts)
-    assert_paths_raw("C:", ["C:"], &.parts)
-    assert_paths_raw("C:/", ["C:"], ["C:/"], &.parts)
-    assert_paths_raw("C:\\", ["C:\\"], &.parts)
-    assert_paths_raw("C:folder", ["C:folder"], ["C:", "folder"], &.parts)
-    assert_paths_raw("C:\\folder", ["C:\\folder"], ["C:\\", "folder"], &.parts)
-    assert_paths_raw("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"], &.parts)
-    assert_paths_raw("C:\\.", ["C:\\."], ["C:\\", "."], &.parts)
+  describe "#each_part" do
+    it_iterates_parts("/Users/foo/bar.cr", ["/", "Users", "foo", "bar.cr"])
+    it_iterates_parts("Users/foo/bar.cr", ["Users", "foo", "bar.cr"])
+    it_iterates_parts("foo/bar/", ["foo", "bar"])
+    it_iterates_parts("foo/bar/.", ["foo", "bar", "."])
+    it_iterates_parts("foo", ["foo"])
+    it_iterates_parts("foo/", ["foo"])
+    it_iterates_parts("/", ["/"])
+    it_iterates_parts("////", ["////"])
+    it_iterates_parts("/.", ["/", "."])
+    it_iterates_parts("/foo", ["/", "foo"])
+    it_iterates_parts("", [] of String)
+    it_iterates_parts("./foo", [".", "foo"])
+    it_iterates_parts(".", ["."])
+    it_iterates_parts("\\Users\\foo\\bar.cr", ["\\Users\\foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("\\Users/foo\\bar.cr", ["\\Users", "foo\\bar.cr"], ["\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("C:\\Users\\foo\\bar.cr", ["C:\\Users\\foo\\bar.cr"], ["C:\\", "Users", "foo", "bar.cr"])
+    it_iterates_parts("\\\\some\\share\\", ["\\\\some\\share\\"], ["\\\\some\\share\\"])
+    it_iterates_parts("\\\\some\\share", ["\\\\some\\share"])
+    it_iterates_parts("\\\\some\\share\\bar.cr", ["\\\\some\\share\\bar.cr"], ["\\\\some\\share\\", "bar.cr"])
+    it_iterates_parts("//some/share", ["//", "some", "share"], ["//some/share"])
+    it_iterates_parts("//some/share/", ["//", "some", "share"], ["//some/share/"])
+    it_iterates_parts("//some/share/bar.cr", ["//", "some", "share", "bar.cr"], ["//some/share/", "bar.cr"])
+    it_iterates_parts("foo\\bar\\", ["foo\\bar\\"], ["foo", "bar"])
+    it_iterates_parts("foo\\", ["foo\\"], ["foo"])
+    it_iterates_parts("\\", ["\\"], ["\\"])
+    it_iterates_parts(".\\foo", [".\\foo"], [".", "foo"])
+    it_iterates_parts("foo/../bar/", ["foo", "..", "bar"])
+    it_iterates_parts("foo/../bar/.", ["foo", "..", "bar", "."])
+    it_iterates_parts("foo/bar/..", ["foo", "bar", ".."])
+    it_iterates_parts("foo/bar/../.", ["foo", "bar", "..", "."])
+    it_iterates_parts("foo/./bar/", ["foo", ".", "bar"])
+    it_iterates_parts("foo/./bar/.", ["foo", ".", "bar", "."])
+    it_iterates_parts("foo/bar/.", ["foo", "bar", "."])
+    it_iterates_parts("foo/bar/./.", ["foo", "bar", ".", "."])
+    it_iterates_parts("m/.gitignore", ["m", ".gitignore"])
+    it_iterates_parts("m", ["m"])
+    it_iterates_parts("m/", ["m"])
+    it_iterates_parts("m//", ["m"])
+    it_iterates_parts("m\\", ["m\\"], ["m"])
+    it_iterates_parts("m//a/b", ["m", "a", "b"])
+    it_iterates_parts("m\\a/b", ["m\\a", "b"], ["m", "a", "b"])
+    it_iterates_parts("/m", ["/", "m"])
+    it_iterates_parts("/m/", ["/", "m"])
+    it_iterates_parts("C:", ["C:"])
+    it_iterates_parts("C:/", ["C:"], ["C:/"])
+    it_iterates_parts("C:\\", ["C:\\"])
+    it_iterates_parts("C:folder", ["C:folder"], ["C:", "folder"])
+    it_iterates_parts("C:\\folder", ["C:\\folder"], ["C:\\", "folder"])
+    it_iterates_parts("C:\\\\folder", ["C:\\\\folder"], ["C:\\\\", "folder"])
+    it_iterates_parts("C:\\.", ["C:\\."], ["C:\\", "."])
   end
 
   describe "#extension" do
@@ -723,8 +749,87 @@ describe Path do
     assert_paths_raw("C:\\foo\\bar", Path.windows("C:\\foo\\bar"), &.to_windows)
   end
 
-  describe "to_posix" do
+  describe "#to_posix" do
     assert_paths_raw("foo/bar", Path.posix("foo/bar"), &.to_posix)
     assert_paths_raw("C:\\foo\\bar", Path.posix("C:\\foo\\bar"), Path.posix("C:/foo/bar"), &.to_posix)
+  end
+
+  describe "#relative_to?" do
+    it_relativizes("a/b", "a/b/c", "c")
+    it_relativizes("a/b", "a/b", ".")
+    it_relativizes("a/b/.", "a/b", ".")
+    it_relativizes("a/b", "a/b/.", ".")
+    it_relativizes("./a/b", "a/b", ".")
+    it_relativizes("a/b", "./a/b", ".")
+    it_relativizes("ab/cd", "ab/cde", "../cde", "..\\cde")
+    it_relativizes("ab/cd", "ab/c", "../c", "..\\c")
+    it_relativizes("a/b", "a/b/c/d", "c/d", "c\\d")
+    it_relativizes("a/b", "a/b/../c", "../c", "..\\c")
+    it_relativizes("a/b/../c", "a/b", "../b", "..\\b")
+    it_relativizes("a/b/c", "a/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("a/b", "c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("a/b/c/d", "a/b", "../..", "..\\..")
+    it_relativizes("a/b/c/d", "a/b/", "../..", "..\\..")
+    it_relativizes("a/b/c/d/", "a/b", "../..", "..\\..")
+    it_relativizes("a/b/c/d/", "a/b/", "../..", "..\\..")
+    it_relativizes("../../a/b", "../../a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/a/b", "/a/b", ".")
+    it_relativizes("/a/b/.", "/a/b", ".")
+    it_relativizes("/a/b", "/a/b/.", ".")
+    it_relativizes("/ab/cd", "/ab/cde", "../cde", "..\\cde")
+    it_relativizes("/ab/cd", "/ab/c", "../c", "..\\c")
+    it_relativizes("/a/b", "/a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/a/b", "/a/b/../c", "../c", "..\\c")
+    it_relativizes("/a/b/../c", "/a/b", "../b", "..\\b")
+    it_relativizes("/a/b/c", "/a/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("/a/b", "/c/d", "../../c/d", "..\\..\\c\\d")
+    it_relativizes("/a/b/c/d", "/a/b", "../..", "..\\..")
+    it_relativizes("/a/b/c/d", "/a/b/", "../..", "..\\..")
+    it_relativizes("/a/b/c/d/", "/a/b", "../..", "..\\..")
+    it_relativizes("/a/b/c/d/", "/a/b/", "../..", "..\\..")
+    it_relativizes("/../../a/b", "/../../a/b/c/d", "c/d", "c\\d")
+    it_relativizes("/", "/a/c", "a/c", "a\\c")
+    it_relativizes("/", "/", ".")
+    it_relativizes(".", "a/b", "a/b", "a\\b")
+    it_relativizes(".", "..", "..")
+    # can't do purely lexically
+    it_relativizes("..", ".", nil)
+    it_relativizes("..", "a", nil)
+    it_relativizes("../..", "..", nil)
+    it_relativizes("a", "/a", nil)
+
+    describe "special windows paths" do
+      it_relativizes("/a", "a", nil)
+      it_relativizes("C:a\\b\\c", "C:a/b/d", "../C:a/b/d", "..\\d")
+      it_relativizes("C:a\\b\\c", "c:a/b/d", "../c:a/b/d", "..\\d")
+      it_relativizes("C:\\", "D:\\", "../D:\\", nil)
+      it_relativizes("C:", "D:", "../D:", nil)
+      it_relativizes("C:\\Projects", "c:\\projects\\src", "../c:\\projects\\src", "src")
+      it_relativizes("C:\\Projects", "c:\\projects", "../c:\\projects", ".")
+      it_relativizes("C:\\Projects\\a\\..", "c:\\projects", "../c:\\projects", ".")
+    end
+  end
+
+  describe "#relative_to" do
+    it "relativizable paths" do
+      Path.posix("a/b/c").relative_to("a/b").should eq Path.posix("c")
+      Path.windows("a\\b\\c").relative_to("a\\b").should eq Path.windows("c")
+    end
+
+    it "mixed input paths" do
+      Path.posix("a/b/c").relative_to(Path.windows("a\\b")).should eq Path.posix("c")
+      Path.windows("a\\b\\c").relative_to(Path.posix("a/b")).should eq Path.windows("c")
+    end
+
+    it "paths that can't be relativized" do
+      path = Path.posix(".")
+      path.relative_to(Path.posix("/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("C:/cwd")).should eq path
+      path = Path.windows(".")
+      path.relative_to(Path.windows("C:cwd")).should eq path
+    end
   end
 end

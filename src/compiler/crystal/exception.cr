@@ -9,14 +9,14 @@ module Crystal
     @filename : String | VirtualFile | Nil
 
     def to_s(io) : Nil
-      to_s_with_source(nil, io)
+      to_s_with_source(io, nil)
     end
 
     def warning=(warning)
       @warning = !!warning
     end
 
-    abstract def to_s_with_source(source, io)
+    abstract def to_s_with_source(io : IO, source)
 
     def to_json(json : JSON::Builder)
       json.array do
@@ -43,7 +43,7 @@ module Crystal
 
     def to_s_with_source(source)
       String.build do |io|
-        to_s_with_source source, io
+        to_s_with_source(io, source)
       end
     end
 
@@ -77,11 +77,11 @@ module Crystal
   end
 
   class LocationlessException < Exception
-    def to_s_with_source(source, io)
+    def to_s_with_source(io : IO, source)
       io << @message
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       io << @message
     end
 

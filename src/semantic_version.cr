@@ -147,7 +147,7 @@ struct SemanticVersion
     # semver.prerelease.to_s # => "rc.1"
     # ```
     def to_s(io : IO) : Nil
-      identifiers.join('.', io)
+      identifiers.join(io, '.')
     end
 
     # The comparison operator.

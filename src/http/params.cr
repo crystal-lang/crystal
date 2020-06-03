@@ -127,9 +127,9 @@ module HTTP
     # params # => "color=black&name=crystal&year=2012+-+today"
     # ```
     def self.build(&block : Builder ->) : String
-      form_builder = Builder.new
-      yield form_builder
-      form_builder.to_s
+      String.build do |io|
+        yield Builder.new(io)
+      end
     end
 
     protected getter raw_params
@@ -330,10 +330,7 @@ module HTTP
     # Every parameter added is directly written to an `IO`,
     # where keys and values are properly escaped.
     class Builder
-      @io : IO
-      @first : Bool
-
-      def initialize(@io = IO::Memory.new)
+      def initialize(@io : IO)
         @first = true
       end
 
@@ -351,10 +348,6 @@ module HTTP
       def add(key, values : Array)
         values.each { |value| add(key, value) }
         self
-      end
-
-      def to_s(io : IO) : Nil
-        io << @io.to_s
       end
     end
   end

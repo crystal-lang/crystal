@@ -273,7 +273,7 @@ class Fiber
 
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
     if name = @name
       io << ": " << name
     end

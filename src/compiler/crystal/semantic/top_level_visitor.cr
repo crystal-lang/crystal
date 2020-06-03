@@ -46,8 +46,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     scope, name, type = lookup_type_def(node)
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     created_new_type = false
 
@@ -193,7 +192,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       type.add_annotation(annotation_type, ann)
     end
 
-    attach_doc type, node
+    attach_doc type, node, annotations
 
     pushing_type(type) do
       run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
@@ -210,8 +209,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     scope, name, type = lookup_type_def(node)
 
@@ -237,7 +235,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     node.resolved_type = type
 
-    attach_doc type, node
+    attach_doc type, node, annotations
 
     process_annotations(annotations) do |annotation_type, ann|
       type.add_annotation(annotation_type, ann)
@@ -264,13 +262,15 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    attach_doc type, node
+    attach_doc type, node, annotations: nil
 
     false
   end
 
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
+
+    annotations = read_annotations
 
     scope, name, existing_type = lookup_type_def(node)
 
@@ -283,7 +283,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     alias_type = AliasType.new(@program, scope, name, node.value)
-    attach_doc alias_type, node
+    attach_doc alias_type, node, annotations
     scope.types[name] = alias_type
 
     alias_type.private = true if node.visibility.private?
@@ -295,6 +295,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : Macro)
     check_outside_exp node, "declare macro"
+
+    annotations = read_annotations
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
+    node.doc ||= annotations_doc(annotations)
+    check_ditto node, node.location
 
     node.set_type @program.nil
 
@@ -316,8 +323,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : Def)
     check_outside_exp node, "declare def"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     process_def_annotations(node, annotations) do |annotation_type, ann|
       if annotation_type == @program.primitive_annotation
@@ -440,8 +446,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : LibDef)
     check_outside_exp node, "declare lib"
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     scope = current_type_scope(node)
 
@@ -459,7 +464,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     process_annotations(annotations) do |annotation_type, ann|
       case annotation_type
       when @program.link_annotation
-        type.add_link_annotation(LinkAnnotation.from(ann))
+        link_annotation = LinkAnnotation.from(ann)
+
+        if link_annotation.static?
+          @program.report_warning(ann, "specifying static linking for individual libraries is deprecated")
+        end
+
+        if ann.args.size > 1
+          @program.report_warning(ann, "using non-named arguments for Link annotations is deprecated")
+        end
+
+        type.add_link_annotation(link_annotation)
       when @program.call_convention_annotation
         type.call_convention = parse_call_convention(ann, type.call_convention)
       else
@@ -478,8 +493,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : CStructOrUnionDef)
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     packed = false
     unless node.union?
@@ -533,10 +547,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : EnumDef)
     check_outside_exp node, "declare enum"
 
-    annotations = @annotations
-    @annotations = nil
-
-    annotations_doc = annotations_doc(annotations)
+    annotations = read_annotations
 
     scope, name, enum_type = lookup_type_def(node)
 
@@ -567,9 +578,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     node.resolved_type = enum_type
-    attach_doc enum_type, node
-
-    enum_type.doc ||= annotations_doc(annotations)
+    attach_doc enum_type, node, annotations
 
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
@@ -747,6 +756,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare constant"
     @exp_nest += 1
 
+    annotations = read_annotations
+
     scope, name = lookup_type_def_name(target)
     if current_type.is_a?(Program)
       scope = program.check_private(target) || scope
@@ -761,7 +772,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     const.private = true if target.visibility.private?
 
     check_ditto node, node.location
-    attach_doc const, node
+    attach_doc const, node, annotations
 
     scope.types[name] = const
 
@@ -844,8 +855,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "can only declare fun at lib or global scope"
     end
 
-    annotations = @annotations
-    @annotations = nil
+    annotations = read_annotations
 
     external = External.new(node.name, ([] of Arg), node.body, node.real_name).at(node)
 
@@ -967,25 +977,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def process_lib_annotations
-    link_annotations = nil
-    call_convention = nil
-
-    process_annotations do |annotation_type, ann|
-      case annotation_type
-      when @program.link
-        link_annotations ||= [] of LinkAnnotation
-        link_annotations << LinkAnnotation.from(ann)
-      when @program.call_convention
-        call_convention = parse_call_convention(ann, call_convention)
-      end
-    end
-
-    @annotations = nil
-
-    {link_annotations, call_convention}
-  end
-
   def include_in(current_type, node, kind)
     node_name = node.name
 
@@ -1054,9 +1045,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     call_convention
   end
 
-  def attach_doc(type, node)
+  def attach_doc(type, node, annotations)
     if @program.wants_doc?
       type.doc ||= node.doc
+      type.doc ||= annotations_doc(annotations) if annotations
     end
 
     if node_location = node.location
@@ -1064,7 +1056,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node : Def | Assign | FunDef | Const, location : Location?) : Nil
+  def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
     return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
     if stripped_doc == ":ditto:"
@@ -1099,12 +1091,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
-      when @program.deprecated_annotation
-        # Check whether a DeprecatedAnnotation can be built.
-        # There is no need to store it, but enforcing
-        # arguments makes sense here.
-        DeprecatedAnnotation.from(ann)
-        yield annotation_type, ann
       else
         yield annotation_type, ann
       end

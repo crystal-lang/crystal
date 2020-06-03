@@ -64,6 +64,7 @@ module Crystal
       @slash_is_regex = true
       @wants_raw = false
       @wants_def_or_macro_name = false
+      @wants_symbol = true
       @string_pool = string_pool || StringPool.new
 
       # When lexing macro tokens, when we encounter `#{` inside
@@ -452,172 +453,182 @@ module Crystal
         next_char :";"
       when ':'
         char = next_char
-        case char
-        when ':'
-          next_char :"::"
-        when '+'
-          next_char_and_symbol "+"
-        when '-'
-          next_char_and_symbol "-"
-        when '*'
-          if next_char == '*'
-            next_char_and_symbol "**"
-          else
-            symbol "*"
-          end
-        when '/'
-          case next_char
-          when '/'
-            next_char_and_symbol "//"
-          else
-            symbol "/"
-          end
-        when '='
-          case next_char
-          when '='
-            if next_char == '='
-              next_char_and_symbol "==="
-            else
-              symbol "=="
-            end
-          when '~'
-            next_char_and_symbol "=~"
-          else
-            unknown_token
-          end
-        when '!'
-          case next_char
-          when '='
-            next_char_and_symbol "!="
-          when '~'
-            next_char_and_symbol "!~"
-          else
-            symbol "!"
-          end
-        when '<'
-          case next_char
-          when '='
-            if next_char == '>'
-              next_char_and_symbol "<=>"
-            else
-              symbol "<="
-            end
-          when '<'
-            next_char_and_symbol "<<"
-          else
-            symbol "<"
-          end
-        when '>'
-          case next_char
-          when '='
-            next_char_and_symbol ">="
-          when '>'
-            next_char_and_symbol ">>"
-          else
-            symbol ">"
-          end
-        when '&'
-          case next_char
+
+        if @wants_symbol
+          case char
+          when ':'
+            next_char :"::"
           when '+'
-            next_char_and_symbol "&+"
+            next_char_and_symbol "+"
           when '-'
-            next_char_and_symbol "&-"
+            next_char_and_symbol "-"
           when '*'
-            case next_char
-            when '*'
-              next_char_and_symbol "&**"
+            if next_char == '*'
+              next_char_and_symbol "**"
             else
-              symbol "&*"
+              symbol "*"
             end
-          else
-            symbol "&"
-          end
-        when '|'
-          next_char_and_symbol "|"
-        when '^'
-          next_char_and_symbol "^"
-        when '~'
-          next_char_and_symbol "~"
-        when '%'
-          next_char_and_symbol "%"
-        when '['
-          if next_char == ']'
+          when '/'
+            case next_char
+            when '/'
+              next_char_and_symbol "//"
+            else
+              symbol "/"
+            end
+          when '='
             case next_char
             when '='
-              next_char_and_symbol "[]="
-            when '?'
-              next_char_and_symbol "[]?"
+              if next_char == '='
+                next_char_and_symbol "==="
+              else
+                symbol "=="
+              end
+            when '~'
+              next_char_and_symbol "=~"
             else
-              symbol "[]"
+              unknown_token
             end
-          else
-            unknown_token
-          end
-        when '"'
-          line = @line_number
-          column = @column_number
-          start = current_pos + 1
-          io = IO::Memory.new
-          while true
-            char = next_char
-            case char
-            when '\\'
-              case char = next_char
-              when 'a'
-                io << '\a'
-              when 'b'
-                io << '\b'
-              when 'n'
-                io << '\n'
-              when 'r'
-                io << '\r'
-              when 't'
-                io << '\t'
-              when 'v'
-                io << '\v'
-              when 'f'
-                io << '\f'
-              when 'e'
-                io << '\e'
-              when 'x'
-                io.write_byte consume_string_hex_escape
-              when 'u'
-                io << consume_string_unicode_escape
-              when '0', '1', '2', '3', '4', '5', '6', '7'
-                io.write_byte consume_octal_escape(char)
-              when '\n'
-                incr_line_number nil
-                io << '\n'
+          when '!'
+            case next_char
+            when '='
+              next_char_and_symbol "!="
+            when '~'
+              next_char_and_symbol "!~"
+            else
+              symbol "!"
+            end
+          when '<'
+            case next_char
+            when '='
+              if next_char == '>'
+                next_char_and_symbol "<=>"
+              else
+                symbol "<="
+              end
+            when '<'
+              next_char_and_symbol "<<"
+            else
+              symbol "<"
+            end
+          when '>'
+            case next_char
+            when '='
+              next_char_and_symbol ">="
+            when '>'
+              next_char_and_symbol ">>"
+            else
+              symbol ">"
+            end
+          when '&'
+            case next_char
+            when '+'
+              next_char_and_symbol "&+"
+            when '-'
+              next_char_and_symbol "&-"
+            when '*'
+              case next_char
+              when '*'
+                next_char_and_symbol "&**"
+              else
+                symbol "&*"
+              end
+            else
+              symbol "&"
+            end
+          when '|'
+            next_char_and_symbol "|"
+          when '^'
+            next_char_and_symbol "^"
+          when '~'
+            next_char_and_symbol "~"
+          when '%'
+            next_char_and_symbol "%"
+          when '['
+            if next_char == ']'
+              case next_char
+              when '='
+                next_char_and_symbol "[]="
+              when '?'
+                next_char_and_symbol "[]?"
+              else
+                symbol "[]"
+              end
+            else
+              unknown_token
+            end
+          when '"'
+            line = @line_number
+            column = @column_number
+            start = current_pos + 1
+            io = IO::Memory.new
+            while true
+              char = next_char
+              case char
+              when '\\'
+                case char = next_char
+                when 'a'
+                  io << '\a'
+                when 'b'
+                  io << '\b'
+                when 'n'
+                  io << '\n'
+                when 'r'
+                  io << '\r'
+                when 't'
+                  io << '\t'
+                when 'v'
+                  io << '\v'
+                when 'f'
+                  io << '\f'
+                when 'e'
+                  io << '\e'
+                when 'x'
+                  io.write_byte consume_string_hex_escape
+                when 'u'
+                  io << consume_string_unicode_escape
+                when '0', '1', '2', '3', '4', '5', '6', '7'
+                  io.write_byte consume_octal_escape(char)
+                when '\n'
+                  incr_line_number nil
+                  io << '\n'
+                when '\0'
+                  raise "unterminated quoted symbol", line, column
+                else
+                  io << char
+                end
+              when '"'
+                break
               when '\0'
                 raise "unterminated quoted symbol", line, column
               else
                 io << char
               end
-            when '"'
-              break
-            when '\0'
-              raise "unterminated quoted symbol", line, column
+            end
+
+            @token.type = :SYMBOL
+            @token.value = io.to_s
+            next_char
+            set_token_raw_from_start(start - 2)
+          else
+            if ident_start?(char)
+              start = current_pos
+              while ident_part?(next_char)
+                # Nothing to do
+              end
+              if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
+                next_char
+              end
+              @token.type = :SYMBOL
+              @token.value = string_range_from_pool(start)
+              set_token_raw_from_start(start - 1)
             else
-              io << char
+              @token.type = :":"
             end
           end
-
-          @token.type = :SYMBOL
-          @token.value = io.to_s
-          next_char
-          set_token_raw_from_start(start - 2)
         else
-          if ident_start?(char)
-            start = current_pos
-            while ident_part?(next_char)
-              # Nothing to do
-            end
-            if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
-              next_char
-            end
-            @token.type = :SYMBOL
-            @token.value = string_range_from_pool(start)
-            set_token_raw_from_start(start - 1)
+          case char
+          when ':'
+            next_char :"::"
           else
             @token.type = :":"
           end
@@ -1724,26 +1735,7 @@ module Crystal
         consume_uint_suffix
         set_token_raw_from_start(start)
       when '_'
-        case peek_next_char
-        when 'i'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_int_suffix
-          set_token_raw_from_start(start)
-        when 'f'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_float_suffix
-        when 'u'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_uint_suffix
-        else
-          scan_number(start)
-        end
+        scan_number(start)
       else
         if next_char.ascii_number?
           raise "octal constants should be prefixed with 0o"
@@ -1998,8 +1990,8 @@ module Crystal
             char = next_char
             next_char
             @token.type = :STRING
-            if string_end == '/' && char == '/'
-              @token.value = "/"
+            if char == '/' || char.ascii_whitespace?
+              @token.value = char.to_s
             else
               @token.value = "\\#{char}"
             end
@@ -2987,6 +2979,11 @@ module Crystal
     def next_token_skip_statement_end
       next_token
       skip_statement_end
+    end
+
+    def next_token_never_a_symbol
+      @wants_symbol = false
+      next_token.tap { @wants_symbol = true }
     end
 
     def current_char

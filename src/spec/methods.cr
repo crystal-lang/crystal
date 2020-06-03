@@ -76,78 +76,207 @@ module Spec::Methods
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
-  # Executes the given block before each spec runs.
+  # Executes the given block before each spec in the current context runs.
+  #
+  # A context is defined by `describe` or `context` blocks, or outside of them
+  # it's the root context. Nested contexts inherit the `*_each` blocks of
+  # their ancestors.
+  #
+  # If multiple blocks are registered for the same spec, the blocks defined in
+  # the outermost context go first. Blocks on the same context are executed in
+  # order of definition.
+  #
+  # ```
+  # require "spec
+  #
+  # it "sample_a" {}
+  #
+  # describe "nested_context" do
+  #   before_each do
+  #     puts "runs before sample_b"
+  #   end
+  #
+  #   it "sample_b" {}
+  # end
+  # ```
   def before_each(&block)
-    Spec.root_context.before_each(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `before_each` outside of a describe/context"
+    end
+    Spec.current_context.before_each(&block)
   end
 
-  # Executes the given block after each spec runs.
+  # Executes the given block after each spec in the current context runs.
+  #
+  # A context is defined by `describe` or `context` blocks, or outside of them
+  # it's the root context. Nested contexts inherit the `*_each` blocks of
+  # their ancestors.
+  #
+  # If multiple blocks are registered for the same spec, the blocks defined in
+  # the outermost context go first. Blocks on the same context are executed in
+  # order of definition.
+  #
+  # ```
+  # require "spec
+  #
+  # it "sample_a" {}
+  #
+  # describe "nested_context" do
+  #   after_each do
+  #     puts "runs after sample_b"
+  #   end
+  #
+  #   it "sample_b" {}
+  # end
+  # ```
   def after_each(&block)
-    Spec.root_context.after_each(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `after_each` outside of a describe/context"
+    end
+    Spec.current_context.after_each(&block)
   end
 
-  # Executes the given block before all specs in a given
-  # `description` or `context` run.
+  # Executes the given block before the first spec in the current context runs.
+  #
+  # A context is defined by `describe` or `context` blocks, or outside of them
+  # it's the root context.
+  # This is independent of the source location the specs and this hook are
+  # defined.
+  #
+  # If multiple blocks are registered on the same context, they are executed in
+  # order of definition.
+  #
+  # ```
+  # require "spec
+  #
+  # it "sample_a" {}
+  #
+  # describe "nested_context" do
+  #   before_all do
+  #     puts "runs at start of nested_context"
+  #   end
+  #
+  #   it "sample_b" {}
+  # end
+  # ```
   def before_all(&block)
-    Spec.root_context.before_all(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `before_all` outside of a describe/context"
+    end
+    Spec.current_context.before_all(&block)
   end
 
-  # Executes the given block after all specs in a given
-  # `description` or `context` run.
+  # Executes the given block after the last spec in the current context runs.
+  #
+  # A context is defined by `describe` or `context` blocks, or outside of them
+  # it's the root context.
+  # This is independent of the source location the specs and this hook are
+  # defined.
+  #
+  # If multiple blocks are registered on the same context, they are executed in
+  # order of definition.
+  #
+  # ```
+  # require "spec
+  #
+  # it "sample_a" {}
+  #
+  # describe "nested_context" do
+  #   after_all do
+  #     puts "runs at end of nested_context"
+  #   end
+  #
+  #   it "sample_b" {}
+  # end
+  # ```
   def after_all(&block)
-    Spec.root_context.after_all(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `after_all` outside of a describe/context"
+    end
+    Spec.current_context.after_all(&block)
   end
 
-  # Executes the given block when each spec runs.
+  # Executes the given block when each spec in the current context runs.
   #
   # The block must call `run` on the given `Example::Procsy`
   # object.
   #
-  # For example:
+  # This is essentially a `before_each` and `after_each` hook combined into one.
+  # It is useful for example when setup and teardown steps need shared state.
+  #
+  # A context is defined by `describe` or `context` blocks, or outside of them
+  # it's the root context. Nested contexts inherit the `*_each` blocks of
+  # their ancestors.
+  #
+  # If multiple blocks are registered for the same spec, the blocks defined in
+  # the outermost context go first. Blocks on the same context are executed in
+  # order of definition.
   #
   # ```
-  # require "spec"
+  # require "spec
   #
-  # describe "something" do
+  # it "sample_a" {}
+  #
+  # describe "nested_context" do
   #   around_each do |example|
-  #     puts "before example runs"
+  #     puts "runs before sample_b"
   #     example.run
-  #     puts "after example runs"
+  #     puts "runs after sample_b"
   #   end
   #
-  #   it "tests something" do
-  #     # ...
-  #   end
+  #   it "sample_b" {}
   # end
   # ```
   def around_each(&block : Example::Procsy ->)
-    Spec.root_context.around_each(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `around_each` outside of a describe/context"
+    end
+    Spec.current_context.around_each(&block)
   end
 
-  # Executes the given block when each `describe` or `context` runs.
+  # Executes the given block when the current context runs.
   #
   # The block must call `run` on the given `Context::Procsy`
   # object.
   #
-  # For example:
+  # This is essentially a `before_all` and `after_all` hook combined into one.
+  # It is useful for example when setup and teardown steps need shared state.
+  #
+  # A context is defined by `describe` or `context` blocks. This hook does not
+  # work outside such a block (i.e. in the root context).
+  #
+  # If multiple blocks are registered for the same spec, the blocks defined in
+  # the outermost context go first. Blocks on the same context are executed in
+  # order of definition.
   #
   # ```
-  # require "spec"
+  # require "spec
   #
-  # describe "something" do
-  #   around_all do |context|
-  #     puts "before describe runs"
+  # describe "main_context" do
+  #   around_each do |example|
+  #     puts "runs at beginning of main_context"
   #     example.run
-  #     puts "after describe runs"
+  #     puts "runs at end of main_context"
   #   end
   #
-  #   it "tests something" do
-  #     # ...
+  #   it "sample_a" {}
+  #
+  #   describe "nested_context" do
+  #     around_each do |example|
+  #       puts "runs at beginning of nested_context"
+  #       example.run
+  #       puts "runs at end of nested_context"
+  #     end
+  #
+  #     it "sample_b" {}
   #   end
   # end
   # ```
   def around_all(&block : ExampleGroup::Procsy ->)
-    Spec.root_context.around_all(&block)
+    if Spec.current_context.is_a?(RootContext)
+      raise "Can't call `around_all` outside of a describe/context"
+    end
+    Spec.current_context.around_all(&block)
   end
 end
 

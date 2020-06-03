@@ -1,11 +1,11 @@
 require "spec"
 require "log"
 
-private def c(value)
-  Log::Context.new(value)
+private def m(value)
+  Log::Metadata.build(value)
 end
 
-describe Log::Context do
+describe "Log.context" do
   before_each do
     Log.context.clear
   end
@@ -14,100 +14,80 @@ describe Log::Context do
     Log.context.clear
   end
 
-  it "initialize" do
-    c({a: 1}).should eq(c({"a" => c(1)}))
-    c({a: 1, b: ["str", true], num: 1i64}).should eq(c({"a" => c(1), "b" => c([c("str"), c(true)]), "num" => c(1i64)}))
-    c({a: 1f32, b: 1f64}).should eq(c({"a" => c(1f32), "b" => c(1f64)}))
-    t = Time.local
-    c({time: t}).should eq(c({"time" => c(t)}))
-    Log::Context.new.should eq(c(NamedTuple.new))
+  it "can be set and cleared" do
+    Log.context.metadata.should eq(Log::Metadata.new)
+
+    Log.context.set a: 1
+    Log.context.metadata.should eq(m({a: 1}))
+
+    Log.context.clear
+    Log.context.metadata.should eq(Log::Metadata.new)
   end
 
-  it "immutability" do
-    context = c({a: 1})
-    other = context.as_h
-    other["a"] = c(2)
-
-    other.should eq({"a" => c(2)})
-    context.should eq(c({a: 1}))
+  it "is extended by set" do
+    Log.context.set a: 1
+    Log.context.set b: 2
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 
-  it "merge" do
-    c({a: 1}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
-    c({a: 1, b: 3}).merge(c({b: 2})).should eq(c({a: 1, b: 2}))
+  it "existing keys are overwritten by set" do
+    Log.context.set a: 1, b: 1
+    Log.context.set b: 2, c: 3
+    Log.context.metadata.should eq(m({a: 1, b: 2, c: 3}))
   end
 
-  describe "implicit context" do
-    it "can be set and cleared" do
-      Log.context.should eq(Log::Context.new)
+  it "is restored after with_context" do
+    Log.context.set a: 1
 
-      Log.context.set a: 1
-      Log.context.should eq(c({a: 1}))
-
-      Log.context.clear
-      Log.context.should eq(Log::Context.new)
-    end
-
-    it "is extended by set" do
-      Log.context.set a: 1
+    Log.with_context do
       Log.context.set b: 2
-      Log.context.should eq(c({a: 1, b: 2}))
+      Log.context.metadata.should eq(m({a: 1, b: 2}))
     end
 
-    it "existing keys are overwritten by set" do
-      Log.context.set a: 1, b: 1
-      Log.context.set b: 2, c: 3
-      Log.context.should eq(c({a: 1, b: 2, c: 3}))
+    Log.context.metadata.should eq(m({a: 1}))
+  end
+
+  it "is restored after with_context of Log instance" do
+    Log.context.set a: 1
+    log = Log.for("temp")
+
+    log.with_context do
+      log.context.set b: 2
+      log.context.metadata.should eq(m({a: 1, b: 2}))
     end
 
-    it "is restored with using" do
-      Log.context.set a: 1
+    log.context.metadata.should eq(m({a: 1}))
+  end
 
-      Log.with_context do
-        Log.context.set b: 2
-        Log.context.should eq(c({a: 1, b: 2}))
-      end
+  it "is per fiber" do
+    Log.context.set a: 1
+    done = Channel(Nil).new
 
-      Log.context.should eq(c({a: 1}))
+    f = spawn do
+      Log.context.metadata.should eq(Log::Metadata.new)
+      Log.context.set b: 2
+      Log.context.metadata.should eq(m({b: 2}))
+
+      done.receive
+      done.receive
     end
 
-    it "is per fiber" do
-      Log.context.set a: 1
-      done = Channel(Nil).new
+    done.send nil
+    Log.context.metadata.should eq(m({a: 1}))
+    done.send nil
+  end
 
-      f = spawn do
-        Log.context.should eq(Log::Context.new)
-        Log.context.set b: 2
-        Log.context.should eq(c({b: 2}))
+  it "is assignable from a hash with symbol keys" do
+    Log.context.set a: 1
+    extra = {:b => 2}
+    Log.context.set extra
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
+  end
 
-        done.receive
-        done.receive
-      end
-
-      done.send nil
-      Log.context.should eq(c({a: 1}))
-      done.send nil
-    end
-
-    it "is assignable from a hash with symbol keys" do
-      Log.context.set a: 1
-      extra = {:b => 2}
-      Log.context.set extra
-      Log.context.should eq(c({a: 1, b: 2}))
-    end
-
-    it "is assignable from a hash with string keys" do
-      Log.context.set a: 1
-      extra = {"b" => 2}
-      Log.context.set extra
-      Log.context.should eq(c({a: 1, b: 2}))
-    end
-
-    it "is assignable from a named tuple" do
-      Log.context.set a: 1
-      extra = {b: 2}
-      Log.context.set extra
-      Log.context.should eq(c({a: 1, b: 2}))
-    end
+  it "is assignable from a named tuple" do
+    Log.context.set a: 1
+    extra = {b: 2}
+    Log.context.set extra
+    Log.context.metadata.should eq(m({a: 1, b: 2}))
   end
 end

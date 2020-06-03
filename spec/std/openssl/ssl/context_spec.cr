@@ -98,6 +98,12 @@ describe OpenSSL::SSL::Context do
     expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
   end
 
+  pending "uses intermediate default ciphers" do
+    # Can't be checked because `Context#ciphers` is not implemented.
+    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+    OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+  end
+
   it "sets ciphers" do
     ciphers = "EDH+aRSA DES-CBC3-SHA !RC4"
     context = OpenSSL::SSL::Context::Client.new

@@ -159,5 +159,9 @@ module Crystal
     def size
       @matches.try(&.size) || 0
     end
+
+    def [](*args)
+      Matches.new(@matches.try &.[](*args), @cover, @owner, @success)
+    end
   end
 end

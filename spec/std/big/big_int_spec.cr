@@ -145,6 +145,28 @@ describe "BigInt" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
@@ -411,6 +433,34 @@ describe "BigInt" do
 
   it "has unsafe_shr (#8691)" do
     BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.to_big_i.digits.should eq([0])
+      1.to_big_i.digits.should eq([1])
+      10.to_big_i.digits.should eq([0, 1])
+      123.to_big_i.digits.should eq([3, 2, 1])
+      123456789.to_big_i.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.to_big_i.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.to_big_i.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.to_big_i.digits
+      end
+    end
   end
 end
 

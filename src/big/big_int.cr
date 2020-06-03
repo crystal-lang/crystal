@@ -167,6 +167,15 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
   end
 
+  def factorial : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
+  end
+
   def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
@@ -424,14 +433,20 @@ struct BigInt < Int
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
   def to_s(base : Int) : String
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
     String.new(cstr)
   end
 
-  def digits : Array(Int32)
+  # :nodoc:
+  def digits(base = 10) : Array(Int32)
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
     ary = [] of Int32
-    self.to_s.each_char { |c| ary << c - '0' }
+    self.to_s(base).each_char { |c| ary << c.to_i(base) }
+    ary.reverse!
     ary
   end
 

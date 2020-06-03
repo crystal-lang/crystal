@@ -6,6 +6,39 @@ private def yield_to(fiber)
   Crystal::Scheduler.resume(fiber)
 end
 
+private macro parallel(*jobs)
+  %channel = Channel(Exception | Nil).new
+
+  {% for job, i in jobs %}
+    %ret{i} = uninitialized typeof({{job}})
+    spawn do
+      begin
+        %ret{i} = {{job}}
+      rescue e : Exception
+        %channel.send e
+      else
+        %channel.send nil
+      end
+    end
+  {% end %}
+
+  {{ jobs.size }}.times do
+    %value = %channel.receive
+    if %value.is_a?(Exception)
+      raise Exception.new(
+        "An unhandled error occurred inside a `parallel` call",
+        cause: %value
+      )
+    end
+  end
+
+  {
+    {% for job, i in jobs %}
+      %ret{i},
+    {% end %}
+  }
+end
+
 describe Channel do
   it "creates unbuffered with no arguments" do
     Channel(Int32).new

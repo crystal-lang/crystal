@@ -9,5 +9,3 @@ abstract class Log::Backend
   def close
   end
 end
-
-alias Log::Formatter = Entry, IO ->
