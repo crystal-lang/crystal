@@ -1,7 +1,17 @@
 require "./sys/types"
 
 lib LibC
-  type DIR = Void
+  struct DIR
+    dd_fd : Int
+    dd_loc : Long
+    dd_size : Long
+    dd_buf : Char*
+    dd_len : Int
+    dd_seek : OffT
+    dd_internal : Void*
+    dd_flags : Int
+    dd_lock : Void*
+  end
 
   DT_DIR = 4
 
