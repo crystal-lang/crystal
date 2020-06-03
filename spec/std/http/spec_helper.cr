@@ -1,5 +1,6 @@
 require "spec"
 require "../spec_helper"
+require "../../support/fibers"
 
 private def wait_for(timeout = 5.seconds)
   now = Time.monotonic
@@ -25,7 +26,7 @@ end
 def run_server(server)
   server_done = Channel(Exception?).new
 
-  spawn do
+  f = spawn do
     server.listen
   rescue exc
     server_done.send exc
@@ -35,6 +36,7 @@ def run_server(server)
 
   begin
     wait_for { server.listening? }
+    wait_until_blocked f
 
     yield server_done
   ensure
