@@ -129,9 +129,7 @@ struct YAML::Any
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
   def dig?(index_or_key, *subkeys)
-    if value = self[index_or_key]?
-      value.dig?(*subkeys)
-    end
+    self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
@@ -146,10 +144,7 @@ struct YAML::Any
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
   def dig(index_or_key, *subkeys)
-    if (value = self[index_or_key]) && value.responds_to?(:dig)
-      return value.dig(*subkeys)
-    end
-    raise "YAML::Any value not diggable for key: #{index_or_key.inspect}"
+    self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
