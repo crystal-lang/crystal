@@ -37,6 +37,7 @@ EXPORTS := \
   CRYSTAL_CONFIG_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)" \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
+SPEC_EXPORTS := CRYSTAL_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)"
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
@@ -81,15 +82,15 @@ help: ## Show this help
 
 .PHONY: spec
 spec: $(O)/all_spec ## Run all specs
-	$(O)/all_spec $(SPEC_FLAGS)
+	$(SPEC_EXPORTS) $(O)/all_spec $(SPEC_FLAGS)
 
 .PHONY: std_spec
 std_spec: $(O)/std_spec ## Run standard library specs
-	$(O)/std_spec $(SPEC_FLAGS)
+	$(SPEC_EXPORTS) $(O)/std_spec $(SPEC_FLAGS)
 
 .PHONY: compiler_spec
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
-	$(O)/compiler_spec $(SPEC_FLAGS)
+	$(SPEC_EXPORTS) $(O)/compiler_spec $(SPEC_FLAGS)
 
 .PHONY: docs
 docs: ## Generate standard library documentation
