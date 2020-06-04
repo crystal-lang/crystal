@@ -27,4 +27,15 @@ describe "Compiler" do
       end
     end
   end
+
+  it "treats all arguments post-filename as program arguments" do
+    with_tempfile "args_test" do |path|
+      `bin/crystal '#{compiler_datapath}/args_test' -Dother_flag -- bar '#{path}'`
+
+      File.read(path).should eq(<<-FILE)
+        ["-Dother_flag", "--", "bar"]
+        {other_flag: false}
+        FILE
+    end
+  end
 end

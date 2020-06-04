@@ -255,6 +255,8 @@ module Crystal::System::File
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    raise NotImplementedError.new("File#fsync")
+    if LibC._commit(fd) != 0
+      raise IO::Error.from_errno("Error syncing file")
+    end
   end
 end
