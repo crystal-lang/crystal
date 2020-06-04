@@ -130,6 +130,7 @@ module Crystal
     # If `true` compiler will error if warnings are found.
     property error_on_warnings : Bool = false
 
+    # Linker flags used when invoking the Compiler
     property link_flags : String?
 
     def initialize
