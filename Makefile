@@ -33,7 +33,6 @@ SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_ou
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
 SOURCE_DATE_EPOCH := $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
 EXPORTS := \
-  $(if $(release),,CRYSTAL_CONFIG_PATH="$(PWD)/src") \
   CRYSTAL_CONFIG_LIBRARY_PATH="$(shell crystal env CRYSTAL_LIBRARY_PATH)" \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
