@@ -55,7 +55,7 @@ describe "Code gen: C ABI" do
       ), &.to_i.should eq(3))
   end
 
-  it "passes struct bigger than128 bits (for real)" do
+  it "passes struct bigger than 128 bits (for real)" do
     test_c(
       %(
         struct s {

@@ -136,7 +136,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                end
         ArgType.direct(aty, cast)
       else
-        ArgType.indirect(aty, LLVM::Attribute::ByVal)
+        ArgType.indirect(aty, nil)
       end
     end
   end
