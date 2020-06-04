@@ -2,6 +2,12 @@ require "crystal/datum"
 
 # Base class for all backends.
 abstract class Log::Backend
+  property dispatcher : Dispatcher
+
+  def initialize(dispatch_mode : DispatchMode = :async)
+    @dispatcher = Dispatcher.for(dispatch_mode)
+  end
+
   def initialize(@dispatcher : Dispatcher)
   end
 

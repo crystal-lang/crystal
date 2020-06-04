@@ -3,8 +3,8 @@ class Log::IOBackend < Log::Backend
   property io : IO
   property formatter : Formatter
 
-  def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat)
-    super(AsyncDispatcher.new)
+  def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec? = nil)
+    super(dispatcher || DispatchMode::Async)
   end
 
   def write(entry : Entry)

@@ -1,9 +1,29 @@
 class Log
   module Dispatcher
+    alias Spec = Dispatcher | DispatchMode
+
     abstract def dispatch(entry : Entry, backend : Backend)
 
     def close
     end
+
+    # :nodoc:
+    def self.for(mode : DispatchMode)
+      case mode
+      when .sync?
+        SyncDispatcher.new
+      when .async?
+        AsyncDispatcher.new
+      else
+        DirectDispatcher
+      end
+    end
+  end
+
+  enum DispatchMode
+    Sync
+    Async
+    Direct
   end
 
   module DirectDispatcher

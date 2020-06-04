@@ -12,7 +12,7 @@ class Log::BroadcastBackend < Log::Backend
   @backends = Hash(Log::Backend, Severity).new
 
   def initialize
-    super(DirectDispatcher)
+    super(:direct)
   end
 
   def append(backend : Log::Backend, level : Severity)
