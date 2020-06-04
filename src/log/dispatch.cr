@@ -1,9 +1,15 @@
 class Log
+  # Base interface implemented by log entry dispatchers
+  #
+  # Dispatchers are in charge of sending log entries according
+  # to different strategies.
   module Dispatcher
     alias Spec = Dispatcher | DispatchMode
 
+    # Dispatch a log entry to the specified backend
     abstract def dispatch(entry : Entry, backend : Backend)
 
+    # Close the dispatcher, releasing resources
     def close
     end
 
@@ -26,6 +32,7 @@ class Log
     Direct
   end
 
+  # Stateless dispatcher that deliver log entries immediately
   module DirectDispatcher
     extend Dispatcher
 
@@ -34,6 +41,7 @@ class Log
     end
   end
 
+  # Deliver log entries asynchronously through a channels
   class AsyncDispatcher
     include Dispatcher
 
@@ -58,6 +66,8 @@ class Log
     end
   end
 
+  # Deliver log entries directly. It uses a mutex to guarantee
+  # one entry is delivered at a time.
   class SyncDispatcher
     include Dispatcher
 
