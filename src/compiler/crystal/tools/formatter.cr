@@ -2656,6 +2656,8 @@ module Crystal
         has_newlines, found_comment = format_call_args(node, false, base_indent)
       end
 
+      short_syntax = false
+
       if block = node.block
         needs_space = !has_parentheses || has_args
         block_indent = base_indent
@@ -2683,10 +2685,10 @@ module Crystal
           end
           write ")"
           next_token_skip_space_or_newline
-          indent(block_indent) { format_block block, needs_space }
+          indent(block_indent) { short_syntax = format_block block, needs_space }
           return false
         end
-        indent(block_indent) { format_block block, needs_space }
+        indent(block_indent) { short_syntax = format_block block, needs_space }
         if has_parentheses
           skip_space
           if @token.type == :NEWLINE
@@ -2697,7 +2699,7 @@ module Crystal
       end
 
       if has_args || node.block_arg
-        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent)
+        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent, !!(node.block_arg || short_syntax))
       elsif has_parentheses
         skip_space_or_newline
         write_token :")"
@@ -2831,7 +2833,7 @@ module Crystal
       has_newlines
     end
 
-    def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
+    def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column, has_block_arg = false)
       skip_space
 
       if has_parentheses
@@ -2859,9 +2861,11 @@ module Crystal
         check :")"
 
         if ends_with_newline
+          write "," if has_newlines && !has_block_arg && !@wrote_newline
           write_line unless @wrote_newline
           write_indent(column)
         end
+
         write ")"
         next_token
       end
@@ -2903,6 +2907,8 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
+      short_syntax = false
+
       if @token.keyword?(:do)
         write " do"
         next_token_skip_space
@@ -2931,6 +2937,7 @@ module Crystal
         write_token :"}"
       else
         # It's foo &.bar
+        short_syntax = true
         write "," if needs_comma
         write " " if needs_space
         write_token :"&"
@@ -3002,6 +3009,8 @@ module Crystal
       end
 
       @inside_call_or_assign = old_inside_call_or_assign
+
+      short_syntax
     end
 
     def clear_object(node)
