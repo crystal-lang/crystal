@@ -8,6 +8,8 @@
 
 {% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
+{% elsif compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
+  @[Link("gc", pkg_config: "bdw-gc")]
 {% else %}
   @[Link("gc")]
 {% end %}
