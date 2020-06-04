@@ -4,15 +4,13 @@ class Log::IOBackend < Log::Backend
   property formatter : Formatter
 
   def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat)
-    @mutex = Mutex.new(:unchecked)
+    super(AsyncDispatcher.new)
   end
 
   def write(entry : Entry)
-    @mutex.synchronize do
-      format(entry)
-      io.puts
-      io.flush
-    end
+    format(entry)
+    io.puts
+    io.flush
   end
 
   # Emits the *entry* to the given *io*.
