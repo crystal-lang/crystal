@@ -28,7 +28,7 @@ struct Crystal::Event
   def add(timeout : Time::Span)
     add LibC::Timeval.new(
       tv_sec: LibC::TimeT.new(timeout.total_seconds),
-      tv_usec: timeout.nanoseconds // 1_000
+      tv_usec: timeout.nanoseconds // 1_000,
     )
   end
 

@@ -16,7 +16,7 @@ struct Crystal::System::FileInfo < ::File::Info
       nFileSizeLow: file_attributes.nFileSizeLow,
       nNumberOfLinks: 1,
       nFileIndexHigh: 0,
-      nFileIndexLow: 0
+      nFileIndexLow: 0,
     )
     @file_type = LibC::FILE_TYPE_DISK
     @reparse_tag = file_attributes.dwReserved0

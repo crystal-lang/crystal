@@ -117,7 +117,7 @@ scene = [
 
     ray = Ray.new(
       Vector.new(0.0, 0.0, 0.0),
-      Vector.new((fi - fw/2.0)/fw, (fj - fh/2.0)/fh, 1.0).normalize
+      Vector.new((fi - fw/2.0)/fw, (fj - fh/2.0)/fh, 1.0).normalize,
     )
 
     hit = nil

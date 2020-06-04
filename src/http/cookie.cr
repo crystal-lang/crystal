@@ -134,7 +134,7 @@ module HTTP
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
-          extension: match["extension"]?
+          extension: match["extension"]?,
         )
       end
 

@@ -183,7 +183,7 @@ abstract class OpenSSL::SSL::Context
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       SINGLE_ECDH_USE,
-      SINGLE_DH_USE
+      SINGLE_DH_USE,
     ))
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))

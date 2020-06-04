@@ -35,7 +35,7 @@ end
 
 private def run_init_project(skeleton_type, name, author, email, github_name, dir = name)
   Crystal::Init::InitProject.new(
-    Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true)
+    Crystal::Init::Config.new(skeleton_type, name, dir, author, email, github_name, true),
   ).run
 end
 

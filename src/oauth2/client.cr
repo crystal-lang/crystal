@@ -164,7 +164,7 @@ class OAuth2::Client
       when .http_basic?
         headers.add(
           "Authorization",
-          "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}"
+          "Basic #{Base64.strict_encode("#{@client_id}:#{@client_secret}")}",
         )
       end
       yield form

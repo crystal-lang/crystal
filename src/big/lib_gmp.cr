@@ -215,5 +215,5 @@ end
 LibGMP.set_memory_functions(
   ->(size) { GC.malloc(size) },
   ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size) },
-  ->(ptr, size) { GC.free(ptr) }
+  ->(ptr, size) { GC.free(ptr) },
 )

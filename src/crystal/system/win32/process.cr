@@ -125,7 +125,7 @@ struct Crystal::System::Process
     if LibC.CreateProcessW(
          nil, command_args.check_no_null_byte.to_utf16, nil, nil, true, LibC::CREATE_UNICODE_ENVIRONMENT,
          make_env_block(env, clear_env), chdir.try &.check_no_null_byte.to_utf16,
-         pointerof(startup_info), pointerof(process_info)
+         pointerof(startup_info), pointerof(process_info),
        ) == 0
       error = WinError.value
       case error.to_errno

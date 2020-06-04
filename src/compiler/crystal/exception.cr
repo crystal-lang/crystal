@@ -176,7 +176,7 @@ module Crystal
         lines: lines,
         line_number: @line_number,
         column_number: @column_number,
-        size: @size
+        size: @size,
       )
       "In #{formatted_error}"
     end

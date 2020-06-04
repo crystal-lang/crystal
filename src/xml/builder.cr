@@ -23,7 +23,7 @@ struct XML::Builder
         0
       },
       @box,
-      nil
+      nil,
     )
     @writer = LibXML.xmlNewTextWriter(buffer)
   end

@@ -647,7 +647,7 @@ module Crystal
         assert_macro("",
           %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each { |v| values << v } %}{{values}}{% end %}),
           [] of ASTNode,
-          %([1, 2, 3])
+          %([1, 2, 3]),
         )
       end
 
@@ -657,7 +657,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([1, 3, 5])
+              %([1, 3, 5]),
             )
           end
         end
@@ -667,7 +667,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |v| values << v } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([1, 2, 3])
+              %([1, 2, 3]),
             )
           end
         end
@@ -677,7 +677,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([0, 1, 2])
+              %([0, 1, 2]),
             )
           end
         end
@@ -687,7 +687,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% [1, 2, 3].each_with_index { values << 7 } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([7, 7, 7])
+              %([7, 7, 7]),
             )
           end
         end
@@ -918,7 +918,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([{"k1", "v1"}, {"k2", "v2"}])
+              %([{"k1", "v1"}, {"k2", "v2"}]),
             )
           end
         end
@@ -928,7 +928,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |k| values << k } %}{{values}}{% end %}),
               [] of ASTNode,
-              %(["k1", "k2"])
+              %(["k1", "k2"]),
             )
           end
         end
@@ -938,7 +938,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
               [] of ASTNode,
-              %(["v1", "v2"])
+              %(["v1", "v2"]),
             )
           end
         end
@@ -948,7 +948,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {"k1" => "v1", "k2" => "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([{"k3", "v3"}, {"k3", "v3"}])
+              %([{"k3", "v3"}, {"k3", "v3"}]),
             )
           end
         end
@@ -1028,7 +1028,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k, v| values << {k, v} } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([{k1, "v1"}, {k2, "v2"}])
+              %([{k1, "v1"}, {k2, "v2"}]),
             )
           end
         end
@@ -1038,7 +1038,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |k| values << k } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([k1, k2])
+              %([k1, k2]),
             )
           end
         end
@@ -1048,7 +1048,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { |_, v| values << v } %}{{values}}{% end %}),
               [] of ASTNode,
-              %(["v1", "v2"])
+              %(["v1", "v2"]),
             )
           end
         end
@@ -1058,7 +1058,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {k1: "v1", k2: "v2"}.each { values << {"k3", "v3"} } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([{"k3", "v3"}, {"k3", "v3"}])
+              %([{"k3", "v3"}, {"k3", "v3"}]),
             )
           end
         end
@@ -1136,7 +1136,7 @@ module Crystal
         assert_macro("",
           %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each { |v| values << v } %}{{values}}{% end %}),
           [] of ASTNode,
-          %([1, 2, 3])
+          %([1, 2, 3]),
         )
       end
 
@@ -1146,7 +1146,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v, idx| values << (v + idx) } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([1, 3, 5])
+              %([1, 3, 5]),
             )
           end
         end
@@ -1156,7 +1156,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |v| values << v } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([1, 2, 3])
+              %([1, 2, 3]),
             )
           end
         end
@@ -1166,7 +1166,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { |_, idx| values << idx } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([0, 1, 2])
+              %([0, 1, 2]),
             )
           end
         end
@@ -1176,7 +1176,7 @@ module Crystal
             assert_macro("",
               %({% begin %}{% values = [] of Nil %}{% {1, 2, 3}.each_with_index { values << 7 } %}{{values}}{% end %}),
               [] of ASTNode,
-              %([7, 7, 7])
+              %([7, 7, 7]),
             )
           end
         end
@@ -2486,7 +2486,7 @@ module Crystal
         assert_macro("",
           %({% begin %}{% values = [] of Nil %}{% (1..3).each { |v| values << v } %}{{values}}{% end %}),
           [] of ASTNode,
-          %([1, 2, 3])
+          %([1, 2, 3]),
         )
       end
     end

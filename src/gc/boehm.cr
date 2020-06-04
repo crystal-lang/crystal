@@ -192,7 +192,7 @@ module GC
       free_bytes: free_bytes,
       unmapped_bytes: unmapped_bytes,
       bytes_since_gc: bytes_since_gc,
-      total_bytes: total_bytes
+      total_bytes: total_bytes,
     )
   end
 

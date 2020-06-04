@@ -9,7 +9,7 @@ abstract class OpenSSL::SSL::Socket < IO
             @ssl,
             LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
             LibSSL::TLSExt::NAMETYPE_host_name,
-            hostname.to_unsafe.as(Pointer(Void))
+            hostname.to_unsafe.as(Pointer(Void)),
           )
 
           {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}

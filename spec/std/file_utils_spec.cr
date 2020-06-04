@@ -38,14 +38,14 @@ describe "FileUtils" do
     it "compares two equal files" do
       FileUtils.cmp(
         datapath("test_file.txt"),
-        datapath("test_file.txt")
+        datapath("test_file.txt"),
       ).should be_true
     end
 
     it "compares two different files" do
       FileUtils.cmp(
         datapath("test_file.txt"),
-        datapath("test_file.ini")
+        datapath("test_file.ini"),
       ).should be_false
     end
   end

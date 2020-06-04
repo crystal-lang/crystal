@@ -1067,7 +1067,7 @@ module Crystal
       type = root.lookup_type?(
         node,
         allow_typeof: false,
-        find_root_generic_type_parameters: find_root_generic_type_parameters
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
       )
       check_can_be_stored(node, type)
     end

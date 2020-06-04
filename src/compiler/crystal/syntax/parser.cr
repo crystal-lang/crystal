@@ -4263,7 +4263,7 @@ module Crystal
                 extra_assigns ||= [] of ASTNode
                 extra_assigns << Assign.new(
                   Var.new(sub_arg_name).at(location),
-                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location)
+                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location),
                 ).at(location)
               end
 

@@ -77,7 +77,7 @@ module Spec
           Example::Procsy.new(procsy.example) do
             run_around_each_hook(around_each, procsy, index + 1)
           end
-        end
+        end,
       )
     end
 
@@ -103,7 +103,7 @@ module Spec
           ExampleGroup::Procsy.new(procsy.example_group) do
             run_around_all_hook(around_all, procsy, index + 1)
           end
-        end
+        end,
       )
     end
   end

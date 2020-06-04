@@ -1228,14 +1228,14 @@ describe "File" do
     it "compares two equal files" do
       File.same_content?(
         datapath("test_file.txt"),
-        datapath("test_file.txt")
+        datapath("test_file.txt"),
       ).should be_true
     end
 
     it "compares two different files" do
       File.same_content?(
         datapath("test_file.txt"),
-        datapath("test_file.ini")
+        datapath("test_file.ini"),
       ).should be_false
     end
   end

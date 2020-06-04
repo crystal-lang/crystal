@@ -35,7 +35,7 @@ class Crystal::CodeGenVisitor
       mangled_name,
       param_types,
       return_type,
-      func.varargs?
+      func.varargs?,
     )
 
     p2 = new_fun.params.to_a

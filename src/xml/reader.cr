@@ -24,7 +24,7 @@ struct XML::Reader
       Box(IO).box(io),
       nil,
       nil,
-      options
+      options,
     )
   end
 

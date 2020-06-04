@@ -324,5 +324,5 @@ LibXML.xmlGcMemSetup(
     copy = Pointer(UInt8).malloc(len)
     copy.copy_from(str, len)
     copy
-  }
+  },
 )

@@ -372,7 +372,7 @@ module Crystal
             file[0],
             registers.line.to_i,
             registers.column.to_i,
-            registers.end_sequence
+            registers.end_sequence,
           )
 
           if rows = @current_sequence_matrix

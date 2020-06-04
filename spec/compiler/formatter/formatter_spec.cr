@@ -1298,28 +1298,28 @@ describe Crystal::Formatter do
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "end"
+    "end",
   )
   assert_format(
     "{% verbatim do %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "{% end %}"
+    "{% end %}",
   )
   assert_format(
     "{% if true %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "{% end %}"
+    "{% end %}",
   )
   assert_format(
     "{% for a in %w() %}\n" +
     "  <<-FOO\n" +
     "    hello  \n" +
     "  FOO\n" +
-    "{% end %}"
+    "{% end %}",
   )
 
   # But remove trailing space in macro expression.
@@ -1337,7 +1337,7 @@ describe Crystal::Formatter do
     "    42\n" +
     "  }}  \n" +
     "  2  \n" +
-    "end"
+    "end",
   )
 
   # #7443

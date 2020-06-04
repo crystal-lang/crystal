@@ -64,7 +64,7 @@ module Crystal::System::File
       ret = LibC.GetFileAttributesExW(
         winpath,
         LibC::GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard,
-        pointerof(file_attributes)
+        pointerof(file_attributes),
       )
       return check_not_found_error("Unable to get file info", path) if ret == 0
 
@@ -90,7 +90,7 @@ module Crystal::System::File
       nil,
       LibC::OPEN_EXISTING,
       LibC::FILE_FLAG_BACKUP_SEMANTICS,
-      LibC::HANDLE.null
+      LibC::HANDLE.null,
     )
 
     return check_not_found_error("Unable to get file info", path) if handle == LibC::INVALID_HANDLE_VALUE
@@ -218,7 +218,7 @@ module Crystal::System::File
       nil,
       LibC::OPEN_EXISTING,
       LibC::FILE_ATTRIBUTE_NORMAL,
-      LibC::HANDLE.null
+      LibC::HANDLE.null,
     )
     if handle == LibC::INVALID_HANDLE_VALUE
       raise ::File::Error.from_winerror("Error setting time on file", file: path)
