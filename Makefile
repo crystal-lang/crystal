@@ -106,7 +106,7 @@ libcrystal: $(LIB_CRYSTAL_TARGET)
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
+	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/all_spec.cr
 
 $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -114,7 +114,7 @@ $(O)/std_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 
 $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
+	$(EXPORT_CC) $(EXPORTS) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/compiler_spec.cr
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
