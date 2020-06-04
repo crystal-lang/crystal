@@ -854,9 +854,6 @@ describe "Code gen: proc" do
         def initialize(@foo : Int32)
         end
 
-        def foo=(@foo)
-        end
-
         def foo
           @foo
         end
@@ -873,9 +870,6 @@ describe "Code gen: proc" do
     run(%(
       class Foo
         def initialize(@foo : Int32)
-        end
-
-        def foo=(@foo)
         end
 
         def foo
@@ -903,9 +897,6 @@ describe "Code gen: proc" do
 
       class Foo
         def initialize(@foo : Int32)
-        end
-
-        def foo=(@foo)
         end
 
         def foo
