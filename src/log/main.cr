@@ -46,6 +46,8 @@ class Log
 
   @@builder = Builder.new
 
+  at_exit { @@builder.close }
+
   # Returns the default `Log::Builder` used for `Log.for` calls.
   def self.builder
     @@builder

@@ -47,6 +47,7 @@ class Log
 
     def initialize(buffer_size = 2048)
       @channel = Channel({Entry, Backend}).new(buffer_size)
+      @done = Channel(Nil).new
       spawn write_logs
     end
 
@@ -59,10 +60,16 @@ class Log
         entry, backend = msg
         backend.write(entry)
       end
+
+      @done.send nil
     end
 
     def close
-      @channel.close
+      # TODO: this might fail if being closed from different threads
+      unless @channel.closed?
+        @channel.close
+        @done.receive
+      end
     end
   end
 

@@ -26,6 +26,7 @@ class Log::BroadcastBackend < Log::Backend
   end
 
   def close
+    @backends.each_key &.close
   end
 
   # :nodoc:
