@@ -66,7 +66,8 @@ module Crystal
                 implementation = ImplementationTrace.build location
                 MacroImplementation.new(
                   name: name,
-                  implementation: implementation)
+                  implementation: implementation,
+                )
               end
             end
 

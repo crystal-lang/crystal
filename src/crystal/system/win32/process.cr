@@ -91,7 +91,8 @@ struct Crystal::System::Process
       Crystal::System::Time.filetime_to_f64secs(user),
       Crystal::System::Time.filetime_to_f64secs(kernel),
       0,
-      0)
+      0,
+    )
   end
 
   def self.fork

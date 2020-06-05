@@ -60,7 +60,8 @@ module GC
       gc_no: zero,
       markers_m1: zero,
       bytes_reclaimed_since_gc: zero,
-      reclaimed_bytes_before_gc: zero)
+      reclaimed_bytes_before_gc: zero,
+    )
   end
 
   {% unless flag?(:win32) %}

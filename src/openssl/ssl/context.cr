@@ -296,7 +296,7 @@ abstract class OpenSSL::SSL::Context
   # context.add_options(
   #   OpenSSL::SSL::Options::ALL |       # various workarounds
   #   OpenSSL::SSL::Options::NO_SSL_V2 | # disable overly deprecated SSLv2
-  #   OpenSSL::SSL::Options::NO_SSL_V3   # disable deprecated SSLv3
+  #   OpenSSL::SSL::Options::NO_SSL_V3,  # disable deprecated SSLv3
   # )
   # ```
   def add_options(options : OpenSSL::SSL::Options)

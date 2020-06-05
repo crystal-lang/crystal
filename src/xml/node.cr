@@ -449,7 +449,8 @@ struct XML::Node
         },
         Box(IO).box(io),
         @node.value.doc.value.encoding,
-        options)
+        options,
+      )
       LibXML.xmlSaveTree(save_ctx, self)
       LibXML.xmlSaveClose(save_ctx)
 

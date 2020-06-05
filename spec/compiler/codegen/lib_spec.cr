@@ -119,7 +119,8 @@ describe "Code gen: lib" do
 
         tuple = LibFoo.foo
         tuple[0] + tuple[1]
-      ), &.to_i.should eq(3))
+      ), &.to_i.should eq(3)
+    )
   end
 
   it "get fun field from struct (#672)" do

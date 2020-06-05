@@ -504,6 +504,7 @@ describe "Code gen: pointer" do
         z = LibFoo.external_var
 
         x + y + z
-      ), &.to_i.should eq(111))
+      ), &.to_i.should eq(111)
+    )
   end
 end

@@ -201,7 +201,7 @@ class Crystal::CodeGenVisitor
   def codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
     overflow = and(
       codegen_binary_op_ne(t1, t1, p1, int(0, t1)), # self != 0
-      codegen_binary_op_lt(t2, t2, p2, int(0, t2))  # other < 0
+      codegen_binary_op_lt(t2, t2, p2, int(0, t2)), # other < 0
     )
     codegen_raise_overflow_cond overflow
 
@@ -1235,7 +1235,8 @@ class Crystal::CodeGenVisitor
 
       # .PEAX is void*
       void_ptr_type_descriptor = @main_mod.globals.add(
-        type_descriptor, void_ptr_type_descriptor_name)
+        type_descriptor, void_ptr_type_descriptor_name,
+      )
       void_ptr_type_descriptor.initializer = llvm_context.const_struct [
         base_type_descriptor,
         llvm_context.void_pointer.null,
@@ -1259,7 +1260,8 @@ class Crystal::CodeGenVisitor
     if !@main_mod.globals[void_ptr_throwinfo_name]?
       catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
       void_ptr_catchable_type = @main_mod.globals.add(
-        catchable_type, "_CT??_R0PEAX@88")
+        catchable_type, "_CT??_R0PEAX@88",
+      )
       void_ptr_catchable_type.initializer = llvm_context.const_struct [
         int32(1),
         sub_image_base(void_ptr_type_descriptor),
@@ -1272,14 +1274,16 @@ class Crystal::CodeGenVisitor
 
       catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
       catchable_void_ptr = @main_mod.globals.add(
-        catchable_type_array, "_CTA1PEAX")
+        catchable_type_array, "_CTA1PEAX",
+      )
       catchable_void_ptr.initializer = llvm_context.const_struct [
         int32(1),
         llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
       ]
 
       void_ptr_throwinfo = @main_mod.globals.add(
-        eh_throwinfo, void_ptr_throwinfo_name)
+        eh_throwinfo, void_ptr_throwinfo_name,
+      )
       void_ptr_throwinfo.initializer = llvm_context.const_struct [
         int32(0),
         int32(0),
@@ -1306,7 +1310,9 @@ class Crystal::CodeGenVisitor
     @builder.trunc(
       @builder.sub(
         @builder.ptr2int(value, llvm_context.int64),
-        @builder.ptr2int(image_base, llvm_context.int64)),
-      llvm_context.int32)
+        @builder.ptr2int(image_base, llvm_context.int64),
+      ),
+      llvm_context.int32,
+    )
   end
 end

@@ -3161,7 +3161,8 @@ module Crystal
         node.assign.target.as(Var),
         node.assign.value,
         node.assign,
-        restriction: node.restriction)
+        restriction: node.restriction,
+      )
       node.bind_to(node.assign)
       false
     end

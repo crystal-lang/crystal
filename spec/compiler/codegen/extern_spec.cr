@@ -220,7 +220,8 @@ describe "Codegen: extern struct" do
             })
 
             Global.x &+ Global.y
-          ), &.to_i.should eq(3))
+          ), &.to_i.should eq(3)
+      )
     end
 
     it "codegens proc that takes an extern struct with C ABI (2)" do
@@ -275,7 +276,8 @@ describe "Codegen: extern struct" do
             })
 
             Global.x &+ Global.y
-          ), &.to_i.should eq(33))
+          ), &.to_i.should eq(33)
+      )
     end
 
     it "codegens proc that takes an extern struct with C ABI, callback returns nil" do
@@ -331,7 +333,8 @@ describe "Codegen: extern struct" do
             })
 
             Global.x &+ Global.y
-          ), &.to_i.should eq(3))
+          ), &.to_i.should eq(3)
+      )
     end
 
     it "codegens proc that takes and returns an extern struct with C ABI" do
@@ -389,7 +392,8 @@ describe "Codegen: extern struct" do
             })
 
             Global.x &+ Global.y &+ s2.x &+ s2.y
-          ), &.to_i.should eq(303))
+          ), &.to_i.should eq(303)
+      )
     end
 
     it "codegens proc that takes and returns an extern struct with C ABI" do
@@ -424,7 +428,8 @@ describe "Codegen: extern struct" do
             })
 
             s2.x &+ s2.y
-          ), &.to_i.should eq(30))
+          ), &.to_i.should eq(30)
+      )
     end
 
     it "codegens proc that takes and returns an extern struct with sret" do
@@ -479,7 +484,8 @@ describe "Codegen: extern struct" do
             Global.x &+= s2.y
             Global.x &+= s2.z
             Global.x.to_i32
-          ), &.to_i.should eq(12))
+          ), &.to_i.should eq(12)
+      )
     end
 
     it "doesn't crash with proc with extern struct that's a closure" do

@@ -281,7 +281,8 @@ describe "Code gen: primitives" do
           end
 
           LibFoo.foo
-        ), &.to_i.should eq(6))
+        ), &.to_i.should eq(6)
+      )
     end
   end
 end

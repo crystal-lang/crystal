@@ -852,11 +852,13 @@ describe Time do
       with_zoneinfo do
         location = Time::Location.load("Europe/Berlin")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
-          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location),
+        )
 
         location = Time::Location.load("America/Buenos_Aires")
         Time.week_date(*CALENDAR_WEEK_TEST_DATA[0][1], 11, 57, 32, nanosecond: 123_567, location: location).should eq(
-          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location))
+          Time.local(*CALENDAR_WEEK_TEST_DATA[0][0], 11, 57, 32, nanosecond: 123_567, location: location),
+        )
       end
     end
   end

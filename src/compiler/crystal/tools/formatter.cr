@@ -658,7 +658,8 @@ module Crystal
         info.line,
         info.column,
         info.indent, info.string_continuation,
-        wrote_token: true)
+        wrote_token: true,
+      )
     end
 
     def visit(node : RegexLiteral)
@@ -2073,7 +2074,8 @@ module Crystal
             ex.line_number + macro_node_line,
             ex.column_number,
             ex.filename,
-            ex.size)
+            ex.size,
+          )
         end
 
         # The formatted contents might have heredocs for which we must preserve

@@ -209,7 +209,8 @@ module GC
       gc_no: stats.gc_no,
       markers_m1: stats.markers_m1,
       bytes_reclaimed_since_gc: stats.bytes_reclaimed_since_gc,
-      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc)
+      reclaimed_bytes_before_gc: stats.reclaimed_bytes_before_gc,
+    )
   end
 
   {% unless flag?(:win32) %}

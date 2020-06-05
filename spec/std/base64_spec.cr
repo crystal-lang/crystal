@@ -60,7 +60,8 @@ describe "Base64" do
 
     it "decode from strict form" do
       Base64.decode_string("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
-        "Now is the time for all good coders\nto learn Crystal")
+        "Now is the time for all good coders\nto learn Crystal",
+      )
     end
 
     it "encode to stream" do
@@ -152,7 +153,8 @@ describe "Base64" do
   describe "scrict" do
     it "encode" do
       Base64.strict_encode("Now is the time for all good coders\nto learn Crystal").should eq(
-        "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==")
+        "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==",
+      )
     end
     it "with spec symbols" do
       s = String.build { |b| (160..179).each { |i| b << i.chr } }

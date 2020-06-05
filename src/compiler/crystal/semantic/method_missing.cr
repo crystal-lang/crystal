@@ -87,7 +87,8 @@ module Crystal
           raise_wrong_method_missing_expansion(
             "it should only expand to a single def",
             expanded_macro,
-            original_call)
+            original_call,
+          )
         end
 
         a_def.body = generated_nodes
@@ -108,7 +109,8 @@ module Crystal
         raise_wrong_method_missing_expansion(
           "the generated method won't be found by the original call invocation",
           expanded_macro,
-          original_call)
+          original_call,
+        )
       end
 
       true

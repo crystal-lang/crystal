@@ -629,8 +629,7 @@ describe "#remote_address" do
       HTTP::LogHandler.new,
       HTTP::CompressHandler.new,
       HTTP::StaticFileHandler.new("."),
-    ]
-    )
+    ])
     server.bind_tcp "0.0.0.0", 0
     server.listen
     server.close
@@ -651,8 +650,7 @@ describe "#remote_address" do
       HTTP::LogHandler.new,
       HTTP::CompressHandler.new,
       HTTP::StaticFileHandler.new("."),
-    ]
-    )
+    ])
     server.bind_tcp 0
     server.listen
     server.close
