@@ -339,13 +339,13 @@ struct Crystal::TypeDeclarationProcessor
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
 
+    # If a superclass already defines this variable we ignore
+    # the guessed type information for subclasses
+    supervar = owner.lookup_instance_var?(name)
+    return if supervar
+
     case owner
     when NonGenericClassType
-      # If a superclass already defines this variable we ignore
-      # the guessed type information for subclasses
-      supervar = owner.lookup_instance_var?(name)
-      return if supervar
-
       type = type_info.type
       if nilable_instance_var?(owner, name)
         type = Type.merge!(type, @program.nil)
