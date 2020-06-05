@@ -414,13 +414,4 @@ class Crystal::Doc::Generator
     end
     locations.sort
   end
-
-  def highlight(code)
-    begin
-      Highlighter.highlight(code)
-    rescue
-      # TODO: show warning message on error
-      code
-    end
-  end
 end

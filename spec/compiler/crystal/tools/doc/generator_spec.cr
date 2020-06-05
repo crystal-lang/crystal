@@ -268,18 +268,4 @@ describe Doc::Generator do
 
       XML
   end
-
-  describe "#highlight" do
-    it "returns highlight code" do
-      program = Program.new
-      generator = Doc::Generator.new program, ["."]
-      generator.highlight("1").should eq(%(<span class="n">1</span>))
-    end
-
-    it "returns unhighlight code if code is broken" do
-      program = Program.new
-      generator = Doc::Generator.new program, ["."]
-      generator.highlight("\"foo").should eq("\"foo")
-    end
-  end
 end

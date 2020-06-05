@@ -291,7 +291,7 @@ class Crystal::Doc::Method
 
     if default_value = arg.default_value
       io << " = "
-      io << highlight(default_value.to_s)
+      io << Highlighter.highlight(default_value.to_s)
     end
   end
 
