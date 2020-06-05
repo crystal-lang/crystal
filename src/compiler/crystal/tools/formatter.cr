@@ -991,7 +991,7 @@ module Crystal
           write " " if write_space_at_end
         end
       else
-        found_comment ||= skip_space_or_newline
+        found_comment |= skip_space_or_newline
         check suffix
 
         if @wrote_newline
@@ -2623,6 +2623,7 @@ module Crystal
       column = @indent
       has_newlines = false
       found_comment = false
+      found_first_newline = false
 
       # For special calls we want to format `.as (Int32)` into `.as(Int32)`
       # so we remove the space between "as" and "(".
@@ -2631,6 +2632,7 @@ module Crystal
       if @token.type == :"("
         slash_is_regex!
         next_token
+        found_first_newline = @token.type == :NEWLINE
 
         # If it's something like `foo.bar()` we rewrite it as `foo.bar`
         # (parentheses are not needed). Also applies for special calls
@@ -2645,7 +2647,7 @@ module Crystal
         write "("
         has_parentheses = true
         has_newlines, found_comment = format_call_args(node, true, base_indent)
-        found_comment ||= skip_space
+        found_comment |= skip_space(write_comma: found_first_newline)
         if @token.type == :NEWLINE
           ends_with_newline = true
         end
@@ -2699,7 +2701,7 @@ module Crystal
       end
 
       if has_args || node.block_arg
-        finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, base_indent, !!(node.block_arg || short_syntax))
+        finish_args(has_parentheses, has_newlines, found_first_newline, found_comment, base_indent, !!(node.block_arg || short_syntax))
       elsif has_parentheses
         skip_space_or_newline
         write_token :")"
@@ -2833,11 +2835,13 @@ module Crystal
       has_newlines
     end
 
-    def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column, has_block_arg = false)
-      skip_space
+    def finish_args(has_parentheses, has_newlines, found_first_newline, found_comment, column, has_block_arg = false)
+      found_comment |= skip_space(write_comma: found_first_newline)
 
       if has_parentheses
-        if @token.type == :","
+        has_comma = @token.type == :","
+
+        if has_comma
           next_token
           found_comment |= skip_space(column + 2, write_comma: true)
           if @token.type == :NEWLINE && has_newlines
@@ -2860,9 +2864,11 @@ module Crystal
         end
         check :")"
 
-        if ends_with_newline
+        if found_first_newline && !has_comma && !found_comment
           write "," if has_newlines && !has_block_arg && !@wrote_newline
           write_line unless @wrote_newline
+          write_indent(column)
+        elsif @wrote_newline
           write_indent(column)
         end
 
@@ -4505,7 +4511,7 @@ module Crystal
         when :";"
           next_token
         when :SPACE
-          found_comment ||= skip_space
+          found_comment |= skip_space
         else
           break
         end
