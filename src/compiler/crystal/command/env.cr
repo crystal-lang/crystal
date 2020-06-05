@@ -16,7 +16,7 @@ class Crystal::Command
 
     if ARGV.empty?
       vars.each do |key, value|
-        puts "#{key}=#{value.inspect}"
+        puts "#{key}=#{Process.quote(value)}"
       end
     else
       ARGV.each do |key|
