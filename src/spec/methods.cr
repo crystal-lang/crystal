@@ -6,6 +6,8 @@ module Spec::Methods
   #
   # Example:
   # ```
+  # require "spec"
+  #
   # describe "Int32" do
   #   describe "+" do
   #     it "adds" { (1 + 1).should eq 2 }
@@ -35,6 +37,8 @@ module Spec::Methods
   #
   # Example:
   # ```
+  # require "spec"
+  #
   # it "adds" { (1 + 1).should eq 2 }
   # ```
   #
@@ -52,6 +56,8 @@ module Spec::Methods
   #
   # Example:
   # ```
+  # require "spec"
+  #
   # pending "check cat" { cat.alive? }
   # ```
   #
@@ -76,6 +82,24 @@ module Spec::Methods
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
+  # Marks the current example pending
+  #
+  # In case an example needs to be pending on some condition that requires executing it,
+  # this allows to mark it as such  rather than letting it fail or never run.
+  #
+  # ```
+  # require "spec"
+  #
+  # it "test git" do
+  #   cmd = Process.find_executable("git")
+  #   pending!("git is not available") unless cmd
+  #   cmd.ends_with?("git").should be_true
+  # end
+  # ```
+  def pending!(msg = "Cannot run example", file = __FILE__, line = __LINE__)
+    raise Spec::ExamplePending.new(msg, file, line)
+  end
+
   # Executes the given block before each spec in the current context runs.
   #
   # A context is defined by `describe` or `context` blocks, or outside of them
@@ -87,16 +111,16 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
-  # it "sample_a" {}
+  # it "sample_a" { }
   #
   # describe "nested_context" do
   #   before_each do
   #     puts "runs before sample_b"
   #   end
   #
-  #   it "sample_b" {}
+  #   it "sample_b" { }
   # end
   # ```
   def before_each(&block)
@@ -117,16 +141,16 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
-  # it "sample_a" {}
+  # it "sample_a" { }
   #
   # describe "nested_context" do
   #   after_each do
   #     puts "runs after sample_b"
   #   end
   #
-  #   it "sample_b" {}
+  #   it "sample_b" { }
   # end
   # ```
   def after_each(&block)
@@ -147,16 +171,16 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
-  # it "sample_a" {}
+  # it "sample_a" { }
   #
   # describe "nested_context" do
   #   before_all do
   #     puts "runs at start of nested_context"
   #   end
   #
-  #   it "sample_b" {}
+  #   it "sample_b" { }
   # end
   # ```
   def before_all(&block)
@@ -177,16 +201,16 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
-  # it "sample_a" {}
+  # it "sample_a" { }
   #
   # describe "nested_context" do
   #   after_all do
   #     puts "runs at end of nested_context"
   #   end
   #
-  #   it "sample_b" {}
+  #   it "sample_b" { }
   # end
   # ```
   def after_all(&block)
@@ -213,9 +237,9 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
-  # it "sample_a" {}
+  # it "sample_a" { }
   #
   # describe "nested_context" do
   #   around_each do |example|
@@ -224,7 +248,7 @@ module Spec::Methods
   #     puts "runs after sample_b"
   #   end
   #
-  #   it "sample_b" {}
+  #   it "sample_b" { }
   # end
   # ```
   def around_each(&block : Example::Procsy ->)
@@ -250,7 +274,7 @@ module Spec::Methods
   # order of definition.
   #
   # ```
-  # require "spec
+  # require "spec"
   #
   # describe "main_context" do
   #   around_each do |example|
@@ -259,7 +283,7 @@ module Spec::Methods
   #     puts "runs at end of main_context"
   #   end
   #
-  #   it "sample_a" {}
+  #   it "sample_a" { }
   #
   #   describe "nested_context" do
   #     around_each do |example|
@@ -268,7 +292,7 @@ module Spec::Methods
   #       puts "runs at end of nested_context"
   #     end
   #
-  #     it "sample_b" {}
+  #     it "sample_b" { }
   #   end
   # end
   # ```
