@@ -62,10 +62,8 @@ module Crystal
   end
 
   def self.normalize_path(path)
-    path_start = ".#{File::SEPARATOR}"
-    unless path.starts_with?(path_start) || path.starts_with?(File::SEPARATOR)
-      path = path_start + path
-    end
-    path.rstrip(File::SEPARATOR)
+    path = ::Path[path].normalize
+    path = ::Path["."] / path unless path.anchor
+    path.to_s
   end
 end

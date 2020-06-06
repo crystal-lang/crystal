@@ -368,6 +368,24 @@ describe "Dir" do
         Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).size.should eq 0
       end
     end
+
+    context "with path" do
+      expected = [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ]
+
+      it "posix path" do
+        Dir[Path.posix(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.posix(datapath, "dir", "*.txt")]].sort.should eq expected
+      end
+
+      it "windows path" do
+        Dir[Path.windows(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.windows(datapath, "dir", "*.txt")]].sort.should eq expected
+      end
+    end
   end
 
   describe "cd" do

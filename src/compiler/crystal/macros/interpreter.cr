@@ -318,6 +318,11 @@ module Crystal
       false
     end
 
+    def visit(node : OpAssign)
+      @program.normalize(node).accept(self)
+      false
+    end
+
     def visit(node : And)
       node.left.accept self
       if @last.truthy?

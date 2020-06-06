@@ -4,19 +4,23 @@ require "../../support/env"
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
     crystal_path = Crystal::CrystalPath.new(path)
-    relative_to = "#{__DIR__}/#{relative_to}" if relative_to
-    results = results.map { |result| "#{__DIR__}/#{result}" }
-    matches = crystal_path.find search, relative_to: relative_to
-    matches.should eq(results)
+    results = results.map { |result| File.join(__DIR__, result) }
+    Dir.cd(__DIR__) do
+      matches = crystal_path.find search, relative_to: relative_to
+      matches.should eq(results), file: file, line: line
+    end
   end
 end
 
-private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
+private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, expected_relative_to = nil, file = __FILE__, line = __LINE__)
   it "doesn't finds #{search.inspect}", file, line do
     crystal_path = Crystal::CrystalPath.new(path)
-    relative_to = "#{__DIR__}/#{relative_to}" if relative_to
-    expect_raises Exception, /can't find file/ do
-      crystal_path.find search, relative_to: relative_to
+    Dir.cd(__DIR__) do
+      error = expect_raises Crystal::CrystalPath::NotFoundError do
+        crystal_path.find search, relative_to: relative_to
+      end
+      error.relative_to.should eq(expected_relative_to), file: file, line: line
+      error.filename.should eq(search), file: file, line: line
     end
   end
 end
@@ -88,33 +92,17 @@ describe Crystal::CrystalPath do
 
   assert_doesnt_find "file_two.cr"
   assert_doesnt_find "test_folder/file_three.cr"
-  assert_doesnt_find "test_folder/*", relative_to: "#{__DIR__}/test_files/file_one.cr"
+  assert_doesnt_find "test_folder/*", relative_to: Path[__DIR__, "test_files", "file_one.cr"].to_s, expected_relative_to: Path[__DIR__, "test_files"].to_s
   assert_doesnt_find "test_files/missing_file.cr"
   assert_doesnt_find __FILE__[1..-1], path: ":"
 
   # Don't find in CRYSTAL_PATH if the path is relative (#4742)
-  assert_doesnt_find "./crystal_path_spec", relative_to: "test_files/file_one.cr"
-  assert_doesnt_find "./crystal_path_spec.cr", relative_to: "test_files/file_one.cr"
+  assert_doesnt_find "./crystal_path_spec", relative_to: Path["test_files", "file_one.cr"].to_s, expected_relative_to: Path["test_files"].to_s
+  assert_doesnt_find "./crystal_path_spec.cr", relative_to: Path["test_files", "file_one.cr"].to_s, expected_relative_to: Path["test_files"].to_s
   assert_doesnt_find "../crystal_path/test_files/file_one"
 
   # Don't find relative filenames in src or shards
-  assert_doesnt_find "../../src/file_three", relative_to: "test_files/test_folder/test_folder.cr"
-
-  it "prints an explanatory message for non-relative requires" do
-    crystal_path = Crystal::CrystalPath.new(__DIR__)
-    ex = expect_raises Exception, /If you're trying to require a shard/ do
-      crystal_path.find "non_existent", relative_to: __DIR__
-    end
-  end
-
-  it "doesn't print an explanatory message for relative requires" do
-    crystal_path = Crystal::CrystalPath.new(__DIR__)
-    ex = expect_raises Exception, /can't find file/ do
-      crystal_path.find "./non_existent", relative_to: __DIR__
-    end
-
-    ex.message.not_nil!.should_not contain "If you're trying to require a shard"
-  end
+  assert_doesnt_find "../../src/file_three", relative_to: Path["test_files", "test_folder", "test_folder.cr"].to_s, expected_relative_to: Path["test_files", "test_folder"].to_s
 
   it "includes 'lib' by default" do
     with_env("CRYSTAL_PATH": nil) do

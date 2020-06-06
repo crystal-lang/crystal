@@ -298,7 +298,7 @@ class HTTP::WebSocket::Protocol
       handshake.to_io(socket)
       socket.flush
 
-      handshake_response = HTTP::Client::Response.from_io(socket)
+      handshake_response = HTTP::Client::Response.from_io(socket, ignore_body: true)
       unless handshake_response.status.switching_protocols?
         raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status.code}.")
       end

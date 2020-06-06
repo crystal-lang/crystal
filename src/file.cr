@@ -809,6 +809,9 @@ class File < IO::FileDescriptor
   # then the syscall *fdatasync* will be used and only data required for
   # subsequent data retrieval is flushed. Metadata such as modified time and
   # access time is not written.
+  #
+  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
+  # and DragonFly BSD.
   def fsync(flush_metadata = true) : Nil
     flush
     system_fsync(flush_metadata)

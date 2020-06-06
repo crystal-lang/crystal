@@ -3,14 +3,21 @@ require "./exception"
 
 module Crystal
   struct CrystalPath
-    class Error < LocationlessException
+    class NotFoundError < LocationlessException
+      getter filename
+      getter relative_to
+
+      def initialize(@filename : String, @relative_to : String?)
+      end
     end
 
     private DEFAULT_LIB_PATH = "lib"
 
     def self.default_path
       ENV["CRYSTAL_PATH"]? || begin
-        if Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
+        if Crystal::Config.path.blank?
+          DEFAULT_LIB_PATH
+        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
           Crystal::Config.path
         else
           {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
@@ -46,7 +53,9 @@ module Crystal
         result = find_in_crystal_path(filename)
       end
 
-      cant_find_file filename, relative_to unless result
+      unless result
+        raise NotFoundError.new(filename, relative_to)
+      end
 
       result = [result] if result.is_a?(String)
       result
@@ -158,24 +167,6 @@ module Crystal
       end
 
       nil
-    end
-
-    private def cant_find_file(filename, relative_to)
-      error = "can't find file '#{filename}'"
-
-      if filename.starts_with? '.'
-        error += " relative to '#{relative_to}'" if relative_to
-      else
-        error = <<-NOTE
-          #{error}
-
-          If you're trying to require a shard:
-          - Did you remember to run `shards install`?
-          - Did you make sure you're running the compiler in the same directory as your shard.yml?
-          NOTE
-      end
-
-      raise Error.new(error)
     end
   end
 end

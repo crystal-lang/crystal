@@ -159,7 +159,7 @@ class HTTP::WebSocket
           message = @current_message.gets_to_end
 
           @on_close.try &.call(code, message)
-          close(code)
+          close
 
           @current_message.clear
           break

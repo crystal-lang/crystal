@@ -496,24 +496,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_path(node.name.as(Path))
-    if match
-      if match.must_be_included?
-        if links
-          io << %(<a href=")
-          io << match.path_from(self)
-          io << %(">)
-        end
-        match.full_name_without_type_vars(io)
-        if links
-          io << "</a>"
-        end
-      else
-        io << node.name
-      end
-    else
-      io << node.name
-    end
+    node_to_html node.name, io, links: links
     io << '('
     node.type_vars.join(io, ", ") do |type_var|
       node_to_html type_var, io, links: links

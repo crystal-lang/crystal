@@ -172,17 +172,6 @@ describe "at_exit" do
     error.should eq "Error running at_exit handler: Raised from at_exit handler!\n"
   end
 
-  it "errors when used in an at_exit handler" do
-    status, output, error = compile_and_run_source <<-CODE
-      at_exit do
-        at_exit {}
-      end
-    CODE
-
-    status.success?.should be_false
-    error.should eq "Error running at_exit handler: Cannot use at_exit from an at_exit handler\n"
-  end
-
   it "shows unhandled exceptions after at_exit handlers" do
     status, _, error = compile_and_run_source <<-CODE
       at_exit do
@@ -218,6 +207,27 @@ describe "at_exit" do
                            Kaboom!
                            Unhandled exception: Kaboom!
                            OUTPUT
+  end
+
+  it "allows at_exit inside at_exit" do
+    status, output = compile_and_run_source <<-CODE
+      at_exit do
+        puts "1"
+        at_exit do
+          puts "2"
+        end
+      end
+
+      at_exit do
+        puts "3"
+        at_exit do
+          puts "4"
+        end
+      end
+    CODE
+
+    status.success?.should be_true
+    output.should eq("3\n4\n1\n2\n")
   end
 end
 

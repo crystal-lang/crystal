@@ -28,6 +28,15 @@ private def assert_packet(packet, opcode, size, final = false)
   packet.final.should eq(final)
 end
 
+private class MalformerHandler
+  include HTTP::Handler
+
+  def call(context)
+    context.response.headers["Transfer-Encoding"] = "chunked"
+    call_next(context)
+  end
+end
+
 describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
@@ -425,6 +434,30 @@ describe HTTP::WebSocket do
       expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
         HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
       end
+    end
+  end
+
+  it "ignores body in upgrade response (malformed)" do
+    malformer = MalformerHandler.new
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.on_message do |str|
+        ws.send(str)
+      end
+    end
+    http_server = HTTP::Server.new([malformer, ws_handler])
+
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://#{address}")
+      message = nil
+      client.on_message do |msg|
+        message = msg
+        client.close
+      end
+      client.send "hello"
+      client.run
+      message.should eq("hello")
     end
   end
 

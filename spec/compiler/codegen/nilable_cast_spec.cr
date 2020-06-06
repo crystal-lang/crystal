@@ -147,4 +147,26 @@ describe "Code gen: nilable cast" do
       x.try &.as?(Foo)
       ))
   end
+
+  it "casts union type to nilable type (#9342)" do
+    run(%(
+      struct Nil
+        def foo
+          0
+        end
+      end
+
+      class Gen(T)
+        def initialize(@value : Int32)
+        end
+
+        def foo
+          @value
+        end
+      end
+
+      a = Gen(String).new(10) || Gen(Int32).new(20)
+      a.as?(Gen).foo
+      )).to_i.should eq(10)
+  end
 end

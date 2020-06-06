@@ -4,12 +4,12 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.[](*patterns) : Array(String)
+  def self.[](*patterns : Path | String) : Array(String)
     glob(patterns)
   end
 
   # :ditto:
-  def self.[](patterns : Enumerable(String)) : Array(String)
+  def self.[](patterns : Enumerable) : Array(String)
     glob(patterns)
   end
 
@@ -20,12 +20,12 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden = false) : Array(String)
     glob(patterns, match_hidden: match_hidden)
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
+  def self.glob(patterns : Enumerable, match_hidden = false) : Array(String)
     paths = [] of String
     glob(patterns, match_hidden: match_hidden) do |path|
       paths << path
@@ -40,14 +40,14 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false, &block : String -> _)
+  def self.glob(*patterns : Path | String, match_hidden = false, &block : String -> _)
     glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
+  def self.glob(patterns : Enumerable, match_hidden = false, &block : String -> _)
     Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
@@ -72,8 +72,11 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
+    def self.glob(patterns : Enumerable, **options, &block : String -> _)
       patterns.each do |pattern|
+        if pattern.is_a?(Path)
+          pattern = pattern.to_posix.to_s
+        end
         sequences = compile(pattern)
 
         sequences.each do |sequence|
