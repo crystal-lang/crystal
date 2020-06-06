@@ -2,15 +2,11 @@ require "spec"
 require "socket"
 
 module SocketSpecHelper
-  @supports_ipv6 : Bool? = nil
-
-  def self.supports_ipv6?
-    return @@supports_ipv6 unless @@supports_ipv6.nil?
-
-    TCPServer.open("::1", 0) { return @@supports_ipv6 = true }
-    @@supports_ipv6 = false
+  class_getter?(supports_ipv6 : Bool) do
+    TCPServer.open("::1", 0) { return true }
+    false
   rescue Socket::BindError
-    @@supports_ipv6 = false
+    false
   end
 end
 

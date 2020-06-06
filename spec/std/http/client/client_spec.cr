@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
