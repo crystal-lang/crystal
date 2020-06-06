@@ -49,6 +49,7 @@ require "../../support/tempfile"
       "inboth.exe"     => "inboth.exe",
       "inboth"         => "inboth.exe",
       "./inbase"       => "inbase.exe",
+      "../base/inbase" => "inbase.exe",
       "./inpath"       => nil,
       "sub"            => nil,
       "#{pwd}\\sub"    => nil,
@@ -84,6 +85,7 @@ require "../../support/tempfile"
   def find_executable_test_cases(pwd)
     {
       "./inbase"       => "inbase",
+      "../base/inbase" => "inbase",
       "inbase"         => nil,
       "sub/insub"      => "sub/insub",
       "inpath"         => "../path/inpath",
