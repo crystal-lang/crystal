@@ -10,7 +10,7 @@ describe TCPSocket do
           TCPSocket.open(address, port) do |client|
             client.local_address.address.should eq address
 
-            sock = server.accept
+            sock = with_timeout { server.accept }
 
             sock.closed?.should be_false
             client.closed?.should be_false
@@ -52,7 +52,7 @@ describe TCPSocket do
 
         TCPServer.open("localhost", port) do |server|
           TCPSocket.open("localhost", port) do |client|
-            sock = server.accept
+            sock = with_timeout { server.accept }
           end
         end
       end
@@ -86,7 +86,7 @@ describe TCPSocket do
 
     TCPServer.open("::", port) do |server|
       TCPSocket.open("localhost", port) do |client|
-        sock = server.accept
+        sock = with_timeout { server.accept }
         sock.sync?.should eq(server.sync?)
       end
 
@@ -94,7 +94,7 @@ describe TCPSocket do
       server.sync = !server.sync?
 
       TCPSocket.open("localhost", port) do |client|
-        sock = server.accept
+        sock = with_timeout { server.accept }
         sock.sync?.should eq(server.sync?)
       end
     end
@@ -138,7 +138,7 @@ describe TCPSocket do
 
     TCPServer.open("::", port) do |server|
       TCPSocket.open("localhost", port) do |client|
-        sock = server.accept
+        sock = with_timeout { server.accept }
 
         client << "ping"
         sock.gets(4).should eq("ping")

@@ -68,7 +68,7 @@ describe UNIXServer do
       with_tempfile("unix_server-accept.sock") do |path|
         UNIXServer.open(path) do |server|
           UNIXSocket.open(path) do |_|
-            client = server.accept
+            client = with_timeout { server.accept }
             client.should be_a(UNIXSocket)
             client.close
           end
@@ -113,7 +113,7 @@ describe UNIXServer do
       with_tempfile("unix_server-accept_.sock") do |path|
         UNIXServer.open(path) do |server|
           UNIXSocket.open(path) do |_|
-            client = server.accept?.not_nil!
+            client = with_timeout { server.accept? }.not_nil!
             client.should be_a(UNIXSocket)
             client.close
           end
