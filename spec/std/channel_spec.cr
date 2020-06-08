@@ -633,8 +633,9 @@ describe "unbuffered" do
   it "can be closed" do
     ch = Channel(Int32).new
     ch.closed?.should be_false
-    ch.close.should be_nil
+    ch.close.should be_true
     ch.closed?.should be_true
+    ch.close.should be_false
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 
