@@ -1,4 +1,4 @@
-# 0.35.0 (2020-06-08)
+# 0.35.0 (2020-06-09)
 
 ## Language changes
 
@@ -11,7 +11,7 @@
 
 ## Standard library
 
-- **(breaking-change)** Refactor to standardize on first argument for methods receiving `IO`. ([#9134](https://github.com/crystal-lang/crystal/pull/9134), [#9289](https://github.com/crystal-lang/crystal/pull/9289), [#9303](https://github.com/crystal-lang/crystal/pull/9303), thanks @straight-shoota, @bcardiff)
+- **(breaking-change)** Refactor to standardize on first argument for methods receiving `IO`. ([#9134](https://github.com/crystal-lang/crystal/pull/9134), [#9289](https://github.com/crystal-lang/crystal/pull/9289), [#9303](https://github.com/crystal-lang/crystal/pull/9303), [#9318](https://github.com/crystal-lang/crystal/pull/9318), thanks @straight-shoota, @bcardiff, @oprypin)
 - **(breaking-change)** Cleanup Digest and OpenSSL::Digest. ([#8426](https://github.com/crystal-lang/crystal/pull/8426), thanks @didactic-drunk)
 - Fix `Enum#to_s` for private enum. ([#9126](https://github.com/crystal-lang/crystal/pull/9126), thanks @straight-shoota)
 - Refactor `Benchmark::IPS::Entry` to use `UInt64` in `bytes_per_op`. ([#9081](https://github.com/crystal-lang/crystal/pull/9081), thanks @jhass)
@@ -64,6 +64,8 @@
 - Escape CDATA end sequences. ([#9230](https://github.com/crystal-lang/crystal/pull/9230), thanks @Blacksmoke16)
 - Add `JSON` and `YAML` serialization to `Path`. ([#9156](https://github.com/crystal-lang/crystal/pull/9156), thanks @straight-shoota)
 - Specify pkg-config name for `libyaml`. ([#9426](https://github.com/crystal-lang/crystal/pull/9426), thanks @jhass)
+- Specify pkg-config name for `libxml2`. ([#9436](https://github.com/crystal-lang/crystal/pull/9436), thanks @Blacksmoke16)
+- Make YAML specs robust against libyaml 0.2.5. ([#9427](https://github.com/crystal-lang/crystal/pull/9427), thanks @jhass)
 
 ### Time
 
@@ -88,7 +90,6 @@
 
 ### Networking
 
-- **(security)** Update SSL server secure defaults. ([#9026](https://github.com/crystal-lang/crystal/pull/9026), thanks @straight-shoota)
 - **(breaking-change)** Make `IO#skip`, `IO#write` returns the number of bytes it skipped/written as `Int64`. ([#9233](https://github.com/crystal-lang/crystal/pull/9233), [#9363](https://github.com/crystal-lang/crystal/pull/9363), thanks @bcardiff)
 - **(breaking-change)** Improve error handling and logging in `HTTP::Server`. ([#9115](https://github.com/crystal-lang/crystal/pull/9115), [#9034](https://github.com/crystal-lang/crystal/pull/9034), thanks @waj, @straight-shoota)
 - **(breaking-change)** Change `HTTP::Request#remote_address` type to `Socket::Address?`. ([#9210](https://github.com/crystal-lang/crystal/pull/9210), thanks @waj)
@@ -106,6 +107,7 @@
 
 ### Crypto
 
+- **(security)** Update SSL server secure defaults. ([#9026](https://github.com/crystal-lang/crystal/pull/9026), thanks @straight-shoota)
 - Add LibSSL `NO_TLS_V1_3` option. ([#9350](https://github.com/crystal-lang/crystal/pull/9350), thanks @lun-4)
 
 ### Logging
@@ -117,7 +119,7 @@
 - Add `Log.capture` spec helper. ([#9201](https://github.com/crystal-lang/crystal/pull/9201), thanks @bcardiff)
 - Redesign `Log::Formatter`. ([#9211](https://github.com/crystal-lang/crystal/pull/9211), thanks @waj)
 - Add `to_json` for `Log::Context`. ([#9101](https://github.com/crystal-lang/crystal/pull/9101), thanks @paulcsmith)
-- Add `Log::IOBackend#new` with formatter. ([#9105](https://github.com/crystal-lang/crystal/pull/9105), thanks @paulcsmith)
+- Add `Log::IOBackend#new` with `formatter` named argument. ([#9105](https://github.com/crystal-lang/crystal/pull/9105), [#9434](https://github.com/crystal-lang/crystal/pull/9434), thanks @paulcsmith, @bcardiff)
 - Allow `nil` as context raw values. ([#9121](https://github.com/crystal-lang/crystal/pull/9121), thanks @bcardiff)
 - Add missing `Log#with_context`. ([#9058](https://github.com/crystal-lang/crystal/pull/9058), thanks @bcardiff)
 - Fix types referred in documentation. ([#9117](https://github.com/crystal-lang/crystal/pull/9117), thanks @bcardiff)
@@ -186,7 +188,8 @@
 - Fix autocasting in multidispatch. ([#9004](https://github.com/crystal-lang/crystal/pull/9004), thanks @asterite)
 - Fix propagation of annotations into other scopes. ([#9125](https://github.com/crystal-lang/crystal/pull/9125), thanks @asterite)
 - Fix yield computation inside macro code. ([#9324](https://github.com/crystal-lang/crystal/pull/9324), thanks @asterite)
-- Fix incorrect type generated with `as?` when type is a union. ([#9417](https://github.com/crystal-lang/crystal/pull/9417), thanks @asterite)
+- Fix incorrect type generated with `as?` when type is a union. ([#9417](https://github.com/crystal-lang/crystal/pull/9417), [#9435](https://github.com/crystal-lang/crystal/pull/9435), thanks @asterite)
+- Don't duplicate instance var in inherited generic type. ([#9433](https://github.com/crystal-lang/crystal/pull/9433), thanks @asterite)
 - Ensure `type_vars` works for generic modules. ([#9161](https://github.com/crystal-lang/crystal/pull/9161), thanks @toddsundsted)
 - Make autocasting work in default values against unions. ([#9366](https://github.com/crystal-lang/crystal/pull/9366), thanks @asterite)
 - Skip no closure check for non-Crystal procs. ([#9248](https://github.com/crystal-lang/crystal/pull/9248), thanks @jhass)
