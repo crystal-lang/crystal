@@ -3,9 +3,8 @@ class Log::IOBackend < Log::Backend
   property io : IO
   property formatter : Formatter
 
-  def initialize(@io = STDOUT, *, formatter : Formatter = ShortFormat)
+  def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat)
     @mutex = Mutex.new(:unchecked)
-    @formatter = formatter
   end
 
   def write(entry : Entry)
