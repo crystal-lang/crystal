@@ -497,7 +497,7 @@ describe "YAML::Serializable" do
 
   it "emit_nulls option" do
     person = YAMLAttrPersonEmittingNullsByOptions.from_yaml("---\nname: John\n")
-    person.to_yaml.should eq "---\nname: John\nage: \nvalue1: \n"
+    person.to_yaml.should match /\A---\nname: John\nage: ?\nvalue1: ?\n\z/
   end
 
   it "parses yaml with Time::Format converter" do
@@ -528,7 +528,7 @@ describe "YAML::Serializable" do
 
   it "outputs with converter when nilable when emit_null is true" do
     yaml = YAMLAttrWithNilableTimeEmittingNull.new
-    yaml.to_yaml.should eq("---\nvalue: \n")
+    yaml.to_yaml.should match(/\A---\nvalue: ?\n\z/)
   end
 
   it "outputs YAML with properties key" do
