@@ -230,6 +230,7 @@
 ## Others
 
 - CI improvements and housekeeping. ([#9012](https://github.com/crystal-lang/crystal/pull/9012), [#9129](https://github.com/crystal-lang/crystal/pull/9129), [#9242](https://github.com/crystal-lang/crystal/pull/9242), [#9370](https://github.com/crystal-lang/crystal/pull/9370), thanks @bcardiff)
+- Update to Shards 0.11.1. ([#9446](https://github.com/crystal-lang/crystal/pull/9446), thanks @bcardiff)
 - Tidy up Makefile and crystal env output. ([#9423](https://github.com/crystal-lang/crystal/pull/9423), thanks @bcardiff)
 - Always include `lib` directory in the `CRYSTAL_PATH`. ([#9315](https://github.com/crystal-lang/crystal/pull/9315), thanks @waj)
 - Use `SOURCE_DATE_EPOCH` only to determine compiler date. ([#9088](https://github.com/crystal-lang/crystal/pull/9088), thanks @straight-shoota)
