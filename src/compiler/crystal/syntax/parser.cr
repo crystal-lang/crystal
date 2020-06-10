@@ -5057,6 +5057,7 @@ module Crystal
 
       case @token.type
       when :IDENT
+        return false if named_tuple_start?
         case @token.value
         when :typeof
           true
