@@ -14,6 +14,14 @@ end
 
 private alias RecursiveType = String | Int32 | Array(RecursiveType) | Hash(Symbol, RecursiveType)
 
+private class HashWrapper(K, V)
+  include Enumerable({K, V})
+
+  @hash = {} of K => V
+
+  delegate each, to: @hash
+end
+
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -1224,5 +1232,9 @@ describe "Hash" do
       h = ({} of String => Int32).compare_by_identity
       h.clone.compare_by_identity?.should be_true
     end
+  end
+
+  it "can be wrapped" do
+    HashWrapper(Int32, Int32).new.to_a.should be_empty
   end
 end
