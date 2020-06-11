@@ -203,16 +203,16 @@ class OptionParser
 
   private def parse_flag_definition(flag : String)
     case flag
-    when /--(\S+)\s+\[\S+\]/
+    when /\A--(\S+)\s+\[\S+\]\z/
       {"--#{$1}", FlagValue::Optional}
-    when /--(\S+)(\s+|\=)(\S+)?/
+    when /\A--(\S+)(\s+|\=)(\S+)?\z/
       {"--#{$1}", FlagValue::Required}
-    when /--\S+/
+    when /\A--\S+\z/
       # This can't be merged with `else` otherwise /-(.)/ matches
       {flag, FlagValue::None}
-    when /-(.)\s*\[\S+\]/
+    when /\A-(.)\s*\[\S+\]\z/
       {flag[0..1], FlagValue::Optional}
-    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+    when /\A-(.)\s+\S+\z/, /\A-(.)\s+\z/, /\A-(.)\S+\z/
       {flag[0..1], FlagValue::Required}
     else
       # This happens for -f without argument
