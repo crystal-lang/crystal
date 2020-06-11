@@ -386,9 +386,9 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
+      expected = /\A---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: ?\n\z/
 
-      data.to_yaml.should eq(expected)
+      data.to_yaml.should match(expected)
     end
 
     it "writes to a stream" do
@@ -409,7 +409,7 @@ describe "YAML serialization" do
       h[1] = 2
       h[h] = h
 
-      h.to_yaml.should eq("--- &1\n1: 2\n*1: *1\n")
+      h.to_yaml.should match(/\A--- &1\n1: 2\n\*1 ?: \*1\n\z/)
     end
   end
 end

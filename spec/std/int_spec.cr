@@ -799,4 +799,43 @@ describe "Int" do
       (10.to_big_i ** 3010).bit_length.should eq(10000)
     end
   end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.digits.should eq([0])
+      1.digits.should eq([1])
+      10.digits.should eq([0, 1])
+      123.digits.should eq([3, 2, 1])
+      123456789.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works for maximums" do
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
+    end
+
+    it "works for non-Int32" do
+      digits = 123_i64.digits
+      digits.should eq([3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.digits
+      end
+    end
+  end
 end

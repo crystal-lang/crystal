@@ -1905,6 +1905,18 @@ module Crystal
         check :"."
         name = consume_def_or_macro_name
         next_token_skip_space
+      when :INSTANCE_VAR
+        obj = InstanceVar.new(@token.value.to_s)
+        next_token_skip_space
+        check :"."
+        name = consume_def_or_macro_name
+        next_token_skip_space
+      when :CLASS_VAR
+        obj = ClassVar.new(@token.value.to_s)
+        next_token_skip_space
+        check :"."
+        name = consume_def_or_macro_name
+        next_token_skip_space
       else
         unexpected_token
       end
@@ -2126,6 +2138,8 @@ module Crystal
         string = combine_pieces(pieces, delimiter_state)
         node.expressions.push(StringLiteral.new(string).at(node.location).at_end(token_end_location))
       end
+
+      node.heredoc_indent = delimiter_state.heredoc_indent
 
       node.end_location = token_end_location
     end
@@ -5043,6 +5057,7 @@ module Crystal
 
       case @token.type
       when :IDENT
+        return false if named_tuple_start?
         case @token.value
         when :typeof
           true

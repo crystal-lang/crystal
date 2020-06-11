@@ -562,6 +562,41 @@ struct Int
     self % other
   end
 
+  # Returns the digits of a number in a given base.
+  # The digits are returned as an array with the least significant digit as the first array element.
+  #
+  # ```
+  # 12345.digits      # => [5, 4, 3, 2, 1]
+  # 12345.digits(7)   # => [4, 6, 6, 0, 5]
+  # 12345.digits(100) # => [45, 23, 1]
+  #
+  # -12345.digits(7) # => ArgumentError
+  # ```
+  def digits(base = 10) : Array(Int32)
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
+    if self == 0
+      return [0]
+    end
+
+    num = self
+
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
+      num = num.tdiv(base)
+    end
+    ary
+  end
+
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

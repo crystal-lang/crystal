@@ -35,6 +35,15 @@ module Crystal::System::Time
     ::Time.utc(seconds: seconds, nanoseconds: nanoseconds)
   end
 
+  def self.to_filetime(time : ::Time) : LibC::FILETIME
+    span = time - ::Time.utc(seconds: WINDOWS_EPOCH_IN_SECONDS, nanoseconds: 0)
+    ticks = span.to_i.to_u64 * FILETIME_TICKS_PER_SECOND + span.nanoseconds // NANOSECONDS_PER_FILETIME_TICK
+    filetime = uninitialized LibC::FILETIME
+    filetime.dwHighDateTime = (ticks >> 32).to_u32
+    filetime.dwLowDateTime = ticks.to_u32!
+    filetime
+  end
+
   def self.filetime_to_f64secs(filetime) : Float64
     ((filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64).to_f64 / FILETIME_TICKS_PER_SECOND.to_f64
   end

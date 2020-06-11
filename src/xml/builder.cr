@@ -11,7 +11,7 @@ struct XML::Builder
   @box : Void*
 
   # Creates a builder that writes to the given *io*.
-  def initialize(io : IO)
+  def initialize(@io : IO)
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
@@ -249,6 +249,8 @@ struct XML::Builder
   # this writer's `IO`.
   def flush
     call Flush
+
+    @io.flush
   end
 
   # Sets the indent string.
@@ -376,7 +378,6 @@ module XML
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
-    io.flush
     v
   end
 end

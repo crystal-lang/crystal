@@ -419,9 +419,6 @@ describe Process do
       (path = Process.find_executable("ls")).should_not be_nil
       path.not_nil!.should match(/#{File::SEPARATOR}ls$/)
 
-      (path = Process.find_executable("crystal")).should_not be_nil
-      path.not_nil!.should match(/#{File::SEPARATOR}crystal$/)
-
       Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
     end
   end

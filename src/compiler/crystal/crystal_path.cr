@@ -15,7 +15,9 @@ module Crystal
 
     def self.default_path
       ENV["CRYSTAL_PATH"]? || begin
-        if Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
+        if Crystal::Config.path.blank?
+          DEFAULT_LIB_PATH
+        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
           Crystal::Config.path
         else
           {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)

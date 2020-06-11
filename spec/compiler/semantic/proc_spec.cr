@@ -1069,4 +1069,42 @@ describe "Semantic: proc" do
       foo
       )) { proc_of nil_type }
   end
+
+  it "can use @ivar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        @foo = Foo.new
+
+        def foo
+          ->@foo.foo
+        end
+      end
+
+      Bar.new.foo
+    )) { proc_of int32 }
+  end
+
+  it "can use @@cvar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        @@foo = new
+
+        def self.foo
+          ->@@foo.foo
+        end
+
+        def foo
+          1
+        end
+      end
+
+      Foo.foo
+    )) { proc_of int32 }
+  end
 end
