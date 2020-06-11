@@ -10,7 +10,7 @@ describe "Backtrace" do
     current_dir += File::SEPARATOR unless current_dir.ends_with?(File::SEPARATOR)
     source_file = source_file.lchop(current_dir)
 
-    _, output, _ = compile_and_run_file(source_file)
+    _, output, _ = compile_and_run_file(source_file, flags: %w(--debug))
 
     # resolved file line:column
     output.should match(/#{source_file}:3:10 in 'callee1'/)
@@ -28,7 +28,7 @@ describe "Backtrace" do
   it "prints exception backtrace to stderr" do
     sample = datapath("exception_backtrace_sample")
 
-    _, output, error = compile_and_run_file(sample)
+    _, output, error = compile_and_run_file(sample, flags: %w(--debug))
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("IndexError")
@@ -37,7 +37,7 @@ describe "Backtrace" do
   it "prints crash backtrace to stderr" do
     sample = datapath("crash_backtrace_sample")
 
-    _, output, error = compile_and_run_file(sample)
+    _, output, error = compile_and_run_file(sample, flags: %w(--debug))
 
     output.to_s.empty?.should be_true
     error.to_s.should contain("Invalid memory access")
