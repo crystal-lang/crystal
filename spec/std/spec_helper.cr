@@ -94,7 +94,7 @@ def compile_source(source, flags = %w(--debug), file = __FILE__)
 end
 
 def compile_and_run_file(source_file, flags = %w(--debug), file = __FILE__)
-  compile_file(source_file, file: file) do |executable_file|
+  compile_file(source_file, flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
     status = Process.run executable_file, output: output, error: error
 
