@@ -5,8 +5,6 @@ require "uri/punycode"
 # For both server and client applications exist more specialized subclassses
 # `SSL::Context::Server` and `SSL::Context::Client` which need to be instantiated
 # appropriately.
-#
-# All instances use `CIPHERS_INTERMEDIATE` ciphers by default.
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -18,6 +16,8 @@ abstract class OpenSSL::SSL::Context
   end
 
   class Client < Context
+    @hostname : String?
+
     # Generates a new TLS client context with sane defaults for a client connection.
     #
     # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
@@ -36,9 +36,8 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-
-    @hostname : String?
-
+    #
+    # It uses `CIPHERS_OLD` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -46,6 +45,8 @@ abstract class OpenSSL::SSL::Context
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
         self.default_verify_param = "ssl_server"
       {% end %}
+
+      self.ciphers = CIPHERS_OLD
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -115,6 +116,8 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Server.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
+    #
+    # It uses `CIPHERS_INTERMEDIATE` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -124,6 +127,8 @@ abstract class OpenSSL::SSL::Context
       {% end %}
 
       set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
+
+      self.ciphers = CIPHERS_INTERMEDIATE
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -187,8 +192,6 @@ abstract class OpenSSL::SSL::Context
     ))
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
-
-    self.ciphers = CIPHERS_INTERMEDIATE
   end
 
   # Overriding initialize or new in the child classes as public methods,
