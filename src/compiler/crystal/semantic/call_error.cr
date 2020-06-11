@@ -228,11 +228,7 @@ class Crystal::Call
       else
         # This check is for the case `a if a = 1`
         similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
-        if similar_name == def_name
-          could_be_local_variable = false
-        else
-          could_be_local_variable = true
-        end
+        could_be_local_variable = (similar_name != def_name)
       end
 
       if could_be_local_variable
