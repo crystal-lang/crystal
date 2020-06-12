@@ -23,9 +23,10 @@ module Crystal
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
       yields : Bool,
-      comment : Bool do
+      comment : Bool,
+      heredocs : Array(DelimiterState)? do
       def self.default
-        MacroState.new(true, 0, 0, nil, true, false, false)
+        MacroState.new(true, 0, 0, nil, true, false, false, nil)
       end
 
       setter whitespace

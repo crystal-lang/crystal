@@ -1792,6 +1792,30 @@ module Crystal
     it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
     it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
 
+    it_parses <<-'CR', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
+      macro foo
+        <<-FOO
+          #{ %var }
+        FOO
+      end
+      CR
+
+    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
+      macro foo
+        <<-FOO, <<-BAR + ""
+        FOO
+        BAR
+      end
+      CR
+
+    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
+      macro foo
+        <<-FOO
+          %foo
+        FOO
+      end
+      CR
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
