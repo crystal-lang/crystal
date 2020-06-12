@@ -112,7 +112,8 @@ prepare_build() {
   on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.34.0-1 crystal;popd'
 
   on_osx 'brew unlink python@2 || true'
-  on_osx brew install z3 llvm@10 gmp libevent pcre openssl pkg-config
+  on_osx brew install z3 llvm@10 gmp libevent pcre pkg-config
+  on_osx brew reinstall openssl
   on_osx brew link --force llvm@10
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm
