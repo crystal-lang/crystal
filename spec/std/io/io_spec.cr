@@ -55,8 +55,6 @@ private class SimpleIOMemory < IO
 
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
-
-    nil
   end
 
   def to_slice

@@ -32,7 +32,6 @@ require "c/errno"
 #   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     nil
 #   end
 # end
 #
@@ -268,7 +267,6 @@ abstract class IO
   # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -471,6 +469,7 @@ abstract class IO
     else
       write(slice)
     end
+
     nil
   end
 
