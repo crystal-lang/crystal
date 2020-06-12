@@ -1114,12 +1114,12 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst) : UInt64
+  def self.copy(src, dst) : Int64
     buffer = uninitialized UInt8[4096]
-    count = 0_u64
+    count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
-      count += len
+      count &+= len
     end
     count
   end
@@ -1134,16 +1134,16 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int) : UInt64
+  def self.copy(src, dst, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
-    limit = limit.to_u64
+    limit = limit.to_i64
 
     buffer = uninitialized UInt8[4096]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
-      remaining -= len
+      remaining &-= len
     end
     limit - remaining
   end
