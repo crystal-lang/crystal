@@ -2377,10 +2377,10 @@ module Crystal
       until char == '{' || char == '\0' || (char == '\\' && ((peek = peek_next_char) == '{' || peek == '%')) || (whitespace && !delimiter_state && char == 'e')
         case char
         when '\n'
-          char = next_char
           incr_line_number 0
           whitespace = true
           beginning_of_line = true
+          char = next_char
 
           while true
             if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
