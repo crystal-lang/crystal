@@ -33,11 +33,11 @@ class IO::Hexdump < IO
   end
 
   def write(buf : Bytes) : Int64
-    return 0i64 if buf.empty?
-
+    return 0_i64 if buf.empty?
     @io.write(buf).tap do
       @output.puts buf.hexdump if @write
     end
+    0_i64
   end
 
   delegate :peek, :close, :closed?, :flush, :tty?, :pos, :pos=, :seek, to: @io
