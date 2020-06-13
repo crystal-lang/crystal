@@ -2382,19 +2382,13 @@ module Crystal
           beginning_of_line = true
           char = next_char
 
-          while true
-            if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
-              char = next_char
-              delimiter_state = nil
-              next
-            end
+          if !delimiter_state && heredocs && !heredocs.empty?
+            delimiter_state = heredocs.shift
+          end
 
-            if !delimiter_state && heredocs && !heredocs.empty?
-              delimiter_state = heredocs.shift
-              next
-            end
-
-            break
+          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+            char = current_char
+            delimiter_state = heredocs.try &.shift?
           end
 
           next
