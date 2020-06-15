@@ -126,6 +126,7 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
+
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
@@ -139,6 +140,14 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
+  #```  
+  # someId = "123ABC456DEF"
+  # command = "echo #{someId}"  
+  # output = IO::Memory.new
+  # status = Process.run(command, shell: true, output: output)
+  # pp output.to_s
+  #```
+
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
