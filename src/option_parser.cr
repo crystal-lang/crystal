@@ -212,7 +212,7 @@ class OptionParser
       {flag, FlagValue::None}
     when /-(.)\s*\[\S+\]/
       {flag[0..1], FlagValue::Optional}
-    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+    when /-(.)\s+\S+/, /-(.)\s+/, /^-(.)\S+/
       {flag[0..1], FlagValue::Required}
     else
       # This happens for -f without argument
