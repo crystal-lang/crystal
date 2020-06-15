@@ -1067,6 +1067,7 @@ module Crystal
     assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
 
     it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
+    it_parses "{} of Int32 -> Int32 => Int32", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new(ProcNotation.new(["Int32".path] of ASTNode, "Int32".path), "Int32".path))
 
     it_parses "require \"foo\"", Require.new("foo")
     it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]

@@ -10,7 +10,7 @@
 
 class Crystal::Command
   private def spec
-    compiler = Compiler.new
+    compiler = new_compiler
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
@@ -74,7 +74,7 @@ class Crystal::Command
     output_filename = Crystal.temp_executable "spec"
 
     result = compiler.compile sources, output_filename
-    report_warnings result
-    execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?(result)
+    report_warnings
+    execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end
 end

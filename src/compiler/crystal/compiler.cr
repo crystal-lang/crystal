@@ -153,6 +153,9 @@ module Crystal
     # Whether to use llvm ThinLTO for linking
     property thin_lto = false
 
+    # Program that was created for the last compilation.
+    property! program : Program
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -198,7 +201,7 @@ module Crystal
     end
 
     private def new_program(sources)
-      program = Program.new
+      @program = program = Program.new
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target

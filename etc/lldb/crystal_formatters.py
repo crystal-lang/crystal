@@ -22,10 +22,10 @@ class CrystalArraySyntheticProvider:
             return int(name.lstrip('[').rstrip(']'))
         except:
             return -1
-           
+
     def get_child_at_index(self,index):
         if index >= self.size:
-            return None        
+            return None
         try:
             elementType = self.buffer.type.GetPointeeType()
             offset = elementType.size * index
