@@ -141,7 +141,7 @@ class Process
   #
   # Returns the block's value.
   #```  
-  # someId = "123ABC456DEF"
+  # some_id = "123ABC456DEF"
   # command = "echo #{someId}"  
   # output = IO::Memory.new
   # status = Process.run(command, shell: true, output: output)
