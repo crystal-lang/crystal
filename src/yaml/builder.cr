@@ -72,6 +72,7 @@ class YAML::Builder
   # Ends a YAML stream.
   def end_stream
     emit stream_end
+    @io.flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
