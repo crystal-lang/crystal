@@ -320,4 +320,32 @@ describe HTTP::Server::RequestProcessor do
     client_response.status_code.should eq(200)
     client_response.body.should eq("Hello world")
   end
+
+  it "does not bleed Log::Context between requests" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      Log.info { "before" }
+      Log.context.set foo: "bar"
+      Log.info { "after" }
+
+      context.response.content_type = "text/plain"
+      context.response.print "Hello world"
+    end
+
+    logs = Log.capture do
+      processor.process(
+        IO::Memory.new("GET / HTTP/1.1\r\n\r\nGET / HTTP/1.1\r\n\r\n"),
+        IO::Memory.new,
+      )
+    end
+
+    logs.check :info, "before"
+    logs.entry.context.should be_empty
+    logs.check :info, "after"
+    logs.entry.context[:foo].should eq "bar"
+
+    logs.check :info, "before"
+    logs.entry.context.should be_empty
+    logs.check :info, "after"
+    logs.entry.context[:foo].should eq "bar"
+  end
 end

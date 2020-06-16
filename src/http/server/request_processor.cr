@@ -47,7 +47,9 @@ class HTTP::Server::RequestProcessor
         context = Context.new(request, response)
 
         begin
-          @handler.call(context)
+          Log.with_context do
+            @handler.call(context)
+          end
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
         rescue ex
