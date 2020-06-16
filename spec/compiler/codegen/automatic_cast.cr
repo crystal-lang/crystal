@@ -239,4 +239,25 @@ describe "Code gen: automatic cast" do
       foo(1, "a" || 1)
       )).to_i.should eq(20)
   end
+
+  it "does multidispatch with automatic casting (3)" do
+    run(%(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo(x : UInt8)
+          2
+        end
+      end
+
+      class Baz < Foo
+        def foo(x : UInt8)
+          3
+        end
+      end
+
+      Bar.new.as(Foo).foo(1)
+      )).to_i.should eq(2)
+  end
 end

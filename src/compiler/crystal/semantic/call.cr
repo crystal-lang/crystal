@@ -368,9 +368,10 @@ class Crystal::Call
       # matches and they were not ambiguous). If so, only keep matches up to
       # that exact match. We need to do this here because with autocasting
       # we consider all overloads to detect ambiguous usage.
-      stop_index = matches.index do |match|
+      stop_index = matches.matches.try &.rindex do |match|
         signature.matches_exactly?(match, with_literals: true)
       end
+
       matches = matches[..stop_index] if stop_index
     end
 
