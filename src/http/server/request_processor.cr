@@ -46,10 +46,8 @@ class HTTP::Server::RequestProcessor
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
-        begin
-          Log.with_context do
-            @handler.call(context)
-          end
+        Log.with_context do
+          @handler.call(context)
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
         rescue ex
