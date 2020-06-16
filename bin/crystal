@@ -141,7 +141,7 @@ CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 export CRYSTAL_PATH=lib:$CRYSTAL_ROOT/src
 export CRYSTAL_HAS_WRAPPER=true
 
-CRYSTAL="${CRYSTAL:-"crystal"}"
+export CRYSTAL="${CRYSTAL:-"crystal"}"
 
 if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ]; then
   export CRYSTAL_CONFIG_LIBRARY_PATH="$(crystal env CRYSTAL_LIBRARY_PATH || echo "")"
