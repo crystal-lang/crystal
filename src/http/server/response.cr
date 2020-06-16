@@ -175,6 +175,7 @@ class HTTP::Server
 
       def initialize(@io)
         @chunked = false
+        @closed = false
       end
 
       def reset
@@ -215,7 +216,7 @@ class HTTP::Server
         raise ClientError.new("Error while writing data to the client", ex)
       end
 
-      def closed?
+      def closed? : Bool
         @closed
       end
 
