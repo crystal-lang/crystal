@@ -13,8 +13,8 @@ module Compress::Zip
       raise IO::Error.new "Can't read from Zip::Writer entry"
     end
 
-    def write(slice : Bytes) : Int64
-      return 0i64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       @count += slice.size
       @crc32 = Digest::CRC32.update(slice, @crc32) if @compute_crc32

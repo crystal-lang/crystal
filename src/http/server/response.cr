@@ -80,8 +80,8 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Bytes) : Int64
-      return 0i64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       @output.write(slice)
     end

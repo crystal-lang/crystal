@@ -38,8 +38,8 @@ class String::Builder < IO
     raise "Not implemented"
   end
 
-  def write(slice : Bytes) : Int64
-    return 0i64 if slice.empty?
+  def write(slice : Bytes) : Nil
+    return if slice.empty?
 
     count = slice.size
     new_bytesize = real_bytesize + count
@@ -49,11 +49,9 @@ class String::Builder < IO
 
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
-
-    slice.size.to_i64
   end
 
-  def write_byte(byte : UInt8) : Int64
+  def write_byte(byte : UInt8)
     new_bytesize = real_bytesize + 1
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -63,7 +61,7 @@ class String::Builder < IO
 
     @bytesize += 1
 
-    1i64
+    nil
   end
 
   def buffer

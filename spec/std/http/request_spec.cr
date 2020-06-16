@@ -6,8 +6,7 @@ private class EmptyIO < IO
     0
   end
 
-  def write(slice : Bytes) : Int64
-    slice.size.to_i64
+  def write(slice : Bytes) : Nil
   end
 end
 
