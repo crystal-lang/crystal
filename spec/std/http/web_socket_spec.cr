@@ -393,6 +393,7 @@ describe HTTP::WebSocket do
 
           ws.on_message do |str|
             ws.send("pong #{str}")
+            ws.close
           end
 
           ws.on_close do
@@ -415,7 +416,6 @@ describe HTTP::WebSocket do
       random = Random::Secure.hex
       ws2.on_message do |str|
         str.should eq("pong #{random}")
-        ws2.close
       end
       ws2.send(random)
 
