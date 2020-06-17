@@ -1,4 +1,5 @@
 require "spec"
+require "../digest/algorithm"
 require "../../../src/openssl"
 
 describe OpenSSL::Digest do
@@ -58,4 +59,8 @@ describe OpenSSL::Digest do
 
     digest.final.hexstring.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae")
   end
+
+  acts_as_digest_algorithm OpenSSL::Digest::SHA1
+  acts_as_digest_algorithm OpenSSL::Digest::SHA256
+  acts_as_digest_algorithm OpenSSL::Digest::SHA512
 end

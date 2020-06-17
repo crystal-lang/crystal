@@ -48,20 +48,20 @@ module OpenSSL
       Digest.new(@name, ctx)
     end
 
-    private def reset_impl : Nil
+    protected def reset_impl : Nil
       if LibCrypto.evp_digestinit_ex(self, to_unsafe_md, nil) != 1
         raise Error.new "Digest initialization failed."
       end
     end
 
-    private def update_impl(data : Bytes) : Nil
+    protected def update_impl(data : Bytes) : Nil
       check_finished
       if LibCrypto.evp_digestupdate(self, data, data.bytesize) != 1
         raise Error.new "EVP_DigestUpdate"
       end
     end
 
-    private def final_impl(data : Bytes) : Nil
+    protected def final_impl(data : Bytes) : Nil
       raise ArgumentError.new("data size incorrect") unless data.bytesize == digest_size
       if LibCrypto.evp_digestfinal_ex(@ctx, data, nil) != 1
         raise Error.new "EVP_DigestFinal_ex"
@@ -83,5 +83,23 @@ module OpenSSL
     def to_unsafe
       @ctx
     end
+  end
+
+  class Digest::SHA1 < ::Digest::Algorithm
+    @digest = OpenSSL::Digest.new("SHA1")
+
+    delegate update_impl, final_impl, reset_impl, digest_size, to: @digest
+  end
+
+  class Digest::SHA256 < ::Digest::Algorithm
+    @digest = OpenSSL::Digest.new("SHA256")
+
+    delegate update_impl, final_impl, reset_impl, digest_size, to: @digest
+  end
+
+  class Digest::SHA512 < ::Digest::Algorithm
+    @digest = OpenSSL::Digest.new("SHA512")
+
+    delegate update_impl, final_impl, reset_impl, digest_size, to: @digest
   end
 end
