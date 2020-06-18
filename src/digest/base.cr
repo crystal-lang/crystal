@@ -24,7 +24,7 @@ abstract class Digest::Base
     # end
     # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.digest(& : Digest::Base -> _) : Bytes
+    def self.digest(& : self ->) : Bytes
       context = new
       yield context
       context.final
@@ -55,7 +55,7 @@ abstract class Digest::Base
     # end
     # # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.hexdigest(& : Digest::Base -> _) : String
+    def self.hexdigest(& : self ->) : String
       hashsum = digest do |ctx|
         yield ctx
       end
@@ -87,7 +87,7 @@ abstract class Digest::Base
     # end
     # # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
     # ```
-    def self.base64digest(& : Digest::Base -> _) : String
+    def self.base64digest(& : self -> _) : String
       hashsum = digest do |ctx|
         yield ctx
       end
