@@ -344,6 +344,33 @@ describe "Semantic: annotation" do
     )) { int32 }
     end
 
+    it "finds annotations in instance var (subclass)" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        class Base
+          @[Foo]
+          @x : Nil
+        end
+
+        class Child < Base
+          @[Foo]
+          @x : Nil
+
+          def foo
+            {% if @type.instance_vars.first.annotations(Foo).size == 2 %}
+              1
+            {% else %}
+              'a'
+            {% end %}
+          end
+        end
+
+        Child.new.foo
+      )) { int32 }
+    end
+
     it "collects annotations values in type" do
       assert_type(%(
         annotation Foo
@@ -730,7 +757,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -740,6 +767,32 @@ describe "Semantic: annotation" do
 
         Moo.new(1).foo
     )) { int32 }
+    end
+
+    it "finds annotation in instance var (subclass)" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        class Base
+          @x : Nil
+        end
+
+        class Child < Base
+          @[Foo]
+          @x : Nil
+
+          def foo
+            {% if @type.instance_vars.first.annotation(Foo) %}
+              1
+            {% else %}
+              'a'
+            {% end %}
+          end
+        end
+
+        Child.new.foo
+      )) { int32 }
     end
 
     it "overrides annotation value in type" do

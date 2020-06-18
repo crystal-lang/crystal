@@ -266,6 +266,11 @@ struct Crystal::TypeDeclarationProcessor
       unless supervar.type.same?(type_decl.type)
         raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
       end
+
+      # Assign annotations to the existing instance var
+      type_decl.annotations.try &.each do |annotation_type, ann|
+        supervar.add_annotation(annotation_type, ann)
+      end
     else
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
