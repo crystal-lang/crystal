@@ -142,7 +142,10 @@ export CRYSTAL_PATH=lib:$CRYSTAL_ROOT/src
 export CRYSTAL_HAS_WRAPPER=true
 
 if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ]; then
-  export CRYSTAL_CONFIG_LIBRARY_PATH="$(crystal env CRYSTAL_LIBRARY_PATH || echo "")"
+  export CRYSTAL_CONFIG_LIBRARY_PATH="$(
+    export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")" 
+    crystal env CRYSTAL_LIBRARY_PATH || echo ""
+  )"
 fi
 
 if [ -x "$CRYSTAL_DIR/crystal" ]; then
