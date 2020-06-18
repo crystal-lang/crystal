@@ -546,4 +546,33 @@ describe "Semantic: automatic cast" do
       fill()
       )) { types["AnotherColor"] }
   end
+
+  it "doesn't do multidispatch if an overload matches exactly (#8217)" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo(x : Int64)
+          x
+        end
+
+        def foo(*xs : Int64)
+          xs
+        end
+      end
+
+      class Baz < Foo
+        def foo(x : Int64)
+          x
+        end
+
+        def foo(*xs : Int64)
+          xs
+        end
+      end
+
+      Baz.new.as(Foo).foo(1)
+      )) { int64 }
+  end
 end
