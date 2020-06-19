@@ -62,7 +62,7 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def initialize(&block : Int32 -> T)
+  def initialize(& : Int32 -> T)
     N.times do |i|
       to_unsafe[i] = yield i
     end
