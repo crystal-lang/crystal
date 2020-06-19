@@ -6,6 +6,7 @@ env:
   TRAVIS_OS_NAME: linux
   ARCH: x86_64
   ARCH_CMD: linux64
+  SPEC_SPLIT_DOTS: 160
 
 jobs:
   test_linux:

@@ -6,6 +6,7 @@ env:
   TRAVIS_OS_NAME: osx
   LLVM_CONFIG: /usr/local/opt/llvm/bin/llvm-config
   PKG_CONFIG_PATH: /usr/local/opt/openssl/lib/pkgconfig
+  SPEC_SPLIT_DOTS: 160
 
 jobs:
   test_macos:

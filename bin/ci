@@ -166,6 +166,7 @@ with_build_env() {
     -v /etc/group:/etc/group \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
+    -e SPEC_SPLIT_DOTS \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
