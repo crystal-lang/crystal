@@ -62,12 +62,10 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def self.new(&block : Int32 -> T)
-    array = uninitialized self
+  def initialize(&block : Int32 -> T)
     N.times do |i|
-      array.to_unsafe[i] = yield i
+      to_unsafe[i] = yield i
     end
-    array
   end
 
   # Creates a new static array filled with the given value.
