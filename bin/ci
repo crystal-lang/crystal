@@ -65,6 +65,15 @@ on_osx() {
   fail_on_error on_os "osx" "${@}"
 }
 
+on_github() {
+  if [ "$GITHUB_ACTIONS" = "true" ]; then
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
 prepare_system() {
   on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
   on_linux sudo service docker restart
@@ -138,6 +147,7 @@ verify_version() {
 
 with_build_env() {
   command="$1"
+  on_github echo "::group::$1"
 
   # Ensure non GMT timezone
   export TZ="America/New_York"
@@ -176,6 +186,7 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
+  on_github echo "::endgroup::"
 }
 
 usage() {
