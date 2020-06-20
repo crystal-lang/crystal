@@ -147,7 +147,7 @@ verify_version() {
 
 with_build_env() {
   command="$1"
-  on_github echo "::group::$1"
+  on_github "echo '::group::$1'"
 
   # Ensure non GMT timezone
   export TZ="America/New_York"
