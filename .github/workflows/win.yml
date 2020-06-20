@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.34.0-build
+    container: crystallang/crystal:0.35.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -16,7 +16,6 @@ jobs:
       - name: Cross-compile Crystal
         run: |
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
-          mv crystal.o crystal.obj || true  # TODO: Remove this after 0.35.0
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v1
@@ -61,7 +60,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./bdwgc
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake . -DBUILD_SHARED_LIBS=OFF -Denable_large_config=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Download libpcre
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -73,7 +72,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./pcre
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON
+          cmake . -DBUILD_SHARED_LIBS=OFF -DPCRE_SUPPORT_UNICODE_PROPERTIES=ON -DPCRE_SUPPORT_JIT=ON -DPCRE_STATIC_RUNTIME=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Download zlib
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -85,7 +84,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./zlib
         run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Download libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -97,7 +96,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libyaml
         run: |
-          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake . -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Download libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -110,7 +109,7 @@ jobs:
         if: steps.cache-libs.outputs.cache-hit != 'true'
         working-directory: ./libxml2
         run: |
-          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake . -DBUILD_SHARED_LIBS=OFF -DLIBXML2_WITH_HTTP=OFF -DLIBXML2_WITH_FTP=OFF -DLIBXML2_WITH_TESTS=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Gather libraries
         if: steps.cache-libs.outputs.cache-hit != 'true'
@@ -139,7 +138,7 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         working-directory: ./llvm-src
         run: |
-          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF
+          cmake . -Thost=x64 -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_USE_CRT_RELEASE=MT -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF
           cmake --build . --config Release
       - name: Gather LLVM
         if: steps.cache-llvm.outputs.cache-hit != 'true'

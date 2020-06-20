@@ -1,3 +1,37 @@
+# 0.35.1 (2020-06-19)
+
+## Standard library
+
+### Collections
+
+- Remove `Hash#each` type restriction to allow working with splats. ([#9456](https://github.com/crystal-lang/crystal/pull/9456), thanks @bcardiff)
+
+### Networking
+
+- Revert `IO#write` changes in 0.35.0 and let it return Nil. ([#9469](https://github.com/crystal-lang/crystal/pull/9469), thanks @bcardiff)
+- Avoid leaking logging context in HTTP request handlers. ([#9494](https://github.com/crystal-lang/crystal/pull/9494), thanks @Blacksmoke16)
+
+### Crypto
+
+- Use less strict cipher compatibility for OpenSSL client context. ([#9459](https://github.com/crystal-lang/crystal/pull/9459), thanks @straight-shoota)
+- Fix `Digest::Base` block argument type restrictions. ([#9500](https://github.com/crystal-lang/crystal/pull/9500), thanks @straight-shoota)
+
+### Logging
+
+- Fix `Log.context.set` docs for hash based data. ([#9470](https://github.com/crystal-lang/crystal/pull/9470), thanks @bcardiff)
+
+## Compiler
+
+- Show warnings even if there are errors. ([#9461](https://github.com/crystal-lang/crystal/pull/9461), thanks @asterite)
+- Fix parsing of `{foo: X, typeof: Y}` type. ([#9453](https://github.com/crystal-lang/crystal/pull/9453), thanks @MakeNowJust)
+- Fix parsing of proc in hash `of` key type. ([#9458](https://github.com/crystal-lang/crystal/pull/9458), thanks @MakeNowJust)
+- Revert debug level information changes in specs to fix 32 bits builds. ([#9466](https://github.com/crystal-lang/crystal/pull/9466), thanks @bcardiff)
+
+## Others
+
+- CI improvements and housekeeping. ([#9455](https://github.com/crystal-lang/crystal/pull/9455), thanks @bcardiff)
+- Code formatting. ([#9482](https://github.com/crystal-lang/crystal/pull/9482), thanks @MakeNowJust)
+
 # 0.35.0 (2020-06-09)
 
 ## Language changes
