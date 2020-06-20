@@ -434,6 +434,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run:
+          # $SNAPCRAFT_TOKEN is generated using `snapcraft export-login --snaps crystal --channels edge,edge/* -`
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
