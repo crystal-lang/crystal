@@ -118,18 +118,6 @@ module Crystal
 
     property codegen_target = Config.host_target
 
-    # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
-
-    # Paths to ignore for warnings detection.
-    property warnings_exclude : Array(String) = [] of String
-
-    # Detected warning failures.
-    property warning_failures = [] of String
-
-    # If `true` compiler will error if warnings are found.
-    property error_on_warnings : Bool = false
-
     def initialize
       super(self, self, "main")
 
@@ -326,10 +314,18 @@ module Crystal
 
     # Returns the `Type` for `type | Nil`
     def nilable(type)
-      # Nil | Nil # => Nil
-      return self.nil if type == self.nil
-
-      union_of self.nil, type
+      case type
+      when self.nil
+        # Nil | Nil # => Nil
+        return self.nil
+      when UnionType
+        types = Array(Type).new(type.union_types.size + 1)
+        types.concat type.union_types
+        types << self.nil unless types.includes? self.nil
+        union_of types
+      else
+        union_of self.nil, type
+      end
     end
 
     # Returns the `Type` for `type1 | type2`

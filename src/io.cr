@@ -14,7 +14,7 @@ require "c/errno"
 # these two methods:
 #
 # * `read(slice : Bytes)`: read at most *slice.size* bytes from IO into *slice* and return the number of bytes read
-# * `write(slice : Bytes)`: write the whole *slice* into the IO and return the number of bytes written
+# * `write(slice : Bytes)`: write the whole *slice* into the IO
 #
 # For example, this is a simple `IO` on top of a `Bytes`:
 #
@@ -29,10 +29,9 @@ require "c/errno"
 #     slice.size
 #   end
 #
-#   def write(slice : Bytes) : Int64
+#   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     slice.size.to_i64
 #   end
 # end
 #
@@ -100,7 +99,7 @@ abstract class IO
   # io.write(slice)
   # io.to_s # => "abcd"
   # ```
-  abstract def write(slice : Bytes) : Int64
+  abstract def write(slice : Bytes) : Nil
 
   # Closes this `IO`.
   #
@@ -464,12 +463,14 @@ abstract class IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes) : Int64
+  def write_utf8(slice : Bytes)
     if encoder = encoder()
       encoder.write(self, slice)
     else
       write(slice)
     end
+
+    nil
   end
 
   private def encoder
@@ -812,27 +813,22 @@ abstract class IO
   # io.gets    # => "world"
   # io.skip(1) # raises IO::EOFError
   # ```
-  def skip(bytes_count : Int) : Int64
-    bytes_count = bytes_count.to_i64
-    remaining = bytes_count
+  def skip(bytes_count : Int) : Nil
     buffer = uninitialized UInt8[4096]
-    while remaining > 0
-      read_count = read(buffer.to_slice[0, Math.min(remaining, 4096)])
+    while bytes_count > 0
+      read_count = read(buffer.to_slice[0, Math.min(bytes_count, 4096)])
       raise IO::EOFError.new if read_count == 0
-      remaining -= read_count
+
+      bytes_count -= read_count
     end
-    bytes_count
   end
 
   # Reads and discards bytes from `self` until there
   # are no more bytes.
-  def skip_to_end : Int64
-    bytes_count = 0i64
+  def skip_to_end : Nil
     buffer = uninitialized UInt8[4096]
-    while (len = read(buffer.to_slice)) > 0
-      bytes_count &+= len
+    while read(buffer.to_slice) > 0
     end
-    bytes_count
   end
 
   # Writes a single byte into this `IO`.
@@ -842,7 +838,7 @@ abstract class IO
   # io.write_byte 97_u8
   # io.to_s # => "a"
   # ```
-  def write_byte(byte : UInt8) : Int64
+  def write_byte(byte : UInt8)
     x = byte
     write Slice.new(pointerof(x), 1)
   end
@@ -850,7 +846,7 @@ abstract class IO
   # Writes the given object to this `IO` using the specified *format*.
   #
   # This ends up invoking `object.to_io(self, format)`, so any object defining a
-  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : UInt64`
+  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
   # method can be written in this way.
   #
   # See `Int#to_io` and `Float#to_io`.
@@ -861,7 +857,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Int64
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     object.to_io(self, format)
   end
 

@@ -673,7 +673,7 @@ struct Int
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat) : Int64
+  def to_io(io : IO, format : IO::ByteFormat)
     format.encode(self, io)
   end
 

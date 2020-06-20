@@ -5057,6 +5057,7 @@ module Crystal
 
       case @token.type
       when :IDENT
+        return false if named_tuple_start?
         case @token.value
         when :typeof
           true
@@ -5102,7 +5103,7 @@ module Crystal
         # They are conflicted with operators, so more look-ahead is needed.
         next_token_skip_space
         delimiter_or_type_suffix?
-      when :"->", :"|", :",", :NEWLINE, :EOF, :"=", :";", :"(", :")", :"[", :"]"
+      when :"->", :"|", :",", :"=>", :NEWLINE, :EOF, :"=", :";", :"(", :")", :"[", :"]"
         true
       else
         false

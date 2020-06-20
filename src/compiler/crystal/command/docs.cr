@@ -14,7 +14,7 @@ class Crystal::Command
     sitemap_changefreq = "never"
     project_info = Doc::ProjectInfo.new
 
-    compiler = Compiler.new
+    compiler = new_compiler
 
     OptionParser.parse(options) do |opts|
       opts.banner = <<-'BANNER'
@@ -140,7 +140,7 @@ class Crystal::Command
 
     Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq, project_info).run
 
-    report_warnings result
-    exit 1 if warnings_fail_on_exit?(result)
+    report_warnings
+    exit 1 if warnings_fail_on_exit?
   end
 end

@@ -429,14 +429,14 @@ describe "IO::Buffered" do
   it "skips" do
     str = IO::Memory.new("123456789")
     io = BufferedWrapper.new(str)
-    io.skip(3).should eq(3)
+    io.skip(3)
     io.read_char.should eq('4')
   end
 
   it "skips big" do
     str = IO::Memory.new(("a" * 10_000) + "b")
     io = BufferedWrapper.new(str)
-    io.skip(10_000).should eq(10_000)
+    io.skip(10_000)
     io.read_char.should eq('b')
   end
 

@@ -16,8 +16,6 @@ class Crystal::CodeGenVisitor
       return false
     end
 
-    check_call_to_deprecated_method node
-
     owner = node.name == "super" ? node.scope : node.target_def.owner
 
     call_args, has_out = prepare_call_args node, owner

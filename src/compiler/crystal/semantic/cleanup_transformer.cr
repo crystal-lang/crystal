@@ -326,6 +326,8 @@ module Crystal
         return expanded.transform self
       end
 
+      @program.check_call_to_deprecated_method(node)
+
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
       # ~~~
