@@ -620,7 +620,7 @@ class Crystal::Command
   end
 
   private def use_crystal_opts
-    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
+    @options = Process.split(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
   end
 
   private def new_compiler

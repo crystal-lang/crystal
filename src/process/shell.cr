@@ -102,4 +102,55 @@ class Process
   def self.quote_windows(arg : String) : String
     quote_windows({arg})
   end
+
+  # Split a *line* string into the array of tokens in the same way the POSIX shell.
+  #
+  # ```
+  # p Process.split(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
+  # ```
+  #
+  # See https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_03
+  def self.split(line : String) : Array(String)
+    tokens = [] of String
+
+    reader = Char::Reader.new(line)
+
+    while reader.has_next?
+      # skip whitespace
+      while reader.current_char.ascii_whitespace?
+        reader.next_char
+      end
+      break unless reader.has_next?
+
+      token = String.build do |str|
+        while reader.has_next? && !reader.current_char.ascii_whitespace?
+          quote = nil
+          if {'\'', '"'}.includes?(reader.current_char)
+            quote = reader.current_char
+            reader.next_char
+          end
+
+          until (char = reader.current_char) == quote || (!quote && char.ascii_whitespace?)
+            break unless reader.has_next?
+            reader.next_char
+            if char == '\\' && quote != '\''
+              char = reader.current_char
+              if reader.has_next?
+                reader.next_char
+              else
+                char = '\\'
+              end
+            end
+            str << char
+          end
+
+          reader.next_char if quote
+        end
+      end
+
+      tokens << token
+    end
+
+    tokens
+  end
 end

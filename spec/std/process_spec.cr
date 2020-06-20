@@ -460,4 +460,18 @@ describe Process do
       it { Process.quote_windows(["foo ", "", " ", " bar"]).should eq %("foo " "" " " " bar") }
     end
   end
+
+  describe "split" do
+    it { Process.split("").should eq(%w[]) }
+    it { Process.split(" ").should eq(%w[]) }
+    it { Process.split("foo").should eq(%w[foo]) }
+    it { Process.split("foo bar").should eq(%w[foo bar]) }
+    it { Process.split(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
+    it { Process.split(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
+    it { Process.split(%q(foo\ bar)).should eq(["foo bar"]) }
+    it { Process.split(%q("foo\ bar")).should eq(["foo bar"]) }
+    it { Process.split(%q('foo\ bar')).should eq(["foo\\ bar"]) }
+    it { Process.split("\\").should eq(["\\"]) }
+    it { Process.split(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+  end
 end
