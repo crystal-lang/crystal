@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   linux-job:
     runs-on: ubuntu-latest
-    container: crystallang/crystal:0.34.0-build
+    container: crystallang/crystal:0.35.1-build
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
@@ -16,7 +16,6 @@ jobs:
       - name: Cross-compile Crystal
         run: |
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
-          mv crystal.o crystal.obj || true  # TODO: Remove this after 0.35.0
 
       - name: Upload Crystal object file
         uses: actions/upload-artifact@v1
