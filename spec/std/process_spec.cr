@@ -469,9 +469,21 @@ describe Process do
     it { Process.parse_arguments(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
     it { Process.parse_arguments(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
     it { Process.parse_arguments(%q(foo\ bar)).should eq(["foo bar"]) }
-    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo bar"]) }
+    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo\\ bar"]) }
     it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
     it { Process.parse_arguments("\\").should eq(["\\"]) }
     it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+
+    it "raises an error when double quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q["foo])
+      end
+    end
+
+    it "raises an error if single quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q['foo])
+      end
+    end
   end
 end

@@ -134,17 +134,22 @@ class Process
             break unless reader.has_next?
             reader.next_char
             if char == '\\' && quote != '\''
+              str << char if quote == '"'
               char = reader.current_char
               if reader.has_next?
                 reader.next_char
               else
+                break if quote == '"'
                 char = '\\'
               end
             end
             str << char
           end
 
-          reader.next_char if quote
+          if quote
+            raise ArgumentError.new("Unmatched quote") unless reader.has_next?
+            reader.next_char
+          end
         end
       end
 
