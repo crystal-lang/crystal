@@ -125,7 +125,7 @@ class Process
       token = String.build do |str|
         while reader.has_next? && !reader.current_char.ascii_whitespace?
           quote = nil
-          if {'\'', '"'}.includes?(reader.current_char)
+          if reader.current_char.in?('\'', '"')
             quote = reader.current_char
             reader.next_char
           end
