@@ -9,6 +9,9 @@ describe BigDecimal do
     BigDecimal.new("41.0123")
       .should eq(BigDecimal.new(BigInt.new(410123), 4))
 
+    BigDecimal.new("000041.0123")
+      .should eq(BigDecimal.new(BigInt.new(410123), 4))
+
     BigDecimal.new(1)
       .should eq(BigDecimal.new(BigInt.new(1)))
 
@@ -245,6 +248,64 @@ describe BigDecimal do
     "10e+8".to_big_d.should eq(BigDecimal.new("1000000000"))
     "10E+8".to_big_d.should eq(BigDecimal.new("1000000000"))
     "10E8".to_big_d.should eq(BigDecimal.new("1000000000"))
+  end
+
+  it "raises InvalidBigDecimalException when initializing from invalid E notation" do
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1ee1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1 e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-..e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("e+5")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new(".e+1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("-.e1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e.")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e0.1")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1e+")
+    end
+
+    expect_raises(InvalidBigDecimalException) do
+      BigDecimal.new("1.0e")
+    end
   end
 
   it "is comparable with other types" do
