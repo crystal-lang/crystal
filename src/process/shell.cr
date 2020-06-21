@@ -110,7 +110,7 @@ class Process
   # ```
   #
   # See https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_03
-  def self.split(line : String) : Array(String)
+  def self.parse_arguments(line : String) : Array(String)
     tokens = [] of String
 
     reader = Char::Reader.new(line)

@@ -461,17 +461,17 @@ describe Process do
     end
   end
 
-  describe "split" do
-    it { Process.split("").should eq(%w[]) }
-    it { Process.split(" ").should eq(%w[]) }
-    it { Process.split("foo").should eq(%w[foo]) }
-    it { Process.split("foo bar").should eq(%w[foo bar]) }
-    it { Process.split(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
-    it { Process.split(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
-    it { Process.split(%q(foo\ bar)).should eq(["foo bar"]) }
-    it { Process.split(%q("foo\ bar")).should eq(["foo bar"]) }
-    it { Process.split(%q('foo\ bar')).should eq(["foo\\ bar"]) }
-    it { Process.split("\\").should eq(["\\"]) }
-    it { Process.split(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+  describe "parse_arguments" do
+    it { Process.parse_arguments("").should eq(%w[]) }
+    it { Process.parse_arguments(" ").should eq(%w[]) }
+    it { Process.parse_arguments("foo").should eq(%w[foo]) }
+    it { Process.parse_arguments("foo bar").should eq(%w[foo bar]) }
+    it { Process.parse_arguments(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
+    it { Process.parse_arguments(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
+    it { Process.parse_arguments(%q(foo\ bar)).should eq(["foo bar"]) }
+    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo bar"]) }
+    it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
+    it { Process.parse_arguments("\\").should eq(["\\"]) }
+    it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
   end
 end
