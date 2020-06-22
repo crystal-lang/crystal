@@ -1,5 +1,10 @@
 require "uri/punycode"
 
+# An `SSL::Context` represents a generic secure socket protocol configuration.
+#
+# For both server and client applications exist more specialized subclassses
+# `SSL::Context::Server` and `SSL::Context::Client` which need to be instantiated
+# appropriately.
 abstract class OpenSSL::SSL::Context
   # :nodoc:
   def self.default_method
@@ -10,52 +15,9 @@ abstract class OpenSSL::SSL::Context
     {% end %}
   end
 
-  # The list of secure ciphers (intermediate security) as of May 2016 as per
-  # https://wiki.mozilla.org/Security/Server_Side_TLS
-  CIPHERS = %w(
-    ECDHE-ECDSA-CHACHA20-POLY1305
-    ECDHE-RSA-CHACHA20-POLY1305
-    ECDHE-ECDSA-AES128-GCM-SHA256
-    ECDHE-RSA-AES128-GCM-SHA256
-    ECDHE-ECDSA-AES256-GCM-SHA384
-    ECDHE-RSA-AES256-GCM-SHA384
-    DHE-RSA-AES128-GCM-SHA256
-    DHE-RSA-AES256-GCM-SHA384
-    ECDHE-ECDSA-AES128-SHA256
-    ECDHE-RSA-AES128-SHA256
-    ECDHE-ECDSA-AES128-SHA
-    ECDHE-RSA-AES256-SHA384
-    ECDHE-RSA-AES128-SHA
-    ECDHE-ECDSA-AES256-SHA384
-    ECDHE-ECDSA-AES256-SHA
-    ECDHE-RSA-AES256-SHA
-    DHE-RSA-AES128-SHA256
-    DHE-RSA-AES128-SHA
-    DHE-RSA-AES256-SHA256
-    DHE-RSA-AES256-SHA
-    ECDHE-ECDSA-DES-CBC3-SHA
-    ECDHE-RSA-DES-CBC3-SHA
-    EDH-RSA-DES-CBC3-SHA
-    AES128-GCM-SHA256
-    AES256-GCM-SHA384
-    AES128-SHA256
-    AES256-SHA256
-    AES128-SHA
-    AES256-SHA
-    DES-CBC3-SHA
-    !RC4
-    !aNULL
-    !eNULL
-    !LOW
-    !3DES
-    !MD5
-    !EXP
-    !PSK
-    !SRP
-    !DSS
-  ).join(' ')
-
   class Client < Context
+    @hostname : String?
+
     # Generates a new TLS client context with sane defaults for a client connection.
     #
     # Defaults to `TLS_method` or `SSLv23_method` (depending on OpenSSL version)
@@ -74,9 +36,8 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Client.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
-
-    @hostname : String?
-
+    #
+    # It uses `CIPHERS_OLD` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -84,6 +45,8 @@ abstract class OpenSSL::SSL::Context
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
         self.default_verify_param = "ssl_server"
       {% end %}
+
+      self.ciphers = CIPHERS_OLD
     end
 
     # Returns a new TLS client context with only the given method set.
@@ -153,6 +116,8 @@ abstract class OpenSSL::SSL::Context
     # context = OpenSSL::SSL::Context::Server.new
     # context.add_options(OpenSSL::SSL::Options::NO_SSL_V2 | OpenSSL::SSL::Options::NO_SSL_V3)
     # ```
+    #
+    # It uses `CIPHERS_INTERMEDIATE` compatibility level by default.
     def initialize(method : LibSSL::SSLMethod = Context.default_method)
       super(method)
 
@@ -162,6 +127,8 @@ abstract class OpenSSL::SSL::Context
       {% end %}
 
       set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
+
+      self.ciphers = CIPHERS_INTERMEDIATE
     end
 
     # Returns a new TLS server context with only the given method set.
@@ -217,14 +184,14 @@ abstract class OpenSSL::SSL::Context
       ALL,
       NO_SSL_V2,
       NO_SSL_V3,
+      NO_TLS_V1,
+      NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       SINGLE_ECDH_USE,
       SINGLE_DH_USE
     ))
 
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
-
-    self.ciphers = CIPHERS
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -283,6 +250,8 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Specify a list of TLS ciphers to use or discard.
+  #
+  # This affects only TLSv1.2 and below.
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0

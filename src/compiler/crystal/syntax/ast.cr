@@ -296,7 +296,11 @@ module Crystal
   class StringInterpolation < ASTNode
     property expressions : Array(ASTNode)
 
-    def initialize(@expressions : Array(ASTNode))
+    # Removed indentation size.
+    # This property is only available when this is created from heredoc.
+    property heredoc_indent : Int32
+
+    def initialize(@expressions : Array(ASTNode), @heredoc_indent = 0)
     end
 
     def accept_children(visitor)
@@ -1178,8 +1182,9 @@ module Crystal
   class When < ASTNode
     property conds : Array(ASTNode)
     property body : ASTNode
+    property? exhaustive : Bool
 
-    def initialize(@conds, body = nil)
+    def initialize(@conds : Array(ASTNode), body : ASTNode? = nil, @exhaustive = false)
       @body = Expressions.from body
     end
 
@@ -1189,18 +1194,22 @@ module Crystal
     end
 
     def clone_without_location
-      When.new(@conds.clone, @body.clone)
+      When.new(@conds.clone, @body.clone, @exhaustive)
     end
 
-    def_equals_and_hash @conds, @body
+    def_equals_and_hash @conds, @body, @exhaustive
   end
 
   class Case < ASTNode
     property cond : ASTNode?
     property whens : Array(When)
     property else : ASTNode?
+    property? exhaustive : Bool
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@cond : ASTNode?, @whens : Array(When), @else : ASTNode?, @exhaustive : Bool)
+      @whens.each do |wh|
+        wh.exhaustive = self.exhaustive?
+      end
     end
 
     def accept_children(visitor)
@@ -1210,10 +1219,10 @@ module Crystal
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@cond.clone, @whens.clone, @else.clone, @exhaustive)
     end
 
-    def_equals_and_hash @cond, @whens, @else
+    def_equals_and_hash @exhaustive, @cond, @whens, @else
   end
 
   class Select < ASTNode
@@ -1264,7 +1273,6 @@ module Crystal
   class Path < ASTNode
     property names : Array(String)
     property? global : Bool
-    property name_size = 0
     property visibility = Visibility::Public
 
     def initialize(@names : Array, @global = false)
@@ -1278,6 +1286,10 @@ module Crystal
       new names, true
     end
 
+    def name_size
+      names.sum(&.size) + (names.size + (global? ? 0 : -1)) * 2
+    end
+
     # Returns true if this path has a single component
     # with the given name
     def single?(name)
@@ -1286,7 +1298,6 @@ module Crystal
 
     def clone_without_location
       ident = Path.new(@names.clone, @global)
-      ident.name_size = name_size
       ident
     end
 
@@ -2183,7 +2194,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      (location.try(&.original_location) || location).try(&.line_number) || 0
+      (location.try(&.expanded_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)

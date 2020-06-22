@@ -331,6 +331,8 @@ struct Char
         else # at the beginning of the set or escaped
           return not_negated if self == char
         end
+      else
+        # go on
       end
 
       if range && previous
@@ -475,7 +477,7 @@ struct Char
     dump_or_inspect do |io|
       if ascii_control?
         io << "\\u{"
-        ord.to_s(16, io)
+        ord.to_s(io, 16)
         io << '}'
       else
         to_s(io)
@@ -503,7 +505,7 @@ struct Char
     dump_or_inspect do |io|
       if ascii_control? || ord >= 0x80
         io << "\\u{"
-        ord.to_s(16, io)
+        ord.to_s(io, 16)
         io << '}'
       else
         to_s(io)

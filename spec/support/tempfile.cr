@@ -34,6 +34,25 @@ def with_tempfile(*paths, file = __FILE__)
   end
 end
 
+def with_temp_executable(name, file = __FILE__)
+  {% if flag?(:win32) %}
+    name += ".exe"
+  {% end %}
+  with_tempfile(name, file: file) do |tempname|
+    yield tempname
+  end
+end
+
+def with_temp_c_object_file(c_code, file = __FILE__)
+  with_tempfile("temp_c.c", "temp_c.o", file: file) do |c_filename, o_filename|
+    File.write(c_filename, c_code)
+
+    `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
+
+    yield o_filename
+  end
+end
+
 if SPEC_TEMPFILE_CLEANUP
   at_exit do
     FileUtils.rm_r(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)

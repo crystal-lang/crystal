@@ -46,6 +46,10 @@ module Crystal::System::File
     end
   end
 
+  def self.info(path, follow_symlinks)
+    info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
+  end
+
   def self.exists?(path)
     accessible?(path, LibC::F_OK)
   end
@@ -108,7 +112,7 @@ module Crystal::System::File
 
   def self.readlink(path) : String
     buf = Bytes.new 256
-    # First pass at 256 bytes handles all normal occurences in 1 system call.
+    # First pass at 256 bytes handles all normal occurrences in 1 system call.
     # Second pass at 1024 bytes handles outliers?
     # Third pass is the max or double what Linux/MacOS can store.
     3.times do |iter|
@@ -185,7 +189,11 @@ module Crystal::System::File
       if flush_metadata
         LibC.fsync(fd)
       else
-        LibC.fdatasync(fd)
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
       end
 
     if ret != 0

@@ -943,4 +943,15 @@ describe "Semantic: annotation" do
       ),
       "can't declare type inside annotation Ann"
   end
+
+  it "doesn't bleed annotation from class into class variable (#8314)" do
+    semantic(%(
+      annotation Attr; end
+
+      @[Attr]
+      class Bar
+        @@x = 0
+      end
+      ))
+  end
 end

@@ -32,27 +32,7 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   def self.from_stdio(fd)
-    {% if flag?(:win32) %}
-      new(fd)
-    {% else %}
-      # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
-      # We need to reopen it to use O_NONBLOCK without causing other programs to break
-
-      # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
-      # For non-tty we set flush_on_newline to true for reasons described in STDOUT and STDERR docs.
-      path = uninitialized UInt8[256]
-      ret = LibC.ttyname_r(fd, path, 256)
-      return new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
-
-      clone_fd = LibC.open(path, LibC::O_RDWR)
-      return new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
-
-      # We don't buffer output for TTY devices to see their output right away
-      io = new(clone_fd)
-      io.close_on_exec = true
-      io.sync = true
-      io
-    {% end %}
+    Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
   def blocking

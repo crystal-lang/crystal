@@ -13,6 +13,114 @@ module Spec
       end
       children.shuffle!(randomizer)
     end
+
+    protected def internal_run
+      run_before_all_hooks
+
+      @running = true
+
+      channel = Channel(Nil).new
+
+      async_children.each do |child|
+        spawn { child.run { channel.send nil } }
+      end
+
+      children.each &.run
+
+      # Wait for each child to tell it they're done
+      async_children.each { channel.receive }
+    ensure
+      @running = false
+      run_after_all_hooks
+    end
+
+    protected def before_each(&block)
+      (@before_each ||= [] of ->) << block
+    end
+
+    protected def run_before_each_hooks
+      @before_each.try &.each &.call
+    end
+
+    protected def after_each(&block)
+      (@after_each ||= [] of ->) << block
+    end
+
+    protected def run_after_each_hooks
+      @after_each.try &.reverse_each &.call
+    end
+
+    protected def before_all(&block)
+      (@before_all ||= [] of ->) << block
+    end
+
+    protected def run_before_all_hooks
+      @before_all.try &.each &.call
+    end
+
+    protected def after_all(&block)
+      (@after_all ||= [] of ->) << block
+    end
+
+    protected def run_after_all_hooks
+      @after_all.try &.reverse_each &.call
+    end
+
+    protected def around_each(&block : Example::Procsy ->)
+      (@around_each ||= [] of Example::Procsy ->) << block
+    end
+
+    protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
+      internal_run_around_each_hooks(procsy)
+    end
+
+    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
+      around_each = @around_each
+      return false unless around_each
+
+      run_around_each_hook(around_each, procsy, 0)
+      true
+    end
+
+    protected def run_around_each_hook(around_each, procsy, index) : Nil
+      around_each[index].call(
+        if index == around_each.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          Example::Procsy.new(procsy.example) do
+            run_around_each_hook(around_each, procsy, index + 1)
+          end
+        end
+      )
+    end
+
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
+    end
+
+    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
+      around_all = @around_all
+      return false unless around_all
+
+      run_around_all_hook(around_all, procsy, 0)
+      true
+    end
+
+    protected def run_around_all_hook(around_all, procsy, index) : Nil
+      around_all[index].call(
+        if index == around_all.size - 1
+          # If we don't have any more hooks after this one, call the procsy
+          procsy
+        else
+          # Otherwise, create a procsy that will invoke the next hook
+          ExampleGroup::Procsy.new(procsy.example_group) do
+            run_around_all_hook(around_all, procsy, index + 1)
+          end
+        end
+      )
+    end
   end
 
   # :nodoc:
@@ -30,11 +138,16 @@ module Spec
   end
 
   # :nodoc:
+  def self.current_context : Context
+    RootContext.current_context
+  end
+
+  # :nodoc:
   #
   # The root context is the main interface that the spec DSL interacts with.
   class RootContext < Context
     class_getter instance = RootContext.new
-    @@current_context : Context = @@instance
+    class_getter current_context : Context = @@instance
 
     getter? running = false
 
@@ -45,23 +158,6 @@ module Spec
         error:   [] of Result,
         pending: [] of Result,
       }
-    end
-
-    def run
-      @running = true
-
-      channel = Channel(Nil).new
-
-      async_children.each do |child|
-        spawn { child.run { channel.send nil } }
-      end
-
-      children.each &.run
-
-      # Wait for each child to tell it they're done
-      async_children.each { channel.receive }
-    ensure
-      @running = false
     end
 
     def report(kind, full_description, file, line, elapsed = nil, ex = nil)
@@ -234,68 +330,8 @@ module Spec
       end
     end
 
-    def before_each(&block)
-      if @@current_context == self
-        raise "Can't call `before_each` outside of a describe/context"
-      end
-
-      @@current_context.before_each(&block)
-    end
-
-    def run_before_each_hooks
-      # Nothing
-    end
-
-    def after_each(&block)
-      if @@current_context == self
-        raise "Can't call `after_each` outside of a describe/context"
-      end
-
-      @@current_context.after_each(&block)
-    end
-
-    def run_after_each_hooks
-      # Nothing
-    end
-
-    def before_all(&block)
-      if @@current_context == self
-        raise "Can't call `before_all` outside of a describe/context"
-      end
-
-      @@current_context.before_all(&block)
-    end
-
-    def after_all(&block)
-      if @@current_context == self
-        raise "Can't call `after_all` outside of a describe/context"
-      end
-
-      @@current_context.after_all(&block)
-    end
-
-    def around_each(&block : Example::Procsy ->)
-      if @@current_context == self
-        raise "Can't call `around_each` outside of a describe/context"
-      end
-
-      @@current_context.around_each(&block)
-    end
-
-    def run_around_each_hooks(procsy : Example::Procsy) : Bool
-      false
-    end
-
-    def around_all(&block : ExampleGroup::Procsy ->)
-      if @@current_context == self
-        raise "Can't call `around_all` outside of a describe/context"
-      end
-
-      @@current_context.around_all(&block)
-    end
-
-    def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
-      false
+    protected def around_all(&block : ExampleGroup::Procsy ->)
+      raise "Can't call `around_all` outside of a describe/context"
     end
 
     def async?
@@ -328,62 +364,18 @@ module Spec
       on_finish.call
     end
 
-    protected def internal_run
-      run_before_all_hooks
-      # children.each &.run
-      channel = Channel(Nil).new
-
-      async_children.each do |child|
-        spawn child.run { channel.send nil }
-      end
-
-      children.each &.run
-
-      # Wait for each child to tell it they're done
-      async_children.each { channel.receive }
-      run_after_all_hooks
-    end
-
     protected def report(kind, description, file, line, elapsed = nil, ex = nil)
       parent.report kind, "#{@description} #{description}", file, line, elapsed, ex
     end
 
-    protected def before_each(&block)
-      (@before_each ||= [] of ->) << block
-    end
-
     protected def run_before_each_hooks
       @parent.run_before_each_hooks
-      @before_each.try &.each &.call
-    end
-
-    protected def after_each(&block)
-      (@after_each ||= [] of ->) << block
+      super
     end
 
     protected def run_after_each_hooks
-      @after_each.try &.reverse_each &.call
+      super
       @parent.run_after_each_hooks
-    end
-
-    protected def before_all(&block)
-      (@before_all ||= [] of ->) << block
-    end
-
-    protected def run_before_all_hooks
-      @before_all.try &.each &.call
-    end
-
-    protected def after_all(&block)
-      (@after_all ||= [] of ->) << block
-    end
-
-    protected def run_after_all_hooks
-      @after_all.try &.reverse_each &.call
-    end
-
-    protected def around_each(&block : Example::Procsy ->)
-      (@around_each ||= [] of Example::Procsy ->) << block
     end
 
     protected def run_around_each_hooks(procsy : Example::Procsy) : Bool
@@ -399,54 +391,6 @@ module Spec
         end
       end)
       ran || internal_run_around_each_hooks(procsy)
-    end
-
-    protected def internal_run_around_each_hooks(procsy : Example::Procsy) : Bool
-      around_each = @around_each
-      return false unless around_each
-
-      run_around_each_hook(around_each, procsy, 0)
-      true
-    end
-
-    protected def run_around_each_hook(around_each, procsy, index) : Nil
-      around_each[index].call(
-        if index == around_each.size - 1
-          # If we don't have any more hooks after this one, call the procsy
-          procsy
-        else
-          # Otherwise, create a procsy that will invoke the next hook
-          Example::Procsy.new(procsy.example) do
-            run_around_each_hook(around_each, procsy, index + 1)
-          end
-        end
-      )
-    end
-
-    protected def around_all(&block : ExampleGroup::Procsy ->)
-      (@around_all ||= [] of ExampleGroup::Procsy ->) << block
-    end
-
-    protected def run_around_all_hooks(procsy : ExampleGroup::Procsy) : Bool
-      around_all = @around_all
-      return false unless around_all
-
-      run_around_all_hook(around_all, procsy, 0)
-      true
-    end
-
-    protected def run_around_all_hook(around_all, procsy, index) : Nil
-      around_all[index].call(
-        if index == around_all.size - 1
-          # If we don't have any more hooks after this one, call the procsy
-          procsy
-        else
-          # Otherwise, create a procsy that will invoke the next hook
-          ExampleGroup::Procsy.new(procsy.example_group) do
-            run_around_all_hook(around_all, procsy, index + 1)
-          end
-        end
-      )
     end
   end
 end

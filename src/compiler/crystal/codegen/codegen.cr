@@ -135,8 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      getter debug_variable_created : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_variable_created = false)
       end
     end
 
@@ -183,9 +184,7 @@ module Crystal
 
       if @program.has_flag? "windows"
         @personality_name = "__CxxFrameHandler3"
-
-        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
-        @main.personality_function = personality_function
+        @main.personality_function = windows_personality_fun
       else
         @personality_name = "__crystal_personality"
       end
@@ -310,7 +309,10 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
+        else
+          # go on
         end
+
         false
       end
 
@@ -561,7 +563,7 @@ module Crystal
     end
 
     def fun_literal_name(node : ProcLiteral)
-      location = node.location.try &.original_location
+      location = node.location.try &.expanded_location
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename.as(String)
@@ -1109,6 +1111,8 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
+      else
+        # go on
       end
 
       @last = llvm_nil
@@ -1301,7 +1305,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1320,6 +1324,7 @@ module Crystal
         location = Location.new(@program.filename, 1, 1)
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
         @program.visit_main call
+        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call
       end
     end
@@ -1345,7 +1350,17 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= begin
+        pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
+        debug_variable_created =
+          if context.fun.naked?
+            # Naked functions must not have debug info associated with them
+            false
+          else
+            declare_variable(var.name, var.type, pointer, var.location)
+          end
+        LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
+      end
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1509,6 +1524,10 @@ module Crystal
       end
 
       false
+    end
+
+    def visit(node : Unreachable)
+      builder.unreachable
     end
 
     def check_proc_is_not_closure(value, type)
@@ -1712,8 +1731,20 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = builder.alloca llvm_type(var_type), name
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            ptr = alloca llvm_type(var_type), name
+
+            location = var.location
+            if location.nil? && obj.is_a?(ASTNode)
+              location = obj.location
+            end
+
+            debug_variable_created =
+              if location && !context.fun.naked?
+                declare_variable name, var_type, ptr, location, alloca_block
+              else
+                false
+              end
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
             if bound_to_mod_nil?(var)
@@ -2179,7 +2210,7 @@ module Crystal
             str << char
           else
             str << '.'
-            char.ord.to_s(16, str, upcase: true)
+            char.ord.to_s(str, 16, upcase: true)
             str << '.'
           end
         end

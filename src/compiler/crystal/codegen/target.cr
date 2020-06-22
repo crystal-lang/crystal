@@ -27,6 +27,8 @@ class Crystal::Codegen::Target
       @architecture = "x86_64"
     when .starts_with?("arm")
       @architecture = "arm"
+    else
+      # no need to tweak the architecture
     end
   end
 
@@ -49,6 +51,8 @@ class Crystal::Codegen::Target
       "darwin"
     when .freebsd?
       "freebsd"
+    when .dragonfly?
+      "dragonfly"
     when .openbsd?
       "openbsd"
     else
@@ -72,6 +76,10 @@ class Crystal::Codegen::Target
     end
   end
 
+  def dragonfly?
+    @environment.starts_with?("dragonfly")
+  end
+
   def openbsd?
     @environment.starts_with?("openbsd")
   end
@@ -80,8 +88,12 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
+  def bsd?
+    freebsd? || openbsd? || dragonfly?
+  end
+
   def unix?
-    macos? || freebsd? || openbsd? || linux?
+    macos? || bsd? || linux?
   end
 
   def gnu?

@@ -34,6 +34,8 @@ class CSV::Lexer::StringBased < CSV::Lexer
         break
       when @quote_char
         raise "Unexpected quote"
+      else
+        # go on
       end
     end
     @reader.string.byte_slice(start_pos, end_pos - start_pos)

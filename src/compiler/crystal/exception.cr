@@ -9,14 +9,14 @@ module Crystal
     @filename : String | VirtualFile | Nil
 
     def to_s(io) : Nil
-      to_s_with_source(nil, io)
+      to_s_with_source(io, nil)
     end
 
     def warning=(warning)
       @warning = !!warning
     end
 
-    abstract def to_s_with_source(source, io)
+    abstract def to_s_with_source(io : IO, source)
 
     def to_json(json : JSON::Builder)
       json.array do
@@ -43,7 +43,7 @@ module Crystal
 
     def to_s_with_source(source)
       String.build do |io|
-        to_s_with_source source, io
+        to_s_with_source(io, source)
       end
     end
 
@@ -77,11 +77,11 @@ module Crystal
   end
 
   class LocationlessException < Exception
-    def to_s_with_source(source, io)
+    def to_s_with_source(io : IO, source)
       io << @message
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       io << @message
     end
 
@@ -112,6 +112,8 @@ module Crystal
         if File.file?(filename)
           return format_error_from_file(filename)
         end
+      else
+        # go on
       end
 
       return format_error(source) if source
@@ -126,7 +128,7 @@ module Crystal
       size ||= 0
       io << '\n'
       io << (" " * (offset + column_number - 1))
-      Colorize.with.green.bold.surround(io) do
+      with_color.green.bold.surround(io) do
         io << '^'
         if size > 0
           io << ("-" * (size - 1))
@@ -207,12 +209,16 @@ module Crystal
 
     def source_lines(filename)
       case filename
+      when Nil
+        nil
       when String
         if File.file? filename
-          source_lines = File.read_lines(filename)
+          File.read_lines(filename)
+        else
+          nil
         end
       when VirtualFile
-        source_lines = filename.source.lines
+        filename.source.lines
       end
     end
 

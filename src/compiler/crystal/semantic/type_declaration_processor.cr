@@ -339,13 +339,13 @@ struct Crystal::TypeDeclarationProcessor
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
 
+    # If a superclass already defines this variable we ignore
+    # the guessed type information for subclasses
+    supervar = owner.lookup_instance_var?(name)
+    return if supervar
+
     case owner
     when NonGenericClassType
-      # If a superclass already defines this variable we ignore
-      # the guessed type information for subclasses
-      supervar = owner.lookup_instance_var?(name)
-      return if supervar
-
       type = type_info.type
       if nilable_instance_var?(owner, name)
         type = Type.merge!(type, @program.nil)
@@ -408,6 +408,8 @@ struct Crystal::TypeDeclarationProcessor
         process_owner_guessed_instance_var_declaration(including_type, name, type_info)
         remove_error including_type, name
       end
+    else
+      # TODO: can this be reached?
     end
   end
 
@@ -643,6 +645,8 @@ struct Crystal::TypeDeclarationProcessor
           error.node.raise "can't use #{error.type} as the type of class variable '#{name}' of #{type}, use a more specific type"
         when .starts_with?("@")
           error.node.raise "can't use #{error.type} as the type of instance variable '#{name}' of #{type}, use a more specific type"
+        else
+          # TODO: can this be reached?
         end
       end
     end

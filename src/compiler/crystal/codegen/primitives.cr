@@ -128,14 +128,18 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
+    else # go on
+    end
+
+    case op
+    when "+", "-", "*"
+      return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
+    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
-    when "+"               then codegen_binary_op_add(tmax, t1, t2, p1, p2)
-    when "-"               then codegen_binary_op_sub(tmax, t1, t2, p1, p2)
-    when "*"               then codegen_binary_op_mul(tmax, t1, t2, p1, p2)
     when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
     when "&-"              then codegen_trunc_binary_op_result(t1, t2, builder.sub(p1, p2))
     when "&*"              then codegen_trunc_binary_op_result(t1, t2, builder.mul(p1, p2))
@@ -148,6 +152,79 @@ class Crystal::CodeGenVisitor
     when "^"               then codegen_trunc_binary_op_result(t1, t2, builder.xor(p1, p2))
     else                        raise "BUG: trying to codegen #{t1} #{op} #{t2}"
     end
+  end
+
+  def codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
+    if op == "*"
+      if t1.unsigned? && t2.signed?
+        return codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
+      elsif t1.signed? && t2.unsigned?
+        return codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
+      end
+    end
+
+    calc_signed = t1.signed? || t2.signed?
+    calc_width = {t1, t2}.map { |t| t.bytes * 8 + ((calc_signed && t.unsigned?) ? 1 : 0) }.max
+    calc_type = llvm_context.int(calc_width)
+
+    e1 = t1.signed? ? builder.sext(p1, calc_type) : builder.zext(p1, calc_type)
+    e2 = t2.signed? ? builder.sext(p2, calc_type) : builder.zext(p2, calc_type)
+
+    llvm_op =
+      case {calc_signed, op}
+      when {false, "+"} then "uadd"
+      when {false, "-"} then "usub"
+      when {false, "*"} then "umul"
+      when {true, "+"}  then "sadd"
+      when {true, "-"}  then "ssub"
+      when {true, "*"}  then "smul"
+      else                   raise "BUG: unknown overflow op"
+      end
+
+    llvm_fun = binary_overflow_fun "llvm.#{llvm_op}.with.overflow.i#{calc_width}", calc_type
+    res_with_overflow = builder.call(llvm_fun, [e1, e2])
+
+    result = extract_value res_with_overflow, 0
+    overflow = extract_value res_with_overflow, 1
+
+    if calc_width > t1.bytes * 8
+      result_trunc = trunc result, llvm_type(t1)
+      result_trunc_ext = t1.signed? ? builder.sext(result_trunc, calc_type) : builder.zext(result_trunc, calc_type)
+      overflow = or(overflow, builder.icmp LLVM::IntPredicate::NE, result, result_trunc_ext)
+    end
+
+    codegen_raise_overflow_cond overflow
+
+    trunc result, llvm_type(t1)
+  end
+
+  def codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
+    overflow = and(
+      codegen_binary_op_ne(t1, t1, p1, int(0, t1)), # self != 0
+      codegen_binary_op_lt(t2, t2, p2, int(0, t2))  # other < 0
+    )
+    codegen_raise_overflow_cond overflow
+
+    return codegen_binary_op_with_overflow("*", t1, @program.int_type(false, t2.bytes), p1, p2)
+  end
+
+  def codegen_mul_signed_unsigned_with_overflow(t1, t2, p1, p2)
+    negative = codegen_binary_op_lt(t1, t1, p1, int(0, t1)) # self < 0
+    minus_p1 = builder.sub int(0, t1), p1
+    abs = builder.select negative, minus_p1, p1
+    u1 = @program.int_type(false, t1.bytes)
+
+    # tmp is the abs value of the result
+    # there is overflow when |result| > max + (negative ? 1 : 0)
+    tmp = codegen_binary_op_with_overflow("*", u1, t2, abs, p2)
+    _, max = t1.range
+    max_result = builder.add(int(max, t1), builder.zext(negative, llvm_type(t1)))
+    overflow = codegen_binary_op_gt(u1, u1, tmp, max_result)
+    codegen_raise_overflow_cond overflow
+
+    # negate back the result if p1 was negative
+    minus_tmp = builder.sub int(0, t1), tmp
+    builder.select negative, minus_tmp, tmp
   end
 
   def codegen_binary_extend_int(t1, t2, p1, p2)
@@ -173,138 +250,6 @@ class Crystal::CodeGenVisitor
     else
       result
     end
-  end
-
-  def codegen_binary_op_add(t : IntegerType, t1, t2, p1, p2)
-    llvm_fun = case t.kind
-               when :i8
-                 binary_overflow_fun "llvm.sadd.with.overflow.i8", llvm_context.int8
-               when :i16
-                 binary_overflow_fun "llvm.sadd.with.overflow.i16", llvm_context.int16
-               when :i32
-                 binary_overflow_fun "llvm.sadd.with.overflow.i32", llvm_context.int32
-               when :i64
-                 binary_overflow_fun "llvm.sadd.with.overflow.i64", llvm_context.int64
-               when :i128
-                 binary_overflow_fun "llvm.sadd.with.overflow.i128", llvm_context.int128
-               when :u8
-                 binary_overflow_fun "llvm.uadd.with.overflow.i8", llvm_context.int8
-               when :u16
-                 binary_overflow_fun "llvm.uadd.with.overflow.i16", llvm_context.int16
-               when :u32
-                 binary_overflow_fun "llvm.uadd.with.overflow.i32", llvm_context.int32
-               when :u64
-                 binary_overflow_fun "llvm.uadd.with.overflow.i64", llvm_context.int64
-               when :u128
-                 binary_overflow_fun "llvm.uadd.with.overflow.i128", llvm_context.int128
-               else
-                 raise "unreachable"
-               end
-
-    codegen_binary_overflow_check(llvm_fun, t, t1, t2, p1, p2)
-  end
-
-  def codegen_binary_op_sub(t : IntegerType, t1, t2, p1, p2)
-    llvm_fun = case t.kind
-               when :i8
-                 binary_overflow_fun "llvm.ssub.with.overflow.i8", llvm_context.int8
-               when :i16
-                 binary_overflow_fun "llvm.ssub.with.overflow.i16", llvm_context.int16
-               when :i32
-                 binary_overflow_fun "llvm.ssub.with.overflow.i32", llvm_context.int32
-               when :i64
-                 binary_overflow_fun "llvm.ssub.with.overflow.i64", llvm_context.int64
-               when :i128
-                 binary_overflow_fun "llvm.ssub.with.overflow.i128", llvm_context.int128
-               when :u8
-                 binary_overflow_fun "llvm.usub.with.overflow.i8", llvm_context.int8
-               when :u16
-                 binary_overflow_fun "llvm.usub.with.overflow.i16", llvm_context.int16
-               when :u32
-                 binary_overflow_fun "llvm.usub.with.overflow.i32", llvm_context.int32
-               when :u64
-                 binary_overflow_fun "llvm.usub.with.overflow.i64", llvm_context.int64
-               when :u128
-                 binary_overflow_fun "llvm.usub.with.overflow.i128", llvm_context.int128
-               else
-                 raise "unreachable"
-               end
-
-    codegen_binary_overflow_check(llvm_fun, t, t1, t2, p1, p2)
-  end
-
-  def codegen_binary_op_mul(t : IntegerType, t1, t2, p1, p2)
-    llvm_fun = case t.kind
-               when :i8
-                 binary_overflow_fun "llvm.smul.with.overflow.i8", llvm_context.int8
-               when :i16
-                 binary_overflow_fun "llvm.smul.with.overflow.i16", llvm_context.int16
-               when :i32
-                 binary_overflow_fun "llvm.smul.with.overflow.i32", llvm_context.int32
-               when :i64
-                 binary_overflow_fun "llvm.smul.with.overflow.i64", llvm_context.int64
-               when :i128
-                 binary_overflow_fun "llvm.smul.with.overflow.i128", llvm_context.int128
-               when :u8
-                 binary_overflow_fun "llvm.umul.with.overflow.i8", llvm_context.int8
-               when :u16
-                 binary_overflow_fun "llvm.umul.with.overflow.i16", llvm_context.int16
-               when :u32
-                 binary_overflow_fun "llvm.umul.with.overflow.i32", llvm_context.int32
-               when :u64
-                 binary_overflow_fun "llvm.umul.with.overflow.i64", llvm_context.int64
-               when :u128
-                 binary_overflow_fun "llvm.umul.with.overflow.i128", llvm_context.int128
-               else
-                 raise "unreachable"
-               end
-
-    codegen_binary_overflow_check(llvm_fun, t, t1, t2, p1, p2)
-  end
-
-  # Generates a call to llvm_fun(p1, p2).
-  # t1, t2 are the original types of p1, p2.
-  # t is the super type of t1 and t2 where the operation is performed.
-  # llvm_fun returns {res, o_bit} where the o_bit signals overflow.
-  # The generated code also performs a range check and truncation of res
-  # in order to fit in the original type t1 if needed.
-  #
-  # ```
-  # %res_with_overflow = call {T, i1} <llvm_fun>(T %p1, T %p2)
-  # %res = extractvalue {T, i1} %res, 0
-  # %o_bit = extractvalue {T, i1} %res, 1
-  # ;; if T != T1
-  # %out_of_range = %res < T1::MIN || %res > T1::MAX ;; compare T1.range and %res
-  # br i1 or(%o_bit, %out_of_range), label %overflow, label %normal
-  # ;; else
-  # br i1 %o_bit, label %overflow, label %normal
-  # ;; end
-  #
-  # overflow:
-  # ;; codegen: raise OverflowError.new with caller's location
-  #
-  # normal:
-  # ;; if T != T1
-  # ;;   %res' is returned
-  # %res' = trunc T %res to T1
-  # ;; else
-  # ;;   %res is returned
-  # ;; end
-  # ```
-  private def codegen_binary_overflow_check(llvm_fun, t : IntegerType, t1, t2, p1, p2)
-    res_with_overflow = builder.call(llvm_fun, [p1, p2])
-
-    res = extract_value res_with_overflow, 0
-    o_bit = extract_value res_with_overflow, 1
-
-    if t != t1
-      overflow = or(o_bit, codegen_out_of_range(t1, t, res))
-    else
-      overflow = o_bit
-    end
-
-    codegen_raise_overflow_cond overflow
-    codegen_trunc_binary_op_result(t1, t2, res)
   end
 
   private def codegen_out_of_range(target_type : IntegerType, arg_type : IntegerType, arg)
@@ -859,12 +804,10 @@ class Crystal::CodeGenVisitor
     scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
-    # Check nil to pointer
+    # Check assigning nil to a field of type pointer or Proc
     if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
-    end
-
-    if field_type.proc?
+    elsif field_type.proc?
       call_arg = check_proc_is_not_closure(call_arg, field_type)
     end
 
@@ -1277,32 +1220,45 @@ class Crystal::CodeGenVisitor
   def void_ptr_type_descriptor
     void_ptr_type_descriptor_name = "\u{1}??_R0PEAX@8"
 
-    @llvm_mod.globals[void_ptr_type_descriptor_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_type_descriptor_name]?
+      return existing
+    end
+
+    type_descriptor = llvm_context.struct([
+      llvm_context.void_pointer.pointer,
+      llvm_context.void_pointer,
+      llvm_context.int8.array(6),
+    ])
+
+    if !@main_mod.globals[void_ptr_type_descriptor_name]?
       base_type_descriptor = external_constant(llvm_context.void_pointer, "\u{1}??_7type_info@@6B@")
 
       # .PEAX is void*
-      void_ptr_type_descriptor = @llvm_mod.globals.add(
-        llvm_context.struct([
-          llvm_context.void_pointer.pointer,
-          llvm_context.void_pointer,
-          llvm_context.int8.array(6),
-        ]), void_ptr_type_descriptor_name)
+      void_ptr_type_descriptor = @main_mod.globals.add(
+        type_descriptor, void_ptr_type_descriptor_name)
       void_ptr_type_descriptor.initializer = llvm_context.const_struct [
         base_type_descriptor,
         llvm_context.void_pointer.null,
         llvm_context.const_string(".PEAX"),
       ]
-
-      void_ptr_type_descriptor
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_type_descriptor
+    external_constant(type_descriptor, void_ptr_type_descriptor_name)
   end
 
   def void_ptr_throwinfo
     void_ptr_throwinfo_name = "_TI1PEAX"
 
-    @llvm_mod.globals[void_ptr_throwinfo_name]? || begin
+    if existing = @llvm_mod.globals[void_ptr_throwinfo_name]?
+      return existing
+    end
+
+    eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
+
+    if !@main_mod.globals[void_ptr_throwinfo_name]?
       catchable_type = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_catchable_type = @llvm_mod.globals.add(
+      void_ptr_catchable_type = @main_mod.globals.add(
         catchable_type, "_CT??_R0PEAX@88")
       void_ptr_catchable_type.initializer = llvm_context.const_struct [
         int32(1),
@@ -1315,15 +1271,14 @@ class Crystal::CodeGenVisitor
       ]
 
       catchable_type_array = llvm_context.struct([llvm_context.int32, llvm_context.int32.array(1)])
-      catchable_void_ptr = @llvm_mod.globals.add(
+      catchable_void_ptr = @main_mod.globals.add(
         catchable_type_array, "_CTA1PEAX")
       catchable_void_ptr.initializer = llvm_context.const_struct [
         int32(1),
         llvm_context.int32.const_array([sub_image_base(void_ptr_catchable_type)]),
       ]
 
-      eh_throwinfo = llvm_context.struct([llvm_context.int32, llvm_context.int32, llvm_context.int32, llvm_context.int32])
-      void_ptr_throwinfo = @llvm_mod.globals.add(
+      void_ptr_throwinfo = @main_mod.globals.add(
         eh_throwinfo, void_ptr_throwinfo_name)
       void_ptr_throwinfo.initializer = llvm_context.const_struct [
         int32(0),
@@ -1331,9 +1286,10 @@ class Crystal::CodeGenVisitor
         int32(0),
         sub_image_base(catchable_void_ptr),
       ]
-
-      void_ptr_throwinfo
     end
+
+    # if @llvm_mod == @main_mod, this will find the previously created void_ptr_throwinfo
+    external_constant(eh_throwinfo, void_ptr_throwinfo_name)
   end
 
   def external_constant(type, name)

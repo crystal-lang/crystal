@@ -242,7 +242,7 @@ module Crystal
             {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
-          exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
+          exp.raise "can't iterate TypeNode of type #{type}, only tuple or named tuple types"
         end
       else
         node.exp.raise "`for` expression must be an array, hash, tuple, named tuple or a range literal, not #{exp.class_desc}:\n\n#{exp}"
@@ -315,6 +315,11 @@ module Crystal
         node.raise "can only assign to variables, not #{target.class_desc}"
       end
 
+      false
+    end
+
+    def visit(node : OpAssign)
+      @program.normalize(node).accept(self)
       false
     end
 
@@ -451,6 +456,7 @@ module Crystal
           else
             produce_tuple = false
           end
+
           if produce_tuple
             case matched_type
             when TupleInstanceType
@@ -462,6 +468,8 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
+            else
+              # go on
             end
           end
         end
@@ -534,12 +542,12 @@ module Crystal
       case node.name
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
-        return @last = TypeNode.new(target.devirtualize)
+        @last = TypeNode.new(target.devirtualize)
       when "@def"
-        return @last = @def || NilLiteral.new
+        @last = @def || NilLiteral.new
+      else
+        node.raise "unknown macro instance var: '#{node.name}'"
       end
-
-      node.raise "unknown macro instance var: '#{node.name}'"
     end
 
     def visit(node : TupleLiteral)

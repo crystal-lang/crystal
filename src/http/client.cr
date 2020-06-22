@@ -1,3 +1,7 @@
+{% if !flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
+
 # An HTTP Client.
 #
 # ### One-shot usage
@@ -101,18 +105,16 @@ class HTTP::Client
   # ```
   {% if flag?(:without_openssl) %}
     getter! tls : Nil
+    @socket : TCPSocket | Nil
+    alias TLSContext = Bool | Nil
   {% else %}
     getter! tls : OpenSSL::SSL::Context::Client
+    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
+    alias TLSContext = OpenSSL::SSL::Context::Client | Bool | Nil
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
-  property? compress : Bool
-
-  {% if flag?(:without_openssl) %}
-    @socket : TCPSocket | Nil
-  {% else %}
-    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
-  {% end %}
+  property? compress : Bool = true
 
   @dns_timeout : Float64?
   @connect_timeout : Float64?
@@ -124,35 +126,27 @@ class HTTP::Client
   # be used depending on the *tls* arguments: 80 for if *tls* is `false`,
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
-  {% if flag?(:without_openssl) %}
-    def initialize(@host : String, port = nil, tls : Bool = false)
-      check_host_only(@host)
+  def initialize(@host : String, port = nil, tls : TLSContext = nil)
+    check_host_only(@host)
 
-      @tls = nil
+    {% if flag?(:without_openssl) %}
       if tls
         raise "HTTP::Client TLS is disabled because `-D without_openssl` was passed at compile time"
       end
-
-      @port = (port || (@tls ? 443 : 80)).to_i
-      @compress = true
-    end
-  {% else %}
-    def initialize(@host : String, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
-      check_host_only(@host)
-
+      @tls = nil
+    {% else %}
       @tls = case tls
              when true
                OpenSSL::SSL::Context::Client.new
              when OpenSSL::SSL::Context::Client
                tls
-             when false
+             when false, nil
                nil
              end
+    {% end %}
 
-      @port = (port || (@tls ? 443 : 80)).to_i
-      @compress = true
-    end
-  {% end %}
+    @port = (port || (@tls ? 443 : 80)).to_i
+  end
 
   private def check_host_only(string : String)
     # When parsing a URI with just a host
@@ -193,7 +187,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls = nil)
+  def self.new(uri : URI, tls : TLSContext = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     new(host, uri.port, tls)
@@ -223,7 +217,7 @@ class HTTP::Client
   #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI, tls = nil)
+  def self.new(uri : URI, tls : TLSContext = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
     client = new(host, uri.port, tls)
@@ -244,7 +238,7 @@ class HTTP::Client
   #   client.get "/"
   # end
   # ```
-  def self.new(host : String, port = nil, tls = false)
+  def self.new(host : String, port = nil, tls : TLSContext = nil)
     client = new(host, port, tls)
     begin
       yield client
@@ -440,7 +434,7 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
       exec {{method.upcase}}, url, headers, body, tls
     end
 
@@ -454,7 +448,7 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
       exec {{method.upcase}}, url, headers, body, tls do |response|
         yield response
       end
@@ -536,7 +530,7 @@ class HTTP::Client
     #
     # response = HTTP::Client.{{method.id}} "http://www.example.com", form: "foo=bar"
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash) : HTTP::Client::Response
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash) : HTTP::Client::Response
       exec(url, tls) do |client, path|
         client.{{method.id}}(path, form: form, headers: headers)
       end
@@ -553,7 +547,7 @@ class HTTP::Client
     #   response.body_io.gets
     # end
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls = nil, *, form : String | IO | Hash)
+    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash)
       exec(url, tls) do |client, path|
         client.{{method.id}}(path, form: form, headers: headers) do |response|
           yield response
@@ -724,7 +718,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil) : HTTP::Client::Response
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec method, path, headers, body
@@ -741,7 +735,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls = nil)
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
     headers = default_one_shot_headers(headers)
     exec(url, tls) do |client, path|
       client.exec(method, path, headers, body) do |response|
@@ -794,7 +788,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String, tls = nil)
+  private def self.exec(string : String, tls : TLSContext = nil)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -807,48 +801,39 @@ class HTTP::Client
     end
   end
 
-  {% if flag?(:without_openssl) %}
-    protected def self.tls_flag(uri, context : Nil)
-      scheme = uri.scheme
+  protected def self.tls_flag(uri, context : TLSContext) : TLSContext
+    scheme = uri.scheme
+    raise ArgumentError.new("Missing scheme: #{uri}") if !scheme
+    {% if flag?(:without_openssl) %}
       case scheme
-      when nil
-        raise ArgumentError.new("Missing scheme: #{uri}")
-      when "http"
-        false
-      when "https"
-        true
-      else
-        raise ArgumentError.new "Unsupported scheme: #{scheme}"
+      when "http"  then false
+      when "https" then true
+      else              raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
-    end
-  {% else %}
-    protected def self.tls_flag(uri, context : OpenSSL::SSL::Context::Client?)
-      scheme = uri.scheme
+    {% else %}
       case {scheme, context}
-      when {nil, _}
-        raise ArgumentError.new("Missing scheme: #{uri}")
-      when {"http", nil}
+      when {"http", false}, {"http", nil}
         false
       when {"http", OpenSSL::SSL::Context::Client}
         raise ArgumentError.new("TLS context given for HTTP URI")
-      when {"https", nil}
+      when {"https", true}, {"https", nil}
         true
       when {"https", OpenSSL::SSL::Context::Client}
         context
       else
         raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
-    end
-  {% end %}
+    {% end %}
+  end
 
   protected def self.validate_host(uri)
     host = uri.host.presence
     return host if host
 
-    raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
+    raise ArgumentError.new "Request URI must have host (URI is: #{uri})"
   end
 
-  private def self.exec(uri : URI, tls = nil)
+  private def self.exec(uri : URI, tls : TLSContext = nil)
     tls = tls_flag(uri, tls)
     host = validate_host(uri)
 
@@ -866,11 +851,7 @@ class HTTP::Client
   end
 end
 
-{% if !flag?(:without_openssl) %}
-  require "openssl"
-{% end %}
 require "socket"
 require "uri"
 require "base64"
-require "./client/response"
 require "./common"

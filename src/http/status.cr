@@ -70,41 +70,102 @@ enum HTTP::Status
 
   # Create a new status instance with the given status code, or raise an
   # error if the status code given is not inside 100..999.
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status.new(100)  # => CONTINUE
+  # HTTP::Status.new(202)  # => ACCEPTED
+  # HTTP::Status.new(123)  # => 123
+  # HTTP::Status.new(1000) # raises ArgumentError
+  # ```
   def self.new(status_code : Int32)
     raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
     previous_def(status_code)
   end
 
-  def code
+  # Returns the number that represents the HTTP status code.
+  #
+  # ```
+  # require "http/status"
+  #
+  # status = HTTP::Status::NO_CONTENT
+  # status.code # => 204
+  # ```
+  def code : Int32
     value
   end
 
   # Returns `true` if the response status code is between 100 and 199.
-  def informational?
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status::SWITCHING_PROTOCOLS.informational?   # => true
+  # HTTP::Status::INTERNAL_SERVER_ERROR.informational? # => false
+  # ```
+  def informational? : Bool
     100 <= code <= 199
   end
 
   # Returns `true` if the response status code is between 200 and 299.
-  def success?
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status::NO_CONTENT.success?            # => true
+  # HTTP::Status::INTERNAL_SERVER_ERROR.success? # => false
+  # ```
+  def success? : Bool
     200 <= code <= 299
   end
 
   # Returns `true` if the response status code is between 300 and 399.
-  def redirection?
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status::SWITCH_PROXY.redirection?          # => true
+  # HTTP::Status::INTERNAL_SERVER_ERROR.redirection? # => false
+  # ```
+  def redirection? : Bool
     300 <= code <= 399
   end
 
   # Returns `true` if the response status code is between 400 and 499.
-  def client_error?
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status::METHOD_NOT_ALLOWED.client_error?    # => true
+  # HTTP::Status::INTERNAL_SERVER_ERROR.client_error? # => false
+  # ```
+  def client_error? : Bool
     400 <= code <= 499
   end
 
   # Returns `true` if the response status code is between 500 and 599.
-  def server_error?
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status::INTERNAL_SERVER_ERROR.server_error? # => true
+  # HTTP::Status::METHOD_NOT_ALLOWED.server_error?    # => true
+  # ```
+  def server_error? : Bool
     500 <= code <= 599
   end
 
   # Returns the default status description of the given HTTP status code.
+  #
+  # ```
+  # require "http/status"
+  #
+  # HTTP::Status.new(123).description               # => nil
+  # HTTP::Status::NO_CONTENT.description            # => "No Content"
+  # HTTP::Status::METHOD_NOT_ALLOWED.description    # => "Method Not Allowed"
+  # HTTP::Status::INTERNAL_SERVER_ERROR.description # => "Internal Server Error"
+  # ```
   def description : String?
     case code
     when 100 then "Continue"

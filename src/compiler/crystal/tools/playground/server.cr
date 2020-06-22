@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "http/server"
 require "log"
 require "ecr/macros"
@@ -54,7 +56,7 @@ module Crystal::Playground
         return
       end
 
-      output_filename = tempfile "play-#{@session_key}-#{tag}"
+      output_filename = Crystal.temp_executable "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       compiler.color = false
       begin
@@ -154,16 +156,12 @@ module Crystal::Playground
       end
     end
 
-    private def tempfile(basename)
-      Crystal.tempfile(basename)
-    end
-
     private def stop_process
       if process = @process
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
         File.delete @running_process_filename rescue nil
-        process.kill rescue nil
+        process.terminate rescue nil
       end
     end
 
@@ -356,6 +354,8 @@ module Crystal::Playground
           context.response << page
           return
         end
+      else
+        # Not a special path
       end
 
       call_next(context)
@@ -488,7 +488,7 @@ module Crystal::Playground
         origin = context.request.headers["Origin"]
         if !accept_request?(origin)
           Log.warn { "Invalid Request Origin: #{origin}" }
-          ws.close "Invalid Request Origin"
+          ws.close :policy_violation, "Invalid Request Origin"
         else
           @sessions_key += 1
           @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port)
@@ -507,6 +507,8 @@ module Crystal::Playground
               source = json["source"].as_s
               tag = json["tag"].as_i
               session.format source, tag
+            else
+              # TODO: maybe raise because it's an unexpected message?
             end
           end
         end

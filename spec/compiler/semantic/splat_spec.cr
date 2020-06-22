@@ -539,6 +539,8 @@ describe "Semantic: splat" do
           expect_splat "x", 0, 10, 0
         when 1
           expect_splat "y", 1, 20, 1
+        else
+          fail "shouldn't happen"
         end
         i += 1
       end
@@ -560,6 +562,8 @@ describe "Semantic: splat" do
           expect_splat "a1", 0, 10, 0
         when 1
           expect_splat "a2", 1, 20, 1
+        else
+          fail "shouldn't happen"
         end
         i += 1
       end
@@ -576,6 +580,8 @@ describe "Semantic: splat" do
           expect_splat "a3", 2, 50, 4
         when 3
           expect_splat "a3", 2, 60, 5
+        else
+          fail "shouldn't happen"
         end
         i += 1
       end

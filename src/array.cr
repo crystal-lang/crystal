@@ -751,6 +751,11 @@ class Array(T)
   # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int)
+    index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
     val = self[index, count]
     count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
@@ -1875,7 +1880,7 @@ class Array(T)
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << ']'
     end
     io << "[...]" unless executed

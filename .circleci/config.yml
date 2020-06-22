@@ -172,7 +172,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 70a3f17810d0460b4a4c9810f1024edcda1e9321
+          git checkout cb8f2c51a042609d7c45707ba8369b37d011037f
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -183,7 +183,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.33.0/crystal-0.33.0-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.35.1/crystal-0.35.1-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
@@ -326,6 +326,8 @@ jobs:
       - run:
           name: Setup environment
           command: |
+            brew unlink python@2 || true
+
             ruby-install ruby 2.5.6
 
             brew install pkgconfig libtool
@@ -432,6 +434,7 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run:
+          # $SNAPCRAFT_TOKEN is generated using `snapcraft export-login --snaps crystal --channels edge,edge/* -`
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env

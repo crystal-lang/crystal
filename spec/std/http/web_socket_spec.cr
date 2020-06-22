@@ -28,6 +28,15 @@ private def assert_packet(packet, opcode, size, final = false)
   packet.final.should eq(final)
 end
 
+private class MalformerHandler
+  include HTTP::Handler
+
+  def call(context)
+    context.response.headers["Transfer-Encoding"] = "chunked"
+    call_next(context)
+  end
+end
+
 describe HTTP::WebSocket do
   describe "receive" do
     it "can read a small text packet" do
@@ -278,14 +287,41 @@ describe HTTP::WebSocket do
   end
 
   describe "close" do
+    it "closes with code" do
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.close(4020)
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
+      bytes[1].should eq(2)            # 2 bytes code
+      bytes[2].should eq(0x0f)
+      bytes[3].should eq(0xb4)
+    end
+
     it "closes with message" do
       message = "bye"
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
-      ws.close(message)
+      ws.close(nil, message)
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
-      String.new(bytes[2, bytes[1]]).should eq(message)
+      bytes[1].should eq(5)            # 2 + message.bytesize
+      bytes[2].should eq(0x03)
+      bytes[3].should eq(0xe8)
+      String.new(bytes[4..6]).should eq(message)
+    end
+
+    it "closes with message and code" do
+      message = "4020"
+      io = IO::Memory.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.close(4020, message)
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
+      bytes[1].should eq(6)            # 2 + message.bytesize
+      bytes[2].should eq(0x0f)
+      bytes[3].should eq(0xb4)
+      String.new(bytes[4..7]).should eq(message)
     end
 
     it "closes without message" do
@@ -301,6 +337,7 @@ describe HTTP::WebSocket do
   each_ip_family do |family, _, any_address|
     it "negotiates over HTTP correctly" do
       address_chan = Channel(Socket::IPAddress).new
+      close_chan = Channel({Int32, String}).new
 
       f = spawn do
         http_ref = nil
@@ -313,8 +350,9 @@ describe HTTP::WebSocket do
             ws.send("pong #{str}")
           end
 
-          ws.on_close do
+          ws.on_close do |code, message|
             http_ref.not_nil!.close
+            close_chan.send({code.to_i, message})
           end
         end
 
@@ -332,11 +370,15 @@ describe HTTP::WebSocket do
       random = Random::Secure.hex
       ws2.on_message do |str|
         str.should eq("pong #{random}")
-        ws2.close
+        ws2.close(4020, "close message")
       end
       ws2.send(random)
 
       ws2.run
+
+      code, message = close_chan.receive
+      code.should eq(4020)
+      message.should eq("close message")
     end
 
     it "negotiates over HTTPS correctly" do
@@ -392,6 +434,30 @@ describe HTTP::WebSocket do
       expect_raises(Socket::Error, "Handshake got denied. Status code was 200.") do
         HTTP::WebSocket::Protocol.new(address.address, port: address.port, path: "/")
       end
+    end
+  end
+
+  it "ignores body in upgrade response (malformed)" do
+    malformer = MalformerHandler.new
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.on_message do |str|
+        ws.send(str)
+      end
+    end
+    http_server = HTTP::Server.new([malformer, ws_handler])
+
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://#{address}")
+      message = nil
+      client.on_message do |msg|
+        message = msg
+        client.close
+      end
+      client.send "hello"
+      client.run
+      message.should eq("hello")
     end
   end
 

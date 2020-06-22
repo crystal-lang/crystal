@@ -1,3 +1,6 @@
+require "./client"
+require "./headers"
+
 class HTTP::WebSocket
   getter? closed = false
 
@@ -41,7 +44,7 @@ class HTTP::WebSocket
   # HTTP::WebSocket.new("websocket.example.com", "/chat")            # Creates a new WebSocket to `websocket.example.com`
   # HTTP::WebSocket.new("websocket.example.com", "/chat", tls: true) # Creates a new WebSocket with TLS to `ẁebsocket.example.com`
   # ```
-  def self.new(host : String, path : String, port = nil, tls = false, headers = HTTP::Headers.new)
+  def self.new(host : String, path : String, port = nil, tls : HTTP::Client::TLSContext = nil, headers = HTTP::Headers.new)
     new(Protocol.new(host, path, port, tls, headers))
   end
 
@@ -57,7 +60,7 @@ class HTTP::WebSocket
   def on_binary(&@on_binary : Bytes ->)
   end
 
-  def on_close(&@on_close : String ->)
+  def on_close(&@on_close : CloseCode, String ->)
   end
 
   protected def check_open
@@ -94,10 +97,15 @@ class HTTP::WebSocket
     end
   end
 
-  def close(message = nil)
+  @[Deprecated("Use WebSocket#close(code, message) instead")]
+  def close(message)
+    close(nil, message)
+  end
+
+  def close(code : CloseCode | Int? = nil, message = nil)
     return if closed?
     @closed = true
-    @ws.close(message)
+    @ws.close(code, message)
   end
 
   def run
@@ -105,7 +113,8 @@ class HTTP::WebSocket
       begin
         info = @ws.receive(@buffer)
       rescue
-        @on_close.try &.call("")
+        @on_close.try &.call(CloseCode::AbnormalClosure, "")
+        @closed = true
         break
       end
 
@@ -139,12 +148,24 @@ class HTTP::WebSocket
       when .close?
         @current_message.write @buffer[0, info.size]
         if info.final
-          message = @current_message.to_s
-          @on_close.try &.call(message)
-          close(message)
+          @current_message.rewind
+
+          if @current_message.size >= 2
+            code = @current_message.read_bytes(UInt16, IO::ByteFormat::NetworkEndian).to_i
+            code = CloseCode.new(code)
+          else
+            code = CloseCode::NoStatusReceived
+          end
+          message = @current_message.gets_to_end
+
+          @on_close.try &.call(code, message)
+          close
+
           @current_message.clear
           break
         end
+      when Protocol::Opcode::CONTINUATION
+        # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
     end
   end

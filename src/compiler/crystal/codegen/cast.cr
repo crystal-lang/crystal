@@ -188,6 +188,8 @@ class Crystal::CodeGenVisitor
         value = upcast(value, compatible_type, value_type)
         return assign(target_pointer, target_type, compatible_type, value)
       end
+    else
+      # go on
     end
 
     value = to_rhs(value, value_type)
@@ -270,6 +272,16 @@ class Crystal::CodeGenVisitor
     # Cast of a non-void proc to a void proc
     value = to_rhs(value, target_type)
     store value, target_pointer
+  end
+
+  def assign_distinct(target_pointer, target_type : ProcInstanceType, value_type : MixedUnionType, value)
+    # The only case when a union is assigned to a proc is when
+    # target_type is Proc(*T, Nil) and all the types in the union are Proc(*T, R).
+    # In that case we can simply get the union value and cast it to the target type.
+    # Cast of a non-void proc to a void proc
+    _, union_value_ptr = union_type_and_value_pointer(value, value_type)
+    value = bit_cast(union_value_ptr, llvm_type(target_type).pointer)
+    store load(value), target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
@@ -449,6 +461,8 @@ class Crystal::CodeGenVisitor
         value = downcast(value, to_type, compatible_type, true)
         return value
       end
+    else
+      # go on
     end
 
     _, value_ptr = union_type_and_value_pointer(value, from_type)
@@ -663,6 +677,8 @@ class Crystal::CodeGenVisitor
         value = upcast(value, compatible_type, from_type)
         return upcast(value, to_type, compatible_type)
       end
+    else
+      # go on
     end
 
     union_ptr = alloca(llvm_type(to_type))
