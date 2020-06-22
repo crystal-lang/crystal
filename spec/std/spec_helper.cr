@@ -108,3 +108,14 @@ def compile_and_run_source(source, flags = %w(), file = __FILE__)
     compile_and_run_file(source_file, flags, file: file)
   end
 end
+
+def compile_and_run_source_with_c(c_code, crystal_code, flags = %w(--debug), file = __FILE__)
+  with_temp_c_object_file(c_code, file: file) do |o_filename|
+    yield compile_and_run_source(%(
+    require "prelude"
+
+    @[Link(ldflags: #{o_filename.inspect})]
+    #{crystal_code}
+    ))
+  end
+end
