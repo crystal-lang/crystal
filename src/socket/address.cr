@@ -83,7 +83,6 @@ class Socket
 
     getter port : Int32
 
-    @address : String?
     @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
@@ -186,9 +185,7 @@ class Socket
     # ip_address = socket.remote_address
     # ip_address.address # => "127.0.0.1"
     # ```
-    def address
-      @address ||= address(@addr)
-    end
+    getter(address : String) { address(@addr) }
 
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
