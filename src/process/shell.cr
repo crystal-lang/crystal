@@ -106,7 +106,7 @@ class Process
   # Split a *line* string into the array of tokens in the same way the POSIX shell.
   #
   # ```
-  # p Process.split(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
+  # Process.split(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
   # ```
   #
   # See https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_03
