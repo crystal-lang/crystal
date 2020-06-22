@@ -239,8 +239,8 @@ describe "Code gen: primitives" do
   end
 
   describe "va_arg" do
-    # On Windows llvm's va_arg instruction works incorrectly.
-    {% unless flag?(:win32) %}
+    # On Windows and AArch64 llvm's va_arg instruction works incorrectly.
+    {% unless flag?(:win32) || flag?(:aarch64) %}
       it "uses llvm's va_arg instruction" do
         mod = codegen(%(
           struct VaList
@@ -255,33 +255,33 @@ describe "Code gen: primitives" do
         str = mod.to_s
         str.should contain("va_arg %VaList* %list")
       end
-    {% end %}
 
-    pending_win32 "works with C code" do
-      test_c(
-        %(
-          extern int foo_f(int,...);
-          int foo() {
-            return foo_f(3,1,2,3);
-          }
-        ),
-        %(
-          lib LibFoo
-            fun foo() : LibC::Int
-          end
-
-          fun foo_f(count : Int32, ...) : LibC::Int
-            sum = 0
-            VaList.open do |list|
-              count.times do |i|
-                sum += list.next(Int32)
-              end
+      it "works with C code" do
+        test_c(
+          %(
+            extern int foo_f(int,...);
+            int foo() {
+              return foo_f(3,1,2,3);
+            }
+          ),
+          %(
+            lib LibFoo
+              fun foo() : LibC::Int
             end
-            sum
-          end
 
-          LibFoo.foo
-        ), &.to_i.should eq(6))
-    end
+            fun foo_f(count : Int32, ...) : LibC::Int
+              sum = 0
+              VaList.open do |list|
+                count.times do |i|
+                  sum += list.next(Int32)
+                end
+              end
+              sum
+            end
+
+            LibFoo.foo
+          ), &.to_i.should eq(6))
+      end
+    {% end %}
   end
 end
