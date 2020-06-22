@@ -160,6 +160,10 @@ module Spec
       }
     end
 
+    def run
+      internal_run
+    end
+
     def report(kind, full_description, file, line, elapsed = nil, ex = nil)
       result = Result.new(kind, full_description, file, line, elapsed, ex)
 
