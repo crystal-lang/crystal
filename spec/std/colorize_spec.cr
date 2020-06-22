@@ -129,32 +129,6 @@ describe "colorize" do
     colorize("hello", :red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end
 
-  describe "with_color deprecated top-level method" do
-    it "without args" do
-      io = IO::Memory.new
-      with_color.red.toggle(true).surround(io) do
-        io << "hello"
-        with_color.green.toggle(true).surround(io) do
-          io << "world"
-        end
-        io << "bye"
-      end
-      io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
-    end
-
-    it "with args" do
-      io = IO::Memory.new
-      with_color(:red).toggle(true).surround(io) do
-        io << "hello"
-        with_color(:green).toggle(true).surround(io) do
-          io << "world"
-        end
-        io << "bye"
-      end
-      io.to_s.should eq("\e[31mhello\e[0;32mworld\e[0;31mbye\e[0m")
-    end
-  end
-
   it "colorizes with surround" do
     io = IO::Memory.new
     with_color_wrap.red.surround(io) do
