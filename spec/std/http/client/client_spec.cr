@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
@@ -142,7 +143,7 @@ module HTTP
       end
     end
 
-    it "sends the host header ipv6 with brackets" do
+    pending_ipv6 "sends the host header ipv6 with brackets" do
       server = HTTP::Server.new do |context|
         context.response.print context.request.headers["Host"]
       end
@@ -157,10 +158,10 @@ module HTTP
       server = HTTP::Server.new do |context|
         context.response.print context.request.headers["connection"]
       end
-      address = server.bind_unused_port "::1"
+      address = server.bind_unused_port "127.0.0.1"
 
       run_server(server) do
-        HTTP::Client.get("http://[::1]:#{address.port}/").body.should eq("close")
+        HTTP::Client.get("http://127.0.0.1:#{address.port}/").body.should eq("close")
       end
     end
 
@@ -168,10 +169,10 @@ module HTTP
       server = HTTP::Server.new do |context|
         context.response.print context.request.headers["connection"]
       end
-      address = server.bind_unused_port "::1"
+      address = server.bind_unused_port "127.0.0.1"
 
       run_server(server) do
-        HTTP::Client.get("http://[::1]:#{address.port}/") do |response|
+        HTTP::Client.get("http://127.0.0.1:#{address.port}/") do |response|
           response.body_io.gets_to_end
         end.should eq("close")
       end
