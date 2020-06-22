@@ -1,0 +1,25 @@
+name: macOS CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_OS_NAME: osx
+  LLVM_CONFIG: /usr/local/opt/llvm/bin/llvm-config
+  PKG_CONFIG_PATH: /usr/local/opt/openssl/lib/pkgconfig
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  test_macos:
+    runs-on: macos-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci build
