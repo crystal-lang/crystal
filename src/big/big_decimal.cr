@@ -79,13 +79,15 @@ struct BigDecimal < Number
     input_length = str.bytesize
 
     str.each_char_with_index do |char, index|
+      final_character = index == input_length - 1
+      first_character = index == 0
       case char
       when '-'
-        unless index == 0 || exponent_index == index - 1
+        unless first_character || (exponent_index == index - 1 && !final_character)
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
         end
       when '+'
-        if index == input_length - 1 || exponent_index != index - 1
+        if final_character || exponent_index != index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '+' character")
         end
       when '.'
@@ -94,7 +96,7 @@ struct BigDecimal < Number
         end
         decimal_index = index
       when 'e', 'E'
-        if index == 0 || index == input_length - 1 || exponent_index || decimal_index == index - 1
+        if first_character || final_character || exponent_index || decimal_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
         end
         exponent_index = index
