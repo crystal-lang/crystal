@@ -4,7 +4,7 @@ require "../../support/env"
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
     crystal_path = Crystal::CrystalPath.new(path)
-    results = results.map { |result| File.join(__DIR__, result) }
+    results = results.map { |result| ::Path[__DIR__, result].normalize.to_s }
     Dir.cd(__DIR__) do
       matches = crystal_path.find search, relative_to: relative_to
       matches.should eq(results), file: file, line: line
@@ -112,7 +112,7 @@ describe Crystal::CrystalPath do
   end
 
   it "overrides path with environment variable" do
-    with_env("CRYSTAL_PATH": "foo:bar") do
+    with_env("CRYSTAL_PATH": "foo#{Process::PATH_DELIMITER}bar") do
       crystal_path = Crystal::CrystalPath.new
       crystal_path.entries.should eq(%w(foo bar))
     end
