@@ -70,6 +70,9 @@ module Spec
   class_getter randomizer : Random::PCG32?
 
   # :nodoc:
+  class_property concurrency = 1
+
+  # :nodoc:
   def self.order=(mode)
     seed =
       case mode

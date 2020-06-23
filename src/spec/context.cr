@@ -19,16 +19,21 @@ module Spec
 
       @running = true
 
-      channel = Channel(Nil).new
+      channel = Channel(Item).new(capacity: children.size)
+      done_channel = Channel(Nil).new(Spec.concurrency)
 
-      concurrent_children.each do |child|
-        spawn { child.run { channel.send nil } }
+      Spec.concurrency.times do
+        spawn do
+          loop do
+            channel.receive.run
+          ensure
+            done_channel.send nil
+          end
+        end
       end
 
-      children.each &.run
-
-      # Wait for each child to tell it they're done
-      concurrent_children.each { channel.receive }
+      children.each { |example| channel.send example }
+      children.each { done_channel.receive }
     ensure
       @running = false
       run_after_all_hooks

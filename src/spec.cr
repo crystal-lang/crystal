@@ -100,6 +100,9 @@ OptionParser.parse do |opts|
   opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
     Spec.pattern = pattern
   end
+  opts.on("-j", "--jobs COUNT", "run examples in COUNT fibers") do |count|
+    Spec.concurrency = count.to_i
+  end
   opts.on("-l ", "--line LINE", "run examples whose line matches LINE") do |line|
     Spec.line = line.to_i
   end
