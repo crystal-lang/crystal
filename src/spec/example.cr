@@ -11,7 +11,7 @@ module Spec
     # :nodoc:
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool, @async : Bool, tags,
+                   @focus : Bool, @concurrent : Bool, tags,
                    @block : (->) | Nil)
       initialize_tags(tags)
     end

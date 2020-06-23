@@ -5,7 +5,7 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
-    getter async_children = [] of ExampleGroup | Example
+    getter concurrent_children = [] of ExampleGroup | Example
 
     def randomize(randomizer)
       children.each do |child|
@@ -21,14 +21,14 @@ module Spec
 
       channel = Channel(Nil).new
 
-      async_children.each do |child|
+      concurrent_children.each do |child|
         spawn { child.run { channel.send nil } }
       end
 
       children.each &.run
 
       # Wait for each child to tell it they're done
-      async_children.each { channel.receive }
+      concurrent_children.each { channel.receive }
     ensure
       @running = false
       run_after_all_hooks
@@ -278,12 +278,12 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, focus, async, tags, &block)
+    def describe(description, file, line, end_line, focus, concurrent, tags, &block)
       Spec.focus = true if focus
 
-      async = @@current_context.async? || async
+      concurrent = @@current_context.concurrent? || concurrent
 
-      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, async, tags)
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, concurrent, tags)
 
       old_context = @@current_context
       @@current_context = context
@@ -294,28 +294,28 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, focus, async, tags, &block)
-      add_example(description, file, line, end_line, focus, async, tags, block)
+    def it(description, file, line, end_line, focus, concurrent, tags, &block)
+      add_example(description, file, line, end_line, focus, concurrent, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus, async, tags)
-      add_example(description, file, line, end_line, focus, async, tags, nil)
+    def pending(description, file, line, end_line, focus, concurrent, tags)
+      add_example(description, file, line, end_line, focus, concurrent, tags, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, async, tags, block)
+    private def add_example(description, file, line, end_line, focus, concurrent, tags, block)
       if running?
         raise NestingSpecError.new("can't nest `it` or `pending`", file, line)
       end
 
       Spec.focus = true if focus
 
-      async = @@current_context.async? || async
+      concurrent = @@current_context.concurrent? || concurrent
 
       example =
-        Example.new(@@current_context, description, file, line, end_line, focus, async, tags, block)
+        Example.new(@@current_context, description, file, line, end_line, focus, concurrent, tags, block)
 
-      if async
-        async_children << example
+      if concurrent
+        concurrent_children << example
       else
         children << example
       end
@@ -338,7 +338,7 @@ module Spec
       raise "Can't call `around_all` outside of a describe/context"
     end
 
-    def async?
+    def concurrent?
       false
     end
   end
@@ -349,7 +349,7 @@ module Spec
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool, @async : Bool, tags)
+                   @focus : Bool, @concurrent : Bool, tags)
       initialize_tags(tags)
     end
 
