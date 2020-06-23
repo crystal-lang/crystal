@@ -25,7 +25,7 @@ module Screen
 
   def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    color = with_color(fg_color)
+    color = Colorize.with.fore(fg_color)
     color = color.on(bg_color) if bg_color
     color.surround do
       yield
