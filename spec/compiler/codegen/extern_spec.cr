@@ -427,7 +427,7 @@ describe "Codegen: extern struct" do
           ), &.to_i.should eq(30))
     end
 
-    it "codegens proc that takes and returns an extern struct with sret" do
+    pending_win32 "codegens proc that takes and returns an extern struct with sret" do
       test_c(
         %(
             struct Struct {
