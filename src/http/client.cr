@@ -114,7 +114,7 @@ class HTTP::Client
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool = true
 
-  @socket : IO?
+  @io : IO?
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
@@ -154,7 +154,7 @@ class HTTP::Client
   # Instances created with this constructor cannot be reconnected. Once
   # `close` is called explicitly or if the connection doesn't support keep-alive,
   # the next call to make a request will raise an exception.
-  def initialize(@socket : IO, @host = "", @port = 80)
+  def initialize(@io : IO, @host = "", @port = 80)
     @reconnect = false
   end
 
@@ -595,7 +595,7 @@ class HTTP::Client
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress)
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
   private def handle_response(response)
@@ -642,7 +642,7 @@ class HTTP::Client
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
   end
@@ -657,8 +657,8 @@ class HTTP::Client
   private def send_request(request)
     decompress = set_defaults request
     run_before_request_callbacks(request)
-    request.to_io(socket)
-    socket.flush
+    request.to_io(io)
+    io.flush
     decompress
   end
 
@@ -756,32 +756,32 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close
-    @socket.try &.close
-    @socket = nil
+    @io.try &.close
+    @io = nil
   end
 
   private def new_request(method, path, headers, body : BodyType)
     HTTP::Request.new(method, path, headers, body)
   end
 
-  private def socket
-    socket = @socket
-    return socket if socket
+  private def io
+    io = @io
+    return io if io
     unless @reconnect
       raise "This HTTP::Client cannot be reconnected"
     end
 
     hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
-    socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
-    socket.read_timeout = @read_timeout if @read_timeout
-    socket.write_timeout = @write_timeout if @write_timeout
-    socket.sync = false
+    io = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
+    io.read_timeout = @read_timeout if @read_timeout
+    io.write_timeout = @write_timeout if @write_timeout
+    io.sync = false
 
     {% if !flag?(:without_openssl) %}
       if tls = @tls
-        tcp_socket = socket
+        tcp_socket = io
         begin
-          socket = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host)
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
@@ -790,7 +790,7 @@ class HTTP::Client
       end
     {% end %}
 
-    @socket = socket
+    @io = io
   end
 
   private def host_header
