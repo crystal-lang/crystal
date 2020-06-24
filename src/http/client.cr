@@ -147,7 +147,7 @@ class HTTP::Client
     @port = (port || (@tls ? 443 : 80)).to_i
   end
 
-  def initialize(@socket = IO, @host = "localhost", @port = 80)
+  def initialize(@socket : IO, @host = "localhost", @port = 80)
   end
 
   private def check_host_only(string : String)
