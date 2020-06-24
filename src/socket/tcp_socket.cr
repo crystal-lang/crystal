@@ -1,4 +1,7 @@
 require "./ip_socket"
+{% if flag?(:win32) %}
+  require "c/sys/socket"
+{% end %}
 
 # A Transmission Control Protocol (TCP/IP) socket.
 #
@@ -38,15 +41,27 @@ class TCPSocket < IPSocket
     super family, type, protocol
   end
 
-  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
-    super fd, family, type, protocol
-  end
+  {% if flag?(:win32) %}
+    protected def initialize(socket : LibC::SOCKET, family : Family, type : Type, protocol : Protocol)
+      super socket, family, type, protocol
+    end
+  {% else %}
+    protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
+      super fd, family, type, protocol
+    end
+  {% end %}
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
-    super fd, family, Type::STREAM, Protocol::TCP
-  end
-
+  {% if flag?(:win32) %}
+    def initialize(*, socket : LibC::SOCKET, family : Family = Family::INET)
+      super socket, family, Type::STREAM, Protocol::TCP
+    end
+  {% else %}
+    def initialize(*, fd : Int32, family : Family = Family::INET)
+      super fd, family, Type::STREAM, Protocol::TCP
+    end
+  {% end %}
+  
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.
   #

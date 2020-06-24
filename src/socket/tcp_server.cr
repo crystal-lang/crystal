@@ -1,4 +1,7 @@
 require "./tcp_socket"
+{% if flag?(:win32) %}
+  require "c/sys/socket"
+{% end %}
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
@@ -103,11 +106,21 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept? : TCPSocket?
-    if client_fd = accept_impl
-      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
-      sock.sync = sync?
-      sock
+  {% if flag?(:win32) %}
+    def accept? : TCPSocket?
+      if client_socket = accept_impl
+        sock = TCPSocket.new(socket: client_socket, family: family, type: type, protocol: protocol)
+        sock.sync = sync?
+        sock
+      end
     end
-  end
+  {% else %}
+    def accept? : TCPSocket?
+      if client_fd = accept_impl
+        sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+        sock.sync = sync?
+        sock
+      end
+    end
+  {% end %}
 end

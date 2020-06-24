@@ -1,10 +1,21 @@
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32
+  alias INT = Int32
+  alias VOID = Void
+  alias PVOID = Void*
+  alias LPCVOID = Void*
+  alias UCHAR = UChar
+  alias SHORT = Short
+  alias USHORT = UShort
+  alias ULONG = UInt32
 
   alias CHAR = UChar
+  alias PCHAR = CHAR*
   alias WCHAR = UInt16
   alias LPSTR = CHAR*
+  alias PSTR = CHAR*
+  alias PCSTR = CHAR*
   alias LPWSTR = WCHAR*
   alias LPWCH = WCHAR*
 

@@ -40,5 +40,23 @@ lib LibC
   EILSEQ       = 42
   STRUNCATE    = 80
 
+  # source https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
+  WSAECONNABORTED = 10053
+  ECONNABORTED = 10053
+  WSAECONNRESET = 10054
+  ECONNRESET = 10054
+  WSAECONNREFUSED = 10061
+  ECONNREFUSED = 10061
+  WSAEADDRINUSE = 10048
+  EADDRINUSE = 10048
+
+  WSABASEERR = 10000
+  WSAEINPROGRESS = WSABASEERR + 36
+  WSAEINTR = WSABASEERR + 4
+
+  EISCONN = 106
+  EALREADY = 114
+  EINPROGRESS = 115
+
   alias ErrnoT = Int
 end
