@@ -119,6 +119,7 @@ class HTTP::Client
   @connect_timeout : Float64?
   @read_timeout : Float64?
   @write_timeout : Float64?
+  @reconnect = true
 
   # Creates a new HTTP client with the given *host*, *port* and *tls*
   # configurations. If no port is given, the default one will
@@ -147,7 +148,14 @@ class HTTP::Client
     @port = (port || (@tls ? 443 : 80)).to_i
   end
 
+  # Creates a new HTTP client bound to an existing `IO`.
+  # *host* and *port* can be specified and they will be used
+  # to conform the `Host` header on each request.
+  # Instances created with this constructor cannot be reconnected. Once
+  # `close` is called explicitly or if the connection doesn't support keep-alive,
+  # the next call to make a request will raise an exception.
   def initialize(@socket : IO, @host = "localhost", @port = 80)
+    @reconnect = false
   end
 
   private def check_host_only(string : String)
@@ -759,6 +767,9 @@ class HTTP::Client
   private def socket
     socket = @socket
     return socket if socket
+    unless @reconnect
+      raise "This HTTP::Client cannot be reconnected"
+    end
 
     hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
     socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout
