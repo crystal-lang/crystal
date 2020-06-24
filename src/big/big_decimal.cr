@@ -93,7 +93,7 @@ struct BigDecimal < Number
     end
   end
 
-  private def parse_e_notation(iterator) : Tuple(String, Bool, String | Nil, String | Nil, Bool)
+  private def parse_e_notation(iterator)
     token = take_next_character(iterator)
     value_negative = false
     if token_sign?(token)
@@ -106,11 +106,11 @@ struct BigDecimal < Number
     {value_str, value_negative, fraction_str, exponent_str, exponent_negative}
   end
 
-  private def parse_sign_symbol(token, iterator) : Tuple(Tuple(Char | Nil, Int32), Bool)
+  private def parse_sign_symbol(token, iterator)
     {take_next_character(iterator), token[0] == '-'}
   end
 
-  private def parse_numerical_part(token, iterator) : Tuple(Tuple(Char | Nil, Int32), String, String | Nil, String | Nil, Bool)
+  private def parse_numerical_part(token, iterator)
     value_str = ""
     fraction_str = nil
     if token_digit?(token)
@@ -126,7 +126,7 @@ struct BigDecimal < Number
     {next_token, value_str, fraction_str, exponent_str, exponent_negative}
   end
 
-  private def parse_digits(token, iterator) : Tuple(Tuple(Char | Nil, Int32), String)
+  private def parse_digits(token, iterator)
     val = String.build do |io|
       while token_digit?(token)
         io << token[0]
@@ -136,12 +136,12 @@ struct BigDecimal < Number
     {token, val}
   end
 
-  private def parse_fractional_part(token, iterator) : Tuple(Tuple(Char | Nil, Int32), String)
+  private def parse_fractional_part(token, iterator)
     token = take_next_character(iterator, true) # consume '.'
     parse_digits(token, iterator)
   end
 
-  private def parse_exponent_part(token, iterator) : Tuple(Tuple(Char | Nil, Int32), String, Bool)
+  private def parse_exponent_part(token, iterator)
     token = take_next_character(iterator) # consume 'e'
     if token_sign?(token)
       next_token, exponent_negative = parse_sign_symbol(token, iterator)
@@ -155,7 +155,7 @@ struct BigDecimal < Number
     end
   end
 
-  private def parse_end(token) : Nil
+  private def parse_end(token)
     raise_parse_error(token) unless token_end?(token)
   end
 
