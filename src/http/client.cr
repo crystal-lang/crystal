@@ -105,17 +105,16 @@ class HTTP::Client
   # ```
   {% if flag?(:without_openssl) %}
     getter! tls : Nil
-    @socket : TCPSocket | Nil
     alias TLSContext = Bool | Nil
   {% else %}
     getter! tls : OpenSSL::SSL::Context::Client
-    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
     alias TLSContext = OpenSSL::SSL::Context::Client | Bool | Nil
   {% end %}
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool = true
 
+  @socket : IO?
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
@@ -146,6 +145,9 @@ class HTTP::Client
     {% end %}
 
     @port = (port || (@tls ? 443 : 80)).to_i
+  end
+
+  def initialize(@socket = IO, @host = "localhost", @port = 80)
   end
 
   private def check_host_only(string : String)
