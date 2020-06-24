@@ -154,7 +154,7 @@ class HTTP::Client
   # Instances created with this constructor cannot be reconnected. Once
   # `close` is called explicitly or if the connection doesn't support keep-alive,
   # the next call to make a request will raise an exception.
-  def initialize(@socket : IO, @host = "localhost", @port = 80)
+  def initialize(@socket : IO, @host = "", @port = 80)
     @reconnect = false
   end
 

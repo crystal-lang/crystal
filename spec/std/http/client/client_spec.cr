@@ -279,6 +279,10 @@ module HTTP
       client = Client.new(io)
       response = client.get("/")
       response.body.should eq("Hi!")
+
+      io_request.rewind
+      request = HTTP::Request.from_io(io_request).as(HTTP::Request)
+      request.host.should eq("")
     end
 
     it "can specify host and port when initialized with IO" do
