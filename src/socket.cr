@@ -5,20 +5,6 @@ require "c/netinet/tcp"
 require "c/sys/socket"
 require "c/sys/un"
 require "io/evented"
-{% if flag?(:win32) %}
-  require "c/sys/socket"
-
-  GAI_STRERROR_BUFFER_SIZE = 1024
-
-  def gai_strerror(ecode : Int) : Bytes
-    buf = uninitialized StaticArray(UInt8, 1025)
-    lang = (0x01_u16 << 10) | 0x00_u16
-
-    LibC.formatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM | LibC::FORMAT_MESSAGE_IGNORE_INSERTS | LibC::FORMAT_MESSAGE_MAX_WIDTH_MASK, Pointer(LibC::DWORD).null, ecode, lang, buf, GAI_STRERROR_BUFFER_SIZE, Pointer(UInt32).null)
-
-    buf.to_slice
-  end
-{% end %}
 
 class Socket < IO
   include IO::Buffered

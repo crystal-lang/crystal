@@ -2,6 +2,7 @@ require "c/winnt"
 require "c/win_def"
 require "c/int_safe"
 
+@[Link("Kernel32")]
 lib LibC
   fun GetLastError : DWORD
   fun SetLastError(dwErrCode : DWORD)
@@ -110,4 +111,5 @@ lib LibC
   MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
 
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
+  fun FormatMessageA(dwFlags : DWORD, lpSource : LPCVOID, dwMessageId : DWORD, dwLanguageId : DWORD, lpBuffer : LPSTR, nSize : DWORD, ...) : DWORD
 end

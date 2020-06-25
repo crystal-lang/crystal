@@ -3,8 +3,6 @@
 # require "./stdint"
 require "./sys/socket"
 
-#@[Link(ldflags: "WS2tcpip.obj")]
-@[Link("Kernel32")]
 lib LibC
   AI_PASSIVE     = 0x0001
   AI_CANONNAME   = 0x0002
@@ -89,6 +87,7 @@ lib LibC
   fun freeaddrinfo(pAddrInfo : PADDRINFOA) : VOID
   fun getaddrinfo(pNodeName : PCSTR, pServiceName : PCSTR, pHints : ADDRINFOA*, ppResult : PADDRINFOA*) : INT
   fun getnameinfo(pSockaddr : SOCKADDR*, sockaddrLength : SocklenT, pNodeBuffer : PCHAR, nodeBufferSize : DWORD, pServiceBuffer : PCHAR, serviceBufferSize : DWORD, flags : INT) : INT
-  #fun gai_strerror = gai_strerrorA(ecode : Int) : UInt8*
-  fun formatMessageA = FormatMessageA(dwFlags : DWORD, lpSource : LPCVOID, dwMessageId : DWORD, dwLanguageId : DWORD, lpBuffer : LPSTR, nSize : DWORD, ...) : DWORD
+  
+  # fun gai_strerror = gai_strerrorA(ecode : Int) : UInt8*
+  # See src/socket/addrinfo.cr for `gai_strerrorA` function definition
 end
