@@ -337,4 +337,13 @@ describe "BitArray" do
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
   end
+
+  it "provides dup" do
+    a = BitArray.new(2)
+    b = a.dup
+
+    b[0] = true
+    a[0].should be_false
+    b[0].should be_true
+  end
 end
