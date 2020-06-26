@@ -370,7 +370,7 @@ module Crystal
       end
     end
 
-    private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
+    private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir, retry_on_link_failure = true)
       object_names = units.map &.object_filename
 
       target_triple = target_machine.triple
@@ -399,24 +399,44 @@ module Crystal
 
       output_filename = File.expand_path(output_filename)
 
-      @progress_tracker.stage("Codegen (linking)") do
-        Dir.cd(output_dir) do
-          linker_command = linker_command(program, object_names, output_filename, output_dir, expand: true)
+      command, args = linker_command(program, object_names, output_filename, output_dir, expand: true)
+      error_output = IO::Memory.new
 
-          process_wrapper(*linker_command) do |command, args|
-            Process.run(command, args, shell: true,
-              input: Process::Redirect::Close, output: Process::Redirect::Inherit, error: Process::Redirect::Pipe) do |process|
-              process.error.each_line(chomp: false) do |line|
-                hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
-                line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
-                line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
-                line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
-                STDERR << line
-              end
-            end
-            $?
-          end
+      status = @progress_tracker.stage("Codegen (linking)") do
+        Dir.cd(output_dir) do
+          print_command(command, args) if verbose?
+
+          Process.run(command, args, shell: true, input: :close, output: :inherit, error: error_output)
         end
+      end
+
+      unless status.success?
+        if retry_on_link_failure
+          # Delete all of the .o files in the cached directory.
+          # This can happen if compilation was interrrupted and an `.o` file is left
+          # with half of the contents that are supposed to be there, or if someone
+          # intentionally replaced the contents of an `.o` file with some other `.o` file.
+          # In any case, deleting all object files and retrying once is good because
+          # in most cases this will not be needed, and if it's needed it's better to
+          # wait a bit longer and have a successful compilation, than to fail forever
+          # and leave users confused.
+          Dir.glob(File.join(output_dir, "*.o")) do |obj_filename|
+            File.delete(obj_filename)
+          end
+          return codegen(program, units, output_filename, output_dir, retry_on_link_failure: false)
+        end
+
+        error_output.to_s.each_line(chomp: false) do |line|
+          hint_string = colorize("(this usually means you need to install the development package for lib\\1)").yellow.bold
+          line = line.gsub(/cannot find -l(\S+)\b/, "cannot find -l\\1 #{hint_string}")
+          line = line.gsub(/unable to find library -l(\S+)\b/, "unable to find library -l\\1 #{hint_string}")
+          line = line.gsub(/library not found for -l(\S+)\b/, "library not found for -l\\1 #{hint_string}")
+          STDERR << line
+        end
+
+        msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
+        code = status.normal_exit? ? status.exit_code : 1
+        error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
 
       {units, reused}
@@ -575,10 +595,10 @@ module Crystal
       end
     end
 
-    private def process_wrapper(command, args = nil)
+    private def process_wrapper(command, args)
       print_command(command, args) if verbose?
 
-      status = yield command, args
+      status = yield
 
       unless status.success?
         msg = status.normal_exit? ? "code: #{status.exit_code}" : "signal: #{status.exit_signal} (#{status.exit_signal.value})"
