@@ -97,10 +97,7 @@ struct BigDecimal < Number
         end
         decimal_index = index
       when 'e', 'E'
-        if exponent_index
-          raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
-        end
-        if index == 0
+        if exponent_index || index == 0
           raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
         end
         exponent_index = index
