@@ -81,17 +81,26 @@ struct BigDecimal < Number
         unless index == 0 || exponent_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
         end
+        if index == str.size - 1
+          raise InvalidBigDecimalException.new(str, "Expecting number after '-'")
+        end
       when '+'
         unless exponent_index == index - 1
           raise InvalidBigDecimalException.new(str, "Unexpected '+' character")
         end
+        if index == str.size - 1
+          raise InvalidBigDecimalException.new(str, "Expecting number after '+'")
+        end
       when '.'
-        if decimal_index
+        if decimal_index || exponent_index
           raise InvalidBigDecimalException.new(str, "Unexpected '.' character")
         end
         decimal_index = index
       when 'e', 'E'
         if exponent_index
+          raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
+        end
+        if index == 0
           raise InvalidBigDecimalException.new(str, "Unexpected #{char.inspect} character")
         end
         exponent_index = index
