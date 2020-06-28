@@ -698,6 +698,8 @@ module Crystal
 
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
+          # Delete existing .o file. It cannot be used anymore.
+          File.delete(object_name) if File.exists?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
