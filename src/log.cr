@@ -107,7 +107,7 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# Log.setup |c|
+# Log.setup do |c|
 #   backend = Log::IOBackend.new
 #
 #   c.bind "*", :warn, backend
