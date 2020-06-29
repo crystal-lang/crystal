@@ -3,8 +3,14 @@ class Log::IOBackend < Log::Backend
   property io : IO
   property formatter : Formatter
 
+  {% if flag?(:win32) %}
+    private DEFAULT_DISPATCHER = DispatchMode::Sync
+  {% else %}
+    private DEFAULT_DISPATCHER = DispatchMode::Async
+  {% end %}
+
   def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec? = nil)
-    super(dispatcher || DispatchMode::Async)
+    super(dispatcher || DEFAULT_DISPATCHER)
   end
 
   def write(entry : Entry)
