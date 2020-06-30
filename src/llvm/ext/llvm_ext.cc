@@ -491,7 +491,9 @@ static TargetMachine *unwrap(LLVMTargetMachineRef P) {
 }
 
 void LLVMExtTargetMachineEnableGlobalIsel(LLVMTargetMachineRef T, LLVMBool Enable) {
+#if LLVM_VERSION_GE(7, 0)
   unwrap(T)->setGlobalISel(Enable);
+#endif
 }
 
 // Copy paste of https://github.com/llvm/llvm-project/blob/dace8224f38a31636a02fe9c2af742222831f70c/llvm/lib/ExecutionEngine/ExecutionEngineBindings.cpp#L160-L214
@@ -522,7 +524,9 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
 
   TargetOptions targetOptions;
   targetOptions.EnableFastISel = options.EnableFastISel;
-  targetOptions.EnableGlobalISel = EnableGlobalISel;
+  #if LLVM_VERSION_GE(7, 0)
+    targetOptions.EnableGlobalISel = EnableGlobalISel;
+  #endif
   std::unique_ptr<Module> Mod(unwrap(M));
 
   if (Mod)
@@ -551,7 +555,9 @@ LLVMBool LLVMExtCreateMCJITCompilerForModule(
       std::unique_ptr<RTDyldMemoryManager>(unwrap(options.MCJMM)));
 
   TargetMachine* tm = builder.selectTarget();
-  tm->setGlobalISel(EnableGlobalISel);
+  #if LLVM_VERSION_GE(7, 0)
+    tm->setGlobalISel(EnableGlobalISel);
+  #endif
 
   if (ExecutionEngine *JIT = builder.create(tm)) {
     *OutJIT = wrap(JIT);
