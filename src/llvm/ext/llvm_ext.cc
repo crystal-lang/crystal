@@ -14,7 +14,6 @@
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
-#include <llvm/Target/CodeGenCWrappers.h>
 
 using namespace llvm;
 
@@ -26,6 +25,12 @@ using namespace llvm;
 
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
+
+#if LLVM_VERSION_GE(7, 0)
+#include <llvm/Target/CodeGenCWrappers.h>
+#else
+#include <llvm/Support/CodeGenCWrappers.h>
+#endif
 
 #if LLVM_VERSION_GE(6, 0)
 #include <llvm-c/DebugInfo.h>
