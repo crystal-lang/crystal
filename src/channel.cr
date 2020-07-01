@@ -25,10 +25,13 @@ require "crystal/pointer_linked_list"
 class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
-
+  
+  # :nodoc:
   record NotReady
+  # :nodoc:
   record UseDefault
-
+  
+  # :nodoc:
   module SelectAction(S)
     abstract def execute : DeliveryState
     abstract def wait(context : SelectContext(S))
@@ -273,7 +276,7 @@ class Channel(T)
   # end
   # channel.receive # => 1
   # ```
-  def receive
+  def receive : T
     receive_impl { raise ClosedError.new }
   end
 
@@ -281,11 +284,11 @@ class Channel(T)
   # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
   # Returns `nil` if the channel is closed or closes while waiting for receive.
-  def receive?
+  def receive? : T?
     receive_impl { return nil }
   end
 
-  def receive_impl
+  private def receive_impl
     receiver = Receiver(T).new
 
     @lock.lock
@@ -318,7 +321,7 @@ class Channel(T)
     end
   end
 
-  def receive_internal
+  protected def receive_internal
     if (queue = @queue) && !queue.empty?
       deque_value = queue.shift
       if sender_ptr = dequeue_sender
@@ -422,7 +425,7 @@ class Channel(T)
     select_impl(ops, true)
   end
 
-  def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+  private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
