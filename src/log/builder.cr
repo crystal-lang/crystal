@@ -143,7 +143,7 @@ class Log::Builder
     end
   end
 
-  # :nodoc
+  # :nodoc:
   def close
     @bindings.each &.backend.close
   end
