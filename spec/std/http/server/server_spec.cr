@@ -493,7 +493,7 @@ describe "#remote_address" do
       HTTP::Client.new(URI.parse("http://#{address1}/")) do |client|
         client.get("/")
 
-        remote_address.should eq(client.@socket.as(IPSocket).local_address)
+        remote_address.should eq(client.@io.as(IPSocket).local_address)
       end
     end
   end
@@ -516,7 +516,7 @@ describe "#remote_address" do
         uri: URI.parse("https://#{ip_address1}"),
         tls: client_context) do |client|
         client.get("/")
-        remote_address.should eq(client.@socket.as(OpenSSL::SSL::Socket).local_address)
+        remote_address.should eq(client.@io.as(OpenSSL::SSL::Socket).local_address)
       end
     end
   end

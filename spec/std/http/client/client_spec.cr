@@ -265,5 +265,40 @@ module HTTP
         request.host.should eq "other.example.com"
       end
     end
+
+    it "works with IO" do
+      io_response = IO::Memory.new <<-RESPONSE.gsub('\n', "\r\n")
+      HTTP/1.1 200 OK
+      Content-Type: text/plain
+      Content-Length: 3
+
+      Hi!
+      RESPONSE
+      io_request = IO::Memory.new
+      io = IO::Stapled.new(io_response, io_request)
+      client = Client.new(io)
+      response = client.get("/")
+      response.body.should eq("Hi!")
+
+      io_request.rewind
+      request = HTTP::Request.from_io(io_request).as(HTTP::Request)
+      request.host.should eq("")
+    end
+
+    it "can specify host and port when initialized with IO" do
+      client = Client.new(IO::Memory.new, "host", 1234)
+      client.host.should eq("host")
+      client.port.should eq(1234)
+    end
+
+    it "cannot reconnect when initialized with IO" do
+      io = IO::Memory.new
+      client = Client.new(io)
+      client.close
+      io.closed?.should be_true
+      expect_raises(Exception, "This HTTP::Client cannot be reconnected") do
+        client.get("/")
+      end
+    end
   end
 end
