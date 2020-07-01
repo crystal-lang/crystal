@@ -86,11 +86,11 @@ class Socket
       def self.new(error_code, domain)
         new error_code, String.new(self.gai_strerror(error_code)), domain
       end
-      
+
       {% if flag?(:win32) %}
         # This is the recreation of gai_strerrorA in Windows, as they
         # define their gai_strerrorA in a C-header
-        # 
+        #
         # See https://gist.github.com/andraantariksa/0dacbe0999427d8554286e568ee5f220#file-ws2tcpip-h-L682
         def self.gai_strerror(ecode : Int)
           # The buffer size defined in WS2tcpip.h is 1024 char
@@ -99,8 +99,8 @@ class Socket
           lang = (0x01_u16 << 10) | 0x00_u16
 
           LibC.FormatMessageA(LibC::FORMAT_MESSAGE_FROM_SYSTEM |
-            LibC::FORMAT_MESSAGE_IGNORE_INSERTS |
-            LibC::FORMAT_MESSAGE_MAX_WIDTH_MASK,
+                              LibC::FORMAT_MESSAGE_IGNORE_INSERTS |
+                              LibC::FORMAT_MESSAGE_MAX_WIDTH_MASK,
             Pointer(LibC::DWORD).null, ecode, lang, buf, 1024, Pointer(UInt32).null)
 
           buf.to_slice

@@ -108,6 +108,7 @@ class Socket < IO
       end
     end
   {% else %}\
+
     def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
       @closed = false
       fd = LibC.socket(family, type, protocol)
@@ -121,7 +122,6 @@ class Socket < IO
       end
     end
   {% end %}
-  
 
   # Creates a Socket from an existing socket file descriptor.
   {% if flag?(:win32) %}
@@ -395,11 +395,19 @@ class Socket < IO
   # sock.connect Socket::UNIXAddress.new("/tmp/service.sock")
   # sock.send(Bytes[0])
   # ```
-  def send(message) : Int32
-    evented_send(message.to_slice, "Error sending datagram") do |slice|
-      LibC.send(fd, slice.to_unsafe.as(Void*), slice.size, 0)
+  {% if flag?(:win32) %}
+    def send(message) : Int32
+      evented_send(message.to_slice, "Error sending datagram") do |slice|
+        LibC.send(socket, slice.to_unsafe.as(UInt8*), slice.size, 0)
+      end
     end
-  end
+  {% else %}
+    def send(message) : Int32
+      evented_send(message.to_slice, "Error sending datagram") do |slice|
+        LibC.send(fd, slice.to_unsafe.as(UInt8*), slice.size, 0)
+      end
+    end
+  {% end %}
 
   # Sends a message to the specified remote address.
   #
@@ -411,13 +419,23 @@ class Socket < IO
   # sock.connect("example.com", 2000)
   # sock.send("text query", to: server)
   # ```
-  def send(message, to addr : Address) : Int32
-    slice = message.to_slice
-    bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
-    # to_i32 is fine because string/slice sizes are an Int32
-    bytes_sent.to_i32
-  end
+  {% if flag?(:win32) %}
+    def send(message, to addr : Address) : Int32
+      slice = message.to_slice
+      bytes_sent = LibC.sendto(socket, slice.to_unsafe.as(UInt8*), slice.size, 0, addr, addr.size)
+      raise Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+      # to_i32 is fine because string/slice sizes are an Int32
+      bytes_sent.to_i32
+    end
+  {% else %}
+    def send(message, to addr : Address) : Int32
+      slice = message.to_slice
+      bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
+      raise Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
+      # to_i32 is fine because string/slice sizes are an Int32
+      bytes_sent.to_i32
+    end
+  {% end %}
 
   # Receives a text message from the previously bound address.
   #
@@ -455,16 +473,29 @@ class Socket < IO
     {bytes_read, Address.from(sockaddr, addrlen)}
   end
 
-  protected def recvfrom(bytes)
-    sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
+  {% if flag?(:win32) %}
+    protected def recvfrom(bytes)
+      sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+      addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
-      LibC.recvfrom(fd, slice.to_unsafe.as(Void*), slice.size, 0, sockaddr, pointerof(addrlen))
+      bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
+        LibC.recvfrom(socket, slice.to_unsafe.as(LibC::Char*), slice.size, 0, sockaddr, pointerof(addrlen))
+      end
+
+      {bytes_read, sockaddr, addrlen}
     end
+  {% else %}
+    protected def recvfrom(bytes)
+      sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+      addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
-    {bytes_read, sockaddr, addrlen}
-  end
+      bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
+        LibC.recvfrom(fd, slice.to_unsafe.as(Void*), slice.size, 0, sockaddr, pointerof(addrlen))
+      end
+
+      {bytes_read, sockaddr, addrlen}
+    end
+  {% end %}
 
   # Calls `shutdown(2)` with `SHUT_RD`
   def close_read
@@ -518,23 +549,38 @@ class Socket < IO
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
-  def reuse_port?
-    getsockopt(LibC::SO_REUSEPORT, 0) do |value|
-      return value != 0
-    end
+  {% if flag?(:win32) %}
+    def reuse_port?
+      # TODO
+      # Check function return value
+      getsockopt(LibC::SO_REUSEADDR, 0) do |value|
+        return value != 0
+      end
 
-    if Errno.value == Errno::ENOPROTOOPT
-      return false
-    else
-      raise Socket::Error.from_errno("getsockopt")
+      if Errno.value == Errno::ENOPROTOOPT
+        return false
+      else
+        raise Socket::Error.from_errno("getsockopt")
+      end
     end
-  end
+  {% else %}
+    def reuse_port?
+      getsockopt(LibC::SO_REUSEPORT, 0) do |value|
+        return value != 0
+      end
+
+      if Errno.value == Errno::ENOPROTOOPT
+        return false
+      else
+        raise Socket::Error.from_errno("getsockopt")
+      end
+    end
+  {% end %}
 
   # TODO
   # Care
   {% if flag?(:win32) %}
     def reuse_port=(val : Bool)
-      
     end
   {% else %}
     def reuse_port=(val : Bool)
@@ -593,12 +639,21 @@ class Socket < IO
     raise Socket::Error.from_errno("getsockopt")
   end
 
-  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    yield optval if ret == 0
-    ret
-  end
+  {% if flag?(:win32) %}
+    protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+      optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
+      ret = LibC.getsockopt(socket, level, optname, (pointerof(optval).as(UInt8*)), pointerof(optsize))
+      yield optval if ret == 0
+      ret
+    end
+  {% else %}
+    protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+      optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
+      ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
+      yield optval if ret == 0
+      ret
+    end
+  {% end %}
 
   # NOTE: *optval* is restricted to `Int32` until sizeof works on variables.
   {% if flag?(:win32) %}
@@ -648,11 +703,11 @@ class Socket < IO
 
   {% if flag?(:win32) %}
     def blocking=(value)
-      mode : UInt32 =  if value
-                1.to_u32
-              else
-                0.to_u32
-              end
+      mode : UInt32 = if value
+        1.to_u32
+      else
+        0.to_u32
+      end
       LibC.ioctlsocket(self.socket, LibC::FIONBIO, pointerof(mode))
     end
   {% else %}
