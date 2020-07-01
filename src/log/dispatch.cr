@@ -16,11 +16,11 @@ class Log
     # :nodoc:
     def self.for(mode : DispatchMode)
       case mode
-      when .sync?
+      in .sync?
         SyncDispatcher.new
-      when .async?
+      in .async?
         AsyncDispatcher.new
-      else
+      in .direct?
         DirectDispatcher
       end
     end
