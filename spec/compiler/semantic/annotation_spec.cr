@@ -932,7 +932,7 @@ describe "Semantic: annotation" do
         @x : Nil
       end
       ),
-      "can't annotate an instance variable not defined in this class"
+      "can't annotate @x here because it was first defined in Base"
   end
 
   it "errors if wanting to add type inside annotation (1) (#8614)" do
