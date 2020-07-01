@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "log"
 
 private def s(value : Log::Severity)

@@ -4,14 +4,15 @@ class Log::IOBackend < Log::Backend
   property formatter : Formatter
 
   {% if flag?(:win32) %}
-    private DEFAULT_DISPATCHER = DispatchMode::Sync
+    # TODO: this constructor must go away once channels are fixed in Windows
+    def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec = DispatchMode::Sync)
+      super(dispatcher)
+    end
   {% else %}
-    private DEFAULT_DISPATCHER = DispatchMode::Async
+    def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec = DispatchMode::Async)
+      super(dispatcher)
+    end
   {% end %}
-
-  def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec? = nil)
-    super(dispatcher || DEFAULT_DISPATCHER)
-  end
 
   def write(entry : Entry)
     format(entry)
