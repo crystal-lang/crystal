@@ -55,6 +55,8 @@ class Crystal::Codegen::Target
       "dragonfly"
     when .openbsd?
       "openbsd"
+    when .netbsd?
+      "netbsd"
     else
       environment
     end
@@ -84,12 +86,16 @@ class Crystal::Codegen::Target
     @environment.starts_with?("openbsd")
   end
 
+  def netbsd?
+    @environment.starts_with?("netbsd")
+  end
+
   def linux?
     @environment.starts_with?("linux")
   end
 
   def bsd?
-    freebsd? || openbsd? || dragonfly?
+    freebsd? || netbsd? || openbsd? || dragonfly?
   end
 
   def unix?
