@@ -12,5 +12,4 @@ lib LibC
   end
 
   fun gettimeofday = __gettimeofday50(x0 : Timeval*, x1 : Timezone*) : Int
-  fun utimes = __utimes50(path : Char*, times : Timeval[2]) : Int
 end
