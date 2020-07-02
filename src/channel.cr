@@ -25,12 +25,12 @@ require "crystal/pointer_linked_list"
 class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
-  
+
   # :nodoc:
   record NotReady
   # :nodoc:
   record UseDefault
-  
+
   # :nodoc:
   module SelectAction(S)
     abstract def execute : DeliveryState
@@ -75,7 +75,7 @@ class Channel(T)
     end
   end
 
-  enum SelectState
+  private enum SelectState
     None   = 0
     Active = 1
     Done   = 2
@@ -120,7 +120,7 @@ class Channel(T)
     end
   end
 
-  enum DeliveryState
+  private enum DeliveryState
     None
     Delivered
     Closed
@@ -398,17 +398,19 @@ class Channel(T)
     nil
   end
 
+  # :nodoc:
   def self.select(*ops : SelectAction)
     self.select ops
   end
 
+  # :nodoc:
   def self.select(ops : Indexable(SelectAction))
     i, m = select_impl(ops, false)
     raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 
-  @[Deprecated("Use Channel.non_blocking_select")]
+  # :nodoc:
   def self.select(ops : Indexable(SelectAction), has_else)
     # The overload of Channel.select(Indexable(SelectAction), Bool)
     # is used by LiteralExpander with the second argument as `true`.
@@ -417,10 +419,12 @@ class Channel(T)
     non_blocking_select(ops)
   end
 
+  # :nodoc:
   def self.non_blocking_select(*ops : SelectAction)
     self.non_blocking_select ops
   end
 
+  # :nodoc:
   def self.non_blocking_select(ops : Indexable(SelectAction))
     select_impl(ops, true)
   end
@@ -495,8 +499,7 @@ class Channel(T)
     LooseReceiveAction.new(self)
   end
 
-  # :nodoc:
-  class StrictReceiveAction(T)
+  private class StrictReceiveAction(T)
     include SelectAction(T)
     property receiver : Receiver(T)
 
@@ -560,8 +563,7 @@ class Channel(T)
     end
   end
 
-  # :nodoc:
-  class LooseReceiveAction(T)
+  private class LooseReceiveAction(T)
     include SelectAction(T)
     property receiver : Receiver(T)
 
@@ -625,8 +627,7 @@ class Channel(T)
     end
   end
 
-  # :nodoc:
-  class SendAction(T)
+  private class SendAction(T)
     include SelectAction(Nil)
     property sender : Sender(T)
 
