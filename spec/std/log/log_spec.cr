@@ -89,6 +89,21 @@ describe Log do
     ])
   end
 
+  it "takes the verbosity level as an argument" do
+    backend = Log::MemoryBackend.new
+    log = Log.new("a", backend, :trace)
+
+    log.log :warn { "warning message" }
+    log.log :error { "error message" }
+    log.log :fatal { "fatal message" }
+
+    backend.entries.map { |e| {e.severity, e.message} }.should eq([
+      {s(:warn), "warning message"},
+      {s(:error), "error message"},
+      {s(:fatal), "fatal message"},
+    ])
+  end
+
   it "can attach exception to entries" do
     ex = Exception.new
 
