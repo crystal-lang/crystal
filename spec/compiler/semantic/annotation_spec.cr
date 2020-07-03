@@ -932,7 +932,7 @@ describe "Semantic: annotation" do
         @x : Nil
       end
       ),
-      "can't annotate @x here because it was first defined in Base"
+      "can't annotate @x in Child because it was first defined in Base"
   end
 
   it "errors if wanting to add type inside annotation (1) (#8614)" do

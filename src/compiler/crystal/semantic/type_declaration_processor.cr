@@ -269,7 +269,7 @@ struct Crystal::TypeDeclarationProcessor
 
       # Reject annotations to existing instance var
       type_decl.annotations.try &.each do |_, ann|
-        ann.raise "can't annotate #{name} here because it was first defined in #{supervar.owner}"
+        ann.raise "can't annotate #{name} in #{owner} because it was first defined in #{supervar.owner}"
       end
     else
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
