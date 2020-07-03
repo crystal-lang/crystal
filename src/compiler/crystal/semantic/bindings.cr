@@ -27,7 +27,12 @@ module Crystal
         when SymbolLiteral
           SymbolLiteralType.new(type.program, self)
         else
-          type
+          case type
+          when IntegerType
+            NumberLiteralType.new(type.program, self)
+          else
+            type
+          end
         end
       else
         type

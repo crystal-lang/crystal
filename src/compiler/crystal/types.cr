@@ -1421,7 +1421,14 @@ module Crystal
 
     def check_restriction_exception
       if all_matches = @all_matches
-        literal.raise "ambiguous call, implicit cast of #{literal} matches all of #{all_matches.join(", ")}"
+        literal_value =
+          case literal
+          when NumberLiteral, SymbolLiteral
+            literal.to_s
+          else
+            literal.type.to_s
+          end
+        literal.raise "ambiguous call, implicit cast of #{literal_value} matches all of #{all_matches.join(", ")}"
       end
     end
   end
@@ -1431,7 +1438,7 @@ module Crystal
   # fits in those types.
   class NumberLiteralType < LiteralType
     # The literal associated with this type
-    getter literal : NumberLiteral
+    getter literal : ASTNode
 
     def initialize(program, @literal)
       super(program)
@@ -1616,8 +1623,7 @@ module Crystal
       instance_var = instance.lookup_instance_var(initializer.name)
 
       # Check if automatic cast can be done
-      if instance_var.type != value.type &&
-         (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral))
+      if instance_var.type != value.type && value.supports_autocast?
         if casted_value = MainVisitor.check_automatic_cast(@program, value, instance_var.type)
           value = casted_value
         end

@@ -573,6 +573,44 @@ describe "Semantic: automatic cast" do
       end
 
       Baz.new.as(Foo).foo(1)
+    )) { int64 }
+  end
+
+  it "casts integer variable to larger type (#9565)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1
+      foo(x)
+      )) { int64 }
+  end
+
+  it "says bambiguous call for integer var to larger type (#9565)" do
+    assert_error %(
+      def foo(x : Int32)
+        x
+      end
+
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1_u8
+      foo(x)
+      ),
+      "ambiguous call, implicit cast of UInt8 matches all of Int32, Int64"
+  end
+
+  it "can't cast integer to another type when it doesn't fit (#9565)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1
+      foo(x)
       )) { int64 }
   end
 end
