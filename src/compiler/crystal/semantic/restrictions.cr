@@ -1218,7 +1218,7 @@ module Crystal
     end
   end
 
-  class NumberLiteralType
+  class NumberAutocastType
     def restrict(other, context)
       if other.is_a?(IntegerType) || other.is_a?(FloatType)
         # Check for an exact match, which can't produce an ambiguous call
@@ -1246,7 +1246,7 @@ module Crystal
     end
   end
 
-  class SymbolLiteralType
+  class SymbolAutocastType
     def restrict(other, context)
       case other
       when SymbolType

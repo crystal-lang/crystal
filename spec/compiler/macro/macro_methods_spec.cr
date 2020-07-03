@@ -1517,13 +1517,13 @@ module Crystal
 
       it "executes instance_vars on symbol literal" do
         assert_macro("x", "{{x.instance_vars.map &.stringify}}", %([])) do |program|
-          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+          [TypeNode.new(SymbolAutocastType.new(program, "foo".symbol))] of ASTNode
         end
       end
 
       it "executes class_vars on symbol literal" do
         assert_macro("x", "{{x.class_vars.map &.stringify}}", %([])) do |program|
-          [TypeNode.new(SymbolLiteralType.new(program, "foo".symbol))] of ASTNode
+          [TypeNode.new(SymbolAutocastType.new(program, "foo".symbol))] of ASTNode
         end
       end
 
