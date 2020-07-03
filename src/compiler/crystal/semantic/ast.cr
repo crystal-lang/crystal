@@ -31,6 +31,35 @@ module Crystal
         false
       end
     end
+
+    def supports_autocast?
+      case self
+      when NumberLiteral
+        true
+      when SymbolLiteral
+        true
+      else
+        case self.type?
+        when IntegerType
+          true
+        else
+          false
+        end
+      end
+    end
+
+    def can_be_autocast_to?(other_type)
+      self_type = self.type
+
+      case {self_type, other_type}
+      when {IntegerType, IntegerType}
+        self_min, self_max = self_type.range
+        other_min, other_max = other_type.range
+        other_min <= self_min && self_max <= other_max
+      else
+        false
+      end
+    end
   end
 
   class Var
