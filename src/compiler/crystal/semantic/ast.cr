@@ -34,17 +34,10 @@ module Crystal
 
     def supports_autocast?
       case self
-      when NumberLiteral
-        true
-      when SymbolLiteral
+      when NumberLiteral, SymbolLiteral
         true
       else
-        case self.type?
-        when IntegerType
-          true
-        else
-          false
-        end
+        self.type?.is_a?(IntegerType)
       end
     end
 
