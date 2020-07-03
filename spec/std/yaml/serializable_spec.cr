@@ -421,10 +421,10 @@ describe "YAML::Serializable" do
 
   it "works with selective serialization" do
     person = YAMLAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
-    person.to_yaml.should eq "{\"name\":\"Vasya\",\"generated\":\"generated-internally\"}"
+    person.to_yaml.should eq "---\nname: Vasya\ngenerated: generated-internally\n"
 
-    person_json = "{\"name\":\"Vasya\",\"generated\":\"should not set\",\"password\":\"update\"}"
-    person = YAMLAttrPersonWithSelectiveSerialization.from_yaml(person_json)
+    person_yaml = "---\nname: Vasya\ngenerated: should not set\npassword: update\n"
+    person = YAMLAttrPersonWithSelectiveSerialization.from_yaml(person_yaml)
     person.generated.should eq "generated-internally"
     person.password.should eq "update"
   end
