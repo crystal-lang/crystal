@@ -717,8 +717,8 @@ module Crystal
     end
 
     # Checks whether an exception needs to be raised because of a restriction
-    # failure. Only overwriten by literal types (NumberLiteralType and
-    # SymbolLiteralType) when they produce an ambiguous call.
+    # failure. Only overwriten by literal types (NumberAutocastType and
+    # SymbolAutocastType) when they produce an ambiguous call.
     def check_restriction_exception
       nil
     end
@@ -1386,7 +1386,7 @@ module Crystal
   class VoidType < NamedType
   end
 
-  abstract class LiteralType < Type
+  abstract class AutocastType < Type
     # The most exact match type, or the first match otherwise
     getter match : Type?
 
@@ -1436,7 +1436,7 @@ module Crystal
   # Type for a number literal: it has the specific type of the number literal
   # but can also match other types (like ints and floats) if the literal
   # fits in those types.
-  class NumberLiteralType < LiteralType
+  class NumberAutocastType < AutocastType
     # The literal associated with this type
     getter literal : ASTNode
 
@@ -1451,7 +1451,7 @@ module Crystal
 
   # Type for a symbol literal: it has the specific type of the symbol literal (SymbolType)
   # but can also match enums if their members match the symbol's name.
-  class SymbolLiteralType < LiteralType
+  class SymbolAutocastType < AutocastType
     # The literal associated with this type
     getter literal : SymbolLiteral
 
