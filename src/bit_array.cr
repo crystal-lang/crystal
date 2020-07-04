@@ -38,10 +38,6 @@ struct BitArray
     return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
   end
 
-  def ==(other)
-    false
-  end
-
   def unsafe_fetch(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0

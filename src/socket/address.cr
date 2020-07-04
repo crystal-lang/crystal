@@ -50,10 +50,6 @@ class Socket
     end
 
     abstract def to_unsafe : LibC::Sockaddr*
-
-    def ==(other)
-      false
-    end
   end
 
   # IP address representation.

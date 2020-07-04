@@ -74,6 +74,10 @@ describe "BitArray" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares other type" do
+      from_int(3, 0b101).should_not eq("other type")
+    end
   end
 
   describe "[]" do
