@@ -634,4 +634,35 @@ describe "Semantic: automatic cast" do
       ),
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
+
+  it "casts integer variable to larger type for variable with type restriction (#9565)" do
+    assert_type(%(
+      a : Int64 = 0_i64
+      x = 1
+      a = x
+      a
+      )) { int64 }
+  end
+
+  it "casts integer variable to float type (#9565)" do
+    assert_type(%(
+      def foo(x : Float64)
+        x
+      end
+
+      x = 1
+      foo(x)
+      )) { float64 }
+  end
+
+  it "casts float32 variable to float64 type (#9565)" do
+    assert_type(%(
+      def foo(x : Float64)
+        x
+      end
+
+      x = 1.0_f32
+      foo(x)
+      )) { float64 }
+  end
 end
