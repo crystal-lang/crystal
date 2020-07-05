@@ -28,7 +28,7 @@ module Crystal
           SymbolAutocastType.new(type.program, self)
         else
           case type
-          when IntegerType
+          when IntegerType, FloatType
             NumberAutocastType.new(type.program, self)
           else
             type

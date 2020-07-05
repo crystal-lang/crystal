@@ -37,7 +37,17 @@ module Crystal
       when NumberLiteral, SymbolLiteral
         true
       else
-        self.type?.is_a?(IntegerType)
+        case self_type = self.type?
+        when IntegerType
+          case self_type.kind
+          when :i8, :u8, :i16, :u16, :i32, :u32
+            true
+          else
+            false
+          end
+        when FloatType
+          self_type.kind == :f32
+        end
       end
     end
 
@@ -49,6 +59,21 @@ module Crystal
         self_min, self_max = self_type.range
         other_min, other_max = other_type.range
         other_min <= self_min && self_max <= other_max
+      when {IntegerType, FloatType}
+        # Float32 mantissa has 23 bits,
+        # Float64 mantissa has 52 bits
+        case self_type.kind
+        when :i8, :u8, :i16, :u16
+          # Less than 23 bits, so convertable to Float32 and Float64 without precission loss
+          true
+        when :i32, :u32
+          # Less than 52 bits, so convertable to Float64 without precission loss
+          other_type.kind == :f64
+        else
+          false
+        end
+      when {FloatType, FloatType}
+        self_type.kind == :f32 && other_type.kind == :f64
       else
         false
       end
