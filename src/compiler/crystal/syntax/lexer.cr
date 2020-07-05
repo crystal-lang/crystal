@@ -202,7 +202,6 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = IO::Memory.new(20)
             has_single_quote = false
             found_closing_single_quote = false
 

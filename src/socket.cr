@@ -391,6 +391,12 @@ class Socket < IO
     end
   {% end %}
 
+  private def wait_acceptable
+    wait_readable(raise_if_closed: false) do
+      raise TimeoutError.new("Accept timed out")
+    end
+  end
+
   # Sends a message to a previously connected remote address.
   #
   # ```

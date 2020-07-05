@@ -118,11 +118,11 @@ module IO::Evented
 
   # :nodoc:
   def wait_readable(timeout = @read_timeout)
-    wait_readable(timeout: timeout) { |err| raise err }
+    wait_readable(timeout: timeout) { raise TimeoutError.new("Read timed out") }
   end
 
   # :nodoc:
-  def wait_readable(timeout = @read_timeout) : Nil
+  def wait_readable(timeout = @read_timeout, *, raise_if_closed = true) : Nil
     readers = @readers.get { Deque(Fiber).new }
     readers << Fiber.current
     add_read_event(timeout)
@@ -130,10 +130,10 @@ module IO::Evented
 
     if @read_timed_out
       @read_timed_out = false
-      yield TimeoutError.new("Read timed out")
+      yield
     end
 
-    check_open
+    check_open if raise_if_closed
   end
 
   private def add_read_event(timeout = @read_timeout) : Nil
@@ -143,7 +143,7 @@ module IO::Evented
 
   # :nodoc:
   def wait_writable(timeout = @write_timeout)
-    wait_writable(timeout: timeout) { |err| raise err }
+    wait_writable(timeout: timeout) { raise TimeoutError.new("Write timed out") }
   end
 
   # :nodoc:
@@ -155,7 +155,7 @@ module IO::Evented
 
     if @write_timed_out
       @write_timed_out = false
-      yield TimeoutError.new("Write timed out")
+      yield
     end
 
     check_open

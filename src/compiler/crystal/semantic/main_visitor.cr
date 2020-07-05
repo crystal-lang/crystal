@@ -2431,9 +2431,6 @@ module Crystal
     end
 
     def visit_va_arg(node)
-      if program.has_flag? "windows"
-        node.raise "va_arg is not yet supported on Windows"
-      end
       arg = call.not_nil!.args[0]? || node.raise("requires type argument")
       node.type = arg.type.instance_type
     end

@@ -315,7 +315,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -792,7 +792,7 @@ module Crystal
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node

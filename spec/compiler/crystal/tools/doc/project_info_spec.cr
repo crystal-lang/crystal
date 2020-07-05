@@ -50,7 +50,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git tagged version" do
         run_git "init"
         run_git "add shard.yml"
-        run_git "commit -m 'Initial commit' --no-gpg-sign"
+        run_git "commit -m \"Initial commit\" --no-gpg-sign"
         run_git "tag v3.0"
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0", refname: "v3.0"))
@@ -61,7 +61,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git tagged version dirty" do
         run_git "init"
         run_git "add shard.yml"
-        run_git "commit -m 'Initial commit' --no-gpg-sign"
+        run_git "commit -m \"Initial commit\" --no-gpg-sign"
         run_git "tag v3.0"
         File.write("foo.txt", "bar")
 
@@ -73,7 +73,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git non-tagged commit" do
         run_git "init"
         run_git "add shard.yml"
-        run_git "commit -m 'Initial commit' --no-gpg-sign"
+        run_git "commit -m \"Initial commit\" --no-gpg-sign"
         commit_sha = `git rev-parse HEAD`.chomp
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
@@ -85,7 +85,7 @@ describe Crystal::Doc::ProjectInfo do
       it "git non-tagged commit dirty" do
         run_git "init"
         run_git "add shard.yml"
-        run_git "commit -m 'Initial commit' --no-gpg-sign"
+        run_git "commit -m \"Initial commit\" --no-gpg-sign"
         File.write("foo.txt", "bar")
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev", refname: nil))
@@ -109,7 +109,7 @@ describe Crystal::Doc::ProjectInfo do
       File.write("foo.txt", "bar")
       run_git "init"
       run_git "add foo.txt"
-      run_git "commit -m 'Remove shard.yml' --no-gpg-sign"
+      run_git "commit -m \"Remove shard.yml\" --no-gpg-sign"
       run_git "tag v4.0"
 
       assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, "4.0", refname: "v4.0"))
@@ -130,7 +130,7 @@ describe Crystal::Doc::ProjectInfo do
     # Non-tagged commit
     File.write("file.txt", "foo")
     run_git "add file.txt"
-    run_git "commit -m 'Initial commit' --no-gpg-sign"
+    run_git "commit -m \"Initial commit\" --no-gpg-sign"
     ProjectInfo.find_git_version.should eq "master"
 
     # Other branch

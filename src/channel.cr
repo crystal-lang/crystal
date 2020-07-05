@@ -183,11 +183,14 @@ class Channel(T)
   # Both awaiting and subsequent calls to `#send` will consider the channel closed.
   # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
   # Calling `#close` on a closed channel does not have any effect.
-  def close : Nil
+  #
+  # It returns `true` when the channel was successfuly closed, or `false` if it was already closed.
+  def close : Bool
     sender_list = Crystal::PointerLinkedList(Sender(T)).new
     receiver_list = Crystal::PointerLinkedList(Receiver(T)).new
 
     @lock.sync do
+      return false if @closed
       @closed = true
 
       @senders, sender_list = sender_list, @senders
@@ -196,6 +199,7 @@ class Channel(T)
 
     sender_list.each(&.value.close)
     receiver_list.each(&.value.close)
+    true
   end
 
   def closed?

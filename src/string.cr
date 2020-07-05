@@ -4634,7 +4634,7 @@ class String
     !!($~ = /#{re}\z/.match(self))
   end
 
-  # Interpolates *other* into the string using `Kernel#sprintf`.
+  # Interpolates *other* into the string using top-level `::sprintf`.
   #
   # ```
   # "I have %d apples" % 5                                             # => "I have 5 apples"

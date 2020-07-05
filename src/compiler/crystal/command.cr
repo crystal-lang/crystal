@@ -620,7 +620,9 @@ class Crystal::Command
   end
 
   private def use_crystal_opts
-    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
+    @options = Process.parse_arguments(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
+  rescue ex
+    raise LocationlessException.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
   end
 
   private def new_compiler

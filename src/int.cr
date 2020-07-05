@@ -508,7 +508,7 @@ struct Int
     i = self ^ self
     while i < self
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -707,7 +707,7 @@ struct Int
     def next
       if @index < @n
         value = @index
-        @index += 1
+        @index &+= 1
         value
       else
         stop

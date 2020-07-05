@@ -148,7 +148,7 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "::set-env name=CRYSTAL_PATH::src"
+          echo "::set-env name=CRYSTAL_PATH::$(pwd)\src"
           echo "::set-env name=LIB::${env:LIB};$(pwd)\libs"
           echo "::set-env name=TERM::dumb"
           echo "::set-env name=LLVM_CONFIG::$(pwd)\llvm\bin\llvm-config.exe"
@@ -168,13 +168,14 @@ jobs:
       - name: Re-build Crystal
         run: |
           .\crystal-cross.exe build src/compiler/crystal.cr -Di_know_what_im_doing -Dwithout_playground --link-flags=/F10000000
+          mv crystal.exe bin/
 
-      - name: Gather Crystal executable
+      - name: Gather Crystal binaries
         run: |
           mkdir crystal
-          cp crystal.exe crystal/
+          cp bin/crystal.exe crystal/
           cp libs/* crystal/
-      - name: Upload Crystal executable
+      - name: Upload Crystal binaries
         uses: actions/upload-artifact@v1
         with:
           name: crystal
@@ -182,7 +183,14 @@ jobs:
 
       - name: Build stdlib specs executable
         run: |
-          .\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std -Dwithout_openssl -Di_know_what_im_doing
+          bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
       - name: Run stdlib specs
         run: |
           .\std_spec.exe
+
+      - name: Build compiler specs executable
+        run: |
+          bin\crystal.exe build spec/compiler_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_playground -Di_know_what_im_doing
+      - name: Run compiler specs
+        run: |
+          .\compiler_spec.exe
