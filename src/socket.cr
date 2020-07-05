@@ -200,7 +200,7 @@ class Socket < IO
         when Errno::EISCONN
           return
         when Errno::EINPROGRESS, Errno::EALREADY
-          wait_writable(timeout: timeout) do |error|
+          wait_writable(timeout: timeout) do
             return yield IO::TimeoutError.new("connect timed out")
           end
         else
@@ -219,7 +219,7 @@ class Socket < IO
         when Errno::EISCONN
           return
         when Errno::EINPROGRESS, Errno::EALREADY
-          wait_writable(timeout: timeout) do |error|
+          wait_writable(timeout: timeout) do
             return yield IO::TimeoutError.new("connect timed out")
           end
         else
