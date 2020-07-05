@@ -217,29 +217,53 @@ class Socket
     #
     # In the IPv4 family, loopback addresses are all addresses in the subnet
     # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
-    def loopback? : Bool
-      if addr = @addr4
-        addr.s_un.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
-      elsif addr = @addr6
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
-        check = StaticArray(UInt8, 16).new(0)
-        check[-1] = 1
-        ipv6_addr8(addr) == check
-      else
-        raise "unreachable!"
+    {% if flag?(:win32) %}
+      def loopback? : Bool
+        if addr = @addr4
+          addr.s_un.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+        elsif addr = @addr6
+          ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+          check = StaticArray(UInt8, 16).new(0)
+          check[-1] = 1
+          ipv6_addr8(addr) == check
+        else
+          raise "unreachable!"
+        end
       end
-    end
+    {% else %}
+      def loopback? : Bool
+        if addr = @addr4
+          addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+        elsif addr = @addr6
+          ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        else
+          raise "unreachable!"
+        end
+      end
+    {% end %}
 
     # Returns `true` if this IP is an unspecified address, either the IPv4 address `0.0.0.0` or the IPv6 address `::`.
-    def unspecified? : Bool
-      if addr = @addr4
-        addr.s_un.s_addr == 0_u32
-      elsif addr = @addr6
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
-      else
-        raise "unreachable!"
+    {% if flag?(:win32) %}
+      def unspecified? : Bool
+        if addr = @addr4
+          addr.s_un.s_addr == 0_u32
+        elsif addr = @addr6
+          ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+        else
+          raise "unreachable!"
+        end
       end
-    end
+    {% else %}
+      def unspecified? : Bool
+        if addr = @addr4
+          addr.s_addr == 0_u32
+        elsif addr = @addr6
+          ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+        else
+          raise "unreachable!"
+        end
+      end
+    {% end %}
 
     private def ipv6_addr8(addr : LibC::In6Addr)
       {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) || flag?(:dragonfly) %}
