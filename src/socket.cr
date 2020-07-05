@@ -107,8 +107,7 @@ class Socket < IO
         self.blocking = false
       end
     end
-  {% else %}\
-
+  {% else %}
     def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
       @closed = false
       fd = LibC.socket(family, type, protocol)
@@ -338,13 +337,23 @@ class Socket < IO
   #   socket.close
   # end
   # ```
-  def accept?
-    if client_fd = accept_impl
-      sock = Socket.new(client_fd, family, type, protocol, blocking)
-      sock.sync = sync?
-      sock
+  {% if flag?(:win32) %}
+    def accept?
+      if client_socket = accept_impl
+        sock = Socket.new(client_socket, family, type, protocol, blocking)
+        sock.sync = sync?
+        sock
+      end
     end
-  end
+  {% else %}
+    def accept?
+      if client_fd = accept_impl
+        sock = Socket.new(client_fd, family, type, protocol, blocking)
+        sock.sync = sync?
+        sock
+      end
+    end
+  {% end %}
 
   {% if flag?(:win32) %}
     protected def accept_impl
@@ -552,8 +561,8 @@ class Socket < IO
   {% if flag?(:win32) %}
     def reuse_port?
       # TODO
-      # Check function return value
-      getsockopt(LibC::SO_REUSEADDR, 0) do |value|
+      # Might be wrong
+      getsockopt(LibC::SO_EXCLUSIVEADDRUSE, 0) do |value|
         return value != 0
       end
 
@@ -577,10 +586,11 @@ class Socket < IO
     end
   {% end %}
 
-  # TODO
-  # Care
   {% if flag?(:win32) %}
+    # TODO
+    # Might be wrong
     def reuse_port=(val : Bool)
+      setsockopt_bool LibC::SO_EXCLUSIVEADDRUSE, val
     end
   {% else %}
     def reuse_port=(val : Bool)

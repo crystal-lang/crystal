@@ -7,16 +7,38 @@ lib LibC
   alias SaFamilyT = UShort
   alias SOCKET = UInt
 
-  SO_REUSEADDR = 0x0004
-  SO_BROADCAST = 0x0020
-  SOL_SOCKET   = 0xFFFF
+  AF_UNSPEC    =  0
+  AF_UNIX      =  1
+  AF_INET      =  2
+  AF_IPX       =  6
+  AF_APPLETALK = 16
+  AF_NETBIOS   = 17
+  AF_INET6     = 23
+  AF_IRDA      = 26
+  AF_BTH       = 32
+
+  SOCK_STREAM    = 1
+  SOCK_DGRAM     = 2
+  SOCK_RAW       = 3
+  SOCK_RDM       = 4
+  SOCK_SEQPACKET = 5
+
+  PF_INET   =  2
+  PF_INET6  = 23
+  PF_UNIX   =  1
+  PF_UNSPEC =  0
+
+  SO_REUSEADDR        = 0x0004
+  SO_BROADCAST        = 0x0020
+  SOL_SOCKET          = 0xFFFF
+  SO_EXCLUSIVEADDRUSE = ~0x0004_i32
 
   # -2147195266 is the value after convertion to long, actual value 2147772030 with type unsigned
   FIONBIO = -2147195266
 
   struct Sockaddr
-    sa_family : SaFamilyT
-    sa_data : StaticArray(UInt8, 14)
+    sa_family : UShort
+    sa_data : StaticArray(Char, 14)
   end
 
   alias SOCKADDR = Sockaddr
@@ -24,11 +46,11 @@ lib LibC
   struct WSAData
     vVersion : WORD
     wHighVersion : WORD
-    szDescription : StaticArray(UInt8, 257)
-    szSystemStatus : StaticArray(UInt8, 129)
+    szDescription : StaticArray(Char, 257)
+    szSystemStatus : StaticArray(Char, 129)
     iMaxSockets : UInt16
     iMaxUdpDg : UInt16
-    lpVendorInfo : UInt8*
+    lpVendorInfo : Char*
   end
 
   struct SockaddrStorage

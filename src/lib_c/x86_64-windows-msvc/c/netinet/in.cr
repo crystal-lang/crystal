@@ -2,6 +2,14 @@ require "../sys/socket"
 require "../winnt.cr"
 
 lib LibC
+  IPPROTO_IP     =   0
+  IPPROTO_ICMP   =   1
+  IPPROTO_IGMP   =   2
+  IPPROTO_TCP    =   6
+  IPPROTO_UDP    =  17
+  IPPROTO_ICMPV6 =  58
+  IPPROTO_RAW    = 255
+
   struct SUnB
     s_b1 : UCHAR
     s_b2 : UCHAR

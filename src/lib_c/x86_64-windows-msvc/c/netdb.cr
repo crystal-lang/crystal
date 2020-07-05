@@ -1,6 +1,3 @@
-# DIFF
-# require "./netinet/in"
-# require "./stdint"
 require "./sys/socket"
 
 lib LibC
@@ -15,60 +12,16 @@ lib LibC
   AI_RETURN_PREFERRED_NAMES =   0x010000
   AI_FQDN                   = 0x00020000
   AI_FILESERVER             = 0x00040000
+  AI_NUMERICSERV            = 0x00000008
 
-  # lin
-  AI_NUMERICSERV = 0x0400
-
-  # move to sys/socket
-  AF_UNSPEC    =  0
-  AF_INET      =  2
-  AF_IPX       =  6
-  AF_APPLETALK = 16
-  AF_NETBIOS   = 17
-  AF_INET6     = 23
-  AF_IRDA      = 26
-  AF_BTH       = 32
-
-  # lin
-  PF_INET   =  2
-  PF_INET6  = 10
-  PF_UNIX   = LibC::PF_LOCAL
-  PF_UNSPEC = 0
-  PF_LOCAL  = 1
-  AF_UNIX   = LibC::PF_UNIX
-
-  # # lin
-  EAI_AGAIN    =  -3
-  EAI_BADFLAGS =  -1
-  EAI_FAIL     =  -4
-  EAI_FAMILY   =  -6
-  EAI_MEMORY   = -10
-  EAI_NONAME   =  -2
-  EAI_SERVICE  =  -8
-  EAI_SOCKTYPE =  -7
-  EAI_SYSTEM   = -11
-  EAI_OVERFLOW = -12
-
-  # move to sys/socket
-  SOCK_STREAM    = 1
-  SOCK_DGRAM     = 2
-  SOCK_RAW       = 3
-  SOCK_RDM       = 4
-  SOCK_SEQPACKET = 5
-
-  # move to netinet/in
-  IPPROTO_TCP  =   6
-  IPPROTO_UDP  =  17
-  IPPROTO_RM   = 113
-  IPPROTO_IGMP =   2
-  # ipcp
-  BTHPROTO_RFCOMM =  3
-  IPPROTO_ICMPV6  = 58
-
-  # # lin
-  IPPROTO_IP   =   0
-  IPPROTO_RAW  = 255
-  IPPROTO_ICMP =   1
+  EAI_AGAIN    = 11002
+  EAI_BADFLAGS = 10022
+  EAI_FAIL     = 11003
+  EAI_FAMILY   = 10047
+  EAI_MEMORY   =     8
+  EAI_NONAME   = 11001
+  EAI_SERVICE  = 10109
+  EAI_SOCKTYPE = 10044
 
   struct Addrinfo
     ai_flags : Int
@@ -76,7 +29,7 @@ lib LibC
     ai_socktype : Int
     ai_protocol : Int
     ai_addrlen : SizeT
-    ai_canonname : UInt8*
+    ai_canonname : Char*
     ai_addr : Sockaddr*
     ai_next : Addrinfo*
   end
