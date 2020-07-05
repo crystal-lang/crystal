@@ -604,14 +604,15 @@ describe "Semantic: automatic cast" do
   end
 
   it "can't cast integer to another type when it doesn't fit (#9565)" do
-    assert_type(%(
-      def foo(x : Int64)
+    assert_error %(
+      def foo(x : Int32)
         x
       end
 
-      x = 1
+      x = 1_i64
       foo(x)
-      )) { int64 }
+      ),
+      "no overload matches 'foo' with type Int64"
   end
 
   it "doesn't autocast number on union (#8655)" do
