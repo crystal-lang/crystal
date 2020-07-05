@@ -209,12 +209,14 @@ class Socket
     #
     # In the IPv4 family, loopback addresses are all addresses in the subnet
     # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
-    def loopback? : Bool
-      case addr = @addr
-      in LibC::InAddr
-        addr.s_un.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
-      in LibC::In6Addr
-        ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+    {% if flag?(:win32) %}
+      def loopback? : Bool
+        case addr = @addr
+        in LibC::InAddr
+          addr.s_un.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+        in LibC::In6Addr
+          ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
+        end
       end
     {% else %}
       def loopback? : Bool
