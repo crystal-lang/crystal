@@ -83,7 +83,7 @@ struct BigDecimal < Number
       first_character = index == 0
       case char
       when '-'
-        unless first_character || (exponent_index == index - 1 && !final_character)
+        unless (first_character && !final_character) || (exponent_index == index - 1 && !final_character)
           raise InvalidBigDecimalException.new(str, "Unexpected '-' character")
         end
       when '+'
