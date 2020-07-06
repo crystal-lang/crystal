@@ -48,8 +48,8 @@ class Crystal::AbstractDefChecker
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
           if a_def.abstract?
-            # TODO: for now we skip methods with splats and default arguments
-            next if a_def.splat_index || a_def.args.any? &.default_value
+            # TODO: for now we skip methods with splats
+            next if a_def.splat_index
 
             check_implemented_in_subtypes(type, a_def)
           end
@@ -138,6 +138,10 @@ class Crystal::AbstractDefChecker
     end
 
     m2.args.zip(m1.args) do |a2, a1|
+      if a2.default_value
+        return false unless a1.default_value == a2.default_value
+      end
+
       r1 = a1.restriction
       r2 = a2.restriction
       if r2 && r1 && r1 != r2

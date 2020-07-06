@@ -674,4 +674,45 @@ describe "Semantic: abstract def" do
       end
     ))
   end
+
+  it "doesn't error if implementation have default value" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x = 1)
+        end
+      end
+      )
+  end
+
+  it "errors if implementation doesn't have default value" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x = 1)
+      end
+
+      class Bar < Foo
+        def foo(x)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
+  end
+
+  it "errors if implementation doesn't have the same default value" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x = 1)
+      end
+
+      class Bar < Foo
+        def foo(x = 2)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
+  end
 end
