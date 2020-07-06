@@ -144,6 +144,11 @@ class Log::Builder
   end
 
   # :nodoc:
+  def close
+    @bindings.each &.backend.close
+  end
+
+  # :nodoc:
   def self.matches(source : String, pattern : String) : Bool
     return true if source == pattern
     return true if pattern == "*"

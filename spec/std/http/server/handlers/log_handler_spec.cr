@@ -2,6 +2,7 @@ require "spec"
 require "log/spec"
 require "http/server/handler"
 require "../../../../support/io"
+require "../../../../support/retry"
 
 describe HTTP::LogHandler do
   it "logs" do
@@ -49,7 +50,9 @@ describe HTTP::LogHandler do
     handler.next = ->(ctx : HTTP::Server::Context) {}
     handler.call(context)
 
-    io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+    retry do
+      io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+    end
   end
 
   it "log failed request" do
