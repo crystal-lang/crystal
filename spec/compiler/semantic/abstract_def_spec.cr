@@ -715,4 +715,72 @@ describe "Semantic: abstract def" do
       ),
       "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
   end
+
+  it "errors if implementation doesn't have keyword arguments" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, x)
+      end
+
+      class Bar < Foo
+        def foo(a = 0, b = 0)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+  end
+
+  it "errors if implementation doesn't have a keyword argument" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, x)
+      end
+
+      class Bar < Foo
+        def foo(*, y)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+  end
+
+  it "doesn't error if implementation matches keyword argument" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*, x)
+      end
+
+      class Bar < Foo
+        def foo(*, x)
+        end
+      end
+      )
+  end
+
+  it "errors if implementation doesn't match keyword argument type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, x : Int32)
+      end
+
+      class Bar < Foo
+        def foo(*, x : String)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*, x : Int32)` must be implemented by Bar"
+  end
+
+  it "doesn't error if implementation have keyword arguments in different order" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*, x : Int32, y : String)
+      end
+
+      class Bar < Foo
+        def foo(*, y : String, x : Int32)
+        end
+      end
+      )
+  end
 end

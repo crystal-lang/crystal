@@ -22,8 +22,6 @@
 #   def foo(x); end
 # end
 # ```
-#
-# TODO: the check currently ignores methods that involve splats.
 class Crystal::AbstractDefChecker
   def initialize(@program : Program)
     @all_checked = Set(Type).new
@@ -48,9 +46,6 @@ class Crystal::AbstractDefChecker
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
           if a_def.abstract?
-            # TODO: for now we skip methods with splats
-            next if a_def.splat_index
-
             check_implemented_in_subtypes(type, a_def)
           end
         end
@@ -119,11 +114,12 @@ class Crystal::AbstractDefChecker
     return false if m1.abstract?
     return false unless m1.name == m2.name
     return false unless m1.yields == m2.yields
-
-    # TODO: for now we consider that if there's a splat, the method is implemented
-    return true if m1.splat_index
-
     return false if m1.args.size < m2.args.size
+
+    m1_args, m1_kargs = def_arg_ranges(m1)
+    m2_args, m2_kargs = def_arg_ranges(m2)
+
+    return false if m1_args.size < m2_args.size || m1_kargs.size < m2_kargs.size
 
     # If the base type is a generic type, we find the generic instantiation of
     # t1 for it. This will have a mapping of type vars to types, for example
@@ -137,29 +133,56 @@ class Crystal::AbstractDefChecker
       m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
     end
 
-    m2.args.zip(m1.args) do |a2, a1|
-      if a2.default_value
-        return false unless a1.default_value == a2.default_value
-      end
-
-      r1 = a1.restriction
-      r2 = a2.restriction
-      if r2 && r1 && r1 != r2
-        # Check if a1.restriction is contravariant with a2.restriction
-        begin
-          rt1 = t1.lookup_type(r1)
-          rt2 = t2.lookup_type(r2)
-          return false unless rt2.covariant?(rt1)
-        rescue Crystal::TypeException
-          # Ignore if we can't find a type (assume the method is implemented)
-          next
-        end
-      end
+    # Check positional arguments
+    m2_args.each do |i|
+      a1 = m1.args[i]
+      a2 = m2.args[i]
+      return false unless check_arg(t1, a1, t2, a2)
     end
 
     # If the method has more arguments, but default values for them, it implements it
-    if m1.args.size > m2.args.size
-      return false unless m1.args[m2.args.size].default_value
+    if m1_args.size > m2_args.size
+      return false unless m1.args[m2_args.size].default_value
+    end
+
+    # Check keyword arguments
+    m2_kargs.each do |i|
+      a2 = m2.args[i]
+      j = m1.args.index(m1_kargs.begin) { |a1| a1.name == a2.name }
+      return false unless j
+      a1 = m1.args[j]
+
+      return false unless check_arg(t1, a1, t2, a2)
+    end
+
+    true
+  end
+
+  private def def_arg_ranges(method : Def)
+    if splat = method.splat_index
+      {(0...splat), (splat + 1...method.args.size)}
+    else
+      {(0...method.args.size), (0...0)}
+    end
+  end
+
+  def check_arg(t1 : Type, a1 : Arg, t2 : Type, a2 : Arg)
+    if a2.default_value
+      return false unless a1.default_value == a2.default_value
+    end
+
+    r1 = a1.restriction
+    r2 = a2.restriction
+    if r2 && r1 && r1 != r2
+      # Check if a1.restriction is contravariant with a2.restriction
+      begin
+        rt1 = t1.lookup_type(r1)
+        rt2 = t2.lookup_type(r2)
+        return false unless rt2.covariant?(rt1)
+      rescue Crystal::TypeException
+        # Ignore if we can't find a type (assume the method is implemented)
+        return true
+      end
     end
 
     true
