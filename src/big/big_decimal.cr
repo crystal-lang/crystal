@@ -161,11 +161,11 @@ struct BigDecimal < Number
 
   private def take_next_character(iterator, allow_end = false) : Tuple(Char | Nil, Int32)
     next_c = iterator.next
-    begin
-      next_c.as(Tuple(Char, Int32))
-    rescue
+    if next_c == Iterator::Stop::INSTANCE
       raise_parse_eos_error unless allow_end
       {nil, -1}
+    else
+      next_c.as(Tuple(Char, Int32))
     end
   end
 
