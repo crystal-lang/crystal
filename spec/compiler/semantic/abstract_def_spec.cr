@@ -838,4 +838,43 @@ describe "Semantic: abstract def" do
       ),
       "abstract `def Foo#foo(*args : Int32)` must be implemented by Bar"
   end
+
+  it "doesn't error with splat" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*args)
+      end
+
+      class Bar < Foo
+        def foo(*args)
+        end
+      end
+    )
+  end
+
+  it "doesn't error with splat and args with default value" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*args)
+      end
+
+      class Bar < Foo
+        def foo(a = 1, *args)
+        end
+      end
+    )
+  end
+
+  it "allows arguments to be collapsed into splat" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(a : Int32, b : String)
+      end
+
+      class Bar < Foo
+        def foo(*args : Int32 | String)
+        end
+      end
+    )
+  end
 end
