@@ -145,14 +145,24 @@ class Crystal::AbstractDefChecker
       return false unless m1.args[m2_args.size].default_value
     end
 
+    # Index keyword arguments
+    kargs =
+      m1_kargs.to_h do |i|
+        a1 = m1.args[i]
+        {a1.name, a1}
+      end
+
     # Check keyword arguments
     m2_kargs.each do |i|
       a2 = m2.args[i]
-      j = m1.args.index(m1_kargs.begin) { |a1| a1.name == a2.name }
-      return false unless j
-      a1 = m1.args[j]
-
+      a1 = kargs.delete(a2.name)
+      return false unless a1
       return false unless check_arg(t1, a1, t2, a2)
+    end
+
+    # Remaining keyword arguments must have a default value
+    kargs.each_value do |a1|
+      return false unless a1.default_value
     end
 
     true

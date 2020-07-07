@@ -783,4 +783,31 @@ describe "Semantic: abstract def" do
       end
       )
   end
+
+  it "errors if implementation has more keyword arguments" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, x)
+      end
+
+      class Bar < Foo
+        def foo(*, x, y)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*, x)` must be implemented by Bar"
+  end
+
+  it "doesn't error if implementation has more keyword arguments with default values" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*, x)
+      end
+
+      class Bar < Foo
+        def foo(*, x, y = 1)
+        end
+      end
+      )
+  end
 end
