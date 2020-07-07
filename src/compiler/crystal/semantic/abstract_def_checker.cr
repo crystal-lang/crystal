@@ -116,6 +116,15 @@ class Crystal::AbstractDefChecker
     return false unless m1.yields == m2.yields
     return false if m1.args.size < m2.args.size
 
+    # Check splat argument
+    if s2 = m2.splat_index
+      return false unless s1 = m1.splat_index
+
+      a1 = m1.args[s1]
+      a2 = m2.args[s2]
+      return false unless check_arg(t1, a1, t2, a2)
+    end
+
     m1_args, m1_kargs = def_arg_ranges(m1)
     m2_args, m2_kargs = def_arg_ranges(m2)
 

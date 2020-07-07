@@ -810,4 +810,32 @@ describe "Semantic: abstract def" do
       end
       )
   end
+
+  it "errors if implementation doesn't have a splat" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*args)
+      end
+
+      class Bar < Foo
+        def foo(x = 1)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*args)` must be implemented by Bar"
+  end
+
+  it "errors if implementation doesn't match splat type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*args : Int32)
+      end
+
+      class Bar < Foo
+        def foo(*args : String)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(*args : Int32)` must be implemented by Bar"
+  end
 end
