@@ -508,7 +508,7 @@ struct Int
     i = self ^ self
     while i < self
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -560,6 +560,41 @@ struct Int
 
   def modulo(other)
     self % other
+  end
+
+  # Returns the digits of a number in a given base.
+  # The digits are returned as an array with the least significant digit as the first array element.
+  #
+  # ```
+  # 12345.digits      # => [5, 4, 3, 2, 1]
+  # 12345.digits(7)   # => [4, 6, 6, 0, 5]
+  # 12345.digits(100) # => [45, 23, 1]
+  #
+  # -12345.digits(7) # => ArgumentError
+  # ```
+  def digits(base = 10) : Array(Int32)
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
+    if self == 0
+      return [0]
+    end
+
+    num = self
+
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
+      num = num.tdiv(base)
+    end
+    ary
   end
 
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
@@ -638,7 +673,7 @@ struct Int
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat) : UInt64
+  def to_io(io : IO, format : IO::ByteFormat)
     format.encode(self, io)
   end
 
@@ -672,7 +707,7 @@ struct Int
     def next
       if @index < @n
         value = @index
-        @index += 1
+        @index &+= 1
         value
       else
         stop

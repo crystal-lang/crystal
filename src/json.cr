@@ -28,7 +28,7 @@
 # Most types in the standard library implement these methods. For user-defined types
 # you can define a `self.new(pull : JSON::PullParser)` for parsing and
 # `to_json(builder : JSON::Builder)` for serializing. The following sections
-# show convenient ways to do this using either `JSON.mapping` or `JSON::Serializable`.
+# show convenient ways to do this using `JSON::Serializable`.
 #
 # NOTE: JSON object keys are always strings but they can still be parsed
 # and deserialized to other types. To deserialize, define a
@@ -45,12 +45,6 @@
 #
 # {1.5 => 2}.to_json # => "{\"1.5\":2}"
 # ```
-#
-# ### Parsing and generating with `JSON.mapping`
-#
-# Use `JSON.mapping` to define how an object is mapped to JSON, making it
-# the recommended easy, type-safe and efficient option for parsing and generating
-# JSON. Refer to that module's documentation to learn about it.
 #
 # ### Parsing with `JSON.parse`
 #
@@ -83,7 +77,7 @@
 # end
 # ```
 #
-# Parsing with `JSON.parse` is useful for dealing with a dynamic JSON structure but is slower than using `JSON.mapping`.
+# Parsing with `JSON.parse` is useful for dealing with a dynamic JSON structure.
 #
 # ### Generating with `JSON.build`
 #
@@ -112,7 +106,7 @@
 #
 # `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
 # for primitive types, but you need to define `to_json(JSON::Builder)`
-# for custom objects, either manually or using `JSON.mapping`.
+# for custom objects, either manually or using `JSON::Serializable`.
 module JSON
   # Generic JSON error.
   class Error < Exception

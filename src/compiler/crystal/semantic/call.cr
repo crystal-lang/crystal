@@ -247,7 +247,7 @@ class Crystal::Call
     matches = lookup_matches_checking_expansion(owner, signature, with_literals: with_literals)
 
     if matches.empty? && owner.class? && owner.abstract?
-      matches = owner.virtual_type.lookup_matches(signature)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
@@ -263,27 +263,27 @@ class Crystal::Call
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents, with_literals: with_literals)
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
     if matches.empty? && !obj && owner != program && search_in_toplevel
-      program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
+      program_matches = lookup_matches_with_signature(program, signature, search_in_parents, with_literals)
       matches = program_matches unless program_matches.empty?
     end
 
     if matches.empty? && owner.class? && owner.abstract? && name != "super"
-      matches = owner.virtual_type.lookup_matches(signature)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
       defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
-        matches = owner.lookup_matches(signature)
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       elsif with_scope = @with_scope
         defined_method_missing = with_scope.check_method_missing(signature, self)
         if defined_method_missing
-          matches = with_scope.lookup_matches(signature)
+          matches = with_scope.lookup_matches(signature, analyze_all: with_literals)
           @uses_with_scope = true
         end
       end
@@ -321,9 +321,9 @@ class Crystal::Call
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
         if search_in_parents
-          target.lookup_matches signature
+          target.lookup_matches(signature, analyze_all: with_literals)
         else
-          target.lookup_matches_without_parents signature
+          target.lookup_matches_without_parents(signature, analyze_all: with_literals)
         end
       end
       matches.each do |match|
@@ -332,48 +332,36 @@ class Crystal::Call
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents, with_literals) }
     end
   end
 
-  def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents, with_literals)
     location = self.location
     if location && (filename = location.original_filename)
-      matches = owner.lookup_private_matches filename, signature
+      matches = owner.lookup_private_matches(filename, signature, analyze_all: with_literals)
     end
 
     if matches
       if matches.empty?
-        matches = owner.lookup_matches signature
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       end
     else
-      matches = owner.lookup_matches signature
+      matches = owner.lookup_matches(signature, analyze_all: with_literals)
     end
 
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature, search_in_parents)
+  def lookup_matches_with_signature(owner, signature, search_in_parents, with_literals)
     if search_in_parents
-      owner.lookup_matches signature
+      owner.lookup_matches(signature, analyze_all: with_literals)
     else
-      owner.lookup_matches_without_parents signature
+      owner.lookup_matches_without_parents(signature, analyze_all: with_literals)
     end
   end
 
   def instantiate(signature, matches, owner, self_type, with_literals)
-    if with_literals
-      # Now that we have all our matches, check if any of them matches exactly
-      # all types, assuming autocasted values will always match (because they
-      # matches and they were not ambiguous). If so, only keep matches up to
-      # that exact match. We need to do this here because with autocasting
-      # we consider all overloads to detect ambiguous usage.
-      stop_index = matches.index do |match|
-        signature.matches_exactly?(match, with_literals: true)
-      end
-      matches = matches[..stop_index] if stop_index
-    end
-
     matches.each &.remove_literals if with_literals
 
     block = @block

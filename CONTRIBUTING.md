@@ -91,7 +91,7 @@ the docs execute `make docs`. Please follow the guidelines described in our
 
 Be sure to execute `make libcrystal` inside the cloned repository.
 
-Once in the cloned directory, and once you [installed Crystal](http://crystal-lang.org/docs/installation/index.html),
+Once in the cloned directory, and once you [installed Crystal](https://crystal-lang.org/install/),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
 your installation.
@@ -111,7 +111,7 @@ Then push your changes and create a pull request.
 ### The compiler itself
 
 If you want to add/change something in the compiler,
-the first thing you will need to do is to [install the compiler](https://crystal-lang.org/docs/installation/index.html).
+the first thing you will need to do is to [install the compiler](https://crystal-lang.org/install/).
 
 Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
 Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out

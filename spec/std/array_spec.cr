@@ -588,6 +588,20 @@ describe "Array" do
       a.should eq([1, 3, 4])
     end
 
+    it "deletes negative index with range" do
+      a = [1, 2, 3, 4, 5, 6]
+      a.delete_at(-3, 2).should eq([4, 5])
+      a.should eq([1, 2, 3, 6])
+    end
+
+    it "deletes negative index with range, out of bounds" do
+      a = [1, 2, 3, 4, 5, 6]
+
+      expect_raises IndexError do
+        a.delete_at(-7, 2)
+      end
+    end
+
     it "deletes out of bounds" do
       expect_raises IndexError do
         [1].delete_at(2)

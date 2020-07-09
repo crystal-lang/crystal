@@ -243,6 +243,13 @@ struct BitArray
     hasher
   end
 
+  # Returns a new `BitArray` with all of the same elements.
+  def dup
+    bit_array = BitArray.new(@size)
+    @bits.copy_to(bit_array.@bits, malloc_size)
+    bit_array
+  end
+
   private def bit_index_and_sub_index(index)
     bit_index_and_sub_index(index) { raise IndexError.new }
   end

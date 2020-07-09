@@ -119,7 +119,7 @@ module Crystal
         .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
         .reverse!
         .skip(10)
-        .each { |name| `rm -rf "#{name}"` rescue nil }
+        .each { |name| `rm -rf -- #{Process.quote(name)}` rescue nil }
     end
 
     private def gather_cache_entries(dir)

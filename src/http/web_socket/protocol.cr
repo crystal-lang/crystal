@@ -52,8 +52,8 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes) : UInt64
-      return 0u64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.to_unsafe, count)
@@ -66,8 +66,6 @@ class HTTP::WebSocket::Protocol
       if count < slice.size
         write(slice + count)
       end
-
-      slice.size.to_u64
     end
 
     def read(slice : Bytes)
@@ -298,7 +296,7 @@ class HTTP::WebSocket::Protocol
       handshake.to_io(socket)
       socket.flush
 
-      handshake_response = HTTP::Client::Response.from_io(socket)
+      handshake_response = HTTP::Client::Response.from_io(socket, ignore_body: true)
       unless handshake_response.status.switching_protocols?
         raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status.code}.")
       end

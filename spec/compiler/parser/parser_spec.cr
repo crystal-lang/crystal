@@ -565,6 +565,7 @@ module Crystal
     it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
     it_parses "Foo({X: X, Y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("X", "X".path), NamedArgument.new("Y", "Y".path)])] of ASTNode)
     it_parses "Foo(T, {x: X})", Generic.new("Foo".path, ["T".path, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
+    it_parses "Foo({x: X, typeof: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("typeof", "Y".path)])] of ASTNode)
     assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
 
     it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
@@ -1066,6 +1067,7 @@ module Crystal
     assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
 
     it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
+    it_parses "{} of Int32 -> Int32 => Int32", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new(ProcNotation.new(["Int32".path] of ASTNode, "Int32".path), "Int32".path))
 
     it_parses "require \"foo\"", Require.new("foo")
     it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
@@ -1227,6 +1229,8 @@ module Crystal
     it_parses "[] of ->\n", ArrayLiteral.new(of: ProcNotation.new)
     it_parses "->foo=", ProcPointer.new(nil, "foo=")
     it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
+    it_parses "->@foo.foo", [ProcPointer.new("@foo".instance_var, "foo")]
+    it_parses "->@@foo.foo", [ProcPointer.new("@@foo".class_var, "foo")]
 
     it_parses "foo &->bar", Call.new(nil, "foo", block_arg: ProcPointer.new(nil, "bar"))
 
@@ -1764,6 +1768,14 @@ module Crystal
 
     assert_syntax_error %(def foo("bar");end), "expected argument internal name"
 
+    it_parses "{[] of Foo, Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "new")] of ASTNode)
+    it_parses "{[] of Foo, ::Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz], global: true), "new")] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz + 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "+", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz * 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "*", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz ** 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "**", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
+    it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
+
     describe "end locations" do
       assert_end_location "nil"
       assert_end_location "false"
@@ -1994,6 +2006,12 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "doesn't override yield with macro yield" do
+        parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
+        a_def = parser.parse.as(Def)
+        a_def.yields.should eq(1)
       end
     end
   end

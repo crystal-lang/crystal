@@ -54,6 +54,10 @@ module Spec
   end
 
   # :nodoc:
+  class ExamplePending < SpecError
+  end
+
+  # :nodoc:
   class NestingSpecError < SpecError
   end
 

@@ -572,6 +572,16 @@ describe "OptionParser" do
       USAGE
   end
 
+  it "handles subcommands with hyphen" do
+    subcommand = false
+    OptionParser.parse(%w(sub-command)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("sub-command", "Subcommand description") { subcommand = true }
+    end
+
+    subcommand.should be_true
+  end
+
   it "stops when asked" do
     args = %w(--foo --stop --bar)
     foo = false

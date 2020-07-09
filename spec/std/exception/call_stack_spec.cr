@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 describe "Backtrace" do
-  it "prints file line:colunm" do
+  pending_win32 "prints file line:colunm" do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
@@ -34,7 +34,7 @@ describe "Backtrace" do
     error.to_s.should contain("IndexError")
   end
 
-  it "prints crash backtrace to stderr" do
+  pending_win32 "prints crash backtrace to stderr" do
     sample = datapath("crash_backtrace_sample")
 
     _, output, error = compile_and_run_file(sample)

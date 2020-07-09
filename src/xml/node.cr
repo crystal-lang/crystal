@@ -92,7 +92,7 @@ struct XML::Node
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
-    content = escape(content.to_s)
+    check_no_null_byte(content)
     LibXML.xmlNodeSetContent(self, content)
   end
 
@@ -580,19 +580,9 @@ struct XML::Node
     ptr ? (ptr.as(Array(XML::Error))) : nil
   end
 
-  private SUBSTITUTIONS = {
-    '>'  => "&gt;",
-    '<'  => "&lt;",
-    '"'  => "&quot;",
-    '\'' => "&apos;",
-    '&'  => "&amp;",
-  }
-
-  private def escape(string)
-    if string.includes? '\0'
+  private def check_no_null_byte(string)
+    if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
     end
-
-    string.gsub(SUBSTITUTIONS)
   end
 end

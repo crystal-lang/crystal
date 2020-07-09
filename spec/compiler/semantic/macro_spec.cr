@@ -1461,6 +1461,20 @@ describe "Semantic: macro" do
     ), inject_primitives: false)
 
     method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
-    method.location.not_nil!.original_location.not_nil!.line_number.should eq(10)
+    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(10)
+  end
+
+  it "executes OpAssign (#9356)" do
+    assert_type(%(
+      {% begin %}
+        {% a = nil %}
+        {% a ||= 1 %}
+        {% if a %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      {% end %}
+      )) { int32 }
   end
 end

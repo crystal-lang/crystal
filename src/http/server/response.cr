@@ -80,8 +80,8 @@ class HTTP::Server
     end
 
     # See `IO#write(slice)`.
-    def write(slice : Bytes) : UInt64
-      return 0u64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       @output.write(slice)
     end
@@ -175,6 +175,7 @@ class HTTP::Server
 
       def initialize(@io)
         @chunked = false
+        @closed = false
       end
 
       def reset
@@ -215,7 +216,7 @@ class HTTP::Server
         raise ClientError.new("Error while writing data to the client", ex)
       end
 
-      def closed?
+      def closed? : Bool
         @closed
       end
 

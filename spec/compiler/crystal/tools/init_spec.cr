@@ -280,7 +280,7 @@ module Crystal
       config.expanded_dir.should eq ::Path[Dir.current, "foo", "bar"]
     end
 
-    it "DIR (relative to home)" do
+    pending_win32 "DIR (relative to home)" do
       path = ::Path["~", "foo"].to_s
       config = Crystal::Init.parse_args(["lib", path])
       config.name.should eq "foo"

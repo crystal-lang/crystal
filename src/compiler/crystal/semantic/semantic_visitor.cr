@@ -68,6 +68,24 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.expanded = expanded
     node.bind_to(expanded)
     false
+  rescue ex : CrystalPath::NotFoundError
+    message = "can't find file '#{ex.filename}'"
+    notes = [] of String
+
+    # FIXME: as(String) should not be necessary
+    if ex.filename.as(String).starts_with? '.'
+      if relative_to
+        message += " relative to '#{relative_to}'"
+      end
+    else
+      notes << <<-NOTE
+          If you're trying to require a shard:
+          - Did you remember to run `shards install`?
+          - Did you make sure you're running the compiler in the same directory as your shard.yml?
+          NOTE
+    end
+
+    node.raise "#{message}\n\n#{notes.join("\n")}"
   rescue ex : Crystal::Exception
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
@@ -429,7 +447,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def process_annotations(annotations)
     annotations.try &.each do |ann|
-      yield lookup_annotation(ann), ann
+      annotation_type = lookup_annotation(ann)
+      validate_annotation(annotation_type, ann)
+      yield annotation_type, ann
     end
   end
 
@@ -454,6 +474,21 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     type
+  end
+
+  def validate_annotation(annotation_type, ann)
+    case annotation_type
+    when @program.deprecated_annotation
+      # Check whether a DeprecatedAnnotation can be built.
+      # There is no need to store it, but enforcing
+      # arguments makes sense here.
+      DeprecatedAnnotation.from(ann)
+    when @program.experimental_annotation
+      # ditto DeprecatedAnnotation
+      ExperimentalAnnotation.from(ann)
+    else
+      # go on
+    end
   end
 
   def check_class_var_annotations

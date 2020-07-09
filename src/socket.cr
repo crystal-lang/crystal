@@ -155,7 +155,7 @@ class Socket < IO
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(timeout: timeout) do |error|
+        wait_writable(timeout: timeout) do
           return yield IO::TimeoutError.new("connect timed out")
         end
       else
@@ -271,13 +271,20 @@ class Socket < IO
         if closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          wait_readable rescue nil
+          wait_acceptable
+          return if closed?
         else
           raise Socket::Error.from_errno("accept")
         end
       else
         return client_fd
       end
+    end
+  end
+
+  private def wait_acceptable
+    wait_readable(raise_if_closed: false) do
+      raise TimeoutError.new("Accept timed out")
     end
   end
 

@@ -17,12 +17,24 @@ module Crystal::Doc::Highlighter
 
   private def highlight_normal_state(lexer, io, break_on_rcurly = false)
     last_is_def = false
+    heredoc_stack = [] of Token
 
     while true
       token = lexer.next_token
       case token.type
       when :NEWLINE
         io.puts
+        heredoc_stack.each_with_index do |token, i|
+          highlight_delimiter_state lexer, token, io, heredoc: true
+          unless i == heredoc_stack.size - 1
+            # Next token to heredoc's end is either NEWLINE or EOF.
+            # We can't continue highlighting when it is EOF even though
+            # heredoc tokens still remain.
+            break if lexer.next_token.type == :EOF
+            io.puts
+          end
+        end
+        heredoc_stack.clear
       when :SPACE
         io << token.value
       when :COMMENT
@@ -36,7 +48,12 @@ module Crystal::Doc::Highlighter
       when :CONST, :"::"
         highlight token, "t", io
       when :DELIMITER_START
-        highlight_delimiter_state lexer, token, io
+        if token.delimiter_state.kind == :heredoc
+          highlight HTML.escape(token.raw), "s", io
+          heredoc_stack << token.dup
+        else
+          highlight_delimiter_state lexer, token, io
+        end
       when :STRING_ARRAY_START, :SYMBOL_ARRAY_START
         highlight_string_array lexer, token, io
       when :EOF
@@ -83,17 +100,16 @@ module Crystal::Doc::Highlighter
     end
   end
 
-  private def highlight_delimiter_state(lexer, token, io)
+  private def highlight_delimiter_state(lexer, token, io, heredoc = false)
     start_highlight_class "s", io
 
-    HTML.escape(token.raw, io)
+    HTML.escape(token.raw, io) unless heredoc
 
     while true
       token = lexer.next_string_token(token.delimiter_state)
       case token.type
       when :DELIMITER_END
         HTML.escape(token.raw, io)
-        end_highlight_class io
         break
       when :INTERPOLATION_START
         end_highlight_class io
@@ -101,12 +117,12 @@ module Crystal::Doc::Highlighter
         highlight_normal_state lexer, io, break_on_rcurly: true
         highlight "}", "i", io
         start_highlight_class "s", io
-      when :EOF
-        break
       else
         HTML.escape(token.raw, io)
       end
     end
+  ensure # This ensure is necessary to handle unterminated string literal.
+    end_highlight_class io
   end
 
   private def highlight_string_array(lexer, token, io)

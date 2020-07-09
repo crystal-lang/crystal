@@ -1,5 +1,55 @@
 require "../types"
 
+# Looking up matches involves two steps:
+#
+# 1. Lookup is done with autocasting disabled.
+#
+# In this scenario as soon as we find an exact match we don't look at other
+# overloads because the exact match will prevent them from being considered.
+#
+# If no matches are found we try again but this time with autocasting enabled.
+# In `semantic/call.cr` this is when `with_literals` is `true`, and this is when
+# `analyze_all` will be `true` here.
+#
+# 2. Lookup is done with autocasting enabled.
+#
+# In this mode the types for NumberLiteral and SymbolLiteral are not the usual
+# types but instead the special NumberLiteralType and SymbolLiteralType.
+#
+# In this mode we also need to stop as soon as we find an exact match
+# (which just means when the first overload matches with autocasting, which
+# is for example when passing 1 to an Int64 restriction) but we still need
+# to analyze all possible methods in case there's an ambiguity. For example:
+#
+# ```
+# def foo(x : Int64)
+# end
+#
+# def foo(x : Int8)
+# end
+#
+# foo(1)
+# ```
+#
+# In the example above we can't just stop at the first overload because
+# we need to analyze the second overload to find out that the call is ambiguous.
+#
+# However, consider this:
+#
+# ```
+# def foo(x : Int64)
+# end
+#
+# def foo(x : *Int64)
+# end
+#
+# foo(1)
+# ```
+#
+# In this case there's no ambiguity: 1 means `Int64`. However, the first overload
+# is an exact match and there's no need to consider the second overload in the
+# multidispatch. However, we do need to analyze it to check if there's an ambiguity.
+
 module Crystal
   record NamedArgumentType, name : String, type : Type do
     def self.from_args(named_args : Array(NamedArgument)?, with_literals = false)
@@ -16,8 +66,8 @@ module Crystal
     named_args : Array(NamedArgumentType)?
 
   class Type
-    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches if matches.cover_all?
 
       matches_array = matches.matches
@@ -38,7 +88,7 @@ module Crystal
       # and can be known by invoking `lookup_new_in_ancestors?`
       if my_parents && !(is_new && !lookup_new_in_ancestors?)
         my_parents.each do |parent|
-          matches = parent.lookup_matches(signature, owner, parent, matches_array)
+          matches = parent.lookup_matches(signature, owner, parent, matches_array, analyze_all: analyze_all)
           if matches.cover_all?
             return matches
           else
@@ -55,9 +105,11 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
       if defs = self.defs.try &.[signature.name]?
         context = MatchContext.new(owner, path_lookup)
+
+        exact_match = nil
 
         defs.each do |item|
           next if item.def.abstract?
@@ -72,6 +124,8 @@ module Crystal
 
           match = signature.match(item, context)
 
+          next if exact_match
+
           if match
             matches_array ||= [] of Match
             matches_array << match
@@ -81,7 +135,8 @@ module Crystal
             # a function type with return T can be transpass a restriction of a function
             # with the same arguments but which returns Void.
             if signature.matches_exactly?(match)
-              return Matches.new(matches_array, true, owner)
+              exact_match = Matches.new(matches_array, true, owner)
+              break unless analyze_all
             end
 
             context = MatchContext.new(owner, path_lookup)
@@ -90,13 +145,17 @@ module Crystal
             context.def_free_vars = nil
           end
         end
+
+        if exact_match
+          return exact_match
+        end
       end
 
       Matches.new(matches_array, Cover.create(signature, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches unless matches.empty?
 
       is_new = owner.metaclass? && signature.name == "new"
@@ -115,7 +174,7 @@ module Crystal
         my_parents.each do |parent|
           break unless parent.module?
 
-          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
+          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array, analyze_all: analyze_all)
           return matches unless matches.empty?
         end
       end
@@ -304,10 +363,6 @@ module Crystal
 
     def matches_exactly?(match : Match, *, with_literals : Bool = false)
       arg_types_equal = self.arg_types.equals?(match.arg_types) do |x, y|
-        if with_literals && x.is_a?(LiteralType)
-          x = x.match || x.remove_literal
-        end
-
         x.compatible_with?(y)
       end
       if (match_named_args = match.named_arg_types) && (signature_named_args = self.named_args) &&
@@ -315,12 +370,7 @@ module Crystal
         match_named_args = match_named_args.sort_by &.name
         signature_named_args = signature_named_args.sort_by &.name
         named_arg_types_equal = signature_named_args.equals?(match_named_args) do |x, y|
-          x_type = x.type
-          if with_literals && x_type.is_a?(LiteralType)
-            x_type = x_type.match || x_type.remove_literal
-          end
-
-          x.name == y.name && x_type.compatible_with?(y.type)
+          x.name == y.name && x.type.compatible_with?(y.type)
         end
       else
         named_arg_types_equal = !match.named_arg_types && !self.named_args
@@ -341,11 +391,11 @@ module Crystal
       type
     end
 
-    def lookup_matches(signature, owner = self, path_lookup = self)
+    def lookup_matches(signature, owner = self, path_lookup = self, analyze_all = false)
       is_new = virtual_metaclass? && signature.name == "new"
 
       base_type_lookup = virtual_lookup(base_type)
-      base_type_matches = base_type_lookup.lookup_matches(signature, self)
+      base_type_matches = base_type_lookup.lookup_matches(signature, self, analyze_all: analyze_all)
 
       # If there are no subclasses no need to look further
       if leaf?
@@ -369,7 +419,7 @@ module Crystal
         subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
         # Check matches but without parents: only included modules
-        subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+        subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup, analyze_all: analyze_all)
 
         # For Foo+.class#new we need to check that this subtype doesn't define
         # an incompatible initialize: if so, we return empty matches, because
@@ -390,7 +440,7 @@ module Crystal
           base_type_matches.each do |base_type_match|
             if base_type_match.def.macro_def?
               # We need to copy each submatch if it's a macro def
-              full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
+              full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup, analyze_all: analyze_all)
               full_subtype_matches.each do |full_subtype_match|
                 cloned_def = full_subtype_match.def.clone
                 cloned_def.macro_owner = full_subtype_match.def.macro_owner
