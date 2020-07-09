@@ -311,7 +311,9 @@ struct Set(T)
   # ```
   def subtract(other : Enumerable)
     other.each do |value|
-      delete value
+      if value.is_a? T
+        delete value
+      end
     end
     self
   end
