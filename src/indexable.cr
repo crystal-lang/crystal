@@ -167,7 +167,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
   def bsearch_index(&block : T, Int32 -> Bool)
-    (0...size).bsearch { |index| yield unsafe_fetch(index), index }
+    (0...size.to_i32).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
   # Calls the given block once for each element in `self`, passing that
@@ -304,7 +304,7 @@ module Indexable(T)
   # ```text
   # 2 -- 3 --
   # ```
-  def each_index(*, start : Int, count : Int)
+  def each_index(*, start : Int32, count : Int)
     raise ArgumentError.new "negative count: #{count}" if count < 0
 
     start += size if start < 0
@@ -345,8 +345,8 @@ module Indexable(T)
 
     # The total bytesize of the string to return is:
     length =
-      ((self.size - 1) * separator.bytesize) + # the bytesize of all separators
-        self.sum(&.to_s.bytesize)              # the bytesize of all the elements
+      ((self.size.to_i32 - 1) * separator.bytesize) + # the bytesize of all separators
+        self.sum(&.to_s.bytesize)                     # the bytesize of all the elements
 
     String.new(length) do |buffer|
       # Also compute the UTF-8 size if we can
@@ -377,7 +377,7 @@ module Indexable(T)
       end
 
       # Add size of all separators
-      size += (self.size - 1) * separator.size if size_known
+      size += (self.size.to_i32 - 1) * separator.size if size_known
 
       {length, size_known ? size : 0}
     end
@@ -389,7 +389,7 @@ module Indexable(T)
   # {1, 2, 3}.to_a # => [1, 2, 3]
   # ```
   def to_a
-    ary = Array(T).new(size)
+    ary = Array(T).new(size.to_i32)
     each { |e| ary << e }
     ary
   end
@@ -509,7 +509,7 @@ module Indexable(T)
 
   # Same as `#each`, but works in reverse.
   def reverse_each(&block) : Nil
-    (size - 1).downto(0) do |i|
+    (size.to_i32 - 1).downto(0) do |i|
       yield unsafe_fetch(i)
     end
   end
@@ -529,7 +529,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1)
+  def rindex(value, offset = size.to_i32 - 1)
     rindex(offset) { |elem| elem == value }
   end
 
@@ -544,7 +544,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex { |x| x < 3 }            # => 3
   # [1, 2, 3, 2, 3].rindex(offset: 2) { |x| x < 3 } # => 1
   # ```
-  def rindex(offset = size - 1)
+  def rindex(offset = size.to_i32 - 1)
     offset += size if offset < 0
     return nil if offset >= size
 
@@ -605,7 +605,7 @@ module Indexable(T)
 
     end_index = range.end
     if end_index.nil?
-      count = collection_size - start_index
+      count = collection_size.to_i32 - start_index
     else
       end_index += collection_size if end_index < 0
       end_index -= 1 if range.excludes_end?
@@ -636,7 +636,7 @@ module Indexable(T)
   private class ReverseItemIterator(A, T)
     include Iterator(T)
 
-    def initialize(@array : A, @index : Int32 = array.size - 1)
+    def initialize(@array : A, @index : Int32 = array.size.to_i32 - 1)
     end
 
     def next
