@@ -144,8 +144,9 @@ struct Set(T)
   # s.delete 5    # => 5
   # s.includes? 5 # => false
   # ```
-  def delete(object) : T?
+  def delete(object)
     @hash.delete(object) { return nil }
+    object
   end
 
   # Returns the number of elements in the set.
