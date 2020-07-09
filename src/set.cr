@@ -136,17 +136,17 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the *object* from the set and returns `self`.
+  # Deletes the *object* and returns it, otherwise returns nil.
   #
   # ```
   # s = Set{1, 5}
   # s.includes? 5 # => true
-  # s.delete 5
+  # s.delete 5    # => 5
   # s.includes? 5 # => false
   # ```
   def delete(object)
-    @hash.delete(object)
-    self
+    @hash.delete(object) { return }
+    object
   end
 
   # Returns the number of elements in the set.
