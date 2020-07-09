@@ -49,7 +49,7 @@ struct Slice(T)
   # ```
   # Slice(UInt8).new(3).size # => 3
   # ```
-  getter size : Int32
+  getter size : Int64
 
   # Returns `true` if this slice cannot be written to.
   getter? read_only : Bool
@@ -67,7 +67,7 @@ struct Slice(T)
   # String.new(slice) # => "abc"
   # ```
   def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
-    @size = size.to_i32
+    @size = size.to_i64
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to zero

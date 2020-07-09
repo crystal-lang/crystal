@@ -474,6 +474,7 @@ struct Pointer(T)
   # ptr[3] # => 13
   # ```
   def self.malloc(size : Int, &block : Int32 -> T)
+    size = size.to_i32
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr

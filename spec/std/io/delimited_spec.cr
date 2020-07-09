@@ -10,7 +10,7 @@ private class PartialReaderIO < IO
   def read(slice : Bytes)
     return 0 if @slice.size == 0
     max_read_size = {slice.size, @slice.size}.min
-    read_size = rand(1..max_read_size)
+    read_size = rand(1..max_read_size.to_i32)
     slice.copy_from(@slice[0, read_size])
     @slice += read_size
     read_size
