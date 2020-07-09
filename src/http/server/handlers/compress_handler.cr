@@ -1,6 +1,6 @@
 {% if !flag?(:without_zlib) %}
-  require "flate"
-  require "gzip"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 # A handler that configures an `HTTP::Server::Response` to compress the response
@@ -16,10 +16,10 @@ class HTTP::CompressHandler
 
       if request_headers.includes_word?("Accept-Encoding", "gzip")
         context.response.headers["Content-Encoding"] = "gzip"
-        context.response.output = Gzip::Writer.new(context.response.output, sync_close: true)
+        context.response.output = Compress::Gzip::Writer.new(context.response.output, sync_close: true)
       elsif request_headers.includes_word?("Accept-Encoding", "deflate")
         context.response.headers["Content-Encoding"] = "deflate"
-        context.response.output = Flate::Writer.new(context.response.output, sync_close: true)
+        context.response.output = Compress::Deflate::Writer.new(context.response.output, sync_close: true)
       end
 
       call_next(context)

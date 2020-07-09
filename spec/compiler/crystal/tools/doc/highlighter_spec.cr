@@ -76,4 +76,36 @@ describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "%w(foo  bar\n  baz)", %(<span class="s">%w(foo  bar\n  baz)</span>)
   it_highlights "%w<foo bar baz>", %(<span class="s">%w&lt;foo bar baz&gt;</span>)
   it_highlights "%i(foo bar baz)", %(<span class="s">%i(foo bar baz)</span>)
+
+  it_highlights <<-CR, <<-HTML
+    foo, bar = <<-FOO, <<-BAR
+      foo
+      FOO
+      bar
+      BAR
+    CR
+    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
+    <span class="s">  foo
+      FOO</span>
+    <span class="s">  bar
+      BAR</span>
+    HTML
+
+  it_highlights <<-CR, <<-HTML
+    foo, bar = <<-FOO, <<-BAR
+      foo
+      FOO
+    CR
+    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
+    <span class="s">  foo
+      FOO</span>
+    HTML
+
+  it_highlights <<-CR, <<-HTML
+    foo, bar = <<-FOO, <<-BAR
+      foo
+    CR
+    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
+    <span class="s">  foo</span>
+    HTML
 end

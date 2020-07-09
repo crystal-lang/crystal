@@ -31,20 +31,28 @@ class Process
   # Searches an executable, checking for an absolute path, a path relative to
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
-  def self.find_executable(name, path = ENV["PATH"]?, pwd = Dir.current)
-    if name.starts_with?(File::SEPARATOR)
-      return name
+  def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
+    name = Path.new(name)
+    if name.absolute?
+      return name.to_s
     end
 
-    if name.includes?(File::SEPARATOR)
-      return File.expand_path(name, pwd)
+    # check if the name includes a separator
+    count_parts = 0
+    name.each_part do
+      count_parts += 1
+      break if count_parts > 1
+    end
+
+    if count_parts > 1
+      return name.expand(pwd).to_s
     end
 
     return unless path
 
-    path.split(PATH_DELIMITER).each do |path|
-      executable = File.join(path, name)
-      return executable if File.exists?(executable)
+    path.split(PATH_DELIMITER).each do |path_entry|
+      executable = Path.new(path_entry, name)
+      return executable.to_s if File.exists?(executable)
     end
 
     nil
@@ -70,7 +78,7 @@ end
       String.new(buf)
     end
   end
-{% elsif flag?(:freebsd) %}
+{% elsif flag?(:freebsd) || flag?(:dragonfly) %}
   require "c/sysctl"
 
   class Process
@@ -84,10 +92,42 @@ end
       end
     end
   end
+{% elsif flag?(:netbsd) %}
+  require "c/sysctl"
+
+  class Process
+    private def self.executable_path_impl
+      mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC_ARGS, -1, LibC::KERN_PROC_PATHNAME]
+      buf = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
+      size = LibC::SizeT.new(LibC::PATH_MAX)
+
+      if LibC.sysctl(mib, 4, buf, pointerof(size), nil, 0) == 0
+        String.new(buf, size - 1)
+      end
+    end
+  end
 {% elsif flag?(:linux) %}
   class Process
     private def self.executable_path_impl
       "/proc/self/exe"
+    end
+  end
+{% elsif flag?(:win32) %}
+  require "crystal/system/windows"
+  require "c/libloaderapi"
+
+  class Process
+    private def self.executable_path_impl
+      Crystal::System.retry_wstr_buffer do |buffer, small_buf|
+        len = LibC.GetModuleFileNameW(nil, buffer, buffer.size)
+        if 0 < len < buffer.size
+          break String.from_utf16(buffer[0, len])
+        elsif small_buf && len == buffer.size
+          next 32767 # big enough. 32767 is the maximum total path length of UNC path.
+        else
+          break nil
+        end
+      end
     end
   end
 {% else %}

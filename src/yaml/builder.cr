@@ -183,6 +183,8 @@ class YAML::Builder
   # Flushes any pending data to the underlying `IO`.
   def flush
     LibYAML.yaml_emitter_flush(@emitter)
+
+    @io.flush
   end
 
   def finalize

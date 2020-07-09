@@ -1,8 +1,8 @@
 require "c/stdio"
 require "c/stdlib"
-require "callstack"
+require "exception/call_stack"
 
-CallStack.skip(__FILE__)
+Exception::CallStack.skip(__FILE__)
 
 private struct LEBReader
   def initialize(@data : UInt8*)
@@ -90,7 +90,7 @@ private def traverse_eh_table(leb, start, ip, actions)
 end
 
 {% if flag?(:win32) %}
-  require "callstack/lib_unwind"
+  require "exception/lib_unwind"
 
   lib LibC
     fun _CxxThrowException(ex : Void*, throw_info : Void*) : NoReturn
@@ -194,7 +194,8 @@ end
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
     ret = LibUnwind.raise_exception(unwind_ex)
     Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
-    CallStack.print_backtrace
+    Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
     LibC.exit(ret)
   end
 
@@ -214,7 +215,7 @@ end
       exception.inspect_with_backtrace(STDERR)
     {% end %}
 
-    exception.callstack ||= CallStack.new
+    exception.callstack ||= Exception::CallStack.new
     unwind_ex = Pointer(LibUnwind::Exception).malloc
     unwind_ex.value.exception_class = LibC::SizeT.zero
     unwind_ex.value.exception_cleanup = LibC::SizeT.zero

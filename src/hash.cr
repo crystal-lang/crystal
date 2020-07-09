@@ -1855,6 +1855,7 @@ class Hash(K, V)
   # h = {1 => 'a', 2 => 'b', 3 => 'c'}
   # h.to_a # => [{1, 'a'}, {2, 'b'}, {3, 'c'}]
   # ```
+  # The order of the array follows the order the keys were inserted in the Hash.
   def to_a : Array({K, V})
     to_a_impl do |entry|
       {entry.key, entry.value}

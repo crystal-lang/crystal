@@ -1,4 +1,4 @@
-class INI
+module INI
   # Exception thrown on an INI parse error.
   class ParseException < Exception
     getter line_number : Int32
@@ -21,12 +21,12 @@ class INI
   #
   # INI.parse("[foo]\na = 1") # => {"foo" => {"a" => "1"}}
   # ```
-  def self.parse(str : String | IO) : Hash(String, Hash(String, String))
+  def self.parse(string_or_io : String | IO) : Hash(String, Hash(String, String))
     ini = Hash(String, Hash(String, String)).new
     current_section = ini[""] = Hash(String, String).new
     lineno = 0
 
-    str.each_line do |line|
+    string_or_io.each_line do |line|
       lineno += 1
       next if line.empty?
 

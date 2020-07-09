@@ -401,4 +401,22 @@ describe "Code gen: generic class type" do
       end
       ))
   end
+
+  it "doesn't override guessed instance var in generic type if already declared in superclass (#9431)" do
+    codegen(%(
+      class Foo
+        @x = 0
+      end
+
+      class Bar(T) < Foo
+        @x = 0
+      end
+
+      class Baz < Bar(Int32)
+        @valid = true
+      end
+
+      Baz.new
+      ))
+  end
 end

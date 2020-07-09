@@ -730,7 +730,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -918,6 +918,23 @@ describe "Semantic: annotation" do
     end
   end
 
+  it "errors when annotate instance variable in subclass" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Base
+        @x : Nil
+      end
+
+      class Child < Base
+        @[Foo]
+        @x : Nil
+      end
+      ),
+      "can't annotate @x in Child because it was first defined in Base"
+  end
+
   it "errors if wanting to add type inside annotation (1) (#8614)" do
     assert_error %(
       annotation Ann
@@ -942,5 +959,16 @@ describe "Semantic: annotation" do
       Ann::Foo::Bar.new
       ),
       "can't declare type inside annotation Ann"
+  end
+
+  it "doesn't bleed annotation from class into class variable (#8314)" do
+    semantic(%(
+      annotation Attr; end
+
+      @[Attr]
+      class Bar
+        @@x = 0
+      end
+      ))
   end
 end

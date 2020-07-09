@@ -116,19 +116,7 @@ module Crystal
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
-    property codegen_target = Config.default_target
-
-    # Which kind of warnings wants to be detected.
-    property warnings : Warnings = Warnings::All
-
-    # Paths to ignore for warnings detection.
-    property warnings_exclude : Array(String) = [] of String
-
-    # Detected warning failures.
-    property warning_failures = [] of String
-
-    # If `true` compiler will error if warnings are found.
-    property error_on_warnings : Bool = false
+    property codegen_target = Config.host_target
 
     def initialize
       super(self, self, "main")
@@ -242,6 +230,7 @@ module Crystal
       types["ReturnsTwice"] = @returns_twice_annotation = AnnotationType.new self, self, "ReturnsTwice"
       types["ThreadLocal"] = @thread_local_annotation = AnnotationType.new self, self, "ThreadLocal"
       types["Deprecated"] = @deprecated_annotation = AnnotationType.new self, self, "Deprecated"
+      types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
 
       define_crystal_constants
     end
@@ -325,10 +314,18 @@ module Crystal
 
     # Returns the `Type` for `type | Nil`
     def nilable(type)
-      # Nil | Nil # => Nil
-      return self.nil if type == self.nil
-
-      union_of self.nil, type
+      case type
+      when self.nil
+        # Nil | Nil # => Nil
+        return self.nil
+      when UnionType
+        types = Array(Type).new(type.union_types.size + 1)
+        types.concat type.union_types
+        types << self.nil unless types.includes? self.nil
+        union_of types
+      else
+        union_of self.nil, type
+      end
     end
 
     # Returns the `Type` for `type1 | type2`
@@ -429,18 +426,6 @@ module Crystal
       static_array.instantiate([type, NumberLiteral.new(size)] of TypeVar)
     end
 
-    # Adds *filename* to the list of all required files.
-    # Returns `true` if the file was added, `false` if it was
-    # already required.
-    def add_to_requires(filename)
-      if requires.includes? filename
-        false
-      else
-        requires.add filename
-        true
-      end
-    end
-
     record RecordedRequire, filename : String, relative_to : String? do
       include JSON::Serializable
     end
@@ -463,7 +448,7 @@ module Crystal
                      packed_annotation thread_local_annotation no_inline_annotation
                      always_inline_annotation naked_annotation returns_twice_annotation
                      raises_annotation primitive_annotation call_convention_annotation
-                     flags_annotation link_annotation extern_annotation deprecated_annotation) %}
+                     flags_annotation link_annotation extern_annotation deprecated_annotation experimental_annotation) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
@@ -494,6 +479,30 @@ module Crystal
       when :f32  then float32
       when :f64  then float64
       else            raise "Invalid node kind: #{kind}"
+      end
+    end
+
+    def int_type(signed, size)
+      if signed
+        case size
+        when  1 then int8
+        when  2 then int16
+        when  4 then int32
+        when  8 then int64
+        when 16 then int128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
+      else
+        case size
+        when  1 then uint8
+        when  2 then uint16
+        when  4 then uint32
+        when  8 then uint64
+        when 16 then uint128
+        else
+          raise "BUG: Invalid int size: #{size}"
+        end
       end
     end
 
@@ -572,8 +581,8 @@ module Crystal
       end
     end
 
-    def lookup_private_matches(filename, signature)
-      file_module?(filename).try &.lookup_matches(signature)
+    def lookup_private_matches(filename, signature, analyze_all = false)
+      file_module?(filename).try &.lookup_matches(signature, analyze_all: analyze_all)
     end
 
     def file_module?(filename)

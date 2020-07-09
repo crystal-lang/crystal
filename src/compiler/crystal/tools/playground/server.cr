@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "http/server"
 require "log"
 require "ecr/macros"
@@ -54,7 +56,7 @@ module Crystal::Playground
         return
       end
 
-      output_filename = tempfile "play-#{@session_key}-#{tag}"
+      output_filename = Crystal.temp_executable "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       compiler.color = false
       begin
@@ -154,16 +156,12 @@ module Crystal::Playground
       end
     end
 
-    private def tempfile(basename)
-      Crystal.tempfile(basename)
-    end
-
     private def stop_process
       if process = @process
         Log.info { "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})." }
         @process = nil
         File.delete @running_process_filename rescue nil
-        process.kill rescue nil
+        process.terminate rescue nil
       end
     end
 

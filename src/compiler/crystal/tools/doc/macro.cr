@@ -145,7 +145,6 @@ class Crystal::Doc::Macro
   end
 
   def annotations(annotation_type)
-    # macros does not support annotations
-    nil
+    @macro.annotations(annotation_type)
   end
 end

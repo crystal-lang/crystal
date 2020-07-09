@@ -105,7 +105,6 @@ module LLVM::ValueMethods
 
   def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
   end
 
   def to_unsafe

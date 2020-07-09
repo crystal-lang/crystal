@@ -1240,6 +1240,10 @@ module Crystal
         type
       end
     end
+
+    def compatible_with?(type)
+      literal.type == type || literal.can_be_autocast_to?(type)
+    end
   end
 
   class SymbolLiteralType
@@ -1262,6 +1266,17 @@ module Crystal
           type = @match || literal.type
         end
         type
+      end
+    end
+
+    def compatible_with?(type)
+      case type
+      when SymbolType
+        true
+      when EnumType
+        !!(type.find_member(literal.value))
+      else
+        false
       end
     end
   end
