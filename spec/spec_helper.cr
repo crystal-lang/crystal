@@ -135,6 +135,11 @@ def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures[0].should start_with(message), file, line
 end
 
+def assert_no_warnings(code, *, file = __FILE__, line = __LINE__)
+  warning_failures = warnings_result(code, file: file)
+  warning_failures.size.should eq(0), file, line
+end
+
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)
   assert_macro(macro_args, macro_body, expected, expected_pragmas, flags, file: file, line: line) { call_args }
 end

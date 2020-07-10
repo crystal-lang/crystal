@@ -1709,6 +1709,29 @@ module Crystal
     end
   end
 
+  # A free variable in a method.
+  class FreeVariable < Type
+    def initialize(program, @name : String)
+      super(program)
+    end
+
+    def implements?(other : FreeVariable)
+      true
+    end
+
+    def unbound?
+      true
+    end
+
+    def ==(other : FreeVariable)
+      true
+    end
+
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
+      io << @name
+    end
+  end
+
   # A splatted type inside an inherited generic class or included generic module.
   #
   # For example, given:

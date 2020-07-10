@@ -167,7 +167,9 @@ class Crystal::AbstractDefChecker
     base_return_type_node = base_method.return_type
     return unless base_return_type_node
 
-    original_base_return_type = base_type.lookup_type?(base_return_type_node)
+    base_free_vars = free_vars(base_method)
+
+    original_base_return_type = base_type.lookup_type?(base_return_type_node, free_vars: base_free_vars)
     unless original_base_return_type
       report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
       return
@@ -185,7 +187,7 @@ class Crystal::AbstractDefChecker
       base_return_type_node.accept(replacer)
     end
 
-    base_return_type = base_type.lookup_type?(base_return_type_node)
+    base_return_type = base_type.lookup_type?(base_return_type_node, free_vars: base_free_vars)
     unless base_return_type
       report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
       return
@@ -197,7 +199,7 @@ class Crystal::AbstractDefChecker
       return
     end
 
-    return_type = type.lookup_type?(return_type_node)
+    return_type = type.lookup_type?(return_type_node, free_vars: free_vars(method))
     unless return_type
       report_warning(return_type_node, "can't resolve return type #{return_type_node}\n#{this_warning_will_become_an_error}")
       return
@@ -206,6 +208,12 @@ class Crystal::AbstractDefChecker
     unless return_type.implements?(base_return_type)
       report_warning(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}\n#{this_warning_will_become_an_error}")
       return
+    end
+  end
+
+  private def free_vars(method : Def)
+    method.free_vars.try &.to_h do |free_var_name|
+      {free_var_name, FreeVariable.new(@program, free_var_name).as(TypeVar)}
     end
   end
 

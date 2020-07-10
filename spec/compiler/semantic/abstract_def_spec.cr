@@ -674,4 +674,50 @@ describe "Semantic: abstract def" do
       end
     ))
   end
+
+  it "finds free vars in return type (#8766)" do
+    assert_no_warnings(%(
+      module Functor(T)
+        abstract def fmap(&block : T -> U) : Functor(U) forall U
+      end
+
+      class A(T)
+        include Functor(T)
+
+        def fmap(&block : T -> U) : Functor(U) forall U
+        end
+      end
+      ))
+  end
+
+  it "finds free vars in return type, different name (#8766)" do
+    assert_no_warnings(%(
+      module Functor(T)
+        abstract def fmap(&block : T -> U) : Functor(U) forall U
+      end
+
+      class A(T)
+        include Functor(T)
+
+        def fmap(&block : T -> X) : Functor(X) forall X
+        end
+      end
+      ))
+  end
+
+  it "warns if return type doesn't match return type with free var" do
+    assert_warning %(
+      module Functor(T)
+        abstract def fmap(&block : T -> U) : Functor(U) forall U
+      end
+
+      class A(T)
+        include Functor(T)
+
+        def fmap(&block : T -> U) : Functor(Int32) forall U
+        end
+      end
+      ),
+      "warning in line 9\nWarning: this method must return Functor(U), which is the return type of the overridden method Functor(T)#fmap(&block), or a subtype of it, not Functor(Int32)"
+  end
 end
