@@ -147,7 +147,6 @@ struct Set(T)
   def delete(object) : T?
     return nil if !object.is_a? T
     @hash.delete(object) { return nil }
-    object
   end
 
   # Returns the number of elements in the set.
