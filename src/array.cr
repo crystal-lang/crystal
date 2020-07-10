@@ -47,8 +47,7 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
-  # Size of an Array that we consider small to do linear scans
-  # or other optimizations instead of using a lookup Hash.
+  # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
   # Returns the number of elements in the array.
@@ -1601,11 +1600,45 @@ class Array(T)
     self
   end
 
+  # Returns `self` with all the elements shifted `n` times.
+  #
+  # ```
+  # a1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a3 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  #
+  # a1.rotate!
+  # a2.rotate!(1)
+  # a3.rotate!(3)
+  #
+  # a1 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a2 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a3 # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # ```
   def rotate!(n = 1)
     return self if size == 0
     n %= size
-    return self if n == 0
-    if n <= size // 2
+
+    if n == 0
+    elsif n == 1
+      tmp = self[0]
+      @buffer.move_from(@buffer + n, size - n)
+      self[-1] = tmp
+    elsif n == (size - 1)
+      tmp = self[-1]
+      (@buffer + size - n).move_from(@buffer, n)
+      self[0] = tmp
+    elsif n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer, n)
+      @buffer.move_from(@buffer + n, size - n)
+      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
+    elsif size - n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
+      (@buffer + size - n).move_from(@buffer, n)
+      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
+    elsif n <= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
@@ -1617,6 +1650,15 @@ class Array(T)
     self
   end
 
+  # Returns an array with all the elements shifted `n` times.
+  #
+  # ```
+  # a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a.rotate    # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(1) # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(3) # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # a           # => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # ```
   def rotate(n = 1)
     return self if size == 0
     n %= size
