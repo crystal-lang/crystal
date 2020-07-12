@@ -230,6 +230,22 @@ describe "OptionParser" do
     end
   end
 
+  it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+      OptionParser.parse(["-foo"]) do |opts|
+        opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (long flag, #9553)" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: --foo=bar" do
+      OptionParser.parse(["--foo=bar"]) do |opts|
+        opts.on("-foo", "some flag") { }
+      end
+    end
+  end
+
   it "calls the handler for invalid options" do
     called = false
     OptionParser.parse(["-f", "-j"]) do |opts|

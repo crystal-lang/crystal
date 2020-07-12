@@ -366,7 +366,9 @@ class OptionParser
           value = nil
         end
 
-        if handler = @handlers[flag]?
+        # Fetch handler of the flag.
+        # If value is given even though handler does not take value, it is invalid, then it is skipped.
+        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
           handled_args << arg_index
 
           # Pull in the next argument if we don't already have it and an argument
