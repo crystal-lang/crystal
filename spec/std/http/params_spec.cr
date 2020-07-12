@@ -116,16 +116,22 @@ module HTTP
     end
 
     describe "#[]=(name, value)" do
-      it "sets first value for provided param name" do
+      it "sets value for provided param name" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
         params["foo"] = "notfoo"
-        params.fetch_all("foo").should eq(["notfoo", "baz"])
+        params.fetch_all("foo").should eq(["notfoo"])
       end
 
       it "adds new name => value pair if there is no such param" do
         params = Params.parse("foo=bar&foo=baz&baz=qux")
         params["non_existent_param"] = "test"
         params.fetch_all("non_existent_param").should eq(["test"])
+      end
+
+      it "sets value for provided param name (array)" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params["non_existent_param"] = ["test", "something"]
+        params.fetch_all("non_existent_param").should eq(["test", "something"])
       end
     end
 

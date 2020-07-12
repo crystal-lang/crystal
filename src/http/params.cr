@@ -189,14 +189,26 @@ module HTTP
     # ```
     delegate empty?, to: raw_params
 
-    # Sets first *value* for specified param *name*.
+    # Sets the *name* key to *value*.
     #
     # ```
-    # params["item"] = "pencil"
+    # require "http/params"
+    #
+    # params = HTTP::Params{"a" => ["b", "c"]}
+    # params["a"] = "d"
+    # params["a"]           # => "d"
+    # params.fetch_all("a") # => ["d"]
+    #
+    # params["a"] = ["e", "f"]
+    # params["a"]           # => "e"
+    # params.fetch_all("a") # => ["e", "f"]
     # ```
-    def []=(name, value)
-      raw_params[name] ||= [""]
-      raw_params[name][0] = value
+    def []=(name, value : String | Array(String))
+      raw_params[name] =
+        case value
+        in String        then [value]
+        in Array(String) then value
+        end
     end
 
     # Returns all values for specified param *name*.
