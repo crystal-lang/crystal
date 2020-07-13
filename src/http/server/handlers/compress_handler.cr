@@ -14,12 +14,14 @@ class HTTP::CompressHandler
     {% else %}
       request_headers = context.request.headers
 
-      if request_headers.includes_word?("Accept-Encoding", "gzip")
-        context.response.headers["Content-Encoding"] = "gzip"
-        context.response.output = Compress::Gzip::Writer.new(context.response.output, sync_close: true)
-      elsif request_headers.includes_word?("Accept-Encoding", "deflate")
-        context.response.headers["Content-Encoding"] = "deflate"
-        context.response.output = Compress::Deflate::Writer.new(context.response.output, sync_close: true)
+      unless request_headers.includes_word?("Connection", "upgrade")
+        if request_headers.includes_word?("Accept-Encoding", "gzip")
+          context.response.headers["Content-Encoding"] = "gzip"
+          context.response.output = Compress::Gzip::Writer.new(context.response.output, sync_close: true)
+        elsif request_headers.includes_word?("Accept-Encoding", "deflate")
+          context.response.headers["Content-Encoding"] = "deflate"
+          context.response.output = Compress::Deflate::Writer.new(context.response.output, sync_close: true)
+        end
       end
 
       call_next(context)
