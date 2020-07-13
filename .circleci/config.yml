@@ -93,7 +93,7 @@ jobs:
             - brew-cache-v1
       - checkout
       - run: bin/ci prepare_system
-      - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
+      - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
       - run: bin/ci build
