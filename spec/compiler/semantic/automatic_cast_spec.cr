@@ -575,4 +575,14 @@ describe "Semantic: automatic cast" do
       Baz.new.as(Foo).foo(1)
       )) { int64 }
   end
+
+  it "doesn't autocast number on union (#8655)" do
+    assert_type(%(
+      def foo(x : UInt8 | Int32, y : Float64)
+        x
+      end
+
+      foo(255, 60)
+      )) { int32 }
+  end
 end
