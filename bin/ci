@@ -77,8 +77,6 @@ on_github() {
 prepare_system() {
   on_linux 'echo '"'"'{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}'"'"' | sudo tee /etc/docker/daemon.json'
   on_linux sudo service docker restart
-
-  on_osx brew update
 }
 
 build() {
@@ -119,11 +117,8 @@ prepare_build() {
 
   on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.35.1/crystal-0.35.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
   on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.35.1-1 crystal;popd'
+  on_osx brew bundle --no-lock
 
-  on_osx 'brew unlink python@2 || true'
-  on_osx brew install z3 llvm@10 gmp libevent pcre pkg-config
-  on_osx brew reinstall openssl
-  on_osx brew link --force llvm@10
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm
   #
