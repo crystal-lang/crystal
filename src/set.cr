@@ -136,7 +136,7 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the *object* and returns it, otherwise returns `nil`.
+  # Removes the *object* from the set and returns `true`—if present, otherwise returns `false`.
   #
   # ```
   # s = Set{1, 5}
