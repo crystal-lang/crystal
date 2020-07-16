@@ -65,12 +65,12 @@ describe "Set" do
 
     it "returns the object is present" do
       set = Set{1, 2, 3}
-      set.delete(2).should eq(2)
+      set.delete(2).should be_true
     end
 
     it "returns nil if the object is absent" do
       set = Set{1, 2, 3}
-      set.delete(0).should eq(nil)
+      set.delete(0).should be_false
     end
   end
 

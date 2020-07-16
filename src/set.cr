@@ -141,12 +141,13 @@ struct Set(T)
   # ```
   # s = Set{1, 5}
   # s.includes? 5 # => true
-  # s.delete 5    # => 5
+  # s.delete 5    # => true
   # s.includes? 5 # => false
+  # s.delete 5    # => false
   # ```
-  def delete(object) : T?
-    return nil if !object.is_a? T
-    @hash.delete(object) { return nil }
+  def delete(object) : Bool
+    @hash.delete(object) { return false }
+    true
   end
 
   # Returns the number of elements in the set.
