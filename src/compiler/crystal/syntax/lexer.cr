@@ -1510,7 +1510,7 @@ module Crystal
             @token.number_kind = :f64
           end
         else
-          @token.number_kind = :i32
+          @token.number_kind = :i
           has_suffix = false
         end
       when 'e', 'E'
@@ -1546,7 +1546,7 @@ module Crystal
         suffix_size = consume_uint_suffix
       else
         has_suffix = false
-        @token.number_kind = :i32
+        @token.number_kind = :i
       end
 
       end_pos = current_pos - suffix_size
@@ -1650,7 +1650,7 @@ module Crystal
         if int_value > int64max
           @token.number_kind = :u64
         elsif int_value > int32max
-          @token.number_kind = :i64
+          @token.number_kind = :i
         end
       end
     end
@@ -1820,7 +1820,7 @@ module Crystal
         consume_uint_suffix
         check_integer_literal_fits_in_size string_value, name_size, negative, start
       else
-        @token.number_kind = :i32
+        @token.number_kind = :i
         deduce_integer_kind string_value, name_size, negative, start
       end
 

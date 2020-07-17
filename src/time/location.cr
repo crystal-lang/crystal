@@ -80,7 +80,7 @@ class Time::Location
     UTC = new "UTC", 0, false
 
     # Returns the offset from UTC in seconds.
-    getter offset : Int32
+    getter offset : DefaultInt
 
     # Returns `true` if this zone offset is daylight savings time.
     getter? dst : Bool
@@ -93,7 +93,7 @@ class Time::Location
     #
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
-    def initialize(@name : String?, @offset : Int32, @dst : Bool)
+    def initialize(@name : String?, @offset : DefaultInt, @dst : Bool)
       # Maximium offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
@@ -389,7 +389,7 @@ class Time::Location
   #
   # *unix_seconds* expresses the number of seconds since UNIX epoch
   # (`1970-01-01 00:00:00 UTC`).
-  def lookup(unix_seconds : Int) : Zone
+  def lookup(unix_seconds : Int64) : Zone
     unless @cached_range[0] <= unix_seconds < @cached_range[1]
       @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
     end
@@ -398,7 +398,7 @@ class Time::Location
   end
 
   # :nodoc:
-  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
+  def lookup_with_boundaries(unix_seconds : Int64) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
       return Zone::UTC, {Int64::MIN, Int64::MAX}

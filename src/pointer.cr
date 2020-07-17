@@ -114,7 +114,7 @@ struct Pointer(T)
   # ptr[3] # => 13
   # ```
   def [](offset)
-    (self + offset).value
+    (self + offset.to_i!).value
   end
 
   # Sets the value pointed at this pointer's address plus `offset * sizeof(T)`.
@@ -127,7 +127,7 @@ struct Pointer(T)
   # ptr2.value # => 42
   # ```
   def []=(offset, value : T)
-    (self + offset).value = value
+    (self + offset.to_i!).value = value
   end
 
   # Copies *count* elements from *source* into `self`.
@@ -350,7 +350,7 @@ struct Pointer(T)
       raise ArgumentError.new("Negative size")
     end
 
-    realloc(size.to_u64)
+    realloc(size.to_u64!)
   end
 
   # Shuffles *count* consecutive values pointed by this pointer.
@@ -412,8 +412,9 @@ struct Pointer(T)
   # ptr = Pointer(Int32).new(5678)
   # ptr.address # => 5678
   # ```
-  def self.new(address : Int)
-    new address.to_u64
+  def self.new(address : Int::Primitive)
+    # TODO(platform): check this!
+    new address.to_u64!
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized

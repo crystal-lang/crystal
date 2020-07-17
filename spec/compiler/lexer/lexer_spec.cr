@@ -48,6 +48,10 @@ private def it_lexes_idents(idents)
   end
 end
 
+private def it_lexes_i(values)
+  values.each { |value| it_lexes_number :i, value }
+end
+
 private def it_lexes_i32(values)
   values.each { |value| it_lexes_number :i32, value }
 end
@@ -156,8 +160,9 @@ describe "Lexer" do
                    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
                    "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
-  it_lexes_i32 ["1", ["0i32", "0"], ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",
-                ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
+  it_lexes_i ["1", "0", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",
+              ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
+  it_lexes_i32 [["0i32", "0"], ["+1_i32", "+1"], ["-1_i32", "-1"]]
   it_lexes_i64 [["1i64", "1"], ["1_i64", "1"], ["1i64hello", "1"], ["+1_i64", "+1"], ["-1_i64", "-1"]]
   it_lexes_i128 [["1i128", "1"], ["1_i128", "1"], ["1i128hello", "1"], ["+1_i128", "+1"], ["-1_i128", "-1"]]
   it_lexes_f32 [["0f32", "0"], ["0_f32", "0"], ["1.0f32", "1.0"], ["1.0f32hello", "1.0"],
@@ -199,39 +204,38 @@ describe "Lexer" do
   it_lexes_number :f64, ["1f64", "1"]
   it_lexes_number :f64, ["1.0f64", "1.0"]
 
-  it_lexes_number :i32, ["0b1010", "10"]
-  it_lexes_number :i32, ["+0b1010", "+10"]
-  it_lexes_number :i32, ["-0b1010", "-10"]
+  it_lexes_number :i32, ["0b1010_i32", "10"]
+  it_lexes_number :i32, ["+0b1010_i32", "+10"]
+  it_lexes_number :i32, ["-0b1010_i32", "-10"]
 
-  it_lexes_number :i32, ["0xFFFF", "65535"]
-  it_lexes_number :i32, ["0xabcdef", "11259375"]
-  it_lexes_number :i32, ["+0xFFFF", "+65535"]
-  it_lexes_number :i32, ["-0xFFFF", "-65535"]
+  it_lexes_number :i32, ["0xFFFF_i32", "65535"]
+  it_lexes_number :i32, ["0xabcdef_i32", "11259375"]
+  it_lexes_number :i32, ["+0xFFFF_i32", "+65535"]
+  it_lexes_number :i32, ["-0xFFFF_i32", "-65535"]
 
-  it_lexes_number :i64, ["0x80000001", "2147483649"]
-  it_lexes_number :i64, ["-0x80000001", "-2147483649"]
-  it_lexes_number :i64, ["0xFFFFFFFF", "4294967295"]
-  it_lexes_number :i64, ["-0xFFFFFFFF", "-4294967295"]
+  it_lexes_number :i, ["0x80000001", "2147483649"]
+  it_lexes_number :i, ["-0x80000001", "-2147483649"]
+  it_lexes_number :i, ["0xFFFFFFFF", "4294967295"]
+  it_lexes_number :i, ["-0xFFFFFFFF", "-4294967295"]
 
   it_lexes_number :u64, ["0xFFFF_u64", "65535"]
 
-  it_lexes_i32 [["0o123", "83"], ["-0o123", "-83"], ["+0o123", "+83"]]
+  it_lexes_i32 [["0o123_i32", "83"], ["-0o123_i32", "-83"], ["+0o123_i32", "+83"]]
   it_lexes_f64 [["0.5", "0.5"], ["+0.5", "+0.5"], ["-0.5", "-0.5"]]
   it_lexes_i64 [["0o123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
 
-  it_lexes_i64 ["2147483648", "-2147483649"]
-  it_lexes_i64 [["2147483648.foo", "2147483648"]]
+  it_lexes_i ["2147483648", "-2147483649"]
+  it_lexes_i [["2147483648.foo", "2147483648"]]
   it_lexes_u64 ["18446744073709551615", "14146167139683460000", "9223372036854775808"]
   it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
 
-  it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
-  it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
+  it_lexes_i [["0x3fffffffffffffff", "4611686018427387903"]]
+  it_lexes_i ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
 
-  it_lexes_number :i32, ["+0", "+0"]
-  it_lexes_number :i32, ["-0", "-0"]
+  it_lexes_number :i32, ["+0_i32", "+0"]
+  it_lexes_number :i32, ["-0_i32", "-0"]
 
-  it_lexes_number :i32, ["0", "0"]
   it_lexes_number :i32, ["0_i32", "0"]
   it_lexes_number :i8, ["0i8", "0"]
 
@@ -461,7 +465,7 @@ describe "Lexer" do
     lexer.next_token.type.should eq(:SPACE)
     token = lexer.next_token
     token.type.should eq(:NUMBER)
-    token.number_kind.should eq(:i32)
+    token.number_kind.should eq(:i)
   end
 
   it "lexes symbol with quote" do

@@ -55,8 +55,8 @@ class Array(T)
   # ```
   # [:foo, :bar].size # => 2
   # ```
-  getter size : Int32
-  @capacity : Int32
+  getter size : DefaultInt
+  @capacity : DefaultInt
 
   # Creates a new empty `Array`.
   def initialize
@@ -127,7 +127,7 @@ class Array(T)
   # ary[0][0] = 2
   # ary # => [[2], [1], [1]]
   # ```
-  def self.new(size : Int, &block : Int32 -> T)
+  def self.new(size : Int, &block : DefaultInt -> T)
     Array(T).build(size) do |buffer|
       size.to_i.times do |i|
         buffer[i] = yield i
@@ -2119,11 +2119,12 @@ class Array(T)
   end
 
   private def resize_to_capacity(capacity)
+    capacity = capacity.to_i!
     @capacity = capacity
     if @buffer
-      @buffer = @buffer.realloc(@capacity)
+      @buffer = @buffer.realloc(@capacity.to_i!)
     else
-      @buffer = Pointer(T).malloc(@capacity)
+      @buffer = Pointer(T).malloc(@capacity.to_i!)
     end
   end
 

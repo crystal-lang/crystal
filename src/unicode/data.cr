@@ -2383,10 +2383,10 @@ module Unicode
   # try to avoid/reuse temporary allocas.
   # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
   private def self.put(array : Array, *values) : Nil
-    array << values
+    array << values.map(&.to_i32!)
   end
 
   private def self.put(hash : Hash, key, *values) : Nil
-    hash[key] = values
+    hash[key.to_i32!] = values.map(&.to_i32!)
   end
 end

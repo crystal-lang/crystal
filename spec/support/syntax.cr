@@ -4,6 +4,10 @@ require "../../src/compiler/crystal/syntax"
 include Crystal
 
 struct Number
+  def int
+    NumberLiteral.new to_s, :i
+  end
+
   def int32
     NumberLiteral.new to_s, :i32
   end

@@ -62,7 +62,7 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def self.new(&block : Int32 -> T)
+  def self.new(&block : DefaultInt -> T)
     array = uninitialized self
     N.times do |i|
       array.to_unsafe[i] = yield i
@@ -246,7 +246,7 @@ struct StaticArray(T, N)
   # array # => StaticArray[3, 2, 2]
   # ```
   def to_slice
-    Slice.new(to_unsafe, size)
+    Slice.new(to_unsafe, size.to_i!)
   end
 
   # Returns a pointer to this static array's data.

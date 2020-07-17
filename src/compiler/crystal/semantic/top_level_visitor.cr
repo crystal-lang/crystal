@@ -563,7 +563,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         base_type.raise "enum base type must be an integer type"
       end
     else
-      enum_base_type = @program.int32
+      enum_base_type = @program.int
     end
 
     all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
@@ -671,8 +671,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if default_value.is_a?(Crystal::NumberLiteral)
         enum_base_kind = base_type.kind
-        if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
-          default_value.raise "enum value must be an Int32"
+        if (enum_base_kind == :i) && (enum_base_kind != default_value.kind)
+          default_value.raise "enum value must be an Int"
         end
       end
 

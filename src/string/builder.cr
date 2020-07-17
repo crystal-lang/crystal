@@ -4,8 +4,13 @@ require "io"
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder < IO
-  getter bytesize : Int32
-  getter capacity : Int32
+  {% if flag?(:platform_dependent_int) %}
+    getter bytesize : Int
+    getter capacity : Int
+  {% else %}
+    getter bytesize : Int32
+    getter capacity : Int32
+  {% end %}
   @buffer : Pointer(UInt8)
 
   def initialize(capacity : Int = 64)
@@ -16,9 +21,9 @@ class String::Builder < IO
     capacity += String::HEADER_SIZE + 1
     String.check_capacity_in_bounds(capacity)
 
-    @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
+    @buffer = GC.malloc_atomic(capacity.to_i!).as(UInt8*)
     @bytesize = 0
-    @capacity = capacity.to_i
+    @capacity = capacity.to_i!
     @finished = false
   end
 
@@ -47,7 +52,7 @@ class String::Builder < IO
       resize_to_capacity(Math.pw2ceil(new_bytesize))
     end
 
-    slice.copy_to(@buffer + real_bytesize, count)
+    slice.copy_to(@buffer + real_bytesize.to_i!, count)
     @bytesize += count
   end
 
@@ -65,7 +70,7 @@ class String::Builder < IO
   end
 
   def buffer
-    @buffer + String::HEADER_SIZE
+    @buffer + String::HEADER_SIZE.to_i!
   end
 
   def empty?
@@ -108,7 +113,7 @@ class String::Builder < IO
     end
 
     header = @buffer.as({Int32, Int32, Int32}*)
-    header.value = {String::TYPE_ID, @bytesize - 1, 0}
+    header.value = {String::TYPE_ID, (@bytesize - 1).to_i32!, 0_i32}
     @buffer.as(String)
   end
 
@@ -122,6 +127,6 @@ class String::Builder < IO
 
   private def resize_to_capacity(capacity)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity)
+    @buffer = @buffer.realloc(@capacity.to_i!)
   end
 end

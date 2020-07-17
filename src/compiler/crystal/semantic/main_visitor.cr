@@ -2621,12 +2621,12 @@ module Crystal
       # to make it easier for LLVM to optimize things)
       if type && !node.exp.is_a?(TypeOf) &&
          !(type.module? || (type.abstract? && type.struct?))
-        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
-        expanded.type = @program.int32
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i)
+        expanded.type = @program.int
         node.expanded = expanded
       end
 
-      node.type = @program.int32
+      node.type = @program.int
 
       false
     end
@@ -2646,12 +2646,12 @@ module Crystal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
       if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
-        expanded.type = @program.int32
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i)
+        expanded.type = @program.int
         node.expanded = expanded
       end
 
-      node.type = @program.int32
+      node.type = @program.int
 
       false
     end

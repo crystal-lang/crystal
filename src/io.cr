@@ -592,7 +592,7 @@ abstract class IO
   # io.gets('w') # => nil
   # ```
   def gets(delimiter : Char, chomp = false) : String?
-    gets delimiter, Int32::MAX, chomp: chomp
+    gets delimiter, DefaultInt::MAX, chomp: chomp
   end
 
   # Reads until *delimiter* is found, *limit* bytes are read, or the end of the `IO` is reached.
@@ -631,7 +631,7 @@ abstract class IO
   end
 
   private def gets_peek(delimiter, limit, chomp, peek)
-    limit = Int32::MAX if limit < 0
+    limit = DefaultInt::MAX if limit < 0
 
     delimiter_byte = delimiter.ord.to_u8
 

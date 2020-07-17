@@ -5,8 +5,12 @@ describe "Semantic: primitives" do
     assert_type("false") { bool }
   end
 
+  it "types an int" do
+    assert_type("1") { int }
+  end
+
   it "types an int32" do
-    assert_type("1") { int32 }
+    assert_type("1_i32") { int32 }
   end
 
   it "types a int64" do

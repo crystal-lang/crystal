@@ -191,7 +191,7 @@ class String
   # String.new(ptr) # => "abcd"
   # ```
   def self.new(chars : UInt8*)
-    new(chars, LibC.strlen(chars))
+    new(chars, LibC.strlen(chars).to_i!)
   end
 
   # Creates a new `String` from a pointer, indicating its bytesize count
@@ -205,7 +205,7 @@ class String
   # ptr = Pointer.malloc(4) { |i| ('a'.ord + i).to_u8 }
   # String.new(ptr, 2) # => "ab"
   # ```
-  def self.new(chars : UInt8*, bytesize, size = 0)
+  def self.new(chars : UInt8*, bytesize : Int, size = 0)
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
 
@@ -236,7 +236,7 @@ class String
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
-    str = GC.malloc_atomic(capacity.to_u32 + HEADER_SIZE + 1).as(UInt8*)
+    str = GC.malloc_atomic(capacity.to_i! + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
 
@@ -248,11 +248,11 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_u32 + HEADER_SIZE + 1)
+      str = str.realloc(bytesize.to_i! + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
-    str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
+    str_header.value = {TYPE_ID, bytesize.to_i32, size.to_i32}
     str.as(String)
   end
 
@@ -279,8 +279,8 @@ class String
   # "hello".bytesize # => 5
   # "你好".bytesize    # => 6
   # ```
-  def bytesize
-    @bytesize
+  def bytesize : Int
+    @bytesize.to_i!
   end
 
   # Returns the result of interpreting leading characters in this string as an
@@ -322,7 +322,8 @@ class String
   # "0755".to_i(leading_zero_is_octal: true) # => 493
   # ```
   def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false)
-    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+    # TODO(platform): or use to_i64
+    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).to_i
   end
 
   # Same as `#to_i`, but returns `nil` if there is not a valid number at the start
@@ -3160,7 +3161,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -4)  # => 13
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
-  def byte_index(byte : Int, offset = 0) : Int32?
+  def byte_index(byte : Int, offset = 0) : DefaultInt?
     offset += bytesize if offset < 0
     return if offset < 0
 
@@ -4658,12 +4659,13 @@ class String
   # "hello".size # => 5
   # "你好".size    # => 2
   # ```
-  def size
+  def size : Int
     if @length > 0 || @bytesize == 0
-      return @length
+      return @length.to_i
     end
 
-    @length = each_byte_index_and_char_index { }
+    @length = (each_byte_index_and_char_index { }).to_i32!
+    @length.to_i
   end
 
   # Returns `true` if this String is comprised in its entirety
@@ -4712,7 +4714,7 @@ class String
     result ? result.to_s : self
   end
 
-  protected def char_bytesize_at(byte_index)
+  protected def char_bytesize_at(byte_index : Int)
     first = unsafe_byte_at(byte_index)
 
     if first < 0x80

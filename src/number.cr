@@ -2,7 +2,7 @@
 struct Number
   include Comparable(Number)
 
-  alias Primitive = Int::Primitive | Float::Primitive
+  alias Primitive = IntBase::Primitive | Float::Primitive
 
   def self.zero : self
     new(0)

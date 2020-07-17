@@ -31,7 +31,7 @@ module Crystal
   # Note that the above is really just an example, almost the
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
-  def self.main(&block)
+  def self.main(&block) : Int32
     GC.init
 
     status =
@@ -47,7 +47,7 @@ module Crystal
     ignore_stdio_errors { STDERR.flush }
 
     raise ex if ex
-    status
+    status.to_i32!
   end
 
   # :nodoc:
@@ -86,13 +86,13 @@ module Crystal
   # Note that before `Crystal.main` is invoked the GC
   # is not setup yet, so nothing that allocates memory
   # in Crystal (like `new` for classes) can be used.
-  def self.main(argc : Int32, argv : UInt8**)
+  def self.main(argc : Int32, argv : UInt8**) : Int32
     main do
       main_user_code(argc, argv)
     end
   rescue ex
     Crystal::System.print_exception "Unhandled exception", ex
-    1
+    1_i32
   end
 
   # Executes the main user code. This normally is executed

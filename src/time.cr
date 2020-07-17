@@ -937,7 +937,7 @@ struct Time
 
   # Returns the offset from UTC (in seconds) in effect in `location` at
   # this instant.
-  def offset : Int32
+  def offset : DefaultInt
     zone.offset
   end
 

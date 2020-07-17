@@ -1,4 +1,4 @@
-{% skip_file if flag?(:platform_dependent_int) %}
+{% skip_file unless flag?(:platform_dependent_int) %}
 
 # Methods defined here are primitives because they either:
 # * can't be expressed in Crystal (need to be expressed in LLVM). For example unary
@@ -89,7 +89,7 @@ struct Char
   # '☃'.ord      # => 9731
   # ```
   @[Primitive(:convert)]
-  def ord : Int32
+  def ord : Int
   end
 
   {% for op, desc in {
@@ -120,7 +120,7 @@ struct Symbol
 
   # Returns a unique number for this symbol.
   @[Primitive(:convert)]
-  def to_i : Int32
+  def to_i : Int
   end
 
   # Returns the symbol's name as a String.
@@ -269,15 +269,15 @@ end
 # unions.
 
 {% begin %}
-  {% ints = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
+  {% ints = %w(Int Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
   {% floats = %w(Float32 Float64) %}
-  {% nums = %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
+  {% nums = %w(Int Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128 Float32 Float64) %}
   {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying"} %}
 
   {% for num in nums %}
     struct {{num.id}}
       {% for name, type in {
-                             to_i: Int32, to_u: UInt32, to_f: Float64,
+                             to_i: Int, to_u: UInt32, to_f: Float64,
                              to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
                              to_f32: Float32, to_f64: Float64,

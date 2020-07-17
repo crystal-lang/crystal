@@ -10,5 +10,5 @@ end
 
 fun main(argc : Int32, argv : UInt8**) : Int32
   LibCrystalMain.__crystal_main(argc, argv)
-  0
+  0_i32
 end

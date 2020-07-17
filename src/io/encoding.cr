@@ -83,9 +83,9 @@ class IO
         # If we just have a few bytes to decode, read more, just in case these don't produce a character
         if @in_buffer_left < 16
           buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-          @buffer.copy_from(@in_buffer, @in_buffer_left)
+          @buffer.copy_from(@in_buffer, @in_buffer_left.to_i!)
           @in_buffer = @buffer.to_unsafe
-          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
+          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left.to_i!, buffer_remaining)))
         end
 
         # If, after refilling the buffer, we couldn't read new bytes
@@ -131,11 +131,11 @@ class IO
     private def refill_in_buffer(io)
       buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
       if buffer_remaining < 64
-        @buffer.copy_from(@in_buffer, @in_buffer_left)
+        @buffer.copy_from(@in_buffer, @in_buffer_left.to_i!)
         @in_buffer = @buffer.to_unsafe
         buffer_remaining = BUFFER_SIZE - @in_buffer_left
       end
-      @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
+      @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left.to_i!, buffer_remaining)))
     end
 
     def read_byte(io)
@@ -216,7 +216,7 @@ class IO
       end
     end
 
-    private def gets_index(index, delimiter, chomp)
+    private def gets_index(index : Int, delimiter, chomp)
       advance_increment = index
 
       if chomp && index > 0 && @out_slice[index - 1] === delimiter

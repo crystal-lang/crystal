@@ -224,6 +224,7 @@ module Crystal
 
     def integer_value
       case kind
+      when :i   then value.to_i64 # TODO(platform): use platform dependent method
       when :i8  then value.to_i8
       when :i16 then value.to_i16
       when :i32 then value.to_i32

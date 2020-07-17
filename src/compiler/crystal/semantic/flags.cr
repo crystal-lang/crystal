@@ -50,6 +50,8 @@ class Crystal::Program
 
     flags.add "bsd" if target.bsd?
 
+    flags.add "platform_dependent_int"
+
     flags
   end
 end

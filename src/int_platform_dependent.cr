@@ -1,6 +1,6 @@
-{% skip_file if flag?(:platform_dependent_int) %}
+{% skip_file unless flag?(:platform_dependent_int) %}
 
-# Int is the base type of all integer types.
+# IntBase is the base type of all integer types.
 #
 # There are four signed integer types: `Int8`, `Int16`, `Int32` and `Int64`,
 # being able to represent numbers of 8, 16, 32 and 64 bits respectively.
@@ -57,8 +57,8 @@
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```
-struct Int
-  alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
+struct IntBase
+  alias Signed = Int | Int8 | Int16 | Int32 | Int64 | Int128
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
   alias Primitive = Signed | Unsigned
 
@@ -129,7 +129,7 @@ struct Int
   # Raises if *other* is `0`, or if *other* is `-1` and
   # `self` is signed and is the minimum value for that
   # integer type.
-  def tdiv(other : Int)
+  def tdiv(other : Int::Primitive)
     check_div_argument other
 
     unsafe_div other
@@ -156,7 +156,7 @@ struct Int
   # This uses floored division.
   #
   # See `Int#/` for more details.
-  def %(other : Int)
+  def %(other : Int::Primitive)
     {% begin %}
       if other == 0
         raise DivisionByZeroError.new
@@ -176,7 +176,7 @@ struct Int
   # This uses truncated division.
   #
   # See `Int#tdiv` for more details.
-  def remainder(other : Int)
+  def remainder(other : Int::Primitive)
     {% begin %}
       if other == 0
         raise DivisionByZeroError.new
@@ -202,7 +202,7 @@ struct Int
   #
   # -8000 >> 1 # => -4000
   # ```
-  def >>(count : Int)
+  def >>(count : Int::Primitive)
     if count < 0
       self << count.abs
     elsif count < sizeof(self) * 8
@@ -223,7 +223,7 @@ struct Int
   # 8000 << 32 # => 0
   # 8000 << -1 # => 4000
   # ```
-  def <<(count : Int)
+  def <<(count : Int::Primitive)
     if count < 0
       self >> count.abs
     elsif count < sizeof(self) * 8
@@ -233,7 +233,7 @@ struct Int
     end
   end
 
-  def <=>(other : Int) : Int32
+  def <=>(other : Int::Primitive) : DefaultInt
     # Override Number#<=> because when comparing
     # Int vs Int there's no way we can return `nil`
     self > other ? 1 : (self < other ? -1 : 0)
@@ -668,7 +668,7 @@ struct Int
       ptr.value = '-'.ord.to_u8
     end
 
-    count = (ptr_end - ptr).to_i32
+    count = (ptr_end - ptr).to_i!
     yield ptr, count
   end
 
@@ -861,7 +861,7 @@ struct Int32
   Number.expand_div [Float64], Float64
 
   def -
-    0 - self
+    0_i32 - self
   end
 
   def popcount
@@ -1165,5 +1165,44 @@ struct UInt128
   end
 end
 
-alias IntBase = Int
-alias DefaultInt = Int32
+struct Int
+  {% if flag?(:bits32) %}
+    MIN = -2147483648
+    MAX =  2147483647
+  {% else %}
+    MIN = -9223372036854775808
+    MAX =  9223372036854775807
+  {% end %}
+
+  # Returns an `Int` by invoking `to_i` on *value*.
+  def self.new(value)
+    value.to_i
+  end
+
+  # Returns an `Int32` by invoking `to_i!` on *value*.
+  def self.new!(value)
+    value.to_i!
+  end
+
+  def -
+    0 - self
+  end
+
+  def popcount
+    {% if flag?(:bits32) %}
+      Intrinsics.popcount32(self.to_i32)
+    {% else %}
+      Intrinsics.popcount64(self.to_i64)
+    {% end %}
+  end
+
+  def trailing_zeros_count
+    {% if flag?(:bits32) %}
+      Intrinsics.counttrailing32(self.to_i32)
+    {% else %}
+      Intrinsics.counttrailing64(self.to_i64)
+    {% end %}
+  end
+end
+
+alias DefaultInt = Int

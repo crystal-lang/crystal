@@ -45,7 +45,7 @@ struct Char
     # reader.next_char
     # reader.pos # => 1
     # ```
-    getter pos : Int32
+    getter pos : DefaultInt
 
     # If there was an error decoding the current char because
     # of an invalid UTF-8 byte sequence, returns the byte
@@ -56,7 +56,7 @@ struct Char
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
-      @pos = pos.to_i
+      @pos = pos.to_i!
       @current_char = '\0'
       @current_char_width = 0
       @end = false
@@ -249,7 +249,7 @@ struct Char
     @[AlwaysInline]
     private def decode_current_char
       decode_char_at(@pos) do |code_point, width, error|
-        @current_char_width = width
+        @current_char_width = width.to_i32!
         @end = @pos == @string.bytesize
         @error = error
         @current_char = code_point.unsafe_chr

@@ -17,11 +17,11 @@ module Crystal::System::Time
     {% if LibC.has_method?("clock_gettime") %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise RuntimeError.from_errno("clock_gettime") unless ret == 0
-      {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec.to_i}
+      {timespec.tv_sec.to_i64 + UnixEpochInSeconds, timespec.tv_nsec.to_i32}
     {% else %}
       ret = LibC.gettimeofday(out timeval, nil)
       raise RuntimeError.from_errno("gettimeofday") unless ret == 0
-      {timeval.tv_sec.to_i64 + UnixEpochInSeconds, timeval.tv_usec.to_i * 1_000}
+      {timeval.tv_sec.to_i64 + UnixEpochInSeconds, timeval.tv_usec.to_i32 * 1_000}
     {% end %}
   end
 

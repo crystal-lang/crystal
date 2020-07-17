@@ -571,7 +571,7 @@ struct Char
   # 'f'.to_i?(16) # => 15
   # 'z'.to_i?(16) # => nil
   # ```
-  def to_i?(base : Int = 10) : Int32?
+  def to_i?(base : Int = 10) : DefaultInt?
     raise ArgumentError.new "Invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
 
     if base == 10
@@ -582,7 +582,7 @@ struct Char
       if 0 <= ord < 256
         digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
         return if digit == -1 || digit >= base
-        digit.to_i32
+        digit.to_i
       end
     end
   end
