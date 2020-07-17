@@ -260,4 +260,14 @@ describe "Code gen: automatic cast" do
       Bar.new.as(Foo).foo(1)
       )).to_i.should eq(2)
   end
+
+  it "doesn't autocast number on union (#8655)" do
+    run(%(
+      def foo(x : UInt8 | Int32, y : Float64)
+        x
+      end
+
+      foo(255, 60)
+      )).to_i.should eq(255)
+  end
 end

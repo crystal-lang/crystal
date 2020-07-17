@@ -1232,8 +1232,8 @@ module Crystal
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
           type = @match || literal.type
         end
@@ -1260,8 +1260,8 @@ module Crystal
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
           type = @match || literal.type
         end
