@@ -3611,7 +3611,7 @@ class String
 
     while match = separator.match_at_byte_index(self, match_offset)
       index = match.byte_begin(0)
-      match_bytesize = match[0].bytesize
+      match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
 
       if next_offset == slice_offset
@@ -3856,9 +3856,10 @@ class String
       String.new(bytesize) do |buffer|
         buffer += bytesize
         scan(/\X/) do |match|
-          grapheme = match[0]
-          buffer -= grapheme.bytesize
-          buffer.copy_from(grapheme.to_unsafe, grapheme.bytesize)
+          match_begin = match.byte_begin(0)
+          match_bytesize = match.byte_end(0) - match_begin
+          buffer -= match_bytesize
+          buffer.copy_from(to_unsafe + match_begin, match_bytesize)
         end
         {@bytesize, @length}
       end
@@ -4175,7 +4176,7 @@ class String
       index = match.byte_begin(0)
       $~ = match
       yield match
-      match_bytesize = match[0].bytesize
+      match_bytesize = match.byte_end(0) - index
       match_bytesize += 1 if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
