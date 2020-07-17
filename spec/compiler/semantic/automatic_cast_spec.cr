@@ -585,4 +585,15 @@ describe "Semantic: automatic cast" do
       foo(255, 60)
       )) { int32 }
   end
+
+  it "says ambiguous call on union (#8655)" do
+    assert_error %(
+      def foo(x : UInt64 | Int64, y : Float64)
+        x
+      end
+
+      foo(255, 60)
+      ),
+      "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
+  end
 end
