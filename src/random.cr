@@ -99,6 +99,15 @@ module Random
     next_float
   end
 
+  def rand(max : Int) : IntBase
+    # TODO(platform): do this better
+    {% if flag?(:bits32) %}
+      rand_int(max.to_i32).to_i
+    {% else %}
+      rand_int(max.to_i64).to_i
+    {% end %}
+  end
+
   # Generates a random integer which is greater than or equal to `0`
   # and less than *max*.
   #
@@ -108,7 +117,7 @@ module Random
   # Random.new.rand(10)   # => 5
   # Random.new.rand(5000) # => 2243
   # ```
-  def rand(max : Int) : Int
+  def rand(max : IntBase) : IntBase
     rand_int(max)
   end
 
@@ -257,6 +266,15 @@ module Random
     rand(max_prec) / max_prec.to_f64 * max
   end
 
+  def rand(range : Range(Int, Int)) : Int
+    # TODO(platform): do this better
+    {% if flag?(:bits32) %}
+      rand_range(Range.new(range.begin.to_i32, range.end.to_i32, range.exclusive?)).to_i
+    {% else %}
+      rand_range(Range.new(range.begin.to_i64, range.end.to_i64, range.exclusive?)).to_i
+    {% end %}
+  end
+
   # Returns a random integer in the given *range*.
   #
   # The return type always matches the supplied argument.
@@ -265,7 +283,7 @@ module Random
   # Random.new.rand(10..20)                 # => 14
   # Random.new.rand(Int64::MIN..Int64::MAX) # => -5297435808626736140
   # ```
-  def rand(range : Range(Int, Int)) : Int
+  def rand(range : Range(IntBase, IntBase)) : IntBase
     rand_range(range)
   end
 
@@ -341,7 +359,8 @@ module Random
       if IO::ByteFormat::SystemEndian != IO::ByteFormat::LittleEndian
         rand_ptr.to_slice(sizeof(typeof(next_u))).reverse!
       end
-      rand_ptr.copy_to(ptr, {finish - ptr, sizeof(typeof(next_u))}.min)
+      # TODO(platform): check these conversions
+      rand_ptr.copy_to(ptr, {finish - ptr, sizeof(typeof(next_u)).to_i64}.min.to_i)
       ptr += sizeof(typeof(next_u))
     end
   end

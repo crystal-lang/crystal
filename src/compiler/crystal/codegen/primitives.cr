@@ -666,7 +666,8 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_convert(from_type : SymbolType, to_type : IntegerType, arg, *, checked : Bool)
-    arg
+    # TODO(platform): or Int32 depending on context
+    builder.zext arg, llvm_context.int64
   end
 
   def codegen_convert(from_type : TypeDefType, to_type, arg, *, checked : Bool)

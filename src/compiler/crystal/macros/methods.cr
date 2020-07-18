@@ -438,6 +438,22 @@ module Crystal
   class NumberLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter)
       case method
+      when "=="
+        interpret_one_arg_method(method, args) do |arg|
+          if arg.is_a?(NumberLiteral)
+            bool_bin_op(method, args) { |me, other| me == other }
+          else
+            super
+          end
+        end
+      when "!="
+        interpret_one_arg_method(method, args) do |arg|
+          if arg.is_a?(NumberLiteral)
+            bool_bin_op(method, args) { |me, other| me != other }
+          else
+            super
+          end
+        end
       when ">"
         bool_bin_op(method, args) { |me, other| me > other }
       when ">="
@@ -547,6 +563,7 @@ module Crystal
 
     def to_number
       case @kind
+      when :i   then @value.to_i64 # TODO(platform): change to Int64
       when :i8  then @value.to_i8
       when :i16 then @value.to_i16
       when :i32 then @value.to_i32

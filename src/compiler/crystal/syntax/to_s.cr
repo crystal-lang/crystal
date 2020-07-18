@@ -59,7 +59,7 @@ module Crystal
 
     def needs_suffix?(node : NumberLiteral)
       case node.kind
-      when :i32
+      when :i
         false
       when :f64
         # If there's no '.' nor 'e', for example in `1_f64`,

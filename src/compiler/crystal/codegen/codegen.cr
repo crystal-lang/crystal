@@ -436,6 +436,9 @@ module Crystal
 
     def visit(node : NumberLiteral)
       case node.kind
+      when :i
+        # TODO(platform): change to Int32 depending on platform
+        @last = int64(node.value.to_i64)
       when :i8
         @last = int8(node.value.to_i8)
       when :u8
@@ -734,12 +737,14 @@ module Crystal
     end
 
     def visit(node : SizeOf)
-      @last = trunc(llvm_size(node.exp.type.sizeof_type), llvm_context.int32)
+      # TODO(platform): make these platform dependent
+      @last = trunc(llvm_size(node.exp.type.sizeof_type), llvm_context.int64)
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int32)
+      # TODO(platform): make these platform dependent
+      @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int64)
       false
     end
 

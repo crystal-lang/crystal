@@ -1,7 +1,7 @@
 module Crystal
   module DWARF
     struct Strings
-      def initialize(@io : IO::FileDescriptor, @offset : UInt32 | UInt64, size)
+      def initialize(@io : IO::FileDescriptor, @offset : UInt32 | UInt64, size : Int)
         # Read a good chunk of bytes to decode strings faster
         # (avoid seeking/reading the IO too many times)
         @buffer = Bytes.new(Math.max(16384, size))
@@ -13,8 +13,8 @@ module Crystal
       def decode(strp)
         # See if we can read it from the buffer
         if strp < @buffer.size
-          index = @buffer.index('\0'.ord, offset: strp)
-          return String.new(@buffer[strp, index - strp]) if index
+          index = @buffer.index('\0'.ord, offset: strp.to_i!)
+          return String.new(@buffer[strp.to_i!, index - strp.to_i!]) if index
         end
 
         # If not, try directly from the IO

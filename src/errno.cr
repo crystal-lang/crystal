@@ -44,7 +44,7 @@ enum Errno
     {% if flag?(:linux) || flag?(:dragonfly) %}
       Errno.new LibC.__errno_location.value
     {% elsif flag?(:darwin) || flag?(:bsd) %}
-      Errno.new LibC.__error.value
+      Errno.new LibC.__error.value.to_i!
     {% elsif flag?(:win32) %}
       ret = LibC._get_errno(out errno)
       raise RuntimeError.from_errno("_get_errno", Errno.new(ret)) unless ret == 0
@@ -57,7 +57,7 @@ enum Errno
     {% if flag?(:linux) || flag?(:dragonfly) %}
       LibC.__errno_location.value = errno.value
     {% elsif flag?(:darwin) || flag?(:bsd) %}
-      LibC.__error.value = errno.value
+      LibC.__error.value = errno.value.to_i32
     {% elsif flag?(:win32) %}
       ret = LibC._set_errno(errno.value)
       raise RuntimeError.from_errno("_set_errno", ret) unless ret == 0

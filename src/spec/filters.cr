@@ -10,12 +10,12 @@ module Spec
     end
 
     # :nodoc:
-    def matches_line?(line : Int32) : Bool
+    def matches_line?(line : DefaultInt) : Bool
       @line == line || @line <= line <= @end_line
     end
 
     # :nodoc:
-    def matches_locations?(locations : Hash(String, Array(Int32))) : Bool
+    def matches_locations?(locations : Hash(String, Array(DefaultInt))) : Bool
       lines = locations[file]?
       !!(lines && lines.any? { |line| matches_line?(line) })
     end
@@ -48,12 +48,12 @@ module Spec
     end
 
     # :nodoc:
-    def filter_by_line(line : Int32)
+    def filter_by_line(line : DefaultInt)
       children.select!(&.filter_by_line(line))
     end
 
     # :nodoc:
-    def filter_by_locations(locations : Hash(String, Array(Int32)))
+    def filter_by_locations(locations : Hash(String, Array(DefaultInt)))
       children.select!(&.filter_by_locations(locations))
     end
 
@@ -94,7 +94,7 @@ module Spec
     #
     # Filters a context and its children by line.
     # Returns `true` if the context matches the line, `false` otherwise.
-    def filter_by_line(line : Int32) : Bool
+    def filter_by_line(line : DefaultInt) : Bool
       # If any children matches then we match too, but we filter children
       if children.any? &.matches_line?(line)
         children.select!(&.filter_by_line(line))
@@ -115,7 +115,7 @@ module Spec
     #
     # Filters a context and its children by the given locations.
     # Returns `true` if the context matches the locations, `false` otherwise.
-    def filter_by_locations(locations : Hash(String, Array(Int32))) : Bool
+    def filter_by_locations(locations : Hash(String, Array(DefaultInt))) : Bool
       # If any children matches then we match too, but we filter children
       if children.any? &.matches_locations?(locations)
         children.select!(&.filter_by_locations(locations))
@@ -189,7 +189,7 @@ module Spec
     #
     # Returns `true` if the example is contained in the given line,
     # `false` otherwise.
-    def filter_by_line(line : Int32) : Bool
+    def filter_by_line(line : DefaultInt) : Bool
       matches_line?(line)
     end
 
@@ -197,7 +197,7 @@ module Spec
     #
     # Returns `true` if the example is contained in any of the given locations,
     # `false` otherwise.
-    def filter_by_locations(locations : Hash(String, Array(Int32))) : Bool
+    def filter_by_locations(locations : Hash(String, Array(DefaultInt))) : Bool
       matches_locations?(locations)
     end
 

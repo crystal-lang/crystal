@@ -302,14 +302,14 @@ module Crystal
               case len
               when 8 then registers.address = @io.read_bytes(UInt64)
               when 4 then registers.address = @io.read_bytes(UInt32).to_u64
-              else        @io.skip(len)
+              else        @io.skip(len.to_i!)
               end
               registers.op_index = 0_u32
             when LNE::SetDiscriminator
               registers.discriminator = DWARF.read_unsigned_leb128(@io)
             else
               # skip unsupported opcode
-              @io.read_fully(Bytes.new(len))
+              @io.read_fully(Bytes.new(len.to_i!))
             end
           else
             # standard opcode
@@ -362,7 +362,7 @@ module Crystal
         # but some operations within macros seem to be useful and marked as !is_stmt
         # so attempt to include them also
         if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
-          file = sequence.file_names[registers.file]
+          file = sequence.file_names[registers.file.to_i!]
           path = sequence.include_directories[file[1]]
 
           row = Row.new(
@@ -370,8 +370,8 @@ module Crystal
             registers.op_index,
             path,
             file[0],
-            registers.line.to_i,
-            registers.column.to_i,
+            registers.line.to_i32!,
+            registers.column.to_i32!,
             registers.end_sequence
           )
 

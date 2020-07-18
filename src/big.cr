@@ -1,5 +1,5 @@
 # :nodoc: Forward declarations
-struct BigInt < Int
+struct BigInt < IntBase
 end
 
 struct BigFloat < Float

@@ -1,3 +1,5 @@
+{% skip_file if flag?(:platform_dependent_int) %}
+
 # Methods defined here are primitives because they either:
 # * can't be expressed in Crystal (need to be expressed in LLVM). For example unary
 #   and binary math operators fall into this category.

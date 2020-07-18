@@ -153,7 +153,7 @@ module Float::Printer::CachedPowers
 
   # Returns a cached power-of-ten with a binary exponent in the range
   # around *exp* (boundaries included).
-  def self.get_cached_power_for_binary_exponent(exp) : {DiyFP, Int32}
+  def self.get_cached_power_for_binary_exponent(exp) : {DiyFP, DefaultInt}
     min_exp = MIN_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     max_exp = MAX_TARGET_EXP - (exp + DiyFP::SIGNIFICAND_SIZE)
     k = ((min_exp + DiyFP::SIGNIFICAND_SIZE - 1) * D_1_LOG2_10).ceil

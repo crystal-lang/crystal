@@ -35,7 +35,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width : Int32
+    getter current_char_width : DefaultInt
 
     # Returns the position of the current character.
     #
@@ -45,7 +45,7 @@ struct Char
     # reader.next_char
     # reader.pos # => 1
     # ```
-    getter pos : Int32
+    getter pos : DefaultInt
 
     # If there was an error decoding the current char because
     # of an invalid UTF-8 byte sequence, returns the byte
@@ -56,7 +56,7 @@ struct Char
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
-      @pos = pos.to_i
+      @pos = pos.to_i!
       @current_char = '\0'
       @current_char_width = 0
       @end = false

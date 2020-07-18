@@ -2,7 +2,7 @@
 struct Number
   include Comparable(Number)
 
-  alias Primitive = Int::Primitive | Float::Primitive
+  alias Primitive = IntBase::Primitive | Float::Primitive
 
   def self.zero : self
     new(0)
@@ -185,7 +185,7 @@ struct Number
   # - `0` if `self` is equal to *other*
   # - `-1` if `self` is greater than *other*
   # - `nil` if self is `NaN` or *other* is `NaN`, because `NaN` values are not comparable
-  def <=>(other) : Int32?
+  def <=>(other) : DefaultInt?
     # NaN can't be compared to other numbers
     return nil if self.is_a?(Float) && self.nan?
     return nil if other.is_a?(Float) && other.nan?

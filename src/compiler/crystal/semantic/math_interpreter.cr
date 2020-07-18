@@ -8,9 +8,12 @@ struct Crystal::MathInterpreter
 
   def interpret(node : NumberLiteral)
     case node.kind
-    when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
+    when :i, :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
       target_kind = @target_type.try(&.kind) || node.kind
       case target_kind
+      when :i
+        # TODO(platform): use platform dependent method
+        node.value.to_i64? || node.raise "invalid Int: #{node.value}"
       when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
       when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
       when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"

@@ -6,12 +6,12 @@ module Crystal::AtExitHandlers
     handlers << handler
   end
 
-  def self.run(status, exception = nil)
+  def self.run(status : Int, exception = nil)
     if handlers = @@handlers
       # Run the registered handlers in reverse order
       while handler = handlers.pop?
         begin
-          handler.call status, exception
+          handler.call status.to_i32!, exception
         rescue handler_ex
           Crystal::System.print_error "Error running at_exit handler: %s\n", handler_ex.message || ""
           status = 1 if status.zero?

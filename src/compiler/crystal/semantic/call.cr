@@ -498,7 +498,7 @@ class Crystal::Call
 
   def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
-    if arg.is_a?(NumberLiteral) && arg.kind == :i32
+    if arg.is_a?(NumberLiteral) && (arg.kind == :i32 || arg.kind == :i)
       index = arg.value.to_i
       index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)

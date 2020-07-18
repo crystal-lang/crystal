@@ -1,3 +1,5 @@
+{% skip_file if flag?(:platform_dependent_int) %}
+
 # Int is the base type of all integer types.
 #
 # There are four signed integer types: `Int8`, `Int16`, `Int32` and `Int64`,
@@ -1162,3 +1164,6 @@ struct UInt128
     self
   end
 end
+
+alias IntBase = Int
+alias DefaultInt = Int32

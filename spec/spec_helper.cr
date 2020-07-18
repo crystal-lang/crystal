@@ -69,6 +69,7 @@ end
 def semantic(node : ASTNode, wants_doc = false, flags = nil)
   program = new_program
   program.flags.concat(flags.split) if flags
+  program.flags << "platform_dependent_int"
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node

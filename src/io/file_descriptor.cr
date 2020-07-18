@@ -12,7 +12,7 @@ class IO::FileDescriptor < IO
   end
 
   def initialize(fd, blocking = nil)
-    @volatile_fd = Atomic.new(fd)
+    @volatile_fd = Atomic.new(fd.to_i32!)
     @closed = system_closed?
 
     if blocking.nil?

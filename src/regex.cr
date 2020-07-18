@@ -463,7 +463,7 @@ class Regex
   # /(.)(.)/.match("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match("クリスタル", 3).try &.[2] # => "ル"
   # ```
-  def match(str, pos = 0, options = Regex::Options::None) : MatchData?
+  def match(str, pos : Int = 0, options = Regex::Options::None) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
       match = match_at_byte_index(str, byte_index, options)
     else
@@ -483,7 +483,7 @@ class Regex
   # /(.)(.)/.match_at_byte_index("abc", 1).try &.[2]   # => "c"
   # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
-  def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
+  def match_at_byte_index(str, byte_index : Int = 0, options = Regex::Options::None) : MatchData?
     return ($~ = nil) if byte_index > str.bytesize
 
     ovector_size = (@captures + 1) * 3

@@ -75,7 +75,7 @@ struct Time::Span
   # Time::Span.new(seconds: 30)                 # => 00:00:30
   # Time::Span.new(seconds: 5, nanoseconds: 12) # => 00:00:05.000000012
   # ```
-  def initialize(*, seconds : Int, nanoseconds : Int)
+  def initialize(*, seconds : IntBase, nanoseconds : IntBase)
     # Normalize nanoseconds in the range 0...1_000_000_000
     seconds += nanoseconds.tdiv(NANOSECONDS_PER_SECOND)
     nanoseconds = nanoseconds.remainder(NANOSECONDS_PER_SECOND)
@@ -122,8 +122,8 @@ struct Time::Span
   # ```
   def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
     new(
-      seconds: compute_seconds(days, hours, minutes, seconds),
-      nanoseconds: nanoseconds.to_i64,
+      seconds: compute_seconds(days, hours, minutes, seconds).to_i!,
+      nanoseconds: nanoseconds.to_i!,
     )
   end
 
@@ -147,21 +147,21 @@ struct Time::Span
   end
 
   # Returns the number of full hours of the day (`0..23`) in this time span.
-  def hours : Int32
+  def hours : DefaultInt
     to_i.remainder(SECONDS_PER_DAY)
       .tdiv(SECONDS_PER_HOUR)
       .to_i
   end
 
   # Returns the number of full minutes of the hour (`0..59`) in this time span.
-  def minutes : Int32
+  def minutes : DefaultInt
     to_i.remainder(SECONDS_PER_HOUR)
       .tdiv(SECONDS_PER_MINUTE)
       .to_i
   end
 
   # Returns the number of full seconds of the minute (`0..59`) in this time span.
-  def seconds : Int32
+  def seconds : DefaultInt
     to_i.remainder(SECONDS_PER_MINUTE)
       .to_i
   end

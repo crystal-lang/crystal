@@ -140,31 +140,33 @@ module Crystal
 
       types["NoReturn"] = @no_return = NoReturnType.new self, self, "NoReturn"
       types["Void"] = @void = VoidType.new self, self, "Void"
-      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
-      types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
-      types["Char"] = @char = CharType.new self, self, "Char", value, 4
+      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value
+      types["Bool"] = @bool = BoolType.new self, self, "Bool", value
+      types["Char"] = @char = CharType.new self, self, "Char", value
 
-      types["Int"] = int = @int = NonGenericClassType.new self, self, "Int", number
-      abstract_value_type(int)
+      types["IntBase"] = int_base = @int_base = NonGenericClassType.new self, self, "IntBase", number
+      abstract_value_type(int_base)
 
-      types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
-      types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
-      types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int, 2, 3, :i16
-      types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int, 2, 4, :u16
-      types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int, 4, 5, :i32
-      types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
-      types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
-      types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
-      types["Int128"] = @int128 = IntegerType.new self, self, "Int128", int, 16, 9, :i128
-      types["UInt128"] = @uint128 = IntegerType.new self, self, "UInt128", int, 16, 10, :u128
+      types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int_base, :i8
+      types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int_base, :u8
+      types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int_base, :i16
+      types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int_base, :u16
+      types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int_base, :i32
+      types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int_base, :u32
+      types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int_base, :i64
+      types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int_base, :u64
+      types["Int128"] = @int128 = IntegerType.new self, self, "Int128", int_base, :i128
+      types["UInt128"] = @uint128 = IntegerType.new self, self, "UInt128", int_base, :u128
+
+      types["Int"] = @int = IntegerType.new self, self, "Int", int_base, :i
 
       types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
       abstract_value_type(float)
 
-      types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
-      types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
+      types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, :f32
+      types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, :f64
 
-      types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
+      types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value
       types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
       pointer.can_be_stored = false
@@ -442,7 +444,7 @@ module Crystal
       crystal_path.find filename, relative_to
     end
 
-    {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64 int128
+    {% for name in %w(object no_return value number reference void nil bool char int_base int int8 int16 int32 int64 int128
                      uint8 uint16 uint32 uint64 uint128 float float32 float64 string symbol pointer array static_array
                      exception tuple named_tuple proc union enum range regex crystal
                      packed_annotation thread_local_annotation no_inline_annotation
@@ -466,6 +468,7 @@ module Crystal
 
     def type_from_literal_kind(kind)
       case kind
+      when :i    then int
       when :i8   then int8
       when :i16  then int16
       when :i32  then int32
@@ -509,14 +512,17 @@ module Crystal
     # Returns the `IntegerType` that matches the given Int value
     def int?(int)
       case int
-      when Int8   then int8
-      when Int16  then int16
-      when Int32  then int32
-      when Int64  then int64
-      when UInt8  then uint8
-      when UInt16 then uint16
-      when UInt32 then uint32
-      when UInt64 then uint64
+      when Int8    then int8
+      when Int16   then int16
+      when Int32   then int32
+      when Int64   then int64
+      when Int128  then int128
+      when UInt8   then uint8
+      when UInt16  then uint16
+      when UInt32  then uint32
+      when UInt64  then uint64
+      when UInt128 then uint128
+      when Int     then int
       else
         nil
       end

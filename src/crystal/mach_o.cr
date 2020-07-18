@@ -383,7 +383,7 @@ module Crystal
         if cmd == load_command
           yield cmd, cmdsize
         else
-          @io.skip(cmdsize - 8)
+          @io.skip(cmdsize.to_i! - 8)
         end
       end
     end

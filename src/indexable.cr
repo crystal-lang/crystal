@@ -166,7 +166,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(&block : T, Int32 -> Bool)
+  def bsearch_index(&block : T, DefaultInt -> Bool)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -594,7 +594,7 @@ module Indexable(T)
   end
 
   # :nodoc:
-  def self.range_to_index_and_count(range, collection_size)
+  def self.range_to_index_and_count(range, collection_size) : {DefaultInt, DefaultInt}
     start_index = range.begin
     if start_index.nil?
       start_index = 0
@@ -603,7 +603,7 @@ module Indexable(T)
       raise IndexError.new if start_index < 0
     end
 
-    end_index = range.end
+    end_index = range.end.try(&.to_i)
     if end_index.nil?
       count = collection_size - start_index
     else

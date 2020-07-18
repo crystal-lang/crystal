@@ -49,7 +49,7 @@ struct Slice(T)
   # ```
   # Slice(UInt8).new(3).size # => 3
   # ```
-  getter size : Int32
+  getter size : DefaultInt
 
   # Returns `true` if this slice cannot be written to.
   getter? read_only : Bool
@@ -67,7 +67,7 @@ struct Slice(T)
   # String.new(slice) # => "abc"
   # ```
   def initialize(@pointer : Pointer(T), size : Int, *, @read_only = false)
-    @size = size.to_i32
+    @size = size.to_i
   end
 
   # Allocates `size * sizeof(T)` bytes of heap memory initialized to zero
@@ -166,7 +166,7 @@ struct Slice(T)
   def +(offset : Int)
     check_size(offset)
 
-    Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
+    Slice.new(@pointer + offset, (@size - offset).to_i!, read_only: @read_only)
   end
 
   # Sets the given value at the given *index*.
@@ -342,17 +342,17 @@ struct Slice(T)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
-  def copy_from(source : Pointer(T), count)
+  def copy_from(source : Pointer(T), count : Int)
     check_writable
     check_size(count)
 
     @pointer.copy_from(source, count)
   end
 
-  def copy_to(target : Pointer(T), count)
-    check_size(count)
+  def copy_to(target : Pointer(T), count : Int)
+    check_size(count.to_i!)
 
-    @pointer.copy_to(target, count)
+    @pointer.copy_to(target, count.to_i!)
   end
 
   # Copies the contents of this slice into *target*.
@@ -654,8 +654,8 @@ struct Slice(T)
   # a # => Slice[3, 1, 2]
   # ```
   def sort(&block : T, T -> U) : Slice(T) forall U
-    {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% unless U <= DefaultInt? %}
+      {% raise "expected block to return Int or Nil, not #{U}" %}
     {% end %}
 
     dup.sort! &block
@@ -688,8 +688,8 @@ struct Slice(T)
   # a # => Slice[3, 2, 1]
   # ```
   def sort!(&block : T, T -> U) : Slice(T) forall U
-    {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% unless U <= DefaultInt? %}
+      {% raise "expected block to return Int or Nil, not #{U}" %}
     {% end %}
 
     Slice.intro_sort!(to_unsafe, size, block)
@@ -744,7 +744,7 @@ struct Slice(T)
     if 0 <= offset < size
       result = LibC.memchr(to_unsafe + offset, object, size - offset)
       if result
-        return (result - to_unsafe.as(Void*)).to_i32
+        return (result - to_unsafe.as(Void*)).to_i!
       end
     end
 

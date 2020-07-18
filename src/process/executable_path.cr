@@ -71,7 +71,7 @@ end
       size = LibC::PATH_MAX.to_u32
 
       if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
-        buf = GC.malloc_atomic(size).as(UInt8*)
+        buf = GC.malloc_atomic(size.to_i!).as(UInt8*)
         return nil if LibC._NSGetExecutablePath(buf, pointerof(size)) == -1
       end
 

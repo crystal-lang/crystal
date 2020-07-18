@@ -62,7 +62,7 @@ module Spec
   # :nodoc:
   class VerboseFormatter < Formatter
     class Item
-      def initialize(@indent : Int32, @description : String)
+      def initialize(@indent : DefaultInt, @description : String)
         @printed = false
       end
 

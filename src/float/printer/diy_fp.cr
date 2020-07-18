@@ -43,13 +43,13 @@ struct Float::Printer::DiyFP
   property frac : UInt64
 
   # Exponent.
-  property exp : Int32
+  property exp : DefaultInt
 
   def initialize(@frac, @exp)
   end
 
   def initialize(@frac, exp : Int16)
-    @exp = exp.to_i32
+    @exp = exp.to_i
   end
 
   def new(frac : Int32, exp)

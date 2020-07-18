@@ -69,7 +69,7 @@ module Crystal
 
     def initialize
       @type = :EOF
-      @number_kind = :i32
+      @number_kind = :i
       @line_number = 0
       @column_number = 0
       @delimiter_state = DelimiterState.default

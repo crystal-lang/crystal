@@ -215,11 +215,11 @@ class PrettyPrint
   end
 
   private class Breakable
-    @indent : Int32
+    @indent : DefaultInt
     @group : Group
     getter width
 
-    def initialize(@obj : String, @width : Int32, @pp : PrettyPrint)
+    def initialize(@obj : String, @width : DefaultInt, @pp : PrettyPrint)
       @indent = @pp.indent
       @group = @pp.current_group
       @group.breakables.push self
@@ -290,7 +290,7 @@ class PrettyPrint
   # Pretty prints *obj* into *io* with the given
   # *width* as a limit and starting with
   # the given *indent*ation.
-  def self.format(obj, io : IO, width : Int32, newline = "\n", indent = 0)
+  def self.format(obj, io : IO, width : DefaultInt, newline = "\n", indent = 0)
     format(io, width, newline, indent) do |printer|
       obj.pretty_print(printer)
     end
@@ -298,7 +298,7 @@ class PrettyPrint
 
   # Creates a pretty printer and yields it to the block,
   # appending any output to the given *io*.
-  def self.format(io : IO, width : Int32, newline = "\n", indent = 0)
+  def self.format(io : IO, width : DefaultInt, newline = "\n", indent = 0)
     printer = PrettyPrint.new(io, width, newline, indent)
     yield printer
     printer.flush

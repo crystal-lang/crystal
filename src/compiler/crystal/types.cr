@@ -1277,9 +1277,9 @@ module Crystal
     include ClassVarContainer
 
     # Returns the number of bytes this type occupies in memory.
-    getter bytes : Int32
+    abstract def bytes : Int32
 
-    def initialize(program, namespace, name, superclass, @bytes : Int32)
+    def initialize(program, namespace, name, superclass)
       super(program, namespace, name, superclass)
       self.struct = true
     end
@@ -1290,25 +1290,66 @@ module Crystal
   end
 
   class BoolType < PrimitiveType
+    def bytes : Int32
+      1
+    end
   end
 
   class CharType < PrimitiveType
+    def bytes : Int32
+      4
+    end
   end
 
   class IntegerType < PrimitiveType
-    getter rank : Int32
     getter kind : Symbol
 
-    def initialize(program, namespace, name, superclass, bytes, @rank, @kind)
-      super(program, namespace, name, superclass, bytes)
+    def initialize(program, namespace, name, superclass, @kind : Symbol)
+      super(program, namespace, name, superclass)
+    end
+
+    def bytes : Int32
+      case kind
+      when :i8   then 1
+      when :u8   then 1
+      when :i16  then 2
+      when :u16  then 2
+      when :i32  then 4
+      when :u32  then 4
+      when :i64  then 8
+      when :u64  then 8
+      when :i128 then 16
+      when :u128 then 16
+      when :i    then 8 # same is i64
+      else
+        raise "Unknown kind: #{@kind}"
+      end
+    end
+
+    def rank
+      case kind
+      when :i8   then 1
+      when :u8   then 2
+      when :i16  then 3
+      when :u16  then 4
+      when :i32  then 5
+      when :u32  then 6
+      when :i64  then 7
+      when :u64  then 8
+      when :i128 then 9
+      when :u128 then 10
+      when :i    then 7 # same is i64
+      else
+        raise "Unknown kind: #{@kind}"
+      end
     end
 
     def signed?
-      @rank % 2 == 1
+      rank % 2 == 1
     end
 
     def unsigned?
-      @rank % 2 == 0
+      rank % 2 == 0
     end
 
     def bits
@@ -1316,7 +1357,7 @@ module Crystal
     end
 
     def normal_rank
-      (@rank - 1) // 2
+      (rank - 1) // 2
     end
 
     def range
@@ -1341,6 +1382,8 @@ module Crystal
         {UInt64::MIN, UInt64::MAX}
       when :u128
         {UInt128::MIN, UInt128::MAX}
+      when :i
+        {Int32::MIN, Int32::MAX} # same as Int32, the minimum size of Int
       else
         raise "Bug: called 'range' for non-integer literal"
       end
@@ -1348,14 +1391,26 @@ module Crystal
   end
 
   class FloatType < PrimitiveType
-    getter rank : Int32
+    getter kind : Symbol
 
-    def initialize(program, namespace, name, superclass, bytes, @rank)
-      super(program, namespace, name, superclass, bytes)
+    def initialize(program, namespace, name, superclass, @kind : Symbol)
+      super(program, namespace, name, superclass)
     end
 
-    def kind
-      @bytes == 4 ? :f32 : :f64
+    def bytes : Int32
+      case kind
+      when :f32 then 4
+      when :f64 then 8
+      else           raise "Unknown kind: #{@kind}"
+      end
+    end
+
+    def rank
+      case kind
+      when :f32 then 1
+      when :f64 then 2
+      else           raise "Unknown kind: #{@kind}"
+      end
     end
 
     def range
@@ -1371,9 +1426,15 @@ module Crystal
   end
 
   class SymbolType < PrimitiveType
+    def bytes : Int32
+      4
+    end
   end
 
   class NilType < PrimitiveType
+    def bytes : Int32
+      1
+    end
   end
 
   class NoReturnType < NamedType

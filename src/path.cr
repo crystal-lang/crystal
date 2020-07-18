@@ -304,12 +304,12 @@ struct Path
 
     bytes = @name.to_slice
 
-    current = bytes.size - 1
+    current = bytes.size.to_i! - 1
 
     separators = self.separators.map &.ord
 
     # skip trailing separators
-    while separators.includes?(bytes[current]) && current > 0
+    while separators.includes?(bytes[current.to_i!]) && current > 0
       current -= 1
     end
 
@@ -324,13 +324,13 @@ struct Path
     end_pos = {current, 1}.max
 
     # read basename
-    while !separators.includes?(bytes[current]) && current > 0
+    while !separators.includes?(bytes[current.to_i!]) && current > 0
       current -= 1
     end
 
     start_pos = current + 1
 
-    if start_pos == 1 && !separators.includes?(bytes[current])
+    if start_pos == 1 && !separators.includes?(bytes[current.to_i!])
       start_pos = 0
     end
 
