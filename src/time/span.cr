@@ -387,7 +387,12 @@ struct Time::Span
   end
 end
 
-struct Int
+{% begin %}
+  {% if flag?(:platform_dependent_int) %}
+    {{ "struct IntBase".id }}
+  {% else %}
+    {{ "struct Int".id }}
+  {% end %}
   # Returns a `Time::Span` of `self` weeks.
   def weeks : Time::Span
     Time::Span.new(days: (7 * self))
@@ -467,7 +472,8 @@ struct Int
   def nanosecond : Time::Span
     nanoseconds
   end
-end
+{{ "end".id }}
+{% end %}
 
 struct Float
   # Returns a `Time::Span` of `self` weeks.

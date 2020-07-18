@@ -176,7 +176,7 @@ struct Number
   # ```
   #
   # See `Int#humanize_bytes` to format a file size.
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &prefixes : (Int32, Float64) -> {Int32, _} | {Int32, _, Bool}) : Nil
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &prefixes : (DefaultInt, Float64) -> {DefaultInt, _} | {DefaultInt, _, Bool}) : Nil
     if zero?
       digits = 0
     else

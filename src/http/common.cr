@@ -23,10 +23,10 @@ module HTTP
   # :nodoc:
   record EndOfRequest
   # :nodoc:
-  record HeaderLine, name : String, value : String, bytesize : Int32
+  record HeaderLine, name : String, value : String, bytesize : DefaultInt
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : Int32 = MAX_HEADERS_SIZE) : HTTP::Status?
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true, *, max_headers_size : DefaultInt = MAX_HEADERS_SIZE) : HTTP::Status?
     headers = Headers.new
 
     max_size = max_headers_size
@@ -38,7 +38,8 @@ module HTTP
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
-          body = FixedLengthContent.new(io, content_length)
+          # TODO(platform): check this to_i
+          body = FixedLengthContent.new(io, content_length.to_i)
         elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?

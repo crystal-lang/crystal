@@ -4,7 +4,7 @@ require "uri"
 class Socket
   abstract struct Address
     getter family : Family
-    getter size : Int32
+    getter size : DefaultInt
 
     # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
@@ -81,11 +81,11 @@ class Socket
     BROADCAST    = "255.255.255.255"
     BROADCAST6   = "ff0X::1"
 
-    getter port : Int32
+    getter port : DefaultInt
 
     @addr : LibC::In6Addr | LibC::InAddr
 
-    def initialize(@address : String, @port : Int32)
+    def initialize(@address : String, @port : DefaultInt)
       if addr = ip6?(address)
         @addr = addr
         @family = Family::INET6
@@ -146,7 +146,7 @@ class Socket
       parse URI.parse(uri)
     end
 
-    protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
+    protected def initialize(sockaddr : LibC::SockaddrIn6*, @size : DefaultInt)
       @family = Family::INET6
       @addr = sockaddr.value.sin6_addr
       @port =

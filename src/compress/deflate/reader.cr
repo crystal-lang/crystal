@@ -92,7 +92,7 @@ class Compress::Deflate::Reader < IO
       # If we were able to peek, skip the used bytes in the underlying IO
       avail_in_diff = old_avail_in - @stream.avail_in
       if @peek && avail_in_diff > 0
-        @io.skip(avail_in_diff)
+        @io.skip(avail_in_diff.to_i)
       end
 
       case ret

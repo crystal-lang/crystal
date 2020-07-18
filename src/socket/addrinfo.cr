@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter type : Type
     getter protocol : Protocol
-    getter size : Int32
+    getter size : DefaultInt
 
     @addr : LibC::SockaddrIn6
     @next : LibC::Addrinfo*

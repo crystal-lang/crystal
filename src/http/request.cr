@@ -111,7 +111,7 @@ class HTTP::Request
 
   # Returns a `HTTP::Request` instance if successfully parsed,
   # `nil` on EOF or `HTTP::Status` otherwise.
-  def self.from_io(io, *, max_request_line_size : Int32 = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
+  def self.from_io(io, *, max_request_line_size : DefaultInt = HTTP::MAX_REQUEST_LINE_SIZE, max_headers_size : DefaultInt = HTTP::MAX_HEADERS_SIZE) : HTTP::Request | HTTP::Status | Nil
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 

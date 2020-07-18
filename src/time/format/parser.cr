@@ -55,7 +55,7 @@ struct Time::Format
       end
 
       if unix_seconds = @unix_seconds
-        return Time.unix(unix_seconds)
+        return Time.unix(unix_seconds.to_i)
       end
 
       location = @location || location

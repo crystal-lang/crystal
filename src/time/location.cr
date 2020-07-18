@@ -216,14 +216,14 @@ class Time::Location
 
   # Creates a `Location` instance named *name* with fixed *offset* in seconds
   # from UTC.
-  def self.fixed(name : String, offset : Int32) : Location
+  def self.fixed(name : String, offset : DefaultInt) : Location
     new name, [Zone.new(name, offset, false)]
   end
 
   # Creates a `Location` instance with fixed *offset* in seconds from UTC.
   #
   # The formatted *offset* is used as name.
-  def self.fixed(offset : Int32)
+  def self.fixed(offset : DefaultInt)
     zone = Zone.new(nil, offset, false)
     new zone.name, [zone]
   end

@@ -1963,7 +1963,7 @@ class Hash(K, V)
     include Iterator({K, V})
 
     @hash : Hash(K, V)
-    @index : Int32
+    @index : DefaultInt
 
     def next
       base_next { |entry| {entry.key, entry.value} }
@@ -1975,7 +1975,7 @@ class Hash(K, V)
     include Iterator(K)
 
     @hash : Hash(K, V)
-    @index : Int32
+    @index : DefaultInt
 
     def next
       base_next &.key
@@ -1987,7 +1987,7 @@ class Hash(K, V)
     include Iterator(V)
 
     @hash : Hash(K, V)
-    @index : Int32
+    @index : DefaultInt
 
     def next
       base_next &.value

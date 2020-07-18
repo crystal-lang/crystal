@@ -336,7 +336,7 @@ class String
   # "hello".to_i?             # => nil
   # ```
   def to_i?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false)
-    to_i32?(base, whitespace, underscore, prefix, strict, leading_zero_is_octal)
+    to_i32?(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).try(&.to_i)
   end
 
   # Same as `#to_i`, but returns the block's value if there is not a valid number at the start

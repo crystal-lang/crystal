@@ -298,7 +298,7 @@ struct Time
     #
     # This method also accepts `0` to identify `Sunday` in order to be compliant
     # with the `Sunday = 0` numbering. All other days are equal in both formats.
-    def self.from_value(value : Int32) : self
+    def self.from_value(value : DefaultInt) : self
       value = 7 if value == 0
       super(value)
     end
@@ -406,7 +406,7 @@ struct Time
   # In such cases, the choice of time zone, and therefore the time, is not
   # well-defined. This method returns a time that is correct in one of the two
   # zones involved in the transition, but it does not guarantee which.
-  def self.local(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
+  def self.local(year : DefaultInt, month : DefaultInt, day : DefaultInt, hour : DefaultInt = 0, minute : DefaultInt = 0, second : DefaultInt = 0, *, nanosecond : DefaultInt = 0, location : Location = Location.local) : Time
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
@@ -431,7 +431,7 @@ struct Time
     # Normalize internal representation to UTC
     seconds = seconds - zone_offset_at(seconds, location) if !location.utc?
 
-    new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
+    new(seconds: seconds, nanoseconds: nanosecond.to_i32, location: location)
   end
 
   # Creates a new `Time` instance representing the given date-time in UTC.
@@ -501,7 +501,7 @@ struct Time
     # :nodoc:
     def self.new(time : LibC::Timespec, location : Location = Location.local)
       seconds = UNIX_EPOCH.total_seconds + time.tv_sec
-      nanoseconds = time.tv_nsec.to_i
+      nanoseconds = time.tv_nsec.to_i32
       new(seconds: seconds, nanoseconds: nanoseconds, location: location)
     end
   {% end %}
@@ -514,7 +514,7 @@ struct Time
   # ```
   # Time.unix(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.unix(seconds : Int) : Time
+  def self.unix(seconds : IntBase) : Time
     utc(seconds: UNIX_EPOCH.total_seconds + seconds, nanoseconds: 0)
   end
 
@@ -527,7 +527,7 @@ struct Time
   # time = Time.unix_ms(981173106789) # => 2001-02-03 04:05:06.789 UTC
   # time.millisecond                  # => 789
   # ```
-  def self.unix_ms(milliseconds : Int) : Time
+  def self.unix_ms(milliseconds : IntBase) : Time
     milliseconds = milliseconds.to_i64
     seconds = UNIX_EPOCH.total_seconds + (milliseconds // 1_000)
     nanoseconds = (milliseconds % 1000) * NANOSECONDS_PER_MILLISECOND
@@ -625,7 +625,7 @@ struct Time
   # There is no explicit limit on the input values but the addition must result
   # in a valid time between `0001-01-01 00:00:00.0` and
   # `9999-12-31 23:59:59.999_999_999`. Otherwise `ArgumentError` is raised.
-  def shift(seconds : Int, nanoseconds : Int) : Time
+  def shift(seconds : IntBase, nanoseconds : IntBase) : Time
     if seconds == 0 && nanoseconds == 0
       return self
     end
@@ -643,7 +643,7 @@ struct Time
       nanoseconds += NANOSECONDS_PER_SECOND
     end
 
-    Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
+    Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i32, location: location)
   end
 
   # Returns a copy of this `Time` shifted by the amount of calendrical units
@@ -815,7 +815,7 @@ struct Time
   # week date format `year, week, day_of_week` in the same way as the typical
   # format `year, month, day`.
   # `.week_date` creates a `Time` instance from a week date.
-  def calendar_week : {Int32, Int32}
+  def calendar_week : {DefaultInt, DefaultInt}
     year, month, day, day_year = year_month_day_day_year
 
     day_of_week = self.day_of_week
@@ -926,7 +926,7 @@ struct Time
   # Returns the day of the year.
   #
   # The value range is `1..365` in normal yars and `1..366` in leap years.
-  def day_of_year : Int32
+  def day_of_year : DefaultInt
     year_month_day_day_year[3]
   end
 
@@ -962,7 +962,7 @@ struct Time
   #
   # To ensure the comparison is also true for local wall clock, both date-times
   # need to be transformed to the same time zone.
-  def <=>(other : Time) : Int32
+  def <=>(other : Time) : DefaultInt
     cmp = total_seconds <=> other.total_seconds
     cmp = nanosecond <=> other.nanosecond if cmp == 0
     cmp
@@ -998,7 +998,7 @@ struct Time
   # Time.days_in_month(2016, 2) # => 29
   # Time.days_in_month(1990, 4) # => 30
   # ```
-  def self.days_in_month(year : Int, month : Int) : Int32
+  def self.days_in_month(year : Int, month : Int) : DefaultInt
     unless 1 <= month <= 12
       raise ArgumentError.new "Invalid month"
     end
@@ -1015,7 +1015,7 @@ struct Time
   # Time.days_in_year(1990) # => 365
   # Time.days_in_year(2004) # => 366
   # ```
-  def self.days_in_year(year : Int) : Int32
+  def self.days_in_year(year : Int) : DefaultInt
     leap_year?(year) ? 366 : 365
   end
 
@@ -1431,7 +1431,7 @@ struct Time
   # The valid range for *year* is `1..9999` and for *month* `1..12`. The value
   # of *day*  is not validated and can exceed the number of days in the specified
   # month or even a year.
-  protected def self.absolute_days(year, month, day) : Int32
+  protected def self.absolute_days(year, month, day) : DefaultInt
     days_per_month = leap_year?(year) ? DAYS_MONTH_LEAP : DAYS_MONTH
 
     days_in_year = day - 1

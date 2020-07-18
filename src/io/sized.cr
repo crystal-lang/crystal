@@ -29,7 +29,8 @@ class IO::Sized < IO
     check_open
 
     count = {slice.size.to_u64, @read_remaining}.min
-    bytes_read = @io.read slice[0, count]
+    # TODO(platform): check this to_i
+    bytes_read = @io.read slice[0, count.to_i]
     @read_remaining -= bytes_read
     bytes_read
   end
@@ -55,7 +56,8 @@ class IO::Sized < IO
     return nil unless peek
 
     if @read_remaining < peek.size
-      peek = peek[0, @read_remaining]
+      # TODO(platform): check this to_i
+      peek = peek[0, @read_remaining.to_i]
     end
 
     peek

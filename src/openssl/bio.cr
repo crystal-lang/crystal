@@ -26,26 +26,26 @@ struct OpenSSL::BIO
     end
 
     bwrite_ex = LibCrypto::BioMethodWrite.new do |bio, data, len, writep|
-      count = len > Int32::MAX ? Int32::MAX : len.to_i
+      count = len > DefaultInt::MAX ? DefaultInt::MAX : len.to_i
       io = Box(IO).unbox(BIO.get_data(bio))
       io.write Slice.new(data, count)
       writep.value = LibC::SizeT.new(count)
-      1
+      1_i32
     end
 
     bread = LibCrypto::BioMethodReadOld.new do |bio, buffer, len|
       io = Box(IO).unbox(BIO.get_data(bio))
       io.flush
-      io.read(Slice.new(buffer, len)).to_i
+      io.read(Slice.new(buffer, len)).to_i32
     end
 
     bread_ex = LibCrypto::BioMethodWrite.new do |bio, buffer, len, readp|
-      count = len > Int32::MAX ? Int32::MAX : len.to_i
+      count = len > DefaultInt::MAX ? DefaultInt::MAX : len.to_i
       io = Box(IO).unbox(BIO.get_data(bio))
       io.flush
       ret = io.read Slice.new(buffer, count)
       readp.value = LibC::SizeT.new(ret)
-      1
+      1_i32
     end
 
     ctrl = LibCrypto::BioMethodCtrl.new do |bio, cmd, num, ptr|
@@ -74,12 +74,12 @@ struct OpenSSL::BIO
         bio.value.init = 1
         bio.value.num = -1
       {% end %}
-      1
+      1_i32
     end
 
     destroy = LibCrypto::BioMethodDestroy.new do |bio|
       BIO.set_data(bio, Pointer(Void).null)
-      1
+      1_i32
     end
 
     {% if compare_versions(LibCrypto::OPENSSL_VERSION, "1.1.0") >= 0 %}

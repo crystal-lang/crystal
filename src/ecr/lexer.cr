@@ -10,8 +10,8 @@ class ECR::Lexer
 
     property type : Type
     property value : String
-    property line_number : Int32
-    property column_number : Int32
+    property line_number : DefaultInt
+    property column_number : DefaultInt
     property? suppress_leading : Bool
     property? suppress_trailing : Bool
 

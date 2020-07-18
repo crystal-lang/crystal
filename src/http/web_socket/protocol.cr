@@ -33,7 +33,7 @@ class HTTP::WebSocket::Protocol
 
   record PacketInfo,
     opcode : Opcode,
-    size : Int32,
+    size : DefaultInt,
     final : Bool
 
   def initialize(@io : IO, masked = false, @sync_close = true)
@@ -194,7 +194,8 @@ class HTTP::WebSocket::Protocol
   end
 
   private def read_payload(buffer)
-    count = Math.min(@remaining, buffer.size)
+    # TODO(platform): check this to_i
+    count = Math.min(@remaining, buffer.size).to_i
     @io.read_fully(buffer[0, count])
     if masked?
       count.times do |i|

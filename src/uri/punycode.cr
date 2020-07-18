@@ -75,7 +75,7 @@ class URI
               q = (q - t) // (BASE - t)
               k += BASE
             end
-            io << BASE36[q]
+            io << BASE36[q.to_i]
 
             bias = adapt delta, h, firsttime
             delta = 0

@@ -104,10 +104,10 @@ class URI
   #
   # URI.parse("http://foo.com:5432").port # => 5432
   # ```
-  getter port : Int32?
+  getter port : DefaultInt?
 
   # Sets the port component of the URI.
-  setter port : Int32?
+  setter port : DefaultInt?
 
   # Returns the path component of the URI.
   #

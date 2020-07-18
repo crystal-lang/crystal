@@ -506,8 +506,8 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.size # => 2
   # ```
-  def size
-    {{T.size}}
+  def size : DefaultInt
+    {{T.size}}.to_i
   end
 
   # Returns `true` if this named tuple is empty.

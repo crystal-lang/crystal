@@ -11,7 +11,7 @@ class Compress::Deflate::Writer < IO
 
   # Creates an instance of Flate::Writer. `close` must be invoked after all data
   # has written.
-  def initialize(@output : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
+  def initialize(@output : IO, level : DefaultInt = Compress::Deflate::DEFAULT_COMPRESSION,
                  strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
                  @sync_close : Bool = false, @dict : Bytes? = nil)
     unless -1 <= level <= 9

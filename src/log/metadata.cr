@@ -18,15 +18,15 @@ class Log::Metadata
   # The maximum size this metadata would need.
   # Initially is the parent.max_total_size + entries.size .
   # When the metadata is defragmented max_total_size will be updated with size
-  protected getter max_total_size : Int32
-  @max_total_size = uninitialized Int32
+  protected getter max_total_size : DefaultInt
+  @max_total_size = uninitialized DefaultInt
   # How many entries are potentially overriden from parent (ie: initial entries.size)
-  @overriden_size = uninitialized Int32
+  @overriden_size = uninitialized DefaultInt
   # How many entries are stored from @first.
   # Initially are @overriden_size, the one explictly overriden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
-  @size = uninitialized Int32
+  @size = uninitialized DefaultInt
   # @first needs to be the last ivar of Metadata. The entries are allocated together with self
   @first = uninitialized Entry
 

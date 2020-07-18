@@ -77,6 +77,16 @@ module IO::ByteFormat
   abstract def decode(int : Int128.class, bytes : Bytes)
   abstract def decode(int : UInt128.class, bytes : Bytes)
 
+  {% if flag?(:platform_dependent_int) %}
+    def encode(int : Int, io : IO)
+      {% if flag?(:bits32) %}
+         encode(int.to_i32, io)
+      {% else %}
+         encode(int.to_i64, io)
+      {% end %}
+    end
+  {% end %}
+
   def encode(float : Float32, io : IO)
     encode(float.unsafe_as(Int32), io)
   end

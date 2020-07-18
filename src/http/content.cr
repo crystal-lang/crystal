@@ -105,9 +105,9 @@ module HTTP
     # `IO::Error` is raised.
     #
     # Default: `HTTP::MAX_HEADERS_SIZE`
-    getter max_headers_size : Int32
+    getter max_headers_size : DefaultInt
 
-    def initialize(@io : IO, *, @max_headers_size : Int32 = HTTP::MAX_HEADERS_SIZE)
+    def initialize(@io : IO, *, @max_headers_size : DefaultInt = HTTP::MAX_HEADERS_SIZE)
       @chunk_remaining = -1
       @received_final_chunk = false
     end
@@ -201,7 +201,7 @@ module HTTP
       end
     end
 
-    private def read_chunk_size
+    private def read_chunk_size : DefaultInt
       line = @io.read_line(@max_headers_size, chomp: true)
 
       if index = line.byte_index(';'.ord)

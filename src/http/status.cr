@@ -92,7 +92,7 @@ enum HTTP::Status
   # status = HTTP::Status::NO_CONTENT
   # status.code # => 204
   # ```
-  def code : Int32
+  def code : DefaultInt
     value
   end
 
