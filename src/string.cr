@@ -3244,7 +3244,7 @@ class String
   # ```
   def char_index_to_byte_index(index) : DefaultInt?
     if ascii_only?
-      return 0 <= index <= bytesize ? index : nil
+      return 0 <= index <= bytesize ? index.to_i : nil
     end
 
     size = each_byte_index_and_char_index do |byte_index, char_index|
@@ -3260,7 +3260,7 @@ class String
   # will be the size of this string.
   def byte_index_to_char_index(index) : DefaultInt?
     if ascii_only?
-      return 0 <= index <= bytesize ? index : nil
+      return 0 <= index <= bytesize ? index.to_i : nil
     end
 
     size = each_byte_index_and_char_index do |byte_index, char_index|
