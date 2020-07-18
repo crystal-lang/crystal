@@ -402,7 +402,7 @@ describe "Array" do
     end
 
     it "replaces entire range with an array for empty array (#8341)" do
-      a = [] of Int32
+      a = [] of DefaultInt
       a[..] = [1, 2, 3]
       a.should eq([1, 2, 3])
     end
@@ -491,11 +491,11 @@ describe "Array" do
     end
 
     it "concats enumerable to empty array (#2047)" do
-      a = [] of Int32
+      a = [] of DefaultInt
       a.concat(1..1)
       a.@capacity.should eq(3)
 
-      a = [] of Int32
+      a = [] of DefaultInt
       a.concat(1..4)
       a.@capacity.should eq(6)
     end
@@ -651,7 +651,7 @@ describe "Array" do
     b = [3, 9, 4]
     c = [5, 7, 3]
     d = [1, 3, 2, 4]
-    f = ->(x : Int32, y : Int32) { (x % 2) == (y % 2) }
+    f = ->(x : DefaultInt, y : DefaultInt) { (x % 2) == (y % 2) }
     a.equals?(b, &f).should be_true
     a.equals?(c, &f).should be_false
     a.equals?(d, &f).should be_false
@@ -974,7 +974,7 @@ describe "Array" do
   end
 
   it "does product with block" do
-    r = [] of Int32
+    r = [] of DefaultInt
     [1, 2, 3].product([5, 6]) { |a, b| r << a; r << b }
     r.should eq([1, 5, 1, 6, 2, 5, 2, 6, 3, 5, 3, 6])
   end
@@ -1503,7 +1503,7 @@ describe "Array" do
       it "works with iterable" do
         a = [1, 2, 3]
         b = ('a'..'c')
-        r = [] of {Int32, Char}
+        r = [] of {DefaultInt, Char}
         a.zip(b) do |x, y|
           r << {x, y}
         end
@@ -1513,7 +1513,7 @@ describe "Array" do
       it "works with iterator" do
         a = [1, 2, 3]
         b = ('a'..'c').each
-        r = [] of {Int32, Char}
+        r = [] of {DefaultInt, Char}
         a.zip(b) do |x, y|
           r << {x, y}
         end
@@ -1526,7 +1526,7 @@ describe "Array" do
         it "returns an array of paired elements (tuples)" do
           a, b = [1, 2, 3], ["a", "b", "c"]
           r = a.zip(b)
-          r.should be_a(Array({Int32, String}))
+          r.should be_a(Array({DefaultInt, String}))
           r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
         end
 
@@ -1534,7 +1534,7 @@ describe "Array" do
           a = [1, 2, 3]
           b = ('a'..'c')
           r = a.zip(b)
-          r.should be_a(Array({Int32, Char}))
+          r.should be_a(Array({DefaultInt, Char}))
           r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
         end
 
@@ -1542,7 +1542,7 @@ describe "Array" do
           a = [1, 2, 3]
           b = ('a'..'c').each
           r = a.zip(b)
-          r.should be_a(Array({Int32, Char}))
+          r.should be_a(Array({DefaultInt, Char}))
           r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
         end
 
@@ -1551,7 +1551,7 @@ describe "Array" do
           b = 'a'..'c'
           c = ('x'..'z').each
           r = a.zip(b, c)
-          r.should be_a(Array({Int32, Char, Char}))
+          r.should be_a(Array({DefaultInt, Char, Char}))
           r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
         end
 
@@ -1560,7 +1560,7 @@ describe "Array" do
           b = 'a'..'c'
           c = ('x'..'z').each
           r = a.zip(a || b || c)
-          r.should be_a(Array({Int32, Int32 | Char}))
+          r.should be_a(Array({DefaultInt, DefaultInt | Char}))
           r.should eq([{1, 1}, {2, 2}, {3, 3}])
         end
       end
@@ -1579,7 +1579,7 @@ describe "Array" do
         it "works with iterable" do
           a = [1, 2, 3]
           b = ('a'..'b')
-          r = [] of {Int32, Char?}
+          r = [] of {DefaultInt, Char?}
           a.zip?(b) do |x, y|
             r << {x, y}
           end
@@ -1589,7 +1589,7 @@ describe "Array" do
         it "works with iterator" do
           a = [1, 2, 3]
           b = ('a'..'b').each
-          r = [] of {Int32, Char?}
+          r = [] of {DefaultInt, Char?}
           a.zip?(b) do |x, y|
             r << {x, y}
           end
@@ -1611,7 +1611,7 @@ describe "Array" do
             a = [1, 2, 3]
             b = ('a'..'b')
             r = a.zip?(b)
-            r.should be_a(Array({Int32, Char?}))
+            r.should be_a(Array({DefaultInt, Char?}))
             r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
           end
 
@@ -1619,7 +1619,7 @@ describe "Array" do
             a = [1, 2, 3]
             b = ('a'..'b').each
             r = a.zip?(b)
-            r.should be_a(Array({Int32, Char?}))
+            r.should be_a(Array({DefaultInt, Char?}))
             r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
           end
 
@@ -1628,7 +1628,7 @@ describe "Array" do
             b = 'a'..'b'
             c = ('x'..'y').each
             r = a.zip?(b, c)
-            r.should be_a(Array({Int32, Char?, Char?}))
+            r.should be_a(Array({DefaultInt, Char?, Char?}))
             r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
           end
 
@@ -1637,7 +1637,7 @@ describe "Array" do
             b = 'a'..'c'
             c = ('x'..'z').each
             r = a.zip?(a || b || c)
-            r.should be_a(Array({Int32, Int32 | Char | Nil}))
+            r.should be_a(Array({DefaultInt, DefaultInt | Char | Nil}))
             r.should eq([{1, 1}, {2, 2}, {3, 3}])
           end
         end
@@ -1778,7 +1778,7 @@ describe "Array" do
 
   describe "cycle" do
     it "cycles" do
-      a = [] of Int32
+      a = [] of DefaultInt
       [1, 2, 3].cycle do |x|
         a << x
         break if a.size == 9
@@ -1787,7 +1787,7 @@ describe "Array" do
     end
 
     it "cycles N times" do
-      a = [] of Int32
+      a = [] of DefaultInt
       [1, 2, 3].cycle(2) do |x|
         a << x
       end
@@ -1815,8 +1815,8 @@ describe "Array" do
       [[1, 2.0], [1, 2.0]].transpose.should eq([[1, 1], [2.0, 2.0]])
       [[1, 1.0], ['a', "aaa"]].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
 
-      typeof([[1.0], [1]].transpose).should eq(Array(Array(Int32 | Float64)))
-      typeof([[1, 1.0], ['a', "aaa"]].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
+      typeof([[1.0], [1]].transpose).should eq(Array(Array(DefaultInt | Float64)))
+      typeof([[1, 1.0], ['a', "aaa"]].transpose).should eq(Array(Array(String | DefaultInt | Float64 | Char)))
     end
 
     it "transposes empty array" do
@@ -1868,25 +1868,25 @@ describe "Array" do
     it { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
 
     it do
-      a = Array(Int32).new(50) { |i| i }
+      a = Array(DefaultInt).new(50) { |i| i }
       a.rotate!(5)
       a.should eq([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
     end
 
     it do
-      a = Array(Int32).new(50) { |i| i }
+      a = Array(DefaultInt).new(50) { |i| i }
       a.rotate!(-5)
       a.should eq([45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
     end
 
     it do
-      a = Array(Int32).new(50) { |i| i }
+      a = Array(DefaultInt).new(50) { |i| i }
       a.rotate!(20)
       a.should eq([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
     end
 
     it do
-      a = Array(Int32).new(50) { |i| i }
+      a = Array(DefaultInt).new(50) { |i| i }
       a.rotate!(-20)
       a.should eq([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
     end
@@ -1903,7 +1903,7 @@ describe "Array" do
     it { expect_raises(ArgumentError, "Size must be positive") { [1].permutations(-1) } }
 
     it "accepts a block" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_permutation(2) do |perm|
         sums << perm.sum
       end.should be_nil
@@ -1911,7 +1911,7 @@ describe "Array" do
     end
 
     it "yielding dup of arrays" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_permutation(3) do |perm|
         perm.map! &.+(1)
         sums << perm.sum
@@ -1920,7 +1920,7 @@ describe "Array" do
     end
 
     it "yields with reuse = true" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       object_ids = Set(UInt64).new
       [1, 2, 3].each_permutation(3, reuse: true) do |perm|
         object_ids << perm.object_id
@@ -1981,7 +1981,7 @@ describe "Array" do
     it { expect_raises(ArgumentError, "Size must be positive") { [1].combinations(-1) } }
 
     it "accepts a block" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_combination(2) do |comb|
         sums << comb.sum
       end.should be_nil
@@ -1989,7 +1989,7 @@ describe "Array" do
     end
 
     it "yielding dup of arrays" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
@@ -1998,7 +1998,7 @@ describe "Array" do
     end
 
     it "does with reuse = true" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       object_ids = Set(UInt64).new
       [1, 2, 3].each_combination(2, reuse: true) do |comb|
         sums << comb.sum
@@ -2009,8 +2009,8 @@ describe "Array" do
     end
 
     it "does with reuse = array" do
-      sums = [] of Int32
-      reuse = [] of Int32
+      sums = [] of DefaultInt
+      reuse = [] of DefaultInt
       [1, 2, 3].each_combination(2, reuse: reuse) do |comb|
         sums << comb.sum
         comb.should be(reuse)
@@ -2046,7 +2046,7 @@ describe "Array" do
 
     it "returns iterator with reuse = array" do
       a = [1, 2, 3, 4]
-      reuse = [] of Int32
+      reuse = [] of DefaultInt
       combs = a.combinations(2)
       iter = a.each_combination(2, reuse: reuse)
       combs.each do |comb|
@@ -2069,7 +2069,7 @@ describe "Array" do
     it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_combinations(-1) } }
 
     it "accepts a block" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_repeated_combination(2) do |comb|
         sums << comb.sum
       end.should be_nil
@@ -2077,7 +2077,7 @@ describe "Array" do
     end
 
     it "yielding dup of arrays" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_repeated_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
@@ -2088,7 +2088,7 @@ describe "Array" do
     it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_combination(-1) { } } }
 
     it "yields with reuse = true" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       object_ids = Set(UInt64).new
       [1, 2, 3].each_repeated_combination(3, reuse: true) do |comb|
         object_ids << comb.object_id
@@ -2100,8 +2100,8 @@ describe "Array" do
     end
 
     it "yields with reuse = array" do
-      sums = [] of Int32
-      reuse = [] of Int32
+      sums = [] of DefaultInt
+      reuse = [] of DefaultInt
       [1, 2, 3].each_repeated_combination(3, reuse: reuse) do |comb|
         comb.should be(reuse)
         comb.map! &.+(1)
@@ -2136,7 +2136,7 @@ describe "Array" do
 
     it "returns iterator with reuse = array" do
       a = [1, 2, 3, 4]
-      reuse = [] of Int32
+      reuse = [] of DefaultInt
       combs = a.repeated_combinations(2)
       iter = a.each_repeated_combination(2, reuse: reuse)
       combs.each do |comb|
@@ -2159,7 +2159,7 @@ describe "Array" do
     it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_permutations(-1) } }
 
     it "accepts a block" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_repeated_permutation(2) do |a|
         sums << a.sum
       end.should be_nil
@@ -2167,7 +2167,7 @@ describe "Array" do
     end
 
     it "yielding dup of arrays" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       [1, 2, 3].each_repeated_permutation(3) do |a|
         a.map! &.+(1)
         sums << a.sum
@@ -2176,7 +2176,7 @@ describe "Array" do
     end
 
     it "yields with reuse = true" do
-      sums = [] of Int32
+      sums = [] of DefaultInt
       object_ids = Set(UInt64).new
       [1, 2, 3].each_repeated_permutation(3, reuse: true) do |a|
         object_ids << a.object_id
@@ -2188,8 +2188,8 @@ describe "Array" do
     end
 
     it "yields with reuse = array" do
-      sums = [] of Int32
-      reuse = [] of Int32
+      sums = [] of DefaultInt
+      reuse = [] of DefaultInt
       [1, 2, 3].each_repeated_permutation(3, reuse: reuse) do |a|
         a.should be(reuse)
         a.map! &.+(1)
@@ -2203,39 +2203,39 @@ describe "Array" do
 
   describe "Array.each_product" do
     it "one empty array" do
-      empty = [] of Int32
-      res = [] of Array(Int32)
+      empty = [] of DefaultInt
+      res = [] of Array(DefaultInt)
       Array.each_product([empty, [1, 2, 3]]) { |r| res << r }
       Array.each_product([[1, 2, 3], empty]) { |r| res << r }
       res.size.should eq(0)
     end
 
     it "single array" do
-      res = [] of Array(Int32)
+      res = [] of Array(DefaultInt)
       Array.each_product([[1]]) { |r| res << r }
       res.should eq([[1]])
     end
 
     it "2 arrays" do
-      res = [] of Array(Int32)
+      res = [] of Array(DefaultInt)
       Array.each_product([[1, 2], [3, 4]]) { |r| res << r }
       res.should eq([[1, 3], [1, 4], [2, 3], [2, 4]])
     end
 
     it "2 arrays different types" do
-      res = [] of Array(Int32 | Char)
+      res = [] of Array(DefaultInt | Char)
       Array.each_product([[1, 2], ['a', 'b']]) { |r| res << r }
       res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
     end
 
     it "more arrays" do
-      res = [] of Array(Int32)
+      res = [] of Array(DefaultInt)
       Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
       res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
     end
 
     it "more arrays, reuse = true" do
-      res = [] of Array(Int32)
+      res = [] of Array(DefaultInt)
       object_ids = Set(UInt64).new
       Array.each_product([[1, 2], [3], [5, 6]], reuse: true) do |r|
         object_ids << r.object_id
@@ -2246,7 +2246,7 @@ describe "Array" do
     end
 
     it "with splat" do
-      res = [] of Array(Int32 | Char)
+      res = [] of Array(DefaultInt | Char)
       Array.each_product([1, 2], ['a', 'b']) { |r| res << r }
       res.should eq([[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']])
     end

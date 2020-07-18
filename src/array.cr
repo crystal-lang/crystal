@@ -257,7 +257,7 @@ class Array(T)
     end
 
     Array(T | U).build(size + other.size) do |buffer|
-      hash = Hash(T, Bool).new
+      hash = Hash(T | U, Bool).new
       i = 0
       each do |obj|
         unless hash.has_key?(obj)
@@ -1128,7 +1128,7 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+  def map_with_index(offset = 0, &block : T, DefaultInt -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
 
@@ -1136,7 +1136,7 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+  def map_with_index!(offset = 0, &block : (T, DefaultInt) -> T)
     to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
@@ -2156,16 +2156,16 @@ class Array(T)
     include Iterator(Array(T))
 
     @array : Array(T)
-    @size : Int32
-    @n : Int32
-    @cycles : Array(Int32)
+    @size : DefaultInt
+    @n : DefaultInt
+    @cycles : Array(DefaultInt)
     @pool : Array(T)
     @stop : Bool
-    @i : Int32
+    @i : DefaultInt
     @first : Bool
     @reuse : Array(T)?
 
-    def initialize(@array : Array(T), @size, reuse)
+    def initialize(@array : Array(T), @size : DefaultInt, reuse)
       @n = @array.size
       @cycles = (@n - @size + 1..@n).to_a.reverse!
       @pool = @array.dup
@@ -2214,17 +2214,17 @@ class Array(T)
   private class CombinationIterator(T)
     include Iterator(Array(T))
 
-    @size : Int32
-    @n : Int32
+    @size : DefaultInt
+    @n : DefaultInt
     @copy : Array(T)
     @pool : Array(T)
-    @indices : Array(Int32)
+    @indices : Array(DefaultInt)
     @stop : Bool
-    @i : Int32
+    @i : DefaultInt
     @first : Bool
     @reuse : Array(T)?
 
-    def initialize(array : Array(T), @size, reuse)
+    def initialize(array : Array(T), @size : DefaultInt, reuse)
       @n = array.size
       @copy = array.dup
       @pool = array.dup
@@ -2275,17 +2275,17 @@ class Array(T)
   private class RepeatedCombinationIterator(T)
     include Iterator(Array(T))
 
-    @size : Int32
-    @n : Int32
+    @size : DefaultInt
+    @n : DefaultInt
     @copy : Array(T)
-    @indices : Array(Int32)
+    @indices : Array(DefaultInt)
     @pool : Array(T)
     @stop : Bool
-    @i : Int32
+    @i : DefaultInt
     @first : Bool
     @reuse : Array(T)?
 
-    def initialize(array : Array(T), @size, reuse)
+    def initialize(array : Array(T), @size : DefaultInt, reuse)
       @n = array.size
       @copy = array.dup
       @indices = Array.new(@size, 0)

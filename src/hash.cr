@@ -154,7 +154,7 @@ class Hash(K, V)
   # The invariant of `@first` always pointing to a non-deleted entry holds
   # (unless `@size` is 0) and is guaranteed because of how
   # `delete_and_update_counts` is implemented.
-  @first : Int32 = 0
+  @first : DefaultInt = 0
 
   # The buffer of entries.
   # Might be null if the hash is empty at the very beginning.
@@ -169,11 +169,11 @@ class Hash(K, V)
 
   # The number of actual entries in the hash.
   # Exposed to the user via the `size` getter.
-  @size : Int32
+  @size : DefaultInt
 
   # The number of deleted entries.
   # Resets to zero when the hash resizes.
-  @deleted_count : Int32
+  @deleted_count : DefaultInt
 
   # The actual type of `@indices`:
   # - 1 means `Pointer(UInt8)`
@@ -953,7 +953,7 @@ class Hash(K, V)
   # ===========================================================================
 
   # Returns the number of elements in this Hash.
-  getter size : Int32
+  getter size : DefaultInt
 
   # Makes this hash compare keys using their object identity (`object_id)`
   # for types that define such method (`Reference` types, but also structs that
