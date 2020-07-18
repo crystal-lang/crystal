@@ -7,9 +7,9 @@ class IO::Memory < IO
   getter buffer : Pointer(UInt8)
 
   # Same as `size`.
-  getter bytesize : Int32
+  getter bytesize : DefaultInt
 
-  @capacity : Int32
+  @capacity : DefaultInt
 
   # Creates an empty, resizeable and writeable `IO::Memory` with the given
   # initial *capacity* for the internal buffer.

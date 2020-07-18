@@ -3242,7 +3242,7 @@ class String
   # "こんにちは".char_index_to_byte_index(1) # => 3
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
-  def char_index_to_byte_index(index)
+  def char_index_to_byte_index(index) : DefaultInt?
     if ascii_only?
       return 0 <= index <= bytesize ? index : nil
     end
@@ -3250,7 +3250,7 @@ class String
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return byte_index if index == char_index
     end
-    return @bytesize if index == size
+    return @bytesize.to_i! if index == size
     nil
   end
 
@@ -4275,7 +4275,7 @@ class String
   # "ab☃".chars # => ['a', 'b', '☃']
   # ```
   def chars
-    chars = Array(Char).new(@length > 0 ? @length : bytesize)
+    chars = Array(Char).new(@length > 0 ? @length.to_i : bytesize)
     each_char do |char|
       chars << char
     end

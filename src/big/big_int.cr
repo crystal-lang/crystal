@@ -399,7 +399,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
-  def bit_length : Int32
+  def bit_length : DefaultInt
     LibGMP.sizeinbase(self, 2).to_i
   end
 
@@ -618,7 +618,12 @@ struct BigInt < IntBase
   end
 end
 
-struct Int
+{% begin %}
+  {% if flag?(:platform_dependent_int) %}
+    {{ "struct IntBase".id }}
+  {% else %}
+    {{ "struct Int".id }}
+  {% end %}
   include Comparable(BigInt)
 
   def <=>(other : BigInt)
@@ -679,7 +684,8 @@ struct Int
   def to_big_i : BigInt
     BigInt.new(self)
   end
-end
+{{ "end".id }}
+{% end %}
 
 struct Float
   include Comparable(BigInt)

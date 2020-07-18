@@ -30,7 +30,9 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.group_size          # => 1
     # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.group_size # => 2
     # ```
-    getter group_size : Int32
+    def group_size
+      @group_size.to_i
+    end
 
     # Returns the original string.
     #

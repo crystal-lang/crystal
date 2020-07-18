@@ -422,11 +422,11 @@ struct IntBase
   # 0b100.bit_length # => 3
   # 0b101.bit_length # => 3
   # ```
-  def bit_length : Int32
+  def bit_length : DefaultInt
     x = self < 0 ? ~self : self
 
     if x.is_a?(Int::Primitive)
-      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
+      DefaultInt.new(sizeof(self) * 8 - x.leading_zeros_count)
     else
       # Safe fallback for any non-primitive Int type
       to_s(2).size
@@ -574,7 +574,7 @@ struct IntBase
   #
   # -12345.digits(7) # => ArgumentError
   # ```
-  def digits(base = 10) : Array(Int32)
+  def digits(base = 10) : Array(DefaultInt)
     if base < 2
       raise ArgumentError.new("Invalid base #{base}")
     end
@@ -591,7 +591,7 @@ struct IntBase
 
     digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
 
-    ary = Array(Int32).new(digits_count)
+    ary = Array(DefaultInt).new(digits_count)
     while num != 0
       ary << num.remainder(base).to_i
       num = num.tdiv(base)
@@ -776,7 +776,7 @@ struct Int8
     value.to_i8!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -816,7 +816,7 @@ struct Int16
     value.to_i16!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -856,7 +856,7 @@ struct Int32
     value.to_i32!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -896,7 +896,7 @@ struct Int64
     value.to_i64!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -937,7 +937,7 @@ struct Int128
     value.to_i128!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -978,7 +978,7 @@ struct UInt8
     value.to_u8!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -1018,7 +1018,7 @@ struct UInt16
     value.to_u16!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -1058,7 +1058,7 @@ struct UInt32
     value.to_u32!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -1098,7 +1098,7 @@ struct UInt64
     value.to_u64!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -1139,7 +1139,7 @@ struct UInt128
     value.to_u128!
   end
 
-  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
@@ -1184,23 +1184,35 @@ struct Int
     value.to_i!
   end
 
+  Number.expand_div [Int, Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Float32], Float32
+  Number.expand_div [Float64], Float64
+
   def -
     0 - self
   end
 
   def popcount
     {% if flag?(:bits32) %}
-      Intrinsics.popcount32(self.to_i32)
+      Intrinsics.popcount32(self.to_i32).to_i
     {% else %}
-      Intrinsics.popcount64(self.to_i64)
+      Intrinsics.popcount64(self.to_i64).to_i
+    {% end %}
+  end
+
+  def leading_zeros_count
+    {% if flag?(:bits32) %}
+      Intrinsics.countleading32(self.to_i32, false).to_i
+    {% else %}
+      Intrinsics.countleading64(self.to_i64, false).to_i
     {% end %}
   end
 
   def trailing_zeros_count
     {% if flag?(:bits32) %}
-      Intrinsics.counttrailing32(self.to_i32)
+      Intrinsics.counttrailing32(self.to_i32).to_i
     {% else %}
-      Intrinsics.counttrailing64(self.to_i64)
+      Intrinsics.counttrailing64(self.to_i64).to_i
     {% end %}
   end
 end

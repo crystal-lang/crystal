@@ -35,7 +35,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width : Int32
+    getter current_char_width : DefaultInt
 
     # Returns the position of the current character.
     #
@@ -249,7 +249,7 @@ struct Char
     @[AlwaysInline]
     private def decode_current_char
       decode_char_at(@pos) do |code_point, width, error|
-        @current_char_width = width.to_i32!
+        @current_char_width = width
         @end = @pos == @string.bytesize
         @error = error
         @current_char = code_point.unsafe_chr

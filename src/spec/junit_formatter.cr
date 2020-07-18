@@ -6,7 +6,7 @@ module Spec
     @started_at = Time.utc
 
     @results = [] of Spec::Result
-    @summary = {} of Symbol => Int32
+    @summary = {} of Symbol => DefaultInt
 
     def report(result)
       current = @summary[result.kind]? || 0

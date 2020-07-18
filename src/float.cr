@@ -141,6 +141,10 @@ struct Float32
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], Float32
+  {% end %}
+
   Number.expand_div [Float64], Float64
 
   def ceil
@@ -228,6 +232,10 @@ struct Float64
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], Float64
+  {% end %}
+
   Number.expand_div [Float32], Float64
 
   def ceil

@@ -97,7 +97,7 @@ module Spec
   end
 
   # :nodoc:
-  def self.line=(@@line : Int32)
+  def self.line=(@@line : Int)
   end
 
   # :nodoc:
@@ -132,8 +132,8 @@ module Spec
 
   # :nodoc:
   def self.add_location(file, line)
-    locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
+    locations = @@locations ||= {} of String => Array(DefaultInt)
+    lines = locations[File.expand_path(file)] ||= [] of DefaultInt
     lines << line
   end
 
@@ -146,7 +146,7 @@ module Spec
     end
   end
 
-  record SplitFilter, remainder : Int32, quotient : Int32
+  record SplitFilter, remainder : DefaultInt, quotient : DefaultInt
 
   @@split_filter : SplitFilter? = nil
 

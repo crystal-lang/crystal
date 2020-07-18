@@ -760,32 +760,32 @@ struct Time
   end
 
   # Returns the year of the proleptic Georgian Calendar (`0..9999`).
-  def year : Int32
+  def year : DefaultInt
     year_month_day_day_year[0]
   end
 
   # Returns the month of the year (`1..12`).
-  def month : Int32
+  def month : DefaultInt
     year_month_day_day_year[1]
   end
 
   # Returns the day of the month (`1..31`).
-  def day : Int32
+  def day : DefaultInt
     year_month_day_day_year[2]
   end
 
   # Returns the hour of the day (`0..23`).
-  def hour : Int32
+  def hour : DefaultInt
     ((offset_seconds % SECONDS_PER_DAY) // SECONDS_PER_HOUR).to_i
   end
 
   # Returns the minute of the hour (`0..59`).
-  def minute : Int32
+  def minute : DefaultInt
     ((offset_seconds % SECONDS_PER_HOUR) // SECONDS_PER_MINUTE).to_i
   end
 
   # Returns the second of the minute (`0..59`).
-  def second : Int32
+  def second : DefaultInt
     (offset_seconds % SECONDS_PER_MINUTE).to_i
   end
 
@@ -1458,7 +1458,7 @@ struct Time
   #
   # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
   # day (`1..31`) and ordinal day of the year (`1..366`).
-  protected def year_month_day_day_year : {Int32, Int32, Int32, Int32}
+  protected def year_month_day_day_year : {DefaultInt, DefaultInt, DefaultInt, DefaultInt}
     total_days = (offset_seconds // SECONDS_PER_DAY).to_i
 
     num400 = total_days // DAYS_PER_400_YEARS

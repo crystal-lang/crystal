@@ -555,7 +555,7 @@ struct Char
   # 'f'.to_i(16) # => 15
   # 'z'.to_i(16) # raises ArgumentError
   # ```
-  def to_i(base : Int = 10) : Int32
+  def to_i(base : Int = 10) : DefaultInt
     to_i?(base) || raise ArgumentError.new("Invalid integer: #{self}")
   end
 

@@ -320,7 +320,7 @@ class OptionParser
   def parse(args = ARGV)
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
-      handled_args = [] of Int32
+      handled_args = [] of DefaultInt
       double_dash_index = nil
 
       arg_index = 0

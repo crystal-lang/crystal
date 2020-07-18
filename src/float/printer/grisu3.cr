@@ -208,7 +208,7 @@ module Float::Printer::Grisu3
   # represent 'w' we can stop. Everything inside the interval low - high
   # represents w. However we have to pay attention to low, high and w's
   # imprecision.
-  def digit_gen(low : DiyFP, w : DiyFP, high : DiyFP, buffer_p) : {Bool, Int32, Int32}
+  def digit_gen(low : DiyFP, w : DiyFP, high : DiyFP, buffer_p) : {Bool, DefaultInt, DefaultInt}
     buffer = buffer_p.to_slice(128)
     # low, w and high are imprecise, but by less than one ulp (unit in the last
     # place).
@@ -313,7 +313,7 @@ module Float::Printer::Grisu3
   # The last digit will be closest to the actual *v*. That is, even if several
   # digits might correctly yield *v* when read again, the closest will be
   # computed.
-  def grisu3(v : Float64 | Float32, buffer_p) : {Bool, Int32, Int32}
+  def grisu3(v : Float64 | Float32, buffer_p) : {Bool, DefaultInt, DefaultInt}
     buffer = buffer_p.to_slice(128)
 
     w = DiyFP.from_f_normalized(v)

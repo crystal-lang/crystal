@@ -15,14 +15,14 @@ end
 
 describe "Int" do
   describe "**" do
-    it "with positive Int32" do
+    it "with positive Int" do
       x = 2 ** 2
       x.should eq(4)
-      x.should be_a(Int32)
+      x.should be_a(DefaultInt)
 
       x = 2 ** 0
       x.should eq(1)
-      x.should be_a(Int32)
+      x.should be_a(DefaultInt)
     end
 
     it "with positive UInt8" do
@@ -51,14 +51,14 @@ describe "Int" do
   end
 
   describe "&**" do
-    it "with positive Int32" do
+    it "with positive Int" do
       x = 2 &** 2
       x.should eq(4)
-      x.should be_a(Int32)
+      x.should be_a(DefaultInt)
 
       x = 2 &** 0
       x.should eq(1)
-      x.should be_a(Int32)
+      x.should be_a(DefaultInt)
     end
 
     it "with UInt8" do
