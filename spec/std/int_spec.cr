@@ -334,7 +334,7 @@ describe "Int" do
   describe "<<" do
     it { (8000 << 1).should eq(16000) }
     it { (8000 << 2).should eq(32000) }
-    it { (8000 << 32).should eq(0) }
+    it { (8000_i32 << 32_i32).should eq(0_i32) }
     it { (8000 << -1).should eq(4000) }
   end
 
