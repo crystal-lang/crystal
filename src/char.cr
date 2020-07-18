@@ -793,7 +793,7 @@ struct Char
   # 'c' === 99    # => true
   # 'z' === 99    # => false
   # ```
-  def ===(byte : Int)
+  def ===(byte : IntBase)
     ord === byte
   end
 
