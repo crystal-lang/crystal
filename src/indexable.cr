@@ -603,7 +603,7 @@ module Indexable(T)
       raise IndexError.new if start_index < 0
     end
 
-    end_index = range.end.to_i
+    end_index = range.end.try(&.to_i)
     if end_index.nil?
       count = collection_size - start_index
     else

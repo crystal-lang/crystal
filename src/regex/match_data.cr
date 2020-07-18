@@ -66,7 +66,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
     # ```
-    def begin(n = 0)
+    def begin(n = 0) : DefaultInt?
       @string.byte_index_to_char_index byte_begin(n)
     end
 
@@ -80,7 +80,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
     # ```
-    def end(n = 0)
+    def end(n = 0) : DefaultInt?
       @string.byte_index_to_char_index byte_end(n)
     end
 
@@ -94,10 +94,10 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
     # ```
-    def byte_begin(n = 0)
+    def byte_begin(n = 0) : DefaultInt
       check_index_out_of_bounds n
       n += size if n < 0
-      @ovector[n * 2]
+      @ovector[n * 2].to_i
     end
 
     # Returns the position of the next byte after the match.
@@ -110,10 +110,10 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
     # ```
-    def byte_end(n = 0)
+    def byte_end(n = 0) : DefaultInt
       check_index_out_of_bounds n
       n += size if n < 0
-      @ovector[n * 2 + 1]
+      @ovector[n * 2 + 1].to_i
     end
 
     # Returns the match of the *n*th capture group, or `nil` if there isn't
@@ -205,7 +205,7 @@ class Regex
     end
 
     private def named_capture_number(group_name)
-      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last)
+      name_entry_size = LibPCRE.get_stringtable_entries(@code, group_name, out first, out last).to_i
       return if name_entry_size < 0
 
       while first <= last

@@ -267,7 +267,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64) : self
+  def self.build(capacity : Int = 64) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end
@@ -1008,7 +1008,7 @@ class String
   # "hello".codepoint_at(-1) # => 111
   # "hello".codepoint_at(5)  # raises IndexError
   # ```
-  def codepoint_at(index) : Int32
+  def codepoint_at(index) : DefaultInt
     char_at(index).ord
   end
 
@@ -1844,7 +1844,7 @@ class String
     end
 
     multi = nil
-    table = StaticArray(Int32, 256).new(-1)
+    table = StaticArray(DefaultInt, 256).new(-1)
     reader = Char::Reader.new(to)
     char = reader.current_char
     next_char = reader.next_char
@@ -3186,7 +3186,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index("izzy", -4) # => 12
   # "Dizzy Miss Lizzy".byte_index("izzy", -3) # => nil
   # ```
-  def byte_index(search : String, offset = 0) : Int32?
+  def byte_index(search : String, offset = 0) : DefaultInt?
     offset += bytesize if offset < 0
     return if offset < 0
 
@@ -3258,7 +3258,7 @@ class String
   #
   # It is valid to pass `#bytesize` to *index*, and in this case the answer
   # will be the size of this string.
-  def byte_index_to_char_index(index)
+  def byte_index_to_char_index(index) : DefaultInt?
     if ascii_only?
       return 0 <= index <= bytesize ? index : nil
     end
@@ -4320,8 +4320,8 @@ class String
   # ```
   #
   # See also: `Char#ord`.
-  def codepoints
-    codepoints = Array(Int32).new(@length > 0 ? @length : bytesize)
+  def codepoints : Array(DefaultInt)
+    codepoints = Array(DefaultInt).new(@length > 0 ? @length.to_i : bytesize)
     each_codepoint do |codepoint|
       codepoints << codepoint
     end

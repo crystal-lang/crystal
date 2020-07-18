@@ -365,9 +365,9 @@ struct String::Formatter(A)
   end
 
   struct Flags
-    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
-    property width : Int32, width_size : Int32
-    property type : Char, precision : Int32?, precision_size : Int32
+    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : DefaultInt
+    property width : DefaultInt, width_size : DefaultInt
+    property type : Char, precision : DefaultInt?, precision_size : DefaultInt
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false

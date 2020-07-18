@@ -166,7 +166,7 @@ class Object
   end
 
   # Returns a pretty printed version of `self`.
-  def pretty_inspect(width = 79, newline = "\n", indent = 0) : String
+  def pretty_inspect(width : Int = 79, newline = "\n", indent : Int = 0) : String
     String.build do |io|
       PrettyPrint.format(self, io, width, newline, indent)
     end
