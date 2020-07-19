@@ -77,7 +77,7 @@ require "mime/multipart"
 # end
 # ```
 module HTTP::FormData
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
@@ -97,7 +97,7 @@ module HTTP::FormData
     end
   end
 
-  # Parses a multipart/form-data message, yielding a `FormData::Parser`.
+  # Parses a multipart/form-data message, yielding a `FormData::Part`.
   #
   # ```
   # require "http"
