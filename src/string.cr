@@ -788,24 +788,7 @@ class String
 
     start += size if start < 0
 
-    start_pos = nil
-    end_pos = nil
-
-    reader = Char::Reader.new(self)
-    i = 0
-
-    reader.each do |char|
-      if i == start
-        start_pos = reader.pos
-      elsif count >= 0 && i == start + count
-        end_pos = reader.pos
-        i += 1
-        break
-      end
-      i += 1
-    end
-
-    end_pos ||= reader.pos
+    start_pos, end_pos, end_index = find_start_end_and_index(start, count)
 
     if start_pos
       return "" if count == 0
@@ -817,7 +800,7 @@ class String
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
       end
-    elsif start == i
+    elsif start == end_index
       ""
     end
   end
@@ -898,6 +881,168 @@ class String
     else
       yield
     end
+  end
+
+  # Returns a new string that results from deleting characters
+  # at the given range.
+  #
+  # ```
+  # "abcdef".delete_at(1..3) # => "aef"
+  # ```
+  #
+  # Negative indices can be used to start counting from the end of the string:
+  #
+  # ```
+  # "abcdef".delete_at(-3..-2) # => "abcf"
+  # ```
+  #
+  # Raises `IndexError` if any index is outside the bounds of this string.
+  def delete_at(range : Range)
+    delete_at(*Indexable.range_to_index_and_count(range, size))
+  end
+
+  # Returns a new string that results from deleting the character
+  # at the given *index*.
+  #
+  # ```
+  # "abcde".delete_at(0) # => "bcde"
+  # "abcde".delete_at(2) # => "abde"
+  # "abcde".delete_at(4) # => "abcd"
+  # ```
+  #
+  # A negative *index* counts from the end of the string:
+  #
+  # ```
+  # "abcde".delete_at(-2) # => "abce"
+  # ```
+  #
+  # If *index* is outside the bounds of the string, `IndexError` is raised.
+  def delete_at(index : Int) : String
+    index += size if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    if byte_index && byte_index < @bytesize
+      char_bytesize = char_bytesize_at(byte_index)
+
+      new_bytesize = self.bytesize - char_bytesize
+      String.new(new_bytesize) do |buffer|
+        # Copy left part
+        buffer.copy_from(to_unsafe, byte_index)
+
+        # Copy right part
+        (buffer + byte_index).copy_from(
+          to_unsafe + byte_index + char_bytesize,
+          self.bytesize - byte_index - char_bytesize,
+        )
+
+        {new_bytesize, size - 1}
+      end
+    else
+      raise IndexError.new
+    end
+  end
+
+  # Returns a new string that results from deleting *count* characters
+  # starting at *index*.
+  #
+  # ```
+  # "abcdefg".delete_at(1, 3) # => "aefg"
+  # ```
+  #
+  # Deleting more characters than those in the string is valid, and just
+  # results in deleting up to the last character:
+  #
+  # ```
+  # "abcdefg".delete_at(3, 10) # => "abc"
+  # ```
+  #
+  # A negative *index* counts from the end of the string:
+  #
+  # ```
+  # "abcdefg".delete_at(-3, 2) # => "abcdg"
+  # ```
+  #
+  # If *count* is negative, `ArgumentError` is raised.
+  #
+  # If *index* is outside the bounds of the string, `ArgumentError`
+  # is raised.
+  #
+  # However, *index* can be the position that is exactly the end of the string:
+  #
+  # ```
+  # "abcd".delete_at(4, 3) # => "abcd"
+  # ```
+  def delete_at(index : Int, count : Int) : String
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
+    count = Math.min(count, size - index)
+
+    case count
+    when 0
+      return self
+    when size
+      return ""
+    else
+      if ascii_only?
+        byte_delete_at(index, count, count)
+      else
+        unicode_delete_at(index, count)
+      end
+    end
+  end
+
+  private def byte_delete_at(start, count, byte_count)
+    new_bytesize = bytesize - byte_count
+    String.new(new_bytesize) do |buffer|
+      # Copy left part
+      buffer.copy_from(to_unsafe, start)
+
+      # Copy right part
+      (buffer + start).copy_from(
+        to_unsafe + start + byte_count,
+        bytesize - start - byte_count,
+      )
+
+      {new_bytesize, size - count}
+    end
+  end
+
+  private def unicode_delete_at(start, count)
+    start_pos, end_pos, _ = find_start_end_and_index(start, count)
+
+    # That start is in bounds was already verified in `delete_at`
+    start_pos = start_pos.not_nil!
+
+    byte_count = end_pos - start_pos.not_nil!
+    byte_delete_at(start_pos, count, byte_count)
+  end
+
+  private def find_start_end_and_index(start, count)
+    start_pos = nil
+    end_pos = nil
+
+    reader = Char::Reader.new(self)
+    i = 0
+
+    reader.each do |char|
+      if i == start
+        start_pos = reader.pos
+      elsif i == start + count
+        end_pos = reader.pos
+        i += 1
+        break
+      end
+      i += 1
+    end
+
+    end_pos ||= reader.pos
+
+    {start_pos, end_pos, i}
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
