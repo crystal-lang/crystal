@@ -77,6 +77,7 @@ class Crystal::Command
       options.shift
       {% if flag?(:without_playground) %}
         puts "Crystal was compiled without playground support"
+        puts "You can play with the online version here: https://play.crystal-lang.org"
         exit 1
       {% else %}
         playground
