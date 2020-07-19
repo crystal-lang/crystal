@@ -559,7 +559,7 @@ module Crystal
     def allows_instance_vars?
       case self
       when program.object, program.value, program.struct,
-           program.number, program.int, program.float,
+           program.number, program.int_base, program.float,
            PrimitiveType, program.reference
         false
       else

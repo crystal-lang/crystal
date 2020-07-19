@@ -97,11 +97,11 @@ module Spec
   end
 
   # :nodoc:
-  def self.line=(@@line : Int)
+  def self.line=(@@line : DefaultInt)
   end
 
   # :nodoc:
-  def self.slowest=(@@slowest : Int32)
+  def self.slowest=(@@slowest : DefaultInt)
   end
 
   # :nodoc:

@@ -211,7 +211,7 @@ module Crystal
     property value : String
     property kind : Symbol
 
-    def initialize(@value : String, @kind = :i32)
+    def initialize(@value : String, @kind = :i)
     end
 
     def self.new(value : Number)

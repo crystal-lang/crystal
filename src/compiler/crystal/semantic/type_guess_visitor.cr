@@ -981,15 +981,15 @@ module Crystal
     end
 
     def guess_type(node : SizeOf)
-      @program.int32
+      @program.int
     end
 
     def guess_type(node : InstanceSizeOf)
-      @program.int32
+      @program.int
     end
 
     def guess_type(node : OffsetOf)
-      @program.int32
+      @program.int
     end
 
     def guess_type(node : Nop)

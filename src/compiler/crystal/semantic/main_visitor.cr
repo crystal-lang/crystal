@@ -2680,10 +2680,10 @@ module Crystal
         node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
       end
 
-      expanded = NumberLiteral.new(offset.to_s, :i32)
-      expanded.type = @program.int32
+      expanded = NumberLiteral.new(offset.to_s, :i)
+      expanded.type = @program.int
       node.expanded = expanded
-      node.type = @program.int32
+      node.type = @program.int
 
       false
     end

@@ -127,7 +127,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.add(mpz, self, other) }
   end
 
-  def +(other : Int) : BigInt
+  def +(other : IntBase) : BigInt
     if other < 0
       self - other.abs
     elsif other <= LibGMP::ULong::MAX

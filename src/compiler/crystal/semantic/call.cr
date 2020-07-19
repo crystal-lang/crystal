@@ -546,7 +546,7 @@ class Crystal::Call
 
         arg_type.tuple_types.each_with_index do |tuple_type, index|
           num = NumberLiteral.new(index)
-          num.type = program.int32
+          num.type = program.int
           tuple_indexer = Call.new(arg.exp, "[]", num).at(arg)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
@@ -1087,7 +1087,7 @@ class Crystal::Call
       default_value = arg.default_value.as(MagicConstant)
       case default_value.name
       when :__LINE__, :__END_LINE__
-        type = program.int32
+        type = program.int
       when :__FILE__, :__DIR__
         type = program.string
       else

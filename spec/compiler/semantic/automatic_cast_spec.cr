@@ -666,4 +666,16 @@ describe "Semantic: automatic cast" do
       foo(x)
       )) { float64 }
   end
+
+  it "can't autocast Int" do
+    assert_error %(
+      def foo(x : Int64)
+        x
+      end
+
+      x = 1
+      foo(x)
+      ),
+      "OH NO"
+  end
 end
