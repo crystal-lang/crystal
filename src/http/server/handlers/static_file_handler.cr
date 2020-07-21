@@ -82,15 +82,17 @@ class HTTP::StaticFileHandler
       context.response.content_type = MIME.from_filename(file_path.to_s, "application/octet-stream")
 
       # Checks if pre-gzipped file can be served
-      gz_file_path = "#{file_path}.gz"
-      if File.exists?(gz_file_path) &&
-         # Allow small time drift. In some file systems, using `gz --keep` to
-         # compress the file will keep the modification time of the original file
-         # but truncating some decimals
-         last_modified - modification_time(gz_file_path) < 1.millisecond &&
-         context.request.headers.includes_word?("Accept-Encoding", "gzip")
-        file_path = gz_file_path
-        context.response.headers["Content-Encoding"] = "gzip"
+      if context.request.headers.includes_word?("Accept-Encoding", "gzip")
+        gz_file_path = "#{file_path}.gz"
+
+        if File.exists?(gz_file_path) &&
+           # Allow small time drift. In some file systems, using `gz --keep` to
+           # compress the file will keep the modification time of the original file
+           # but truncating some decimals
+           last_modified - modification_time(gz_file_path) < 1.millisecond
+          file_path = gz_file_path
+          context.response.headers["Content-Encoding"] = "gzip"
+        end
       end
 
       context.response.content_length = File.size(file_path)
