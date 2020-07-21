@@ -17,45 +17,47 @@ class HTTP::CompressHandler
     {% end %}
   end
 
-  private class CompressIO < IO
-    def initialize(@io : IO, @context : HTTP::Server::Context)
-      @checked = false
-    end
+  {% unless flag?(:without_zlib) %}
+    private class CompressIO < IO
+      def initialize(@io : IO, @context : HTTP::Server::Context)
+        @checked = false
+      end
 
-    def read(slice : Bytes)
-      raise NotImplementedError.new("read")
-    end
+      def read(slice : Bytes)
+        raise NotImplementedError.new("read")
+      end
 
-    def write(slice : Bytes) : Nil
-      check_output unless @checked
-      @io.write(slice)
-    end
+      def write(slice : Bytes) : Nil
+        check_output unless @checked
+        @io.write(slice)
+      end
 
-    def flush
-      @io.flush
-    end
+      def flush
+        @io.flush
+      end
 
-    def close
-      @io.close
-    end
+      def close
+        @io.close
+      end
 
-    private def check_output
-      @checked = true
+      private def check_output
+        @checked = true
 
-      return if @context.response.wrote_headers?
-      return if @context.response.headers.has_key?("Content-Encoding")
+        return if @context.response.wrote_headers?
+        return if @context.response.headers.has_key?("Content-Encoding")
 
-      request_headers = @context.request.headers
+        request_headers = @context.request.headers
 
-      if request_headers.includes_word?("Accept-Encoding", "gzip")
-        @context.response.headers["Content-Encoding"] = "gzip"
-        @context.response.headers.delete("Content-Length")
-        @io = Compress::Gzip::Writer.new(@io, sync_close: true)
-      elsif request_headers.includes_word?("Accept-Encoding", "deflate")
-        @context.response.headers["Content-Encoding"] = "deflate"
-        @context.response.headers.delete("Content-Length")
-        @io = Compress::Deflate::Writer.new(@io, sync_close: true)
+        if request_headers.includes_word?("Accept-Encoding", "gzip")
+          @context.response.headers["Content-Encoding"] = "gzip"
+          @context.response.headers.delete("Content-Length")
+          @io = Compress::Gzip::Writer.new(@io, sync_close: true)
+        elsif request_headers.includes_word?("Accept-Encoding", "deflate")
+          @context.response.headers["Content-Encoding"] = "deflate"
+          @context.response.headers.delete("Content-Length")
+          @io = Compress::Deflate::Writer.new(@io, sync_close: true)
+        end
       end
     end
-  end
+  {% end %}
 end
