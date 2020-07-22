@@ -716,6 +716,19 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
   end
 
+  it "errors if implementation adds type restriction" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+        end
+      end
+    ), "abstract `def Foo#foo(x)` must be implemented by Bar"
+  end
+
   it "errors if implementation doesn't have keyword arguments" do
     assert_error %(
       abstract class Foo
