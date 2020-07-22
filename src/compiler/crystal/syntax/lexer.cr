@@ -110,7 +110,11 @@ module Crystal
           elsif @comments_enabled
             return consume_comment(start)
           else
-            skip_comment
+            if current_char == '['
+              skip_multiline_comment
+            else
+              skip_comment
+            end
           end
         end
       end
@@ -1327,7 +1331,12 @@ module Crystal
     end
 
     def consume_comment(start_pos)
-      skip_comment
+      if current_char == '['
+        skip_multiline_comment
+      else
+        skip_comment
+      end
+      
       @token.type = :COMMENT
       @token.value = string_range(start_pos)
       @token
@@ -1361,6 +1370,17 @@ module Crystal
       while char != '\n' && char != '\0'
         char = next_char_no_column_increment
       end
+    end
+
+    def skip_multiline_comment
+      char = current_char
+      while peek_next_char != '\0' && char != ']' && peek_next_char != '#'
+        char = next_char_no_column_increment
+      end
+
+      #step over '#'
+      next_char_no_column_increment
+      next_char_no_column_increment if current_char == '#'
     end
 
     def consume_whitespace
