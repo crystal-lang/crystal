@@ -598,6 +598,20 @@ describe "Semantic: automatic cast" do
       )) { int128 }
   end
 
+  it "casts integer expression to larger type (#9565)" do
+    assert_type(%(
+      def foo(x : Int64)
+        x
+      end
+
+      def bar
+        1_i64
+      end
+
+      foo(bar)
+      )) { int64 }
+  end
+
   it "says ambiguous call for integer var to larger type (#9565)" do
     assert_error %(
       def foo(x : Int32)
