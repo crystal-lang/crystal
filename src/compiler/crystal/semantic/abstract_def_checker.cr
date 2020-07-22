@@ -187,17 +187,33 @@ class Crystal::AbstractDefChecker
         {a1.name, a1}
       end
 
-    # Check keyword arguments
-    m2_kargs.each do |i|
-      a2 = m2.args[i]
-      a1 = kargs.delete(a2.name)
-      return false unless a1
-      return false unless check_arg(t1, a1, t2, a2)
+    # Check double splat
+    if m2_double_splat = m2.double_splat
+      if m1_double_splat = m1.double_splat
+        return false unless check_arg(t1, m1_double_splat, t2, m2_double_splat)
+      else
+        return false
+      end
     end
 
-    # Remaining keyword arguments must have a default value
+    # Check keyword arguments
+    # They must either exist in the implementation or match with the double splat
+    m2_kargs.each do |i|
+      a2 = m2.args[i]
+      if a1 = kargs.delete(a2.name) || m1.double_splat
+        return false unless check_arg(t1, a1, t2, a2)
+      else
+        return false
+      end
+    end
+
+    # Check remaining keyword arguments
+    # They must have a default value and match the double splat in the abstract (if it exists)
     kargs.each_value do |a1|
       return false unless a1.default_value
+      if m2_double_splat = m2.double_splat
+        return false unless check_arg(t1, a1, t2, m2_double_splat)
+      end
     end
 
     true
