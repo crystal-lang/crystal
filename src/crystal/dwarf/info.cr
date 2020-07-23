@@ -45,7 +45,7 @@ module Crystal
           code = DWARF.read_unsigned_leb128(@io)
           attributes.clear
 
-          if abbrev = abbreviations[(code &- 1).to_i!]? # abbreviations.find { |a| a.code == abbrev }
+          if code > 0 && (abbrev = abbreviations[(code &- 1).to_i]?) # abbreviations.find { |a| a.code == abbrev }
             abbrev.attributes.each do |attr|
               value = read_attribute_value(attr.form)
               attributes << {attr.at, attr.form, value}
@@ -67,19 +67,19 @@ module Crystal
           end
         when FORM::Block1
           len = @io.read_byte.not_nil!
-          @io.read_fully(bytes = Bytes.new(len.to_i!))
+          @io.read_fully(bytes = Bytes.new(len))
           bytes
         when FORM::Block2
           len = @io.read_bytes(UInt16)
-          @io.read_fully(bytes = Bytes.new(len.to_i!))
+          @io.read_fully(bytes = Bytes.new(len))
           bytes
         when FORM::Block4
           len = @io.read_bytes(UInt32)
-          @io.read_fully(bytes = Bytes.new(len.to_i!))
+          @io.read_fully(bytes = Bytes.new(len.to_i))
           bytes
         when FORM::Block
           len = DWARF.read_unsigned_leb128(@io)
-          @io.read_fully(bytes = Bytes.new(len.to_i!))
+          @io.read_fully(bytes = Bytes.new(len.to_i))
           bytes
         when FORM::Data1
           @io.read_byte.not_nil!
@@ -95,7 +95,7 @@ module Crystal
           DWARF.read_unsigned_leb128(@io)
         when FORM::Exprloc
           len = DWARF.read_unsigned_leb128(@io)
-          @io.read_fully(bytes = Bytes.new(len.to_i!))
+          @io.read_fully(bytes = Bytes.new(len.to_i))
           bytes
         when FORM::Flag
           @io.read_byte == 1

@@ -11,7 +11,7 @@ module Crystal
   # Documentation:
   # - <http://dwarfstd.org>
   module DWARF
-    def self.read_unsigned_leb128(io : IO)
+    def self.read_unsigned_leb128(io : IO) : UInt32
       result = 0_u32
       shift = 0
 
@@ -25,7 +25,7 @@ module Crystal
       result
     end
 
-    def self.read_signed_leb128(io : IO)
+    def self.read_signed_leb128(io : IO) : Int32
       result = 0_i32
       shift = 0
       size = 32
