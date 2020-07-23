@@ -7,8 +7,8 @@ class CSV
 
   # Raised when an error is encountered during CSV parsing.
   class MalformedCSVError < Error
-    getter line_number : Int32
-    getter column_number : Int32
+    getter line_number : DefaultInt
+    getter column_number : DefaultInt
 
     def initialize(message, @line_number, @column_number)
       super("#{message} at #{@line_number}:#{@column_number}")

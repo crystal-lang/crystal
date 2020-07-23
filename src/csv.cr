@@ -162,7 +162,7 @@ class CSV
   end
 
   @headers : Array(String)?
-  @indices : Hash(String, Int32)?
+  @indices : Hash(String, DefaultInt)?
 
   # Creates a new instance from the given `String` or `IO`.
   #
@@ -177,7 +177,7 @@ class CSV
     if headers
       headers = @parser.next_row || ([] of String)
       headers = @headers = headers.map &.strip
-      indices = @indices = {} of String => Int32
+      indices = @indices = {} of String => DefaultInt
       headers.each_with_index do |header, index|
         indices[header] ||= index
       end
