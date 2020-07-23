@@ -182,7 +182,7 @@ describe HTTP::WebSocket do
   describe "send" do
     it "sends long data with correct header" do
       size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "a" * size.to_i
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io)
       ws.send(big_string)
@@ -269,7 +269,7 @@ describe HTTP::WebSocket do
 
     it "sends long data with correct header" do
       size = UInt16::MAX.to_u64 + 1
-      big_string = "a" * size
+      big_string = "a" * size.to_i
       io = IO::Memory.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)
       ws.send(big_string)

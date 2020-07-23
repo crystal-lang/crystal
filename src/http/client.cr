@@ -91,7 +91,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # client.port # => 80
   # ```
-  getter port : Int32
+  getter port : DefaultInt
 
   # If this client uses TLS, returns its `OpenSSL::SSL::Context::Client`, raises otherwise.
   #
@@ -126,7 +126,7 @@ class HTTP::Client
   # be used depending on the *tls* arguments: 80 for if *tls* is `false`,
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
-  def initialize(@host : String, port = nil, tls : TLSContext = nil)
+  def initialize(@host : String, port : DefaultInt? = nil, tls : TLSContext = nil)
     check_host_only(@host)
 
     {% if flag?(:without_openssl) %}

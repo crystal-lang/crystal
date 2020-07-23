@@ -168,12 +168,12 @@ class HTTP::Server
   # the server responds with the status code `414 URI Too Long` (see `HTTP::Status::URI_TOO_LONG`).
   #
   # Default: `HTTP::MAX_REQUEST_LINE_SIZE`
-  def max_request_line_size : Int32
+  def max_request_line_size : DefaultInt
     @processor.max_request_line_size
   end
 
   # Sets the maximum permitted size for the request line in an HTTP request.
-  def max_request_line_size=(size : Int32)
+  def max_request_line_size=(size : DefaultInt)
     @processor.max_request_line_size = size
   end
 
@@ -186,12 +186,12 @@ class HTTP::Server
   # (see `HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE`).
   #
   # Default: `HTTP::MAX_HEADERS_SIZE`
-  def max_headers_size : Int32
+  def max_headers_size : DefaultInt
     @processor.max_headers_size
   end
 
   # Sets the maximum permitted combined size for the headers in an HTTP request.
-  def max_headers_size=(size : Int32)
+  def max_headers_size=(size : DefaultInt)
     @processor.max_headers_size = size
   end
 
@@ -207,7 +207,7 @@ class HTTP::Server
   #
   # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
-  def bind_tcp(host : String, port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+  def bind_tcp(host : String, port : DefaultInt, reuse_port : Bool = false) : Socket::IPAddress
     tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
 
     begin
@@ -232,7 +232,7 @@ class HTTP::Server
   #
   # If *reuse_port* is `true`, it enables the `SO_REUSEPORT` socket option,
   # which allows multiple processes to bind to the same port.
-  def bind_tcp(port : Int32, reuse_port : Bool = false) : Socket::IPAddress
+  def bind_tcp(port : DefaultInt, reuse_port : Bool = false) : Socket::IPAddress
     bind_tcp Socket::IPAddress::LOOPBACK, port, reuse_port
   end
 
@@ -314,7 +314,7 @@ class HTTP::Server
     # context.private_key = "openssl.key"
     # server.bind_tls "127.0.0.1", 8080, context
     # ```
-    def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
+    def bind_tls(host : String, port : DefaultInt, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
       server.start_immediately = false
@@ -426,8 +426,8 @@ class HTTP::Server
   # Creates a `TCPServer` listening on `127.0.0.1:port`, adds it as a socket
   # and starts the server. Blocks until the server is closed.
   #
-  # See `#bind(port : Int32)` for details.
-  def listen(port : Int32, reuse_port : Bool = false)
+  # See `#bind(port : DefaultInt)` for details.
+  def listen(port : DefaultInt, reuse_port : Bool = false)
     bind_tcp(port, reuse_port)
 
     listen
@@ -436,8 +436,8 @@ class HTTP::Server
   # Creates a `TCPServer` listening on `host:port`, adds it as a socket
   # and starts the server. Blocks until the server is closed.
   #
-  # See `#bind(host : String, port : Int32)` for details.
-  def listen(host : String, port : Int32, reuse_port : Bool = false)
+  # See `#bind(host : String, port : DefaultInt)` for details.
+  def listen(host : String, port : DefaultInt, reuse_port : Bool = false)
     bind_tcp(host, port, reuse_port)
 
     listen

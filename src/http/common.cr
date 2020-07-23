@@ -39,7 +39,7 @@ module HTTP
           body = nil
         elsif content_length = content_length(headers)
           # TODO(platform): check this to_i
-          body = FixedLengthContent.new(io, content_length.to_i)
+          body = FixedLengthContent.new(io, content_length)
         elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?

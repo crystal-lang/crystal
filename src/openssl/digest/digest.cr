@@ -68,11 +68,11 @@ module OpenSSL
       end
     end
 
-    def digest_size : Int32
+    def digest_size : DefaultInt
       LibCrypto.evp_md_size(to_unsafe_md).to_i
     end
 
-    def block_size : Int32
+    def block_size : DefaultInt
       LibCrypto.evp_md_block_size(to_unsafe_md).to_i
     end
 

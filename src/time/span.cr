@@ -104,7 +104,7 @@ struct Time::Span
   # Time::Span.new(nanoseconds: 500_000_000)   # => 00:00:00.500000000
   # Time::Span.new(nanoseconds: 5_500_000_000) # => 00:00:05.500000000
   # ```
-  def self.new(*, nanoseconds : Int)
+  def self.new(*, nanoseconds : IntBase)
     new(
       seconds: nanoseconds.to_i64.tdiv(NANOSECONDS_PER_SECOND),
       nanoseconds: nanoseconds.to_i64.remainder(NANOSECONDS_PER_SECOND),
@@ -120,7 +120,7 @@ struct Time::Span
   # Time::Span.new(days: 1, hours: 2, minutes: 3)                             # => 01:02:03
   # Time::Span.new(days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5) # => 1.02:03:04.000000005
   # ```
-  def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
+  def self.new(*, days : IntBase = 0, hours : IntBase = 0, minutes : IntBase = 0, seconds : IntBase = 0, nanoseconds : IntBase = 0)
     new(
       seconds: compute_seconds(days, hours, minutes, seconds),
       nanoseconds: nanoseconds,

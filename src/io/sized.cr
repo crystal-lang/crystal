@@ -19,7 +19,7 @@ class IO::Sized < IO
   # Creates a new `IO::Sized` which wraps *io*, and can read a maximum of
   # *read_size* bytes. If *sync_close* is set, calling `#close` calls
   # `#close` on the underlying `IO`.
-  def initialize(@io : IO, read_size : Int, @sync_close = false)
+  def initialize(@io : IO, read_size : IntBase, @sync_close = false)
     raise ArgumentError.new "Negative read_size" if read_size < 0
     @closed = false
     @read_remaining = read_size.to_u64
