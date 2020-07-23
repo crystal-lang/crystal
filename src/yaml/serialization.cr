@@ -381,31 +381,39 @@ module YAML
         {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
       {% end %}
 
-      private def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
+        YAML::Serializable.discriminate(ctx, node, {{field}}, {{mapping}})
+      end
+    end
 
-        unless node.is_a?(YAML::Nodes::Mapping)
-          node.raise "expected YAML mapping, not #{node.class}"
+    macro discriminate(ctx, node, field, mapping)
+      unless {{node}}.is_a?(YAML::Nodes::Mapping)
+        {{node}}.raise "expected YAML mapping, not #{{{node}}.class}"
+      end
+
+      %discriminator_value = nil
+
+      {{node}}.each do |key, value|
+        next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+
+        if key.value == {{field.id.stringify}}
+          %discriminator_value = value.value
+          break
         end
+      end
 
-        node.each do |key, value|
-          next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
-          next unless key.value == {{field.id.stringify}}
-
-          discriminator_value = value.value
-          case discriminator_value
-          {% for key, value in mapping %}
-            when {{key.id.stringify}}
-              return {{value.id}}.new(ctx, node)
-          {% end %}
-          else
-            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
-          end
-        end
-
-        node.raise "Missing YAML discriminator field '{{field.id}}'"
+      case %discriminator_value
+      when Nil
+        {{node}}.raise "Missing YAML discriminator field '{{ field.id }}'"
+      {% for key, value in mapping %}
+        when {{key.id.stringify}}
+          {{value.id}}.new({{ctx}}, {{node}})
+      {% end %}
+      else
+        {{node}}.raise "Unknown '{{field.id}}' discriminator value: #{%discriminator_value.inspect}"
       end
     end
   end

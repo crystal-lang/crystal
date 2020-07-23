@@ -285,23 +285,35 @@ class YAMLAttrModuleTest2 < YAMLAttrModuleTest
   end
 end
 
-abstract class YAMLShape
-  include YAML::Serializable
+module YAMLShape
+  def self.from_yaml(string_or_io)
+    new YAML::ParseContext.new, YAML::Nodes.parse(string_or_io).nodes.first
+  end
 
-  use_yaml_discriminator "type", {point: YAMLPoint, circle: YAMLCircle}
-
-  property type : String
+  YAML::Serializable.use_yaml_discriminator "type", {point: YAMLPoint, circle: YAMLCircle}
 end
 
-class YAMLPoint < YAMLShape
+abstract class Shape
+end
+
+class YAMLPoint < Shape
+  include YAML::Serializable
+
+  property type : String
   property x : Int32
   property y : Int32
 end
 
-class YAMLCircle < YAMLShape
+class YAMLCircle < Shape
+  include YAML::Serializable
+
+  property type : String
   property x : Int32
   property y : Int32
   property radius : Int32
+end
+
+class NotSerializable < Shape
 end
 
 describe "YAML::Serializable" do
@@ -830,6 +842,21 @@ describe "YAML::Serializable" do
       expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
+    end
+  end
+
+  describe ".discriminate" do
+    it "discriminates" do
+      nodes = YAML::Nodes.parse(%<
+          {
+            "type": "point",
+            "x": 1,
+            "y": 2
+          }
+          >)
+
+      value = (YAML::Serializable.discriminate(YAML::ParseContext.new, nodes, "type", {point: JSONPoint, circle: JSONCircle}))
+      value.should be_a(YAMLPoint)
     end
   end
 end
