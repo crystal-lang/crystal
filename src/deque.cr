@@ -109,12 +109,24 @@ class Deque(T)
   # deq == Deque{2, 3}    # => false
   # ```
   def ==(other : Deque)
-    equals?(other) { |x, y| x == y }
+    exec_recursive_pair(:==, other) do
+      return false unless equals?(other) { |x, y| x == y }
+    end
+
+    true
   end
 
   # :nodoc:
   def ==(other)
     false
+  end
+
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    # TODO: it returns same hash value when an array is recursive.
+    # While `Hash` works fine, but it is inefficient.
+    exec_recursive_outer(:hash) { hasher = super(hasher) }
+    hasher
   end
 
   # Concatenation. Returns a new `Deque` built by concatenating

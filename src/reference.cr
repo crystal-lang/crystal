@@ -133,9 +133,119 @@ class Reference
     io << '>'
   end
 
+  # Returns whether this can be recursive or not.
+  # It calculates on compile-time, and it determines `exec_recursive` handling is needed really.
+  private def possibly_recursive?
+    {% begin %}
+      {% stack = {} of TypeNode => Bool %}
+      {% stack[@type] = true %}
+      {% rec = false %}
+      {% for t, ok in stack %}
+        {% us = [] of TypeNode %}
+        {% for v in t.instance_vars %}{% us << v.type %}{% end %}
+        {% for u in t.subclasses %}{% us << u %}{% end %}
+        {% if t.union? %}
+          {% for u in t.union_types %}{% us << u %}{% end %}
+        {% end %}
+        {% if t <= Tuple || t <= Pointer %}
+          {% for u in t.type_vars %}{% us << u %}{% end %}
+        {% end %}
+        {% if t <= NamedTuple && t != NoReturn %}
+          {% for k in t.keys %}{% us << t[k] %}{% end %}
+        {% end %}
+        {% for u in us %}
+          {% rec = rec || @type <= u %}
+          {% stack[u] = true if !rec && !stack[u] %}
+        {% end %}
+        {% stack.clear if rec %}
+      {% end %}
+      {{ rec }}
+    {% end %}
+  end
+
   # :nodoc:
   module ExecRecursive
     alias Registry = Hash({UInt64, Symbol}, Bool)
+    alias Outers = Hash(Symbol, Bool)
+
+    class OuterSignal < Exception
+    end
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+      @@outers = Crystal::ThreadLocalValue(Outers).new
+    {% else %}
+      @@exec_recursive = Registry.new
+      @@outers = Outers.new
+    {% end %}
+
+    def self.hash
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
+    end
+
+    def self.outers
+      {% if flag?(:preview_mt) %}
+        @@outers.get { Outers.new }
+      {% else %}
+        @@outers
+      {% end %}
+    end
+  end
+
+  private def exec_recursive(method)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
+    hash = ExecRecursive.hash
+    key = {object_id, method}
+    if hash[key]?
+      false
+    else
+      hash[key] = true
+      begin
+        yield
+      ensure
+        hash.delete(key)
+      end
+      true
+    end
+  end
+
+  private def exec_recursive_outer(method)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
+    outers = ExecRecursive.outers
+    outmost = !outers[method]?
+
+    unless outmost
+      unless exec_recursive(method) { yield }
+        raise ExecRecursive::OuterSignal.new
+      end
+      return true
+    end
+
+    outers[method] = true
+    begin
+      exec_recursive(method) { yield }
+    rescue ExecRecursive::OuterSignal
+      return false
+    ensure
+      outers.delete method
+    end
+  end
+
+  # :nodoc:
+  module ExecRecursivePair
+    alias Registry = Hash({UInt64, UInt64, Symbol}, Bool)
 
     {% if flag?(:preview_mt) %}
       @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
@@ -152,15 +262,24 @@ class Reference
     end
   end
 
-  private def exec_recursive(method)
-    hash = ExecRecursive.hash
-    key = {object_id, method}
+  private def exec_recursive_pair(method, pair)
+    unless possibly_recursive?
+      yield
+      return true
+    end
+
+    hash = ExecRecursivePair.hash
+    pair_id = pair.object_id
+    key = {object_id, pair_id, method}
     if hash[key]?
       false
     else
       hash[key] = true
-      value = yield
-      hash.delete(key)
+      begin
+        yield
+      ensure
+        hash.delete key
+      end
       true
     end
   end
