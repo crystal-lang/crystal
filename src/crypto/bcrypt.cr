@@ -63,7 +63,7 @@ class Crypto::Bcrypt
 
   getter password : Bytes
   getter salt : Bytes
-  getter cost : Int32
+  getter cost : DefaultInt
 
   def initialize(@password : Bytes, @salt : Bytes, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)

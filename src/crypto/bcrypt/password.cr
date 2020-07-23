@@ -28,7 +28,7 @@ class Crypto::Bcrypt::Password
   end
 
   getter version : String
-  getter cost : Int32
+  getter cost : DefaultInt
   getter salt : String
   getter digest : String
 

@@ -215,7 +215,7 @@ module Crystal
     end
 
     def self.new(value : Number)
-      new(value.to_s, kind_from_number(value))
+      new(value.to_s, :i)
     end
 
     def has_sign?
