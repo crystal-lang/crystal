@@ -40,7 +40,7 @@ struct Bool
   end
 end
 
-struct Int
+reopen_int_base do
   def to_json(json : JSON::Builder)
     json.number(self)
   end

@@ -246,7 +246,7 @@ struct Number
   end
 end
 
-struct Int
+reopen_int_base do
   enum BinaryPrefixFormat
     # The IEC standard prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`)
     # based on powers of 1000.

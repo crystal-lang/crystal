@@ -10,7 +10,7 @@ module Spec
 
     # :nodoc:
     def initialize(@parent : Context, @description : String,
-                   @file : String, @line : Int32, @end_line : Int32,
+                   @file : String, @line : DefaultInt, @end_line : DefaultInt,
                    @focus : Bool, tags,
                    @block : (->) | Nil)
       initialize_tags(tags)

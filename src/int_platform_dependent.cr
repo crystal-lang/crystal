@@ -1222,3 +1222,9 @@ struct Int
 end
 
 alias DefaultInt = Int
+
+macro reopen_int_base
+  struct IntBase
+    {{ yield }}
+  end
+end

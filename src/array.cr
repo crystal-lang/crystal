@@ -2118,13 +2118,12 @@ class Array(T)
     resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
   end
 
-  private def resize_to_capacity(capacity)
-    capacity = capacity.to_i!
+  private def resize_to_capacity(capacity : DefaultInt)
     @capacity = capacity
     if @buffer
-      @buffer = @buffer.realloc(@capacity.to_i!)
+      @buffer = @buffer.realloc(@capacity)
     else
-      @buffer = Pointer(T).malloc(@capacity.to_i!)
+      @buffer = Pointer(T).malloc(@capacity)
     end
   end
 

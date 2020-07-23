@@ -127,9 +127,9 @@ class Crystal::CodeGenVisitor
       end_location = node.end_location
       case default_value.name
       when :__LINE__
-        call_args << int32(MagicConstant.expand_line(location))
+        call_args << platform_dependent_int(MagicConstant.expand_line(location))
       when :__END_LINE__
-        call_args << int32(MagicConstant.expand_line(end_location))
+        call_args << platform_dependent_int(MagicConstant.expand_line(end_location))
       when :__FILE__
         call_args << build_string_constant(MagicConstant.expand_file(location))
       when :__DIR__

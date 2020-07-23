@@ -11,10 +11,10 @@ module Spec
     getter file : String
 
     # The line where the example or example group starts.
-    getter line : Int32
+    getter line : DefaultInt
 
     # The line where the example or example group ends.
-    getter end_line : Int32
+    getter end_line : DefaultInt
 
     # Does this example or example group have `focus: true` on it?
     getter? focus : Bool

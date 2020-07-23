@@ -1167,3 +1167,9 @@ end
 
 alias IntBase = Int
 alias DefaultInt = Int32
+
+macro reopen_int_base
+  struct Int
+    {{ yield }}
+  end
+end

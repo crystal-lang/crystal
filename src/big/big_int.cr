@@ -145,7 +145,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.sub(mpz, self, other) }
   end
 
-  def -(other : Int) : BigInt
+  def -(other : IntBase) : BigInt
     if other < 0
       self + other.abs
     elsif other <= LibGMP::ULong::MAX
@@ -188,7 +188,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, other) }
   end
 
-  def *(other : Int) : BigInt
+  def *(other : IntBase) : BigInt
     self * other.to_big_i
   end
 
@@ -205,7 +205,7 @@ struct BigInt < IntBase
     unsafe_floored_div(other)
   end
 
-  def //(other : Int) : BigInt
+  def //(other : IntBase) : BigInt
     check_division_by_zero other
 
     if other < 0
@@ -215,7 +215,7 @@ struct BigInt < IntBase
     end
   end
 
-  def tdiv(other : Int) : BigInt
+  def tdiv(other : IntBase) : BigInt
     check_division_by_zero other
 
     unsafe_truncated_div(other)
@@ -225,7 +225,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
   end
 
-  def unsafe_floored_div(other : Int) : BigInt
+  def unsafe_floored_div(other : IntBase) : BigInt
     if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
       unsafe_floored_div(other.to_big_i)
     elsif other < 0
@@ -239,7 +239,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.tdiv_q(mpz, self, other) }
   end
 
-  def unsafe_truncated_div(other : Int) : BigInt
+  def unsafe_truncated_div(other : IntBase) : BigInt
     if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
       unsafe_truncated_div(other.to_big_i)
     elsif other < 0
@@ -249,7 +249,7 @@ struct BigInt < IntBase
     end
   end
 
-  def %(other : Int) : BigInt
+  def %(other : IntBase) : BigInt
     check_division_by_zero other
 
     if other < 0
@@ -259,7 +259,7 @@ struct BigInt < IntBase
     end
   end
 
-  def remainder(other : Int) : BigInt
+  def remainder(other : IntBase) : BigInt
     check_division_by_zero other
 
     unsafe_truncated_mod(other)
@@ -298,7 +298,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
   end
 
-  def unsafe_floored_mod(other : Int) : BigInt
+  def unsafe_floored_mod(other : IntBase) : BigInt
     if (other < LibGMP::Long::MIN || other > LibGMP::ULong::MAX)
       unsafe_floored_mod(other.to_big_i)
     elsif other < 0
@@ -316,7 +316,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs) }
   end
 
-  def unsafe_truncated_mod(other : Int) : BigInt
+  def unsafe_truncated_mod(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i) }
   end
 
@@ -348,34 +348,34 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
 
-  def &(other : Int) : BigInt
+  def &(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.and(mpz, self, other.to_big_i) }
   end
 
-  def |(other : Int) : BigInt
+  def |(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.ior(mpz, self, other.to_big_i) }
   end
 
-  def ^(other : Int) : BigInt
+  def ^(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.xor(mpz, self, other.to_big_i) }
   end
 
-  def >>(other : Int) : BigInt
+  def >>(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
   # :nodoc:
   #
   # Because every Int needs this method.
-  def unsafe_shr(count : Int) : self
+  def unsafe_shr(count : IntBase) : self
     self >> count
   end
 
-  def <<(other : Int) : BigInt
+  def <<(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
   end
 
-  def **(other : Int) : BigInt
+  def **(other : IntBase) : BigInt
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
     end
@@ -386,7 +386,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
-  def gcd(other : Int) : Int
+  def gcd(other : IntBase) : IntBase
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
@@ -395,7 +395,7 @@ struct BigInt < IntBase
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
-  def lcm(other : Int) : BigInt
+  def lcm(other : IntBase) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
 
@@ -420,7 +420,7 @@ struct BigInt < IntBase
   # :ditto:
   def to_s(io : IO) : Nil
     str = to_cstr
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+    io.write_utf8 Slice.new(str, LibC.strlen(str).to_i)
   end
 
   # Returns a string containing the representation of big radix base (2 through 36).
@@ -439,12 +439,12 @@ struct BigInt < IntBase
   end
 
   # :nodoc:
-  def digits(base = 10) : Array(Int32)
+  def digits(base = 10) : Array(DefaultInt)
     if self < 0
       raise ArgumentError.new("Can't request digits of negative number")
     end
 
-    ary = [] of Int32
+    ary = [] of DefaultInt
     self.to_s(base).each_char { |c| ary << c.to_i(base) }
     ary.reverse!
     ary
@@ -618,12 +618,7 @@ struct BigInt < IntBase
   end
 end
 
-{% begin %}
-  {% if flag?(:platform_dependent_int) %}
-    {{ "struct IntBase".id }}
-  {% else %}
-    {{ "struct Int".id }}
-  {% end %}
+reopen_int_base do
   include Comparable(BigInt)
 
   def <=>(other : BigInt)
@@ -684,8 +679,7 @@ end
   def to_big_i : BigInt
     BigInt.new(self)
   end
-{{ "end".id }}
-{% end %}
+end
 
 struct Float
   include Comparable(BigInt)

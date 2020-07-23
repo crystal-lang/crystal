@@ -32,6 +32,11 @@ module Crystal
       llvm_type(type).const_int(n)
     end
 
+    def platform_dependent_int(n)
+      # TODO(platform)
+      int64(n)
+    end
+
     def float32(value)
       llvm_context.float.const_float(value)
     end

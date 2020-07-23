@@ -42,9 +42,9 @@ module Spec
   # :nodoc:
   class SpecError < Exception
     getter file : String
-    getter line : Int32
+    getter line : DefaultInt
 
-    def initialize(message, @file, @line)
+    def initialize(message, @file : String, @line : DefaultInt)
       super(message)
     end
   end

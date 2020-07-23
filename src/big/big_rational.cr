@@ -27,7 +27,7 @@ struct BigRational < Number
   # Creates a new `BigRational`.
   #
   # If *denominator* is 0, this will raise an exception.
-  def initialize(numerator : Int, denominator : Int)
+  def initialize(numerator : IntBase, denominator : IntBase)
     check_division_by_zero denominator
 
     numerator = BigInt.new(numerator) unless numerator.is_a?(BigInt)
@@ -40,7 +40,7 @@ struct BigRational < Number
   end
 
   # Creates a new `BigRational` with *num* as the numerator and 1 for denominator.
-  def initialize(num : Int)
+  def initialize(num : IntBase)
     initialize(num, 1)
   end
 
@@ -100,7 +100,7 @@ struct BigRational < Number
     to_big_f <=> other.to_big_f
   end
 
-  def <=>(other : Int)
+  def <=>(other : IntBase)
     LibGMP.mpq_cmp(mpq, other.to_big_r)
   end
 
@@ -108,7 +108,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_add(mpq, self, other) }
   end
 
-  def +(other : Int)
+  def +(other : IntBase)
     self + other.to_big_r
   end
 
@@ -116,7 +116,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_sub(mpq, self, other) }
   end
 
-  def -(other : Int)
+  def -(other : IntBase)
     self - other.to_big_r
   end
 
@@ -124,7 +124,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_mul(mpq, self, other) }
   end
 
-  def *(other : Int)
+  def *(other : IntBase)
     self * other.to_big_r
   end
 
@@ -155,7 +155,7 @@ struct BigRational < Number
   #
   # BigRational.new(2, 3) >> 2 # => 1/6
   # ```
-  def >>(other : Int)
+  def >>(other : IntBase)
     BigRational.new { |mpq| LibGMP.mpq_div_2exp(mpq, self, other) }
   end
 
@@ -166,7 +166,7 @@ struct BigRational < Number
   #
   # BigRational.new(2, 3) << 2 # => 8/3
   # ```
-  def <<(other : Int)
+  def <<(other : IntBase)
     BigRational.new { |mpq| LibGMP.mpq_mul_2exp(mpq, self, other) }
   end
 
@@ -184,7 +184,7 @@ struct BigRational < Number
   # BigRational.new(2, 3) ** 2  # => 4/9
   # BigRational.new(2, 3) ** -1 # => 3/2
   # ```
-  def **(other : Int) : BigRational
+  def **(other : IntBase) : BigRational
     if other < 0
       return (self ** -other).inv
     end
@@ -231,7 +231,7 @@ struct BigRational < Number
     to_f64!
   end
 
-  delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
+  delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to_i, to: to_f64
 
   def to_big_f
     BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
@@ -253,13 +253,13 @@ struct BigRational < Number
   # r.to_s(16) # => "7dc82b/218c1652"
   # r.to_s(36) # => "4woiz/9b3djm"
   # ```
-  def to_s(base : Int = 10) : String
+  def to_s(base : DefaultInt = 10) : String
     String.new(to_cstr(base))
   end
 
-  def to_s(io : IO, base : Int = 10) : Nil
+  def to_s(io : IO, base : DefaultInt = 10) : Nil
     str = to_cstr(base)
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+    io.write_utf8 Slice.new(str, LibC.strlen(str).to_i)
   end
 
   def inspect : String
@@ -292,7 +292,7 @@ struct BigRational < Number
   end
 end
 
-struct Int
+reopen_int_base do
   include Comparable(BigRational)
 
   # Returns a `BigRational` representing this integer.
@@ -306,7 +306,7 @@ struct Int
   end
 
   def <=>(other : BigRational)
-    -(other <=> self)
+    (other <=> self).try(&.-)
   end
 
   def +(other : BigRational)

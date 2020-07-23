@@ -113,7 +113,7 @@ module Spec
     kind : Symbol,
     description : String,
     file : String,
-    line : Int32,
+    line : DefaultInt,
     elapsed : Time::Span?,
     exception : Exception?
 
@@ -315,7 +315,7 @@ module Spec
     include Item
 
     def initialize(@parent : Context, @description : String,
-                   @file : String, @line : Int32, @end_line : Int32,
+                   @file : String, @line : DefaultInt, @end_line : DefaultInt,
                    @focus : Bool, tags)
       initialize_tags(tags)
     end

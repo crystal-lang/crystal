@@ -55,8 +55,8 @@ struct Char
 
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
-    def initialize(@string : String, pos = 0)
-      @pos = pos.to_i!
+    def initialize(@string : String, pos : DefaultInt = 0)
+      @pos = pos
       @current_char = '\0'
       @current_char_width = 0
       @end = false

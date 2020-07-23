@@ -8,7 +8,7 @@ end
 
 # A `BigDecimal` can represent arbitrarily large precision decimals.
 #
-# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
+# It is internally represented by a pair of `BigInt` and `Int`: value and scale.
 # Value contains the actual value, and scale tells the decimal point place.
 # E.g. when value is `1234` and scale `2`, the result is `12.34`.
 #
@@ -25,7 +25,7 @@ struct BigDecimal < Number
   include Comparable(BigDecimal)
 
   getter value : BigInt
-  getter scale : UInt64
+  getter scale : DefaultInt
 
   # Creates a new `BigDecimal` from `Float`.
   #
@@ -51,12 +51,12 @@ struct BigDecimal < Number
 
   # Creates a new `BigDecimal` from `BigInt` *value* and `UInt64` *scale*,
   # which matches the internal representation.
-  def initialize(@value : BigInt, @scale : UInt64)
+  def initialize(@value : BigInt, @scale : DefaultInt)
   end
 
   # Creates a new `BigDecimal` from `Int`.
-  def initialize(num : Int = 0, scale : Int = 0)
-    initialize(num.to_big_i, scale.to_u64)
+  def initialize(num : IntBase = 0, scale : IntBase = 0)
+    initialize(num.to_big_i, scale.to_i)
   end
 
   # Creates a new `BigDecimal` from a `String`.
@@ -104,16 +104,16 @@ struct BigDecimal < Number
 
     decimal_end_index = (exponent_index || str.bytesize) - 1
     if decimal_index
-      decimal_count = (decimal_end_index - decimal_index).to_u64
+      decimal_count = (decimal_end_index - decimal_index).to_i
 
       value_str = String.build do |builder|
         # We know this is ASCII, so we can slice by index
         builder.write(str.to_slice[0, decimal_index])
-        builder.write(str.to_slice[decimal_index + 1, decimal_count])
+        builder.write(str.to_slice[decimal_index + 1, decimal_count.to_i])
       end
       @value = value_str.to_big_i
     else
-      decimal_count = 0_u64
+      decimal_count = 0
       @value = str[0..decimal_end_index].to_big_i
     end
 
@@ -122,10 +122,10 @@ struct BigDecimal < Number
       case exponent_postfix
       when '+', '-'
         exponent_positive = exponent_postfix == '+'
-        exponent = str[(exponent_index + 2)..-1].to_u64
+        exponent = str[(exponent_index + 2)..-1].to_i
       else
         exponent_positive = true
-        exponent = str[(exponent_index + 1)..-1].to_u64
+        exponent = str[(exponent_index + 1)..-1].to_i
       end
 
       @scale = exponent
@@ -135,7 +135,7 @@ struct BigDecimal < Number
         else
           @scale -= decimal_count
           @value *= 10.to_big_i ** @scale
-          @scale = 0_u64
+          @scale = 0
         end
       else
         @scale += decimal_count
@@ -261,7 +261,7 @@ struct BigDecimal < Number
   end
 
   # :nodoc:
-  def in_scale(new_scale : UInt64) : BigDecimal
+  def in_scale(new_scale : DefaultInt) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
     elsif @scale > new_scale
@@ -282,7 +282,7 @@ struct BigDecimal < Number
   #
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
-  def **(other : Int) : BigDecimal
+  def **(other : IntBase) : BigDecimal
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
     end
@@ -541,7 +541,7 @@ struct BigDecimal < Number
     raise DivisionByZeroError.new if bd.value == 0
   end
 
-  private def power_ten_to(x : Int) : Int
+  private def power_ten_to(x : IntBase) : IntBase
     TEN ** x
   end
 

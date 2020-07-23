@@ -274,7 +274,7 @@ class JSONAttrWithQueryAttributes
 end
 
 module JSONAttrModule
-  property moo : Int32 = 10
+  property moo : DefaultInt = 10
 end
 
 class JSONAttrModuleTest

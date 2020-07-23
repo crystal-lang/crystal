@@ -322,8 +322,11 @@ class String
   # "0755".to_i(leading_zero_is_octal: true) # => 493
   # ```
   def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false)
-    # TODO(platform): or use to_i64
-    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).to_i
+    {% if flag?(:bits32) %}
+      to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int: #{self}") }.to_i
+    {% else %}
+      to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { raise ArgumentError.new("Invalid Int: #{self}") }.to_i
+    {% end %}
   end
 
   # Same as `#to_i`, but returns `nil` if there is not a valid number at the start
@@ -336,7 +339,11 @@ class String
   # "hello".to_i?             # => nil
   # ```
   def to_i?(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false)
-    to_i32?(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).try(&.to_i)
+    {% if flag?(:bits32) %}
+      to_i32?(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).try(&.to_i)
+    {% else %}
+      to_i64?(base, whitespace, underscore, prefix, strict, leading_zero_is_octal).try(&.to_i)
+    {% end %}
   end
 
   # Same as `#to_i`, but returns the block's value if there is not a valid number at the start
@@ -347,7 +354,11 @@ class String
   # "hello".to_i { 0 } # => 0
   # ```
   def to_i(base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false, &block)
-    to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { yield }
+    {% if flag?(:bits32) %}
+      to_i32(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { yield }.to_i
+    {% else %}
+      to_i64(base, whitespace, underscore, prefix, strict, leading_zero_is_octal) { yield }.to_i
+    {% end %}
   end
 
   # Same as `#to_i` but returns an `Int8`.

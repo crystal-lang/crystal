@@ -1,5 +1,8 @@
 struct BigInt
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], BigFloat
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], BigFloat
+  {% end %}
   Number.expand_div [Float32, Float64], BigFloat
 end
 
@@ -19,16 +22,25 @@ struct BigFloat
   end
 
   Number.expand_div [Int8, Int16, Int32, Int64, Int128, UInt128], BigFloat
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], BigFloat
+  {% end %}
   Number.expand_div [Float32, Float64], BigFloat
 end
 
 struct BigDecimal
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], BigDecimal
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], BigDecimal
+  {% end %}
   Number.expand_div [Float32, Float64], BigDecimal
 end
 
 struct BigRational
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], BigRational
+  {% if flag?(:platform_dependent_int) %}
+    Number.expand_div [Int], BigRational
+  {% end %}
   Number.expand_div [Float32, Float64], BigRational
 end
 
@@ -101,6 +113,15 @@ struct UInt128
   Number.expand_div [BigDecimal], BigDecimal
   Number.expand_div [BigRational], BigRational
 end
+
+{% if flag?(:platform_dependent_int) %}
+  struct Int
+    Number.expand_div [BigInt], BigFloat
+    Number.expand_div [BigFloat], BigFloat
+    Number.expand_div [BigDecimal], BigDecimal
+    Number.expand_div [BigRational], BigRational
+  end
+{% end %}
 
 struct Float
   def fdiv(other : BigInt | BigFloat | BigDecimal | BigRational) : self

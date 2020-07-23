@@ -139,9 +139,9 @@ class Crystal::Command
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
-    ex.inspect_with_backtrace STDERR
-
     report_warnings
+
+    ex.inspect_with_backtrace STDERR
 
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end

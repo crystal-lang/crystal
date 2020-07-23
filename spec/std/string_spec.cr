@@ -399,7 +399,7 @@ describe "String" do
     it { expect_raises(ArgumentError, "Invalid base 1") { "12ab".to_i(1) } }
     it { expect_raises(ArgumentError, "Invalid base 37") { "12ab".to_i(37) } }
 
-    it { expect_raises(ArgumentError, "Invalid Int32") { "1Y2P0IJ32E8E7".to_i(36) } }
+    it { expect_raises(ArgumentError, "Invalid Int32") { "1Y2P0IJ32E8E7".to_i32(36) } }
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
