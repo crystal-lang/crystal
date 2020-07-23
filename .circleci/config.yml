@@ -92,6 +92,7 @@ jobs:
           keys:
             - brew-cache-v1
       - checkout
+      - run: brew update
       - run: bin/ci prepare_system
       - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
