@@ -302,14 +302,14 @@ module Crystal
               case len
               when 8 then registers.address = @io.read_bytes(UInt64)
               when 4 then registers.address = @io.read_bytes(UInt32).to_u64
-              else        @io.skip(len.to_i!)
+              else        @io.skip(len.to_i)
               end
               registers.op_index = 0_u32
             when LNE::SetDiscriminator
               registers.discriminator = DWARF.read_unsigned_leb128(@io)
             else
               # skip unsupported opcode
-              @io.read_fully(Bytes.new(len.to_i!))
+              @io.read_fully(Bytes.new(len.to_i))
             end
           else
             # standard opcode
@@ -370,8 +370,8 @@ module Crystal
             registers.op_index,
             path,
             file[0],
-            registers.line.to_i32!,
-            registers.column.to_i32!,
+            registers.line.to_i32,
+            registers.column.to_i32,
             registers.end_sequence
           )
 

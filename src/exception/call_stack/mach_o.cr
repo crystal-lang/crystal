@@ -21,7 +21,7 @@ struct Exception::CallStack
       end
 
       strings = mach_o.read_section?("__debug_str") do |sh, io|
-        Crystal::DWARF::Strings.new(io, sh.offset, sh.size.to_i!)
+        Crystal::DWARF::Strings.new(io, sh.offset, sh.size.to_i)
       end
 
       mach_o.read_section?("__debug_info") do |sh, io|
@@ -92,7 +92,7 @@ struct Exception::CallStack
     size = LibC::PATH_MAX.to_u32
 
     if LibC._NSGetExecutablePath(buffer, pointerof(size)) == -1
-      buffer = GC.malloc_atomic(size.to_i!).as(UInt8*)
+      buffer = GC.malloc_atomic(size.to_i).as(UInt8*)
       if LibC._NSGetExecutablePath(buffer, pointerof(size)) == -1
         return LibC::Long.new(0)
       end

@@ -191,7 +191,7 @@ class String
   # String.new(ptr) # => "abcd"
   # ```
   def self.new(chars : UInt8*)
-    new(chars, LibC.strlen(chars).to_i!)
+    new(chars, LibC.strlen(chars).to_i)
   end
 
   # Creates a new `String` from a pointer, indicating its bytesize count
@@ -236,7 +236,7 @@ class String
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
-    str = GC.malloc_atomic(capacity.to_i! + HEADER_SIZE + 1).as(UInt8*)
+    str = GC.malloc_atomic(capacity.to_i + HEADER_SIZE + 1).as(UInt8*)
     buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
 
@@ -248,7 +248,7 @@ class String
 
     # Try to reclaim some memory if capacity is bigger than what was requested
     if bytesize < capacity
-      str = str.realloc(bytesize.to_i! + HEADER_SIZE + 1)
+      str = str.realloc(bytesize.to_i + HEADER_SIZE + 1)
     end
 
     str_header = str.as({Int32, Int32, Int32}*)
@@ -280,7 +280,7 @@ class String
   # "你好".bytesize    # => 6
   # ```
   def bytesize : Int
-    @bytesize.to_i!
+    @bytesize.to_i
   end
 
   # Returns the result of interpreting leading characters in this string as an
@@ -3261,7 +3261,7 @@ class String
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return byte_index if index == char_index
     end
-    return @bytesize.to_i! if index == size
+    return @bytesize.to_i if index == size
     nil
   end
 
@@ -4675,7 +4675,7 @@ class String
       return @length.to_i
     end
 
-    @length = (each_byte_index_and_char_index { }).to_i32!
+    @length = (each_byte_index_and_char_index { }).to_i32
     @length.to_i
   end
 

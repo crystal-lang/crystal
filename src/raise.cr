@@ -60,7 +60,7 @@ private def traverse_eh_table(leb, start, ip, actions)
   end
 
   cs_table_length = leb.read_uleb128 # CS table length
-  cs_table_end = leb.data + cs_table_length.to_i!
+  cs_table_end = leb.data + cs_table_length.to_i
 
   while leb.data < cs_table_end
     cs_offset = cs_encoding == 3 ? leb.read_uint32 : leb.read_uleb128

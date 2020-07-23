@@ -137,7 +137,7 @@ module IO::Buffered
     end
 
     if flush_on_newline?
-      index = slice[0, count.to_i!].rindex('\n'.ord.to_u8)
+      index = slice[0, count.to_i].rindex('\n'.ord.to_u8)
       if index
         flush
         index += 1
@@ -241,10 +241,10 @@ module IO::Buffered
   end
 
   private def in_buffer
-    @in_buffer ||= GC.malloc_atomic(@buffer_size.to_i!).as(UInt8*)
+    @in_buffer ||= GC.malloc_atomic(@buffer_size.to_i).as(UInt8*)
   end
 
   private def out_buffer
-    @out_buffer ||= GC.malloc_atomic(@buffer_size.to_i!).as(UInt8*)
+    @out_buffer ||= GC.malloc_atomic(@buffer_size.to_i).as(UInt8*)
   end
 end

@@ -246,7 +246,7 @@ struct StaticArray(T, N)
   # array # => StaticArray[3, 2, 2]
   # ```
   def to_slice
-    Slice.new(to_unsafe, size.to_i!)
+    Slice.new(to_unsafe, size.to_i)
   end
 
   # Returns a pointer to this static array's data.

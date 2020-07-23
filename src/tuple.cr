@@ -358,7 +358,7 @@ struct Tuple
   # {'a', 'b'}.size # => 2
   # ```
   def size
-    {{T.size}}.to_i!
+    {{T.size}}.to_i
   end
 
   # Returns the types of this tuple type.

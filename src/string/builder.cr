@@ -21,9 +21,9 @@ class String::Builder < IO
     capacity += String::HEADER_SIZE + 1
     String.check_capacity_in_bounds(capacity)
 
-    @buffer = GC.malloc_atomic(capacity.to_i!).as(UInt8*)
+    @buffer = GC.malloc_atomic(capacity).as(UInt8*)
     @bytesize = 0
-    @capacity = capacity.to_i!
+    @capacity = capacity
     @finished = false
   end
 
@@ -52,7 +52,7 @@ class String::Builder < IO
       resize_to_capacity(Math.pw2ceil(new_bytesize))
     end
 
-    slice.copy_to(@buffer + real_bytesize.to_i!, count)
+    slice.copy_to(@buffer + real_bytesize.to_i, count)
     @bytesize += count
   end
 
@@ -70,7 +70,7 @@ class String::Builder < IO
   end
 
   def buffer
-    @buffer + String::HEADER_SIZE.to_i!
+    @buffer + String::HEADER_SIZE.to_i
   end
 
   def empty?
@@ -113,7 +113,7 @@ class String::Builder < IO
     end
 
     header = @buffer.as({Int32, Int32, Int32}*)
-    header.value = {String::TYPE_ID, (@bytesize - 1).to_i32!, 0_i32}
+    header.value = {String::TYPE_ID, (@bytesize - 1).to_i32, 0_i32}
     @buffer.as(String)
   end
 
@@ -125,8 +125,8 @@ class String::Builder < IO
     resize_to_capacity(@capacity * 2) if real_bytesize == @capacity
   end
 
-  private def resize_to_capacity(capacity)
+  private def resize_to_capacity(capacity : DefaultInt)
     @capacity = capacity
-    @buffer = @buffer.realloc(@capacity.to_i!)
+    @buffer = @buffer.realloc(@capacity)
   end
 end

@@ -166,7 +166,7 @@ struct Slice(T)
   def +(offset : Int)
     check_size(offset)
 
-    Slice.new(@pointer + offset, (@size - offset).to_i!, read_only: @read_only)
+    Slice.new(@pointer + offset, (@size - offset).to_i, read_only: @read_only)
   end
 
   # Sets the given value at the given *index*.
@@ -350,9 +350,9 @@ struct Slice(T)
   end
 
   def copy_to(target : Pointer(T), count : Int)
-    check_size(count.to_i!)
+    check_size(count.to_i)
 
-    @pointer.copy_to(target, count.to_i!)
+    @pointer.copy_to(target, count.to_i)
   end
 
   # Copies the contents of this slice into *target*.
@@ -744,7 +744,7 @@ struct Slice(T)
     if 0 <= offset < size
       result = LibC.memchr(to_unsafe + offset, object, size - offset)
       if result
-        return (result - to_unsafe.as(Void*)).to_i!
+        return (result - to_unsafe.as(Void*)).to_i
       end
     end
 

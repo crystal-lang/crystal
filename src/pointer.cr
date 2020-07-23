@@ -114,7 +114,7 @@ struct Pointer(T)
   # ptr[3] # => 13
   # ```
   def [](offset)
-    (self + offset.to_i!).value
+    (self + offset.to_i).value
   end
 
   # Sets the value pointed at this pointer's address plus `offset * sizeof(T)`.
@@ -127,7 +127,7 @@ struct Pointer(T)
   # ptr2.value # => 42
   # ```
   def []=(offset, value : T)
-    (self + offset.to_i!).value = value
+    (self + offset.to_i).value = value
   end
 
   # Copies *count* elements from *source* into `self`.

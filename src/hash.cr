@@ -753,7 +753,7 @@ class Hash(K, V)
 
   # Allocates `size` number of indices for `@indices`.
   private def malloc_indices(size)
-    Pointer(UInt8).malloc(indices_malloc_size(size.to_i!))
+    Pointer(UInt8).malloc(indices_malloc_size(size.to_i))
   end
 
   # The actual number of bytes needed to allocate `@indices`.
@@ -841,7 +841,7 @@ class Hash(K, V)
 
   # Allocates `size` number of entries for `@entries`.
   private def malloc_entries(size)
-    Pointer(Entry(K, V)).malloc(size.to_i!)
+    Pointer(Entry(K, V)).malloc(size.to_i)
   end
 
   private def realloc_entries(size)

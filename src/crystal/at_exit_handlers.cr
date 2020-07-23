@@ -11,7 +11,7 @@ module Crystal::AtExitHandlers
       # Run the registered handlers in reverse order
       while handler = handlers.pop?
         begin
-          handler.call status.to_i32!, exception
+          handler.call status.to_i32, exception
         rescue handler_ex
           Crystal::System.print_error "Error running at_exit handler: %s\n", handler_ex.message || ""
           status = 1 if status.zero?

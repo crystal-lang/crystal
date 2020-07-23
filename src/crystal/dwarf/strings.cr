@@ -13,8 +13,9 @@ module Crystal
       def decode(strp)
         # See if we can read it from the buffer
         if strp < @buffer.size
-          index = @buffer.index('\0'.ord, offset: strp.to_i!)
-          return String.new(@buffer[strp.to_i!, index - strp.to_i!]) if index
+          strp = strp.to_i
+          index = @buffer.index('\0'.ord, offset: strp)
+          return String.new(@buffer[strp, index - strp]) if index
         end
 
         # If not, try directly from the IO

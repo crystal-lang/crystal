@@ -122,8 +122,8 @@ struct Time::Span
   # ```
   def self.new(*, days : Int = 0, hours : Int = 0, minutes : Int = 0, seconds : Int = 0, nanoseconds : Int = 0)
     new(
-      seconds: compute_seconds(days, hours, minutes, seconds).to_i!,
-      nanoseconds: nanoseconds.to_i!,
+      seconds: compute_seconds(days, hours, minutes, seconds),
+      nanoseconds: nanoseconds,
     )
   end
 

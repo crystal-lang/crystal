@@ -166,7 +166,7 @@ module Unicode
 
   private def self.check_downcase_ranges(char)
     result = search_ranges(downcase_ranges, char.ord)
-    return char + result.to_i! if result
+    return char + result.to_i if result
 
     result = search_alternate(alternate_ranges, char.ord)
     return char + 1 if result && (char.ord - result).even?
