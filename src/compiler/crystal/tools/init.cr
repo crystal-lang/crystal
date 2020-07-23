@@ -279,7 +279,7 @@ module Crystal
 
     template GitignoreView, "gitignore.ecr", ".gitignore"
     template EditorconfigView, "editorconfig.ecr", ".editorconfig"
-    template LicenseView, "license.ecr", "LICENSE"
+    template LicenseView, "license.txt.ecr", "LICENSE.txt"
     template ReadmeView, "readme.md.ecr", "README.md"
     template TravisView, "travis.yml.ecr", ".travis.yml"
     template ShardView, "shard.yml.ecr", "shard.yml"

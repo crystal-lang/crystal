@@ -85,7 +85,7 @@ module Crystal
           end
         end
 
-        with_file "example/LICENSE" do |license|
+        with_file "example/LICENSE.txt" do |license|
           license.should match %r{Copyright \(c\) \d+ John Smith}
         end
 
@@ -236,7 +236,7 @@ module Crystal
         ex.conflicting_files.should contain("README.md")
 
         File.read("README.md").should eq("content before init")
-        File.exists?("LICENSE").should_not be_true
+        File.exists?("LICENSE.txt").should_not be_true
       end
     end
 
@@ -248,7 +248,7 @@ module Crystal
         exec_init("my_lib", ".", force: true)
 
         File.read("README.md").should_not eq("content before init")
-        File.exists?("LICENSE").should be_true
+        File.exists?("LICENSE.txt").should be_true
       end
     end
 
@@ -259,7 +259,7 @@ module Crystal
         exec_init("my_lib", ".", skip_existing: true)
 
         File.read("README.md").should eq("content before init")
-        File.exists?("LICENSE").should be_true
+        File.exists?("LICENSE.txt").should be_true
       end
     end
   end
