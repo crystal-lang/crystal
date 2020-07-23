@@ -41,7 +41,7 @@ class Digest::MD5 < Digest::Base
 
     inLen.times do
       # add new character to buffer, increment mdi
-      @in[mdi] = inBuf.value
+      @in[mdi.to_i] = inBuf.value
       mdi += 1
       inBuf += 1
 
@@ -248,7 +248,7 @@ class Digest::MD5 < Digest::Base
     end
   end
 
-  def digest_size : Int32
+  def digest_size : DefaultInt
     16
   end
 end

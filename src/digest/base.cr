@@ -154,5 +154,5 @@ abstract class Digest::Base
   # Resets the object to it's initial state.
   abstract def reset_impl : Nil
   # Returns the digest output size in bytes.
-  abstract def digest_size : Int32
+  abstract def digest_size : DefaultInt
 end

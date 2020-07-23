@@ -169,7 +169,7 @@ class Digest::SHA1 < Digest::Base
     process_message_block
   end
 
-  def digest_size : Int32
+  def digest_size : DefaultInt
     20
   end
 end
