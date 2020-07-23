@@ -3,9 +3,9 @@ require "../spec_helper"
 
 describe "select" do
   it "select many receviers" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
-    res = [] of Int32
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
+    res = [] of DefaultInt
     spawn do
       10.times do |i|
         (i % 2 == 0) ? ch1.send(i) : ch2.send(i)
@@ -24,8 +24,8 @@ describe "select" do
   end
 
   it "select many senders" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
     res = Array.new(10, 0)
 
     f1 = spawn do
@@ -51,9 +51,9 @@ describe "select" do
   end
 
   it "select many receivers, senders" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
-    res = [] of Int32
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
+    res = [] of DefaultInt
     f = spawn do
       10.times do |i|
         select
@@ -78,8 +78,8 @@ describe "select" do
   end
 
   it "select should work with send which started before receive, fixed #3862" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
     main = Fiber.current
 
     spawn do
@@ -107,9 +107,9 @@ describe "select" do
   end
 
   it "select fiber has one chance to be enqueued into scheduler (1)" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
-    ch3 = Channel(Int32).new
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
+    ch3 = Channel(DefaultInt).new
     x = nil
 
     f = spawn do
@@ -131,9 +131,9 @@ describe "select" do
   end
 
   it "select fiber has one chance to be enqueued into scheduler (2)" do
-    ch1 = Channel(Int32).new
-    ch2 = Channel(Int32).new
-    ch3 = Channel(Int32).new
+    ch1 = Channel(DefaultInt).new
+    ch2 = Channel(DefaultInt).new
+    ch3 = Channel(DefaultInt).new
     x = nil
 
     f = spawn do
@@ -157,7 +157,7 @@ describe "select" do
   end
 
   it "select same channel multiple times" do
-    ch = Channel(Int32).new
+    ch = Channel(DefaultInt).new
 
     spawn do
       ch.send(123)
@@ -172,8 +172,8 @@ describe "select" do
   end
 
   it "priorize by order when entering in a select" do
-    ch1 = Channel(Int32).new(5)
-    ch2 = Channel(Int32).new(5)
+    ch1 = Channel(DefaultInt).new(5)
+    ch2 = Channel(DefaultInt).new(5)
 
     2.times { ch1.send 1 }
     2.times { ch2.send 2 }
@@ -194,8 +194,8 @@ describe "select" do
   it "stress select with send/receive in multiple fibers" do
     fibers = 4
     msg_per_sender = 1000
-    ch = Array.new(fibers) { Array.new(fibers) { Channel(Int32).new } }
-    done = Channel({Int32, Int32}).new
+    ch = Array.new(fibers) { Array.new(fibers) { Channel(DefaultInt).new } }
+    done = Channel({DefaultInt, DefaultInt}).new
 
     fibers.times do |i|
       spawn(name: "sender #{i}") do
