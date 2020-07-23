@@ -58,8 +58,8 @@ module Crystal
 
       case {self_type, other_type}
       when {IntegerType, IntegerType}
-        self_min, self_max = self_type.range
-        other_min, other_max = other_type.range
+        self_min, self_max = self_type.autocast_range
+        other_min, other_max = other_type.autocast_range
         other_min <= self_min && self_max <= other_max
       when {IntegerType, FloatType}
         # Float32 mantissa has 23 bits,
@@ -813,7 +813,7 @@ module Crystal
     def can_be_autocast_to?(other_type)
       case {self.type, other_type}
       when {IntegerType, IntegerType}
-        min, max = other_type.range
+        min, max = other_type.autocast_range
         min <= integer_value <= max
       when {IntegerType, FloatType}
         true

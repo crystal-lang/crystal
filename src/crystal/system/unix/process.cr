@@ -129,7 +129,8 @@ struct Crystal::System::Process
         writer_pipe.write_bytes(Errno.value.to_i)
       rescue ex
         writer_pipe.write_byte(0)
-        writer_pipe.write_bytes(ex.message.try(&.bytesize) || 0)
+        # TODO(platform): maybe use Int64 on 64 bits?
+        writer_pipe.write_bytes(ex.message.try(&.bytesize).try(&.to_i32) || 0_i32)
         writer_pipe << ex.message
         writer_pipe.close
       ensure

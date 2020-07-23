@@ -1383,9 +1383,17 @@ module Crystal
       when :u128
         {UInt128::MIN, UInt128::MAX}
       when :i
-        {Int32::MIN, Int32::MAX} # same as Int32, the minimum size of Int
+        {Int64::MIN, Int64::MAX} # same as Int64
       else
         raise "Bug: called 'range' for non-integer literal"
+      end
+    end
+
+    def autocast_range
+      if kind == :i
+        {Int32::MIN, Int32::MAX} # same as Int32, the minimum size of Int
+      else
+        range
       end
     end
   end
@@ -1422,6 +1430,10 @@ module Crystal
       else
         raise "Bug: called 'range' for non-float literal"
       end
+    end
+
+    def autocast_range
+      range
     end
   end
 

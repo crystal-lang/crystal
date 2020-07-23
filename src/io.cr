@@ -1140,7 +1140,8 @@ abstract class IO
 
     buffer = uninitialized UInt8[4096]
     remaining = limit
-    while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
+    # TODO(platform): this to_i is probably wrong, maybe rethink Slice#[]
+    while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0)).to_i])) > 0
       dst.write buffer.to_slice[0, len]
       remaining &-= len
     end

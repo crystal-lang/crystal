@@ -99,14 +99,16 @@ module Random
     next_float
   end
 
-  def rand(max : Int) : IntBase
-    # TODO(platform): do this better
-    {% if flag?(:bits32) %}
-      rand_int(max.to_i32).to_i
-    {% else %}
-      rand_int(max.to_i64).to_i
-    {% end %}
-  end
+  {% if flag?(:platform_dependent_int) %}
+    def rand(max : Int) : IntBase
+      # TODO(platform): do this better
+      {% if flag?(:bits32) %}
+        rand_int(max.to_i32).to_i
+      {% else %}
+        rand_int(max.to_i64)
+      {% end %}
+    end
+  {% end %}
 
   # Generates a random integer which is greater than or equal to `0`
   # and less than *max*.
