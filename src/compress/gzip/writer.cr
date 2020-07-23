@@ -40,7 +40,7 @@ class Compress::Gzip::Writer < IO
     @crc32 = Digest::CRC32.initial
 
     # Total size of the original (uncompressed) input data modulo 2^32.
-    @isize = 0
+    @isize = 0_i32
   end
 
   # Creates a new writer to the given *filename*.

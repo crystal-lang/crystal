@@ -30,7 +30,7 @@ class Compress::Deflate::Writer < IO
 
   # Creates a new writer for the given *io*, yields it to the given block,
   # and closes it at its end.
-  def self.open(io : IO, level : Int32 = Compress::Deflate::DEFAULT_COMPRESSION,
+  def self.open(io : IO, level : DefaultInt = Compress::Deflate::DEFAULT_COMPRESSION,
                 strategy : Compress::Deflate::Strategy = Compress::Deflate::Strategy::DEFAULT,
                 sync_close : Bool = false, dict : Bytes? = nil)
     writer = new(io, level: level, strategy: strategy, sync_close: sync_close, dict: dict)

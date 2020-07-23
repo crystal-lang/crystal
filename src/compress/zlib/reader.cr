@@ -45,6 +45,7 @@ class Compress::Zlib::Reader < IO
 
     fdict = flg.bit(5) == 1
     if fdict
+      p 1
       unless dict
         raise Compress::Zlib::Error.new("Missing dictionary")
       end

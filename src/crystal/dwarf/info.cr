@@ -25,7 +25,7 @@ module Crystal
           @dwarf64 = false
         end
 
-        @offset = @io.tell
+        @offset = LibC::OffT.new(@io.tell)
         @version = @io.read_bytes(UInt16)
         @debug_abbrev_offset = read_ulong
         @address_size = @io.read_byte.not_nil!

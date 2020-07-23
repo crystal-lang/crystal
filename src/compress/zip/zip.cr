@@ -27,9 +27,9 @@ require "digest/crc32"
 # NOTE: only compression methods 0 (STORED) and 8 (DEFLATED) are
 # supported. Additionally, ZIP64 is not yet supported.
 module Compress::Zip
-  VERSION                                   =     20_u16
-  CENTRAL_DIRECTORY_HEADER_SIGNATURE        = 0x02014b50
-  END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x06054b50
+  VERSION                                   =         20_u16
+  CENTRAL_DIRECTORY_HEADER_SIGNATURE        = 0x02014b50_i32
+  END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x06054b50_i32
 
   class Error < Exception
   end

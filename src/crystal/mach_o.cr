@@ -105,7 +105,7 @@ module Crystal
       @sizeofcmds = @io.read_bytes(UInt32, endianness)
       @flags = Flags.new(@io.read_bytes(UInt32, endianness))
       @io.skip(4) if abi64? # reserved
-      @ldoff = @io.tell
+      @ldoff = @io.tell.to_i64
       @segments = [] of Segment64
       @sections = [] of Section64
     end

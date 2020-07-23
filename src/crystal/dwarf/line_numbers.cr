@@ -169,7 +169,7 @@ module Crystal
       @offset : LibC::OffT
 
       def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0)
-        @offset = @io.tell
+        @offset = LibC::OffT.new(@io.tell)
         @matrix = Array(Array(Row)).new
         decode_sequences(size)
       end
@@ -209,7 +209,7 @@ module Crystal
           break unless offset < size
 
           sequence = Sequence.new
-          sequence.offset = offset
+          sequence.offset = LibC::OffT.new(offset)
           sequence.unit_length = @io.read_bytes(UInt32)
           sequence.version = @io.read_bytes(UInt16)
           sequence.header_length = @io.read_bytes(UInt32)

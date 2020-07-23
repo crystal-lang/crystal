@@ -460,7 +460,7 @@ struct Time
   #
   # Since UTC does not have any time zone transitions, each date-time is
   # unambiguously resolved.
-  def self.utc(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0) : Time
+  def self.utc(year : DefaultInt, month : DefaultInt, day : DefaultInt, hour : DefaultInt = 0, minute : DefaultInt = 0, second : DefaultInt = 0, *, nanosecond : DefaultInt = 0) : Time
     local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: Location::UTC)
   end
 

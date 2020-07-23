@@ -317,7 +317,7 @@ class IO::Memory < IO
   # io.gets(2) # => "he"
   # io.pos     # => 2
   # ```
-  def pos
+  def pos : DefaultInt
     @pos
   end
 

@@ -1,7 +1,7 @@
 # Base type for file information related to zip entries.
 module Compress::Zip::FileInfo
-  SIGNATURE                 = 0x04034b50
-  DATA_DESCRIPTOR_SIGNATURE = 0x08074b50
+  SIGNATURE                 = 0x04034b50_i32
+  DATA_DESCRIPTOR_SIGNATURE =     0x08074b50
 
   DEFLATE_END_SIGNATURE = Bytes[80, 75, 7, 8, read_only: true]
 
@@ -112,13 +112,13 @@ module Compress::Zip::FileInfo
   protected def decompressor_for(io, is_sized = false)
     case compression_method
     when .stored?
-      io = IO::Sized.new(io, compressed_size) unless is_sized
+      io = IO::Sized.new(io, compressed_size.to_i) unless is_sized
     when .deflated?
       if compressed_size == 0 && bit_3_set?
         # Read until we end decompressing the deflate data,
         # which has an unknown size
       else
-        io = IO::Sized.new(io, compressed_size) unless is_sized
+        io = IO::Sized.new(io, compressed_size.to_i) unless is_sized
       end
 
       io = Compress::Deflate::Reader.new(io)

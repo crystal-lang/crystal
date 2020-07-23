@@ -36,7 +36,7 @@ lib LibZ
   end
 
   # error codes
-  enum Error
+  enum Error : Int32
     OK            =  0
     STREAM_END    =  1
     NEED_DICT     =  2

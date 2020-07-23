@@ -113,10 +113,10 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  def pos : DefaultInt
     check_open
 
-    system_pos - @in_buffer_rem.size
+    (system_pos - @in_buffer_rem.size).to_i
   end
 
   # Sets the current position (in bytes) in this `IO`.

@@ -28,7 +28,7 @@ struct Exception::CallStack
         names = [] of {LibC::SizeT, LibC::SizeT, String}
 
         while (offset = io.pos - sh.offset) < sh.size
-          info = Crystal::DWARF::Info.new(io, offset)
+          info = Crystal::DWARF::Info.new(io, LibC::OffT.new(offset))
 
           mach_o.read_section?("__debug_abbrev") do |sh, io|
             info.read_abbreviations(io)
