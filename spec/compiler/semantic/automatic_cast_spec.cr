@@ -596,4 +596,34 @@ describe "Semantic: automatic cast" do
       ),
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
+
+  it "says ambiguous call on crossed types (number)" do
+    assert_error %(
+      def foo(x : Int8, y : Int64)
+      end
+
+      def foo(x : Int64, y : Int8)
+      end
+
+      foo(1_i8, 2_i8)
+      ),
+      "ambiguous call"
+  end
+
+  it "says ambiguous call on crossed types (symbol)" do
+    assert_error %(
+      enum Color
+        Red
+      end
+
+      def foo(x : Symbol, y : Color)
+      end
+
+      def foo(x : Color, y : Symbol)
+      end
+
+      foo(:red, :red)
+      ),
+      "ambiguous call"
+  end
 end

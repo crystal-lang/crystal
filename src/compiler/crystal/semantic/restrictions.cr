@@ -1218,26 +1218,51 @@ module Crystal
     end
   end
 
-  class NumberLiteralType
+  class LiteralType
+    # We need to redefine the logic for unions because we need
+    # to `add_match` each union member that matches.
+    def restrict(other : Union, context)
+      restrict_all(other.types, context)
+    end
+
+    def restrict(other : UnionType, context)
+      restrict_all(other.union_types, context)
+    end
+
+    def restrict_all(elements, context)
+      types = elements.compact_map do |element|
+        restricted = restrict(element, context)
+        add_match(restricted) if restricted
+        restricted
+      end
+      types.size > 0 ? program.type_merge_union_of(types) : nil
+    end
+
     def restrict(other, context)
-      if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        # Check for an exact match, which can't produce an ambiguous call
-        if literal.type == other
-          set_exact_match(other)
-          other
-        elsif !exact_match? && literal.can_be_autocast_to?(other)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
+      type = literal.type.restrict(other, context) ||
+             super(other, context)
+      if type
+        add_match(type)
+      end
+      type
+    end
+  end
+
+  class NumberLiteralType
+    def restrict(other : IntegerType, context)
+      restrict_integer_or_float(other)
+    end
+
+    def restrict(other : FloatType, context)
+      restrict_integer_or_float(other)
+    end
+
+    def restrict_integer_or_float(other)
+      if literal.type == other || literal.can_be_autocast_to?(other)
+        add_match(other)
+        other
       else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
+        nil
       end
     end
 
@@ -1247,25 +1272,17 @@ module Crystal
   end
 
   class SymbolLiteralType
-    def restrict(other, context)
-      case other
-      when SymbolType
-        set_exact_match(other)
+    def restrict(other : SymbolType, context)
+      add_match(other)
+      other
+    end
+
+    def restrict(other : EnumType, context)
+      if other.find_member(literal.value)
+        add_match(other)
         other
-      when EnumType
-        if !exact_match? && other.find_member(literal.value)
-          add_match(other)
-          other
-        else
-          literal.type.restrict(other, context)
-        end
       else
-        type = literal.type.restrict(other, context) ||
-               super(other, context)
-        if type == self
-          type = @match || literal.type
-        end
-        type
+        nil
       end
     end
 

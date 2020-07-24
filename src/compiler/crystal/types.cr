@@ -1393,11 +1393,6 @@ module Crystal
     # All matches. It's nil if `@match` is an exact match.
     @all_matches : Set(Type)?
 
-    def set_exact_match(type)
-      @match = type
-      @all_matches = nil
-    end
-
     def add_match(type)
       if (match = @match) && match != type
         all_matches = @all_matches
@@ -1409,10 +1404,6 @@ module Crystal
       else
         @match = type
       end
-    end
-
-    def exact_match?
-      literal.type == @match
     end
 
     def remove_literal
