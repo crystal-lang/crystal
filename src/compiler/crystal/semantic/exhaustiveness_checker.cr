@@ -16,7 +16,7 @@ struct Crystal::ExhaustivenessChecker
     cond_type = cond.type?
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless cond_type
 
     # Compute all types that we must cover.
@@ -99,7 +99,7 @@ struct Crystal::ExhaustivenessChecker
     elements = cond.elements
 
     # No type on condition means we couldn't type it so we can't
-    # check exhasutiveness.
+    # check exhaustiveness.
     return unless elements.all? &.type?
 
     element_types = elements.map &.type
@@ -179,7 +179,7 @@ struct Crystal::ExhaustivenessChecker
     end
   end
 
-  # Retuens an array of all the types inside `type`:
+  # Returns an array of all the types inside `type`:
   # for unions it's all the union types, otherwise it's just that type.
   private def expand_types(type)
     if type.is_a?(UnionType)

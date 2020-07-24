@@ -221,7 +221,7 @@ class OptionParser
   end
 
   # Adds a separator, with an optional header message, that will be used to
-  # print the help. The seperator is placed between the flags registered (`#on`)
+  # print the help. The separator is placed between the flags registered (`#on`)
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.

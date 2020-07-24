@@ -44,7 +44,7 @@ struct Exception::CallStack
     end
   end
 
-  # DWARF uses fixed addresses but Darwin loads exectutables at a random
+  # DWARF uses fixed addresses but Darwin loads executables at a random
   # address, so we must remove the load offset from the IP to match the
   # addresses in DWARF sections.
   #

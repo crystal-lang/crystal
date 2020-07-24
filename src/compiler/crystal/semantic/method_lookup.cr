@@ -305,7 +305,7 @@ module Crystal
             if a_def.double_splat
               match_arg_type = named_arg.type
 
-              # If there's a restrction on the double splat, check that it matches
+              # If there's a restriction on the double splat, check that it matches
               if double_splat_restriction
                 if double_splat_entries
                   double_splat_entries << named_arg

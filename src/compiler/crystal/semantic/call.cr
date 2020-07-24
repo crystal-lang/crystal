@@ -131,7 +131,7 @@ class Crystal::Call
       named_args_types = NamedArgumentType.from_args(named_args, with_literals)
       matches = lookup_matches_without_splat arg_types, named_args_types, with_literals
 
-      # If we checked for automatic casts, see if an ambigous call was produced
+      # If we checked for automatic casts, see if an ambiguous call was produced
       if with_literals
         arg_types.each &.check_restriction_exception
         named_args_types.try &.each &.type.check_restriction_exception

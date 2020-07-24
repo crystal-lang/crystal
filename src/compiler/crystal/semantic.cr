@@ -4,7 +4,7 @@ require "./syntax/visitor"
 require "./semantic/*"
 
 # The overall algorithm for semantic analysis of a program is:
-# - top level: declare clases, modules, macros, defs and other top-level stuff
+# - top level: declare classes, modules, macros, defs and other top-level stuff
 # - new methods: create `new` methods for every `initialize` method
 # - type declarations: process type declarations like `@x : Int32`
 # - check abstract defs: check that abstract defs are implemented

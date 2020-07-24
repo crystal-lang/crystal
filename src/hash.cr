@@ -140,7 +140,7 @@ class Hash(K, V)
   # shift of the buffer (expensive).
   #
   # There might be other optimizations to try out, like not using Linear Probing,
-  # but for now this implementaton is much faster than the old one which used
+  # but for now this implementation is much faster than the old one which used
   # linked lists (closed addressing).
   #
   # All methods that deal with this implementation come after the constructors.

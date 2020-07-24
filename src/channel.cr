@@ -187,7 +187,7 @@ class Channel(T)
   # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
   # Calling `#close` on a closed channel does not have any effect.
   #
-  # It returns `true` when the channel was successfuly closed, or `false` if it was already closed.
+  # It returns `true` when the channel was successfully closed, or `false` if it was already closed.
   def close : Bool
     sender_list = Crystal::PointerLinkedList(Sender(T)).new
     receiver_list = Crystal::PointerLinkedList(Receiver(T)).new
