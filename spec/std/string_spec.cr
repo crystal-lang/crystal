@@ -97,7 +97,7 @@ describe "String" do
     end
 
     it "gets with start and count with negative start" do
-      "こんいちは"[-3, 2].should eq("いち")
+      "こんにちは"[-3, 2].should eq("にち")
     end
 
     it "raises if index out of bounds" do
@@ -108,7 +108,7 @@ describe "String" do
 
     it "raises if index out of bounds with utf-8" do
       expect_raises(IndexError) do
-        "こんいちは"[6, 1]
+        "こんにちは"[6, 1]
       end
     end
 
@@ -120,7 +120,7 @@ describe "String" do
 
     it "raises if count is negative with utf-8" do
       expect_raises(ArgumentError) do
-        "こんいちは"[3, -1]
+        "こんにちは"[3, -1]
       end
     end
 
@@ -1171,7 +1171,7 @@ describe "String" do
   end
 
   it "reverses utf-8 string" do
-    "こんいちは".reverse.should eq("はちいんこ")
+    "こんにちは".reverse.should eq("はちにんこ")
   end
 
   it "reverses taking grapheme clusters into account" do
