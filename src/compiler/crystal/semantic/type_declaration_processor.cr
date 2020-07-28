@@ -105,7 +105,7 @@ struct Crystal::TypeDeclarationProcessor
     # they are initialized in at least one of the initialize methods.
     @non_nilable_instance_vars = {} of Type => Array(String)
 
-    # Nilable variables there were detected to not be initilized in an initialize,
+    # Nilable variables there were detected to not be initialized in an initialize,
     # but a superclass does initialize it. It's only an error if the explicit/guessed
     # type is not nilable itself.
     @nilable_instance_vars = {} of Type => Hash(String, InitializeInfo)

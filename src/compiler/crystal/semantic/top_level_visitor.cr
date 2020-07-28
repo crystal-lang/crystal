@@ -1147,7 +1147,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, include_private: true, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
-            path.raise "execpted #{name} to be a type"
+            path.raise "expected #{name} to be a type"
           end
         else
           base_type = check_type_is_type_container(base_type, path)

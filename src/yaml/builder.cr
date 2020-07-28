@@ -26,7 +26,7 @@
 class YAML::Builder
   @box : Void*
 
-  # By default the maximum nesting of sequences/amppings is 99. Nesting more
+  # By default the maximum nesting of sequences/mappings is 99. Nesting more
   # than this will result in a YAML::Error. Changing the value of this property
   # allows more/less nesting.
   property max_nesting = 99

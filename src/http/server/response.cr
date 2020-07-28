@@ -96,7 +96,7 @@ class HTTP::Server
       raise "Can't read from HTTP::Server::Response"
     end
 
-    # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
+    # Upgrades this response, writing headers and yielding the connection `IO` (a socket) to the given block.
     # This is useful to implement protocol upgrades, such as websockets.
     def upgrade(&block : IO ->)
       write_headers

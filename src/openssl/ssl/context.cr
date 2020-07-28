@@ -215,7 +215,7 @@ abstract class OpenSSL::SSL::Context
     LibSSL.ssl_ctx_free(@handle)
   end
 
-  # Sets the default paths for `ca_certiifcates=` and `ca_certificates_path=`.
+  # Sets the default paths for `ca_certificates=` and `ca_certificates_path=`.
   def set_default_verify_paths
     LibSSL.ssl_ctx_set_default_verify_paths(@handle)
   end

@@ -67,7 +67,7 @@ class Socket
   # ```
   #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
-  # resolve an IP, or don't know whether a `String` constains an IP or a domain
+  # resolve an IP, or don't know whether a `String` contains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     UNSPECIFIED  = "0.0.0.0"

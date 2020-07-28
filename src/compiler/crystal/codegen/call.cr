@@ -25,7 +25,7 @@ class Crystal::CodeGenVisitor
     return false if @builder.end
 
     if block = node.block
-      # A block might turn into a proc literal but not be used if it particpates in a dispatch
+      # A block might turn into a proc literal but not be used if it participates in a dispatch
       if (fun_literal = block.fun_literal) && node.target_def.uses_block_arg?
         codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)
       else
