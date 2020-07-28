@@ -328,6 +328,21 @@ module HTTP
       end
     end
 
+    # Returns a copy of this `HTTP::Params` instance
+    #
+    # ```
+    # require "http/params"
+    #
+    # original = HTTP::Params{"name" => "Jamie"}
+    # updated = params.dup
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    def dup : self
+      self.class.new(raw_params.dup)
+    end
+
     # :nodoc:
     def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
       URI.decode_one query, bytesize, i, byte, char, buffer, true

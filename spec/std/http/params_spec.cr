@@ -204,6 +204,17 @@ module HTTP
       end
     end
 
+    describe "#dup" do
+      it "gives a whole new set of params" do
+        params = Params{"foo" => "bar"}
+        duped = params.dup
+
+        duped["foo"] = "baz"
+
+        params["foo"].should eq "bar"
+      end
+    end
+
     describe "#each" do
       it "calls provided proc for each name, value pair, including multiple values per one param name" do
         received = [] of {String, String}
