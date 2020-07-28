@@ -146,10 +146,6 @@ module HTTP
       self.raw_params == other.raw_params
     end
 
-    def ==(other)
-      false
-    end
-
     # Returns first value for specified param name.
     #
     # ```

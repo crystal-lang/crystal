@@ -244,4 +244,15 @@ describe Socket do
     Socket.ip?("::0::ffff:c0a8:5e4").should be_false
     Socket.ip?("c0a8").should be_false
   end
+
+  it "==" do
+    a = Socket::IPAddress.new("127.0.0.1", 8080)
+    b = Socket::UNIXAddress.new("some_path")
+    c = "sonme_path"
+    (a == a).should be_true
+    (b == b).should be_true
+    (a == b).should be_false
+    (a == c).should be_false
+    (b == c).should be_false
+  end
 end

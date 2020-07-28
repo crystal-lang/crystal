@@ -253,5 +253,21 @@ module HTTP
         Params.new.empty?.should be_true
       end
     end
+
+    describe "#==" do
+      it "compares other" do
+        a = Params.parse("a=foo&b=bar")
+        b = Params.parse("a=bar&b=foo")
+        (a == a).should be_true
+        (b == b).should be_true
+        (a == b).should be_false
+      end
+
+      it "compares other types" do
+        a = Params.parse("a=foo&b=bar")
+        b = "other type"
+        (a == b).should be_false
+      end
+    end
   end
 end
