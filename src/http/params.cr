@@ -334,7 +334,7 @@ module HTTP
     # require "http/params"
     #
     # original = HTTP::Params{"name" => "Jamie"}
-    # updated = params.dup
+    # updated = original.dup
     # updated["name"] = "Ary"
     #
     # original["name"] # => "Jamie"
