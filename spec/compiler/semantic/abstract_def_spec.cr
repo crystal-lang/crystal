@@ -968,4 +968,17 @@ describe "Semantic: abstract def" do
       end
     ), "abstract `def Foo#foo(**kargs : String)` must be implemented by Bar"
   end
+
+  it "double splat must match keyword argument type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, foo : Int32)
+      end
+
+      class Bar < Foo
+        def foo(**kargs : String)
+        end
+      end
+    ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
+  end
 end
