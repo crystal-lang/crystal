@@ -117,6 +117,7 @@ prepare_build() {
 
   on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.35.1/crystal-0.35.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
   on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.35.1-1 crystal;popd'
+  on_osx brew update --preinstall
   on_osx brew bundle --no-lock
 
   # Note: brew link --force might show:
