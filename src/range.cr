@@ -342,6 +342,10 @@ struct Range(B, E)
     end
   end
 
+  def sample(random = Random::DEFAULT)
+    random.rand self
+  end
+
   # Returns a new `Range` with `begin` and `end` cloned.
   def clone
     Range.new(@begin.clone, @end.clone, @exclusive)

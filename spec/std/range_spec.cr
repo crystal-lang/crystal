@@ -189,6 +189,39 @@ describe "Range" do
     end
   end
 
+  describe "sample" do
+    it "does with inclusive range" do
+      [
+        1..1,
+        1..3,
+        0u8..255u8,
+        -1..1,
+        Int64::MIN..7i64,
+        -7i64..Int64::MAX,
+        0u64..0u64,
+      ].each do |range|
+        x = range.sample
+        x.should be >= range.begin
+        x.should be <= range.end
+      end
+    end
+    it "does with exclusive range" do
+      [
+        1...2,
+        1...4,
+        0u8...255u8,
+        -1...1,
+        Int64::MIN...7i64,
+        -7i64...Int64::MAX,
+        -1i8...0i8,
+      ].each do |range|
+        x = range.sample
+        x.should be >= range.begin
+        x.should be < range.end
+      end
+    end
+  end
+
   describe "each" do
     it "gives correct values with inclusive range" do
       range = -1..3
