@@ -4056,6 +4056,16 @@ module Crystal
 
       is_var = var?(name)
 
+      # If the name is a var and '+' or '-' follow, never treat the name as a call
+      if is_var && next_comes_plus_or_minus?
+        var = Var.new(name)
+        var.doc = doc
+        var.location = name_location
+        var.end_location = name_location
+        next_token
+        return var
+      end
+
       @wants_regex = false
       next_token
 
@@ -4127,13 +4137,6 @@ module Crystal
             maybe_var = !force_call && is_var && !has_parentheses
             if maybe_var && args.size == 0
               Var.new(name)
-            elsif maybe_var && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
-              sign = num.value[0].to_s
-              num.value = num.value.byte_slice(1)
-              Call.new(Var.new(name), sign, args)
-            elsif maybe_var && args.size == 1 && (arg = args[0]) && arg.is_a?(Call) && !arg.obj.nil? &&
-                  arg.name.in?("+", "-") && (!arg.args || arg.args.size == 0)
-              Call.new(Var.new(name), arg.name, arg.obj.not_nil!)
             else
               call = Call.new(nil, name, args, nil, block_arg, named_args, global)
               call.name_location = name_location
@@ -4166,6 +4169,16 @@ module Crystal
       node.location = location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
       node
+    end
+
+    def next_comes_plus_or_minus?
+      pos = current_pos
+      while current_char.ascii_whitespace?
+        next_char_no_column_increment
+      end
+      comes_plus_or_minus = current_char == '+' || current_char == '-'
+      self.current_pos = pos
+      comes_plus_or_minus
     end
 
     def preserve_stop_on_do(new_value = false)
