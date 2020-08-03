@@ -194,7 +194,7 @@ class String
     if chars.null?
       raise ArgumentError.new("Cannot create a string with a null pointer")
     end
-  
+
     new(chars, LibC.strlen(chars))
   end
 
@@ -212,7 +212,7 @@ class String
   def self.new(chars : UInt8*, bytesize, size = 0)
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
-  
+
     if chars.null?
       raise ArgumentError.new("Cannot create a string with a null pointer")
     end
