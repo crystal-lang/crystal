@@ -877,4 +877,108 @@ describe "Semantic: abstract def" do
       end
     )
   end
+
+  it "errors if keyword argument doesn't have the same default value" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, foo = 1)
+      end
+
+      class Bar < Foo
+        def foo(*, foo = 2)
+        end
+      end
+    ), "abstract `def Foo#foo(*, foo = 1)` must be implemented by Bar"
+  end
+
+  it "allow double splat argument" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(**kargs)
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "allow double splat when abstract doesn't have it" do
+    semantic %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "errors if implementation misses the double splat" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs)
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs)` must be implemented by Bar"
+  end
+
+  it "errors if double splat type doesn't match" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs : Int32)
+      end
+
+      class Bar < Foo
+        def foo(**kargs : String)
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs : Int32)` must be implemented by Bar"
+  end
+
+  it "allow splat instead of keyword argument" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*, foo)
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "extra keyword arguments must have compatible type to double splat" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs : String)
+      end
+
+      class Bar < Foo
+        def foo(*, foo : Int32 = 0, **kargs)
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs : String)` must be implemented by Bar"
+  end
+
+  it "double splat must match keyword argument type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, foo : Int32)
+      end
+
+      class Bar < Foo
+        def foo(**kargs : String)
+        end
+      end
+    ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
+  end
 end
