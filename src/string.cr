@@ -192,7 +192,7 @@ class String
   # ```
   def self.new(chars : UInt8*)
     if chars.null?
-      raise "Cannot generate a string from a null pointer"
+      raise ArgumentError.new("Cannot create a string with a null pointer")
     end
   
     new(chars, LibC.strlen(chars))
@@ -214,7 +214,7 @@ class String
     return "" if bytesize == 0
   
     if chars.null?
-      raise "Cannot generate a string from a null pointer"
+      raise ArgumentError.new("Cannot create a string with a null pointer")
     end
 
     new(bytesize) do |buffer|
