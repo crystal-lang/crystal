@@ -1851,16 +1851,34 @@ describe "String" do
     "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
   end
 
-  it "allows creating a string with zeros" do
-    p = Pointer(UInt8).malloc(3)
-    p[0] = 'a'.ord.to_u8
-    p[1] = '\0'.ord.to_u8
-    p[2] = 'b'.ord.to_u8
-    s = String.new(p, 3)
-    s[0].should eq('a')
-    s[1].should eq('\0')
-    s[2].should eq('b')
-    s.bytesize.should eq(3)
+  describe "creating from a pointer" do
+    it "allows creating a string with zeros" do
+      p = Pointer(UInt8).malloc(3)
+      p[0] = 'a'.ord.to_u8
+      p[1] = '\0'.ord.to_u8
+      p[2] = 'b'.ord.to_u8
+      s = String.new(p, 3)
+      s[0].should eq('a')
+      s[1].should eq('\0')
+      s[2].should eq('b')
+      s.bytesize.should eq(3)
+    end
+
+    it "raises an exception when creating a string with a null pointer and no size" do
+      expect_raises ArgumentError do
+        String.new(Pointer(UInt8).null)
+      end
+    end
+
+    it "raises when creating from a null pointer with a nonzero size" do
+      expect_raises ArgumentError do
+        String.new(Pointer(UInt8).null, 3)
+      end
+    end
+
+    it "returns an empty string when creating from a null pointer with size 0" do
+      String.new(Pointer(UInt8).null, 0).should eq ""
+    end
   end
 
   describe "tr" do
