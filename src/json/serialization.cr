@@ -61,6 +61,7 @@ module JSON
   # `JSON::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
+  # * **custom_key**: if set it will override key value for `to_json` method. Useful for use struct properties as json key. (by default the name of the instance variable or key property)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
@@ -270,7 +271,7 @@ module JSON
             {%
               properties[ivar.id] = {
                 type:      ivar.type,
-                key:       ((ann && ann[:key]) || ivar).id.stringify,
+                key:       (ann && (ann[:custom_key] || ann[:key]) || ivar).id.stringify,
                 root:      ann && ann[:root],
                 converter: ann && ann[:converter],
                 emit_null: (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
