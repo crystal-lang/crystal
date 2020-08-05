@@ -1,62 +1,85 @@
 require "./unix_socket"
 
+# A local interprocess communication server socket.
+#
+# Only available on UNIX and UNIX-like operating systems.
+#
+# Example usage:
+# ```
+# require "socket"
+#
+# def handle_client(client)
+#   message = client.gets
+#   client.puts message
+# end
+#
+# server = UNIXServer.new("/tmp/myapp.sock")
+# while client = server.accept?
+#   spawn handle_client(client)
+# end
+# ```
 class UNIXServer < UNIXSocket
-  def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM, backlog = 128)
-    File.delete(path) if File.exists?(path)
+  include Socket::Server
 
-    sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
+  # Creates a named UNIX socket, listening on a filesystem pathname.
+  #
+  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # any leftover socket file.
+  #
+  # The server is of stream type by default, but this can be changed for
+  # another type. For example datagram messages:
+  # ```
+  # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
+  # ```
+  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
+    super(Family::UNIX, type)
 
-    addr = LibC::SockaddrUn.new
-    addr.sun_family = typeof(addr.sun_family).new(LibC::AF_UNIX)
-
-    if path.bytesize + 1 > addr.sun_path.size
-      raise "Path size exceeds the maximum size of #{addr.sun_path.size - 1} bytes"
-    end
-    addr.sun_path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
-
-    if LibC.bind(sock, (pointerof(addr).as(LibC::Sockaddr*)), sizeof(LibC::SockaddrUn)) != 0
-      LibC.close(sock)
-      raise Errno.new("Error binding UNIX server at #{path}")
-    end
-
-    if LibC.listen(sock, backlog) != 0
-      LibC.close(sock)
-      raise Errno.new("Error listening UNIX server at #{path}")
+    bind(UNIXAddress.new(path), path) do |error|
+      close(delete: false)
+      raise error
     end
 
-    super sock
-  end
-
-  def accept
-    loop do
-      client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
-      if client_fd == -1
-        if Errno.value == Errno::EAGAIN
-          wait_readable
-        else
-          raise Errno.new("Error accepting socket at #{path}")
-        end
-      else
-        sock = UNIXSocket.new(client_fd)
-        sock.sync = sync?
-        return sock
-      end
+    listen(backlog) do |error|
+      close
+      raise error
     end
   end
 
-  def accept
-    sock = accept
+  # Creates a UNIXServer from an already configured raw file descriptor
+  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+    super(fd: fd, type: type, path: @path)
+  end
+
+  # Creates a new UNIX server and yields it to the block. Eventually closes the
+  # server socket when the block returns.
+  #
+  # Returns the value of the block.
+  def self.open(path, type : Type = Type::STREAM, backlog = 128)
+    server = new(path, type, backlog)
     begin
-      yield sock
+      yield server
     ensure
-      sock.close
+      server.close
     end
   end
 
-  def close
-    super
+  # Accepts an incoming connection.
+  #
+  # Returns the client socket or `nil` if the server is closed after invoking
+  # this method.
+  def accept? : UNIXSocket?
+    if client_fd = accept_impl
+      sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
+      sock.sync = sync?
+      sock
+    end
+  end
+
+  # Closes the socket, then deletes the filesystem pathname if it exists.
+  def close(delete = true)
+    super()
   ensure
-    if path = @path
+    if delete && (path = @path)
       File.delete(path) if File.exists?(path)
       @path = nil
     end

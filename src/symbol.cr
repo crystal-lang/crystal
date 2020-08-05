@@ -15,16 +15,15 @@
 struct Symbol
   include Comparable(Symbol)
 
-  # Generates an `Int32` hash value for this symbol.
-  #
-  # See `Object#hash`.
-  def hash : Int32
-    to_i
+  # See `Object#hash(hasher)`
+  def hash(hasher)
+    hasher.symbol(self)
   end
 
-  # Compares symbol with other based on `String#<=>` method. Returns -1, 0
-  # or +1 depending on whether symbol is less than, equal to, or greater than
-  # other_symbol.
+  # Compares symbol with other based on `String#<=>` method.
+  # Returns `-1`, `0` or `1` depending on whether symbol is less than, equal to,
+  # or greater than *other*.
+  #
   # See `String#<=>` for more information.
   def <=>(other : Symbol)
     to_s <=> other.to_s
@@ -35,8 +34,8 @@ struct Symbol
   # ```
   # :crystal.inspect # => ":crystal"
   # ```
-  def inspect(io : IO)
-    io << ":"
+  def inspect(io : IO) : Nil
+    io << ':'
 
     value = to_s
     if Symbol.needs_quotes?(value)
@@ -46,12 +45,12 @@ struct Symbol
     end
   end
 
-  # Appends the symbol's name to the passed IO.
+  # Appends the symbol's name to the passed `IO`.
   #
   # ```
   # :crystal.to_s # => "crystal"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << to_s
   end
 
@@ -63,14 +62,18 @@ struct Symbol
   # ```
   def self.needs_quotes?(string) : Bool
     case string
-    when "+", "-", "*", "/", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
+    when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
       # Nothing
     when "&", "|", "^", "~", "**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
       # Nothing
     else
-      string.each_char do |char|
+      string.each_char_with_index do |char, i|
+        if i == 0 && char.ascii_number?
+          return true
+        end
+
         case char
-        when .alphanumeric?, '_'
+        when .ascii_alphanumeric?, '_'
           # Nothing
         else
           return true

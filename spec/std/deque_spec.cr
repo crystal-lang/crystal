@@ -1,6 +1,6 @@
 require "spec"
 
-class DequeTester
+private class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
   @deque : Deque(Int32)
@@ -34,7 +34,7 @@ class DequeTester
   end
 end
 
-alias RecursiveDeque = Deque(RecursiveDeque)
+private alias RecursiveDeque = Deque(RecursiveDeque)
 
 describe "Deque" do
   describe "implementation" do
@@ -75,10 +75,10 @@ describe "Deque" do
     it "works the same as array when inserting at 1/8 size and deleting at 3/4 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size / 8, i) }
+          step { c.insert(c.size // 8, i) }
         end
         1000.times do
-          step { c.delete_at(c.size * 3 / 4) }
+          step { c.delete_at(c.size * 3 // 4) }
         end
       end
     end
@@ -86,10 +86,10 @@ describe "Deque" do
     it "works the same as array when inserting at 3/4 size and deleting at 1/8 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size * 3 / 4, i) }
+          step { c.insert(c.size * 3 // 4, i) }
         end
         1000.times do
-          step { c.delete_at(c.size / 8) }
+          step { c.delete_at(c.size // 8) }
         end
       end
     end
@@ -102,7 +102,7 @@ describe "Deque" do
     end
 
     it "creates with default value in block" do
-      deq = Deque(Int32).new(5) { |i| i * 2 }
+      deq = Deque.new(5) { |i| i * 2 }
       deq.should eq(Deque{0, 2, 4, 6, 8})
     end
 
@@ -112,13 +112,13 @@ describe "Deque" do
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative deque size") do
+      expect_raises(ArgumentError, "Negative deque size") do
         Deque.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative deque capacity") do
+      expect_raises(ArgumentError, "Negative deque capacity") do
         Deque(Int32).new(-1)
       end
     end
@@ -144,6 +144,15 @@ describe "Deque" do
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+    end
+
+    it "compares other types" do
+      a = Deque{1, 2, 3}
+      b = Deque{:foo, :bar}
+      c = "other type"
+      (a == b).should be_false
+      (b == c).should be_false
+      (a == c).should be_false
     end
   end
 
@@ -175,10 +184,6 @@ describe "Deque" do
     it "gets nilable" do
       Deque{1, 2, 3}[2]?.should eq(3)
       Deque{1, 2, 3}[3]?.should be_nil
-    end
-
-    it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
     end
   end
 
@@ -277,10 +282,17 @@ describe "Deque" do
     a.should eq(Deque{x})
   end
 
+  it "does each" do
+    a = Deque{1, 1, 1}
+    b = 0
+    a.each { |i| b += i }.should be_nil
+    b.should eq(3)
+  end
+
   it "does each_index" do
     a = Deque{1, 1, 1}
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 
@@ -312,7 +324,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         Deque(Int32).new.first
       end
     end
@@ -367,7 +379,7 @@ describe "Deque" do
   end
 
   describe "inspect" do
-    assert { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
+    it { Deque{1, 2, 3}.inspect.should eq("Deque{1, 2, 3}") }
   end
 
   describe "last" do
@@ -465,6 +477,18 @@ describe "Deque" do
       a.rotate!(8)
       a.should eq(Deque{4, 1, 2, 3})
     end
+
+    it "rotates with size=0" do
+      a = Deque(Int32).new
+      a.rotate!
+      a.should eq(Deque(Int32).new)
+    end
+
+    it "rotates with size=1" do
+      a = Deque{1}
+      a.rotate!
+      a.should eq(Deque{1})
+    end
   end
 
   describe "shift" do
@@ -530,7 +554,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}")
     end
 
     it "does with recursive" do
@@ -555,9 +579,6 @@ describe "Deque" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -584,9 +605,6 @@ describe "Deque" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
 
     it "works while modifying deque" do
@@ -598,6 +616,17 @@ describe "Deque" do
         a.clear
       end
       count.should eq(1)
+    end
+  end
+
+  describe "reverse each iterator" do
+    it "does next" do
+      a = Deque{1, 2, 3}
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 

@@ -1,12 +1,23 @@
-require "./base_type_visitor"
+require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self))
+    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
       node.accept visitor
+      program.process_finished_hooks(visitor) if process_finished_hooks
 
-      fix_empty_types node
-      node = cleanup node
+      missing_types = FixMissingTypes.new(self)
+      node.accept missing_types
+      program.process_finished_hooks(missing_types) if process_finished_hooks
+
+      node = cleanup node if cleanup
+
+      if process_finished_hooks
+        finished_hooks.map! do |hook|
+          hook_node = cleanup(hook.node)
+          FinishedHook.new(hook.scope, hook.macro, hook_node)
+        end
+      end
 
       node
     end
@@ -24,21 +35,22 @@ module Crystal
   # to it (in @meta_vars).
   #
   # Call resolution logic is in `Call#recalculate`, where method lookup is done.
-  class MainVisitor < BaseTypeVisitor
-    property! scope
+  class MainVisitor < SemanticVisitor
+    ValidGlobalAnnotations   = %w(ThreadLocal)
+    ValidClassVarAnnotations = %w(ThreadLocal)
+
     getter! typed_def
     property! untyped_def : Def
+    setter untyped_def
     getter block : Block?
     property call : Call?
-    property type_lookup
+    property path_lookup
     property fun_literal_context : Def | Program | Nil
     property parent : MainVisitor?
-    property block_nest : Int32
+    property block_nest = 0
     property with_scope : Type?
 
-    # These are the free variables that came from matches. We look up
-    # here first if we find a single-element Path like `T`.
-    property free_vars
+    property match_context : MatchContext?
 
     # These are the variables and types that come from a block specification
     # like `&block : Int32 -> Int32`. When doing `yield 1` we need to verify
@@ -46,17 +58,39 @@ module Crystal
     property yield_vars : Array(Var)?
 
     # In vars we store the types of variables as we traverse the nodes.
-    # These type are not cummulative: if you do `x = 1`, 'x' will have
+    # These type are not cumulative: if you do `x = 1`, 'x' will have
     # type Int32. Then if you do `x = false`, 'x' will have type Bool.
     getter vars
 
-    # Here we store the cummulative types of variables as we traverse the nodes.
+    # Here we store the cumulative types of variables as we traverse the nodes.
     getter meta_vars : MetaVars
-
     property is_initialize : Bool
+    property exception_handler_vars : MetaVars? = nil
+
+    # It means the last block kind, that is one of `block`, `while` and
+    # `ensure`. It is used to detect `break` or `next` from `ensure`.
+    #
+    # ```
+    # begin
+    #   # `last_block_kind == nil`
+    # ensure
+    #   # `last_block_kind == :ensure`
+    #   while true
+    #     # `last_block_kind == :while`
+    #   end
+    #   loop do
+    #     # `last_block_kind == :block`
+    #   end
+    #   # `last_block_kind == :ensure`
+    # end
+    # ```
+    property last_block_kind : Symbol?
+    property? inside_ensure : Bool = false
+    property? inside_constant = false
 
     @unreachable = false
     @is_initialize = false
+    @in_type_args = 0
 
     @while_stack : Array(While)
     @type_filters : TypeFilters?
@@ -66,28 +100,39 @@ module Crystal
     @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
     @block_context : Block?
     @file_module : FileModule?
-    @exception_handler_vars : MetaVars?
     @while_vars : MetaVars?
 
-    def initialize(mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
-      super(mod, vars)
+    # Separate type filters for an `a || b` expression.
+    # We need these to filter types on an else branch of an
+    # if that has an or expression, using boolean logic:
+    # `!(a || b)` is `!a && !b`
+    @or_left_type_filters : TypeFilters?
+    @or_right_type_filters : TypeFilters?
+
+    # Type filters for `exp` in `!exp`, used after a `while`
+    @before_not_type_filters : TypeFilters?
+
+    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
+      super(program, vars)
       @while_stack = [] of While
       @needs_type_filters = 0
-      @unreachable = false
       @typeof_nest = 0
-      @is_initialize = !!(typed_def && typed_def.name == "initialize")
+      @is_initialize = !!(typed_def && (
+        typed_def.name == "initialize" ||
+        typed_def.name.starts_with?("initialize:") # Because of expanded methods from named args
+      ))
       @found_self_in_initialize_call = nil
       @used_ivars_in_calls_in_initialize = nil
-      @in_is_a = false
+      @inside_is_a = false
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
-      # so the codegen phase knows the cummulative types to do allocas.
+      # so the codegen phase knows the cumulative types to do allocas.
       unless meta_vars
         if typed_def = @typed_def
           meta_vars = typed_def.vars = MetaVars.new
         else
-          meta_vars = @mod.vars
+          meta_vars = @program.vars
         end
         vars.each do |name, var|
           meta_var = new_meta_var(name)
@@ -99,11 +144,10 @@ module Crystal
       @meta_vars = meta_vars
     end
 
-    def untyped_def=(@untyped_def : Nil)
-    end
-
     def visit_any(node)
       @unreachable = false
+      @or_left_type_filters = nil
+      @or_right_type_filters = nil
       super
     end
 
@@ -113,11 +157,11 @@ module Crystal
       old_file_module = @file_module
 
       @vars = MetaVars.new
-      @file_module = file_module = @mod.file_module(node.filename)
+      @file_module = file_module = @program.file_module(node.filename)
       @meta_vars = file_module.vars
 
       node.node.accept self
-      node.bind_to node.node
+      node.type = @program.nil_type
 
       @vars = old_vars
       @meta_vars = old_meta_vars
@@ -126,18 +170,197 @@ module Crystal
       false
     end
 
+    def visit(node : Path)
+      lookup_scope = @path_lookup || @scope || @current_type
+
+      # If the lookup scope is a generic type, like Foo(T), we don't
+      # want to find T in main code. For example:
+      #
+      # class Foo(T)
+      #   Bar(T) # This T is unbound and it shouldn't be found in the lookup
+      # end
+      find_root_generic_type_parameters = !lookup_scope.is_a?(GenericType)
+
+      type = lookup_scope.lookup_type_var(node,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
+        remove_alias: false)
+
+      case type
+      when Const
+        if !type.value.type? && !type.visited?
+          type.visited = true
+
+          meta_vars = MetaVars.new
+          const_def = Def.new("const", [] of Arg)
+          type_visitor = MainVisitor.new(@program, meta_vars, const_def)
+          type_visitor.current_type = type.namespace
+          type_visitor.inside_constant = true
+          type.value.accept type_visitor
+
+          type.vars = const_def.vars
+          type.visitor = self
+          type.used = true
+
+          program.const_initializers << type
+        end
+
+        node.target_const = type
+        node.bind_to type.value
+      when Type
+        # We devirtualize the type because in an expression like
+        #
+        #     T.new
+        #
+        # even if T is a virtual type that resulted from a generic
+        # type argument, creating an instance or invoking methods
+        # on the type itself don't need to resolve virtually.
+        #
+        # It's different if from a virtual type we do `v.class.new`
+        # because the class could be any in the hierarchy.
+        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        node.target_type = type
+      when ASTNode
+        type.accept self unless type.type?
+        node.syntax_replacement = type
+        node.bind_to type
+      end
+    end
+
+    def visit(node : Generic)
+      node.in_type_args = @in_type_args > 0
+      node.scope = @scope
+
+      node.name.accept self
+
+      @in_type_args += 1
+      node.type_vars.each &.accept self
+      node.named_args.try &.each &.value.accept self
+      @in_type_args -= 1
+
+      return false if node.type?
+
+      name = node.name
+      if name.is_a?(Path) && name.target_const
+        node.raise "#{name} is not a type, it's a constant"
+      end
+
+      instance_type = node.name.type.instance_type
+      unless instance_type.is_a?(GenericType)
+        node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
+      end
+
+      if instance_type.double_variadic?
+        unless node.named_args
+          node.raise "can only instantiate NamedTuple with named arguments"
+        end
+      elsif instance_type.splat_index
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
+        min_needed = instance_type.type_vars.size - 1
+        if node.type_vars.size < min_needed
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
+        end
+      else
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
+        # Need to count type vars because there might be splats
+        type_vars_count = 0
+        knows_count = true
+        node.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            if type_var.type?
+              type_vars_count += type_var.type.as(TupleInstanceType).size
+            else
+              knows_count = false
+              break
+            end
+          else
+            type_vars_count += 1
+          end
+        end
+
+        if knows_count && instance_type.type_vars.size != type_vars_count
+          node.wrong_number_of "type vars", instance_type, type_vars_count, instance_type.type_vars.size
+        end
+      end
+
+      node.instance_type = instance_type.as(GenericType)
+      node.type_vars.each &.add_observer(node)
+      node.named_args.try &.each &.value.add_observer(node)
+      node.update
+
+      false
+    end
+
+    def visit(node : ProcNotation)
+      @in_type_args += 1
+      node.inputs.try &.each &.accept(self)
+      node.output.try &.accept(self)
+      @in_type_args -= 1
+
+      if inputs = node.inputs
+        types = inputs.map &.type.instance_type.virtual_type
+      else
+        types = [] of Type
+      end
+
+      if output = node.output
+        types << output.type.instance_type.virtual_type
+      else
+        types << program.void
+      end
+
+      node.type = program.proc_of(types)
+
+      false
+    end
+
+    def visit(node : Union)
+      @in_type_args += 1
+      node.types.each &.accept self
+      @in_type_args -= 1
+
+      node.inside_is_a = @inside_is_a
+      node.update
+
+      false
+    end
+
+    def visit(node : Metaclass)
+      node.name.accept self
+      node.type = node.name.type.virtual_type.metaclass
+      false
+    end
+
+    def visit(node : Self)
+      node.type = the_self(node).instance_type
+    end
+
     def visit(node : Var)
       var = @vars[node.name]?
       if var
+        if var.type?.is_a?(Program) && node.name == "self"
+          node.raise "there's no self in this scope"
+        end
+
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
-        if var.nil_if_read
-          meta_var.bind_to(@mod.nil_var) unless meta_var.dependencies.try &.any? &.same?(@mod.nil_var)
-          node.bind_to(@mod.nil_var)
+        if var.nil_if_read?
+          # Once we know a variable is nil if read we mark it as nilable
+          var.bind_to(@program.nil_var)
+          var.nil_if_read = false
+
+          meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
+          node.bind_to(@program.nil_var)
         end
 
-        if meta_var.closured
+        if meta_var.closured?
           var.bind_to(meta_var)
         end
 
@@ -154,17 +377,42 @@ module Crystal
           node.type = current_type.metaclass
         end
       elsif node.special_var?
-        special_var = define_special_var(node.name, mod.nil_var)
+        special_var = define_special_var(node.name, program.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before definition of local variable '#{node.name}'"
+        node.raise "read before assignment to local variable '#{node.name}'"
       end
     end
 
     def visit(node : TypeDeclaration)
       case var = node.var
       when Var
-        node.raise "declaring the type of a local variable is not yet supported"
+        if @meta_vars[var.name]?
+          node.raise "variable '#{var.name}' already declared"
+        end
+
+        meta_var = new_meta_var(var.name)
+        meta_var.type = @program.no_return
+
+        var.bind_to(meta_var)
+        @meta_vars[var.name] = meta_var
+
+        @in_type_args += 1
+        node.declared_type.accept self
+        @in_type_args -= 1
+
+        check_not_a_constant(node.declared_type)
+
+        if declared_type = node.declared_type.type?
+          var_type = check_declare_var_type node, declared_type, "a variable"
+          meta_var.freeze_type = var_type
+        else
+          node.raise "can't infer type of type declaration"
+        end
+
+        if value = node.value
+          type_assign(var, value, node)
+        end
       when InstanceVar
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
@@ -174,20 +422,19 @@ module Crystal
           node.raise "declaring the type of a class variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        thread_local = check_class_var_annotations
+
         class_var = lookup_class_var(var)
         var.var = class_var
-        if Attribute.any?(attributes, "ThreadLocal")
-          class_var.thread_local = true
-        end
+        class_var.thread_local = true if thread_local
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
         end
 
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
-        if Attribute.any?(attributes, "ThreadLocal")
-          global_var = @mod.global_vars[var.name]
+        thread_local = check_class_var_annotations
+        if thread_local
+          global_var = @program.global_vars[var.name]
           global_var.thread_local = true
         end
 
@@ -196,9 +443,11 @@ module Crystal
           node.bind_to(var)
           return false
         end
+      else
+        raise "Bug: unexpected var type: #{var.class}"
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -214,8 +463,16 @@ module Crystal
         node.declared_type.accept self
         @in_type_args -= 1
 
-        var_type = check_declare_var_type node, node.declared_type.type, "a variable"
-        var.type = var_type
+        check_not_a_constant(node.declared_type)
+
+        # TODO: should we be using a binding here to recompute the type?
+        if declared_type = node.declared_type.type?
+          var_type = check_declare_var_type node, declared_type, "a variable"
+          var_type = var_type.virtual_type
+          var.type = var_type
+        else
+          node.raise "can't infer type of type declaration"
+        end
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
         if (existing_type = meta_var.type?) && existing_type != var_type
@@ -228,6 +485,8 @@ module Crystal
         @vars[var.name] = meta_var
 
         check_exception_handler_vars(var.name, node)
+
+        node.type = meta_var.type unless meta_var.type.no_return?
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
@@ -243,7 +502,7 @@ module Crystal
           end
         else
           # Already handled in a previous visitor
-          node.type = @mod.nil
+          node.type = @program.nil
           return false
         end
 
@@ -261,15 +520,23 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
-        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+        thread_local = check_class_var_annotations
 
         class_var = visit_class_var var
-        class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+        class_var.thread_local = true if thread_local
+      else
+        raise "Bug: unexpected var type: #{var.class}"
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil unless node.type?
 
       false
+    end
+
+    def check_not_a_constant(node)
+      if node.is_a?(Path) && node.target_const
+        node.raise "#{node.target_const} is not a type, it's a constant"
+      end
     end
 
     def check_exception_handler_vars(var_name, node)
@@ -301,7 +568,7 @@ module Crystal
       when Underscore
         # Nothing to do
       else
-        node.raise "Bug: unexpected out exp: #{exp}"
+        node.raise "BUG: unexpected out exp: #{exp}"
       end
 
       node.bind_to node.exp
@@ -322,10 +589,10 @@ module Crystal
         expanded.accept self
         node.bind_to expanded
         node.expanded = expanded
-        return false
+      else
+        visit_global node
       end
 
-      visit_global node
       false
     end
 
@@ -334,10 +601,10 @@ module Crystal
 
       if first_time_accessing_meta_type_var?(var)
         var_type = var.type?
-        if var_type && !var_type.includes_type?(mod.nil)
+        if var_type && !var_type.includes_type?(program.nil)
           node.raise "global variable '#{node.name}' is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
         end
-        var.bind_to mod.nil_var
+        var.bind_to program.nil_var
       end
 
       node.bind_to var
@@ -346,48 +613,48 @@ module Crystal
     end
 
     def lookup_global_variable(node)
-      var = mod.global_vars[node.name]?
+      var = program.global_vars[node.name]?
       undefined_global_variable(node) unless var
       var
     end
 
     def undefined_global_variable(node)
       similar_name = lookup_similar_global_variable_name(node)
-      mod.undefined_global_variable(node, similar_name)
+      program.undefined_global_variable(node, similar_name)
     end
 
     def undefined_instance_variable(owner, node)
       similar_name = lookup_similar_instance_variable_name(node, owner)
-      mod.undefined_instance_variable(node, owner, similar_name)
+      program.undefined_instance_variable(node, owner, similar_name)
     end
 
     def lookup_similar_instance_variable_name(node, owner)
       case owner
       when NonGenericModuleType, GenericClassType, GenericModuleType
-        return nil
-      end
-
-      Levenshtein.find(node.name) do |finder|
-        owner.all_instance_vars.each_key do |name|
-          finder.test(name)
+        nil
+      else
+        Levenshtein.find(node.name) do |finder|
+          owner.all_instance_vars.each_key do |name|
+            finder.test(name)
+          end
         end
       end
     end
 
     def lookup_similar_global_variable_name(node)
       Levenshtein.find(node.name) do |finder|
-        mod.global_vars.each_key do |name|
+        program.global_vars.each_key do |name|
           finder.test(name)
         end
       end
     end
 
     def first_time_accessing_meta_type_var?(var)
-      return false if var.uninitialized
+      return false if var.uninitialized?
 
       if var.freeze_type
         deps = var.dependencies?
-        # If no dependencies it's the case of a global for a regex literal.
+        # If no dependencies, it's the case of a global for a regex literal.
         # If there are dependencies and it's just one, it's the same var
         deps ? deps.size == 1 : false
       else
@@ -399,10 +666,13 @@ module Crystal
       var = lookup_instance_var node
       node.bind_to(var)
 
-      if @is_initialize && !@vars.has_key?(node.name) && !scope.has_instance_var_initializer?(node.name)
+      if @is_initialize &&
+         @typeof_nest == 0 &&
+         !@vars.has_key?(node.name) &&
+         !scope.has_instance_var_initializer?(node.name)
         ivar = scope.lookup_instance_var(node.name)
         ivar.nil_reason ||= NilReason.new(node.name, :used_before_initialized, [node] of ASTNode)
-        ivar.bind_to mod.nil_var
+        ivar.bind_to program.nil_var
       end
     end
 
@@ -419,10 +689,10 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       var = visit_class_var node
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
 
       false
     end
@@ -451,22 +721,23 @@ module Crystal
       when .metaclass?
         node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       when InstanceVarContainer
-        var_with_owner = scope.lookup_instance_var_with_owner?(node.name)
-        unless var_with_owner
-          undefined_instance_variable(scope, node)
-        end
-        if !var_with_owner.instance_var.type?
+        var = scope.lookup_instance_var?(node.name)
+        unless var
           undefined_instance_variable(scope, node)
         end
         check_self_closured
-        var_with_owner.instance_var
+        var
       else
-        node.raise "Bug: #{scope} is not an InstanceVarContainer"
+        node.raise "BUG: #{scope} is not an InstanceVarContainer"
       end
     end
 
     def end_visit(node : Expressions)
-      node.bind_to node.last unless node.empty?
+      if node.empty?
+        node.set_type(@program.nil)
+      else
+        node.bind_to node.last
+      end
     end
 
     def visit(node : Assign)
@@ -481,18 +752,43 @@ module Crystal
       false
     end
 
-    def type_assign(target : Var, value, node)
+    def type_assign(target : Var, value, node, restriction = nil)
       value.accept self
+
+      var_name = target.name
+      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+      freeze_type = meta_var.freeze_type
+
+      if freeze_type
+        if casted_value = check_automatic_cast(value, freeze_type, node)
+          value = casted_value
+        end
+      end
+
+      # If this assign comes from a AssignWithRestriction node, check the restriction
+
+      if restriction && (value_type = value.type?)
+        if value_type.restrict(restriction, match_context.not_nil!)
+          # OK
+        else
+          # Check autocast too
+          restriction_type = scope.lookup_type(restriction, free_vars: free_vars)
+          if casted_value = check_automatic_cast(value, restriction_type, node)
+            value = casted_value
+          else
+            node.raise "can't restrict #{value.type} to #{restriction}"
+          end
+        end
+      end
 
       target.bind_to value
       node.bind_to value
 
-      var_name = target.name
-
       value_type_filters = @type_filters
       @type_filters = nil
 
-      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+      # Save variable assignment location for debugging output
+      meta_var.location ||= target.location
 
       begin
         meta_var.bind_to value
@@ -504,10 +800,17 @@ module Crystal
       check_closured meta_var
 
       simple_var = MetaVar.new(var_name)
-      simple_var.bind_to(target)
 
-      if meta_var.closured
+      # When we assign to a local variable with a fixed type, and it's
+      # a Proc, we always want to keep that proc's type.
+      if freeze_type && freeze_type.is_a?(ProcInstanceType)
         simple_var.bind_to(meta_var)
+      else
+        simple_var.bind_to(target)
+
+        if meta_var.closured?
+          simple_var.bind_to(meta_var)
+        end
       end
 
       @vars[var_name] = simple_var
@@ -524,8 +827,8 @@ module Crystal
 
           # Always bind with a special var with nil, so it's easier to assign it later
           # in the codegen (just store the whole value through a pointer)
-          simple_var.bind_to(@mod.nil_var)
-          meta_var.bind_to(@mod.nil_var)
+          simple_var.bind_to(@program.nil_var)
+          meta_var.bind_to(@program.nil_var)
 
           # If we are in a call's block, define the special var in the block
           if (call = @call) && call.block
@@ -540,6 +843,13 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
+        # `InstanceVar` assignment appeared in block is not checked
+        # by `Crystal::InstanceVarsInitializerVisitor` because this block
+        # may be passed to a macro. So, it checks here.
+        if current_type.is_a?(Program) || current_type.is_a?(FileModule)
+          node.raise "can't use instance variables at the top level"
+        end
+
         # Already handled by InstanceVarsInitializerVisitor
         return
       end
@@ -547,6 +857,9 @@ module Crystal
       value.accept self
 
       var = lookup_instance_var target
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
 
       target.bind_to var
       node.bind_to value
@@ -560,36 +873,49 @@ module Crystal
       if @is_initialize
         var_name = target.name
 
-        meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
-        meta_var.bind_to value
-        meta_var.assigned_to = true
+        # Don't track instance variables nilabilty (for example, if they were
+        # just assigned inside a branch) if they have an initializer
+        unless scope.has_instance_var_initializer?(var_name)
+          meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+          meta_var.bind_to value
+          meta_var.assigned_to = true
 
-        simple_var = MetaVar.new(var_name)
-        simple_var.bind_to(target)
-
-        used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
-        if (found_self = @found_self_in_initialize_call) || (used_ivars_node = used_ivars_in_calls_in_initialize.try(&.[var_name]?)) || (@block_nest > 0 && !@vars.has_key?(var_name))
-          ivar = scope.lookup_instance_var(var_name)
-          if found_self
-            ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
-          else
-            ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
-          end
-          ivar.bind_to mod.nil_var
+          simple_var = MetaVar.new(var_name)
+          simple_var.bind_to(target)
         end
 
-        @vars[var_name] = simple_var
+        # Check if an instance variable is being assigned (for the first time)
+        # and self, or that same instance variable, was used (read) before that.
+        unless @vars.has_key?(var_name) || scope.has_instance_var_initializer?(var_name)
+          if (found_self = @found_self_in_initialize_call) ||
+             (used_ivars_node = @used_ivars_in_calls_in_initialize.try(&.[var_name]?)) ||
+             (@block_nest > 0)
+            ivar = scope.lookup_instance_var(var_name)
+            if found_self
+              ivar.nil_reason = NilReason.new(var_name, :used_self_before_initialized, found_self)
+            else
+              ivar.nil_reason = NilReason.new(var_name, :used_before_initialized, used_ivars_node)
+            end
+            ivar.bind_to program.nil_var
+          end
+        end
 
-        check_exception_handler_vars var_name, value
+        if simple_var
+          @vars[var_name] = simple_var
+
+          check_exception_handler_vars var_name, value
+        end
       end
     end
 
     def type_assign(target : Path, value, node)
+      target.bind_to value
+      node.type = @program.nil
       false
     end
 
     def type_assign(target : Global, value, node)
-      attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
+      thread_local = check_class_var_annotations
 
       value.accept self
 
@@ -599,10 +925,10 @@ module Crystal
       # if this is the first time we are assigning to it, because
       # the method might be called conditionally
       if @typed_def && first_time_accessing_meta_type_var?(var)
-        var.bind_to mod.nil_var
+        var.bind_to program.nil_var
       end
 
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      var.thread_local = true if thread_local
       target.var = var
 
       target.bind_to var
@@ -612,31 +938,32 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
+      thread_local = check_class_var_annotations
 
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
       # by one since we are inside an Assign)
       if !@typed_def && (@exp_nest <= 1) && !inside_block?
         var = lookup_class_var(target)
-        check_class_var_is_thread_local(target, var, attributes)
+        target.var = var
+        var.thread_local = true if thread_local
         return
       end
 
       value.accept self
 
       var = lookup_class_var(target)
-      check_class_var_is_thread_local(target, var, attributes)
+      target.var = var
+      var.thread_local = true if thread_local
+
+      if casted_value = check_automatic_cast(value, var.type, node)
+        value = casted_value
+      end
 
       target.bind_to var
 
       node.bind_to value
       var.bind_to value
-    end
-
-    def check_class_var_is_thread_local(target, var, attributes)
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
-      target.var = var
     end
 
     def type_assign(target : Underscore, value, node)
@@ -645,21 +972,39 @@ module Crystal
     end
 
     def type_assign(target, value, node)
-      raise "Bug: unknown assign target in type inference: #{target}"
+      raise "BUG: unknown assign target in MainVisitor: #{target}"
     end
 
-    def visit(node : Def)
-      check_outside_block_or_exp node, "declare def"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
+    # See if we can automatically cast the value if the types don't exactly match
+    def check_automatic_cast(value, var_type, assign = nil)
+      MainVisitor.check_automatic_cast(@program, value, var_type, assign)
     end
 
-    def visit(node : Macro)
-      check_outside_block_or_exp node, "declare macro"
+    def self.check_automatic_cast(program, value, var_type, assign = nil)
+      if value.is_a?(NumberLiteral) && value.type != var_type
+        literal_type = NumberLiteralType.new(program, value)
+        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        if restricted.is_a?(IntegerType) || restricted.is_a?(FloatType)
+          value.type = restricted
+          value.kind = restricted.kind
+          assign.value = value if assign
+          return value
+        end
+      elsif value.is_a?(SymbolLiteral) && value.type != var_type
+        literal_type = SymbolLiteralType.new(program, value)
+        restricted = literal_type.restrict(var_type, MatchContext.new(value.type, value.type))
+        if restricted.is_a?(EnumType)
+          member = restricted.find_member(value.value).not_nil!
+          path = Path.new(member.name)
+          path.target_const = member
+          path.type = restricted
+          value = path
+          assign.value = value if assign
+          return value
+        end
+      end
 
-      false
+      nil
     end
 
     def visit(node : Yield)
@@ -696,11 +1041,11 @@ module Crystal
       node.exps.each &.accept self
 
       # We use a binder to support splats and other complex forms
-      binder = block.binder ||= YieldBlockBinder.new(@mod, block)
+      binder = block.binder ||= YieldBlockBinder.new(@program, block)
       binder.add_yield(node, @yield_vars)
       binder.update
 
-      unless block.visited
+      unless block.visited?
         # When we yield, we are no longer inside `untyped_def`, so we un-nest
         untyped_def = @untyped_def
         untyped_def.block_nest -= 1 if untyped_def
@@ -725,7 +1070,7 @@ module Crystal
     end
 
     def visit(node : Block)
-      return if node.visited
+      return if node.visited?
 
       node.visited = true
       node.context = current_non_block_context
@@ -735,12 +1080,21 @@ module Crystal
       arg_counter = 0
       body_exps = node.body.as?(Expressions).try(&.expressions)
 
+      # Variables that we don't want to get their type merged
+      # with local variables before the block occurrence:
+      # mainly block arguments (locally override vars), but
+      # also block arguments that result from tuple unpacking
+      # that the parser currently generated as local assignments.
+      ignored_vars_after_block = nil
+
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
         # The parser generates __argN block arguments for tuple unpacking,
         # and they need a special treatment because they shouldn't override
         # local variables. So we search the unpacked vars in the body.
         if arg.name.starts_with?("__arg") && body_exps
+          ignored_vars_after_block = node.args.dup
+
           while arg_counter < body_exps.size &&
                 (assign = body_exps[arg_counter]).is_a?(Assign) &&
                 (target = assign.target).is_a?(Var) &&
@@ -748,6 +1102,7 @@ module Crystal
                 (call_var = call.obj).is_a?(Var) &&
                 call_var.name == arg.name
             bind_block_var(node, target, meta_vars, before_block_vars)
+            ignored_vars_after_block << Var.new(target.name)
             arg_counter += 1
           end
         end
@@ -757,14 +1112,15 @@ module Crystal
 
       @block_nest += 1
 
-      block_visitor = MainVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
+      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars)
       block_visitor.yield_vars = @yield_vars
-      block_visitor.free_vars = @free_vars
+      block_visitor.match_context = @match_context
       block_visitor.untyped_def = @untyped_def
       block_visitor.call = @call
       block_visitor.fun_literal_context = @fun_literal_context
       block_visitor.parent = self
       block_visitor.with_scope = node.scope || with_scope
+      block_visitor.exception_handler_vars = @exception_handler_vars
 
       block_scope = @scope
       block_scope ||= current_type.metaclass unless current_type.is_a?(Program)
@@ -772,16 +1128,20 @@ module Crystal
       block_visitor.scope = block_scope
 
       block_visitor.block = node
-      block_visitor.type_lookup = type_lookup || current_type
+      block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
+
+      block_visitor.last_block_kind = :block
+      block_visitor.inside_ensure = inside_ensure?
 
       node.body.accept block_visitor
 
       @block_nest -= 1
 
       # Check re-assigned variables and bind them.
-      bind_vars block_visitor.vars, node.vars
-      bind_vars block_visitor.vars, node.after_vars, node.args
+      ignored_vars_after_block ||= node.args
+      bind_vars block_visitor.vars, node.vars, ignored_vars_after_block
+      bind_vars block_visitor.vars, node.after_vars, ignored_vars_after_block
 
       # Special vars, even if only assigned inside a block,
       # must be inside the def's metavars.
@@ -851,15 +1211,15 @@ module Crystal
       node.def.bind_to node.def.body
       node.def.vars = meta_vars
 
-      block_visitor = MainVisitor.new(mod, fun_vars, node.def, meta_vars)
-      block_visitor.types = @types
+      block_visitor = MainVisitor.new(program, fun_vars, node.def, meta_vars)
+      block_visitor.current_type = current_type
       block_visitor.yield_vars = @yield_vars
-      block_visitor.free_vars = @free_vars
+      block_visitor.match_context = @match_context
       block_visitor.untyped_def = node.def
       block_visitor.call = @call
       block_visitor.scope = @scope
-      block_visitor.type_lookup = type_lookup
-      block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
+      block_visitor.path_lookup = path_lookup
+      block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @program
       block_visitor.block_nest = @block_nest + 1
       block_visitor.parent = self
       block_visitor.is_initialize = @is_initialize
@@ -870,20 +1230,28 @@ module Crystal
     end
 
     def self.check_type_allowed_as_proc_argument(node, type)
-      Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
+      Crystal.check_type_can_be_stored(node, type, "cannot be used as a Proc argument type")
     end
 
     def visit(node : ProcPointer)
-      return false if node.call?
-
       obj = node.obj
 
       if obj
         obj.accept self
       end
 
-      call = Call.new(obj, node.name)
+      # The call might have been created if this is a proc pointer at the top-level
+      call = node.call? || Call.new(obj, node.name).at(obj)
       prepare_call(call)
+
+      # A proc pointer like `->foo` where `foo` is a macro is invalid
+      if expand_macro(call)
+        node.raise(String.build do |io|
+          io << "undefined method '#{node.name}'"
+          (io << " for " << obj.type) if obj
+          io << "\n\n'" << node.name << "' exists as a macro, but macros can't be used in proc pointers"
+        end)
+      end
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
       if node.args.empty? && obj && (obj_type = obj.type).is_a?(LibType)
@@ -920,10 +1288,11 @@ module Crystal
       if expand_macro(node)
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
-        # with its expantion) was cloned.
-        if (expanded = node.expanded) && !node.dependencies?
+        # with its expansion) was cloned.
+        if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
           node.bind_to(expanded)
         end
+
         return false
       end
 
@@ -957,12 +1326,12 @@ module Crystal
         named_args.try &.each &.value.accept self
       end
 
-      obj.try &.add_input_observer(node)
-      args.each &.add_input_observer(node)
-      block_arg.try &.add_input_observer node
-      named_args.try &.each &.value.add_input_observer(node)
+      obj.try &.set_enclosing_call(node)
+      args.each &.set_enclosing_call(node)
+      block_arg.try &.set_enclosing_call node
+      named_args.try &.each &.value.set_enclosing_call(node)
 
-      check_super_in_initialize node
+      check_super_or_previous_def_in_initialize node
 
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting
@@ -975,12 +1344,12 @@ module Crystal
         @vars.each do |name, var|
           before_var = MetaVar.new(name)
           before_var.bind_to(var)
-          before_var.nil_if_read = var.nil_if_read
+          before_var.nil_if_read = var.nil_if_read?
           before_vars[name] = before_var
 
           after_var = MetaVar.new(name)
           after_var.bind_to(var)
-          after_var.nil_if_read = var.nil_if_read
+          after_var.nil_if_read = var.nil_if_read?
           after_vars[name] = after_var
           @vars[name] = after_var
         end
@@ -1004,8 +1373,8 @@ module Crystal
     end
 
     def prepare_call(node)
-      if node.global
-        node.scope = @mod
+      if node.global?
+        node.scope = @program
       else
         node.scope = @scope || current_type.metaclass
       end
@@ -1027,9 +1396,9 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
+        else
+          return true
         end
-
-        return true
       end
 
       false
@@ -1052,9 +1421,11 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
+        else
+          # go on
         end
 
-        temp_var = @mod.new_temp_var.at(arg.location)
+        temp_var = @program.new_temp_var.at(arg.location)
         assign = Assign.new(temp_var, exp).at(arg.location)
         exps << assign
         case arg
@@ -1075,18 +1446,19 @@ module Crystal
       return false
     end
 
-    # If it's a super call inside an initialize we treat
-    # set instance vars from superclasses to not-nil
-    def check_super_in_initialize(node)
-      if @is_initialize && node.name == "super" && !node.obj
-        superclass_vars = scope.all_instance_vars.keys - scope.instance_vars.keys
-        superclass_vars.each do |name|
+    # If it's a super or previous_def call inside an initialize we treat
+    # set instance vars from superclasses to not-nil.
+    def check_super_or_previous_def_in_initialize(node)
+      if @is_initialize && !node.obj && (node.name == "super" || node.name == "previous_def")
+        all_vars = scope.all_instance_vars.keys
+        all_vars -= scope.instance_vars.keys if node.name == "super"
+        all_vars.each do |name|
           instance_var = scope.lookup_instance_var(name)
 
           # If a variable was used before this supercall, it becomes nilable
           if @used_ivars_in_calls_in_initialize.try &.has_key?(name)
             instance_var.nil_reason ||= NilReason.new(name, :used_before_initialized, [node] of ASTNode)
-            instance_var.bind_to @mod.nil_var
+            instance_var.bind_to @program.nil_var
           else
             # Otherwise, declare it as a "local" variable
             meta_var = MetaVar.new(name)
@@ -1097,7 +1469,7 @@ module Crystal
       end
     end
 
-    # Check if it's a call to self. In that case, all instance variables
+    # Checks if it's a call to self. In that case, all instance variables
     # not mentioned so far will be considered nil.
     def check_call_in_initialize(node)
       return unless @is_initialize
@@ -1163,6 +1535,8 @@ module Crystal
               arg.args.push TypeNode.new(arg_type)
             end
           end
+        else
+          # keep checking
         end
       end
     end
@@ -1177,7 +1551,7 @@ module Crystal
       yield method_arg_type
     end
 
-    # Check if it's ProcType#new
+    # Checks if it's ProcType#new
     def check_special_new_call(node, obj_type)
       return false unless obj_type
       return false unless obj_type.metaclass?
@@ -1188,10 +1562,12 @@ module Crystal
         case instance_type
         when ProcInstanceType
           return special_proc_type_new_call(node, instance_type)
-        when CStructOrUnionType
-          if named_args = node.named_args
-            return special_struct_or_union_new_with_named_args(node, instance_type, named_args)
+        when .extern?
+          if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
+            return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
+        else
+          # go on, nothing special
         end
       end
 
@@ -1215,14 +1591,14 @@ module Crystal
       # We create a ->(...) { } from the block
       proc_args = proc_type.arg_types.map_with_index do |arg_type, index|
         block_arg = block.args[index]?
-        Arg.new(block_arg.try(&.name) || @mod.new_temp_var_name, type: arg_type)
+        Arg.new(block_arg.try(&.name) || @program.new_temp_var_name, type: arg_type)
       end
 
       expected_return_type = proc_type.return_type
-      expected_return_type = @mod.nil if expected_return_type.void?
+      expected_return_type = @program.nil if expected_return_type.void?
 
-      proc_def = Def.new("->", proc_args, block.body)
-      proc_literal = ProcLiteral.new(proc_def).at(node.location)
+      proc_def = Def.new("->", proc_args, block.body).at(node)
+      proc_literal = ProcLiteral.new(proc_def).at(node)
       proc_literal.expected_return_type = expected_return_type
       proc_literal.force_nil = true if expected_return_type.nil_type?
       proc_literal.accept self
@@ -1243,28 +1619,28 @@ module Crystal
     #   temp.arg0 = value0
     #   temp.argN = valueN
     #   temp
-    def special_struct_or_union_new_with_named_args(node, type, named_args)
+    def special_c_struct_or_union_new_with_named_args(node, type, named_args)
       exps = [] of ASTNode
 
-      temp_name = @mod.new_temp_var_name
+      temp_name = @program.new_temp_var_name
 
       new_call = Call.new(node.obj, "new").at(node.location)
 
-      new_assign = Assign.new(Var.new(temp_name), new_call)
+      new_assign = Assign.new(Var.new(temp_name).at(node), new_call).at(node)
       exps << new_assign
 
       named_args.each do |named_arg|
-        assign_call = Call.new(Var.new(temp_name), "#{named_arg.name}=", named_arg.value)
+        assign_call = Call.new(Var.new(temp_name).at(named_arg), "#{named_arg.name}=", named_arg.value).at(named_arg)
         if loc = named_arg.location
           assign_call.location = loc
-          assign_call.name_column_number = loc.column_number
+          assign_call.name_location = loc
         end
         exps << assign_call
       end
 
-      exps << Var.new(temp_name)
+      exps << Var.new(temp_name).at(node)
 
-      expanded = Expressions.new(exps)
+      expanded = Expressions.new(exps).at(node)
       expanded.accept self
 
       node.bind_to expanded
@@ -1279,7 +1655,7 @@ module Crystal
       @scope : Type
       @in_super : Int32
       @callstack : Array(ASTNode)
-      @visited : Set(UInt64)?
+      @visited : Set(Def)?
       @vars : MetaVars
 
       def initialize(a_def, @scope, @vars)
@@ -1324,14 +1700,19 @@ module Crystal
           return false
         end
 
+        if obj && !(obj.is_a?(Var) && obj.name == "self")
+          # not a self-instance method: only verify arguments
+          return true
+        end
+
         visited = @visited
 
         node.target_defs.try &.each do |target_def|
           if target_def.owner == @scope
-            next if visited.try &.includes?(target_def.object_id)
+            next if visited.try &.includes?(target_def)
 
-            visited = @visited ||= Set(typeof(object_id)).new
-            visited << target_def.object_id
+            visited = @visited ||= Set(Def).new.compare_by_identity
+            visited << target_def
 
             @callstack.push(node)
             target_def.body.accept self
@@ -1364,6 +1745,14 @@ module Crystal
     end
 
     def visit(node : Return)
+      if inside_ensure?
+        node.raise "can't return from ensure"
+      end
+
+      if inside_constant?
+        node.raise "can't return from constant"
+      end
+
       typed_def = @typed_def || node.raise("can't return from top level")
 
       if typed_def.captured_block?
@@ -1374,8 +1763,11 @@ module Crystal
 
       node.target = typed_def
 
-      typed_def.bind_to(node.exp || mod.nil_var)
+      typed_def.bind_to(node_exp_or_nil_literal(node))
+
       @unreachable = true
+
+      node.type = @program.no_return
 
       false
     end
@@ -1400,18 +1792,20 @@ module Crystal
       node.obj.accept self
 
       @in_type_args += 1
-      @in_is_a = true
+      @inside_is_a = true
       node.const.accept self
-      @in_is_a = false
+      @inside_is_a = false
       @in_type_args -= 1
 
-      node.type = mod.bool
+      node.type = program.bool
       const = node.const
 
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", node.obj).at(node.location)
+        obj = node.obj.clone.at(node.obj)
+        const = node.const.clone.at(node.const)
+        comp = Call.new(const, "===", obj).at(node.location)
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
@@ -1426,7 +1820,7 @@ module Crystal
     end
 
     def end_visit(node : RespondsTo)
-      node.type = mod.bool
+      node.type = program.bool
       if needs_type_filters? && (var = get_expression_var(node.obj))
         @type_filters = TypeFilters.new var, RespondsToTypeFilter.new(node.name)
       end
@@ -1442,11 +1836,22 @@ module Crystal
       when Assign
         target = exp.target
         return target if target.is_a?(Var)
+      when Expressions
+        return unless exp = exp.single_expression?
+        return get_expression_var(exp)
+      else
+        # go on
       end
       nil
     end
 
     def visit(node : Cast | NilableCast)
+      # If there's an `x.as(T)` inside a method, that method
+      # has a chance to raise, so we must mark it as such
+      if typed_def = @typed_def
+        typed_def.raises = true
+      end
+
       node.obj.accept self
 
       @in_type_args += 1
@@ -1454,12 +1859,14 @@ module Crystal
       @in_type_args -= 1
 
       case node.to.type?
-      when @mod.object
+      when @program.object
         node.raise "can't cast to Object yet"
-      when @mod.reference
+      when @program.reference
         node.raise "can't cast to Reference yet"
-      when @mod.class_type
+      when @program.class_type
         node.raise "can't cast to Class yet"
+      else
+        # go on
       end
 
       obj_type = node.obj.type?
@@ -1476,89 +1883,37 @@ module Crystal
       false
     end
 
-    def visit(node : ClassDef)
-      check_outside_block_or_exp node, "declare class"
-
-      pushing_type(node.resolved_type) do
-        node.runtime_initializers.try &.each &.accept self
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : ModuleDef)
-      check_outside_block_or_exp node, "declare module"
-
-      pushing_type(node.resolved_type) do
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : Alias)
-      check_outside_block_or_exp node, "declare alias"
-
-      false
-    end
-
-    def visit(node : Include)
-      check_outside_block_or_exp node, "include"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : Extend)
-      check_outside_block_or_exp node, "extend"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : LibDef)
-      check_outside_block_or_exp node, "declare lib"
-
-      @attributes = nil
-      pushing_type(node.resolved_type) do
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : StructDef)
-      false
-    end
-
-    def visit(node : UnionDef)
-      false
-    end
-
-    def visit(node : TypeDef)
-      false
-    end
-
     def visit(node : FunDef)
-      return false unless node.body
+      body = node.body.not_nil!
 
-      visit_fun_def(node)
-    end
+      external = node.external
+      return_type = external.type
 
-    def visit(node : EnumDef)
-      check_outside_block_or_exp node, "declare enum"
-
-      pushing_type(node.resolved_type) do
-        node.members.each &.accept self
+      vars = MetaVars.new
+      external.args.each do |arg|
+        var = MetaVar.new(arg.name, arg.type)
+        var.bind_to var
+        vars[arg.name] = var
       end
 
-      false
-    end
+      visitor = MainVisitor.new(@program, vars, external)
+      visitor.untyped_def = external
+      visitor.scope = @program
 
-    def visit(node : Arg)
+      begin
+        body.accept visitor
+      rescue ex : Crystal::Exception
+        node.raise ex.message, ex
+      end
+
+      inferred_return_type = @program.type_merge([body.type?, external.type?])
+
+      if return_type && return_type != @program.nil && inferred_return_type != return_type
+        node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
+      end
+
+      external.set_type(return_type)
+
       false
     end
 
@@ -1567,6 +1922,8 @@ module Crystal
         node.cond.accept self
       end
 
+      or_left_type_filters = @or_left_type_filters
+      or_right_type_filters = @or_right_type_filters
       cond_type_filters = @type_filters
       cond_vars = @vars
 
@@ -1575,6 +1932,8 @@ module Crystal
       @unreachable = false
 
       filter_vars cond_type_filters
+
+      before_then_vars = @vars.dup
 
       node.then.accept self
 
@@ -1590,11 +1949,34 @@ module Crystal
       # block is when the condition is a Var (in the else it must be
       # nil), IsA (in the else it's not that type), RespondsTo
       # (in the else it doesn't respond to that message) or Not.
-      case node.cond
+      case cond = node.cond.single_expression
       when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
+      when Or
+        # Try to apply boolean logic: `!(a || b)` is `!a && !b`
+        cond_left = cond.left.single_expression
+        cond_right = cond.right.single_expression
+
+        #  We can't deduce anything for sub && or || expressions
+        or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
+        or_right_type_filters = nil if cond_right.is_a?(And) || cond_right.is_a?(Or)
+
+        # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
+        or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
+
+        if or_left_type_filters && or_right_type_filters
+          filters = TypeFilters.and(or_left_type_filters.not, or_right_type_filters.not)
+          filter_vars filters
+        elsif or_left_type_filters
+          filter_vars or_left_type_filters.not
+        elsif or_right_type_filters
+          filter_vars or_right_type_filters.not
+        end
+      else
+        # go on
       end
 
+      before_else_vars = @vars.dup
       node.else.accept self
 
       else_vars = @vars
@@ -1602,15 +1984,18 @@ module Crystal
       @type_filters = nil
       else_unreachable = @unreachable
 
-      merge_if_vars node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
+      merge_if_vars node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable
 
       if needs_type_filters?
-        case node.binary
-        when :and
+        case node
+        when .and?
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
-          # TODO: or type filters
-          # when :or
-          #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+        when .or?
+          @or_left_type_filters = or_left_type_filters = then_type_filters
+          @or_right_type_filters = or_right_type_filters = else_type_filters
+          @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
+        else
+          # go on: a regular if
         end
       end
 
@@ -1629,7 +2014,7 @@ module Crystal
     #     before the 'if' and it doesn't appear in one of the branches.
     #   - Don't use the type of a branch that is unreachable (ends with return,
     #     break or with a call that is NoReturn)
-    def merge_if_vars(node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
+    def merge_if_vars(node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
         all_vars_names << name
@@ -1641,13 +2026,27 @@ module Crystal
       all_vars_names.each do |name|
         cond_var = cond_vars[name]?
         then_var = then_vars[name]?
+        before_then_var = before_then_vars[name]?
         else_var = else_vars[name]?
+        before_else_var = before_else_vars[name]?
 
         # Check whether the var didn't change at all
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
-        if_var.nil_if_read = !!(then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read))
+
+        # Only copy `nil_if_read` from each branch if it's not unreachable
+        then_var_nil_if_read = !then_unreachable && then_var.try(&.nil_if_read?)
+        else_var_nil_if_read = !else_unreachable && else_var.try(&.nil_if_read?)
+
+        if_var.nil_if_read = !!(then_var_nil_if_read || else_var_nil_if_read)
+
+        # Check if no types were changes in either then 'then' and 'else' branches
+        if cond_var && then_var.same?(before_then_var) && else_var.same?(before_else_var) && !then_unreachable && !else_unreachable
+          cond_var.nil_if_read = if_var.nil_if_read?
+          @vars[name] = cond_var
+          next
+        end
 
         if then_var && else_var
           if then_unreachable
@@ -1671,10 +2070,10 @@ module Crystal
           if cond_var
             if_var.bind_to cond_var
           elsif !else_unreachable
-            if_var.bind_to mod.nil_var
+            if_var.bind_to program.nil_var
             if_var.nil_if_read = true
           else
-            if_var.bind_to conditional_no_return(node.else, @mod.nil_var)
+            if_var.bind_to conditional_no_return(node.else, @program.nil_var)
           end
         elsif else_var
           if else_unreachable
@@ -1686,10 +2085,10 @@ module Crystal
           if cond_var
             if_var.bind_to cond_var
           elsif !then_unreachable
-            if_var.bind_to mod.nil_var
+            if_var.bind_to program.nil_var
             if_var.nil_if_read = true
           else
-            if_var.bind_to conditional_no_return(node.then, @mod.nil_var)
+            if_var.bind_to conditional_no_return(node.then, @program.nil_var)
           end
         end
 
@@ -1709,7 +2108,7 @@ module Crystal
       @vars.each do |name, var|
         before_var = MetaVar.new(name)
         before_var.bind_to(var)
-        before_var.nil_if_read = var.nil_if_read
+        before_var.nil_if_read = var.nil_if_read?
         @vars[name] = before_var
       end
 
@@ -1730,23 +2129,54 @@ module Crystal
       @block, old_block = nil, @block
 
       @while_stack.push node
-      node.body.accept self
 
-      endless_while = node.cond.true_literal?
-      merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      with_block_kind :while do
+        node.body.accept self
+      end
+
+      # After while's body, bind variables *before* the condition to the
+      # ones after the body, because the loop will repeat.
+      #
+      # For example:
+      #
+      #    x = exp
+      #    # x starts with the type of exp
+      #    while x = x.method
+      #      # but after the loop, the x above (in x.method)
+      #      # should now also get the type of x.method, recursively
+      #    end
+      before_cond_vars.each do |name, before_cond_var|
+        var = @vars[name]?
+        before_cond_var.bind_to(var) if var && !var.same?(before_cond_var)
+      end
+
+      cond = node.cond.single_expression
+
+      endless_while = cond.true_literal?
+      merge_while_vars cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
       @while_vars = old_while_vars
 
-      unless node.has_breaks
+      unless node.has_breaks?
         if endless_while
-          node.type = mod.no_return
+          node.type = program.no_return
           return
+        end
+
+        if node.cond.is_a?(Not)
+          after_while_type_filters = @not_type_filters
+        else
+          after_while_type_filters = not_type_filters(node.cond, cond_type_filters)
+        end
+
+        if after_while_type_filters
+          filter_vars(after_while_type_filters)
         end
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -1765,7 +2195,7 @@ module Crystal
         if cond_var && (cond_var.name == name) && after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
-          after_while_var.nil_if_read = after_cond_var.nil_if_read
+          after_while_var.nil_if_read = after_cond_var.nil_if_read?
           after_while_vars[name] = after_while_var
 
           # If there was a previous variable, we use that type merged
@@ -1776,14 +2206,14 @@ module Crystal
           # If the loop is endless
           if endless
             after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read
+            after_while_var.nil_if_read = while_var.nil_if_read?
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
             # `before_cond_vars` are modified in the while body
             after_while_var.bind_to(before_cond_vars_copy[name])
             after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
+            after_while_var.nil_if_read = before_cond_var.nil_if_read? || while_var.nil_if_read?
           end
           after_while_vars[name] = after_while_var
 
@@ -1798,18 +2228,21 @@ module Crystal
           after_while_var.bind_to(while_var)
           nilable = false
           if endless
-            # In an endless loop if there's a break before a variable is declared,
-            # that variable becomes nilable.
-            unless all_break_vars.try &.all? &.has_key?(name)
+            # In an endless loop if not all variable with the given name end up
+            # in a break it means that they can be nilable.
+            # Alternatively, if any var that ends in a break is nil-if-read then
+            # the resulting variable will be nil-if-read too.
+            if !all_break_vars.try(&.all? &.has_key?(name)) ||
+               all_break_vars.try(&.any? &.[name]?.try &.nil_if_read?)
               nilable = true
             end
           else
             nilable = true
           end
           if nilable
-            after_while_var.bind_to(@mod.nil_var)
             after_while_var.nil_if_read = true
           end
+
           after_while_vars[name] = after_while_var
         end
       end
@@ -1826,8 +2259,8 @@ module Crystal
               # it might be that a break variable is not present
               # in the current vars after a while
               var = new_meta_var(name)
-              var.bind_to(mod.nil_var)
-              @meta_vars[name].bind_to(mod.nil_var)
+              var.bind_to(program.nil_var)
+              @meta_vars[name].bind_to(program.nil_var)
               @vars[name] = var
             end
             var.bind_to(break_var)
@@ -1846,11 +2279,16 @@ module Crystal
       when And
         return get_while_cond_assign_target(node.left)
       when If
-        if node.binary == :and
+        if node.and?
           return get_while_cond_assign_target(node.cond)
         end
       when Call
         return get_while_cond_assign_target(node.obj)
+      when Expressions
+        return unless node = node.single_expression?
+        return get_while_cond_assign_target(node)
+      else
+        # go on
       end
 
       nil
@@ -1884,34 +2322,43 @@ module Crystal
     end
 
     def end_visit(node : Break)
+      if last_block_kind == :ensure
+        node.raise "can't use break inside ensure"
+      end
+
       if block = @block
         node.target = block.call.not_nil!
 
-        block.break.bind_to(node.exp || mod.nil_var)
+        block.break.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
-        target_while.has_breaks = true
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
       else
         if @typed_def.try &.captured_block?
-          node.raise "can't break from captured block"
+          node.raise "can't break from captured block, try using `next`."
         end
 
-        node.raise "Invalid break"
+        node.raise "invalid break"
       end
+
+      node.type = @program.no_return
 
       @unreachable = true
     end
 
     def end_visit(node : Next)
+      if last_block_kind == :ensure
+        node.raise "can't use next inside ensure"
+      end
+
       if block = @block
         node.target = block
 
-        block.bind_to(node.exp || mod.nil_var)
+        block.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars, block.args
@@ -1923,114 +2370,69 @@ module Crystal
         typed_def = @typed_def
         if typed_def && typed_def.captured_block?
           node.target = typed_def
-          typed_def.bind_to(node.exp || mod.nil_var)
+          typed_def.bind_to(node_exp_or_nil_literal(node))
         else
-          node.raise "Invalid next"
+          node.raise "invalid next"
         end
       end
+
+      node.type = @program.no_return
 
       @unreachable = true
     end
 
+    def with_block_kind(kind)
+      old_block_kind, @last_block_kind = last_block_kind, kind
+      old_inside_ensure, @inside_ensure = @inside_ensure, @inside_ensure || kind == :ensure
+      yield
+      @last_block_kind = old_block_kind
+      @inside_ensure = old_inside_ensure
+    end
+
     def visit(node : Primitive)
+      # If the method where this primitive is defined has a return type, use it
+      if return_type = typed_def.return_type
+        node.type = scope.lookup_type(return_type, free_vars: free_vars)
+        return false
+      end
+
       case node.name
-      when "binary"
-        visit_binary node
-      when "cast"
-        visit_cast node
       when "allocate"
         visit_allocate node
       when "pointer_malloc"
         visit_pointer_malloc node
       when "pointer_set"
         visit_pointer_set node
-      when "pointer_get"
-        visit_pointer_get node
-      when "pointer_address"
-        node.type = @mod.uint64
       when "pointer_new"
         visit_pointer_new node
-      when "pointer_realloc"
-        node.type = scope
-      when "pointer_add"
-        node.type = scope
       when "argc"
         # Already typed
       when "argv"
         # Already typed
-      when "struct_new"
-        node.type = scope.instance_type
-      when "struct_set"
+      when "struct_or_union_set"
         visit_struct_or_union_set node
-      when "struct_get"
-        visit_struct_get node
-      when "union_new"
-        node.type = scope.instance_type
-      when "union_set"
-        visit_struct_or_union_set node
-      when "union_get"
-        visit_union_get node
       when "external_var_set"
         # Nothing to do
       when "external_var_get"
         # Nothing to do
-      when "object_id"
-        node.type = mod.uint64
-      when "object_crystal_type_id"
-        node.type = mod.int32
-      when "symbol_to_s"
-        node.type = mod.string
       when "class"
         node.type = scope.metaclass
-      when "proc_call"
-        node.type = scope.as(ProcInstanceType).return_type
-      when "pointer_diff"
-        node.type = mod.int64
-      when "class_name"
-        node.type = mod.string
       when "enum_value"
         # Nothing to do
       when "enum_new"
         # Nothing to do
+      when "throw_info"
+        node.type = program.pointer_of(program.void)
+      when "va_arg"
+        visit_va_arg node
       else
-        node.raise "Bug: unhandled primitive in type inference: #{node.name}"
+        node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
     end
 
-    def visit_binary(node)
-      case typed_def.name
-      when "+", "-", "*", "/", "unsafe_div"
-        t1 = scope.remove_typedef
-        t2 = typed_def.args[0].type
-        node.type = t1.integer? && t2.float? ? t2 : scope
-      when "==", "<", "<=", ">", ">=", "!="
-        node.type = @mod.bool
-      when "%", "unsafe_shl", "unsafe_shr", "|", "&", "^", "unsafe_mod"
-        node.type = scope
-      else
-        raise "Bug: unknown binary operator #{typed_def.name}"
-      end
-    end
-
-    def visit_cast(node)
-      node.type =
-        case typed_def.name
-        when "to_i", "to_i32", "ord" then mod.int32
-        when "to_i8"                 then mod.int8
-        when "to_i16"                then mod.int16
-        when "to_i32"                then mod.int32
-        when "to_i64"                then mod.int64
-        when "to_u", "to_u32"        then mod.uint32
-        when "to_u8"                 then mod.uint8
-        when "to_u16"                then mod.uint16
-        when "to_u32"                then mod.uint32
-        when "to_u64"                then mod.uint64
-        when "to_f", "to_f64"        then mod.float64
-        when "to_f32"                then mod.float32
-        when "unsafe_chr", "chr"     then mod.char # TODO: remove "chr" after 0.18.0
-        else
-          raise "Bug: unknown cast operator #{typed_def.name}"
-        end
+    def visit_va_arg(node)
+      arg = call.not_nil!.args[0]? || node.raise("requires type argument")
+      node.type = arg.type.instance_type
     end
 
     def visit_allocate(node)
@@ -2043,13 +2445,13 @@ module Crystal
         node.raise "can't create instance of a union type"
       when PointerInstanceType
         node.raise "can't create instance of a pointer type"
-      end
+      else
+        if !instance_type.virtual? && instance_type.abstract?
+          node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        end
 
-      if !instance_type.virtual? && instance_type.abstract?
-        node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
+        node.type = instance_type
       end
-
-      node.type = instance_type
     end
 
     def visit_pointer_malloc(node)
@@ -2065,7 +2467,7 @@ module Crystal
 
       # We don't want to change the value of Pointer(Void) to include Nil (Nil passes as Void)
       if scope.element_type.void?
-        node.type = @mod.nil
+        node.type = @program.nil
         return
       end
 
@@ -2073,12 +2475,6 @@ module Crystal
 
       scope.var.bind_to value
       node.bind_to value
-    end
-
-    def visit_pointer_get(node)
-      scope = scope().remove_typedef.as(PointerInstanceType)
-
-      node.bind_to scope.var
     end
 
     def visit_pointer_new(node)
@@ -2090,10 +2486,10 @@ module Crystal
     end
 
     def visit_struct_or_union_set(node)
-      scope = @scope.as(CStructOrUnionType)
+      scope = @scope.as(NonGenericClassType)
 
-      field_name = call.not_nil!.name[0...-1]
-      expected_type = scope.vars[field_name].type
+      field_name = call.not_nil!.name.rchop
+      expected_type = scope.instance_vars['@' + field_name].type
       value = @vars["value"]
       actual_type = value.type
 
@@ -2116,9 +2512,11 @@ module Crystal
           node.extra = convert_call
           return
         end
+      else
+        # go on
       end
 
-      unsafe_call = Conversions.to_unsafe(node, Var.new("value"), self, actual_type, expected_type)
+      unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
       if unsafe_call
         node.extra = unsafe_call
         return
@@ -2131,42 +2529,57 @@ module Crystal
       Conversions.numeric_argument(node, Var.new("value"), self, unaliased_type, expected_type, actual_type)
     end
 
-    def visit_struct_get(node)
-      scope = @scope.as(CStructType)
-      node.bind_to scope.vars[untyped_def.name]
-    end
-
-    def visit_union_get(node)
-      scope = @scope.as(CUnionType)
-      node.bind_to scope.vars[untyped_def.name]
-    end
-
     def visit(node : PointerOf)
-      var = case node_exp = node.exp
-            when Var
-              meta_var = @meta_vars[node_exp.name]
-              meta_var.assigned_to = true
-              meta_var
-            when InstanceVar
-              lookup_instance_var node_exp
-            when ClassVar
-              visit_class_var node_exp
-            when Global
-              visit_global node_exp
-            when Path
-              node_exp.accept self
-              if const = node_exp.target_const
-                const.value
-              else
-                node_exp.raise "can't take address of #{node_exp}"
-              end
-            when ReadInstanceVar
-              visit_read_instance_var(node_exp)
-              node_exp
-            else
-              node_exp.raise "can't take address of #{node_exp}"
-            end
+      var = pointerof_var(node)
+
+      unless var
+        # Accept the exp to trigger potential errors there, like
+        # "undefined local variable or method"
+        node.exp.accept self
+
+        node.exp.raise "can't take address of #{node.exp}"
+      end
+
       node.bind_to var
+      true
+    end
+
+    def pointerof_var(node)
+      case exp = node.exp
+      when Var
+        meta_var = @meta_vars[exp.name]
+        meta_var.assigned_to = true
+        meta_var
+      when InstanceVar
+        lookup_instance_var exp
+      when ClassVar
+        visit_class_var exp
+      when Global
+        visit_global exp
+      when Path
+        exp.accept self
+        if const = exp.target_const
+          const.value
+        end
+      when ReadInstanceVar
+        visit_read_instance_var(exp)
+        exp
+      when Call
+        # Check lib external var
+        return unless exp.args.empty? && !exp.named_args && !exp.block && !exp.block_arg
+
+        obj = exp.obj
+        return unless obj
+
+        obj.accept(self)
+
+        obj_type = obj.type?
+        return unless obj_type.is_a?(LibType)
+
+        obj_type.lookup_var(exp.name)
+      else
+        nil
+      end
     end
 
     def visit(node : TypeOf)
@@ -2197,15 +2610,24 @@ module Crystal
       node.exp.accept self
       @in_type_args -= 1
 
+      type = node.exp.type?
+
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take sizeof uninstantiated generic type #{type}"
+      end
+
       # Try to resolve the sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@mod.size_of(type))
-        expanded.type = @mod.int32
+      if type && !node.exp.is_a?(TypeOf) &&
+         !(type.module? || (type.abstract? && type.struct?))
+        expanded = NumberLiteral.new(@program.size_of(type.sizeof_type).to_s, :i32)
+        expanded.type = @program.int32
         node.expanded = expanded
       end
-      node.type = @mod.int32
+
+      node.type = @program.int32
+
       false
     end
 
@@ -2214,15 +2636,55 @@ module Crystal
       node.exp.accept self
       @in_type_args -= 1
 
+      type = node.exp.type?
+
+      if type.is_a?(GenericType)
+        node.exp.raise "can't take instance_sizeof uninstantiated generic type #{type}"
+      end
+
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if (type = node.exp.type?) && type.instance_type.class? && !node.exp.is_a?(TypeOf)
-        expanded = NumberLiteral.new(@mod.instance_size_of(type))
-        expanded.type = @mod.int32
+      if type && type.instance_type.devirtualize.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@program.instance_size_of(type.sizeof_type).to_s, :i32)
+        expanded.type = @program.int32
         node.expanded = expanded
       end
-      node.type = @mod.int32
+
+      node.type = @program.int32
+
+      false
+    end
+
+    def visit(node : OffsetOf)
+      @in_type_args += 1
+      node.offsetof_type.accept self
+      @in_type_args -= 1
+
+      type = node.offsetof_type.type?
+
+      node.offsetof_type.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
+      node.offsetof_type.raise "can't use typeof inside offsetof expression" if node.offsetof_type.is_a?(TypeOf)
+
+      ivar_name = node.instance_var.as(InstanceVar).name
+      ivar_index = type.index_of_instance_var(ivar_name)
+
+      node.instance_var.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
+      node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+
+      if type && type.struct?
+        offset = @program.offset_of(type.sizeof_type, ivar_index)
+      elsif type && type.instance_type.devirtualize.class?
+        offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
+      else
+        node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
+      end
+
+      expanded = NumberLiteral.new(offset.to_s, :i32)
+      expanded.type = @program.int32
+      node.expanded = expanded
+      node.type = @program.int32
+
       false
     end
 
@@ -2231,8 +2693,8 @@ module Crystal
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.subclass_of?(@mod.exception)
-            type.raise "#{type} is not a subclass of Exception"
+          unless instance_type.implements?(@program.exception)
+            type.raise "#{instance_type} is not a subclass of Exception"
           end
           instance_type
         end
@@ -2241,14 +2703,15 @@ module Crystal
       if node_name = node.name
         var = @vars[node_name] = new_meta_var(node_name)
         meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
+        check_closured(meta_var)
         meta_var.bind_to(var)
         meta_var.assigned_to = true
 
         if types
-          unified_type = @mod.type_merge(types).not_nil!
+          unified_type = @program.type_merge(types).not_nil!
           unified_type = unified_type.virtual_type unless unified_type.is_a?(VirtualType)
         else
-          unified_type = @mod.exception.virtual_type
+          unified_type = @program.exception.virtual_type
         end
         var.type = unified_type
         var.freeze_type = unified_type
@@ -2270,15 +2733,19 @@ module Crystal
       # Any variable assigned in the body (begin) will have, inside rescue
       # blocks, all types that were assigned to them, because we can't know at which
       # point an exception is raised.
+      # We create different vars, though, to avoid changing the type of vars
+      # before the handler.
       exception_handler_vars = @exception_handler_vars = @vars.dup
+      exception_handler_vars.each do |name, var|
+        new_var = new_meta_var(name)
+        new_var.nil_if_read = var.nil_if_read?
+        new_var.bind_to(var)
+        exception_handler_vars[name] = new_var
+      end
 
       node.body.accept self
 
-      # We need the variables after the begin block to use in the else,
-      # but we don't dup them if we don't need them
-      if node.else
-        after_exception_handler_vars = @vars.dup
-      end
+      after_exception_handler_vars = @vars.dup
 
       @exception_handler_vars = nil
 
@@ -2288,6 +2755,15 @@ module Crystal
         # was raised before assigning any of the vars.
         exception_handler_vars.each do |name, var|
           unless before_body_vars[name]?
+            # Instance variables inside the body must be marked as nil
+            if name.starts_with?('@')
+              ivar = scope.lookup_instance_var(name)
+              unless ivar.type.includes_type?(@program.nil_var)
+                ivar.nil_reason = NilReason.new(name, :initialized_in_rescue)
+                ivar.bind_to @program.nil_var
+              end
+            end
+
             var.nil_if_read = true
           end
         end
@@ -2306,7 +2782,7 @@ module Crystal
         # In the else block the types are the same as in the begin block,
         # because we assume no exception was raised.
         node.else.try do |a_else|
-          @vars = after_exception_handler_vars.not_nil!.dup
+          @vars = after_exception_handler_vars.dup
           @unreachable = false
           a_else.accept self
           all_rescue_vars << @vars unless @unreachable
@@ -2321,7 +2797,9 @@ module Crystal
           merge_rescue_vars exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
-          node.ensure.try &.accept self
+          with_block_kind :ensure do
+            node.ensure.try &.accept self
+          end
         end
       end
 
@@ -2339,22 +2817,40 @@ module Crystal
             end
           end
 
-          node_ensure.accept self
+          before_ensure_vars = @vars.dup
+
+          with_block_kind :ensure do
+            node_ensure.accept self
+          end
 
           @vars = after_handler_vars
-        else
-          @vars = exception_handler_vars
-        end
 
-        # However, those previous variables can't be nil afterwards:
-        # if an exception was raised then we won't running the code
-        # after the ensure clause, so variables don't matter. But if
-        # an exception was not raised then all variables were declared
-        # successfully.
-        @vars.each do |name, var|
-          unless before_body_vars[name]?
-            var.nil_if_read = false
+          # Variables declared or overwritten inside the ensure block
+          # must remain after the exception handler
+          exception_handler_vars.each do |name, var|
+            before_var = before_ensure_vars[name]?
+            @vars[name] = var unless var.same?(before_var)
           end
+
+          # However, those previous variables can't be nil afterwards:
+          # if an exception was raised then we won't be running the code
+          # after the ensure clause, so variables don't matter. But if
+          # an exception was not raised then all variables were declared
+          # successfully.
+          @vars.each do |name, var|
+            unless before_body_vars[name]?
+              # But if the variable is already nilable after the begin
+              # block it must remain nilable
+              unless after_exception_handler_vars[name]?.try &.nil_if_read?
+                var.nil_if_read = false
+              end
+            end
+          end
+        else
+          # If there's no ensure, because all rescue/else end with unreachable
+          # we know all the vars after the exception handler will have the types
+          # after the handle (begin) block.
+          @vars = after_exception_handler_vars
         end
       end
 
@@ -2374,7 +2870,7 @@ module Crystal
         end
       end
 
-      old_exception_handler_vars = @exception_handler_vars
+      @exception_handler_vars = old_exception_handler_vars
 
       false
     end
@@ -2385,8 +2881,7 @@ module Crystal
       all_rescue_vars.each do |rescue_vars|
         rescue_vars.each do |name, var|
           after_var = (after_vars[name] ||= new_meta_var(name))
-          if var.nil_if_read || !body_vars[name]?
-            after_var.bind_to(mod.nil_var)
+          if var.nil_if_read? || !body_vars[name]?
             after_var.nil_if_read = true
           end
           after_var.bind_to(var)
@@ -2403,14 +2898,14 @@ module Crystal
 
     def end_visit(node : TupleLiteral)
       node.elements.each &.add_observer(node)
-      node.mod = @mod
+      node.program = @program
       node.update
       false
     end
 
     def end_visit(node : NamedTupleLiteral)
       node.entries.each &.value.add_observer(node)
-      node.mod = @mod
+      node.program = @program
       node.update
       false
     end
@@ -2421,102 +2916,62 @@ module Crystal
         node.type = scope.tuple_types[node.index].as(Type)
       elsif scope.is_a?(NamedTupleInstanceType)
         node.type = scope.entries[node.index].type
-      elsif scope
-        node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
+        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+      elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
+        node.type = instance_type.entries[node.index].type.metaclass
+      else
+        node.raise "unsupported TupleIndexer scope"
       end
       false
     end
 
     def visit(node : Asm)
-      if output = node.output
-        ptrof = PointerOf.new(output.exp).at(output.exp)
-        ptrof.accept self
-        node.ptrof = ptrof
+      if outputs = node.outputs
+        node.output_ptrofs = outputs.map do |output|
+          ptrof = PointerOf.new(output.exp).at(output.exp)
+          ptrof.accept self
+          ptrof
+        end
       end
 
       if inputs = node.inputs
         inputs.each &.exp.accept self
       end
 
-      node.type = @mod.void
+      node.type = @program.void
       false
-    end
-
-    def check_call_convention_attributes(node)
-      attributes = @attributes
-      return unless attributes
-
-      call_convention = nil
-
-      attributes.reject! do |attr|
-        next false unless attr.name == "CallConvention"
-
-        if call_convention
-          attr.raise "call convention already specified"
-        end
-
-        if attr.args.size != 1
-          attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
-        end
-
-        call_convention_node = attr.args.first
-        unless call_convention_node.is_a?(StringLiteral)
-          call_convention_node.raise "argument to CallConvention must be a string"
-        end
-
-        value = call_convention_node.value
-        call_convention = LLVM::CallConvention.parse?(value)
-        unless call_convention
-          call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
-        end
-
-        true
-      end
-
-      call_convention
     end
 
     # # Literals
 
     def visit(node : Nop)
-      node.type = @mod.nil
+      node.type = @program.nil
     end
 
     def visit(node : NilLiteral)
-      node.type = @mod.nil
+      node.type = @program.nil
     end
 
     def visit(node : BoolLiteral)
-      node.type = mod.bool
+      node.type = program.bool
     end
 
     def visit(node : NumberLiteral)
-      node.type = case node.kind
-                  when :i8  then mod.int8
-                  when :i16 then mod.int16
-                  when :i32 then mod.int32
-                  when :i64 then mod.int64
-                  when :u8  then mod.uint8
-                  when :u16 then mod.uint16
-                  when :u32 then mod.uint32
-                  when :u64 then mod.uint64
-                  when :f32 then mod.float32
-                  when :f64 then mod.float64
-                  else           raise "Invalid node kind: #{node.kind}"
-                  end
+      node.type = program.type_from_literal_kind node.kind
     end
 
     def visit(node : CharLiteral)
-      node.type = mod.char
+      node.type = program.char
     end
 
     def visit(node : SymbolLiteral)
-      node.type = mod.symbol
-      mod.symbols.add node.value
+      node.type = program.symbol
+      program.symbols.add node.value
     end
 
     def visit(node : StringLiteral)
-      node.type = mod.string
+      node.type = program.string
     end
 
     def visit(node : RegexLiteral)
@@ -2530,19 +2985,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of = TypeOf.new(node.elements).at(node.location)
-          generic = Generic.new(path, type_of).at(node.location)
+
+          generic = Generic.new(generic_type, type_of).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-          path = Path.global(type_name).at(node.location)
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
@@ -2558,22 +3010,16 @@ module Crystal
 
         case type
         when GenericClassType
-          type_name = type.name.split "::"
-
-          path = Path.global(type_name).at(node.location)
+          generic_type = TypeNode.new(type).at(node.location)
           type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
           type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
-          generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
+          generic = Generic.new(generic_type, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
         when GenericClassInstanceType
           # Nothing
         else
-          type_name = type.to_s.split "::"
-
-          path = Path.global(type_name).at(node.location)
-
-          node.name = path
+          node.name = TypeNode.new(name.type).at(node.location)
         end
 
         expand_named(node)
@@ -2600,12 +3046,38 @@ module Crystal
       # This allows some methods to be resolved even if the interpolated expressions doesn't
       # end up with a type because of recursive methods. We should really do something more
       # clever and robust here for the general case.
-      node.type = mod.string
+      node.type = program.string
 
       false
     end
 
     def visit(node : Case)
+      # For exhaustiveness check, which is done in CleanupTransformer,
+      # we need to know the type of `cond`. However, LiteralExpander will
+      # work with copies of `cond` in case they are Var or InstanceVar so
+      # here we type them so their type is available later on.
+      cond = node.cond
+      case cond
+      when Var         then cond.accept(self)
+      when InstanceVar then cond.accept(self)
+      when TupleLiteral
+        cond.elements.each do |element|
+          case element
+          when Var         then element.accept(self)
+          when InstanceVar then element.accept(self)
+          else
+            # Nothing to do
+          end
+        end
+      else
+        # Nothing to do
+      end
+
+      expand(node)
+      false
+    end
+
+    def visit(node : Select)
       expand(node)
       false
     end
@@ -2616,11 +3088,11 @@ module Crystal
     end
 
     def expand(node)
-      expand(node) { @mod.literal_expander.expand node }
+      expand(node) { @program.literal_expander.expand node }
     end
 
     def expand_named(node)
-      expand(node) { @mod.literal_expander.expand_named node }
+      expand(node) { @program.literal_expander.expand_named node }
     end
 
     def expand(node)
@@ -2636,13 +3108,28 @@ module Crystal
       node.exp.add_observer node
       node.update
 
-      if needs_type_filters? && (type_filters = @type_filters)
-        @type_filters = type_filters.not
+      if needs_type_filters?
+        @not_type_filters = @type_filters
+        @type_filters = not_type_filters(node.exp, @type_filters)
       else
         @type_filters = nil
+        @not_type_filters = nil
       end
 
       false
+    end
+
+    private def not_type_filters(exp, type_filters)
+      if type_filters
+        case exp
+        when Var, IsA, RespondsTo, Not
+          return type_filters.not
+        else
+          # go on
+        end
+      end
+
+      nil
     end
 
     def visit(node : VisibilityModifier)
@@ -2655,10 +3142,36 @@ module Crystal
         node.raise "can't apply visibility modifier"
       end
 
+      node.type = @program.nil
+
       false
     end
 
+    def visit(node : Arg)
+      # Arg nodes are also used for Enum constants, and they
+      # must be skipped here
+      false
+    end
+
+    def visit(node : AssignWithRestriction)
+      type_assign(
+        node.assign.target.as(Var),
+        node.assign.value,
+        node.assign,
+        restriction: node.restriction)
+      node.bind_to(node.assign)
+      false
+    end
+
+    def visit(node : Unreachable)
+      node.type = @program.no_return
+    end
+
     # # Helpers
+
+    def free_vars
+      match_context.try &.free_vars
+    end
 
     def check_closured(var)
       return if @typeof_nest > 0
@@ -2723,7 +3236,7 @@ module Crystal
     end
 
     def current_non_block_context
-      @typed_def || @file_module || @mod
+      @typed_def || @file_module || @program
     end
 
     def closure_context
@@ -2737,12 +3250,11 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var : InstanceVar)
-      scope = @scope.as(InstanceVarContainer)
       scope.lookup_instance_var(var.name)
     end
 
     def lookup_var_or_instance_var(var)
-      raise "Bug: trying to lookup var or instance var but got #{var}"
+      raise "BUG: trying to lookup var or instance var but got #{var}"
     end
 
     def bind_meta_var(var : Var)
@@ -2754,7 +3266,7 @@ module Crystal
     end
 
     def bind_meta_var(var)
-      raise "Bug: trying to bind var or instance var but got #{var}"
+      raise "BUG: trying to bind var or instance var but got #{var}"
     end
 
     def bind_initialize_instance_vars(owner)
@@ -2762,9 +3274,9 @@ module Crystal
 
       @vars.each do |name, var|
         if name.starts_with? '@'
-          if var.nil_if_read
-            ivar = owner.lookup_instance_var(name)
-            ivar.bind_to mod.nil_var
+          if var.nil_if_read?
+            ivar = lookup_instance_var(var, owner)
+            ivar.bind_to program.nil_var
           end
 
           names_to_remove << name
@@ -2774,6 +3286,21 @@ module Crystal
       names_to_remove.each do |name|
         @meta_vars.delete name
         @vars.delete name
+      end
+    end
+
+    def check_initialize_instance_vars_types(owner)
+      return if untyped_def.calls_super? ||
+                untyped_def.calls_initialize?
+
+      owner.all_instance_vars.each do |name, var|
+        next if owner.has_instance_var_initializer?(name)
+        next if var.type.includes_type?(@program.nil)
+
+        meta_var = @meta_vars[name]?
+        unless meta_var
+          untyped_def.raise "instance variable '#{name}' of #{owner} was not initialized in this 'initialize', rendering it nilable"
+        end
       end
     end
 
@@ -2811,7 +3338,7 @@ module Crystal
     def define_special_var(name, value)
       meta_var = (@meta_vars[name] ||= new_meta_var(name))
       meta_var.bind_to value
-      meta_var.bind_to mod.nil_var unless meta_var.dependencies.any? &.same?(mod.nil_var)
+      meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
       meta_var.assigned_to = true
       check_closured meta_var
 
@@ -2833,8 +3360,68 @@ module Crystal
       @untyped_def || @block_context
     end
 
-    def visit(node : When | Unless | Until | MacroLiteral)
-      raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    def lookup_class_var(node)
+      class_var_owner = class_var_owner(node)
+      var = class_var_owner.lookup_class_var?(node.name)
+      unless var
+        undefined_class_variable(node, class_var_owner)
+      end
+      var
+    end
+
+    def undefined_class_variable(node, owner)
+      similar_name = lookup_similar_class_variable_name(node, owner)
+      @program.undefined_class_variable(node, owner, similar_name)
+    end
+
+    def lookup_similar_class_variable_name(node, owner)
+      Levenshtein.find(node.name) do |finder|
+        owner.class_vars.each_key do |name|
+          finder.test(name)
+        end
+      end
+    end
+
+    def check_type_in_type_args(type)
+      if @in_type_args > 0
+        type
+      else
+        type.metaclass
+      end
+    end
+
+    def the_self(node)
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+      the_self
+    end
+
+    # Returns node.exp if it's not nil. Otherwise,
+    # creates a NilLiteral node that has the same location
+    # as `node`, and returns that.
+    # We use this NilLiteral when the user writes
+    # `return`, `next` or `break` without arguments,
+    # so that in the error trace we can show it right
+    # (those expressions have a NoReturn type so we can't
+    # directly bind to them).
+    def node_exp_or_nil_literal(node)
+      exp = node.exp
+      return exp if exp
+
+      nil_exp = NilLiteral.new
+      nil_exp.location = node.location
+      nil_exp.type = @program.nil
+      nil_exp
+    end
+
+    def visit(node : When | Unless | Until | MacroLiteral | OpAssign)
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : ImplicitObj)
+      raise "BUG: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in expand"
     end
   end
 end

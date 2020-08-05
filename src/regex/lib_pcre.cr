@@ -10,6 +10,7 @@ lib LibPCRE
                        ovector : Int*, ovecsize : Int) : Int32
   fun full_info = pcre_fullinfo(code : Pcre, extra : PcreExtra, what : Int, where : Int32*) : Int
   fun get_stringnumber = pcre_get_stringnumber(code : Pcre, string_name : UInt8*) : Int
+  fun get_stringtable_entries = pcre_get_stringtable_entries(code : Pcre, name : UInt8*, first : UInt8**, last : UInt8**) : Int
 
   INFO_CAPTURECOUNT  = 2
   INFO_NAMEENTRYSIZE = 7

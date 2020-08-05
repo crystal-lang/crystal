@@ -13,6 +13,10 @@ describe "Code gen: case" do
     run("require \"prelude\"; case 1; when 0; 2; else; 3; end").to_i.should eq(3)
   end
 
+  it "codegens case without whens but else" do
+    run("require \"prelude\"; case 1; else; 2; end").to_i.should eq(2)
+  end
+
   it "codegens case that always returns" do
     run("
       require \"prelude\"
@@ -34,10 +38,8 @@ describe "Code gen: case" do
     run("
       require \"prelude\"
 
-      $a = 0
-
       def foo
-        $a += 1
+        1
       end
 
       case foo
@@ -53,7 +55,7 @@ describe "Code gen: case" do
 
   it "codegens case with class" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       struct Int32
         def foo
@@ -67,7 +69,7 @@ describe "Code gen: case" do
         a.foo
       when Char
         a.ord
-      end.to_i
+      end.to_i!
       ").to_i.should eq(-1)
   end
 
@@ -92,9 +94,9 @@ describe "Code gen: case" do
         end
       end
 
-      A = nil
+      CONST = nil
       case nil
-      when A
+      when CONST
         1
       else
         2

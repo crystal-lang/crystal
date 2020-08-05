@@ -8,7 +8,7 @@ describe "Regex" do
 
   it "does =~" do
     (/foo/ =~ "bar foo baz").should eq(4)
-    $~.size.should eq(0)
+    $~.group_size.should eq(0)
   end
 
   it "does inspect" do
@@ -31,8 +31,29 @@ describe "Regex" do
     md["foo"].should eq("r")
   end
 
+  it "does inspect with slash" do
+    %r(/).inspect.should eq("/\\//")
+    %r(\/).inspect.should eq("/\\//")
+  end
+
+  it "does to_s with slash" do
+    %r(/).to_s.should eq("(?-imsx:\\/)")
+    %r(\/).to_s.should eq("(?-imsx:\\/)")
+  end
+
   it "doesn't crash when PCRE tries to free some memory (#771)" do
     expect_raises(ArgumentError) { Regex.new("foo)") }
+  end
+
+  it "checks if Char need to be escaped" do
+    Regex.needs_escape?('*').should be_true
+    Regex.needs_escape?('|').should be_true
+    Regex.needs_escape?('@').should be_false
+  end
+
+  it "checks if String need to be escaped" do
+    Regex.needs_escape?("10$").should be_true
+    Regex.needs_escape?("foo").should be_false
   end
 
   it "escapes" do
@@ -56,7 +77,7 @@ describe "Regex" do
 
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.size.should eq(2)
+    $~.group_size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -69,9 +90,20 @@ describe "Regex" do
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.size.should eq(2)
+    $~.group_size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
+  end
+
+  describe "matches?" do
+    it "matches but create no MatchData" do
+      /f(o+)(bar?)/.matches?("fooba").should eq(true)
+      /f(o+)(bar?)/.matches?("barfo").should eq(false)
+    end
+
+    it "can specify initial position of matching" do
+      /f(o+)(bar?)/.matches?("fooba", 1).should eq(false)
+    end
   end
 
   describe "name_table" do
@@ -140,5 +172,21 @@ describe "Regex" do
   it "clones" do
     regex = /foo/
     regex.clone.should be(regex)
+  end
+
+  it "checks equality by ==" do
+    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    (regex == Regex.new("foo")).should be_false
+    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar")).should be_false
+  end
+
+  it "hashes" do
+    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("foo").hash)
+    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar").hash)
   end
 end

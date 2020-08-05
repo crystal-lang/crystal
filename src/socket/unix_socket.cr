@@ -1,32 +1,44 @@
+# A local interprocess communication clientsocket.
+#
+# Only available on UNIX and UNIX-like operating systems.
+#
+# Example usage:
+# ```
+# require "socket"
+#
+# sock = UNIXSocket.new("/tmp/myapp.sock")
+# sock.puts "message"
+# response = sock.gets
+# sock.close
+# ```
 class UNIXSocket < Socket
   getter path : String?
 
-  def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM)
-    sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
+  # Connects a named UNIX socket, bound to a filesystem pathname.
+  def initialize(@path : String, type : Type = Type::STREAM)
+    super(Family::UNIX, type, Protocol::IP)
 
-    addr = LibC::SockaddrUn.new
-    addr.sun_family = LibC::SaFamilyT.new(LibC::AF_UNIX)
-
-    if path.bytesize + 1 > addr.sun_path.size
-      raise "Path size exceeds the maximum size of #{addr.sun_path.size - 1} bytes"
+    connect(UNIXAddress.new(path)) do |error|
+      close
+      raise error
     end
-    addr.sun_path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
-
-    if LibC.connect(sock, (pointerof(addr).as(LibC::Sockaddr*)), sizeof(LibC::SockaddrUn)) != 0
-      LibC.close(sock)
-      raise Errno.new("Error connecting to '#{path}'")
-    end
-
-    super sock
   end
 
-  def initialize(fd : Int32)
-    init_close_on_exec fd
-    super fd
+  protected def initialize(family : Family, type : Type)
+    super family, type, Protocol::IP
   end
 
-  def self.open(path, socktype : Socket::Type = Socket::Type::STREAM)
-    sock = new(path, socktype)
+  # Creates a UNIXSocket from an already configured raw file descriptor
+  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+    super fd, Family::UNIX, type, Protocol::IP
+  end
+
+  # Opens an UNIX socket to a filesystem pathname, yields it to the block, then
+  # eventually closes the socket when the block returns.
+  #
+  # Returns the value of the block.
+  def self.open(path, type : Type = Type::STREAM)
+    sock = new(path, type)
     begin
       yield sock
     ensure
@@ -34,20 +46,43 @@ class UNIXSocket < Socket
     end
   end
 
-  def self.pair(socktype : Socket::Type = Socket::Type::STREAM, protocol : Socket::Protocol = Socket::Protocol::IP)
-    fds = StaticArray(Int32, 2).new { 0_i32 }
-    socktype_value = socktype.value
-    {% if LibC.constants.includes?("SOCK_CLOEXEC".id) %}
-      socktype_value |= LibC::SOCK_CLOEXEC
+  # Returns a pair of unamed UNIX sockets.
+  #
+  # ```
+  # require "socket"
+  #
+  # left, right = UNIXSocket.pair
+  #
+  # spawn do
+  #   # echo server
+  #   message = right.gets
+  #   right.puts message
+  # end
+  #
+  # left.puts "message"
+  # left.gets # => "message"
+  # ```
+  def self.pair(type : Type = Type::STREAM)
+    fds = uninitialized Int32[2]
+
+    socktype = type.value
+    {% if LibC.has_constant?(:SOCK_CLOEXEC) %}
+      socktype |= LibC::SOCK_CLOEXEC
     {% end %}
-    if LibC.socketpair(LibC::AF_UNIX, socktype_value, protocol.value, fds) != 0
-      raise Errno.new("socketpair:")
+
+    if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
+      raise Socket::Error.new("socketpair:")
     end
-    fds.map { |fd| UNIXSocket.new(fd) }
+
+    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
-  def self.pair(socktype : Socket::Type = Socket::Type::STREAM, protocol : Socket::Protocol = Socket::Protocol::IP)
-    left, right = pair(socktype, protocol)
+  # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
+  # block. Eventually closes both sockets when the block returns.
+  #
+  # Returns the value of the block.
+  def self.pair(type : Type = Type::STREAM)
+    left, right = pair(type)
     begin
       yield left, right
     ensure
@@ -62,5 +97,10 @@ class UNIXSocket < Socket
 
   def remote_address
     UNIXAddress.new(path.to_s)
+  end
+
+  def receive
+    bytes_read, sockaddr, addrlen = recvfrom
+    {bytes_read, UNIXAddress.from(sockaddr, addrlen)}
   end
 end

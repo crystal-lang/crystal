@@ -1,6 +1,44 @@
+{% skip_file if flag?(:win32) %}
+
 require "termios"
 
-module IO
+class IO::FileDescriptor < IO
+  # Turns off character echoing for the duration of the given block.
+  # This will prevent displaying back to the user what they enter on the terminal.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
+  #
+  # ```
+  # print "Enter password: "
+  # password = STDIN.noecho &.gets.try &.chomp
+  # puts
+  # ```
+  def noecho
+    preserving_tc_mode("can't set IO#noecho") do |mode|
+      noecho_from_tc_mode!
+      yield self
+    end
+  end
+
+  # Turns off character echoing for this IO.
+  # This will prevent displaying back to the user what they enter on the terminal.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
+  def noecho!
+    if LibC.tcgetattr(fd, out mode) != 0
+      raise IO::Error.from_errno "can't set IO#noecho!"
+    end
+    noecho_from_tc_mode!
+  end
+
+  macro noecho_from_tc_mode!
+    mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
+    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+  end
+
+  # Enables character processing for the duration of the given block.
+  # The so called cooked mode is the standard behavior of a terminal,
+  # doing line wise editing by the terminal and only sending the input to
+  # the program on a newline.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
   def cooked
     preserving_tc_mode("can't set IO#cooked") do |mode|
       cooked_from_tc_mode!
@@ -8,29 +46,38 @@ module IO
     end
   end
 
+  # Enables character processing for this IO.
+  # The so called cooked mode is the standard behavior of a terminal,
+  # doing line wise editing by the terminal and only sending the input to
+  # the program on a newline.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
   def cooked!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#cooked!"
+      raise IO::Error.from_errno "can't set IO#cooked!"
     end
     cooked_from_tc_mode!
   end
 
   macro cooked_from_tc_mode!
-    mode.c_iflag |= Termios::InputMode::BRKINT |
+    mode.c_iflag |= (Termios::InputMode::BRKINT |
                     Termios::InputMode::ISTRIP |
                     Termios::InputMode::ICRNL  |
-                    Termios::InputMode::IXON
-    mode.c_oflag |= Termios::OutputMode::OPOST
-    mode.c_lflag |= Termios::LocalMode::ECHO   |
+                    Termios::InputMode::IXON).value
+    mode.c_oflag |= Termios::OutputMode::OPOST.value
+    mode.c_lflag |= (Termios::LocalMode::ECHO   |
                     Termios::LocalMode::ECHOE  |
                     Termios::LocalMode::ECHOK  |
                     Termios::LocalMode::ECHONL |
                     Termios::LocalMode::ICANON |
                     Termios::LocalMode::ISIG   |
-                    Termios::LocalMode::IEXTEN
+                    Termios::LocalMode::IEXTEN).value
     LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
+  # Enables raw mode for the duration of the given block.
+  # In raw mode every keypress is directly sent to the program, no interpretation
+  # is done by the terminal.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
   def raw
     preserving_tc_mode("can't set IO#raw") do |mode|
       raw_from_tc_mode!
@@ -38,9 +85,13 @@ module IO
     end
   end
 
+  # Enables raw mode for this IO.
+  # In raw mode every keypress is directly sent to the program, no interpretation
+  # is done by the terminal.
+  # Only call this when this IO is a TTY, such as a not redirected stdin.
   def raw!
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new "can't set IO#raw!"
+      raise IO::Error.from_errno "can't set IO#raw!"
     end
 
     raw_from_tc_mode!
@@ -53,33 +104,13 @@ module IO
 
   private def preserving_tc_mode(msg)
     if LibC.tcgetattr(fd, out mode) != 0
-      raise Errno.new msg
+      raise IO::Error.from_errno msg
     end
     before = mode
     begin
       yield mode
     ensure
       LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
-    end
-  end
-
-  def read_nonblock(size)
-    before = LibC.fcntl(fd, LibC::F_GETFL)
-    LibC.fcntl(fd, LibC::F_SETFL, before | LibC::O_NONBLOCK)
-
-    begin
-      String.new(size) do |buffer|
-        read_size = read Slice.new(buffer, size)
-        if read_size == 0
-          raise EOFError.new "read_nonblock: read nothing"
-        elsif Errno.value == LibC::EWOULDBLOCK
-          raise Errno.new "exception in read_nonblock"
-        else
-          {read_size.to_i, 0}
-        end
-      end
-    ensure
-      LibC.fcntl(fd, LibC::F_SETFL, before)
     end
   end
 end

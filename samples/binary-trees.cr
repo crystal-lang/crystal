@@ -1,4 +1,4 @@
-# Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u64q/benchmark.php?test=binarytrees&lang=yarv&id=1&data=u64q
+# Copied with little modifications from: https://benchmarksgame-team.pages.debian.net/benchmarksgame/program/binarytrees-yarv-1.html
 
 class Node
   def initialize(@a : Node?, @b : Int32, @c : Node?)
@@ -35,7 +35,7 @@ stretch_tree = nil
 
 long_lived_tree = bottom_up_tree(0, max_depth)
 
-min_depth.step(max_depth + 1, 2) do |depth|
+min_depth.step(to: max_depth + 1, by: 2) do |depth|
   iterations = 2**(max_depth - depth + min_depth)
 
   check = 0

@@ -16,7 +16,7 @@ module OpenSSL::SSL::HostnameValidation
   #
   # The Common Name (CN) entry will only be used if no SAN entries are present
   # in the certificate, as per
-  # [RFC6125, Section 6.4.4](https://tools.ietf.org/html/rfc6125#section-6.4.4).
+  # [RFC 6125, Section 6.4.4](https://tools.ietf.org/html/rfc6125#section-6.4.4).
   def self.validate_hostname(hostname : String, server_cert : LibCrypto::X509)
     return Result::Error if server_cert.null?
     result = matches_subject_alternative_name(hostname, server_cert)
@@ -55,9 +55,13 @@ module OpenSSL::SSL::HostnameValidation
         when 16
           addr6 = uninitialized LibC::In6Addr
           if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
-            return Result::MatchFound if pointerof(addr6).as(StaticArray(UInt32, 4)*).value == data.as(StaticArray(UInt32, 4)*).value
+            return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
           end
+        else
+          # not a length we expect
         end
+      else
+        # not a type we expect
       end
     end
 
@@ -97,8 +101,8 @@ module OpenSSL::SSL::HostnameValidation
   # Matches a hostname against a wildcard pattern.
   #
   # The hostname must be an exact match or use a wildcard following
-  # [RFC6125, section 6.4.3](http://tools.ietf.org/html/rfc6125#section-6.4.3)
-  # and [RFC6125, section 7.2](http://tools.ietf.org/html/rfc6125#section-7.2)
+  # [RFC 6125, section 6.4.3](http://tools.ietf.org/html/rfc6125#section-6.4.3)
+  # and [RFC 6125, section 7.2](http://tools.ietf.org/html/rfc6125#section-7.2)
   #
   # IDNA domains must be given in their punycode encoding, and no wildcard match
   # will be attempted if the left-most label is an IDNA label. For example

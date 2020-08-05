@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 ################## https://github.com/mkropat/sh-realpath #####################
 #
@@ -37,7 +37,7 @@ _resolve_symlinks() {
 
     local dir_context path
     path=$(readlink -- "$1")
-    if [ $? -eq 0 ]; then
+    if [ $? = 0 ]; then
         dir_context=$(dirname -- "$1")
         _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
     else
@@ -89,47 +89,80 @@ _canonicalize_file_path() {
     local dir file
     dir=$(dirname -- "$1")
     file=$(basename -- "$1")
-    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+    (cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
 }
 
 ##############################################################################
 
-# Based on http://stackoverflow.com/a/2108540/2199687
+# Based on http://stackoverflow.com/q/370047/641451
 remove_path_item() {
-  local path item work
+  local path item
 
   path="$1"
   item="$2"
 
-  work=":$path:"
-  work="${work/:$item:/:}"
-  work="${work%:}"
-  work="${work#:}"
-
-  echo "$work"
+  echo -n $path | awk -v RS=: -v ORS=: '$0 != "'$item'"' | sed 's/:$//'
 }
 
 ##############################################################################
+
+__has_colors() {
+  local num_colors=$(tput colors 2>/dev/null)
+
+  if [ -n "$num_colors" ] && [ "$num_colors" -gt 2 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+__error_msg() {
+  if __has_colors; then
+    # bold red coloring
+    printf '%b\n' "\033[31;1m$@\033[0m" 1>&2
+  else
+    printf '%b\n' "$@" 1>&2
+  fi
+}
+__warning_msg() {
+  if __has_colors; then
+    # brown coloring
+    printf '%b\n' "\033[33m$@\033[0m" 1>&2
+  else
+    printf '%b\n' "$@" 1>&2
+  fi
+}
+
 
 SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
-export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs
+export CRYSTAL_PATH="${CRYSTAL_PATH:-lib:$CRYSTAL_ROOT/src}"
+if [ -n "${CRYSTAL_PATH##*$CRYSTAL_ROOT/src*}" ]; then
+  __warning_msg "CRYSTAL_PATH env variable does not contains $CRYSTAL_ROOT/src"
+fi
 
-if [ -x "$CRYSTAL_DIR/crystal" ]
-then
-  >&2 echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
+export CRYSTAL_HAS_WRAPPER=true
+
+export CRYSTAL="${CRYSTAL:-"crystal"}"
+
+if [ -z "$CRYSTAL_CONFIG_LIBRARY_PATH" ]; then
+  export CRYSTAL_CONFIG_LIBRARY_PATH="$(
+    export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
+    crystal env CRYSTAL_LIBRARY_PATH || echo ""
+  )"
+fi
+
+if [ -x "$CRYSTAL_DIR/crystal" ]; then
+  __warning_msg "Using compiled compiler at ${CRYSTAL_DIR#"$PWD/"}/crystal"
   exec "$CRYSTAL_DIR/crystal" "$@"
-elif ! command -v crystal > /dev/null
-then
-  echo -e "\x1B[31mYou need to have a crystal executable in your path!\x1B[0m" 1>&2
+elif ! command -v $CRYSTAL > /dev/null; then
+  __error_msg 'You need to have a crystal executable in your path! or set CRYSTAL env variable'
   exit 1
-elif [ "$(command -v crystal)" = "$SCRIPT_PATH" ] || [ "$(command -v crystal)" = "bin/crystal" ]
-then
+elif [ "$(command -v $CRYSTAL)" = "$SCRIPT_PATH" ] || [ "$(command -v $CRYSTAL)" = "bin/crystal" ]; then
   export PATH="$(remove_path_item "$(remove_path_item "$PATH" "$SCRIPT_ROOT")" "bin")"
   exec "$SCRIPT_PATH" "$@"
 else
-  exec crystal "$@"
+  exec $CRYSTAL "$@"
 fi

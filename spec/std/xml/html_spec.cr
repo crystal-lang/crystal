@@ -40,7 +40,7 @@ describe XML do
   end
 
   it "parses HTML from IO" do
-    io = MemoryIO.new(%(\
+    io = IO::Memory.new(%(\
       <!doctype html>
       <html>
       <head>
@@ -68,5 +68,15 @@ describe XML do
     expect_raises XML::Error, "Document is empty" do
       XML.parse_html("")
     end
+  end
+
+  it "gets name of HTML document node (#4040)" do
+    doc = XML.parse_html(%(\
+      <!doctype html>
+      <html>
+      </html>
+    ))
+    doc.document?.should be_true
+    doc.name.should eq("document")
   end
 end

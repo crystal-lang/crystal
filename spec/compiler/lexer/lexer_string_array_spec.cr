@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 private def it_should_be_valid_string_array_lexer(lexer)
   token = lexer.next_token
@@ -73,6 +73,14 @@ describe "Lexer string array" do
   context "using < as delimiter" do
     it "lexes simple string array" do
       lexer = Lexer.new("%w<one two>")
+
+      it_should_be_valid_string_array_lexer(lexer)
+    end
+  end
+
+  context "using | as delimiter" do
+    it "lexes simple string array" do
+      lexer = Lexer.new("%w|one two|")
 
       it_should_be_valid_string_array_lexer(lexer)
     end

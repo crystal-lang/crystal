@@ -45,9 +45,11 @@ class Crystal::CodeGenVisitor
   end
 
   private def create_match_fun(name, type)
-    define_main_function(name, ([LLVM::Int32]), LLVM::Int1) do |func|
-      type_id = func.params.first
-      create_match_fun_body(type, type_id)
+    in_main do
+      define_main_function(name, ([llvm_context.int32]), llvm_context.int1) do |func|
+        type_id = func.params.first
+        create_match_fun_body(type, type_id)
+      end
     end
   end
 
@@ -60,17 +62,8 @@ class Crystal::CodeGenVisitor
     ret result.not_nil!
   end
 
-  private def create_match_fun_body(type : NonGenericModuleType, type_id)
-    result = nil
-    type.expand_union_types.each do |sub_type|
-      sub_type_cond = match_any_type_id(sub_type, type_id)
-      result = result ? or(result, sub_type_cond) : sub_type_cond
-    end
-    ret result.not_nil!
-  end
-
   private def create_match_fun_body(type : VirtualType, type_id)
-    min, max = @llvm_id.min_max_type_id(type.base_type).not_nil!
+    min, max = @program.llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(
       and(
         builder.icmp(LLVM::IntPredicate::SGE, type_id, int(min)),

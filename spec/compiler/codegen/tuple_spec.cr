@@ -35,10 +35,10 @@ describe "Code gen: tuple" do
       ").to_i.should eq(2)
   end
 
-  it "accesses a tuple type and creates instance from it" do
+  it "accesses T and creates instance from it" do
     run("
       struct Tuple
-        def types
+        def type_args
           T
         end
       end
@@ -53,7 +53,7 @@ describe "Code gen: tuple" do
       end
 
       t = {Foo.new(1)}
-      f = t.types[0].new(2)
+      f = t.type_args[0].new(2)
       f.x
       ").to_i.should eq(2)
   end
@@ -66,14 +66,14 @@ describe "Code gen: tuple" do
         end
       end
 
-      def foo(x : T)
+      def foo(x : T) forall T
         p = Pointer(T).malloc(1)
         p.value = x
         p
       end
 
       p = foo({1, 2})
-      p.value[0] + p.value[1]
+      p.value[0] &+ p.value[1]
       ").to_i.should eq(3)
   end
 
@@ -290,7 +290,7 @@ describe "Code gen: tuple" do
       if v.is_a?(Float64)
         10
       else
-        v[0].to_i + v[1].to_i
+        v[0].to_i! &+ v[1].to_i!
       end
       )).to_i.should eq(42)
   end
@@ -322,6 +322,46 @@ describe "Code gen: tuple" do
 
       foo
       bar
+      ))
+  end
+
+  it "assigns two same-size tuple types to a same var (#3132)" do
+    run(%(
+      t = {true}
+      t
+      t = {2}
+      t[0]
+      )).to_i.should eq(2)
+  end
+
+  it "downcasts union to mixed tuple type" do
+    run(%(
+      t = {1} || 2 || {true}
+      t = {1}
+      t[0]
+      )).to_i.should eq(1)
+  end
+
+  it "downcasts union to mixed union with mixed tuple types" do
+    run(%(
+      require "prelude"
+
+      t = {1} || 2 || {true}
+      t = {1} || 2
+      t.as(Tuple)[0]
+      )).to_i.should eq(1)
+  end
+
+  it "downcasts union inside tuple to value (#3907)" do
+    codegen(%(
+      struct Foo
+      end
+
+      foo = Foo.new
+
+      x = {0, foo}
+      z = x[0]
+      x = {0, z}
       ))
   end
 end

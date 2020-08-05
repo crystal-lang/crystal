@@ -14,7 +14,7 @@ _crystal()
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="init build deps docs eval play run spec tool help version --help --version"
+    commands="init build docs eval play run spec tool help version --help --version"
 
     case "${cmd}" in
         init)
@@ -24,30 +24,17 @@ _crystal()
                 COMPREPLY=( $(compgen -f ${cur}) )
             fi
             ;;
-        compile)
+        build)
             if [[ ${cur} == -* ]] ; then
-                local opts="--cross-compile --debug --emit --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --help"
+                local opts="--cross-compile --debug --emit --error-on-warnings --exclude-warnings --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --warnings --help"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 COMPREPLY=($(_crystal_compgen_files $cur))
             fi
             ;;
-        deps)
-            if [[ ${cur} == -* ]] ; then
-                local opts="--no-color --version --production"
-                COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-            else
-                if [[ "${prev}" == "deps" ]] ; then
-                    local subcommands="check install list update"
-                    COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
-                else
-                    COMPREPLY=($(_crystal_compgen_files $cur))
-                fi
-            fi
-            ;;
         run)
             if [[ ${cur} == -* ]] ; then
-                local opts="--debug --define --emit --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose"
+                local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose --warnings"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 COMPREPLY=($(_crystal_compgen_files $cur))
@@ -79,7 +66,7 @@ _crystal()
             COMPREPLY=( $(compgen -f ${cur}) )
             ;;
         *)
-            # When any of sumbcommands matches directly
+            # When any of subcommands matches directly
             if [[ "${prev}" == "${program}" && $(compgen -W "${commands}" -- ${cur})  ]] ; then
                 COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
             else

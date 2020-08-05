@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 describe "Lexer doc" do
   it "lexes without doc enabled" do

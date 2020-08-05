@@ -5,12 +5,12 @@ module Crystal
     def visit(node : Arg)
       if node.external_name != node.name
         visit_named_arg_name(node.external_name)
-        @str << " "
+        @str << ' '
       end
       if node.name
         @str << decorate_arg(node, node.name)
       else
-        @str << "?"
+        @str << '?'
       end
       if type = node.type?
         @str << " : "
@@ -35,6 +35,10 @@ module Crystal
       @str << node.name
     end
 
+    def visit(node : MetaMacroVar)
+      @str << node.name
+    end
+
     def visit(node : TypeFilteredNode)
       false
     end
@@ -44,7 +48,40 @@ module Crystal
       false
     end
 
+    def visit(node : AssignWithRestriction)
+      @str << "# type restriction: "
+      node.assign.target.accept self
+      @str << " : "
+      node.restriction.accept self
+      @str << " = "
+      node.assign.value.accept self
+      false
+    end
+
     def visit(node : YieldBlockBinder)
+      false
+    end
+
+    def visit(node : FileNode)
+      @str.puts
+      @str << "# " << node.filename
+      @str.puts
+      node.node.accept self
+      false
+    end
+
+    def visit(node : External)
+      node.fun_def?.try &.accept self
+      false
+    end
+
+    def visit(node : MacroId)
+      @str << node.value
+      false
+    end
+
+    def visit(node : Unreachable)
+      @str << %(raise "unreachable")
       false
     end
   end

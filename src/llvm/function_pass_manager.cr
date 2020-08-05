@@ -2,10 +2,6 @@ class LLVM::FunctionPassManager
   def initialize(@unwrap : LibLLVM::PassManagerRef)
   end
 
-  def add_target_data(target_data)
-    LibLLVM.add_target_data target_data, self
-  end
-
   def run(mod : Module)
     changed = false
     run do |runner|

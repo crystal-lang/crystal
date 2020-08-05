@@ -22,7 +22,7 @@ describe "Code gen: splat" do
       end
 
       def foo(x, *args)
-        x + args.size
+        x &+ args.size
       end
 
       foo 10, 1, 1
@@ -32,7 +32,7 @@ describe "Code gen: splat" do
   it "splats on call" do
     run(%(
       def foo(x, y)
-        x + y
+        x &+ y
       end
 
       tuple = {1, 2}
@@ -61,7 +61,7 @@ describe "Code gen: splat" do
       end
 
       def foo(x = 100, *args)
-        x + args.size
+        x &+ args.size
       end
 
       foo
@@ -75,7 +75,7 @@ describe "Code gen: splat" do
       end
 
       def foo(x, y = 100, *args)
-        x + y + args.size
+        x &+ y &+ args.size
       end
 
       foo 10
@@ -89,7 +89,7 @@ describe "Code gen: splat" do
       end
 
       def foo(x, y = 100, *args)
-        x + y + args.size
+        x &+ y &+ args.size
       end
 
       foo 10, 20, 30, 40
@@ -116,7 +116,7 @@ describe "Code gen: splat" do
       end
 
       foo = Foo.new 1, 2
-      foo.x + foo.y
+      foo.x &+ foo.y
       )).to_i.should eq(3)
   end
 
@@ -145,20 +145,29 @@ describe "Code gen: splat" do
 
   it "evaluates splat argument just once (#2677)" do
     run(%(
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def data
-        $a += 1
-        {$a, $a, $a}
+        Global.x &+= 1
+        {Global.x, Global.x, Global.x}
       end
 
       def test(x, y, z)
-        x + y + z
+        x &+ y &+ z
       end
 
       v = test(*data)
 
-      $a
+      Global.x
       )).to_i.should eq(1)
   end
 end

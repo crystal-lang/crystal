@@ -70,6 +70,7 @@ enum XML::ParserOptions
   BIG_LINES = 4194304
 
   # Returns default options for parsing XML documents.
+  #
   # Default flags are: `RECOVER` | `NOERROR` | `NOWARNING` | `NONET`
   def self.default : self
     RECOVER | NOERROR | NOWARNING | NONET

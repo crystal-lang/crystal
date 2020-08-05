@@ -1,11 +1,14 @@
 module Crypto::Subtle
-  # Compares *x* and *y* in constant time and returns true if they are the same, and false if they are not.
-  # Note: *x* and *y* must be able to respond to `to_slice`.
+  # Compares *x* and *y* in constant time and returns `true` if they are the same, and `false` if they are not.
   #
   # ```
-  # Crypto::Suble.constant_time_compare("foo","bar") => false
-  # Crypto::Suble.constant_time_compare("foo","foo") => true
+  # require "crypto/subtle"
+  #
+  # Crypto::Subtle.constant_time_compare("foo", "bar") # => false
+  # Crypto::Subtle.constant_time_compare("foo", "foo") # => true
   # ```
+  #
+  # NOTE: *x* and *y* must be able to respond to `to_slice`.
   def self.constant_time_compare(x, y) : Bool
     x = x.to_slice
     y = y.to_slice

@@ -12,7 +12,12 @@ class CSV::Lexer::StringBased < CSV::Lexer
   end
 
   def rewind
+    super
     @reader.pos = 0
+    if @reader.current_char == '\n'
+      @line_number += 1
+      @column_number = 0
+    end
   end
 
   private def consume_unquoted_cell
@@ -28,7 +33,9 @@ class CSV::Lexer::StringBased < CSV::Lexer
         end_pos = @reader.pos
         break
       when @quote_char
-        raise "unexpected quote"
+        raise "Unexpected quote"
+      else
+        # go on
       end
     end
     @reader.string.byte_slice(start_pos, end_pos - start_pos)

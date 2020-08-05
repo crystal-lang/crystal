@@ -1,12 +1,25 @@
 require "spec"
 
-alias RecursiveArray = Array(RecursiveArray)
+private alias RecursiveArray = Array(RecursiveArray)
 
-class BadSortingClass
+private class BadSortingClass
   include Comparable(self)
 
   def <=>(other)
     1
+  end
+end
+
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
   end
 end
 
@@ -20,16 +33,19 @@ describe "Array" do
     it "creates with default value in block" do
       ary = Array.new(5) { |i| i * 2 }
       ary.should eq([0, 2, 4, 6, 8])
+
+      ary = Array.new(5_u32) { |i| i * 2 }
+      ary.should eq([0, 2, 4, 6, 8])
     end
 
     it "raises on negative count" do
-      expect_raises(ArgumentError, "negative array size") do
+      expect_raises(ArgumentError, "Negative array size") do
         Array.new(-1, 3)
       end
     end
 
     it "raises on negative capacity" do
-      expect_raises(ArgumentError, "negative array size") do
+      expect_raises(ArgumentError, "Negative array size") do
         Array(Int32).new(-1)
       end
     end
@@ -58,17 +74,35 @@ describe "Array" do
     end
   end
 
-  it "does &" do
-    ([1, 2, 3] & [] of Int32).should eq([] of Int32)
-    ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
-    ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
-    ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+  describe "&" do
+    it "small arrays" do
+      ([1, 2, 3] & [] of Int32).should eq([] of Int32)
+      ([] of Int32 & [1, 2, 3]).should eq([] of Int32)
+      ([1, 2, 3] & [3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3] & [3, 2, 4, 3, 2, 4]).should eq([2, 3])
+      ([1, 2, 3, 1, 2, 3, nil, nil] & [3, 2, 4, 3, 2, 4, nil]).should eq([2, 3, nil])
+    end
+
+    it "big arrays" do
+      a1 = (1..64).to_a
+      a2 = (33..96).to_a
+      (a1 & a2).should eq((33..64).to_a)
+    end
   end
 
-  it "does |" do
-    ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
-    ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+  describe "|" do
+    it "small arrays" do
+      ([1, 2, 3, 2, 3] | ([] of Int32)).should eq([1, 2, 3])
+      (([] of Int32) | [1, 2, 3, 2, 3]).should eq([1, 2, 3])
+      ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4])
+      ([1, 1, 2, 3, 3] | [4, 5, 5, 6]).should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "large arrays" do
+      a = [1, 2, 3] * 10
+      b = [4, 5, 6] * 10
+      (a | b).should eq([1, 2, 3, 4, 5, 6])
+    end
   end
 
   it "does +" do
@@ -92,10 +126,18 @@ describe "Array" do
     it "does with larger array coming second" do
       ([4, 2] - [1, 2, 3]).should eq([4])
     end
+
+    it "does with even larger arrays" do
+      ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
+    end
   end
 
   it "does *" do
+    (([] of Int32) * 10).empty?.should be_true
+    ([1, 2, 3] * 0).empty?.should be_true
+    ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
+    ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
   end
 
   describe "[]" do
@@ -136,9 +178,23 @@ describe "Array" do
       [1, 2, 3][2..-2].should eq([] of Int32)
     end
 
+    it "gets on range without end" do
+      [1, 2, 3][1..nil].should eq([2, 3])
+    end
+
+    it "gets on range without begin" do
+      [1, 2, 3][nil..1].should eq([1, 2])
+    end
+
     it "raises on index out of bounds with range" do
       expect_raises IndexError do
         [1, 2, 3][4..6]
+      end
+    end
+
+    it "raises on index out of bounds with range without end" do
+      expect_raises IndexError do
+        [1, 2, 3][4..nil]
       end
     end
 
@@ -173,13 +229,13 @@ describe "Array" do
     end
 
     it "raises on negative count" do
-      expect_raises ArgumentError, /negative count: -1/ do
+      expect_raises ArgumentError, /Negative count: -1/ do
         [1, 2, 3][1, -1]
       end
     end
 
     it "raises on negative count on empty Array" do
-      expect_raises ArgumentError, /negative count: -1/ do
+      expect_raises ArgumentError, /Negative count: -1/ do
         Array(Int32).new[0, -1]
       end
     end
@@ -192,15 +248,6 @@ describe "Array" do
     it "gets 0 ... 0 on empty array" do
       a = [] of Int32
       a[0..0].should eq(a)
-    end
-
-    it "gets nilable" do
-      [1, 2, 3][2]?.should eq(3)
-      [1, 2, 3][3]?.should be_nil
-    end
-
-    it "same access by at" do
-      [1, 2, 3][1].should eq([1, 2, 3].at(1))
     end
 
     it "doesn't exceed limits" do
@@ -216,6 +263,32 @@ describe "Array" do
       expect_raises IndexError do
         [1, 2, 3][-4..0]
       end
+    end
+  end
+
+  describe "[]?" do
+    it "gets with index" do
+      [1, 2, 3][2]?.should eq(3)
+      [1, 2, 3][3]?.should be_nil
+    end
+
+    it "gets with range" do
+      [1, 2, 3][1..2]?.should eq([2, 3])
+      [1, 2, 3][4..-1]?.should be_nil
+    end
+
+    it "gets with start and count" do
+      [1, 2, 3][1, 3]?.should eq([2, 3])
+      [1, 2, 3][4, 0]?.should be_nil
+    end
+
+    it "gets with range without end" do
+      [1, 2, 3][1..nil]?.should eq([2, 3])
+      [1, 2, 3][4..nil]?.should be_nil
+    end
+
+    it "gets with range without beginning" do
+      [1, 2, 3][nil..1]?.should eq([1, 2])
     end
   end
 
@@ -257,7 +330,7 @@ describe "Array" do
       a[1, 3] = 6
       a.should eq([1, 6, 5, 6, 7, 8])
 
-      expect_raises ArgumentError, "negative count" do
+      expect_raises ArgumentError, "Negative count" do
         [1, 2, 3][0, -1]
       end
 
@@ -272,6 +345,14 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[1...1] = 6
       a.should eq([1, 6, 2, 3, 4, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2..nil] = 6
+      a.should eq([1, 2, 6])
+
+      a = [1, 2, 3, 4, 5]
+      a[nil..2] = 6
+      a.should eq([6, 4, 5])
     end
 
     it "replaces a subrange with an array" do
@@ -298,6 +379,38 @@ describe "Array" do
       a = [1, 2, 3, 4, 5]
       a[1..3] = [6, 7, 8]
       a.should eq([1, 6, 7, 8, 5])
+
+      a = [1, 2, 3, 4, 5]
+      a[2..nil] = [6, 7]
+      a.should eq([1, 2, 6, 7])
+
+      a = [1, 2, 3, 4, 5]
+      a[nil..2] = [6, 7]
+      a.should eq([6, 7, 4, 5])
+    end
+
+    it "replaces entire range with a value for empty array (#8341)" do
+      a = [] of Int32
+      a[..] = 6
+      a.should eq([6])
+    end
+
+    it "pushes a new value with []=(...)" do
+      a = [1, 2, 3]
+      a[3..] = 4
+      a.should eq([1, 2, 3, 4])
+    end
+
+    it "replaces entire range with an array for empty array (#8341)" do
+      a = [] of Int32
+      a[..] = [1, 2, 3]
+      a.should eq([1, 2, 3])
+    end
+
+    it "concats a new array with []=(...)" do
+      a = [1, 2, 3]
+      a[3..] = [4, 5, 6]
+      a.should eq([1, 2, 3, 4, 5, 6])
     end
   end
 
@@ -351,18 +464,11 @@ describe "Array" do
     a.should eq([1, nil, 2, nil, 3])
   end
 
-  describe "compact!" do
-    it "returns true if removed" do
-      a = [1, nil, 2, nil, 3]
-      b = a.compact!.should be_true
-      a.should eq([1, 2, 3])
-    end
-
-    it "returns false if not removed" do
-      a = [1]
-      b = a.compact!.should be_false
-      a.should eq([1])
-    end
+  it "does compact!" do
+    a = [1, nil, 2, nil, 3]
+    b = a.compact!
+    b.should eq([1, 2, 3])
+    b.should be(a)
   end
 
   describe "concat" do
@@ -393,18 +499,24 @@ describe "Array" do
       a.concat(1..4)
       a.@capacity.should eq(6)
     end
+
+    it "concats a union of arrays" do
+      a = [1, '2']
+      a.concat([3] || ['4'])
+      a.should eq([1, '2', 3])
+    end
   end
 
   describe "delete" do
     it "deletes many" do
       a = [1, 2, 3, 1, 2, 3]
-      a.delete(2).should be_true
+      a.delete(2).should eq(2)
       a.should eq([1, 3, 1, 3])
     end
 
     it "delete not found" do
       a = [1, 2]
-      a.delete(4).should be_false
+      a.delete(4).should be_nil
       a.should eq([1, 2])
     end
   end
@@ -445,6 +557,10 @@ describe "Array" do
       a = [1, 2, 3, 4, 5, 6, 7]
       a.delete_at(1..2)
       a.should eq([1, 4, 5, 6, 7])
+
+      a = [1, 2, 3, 4, 5, 6, 7]
+      a.delete_at(3..nil)
+      a.should eq([1, 2, 3])
     end
 
     it "deletes with index and count" do
@@ -470,6 +586,20 @@ describe "Array" do
       a = [1, 2, 3, 4]
       a.delete_at(-3).should eq(2)
       a.should eq([1, 3, 4])
+    end
+
+    it "deletes negative index with range" do
+      a = [1, 2, 3, 4, 5, 6]
+      a.delete_at(-3, 2).should eq([4, 5])
+      a.should eq([1, 2, 3, 6])
+    end
+
+    it "deletes negative index with range, out of bounds" do
+      a = [1, 2, 3, 4, 5, 6]
+
+      expect_raises IndexError do
+        a.delete_at(-7, 2)
+      end
     end
 
     it "deletes out of bounds" do
@@ -502,7 +632,7 @@ describe "Array" do
   it "does each_index" do
     a = [1, 1, 1]
     b = 0
-    a.each_index { |i| b += i }
+    a.each_index { |i| b += i }.should be_nil
     b.should eq(3)
   end
 
@@ -532,36 +662,120 @@ describe "Array" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'x']
       a.fill('x').should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 0]
+      a.fill(0).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 0]
+      a.fill(0).should eq(expected)
     end
 
     it "replaces only values between index and size" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', 0, 2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, 0, 2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, 0, 2).should eq(expected)
     end
 
     it "replaces only values between index and size (2)" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', 1, 2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, 1, 2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, 1, 2).should eq(expected)
     end
 
     it "replaces all values from index onwards" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
       a.fill('x', -2).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, -2).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, -2).should eq(expected)
+    end
+
+    it "raises when given big negative number (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4)
+      end
+      expect_raises(IndexError) do
+        [1, 2, 3].fill(0, -4)
+      end
+      expect_raises(IndexError) do
+        [1.0, 2.0, 3.0].fill(0, -4)
+      end
     end
 
     it "replaces only values between negative index and size" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
       a.fill('x', -1, 1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 2, 0]
+      a.fill(0, -1, 1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 2, 0]
+      a.fill(0, -1, 1).should eq(expected)
+    end
+
+    it "raises when given big negative number in from/count (#4539)" do
+      expect_raises(IndexError) do
+        ['a', 'b', 'c'].fill('x', -4, 1)
+      end
+      expect_raises(IndexError) do
+        [1, 2, 3].fill(0, -4, 1)
+      end
+      expect_raises(IndexError) do
+        [1.0, 2.0, 3.0].fill(0, -4, 1)
+      end
     end
 
     it "replaces only values in range" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
       a.fill('x', -3..1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, -3..1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, -3..1).should eq(expected)
+    end
+
+    it "replaces only values in range without end" do
+      a = ['a', 'b', 'c']
+      expected = ['a', 'x', 'x']
+      a.fill('x', 1..nil).should eq(expected)
+      a = [1, 2, 3]
+      expected = [1, 0, 0]
+      a.fill(0, 1..nil).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [1, 0, 0]
+      a.fill(0, 1..nil).should eq(expected)
+    end
+
+    it "replaces only values in range begin" do
+      a = ['a', 'b', 'c']
+      expected = ['x', 'x', 'c']
+      a.fill('x', nil..1).should eq(expected)
+      a = [1, 2, 3]
+      expected = [0, 0, 3]
+      a.fill(0, nil..1).should eq(expected)
+      a = [1.0, 2.0, 3.0]
+      expected = [0, 0, 3]
+      a.fill(0, nil..1).should eq(expected)
     end
 
     it "works with a block" do
@@ -581,7 +795,7 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         ([] of Int32).first
       end
     end
@@ -620,10 +834,22 @@ describe "Array" do
       a.index(4).should be_nil
     end
 
+    it "performs without a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(3, offset: 3).should eq(5)
+      a.index(3, offset: -3).should eq(5)
+    end
+
     it "performs with a block" do
       a = [1, 2, 3]
       a.index { |i| i > 1 }.should eq(1)
       a.index { |i| i > 3 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.index(offset: 3) { |i| i > 1 }.should eq(4)
+      a.index(offset: -3) { |i| i > 1 }.should eq(4)
     end
 
     it "raises if out of bounds" do
@@ -665,7 +891,7 @@ describe "Array" do
   end
 
   describe "inspect" do
-    assert { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
+    it { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end
 
   describe "last" do
@@ -821,10 +1047,27 @@ describe "Array" do
       a.rindex(7).should be_nil
     end
 
+    it "performs without a block and an offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex(3, offset: 4).should eq(2)
+      a.rindex(6, offset: 4).should be_nil
+      a.rindex(3, offset: -2).should eq(5)
+      a.rindex(3, offset: -3).should eq(2)
+      a.rindex(3, offset: -100).should be_nil
+    end
+
     it "performs with a block" do
       a = [1, 2, 3, 4, 5, 3, 6]
       a.rindex { |i| i > 1 }.should eq(6)
       a.rindex { |i| i > 6 }.should be_nil
+    end
+
+    it "performs with a block and offset" do
+      a = [1, 2, 3, 4, 5, 3, 6]
+      a.rindex { |i| i > 1 }.should eq(6)
+      a.rindex { |i| i > 6 }.should be_nil
+      a.rindex(offset: 4) { |i| i == 3 }.should eq(2)
+      a.rindex(offset: -3) { |i| i == 3 }.should eq(2)
     end
   end
 
@@ -838,7 +1081,7 @@ describe "Array" do
 
     it "sample with random" do
       x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(3)
+      x.sample(Random.new(1)).should eq(2)
     end
 
     it "gets sample of negative count elements raises" do
@@ -886,7 +1129,7 @@ describe "Array" do
     it "gets sample of k elements out of n, with random" do
       a = [1, 2, 3, 4, 5]
       b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 5])
+      b.should eq([4, 3, 1])
     end
   end
 
@@ -945,13 +1188,13 @@ describe "Array" do
     it "shuffle! with random" do
       a = [1, 2, 3]
       a.shuffle!(Random.new(1))
-      a.should eq([2, 1, 3])
+      a.should eq([1, 3, 2])
     end
 
     it "shuffle with random" do
       a = [1, 2, 3]
       b = a.shuffle(Random.new(1))
-      b.should eq([2, 1, 3])
+      b.should eq([1, 3, 2])
     end
   end
 
@@ -974,6 +1217,37 @@ describe "Array" do
       [1, 2, 3].sort { 1 }
       Array.new(10) { BadSortingClass.new }.sort
     end
+
+    it "can sort just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      sorted = spaceships.sort
+      4.times do |i|
+        sorted[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort
+      end
+    end
+
+    it "raises if sort block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort { nil }
+      end
+    end
   end
 
   describe "sort!" do
@@ -988,6 +1262,43 @@ describe "Array" do
       a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
     end
+
+    it "sorts with invalid block (#4379)" do
+      a = [1] * 17
+      b = a.sort { -1 }
+      a.should eq(b)
+    end
+
+    it "can sort! just by using <=> (#6608)" do
+      spaceships = [
+        Spaceship.new(2),
+        Spaceship.new(0),
+        Spaceship.new(1),
+        Spaceship.new(3),
+      ]
+
+      spaceships.sort!
+      4.times do |i|
+        spaceships[i].value.should eq(i)
+      end
+    end
+
+    it "raises if <=> returns nil" do
+      spaceships = [
+        Spaceship.new(2, return_nil: true),
+        Spaceship.new(0, return_nil: true),
+      ]
+
+      expect_raises(ArgumentError) do
+        spaceships.sort!
+      end
+    end
+
+    it "raises if sort! block returns nil" do
+      expect_raises(ArgumentError) do
+        [1, 2].sort! { nil }
+      end
+    end
   end
 
   describe "sort_by" do
@@ -995,6 +1306,13 @@ describe "Array" do
       a = ["foo", "a", "hello"]
       b = a.sort_by &.size
       b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+
+    it "unpacks tuple" do
+      a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
+      b = a.sort_by { |x, y| y }
+      b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
       a.should_not eq(b)
     end
   end
@@ -1044,7 +1362,7 @@ describe "Array" do
 
   describe "to_s" do
     it "does to_s" do
-      assert { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
+      [1, 2, 3].to_s.should eq("[1, 2, 3]")
     end
 
     it "does with recursive" do
@@ -1075,6 +1393,11 @@ describe "Array" do
       b.should eq([1])
       a.same?(b).should be_false
     end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      (a * 4).uniq.should eq(a)
+    end
   end
 
   describe "uniq!" do
@@ -1094,6 +1417,13 @@ describe "Array" do
       a = [1, 2, 3]
       a.uniq! { true }
       a.should eq([1])
+    end
+
+    it "uniqs large array" do
+      a = (1..32).to_a
+      b = a * 2
+      b.uniq!
+      b.should eq(a)
     end
   end
 
@@ -1128,7 +1458,7 @@ describe "Array" do
     b = [4, 5, 6]
     c = [1, 2]
 
-    (a <=> b).should be < 1
+    (a <=> b).should be < 0
     (a <=> c).should be > 0
     (b <=> c).should be > 0
     (b <=> a).should be > 0
@@ -1148,7 +1478,7 @@ describe "Array" do
     a.each do
       count += 1
       a.clear
-    end
+    end.should be_nil
     count.should eq(1)
   end
 
@@ -1158,7 +1488,7 @@ describe "Array" do
     a.each_index do
       count += 1
       a.clear
-    end
+    end.should be_nil
     count.should eq(1)
   end
 
@@ -1169,6 +1499,26 @@ describe "Array" do
         a.zip(b) { |x, y| r += "#{x}:#{y}," }
         r.should eq("1:4,2:5,3:6,")
       end
+
+      it "works with iterable" do
+        a = [1, 2, 3]
+        b = ('a'..'c')
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
+
+      it "works with iterator" do
+        a = [1, 2, 3]
+        b = ('a'..'c').each
+        r = [] of {Int32, Char}
+        a.zip(b) do |x, y|
+          r << {x, y}
+        end
+        r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+      end
     end
 
     describe "when no block is provided" do
@@ -1176,7 +1526,42 @@ describe "Array" do
         it "returns an array of paired elements (tuples)" do
           a, b = [1, 2, 3], ["a", "b", "c"]
           r = a.zip(b)
+          r.should be_a(Array({Int32, String}))
           r.should eq([{1, "a"}, {2, "b"}, {3, "c"}])
+        end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'c')
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'c').each
+          r = a.zip(b)
+          r.should be_a(Array({Int32, Char}))
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, 'c'}])
+        end
+
+        it "zips three things" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(b, c)
+          r.should be_a(Array({Int32, Char, Char}))
+          r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, 'c', 'z'}])
+        end
+
+        it "zips union type (#8608)" do
+          a = [1, 2, 3]
+          b = 'a'..'c'
+          c = ('x'..'z').each
+          r = a.zip(a || b || c)
+          r.should be_a(Array({Int32, Int32 | Char}))
+          r.should eq([{1, 1}, {2, 2}, {3, 3}])
         end
       end
     end
@@ -1190,6 +1575,26 @@ describe "Array" do
           a.zip?(b) { |x, y| r += "#{x}:#{y}," }
           r.should eq("1:4,2:5,3:,")
         end
+
+        it "works with iterable" do
+          a = [1, 2, 3]
+          b = ('a'..'b')
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
+
+        it "works with iterator" do
+          a = [1, 2, 3]
+          b = ('a'..'b').each
+          r = [] of {Int32, Char?}
+          a.zip?(b) do |x, y|
+            r << {x, y}
+          end
+          r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+        end
       end
     end
 
@@ -1200,6 +1605,40 @@ describe "Array" do
             a, b = [1, 2, 3], ["a", "b"]
             r = a.zip?(b)
             r.should eq([{1, "a"}, {2, "b"}, {3, nil}])
+          end
+
+          it "works with iterable" do
+            a = [1, 2, 3]
+            b = ('a'..'b')
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "works with iterator" do
+            a = [1, 2, 3]
+            b = ('a'..'b').each
+            r = a.zip?(b)
+            r.should be_a(Array({Int32, Char?}))
+            r.should eq([{1, 'a'}, {2, 'b'}, {3, nil}])
+          end
+
+          it "zips three things" do
+            a = [1, 2, 3]
+            b = 'a'..'b'
+            c = ('x'..'y').each
+            r = a.zip?(b, c)
+            r.should be_a(Array({Int32, Char?, Char?}))
+            r.should eq([{1, 'a', 'x'}, {2, 'b', 'y'}, {3, nil, nil}])
+          end
+
+          it "zips union type (#8608)" do
+            a = [1, 2, 3]
+            b = 'a'..'c'
+            c = ('x'..'z').each
+            r = a.zip?(a || b || c)
+            r.should be_a(Array({Int32, Int32 | Char | Nil}))
+            r.should eq([{1, 1}, {2, 2}, {3, 3}])
           end
         end
       end
@@ -1244,12 +1683,12 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "returns nil when using select! and no changes were made" do
+  it "selects! with pattern" do
     ary1 = [1, 2, 3, 4, 5]
 
-    ary2 = ary1.select! { true }
-    ary2.should eq(nil)
-    ary1.should eq([1, 2, 3, 4, 5])
+    ary2 = ary1.select!(2..4)
+    ary2.should eq([2, 3, 4])
+    ary2.should be(ary1)
   end
 
   it "rejects!" do
@@ -1260,18 +1699,38 @@ describe "Array" do
     ary2.should be(ary1)
   end
 
-  it "returns nil when using reject! and no changes were made" do
+  it "rejects! with pattern" do
     ary1 = [1, 2, 3, 4, 5]
 
-    ary2 = ary1.reject! { false }
-    ary2.should eq(nil)
-    ary1.should eq([1, 2, 3, 4, 5])
+    ary2 = ary1.reject!(2..4)
+    ary2.should eq([1, 5])
+    ary2.should be(ary1)
   end
 
   it "does map_with_index" do
     ary = [1, 1, 2, 2]
     ary2 = ary.map_with_index { |e, i| e + i }
     ary2.should eq([1, 2, 4, 5])
+  end
+
+  it "does map_with_index, with offset" do
+    ary = [1, 1, 2, 2]
+    ary2 = ary.map_with_index(10) { |e, i| e + i }
+    ary2.should eq([11, 12, 14, 15])
+  end
+
+  it "does map_with_index!" do
+    ary = [0, 1, 2]
+    ary2 = ary.map_with_index! { |e, i| i * 2 }
+    ary.should eq([0, 2, 4])
+    ary2.should be(ary)
+  end
+
+  it "does map_with_index!, with offset" do
+    ary = [0, 1, 2]
+    ary2 = ary.map_with_index!(10) { |e, i| i * 2 }
+    ary.should eq([20, 22, 24])
+    ary2.should be(ary)
   end
 
   it "does + with different types (#568)" do
@@ -1288,9 +1747,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -1306,9 +1762,6 @@ describe "Array" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
   end
 
@@ -1320,9 +1773,6 @@ describe "Array" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 
@@ -1399,40 +1849,64 @@ describe "Array" do
       a.rotate.should eq([2, 3, 1])
     end
 
-    assert { a = [1, 2, 3]; a.rotate!(0); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate!(1); a.should eq([2, 3, 1]) }
-    assert { a = [1, 2, 3]; a.rotate!(2); a.should eq([3, 1, 2]) }
-    assert { a = [1, 2, 3]; a.rotate!(3); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate!(4); a.should eq([2, 3, 1]) }
-    assert { a = [1, 2, 3]; a.rotate!(3001); a.should eq([2, 3, 1]) }
-    assert { a = [1, 2, 3]; a.rotate!(-1); a.should eq([3, 1, 2]) }
-    assert { a = [1, 2, 3]; a.rotate!(-3001); a.should eq([3, 1, 2]) }
+    it { a = [1, 2, 3]; a.rotate!(0); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate!(1); a.should eq([2, 3, 1]) }
+    it { a = [1, 2, 3]; a.rotate!(2); a.should eq([3, 1, 2]) }
+    it { a = [1, 2, 3]; a.rotate!(3); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate!(4); a.should eq([2, 3, 1]) }
+    it { a = [1, 2, 3]; a.rotate!(3001); a.should eq([2, 3, 1]) }
+    it { a = [1, 2, 3]; a.rotate!(-1); a.should eq([3, 1, 2]) }
+    it { a = [1, 2, 3]; a.rotate!(-3001); a.should eq([3, 1, 2]) }
 
-    assert { a = [1, 2, 3]; a.rotate(0).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(1).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(2).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(3).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(4).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
-    assert { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(0).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(1).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(2).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(3).should eq([1, 2, 3]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(4).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+    it { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(5)
+      a.should eq([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-5)
+      a.should eq([45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(20)
+      a.should eq([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-20)
+      a.should eq([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
   end
 
   describe "permutations" do
-    assert { [1, 2, 2].permutations.should eq([[1, 2, 2], [1, 2, 2], [2, 1, 2], [2, 2, 1], [2, 1, 2], [2, 2, 1]]) }
-    assert { [1, 2, 3].permutations.should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
-    assert { [1, 2, 3].permutations(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].permutations(2).should eq([[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]) }
-    assert { [1, 2, 3].permutations(3).should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
-    assert { [1, 2, 3].permutations(0).should eq([[] of Int32]) }
-    assert { [1, 2, 3].permutations(4).should eq([] of Array(Int32)) }
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].permutations(-1) } }
+    it { [1, 2, 2].permutations.should eq([[1, 2, 2], [1, 2, 2], [2, 1, 2], [2, 2, 1], [2, 1, 2], [2, 2, 1]]) }
+    it { [1, 2, 3].permutations.should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
+    it { [1, 2, 3].permutations(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].permutations(2).should eq([[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]) }
+    it { [1, 2, 3].permutations(3).should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
+    it { [1, 2, 3].permutations(0).should eq([[] of Int32]) }
+    it { [1, 2, 3].permutations(4).should eq([] of Array(Int32)) }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].permutations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
       [1, 2, 3].each_permutation(2) do |perm|
         sums << perm.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([3, 4, 3, 5, 4, 5])
     end
 
@@ -1441,11 +1915,23 @@ describe "Array" do
       [1, 2, 3].each_permutation(3) do |perm|
         perm.map! &.+(1)
         sums << perm.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([9, 9, 9, 9, 9, 9])
     end
 
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) { } } }
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_permutation(3, reuse: true) do |perm|
+        object_ids << perm.object_id
+        perm.map! &.+(1)
+        sums << perm.sum
+      end.should be_nil
+      sums.should eq([9, 9, 9, 9, 9, 9])
+      object_ids.size.should eq(1)
+    end
+
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_permutation(-1) { } } }
 
     it "returns iterator" do
       a = [1, 2, 3]
@@ -1455,9 +1941,6 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(perms[0])
     end
 
     it "returns iterator with given size" do
@@ -1468,29 +1951,40 @@ describe "Array" do
         iter.next.should eq(perm)
       end
       iter.next.should be_a(Iterator::Stop)
+    end
 
-      iter.rewind
-      iter.next.should eq(perms[0])
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3]
+      object_ids = Set(UInt64).new
+      perms = a.permutations
+      iter = a.each_permutation(reuse: true)
+      perms.each do |perm|
+        b = iter.next.as(Array)
+        object_ids << b.object_id
+        b.should eq(perm)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
     end
   end
 
   describe "combinations" do
-    assert { [1, 2, 2].combinations.should eq([[1, 2, 2]]) }
-    assert { [1, 2, 3].combinations.should eq([[1, 2, 3]]) }
-    assert { [1, 2, 3].combinations(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].combinations(2).should eq([[1, 2], [1, 3], [2, 3]]) }
-    assert { [1, 2, 3].combinations(3).should eq([[1, 2, 3]]) }
-    assert { [1, 2, 3].combinations(0).should eq([[] of Int32]) }
-    assert { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
-    assert { [1, 2, 3, 4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
-    assert { [1, 2, 3, 4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].combinations(-1) } }
+    it { [1, 2, 2].combinations.should eq([[1, 2, 2]]) }
+    it { [1, 2, 3].combinations.should eq([[1, 2, 3]]) }
+    it { [1, 2, 3].combinations(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].combinations(2).should eq([[1, 2], [1, 3], [2, 3]]) }
+    it { [1, 2, 3].combinations(3).should eq([[1, 2, 3]]) }
+    it { [1, 2, 3].combinations(0).should eq([[] of Int32]) }
+    it { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
+    it { [1, 2, 3, 4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
+    it { [1, 2, 3, 4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].combinations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
       [1, 2, 3].each_combination(2) do |comb|
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([3, 4, 5])
     end
 
@@ -1499,11 +1993,32 @@ describe "Array" do
       [1, 2, 3].each_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([9])
     end
 
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) { } } }
+    it "does with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_combination(2, reuse: true) do |comb|
+        sums << comb.sum
+        object_ids << comb.object_id
+      end.should be_nil
+      sums.should eq([3, 4, 5])
+      object_ids.size.should eq(1)
+    end
+
+    it "does with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_combination(2, reuse: reuse) do |comb|
+        sums << comb.sum
+        comb.should be(reuse)
+      end.should be_nil
+      sums.should eq([3, 4, 5])
+    end
+
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_combination(-1) { } } }
 
     it "returns iterator" do
       a = [1, 2, 3, 4]
@@ -1513,27 +2028,51 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
+    end
 
-      iter.rewind
-      iter.next.should eq(combs[0])
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3, 4]
+      combs = a.combinations(2)
+      object_ids = Set(UInt64).new
+      iter = a.each_combination(2, reuse: true)
+      combs.each do |comb|
+        b = iter.next
+        object_ids << b.object_id
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
+    end
+
+    it "returns iterator with reuse = array" do
+      a = [1, 2, 3, 4]
+      reuse = [] of Int32
+      combs = a.combinations(2)
+      iter = a.each_combination(2, reuse: reuse)
+      combs.each do |comb|
+        b = iter.next
+        b.should be(reuse)
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 
   describe "repeated_combinations" do
-    assert { [1, 2, 2].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]) }
-    assert { [1, 2, 3].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
-    assert { [1, 2, 3].repeated_combinations(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].repeated_combinations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]) }
-    assert { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
-    assert { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
-    assert { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].repeated_combinations(-1) } }
+    it { [1, 2, 2].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]) }
+    it { [1, 2, 3].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    it { [1, 2, 3].repeated_combinations(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].repeated_combinations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]) }
+    it { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
+    it { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
+    it { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_combinations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
       [1, 2, 3].each_repeated_combination(2) do |comb|
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([2, 3, 4, 4, 5, 6])
     end
 
@@ -1542,11 +2081,34 @@ describe "Array" do
       [1, 2, 3].each_repeated_combination(3) do |comb|
         comb.map! &.+(1)
         sums << comb.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
     end
 
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_combination(-1) { } } }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_combination(-1) { } } }
+
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_repeated_combination(3, reuse: true) do |comb|
+        object_ids << comb.object_id
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should be_nil
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+      object_ids.size.should eq(1)
+    end
+
+    it "yields with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_repeated_combination(3, reuse: reuse) do |comb|
+        comb.should be(reuse)
+        comb.map! &.+(1)
+        sums << comb.sum
+      end.should be_nil
+      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
+    end
 
     it "returns iterator" do
       a = [1, 2, 3, 4]
@@ -1556,27 +2118,51 @@ describe "Array" do
         iter.next.should eq(comb)
       end
       iter.next.should be_a(Iterator::Stop)
+    end
 
-      iter.rewind
-      iter.next.should eq(combs[0])
+    it "returns iterator with reuse = true" do
+      a = [1, 2, 3, 4]
+      object_ids = Set(UInt64).new
+      combs = a.repeated_combinations(2)
+      iter = a.each_repeated_combination(2, reuse: true)
+      combs.each do |comb|
+        b = iter.next
+        object_ids << b.object_id
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
+      object_ids.size.should eq(1)
+    end
+
+    it "returns iterator with reuse = array" do
+      a = [1, 2, 3, 4]
+      reuse = [] of Int32
+      combs = a.repeated_combinations(2)
+      iter = a.each_repeated_combination(2, reuse: reuse)
+      combs.each do |comb|
+        b = iter.next
+        b.should be(reuse)
+        b.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
     end
   end
 
   describe "repeated_permutations" do
-    assert { [1, 2, 2].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2]]) }
-    assert { [1, 2, 3].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
-    assert { [1, 2, 3].repeated_permutations(1).should eq([[1], [2], [3]]) }
-    assert { [1, 2, 3].repeated_permutations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3], [3, 1], [3, 2], [3, 3]]) }
-    assert { [1, 2, 3].repeated_permutations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
-    assert { [1, 2, 3].repeated_permutations(0).should eq([[] of Int32]) }
-    assert { [1, 2, 3].repeated_permutations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 1], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 1], [1, 1, 3, 2], [1, 1, 3, 3], [1, 2, 1, 1], [1, 2, 1, 2], [1, 2, 1, 3], [1, 2, 2, 1], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 1], [1, 2, 3, 2], [1, 2, 3, 3], [1, 3, 1, 1], [1, 3, 1, 2], [1, 3, 1, 3], [1, 3, 2, 1], [1, 3, 2, 2], [1, 3, 2, 3], [1, 3, 3, 1], [1, 3, 3, 2], [1, 3, 3, 3], [2, 1, 1, 1], [2, 1, 1, 2], [2, 1, 1, 3], [2, 1, 2, 1], [2, 1, 2, 2], [2, 1, 2, 3], [2, 1, 3, 1], [2, 1, 3, 2], [2, 1, 3, 3], [2, 2, 1, 1], [2, 2, 1, 2], [2, 2, 1, 3], [2, 2, 2, 1], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 1], [2, 2, 3, 2], [2, 2, 3, 3], [2, 3, 1, 1], [2, 3, 1, 2], [2, 3, 1, 3], [2, 3, 2, 1], [2, 3, 2, 2], [2, 3, 2, 3], [2, 3, 3, 1], [2, 3, 3, 2], [2, 3, 3, 3], [3, 1, 1, 1], [3, 1, 1, 2], [3, 1, 1, 3], [3, 1, 2, 1], [3, 1, 2, 2], [3, 1, 2, 3], [3, 1, 3, 1], [3, 1, 3, 2], [3, 1, 3, 3], [3, 2, 1, 1], [3, 2, 1, 2], [3, 2, 1, 3], [3, 2, 2, 1], [3, 2, 2, 2], [3, 2, 2, 3], [3, 2, 3, 1], [3, 2, 3, 2], [3, 2, 3, 3], [3, 3, 1, 1], [3, 3, 1, 2], [3, 3, 1, 3], [3, 3, 2, 1], [3, 3, 2, 2], [3, 3, 2, 3], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]]) }
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].repeated_permutations(-1) } }
+    it { [1, 2, 2].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [1, 2, 1], [1, 2, 2], [1, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 1, 1], [2, 1, 2], [2, 1, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2]]) }
+    it { [1, 2, 3].repeated_permutations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
+    it { [1, 2, 3].repeated_permutations(1).should eq([[1], [2], [3]]) }
+    it { [1, 2, 3].repeated_permutations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3], [3, 1], [3, 2], [3, 3]]) }
+    it { [1, 2, 3].repeated_permutations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 1], [1, 2, 2], [1, 2, 3], [1, 3, 1], [1, 3, 2], [1, 3, 3], [2, 1, 1], [2, 1, 2], [2, 1, 3], [2, 2, 1], [2, 2, 2], [2, 2, 3], [2, 3, 1], [2, 3, 2], [2, 3, 3], [3, 1, 1], [3, 1, 2], [3, 1, 3], [3, 2, 1], [3, 2, 2], [3, 2, 3], [3, 3, 1], [3, 3, 2], [3, 3, 3]]) }
+    it { [1, 2, 3].repeated_permutations(0).should eq([[] of Int32]) }
+    it { [1, 2, 3].repeated_permutations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 1], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 1], [1, 1, 3, 2], [1, 1, 3, 3], [1, 2, 1, 1], [1, 2, 1, 2], [1, 2, 1, 3], [1, 2, 2, 1], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 1], [1, 2, 3, 2], [1, 2, 3, 3], [1, 3, 1, 1], [1, 3, 1, 2], [1, 3, 1, 3], [1, 3, 2, 1], [1, 3, 2, 2], [1, 3, 2, 3], [1, 3, 3, 1], [1, 3, 3, 2], [1, 3, 3, 3], [2, 1, 1, 1], [2, 1, 1, 2], [2, 1, 1, 3], [2, 1, 2, 1], [2, 1, 2, 2], [2, 1, 2, 3], [2, 1, 3, 1], [2, 1, 3, 2], [2, 1, 3, 3], [2, 2, 1, 1], [2, 2, 1, 2], [2, 2, 1, 3], [2, 2, 2, 1], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 1], [2, 2, 3, 2], [2, 2, 3, 3], [2, 3, 1, 1], [2, 3, 1, 2], [2, 3, 1, 3], [2, 3, 2, 1], [2, 3, 2, 2], [2, 3, 2, 3], [2, 3, 3, 1], [2, 3, 3, 2], [2, 3, 3, 3], [3, 1, 1, 1], [3, 1, 1, 2], [3, 1, 1, 3], [3, 1, 2, 1], [3, 1, 2, 2], [3, 1, 2, 3], [3, 1, 3, 1], [3, 1, 3, 2], [3, 1, 3, 3], [3, 2, 1, 1], [3, 2, 1, 2], [3, 2, 1, 3], [3, 2, 2, 1], [3, 2, 2, 2], [3, 2, 2, 3], [3, 2, 3, 1], [3, 2, 3, 2], [3, 2, 3, 3], [3, 3, 1, 1], [3, 3, 1, 2], [3, 3, 1, 3], [3, 3, 2, 1], [3, 3, 2, 2], [3, 3, 2, 3], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]]) }
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_permutations(-1) } }
 
     it "accepts a block" do
       sums = [] of Int32
       [1, 2, 3].each_repeated_permutation(2) do |a|
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([2, 3, 4, 3, 4, 5, 4, 5, 6])
     end
 
@@ -1585,14 +2171,45 @@ describe "Array" do
       [1, 2, 3].each_repeated_permutation(3) do |a|
         a.map! &.+(1)
         sums << a.sum
-      end.should eq([1, 2, 3])
+      end.should be_nil
       sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
     end
 
-    assert { expect_raises(ArgumentError, "size must be positive") { [1].each_repeated_permutation(-1) { } } }
+    it "yields with reuse = true" do
+      sums = [] of Int32
+      object_ids = Set(UInt64).new
+      [1, 2, 3].each_repeated_permutation(3, reuse: true) do |a|
+        object_ids << a.object_id
+        a.map! &.+(1)
+        sums << a.sum
+      end.should be_nil
+      sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
+      object_ids.size.should eq(1)
+    end
+
+    it "yields with reuse = array" do
+      sums = [] of Int32
+      reuse = [] of Int32
+      [1, 2, 3].each_repeated_permutation(3, reuse: reuse) do |a|
+        a.should be(reuse)
+        a.map! &.+(1)
+        sums << a.sum
+      end.should be_nil
+      sums.should eq([6, 7, 8, 7, 8, 9, 8, 9, 10, 7, 8, 9, 8, 9, 10, 9, 10, 11, 8, 9, 10, 9, 10, 11, 10, 11, 12])
+    end
+
+    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_permutation(-1) { } } }
   end
 
   describe "Array.each_product" do
+    it "one empty array" do
+      empty = [] of Int32
+      res = [] of Array(Int32)
+      Array.each_product([empty, [1, 2, 3]]) { |r| res << r }
+      Array.each_product([[1, 2, 3], empty]) { |r| res << r }
+      res.size.should eq(0)
+    end
+
     it "single array" do
       res = [] of Array(Int32)
       Array.each_product([[1]]) { |r| res << r }
@@ -1615,6 +2232,17 @@ describe "Array" do
       res = [] of Array(Int32)
       Array.each_product([[1, 2], [3], [5, 6]]) { |r| res << r }
       res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+    end
+
+    it "more arrays, reuse = true" do
+      res = [] of Array(Int32)
+      object_ids = Set(UInt64).new
+      Array.each_product([[1, 2], [3], [5, 6]], reuse: true) do |r|
+        object_ids << r.object_id
+        res << r.dup
+      end
+      res.should eq([[1, 3, 5], [1, 3, 6], [2, 3, 5], [2, 3, 6]])
+      object_ids.size.should eq(1)
     end
 
     it "with splat" do
@@ -1644,5 +2272,24 @@ describe "Array" do
 
   it "flattens" do
     [[1, 'a'], [[[[true], "hi"]]]].flatten.should eq([1, 'a', true, "hi"])
+
+    s = [1, 2, 3]
+    t = [4, 5, 6, [7, 8]]
+    u = [9, [10, 11].each]
+    a = [s, t, u, 12, 13]
+    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+  end
+
+  it "#skip" do
+    ary = [1, 2, 3]
+    ary.skip(0).should eq([1, 2, 3])
+    ary.skip(1).should eq([2, 3])
+    ary.skip(2).should eq([3])
+    ary.skip(3).should eq([] of Int32)
+    ary.skip(4).should eq([] of Int32)
+
+    expect_raises(ArgumentError, "Attempt to skip negative size") do
+      ary.skip(-1)
+    end
   end
 end

@@ -32,9 +32,11 @@ module Crystal
         when :right
           "%+#{available_width}s" % cell.text
         when :center
-          left = " " * ((available_width - cell.text.size) / 2)
+          left = " " * ((available_width - cell.text.size) // 2)
           right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
+        else
+          raise "Unknown alignment: #{cell.align}"
         end
       end
     end
@@ -51,7 +53,7 @@ module Crystal
 
     alias RowTypes = Array(Cell) | Separator
 
-    property! last_string_row : Array(Cell)?
+    property! last_string_row : Array(Cell)
     property columns : Array(Column)
 
     def initialize(@io : IO)

@@ -5,7 +5,7 @@ class OAuth::RequestToken
   def initialize(@token : String, @secret : String)
   end
 
-  def self.from_response(response)
+  def self.from_response(response) : self
     token = nil
     secret = nil
 
@@ -13,6 +13,8 @@ class OAuth::RequestToken
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value
+      else
+        # Not a key we are interested in
       end
     end
 

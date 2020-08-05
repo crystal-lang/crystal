@@ -1,47 +1,83 @@
-# Set implements a collection of unordered values with no duplicates.
+# `Set` implements a collection of unordered values with no duplicates.
 #
 # An `Enumerable` object can be converted to `Set` using the `#to_set` method.
 #
-# Set uses `Hash` as storage, so you must note the following points:
+# `Set` uses `Hash` as storage, so you must note the following points:
 #
-# * Equality of elements is determined according to `Object#==` and
-#   `Object#hash`.
-# * Set assumes that the identity of each element does not change while it is
-#   stored. Modifying an element of a set will render the set to an unreliable
-#   state.
+# * Equality of elements is determined according to `Object#==` and `Object#hash`.
+# * `Set` assumes that the identity of each element does not change while it is stored. Modifying an element of a set will render the set to an unreliable state.
 #
 # ### Example
 #
-#     s1 = Set{1, 2}
-#     s2 = [1, 2].to_set
-#     s3 = Set.new [1, 2]
-#     s1 == s2         # => true
-#     s1 == s3         # => true
-#     s1.add(2)
-#     s1.merge([6,8])
-#     s1.subset? s2    # => false
-#     s2.subset? s1    # => true
+# ```
+# s1 = Set{1, 2}
+# s2 = [1, 2].to_set
+# s3 = Set.new [1, 2]
+# s1 == s2 # => true
+# s1 == s3 # => true
+# s1.add(2)
+# s1.concat([6, 8])
+# s1.subset? s2 # => false
+# s2.subset? s1 # => true
+# ```
 struct Set(T)
   include Enumerable(T)
-  include Iterable
+  include Iterable(T)
 
-  # Creates a new, empty `Set`
+  # Creates a new, empty `Set`.
   #
-  #     s = Set(Int32).new
-  #     set.empty? # => true
+  # ```
+  # s = Set(Int32).new
+  # s.empty? # => true
+  # ```
   #
   # An initial capacity can be specified, and it will be set as the initial capacity
-  # of the internal Hash.
+  # of the internal `Hash`.
   def initialize(initial_capacity = nil)
     @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
-  # Creates a new set from the elements in `enumerable`
+  protected def initialize(*, using_hash @hash : Hash(T, Nil))
+  end
+
+  # Optimized version of `new` used when *other* is also an `Indexable`
+  def self.new(other : Indexable(T))
+    Set(T).new(other.size).concat(other)
+  end
+
+  # Creates a new set from the elements in *enumerable*.
   #
-  #     s = Set.new [1,3,5]
-  #     s.empty? => false
+  # ```
+  # a = [1, 3, 5]
+  # s = Set.new a
+  # s.empty? # => false
+  # ```
   def self.new(enumerable : Enumerable(T))
-    Set(T).new.merge(enumerable)
+    Set(T).new.concat(enumerable)
+  end
+
+  # Makes this set compare objects using their object identity (`object_id)`
+  # for types that define such method (`Reference` types, but also structs that
+  # might wrap other `Reference` types and delegate the `object_id` method to them).
+  #
+  # ```
+  # s = Set{"foo", "bar"}
+  # s.includes?("fo" + "o") # => true
+  #
+  # s.compare_by_identity
+  # s.compare_by_identity?  # => true
+  # s.includes?("fo" + "o") # => false # not the same String instance
+  # ```
+  def compare_by_identity
+    @hash.compare_by_identity
+    self
+  end
+
+  # Returns `true` of this Set is comparing objects by `object_id`.
+  #
+  # See `compare_by_identity`.
+  def compare_by_identity?
+    @hash.compare_by_identity?
   end
 
   # Alias for `add`
@@ -49,42 +85,65 @@ struct Set(T)
     add object
   end
 
-  # Adds `object` to the set and returns `self`
+  # Adds *object* to the set and returns `self`.
   #
-  #     s = Set.new [1,5]
-  #     s.includes? 8     # => false
-  #     s << 8
-  #     s.includes? 8     # => true
+  # ```
+  # s = Set{1, 5}
+  # s.includes? 8 # => false
+  # s << 8
+  # s.includes? 8 # => true
+  # ```
   def add(object : T)
     @hash[object] = nil
     self
   end
 
+  # Adds *object* to the set and returns `true` on success
+  # and `false` if the value was already in the set.
+  #
+  # ```
+  # s = Set{1, 5}
+  # s.add? 8 # => true
+  # s.add? 8 # => false
+  # ```
+  def add?(object : T)
+    @hash.put(object, nil) { return true }
+    false
+  end
+
   # Adds `#each` element of *elems* to the set and returns `self`.
   #
-  #     s = Set.new [1,5]
-  #     s.merge [5,5,8,9]
-  #     s.size            # => 4
-  def merge(elems)
+  # ```
+  # s = Set{1, 5}
+  # s.concat [5, 5, 8, 9]
+  # s.size # => 4
+  # ```
+  #
+  # See also: `#|` to merge two sets and return a new one.
+  def concat(elems)
     elems.each { |elem| self << elem }
     self
   end
 
   # Returns `true` if *object* exists in the set.
   #
-  #     s = Set.new [1,5]
-  #     s.includes? 5  # => true
-  #     s.includes? 9  # => false
+  # ```
+  # s = Set{1, 5}
+  # s.includes? 5 # => true
+  # s.includes? 9 # => false
+  # ```
   def includes?(object)
     @hash.has_key?(object)
   end
 
   # Removes the *object* from the set and returns `self`.
   #
-  #     s = Set.new [1,5]
-  #     s.includes? 5  # => true
-  #     s.delete 5
-  #     s.includes? 5  # => false
+  # ```
+  # s = Set{1, 5}
+  # s.includes? 5 # => true
+  # s.delete 5
+  # s.includes? 5 # => false
+  # ```
   def delete(object)
     @hash.delete(object)
     self
@@ -92,18 +151,22 @@ struct Set(T)
 
   # Returns the number of elements in the set.
   #
-  #     s = Set.new [1,5]
-  #     s.size  # => 2
+  # ```
+  # s = Set{1, 5}
+  # s.size # => 2
+  # ```
   def size
     @hash.size
   end
 
   # Removes all elements in the set, and returns `self`.
   #
-  #     s = Set.new [1,5]
-  #     s.size  # => 2
-  #     s.clear
-  #     s.size  # => 0
+  # ```
+  # s = Set{1, 5}
+  # s.size # => 2
+  # s.clear
+  # s.size # => 0
+  # ```
   def clear
     @hash.clear
     self
@@ -111,10 +174,12 @@ struct Set(T)
 
   # Returns `true` if the set is empty.
   #
-  #     s = Set(Int32).new
-  #     s.empty? # => true
-  #     s << 3
-  #     s.empty? # => false
+  # ```
+  # s = Set(Int32).new
+  # s.empty? # => true
+  # s << 3
+  # s.empty? # => false
+  # ```
   def empty?
     @hash.empty?
   end
@@ -124,7 +189,6 @@ struct Set(T)
     @hash.each_key do |key|
       yield key
     end
-    self
   end
 
   # Returns an iterator for each element of the set.
@@ -134,32 +198,54 @@ struct Set(T)
 
   # Intersection: returns a new set containing elements common to both sets.
   #
-  #     Set.new([1,1,3,5]) & Set.new([1,2,3])               #=> Set{1, 3}
-  #     Set.new(['a','b','b','z']) & Set.new(['a','b','c']) #=> Set{'a', 'b'}
+  # ```
+  # Set{1, 1, 3, 5} & Set{1, 2, 3}               # => Set{1, 3}
+  # Set{'a', 'b', 'b', 'z'} & Set{'a', 'b', 'c'} # => Set{'a', 'b'}
+  # ```
   def &(other : Set)
+    smallest, largest = self, other
+    if largest.size < smallest.size
+      smallest, largest = largest, smallest
+    end
+
     set = Set(T).new
-    each do |value|
-      set.add value if other.includes?(value)
+    smallest.each do |value|
+      set.add value if largest.includes?(value)
     end
     set
   end
 
   # Union: returns a new set containing all unique elements from both sets.
   #
-  #     Set.new([1,1,3,5]) | Set.new([1,2,3])               #=> Set{1, 3, 5, 2}
-  #     Set.new(['a','b','b','z']) | Set.new(['a','b','c']) #=> Set{'a', 'b', 'z', 'c'}
-  def |(other : Set(U))
-    set = Set(T | U).new
+  # ```
+  # Set{1, 1, 3, 5} | Set{1, 2, 3}               # => Set{1, 3, 5, 2}
+  # Set{'a', 'b', 'b', 'z'} | Set{'a', 'b', 'c'} # => Set{'a', 'b', 'z', 'c'}
+  # ```
+  #
+  # See also: `#concat` to add elements from a set to `self`.
+  def |(other : Set(U)) forall U
+    set = Set(T | U).new(Math.max(size, other.size))
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
   end
 
+  # Addition: returns a new set containing the unique elements from both sets.
+  #
+  # ```
+  # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
+  # ```
+  def +(other : Set(U)) forall U
+    self | other
+  end
+
   # Difference: returns a new set containing elements in this set that are not
   # present in the other.
   #
-  #     Set.new([1,2,3,4,5]) - Set.new([2,4])               #=> Set{1, 3, 5}
-  #     Set.new(['a','b','b','z']) - Set.new(['a','b','c']) #=> Set{'z'}
+  # ```
+  # Set{1, 2, 3, 4, 5} - Set{2, 4}               # => Set{1, 3, 5}
+  # Set{'a', 'b', 'b', 'z'} - Set{'a', 'b', 'c'} # => Set{'z'}
+  # ```
   def -(other : Set)
     set = Set(T).new
     each do |value|
@@ -171,8 +257,10 @@ struct Set(T)
   # Difference: returns a new set containing elements in this set that are not
   # present in the other enumerable.
   #
-  #     Set.new([1,2,3,4,5]) - [2,4]               #=> Set{1, 3, 5}
-  #     Set.new(['a','b','b','z']) - ['a','b','c'] #=> Set{'z'}
+  # ```
+  # Set{1, 2, 3, 4, 5} - [2, 4]               # => Set{1, 3, 5}
+  # Set{'a', 'b', 'b', 'z'} - ['a', 'b', 'c'] # => Set{'z'}
+  # ```
   def -(other : Enumerable)
     dup.subtract other
   end
@@ -180,9 +268,11 @@ struct Set(T)
   # Symmetric Difference: returns a new set `(self - other) | (other - self)`.
   # Equivalently, returns `(self | other) - (self & other)`.
   #
-  #     Set.new([1,2,3,4,5]) ^ Set.new([2,4,6])             #=> Set{1, 3, 5, 6}
-  #     Set.new(['a','b','b','z']) ^ Set.new(['a','b','c']) #=> Set{'z', 'c'}
-  def ^(other : Set(U))
+  # ```
+  # Set{1, 2, 3, 4, 5} ^ Set{2, 4, 6}            # => Set{1, 3, 5, 6}
+  # Set{'a', 'b', 'b', 'z'} ^ Set{'a', 'b', 'c'} # => Set{'z', 'c'}
+  # ```
+  def ^(other : Set(U)) forall U
     set = Set(T | U).new
     each do |value|
       set.add value unless other.includes?(value)
@@ -196,10 +286,12 @@ struct Set(T)
   # Symmetric Difference: returns a new set `(self - other) | (other - self)`.
   # Equivalently, returns `(self | other) - (self & other)`.
   #
-  #     Set.new([1,2,3,4,5]) ^ [2,4,6]             #=> Set{1, 3, 5, 6}
-  #     Set.new(['a','b','b','z']) ^ ['a','b','c'] #=> Set{'z', 'c'}
-  def ^(other : Enumerable(U))
-    set = Set(T | U).new.merge(self)
+  # ```
+  # Set{1, 2, 3, 4, 5} ^ [2, 4, 6]            # => Set{1, 3, 5, 6}
+  # Set{'a', 'b', 'b', 'z'} ^ ['a', 'b', 'c'] # => Set{'z', 'c'}
+  # ```
+  def ^(other : Enumerable(U)) forall U
+    set = Set(T | U).new(self)
     other.each do |value|
       if includes?(value)
         set.delete value
@@ -213,8 +305,10 @@ struct Set(T)
   # Returns `self` after removing from it those elements that are present in
   # the given enumerable.
   #
-  #     Set.new(['a','b','b','z']).subtract Set.new(['a','b','c']) #=> Set{'z'}
-  #     Set.new([1,2,3,4,5]).subtract [2,4,6] #=> Set{1, 3, 5}
+  # ```
+  # Set{'a', 'b', 'b', 'z'}.subtract Set{'a', 'b', 'c'} # => Set{'z'}
+  # Set{1, 2, 3, 4, 5}.subtract [2, 4, 6]               # => Set{1, 3, 5}
+  # ```
   def subtract(other : Enumerable)
     other.each do |value|
       delete value
@@ -222,42 +316,75 @@ struct Set(T)
     self
   end
 
-  # Returns `true` if both sets have the same elements
+  # Returns `true` if both sets have the same elements.
   #
-  #     Set.new([1,5]) == Set.new([1,5]) # => true
+  # ```
+  # Set{1, 5} == Set{1, 5} # => true
+  # ```
   def ==(other : Set)
     same?(other) || @hash == other.@hash
   end
 
-  # Returns a new set with all of the same elements
-  def dup
-    Set(T).new.merge(self)
+  # Same as `#includes?`.
+  #
+  # It is for convenience with using on `case` statement.
+  #
+  # ```
+  # red_like = Set{"red", "pink", "violet"}
+  # blue_like = Set{"blue", "azure", "violet"}
+  #
+  # case "violet"
+  # when red_like & blue_like
+  #   puts "red & blue like color!"
+  # when red_like
+  #   puts "red like color!"
+  # when blue_like
+  #   puts "blue like color!"
+  # end
+  # ```
+  #
+  # See also: `Object#===`.
+  def ===(object : T)
+    includes? object
   end
 
-  # Returns a new set with all of the elements cloned.
+  # Returns a new `Set` with all of the same elements.
+  def dup
+    set = Set(T).new(using_hash: @hash.dup)
+    set.compare_by_identity if compare_by_identity?
+    set
+  end
+
+  # Returns a new `Set` with all of the elements cloned.
   def clone
-    clone = Set(T).new
+    clone = Set(T).new(self.size)
+    clone.compare_by_identity if compare_by_identity?
     each do |element|
       clone << element.clone
     end
     clone
   end
 
-  # Returns the elements as an array
+  # Returns the elements as an `Array`.
   #
-  #     Set.new([1,5]).to_a  # => [1,5]
+  # ```
+  # Set{1, 5}.to_a # => [1,5]
+  # ```
   def to_a
     @hash.keys
   end
 
-  # Alias of `#to_s`
-  def inspect(io)
+  # Alias of `#to_s`.
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  def hash
-    @hash.hash
+  def pretty_print(pp) : Nil
+    pp.list("Set{", self, "}")
   end
+
+  # See `Object#hash(hasher)`
+  def_hash @hash
 
   # Returns `true` if the set and the given set have at least one element in
   # common.
@@ -274,55 +401,63 @@ struct Set(T)
     end
   end
 
-  # Writes a string representation of the set to `io`
-  def to_s(io)
+  # Writes a string representation of the set to *io*.
+  def to_s(io : IO) : Nil
     io << "Set{"
-    join ", ", io, &.inspect(io)
-    io << "}"
+    join io, ", ", &.inspect(io)
+    io << '}'
   end
 
-  # Returns `true` if the set is a subset of the `other` set
+  # Returns `true` if the set is a subset of the *other* set.
   #
-  # This set must have the same or fewer elements than the `other` set, and all
-  # of elements in this set must be present in the `other` set.
+  # This set must have the same or fewer elements than the *other* set, and all
+  # of elements in this set must be present in the *other* set.
   #
-  #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
-  #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => true
+  # ```
+  # Set{1, 5}.subset? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.subset? Set{1, 3, 5} # => true
+  # ```
   def subset?(other : Set)
     return false if other.size < size
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a proper subset of the `other` set
+  # Returns `true` if the set is a proper subset of the *other* set.
   #
-  # This set must have fewer elements than the `other` set, and all
-  # of elements in this set must be present in the `other` set.
+  # This set must have fewer elements than the *other* set, and all
+  # of elements in this set must be present in the *other* set.
   #
-  #     Set.new([1,5]).subset? Set.new([1,3,5])   # => true
-  #     Set.new([1,3,5]).subset? Set.new([1,3,5]) # => false
+  # ```
+  # Set{1, 5}.proper_subset? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.proper_subset? Set{1, 3, 5} # => false
+  # ```
   def proper_subset?(other : Set)
     return false if other.size <= size
     all? { |value| other.includes?(value) }
   end
 
-  # Returns `true` if the set is a superset of the `other` set
+  # Returns `true` if the set is a superset of the *other* set.
   #
-  # The `other` must have the same or fewer elements than this set, and all of
-  # elements in the `other` set must be present in this set.
+  # The *other* must have the same or fewer elements than this set, and all of
+  # elements in the *other* set must be present in this set.
   #
-  #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
-  #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => true
+  # ```
+  # Set{1, 3, 5}.superset? Set{1, 5}    # => true
+  # Set{1, 3, 5}.superset? Set{1, 3, 5} # => true
+  # ```
   def superset?(other : Set)
     other.subset?(self)
   end
 
-  # Returns `true` if the set is a superset of the `other` set
+  # Returns `true` if the set is a superset of the *other* set.
   #
-  # The `other` must have the same or fewer elements than this set, and all of
-  # elements in the `other` set must be present in this set.
+  # The *other* must have the same or fewer elements than this set, and all of
+  # elements in the *other* set must be present in this set.
   #
-  #     Set.new([1,3,5]).superset? Set.new([1,5])   # => true
-  #     Set.new([1,3,5]).superset? Set.new([1,3,5]) # => false
+  # ```
+  # Set{1, 3, 5}.proper_superset? Set{1, 5}    # => true
+  # Set{1, 3, 5}.proper_superset? Set{1, 3, 5} # => false
+  # ```
   def proper_superset?(other : Set)
     other.proper_subset?(self)
   end
@@ -339,7 +474,7 @@ struct Set(T)
 end
 
 module Enumerable
-  # Returns a new `Set` with each unique element in the enumerable
+  # Returns a new `Set` with each unique element in the enumerable.
   def to_set
     Set.new(self)
   end

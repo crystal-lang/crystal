@@ -101,8 +101,8 @@ describe "OptionParser" do
     expect_capture_option ["--flag=123"], "--flag=FLAG", "123"
   end
 
-  it "has required option with = (3) raises" do
-    expect_missing_option ["--flag="], "--flag=FLAG", "--flag"
+  it "has required option with = (3) handles empty" do
+    expect_capture_option ["--flag="], "--flag=FLAG", ""
   end
 
   it "raises if missing required argument separated from long flag" do
@@ -115,6 +115,14 @@ describe "OptionParser" do
 
   it "has required option with long flag space" do
     expect_capture_option ["--flag", "123"], "--flag ", "123"
+  end
+
+  it "gets short option with value -- (#8937)" do
+    expect_capture_option ["-f", "--"], "-f ARG", "--"
+  end
+
+  it "gets long option with value -- (#8937)" do
+    expect_capture_option ["--flag", "--"], "--flag [ARG]", "--"
   end
 
   it "doesn't raise if required option is not specified" do
@@ -133,8 +141,28 @@ describe "OptionParser" do
     expect_doesnt_capture_option [] of String, "-f [FLAG]"
   end
 
-  it "doesn't raise if required option is not specified with separated short flag 2" do
+  it "doesn't raise if required option is not specified with separated short flag" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
+  end
+
+  it "parses argument when only referenced in long flag" do
+    captured = ""
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.on("-f", "--flag X", "some flag") { |x| captured = x }
+    end
+    parser.parse(["-f", "12"])
+    captured.should eq "12"
+    parser.to_s.should contain "   -f, --flag X"
+  end
+
+  it "parses argument when referenced in long and short flag" do
+    captured = ""
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.on("-f X", "--flag X", "some flag") { |x| captured = x }
+    end
+    parser.parse(["-f", "12"])
+    captured.should eq "12"
+    parser.to_s.should contain "   -f X, --flag X"
   end
 
   it "does to_s with banner" do
@@ -145,11 +173,11 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "    -f, --flag                       some flag",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "does to_s with separators" do
@@ -164,15 +192,34 @@ describe "OptionParser" do
       opts.on("-g[FLAG]", "some other flag") do
       end
     end
-    parser.to_s.should eq([
-      "Usage: foo",
-      "",
-      "Type F flags:",
-      "    -f, --flag                       some flag",
-      "",
-      "Type G flags:",
-      "    -g[FLAG]                         some other flag",
-    ].join "\n")
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+
+      Type F flags:
+          -f, --flag                       some flag
+
+      Type G flags:
+          -g[FLAG]                         some other flag
+      USAGE
+  end
+
+  it "does to_s with very long flag (#3305)" do
+    parser = OptionParser.parse([] of String) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("--very_long_option_kills=formatter", "long") do
+      end
+      opts.on("-f", "--flag", "some flag") do
+      end
+      opts.on("-g[FLAG]", "some other flag") do
+      end
+    end
+    parser.to_s.should eq <<-USAGE
+      Usage: foo
+          --very_long_option_kills=formatter
+                                           long
+          -f, --flag                       some flag
+          -g[FLAG]                         some other flag
+      USAGE
   end
 
   it "raises on invalid option" do
@@ -181,6 +228,48 @@ describe "OptionParser" do
         opts.on("-f", "some flag") { }
       end
     end
+  end
+
+  it "raises on invalid option if value is given to none value handler (short flag, #9553) " do
+    expect_raises OptionParser::InvalidOption, "Invalid option: -foo" do
+      OptionParser.parse(["-foo"]) do |opts|
+        opts.on("-f", "some flag") { }
+      end
+    end
+  end
+
+  it "raises on invalid option if value is given to none value handler (long flag, #9553)" do
+    expect_raises OptionParser::InvalidOption, "Invalid option: --foo=bar" do
+      OptionParser.parse(["--foo=bar"]) do |opts|
+        opts.on("-foo", "some flag") { }
+      end
+    end
+  end
+
+  it "calls the handler for invalid options" do
+    called = false
+    OptionParser.parse(["-f", "-j"]) do |opts|
+      opts.on("-f", "some flag") { }
+      opts.invalid_option do |flag|
+        flag.should eq("-j")
+        called = true
+      end
+    end
+
+    called.should be_true
+  end
+
+  it "calls the handler for missing options" do
+    called = false
+    OptionParser.parse(["-f"]) do |opts|
+      opts.on("-f FOO", "some flag") { }
+      opts.missing_option do |flag|
+        flag.should eq("-f")
+        called = true
+      end
+    end
+
+    called.should be_true
   end
 
   describe "multiple times" do
@@ -314,7 +403,7 @@ describe "OptionParser" do
           opts.on("--f FLAG", "some flag") do |v|
             f = v
           end
-        end.parse!
+        end.parse
         f.should eq("hi")
       ensure
         ARGV.clear
@@ -354,5 +443,199 @@ describe "OptionParser" do
       value1.should eq("value1")
       value2.should eq("value2")
     end
+  end
+
+  it "raises if flag pair doesn't start with dash (#4001)" do
+    OptionParser.parse([] of String) do |opts|
+      expect_raises ArgumentError, %(Argument 'short_flag' ("foo") must start with a dash) do
+        opts.on("foo", "bar", "baz") { }
+      end
+
+      expect_raises ArgumentError, %(Argument 'long_flag' ("bar") must start with a dash) do
+        opts.on("-foo", "bar", "baz") { }
+      end
+
+      opts.on("", "-bar", "baz") { }
+    end
+  end
+
+  it "handles subcommands" do
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+    OptionParser.parse(args) do |opts|
+      opts.on("subcommand", "") do
+        subcommand = true
+        opts.on("--foo arg", "") { |v| foo = v }
+        opts.on("--bar", "") { bar = true }
+        opts.on("sub2", "") { sub2 = true }
+      end
+      opts.on("--verbose", "") { verbose = true }
+      opts.on("-z", "--baz", "") { z = true }
+    end
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+  end
+
+  it "parses with subcommands twice" do
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+
+    parser = OptionParser.new do |opts|
+      opts.on("subcommand", "") do
+        subcommand = true
+        opts.on("--foo arg", "") { |v| foo = v }
+        opts.on("--bar", "") { bar = true }
+        opts.on("sub2", "") { sub2 = true }
+      end
+      opts.on("--verbose", "") { verbose = true }
+      opts.on("-z", "--baz", "") { z = true }
+    end
+
+    parser.parse args
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+
+    args = %w(--verbose subcommand --foo 1 --bar sub2 -z)
+    verbose = false
+    subcommand = false
+    foo = nil
+    bar = false
+    sub2 = false
+    z = false
+
+    parser.parse args
+
+    verbose.should be_true
+    subcommand.should be_true
+    foo.should be("1")
+    bar.should be_true
+    sub2.should be_true
+    z.should be_true
+  end
+
+  it "unregisters subcommands on call" do
+    foo = false
+    bar = false
+    baz = false
+    OptionParser.parse(%w(foo baz)) do |opts|
+      opts.on("foo", "") do
+        foo = true
+        opts.on("bar", "") { bar = true }
+      end
+      opts.on("baz", "") { baz = true }
+    end
+    foo.should be_true
+    bar.should be_false
+    baz.should be_false
+  end
+
+  it "handles subcommand --help well (top level)" do
+    help = nil
+    OptionParser.parse(%w(--help)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("subcommand", "Subcommand Description") do
+        opts.on("-f", "--foo", "Foo") { }
+      end
+      opts.on("--verbose", "Verbose mode") { }
+      opts.on("--help", "Help") { help = opts.to_s }
+    end
+
+    help.should eq <<-USAGE
+      Usage: foo
+          subcommand                       Subcommand Description
+          --verbose                        Verbose mode
+          --help                           Help
+      USAGE
+  end
+
+  it "handles subcommand --help well (subcommand)" do
+    help = nil
+    OptionParser.parse(%w(subcommand --help)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("subcommand", "Subcommand Description") do
+        opts.banner = "Usage: foo subcommand"
+        opts.on("-f", "--foo", "Foo") { }
+      end
+      opts.on("--verbose", "Verbose mode") { }
+      opts.on("--help", "Help") { help = opts.to_s }
+    end
+
+    help.should eq <<-USAGE
+      Usage: foo subcommand
+          --verbose                        Verbose mode
+          --help                           Help
+          -f, --foo                        Foo
+      USAGE
+  end
+
+  it "handles subcommands with hyphen" do
+    subcommand = false
+    OptionParser.parse(%w(sub-command)) do |opts|
+      opts.banner = "Usage: foo"
+      opts.on("sub-command", "Subcommand description") { subcommand = true }
+    end
+
+    subcommand.should be_true
+  end
+
+  it "stops when asked" do
+    args = %w(--foo --stop --bar)
+    foo = false
+    bar = false
+    OptionParser.parse(args) do |opts|
+      opts.on("--foo", "") { foo = true }
+      opts.on("--bar", "") { bar = true }
+      opts.on("--stop", "") { opts.stop }
+      opts.unknown_args do |before, after|
+        before.should eq(%w())
+        after.should eq(%w(--bar))
+      end
+    end
+    foo.should be_true
+    bar.should be_false
+    args.should eq(%w(--bar))
+  end
+
+  it "can run a callback on every argument" do
+    args = %w(--foo file --bar)
+    foo = false
+    bar = false
+    OptionParser.parse(args) do |opts|
+      opts.on("--foo", "") { foo = true }
+      opts.on("--bar", "") { bar = true }
+      opts.before_each do |arg|
+        if arg == "file"
+          opts.stop
+        end
+      end
+      opts.unknown_args do |before, after|
+        before.should eq(%w(file))
+        after.should eq(%w(--bar))
+      end
+    end
+
+    foo.should be_true
+    bar.should be_false
+    args.should eq(%w(file --bar))
   end
 end

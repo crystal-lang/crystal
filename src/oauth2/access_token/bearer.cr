@@ -13,13 +13,13 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
     request.headers["Authorization"] = "Bearer #{access_token}"
   end
 
-  def to_json(io)
-    io.json_object do |object|
-      object.field "token_type", "bearer"
-      object.field "access_token", access_token
-      object.field "expires_in", expires_in
-      object.field "refresh_token", refresh_token if refresh_token
-      object.field "scope", scope if scope
+  def to_json(json : JSON::Builder)
+    json.object do
+      json.field "token_type", "bearer"
+      json.field "access_token", access_token
+      json.field "expires_in", expires_in
+      json.field "refresh_token", refresh_token if refresh_token
+      json.field "scope", scope if scope
     end
   end
 

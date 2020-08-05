@@ -18,7 +18,7 @@ struct XML::NodeSet
     internal_at(index)
   end
 
-  def each
+  def each : Nil
     size.times do |i|
       yield internal_at(i)
     end
@@ -28,14 +28,13 @@ struct XML::NodeSet
     size == 0
   end
 
-  def hash
-    object_id
-  end
+  # See `Object#hash(hasher)`
+  def_hash object_id
 
-  def inspect(io)
-    io << "["
-    join ", ", io, &.inspect(io)
-    io << "]"
+  def inspect(io : IO) : Nil
+    io << '['
+    join io, ", ", &.inspect(io)
+    io << ']'
   end
 
   def size
@@ -46,8 +45,8 @@ struct XML::NodeSet
     @set.address
   end
 
-  def to_s(io)
-    join "\n", io
+  def to_s(io : IO) : Nil
+    join '\n', io
   end
 
   def to_unsafe

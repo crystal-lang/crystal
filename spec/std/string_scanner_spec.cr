@@ -146,7 +146,7 @@ describe StringScanner, "#[]" do
     s = StringScanner.new("Fri Dec 12 1975 14:39")
     s.scan(/this is not there/)
 
-    expect_raises { s[0] }
+    expect_raises(Exception, "Nil assertion failed") { s[0] }
   end
 
   it "raises when there is no subgroup" do
@@ -155,8 +155,8 @@ describe StringScanner, "#[]" do
     s.scan(regex)
 
     s[0].should_not be_nil
-    expect_raises { s[5] }
-    expect_raises { s["something"] }
+    expect_raises(IndexError) { s[5] }
+    expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
   end
 end
 
@@ -193,7 +193,7 @@ describe StringScanner, "#[]?" do
 end
 
 describe StringScanner, "#string" do
-  assert { StringScanner.new("foo").string.should eq("foo") }
+  it { StringScanner.new("foo").string.should eq("foo") }
 end
 
 describe StringScanner, "#offset" do
@@ -228,6 +228,13 @@ describe StringScanner, "#inspect" do
     s.inspect.should eq(%(#<StringScanner 8/16 "s a s" >))
     s.scan(/\w+\s\w+/)
     s.inspect.should eq(%(#<StringScanner 16/16 "tring" >))
+  end
+
+  it "works with small strings" do
+    s = StringScanner.new("hi")
+    s.inspect.should eq(%(#<StringScanner 0/2 "hi" >))
+    s.scan(/\w\w/)
+    s.inspect.should eq(%(#<StringScanner 2/2 "hi" >))
   end
 end
 

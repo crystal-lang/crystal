@@ -243,7 +243,7 @@ describe "Codegen: is_a?" do
     run("
       a = 1
       if a.is_a?(Int32 | Char)
-        a + 1
+        a &+ 1
       else
         0
       end
@@ -253,7 +253,7 @@ describe "Codegen: is_a?" do
   it "restricts union with union" do
     run("
       struct Char
-        def +(other : Int32)
+        def &+(other : Int32)
           other
         end
       end
@@ -266,7 +266,7 @@ describe "Codegen: is_a?" do
 
       a = 1 || 'a' || false
       if a.is_a?(Int32 | Char)
-        a + 2
+        a &+ 2
       else
         a.foo
       end
@@ -276,16 +276,16 @@ describe "Codegen: is_a?" do
   it "codegens is_a? with a Const does comparison and gives true" do
     run("
       require \"prelude\"
-      A = 1
-      1.is_a?(A)
+      CONST = 1
+      1.is_a?(CONST)
       ").to_b.should be_true
   end
 
   it "codegens is_a? with a Const does comparison and gives false" do
     run("
       require \"prelude\"
-      A = 1
-      2.is_a?(A)
+      CONST = 1
+      2.is_a?(CONST)
       ").to_b.should be_false
   end
 
@@ -433,7 +433,7 @@ describe "Codegen: is_a?" do
       foo = Foo.new(1)
       x = foo.x
       if x.is_a?(Int32)
-        z = x + 1
+        z = x &+ 1
       else
         z = x.foo_bar
       end
@@ -457,20 +457,20 @@ describe "Codegen: is_a?" do
 
   it "works with inherited generic class against an instantiation (2)" do
     run(%(
-      class A
+      class Class1
       end
 
-      class B < A
+      class Class2 < Class1
       end
 
       class Foo(T)
       end
 
-      class Bar < Foo(B)
+      class Bar < Foo(Class2)
       end
 
       bar = Bar.new
-      bar.is_a?(Foo(A))
+      bar.is_a?(Foo(Class1))
       )).to_b.should be_true
   end
 
@@ -490,22 +490,22 @@ describe "Codegen: is_a?" do
   it "doesn't type merge (1) (#548)" do
     run(%(
       class Base; end
-      class A < Base; end
-      class B < Base; end
-      class C < Base; end
+      class Base1 < Base; end
+      class Base2 < Base; end
+      class Base3 < Base; end
 
-      C.new.is_a?(A | B)
+      Base3.new.is_a?(Base1 | Base2)
       )).to_b.should be_false
   end
 
   it "doesn't type merge (2) (#548)" do
     run(%(
       class Base; end
-      class A < Base; end
-      class B < Base; end
-      class C < Base; end
+      class Base1 < Base; end
+      class Base2 < Base; end
+      class Base3 < Base; end
 
-      A.new.is_a?(A | B) && B.new.is_a?(A | B)
+      Base1.new.is_a?(Base1 | Base2) && Base2.new.is_a?(Base1 | Base2)
       )).to_b.should be_true
   end
 
@@ -513,7 +513,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        b + 1
+        b &+ 1
       else
         a
       end
@@ -524,7 +524,7 @@ describe "Codegen: is_a?" do
     run(%(
       a = 123
       if (b = a).is_a?(Int32)
-        a + 2
+        a &+ 2
       else
         b
       end
@@ -537,7 +537,7 @@ describe "Codegen: is_a?" do
       if (b = a).is_a?(Char)
         b
       else
-        b + 1
+        b &+ 1
       end
       )).to_i.should eq(124)
   end
@@ -550,7 +550,7 @@ describe "Codegen: is_a?" do
       else
         a
       end
-      b ? b + 1 : 0
+      b ? b &+ 1 : 0
       )).to_i.should eq(124)
   end
 
@@ -667,8 +667,64 @@ describe "Codegen: is_a?" do
         end
       end
 
-      io = (Foo.new as Moo) || 1
+      io = Foo.new.as(Moo) || 1
       foo(io)
       )).to_i.should eq(2)
+  end
+
+  it "does is_a? for virtual generic instance type against generic" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      def foo(x : Bar)
+      end
+
+      Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
+      )).to_i.should eq(2)
+  end
+
+  it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
+    run(%(
+      class Gen(T)
+      end
+
+      alias Type = Int32 | Gen(Type)
+      a = Gen(Int32).new
+      a.is_a?(Type)
+      )).to_b.should be_false
+  end
+
+  it "codegens untyped var (#4009)" do
+    codegen(%(
+      require "prelude"
+
+      i = 1
+      1 || i.is_a?(Int32) ? "" : i
+      ))
+  end
+
+  it "visits 1.to_s twice, may trigger enclosing_call (#4364)" do
+    run(%(
+      require "prelude"
+
+      B = String
+      1.to_s.is_a?(B)
+      )).to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class)
+    ").to_b.should be_true
+  end
+
+  it "says true for Class.is_a?(Class.class.class) (#4374)" do
+    run("
+      Class.is_a?(Class.class.class)
+    ").to_b.should be_true
   end
 end

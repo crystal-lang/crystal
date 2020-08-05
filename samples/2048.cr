@@ -1,11 +1,10 @@
 # Based on 2048 by Gabriele Cirulli - gabrielecirulli.github.io/2048
 
-require "io/console"
 require "colorize"
 
 module Screen
   TILES = {
-        0 => {:white, :black},
+        0 => {:white, nil},
         2 => {:black, :white},
         4 => {:blue, :white},
         8 => {:black, :yellow},
@@ -26,7 +25,9 @@ module Screen
 
   def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    with_color(fg_color).on(bg_color).surround do
+    color = Colorize.with.fore(fg_color)
+    color = color.on(bg_color) if bg_color
+    color.surround do
       yield
     end
   end
@@ -37,14 +38,10 @@ module Screen
 
   def self.read_keypress
     STDIN.raw do |io|
-      input = io.gets 1
-      return :unknown unless input
-      if input == "\e"
-        next_two_bytes = io.read_nonblock(2) rescue nil
-        # third_byte = io.read_nonblock(1) rescue nil
-        input += next_two_bytes if next_two_bytes
-        # input += third_byte if third_byte
-      end
+      buffer = Bytes.new(3)
+      bytes_read = io.read(buffer)
+      return :unknown if bytes_read == 0
+      input = String.new(buffer[0, bytes_read])
 
       case input
       when "\e[A", "w"
@@ -119,7 +116,7 @@ class Drawer
   end
 
   def space_line
-    line "│", " ", "│", "│"
+    line '│', " ", '│', '│'
   end
 
   def content_line
@@ -129,15 +126,15 @@ class Drawer
   end
 
   def top_border
-    line "┌", "─", "┬", "┐"
+    line '┌', "─", '┬', '┐'
   end
 
   def mid_border
-    line "├", "─", "┼", "┤"
+    line '├', "─", '┼', '┤'
   end
 
   def bottom_border
-    line "└", "─", "┴", "┘"
+    line '└', "─", '┴', '┘'
   end
 
   def line(left, fill, inner, right)
@@ -155,12 +152,12 @@ class Drawer
   end
 
   def cell_line(fill, cell)
-    content = @current_row.at(cell) { "empty" }
+    content = @current_row.fetch(cell) { "empty" }
     tile_value = (content == "empty" ? 0 : (content.to_i? || 0)).to_i
     content = "" if !@content_line || content == "empty"
 
-    fill_size = INNER_CELL_WIDTH / 2
-    fill_size -= content.size / 2
+    fill_size = INNER_CELL_WIDTH // 2
+    fill_size -= content.size // 2
     fill_size -= 2
 
     print fill
@@ -248,16 +245,17 @@ class Game
   end
 
   def execute_action(action)
-    if [:up, :down, :left, :right].includes? action
+    case action
+    when :up, :down, :left, :right
       if can_move_in? action
         shift_grid action
         true
       else
         false
       end
-    elsif [:ctrl_c, :escape, :q].includes? action
+    when :ctrl_c, :escape, :q
       end_game "Bye"
-    elsif action == :unknown
+    when :unknown
       false # ignore
     else
       raise ArgumentError.new "Unknown action: #{action}"

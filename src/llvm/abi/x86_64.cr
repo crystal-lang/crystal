@@ -1,32 +1,32 @@
 require "../abi"
 
-# Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi_x86_64.rs
+# Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
-      x86_64_type(arg_type, Attribute::ByVal) { |cls| pass_by_val?(cls) }
+      x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
     end
 
     if ret_def
-      ret_ty = x86_64_type(rty, Attribute::StructRet) { |cls| sret?(cls) }
+      ret_ty = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
     else
-      ret_ty = ArgType.direct(LLVM::Void)
+      ret_ty = ArgType.direct(context.void)
     end
 
     FunctionType.new arg_tys, ret_ty
   end
 
-  def x86_64_type(type, ind_attr)
+  def x86_64_type(type, ind_attr, context)
     if register?(type)
-      attr = type == LLVM::Int1 ? Attribute::ZExt : nil
+      attr = type == context.int1 ? Attribute::ZExt : nil
       ArgType.direct(type, attr: attr)
     else
       cls = classify(type)
       if yield cls
         ArgType.indirect(type, ind_attr)
       else
-        ArgType.direct(type, llreg(cls))
+        ArgType.direct(type, llreg(context, cls))
       end
     end
   end
@@ -54,7 +54,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   end
 
   def classify(type)
-    words = (size(type) + 7) / 8
+    words = (size(type) + 7) // 8
     reg_classes = Array.new(words, RegClass::NoClass)
     if words > 4
       all_mem(reg_classes)
@@ -71,8 +71,8 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     misalign = off % t_align
     if misalign != 0
-      i = off / 8
-      e = (off + t_size + 7) / 8
+      i = off // 8
+      e = (off + t_size + 7) // 8
       while i < e
         unify(cls, ix + 1, RegClass::Memory)
         i += 1
@@ -82,11 +82,11 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     case ty.kind
     when Type::Kind::Integer, Type::Kind::Pointer
-      unify(cls, ix + off / 8, RegClass::Int)
+      unify(cls, ix + off // 8, RegClass::Int)
     when Type::Kind::Float
-      unify(cls, ix + off / 8, (off % 8 == 4) ? RegClass::SSEFv : RegClass::SSEFs)
+      unify(cls, ix + off // 8, (off % 8 == 4) ? RegClass::SSEFv : RegClass::SSEFs)
     when Type::Kind::Double
-      unify(cls, ix + off / 8, RegClass::SSEDs)
+      unify(cls, ix + off // 8, RegClass::SSEDs)
     when Type::Kind::Struct
       classify_struct(ty.struct_element_types, cls, ix, off, ty.packed_struct?)
     when Type::Kind::Array
@@ -188,30 +188,30 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     reg_classes.fill(RegClass::Memory)
   end
 
-  def llreg(reg_classes)
+  def llreg(context, reg_classes)
     types = Array(Type).new
     i = 0
     e = reg_classes.size
     while i < e
       case reg_classes[i]
       when RegClass::Int
-        types << LLVM::Int64
+        types << context.int64
       when RegClass::SSEFv
         vec_len = llvec_len(reg_classes[i + 1..-1])
-        vec_type = Type.vector(LLVM::Float, vec_len * 2)
+        vec_type = context.float.vector(vec_len * 2)
         types << vec_type
         i += vec_len
         next
       when RegClass::SSEFs
-        types << LLVM::Float
+        types << context.float
       when RegClass::SSEDs
-        types << LLVM::Double
+        types << context.double
       else
         raise "Unhandled RegClass: #{reg_classes[i]}"
       end
       i += 1
     end
-    Type.struct(types)
+    context.struct(types)
   end
 
   def llvec_len(reg_classes)
@@ -226,7 +226,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def align(type : Type)
     case type.kind
     when Type::Kind::Integer
-      (type.int_width + 7) / 8
+      (type.int_width + 7) // 8
     when Type::Kind::Float
       4
     when Type::Kind::Double
@@ -251,7 +251,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def size(type : Type)
     case type.kind
     when Type::Kind::Integer
-      (type.int_width + 7) / 8
+      (type.int_width + 7) // 8
     when Type::Kind::Float
       4
     when Type::Kind::Double
@@ -278,7 +278,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
   def align(offset, type)
     align = align(type)
-    (offset + align - 1) / align * align
+    (offset + align - 1) // align * align
   end
 
   enum RegClass
@@ -297,7 +297,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     def sse?
       case self
-      when SSEFs, SSEFv, SSEDs, SSEDs
+      when SSEFs, SSEFv, SSEDs
         true
       else
         false

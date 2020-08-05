@@ -95,9 +95,88 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
+  it "does [] with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char)
+
+    key = "b"
+    val = tup[key]
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char)
+
+    expect_raises(KeyError) do
+      key = "c"
+      tup[key]
+    end
+  end
+
+  it "does []? with string" do
+    tup = {a: 1, b: 'a'}
+
+    key = "a"
+    val = tup[key]?
+    val.should eq(1)
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "b"
+    val = tup[key]?
+    val.should eq('a')
+    typeof(val).should eq(Int32 | Char | Nil)
+
+    key = "c"
+    val = tup[key]?
+    val.should be_nil
+    typeof(val).should eq(Int32 | Char | Nil)
+  end
+
+  describe "dig?" do
+    it "gets the value at given path given splat" do
+      h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
+
+      h.dig?(:a, :b, :c).should eq([10, 20])
+      h.dig?("x", "a").should eq("b")
+    end
+
+    it "returns nil if not found" do
+      h = {a: {b: {c: 300}}, x: {a: "b"}}
+
+      h.dig?("a", "b", "c", "d", "e").should be_nil
+      h.dig?("z").should be_nil
+      h.dig?("").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}
+
+      h.dig(:a, :b, :c).should eq([10, 20])
+      h.dig("x", "a").should eq("b")
+      h.dig("x", "c").should eq(nil)
+    end
+
+    it "raises KeyError if not found" do
+      h = {a: {b: {c: 300}}, x: {a: "b"}}
+
+      expect_raises KeyError, %(NamedTuple value not diggable for key: "c") do
+        h.dig("a", "b", "c", "d", "e")
+      end
+      expect_raises KeyError, %(Missing named tuple key: "z") do
+        h.dig("z")
+      end
+      expect_raises KeyError, %(Missing named tuple key: "") do
+        h.dig("")
+      end
+    end
+  end
+
   it "computes a hash value" do
     tup1 = {a: 1, b: 'a'}
-    tup1.hash.should_not eq(0)
+    tup1.hash.should eq(tup1.dup.hash)
 
     tup2 = {b: 'a', a: 1}
     tup2.hash.should eq(tup1.hash)
@@ -114,9 +193,11 @@ describe "NamedTuple" do
       when 1
         key.should eq(:b)
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -129,9 +210,11 @@ describe "NamedTuple" do
         key.should eq(:a)
       when 1
         key.should eq(:b)
+      else
+        fail "shouldn't happen"
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -144,9 +227,11 @@ describe "NamedTuple" do
         value.should eq(1)
       when 1
         value.should eq("hello")
+      else
+        fail "shouldn't happen"
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
@@ -163,21 +248,31 @@ describe "NamedTuple" do
         key.should eq(:b)
         value.should eq("hello")
         index.should eq(1)
+      else
+        fail "shouldn't happen"
       end
       i += 1
-    end
+    end.should be_nil
     i.should eq(2)
   end
 
-  it "does has_key?" do
+  it "does has_key? with symbol" do
     tup = {a: 1, b: 'a'}
     tup.has_key?(:a).should be_true
     tup.has_key?(:b).should be_true
     tup.has_key?(:c).should be_false
   end
 
+  it "does has_key? with string" do
+    tup = {a: 1, b: 'a'}
+    tup.has_key?("a").should be_true
+    tup.has_key?("b").should be_true
+    tup.has_key?("c").should be_false
+  end
+
   it "does empty" do
     {a: 1}.empty?.should be_false
+    NamedTuple.new.empty?.should be_true
   end
 
   it "does to_a" do
@@ -210,6 +305,16 @@ describe "NamedTuple" do
     tup3 = {b: 'a', a: 1.1}
     tup1.should eq(tup2)
     tup1.should_not eq(tup3)
+  end
+
+  it "compares with named tuple union (#5131)" do
+    tup1 = {a: 1, b: 'a'}
+    tup2 = {a: 1, c: 'b'}
+    u = tup1 || tup2
+    u.should eq(u)
+
+    v = tup2 || tup1
+    u.should_not eq(v)
   end
 
   it "does to_h" do
@@ -247,8 +352,24 @@ describe "NamedTuple" do
     tup.keys.should eq({:a, :b})
   end
 
+  it "does sorted_keys" do
+    tup = {foo: 1, bar: 2, baz: 3}
+    tup.sorted_keys.should eq({:bar, :baz, :foo})
+  end
+
   it "does values" do
     tup = {a: 1, b: 'a'}
     tup.values.should eq({1, 'a'})
+  end
+
+  it "merges with other named tuple" do
+    a = {one: 1, two: 2, three: 3, four: 4, five: 5, "im \"string": "works"}
+    b = {two: "Two", three: true, "new one": "ok"}
+    a.merge(b).merge(four: "Four").merge(NamedTuple.new).should eq({one: 1, two: "Two", three: true, four: "Four", five: 5, "new one": "ok", "im \"string": "works"})
+  end
+
+  it "does types" do
+    tuple = {a: 1, b: 'a', c: "hello"}
+    tuple.class.types.to_s.should eq("{a: Int32, b: Char, c: String}")
   end
 end

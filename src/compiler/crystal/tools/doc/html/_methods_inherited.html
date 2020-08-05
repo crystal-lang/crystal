@@ -1,0 +1,11 @@
+<% method_groups = methods.group_by { |method| method.name } %>
+<% unless method_groups.empty? %>
+  <h3><%= label %> methods inherited from <%= ancestor.kind %> <code><%= ancestor.link_from(type) %></code></h3>
+  <% i = 0 %>
+  <% method_groups.each do |method_name, methods| %>
+    <a href="<%= type.path_to(ancestor) %><%= methods[0].anchor %>" class="tooltip">
+      <span><%= methods.map { |method| method.name + method.args_to_s } .join("<br/>") %></span>
+    <%= method_name %></a><%= ", " if i != method_groups.size - 1 %>
+    <% i += 1 %>
+  <% end %>
+<% end %>

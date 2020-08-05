@@ -7,7 +7,7 @@ struct LLVM::TargetData
   end
 
   def size_in_bytes(type)
-    size_in_bits(type) / 8
+    size_in_bits(type) // 8
   end
 
   def abi_size(type)
@@ -24,5 +24,9 @@ struct LLVM::TargetData
 
   def offset_of_element(struct_type, element)
     LibLLVM.offset_of_element(self, struct_type, element)
+  end
+
+  def to_data_layout_string
+    String.new(LibLLVM.copy_string_rep_of_target_data(self))
   end
 end

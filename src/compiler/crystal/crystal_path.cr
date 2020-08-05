@@ -1,103 +1,144 @@
 require "./config"
+require "./exception"
 
 module Crystal
   struct CrystalPath
-    def self.default_path
-      ENV["CRYSTAL_PATH"]? || Crystal::Config.path
-    end
+    class NotFoundError < LocationlessException
+      getter filename
+      getter relative_to
 
-    @crystal_path : Array(String)
-
-    def initialize(path = CrystalPath.default_path, target_triple = LLVM.default_target_triple)
-      @crystal_path = path.split(':').reject &.empty?
-      add_target_path(target_triple)
-    end
-
-    private def add_target_path(target_triple = LLVM.default_target_triple)
-      triple = target_triple.split('-')
-      triple.delete(triple[1]) if triple.size == 4 # skip vendor
-
-      if %w(i386 i486 i586).includes?(triple[0])
-        triple[0] = "i686"
+      def initialize(@filename : String, @relative_to : String?)
       end
+    end
 
-      target = if triple.any?(&.includes?("macosx"))
-                 {triple[0], "macosx", "darwin"}.join('-')
-               elsif triple.any?(&.includes?("freebsd"))
-                 {triple[0], triple[1], "freebsd"}.join('-')
-               else
-                 triple.join('-')
-               end
+    private DEFAULT_LIB_PATH = "lib"
 
-      @crystal_path.each do |path|
-        _path = File.join(path, "lib_c", target)
-        if Dir.exists?(_path)
-          @crystal_path << _path unless @crystal_path.includes?(_path)
+    def self.default_path
+      ENV["CRYSTAL_PATH"]? || begin
+        if Crystal::Config.path.blank?
+          DEFAULT_LIB_PATH
+        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
+          Crystal::Config.path
+        else
+          {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
+        end
+      end
+    end
+
+    property entries : Array(String)
+
+    def initialize(path = CrystalPath.default_path, codegen_target = Config.host_target)
+      @entries = path.split(Process::PATH_DELIMITER).reject &.empty?
+      add_target_path(codegen_target)
+    end
+
+    private def add_target_path(codegen_target)
+      target = "#{codegen_target.architecture}-#{codegen_target.os_name}"
+
+      @entries.each do |path|
+        path = File.join(path, "lib_c", target)
+        if Dir.exists?(path)
+          @entries << path unless @entries.includes?(path)
           return
         end
       end
     end
 
-    def find(filename, relative_to = nil)
+    def find(filename, relative_to = nil) : Array(String)?
       relative_to = File.dirname(relative_to) if relative_to.is_a?(String)
+
       if filename.starts_with? '.'
         result = find_in_path_relative_to_dir(filename, relative_to)
       else
-        result = find_in_crystal_path(filename, relative_to)
+        result = find_in_crystal_path(filename)
       end
+
+      unless result
+        raise NotFoundError.new(filename, relative_to)
+      end
+
       result = [result] if result.is_a?(String)
       result
     end
 
-    private def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path = true)
-      if relative_to.is_a?(String)
-        # Check if it's a wildcard.
-        if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
-          filename_dir_index = filename.rindex('/').not_nil!
-          filename_dir = filename[0..filename_dir_index]
-          relative_dir = "#{relative_to}/#{filename_dir}"
-          if File.exists?(relative_dir)
-            files = [] of String
-            gather_dir_files(relative_dir, files, recursive)
-            return files
-          end
-        else
-          relative_filename = "#{relative_to}/#{filename}"
+    private def find_in_path_relative_to_dir(filename, relative_to)
+      return unless relative_to.is_a?(String)
 
-          # Check if .cr file exists.
-          relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
-          if File.exists?(relative_filename_cr)
-            return make_relative_unless_absolute relative_filename_cr
-          end
-
-          # If it's a directory, we check if a .cr file with a name the same as the
-          # directory basename exists, and we require that one.
-          if Dir.exists?(relative_filename)
-            basename = File.basename(relative_filename)
-            absolute_filename = make_relative_unless_absolute("#{relative_filename}/#{basename}.cr")
-            if File.exists?(absolute_filename)
-              return absolute_filename
-            end
-          end
+      # Check if it's a wildcard.
+      if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
+        filename_dir_index = filename.rindex('/').not_nil!
+        filename_dir = filename[0..filename_dir_index]
+        relative_dir = "#{relative_to}/#{filename_dir}"
+        if File.exists?(relative_dir)
+          files = [] of String
+          gather_dir_files(relative_dir, files, recursive)
+          return files
         end
+
+        return nil
       end
 
-      if check_crystal_path
-        find_in_crystal_path filename, relative_to
-      else
-        nil
+      relative_filename = "#{relative_to}/#{filename}"
+
+      # Check if .cr file exists.
+      relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+      if File.exists?(relative_filename_cr)
+        return File.expand_path(relative_filename_cr)
       end
+
+      filename_is_relative = filename.starts_with?('.')
+
+      if !filename_is_relative && (slash_index = filename.index('/'))
+        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
+        before_slash, after_slash = filename.split('/', 2)
+
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
+        basename = File.basename(relative_filename)
+        absolute_filename = File.expand_path("#{relative_to}/#{filename}/#{basename}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
+        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+
+        return nil
+      end
+
+      basename = File.basename(relative_filename)
+
+      # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
+      absolute_filename = File.expand_path("#{relative_filename}/#{basename}.cr")
+      return absolute_filename if File.exists?(absolute_filename)
+
+      unless filename_is_relative
+        # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
+        absolute_filename = File.expand_path("#{relative_filename}/src/#{basename}.cr")
+        return absolute_filename if File.exists?(absolute_filename)
+      end
+
+      nil
     end
 
     private def gather_dir_files(dir, files_accumulator, recursive)
       files = [] of String
       dirs = [] of String
 
-      Dir.foreach(dir) do |filename|
+      Dir.each_child(dir) do |filename|
         full_name = "#{dir}/#{filename}"
 
         if File.directory?(full_name)
-          if filename != "." && filename != ".." && recursive
+          if recursive
             dirs << filename
           end
         else
@@ -119,22 +160,13 @@ module Crystal
       end
     end
 
-    private def make_relative_unless_absolute(filename)
-      filename = "#{Dir.current}/#{filename}" unless filename.starts_with?('/')
-      File.expand_path(filename)
-    end
-
-    private def find_in_crystal_path(filename, relative_to)
-      @crystal_path.each do |path|
-        required = find_in_path_relative_to_dir(filename, path, check_crystal_path: false)
+    private def find_in_crystal_path(filename)
+      @entries.each do |path|
+        required = find_in_path_relative_to_dir(filename, path)
         return required if required
       end
 
-      if relative_to
-        raise "can't find file '#{filename}' relative to '#{relative_to}'"
-      else
-        raise "can't find file '#{filename}'"
-      end
+      nil
     end
   end
 end

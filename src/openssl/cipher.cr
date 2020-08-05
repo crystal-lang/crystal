@@ -1,4 +1,5 @@
-require "./openssl"
+require "random/secure"
+require "openssl"
 
 class OpenSSL::Cipher
   class Error < OpenSSL::Error
@@ -6,7 +7,7 @@ class OpenSSL::Cipher
 
   def initialize(name)
     cipher = LibCrypto.evp_get_cipherbyname name
-    raise ArgumentError.new "unsupported cipher algorithm #{name.inspect}" unless cipher
+    raise ArgumentError.new "Unsupported cipher algorithm #{name.inspect}" unless cipher
 
     @ctx = LibCrypto.evp_cipher_ctx_new
     # The EVP which has EVP_CIPH_RAND_KEY flag (such as DES3) allows
@@ -25,7 +26,7 @@ class OpenSSL::Cipher
   end
 
   def key=(key)
-    raise ArgumentError.new "key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
+    raise ArgumentError.new "Key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
     cipherinit key: key
     key
   end
@@ -37,12 +38,12 @@ class OpenSSL::Cipher
   end
 
   def random_key
-    key = SecureRandom.random_bytes key_len
+    key = Random::Secure.random_bytes key_len
     self.key = key
   end
 
   def random_iv
-    iv = SecureRandom.random_bytes iv_len
+    iv = Random::Secure.random_bytes iv_len
     self.iv = iv
   end
 
@@ -50,16 +51,10 @@ class OpenSSL::Cipher
     cipherinit
   end
 
-  def update(data : (String | Slice))
-    slice = case data
-            when String
-              data.to_slice
-            else
-              data
-            end
-
+  def update(data)
+    slice = data.to_slice
     buffer_length = slice.size + block_size
-    buffer = Slice(UInt8).new(buffer_length)
+    buffer = Bytes.new(buffer_length)
     if LibCrypto.evp_cipherupdate(@ctx, buffer, pointerof(buffer_length), slice, slice.size) != 1
       raise Error.new "EVP_CipherUpdate"
     end
@@ -69,7 +64,7 @@ class OpenSSL::Cipher
 
   def final
     buffer_length = block_size
-    buffer = Slice(UInt8).new(buffer_length)
+    buffer = Bytes.new(buffer_length)
 
     if LibCrypto.evp_cipherfinal_ex(@ctx, buffer, pointerof(buffer_length)) != 1
       raise Error.new "EVP_CipherFinal_ex"
@@ -107,6 +102,10 @@ class OpenSSL::Cipher
   def finalize
     LibCrypto.evp_cipher_ctx_free(@ctx) if @ctx
     @ctx = nil
+  end
+
+  def authenticated?
+    LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
   end
 
   private def cipherinit(cipher = nil, engine = nil, key = nil, iv = nil, enc = -1)

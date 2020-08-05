@@ -1,66 +1,55 @@
 class Crystal::Program
+  @flags : Set(String)?
+  @host_flags : Set(String)?
+
+  # Returns the flags for this program. By default these
+  # are computed from the target triple (for example x86_64,
+  # darwin, linux, etc.), but can be overwritten with `flags=`
+  # and also added with the `-D` command line argument.
+  #
+  # See `Compiler#flags`.
   def flags
-    @flags ||= parse_flags(target_machine.triple.split('-'))
+    @flags ||= flags_for_target(codegen_target)
   end
 
-  def flags=(flags)
-    @flags = parse_flags(flags.split)
+  def host_flags
+    @host_flags ||= flags_for_target(Config.host_target)
   end
 
-  def has_flag?(name)
+  # Returns `true` if *name* is in the program's flags.
+  def has_flag?(name : String)
     flags.includes?(name)
   end
 
-  def eval_flags(node)
-    evaluator = FlagsEvaluator.new(self)
-    node.accept evaluator
-    evaluator.value
+  def bits64?
+    codegen_target.pointer_bit_width == 64
   end
 
-  private def parse_flags(flags_name)
-    set = flags_name.map(&.downcase).to_set
-    set.add "darwin" if set.any?(&.starts_with?("macosx"))
-    set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
-    set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
-    set
-  end
+  private def flags_for_target(target)
+    flags = Set(String).new
 
-  class FlagsEvaluator < Visitor
-    getter value : Bool
-    @program : Program
+    flags.add target.architecture
+    flags.add target.vendor
+    flags.concat target.environment_parts
 
-    def initialize(@program)
-      @value = false
+    flags.add "bits#{target.pointer_bit_width}"
+
+    flags.add "armhf" if target.armhf?
+
+    flags.add "unix" if target.unix?
+    flags.add "win32" if target.win32?
+
+    flags.add "darwin" if target.macos?
+    if target.freebsd?
+      flags.add "freebsd"
+      flags.add "freebsd#{target.freebsd_version}"
     end
+    flags.add "netbsd" if target.netbsd?
+    flags.add "openbsd" if target.openbsd?
+    flags.add "dragonfly" if target.dragonfly?
 
-    def visit(node : Var)
-      @value = @program.has_flag?(node.name)
-    end
+    flags.add "bsd" if target.bsd?
 
-    def visit(node : Not)
-      node.exp.accept self
-      @value = !@value
-      false
-    end
-
-    def visit(node : And)
-      node.left.accept self
-      left_value = @value
-      node.right.accept self
-      @value = left_value && @value
-      false
-    end
-
-    def visit(node : Or)
-      node.left.accept self
-      left_value = @value
-      node.right.accept self
-      @value = left_value || @value
-      false
-    end
-
-    def visit(node : ASTNode)
-      raise "Bug: shouldn't visit #{node} in FlagsEvaluator"
-    end
+    flags
   end
 end

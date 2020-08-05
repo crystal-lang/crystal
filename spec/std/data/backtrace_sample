@@ -1,0 +1,17 @@
+class Kls
+  def callee1
+    puts caller.join('\n')
+  end
+end
+
+def callee2
+  yield
+end
+
+def callee3
+  callee2 do
+    Kls.new.callee1
+  end
+end
+
+callee3

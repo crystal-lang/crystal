@@ -1,5 +1,7 @@
+require "./lib_llvm"
+
 struct LLVM::DIBuilder
-  def initialize(llvm_module)
+  def initialize(@llvm_module : Module)
     @unwrap = LibLLVMExt.create_di_builder(llvm_module)
   end
 
@@ -23,26 +25,34 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_file(self, file, dir)
   end
 
-  def create_lexical_block(scope, file, line, column)
-    LibLLVMExt.di_builder_create_lexical_block(self, scope, file, line, column)
+  def create_lexical_block(scope, file_scope, line, column)
+    LibLLVMExt.di_builder_create_lexical_block(self, scope, file_scope, line, column)
+  end
+
+  def create_lexical_block_file(scope, file_scope, discriminator = 0)
+    LibLLVMExt.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
   end
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
                       scope_line, flags, is_optimized, func)
-    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
-      scope_line, flags, is_optimized, func)
+    LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type,
+      is_local_to_unit, is_definition, scope_line, flags, is_optimized, func)
   end
 
-  def create_local_variable(tag, scope, name, file, line, type)
-    LibLLVMExt.di_builder_create_local_variable(self, tag.value, scope, name, file, line, type, 0, 0, 0)
+  def create_auto_variable(scope, name, file, line, type, align_in_bits, flags = DIFlags::Zero)
+    LibLLVMExt.di_builder_create_auto_variable(self, scope, name, file, line, type, 1, flags, align_in_bits)
+  end
+
+  def create_parameter_variable(scope, name, argno, file, line, type, flags = DIFlags::Zero)
+    LibLLVMExt.di_builder_create_parameter_variable(self, scope, name, argno, file, line, type, 1, flags)
   end
 
   def create_expression(addr, length)
     LibLLVMExt.di_builder_create_expression(self, addr, length)
   end
 
-  def insert_declare_at_end(storage, var_info, expr, block)
-    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, block)
+  def insert_declare_at_end(storage, var_info, expr, dl, block)
+    LibLLVMExt.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
   end
 
   def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
@@ -63,6 +73,16 @@ struct LLVM::DIBuilder
       flags, derived_from, element_types)
   end
 
+  def create_union_type(scope, name, file, line, size_in_bits, align_in_bits, flags, element_types)
+    LibLLVMExt.di_builder_create_union_type(self, scope, name, file, line, size_in_bits, align_in_bits,
+      flags, element_types)
+  end
+
+  def create_array_type(size_in_bits, align_in_bits, type, subs)
+    elements = self.get_or_create_array(subs)
+    LibLLVMExt.di_builder_create_array_type(self, size_in_bits, align_in_bits, type, elements)
+  end
+
   def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty)
     LibLLVMExt.di_builder_create_member_type(self, scope, name, file, line, size_in_bits, align_in_bits,
       offset_in_bits, flags, ty)
@@ -72,15 +92,27 @@ struct LLVM::DIBuilder
     LibLLVMExt.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, name)
   end
 
-  def temporary_md_node(context)
-    LibLLVMExt.temporary_md_node(context, nil, 0).as(LibLLVMExt::Metadata)
+  def create_replaceable_composite_type(scope, name, file, line, context : Context)
+    LibLLVMExt.di_builder_create_replaceable_composite_type(self, scope, name, file, line)
   end
 
-  def replace_all_uses(from, to)
-    LibLLVMExt.metadata_replace_all_uses_with(from, to)
+  def replace_temporary(from, to)
+    LibLLVMExt.di_builder_replace_temporary(self, from, to)
   end
 
-  def finalize
+  def create_unspecified_type(name : String)
+    LibLLVMExt.di_builder_create_unspecified_type(self, name, name.size)
+  end
+
+  def get_or_create_array_subrange(lo, count)
+    LibLLVMExt.di_builder_get_or_create_array_subrange(self, lo, count)
+  end
+
+  def create_reference_type(debug_type)
+    LibLLVM.di_builder_create_reference_type(self, 16, debug_type) # 16 is the code for DW_TAG_reference_type
+  end
+
+  def end
     LibLLVMExt.di_builder_finalize(self)
   end
 

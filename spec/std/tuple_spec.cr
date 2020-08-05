@@ -1,6 +1,6 @@
 require "spec"
 
-class TupleSpecObj
+private class TupleSpecObj
   getter x : Int32
 
   def initialize(@x)
@@ -27,29 +27,42 @@ describe "Tuple" do
     a[i].should eq(1)
     i = 1
     a[i].should eq(2.5)
+    i = -1
+    a[i].should eq(2.5)
+    i = -2
+    a[i].should eq(1)
   end
 
   it "does [] raises index out of bounds" do
     a = {1, 2.5}
     i = 2
     expect_raises(IndexError) { a[i] }
-    i = -1
+    i = -3
     expect_raises(IndexError) { a[i] }
   end
 
   it "does []?" do
     a = {1, 2}
-    a[1]?.should eq(2)
-    a[2]?.should be_nil
+    i = 1
+    a[i]?.should eq(2)
+    i = -1
+    a[i]?.should eq(2)
+    i = 2
+    a[i]?.should be_nil
+    i = -3
+    a[i]?.should be_nil
   end
 
   it "does at" do
     a = {1, 2}
     a.at(1).should eq(2)
+    a.at(-1).should eq(2)
 
     expect_raises(IndexError) { a.at(2) }
+    expect_raises(IndexError) { a.at(-3) }
 
     a.at(2) { 3 }.should eq(3)
+    a.at(-3) { 3 }.should eq(3)
   end
 
   describe "values_at" do
@@ -117,7 +130,7 @@ describe "Tuple" do
     a = 0
     {1, 2, 3}.each do |i|
       a += i
-    end
+    end.should be_nil
     a.should eq(6)
   end
 
@@ -185,9 +198,6 @@ describe "Tuple" do
     iter.next.should eq(2)
     iter.next.should eq(3)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(1)
   end
 
   it "does map" do
@@ -195,6 +205,18 @@ describe "Tuple" do
     tuple2 = tuple.map &.to_s
     tuple2.is_a?(Tuple).should be_true
     tuple2.should eq({"1", "2.5", "a"})
+  end
+
+  it "does map_with_index" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index { |e, i| e + i }
+    tuple2.should eq({1, 2, 4, 5})
+  end
+
+  it "does map_with_index, with offset" do
+    tuple = {1, 1, 2, 2}
+    tuple2 = tuple.map_with_index(10) { |e, i| e + i }
+    tuple2.should eq({11, 12, 14, 15})
   end
 
   it "does reverse" do
@@ -205,7 +227,7 @@ describe "Tuple" do
     str = ""
     {"a", "b", "c"}.reverse_each do |i|
       str += i
-    end
+    end.should be_nil
     str.should eq("cba")
   end
 
@@ -217,9 +239,6 @@ describe "Tuple" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 
@@ -270,7 +289,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
+    tuple.class.types.to_s.should eq("{Int32, Char, String}")
   end
 
   it "does ===" do
@@ -279,5 +298,14 @@ describe "Tuple" do
     ({1, 2, 3} === {1, 2}).should be_false
     ({/o+/, "bar"} === {"fox", "bar"}).should be_true
     ({1, 2} === nil).should be_false
+  end
+
+  it "does to_a" do
+    ary = {1, 'a', true}.to_a
+    ary.should eq([1, 'a', true])
+    ary.size.should eq(3)
+
+    ary = Tuple.new.to_a
+    ary.size.should eq(0)
   end
 end

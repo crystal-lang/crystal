@@ -67,7 +67,7 @@ describe "Code gen: uninitialized" do
       end
 
       bar = Bar.new
-      bar.x + bar.y
+      bar.x &+ bar.y
       )).to_i.should eq(3)
   end
 
@@ -86,5 +86,30 @@ describe "Code gen: uninitialized" do
       end
       a
       )).to_i.should eq(3)
+  end
+
+  it "works with uninitialized NoReturn (#3314)" do
+    codegen(%(
+      def foo
+        x = uninitialized NoReturn
+        if 1
+          x = yield
+        end
+        x
+      end
+
+      def bar
+        foo { return }
+      end
+
+      bar
+      ), inject_primitives: false)
+  end
+
+  it "codegens value (#3641)" do
+    run(%(
+      x = y = uninitialized Int32
+      x == y
+      )).to_b.should be_true
   end
 end

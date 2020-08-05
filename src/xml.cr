@@ -1,8 +1,11 @@
 # The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
 #
-# `XML#parse` will parse xml from `String` or `io` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
+# ### Parsing
+#
+# `XML#parse` will parse xml from `String` or `IO` and return xml document as an `XML::Node` which represents all kinds of xml nodes.
 #
 # Example:
+#
 # ```
 # require "xml"
 #
@@ -26,20 +29,26 @@
 #   end
 # end
 # ```
+#
+# ## Generating
+#
+# Use `XML.build`, which uses an `XML::Builder`:
+#
+# ```
+# require "xml"
+#
+# string = XML.build(indent: "  ") do |xml|
+#   xml.element("person", id: 1) do
+#     xml.element("firstname") { xml.text "Jane" }
+#     xml.element("lastname") { xml.text "Doe" }
+#   end
+# end
+#
+# string # => "<?xml version=\"1.0\"?>\n<person id=\"1\">\n  <firstname>Jane</firstname>\n  <lastname>Doe</lastname>\n</person>\n"
+# ```
 module XML
-  SUBSTITUTIONS = {
-    '>'  => "&gt;",
-    '<'  => "&lt;",
-    '"'  => "&quot;",
-    '\'' => "&apos;",
-    '&'  => "&amp;",
-  }
-
-  def self.escape(string : String)
-    string.gsub(SUBSTITUTIONS)
-  end
-
   # Parses an XML document from *string* with *options* into an `XML::Node`.
+  #
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
@@ -47,6 +56,7 @@ module XML
   end
 
   # Parses an XML document from *io* with *options* into an `XML::Node`.
+  #
   # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadIO(
@@ -62,6 +72,7 @@ module XML
   end
 
   # Parses an HTML document from *string* with *options* into an `XML::Node`.
+  #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     raise XML::Error.new("Document is empty", 0) if string.empty?
@@ -69,6 +80,7 @@ module XML
   end
 
   # Parses an HTML document from *io* with *options* into an `XML::Node`.
+  #
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadIO(

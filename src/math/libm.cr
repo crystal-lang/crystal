@@ -1,16 +1,8 @@
-{% if flag?(:linux) || flag?(:freebsd) %}
+{% if flag?(:linux) || flag?(:bsd) %}
   @[Link("m")]
 {% end %}
-lib LibM
-  # ## To be uncommented once LLVM is updated
-  # LLVM binary operations
-  # fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32
-  # fun div_f32 = "llvm.fdiv"(value1 : Float32, value2 : Float32) : Float32
-  # fun div_f64 = "llvm.fdiv"(value1 : Float64, value2 : Float64) : Float64
-  # fun rem_i32 = "llvm.srem"(value1 : Int32, value2 : Int32) : Int32
-  # fun rem_f32 = "llvm.frem"(value1 : Float32, value2 : Float32) : Float32
-  # fun rem_f64 = "llvm.frem"(value1 : Float64, value2 : Float64) : Float64
 
+lib LibM
   # LLVM standard C library intrinsics
   fun ceil_f32 = "llvm.ceil.f32"(value : Float32) : Float32
   fun ceil_f64 = "llvm.ceil.f64"(value : Float64) : Float64
@@ -30,15 +22,16 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  # ## To be uncommented once LLVM is updated
-  # fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
-  # fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
-  # fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
+  fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
+  fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
-  fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
-  fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+  {% unless flag?(:win32) %}
+    fun powi_f32 = "llvm.powi.f32"(value : Float32, power : Int32) : Float32
+    fun powi_f64 = "llvm.powi.f64"(value : Float64, power : Int32) : Float64
+  {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
   fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
@@ -85,6 +78,8 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
+  fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
+  fun frexp_f64 = frexp(value : Float64, exp : Int32*) : Float64
   fun gamma_f32 = lgammaf(value : Float32) : Float32
   fun gamma_f64 = lgamma(value : Float64) : Float64
   fun hypot_f32 = hypotf(value1 : Float32, value2 : Float32) : Float32

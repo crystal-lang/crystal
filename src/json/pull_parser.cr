@@ -1,11 +1,31 @@
 # This class allows you to consume JSON on demand, token by token.
 class JSON::PullParser
-  getter kind : Symbol
+  enum Kind
+    Null
+    Bool
+    Int
+    Float
+    String
+    BeginArray
+    EndArray
+    BeginObject
+    EndObject
+    EOF
+  end
+
+  private enum ObjectStackKind
+    Object
+    Array
+  end
+
+  getter kind : Kind
   getter bool_value : Bool
   getter int_value : Int64
   getter float_value : Float64
   getter string_value : String
   getter raw_value : String
+
+  property max_nesting = 512
 
   def initialize(input)
     @lexer = Lexer.new input
@@ -15,33 +35,34 @@ class JSON::PullParser
     @float_value = 0.0
     @string_value = ""
     @raw_value = ""
-    @object_stack = [] of Symbol
+    @object_stack = [] of ObjectStackKind
     @skip_count = 0
+    @location = {0, 0}
 
     next_token
-    case token.type
-    when :null
+    case token.kind
+    when .null?
       @kind = :null
-    when :false
+    when .false?
       @kind = :bool
       @bool_value = false
-    when :true
+    when .true?
       @kind = :bool
       @bool_value = true
-    when :INT
+    when .int?
       @kind = :int
       @int_value = token.int_value
       @raw_value = token.raw_value
-    when :FLOAT
+    when .float?
       @kind = :float
       @float_value = token.float_value
       @raw_value = token.raw_value
-    when :STRING
+    when .string?
       @kind = :string
       @string_value = token.string_value
-    when :"["
+    when .begin_array?
       begin_array
-    when :"{"
+    when .begin_object?
       begin_object
     else
       unexpected_token
@@ -60,7 +81,7 @@ class JSON::PullParser
 
   def read_array
     read_begin_array
-    while kind != :end_array
+    until kind.end_array?
       yield
     end
     read_end_array
@@ -82,9 +103,10 @@ class JSON::PullParser
 
   def read_object
     read_begin_object
-    while kind != :end_object
+    until kind.end_object?
+      key_location = location
       key = read_object_key
-      yield key
+      yield key, key_location
     end
     read_end_object
   end
@@ -107,9 +129,9 @@ class JSON::PullParser
 
   def read_float
     case @kind
-    when :int
+    when .int?
       @int_value.to_f.tap { read_next }
-    when :float
+    when .float?
       @float_value.tap { read_next }
     else
       parse_exception "expecting int or float but was #{@kind}"
@@ -118,63 +140,56 @@ class JSON::PullParser
 
   def read_raw
     case @kind
-    when :null
+    when .null?
       read_next
       "null"
-    when :bool
+    when .bool?
       @bool_value.to_s.tap { read_next }
-    when :int, :float
+    when .int?, .float?
       @raw_value.tap { read_next }
-    when :string
+    when .string?
       @string_value.to_json.tap { read_next }
-    when :begin_array
-      String.build { |io| read_raw(io) }
-    when :begin_object
-      String.build { |io| read_raw(io) }
+    when .begin_array?
+      JSON.build { |json| read_raw(json) }
+    when .begin_object?
+      JSON.build { |json| read_raw(json) }
     else
       unexpected_token
     end
   end
 
-  def read_raw(io)
+  def read_raw(json)
     case @kind
-    when :null
+    when .null?
       read_next
-      io << "null"
-    when :bool
-      io << @bool_value
+      json.null
+    when .bool?
+      json.bool(@bool_value)
       read_next
-    when :int, :float
-      io << @raw_value
+    when .int?, .float?
+      json.raw(@raw_value)
       read_next
-    when :string
-      @string_value.to_json(io)
+    when .string?
+      json.string(@string_value)
       read_next
-    when :begin_array
-      io << "["
-      read_begin_array
-      first = true
-      while kind != :end_array
-        io << "," unless first
-        read_raw(io)
-        first = false
+    when .begin_array?
+      json.array do
+        read_begin_array
+        until kind.end_array?
+          read_raw(json)
+        end
+        read_end_array
       end
-      io << "]"
-      read_end_array
-    when :begin_object
-      io << "{"
-      read_begin_object
-      first = true
-      while kind != :end_object
-        io << "," unless first
-        @string_value.to_json(io)
-        read_object_key
-        io << ":"
-        read_raw(io)
-        first = false
+    when .begin_object?
+      json.object do
+        read_begin_object
+        until kind.end_object?
+          json.string(@string_value)
+          read_object_key
+          read_raw(json)
+        end
+        read_end_object
       end
-      io << "}"
-      read_end_object
     else
       unexpected_token
     end
@@ -210,7 +225,7 @@ class JSON::PullParser
   end
 
   def read_null_or
-    if @kind == :null
+    if @kind.null?
       read_next
       nil
     else
@@ -238,7 +253,7 @@ class JSON::PullParser
     end
 
     unless found
-      raise "json key not found: #{key}"
+      raise "JSON key not found: #{key}"
     end
 
     value
@@ -250,117 +265,102 @@ class JSON::PullParser
   end
 
   def read?(klass : Bool.class)
-    read_bool if kind == :bool
+    read_bool if kind.bool?
   end
 
-  def read?(klass : Int8.class)
-    read_int.to_i8 if kind == :int
-  end
+  {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
+    def read?(klass : {{type}}.class)
+      {{type}}.new(int_value).tap { read_next } if kind.int?
+    rescue OverflowError
+      nil
+    end
+  {% end %}
 
-  def read?(klass : Int16.class)
-    read_int.to_i16 if kind == :int
-  end
-
-  def read?(klass : Int32.class)
-    read_int.to_i32 if kind == :int
-  end
-
-  def read?(klass : Int64.class)
-    read_int.to_i64 if kind == :int
-  end
-
-  def read?(klass : UInt8.class)
-    read_int.to_u8 if kind == :int
-  end
-
-  def read?(klass : UInt16.class)
-    read_int.to_u16 if kind == :int
-  end
-
-  def read?(klass : UInt32.class)
-    read_int.to_u32 if kind == :int
-  end
-
+  # UInt64 is a special case due to exceeding bounds of @int_value
   def read?(klass : UInt64.class)
-    read_int.to_u64 if kind == :int
+    UInt64.new(raw_value).tap { read_next } if kind.int?
+  rescue ArgumentError
+    nil
   end
 
   def read?(klass : Float32.class)
-    return read_int.to_f32 if kind == :int
-    return read_float.to_f32 if kind == :float
+    return read_int.to_f32 if kind.int?
+    return float_value.to_f32.tap { read_next } if kind.float?
+  rescue OverflowError
+    nil
   end
 
   def read?(klass : Float64.class)
-    return read_int.to_f64 if kind == :int
-    return read_float.to_f64 if kind == :float
+    return read_int.to_f64 if kind.int?
+    return read_float.to_f64 if kind.float?
   end
 
   def read?(klass : String.class)
-    read_string if kind == :string
+    read_string if kind.string?
   end
 
   private def read_next_internal
     current_kind = @kind
 
     while true
-      case token.type
-      when :null
+      case token.kind
+      when .null?
         @kind = :null
         next_token_after_value
         return
-      when :true
+      when .true?
         @kind = :bool
         @bool_value = true
         next_token_after_value
         return
-      when :false
+      when .false?
         @kind = :bool
         @bool_value = false
         next_token_after_value
         return
-      when :INT
+      when .int?
         @kind = :int
         @int_value = token.int_value
         @raw_value = token.raw_value
         next_token_after_value
         return
-      when :FLOAT
+      when .float?
         @kind = :float
         @float_value = token.float_value
         @raw_value = token.raw_value
         next_token_after_value
         return
-      when :STRING
+      when .string?
         @kind = :string
         @string_value = token.string_value
-        if current_kind == :begin_object
-          if next_token.type != :":"
+        if current_kind.begin_object?
+          unless next_token.kind.colon?
             unexpected_token
           end
         else
           next_token_after_value
         end
         return
-      when :"["
+      when .begin_array?
         begin_array
         return
-      when :"]"
+      when .end_array?
         @kind = :end_array
         next_token_after_array_or_object
         return
-      when :"{"
+      when .begin_object?
         begin_object
         return
-      when :"}"
+      when .end_object?
         @kind = :end_object
         next_token_after_array_or_object
         return
-      when :","
+      when .comma?
         obj = current_object()
 
         @lexer.skip = false if @skip_count == 1
 
-        if obj == :object
+        if obj.try(&.object?)
           next_token_expect_object_key
         else
           next_token
@@ -368,25 +368,29 @@ class JSON::PullParser
 
         @lexer.skip = true if @skip_count == 1
 
-        case token.type
-        when :",", :"]", :"}", :EOF
+        case token.kind
+        when .comma?, .end_array?, .end_object?, .eof?
           unexpected_token
+        else
+          # okay
         end
 
-        if obj == :object && token.type == :STRING
+        if obj.try(&.object?) && token.kind.string?
           @kind = :string
           @string_value = token.string_value
-          if next_token.type != :":"
+          unless next_token.kind.colon?
             unexpected_token
           end
           return
         end
-      when :":"
-        case next_token.type
-        when :",", :":", :"]", :"}", :EOF
+      when .colon?
+        case next_token.kind
+        when .comma?, .colon?, .end_array?, .end_object?, .eof?
           unexpected_token
+        else
+          # okay
         end
-      when :EOF
+      when .eof?
         @kind = :EOF
         return
       else
@@ -401,23 +405,35 @@ class JSON::PullParser
     @lexer.skip = false
   end
 
+  def line_number
+    @location[0]
+  end
+
+  def column_number
+    @location[1]
+  end
+
+  def location
+    @location
+  end
+
   private def skip_internal
     @skip_count += 1
     case @kind
-    when :null, :bool, :int, :float, :string
+    when .null?, .bool?, .int?, .float?, .string?
       read_next
-    when :begin_array
+    when .begin_array?
       @skip_count += 1
       read_begin_array
-      while kind != :end_array
+      until kind.end_array?
         skip_internal
       end
       @skip_count -= 1
       read_end_array
-    when :begin_object
+    when .begin_object?
       @skip_count += 1
       read_begin_object
-      while kind != :end_object
+      until kind.end_object?
         read_object_key
         skip_internal
       end
@@ -431,20 +447,22 @@ class JSON::PullParser
 
   private def begin_array
     @kind = :begin_array
-    @object_stack << :array
+    push_in_object_stack :array
 
-    case next_token.type
-    when :",", :"}", :":", :EOF
+    case next_token.kind
+    when .comma?, .end_object?, .colon?, .eof?
       unexpected_token
+    else
+      # okay
     end
   end
 
   private def begin_object
     @kind = :begin_object
-    @object_stack << :object
+    push_in_object_stack :object
 
-    case next_token_expect_object_key.type
-    when :STRING, :"}"
+    case next_token_expect_object_key.kind
+    when .string?, .end_object?
       # OK
     else
       unexpected_token
@@ -455,13 +473,23 @@ class JSON::PullParser
     @object_stack.last?
   end
 
-  private delegate token, to: @lexer
-  private delegate next_token, to: @lexer
-  private delegate next_token_expect_object_key, to: @lexer
+  private def token
+    @lexer.token
+  end
+
+  private def next_token
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
+    @lexer.next_token
+  end
+
+  private def next_token_expect_object_key
+    @location = {@lexer.token.line_number, @lexer.token.column_number}
+    @lexer.next_token_expect_object_key
+  end
 
   private def next_token_after_value
-    case next_token.type
-    when :",", :"]", :"}"
+    case next_token.kind
+    when .comma?, .end_array?, .end_object?
       # Ok
     else
       if @object_stack.empty?
@@ -476,10 +504,10 @@ class JSON::PullParser
     unless @object_stack.pop?
       unexpected_token
     end
-    case next_token.type
-    when :",", :"]", :"}"
+    case next_token.kind
+    when .comma?, .end_array?, .end_object?
       # OK
-    when :EOF
+    when .eof?
       unless @object_stack.empty?
         unexpected_token
       end
@@ -488,15 +516,23 @@ class JSON::PullParser
     end
   end
 
-  private def expect_kind(kind)
-    parse_exception "expected #{kind} but was #{@kind}" unless @kind == kind
+  private def expect_kind(kind : Kind)
+    parse_exception "Expected #{kind} but was #{@kind}" unless @kind == kind
   end
 
   private def unexpected_token
-    parse_exception "unexpected token: #{token}"
+    parse_exception "Unexpected token: #{token}"
   end
 
   private def parse_exception(msg)
     raise ParseException.new(msg, token.line_number, token.column_number)
+  end
+
+  private def push_in_object_stack(kind : ObjectStackKind)
+    if @object_stack.size >= @max_nesting
+      parse_exception "Nesting of #{@object_stack.size + 1} is too deep"
+    end
+
+    @object_stack.push(kind)
   end
 end

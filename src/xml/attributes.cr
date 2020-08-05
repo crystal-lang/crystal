@@ -1,3 +1,5 @@
+require "./node"
+
 struct XML::Attributes
   include Enumerable(Node)
 
@@ -35,7 +37,18 @@ struct XML::Attributes
     find { |node| node.name == name }
   end
 
-  def each
+  def []=(name : String, value)
+    LibXML.xmlSetProp(@node, name, value.to_s)
+    value
+  end
+
+  def delete(name : String)
+    value = self[name]?.try &.content
+    res = LibXML.xmlUnsetProp(@node, name)
+    value if res == 0
+  end
+
+  def each : Nil
     return unless @node.element?
 
     props = self.props
@@ -45,13 +58,13 @@ struct XML::Attributes
     end
   end
 
-  def to_s(io)
-    io << "["
-    join ", ", io, &.inspect(io)
-    io << "]"
+  def to_s(io : IO) : Nil
+    io << '['
+    join io, ", ", &.inspect(io)
+    io << ']'
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

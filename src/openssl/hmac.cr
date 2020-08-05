@@ -1,29 +1,35 @@
 require "./lib_crypto"
+require "openssl/algorithm"
 
+# Allows computing Hash-based Message Authentication Code (HMAC).
+#
+# It is a type of message authentication code (MAC)
+# involving a hash function in combination with a key.
+#
+# HMAC can be used to verify the integrity of a message as well as the authenticity.
+#
+# See also [RFC2104](https://tools.ietf.org/html/rfc2104.html).
 class OpenSSL::HMAC
-  def self.digest(algorithm : Symbol, key, data) : Slice(UInt8)
-    evp = case algorithm
-          when :dss       then LibCrypto.evp_dss
-          when :dss1      then LibCrypto.evp_dss1
-          when :md4       then LibCrypto.evp_md4
-          when :md5       then LibCrypto.evp_md5
-          when :ripemd160 then LibCrypto.evp_ripemd160
-          when :sha       then LibCrypto.evp_sha
-          when :sha1      then LibCrypto.evp_sha1
-          when :sha224    then LibCrypto.evp_sha224
-          when :sha256    then LibCrypto.evp_sha256
-          when :sha384    then LibCrypto.evp_sha384
-          when :sha512    then LibCrypto.evp_sha512
-          else                 raise "Unsupported digest algorithm: #{algorithm}"
-          end
+  # Returns the HMAC digest of *data* using the secret *key*.
+  #
+  # It may contain non-ASCII bytes, including NUL bytes.
+  #
+  # *algorithm* specifies which `OpenSSL::Algorithm` is to be used.
+  def self.digest(algorithm : OpenSSL::Algorithm, key, data) : Bytes
+    evp = algorithm.to_evp
     key_slice = key.to_slice
     data_slice = data.to_slice
-    buffer = Slice(UInt8).new(128)
+    buffer = Bytes.new(128)
     LibCrypto.hmac(evp, key_slice, key_slice.size, data_slice, data_slice.size, buffer, out buffer_len)
     buffer[0, buffer_len.to_i]
   end
 
-  def self.hexdigest(algorithm : Symbol, key, data) : String
+  # Returns the HMAC digest of *data* using the secret *key*,
+  # formatted as a hexadecimal string. This is necessary to safely transfer
+  # the digest where binary messages are not allowed.
+  #
+  # See also `#digest`.
+  def self.hexdigest(algorithm : OpenSSL::Algorithm, key, data) : String
     digest(algorithm, key, data).hexstring
   end
 end

@@ -20,7 +20,7 @@ describe "Code gen: block" do
       end
 
       foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -32,7 +32,7 @@ describe "Code gen: block" do
       end
 
       foo(3) do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(4)
   end
@@ -46,7 +46,7 @@ describe "Code gen: block" do
       end
 
       3.foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(4)
   end
@@ -60,7 +60,7 @@ describe "Code gen: block" do
       end
 
       3.foo(2) do |x, i|
-        x + i
+        x &+ i
       end
     ").to_i.should eq(5)
   end
@@ -73,7 +73,7 @@ describe "Code gen: block" do
 
       x = 1
       foo do
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -90,7 +90,7 @@ describe "Code gen: block" do
       end
 
       Foo.new.foo do |x|
-        x + 1
+        x &+ 1
       end
     ").to_i.should eq(2)
   end
@@ -127,7 +127,7 @@ describe "Code gen: block" do
         end
       end
 
-      Foo.new.foo { |x| x + 1 }
+      Foo.new.foo { |x| x &+ 1 }
     ").to_i.should eq(2)
   end
 
@@ -235,7 +235,7 @@ describe "Code gen: block" do
         a
       end
 
-      foo {}.to_i
+      foo {}.to_i!
     ").to_i.should eq(1)
   end
 
@@ -262,7 +262,7 @@ describe "Code gen: block" do
         true ? return 1 : return 1.1
       end
 
-      foo {}.to_i
+      foo {}.to_i!
     ").to_i.should eq(1)
   end
 
@@ -314,12 +314,14 @@ describe "Code gen: block" do
         bar(x) { |z| z }
       end
 
-      foo.to_i
+      foo.to_i!
     ").to_i.should eq(1)
   end
 
   it "call block from dispatch and use local vars" do
     run("
+      require \"prelude\"
+
       def bar(y)
         yield y
       end
@@ -377,7 +379,7 @@ describe "Code gen: block" do
       end
 
       a = 0
-      foo { a += 1; break }
+      foo { a &+= 1; break }
       a
     ").to_i.should eq(1)
   end
@@ -445,10 +447,10 @@ describe "Code gen: block" do
       require \"nil\"
 
       def foo
-        1 + yield
+        1 &+ yield
       end
 
-      foo { break 2 }.to_i
+      foo { break 2 }.to_i!
     ").to_i.should eq(2)
   end
 
@@ -494,7 +496,7 @@ describe "Code gen: block" do
       end
 
       def foo
-        bar { 1 + yield }
+        bar { 1 &+ yield }
       end
 
       foo { break 3 }
@@ -555,7 +557,7 @@ describe "Code gen: block" do
 
   it "can use self inside a block called from dispatch" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       class Foo
         def do; yield; end
@@ -563,18 +565,27 @@ describe "Code gen: block" do
       class Bar < Foo
       end
 
-      $x : Int32?
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       struct Int
         def foo
           x = Foo.new
           x = Bar.new
-          x.do { $x = self }
+          x.do { Global.x = self }
         end
       end
 
       123.foo
-      $x.to_i
+      Global.x.to_i!
     ").to_i.should eq(123)
   end
 
@@ -824,7 +835,7 @@ describe "Code gen: block" do
         yield 1 || 1.5
       end
 
-      foo { |x| x }.to_i
+      foo { |x| x }.to_i!
       ").to_i.should eq(1)
   end
 
@@ -849,7 +860,7 @@ describe "Code gen: block" do
       a = Foo.new(1) || Foo.new(1.5)
       a.each do |x|
         x.abs
-      end.to_i
+      end.to_i!
       ").to_i.should eq(1)
   end
 
@@ -897,6 +908,8 @@ describe "Code gen: block" do
 
   it "codegens dispatch with block and break (1)" do
     run("
+      require \"prelude\"
+
       class Foo(T)
         def initialize(@x : T)
         end
@@ -1012,7 +1025,7 @@ describe "Code gen: block" do
       end
 
       foo = Foo.new do |a|
-        a + 1
+        a &+ 1
       end
       foo.x
       )).to_i.should eq(2)
@@ -1108,7 +1121,7 @@ describe "Code gen: block" do
           LibC.exit(1)
         end
 
-        def to_i
+        def to_i!
           0
         end
       end
@@ -1126,11 +1139,11 @@ describe "Code gen: block" do
       foo do |key|
         if 1 == 1
           extra = 1
-          extra + key
+          extra &+ key
         end
       end
 
-      extra.to_i
+      extra.to_i!
       )).to_i.should eq(1)
   end
 
@@ -1192,7 +1205,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
         next if true
         break
       end
@@ -1210,7 +1223,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
         next if 1 == 1
         break
       end
@@ -1220,12 +1233,21 @@ describe "Code gen: block" do
 
   it "codegens block bug with conditional next and unconditional break (3)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         a = 1234
         a = yield 1
-        $x = a
+        Global.x = a
         a
       end
 
@@ -1233,27 +1255,36 @@ describe "Code gen: block" do
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
   it "codegens block bug with conditional next and unconditional break (4)" do
     run(%(
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         bar(yield 1)
       end
 
       def bar(x)
-        $x = x
+        Global.x = x
       end
 
       foo do |x|
         next x if 1 == 1
         break 0
       end
-      $x
+      Global.x
       )).to_i.should eq(1)
   end
 
@@ -1273,7 +1304,7 @@ describe "Code gen: block" do
 
   it "does next from captured block" do
     run(%(
-      def foo(&block : -> T)
+      def foo(&block : -> T) forall T
         block
       end
 
@@ -1331,7 +1362,7 @@ describe "Code gen: block" do
 
       a = 0
       foo do |x|
-        a += x
+        a &+= x
       end
       a
       )).to_i.should eq(4)
@@ -1345,7 +1376,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, z|
-        x + y + z
+        x &+ y &+ z
       end
       )).to_i.should eq(6)
   end
@@ -1369,7 +1400,7 @@ describe "Code gen: block" do
       end
 
       foo do |*args|
-        args[0] + args[1] + args[2]
+        args[0] &+ args[1] &+ args[2]
       end
       )).to_i.should eq(6)
   end
@@ -1381,7 +1412,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, *z, w|
-        ((((x + y) * z[0]) - z[1]) * z[2]) - w
+        ((((x &+ y) &* z[0]) &- z[1]) &* z[2]) &- w
       end
       )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
   end
@@ -1395,7 +1426,7 @@ describe "Code gen: block" do
 
       total = 0
       foo do |*args|
-        total += args[0].to_i
+        total &+= args[0].to_i!
       end
       total
       )).to_i.should eq(3)
@@ -1409,7 +1440,7 @@ describe "Code gen: block" do
       end
 
       foo do |x, y, z|
-        (x + y) * z
+        (x &+ y) &* z
       end
       )).to_i.should eq((1 + 2) * 4)
   end
@@ -1426,7 +1457,84 @@ describe "Code gen: block" do
       w = 4
       foo do |(x, y), (z, w)|
       end
-      x + y + z + w
+      x &+ y &+ z &+ w
       )).to_i.should eq(10)
+  end
+
+  it "codegens block with multiple underscores (#3054)" do
+    run(%(
+      def foo(&block : Int32, Int32 -> Int32)
+        block.call(1, 2)
+      end
+
+      foo do |_, _|
+        3
+      end
+      )).to_i.should eq(3)
+  end
+
+  it "breaks in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+        456
+      end
+
+      foo do
+        a = nil || break 123
+      end
+      )).to_i.should eq(123)
+  end
+
+  it "nexts in var assignment (#3364)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      foo do
+        a = nil || next 123
+      end
+      )).to_i.should eq(123)
+  end
+
+  it "dispatches with captured and non-captured block (#3969)" do
+    run(%(
+      def fn(x : Int32, &block)
+        x
+      end
+
+      def fn(x : Char, &block : -> Int32)
+        block.call
+      end
+
+      a = fn(1 || 'a') { 2 }
+      b = fn('a' || 1) { 2 }
+      a &+ b
+      )).to_i.should eq(3)
+  end
+
+  it "codegens block with repeated underscore and different types (#4711)" do
+    codegen(%(
+      def foo
+        yield('0', 0)
+      end
+      foo{|_, _| }
+      ))
+  end
+
+  it "doesn't crash on yield exp without a type (#8100)" do
+    codegen(%(
+      def foo
+        x = 1
+        if x.is_a?(Char)
+          yield x
+        else
+          yield x
+        end
+      end
+
+      foo { |x| }
+    ))
   end
 end

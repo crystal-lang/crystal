@@ -1,9 +1,6 @@
 module Crystal
   class LiteralExpander
-    @program : Program
-    @regexes : Array({String, Regex::Options})
-
-    def initialize(@program)
+    def initialize(@program : Program)
       @regexes = [] of {String, Regex::Options}
     end
 
@@ -90,7 +87,7 @@ module Crystal
       exps = Array(ASTNode).new(node.entries.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone]).at(node)
+        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
       end
       exps << temp_var.clone
 
@@ -188,11 +185,10 @@ module Crystal
 
         @program.global_vars[global_name] = global_var
 
-        @program.initialized_global_vars.add global_name
-        first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-        regex = regex_new_call(node, StringLiteral.new(string))
-        second_assign = Assign.new(Global.new(global_name), regex)
-        If.new(first_assign, Var.new(temp_name), second_assign)
+        first_assign = Assign.new(Var.new(temp_name).at(node), Global.new(global_name).at(node)).at(node)
+        regex = regex_new_call(node, StringLiteral.new(string).at(node))
+        second_assign = Assign.new(Global.new(global_name).at(node), regex).at(node)
+        If.new(first_assign, Var.new(temp_name).at(node), second_assign).at(node)
       else
         regex_new_call(node, node_value)
       end
@@ -212,25 +208,21 @@ module Crystal
     #       temp
     #     end
     def expand(node : And)
-      left = node.left
-
-      if left.is_a?(Expressions) && left.expressions.size == 1
-        left = left.expressions.first
-      end
+      left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
-                   If.new(left, node.right, left.target.clone)
+                   If.new(left, node.right, left.target.clone).at(node)
                  elsif left.is_a?(Not) && left.exp.is_a?(Var)
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
-                   If.new(left, node.right, left.clone)
+                   If.new(left, node.right, left.clone).at(node)
                  else
                    temp_var = new_temp_var
-                   If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
+                   If.new(Assign.new(temp_var.clone, left).at(node), node.right, temp_var.clone).at(node)
                  end
-      new_node.binary = :and
+      new_node.and = true
       new_node.location = node.location
       new_node
     end
@@ -249,25 +241,21 @@ module Crystal
     #       b
     #     end
     def expand(node : Or)
-      left = node.left
-
-      if left.is_a?(Expressions) && left.expressions.size == 1
-        left = left.expressions.first
-      end
+      left = node.left.single_expression
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
-                   If.new(left, left.target.clone, node.right)
+                   If.new(left, left.target.clone, node.right).at(node)
                  elsif left.is_a?(Not) && left.exp.is_a?(Var)
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
-                   If.new(left, left.clone, node.right)
+                   If.new(left, left.clone, node.right).at(node)
                  else
                    temp_var = new_temp_var
-                   If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
+                   If.new(Assign.new(temp_var.clone, left).at(node), temp_var.clone, node.right).at(node)
                  end
-      new_node.binary = :or
+      new_node.or = true
       new_node.location = node.location
       new_node
     end
@@ -291,42 +279,47 @@ module Crystal
     #    Range.new(1, 3, false)
     def expand(node : RangeLiteral)
       path = Path.global("Range").at(node)
-      bool = BoolLiteral.new(node.exclusive).at(node)
+      bool = BoolLiteral.new(node.exclusive?).at(node)
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 
-    # Convert an interpolation to a concatenation with a MemoryIO:
+    # Convert an interpolation to a call to `String.interpolation`
     #
     # From:
     #
-    #     "foo#{bar}baz"
+    #     "foo#{bar}baz#{qux}"
     #
     # To:
     #
-    #     (MemoryIO.new << "foo" << bar << "baz").to_s
+    #     String.interpolation("foo", bar, "baz", qux)
     def expand(node : StringInterpolation)
-      # Compute how long at least the string will be, so we
-      # can allocate enough space.
-      capacity = 0
-      node.expressions.each do |piece|
-        case piece
-        when StringLiteral
-          capacity += piece.value.size
-        else
-          capacity += 15
-        end
-      end
+      # We could do `node.expressions.dup` for more purity,
+      # but the string interpolation isn't used later on so this is fine,
+      # and having pieces in a different representation but same end
+      # result is just fine.
+      pieces = node.expressions
+      combine_contiguous_string_literals(pieces)
+      Call.new(Path.global("String").at(node), "interpolation", pieces).at(node)
+    end
 
-      if capacity <= 64
-        call = Call.new(Path.global(["String", "Builder"]), "new")
-      else
-        call = Call.new(Path.global(["String", "Builder"]), "new", NumberLiteral.new(capacity))
+    private def combine_contiguous_string_literals(pieces)
+      i = 0
+      pieces.reject! do |piece|
+        delete =
+          if i < pieces.size - 1
+            next_piece = pieces[i + 1]
+            if piece.is_a?(StringLiteral) && next_piece.is_a?(StringLiteral)
+              pieces[i + 1] = StringLiteral.new(piece.value + next_piece.value)
+              true
+            else
+              false
+            end
+          else
+            false
+          end
+        i += 1
+        delete
       end
-
-      node.expressions.each do |piece|
-        call = Call.new(call, "<<", piece)
-      end
-      Call.new(call, "to_s").at(node)
     end
 
     # Convert a Case into a series of if ... elseif ... end:
@@ -385,6 +378,22 @@ module Crystal
     #     end
     def expand(node : Case)
       node_cond = node.cond
+
+      if node.whens.empty?
+        expressions = [] of ASTNode
+
+        node_else = node.else
+        if node_cond
+          expressions << node_cond
+          expressions << NilLiteral.new unless node_else
+        end
+        if node_else
+          expressions << node_else
+        end
+
+        return Expressions.new(expressions).at(node)
+      end
+
       if node_cond
         if node_cond.is_a?(TupleLiteral)
           conds = node_cond.elements
@@ -394,7 +403,7 @@ module Crystal
 
         assigns = [] of ASTNode
         temp_vars = conds.map do |cond|
-          case cond
+          case cond = cond.single_expression
           when Var, InstanceVar
             temp_var = cond
           when Assign
@@ -402,7 +411,7 @@ module Crystal
             assigns << cond
           else
             temp_var = new_temp_var
-            assigns << Assign.new(temp_var.clone, cond)
+            assigns << Assign.new(temp_var.clone, cond).at(node_cond)
           end
           temp_var
         end
@@ -423,13 +432,13 @@ module Crystal
 
                 sub_comp = case_when_comparison(rh, lh).at(cond)
                 if comp
-                  comp = And.new(comp, sub_comp)
+                  comp = And.new(comp, sub_comp).at(comp)
                 else
                   comp = sub_comp
                 end
               end
             else
-              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond)
+              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
             end
           else
             temp_var = temp_vars.try &.first
@@ -439,7 +448,7 @@ module Crystal
           next unless comp
 
           if final_comp
-            final_comp = Or.new(final_comp, comp)
+            final_comp = Or.new(final_comp, comp).at(final_comp)
           else
             final_comp = comp
           end
@@ -447,7 +456,7 @@ module Crystal
 
         final_comp ||= BoolLiteral.new(true)
 
-        wh_if = If.new(final_comp, wh.body)
+        wh_if = If.new(final_comp, wh.body).at(final_comp)
         if a_if
           a_if.else = wh_if
         else
@@ -456,19 +465,82 @@ module Crystal
         a_if = wh_if
       end
 
-      if node_else = node.else
+      if node.exhaustive?
+        a_if.not_nil!.else = node.else || Unreachable.new
+      elsif node_else = node.else
         a_if.not_nil!.else = node_else
       end
 
       final_if = final_if.not_nil!
       final_exp = if assigns && !assigns.empty?
                     assigns << final_if
-                    Expressions.new(assigns)
+                    Expressions.new(assigns).at(node)
                   else
                     final_if
                   end
       final_exp.location = node.location
       final_exp
+    end
+
+    def expand(node : Select)
+      index_name = @program.new_temp_var_name
+      value_name = @program.new_temp_var_name
+
+      targets = [Var.new(index_name).at(node), Var.new(value_name).at(node)] of ASTNode
+      channel = Path.global("Channel").at(node)
+
+      tuple_values = [] of ASTNode
+      case_whens = [] of When
+
+      node.whens.each_with_index do |a_when, index|
+        condition = a_when.condition
+        case condition
+        when Call
+          cloned_call = condition.clone
+          cloned_call.name = select_action_name(cloned_call.name)
+          tuple_values << cloned_call
+
+          case_whens << When.new([NumberLiteral.new(index).at(node)] of ASTNode, a_when.body.clone)
+        when Assign
+          cloned_call = condition.value.as(Call).clone
+          cloned_call.name = select_action_name(cloned_call.name)
+          tuple_values << cloned_call
+
+          typeof_node = TypeOf.new([condition.value.clone] of ASTNode).at(node)
+          cast = Cast.new(Var.new(value_name).at(node), typeof_node).at(node)
+          new_assign = Assign.new(condition.target.clone, cast).at(node)
+          new_body = Expressions.new([new_assign, a_when.body.clone] of ASTNode)
+          case_whens << When.new([NumberLiteral.new(index).at(node)] of ASTNode, new_body)
+        else
+          node.raise "BUG: expected select when expression to be Assign or Call, not #{condition}"
+        end
+      end
+
+      if node_else = node.else
+        case_else = node_else.clone
+      else
+        case_else = Call.new(nil, "raise", args: [StringLiteral.new("BUG: invalid select index")] of ASTNode, global: true).at(node)
+      end
+
+      call_name = node.else ? "non_blocking_select" : "select"
+      call_args = [TupleLiteral.new(tuple_values).at(node)] of ASTNode
+
+      call = Call.new(channel, call_name, call_args).at(node)
+      multi = MultiAssign.new(targets, [call] of ASTNode)
+      case_cond = Var.new(index_name).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)
+      Expressions.from([multi, a_case] of ASTNode).at(node)
+    end
+
+    def select_action_name(name)
+      case name
+      when .ends_with? "!"
+        name[0...-1] + "_select_action!"
+      when .ends_with? "?"
+        name[0...-1] + "_select_action?"
+      else
+        name + "_select_action"
+      end
     end
 
     # Transform a multi assign into many assigns.
@@ -498,18 +570,6 @@ module Crystal
 
         # From:
         #
-        #     a = 1, 2, 3
-        #
-        # To:
-        #
-        #     a = [1, 2, 3]
-      elsif node.targets.size == 1
-        target = node.targets.first
-        array = ArrayLiteral.new(node.values)
-        exps = transform_multi_assign_target(target, array)
-
-        # From:
-        #
         #     a, b = c, d
         #
         # To:
@@ -519,6 +579,8 @@ module Crystal
         #     a = temp1
         #     b = temp2
       else
+        raise "BUG: multiple assignment count mismatch" unless node.targets.size == node.values.size
+
         temp_vars = node.values.map { new_temp_var }
 
         assign_to_temps = [] of ASTNode
@@ -556,6 +618,13 @@ module Crystal
 
       right_side = temp_var.clone
 
+      check_implicit_obj Call
+      check_implicit_obj RespondsTo
+      check_implicit_obj IsA
+      check_implicit_obj Cast
+      check_implicit_obj NilableCast
+      check_implicit_obj Not
+
       case cond
       when NilLiteral
         return IsA.new(right_side, Path.global("Nil"))
@@ -564,22 +633,37 @@ module Crystal
       when Call
         obj = cond.obj
         case obj
-        when ImplicitObj
-          implicit_call = cond.clone.as(Call)
-          implicit_call.obj = temp_var.clone
-          return implicit_call
         when Path
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
+        else
+          # no special treatment
         end
+      else
+        # no special treatment
       end
 
       Call.new(cond, "===", right_side)
+    end
+
+    macro check_implicit_obj(type)
+      if cond.is_a?({{type}})
+        cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
+        if cond_obj.is_a?(ImplicitObj)
+          implicit_call = cond.clone.as({{type}})
+          if implicit_call.is_a?(Not)
+            implicit_call.exp = temp_var.clone
+          else
+            implicit_call.obj = temp_var.clone
+          end
+          return implicit_call
+        end
+      end
     end
 
     private def regex_new_call(node, value)

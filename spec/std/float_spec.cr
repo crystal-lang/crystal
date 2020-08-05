@@ -2,50 +2,50 @@ require "spec"
 
 describe "Float" do
   describe "**" do
-    assert { (2.5_f32 ** 2_i32).should be_close(6.25_f32, 0.0001) }
-    assert { (2.5_f32 ** 2).should be_close(6.25_f32, 0.0001) }
-    assert { (2.5_f32 ** 2.5_f32).should be_close(9.882117688026186_f32, 0.0001) }
-    assert { (2.5_f32 ** 2.5).should be_close(9.882117688026186_f32, 0.0001) }
-    assert { (2.5_f64 ** 2_i32).should be_close(6.25_f64, 0.0001) }
-    assert { (2.5_f64 ** 2).should be_close(6.25_f64, 0.0001) }
-    assert { (2.5_f64 ** 2.5_f64).should be_close(9.882117688026186_f64, 0.0001) }
-    assert { (2.5_f64 ** 2.5).should be_close(9.882117688026186_f64, 0.001) }
+    it { (2.5_f32 ** 2_i32).should be_close(6.25_f32, 0.0001) }
+    it { (2.5_f32 ** 2).should be_close(6.25_f32, 0.0001) }
+    it { (2.5_f32 ** 2.5_f32).should be_close(9.882117688026186_f32, 0.0001) }
+    it { (2.5_f32 ** 2.5).should be_close(9.882117688026186_f32, 0.0001) }
+    it { (2.5_f64 ** 2_i32).should be_close(6.25_f64, 0.0001) }
+    it { (2.5_f64 ** 2).should be_close(6.25_f64, 0.0001) }
+    it { (2.5_f64 ** 2.5_f64).should be_close(9.882117688026186_f64, 0.0001) }
+    it { (2.5_f64 ** 2.5).should be_close(9.882117688026186_f64, 0.001) }
   end
 
   describe "%" do
     it "uses modulo behavior, not remainder behavior" do
-      assert { ((-11.5) % 4.0).should eq(0.5) }
+      ((-11.5) % 4.0).should eq(0.5)
     end
   end
 
   describe "modulo" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.modulo 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.modulo 0.0 }
     end
 
-    assert { (13.0.modulo 4.0).should eq(1.0) }
-    assert { (13.0.modulo -4.0).should eq(-3.0) }
-    assert { (-13.0.modulo 4.0).should eq(3.0) }
-    assert { (-13.0.modulo -4.0).should eq(-1.0) }
-    assert { (11.5.modulo 4.0).should eq(3.5) }
-    assert { (11.5.modulo -4.0).should eq(-0.5) }
-    assert { (-11.5.modulo 4.0).should eq(0.5) }
-    assert { (-11.5.modulo -4.0).should eq(-3.5) }
+    it { (13.0.modulo 4.0).should eq(1.0) }
+    it { (13.0.modulo -4.0).should eq(-3.0) }
+    it { (-13.0.modulo 4.0).should eq(3.0) }
+    it { (-13.0.modulo -4.0).should eq(-1.0) }
+    it { (11.5.modulo 4.0).should eq(3.5) }
+    it { (11.5.modulo -4.0).should eq(-0.5) }
+    it { (-11.5.modulo 4.0).should eq(0.5) }
+    it { (-11.5.modulo -4.0).should eq(-3.5) }
   end
 
   describe "remainder" do
     it "raises when mods by zero" do
-      expect_raises(DivisionByZero) { 1.2.remainder 0.0 }
+      expect_raises(DivisionByZeroError) { 1.2.remainder 0.0 }
     end
 
-    assert { (13.0.remainder 4.0).should eq(1.0) }
-    assert { (13.0.remainder -4.0).should eq(1.0) }
-    assert { (-13.0.remainder 4.0).should eq(-1.0) }
-    assert { (-13.0.remainder -4.0).should eq(-1.0) }
-    assert { (11.5.remainder 4.0).should eq(3.5) }
-    assert { (11.5.remainder -4.0).should eq(3.5) }
-    assert { (-11.5.remainder 4.0).should eq(-3.5) }
-    assert { (-11.5.remainder -4.0).should eq(-3.5) }
+    it { (13.0.remainder 4.0).should eq(1.0) }
+    it { (13.0.remainder -4.0).should eq(1.0) }
+    it { (-13.0.remainder 4.0).should eq(-1.0) }
+    it { (-13.0.remainder -4.0).should eq(-1.0) }
+    it { (11.5.remainder 4.0).should eq(3.5) }
+    it { (11.5.remainder -4.0).should eq(3.5) }
+    it { (-11.5.remainder 4.0).should eq(-3.5) }
+    it { (-11.5.remainder -4.0).should eq(-3.5) }
 
     it "preserves type" do
       r = 1.5_f32.remainder(1)
@@ -54,32 +54,90 @@ describe "Float" do
   end
 
   describe "round" do
-    assert { 2.5.round.should eq(3) }
-    assert { 2.4.round.should eq(2) }
+    it { 2.5.round.should eq(3) }
+    it { 2.4.round.should eq(2) }
   end
 
   describe "floor" do
-    assert { 2.1.floor.should eq(2) }
-    assert { 2.9.floor.should eq(2) }
+    it { 2.1.floor.should eq(2) }
+    it { 2.9.floor.should eq(2) }
   end
 
   describe "ceil" do
-    assert { 2.0_f32.ceil.should eq(2) }
-    assert { 2.0.ceil.should eq(2) }
+    it { 2.0_f32.ceil.should eq(2) }
+    it { 2.0.ceil.should eq(2) }
 
-    assert { 2.1_f32.ceil.should eq(3_f32) }
-    assert { 2.1.ceil.should eq(3) }
+    it { 2.1_f32.ceil.should eq(3_f32) }
+    it { 2.1.ceil.should eq(3) }
 
-    assert { 2.9_f32.ceil.should eq(3) }
-    assert { 2.9.ceil.should eq(3) }
+    it { 2.9_f32.ceil.should eq(3) }
+    it { 2.9.ceil.should eq(3) }
   end
 
   describe "fdiv" do
-    assert { 1.0.fdiv(1).should eq 1.0 }
-    assert { 1.0.fdiv(2).should eq 0.5 }
-    assert { 1.0.fdiv(0.5).should eq 2.0 }
-    assert { 0.0.fdiv(1).should eq 0.0 }
-    assert { 1.0.fdiv(0).should eq 1.0/0.0 }
+    it { 1.0.fdiv(1).should eq 1.0 }
+    it { 1.0.fdiv(2).should eq 0.5 }
+    it { 1.0.fdiv(0.5).should eq 2.0 }
+    it { 0.0.fdiv(1).should eq 0.0 }
+    it { 1.0.fdiv(0).should eq 1.0/0.0 }
+  end
+
+  describe "divmod" do
+    it { 1.2.divmod(0.3)[0].should eq(4) }
+    it { 1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+
+    it { 1.3.divmod(0.3)[0].should eq(4) }
+    it { 1.3.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+
+    it { 1.4.divmod(0.3)[0].should eq(4) }
+    it { 1.4.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+
+    it { -1.2.divmod(0.3)[0].should eq(-4) }
+    it { -1.2.divmod(0.3)[1].should be_close(0.0, 0.00001) }
+
+    it { -1.3.divmod(0.3)[0].should eq(-5) }
+    it { -1.3.divmod(0.3)[1].should be_close(0.2, 0.00001) }
+
+    it { -1.4.divmod(0.3)[0].should eq(-5) }
+    it { -1.4.divmod(0.3)[1].should be_close(0.1, 0.00001) }
+
+    it { 1.2.divmod(-0.3)[0].should eq(-4) }
+    it { 1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+
+    it { 1.3.divmod(-0.3)[0].should eq(-5) }
+    it { 1.3.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+
+    it { 1.4.divmod(-0.3)[0].should eq(-5) }
+    it { 1.4.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+
+    it { -1.2.divmod(-0.3)[0].should eq(4) }
+    it { -1.2.divmod(-0.3)[1].should be_close(0.0, 0.00001) }
+
+    it { -1.3.divmod(-0.3)[0].should eq(4) }
+    it { -1.3.divmod(-0.3)[1].should be_close(-0.1, 0.00001) }
+
+    it { -1.4.divmod(-0.3)[0].should eq(4) }
+    it { -1.4.divmod(-0.3)[1].should be_close(-0.2, 0.00001) }
+  end
+
+  describe "floor division //" do
+    it "preserves type of lhs" do
+      (7.0 // 2).should be_a(Float64)
+      (7.0 // 2i32).should be_a(Float64)
+      (7.0 // 2.0).should be_a(Float64)
+      (7.0_f32 // 2.0_f64).should be_a(Float32)
+      (7.0_f32 // 2.0_f32).should be_a(Float32)
+    end
+
+    it "applies floor" do
+      (7.0 // 2.0).should eq(3.0)
+      (-7.0 // 2.0).should eq(-4.0)
+
+      (6.0 // 2.0).should eq(3.0)
+      (-6.0 // 2.0).should eq(-3.0)
+
+      (30.3 // 3.9).should eq(7.0)
+    end
   end
 
   describe "to_s" do
@@ -91,7 +149,7 @@ describe "Float" do
       0.65000000000000002.to_s.should eq("0.65")
       1.234001.to_s.should eq("1.234001")
       1.23499.to_s.should eq("1.23499")
-      1.23499999999999.to_s.should eq("1.235")
+      1.23499999999999999.to_s.should eq("1.235")
       1.2345.to_s.should eq("1.2345")
       1.23456.to_s.should eq("1.23456")
       1.234567.to_s.should eq("1.234567")
@@ -103,7 +161,7 @@ describe "Float" do
       1.23456789123.to_s.should eq("1.23456789123")
       9525365.25.to_s.should eq("9525365.25")
       12.9999.to_s.should eq("12.9999")
-      12.999999999999.to_s.should eq("13.0")
+      12.9999999999999999.to_s.should eq("13.0")
       1.0.to_s.should eq("1.0")
       2e20.to_s.should eq("2.0e+20")
       1e-10.to_s.should eq("1.0e-10")
@@ -126,6 +184,7 @@ describe "Float" do
       65432.1234567891e20.to_s.should eq("6.54321234567891e+24")
       (1.0/0.0).to_s.should eq("Infinity")
       (-1.0/0.0).to_s.should eq("-Infinity")
+      (0.999999999999999989).to_s.should eq("1.0")
     end
 
     it "does to_s for f32" do
@@ -145,13 +204,33 @@ describe "Float" do
     end
   end
 
+  describe "#inspect" do
+    it "does inspect for f64" do
+      3.2.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      3.2_f32.inspect.should eq("3.2")
+    end
+
+    it "does inspect for f64 with IO" do
+      str = String.build { |io| 3.2.inspect(io) }
+      str.should eq("3.2")
+    end
+
+    it "does inspect for f32" do
+      str = String.build { |io| 3.2_f32.inspect(io) }
+      str.should eq("3.2")
+    end
+  end
+
   describe "hash" do
     it "does for Float32" do
-      1.2_f32.hash.should_not eq(0)
+      1.2_f32.hash.should eq(1.2_f32.hash)
     end
 
     it "does for Float64" do
-      1.2.hash.should_not eq(0)
+      1.2.hash.should eq(1.2.hash)
     end
   end
 
@@ -199,5 +278,67 @@ describe "Float" do
   it "clones" do
     1.0.clone.should eq(1.0)
     1.0_f32.clone.should eq(1.0_f32)
+  end
+
+  it "constants have right binary value" do
+    Float32::MIN.unsafe_as(UInt32).should eq 0xff7fffff_u32
+    Float32::MAX.unsafe_as(UInt32).should eq 0x7f7fffff_u32
+    Float32::EPSILON.unsafe_as(UInt32).should eq 0x34000000_u32
+    Float32::MIN_POSITIVE.unsafe_as(UInt32).should eq 0x00800000_u32
+
+    Float64::MIN.unsafe_as(UInt64).should eq 0xffefffffffffffff_u64
+    Float64::MAX.unsafe_as(UInt64).should eq 0x7fefffffffffffff_u64
+    Float64::EPSILON.unsafe_as(UInt64).should eq 0x3cb0000000000000_u64
+    Float64::MIN_POSITIVE.unsafe_as(UInt64).should eq 0x0010000000000000_u64
+  end
+
+  it "returns nil in <=> for NaN values (Float32)" do
+    nan = Float32::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
+  end
+
+  it "returns nil in <=> for NaN values (Float64)" do
+    nan = Float64::NAN
+
+    (1_f32 <=> nan).should be_nil
+    (1_f64 <=> nan).should be_nil
+
+    (1_u8 <=> nan).should be_nil
+    (1_u16 <=> nan).should be_nil
+    (1_u32 <=> nan).should be_nil
+    (1_u64 <=> nan).should be_nil
+    (1_i8 <=> nan).should be_nil
+    (1_i16 <=> nan).should be_nil
+    (1_i32 <=> nan).should be_nil
+    (1_i64 <=> nan).should be_nil
+
+    (nan <=> 1_u8).should be_nil
+    (nan <=> 1_u16).should be_nil
+    (nan <=> 1_u32).should be_nil
+    (nan <=> 1_u64).should be_nil
+    (nan <=> 1_i8).should be_nil
+    (nan <=> 1_i16).should be_nil
+    (nan <=> 1_i32).should be_nil
+    (nan <=> 1_i64).should be_nil
   end
 end

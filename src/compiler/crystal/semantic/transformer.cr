@@ -2,27 +2,12 @@ require "../syntax/transformer"
 
 module Crystal
   class Transformer
-    def transform(node : MetaVar)
+    def transform(node : MetaVar | MetaMacroVar | Primitive | TypeFilteredNode | TupleIndexer | TypeNode | AssignWithRestriction | YieldBlockBinder | MacroId | Unreachable)
       node
     end
 
-    def transform(node : Primitive)
-      node
-    end
-
-    def transform(node : TypeFilteredNode)
-      node
-    end
-
-    def transform(node : TupleIndexer)
-      node
-    end
-
-    def transform(node : TypeNode)
-      node
-    end
-
-    def transform(node : YieldBlockBinder)
+    def transform(node : FileNode)
+      node.node = node.node.transform self
       node
     end
   end

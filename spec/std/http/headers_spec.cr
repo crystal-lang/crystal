@@ -28,7 +28,7 @@ describe HTTP::Headers do
     headers = HTTP::Headers{"FOO_BAR" => "bar", "Foobar-foo" => "baz"}
     serialized = String.build do |io|
       headers.each do |name, values|
-        io << name << ": " << values.first << ";"
+        io << name << ": " << values.first << ';'
       end
     end
 
@@ -41,11 +41,6 @@ describe HTTP::Headers do
 
     headers["Foo"] = "bar"
     headers["foo"]?.should eq("bar")
-  end
-
-  it "fetches" do
-    headers = HTTP::Headers{"Foo" => "bar"}
-    headers.fetch("foo").should eq("bar")
   end
 
   it "fetches with default value" do
@@ -147,6 +142,39 @@ describe HTTP::Headers do
     headers.includes_word?("foo", "ba").should be_false
   end
 
+  it "matches word with comma separated value, case insensitive (#3626)" do
+    headers = HTTP::Headers{"foo" => "BaR, BAZ"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+    headers.includes_word?("foo", "BAR").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+  end
+
+  it "doesn't match empty string" do
+    headers = HTTP::Headers{"foo" => "bar, baz"}
+    headers.includes_word?("foo", "").should be_false
+  end
+
+  it "matches word with comma separated value, partial match" do
+    headers = HTTP::Headers{"foo" => "bar, bazo, baz"}
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
+  it "doesn't match word with comma separated value, partial match" do
+    headers = HTTP::Headers{"foo" => "bar, bazo"}
+    headers.includes_word?("foo", "baz").should be_false
+  end
+
+  it "matches word with comma separated value, partial match (array)" do
+    headers = HTTP::Headers{"foo" => ["foo", "baz, bazo"]}
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
+  it "doesn't match word with comma separated value, partial match (array)" do
+    headers = HTTP::Headers{"foo" => ["foo", "bar, bazo"]}
+    headers.includes_word?("foo", "baz").should be_false
+  end
+
   it "matches word among headers" do
     headers = HTTP::Headers.new
     headers.add("foo", "bar")
@@ -159,5 +187,23 @@ describe HTTP::Headers do
     headers = HTTP::Headers.new
     headers.includes_word?("foo", "bar").should be_false
     headers.includes_word?("foo", "").should be_false
+  end
+
+  it "can create header value with all US-ASCII visible chars (#2999)" do
+    headers = HTTP::Headers.new
+    value = (32..126).map(&.chr).join
+    headers.add("foo", value)
+  end
+
+  it "validates content" do
+    headers = HTTP::Headers.new
+    valid_value = "foo"
+    invalid_value = "\r\nLocation: http://example.com"
+    headers.valid_value?(valid_value).should be_true
+    headers.valid_value?(invalid_value).should be_false
+    headers.add?("foo", valid_value).should be_true
+    headers.add?("foo", [valid_value]).should be_true
+    headers.add?("foobar", invalid_value).should be_false
+    headers.add?("foobar", [invalid_value]).should be_false
   end
 end

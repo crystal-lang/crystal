@@ -268,4 +268,16 @@ module Crystal
       end
     end
   end
+
+  class VirtualMetaclassType
+    delegate cover, cover_size, to: instance_type
+  end
+
+  class AliasType
+    delegate cover, cover_size, to: aliased_type
+  end
+
+  class LiteralType
+    delegate cover, cover_size, to: (@match || literal.type)
+  end
 end

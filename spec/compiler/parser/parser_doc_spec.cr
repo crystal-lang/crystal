@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 describe "Parser doc" do
   [
@@ -9,7 +9,6 @@ describe "Parser doc" do
     {"def", "def foo\nend"},
     {"abstract def", "abstract def foo"},
     {"macro", "macro foo\nend"},
-    {"macro def", "macro def foo : Int32\nend"},
     {"call without obj", "foo"},
     {"fun def", "fun foo : Int32\nend"},
     {"enum def", "enum Foo\nend"},

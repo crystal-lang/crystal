@@ -1,8 +1,41 @@
 # A fixed-size, stack allocated array.
+#
+# `StaticArray` is a generic type with type argument `T` specifying the type of
+# its elements and `N` the fixed size. For example `StaticArray(Int32, 3)`
+# is a static array of `Int32` with three elements.
+#
+# Instantiations of this static array type:
+#
+# ```
+# StaticArray(Int32, 3).new(42)           # => StaticArray[42, 42, 42]
+# StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
+# StaticArray[0, 8, 15]                   # => StaticArray[0, 8, 15]
+# ```
+#
+# This type can also be expressed as `Int32[3]` (only in type grammar). A typical use
+# case is in combination with `uninitialized`:
+#
+# ```
+# ints = uninitialized Int32[3]
+# ints[0] = 0
+# ints[1] = 8
+# ints[2] = 15
+# ```
+#
+# For number types there is also `Number.static_array` which can be used to initialize
+# a static array:
+#
+# ```
+# Int32.static_array(0, 8, 15) # => StaticArray[0, 8, 15]
+# ```
+#
+# The generic argument type `N` is a special case in the type grammar as it
+# doesn't specify a type but a size. Its value can be an `Int32` literal or
+# constant.
 struct StaticArray(T, N)
-  include Enumerable(T)
+  include Indexable(T)
 
-  # Create a new `StaticArray` with the given *args*. The type of the
+  # Creates a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
   # and its size will be the number of elements in *args*.
   #
@@ -27,7 +60,7 @@ struct StaticArray(T, N)
   # block's value in that index.
   #
   # ```
-  # StaticArray(Int32, 3).new { |i| i * 2 } # => [0, 2, 4]
+  # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
   def self.new(&block : Int32 -> T)
     array = uninitialized self
@@ -40,19 +73,25 @@ struct StaticArray(T, N)
   # Creates a new static array filled with the given value.
   #
   # ```
-  # StaticArray(Int32, 3).new(42) # => [42, 42, 42]
+  # StaticArray(Int32, 3).new(42) # => StaticArray[42, 42, 42]
   # ```
   def self.new(value : T)
     new { value }
   end
 
-  # Equality. Returns *true* if each element in `self` is equal to each
+  # Disallow creating an uninitialized StaticArray with new.
+  # If this is desired, one can use `array = uninitialized ...`
+  # which makes it clear that it's unsafe.
+  private def initialize
+  end
+
+  # Equality. Returns `true` if each element in `self` is equal to each
   # corresponding element in *other*.
   #
   # ```
-  # array = StaticArray(Int32, 3).new 0  # => [0, 0, 0]
-  # array2 = StaticArray(Int32, 3).new 0 # => [0, 0, 0]
-  # array3 = StaticArray(Int32, 3).new 1 # => [1, 1, 1]
+  # array = StaticArray(Int32, 3).new 0  # => StaticArray[0, 0, 0]
+  # array2 = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
+  # array3 = StaticArray(Int32, 3).new 1 # => StaticArray[1, 1, 1]
   # array == array2                      # => true
   # array == array3                      # => false
   # ```
@@ -64,55 +103,31 @@ struct StaticArray(T, N)
     true
   end
 
-  # Equality with another object. Always returns *false*.
+  # Equality with another object. Always returns `false`.
   #
   # ```
-  # array = StaticArray(Int32, 3).new 0 # => [0, 0, 0]
+  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
   # array == nil                        # => false
   # ```
   def ==(other)
     false
   end
 
-  # Calls the given block once for each element in `self`, passing that element as a parameter
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new 0     # => [0, 0, 0]
-  # puts array.each { |x| print x, " -- " } # => 0 -- 0 -- 0 -- 3
-  # ```
-  def each
-    N.times do |i|
-      yield to_unsafe[i]
-    end
-  end
-
-  # Returns the element at the given index.
-  #
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to set an element outside the array's range.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => [1 ,2 ,3]
-  # array[0]                                        # => 1
-  # array[1]                                        # => 2
-  # array[2]                                        # => 3
-  # array[4]                                        # => IndexError
-  # ```
   @[AlwaysInline]
-  def [](index : Int)
-    index = check_index_out_of_bounds index
+  def unsafe_fetch(index : Int)
     to_unsafe[index]
   end
 
-  # Sets the given value at the given index.
+  # Sets the given value at the given *index*.
   #
   # Negative indices can be used to start counting from the end of the array.
   # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => [1, 2, 3]
-  # array[2] = 2                                    # => [1, 2, 2]
-  # array[4] = 4                                    # => IndexError
+  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
+  # array[2] = 2                                    # => 2
+  # array                                           # => StaticArray[1, 2, 2]
+  # array[4] = 4                                    # raises IndexError
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
@@ -120,24 +135,15 @@ struct StaticArray(T, N)
     to_unsafe[index] = value
   end
 
-  # Returns a tuple populated with the elements at the given indexes.
-  # Raises if any index is invalid.
-  #
-  # ```
-  # a = StaticArray(Int32, 4).new { |i| i + 1 }
-  # a.values_at(0, 2) # => {1, 3}
-  # ```
-  def values_at(*indexes : Int)
-    indexes.map { |index| self[index] }
-  end
-
-  # Yields the current element at the given index and updates the value at the given index with the block's value
+  # Yields the current element at the given index and updates the value
+  # at the given *index* with the block's value.
   # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => [1, 2, 3]
-  # array.update(1) { |x| x * 2 }                   # => [1, 4, 3]
-  # array.update(5) { |x| x * 2 }                   # => IndexError
+  # array = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
+  # array.update(1) { |x| x * 2 }                   # => 4
+  # array                                           # => StaticArray[1, 4, 3]
+  # array.update(5) { |x| x * 2 }                   # raises IndexError
   # ```
   def update(index : Int)
     index = check_index_out_of_bounds index
@@ -154,12 +160,12 @@ struct StaticArray(T, N)
     N
   end
 
-  # Fills the array by substituting all elements with the given value
+  # Fills the array by substituting all elements with the given value.
   #
   # ```
-  # array = StaticArray(Int32, 3).new { |i| i+1 }
-  # array[]= 2 # => [2, 2, 2]
-  #
+  # array = StaticArray(Int32, 3).new { |i| i + 1 }
+  # array.[]= 2 # => nil
+  # array       # => StaticArray[2, 2, 2]
   # ```
   def []=(value : T)
     size.times do |i|
@@ -168,15 +174,15 @@ struct StaticArray(T, N)
   end
 
   # Modifies `self` by randomizing the order of elements in the array
-  # using the given *random* number generator.  Returns `self`.
+  # using the given *random* number generator. Returns `self`.
   #
   # ```
-  # a = StaticArray(Int32, 3).new { |i| i + 1 } # => [1, 2, 3]
-  # a.shuffle!(Random.new(42))                  # => [3, 2, 1]
-  # a                                           # => [3, 2, 1]
+  # a = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
+  # a.shuffle!(Random.new(42))                  # => StaticArray[3, 2, 1]
+  # a                                           # => StaticArray[3, 2, 1]
   # ```
   def shuffle!(random = Random::DEFAULT)
-    to_unsafe.shuffle!(size, random)
+    to_slice.shuffle!(random)
     self
   end
 
@@ -185,27 +191,48 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.map! { |x| x*x } # => [1, 4, 9]
+  # array.map! { |x| x*x } # => StaticArray[1, 4, 9]
   # ```
   def map!
     to_unsafe.map!(size) { |e| yield e }
     self
   end
 
-  # Reverses the elements of this array in-place, then returns `self`
+  # Returns a new static array where elements are mapped by the given block.
+  #
+  # ```
+  # array = StaticArray[1, 2.5, "a"]
+  # array.map &.to_s # => StaticArray["1", "2.5", "a"]
+  # ```
+  def map(&block : T -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i] }
+  end
+
+  # Like `map!`, but the block gets passed both the element and its index.
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
+    self
+  end
+
+  # Like `map`, but the block gets passed both the element and its index.
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
+  end
+
+  # Reverses the elements of this array in-place, then returns `self`.
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.reverse! # => [3, 2, 1]
+  # array.reverse! # => StaticArray[3, 2, 1]
   # ```
   def reverse!
-    i = 0
-    j = size - 1
-    while i < j
-      to_unsafe.swap i, j
-      i += 1
-      j -= 1
-    end
+    to_slice.reverse!
     self
   end
 
@@ -214,21 +241,12 @@ struct StaticArray(T, N)
   #
   # ```
   # array = StaticArray(Int32, 3).new(2)
-  # slice = array.to_slice # => [2, 2, 2]
+  # slice = array.to_slice # => Slice[2, 2, 2]
   # slice[0] = 3
-  # array # => [3, 2, 2]
+  # array # => StaticArray[3, 2, 2]
   # ```
   def to_slice
     Slice.new(to_unsafe, size)
-  end
-
-  # Returns a hash code based on `self`'s size and elements.
-  #
-  # See `Object#hash`.
-  def hash
-    reduce(31 * size) do |memo, elem|
-      31 * memo + elem.hash
-    end
   end
 
   # Returns a pointer to this static array's data.
@@ -241,19 +259,27 @@ struct StaticArray(T, N)
     pointerof(@buffer)
   end
 
-  # Appends a string representation of this static array to the given IO.
+  # Appends a string representation of this static array to the given `IO`.
   #
   # ```
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.to_s # => "[1, 2, 3]"
+  # array.to_s # => "StaticArray[1, 2, 3]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "StaticArray["
-    join ", ", io, &.inspect(io)
-    io << "]"
+    join io, ", ", &.inspect(io)
+    io << ']'
   end
 
-  # Returns a new StaticArray where each element is cloned from elements in `self`.
+  def pretty_print(pp)
+    # Don't pass `self` here because we'll pass `self` by
+    # value and for big static arrays that seems to make
+    # LLVM really slow.
+    # TODO: investigate why, maybe report a bug to LLVM?
+    pp.list("StaticArray[", to_slice, "]")
+  end
+
+  # Returns a new `StaticArray` where each element is cloned from elements in `self`.
   def clone
     array = uninitialized self
     N.times do |i|
@@ -262,11 +288,14 @@ struct StaticArray(T, N)
     array
   end
 
-  private def check_index_out_of_bounds(index)
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
+  # :nodoc:
+  def index(object, offset : Int = 0)
+    # Optimize for the case of looking for a byte in a byte slice
+    if T.is_a?(UInt8.class) &&
+       (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))
+      return to_slice.fast_index(object, offset)
     end
-    index
+
+    super
   end
 end

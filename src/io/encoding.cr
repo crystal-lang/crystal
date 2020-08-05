@@ -1,5 +1,9 @@
-module IO
-  # Has the name and the invalid option
+{% unless flag?(:win32) %}
+  require "crystal/iconv"
+{% end %}
+
+class IO
+  # Has the `name` and the `invalid` option.
   struct EncodingOptions
     getter name : String
     getter invalid : Symbol?
@@ -10,19 +14,20 @@ module IO
 
     def self.check_invalid(invalid)
       if invalid && invalid != :skip
-        raise ArgumentError.new "valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
+        raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end
     end
   end
 
-  # :nodoc:
-  class Encoder
+  {% skip_file if flag?(:win32) %}
+
+  private class Encoder
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
+      @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
     end
 
-    def write(io, slice : Slice(UInt8))
+    def write(io, slice : Bytes)
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -30,7 +35,7 @@ module IO
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == -1
+        if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -48,71 +53,89 @@ module IO
     end
   end
 
-  # :nodoc:
-  class Decoder
+  private class Decoder
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 
-    property out_slice : Slice(UInt8)
+    property out_slice : Bytes
 
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
-      @buffer = Slice(UInt8).new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
+      @iconv = Crystal::Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
+      @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
-      @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
-      @out_slice = Slice(UInt8).new(Pointer(UInt8).null, 0)
-      @last_errno = 0
+      @out_buffer = Bytes.new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
+      @out_slice = Bytes.empty
       @closed = false
     end
 
     def read(io)
-      return unless @out_slice.empty?
+      loop do
+        return unless @out_slice.empty?
 
-      if @in_buffer_left == 0
-        @in_buffer = @buffer.to_unsafe
-        @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
-      elsif @last_errno == Errno::EINVAL
-        # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
+        if @in_buffer_left == 0
+          @in_buffer = @buffer.to_unsafe
+          @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
+        end
 
-        # If we have just a few bytes remaining to fill, move the ones we have to the beginning
-        # and read into the rest, so we avoid just decoding a small amount of bytes
-        buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-        if buffer_remaining < 64
+        # If we just have a few bytes to decode, read more, just in case these don't produce a character
+        if @in_buffer_left < 16
+          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
           @buffer.copy_from(@in_buffer, @in_buffer_left)
           @in_buffer = @buffer.to_unsafe
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left
+          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
         end
-        @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
-      end
 
-      # If we just have a few bytes to decode, read more, just in case these don't produce a character
-      if @in_buffer_left < 16
-        buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
+        # If, after refilling the buffer, we couldn't read new bytes
+        # it means we reached the end
+        break if @in_buffer_left == 0
+
+        # Convert bytes using iconv
+        out_buffer = @out_buffer.to_unsafe
+        out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
+        result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
+        @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
+
+        # Check for errors
+        if result == Crystal::Iconv::ERROR
+          case Errno.value
+          when Errno::EILSEQ
+            # For an illegal sequence we just skip one byte and we'll continue next
+            @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+          when Errno::EINVAL
+            # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
+            old_in_buffer_left = @in_buffer_left
+
+            # On invalid multibyte sequence we try to read more bytes
+            # to see if they complete the sequence
+            refill_in_buffer(io)
+
+            # If we couldn't read anything new, we raise or skip
+            if old_in_buffer_left == @in_buffer_left
+              @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+            end
+          else
+            # Not an error we can handle
+          end
+
+          # Continue decoding after an error
+          next
+        end
+
+        break
+      end
+    end
+
+    private def refill_in_buffer(io)
+      buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
+      if buffer_remaining < 64
         @buffer.copy_from(@in_buffer, @in_buffer_left)
         @in_buffer = @buffer.to_unsafe
-        @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
+        buffer_remaining = BUFFER_SIZE - @in_buffer_left
       end
-
-      out_buffer = @out_buffer.to_unsafe
-      out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
-      old_in_buffer_left = @in_buffer_left
-      result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
-      @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
-      if result == -1
-        if Errno.value == Errno::EILSEQ
-          @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
-        end
-
-        if old_in_buffer_left == @in_buffer_left
-          raise ArgumentError.new "incomplete multibyte sequence"
-        end
-        @last_errno = Errno.value
-      else
-        @last_errno = 0
-      end
+      @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
     end
 
     def read_byte(io)
@@ -141,29 +164,25 @@ module IO
       count
     end
 
-    def gets(io, delimiter : UInt8, limit : Int)
+    def gets(io, delimiter : UInt8, limit : Int, chomp)
       read(io)
       return nil if @out_slice.empty?
 
       index = @out_slice.index(delimiter)
       if index
         # If we find it past the limit, limit the result
-        if index > limit
+        if index >= limit
           index = limit
         else
           index += 1
         end
 
-        string = String.new(@out_slice[0, index])
-        advance(index)
-        return string
+        return gets_index(index, delimiter, chomp)
       end
 
       # Check if there's limit bytes in the out slice
       if @out_slice.size >= limit
-        string = String.new(@out_slice[0, limit])
-        advance(limit)
-        return string
+        return gets_index(limit, delimiter, chomp)
       end
 
       # We need to read from the out_slice into a String until we find that byte,
@@ -179,7 +198,7 @@ module IO
 
           index = @out_slice.index(delimiter)
           if index
-            if index > limit
+            if index >= limit
               index = limit
             else
               index += 1
@@ -193,12 +212,29 @@ module IO
             end
           end
         end
+        str.chomp!(delimiter) if chomp
       end
+    end
+
+    private def gets_index(index, delimiter, chomp)
+      advance_increment = index
+
+      if chomp && index > 0 && @out_slice[index - 1] === delimiter
+        index -= 1
+
+        if delimiter === '\n' && index > 0 && @out_slice[index - 1] === '\r'
+          index -= 1
+        end
+      end
+
+      string = String.new(@out_slice[0, index])
+      advance(advance_increment)
+      string
     end
 
     def write(io)
       io.write @out_slice
-      @out_slice = Slice.new(Pointer(UInt8).null, 0)
+      @out_slice = Bytes.empty
     end
 
     def write(io, numbytes)

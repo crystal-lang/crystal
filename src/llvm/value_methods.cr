@@ -10,16 +10,20 @@ module LLVM::ValueMethods
     String.new LibLLVM.get_value_name(self)
   end
 
-  def add_attribute(attribute)
-    LibLLVM.add_attribute self, attribute
+  def kind
+    LibLLVM.get_value_kind(self)
   end
 
-  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
-    LibLLVM.add_instr_attribute(self, index, attribute)
-  end
-
-  def attributes
-    LibLLVM.get_attribute(self)
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute, context : LLVM::Context)
+    return if attribute.value == 0
+    {% if LibLLVM.has_constant?(:AttributeRef) %}
+      attribute.each_kind do |kind|
+        attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
+        LibLLVM.add_call_site_attribute(self, index, attribute_ref)
+      end
+    {% else %}
+      LibLLVM.add_instr_attribute(self, index, attribute)
+    {% end %}
   end
 
   def constant?
@@ -71,17 +75,36 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
+  def volatile=(volatile)
+    LibLLVM.set_volatile(self, volatile ? 1 : 0)
+  end
+
+  def ordering=(ordering)
+    LibLLVMExt.set_ordering(self, ordering)
+  end
+
+  def alignment=(bytes)
+    LibLLVM.set_alignment(self, bytes)
+  end
+
+  def const_int_get_sext_value
+    LibLLVM.const_int_get_sext_value(self)
+  end
+
+  def const_int_get_zext_value
+    LibLLVM.const_int_get_zext_value(self)
+  end
+
   def to_value
-    LLVM::Value.new unwrap
+    LLVM::Value.new @unwrap
   end
 
   def dump
     LibLLVM.dump_value self
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_value_to_string(self), io)
-    self
   end
 
   def to_unsafe

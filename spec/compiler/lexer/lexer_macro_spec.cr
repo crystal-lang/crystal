@@ -1,4 +1,4 @@
-require "../../spec_helper"
+require "../../support/syntax"
 
 describe "Lexer macro" do
   it "lexes simple macro" do
@@ -39,7 +39,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "ifdef", "macro def"].each do |keyword|
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "annotation", "select"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
@@ -489,27 +489,6 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  it "lexes macro var inside string, inside interpolation" do
-    lexer = Lexer.new(%(" %var " end))
-
-    token = lexer.next_macro_token(Token::MacroState.default, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq(%(" ))
-    token.macro_state.nest.should eq(0)
-    token.macro_state.delimiter_state.not_nil!.nest.should eq('"')
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_VAR)
-    token.value.should eq("var")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq(%( " ))
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_END)
-  end
-
   it "doesn't lex macro var if escaped" do
     lexer = Lexer.new(%(" \\%var " end))
 
@@ -616,5 +595,13 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
+  end
+
+  it "keeps correct line number after lexes the part of keyword and newline (#4656)" do
+    lexer = Lexer.new(%(ab\ncd)) # 'ab' means the part of 'abstract'
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("ab\ncd")
+    lexer.line_number.should eq(2)
   end
 end

@@ -1,7 +1,7 @@
 require "http/client"
 require "http/params"
 require "uri"
-require "secure_random"
+require "random/secure"
 require "openssl/hmac"
 require "base64"
 require "./oauth/**"

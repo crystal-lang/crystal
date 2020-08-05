@@ -46,6 +46,37 @@ class OAuth2::AccessToken
       token.authenticate request, false
       request.headers["Authorization"].should eq("Bearer access token")
     end
+
+    it "builds from json without expires_in (#4041)" do
+      access_token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "token_type" : "Bearer",
+        "refresh_token" : "bar",
+        "scope" : "baz"
+        }))
+      access_token.expires_in.should be_nil
+    end
+
+    it "builds from json with unknown key (#4437)" do
+      token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "token_type" : "Bearer",
+        "refresh_token" : "bar",
+        "scope" : "baz",
+        "unknown": [1, 2, 3]
+        }))
+      token.extra.not_nil!["unknown"].should eq("[1,2,3]")
+    end
+
+    it "builds from json without token_type, assumes Bearer (#4503)" do
+      token = AccessToken.from_json(%({
+        "access_token" : "foo",
+        "refresh_token" : "bar",
+        "scope" : "baz"
+        }))
+      token.should be_a(AccessToken::Bearer)
+      token.access_token.should eq("foo")
+    end
   end
 
   describe Mac do

@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe "Type inference: yield with scope" do
+describe "Semantic: yield with scope" do
   it "uses scope in global method" do
     run("
       require \"prelude\"
@@ -89,14 +89,14 @@ describe "Type inference: yield with scope" do
 
   it "doesn't explode if specifying &block but never using it (#181)" do
     codegen(%(
-      class A
+      class Foo
         def a(&block)
           with self yield
         end
         def aa
         end
       end
-      a = A.new
+      a = Foo.new
       a.a { aa }
       a.a { aa }
       ))
@@ -117,7 +117,7 @@ describe "Type inference: yield with scope" do
 
         def bar
           Foo.new.foo do
-            @x + 1
+            @x &+ 1
           end
         end
       end
@@ -137,7 +137,7 @@ describe "Type inference: yield with scope" do
       class Bar
         def bar
           Foo.new.foo do
-            baz + 1
+            baz &+ 1
           end
         end
 
@@ -162,7 +162,7 @@ describe "Type inference: yield with scope" do
         end
 
         def coco
-          @x + 1
+          @x &+ 1
         end
       end
 

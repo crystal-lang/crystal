@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-def assert_type_to_s(expected)
+private def assert_type_to_s(expected)
   p = Program.new
   t = with p yield p
   t.to_s.should eq(expected)
@@ -8,7 +8,7 @@ end
 
 describe "types to_s of" do
   it "does for type contained in generic class" do
-    result = infer_type(%(
+    result = semantic(%(
       class Bar(T)
         class Foo
         end
@@ -18,7 +18,7 @@ describe "types to_s of" do
   end
 
   it "does for type contained in generic module" do
-    result = infer_type(%(
+    result = semantic(%(
       module Bar(T)
         class Foo
         end

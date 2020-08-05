@@ -190,7 +190,7 @@ describe "Code gen: if" do
       else
         n
       end
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 
@@ -229,5 +229,91 @@ describe "Code gen: if" do
       end
       1
       )).to_i.should eq(1)
+  end
+
+  it "restricts with || always falsey" do
+    run(%(
+      t = 1
+      if t.is_a?(String) || t.is_a?(String)
+        t
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "considers or truthy/falsey right" do
+    run(%(
+      t = 1 || 'a'
+      if t.is_a?(Char) || t.is_a?(Char)
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "codegens #3104" do
+    codegen(%(
+      def foo
+        yield
+      end
+
+      x = typeof(nil && 1)
+      foo do
+        if x
+        end
+      end
+      x
+      ))
+  end
+
+  it "doesn't generate truthy if branch if doesn't need value (bug)" do
+    codegen(%(
+      class Foo
+      end
+
+      x = nil
+      if x
+        nil
+      else
+        if 2 == 2
+          Foo.new
+        else
+          ""
+        end
+      end
+      1
+      ))
+  end
+
+  it "doesn't crash no NoReturn var (true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if true || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
+      ))
+  end
+
+  it "doesn't crash no NoReturn var (non-true left cond) (#1823)" do
+    codegen(%(
+      def foo
+        arg = nil
+        if 1 == 2 || arg.nil?
+          return
+        end
+
+        arg
+      end
+
+      foo
+      ))
   end
 end

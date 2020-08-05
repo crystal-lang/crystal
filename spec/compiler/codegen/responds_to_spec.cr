@@ -162,4 +162,16 @@ describe "Codegen: responds_to?" do
       moo.responds_to?(:foo)
       )).to_b.should be_true
   end
+
+  it "does for generic instance type metaclass (#4353)" do
+    run(%(
+      class MyGeneric(T)
+        def self.hallo
+          1
+        end
+      end
+
+      MyGeneric(String).responds_to? :hallo
+      )).to_b.should be_true
+  end
 end

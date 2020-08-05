@@ -1,13 +1,15 @@
 require "openssl/lib_crypto"
 
-# :nodoc;
+# :nodoc:
 module OpenSSL::X509
-  # :nodoc;
+  # :nodoc:
   class Name
     # Parses entries in string and initializes a Name object.
     #
     # Example:
     # ```
+    # require "openssl"
+    #
     # OpenSSL::X509::Name.parse("CN=nobody/DC=example")
     # ```
     def self.parse(string : String) : Name
@@ -66,7 +68,7 @@ module OpenSSL::X509
       count = LibCrypto.x509_name_entry_count(@name)
       raise Error.new("X509_NAME_entry_count") if count < 0
 
-      long_name = Slice(UInt8).new(512)
+      long_name = Bytes.new(512)
 
       Array(Tuple(String, String)).new(count) do |i|
         entry = LibCrypto.x509_name_get_entry(@name, i)

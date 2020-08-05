@@ -1,17 +1,6 @@
 require "spec"
 require "yaml"
 
-private def assert_raw(string, expected = string, file = __FILE__, line = __LINE__)
-  it "parses raw #{string.inspect}", file, line do
-    pull = YAML::PullParser.new(string)
-    pull.read_stream do
-      pull.read_document do
-        pull.read_raw.should eq(expected)
-      end
-    end
-  end
-end
-
 module YAML
   describe PullParser do
     it "reads empty stream" do
@@ -35,6 +24,15 @@ module YAML
       parser.read_stream do
         parser.read_document do
           parser.read_scalar.should eq("foo")
+        end
+      end
+    end
+
+    it "reads a scalar having a null character" do
+      parser = PullParser.new(%(--- "foo\\0bar"\n...\n))
+      parser.read_stream do
+        parser.read_document do
+          parser.read_scalar.should eq("foo\0bar")
         end
       end
     end
@@ -107,10 +105,110 @@ module YAML
       end
     end
 
-    assert_raw %(hello)
-    assert_raw %("hello"), %(hello)
-    assert_raw %(["hello"])
-    assert_raw %(["hello","world"])
-    assert_raw %({"hello":"world"})
+    it "raises exception at correct location" do
+      parser = PullParser.new("[1]")
+      parser.read_stream do
+        parser.read_document do
+          parser.read_sequence do
+            ex = expect_raises(YAML::ParseException) do
+              parser.read_mapping do
+              end
+            end
+            ex.location.should eq({1, 2})
+
+            parser.read_scalar
+          end
+        end
+      end
+    end
+
+    describe "skip" do
+      it "scalar" do
+        parser = PullParser.new("[1, 2]")
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("2")
+            end
+          end
+        end
+      end
+
+      it "alias" do
+        parser = PullParser.new(<<-YAML)
+          - &value 1
+          - *value
+          - 2
+          YAML
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.read_scalar.should eq("1")
+              parser.skip
+              parser.read_scalar.should eq("2")
+            end
+          end
+        end
+      end
+
+      it "sequence" do
+        parser = PullParser.new("[[1, [2]], 3]")
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("3")
+            end
+          end
+        end
+      end
+
+      it "mapping" do
+        parser = PullParser.new(%([{"foo": [1, 2]}, 3]))
+        parser.read_stream do
+          parser.read_document do
+            parser.read_sequence do
+              parser.skip
+              parser.read_scalar.should eq("3")
+            end
+          end
+        end
+      end
+
+      it "stream" do
+        parser = PullParser.new("[1]")
+        parser.skip
+        parser.read_next.should eq(EventKind::NONE)
+      end
+
+      it "document" do
+        parser = PullParser.new("[1]")
+        parser.read_stream do
+          parser.skip
+        end
+        parser.read_next.should eq(EventKind::NONE)
+      end
+
+      it "skips event in other cases" do
+        parser = PullParser.new(%([ {"foo": 1}]))
+        parser.kind.should eq(EventKind::STREAM_START)
+        parser.read_next.should eq(EventKind::DOCUMENT_START)
+        parser.read_next.should eq(EventKind::SEQUENCE_START)
+        parser.read_next.should eq(EventKind::MAPPING_START)
+        parser.read_next.should eq(EventKind::SCALAR)
+        parser.read_next.should eq(EventKind::SCALAR)
+        parser.skip
+        parser.kind.should eq(EventKind::MAPPING_END)
+        parser.skip
+        parser.kind.should eq(EventKind::SEQUENCE_END)
+        parser.skip
+        parser.kind.should eq(EventKind::DOCUMENT_END)
+        parser.skip
+        parser.kind.should eq(EventKind::STREAM_END)
+        parser.skip
+        parser.kind.should eq(EventKind::NONE)
+      end
+    end
   end
 end

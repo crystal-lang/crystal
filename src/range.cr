@@ -1,17 +1,21 @@
-# A Range represents an interval: a set of values with a beginning and an end.
+# A `Range` represents an interval: a set of values with a beginning and an end.
 #
 # Ranges may be constructed using the usual `new` method or with literals:
 #
 # ```
 # x..y  # an inclusive range, in mathematics: [x, y]
 # x...y # an exclusive range, in mathematics: [x, y)
+# (x..) # an endless range, in mathematics: >= x
+# ..y   # a beginless inclusive range, in mathematics: <= y
+# ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
-# Ranges typically involve integers, but can be created using arbitrary objects as long as they define `succ` (or `pred`
-# for `reverse_each`), to get the next element in the range, and `<` and `==`, to know when the range reached the end:
+# Ranges typically involve integers, but can be created using arbitrary objects
+# as long as they define `succ` (or `pred` for `reverse_each`), to get the
+# next element in the range, and `<` and `==`, to know when the range reached the end:
 #
 # ```
 # # Represents a string of 'x's.
@@ -20,7 +24,7 @@
 #
 #   getter size
 #
-#   def initialize(@size)
+#   def initialize(@size : Int32)
 #   end
 #
 #   def succ
@@ -45,13 +49,14 @@
 # An example of using `Xs` to construct a range:
 #
 # ```
-# r = Xs.new(3)..Xs.new(6) # => xxx..xxxxxx
-# r.to_a                   # => [xxx, xxxx, xxxxx, xxxxxx]
-# r.includes?(Xs.new(5))   # => true
+# r = Xs.new(3)..Xs.new(6)
+# r.to_s                 # => "xxx..xxxxxx"
+# r.to_a                 # => [Xs.new(3), Xs.new(4), Xs.new(5), Xs.new(6)]
+# r.includes?(Xs.new(5)) # => true
 # ```
 struct Range(B, E)
   include Enumerable(B)
-  include Iterable
+  include Iterable(B)
 
   # Returns the object that defines the beginning of this range.
   #
@@ -73,7 +78,7 @@ struct Range(B, E)
   # Returns `false` otherwise (default).
   getter? exclusive : Bool
 
-  # Constructs a range using the given beginning and end.
+  # Constructs a `Range` using the given beginning and end.
   #
   # ```
   # Range.new(1, 10)                  # => 1..10
@@ -85,7 +90,7 @@ struct Range(B, E)
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 3]
+  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 2]
   # ```
   def cycle
     each.cycle
@@ -97,14 +102,32 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each
+  def each : Nil
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
     current = @begin
-    while current < @end
-      yield current
-      current = current.succ
+    if current.nil?
+      raise ArgumentError.new("Can't each beginless range")
     end
-    yield current if !@exclusive && current == @end
-    self
+
+    # TODO: This typeof and the macro interpolations are a workaround until #9324 is fixed.
+    typeof(yield current)
+
+    {% if E == Nil %}
+      while true
+        {{ "yield current".id }}
+        current = current.succ
+      end
+    {% else %}
+      end_value = @end
+      while end_value.nil? || current < end_value
+        {{ "yield current".id }}
+        current = current.succ
+      end
+      {{ "yield current".id }} if !@exclusive && current == end_value
+    {% end %}
   end
 
   # Returns an `Iterator` over the elements of this range.
@@ -113,23 +136,52 @@ struct Range(B, E)
   # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
+    {% if B == Nil %}
+      {% raise "Can't each beginless range" %}
+    {% end %}
+
+    if @begin.nil?
+      raise ArgumentError.new("Can't each beginless range")
+    end
+
     ItemIterator.new(self)
   end
 
-  # Iterates over the elements of this range in reverse order, passing each in turn to the block.
+  # Iterates over the elements of this range in reverse order,
+  # passing each in turn to the block.
   #
   # ```
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each
-    yield @end if !@exclusive && !(@end < @begin)
-    current = @end
-    while @begin < current
-      current = current.pred
-      yield current
+  def reverse_each : Nil
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    end_value = @end
+    if end_value.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
     end
-    self
+
+    begin_value = @begin
+
+    yield end_value if !@exclusive && (begin_value.nil? || !(end_value < begin_value))
+    current = end_value
+
+    # TODO: The macro interpolations are a workaround until #9324 is fixed.
+
+    {% if B == Nil %}
+      while true
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% else %}
+      while begin_value.nil? || begin_value < current
+        current = current.pred
+        {{ "yield current".id }}
+      end
+    {% end %}
   end
 
   # Returns a reverse `Iterator` over the elements of this range.
@@ -138,6 +190,14 @@ struct Range(B, E)
   # (1..3).reverse_each.skip(1).to_a # => [2, 1]
   # ```
   def reverse_each
+    {% if E == Nil %}
+      {% raise "Can't reverse_each endless range" %}
+    {% end %}
+
+    if @end.nil?
+      raise ArgumentError.new("Can't reverse_each endless range")
+    end
+
     ReverseIterator.new(self)
   end
 
@@ -166,13 +226,18 @@ struct Range(B, E)
   # ```
   #
   # See `Range`'s overview for the definition of `Xs`.
-  def step(n = 1)
+  def step(by = 1)
     current = @begin
-    while current < @end
-      yield current
-      n.times { current = current.succ }
+    if current.nil?
+      raise ArgumentError.new("Can't step beginless range")
     end
-    yield current if current == @end && !@exclusive
+
+    end_value = @end
+    while end_value.nil? || current < end_value
+      yield current
+      by.times { current = current.succ }
+    end
+    yield current if !@exclusive && current == @end
     self
   end
 
@@ -181,11 +246,15 @@ struct Range(B, E)
   # ```
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
-  def step(n : Int = 1)
-    StepIterator(self, B, typeof(n)).new(self, n)
+  def step(by = 1)
+    if @begin.nil?
+      raise ArgumentError.new("Can't step beginless range")
+    end
+
+    StepIterator(self, B, typeof(by)).new(self, by)
   end
 
-  # Returns true if this range excludes the *end* element.
+  # Returns `true` if this range excludes the *end* element.
   #
   # ```
   # (1..10).excludes_end?  # => false
@@ -195,7 +264,7 @@ struct Range(B, E)
     @exclusive
   end
 
-  # Returns true if this range includes the given *value*.
+  # Returns `true` if this range includes the given *value*.
   #
   # ```
   # (1..10).includes?(4)  # => true
@@ -206,14 +275,17 @@ struct Range(B, E)
   # (1...10).includes?(10) # => false
   # ```
   def includes?(value)
-    if @exclusive
-      @begin <= value < @end
-    else
-      @begin <= value <= @end
-    end
+    begin_value = @begin
+    end_value = @end
+
+    # begin passes
+    (begin_value.nil? || value >= begin_value) &&
+      # end passes
+      (end_value.nil? ||
+        (@exclusive ? value < end_value : value <= end_value))
   end
 
-  # Same as `includes?`
+  # Same as `includes?`.
   def covers?(value)
     includes?(value)
   end
@@ -234,24 +306,24 @@ struct Range(B, E)
   # high
   # ```
   #
-  # See `Object#===`.
+  # See also: `Object#===`.
   def ===(value)
     includes?(value)
   end
 
   # :nodoc:
-  def to_s(io : IO)
-    @begin.inspect(io)
+  def to_s(io : IO) : Nil
+    @begin.try &.inspect(io)
     io << (@exclusive ? "..." : "..")
-    @end.inspect(io)
+    @end.try &.inspect(io)
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
-  # If self is a `Int` range, it provides O(1) implementation,
+  # If `self` is a `Int` range, it provides O(1) implementation,
   # otherwise it is same as `Enumerable#sum`.
   def sum(initial)
     b = self.begin
@@ -261,7 +333,7 @@ struct Range(B, E)
       e -= 1 if @exclusive
       n = e - b + 1
       if n >= 0
-        initial + n * (b + e) / 2
+        initial + n * (b + e) // 2
       else
         initial
       end
@@ -270,13 +342,50 @@ struct Range(B, E)
     end
   end
 
-  # Returns a new Range with `begin` and `end` cloned.
+  # Returns a new `Range` with `begin` and `end` cloned.
   def clone
     Range.new(@begin.clone, @end.clone, @exclusive)
   end
 
   # :nodoc:
-  class ItemIterator(B, E)
+  def map(&block : B -> U) forall U
+    b = self.begin
+    e = self.end
+
+    # Optimized implementation for int range
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      n = 0 if n < 0
+      Array(U).new(n) { |i| yield b + i }
+    else
+      super { |i| yield i }
+    end
+  end
+
+  # :nodoc:
+  def size
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't calculate size of an open range" %}
+    {% end %}
+
+    b = self.begin
+    e = self.end
+
+    # Optimized implementation for int range
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      n < 0 ? 0 : n
+    else
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't calculate size of an open range")
+      end
+      super
+    end
+  end
+
+  private class ItemIterator(B, E)
     include Iterator(B)
 
     @range : Range(B, E)
@@ -289,57 +398,47 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @current = @current.succ
         value
       else
         @reached_end = true
 
-        if !@range.excludes_end? && @current == @range.end
+        if !@range.excludes_end? && @current == end_value
           @current
         else
           stop
         end
       end
     end
-
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
-    end
   end
 
-  # :nodoc:
-  class ReverseIterator(B, E)
+  private class ReverseIterator(B, E)
     include Iterator(E)
 
     @range : Range(B, E)
     @current : E
 
-    def initialize(@range : Range(B, E), @current = range.end)
-      rewind
+    def initialize(@range : Range(B, E))
+      if range.excludes_end?
+        @current = range.end.not_nil!
+      else
+        @current = range.end.not_nil!.succ
+      end
     end
 
     def next
-      return stop if @current <= @range.begin
+      begin_value = @range.begin
+
+      return stop if !begin_value.nil? && @current <= begin_value
       return @current = @current.pred
-    end
-
-    def rewind
-      if @range.excludes_end?
-        @current = @range.end
-      else
-        @current = @range.end.succ
-      end
-
-      self
     end
   end
 
-  # :nodoc:
-  class StepIterator(R, B, N)
+  private class StepIterator(R, B, N)
     include Iterator(B)
 
     @range : R
@@ -353,7 +452,9 @@ struct Range(B, E)
     def next
       return stop if @reached_end
 
-      if @current < @range.end
+      end_value = @range.end
+
+      if end_value.nil? || @current < end_value
         value = @current
         @step.times { @current = @current.succ }
         value
@@ -368,12 +469,6 @@ struct Range(B, E)
       end
     end
 
-    def rewind
-      @current = @range.begin
-      @reached_end = false
-      self
-    end
-
     def sum(initial)
       super if @reached_end
 
@@ -383,10 +478,10 @@ struct Range(B, E)
 
       if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
         e -= 1 if @range.excludes_end?
-        n = (e - b) / d + 1
+        n = (e - b) // d + 1
         if n >= 0
           e = b + (n - 1) * d
-          initial + n * (b + e) / 2
+          initial + n * (b + e) // 2
         else
           initial
         end

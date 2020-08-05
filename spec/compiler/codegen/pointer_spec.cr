@@ -28,11 +28,11 @@ describe "Code gen: pointer" do
   end
 
   it "get value of pointer to union" do
-    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i").to_i.should eq(1)
+    run("a = 1.1; a = 1; b = pointerof(a); b.value.to_i!").to_i.should eq(1)
   end
 
   it "sets value of pointer to union" do
-    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i").to_i.should eq(2)
+    run("p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i!").to_i.should eq(2)
   end
 
   it "increments pointer" do
@@ -53,15 +53,19 @@ describe "Code gen: pointer" do
   end
 
   it "codegens malloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens realloc" do
-    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value + 1_i64").to_i.should eq(2)
+    run("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value &+ 1_i64").to_i.should eq(2)
   end
 
   it "codegens pointer cast" do
-    run("a = 1_i64; (pointerof(a) as Int32*).value").to_i.should eq(1)
+    run("a = 1_i64; pointerof(a).as(Int32*).value").to_i.should eq(1)
+  end
+
+  it "codegens pointer cast to Nil (#8015)" do
+    run("a = 1_i64; pointerof(a).as(Nil).nil? ? 3 : 7").to_i.should eq(3)
   end
 
   it "codegens pointer as if condition" do
@@ -246,10 +250,11 @@ describe "Code gen: pointer" do
   end
 
   it "gets pointer to constant" do
-    run("
+    run(%(
+      require "prelude"
       FOO = 1
       pointerof(FOO).value
-    ").to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "passes pointer of pointer to method" do
@@ -320,6 +325,8 @@ describe "Code gen: pointer" do
 
   it "does pointerof class variable with class" do
     run(%(
+      require "prelude"
+
       class Bar
         def initialize(@x : Int32)
         end
@@ -343,14 +350,6 @@ describe "Code gen: pointer" do
 
       Foo.a_ptr.value = Bar.new(2)
       Foo.a.x
-      )).to_i.should eq(2)
-  end
-
-  it "does pointerof global variable" do
-    run(%(
-      $a = 1
-      pointerof($a).value = 2
-      $a
       )).to_i.should eq(2)
   end
 
@@ -456,5 +455,55 @@ describe "Code gen: pointer" do
       Pointer(Int32 | UInt8[9]).malloc(0_u64)
       foo.value
       )).to_i.should eq(3)
+  end
+
+  it "compares pointers through typedef" do
+    run(%(
+      module Comparable(T)
+        def ==(other : T)
+          (self <=> other) == 0
+        end
+      end
+
+      struct Pointer(T)
+        include Comparable(Pointer)
+
+        def <=>(other : Pointer)
+          0
+        end
+      end
+
+      lib LibFoo
+        type Ptr = Void*
+      end
+
+      ptr = Pointer(Void).malloc(1_u64).as(LibFoo::Ptr)
+      ptr == ptr
+      )).to_b.should be_true
+  end
+
+  it "takes pointerof lib external var" do
+    test_c(
+      %(
+        int external_var = 0;
+      ),
+      %(
+        lib LibFoo
+          $external_var : Int32
+        end
+
+        LibFoo.external_var = 1
+
+        ptr = pointerof(LibFoo.external_var)
+        x = ptr.value
+
+        ptr.value = 10
+        y = ptr.value
+
+        ptr.value = 100
+        z = LibFoo.external_var
+
+        x + y + z
+      ), &.to_i.should eq(111))
   end
 end

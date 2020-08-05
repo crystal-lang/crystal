@@ -1,5 +1,6 @@
 require "spec"
 require "yaml"
+require "json"
 
 describe YAML::Any do
   describe "casts" do
@@ -7,16 +8,104 @@ describe YAML::Any do
       YAML.parse("").as_nil.should be_nil
     end
 
+    it "gets bool" do
+      YAML.parse("true").as_bool.should be_true
+      YAML.parse("false").as_bool.should be_false
+      YAML.parse("true").as_bool?.should be_true
+      YAML.parse("false").as_bool?.should be_false
+      YAML.parse("2").as_bool?.should be_nil
+    end
+
     it "gets string" do
       YAML.parse("hello").as_s.should eq("hello")
+      YAML.parse("hello").as_s?.should eq("hello")
+      YAML.parse("hello:\n- cruel\n- world\n").as_s?.should be_nil
     end
 
     it "gets array" do
       YAML.parse("- foo\n- bar\n").as_a.should eq(["foo", "bar"])
+      YAML.parse("- foo\n- bar\n").as_a?.should eq(["foo", "bar"])
+      YAML.parse("hello").as_a?.should be_nil
     end
 
     it "gets hash" do
       YAML.parse("foo: bar").as_h.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar").as_h?.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar")["foo"].as_h?.should be_nil
+    end
+
+    it "gets int32" do
+      value = YAML.parse("1").as_i
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("1").as_i?
+      value.should eq(1)
+      value.should be_a(Int32)
+
+      value = YAML.parse("true").as_i?
+      value.should be_nil
+    end
+
+    it "gets int64" do
+      value = YAML.parse("1").as_i64
+      value.should eq(1)
+      value.should be_a(Int64)
+
+      value = YAML.parse("1").as_i64?
+      value.should eq(1)
+      value.should be_a(Int64)
+
+      value = YAML.parse("true").as_i64?
+      value.should be_nil
+    end
+
+    it "gets float32" do
+      value = YAML.parse("1.2").as_f32
+      value.should eq(1.2_f32)
+      value.should be_a(Float32)
+
+      value = YAML.parse("1.2").as_f32?
+      value.should eq(1.2_f32)
+      value.should be_a(Float32)
+
+      value = YAML.parse("true").as_f32?
+      value.should be_nil
+    end
+
+    it "gets float64" do
+      value = YAML.parse("1.2").as_f
+      value.should eq(1.2)
+      value.should be_a(Float64)
+
+      value = YAML.parse("1.2").as_f?
+      value.should eq(1.2)
+      value.should be_a(Float64)
+
+      value = YAML.parse("true").as_f?
+      value.should be_nil
+    end
+
+    it "gets time" do
+      value = YAML.parse("2010-01-02").as_time
+      value.should eq(Time.utc(2010, 1, 2))
+
+      value = YAML.parse("2010-01-02").as_time?
+      value.should eq(Time.utc(2010, 1, 2))
+
+      value = YAML.parse("hello").as_time?
+      value.should be_nil
+    end
+
+    it "gets bytes" do
+      value = YAML.parse("!!binary aGVsbG8=").as_bytes
+      value.should eq("hello".to_slice)
+
+      value = YAML.parse("!!binary aGVsbG8=").as_bytes?
+      value.should eq("hello".to_slice)
+
+      value = YAML.parse("1").as_bytes?
+      value.should be_nil
     end
   end
 
@@ -38,6 +127,10 @@ describe YAML::Any do
     it "of hash" do
       YAML.parse("foo: bar")["foo"].raw.should eq("bar")
     end
+
+    it "of hash with integer keys" do
+      YAML.parse("1: bar")[1].raw.should eq("bar")
+    end
   end
 
   describe "#[]?" do
@@ -50,23 +143,55 @@ describe YAML::Any do
       YAML.parse("foo: bar")["foo"]?.not_nil!.raw.should eq("bar")
       YAML.parse("foo: bar")["fox"]?.should be_nil
     end
+
+    it "of hash with integer keys" do
+      YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("1: bar")[2]?.should be_nil
+    end
   end
 
-  describe "each" do
-    it "of array" do
-      elems = [] of String
-      YAML.parse("- foo\n- bar\n").each do |any|
-        elems << any.as_s
-      end
-      elems.should eq(%w(foo bar))
+  describe "#dig?" do
+    it "gets the value at given path given splat" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig?("foo", "bar", "baz").should eq(%w(qux fox))
+      obj.dig?("foo", "bar", "baz", 1).should eq("fox")
     end
 
-    it "of hash" do
-      elems = [] of String
-      YAML.parse("foo: bar").each do |key, value|
-        elems << key.to_s << value.to_s
+    it "returns nil if not found" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig?("foo", 10).should be_nil
+      obj.dig?("bar", "baz").should be_nil
+      obj.dig?("").should be_nil
+    end
+
+    it "returns nil for non-Hash/Array intermediary values" do
+      YAML::Any.new(nil).dig?("foo").should be_nil
+      YAML::Any.new(0.0).dig?("foo").should be_nil
+    end
+  end
+
+  describe "dig" do
+    it "gets the value at given path given splat" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      obj.dig("foo", "bar", "baz").should eq(%w(qux fox))
+      obj.dig("foo", "bar", "baz", 1).should eq("fox")
+    end
+
+    it "raises if not found" do
+      obj = YAML.parse("--- \nfoo: \n  bar: \n    baz: \n      - qux\n      - fox")
+
+      expect_raises KeyError, %(Missing hash key: 1) do
+        obj.dig("foo", 1, "bar", "baz")
       end
-      elems.should eq(%w(foo bar))
+      expect_raises KeyError, %(Missing hash key: "bar") do
+        obj.dig("bar", "baz")
+      end
+      expect_raises KeyError, %(Missing hash key: "") do
+        obj.dig("")
+      end
     end
   end
 
@@ -88,7 +213,7 @@ describe YAML::Any do
   end
 
   it "can compare with ===" do
-    ("1" === YAML.parse("1")).should be_truthy
+    (1 === YAML.parse("1")).should be_truthy
   end
 
   it "exposes $~ when doing Regex#===" do
@@ -98,9 +223,29 @@ describe YAML::Any do
 
   it "is enumerable" do
     nums = YAML.parse("[1, 2, 3]")
-    nums.each_with_index do |x, i|
+    nums.as_a.each_with_index do |x, i|
       x.should be_a(YAML::Any)
-      x.raw.should eq((i + 1).to_s)
+      x.raw.should eq(i + 1)
     end
+  end
+
+  it "dups" do
+    any = YAML.parse("[1, 2, 3]")
+    any2 = any.dup
+    any2.as_a.should_not be(any.as_a)
+  end
+
+  it "clones" do
+    any = YAML.parse("[[1], 2, 3]")
+    any2 = any.clone
+    any2.as_a[0].as_a.should_not be(any.as_a[0].as_a)
+  end
+
+  it "#to_json" do
+    any = YAML.parse <<-YAML
+      foo: bar
+      baz: [1, 2.3, true, "qux", {"qax": "qox"}]
+      YAML
+    any.to_json.should eq %({"foo":"bar","baz":[1,2.3,true,"qux",{"qax":"qox"}]})
   end
 end

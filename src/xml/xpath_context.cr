@@ -6,7 +6,16 @@ struct XML::XPathContext
 
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
-    raise XML::Error.new("error in '#{search_path}' expression", 0) unless xpath.value
+    unless xpath
+      {% if flag?(:arm) || flag?(:aarch64) %}
+        if errors = XML::Error.errors
+          raise errors.last
+        end
+      {% end %}
+      raise XML::Error.new("Error in '#{search_path}' expression", 0)
+    end
+
+    raise XML::Error.new("Error in '#{search_path}' expression", 0) unless xpath.value
 
     case xpath.value.type
     when LibXML::XPathObjectType::STRING
@@ -32,8 +41,9 @@ struct XML::XPathContext
     end
   end
 
-  def register_namespace(prefix, uri)
-    LibXML.xmlXPathRegisterNs(self, prefix.to_s, uri.to_s)
+  def register_namespace(prefix : String, uri : String?)
+    prefix = prefix.lchop("xmlns:")
+    LibXML.xmlXPathRegisterNs(self, prefix, uri.to_s)
   end
 
   def register_variables(variables)

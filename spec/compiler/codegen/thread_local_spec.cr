@@ -1,31 +1,9 @@
 require "../../spec_helper"
 
-describe "Codegen: thread local" do
-  it "works with global variables" do
-    run(%(
-      require "prelude"
-
-      @[ThreadLocal]
-      $var = 123
-
-      Thread.new { $var = 456 }.join
-
-      $var
-    )).to_i.should eq(123)
-  end
-
-  it "works with global variable in main thread" do
-    run(%(
-      require "prelude"
-
-      @[ThreadLocal]
-      $a = 123
-      $a
-      )).to_i.should eq(123)
-  end
-
-  it "works with class variables" do
-    run(%(
+{% if !flag?(:openbsd) %}
+  describe "Codegen: thread local" do
+    pending_win32 "works with class variables" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -44,10 +22,10 @@ describe "Codegen: thread local" do
 
       Foo.var
     )).to_i.should eq(123)
-  end
+    end
 
-  it "works with class variable in main thread" do
-    run(%(
+    it "works with class variable in main thread" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -61,10 +39,10 @@ describe "Codegen: thread local" do
 
       Foo.a
       )).to_i.should eq(123)
-  end
+    end
 
-  it "compiles with class variable referenced from initializer" do
-    run(%(
+    it "compiles with class variable referenced from initializer" do
+      run(%(
       require "prelude"
 
       class Foo
@@ -83,5 +61,6 @@ describe "Codegen: thread local" do
 
       0
     ))
+    end
   end
-end
+{% end %}

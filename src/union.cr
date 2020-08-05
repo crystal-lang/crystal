@@ -17,4 +17,13 @@
 # Union(Int32, Int32, Int32) # => Int32
 # ```
 struct Union
+  # Returns `true` if this union includes the `Nil` type.
+  #
+  # ```
+  # (Int32 | String).nilable? # => false
+  # (Int32 | Nil).nilable?    # => true
+  # ```
+  def self.nilable?
+    {{ T.any? &.==(::Nil) }}
+  end
 end

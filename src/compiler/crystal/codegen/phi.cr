@@ -4,8 +4,7 @@ class Crystal::CodeGenVisitor
   class Phi
     include LLVMBuilderHelper
 
-    getter count : Int32
-    getter exit_block : LLVM::BasicBlock?
+    property? force_exit_block = false
 
     def self.open(codegen, node, needs_value = true)
       block = new codegen, node, needs_value
@@ -22,8 +21,8 @@ class Crystal::CodeGenVisitor
       @count = 0
     end
 
-    def exit_block
-      @exit_block ||= @codegen.new_block "exit"
+    getter exit_block : LLVM::BasicBlock do
+      @codegen.new_block "exit"
     end
 
     def builder
@@ -34,8 +33,8 @@ class Crystal::CodeGenVisitor
       @codegen.llvm_typer
     end
 
-    def add_last(value, type)
-      add value, type, true
+    def unreachable
+      @codegen.unreachable
     end
 
     def add(value, type : Nil, last = false)
@@ -47,7 +46,18 @@ class Crystal::CodeGenVisitor
     end
 
     def add(value, type : Type, last = false)
-      return unreachable if @node_type.try &.no_return?
+      if @node_type.try &.no_return?
+        if @force_exit_block
+          br exit_block
+        else
+          unreachable
+        end
+        return
+      end
+
+      if @codegen.builder.end
+        return
+      end
 
       if @needs_value
         unless @node_type.try(&.void?) || @node_type.try(&.nil_type?)
@@ -55,7 +65,9 @@ class Crystal::CodeGenVisitor
           @phi_table.not_nil!.add insert_block, value
         end
       end
+
       @count += 1
+
       if last && @count == 1
         # Don't create exit block for just one value
       else
@@ -69,7 +81,11 @@ class Crystal::CodeGenVisitor
       end
 
       if @count == 0
-        unreachable
+        if @force_exit_block
+          @codegen.last = llvm_nil
+        else
+          unreachable
+        end
       elsif @needs_value
         phi_table = @phi_table.not_nil!
         if phi_table.empty?
@@ -77,7 +93,10 @@ class Crystal::CodeGenVisitor
           @codegen.last = llvm_nil
         else
           if @exit_block
-            @codegen.last = phi llvm_arg_type(@node_type.not_nil!), phi_table
+            node_type = @node_type.not_nil!
+            type = llvm_type(node_type)
+            type = type.pointer if node_type.passed_by_value?
+            @codegen.last = phi type, phi_table
           else
             @codegen.last = phi_table.values.first
           end

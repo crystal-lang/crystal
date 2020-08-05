@@ -1,9 +1,10 @@
 require "spec"
 require "crypto/bcrypt"
+require "random/secure"
 
 describe "Crypto::Bcrypt" do
-  latin1_pound_sign = String.new(Slice(UInt8).new(1, 0xa3_u8))
-  utf8_pound_sign = String.new(Slice(UInt8).new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
+  latin1_pound_sign = String.new(Bytes.new(1, 0xa3_u8))
+  utf8_pound_sign = String.new(Bytes.new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
   bit8_unicode_pound_sign = "\u00A3"
 
   vectors = [
@@ -16,6 +17,7 @@ describe "Crypto::Bcrypt" do
     {5, latin1_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "BvtRGGx3p8o0C5C36uS442Qqnrwofrq"},
     {5, utf8_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
     {5, bit8_unicode_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
+    {5, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678", "VU6N0LbtX7trKLCg4Uf8qe", "5WYPzqIUUIrkveFjCbMg/hXc592OQLK"},
   ]
 
   it "computes digest vectors" do
@@ -28,16 +30,16 @@ describe "Crypto::Bcrypt" do
 
   it "validates salt size" do
     expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
-      Crypto::Bcrypt.new("abcd", SecureRandom.hex(7))
+      Crypto::Bcrypt.new("abcd", Random::Secure.hex(7))
     end
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
-      Crypto::Bcrypt.new("abcd", SecureRandom.hex(9))
+      Crypto::Bcrypt.new("abcd", Random::Secure.hex(9))
     end
   end
 
   it "validates cost" do
-    salt = SecureRandom.hex(8)
+    salt = Random::Secure.hex(8)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid cost/) do
       Crypto::Bcrypt.new("abcd", salt, 3)
@@ -49,7 +51,7 @@ describe "Crypto::Bcrypt" do
   end
 
   it "validates password size" do
-    salt = SecureRandom.random_bytes(16)
+    salt = Random::Secure.random_bytes(16)
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
       Crypto::Bcrypt.new("".to_slice, salt)

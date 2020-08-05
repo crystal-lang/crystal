@@ -45,20 +45,29 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $x = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         raise "foo"
       rescue
-        $x += 1
+        Global.x += 1
         return
       ensure
-        $x += 1
+        Global.x += 1
       end
 
       foo
 
-      $x
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -764,14 +773,30 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
-      $b = 0
+      class Global
+        @@a = 0
+        @@b = 0
+
+        def self.a=(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+
+        def self.b=(@@b)
+        end
+
+        def self.b
+          @@b
+        end
+      end
 
       def bar
         begin
           yield
         ensure
-          $a = 1
+          Global.a = 1
         end
       end
 
@@ -779,10 +804,10 @@ describe "Code gen: exception" do
         while true
           break
         end
-        $b = $a
+        Global.b = Global.a
       end
 
-      $b
+      Global.b
       )).to_i.should eq(0)
   end
 
@@ -844,24 +869,33 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         begin
           begin
             raise "foo"
           rescue
-            $a += 1
+            Global.x += 1
             return
           end
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
       foo
 
-      $a
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -890,13 +924,22 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         begin
           yield
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
@@ -906,13 +949,13 @@ describe "Code gen: exception" do
             return
           end
         ensure
-          $a += 1
+          Global.x += 1
         end
       end
 
       bar
 
-      $a
+      Global.x
       )).to_i.should eq(2)
   end
 
@@ -948,15 +991,31 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
-      $b = 0
+      class Global
+        @@a = 0
+        @@b = 0
+
+        def self.a=(@@a)
+        end
+
+        def self.a
+          @@a
+        end
+
+        def self.b=(@@b)
+        end
+
+        def self.b
+          @@b
+        end
+      end
 
       def foo
         begin
           yield
-          $b = $a
+          Global.b = Global.a
         ensure
-          $a += 1
+          Global.a += 1
         end
       end
 
@@ -965,14 +1024,14 @@ describe "Code gen: exception" do
           begin
             next
           ensure
-            $a += 1
+            Global.a += 1
           end
         end
       ensure
-        $a += 1
+        Global.a += 1
       end
 
-      $b
+      Global.b
       )).to_i.should eq(1)
   end
 
@@ -1008,19 +1067,28 @@ describe "Code gen: exception" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       def foo
         yield
       ensure
-        $a = 123
+        Global.x = 123
       end
 
       foo do
         break
       end
 
-      $a
+      Global.x
       )).to_i.should eq(123)
   end
 
@@ -1167,5 +1235,88 @@ describe "Code gen: exception" do
 
       foo(10).as(Int32)
       )).to_i.should eq(10)
+  end
+
+  it "runs NoReturn ensure (#3082)" do
+    run(%(
+      require "prelude"
+
+      begin
+        print 1
+        raise "OH NO"
+        print 0
+      rescue
+        print 2
+      ensure
+        print 3
+        exit
+        print 4
+      end
+      print 5
+      )).to_i.should eq(123)
+  end
+
+  it "catches exception thrown by as inside method (#4030)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        a = 1 || ""
+        a.as(String)
+      end
+
+      begin
+        foo
+        "bad"
+      rescue ex : TypeCastError
+        "good"
+      end
+      )).to_string.should eq("good")
+  end
+
+  it "types parenthesized expression (#5511)" do
+    run(%(
+      require "prelude"
+
+      begin
+        ((raise "foo").bar).baz
+      rescue ex
+        ex.message
+      end
+      )).to_string.should eq("foo")
+  end
+
+  it "codegens return from rescue with value" do
+    run(%(
+      require "prelude"
+
+      def foo
+        begin
+          raise "foo"
+        rescue
+          return 5
+        end
+      end
+
+      foo
+      )).to_i.should eq(5)
+  end
+
+  it "closures rescue variable (#8141)" do
+    codegen(%(
+      require "prelude"
+
+      def invoke(&block)
+        block.call
+      end
+
+      ex = nil
+
+      invoke do
+        begin
+        rescue ex
+        end
+      end
+    ))
   end
 end

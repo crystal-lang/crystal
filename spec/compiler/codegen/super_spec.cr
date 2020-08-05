@@ -6,7 +6,7 @@ describe "Codegen: super" do
   end
 
   it "codegens super without arguments but parent has arguments" do
-    run("class Foo; def foo(x); x + 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
+    run("class Foo; def foo(x); x &+ 1; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)").to_i.should eq(2)
   end
 
   it "codegens super without arguments and instance variable" do
@@ -222,13 +222,13 @@ describe "Codegen: super" do
         end
 
         def foo(z)
-          z + @x
+          z &+ @x
         end
       end
 
       class Bar < Foo
         def foo(z)
-          ->(x : Int32) { x + super }
+          ->(x : Int32) { x &+ super }
         end
       end
 
@@ -328,14 +328,23 @@ describe "Codegen: super" do
 
   it "doesn't invoke super twice in inherited generic types (#942)" do
     run(%(
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       abstract class Foo
       end
 
       class Bar(T) < Foo
         def initialize
-            $a += 1
+            Global.x &+= 1
             super
         end
       end
@@ -345,7 +354,7 @@ describe "Codegen: super" do
 
       Baz(Int8).new
 
-      $a
+      Global.x
       )).to_i.should eq(1)
   end
 
@@ -354,17 +363,26 @@ describe "Codegen: super" do
     run(%(
       require "prelude"
 
-      $a = 0
+      class Global
+        @@x = 0
+
+        def self.x=(@@x)
+        end
+
+        def self.x
+          @@x
+        end
+      end
 
       class Base
         def self.foo
-          $a += 1
+          Global.x += 1
         end
       end
 
       class One < Base
         def self.foo
-          $a += 3
+          Global.x += 3
           super
         end
       end
@@ -393,7 +411,7 @@ describe "Codegen: super" do
       end
 
       z = Bar.new.foo(3 || 2.5)
-      z.to_i
+      z.to_i!
       )).to_i.should eq(3)
   end
 
