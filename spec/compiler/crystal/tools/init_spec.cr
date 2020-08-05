@@ -6,6 +6,8 @@ require "ini"
 require "spec"
 require "yaml"
 require "../../../support/tempfile"
+require "../../../support/env"
+require "../../../support/win32"
 
 private def exec_init(project_name, project_dir = nil, type = "lib", force = false, skip_existing = false)
   args = [type, project_name]
@@ -41,6 +43,24 @@ end
 
 module Crystal
   describe Init::InitProject do
+    it "correctly uses git config" do
+      within_temporary_directory do
+        File.write(".gitconfig", <<-CONTENT)
+        [user]
+          email = dorian@dorianmarie.fr
+          name = Dorian Marié
+        CONTENT
+
+        with_env("GIT_CONFIG": "#{FileUtils.pwd}/.gitconfig") do
+          exec_init("example", "example", "app")
+        end
+
+        with_file "example/LICENSE" do |file|
+          file.should contain("Dorian Marié")
+        end
+      end
+    end
+
     it "has proper contents" do
       within_temporary_directory do
         run_init_project("lib", "example", "John Smith", "john@smith.com", "jsmith")
