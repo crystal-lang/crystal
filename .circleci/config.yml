@@ -225,12 +225,17 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
+      - checkout
+      - run: |
+          # We need CRYSTAL_VERSION in prepare_nightly to use src/VERSION so we publish them as x.y.z-dev in apt/rpm
+          #
+          # How to brand it
+          echo "export CRYSTAL_VERSION=$(cat src/VERSION)" >> /tmp/workspace/distribution-scripts/build.env
+          #
+          # TODO: We might want to do that on docker images also to support updates on multiple development versions the same date.
       - run: |
           cd /tmp/workspace/distribution-scripts
 
-          # How to brand it
-          export VERSION=nightly-$(date '+%Y%m%d')
-          echo "export CRYSTAL_VERSION=$VERSION" >> build.env
           echo "export DOCKER_TAG=nightly" >> build.env
 
           # Build from working directory (needed for omnibus and when version does not match branch/tag)
@@ -357,6 +362,24 @@ jobs:
           root: /tmp/workspace/distribution-scripts/darwin/
           paths:
             - build
+
+  dist_bintray_nightly:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          no_output_timeout: 20m
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            cd bintray
+            ./publish-nightly.sh $CRYSTAL_VERSION $(date '+%Y-%m-%d') \
+                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
+                /tmp/workspace/build/crystal-*-linux-i686.tar.gz
+      - store_artifacts:
+          path: /tmp/workspace/distribution-scripts/bintray/build/unsigned
+          destination: unsigned
 
   dist_docker:
     machine: true
@@ -645,6 +668,10 @@ workflows:
       - dist_darwin:
           requires:
             - prepare_nightly
+      - dist_bintray_nightly:
+          requires:
+            - dist_linux
+            - dist_linux32
       - dist_docker:
           requires:
             - dist_linux
