@@ -192,8 +192,25 @@ module Crystal::System::File
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
-    # TODO: support directory symlinks (copy Go's stdlib logic here)
-    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
+    win_old_path = to_windows_path(old_path)
+    win_new_path = to_windows_path(new_path)
+    info = info?(old_path, true)
+    dir = info && info.type ? info.type == ::File::Type::Directory : false
+    flags = dir ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0
+
+    # Symlink on Windows required the SeCreateSymbolicLink privilege. But in the Windows 10
+    # Creators Update (1703), Microsoft added the SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+    # flag, that allows creation symlink without SeCreateSymbolicLink privilege if the computer
+    # is in Developer Mode.
+    result = LibC.CreateSymbolicLinkW(win_new_path, win_old_path, flags | LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE)
+
+    # If we get an error like ERROR_INVALID_PARAMETER, it means that we have an older
+    # Windows. Retry without SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE flag.
+    if result == 0 && LibC.GetLastError == WinError::ERROR_INVALID_PARAMETER
+      result = LibC.CreateSymbolicLinkW(win_new_path, win_old_path, flags)
+    end
+
+    if result == 0
       raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
     end
   end
