@@ -1244,7 +1244,7 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods.map(&.id) %}
-      {% if method.ends_with?('=') && method != "[]=" %}
+      {% if (method.ends_with?('=') || method.ends_with?('~')) && method != "[]=" %}
         def {{method}}(arg)
           {{object.id}}.{{method}} arg
         end
