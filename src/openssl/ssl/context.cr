@@ -410,7 +410,7 @@ abstract class OpenSSL::SSL::Context
     when "peer"
       context.verify_mode = OpenSSL::SSL::VerifyMode::PEER
     when "force-peer"
-      context.verify_mode = OpenSSL::SSL::VerifyMode::FAIL_IF_NO_PEER_CERT
+      context.verify_mode = OpenSSL::SSL::VerifyMode::PEER | OpenSSL::SSL::VerifyMode::FAIL_IF_NO_PEER_CERT
     when "none"
       context.verify_mode = OpenSSL::SSL::VerifyMode::NONE
     when nil
