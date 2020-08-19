@@ -136,6 +136,7 @@ module Crystal
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
+    it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
 
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
