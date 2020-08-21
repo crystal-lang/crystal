@@ -3180,7 +3180,7 @@ class String
   end
 
   # :ditto:
-  def rindex(search : Regex, offset = size - 1)
+  def rindex(search : Regex, offset = size)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 

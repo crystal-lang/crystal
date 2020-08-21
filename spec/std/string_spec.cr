@@ -910,6 +910,12 @@ describe "String" do
       it { "a43b53".rindex(/\d+/).should eq(4) }
       it { "bbbb".rindex(/\d/).should be_nil }
 
+      describe "which matches empty string" do
+        it { "foo".rindex(/o*/).should eq(3) }
+        it { "foo".rindex(//).should eq(3) }
+        it { "foo".rindex(/\b/).should eq(3) }
+      end
+
       describe "with offset" do
         it { "bbbb".rindex(/b/, 2).should eq(2) }
         it { "abbbb".rindex(/b/, 0).should be_nil }
