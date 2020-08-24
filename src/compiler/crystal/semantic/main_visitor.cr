@@ -3165,6 +3165,7 @@ module Crystal
 
     def visit(node : Unreachable)
       node.type = @program.no_return
+      @unreachable = true
     end
 
     # # Helpers
