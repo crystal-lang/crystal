@@ -111,6 +111,18 @@ module Crystal
     it_parses "1 / -2", Call.new(1.int32, "/", -2.int32)
     it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", 3.int32), "+", Call.new(4.int32, "/", 5.int32))
     it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
+    it_parses "a = 1; b = 2; c = 3; a-b-c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
+    it_parses "a = 1; b = 2; c = 3; a-b -c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
     it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
     it_parses "1 + /foo/", Call.new(1.int32, "+", regex("foo"))
     it_parses "1+0", Call.new(1.int32, "+", 0.int32)
