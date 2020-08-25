@@ -20,7 +20,7 @@ module OpenSSL
     getter mode : DigestMode
 
     delegate close, closed?, flush, peek, tty?, rewind, to: @io
-    delegate digest, hexdigest, base64digest, to: @digest_algorithm
+    delegate final, digest, hexdigest, base64digest, to: @digest_algorithm
 
     enum DigestMode
       Read
