@@ -35,10 +35,10 @@ class Digest::SHA1 < Digest::Base
     data.each do |byte|
       @message_block[@message_block_index] = byte & 0xFF_u8
       @message_block_index += 1
-      @length_low += 8
+      @length_low &+= 8
 
       if @length_low == 0
-        @length_high += 1
+        @length_high &+= 1
         if @length_high == 0
           raise ArgumentError.new "Crypto.sha1: message too long"
         end
