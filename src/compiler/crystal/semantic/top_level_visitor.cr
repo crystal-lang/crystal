@@ -1013,8 +1013,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.add_hook_expansion(expansion)
     end
 
-    if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)
-      run_hooks(superclass.metaclass, current_type, kind, node)
+    if kind == :inherited
+      # In the case of:
+      #
+      #    class A(X); end
+      #    clsss B < A(Int32);end
+      #
+      # we need to go from A(Int32) to A(X) to go up the hierarchy.
+      if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)
+        run_hooks(type_with_hooks.instance_type.generic_type.metaclass, current_type, kind, node)
+      elsif (superclass = type_with_hooks.instance_type.superclass)
+        run_hooks(superclass.metaclass, current_type, kind, node)
+      end
     end
   end
 
