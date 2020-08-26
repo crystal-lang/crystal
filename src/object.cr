@@ -184,7 +184,7 @@ class Object
   #   .map { |x| x*x }.tap { |x| puts "squares: #{x.inspect}" }
   # ```
   def tap
-    yield self
+    with self yield self
     self
   end
 
@@ -198,7 +198,7 @@ class Object
   # ARGV[0]?.try &.downcase
   # ```
   def try
-    yield self
+    with self yield self
   end
 
   # Returns `true` if `self` is included in the *collection* argument.
