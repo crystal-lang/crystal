@@ -3917,8 +3917,7 @@ module Crystal
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
              :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
-             :self,
-             :end # `end` is also invalid because it maybe terminate `def` block.
+             :self, :in, :end
           true
         else
           false
@@ -3930,7 +3929,7 @@ module Crystal
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
              "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
-             "self", "end"
+             "self", "in", "end"
           true
         else
           false
