@@ -4242,7 +4242,12 @@ module Crystal
 
           case @token.type
           when :IDENT
+            if @token.keyword? && invalid_internal_name?(@token.value)
+              raise "cannot use '#{@token}' as a block argument name", @token
+            end
+
             arg_name = @token.value.to_s
+
             if all_names.includes?(arg_name)
               raise "duplicated block argument name: #{arg_name}", @token
             end
@@ -4258,7 +4263,12 @@ module Crystal
             while true
               case @token.type
               when :IDENT
+                if @token.keyword? && invalid_internal_name?(@token.value)
+                  raise "cannot use '#{@token}' as a block argument name", @token
+                end
+
                 sub_arg_name = @token.value.to_s
+
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block argument name: #{sub_arg_name}", @token
                 end
