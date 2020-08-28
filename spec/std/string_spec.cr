@@ -1876,8 +1876,10 @@ describe "String" do
       end
     end
 
-    it "returns an empty string when creating from a null pointer with size 0" do
-      String.new(Pointer(UInt8).null, 0).should eq ""
+    it "raises when creating from a null pointer with size 0" do
+      expect_raises ArgumentError do
+        String.new(Pointer(UInt8).null, 0).should eq ""
+      end
     end
   end
 
