@@ -784,7 +784,7 @@ class String
   # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
   def []?(start : Int, count : Int)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
-    return byte_slice?(start, count) if ascii_only?
+    return byte_slice?(start, count) if single_byte_optimizable?
 
     start += size if start < 0
 
@@ -863,7 +863,7 @@ class String
   # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
   def char_at(index : Int, &)
-    if ascii_only?
+    if single_byte_optimizable?
       byte = byte_at?(index)
       if byte
         return byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT
@@ -988,7 +988,7 @@ class String
     when size
       return ""
     else
-      if ascii_only?
+      if single_byte_optimizable?
         byte_delete_at(index, count, count)
       else
         unicode_delete_at(index, count)
@@ -1095,7 +1095,7 @@ class String
     raise ArgumentError.new "Negative count" if count < 0
 
     start += bytesize if start < 0
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
 
     if 0 <= start < bytesize
       count = bytesize - start if start + count > bytesize
@@ -1214,7 +1214,7 @@ class String
   def downcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
@@ -1249,7 +1249,7 @@ class String
   def upcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
@@ -1285,7 +1285,7 @@ class String
   def capitalize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = if i.zero?
@@ -1331,7 +1331,7 @@ class String
   def titleize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       upcase_next = true
 
       return String.new(bytesize) do |buffer|
@@ -1458,7 +1458,7 @@ class String
   def lchop? : String?
     return if empty?
 
-    if ascii_only?
+    if single_byte_optimizable?
       unsafe_byte_slice_string(1, bytesize - 1)
     else
       reader = Char::Reader.new(self)
@@ -1518,7 +1518,7 @@ class String
   def rchop? : String?
     return if empty?
 
-    if to_unsafe[bytesize - 1] < 128 || ascii_only?
+    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
       return unsafe_byte_slice_string(0, bytesize - 1)
     end
 
@@ -1646,7 +1646,7 @@ class String
     bytes, count = String.char_bytes_and_bytesize(other)
 
     new_bytesize = bytesize + count
-    new_size = (ascii_only? && other.ascii?) ? new_bytesize : 0
+    new_size = (single_byte_optimizable? && other.ascii?) ? new_bytesize : 0
 
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
@@ -1675,7 +1675,7 @@ class String
     raise IndexError.new unless byte_index
 
     new_bytesize = bytesize + other.bytesize
-    new_size = ascii_only? && other.ascii_only? ? new_bytesize : 0
+    new_size = single_byte_optimizable? && other.single_byte_optimizable? ? new_bytesize : 0
 
     insert_impl(byte_index, other.to_unsafe, other.bytesize, new_bytesize, new_size)
   end
@@ -2280,7 +2280,7 @@ class String
         buffer.value = byte
         buffer += 1
       end
-      {buffer, ascii_only? ? bytesize - (to_index - from_index) + 1 : 0}
+      {buffer, single_byte_optimizable? ? bytesize - (to_index - from_index) + 1 : 0}
     end
   end
 
@@ -2823,7 +2823,7 @@ class String
   def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
     return self <=> other unless case_insensitive
 
-    if ascii_only? && other.ascii_only?
+    if single_byte_optimizable? && other.single_byte_optimizable?
       position = 0
 
       while position < bytesize && position < other.bytesize
@@ -2992,7 +2992,7 @@ class String
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && ascii_only?
+    if search.ascii? && single_byte_optimizable?
       return to_slice.index(search.ord.to_u8, offset)
     end
 
@@ -3087,7 +3087,7 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && ascii_only?
+    if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 
@@ -3375,7 +3375,7 @@ class String
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
   def char_index_to_byte_index(index)
-    if ascii_only?
+    if single_byte_optimizable?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -3391,7 +3391,7 @@ class String
   # It is valid to pass `#bytesize` to *index*, and in this case the answer
   # will be the size of this string.
   def byte_index_to_char_index(index)
-    if ascii_only?
+    if single_byte_optimizable?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -3463,7 +3463,7 @@ class String
     end
 
     yielded = 0
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
     index = 0
     i = 0
     looking_for_space = false
@@ -3654,7 +3654,7 @@ class String
     byte_offset = 0
     separator_bytesize = separator.bytesize
 
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
 
     i = 0
     stop = bytesize - separator.bytesize + 1
@@ -3976,7 +3976,7 @@ class String
   def reverse
     return self if bytesize <= 1
 
-    if ascii_only?
+    if single_byte_optimizable?
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = self.to_unsafe[bytesize - i - 1]
@@ -4359,7 +4359,7 @@ class String
   # array # => ['a', 'b', '☃']
   # ```
   def each_char : Nil
-    if ascii_only?
+    if single_byte_optimizable?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
       end
@@ -4740,7 +4740,7 @@ class String
   def ends_with?(char : Char) : Bool
     return false unless bytesize > 0
 
-    if char.ascii? || ascii_only?
+    if char.ascii? || single_byte_optimizable?
       return to_unsafe[bytesize - 1] == char.ord
     end
 
@@ -4815,6 +4815,11 @@ class String
     else
       false
     end
+  end
+
+  # :nodoc:
+  def single_byte_optimizable?
+    @bytesize == size
   end
 
   # Returns `true` if this String is encoded correctly
