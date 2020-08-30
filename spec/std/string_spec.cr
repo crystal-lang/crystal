@@ -842,6 +842,8 @@ describe "String" do
         it { "foo".index("", 3).should eq(3) }
         it { "foo".index("", 4).should be_nil }
         it { "日本語日本語".index("本語", 2).should eq(4) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
       end
     end
 
