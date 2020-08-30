@@ -832,6 +832,7 @@ describe "String" do
       it { "foo".index("foo").should eq(0) }
       it { "日本語日本語".index("本語").should eq(1) }
       it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
+      it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -2696,9 +2697,9 @@ describe "String" do
 
     it "scrubs" do
       string = String.new(Bytes[255, 129, 97, 255, 97])
-      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 239, 191, 189, 97, 239, 191, 189, 97])
 
-      string.scrub("?").should eq("?a?a")
+      string.scrub("?").should eq("??a?a")
 
       "hello".scrub.should eq("hello")
     end

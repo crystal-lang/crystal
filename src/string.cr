@@ -4857,48 +4857,65 @@ class String
     end
 
     if first < 0xc2
-      return 1
+      return 1 # Invalid
     end
 
-    if bytes.size < 2
-      return 1
+    second = bytes[1]?
+    unless second
+      return 1 # Invalid
     end
 
-    second = bytes[1]
     if (second & 0xc0) != 0x80
-      return 1
+      return 1 # Invalid
     end
 
     if first < 0xe0
       return 2
     end
 
-    if bytes.size < 3
-      return 2
+    third = bytes[2]?
+    unless third
+      return 1 # Invalid
     end
 
-    third = bytes[2]
     if (third & 0xc0) != 0x80
-      return 2
+      return 1 # Invalid
     end
 
     if first < 0xf0
+      if first == 0xe0 && second < 0xa0
+        return 1 # Invalid
+      end
+
+      if first == 0xed && second >= 0xa0
+        return 1 # Invalid
+      end
+
       return 3
     end
 
     if first == 0xf0 && second < 0x90
-      return 3
+      return 1 # Invalid
     end
 
     if first == 0xf4 && second >= 0x90
-      return 3
+      return 1 # Invalid
     end
 
-    if bytes.size < 4
-      return 3
+    fourth = bytes[3]?
+    unless fourth
+      return 1 # Invalid
     end
 
-    return 4
+    if (fourth & 0xc0) != 0x80
+      return 1 # Invalid
+    end
+
+    if first < 0xf5
+      return 4
+    end
+
+    1 # Invalid
   end
 
   # :nodoc:
