@@ -3030,7 +3030,7 @@ class String
     pointer = to_unsafe
     end_pointer = pointer + bytesize
     while char_index < offset && pointer < end_pointer
-      char_bytesize = String.char_bytesize_at(to_slice + (pointer - to_unsafe))
+      char_bytesize = String.char_bytesize_at(pointer)
       pointer += char_bytesize
       char_index += 1
     end
@@ -3055,7 +3055,7 @@ class String
       return if pointer >= end_pointer
 
       byte = head_pointer.value
-      char_bytesize = String.char_bytesize_at(to_slice + (head_pointer - to_unsafe))
+      char_bytesize = String.char_bytesize_at(head_pointer)
       case char_bytesize
       when 1 then update_hash 1
       when 2 then update_hash 2
@@ -4858,11 +4858,11 @@ class String
   end
 
   protected def char_bytesize_at(byte_index)
-    String.char_bytesize_at(to_slice + byte_index)
+    String.char_bytesize_at(to_unsafe + byte_index)
   end
 
-  protected def self.char_bytesize_at(bytes : Bytes)
-    first = bytes[0]
+  protected def self.char_bytesize_at(bytes : Pointer(UInt8))
+    first = bytes.value
 
     if first < 0x80
       return 1
@@ -4872,10 +4872,7 @@ class String
       return 1 # Invalid
     end
 
-    second = bytes[1]?
-    unless second
-      return 1 # Invalid
-    end
+    second = bytes[1]
 
     if (second & 0xc0) != 0x80
       return 1 # Invalid
@@ -4885,10 +4882,7 @@ class String
       return 2
     end
 
-    third = bytes[2]?
-    unless third
-      return 1 # Invalid
-    end
+    third = bytes[2]
 
     if (third & 0xc0) != 0x80
       return 1 # Invalid
@@ -4914,10 +4908,7 @@ class String
       return 1 # Invalid
     end
 
-    fourth = bytes[3]?
-    unless fourth
-      return 1 # Invalid
-    end
+    fourth = bytes[3]
 
     if (fourth & 0xc0) != 0x80
       return 1 # Invalid
