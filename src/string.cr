@@ -1516,7 +1516,7 @@ class String
   # "".rchop?           # => nil
   # ```
   def rchop? : String?
-    return if bytesize <= 1
+    return if empty?
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
       return unsafe_byte_slice_string(0, bytesize - 1)

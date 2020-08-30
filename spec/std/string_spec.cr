@@ -699,6 +699,7 @@ describe "String" do
 
   describe "rchop?" do
     it { "".rchop?.should be_nil }
+    it { "\n".rchop?.should eq("") }
     it { "foo".rchop?.should eq("fo") }
     it { "foo\n".rchop?.should eq("foo") }
     it { "foo\r".rchop?.should eq("foo") }
