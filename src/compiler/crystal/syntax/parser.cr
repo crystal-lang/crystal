@@ -3917,8 +3917,7 @@ module Crystal
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
              :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
-        # `end` is also invalid because it maybe terminate `def` block.
-             :end
+             :self, :in, :end
           true
         else
           false
@@ -3930,7 +3929,7 @@ module Crystal
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
              "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
-             "end"
+             "self", "in", "end"
           true
         else
           false
@@ -4242,7 +4241,12 @@ module Crystal
 
           case @token.type
           when :IDENT
+            if @token.keyword? && invalid_internal_name?(@token.value)
+              raise "cannot use '#{@token}' as a block argument name", @token
+            end
+
             arg_name = @token.value.to_s
+
             if all_names.includes?(arg_name)
               raise "duplicated block argument name: #{arg_name}", @token
             end
@@ -4258,7 +4262,12 @@ module Crystal
             while true
               case @token.type
               when :IDENT
+                if @token.keyword? && invalid_internal_name?(@token.value)
+                  raise "cannot use '#{@token}' as a block argument name", @token
+                end
+
                 sub_arg_name = @token.value.to_s
+
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block argument name: #{sub_arg_name}", @token
                 end

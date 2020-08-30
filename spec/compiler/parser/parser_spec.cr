@@ -209,13 +209,16 @@ module Crystal
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof offsetof typeof private protected asm out
-      end
+      end self in
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+
+      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block argument name", 1, 8
+      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block argument name", 1, 9
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)

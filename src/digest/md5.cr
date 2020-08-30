@@ -131,80 +131,80 @@ class Digest::MD5 < Digest::Base
     a &+= b
   end
 
-  private def transform(in)
+  private def transform(input)
     a, b, c, d = @buf
 
     # Round 1
-    a = ff(a, b, c, d, in[0], S11, 3614090360)  # 1
-    d = ff(d, a, b, c, in[1], S12, 3905402710)  # 2
-    c = ff(c, d, a, b, in[2], S13, 606105819)   # 3
-    b = ff(b, c, d, a, in[3], S14, 3250441966)  # 4
-    a = ff(a, b, c, d, in[4], S11, 4118548399)  # 5
-    d = ff(d, a, b, c, in[5], S12, 1200080426)  # 6
-    c = ff(c, d, a, b, in[6], S13, 2821735955)  # 7
-    b = ff(b, c, d, a, in[7], S14, 4249261313)  # 8
-    a = ff(a, b, c, d, in[8], S11, 1770035416)  # 9
-    d = ff(d, a, b, c, in[9], S12, 2336552879)  # 10
-    c = ff(c, d, a, b, in[10], S13, 4294925233) # 11
-    b = ff(b, c, d, a, in[11], S14, 2304563134) # 12
-    a = ff(a, b, c, d, in[12], S11, 1804603682) # 13
-    d = ff(d, a, b, c, in[13], S12, 4254626195) # 14
-    c = ff(c, d, a, b, in[14], S13, 2792965006) # 15
-    b = ff(b, c, d, a, in[15], S14, 1236535329) # 16
+    a = ff(a, b, c, d, input[0], S11, 3614090360)  # 1
+    d = ff(d, a, b, c, input[1], S12, 3905402710)  # 2
+    c = ff(c, d, a, b, input[2], S13, 606105819)   # 3
+    b = ff(b, c, d, a, input[3], S14, 3250441966)  # 4
+    a = ff(a, b, c, d, input[4], S11, 4118548399)  # 5
+    d = ff(d, a, b, c, input[5], S12, 1200080426)  # 6
+    c = ff(c, d, a, b, input[6], S13, 2821735955)  # 7
+    b = ff(b, c, d, a, input[7], S14, 4249261313)  # 8
+    a = ff(a, b, c, d, input[8], S11, 1770035416)  # 9
+    d = ff(d, a, b, c, input[9], S12, 2336552879)  # 10
+    c = ff(c, d, a, b, input[10], S13, 4294925233) # 11
+    b = ff(b, c, d, a, input[11], S14, 2304563134) # 12
+    a = ff(a, b, c, d, input[12], S11, 1804603682) # 13
+    d = ff(d, a, b, c, input[13], S12, 4254626195) # 14
+    c = ff(c, d, a, b, input[14], S13, 2792965006) # 15
+    b = ff(b, c, d, a, input[15], S14, 1236535329) # 16
 
     # Round 2
-    a = gg(a, b, c, d, in[1], S21, 4129170786)  # 17
-    d = gg(d, a, b, c, in[6], S22, 3225465664)  # 18
-    c = gg(c, d, a, b, in[11], S23, 643717713)  # 19
-    b = gg(b, c, d, a, in[0], S24, 3921069994)  # 20
-    a = gg(a, b, c, d, in[5], S21, 3593408605)  # 21
-    d = gg(d, a, b, c, in[10], S22, 38016083)   # 22
-    c = gg(c, d, a, b, in[15], S23, 3634488961) # 23
-    b = gg(b, c, d, a, in[4], S24, 3889429448)  # 24
-    a = gg(a, b, c, d, in[9], S21, 568446438)   # 25
-    d = gg(d, a, b, c, in[14], S22, 3275163606) # 26
-    c = gg(c, d, a, b, in[3], S23, 4107603335)  # 27
-    b = gg(b, c, d, a, in[8], S24, 1163531501)  # 28
-    a = gg(a, b, c, d, in[13], S21, 2850285829) # 29
-    d = gg(d, a, b, c, in[2], S22, 4243563512)  # 30
-    c = gg(c, d, a, b, in[7], S23, 1735328473)  # 31
-    b = gg(b, c, d, a, in[12], S24, 2368359562) # 32
+    a = gg(a, b, c, d, input[1], S21, 4129170786)  # 17
+    d = gg(d, a, b, c, input[6], S22, 3225465664)  # 18
+    c = gg(c, d, a, b, input[11], S23, 643717713)  # 19
+    b = gg(b, c, d, a, input[0], S24, 3921069994)  # 20
+    a = gg(a, b, c, d, input[5], S21, 3593408605)  # 21
+    d = gg(d, a, b, c, input[10], S22, 38016083)   # 22
+    c = gg(c, d, a, b, input[15], S23, 3634488961) # 23
+    b = gg(b, c, d, a, input[4], S24, 3889429448)  # 24
+    a = gg(a, b, c, d, input[9], S21, 568446438)   # 25
+    d = gg(d, a, b, c, input[14], S22, 3275163606) # 26
+    c = gg(c, d, a, b, input[3], S23, 4107603335)  # 27
+    b = gg(b, c, d, a, input[8], S24, 1163531501)  # 28
+    a = gg(a, b, c, d, input[13], S21, 2850285829) # 29
+    d = gg(d, a, b, c, input[2], S22, 4243563512)  # 30
+    c = gg(c, d, a, b, input[7], S23, 1735328473)  # 31
+    b = gg(b, c, d, a, input[12], S24, 2368359562) # 32
 
     # Round 3
-    a = hh(a, b, c, d, in[5], S31, 4294588738)  # 33
-    d = hh(d, a, b, c, in[8], S32, 2272392833)  # 34
-    c = hh(c, d, a, b, in[11], S33, 1839030562) # 35
-    b = hh(b, c, d, a, in[14], S34, 4259657740) # 36
-    a = hh(a, b, c, d, in[1], S31, 2763975236)  # 37
-    d = hh(d, a, b, c, in[4], S32, 1272893353)  # 38
-    c = hh(c, d, a, b, in[7], S33, 4139469664)  # 39
-    b = hh(b, c, d, a, in[10], S34, 3200236656) # 40
-    a = hh(a, b, c, d, in[13], S31, 681279174)  # 41
-    d = hh(d, a, b, c, in[0], S32, 3936430074)  # 42
-    c = hh(c, d, a, b, in[3], S33, 3572445317)  # 43
-    b = hh(b, c, d, a, in[6], S34, 76029189)    # 44
-    a = hh(a, b, c, d, in[9], S31, 3654602809)  # 45
-    d = hh(d, a, b, c, in[12], S32, 3873151461) # 46
-    c = hh(c, d, a, b, in[15], S33, 530742520)  # 47
-    b = hh(b, c, d, a, in[2], S34, 3299628645)  # 48
+    a = hh(a, b, c, d, input[5], S31, 4294588738)  # 33
+    d = hh(d, a, b, c, input[8], S32, 2272392833)  # 34
+    c = hh(c, d, a, b, input[11], S33, 1839030562) # 35
+    b = hh(b, c, d, a, input[14], S34, 4259657740) # 36
+    a = hh(a, b, c, d, input[1], S31, 2763975236)  # 37
+    d = hh(d, a, b, c, input[4], S32, 1272893353)  # 38
+    c = hh(c, d, a, b, input[7], S33, 4139469664)  # 39
+    b = hh(b, c, d, a, input[10], S34, 3200236656) # 40
+    a = hh(a, b, c, d, input[13], S31, 681279174)  # 41
+    d = hh(d, a, b, c, input[0], S32, 3936430074)  # 42
+    c = hh(c, d, a, b, input[3], S33, 3572445317)  # 43
+    b = hh(b, c, d, a, input[6], S34, 76029189)    # 44
+    a = hh(a, b, c, d, input[9], S31, 3654602809)  # 45
+    d = hh(d, a, b, c, input[12], S32, 3873151461) # 46
+    c = hh(c, d, a, b, input[15], S33, 530742520)  # 47
+    b = hh(b, c, d, a, input[2], S34, 3299628645)  # 48
 
     # Round 4
-    a = ii(a, b, c, d, in[0], S41, 4096336452)  # 49
-    d = ii(d, a, b, c, in[7], S42, 1126891415)  # 50
-    c = ii(c, d, a, b, in[14], S43, 2878612391) # 51
-    b = ii(b, c, d, a, in[5], S44, 4237533241)  # 52
-    a = ii(a, b, c, d, in[12], S41, 1700485571) # 53
-    d = ii(d, a, b, c, in[3], S42, 2399980690)  # 54
-    c = ii(c, d, a, b, in[10], S43, 4293915773) # 55
-    b = ii(b, c, d, a, in[1], S44, 2240044497)  # 56
-    a = ii(a, b, c, d, in[8], S41, 1873313359)  # 57
-    d = ii(d, a, b, c, in[15], S42, 4264355552) # 58
-    c = ii(c, d, a, b, in[6], S43, 2734768916)  # 59
-    b = ii(b, c, d, a, in[13], S44, 1309151649) # 60
-    a = ii(a, b, c, d, in[4], S41, 4149444226)  # 61
-    d = ii(d, a, b, c, in[11], S42, 3174756917) # 62
-    c = ii(c, d, a, b, in[2], S43, 718787259)   # 63
-    b = ii(b, c, d, a, in[9], S44, 3951481745)  # 64
+    a = ii(a, b, c, d, input[0], S41, 4096336452)  # 49
+    d = ii(d, a, b, c, input[7], S42, 1126891415)  # 50
+    c = ii(c, d, a, b, input[14], S43, 2878612391) # 51
+    b = ii(b, c, d, a, input[5], S44, 4237533241)  # 52
+    a = ii(a, b, c, d, input[12], S41, 1700485571) # 53
+    d = ii(d, a, b, c, input[3], S42, 2399980690)  # 54
+    c = ii(c, d, a, b, input[10], S43, 4293915773) # 55
+    b = ii(b, c, d, a, input[1], S44, 2240044497)  # 56
+    a = ii(a, b, c, d, input[8], S41, 1873313359)  # 57
+    d = ii(d, a, b, c, input[15], S42, 4264355552) # 58
+    c = ii(c, d, a, b, input[6], S43, 2734768916)  # 59
+    b = ii(b, c, d, a, input[13], S44, 1309151649) # 60
+    a = ii(a, b, c, d, input[4], S41, 4149444226)  # 61
+    d = ii(d, a, b, c, input[11], S42, 3174756917) # 62
+    c = ii(c, d, a, b, input[2], S43, 718787259)   # 63
+    b = ii(b, c, d, a, input[9], S44, 3951481745)  # 64
 
     @buf[0] &+= a
     @buf[1] &+= b
