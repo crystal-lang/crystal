@@ -4807,7 +4807,14 @@ class String
   # "你好".ascii_only?    # => false
   # ```
   def ascii_only?
-    @bytesize == size
+    if @bytesize == size
+      each_byte do |byte|
+        return false unless byte < 0x80
+      end
+      true
+    else
+      false
+    end
   end
 
   # Returns `true` if this String is encoded correctly

@@ -1976,25 +1976,31 @@ describe "String" do
     end
   end
 
-  it "answers ascii_only?" do
-    "a".ascii_only?.should be_true
-    "あ".ascii_only?.should be_false
+  describe "ascii_only?" do
+    it "answers ascii_only?" do
+      "a".ascii_only?.should be_true
+      "あ".ascii_only?.should be_false
 
-    str = String.new(1) do |buffer|
-      buffer.value = 'a'.ord.to_u8
-      {1, 0}
-    end
-    str.ascii_only?.should be_true
-
-    str = String.new(4) do |buffer|
-      count = 0
-      'あ'.each_byte do |byte|
-        buffer[count] = byte
-        count += 1
+      str = String.new(1) do |buffer|
+        buffer.value = 'a'.ord.to_u8
+        {1, 0}
       end
-      {count, 0}
+      str.ascii_only?.should be_true
+
+      str = String.new(4) do |buffer|
+        count = 0
+        'あ'.each_byte do |byte|
+          buffer[count] = byte
+          count += 1
+        end
+        {count, 0}
+      end
+      str.ascii_only?.should be_false
     end
-    str.ascii_only?.should be_false
+
+    it "broken UTF-8 is not ascii_only" do
+      "\xED\xA0\x80\xED\xBF\xBF".ascii_only?.should be_false
+    end
   end
 
   describe "scan" do
