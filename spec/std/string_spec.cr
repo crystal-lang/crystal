@@ -831,6 +831,7 @@ describe "String" do
       it { "foo".index("").should eq(0) }
       it { "foo".index("foo").should eq(0) }
       it { "日本語日本語".index("本語").should eq(1) }
+      it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }

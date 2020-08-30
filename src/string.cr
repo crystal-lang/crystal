@@ -3030,16 +3030,8 @@ class String
     pointer = to_unsafe
     end_pointer = pointer + bytesize
     while char_index < offset && pointer < end_pointer
-      byte = pointer.value
-      if byte < 0x80
-        pointer += 1
-      elsif byte < 0xe0
-        pointer += 2
-      elsif byte < 0xf0
-        pointer += 3
-      else
-        pointer += 4
-      end
+      char_bytesize = String.char_bytesize_at(to_slice + (pointer - to_unsafe))
+      pointer += char_bytesize
       char_index += 1
     end
 
@@ -3063,18 +3055,14 @@ class String
       return if pointer >= end_pointer
 
       byte = head_pointer.value
-
-      # update a rolling hash of this text (heystack)
-      # thanks @MaxLap for suggesting this loop reduction
-      if byte < 0x80
-        update_hash 1
-      elsif byte < 0xe0
-        update_hash 2
-      elsif byte < 0xf0
-        update_hash 3
-      else
-        update_hash 4
+      char_bytesize = String.char_bytesize_at(to_slice + (head_pointer - to_unsafe))
+      case char_bytesize
+      when 1 then update_hash 1
+      when 2 then update_hash 2
+      when 3 then update_hash 3
+      else        update_hash 4
       end
+
       char_index += 1
     end
   end
@@ -4858,7 +4846,11 @@ class String
   end
 
   protected def char_bytesize_at(byte_index)
-    first = unsafe_byte_at(byte_index)
+    String.char_bytesize_at(to_slice + byte_index)
+  end
+
+  protected def self.char_bytesize_at(bytes : Bytes)
+    first = bytes[0]
 
     if first < 0x80
       return 1
@@ -4868,7 +4860,11 @@ class String
       return 1
     end
 
-    second = unsafe_byte_at(byte_index + 1)
+    if bytes.size < 2
+      return 1
+    end
+
+    second = bytes[1]
     if (second & 0xc0) != 0x80
       return 1
     end
@@ -4877,7 +4873,11 @@ class String
       return 2
     end
 
-    third = unsafe_byte_at(byte_index + 2)
+    if bytes.size < 3
+      return 2
+    end
+
+    third = bytes[2]
     if (third & 0xc0) != 0x80
       return 2
     end
@@ -4891,6 +4891,10 @@ class String
     end
 
     if first == 0xf4 && second >= 0x90
+      return 3
+    end
+
+    if bytes.size < 4
       return 3
     end
 
