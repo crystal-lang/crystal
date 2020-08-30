@@ -185,7 +185,7 @@ struct Char
     end
 
     private def decode_char_at(pos)
-      first = byte_at?(pos) || 0u32
+      first = byte_at(pos)
       if first < 0x80
         return yield first, 1, nil
       end
@@ -194,8 +194,8 @@ struct Char
         invalid_byte_sequence
       end
 
-      second = byte_at?(pos + 1)
-      if second.nil? || (second & 0xc0) != 0x80
+      second = byte_at(pos + 1)
+      if (second & 0xc0) != 0x80
         invalid_byte_sequence
       end
 
@@ -203,8 +203,8 @@ struct Char
         return yield (first << 6) &+ (second &- 0x3080), 2, nil
       end
 
-      third = byte_at?(pos + 2)
-      if third.nil? || (third & 0xc0) != 0x80
+      third = byte_at(pos + 2)
+      if (third & 0xc0) != 0x80
         invalid_byte_sequence
       end
 
@@ -228,10 +228,8 @@ struct Char
         invalid_byte_sequence
       end
 
-      fourth = byte_at?(pos + 3)
-      if fourth.nil?
-        invalid_byte_sequence
-      elsif (fourth & 0xc0) != 0x80
+      fourth = byte_at(pos + 3)
+      if (fourth & 0xc0) != 0x80
         invalid_byte_sequence
       end
 
@@ -274,11 +272,7 @@ struct Char
     end
 
     private def byte_at(i)
-      @string.byte_at(i).to_u32
-    end
-
-    private def byte_at?(i)
-      @string.byte_at?(i).try(&.to_u32)
+      @string.to_unsafe[i].to_u32
     end
   end
 end
