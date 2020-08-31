@@ -185,65 +185,63 @@ struct Char
     end
 
     private def decode_char_at(pos)
-      first = byte_at?(pos) || 0u32
+      first = byte_at(pos)
       if first < 0x80
         return yield first, 1, nil
       end
 
       if first < 0xc2
-        invalid_byte_sequence 1
+        invalid_byte_sequence
       end
 
-      second = byte_at?(pos + 1)
-      if second.nil? || (second & 0xc0) != 0x80
-        invalid_byte_sequence 1
+      second = byte_at(pos + 1)
+      if (second & 0xc0) != 0x80
+        invalid_byte_sequence
       end
 
       if first < 0xe0
         return yield (first << 6) &+ (second &- 0x3080), 2, nil
       end
 
-      third = byte_at?(pos + 2)
-      if third.nil? || (third & 0xc0) != 0x80
-        invalid_byte_sequence 2
+      third = byte_at(pos + 2)
+      if (third & 0xc0) != 0x80
+        invalid_byte_sequence
       end
 
       if first < 0xf0
         if first == 0xe0 && second < 0xa0
-          invalid_byte_sequence 3
+          invalid_byte_sequence
         end
 
         if first == 0xed && second >= 0xa0
-          invalid_byte_sequence 3
+          invalid_byte_sequence
         end
 
         return yield (first << 12) &+ (second << 6) &+ (third &- 0xE2080), 3, nil
       end
 
       if first == 0xf0 && second < 0x90
-        invalid_byte_sequence 3
+        invalid_byte_sequence
       end
 
       if first == 0xf4 && second >= 0x90
-        invalid_byte_sequence 3
+        invalid_byte_sequence
       end
 
-      fourth = byte_at?(pos + 3)
-      if fourth.nil?
-        invalid_byte_sequence 3
-      elsif (fourth & 0xc0) != 0x80
-        invalid_byte_sequence 4
+      fourth = byte_at(pos + 3)
+      if (fourth & 0xc0) != 0x80
+        invalid_byte_sequence
       end
 
       if first < 0xf5
         return yield (first << 18) &+ (second << 12) &+ (third << 6) &+ (fourth &- 0x3C82080), 4, nil
       end
 
-      invalid_byte_sequence 4
+      invalid_byte_sequence
     end
 
-    private macro invalid_byte_sequence(width)
-      return yield Char::REPLACEMENT.ord, {{width}}, first.to_u8
+    private macro invalid_byte_sequence
+      return yield Char::REPLACEMENT.ord, 1, first.to_u8
     end
 
     @[AlwaysInline]
@@ -274,11 +272,7 @@ struct Char
     end
 
     private def byte_at(i)
-      @string.byte_at(i).to_u32
-    end
-
-    private def byte_at?(i)
-      @string.byte_at?(i).try(&.to_u32)
+      @string.to_unsafe[i].to_u32
     end
   end
 end

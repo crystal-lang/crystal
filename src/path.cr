@@ -828,7 +828,7 @@ struct Path
       # Copy the part
       buffer.copy_from(part_ptr, part_bytesize)
 
-      {bytesize, @name.ascii_only? && part.ascii_only? ? bytesize : 0}
+      {bytesize, @name.single_byte_optimizable? && part.single_byte_optimizable? ? bytesize : 0}
     end
 
     new_instance new_name

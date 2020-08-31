@@ -699,6 +699,7 @@ describe "String" do
 
   describe "rchop?" do
     it { "".rchop?.should be_nil }
+    it { "\n".rchop?.should eq("") }
     it { "foo".rchop?.should eq("fo") }
     it { "foo\n".rchop?.should eq("foo") }
     it { "foo\r".rchop?.should eq("foo") }
@@ -831,6 +832,8 @@ describe "String" do
       it { "foo".index("").should eq(0) }
       it { "foo".index("foo").should eq(0) }
       it { "日本語日本語".index("本語").should eq(1) }
+      it { "\xFF\xFFcrystal".index("crystal").should eq(2) }
+      it { "\xFD\x9A\xAD\x50NG".index("PNG").should eq(3) }
 
       describe "with offset" do
         it { "foobarbaz".index("ba", 4).should eq(6) }
@@ -840,6 +843,8 @@ describe "String" do
         it { "foo".index("", 3).should eq(3) }
         it { "foo".index("", 4).should be_nil }
         it { "日本語日本語".index("本語", 2).should eq(4) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
+        it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
       end
     end
 
@@ -930,57 +935,57 @@ describe "String" do
 
   describe "partition" do
     describe "by char" do
-      "hello".partition('h').should eq ({"", "h", "ello"})
-      "hello".partition('o').should eq ({"hell", "o", ""})
-      "hello".partition('l').should eq ({"he", "l", "lo"})
-      "hello".partition('x').should eq ({"hello", "", ""})
+      it { "hello".partition('h').should eq ({"", "h", "ello"}) }
+      it { "hello".partition('o').should eq ({"hell", "o", ""}) }
+      it { "hello".partition('l').should eq ({"he", "l", "lo"}) }
+      it { "hello".partition('x').should eq ({"hello", "", ""}) }
     end
 
     describe "by string" do
-      "hello".partition("h").should eq ({"", "h", "ello"})
-      "hello".partition("o").should eq ({"hell", "o", ""})
-      "hello".partition("l").should eq ({"he", "l", "lo"})
-      "hello".partition("ll").should eq ({"he", "ll", "o"})
-      "hello".partition("x").should eq ({"hello", "", ""})
+      it { "hello".partition("h").should eq ({"", "h", "ello"}) }
+      it { "hello".partition("o").should eq ({"hell", "o", ""}) }
+      it { "hello".partition("l").should eq ({"he", "l", "lo"}) }
+      it { "hello".partition("ll").should eq ({"he", "ll", "o"}) }
+      it { "hello".partition("x").should eq ({"hello", "", ""}) }
     end
 
     describe "by regex" do
-      "hello".partition(/h/).should eq ({"", "h", "ello"})
-      "hello".partition(/o/).should eq ({"hell", "o", ""})
-      "hello".partition(/l/).should eq ({"he", "l", "lo"})
-      "hello".partition(/ll/).should eq ({"he", "ll", "o"})
-      "hello".partition(/.l/).should eq ({"h", "el", "lo"})
-      "hello".partition(/.h/).should eq ({"hello", "", ""})
-      "hello".partition(/h./).should eq ({"", "he", "llo"})
-      "hello".partition(/o./).should eq ({"hello", "", ""})
-      "hello".partition(/.o/).should eq ({"hel", "lo", ""})
-      "hello".partition(/x/).should eq ({"hello", "", ""})
+      it { "hello".partition(/h/).should eq ({"", "h", "ello"}) }
+      it { "hello".partition(/o/).should eq ({"hell", "o", ""}) }
+      it { "hello".partition(/l/).should eq ({"he", "l", "lo"}) }
+      it { "hello".partition(/ll/).should eq ({"he", "ll", "o"}) }
+      it { "hello".partition(/.l/).should eq ({"h", "el", "lo"}) }
+      it { "hello".partition(/.h/).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/h./).should eq ({"", "he", "llo"}) }
+      it { "hello".partition(/o./).should eq ({"hello", "", ""}) }
+      it { "hello".partition(/.o/).should eq ({"hel", "lo", ""}) }
+      it { "hello".partition(/x/).should eq ({"hello", "", ""}) }
     end
   end
 
   describe "rpartition" do
     describe "by char" do
-      "hello".rpartition('l').should eq ({"hel", "l", "o"})
-      "hello".rpartition('o').should eq ({"hell", "o", ""})
-      "hello".rpartition('h').should eq ({"", "h", "ello"})
+      it { "hello".rpartition('l').should eq ({"hel", "l", "o"}) }
+      it { "hello".rpartition('o').should eq ({"hell", "o", ""}) }
+      it { "hello".rpartition('h').should eq ({"", "h", "ello"}) }
     end
 
     describe "by string" do
-      "hello".rpartition("l").should eq ({"hel", "l", "o"})
-      "hello".rpartition("x").should eq ({"", "", "hello"})
-      "hello".rpartition("o").should eq ({"hell", "o", ""})
-      "hello".rpartition("h").should eq ({"", "h", "ello"})
-      "hello".rpartition("ll").should eq ({"he", "ll", "o"})
-      "hello".rpartition("lo").should eq ({"hel", "lo", ""})
-      "hello".rpartition("he").should eq ({"", "he", "llo"})
+      it { "hello".rpartition("l").should eq ({"hel", "l", "o"}) }
+      it { "hello".rpartition("x").should eq ({"", "", "hello"}) }
+      it { "hello".rpartition("o").should eq ({"hell", "o", ""}) }
+      it { "hello".rpartition("h").should eq ({"", "h", "ello"}) }
+      it { "hello".rpartition("ll").should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition("lo").should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition("he").should eq ({"", "he", "llo"}) }
     end
 
     describe "by regex" do
-      "hello".rpartition(/.l/).should eq ({"he", "ll", "o"})
-      "hello".rpartition(/ll/).should eq ({"he", "ll", "o"})
-      "hello".rpartition(/.o/).should eq ({"hel", "lo", ""})
-      "hello".rpartition(/.e/).should eq ({"", "he", "llo"})
-      "hello".rpartition(/l./).should eq ({"hel", "lo", ""})
+      it { "hello".rpartition(/.l/).should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition(/ll/).should eq ({"he", "ll", "o"}) }
+      it { "hello".rpartition(/.o/).should eq ({"hel", "lo", ""}) }
+      it { "hello".rpartition(/.e/).should eq ({"", "he", "llo"}) }
+      it { "hello".rpartition(/l./).should eq ({"hel", "lo", ""}) }
     end
   end
 
@@ -1972,25 +1977,31 @@ describe "String" do
     end
   end
 
-  it "answers ascii_only?" do
-    "a".ascii_only?.should be_true
-    "あ".ascii_only?.should be_false
+  describe "ascii_only?" do
+    it "answers ascii_only?" do
+      "a".ascii_only?.should be_true
+      "あ".ascii_only?.should be_false
 
-    str = String.new(1) do |buffer|
-      buffer.value = 'a'.ord.to_u8
-      {1, 0}
-    end
-    str.ascii_only?.should be_true
-
-    str = String.new(4) do |buffer|
-      count = 0
-      'あ'.each_byte do |byte|
-        buffer[count] = byte
-        count += 1
+      str = String.new(1) do |buffer|
+        buffer.value = 'a'.ord.to_u8
+        {1, 0}
       end
-      {count, 0}
+      str.ascii_only?.should be_true
+
+      str = String.new(4) do |buffer|
+        count = 0
+        'あ'.each_byte do |byte|
+          buffer[count] = byte
+          count += 1
+        end
+        {count, 0}
+      end
+      str.ascii_only?.should be_false
     end
-    str.ascii_only?.should be_false
+
+    it "broken UTF-8 is not ascii_only" do
+      "\xED\xA0\x80\xED\xBF\xBF".ascii_only?.should be_false
+    end
   end
 
   describe "scan" do
@@ -2695,9 +2706,9 @@ describe "String" do
 
     it "scrubs" do
       string = String.new(Bytes[255, 129, 97, 255, 97])
-      string.scrub.bytes.should eq([239, 191, 189, 97, 239, 191, 189, 97])
+      string.scrub.bytes.should eq([239, 191, 189, 239, 191, 189, 97, 239, 191, 189, 97])
 
-      string.scrub("?").should eq("?a?a")
+      string.scrub("?").should eq("??a?a")
 
       "hello".scrub.should eq("hello")
     end
