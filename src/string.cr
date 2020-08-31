@@ -191,6 +191,8 @@ class String
   # String.new(ptr) # => "abcd"
   # ```
   def self.new(chars : UInt8*)
+    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
+
     new(chars, LibC.strlen(chars))
   end
 
@@ -206,6 +208,8 @@ class String
   # String.new(ptr, 2) # => "ab"
   # ```
   def self.new(chars : UInt8*, bytesize, size = 0)
+    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
+
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
 
