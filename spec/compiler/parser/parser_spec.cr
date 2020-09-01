@@ -473,6 +473,8 @@ module Crystal
 
     it_parses "def %(); end;", Def.new("%")
     it_parses "def /(); end;", Def.new("/")
+    it_parses "def self./(); end;", Def.new("/", receiver: "self".var)
+    it_parses "def self.%(); end;", Def.new("%", receiver: "self".var)
 
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)

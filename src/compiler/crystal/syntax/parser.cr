@@ -3416,7 +3416,8 @@ module Crystal
             raise "shouldn't reach this line"
           end
         end
-        next_token_skip_space
+
+        consume_def_or_macro_name
 
         if @token.type == :IDENT
           check_valid_def_name
