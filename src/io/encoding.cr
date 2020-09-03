@@ -80,14 +80,6 @@ class IO
           @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
         end
 
-        # If we just have a few bytes to decode, read more, just in case these don't produce a character
-        if @in_buffer_left < 16
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-          @buffer.copy_from(@in_buffer, @in_buffer_left)
-          @in_buffer = @buffer.to_unsafe
-          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
-        end
-
         # If, after refilling the buffer, we couldn't read new bytes
         # it means we reached the end
         break if @in_buffer_left == 0
