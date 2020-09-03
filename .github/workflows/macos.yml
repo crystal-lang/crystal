@@ -3,10 +3,8 @@ name: macOS CI
 on: [push, pull_request]
 
 env:
-  TRAVIS_OS_NAME: osx
-  LLVM_CONFIG: /usr/local/opt/llvm/bin/llvm-config
-  PKG_CONFIG_PATH: /usr/local/opt/openssl@1.1/lib/pkgconfig
   SPEC_SPLIT_DOTS: 160
+  CI_NIX_SHELL: true
 
 jobs:
   test_macos:
@@ -14,6 +12,12 @@ jobs:
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
+
+      - uses: cachix/install-nix-action@v10
+      - uses: cachix/cachix-action@v6
+        with:
+          name: crystal-ci
+          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
 
       - name: Prepare System
         run: bin/ci prepare_system
