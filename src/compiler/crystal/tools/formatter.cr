@@ -287,8 +287,14 @@ module Crystal
         else
           if needs_two_lines
             unless found_comment
-              skip_space_write_line
-              found_comment = skip_space_or_newline last: true, at_least_one: true
+              if @wrote_newline
+                write_line unless @wrote_double_newlines
+              elsif !@wrote_double_newlines
+                write_line
+                write_line
+              end
+              @wrote_double_newlines = true
+              found_comment = skip_space_or_newline
               write_line unless found_comment || @wrote_double_newlines
             end
           else
@@ -1374,7 +1380,7 @@ module Crystal
     def format_nested(node, indent = @indent, write_end_line = true, write_indent = true)
       slash_is_regex!
       if node.is_a?(Nop)
-        skip_nop(indent + 2)
+        skip_space_write_line
       else
         if write_indent
           indent(indent + 2) do
@@ -4420,7 +4426,7 @@ module Crystal
       indent(indent) { skip_space(write_comma) }
     end
 
-    def skip_space_or_newline(last : Bool = false, at_least_one : Bool = false)
+    def skip_space_or_newline(last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
       just_wrote_line = @wrote_newline
       base_column = @column
       has_space = false
@@ -4453,15 +4459,15 @@ module Crystal
             write_line
           end
         end
-        write_comment(needs_indent: !needs_space)
+        write_comment(needs_indent: !needs_space, next_comes_end: last)
         true
       else
         false
       end
     end
 
-    def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false)
-      indent(indent) { skip_space_or_newline(last, at_least_one) }
+    def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
+      indent(indent) { skip_space_or_newline(last, at_least_one, next_comes_end) }
     end
 
     def slash_is_regex!
@@ -4476,11 +4482,6 @@ module Crystal
       found_comment = skip_space
       write_line unless found_comment || @wrote_newline
       found_comment
-    end
-
-    def skip_nop(indent)
-      skip_space_write_line
-      skip_space_or_newline(indent)
     end
 
     def skip_semicolon
@@ -4523,7 +4524,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def write_comment(needs_indent = true, consume_newline = true)
+    def write_comment(needs_indent = true, consume_newline = true, next_comes_end = false)
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
@@ -4576,18 +4577,18 @@ module Crystal
         write value
         next_token_skip_space
         if consume_newline
-          consume_newlines
+          consume_newlines(next_comes_end: next_comes_end)
           skip_space_or_newline
         end
       end
     end
 
-    def consume_newlines
+    def consume_newlines(next_comes_end = false)
       if @token.type == :NEWLINE
         write_line unless @wrote_newline
         next_token_skip_space
 
-        if @token.type == :NEWLINE
+        if @token.type == :NEWLINE && !next_comes_end
           write_line
           @wrote_double_newlines = true
         end
@@ -4660,6 +4661,7 @@ module Crystal
       end
 
       @wrote_newline = false
+      @wrote_double_newlines = false
       @last_write = string
     end
 
