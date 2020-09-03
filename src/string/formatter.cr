@@ -229,14 +229,21 @@ struct String::Formatter(A)
 
       if flags.left_padding?
         if flags.padding_char == '0'
-          @io << '+' if flags.plus
+          if flags.plus
+            if int >= 0
+              @io << '+'
+            else
+              @io << '-'
+              int = int.abs
+            end
+          end
           @io << ' ' if flags.space
         end
 
         pad_int int, flags
       end
 
-      if int > 0
+      if int >= 0
         unless flags.padding_char == '0'
           @io << '+' if flags.plus
           @io << ' ' if flags.space
@@ -312,7 +319,7 @@ struct String::Formatter(A)
 
   def pad_int(int, flags)
     size = int.to_s(flags.base).bytesize
-    size += 1 if int > 0 && (flags.plus || flags.space)
+    size += 1 if int >= 0 && (flags.plus || flags.space)
     pad size, flags
   end
 
