@@ -223,7 +223,7 @@ class HTTP::Server
       def close
         return if closed?
 
-        unless response.wrote_headers?
+        if !response.wrote_headers? && !response.headers.has_key?("Content-Length")
           response.content_length = @out_count
         end
 
