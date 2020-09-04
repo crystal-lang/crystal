@@ -535,17 +535,6 @@ module Enumerable(T)
     ary
   end
 
-  # Returns an `Array` with all the elements in the collection that
-  # match the `RegExp` *pattern*.
-  #
-  # ```
-  # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
-  # ```
-  @[Deprecated("Use `#select` instead")]
-  def grep(pattern)
-    self.select { |elem| pattern === elem }
-  end
-
   # Returns a `Hash` whose keys are each different value that the passed block
   # returned when run for each element in the collection, and which values are
   # an `Array` of the elements for which the block returned that value.
