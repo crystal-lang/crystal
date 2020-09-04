@@ -28,7 +28,6 @@ require "./spec/dsl"
 #   end
 #
 #   # lots more specs
-#
 # end
 # ```
 #
