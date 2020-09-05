@@ -2145,7 +2145,7 @@ module Crystal
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
-      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent > 0
+      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent >= 0
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
