@@ -351,6 +351,28 @@ class JSONCircle < JSONShape
   property radius : Int32
 end
 
+module JSONNamespace
+  struct FooRequest
+    include JSON::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include JSON::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include JSON::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
+end
+
 describe "JSON mapping" do
   it "works with record" do
     JSONAttrPoint.new(1, 2).to_json.should eq "{\"x\":1,\"y\":2}"
@@ -856,6 +878,14 @@ describe "JSON mapping" do
       expect_raises(::JSON::SerializableError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = JSONNamespace::FooRequest.from_json(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end
