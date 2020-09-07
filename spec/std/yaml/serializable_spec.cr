@@ -304,6 +304,29 @@ class YAMLCircle < YAMLShape
   property radius : Int32
 end
 
+module YAMLNamespace
+  struct FooRequest
+    include YAML::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include YAML::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include YAML::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
+end
+
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -830,6 +853,14 @@ describe "YAML::Serializable" do
       expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = YAMLNamespace::FooRequest.from_yaml(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end
