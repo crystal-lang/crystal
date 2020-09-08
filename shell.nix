@@ -1,4 +1,4 @@
-# This nix-shell script can be used to get a complette development environment
+# This nix-shell script can be used to get a complete development environment
 # for the Crystal compiler.
 #
 # You can choose which llvm version use and, on Linux, choose to use musl.
