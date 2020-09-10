@@ -11,7 +11,7 @@
 # $ nix-shell --pure --arg llvm 6
 #
 # If needed, you can use https://app.cachix.org/cache/crystal-ci to avoid building
-# packages that are not available in Nix directly. This is only useful for musl so far.
+# packages that are not available in Nix directly. This is mostly useful for musl.
 #
 # $ nix-env -iA cachix -f https://cachix.org/api/v1/install
 # $ cachix use crystal-ci
@@ -39,10 +39,10 @@ let
         mkdir -p $out/bin
 
         # Darwin packages use embedded/bin/crystal
-        [ -f "${src}/embedded/bin/crystal" ] && cp ${src}/embedded/bin/crystal $out/bin/
+        [ ! -f "${src}/embedded/bin/crystal" ] || cp ${src}/embedded/bin/crystal $out/bin/
 
         # Linux packages use lib/crystal/bin/crystal
-        [ -f "${src}/lib/crystal/bin/crystal" ] && cp ${src}/lib/crystal/bin/crystal $out/bin/
+        [ ! -f "${src}/lib/crystal/bin/crystal" ] || cp ${src}/lib/crystal/bin/crystal $out/bin/
       '';
     };
 
@@ -89,17 +89,44 @@ let
     };
   }."llvm_${toString llvm}");
 
-  boehmgc = pkgs.boehmgc.overrideAttrs (oldAttrs: rec {
+  libatomic_ops = builtins.fetchurl {
+    url = "https://github.com/ivmai/libatomic_ops/releases/download/v7.6.10/libatomic_ops-7.6.10.tar.gz";
+    sha256 = "1bwry043f62pc4mgdd37zx3fif19qyrs8f5bw7qxlmkzh5hdyzjq";
+  };
+
+  boehmgc = pkgs.stdenv.mkDerivation rec {
+    pname = "boehm-gc";
+    version = "8.0.4";
+
+    src = builtins.fetchTarball {
+      url = "https://github.com/ivmai/bdwgc/releases/download/v${version}/gc-${version}.tar.gz";
+      sha256 = "16ic5dwfw51r5lcl88vx3qrkg3g2iynblazkri3sl9brnqiyzjk7";
+    };
+
     patches = [
       (pkgs.fetchpatch {
-        url = "https://raw.githubusercontent.com/crystal-lang/distribution-scripts/e942880dda3b100ff1143cce88b579bbec3f05b9/linux/files/feature-thread-stackbottom-upstream.patch";
-        sha256 = "784ade9fe1c2668db77a3c08cd195cd7701331bdf8c9d160038cfce099b77e37";
+        url = "https://github.com/ivmai/bdwgc/commit/5668de71107022a316ee967162bc16c10754b9ce.patch";
+        sha256 = "02f0rlxl4fsqk1xiq0pabkhwydnmyiqdik2llygkc6ixhxbii8xw";
       })
     ];
-  });
+
+    postUnpack = ''
+      mkdir $sourceRoot/libatomic_ops
+      tar -xzf ${libatomic_ops} -C $sourceRoot/libatomic_ops --strip-components 1
+    '';
+
+    configureFlags = [
+      "--disable-debug"
+      "--disable-dependency-tracking"
+      "--disable-shared"
+      "--enable-large-config"
+    ];
+
+    enableParallelBuilding = true;
+  };
 
   stdLibDeps = with pkgs; [
-      gmp libevent libiconv libxml2 libyaml openssl pcre zlib
+      boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
     ] ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv ];
 
   tools = [ pkgs.hostname llvm_suite.extra ];
@@ -112,7 +139,6 @@ pkgs.stdenv.mkDerivation rec {
     latestCrystalBinary
     pkgconfig
     llvm_suite.llvm
-    boehmgc
   ];
 
   LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
