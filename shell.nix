@@ -7,6 +7,7 @@
 # $ nix-shell --pure --arg llvm 10
 # $ nix-shell --pure --arg llvm 10 --arg musl true
 # $ nix-shell --pure --arg llvm 9
+# $ nix-shell --pure --arg llvm 9 --argstr system i686-linux
 # ...
 # $ nix-shell --pure --arg llvm 6
 #
@@ -18,14 +19,16 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 10, musl ? false}:
+{llvm ? 10, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
     name = "nixpkgs-20.03";
     url = "https://github.com/NixOS/nixpkgs/archive/2d580cd2793a7b5f4b8b6b88fb2ccec700ee1ae6.tar.gz";
     sha256 = "1nbanzrir1y0yi2mv70h60sars9scwmm0hsxnify2ldpczir9n37";
-  }) {};
+  }) {
+    inherit system;
+  };
 
   pkgs = if musl then nixpkgs.pkgsMusl else nixpkgs;
 
