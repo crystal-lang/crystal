@@ -1,5 +1,4 @@
 require "spec"
-require "complex"
 
 describe "Math" do
   describe "Mathematical constants" do
@@ -41,10 +40,6 @@ describe "Math" do
       Math.sqrt(5.2).should be_close(2.280350850198276, 1e-7)
       Math.sqrt(4_f32).should eq(2)
       Math.sqrt(4).should eq(2)
-      Math.sqrt(Complex.new(1.32, 7.25)).should be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
-      Math.sqrt(Complex.new(7.11, -0.9)).should be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
-      Math.sqrt(Complex.new(-2.2, 6.22)).should be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
-      Math.sqrt(Complex.new(-8.3, -1.11)).should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
     end
   end
 
@@ -52,7 +47,6 @@ describe "Math" do
     it "exp" do
       Math.exp(0.211_f32).should be_close(1.2349123550613943, 1e-7)
       Math.exp(0.211).should be_close(1.2349123550613943, 1e-7)
-      Math.exp(Complex.new(1.15, -5.1)).should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
     end
 
     it "exp2" do
@@ -102,19 +96,16 @@ describe "Math" do
       Math.log(3.24).should be_close(1.1755733298042381, 1e-7)
       Math.log(0.3_f32, 3).should be_close(-1.0959032742893848, 1e-7)
       Math.log(0.3, 3).should be_close(-1.0959032742893848, 1e-7)
-      Math.log(Complex.new(1.25, -4.7)).should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
     end
 
     it "log2" do
       Math.log2(1.2_f32).should be_close(0.2630344058337938, 1e-7)
       Math.log2(1.2).should be_close(0.2630344058337938, 1e-7)
-      Math.log2(Complex.new(-9.1, 3.2)).should eq(Complex.new(3.2699671225858946, +4.044523592551345))
     end
 
     it "log10" do
       Math.log10(0.5_f32).should be_close(-0.3010299956639812, 1e-7)
       Math.log10(0.5).should be_close(-0.3010299956639812, 1e-7)
-      Math.log10(Complex.new(2.11, 1.21)).should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
     end
 
     it "log1p" do
