@@ -985,7 +985,9 @@ module Crystal
         StringLiteral.new(name).accept self
       else
         write @token
+        @lexer.wants_symbol = false
         next_token
+        @lexer.wants_symbol = true
       end
     end
 

@@ -14,6 +14,7 @@ module Crystal
     getter token : Token
     property line_number : Int32
     property column_number : Int32
+    property wants_symbol : Bool
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
