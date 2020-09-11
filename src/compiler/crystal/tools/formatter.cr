@@ -221,8 +221,8 @@ module Crystal
         @indent += 2
         write_line
         next_token
-        # Cornor case: an empty `begin ... end`.
-        # In this case, we should not skip space becuase it will do in the below loop.
+        # Corner case: an empty `begin ... end`.
+        # In this case, we should not skip space because it will do in the below loop.
         unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
           skip_space_or_newline
           if @token.type == :";"
