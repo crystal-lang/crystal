@@ -307,7 +307,7 @@ module Math
     r = exp(z.real)
     Complex.new(r * cos(z.imag), r * sin(z.imag))
   end
-  
+
   # Calculates the natural logarithm of the complex number `z`.
   #
   # ```
