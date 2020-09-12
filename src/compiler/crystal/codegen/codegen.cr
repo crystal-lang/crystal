@@ -1186,6 +1186,10 @@ module Crystal
       read_instance_var node.type, node.obj.type, node.name, @last
     end
 
+    def read_instance_var(node_type, type : TypeDefType, name, value)
+      read_instance_var(node_type, type.typedef, name, value)
+    end
+
     def read_instance_var(node_type, type, name, value)
       ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
