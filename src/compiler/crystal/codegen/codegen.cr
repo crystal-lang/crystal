@@ -1186,15 +1186,12 @@ module Crystal
       read_instance_var node.type, node.obj.type, node.name, @last
     end
 
-    def read_instance_var(node_type, type : TypeDefType, name, value)
-      read_instance_var(node_type, type.typedef, name, value)
-    end
-
     def read_instance_var(node_type, type, name, value)
-      ivar = type.lookup_instance_var(name)
-      ivar_ptr = instance_var_ptr type, name, value
+      type_without_typedef = type.remove_typedef
+      ivar = type_without_typedef.lookup_instance_var(name)
+      ivar_ptr = instance_var_ptr type_without_typedef, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
-      if type.extern?
+      if type_without_typedef.extern?
         # When reading the instance variable of a C struct or union
         # we need to convert C functions to Crystal procs. This
         # can happen for example in Struct#to_s, where all fields
