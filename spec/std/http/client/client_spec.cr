@@ -3,6 +3,7 @@ require "../../socket/spec_helper"
 require "openssl"
 require "http/client"
 require "http/server"
+require "log/spec"
 
 private def test_server(host, port, read_time = 0, content_type = "text/plain", write_response = true)
   server = TCPServer.new(host, port)
@@ -298,6 +299,39 @@ module HTTP
       io.closed?.should be_true
       expect_raises(Exception, "This HTTP::Client cannot be reconnected") do
         client.get("/")
+      end
+    end
+
+    describe "logging" do
+      it "emit logs" do
+        test_server("localhost", 0, content_type: "") do |server|
+          client = Client.new("localhost", server.local_address.port)
+          Log.capture("http.client") do |logs|
+            client.get("/")
+
+            logs.check(:debug, "Performing request")
+            logs.entry.data[:method].should eq("GET")
+            logs.entry.data[:host].should eq("localhost")
+            logs.entry.data[:port].should eq(server.local_address.port)
+            logs.entry.data[:resource].should eq("/")
+          end
+        end
+      end
+
+      it "emit logs with block" do
+        test_server("localhost", 0, content_type: "") do |server|
+          Client.new("localhost", server.local_address.port) do |client|
+            Log.capture("http.client") do |logs|
+              client.get("/") do |response|
+                logs.check(:debug, "Performing request")
+                logs.entry.data[:method].should eq("GET")
+                logs.entry.data[:host].should eq("localhost")
+                logs.entry.data[:port].should eq(server.local_address.port)
+                logs.entry.data[:resource].should eq("/")
+              end
+            end
+          end
+        end
       end
     end
   end

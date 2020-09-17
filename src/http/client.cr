@@ -577,7 +577,10 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
+    before_exec(request)
     exec_internal(request)
+  ensure
+    after_exec(request)
   end
 
   private def exec_internal(request)
@@ -615,9 +618,12 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
+    before_exec(request)
     exec_internal(request) do |response|
       yield response
     end
+  ensure
+    after_exec(request)
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
@@ -861,6 +867,12 @@ class HTTP::Client
       end
       yield client, path
     end
+  end
+
+  protected def before_exec(request)
+  end
+
+  protected def after_exec(request)
   end
 end
 
