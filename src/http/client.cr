@@ -868,13 +868,18 @@ class HTTP::Client
   end
 
   protected def around_exec(request)
-    yield request
+    yield
   end
 
-  macro def_around_exec
-    protected def around_exec(request)
+  macro def_around_exec(&block)
+    protected def around_exec(%request)
       previous_def do
-        {{ yield :request.id }}
+        {% if block.args.size != 1 %}
+          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+        {% end %}
+
+        {{ block.args.first.id }} = %request
+        {{ block.body }}
       end
     end
   end

@@ -4,7 +4,7 @@ class HTTP::Client
   Log = ::Log.for(self)
 
   def_around_exec do |request|
-    emit_log({{request}})
+    emit_log(request)
     yield
   end
 
