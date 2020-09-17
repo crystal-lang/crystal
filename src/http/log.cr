@@ -3,9 +3,9 @@ require "log"
 class HTTP::Client
   Log = ::Log.for(self)
 
-  protected def before_exec(request)
-    previous_def
-    emit_log(request)
+  def_around_exec do |request|
+    emit_log({{request}})
+    yield
   end
 
   protected def emit_log(request)
