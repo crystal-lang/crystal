@@ -867,10 +867,27 @@ class HTTP::Client
     end
   end
 
+  # This method is called when executing the request. Although it can be
+  # redefined, it is recommended to use the `def_around_exec` macro to be
+  # able to add new behaviors without loosing prior existing ones.
   protected def around_exec(request)
     yield
   end
 
+  # This macro allows injecting code to be run before and after the execution
+  # of the request. It should return the yielded value. It must be called with 1
+  # block argument that will be used to pass the `HTTP::Request`.
+  #
+  # ```
+  # class HTTP::Client
+  #   def_around_exec do |request|
+  #     # do something before exec
+  #     res = yield
+  #     # do something after exec
+  #     res
+  #   end
+  # end
+  # ```
   macro def_around_exec(&block)
     protected def around_exec(%request)
       previous_def do
