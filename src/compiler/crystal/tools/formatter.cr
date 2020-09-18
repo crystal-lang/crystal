@@ -2906,18 +2906,37 @@ module Crystal
       old_inside_call_or_assign = @inside_call_or_assign
       @inside_call_or_assign = 0
 
+      comma_before_comment = false
+
       if @token.type == :","
-        needs_comma = true
-        next_token_skip_space_or_newline
+        next_token
+        next_token if @token.type == :SPACE
+        if @token.type == :COMMENT
+          write ","
+          needs_comma = false
+          comma_before_comment = true
+          @indent += 2
+        else
+          needs_comma = true
+        end
+        skip_space_or_newline
+        @indent -= 2 if comma_before_comment
       end
 
       if @token.keyword?(:do)
-        write " do"
+        if comma_before_comment
+          @indent += 2
+          write_indent
+        else
+          write " "
+        end
+        write "do"
         next_token_skip_space
         body = format_block_args node.args, node
         old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
         format_nested_with_end body
         @implicit_exception_handler_indent = old_implicit_exception_handler_indent
+        @indent -= 2
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
