@@ -60,7 +60,7 @@ class HTTP::WebSocket
   def on_message(&@on_message : String ->)
   end
 
-  # Called when the server recieves a binary message from a client.
+  # Called when the server receives a binary message from a client.
   def on_binary(&@on_binary : Bytes ->)
   end
 
