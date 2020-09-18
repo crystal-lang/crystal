@@ -56,7 +56,7 @@ class HTTP::WebSocket
   def on_pong(&@on_pong : String ->)
   end
 
-  # Called when the server recieves a text message from a client.
+  # Called when the server receives a text message from a client.
   def on_message(&@on_message : String ->)
   end
 
