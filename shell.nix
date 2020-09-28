@@ -132,7 +132,7 @@ let
       boehmgc gmp libevent libiconv libxml2 libyaml openssl pcre zlib
     ] ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv ];
 
-  tools = [ pkgs.hostname llvm_suite.extra ];
+  tools = [ pkgs.hostname pkgs.git llvm_suite.extra ];
 in
 
 pkgs.stdenv.mkDerivation rec {
