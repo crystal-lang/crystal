@@ -166,6 +166,8 @@ class Crystal::CodeGenVisitor
       call_args << sret_value
     end
 
+    target_def_args_size = target_def.args.size
+
     node.args.each_with_index do |arg, i|
       if arg.is_a?(Out)
         has_out = true
@@ -217,13 +219,26 @@ class Crystal::CodeGenVisitor
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
-        call_args << call_arg
       when LLVM::ABI::ArgKind::Indirect
         # Pass argument as is (will be passed byval)
-        call_args << call_arg
       when LLVM::ABI::ArgKind::Ignore
         # Ignore
+        next
       end
+
+      # If we are passing variadic arguments there are some special rules
+      if i >= target_def_args_size
+        arg_type = arg.type.remove_indirection
+        if arg_type.is_a?(FloatType) && arg_type.kind == :f32
+          # Floats must be passed as doubles (there are no float varargs)
+          call_arg = extend_float @program.float64, call_arg
+        elsif arg_type.is_a?(IntegerType) && arg_type.kind.in?(:i8, :u8, :i16, :u16)
+          # Integer with a size less that `int` must be converted to `int`
+          call_arg = extend_int arg_type, @program.int32, call_arg
+        end
+      end
+
+      call_args << call_arg
     end
 
     @needs_value = old_needs_value
