@@ -1187,6 +1187,7 @@ module Crystal
     end
 
     def read_instance_var(node_type, type, name, value)
+      type = type.remove_typedef
       ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
