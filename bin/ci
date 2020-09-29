@@ -69,7 +69,7 @@ on_osx() {
   fail_on_error on_os "osx" "${@}"
 }
 
-on_nix_shell() {
+on_nix_shell_eval() {
   if [ -n "$CI_NIX_SHELL" ]; then
     echo "${@}"
     eval "${@}"
@@ -77,6 +77,10 @@ on_nix_shell() {
   else
     return 0
   fi
+}
+
+on_nix_shell() {
+  fail_on_error on_nix_shell_eval "${@}"
 }
 
 on_github() {
