@@ -118,11 +118,11 @@ class HTTP::WebSocket
 
   # Continuously receives messages and calls previously set callbacks until the websocket is closed.
   # Ping and pong messages are automatically handled.
-  #  
+  #
   # ```
   # # Open websocket connection
   # ws = WebSocket.new(uri)
-  # 
+  #
   # # Set callback
   # ws.on_message do |msg|
   #   ws.send "response"
