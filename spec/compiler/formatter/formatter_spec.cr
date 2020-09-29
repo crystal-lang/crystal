@@ -1728,4 +1728,17 @@ describe Crystal::Formatter do
     def bar
     end
     CODE
+
+  assert_format <<-CODE
+    foo 1, # comment
+      do
+      end
+    CODE
+
+  assert_format <<-CODE
+    foo 1, # comment
+      # bar
+      do
+      end
+    CODE
 end
