@@ -35,9 +35,9 @@ class Digest::MD5 < Digest::Base
     mdi = (@i[0] >> 3) & 0x3F
 
     # update number of bits
-    @i[1] += 1 if (@i[0] + (inLen << 3)) < @i[0]
-    @i[0] += (inLen << 3)
-    @i[1] += (inLen >> 29)
+    @i[1] &+= 1 if (@i[0] &+ (inLen << 3)) < @i[0]
+    @i[0] &+= (inLen << 3)
+    @i[1] &+= (inLen >> 29)
 
     inLen.times do
       # add new character to buffer, increment mdi
