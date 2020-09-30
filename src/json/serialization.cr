@@ -183,7 +183,7 @@ module JSON
         begin
           pull.read_begin_object
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, nil, *%location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
         end
         until pull.kind.end_object?
           %key_location = pull.location
@@ -212,7 +212,7 @@ module JSON
 
                 {% if value[:nilable] || value[:has_default] %} } {% end %}
               rescue exc : ::JSON::ParseException
-                raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+                raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
               end
           {% end %}
           else
@@ -224,7 +224,7 @@ module JSON
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
             if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
-              raise ::JSON::MappingError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+              raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
             end
           {% end %}
 
@@ -329,7 +329,7 @@ module JSON
 
     module Strict
       protected def on_unknown_json_attribute(pull, key, key_location)
-        raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
+        raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
       end
     end
 
@@ -341,7 +341,7 @@ module JSON
         json_unmapped[key] = begin
           JSON::Any.new(pull)
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, key, *key_location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, key, *key_location, exc)
         end
       end
 
@@ -414,7 +414,7 @@ module JSON
         end
 
         unless discriminator_value
-          raise ::JSON::MappingError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
         end
 
         case discriminator_value
@@ -423,8 +423,28 @@ module JSON
             {{value.id}}.from_json(json)
         {% end %}
         else
-          raise ::JSON::MappingError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
         end
+      end
+    end
+  end
+
+  class SerializableError < ParseException
+    getter klass : String
+    getter attribute : String?
+
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+      message = String.build do |io|
+        io << message
+        io << "\n  parsing "
+        io << klass
+        if attribute = @attribute
+          io << '#' << attribute
+        end
+      end
+      super(message, line_number, column_number, cause)
+      if cause
+        @line_number, @column_number = cause.location
       end
     end
   end

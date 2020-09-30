@@ -2036,7 +2036,7 @@ module Crystal
       if raise_overflow_fun = @raise_overflow_fun
         check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
       else
-        raise "BUG: __crystal_raise_overflow is not defined"
+        raise LocationlessException.new("Missing __crystal_raise_overflow function, either use std-lib's prelude or define it")
       end
     end
 

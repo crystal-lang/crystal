@@ -32,8 +32,8 @@ class IO::Hexdump < IO
     end
   end
 
-  def write(buf : Bytes) : Int64
-    return 0i64 if buf.empty?
+  def write(buf : Bytes) : Nil
+    return if buf.empty?
 
     @io.write(buf).tap do
       @output.puts buf.hexdump if @write

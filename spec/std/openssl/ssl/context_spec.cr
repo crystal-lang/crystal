@@ -100,7 +100,7 @@ describe OpenSSL::SSL::Context do
 
   pending "uses intermediate default ciphers" do
     # Can't be checked because `Context#ciphers` is not implemented.
-    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_OLD
     OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
   end
 

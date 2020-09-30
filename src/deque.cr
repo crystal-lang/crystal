@@ -112,11 +112,6 @@ class Deque(T)
     equals?(other) { |x, y| x == y }
   end
 
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Concatenation. Returns a new `Deque` built by concatenating
   # two deques together to create a third. The type of the new deque
   # is the union of the types of both the other deques.

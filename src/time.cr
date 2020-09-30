@@ -189,7 +189,7 @@ require "crystal/system/time"
 # computer's wall clock has changed between both calls.
 #
 # As an alternative, the operating system also provides a monotonic clock.
-# Its time-line has no specfied starting point but is strictly linearly
+# Its time-line has no specified starting point but is strictly linearly
 # increasing.
 #
 # This monotonic clock should always be used for measuring elapsed time.
@@ -584,7 +584,7 @@ struct Time
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are increased by the specified amount.
+  # representations of month and year are increased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
@@ -602,7 +602,7 @@ struct Time
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are decreased by the specified amount.
+  # representations of month and year are decreased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.

@@ -225,9 +225,9 @@ struct Complex
     log / Math::LOG10
   end
 
-  # Returns absolute value of `self`.
+  # Returns `self`.
   def +
-    Complex.new(@real.abs, @imag.abs)
+    self
   end
 
   # Adds the value of `self` to *other*.

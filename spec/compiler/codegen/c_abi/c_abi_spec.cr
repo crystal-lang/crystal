@@ -55,7 +55,7 @@ describe "Code gen: C ABI" do
       ), &.to_i.should eq(3))
   end
 
-  it "passes struct bigger than128 bits (for real)" do
+  it "passes struct bigger than 128 bits (for real)" do
     test_c(
       %(
         struct s {
@@ -83,6 +83,36 @@ describe "Code gen: C ABI" do
         LibFoo.foo(s)
       ), &.to_i.should eq(6))
   end
+
+  {% if flag?(:x86_64) && !flag?(:win32) %}
+    pending "passes struct after many other args (for real) (#9519)"
+  {% else %}
+    it "passes struct after many other args (for real)" do
+      test_c(
+        %(
+          struct s {
+            long long x, y;
+          };
+
+          long long foo(long long a, long long b, long long c, long long d, long long e, struct s v) {
+            return a + b + c + d + e + v.x + v.y;
+          }
+        ),
+        %(
+          lib LibFoo
+            struct S
+              x : Int64
+              y : Int64
+            end
+
+            fun foo(a : Int64, b : Int64, c : Int64, d : Int64, e : Int64, v : S) : Int64
+          end
+
+          v = LibFoo::S.new(x: 6, y: 7)
+          LibFoo.foo(1, 2, 3, 4, 5, v)
+        ), &.to_string.should eq("28"))
+    end
+  {% end %}
 
   it "returns struct less than 64 bits (for real)" do
     test_c(

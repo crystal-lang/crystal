@@ -52,8 +52,8 @@ class HTTP::WebSocket::Protocol
       @pos = 0
     end
 
-    def write(slice : Bytes) : Int64
-      return 0i64 if slice.empty?
+    def write(slice : Bytes) : Nil
+      return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
       (@buffer + @pos).copy_from(slice.to_unsafe, count)
@@ -66,8 +66,6 @@ class HTTP::WebSocket::Protocol
       if count < slice.size
         write(slice + count)
       end
-
-      slice.size.to_i64
     end
 
     def read(slice : Bytes)

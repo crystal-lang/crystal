@@ -105,7 +105,7 @@ struct Crystal::TypeDeclarationProcessor
     # they are initialized in at least one of the initialize methods.
     @non_nilable_instance_vars = {} of Type => Array(String)
 
-    # Nilable variables there were detected to not be initilized in an initialize,
+    # Nilable variables there were detected to not be initialized in an initialize,
     # but a superclass does initialize it. It's only an error if the explicit/guessed
     # type is not nilable itself.
     @nilable_instance_vars = {} of Type => Hash(String, InitializeInfo)
@@ -266,6 +266,11 @@ struct Crystal::TypeDeclarationProcessor
       unless supervar.type.same?(type_decl.type)
         raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.type} (trying to re-declare as #{type_decl.type})", type_decl.location)
       end
+
+      # Reject annotations to existing instance var
+      type_decl.annotations.try &.each do |_, ann|
+        ann.raise "can't annotate #{name} in #{owner} because it was first defined in #{supervar.owner}"
+      end
     else
       declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true, check_nilable: !owner.module?)
       remove_error owner, name
@@ -339,13 +344,13 @@ struct Crystal::TypeDeclarationProcessor
     # set from uninstantiated generic types
     return if owner.is_a?(GenericInstanceType)
 
+    # If a superclass already defines this variable we ignore
+    # the guessed type information for subclasses
+    supervar = owner.lookup_instance_var?(name)
+    return if supervar
+
     case owner
     when NonGenericClassType
-      # If a superclass already defines this variable we ignore
-      # the guessed type information for subclasses
-      supervar = owner.lookup_instance_var?(name)
-      return if supervar
-
       type = type_info.type
       if nilable_instance_var?(owner, name)
         type = Type.merge!(type, @program.nil)

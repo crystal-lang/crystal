@@ -3,7 +3,7 @@ require "./spec_helper"
 describe Spec do
   describe "hooks" do
     it "runs in correct order" do
-      compile_and_run_source(<<-CR)[1].lines[..-5].should eq <<-OUT.lines
+      compile_and_run_source(<<-CR, flags: %w(--no-debug))[1].lines[..-5].should eq <<-OUT.lines
         require "prelude"
         require "spec"
 

@@ -46,6 +46,8 @@ class Log
 
   @@builder = Builder.new
 
+  at_exit { @@builder.close }
+
   # Returns the default `Log::Builder` used for `Log.for` calls.
   def self.builder
     @@builder
@@ -64,7 +66,7 @@ class Log
   # :ditto:
   def self.context=(value : Log::Context)
     # NOTE: There is a need for `Metadata` and `Context` setters in
-    # becuase `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
+    # because `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
     # but if the metadata is built manually the construct `Log.context = metadata` will be used.
     Log.context = value.metadata
   end
@@ -127,13 +129,13 @@ class Log
     # ```
     # Log.context.set a: 1
     # Log.context.set b: 2
-    # Log.info { %q(message with {"a" => 1, "b" => 2} context") }
-    # extra = {:c => "3"}
-    # Log.context.set extra
-    # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => "3" } context) }
-    # extra = {"c" => 3}
-    # Log.context.set extra
-    # Log.info { %q(message with {"a" => 1, "b" => 2, "c" => 3 } context) }
+    # Log.info { %q(message with a: 1, b: 2 context") }
+    # h = {:c => "3"}
+    # Log.context.set extra: h
+    # Log.info { %q(message with a: 1, b: 2, extra: {"c" => "3"} context) }
+    # h = {"c" => 3}
+    # Log.context.set extra: h
+    # Log.info { %q(message with a: 1, b: 2, extra: {"c" => 3} context) }
     # ```
     def set(**kwargs)
       extend_fiber_context(Fiber.current, kwargs)

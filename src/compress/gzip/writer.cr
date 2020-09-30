@@ -68,10 +68,10 @@ class Compress::Gzip::Writer < IO
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : Int64
+  def write(slice : Bytes) : Nil
     check_open
 
-    return 0i64 if slice.empty?
+    return if slice.empty?
 
     flate_io = write_header
     flate_io.write(slice)
@@ -82,8 +82,6 @@ class Compress::Gzip::Writer < IO
     # Using wrapping addition here because isize is only 32 bits wide but
     # uncompressed data size can be bigger.
     @isize &+= slice.size
-
-    slice.size.to_i64
   end
 
   # Flushes data, forcing writing the gzip header if no

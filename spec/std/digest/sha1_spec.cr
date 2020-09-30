@@ -1,7 +1,10 @@
 require "spec"
+require "./spec_helper"
 require "digest/sha1"
 
 describe Digest::SHA1 do
+  it_acts_as_digest_algorithm Digest::SHA1
+
   [
     {"", "da39a3ee5e6b4b0d3255bfef95601890afd80709", "2jmj7l5rSw0yVb/vlWAYkK/YBwk="},
     {"The quick brown fox jumps over the lazy dog", "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12", "L9ThxnotKPzthJ7hu3bnORuT6xI="},

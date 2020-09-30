@@ -28,7 +28,7 @@ def with_tempfile(*paths, file = __FILE__)
   ensure
     if SPEC_TEMPFILE_CLEANUP
       paths.each do |path|
-        FileUtils.rm_r(path) if File.exists?(path)
+        rm_rf(path) if File.exists?(path)
       end
     end
   end
@@ -43,8 +43,41 @@ def with_temp_executable(name, file = __FILE__)
   end
 end
 
+def with_temp_c_object_file(c_code, file = __FILE__)
+  obj_ext = {{ flag?(:win32) ? ".obj" : ".o" }}
+  with_tempfile("temp_c.c", "temp_c#{obj_ext}", file: file) do |c_filename, o_filename|
+    File.write(c_filename, c_code)
+
+    {% if flag?(:win32) %}
+      `cl.exe /nologo /c #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
+    {% else %}
+      `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
+    {% end %}
+
+    yield o_filename
+  end
+end
+
 if SPEC_TEMPFILE_CLEANUP
   at_exit do
-    FileUtils.rm_r(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)
+    rm_rf(SPEC_TEMPFILE_PATH) if Dir.exists?(SPEC_TEMPFILE_PATH)
+  end
+end
+
+private def rm_rf(path : String) : Nil
+  if Dir.exists?(path) && !File.symlink?(path)
+    Dir.each_child(path) do |entry|
+      src = File.join(path, entry)
+      rm_rf(src)
+    end
+    Dir.delete(path)
+  else
+    begin
+      File.delete(path)
+    rescue File::AccessDeniedError
+      # To be able to delete read-only files (e.g. ones under .git/) on Windows.
+      File.chmod(path, 0o666)
+      File.delete(path)
+    end
   end
 end

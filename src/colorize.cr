@@ -150,16 +150,6 @@ module Colorize
   end
 end
 
-@[Deprecated("Use `Colorize.with`")]
-def with_color
-  Colorize.with
-end
-
-@[Deprecated("Use `Colorize.with.fore(color)`")]
-def with_color(color : Symbol)
-  Colorize.with.fore(color)
-end
-
 module Colorize::ObjectExtensions
   def colorize
     Colorize::Object.new(self)

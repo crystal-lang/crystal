@@ -5,9 +5,12 @@ module HTTP
   class Cookie
     # Possible values for the `SameSite` cookie as described in the [Same-site Cookies Draft](https://tools.ietf.org/html/draft-west-first-party-cookies-07#section-4.1.1).
     enum SameSite
+      # The browser will send cookies with both cross-site requests and same-site requests.
+      #
+      # The `None` directive requires the `secure` attribute to be `true` to mitigate risks associated with cross-site access.
+      None
       # Prevents the cookie from being sent by the browser in all cross-site browsing contexts.
       Strict
-
       # Allows the cookie to be sent by the browser during top-level navigations that use a [safe](https://tools.ietf.org/html/rfc7231#section-4.2.1) HTTP method.
       Lax
     end

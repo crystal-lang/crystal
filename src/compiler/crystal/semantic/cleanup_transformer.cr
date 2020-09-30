@@ -315,7 +315,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -325,6 +325,8 @@ module Crystal
       if expanded = node.expanded
         return expanded.transform self
       end
+
+      @program.check_call_to_deprecated_method(node)
 
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
@@ -790,7 +792,7 @@ module Crystal
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
