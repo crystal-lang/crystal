@@ -191,6 +191,8 @@ describe BigDecimal do
     BigDecimal.new(3333.to_big_i, 7_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 7))
 
     (-BigDecimal.new(3)).should eq(BigDecimal.new(-3))
+
+    BigDecimal.new(1).should eq(BigDecimal.new(5) % BigDecimal.new(2))
   end
 
   it "performs arithmetic with other number types" do
