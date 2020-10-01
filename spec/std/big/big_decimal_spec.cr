@@ -192,7 +192,9 @@ describe BigDecimal do
 
     (-BigDecimal.new(3)).should eq(BigDecimal.new(-3))
 
-    BigDecimal.new(1).should eq(BigDecimal.new(5) % BigDecimal.new(2))
+    (BigDecimal.new(5) % BigDecimal.new(2)).should eq(BigDecimal.new(1))
+    (BigDecimal.new(500) % BigDecimal.new(2)).should eq(BigDecimal.new(0))
+    (BigDecimal.new(500) % BigDecimal.new(2000)).should eq(BigDecimal.new(500))
   end
 
   it "performs arithmetic with other number types" do
