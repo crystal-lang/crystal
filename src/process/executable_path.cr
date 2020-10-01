@@ -33,6 +33,8 @@ class Process
       return false
     end
     {% if flag?(:win32) %}
+      # This is *not* a temporary stub.
+      # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
       true
     {% else %}
       File.executable?(path)
@@ -52,14 +54,14 @@ class Process
   end
 
   private def self.find_executable_possibilities(name, path, pwd)
-    return if "#{name}".empty?
+    return if name.to_s.empty?
 
     {% if flag?(:win32) %}
       # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw#parameters
       # > If the file name does not contain an extension, .exe is appended.
       # See find_executable_spec.cr for cases this needs to match, based on CreateProcessW behavior.
       basename = name.ends_with_separator? ? "" : name.basename
-      basename = "" if basename == "#{name.anchor}"
+      basename = "" if basename == name.anchor.to_s
       if (basename.empty? ? !name.anchor : !basename.includes?("."))
         name = Path.new("#{name}.exe")
       end
