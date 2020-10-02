@@ -123,18 +123,20 @@ struct Exception::CallStack
   end
 
   private def self.print_frame(repeated_frame)
-    if @@dwarf_loaded &&
-       (name = decode_function_name(repeated_frame.ip.address))
-      file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
-      if file && file != "??"
-        if repeated_frame.count == 0
-          Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
-        else
-          Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
+    {% if flag?(:debug) %}
+      if @@dwarf_loaded &&
+         (name = decode_function_name(repeated_frame.ip.address))
+        file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
+        if file && file != "??"
+          if repeated_frame.count == 0
+            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
+          else
+            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
+          end
+          return
         end
-        return
       end
-    end
+    {% end %}
 
     frame = decode_frame(repeated_frame.ip)
     if frame
@@ -215,4 +217,10 @@ struct Exception::CallStack
       end
     end
   end
+
+  {% if flag?(:debug) %}
+    # load dwarf on start up of the program when compiled with --debug
+    # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
+    load_dwarf
+  {% end %}
 end
