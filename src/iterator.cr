@@ -340,8 +340,6 @@ module Iterator(T)
 
     def next : {T, T} | Iterator::Stop
       elem = wrapped_next
-      return elem if elem.is_a?(Iterator::Stop)
-
       last_elem = @last_elem
 
       if last_elem.is_a?(Iterator::Stop)
