@@ -133,7 +133,7 @@ class IO::FileDescriptor < IO
     value
   end
 
-  # Flushes all data written to this File to the disk device so that
+  # Flushes all data written to this File Descriptor to the disk device so that
   # all changed information can be retrieved even if the system
   # crashes or is rebooted. The call blocks until the device reports that
   # the transfer has completed.
@@ -161,7 +161,7 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
   def flock_shared(blocking = true)
     system_flock_shared(blocking)
@@ -176,7 +176,7 @@ class IO::FileDescriptor < IO
     end
   end
 
-  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
   def flock_exclusive(blocking = true)
     system_flock_exclusive(blocking)
