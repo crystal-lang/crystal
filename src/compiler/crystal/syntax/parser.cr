@@ -504,7 +504,7 @@ module Crystal
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
     end
 
-    macro parse_operator(name, next_operator, node, operators)
+    macro parse_operator(name, next_operator, node, operators, right_associative = false)
       def parse_{{name.id}}
         location = @token.location
 
@@ -521,7 +521,7 @@ module Crystal
 
             slash_is_regex!
             next_token_skip_space_or_newline
-            right = parse_{{next_operator.id}}
+            right = parse_{{(right_associative ? name : next_operator).id}}
             left = ({{node.id}}).at(location).at_end(right)
             left.name_location = name_location if left.is_a?(Call)
           else
@@ -579,7 +579,7 @@ module Crystal
     end
 
     parse_operator :mul_or_div, :pow, "Call.new left, method, right", %(:"*", :"/", :"//", :"%", :"&*")
-    parse_operator :pow, :prefix, "Call.new left, method, right", %(:"**", :"&**")
+    parse_operator :pow, :prefix, "Call.new left, method, right", %(:"**", :"&**"), right_associative: true
 
     def parse_prefix
       name_location = @token.location
