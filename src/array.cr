@@ -622,7 +622,18 @@ class Array(T)
   # ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
-    Array(T).new(size) { |i| @buffer[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Array(T).new(size) { |i| @buffer[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Array(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone.as(T)
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Returns a copy of `self` with all `nil` elements removed.

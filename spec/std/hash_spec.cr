@@ -432,6 +432,13 @@ describe "Hash" do
       h1.delete(0)
       h2[0].should eq([0])
     end
+
+    it "clones recursive hash" do
+      h = {} of RecursiveHash => RecursiveHash
+      h[h] = h
+      clone = h.clone
+      clone.should be(clone.first[1])
+    end
   end
 
   describe "dup" do

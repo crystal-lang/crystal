@@ -159,9 +159,56 @@ class Reference
       false
     else
       hash[key] = true
-      value = yield
+      yield
       hash.delete(key)
       true
     end
+  end
+
+  # :nodoc:
+  module ExecRecursiveClone
+    alias Registry = Hash(UInt64, UInt64)
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
+    def self.hash
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
+    end
+  end
+
+  # Helper method to perform clone by also checking recursiveness.
+  # When clone is wanted, call this method. Then create the clone
+  # instance without any contents (don't fill it out yet), then
+  # put the clone's object id into the hash yielded into the block.
+  # At the end of the block return the cloned object.
+  #
+  # For example:
+  #
+  # ```
+  # def clone
+  #   exec_recursive_clone do |hash|
+  #     clone = SomeClass.new
+  #     hash[object_id] = clone.object_id
+  #     # fill out the clone object
+  #     clone
+  #   end
+  # end
+  # ```
+  private def exec_recursive_clone
+    hash = ExecRecursiveClone.hash
+    clone_object_id = hash[object_id]?
+    unless clone_object_id
+      clone_object_id = yield(hash).object_id
+      hash.delete(object_id)
+    end
+    Pointer(Void).new(clone_object_id).as(self)
   end
 end
