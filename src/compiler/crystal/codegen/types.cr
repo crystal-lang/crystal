@@ -167,6 +167,15 @@ module Crystal
   class Const
     property initializer : LLVM::Value?
 
+    # Was this constant already read during the codegen phase?
+    # If not, and we are at the place that declares the constant, we can
+    # directly initialize the constant now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the constant was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
     def initialized_llvm_name
       "#{llvm_name}:init"
     end
