@@ -129,7 +129,8 @@ struct Enum
   # IOMode.base_type # => UInt16
   # ```
   def self.base_type : Int.class
-    {{@type.base_type}}
+    # TODO: Update this to leverage `{{@type.enum_base_type}}` after the next release.
+    typeof(self.values.first.value)
   end
 
   # Appends a `String` representation of this enum member to the given *io*.
