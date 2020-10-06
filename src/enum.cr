@@ -86,12 +86,50 @@
 #   puts "Got blue"
 # end
 # ```
+#
+# ### Changing the Base Type
+#
+# The type of the underlying enum value is `Int32` by default, but it can be changed:
+#
+# ```
+# enum Color : UInt8
+#   Red
+#   Green
+#   Blue
+# end
+#
+# Color::Red.value # => UInt8
+# ```
+#
+# NOTE: Only `Int` based types are allowed.
 struct Enum
   include Comparable(self)
 
   # Returns *value*.
   def self.new(value : self)
     value
+  end
+
+  # Returns the type of the underlying enum value.
+  #
+  # ```
+  # enum Color
+  #   Red
+  #   Green
+  #   Blue
+  # end
+  #
+  # enum IOMode : UInt16
+  #   Read
+  #   Write
+  #   Async
+  # end
+  #
+  # Color.base_type  # => Int32
+  # IOMode.base_type # => UInt16
+  # ```
+  def self.base_type : Int.class
+    {{@type.base_type}}
   end
 
   # Appends a `String` representation of this enum member to the given *io*.

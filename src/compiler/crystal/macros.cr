@@ -1860,6 +1860,28 @@ module Crystal::Macros
     def name(*, generic_args : BoolLiteral = true) : MacroId
     end
 
+    # Returns the base type of this enum.
+    # If the type is not an enum, an error is raised.
+    #
+    # ```
+    # enum Color
+    #   Red
+    #   Green
+    #   Blue
+    # end
+    #
+    # enum IOMode : UInt16
+    #   Read
+    #   Write
+    #   Async
+    # end
+    #
+    # {{Color.base_type}}  # => Int32
+    # {{IOMode.base_type}} # => UInt16
+    # ```
+    def base_type : TypeNode
+    end
+
     # Returns the type variables of the generic type. If the type is not
     # generic, an empty array is returned.
     def type_vars : ArrayLiteral(TypeNode)
