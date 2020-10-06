@@ -1876,10 +1876,10 @@ module Crystal::Macros
     #   Async
     # end
     #
-    # {{Color.base_type}}  # => Int32
-    # {{IOMode.base_type}} # => UInt16
+    # {{Color.enum_base_type}}  # => Int32
+    # {{IOMode.enum_base_type}} # => UInt16
     # ```
-    def base_type : TypeNode
+    def enum_base_type : TypeNode
     end
 
     # Returns the type variables of the generic type. If the type is not

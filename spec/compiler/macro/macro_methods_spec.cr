@@ -1956,22 +1956,22 @@ module Crystal
         end
       end
 
-      describe "#base_type" do
+      describe "#enum_base_type" do
         it "with Int32" do
-          assert_macro("e", "{{e.base_type}}", "Int32") do |program|
+          assert_macro("e", "{{e.enum_base_type}}", "Int32") do |program|
             [TypeNode.new(EnumType.new(program, program, "Color", program.int32))] of ASTNode
           end
         end
 
         it "with UInt16" do
-          assert_macro("e", "{{e.base_type}}", "UInt16") do |program|
+          assert_macro("e", "{{e.enum_base_type}}", "UInt16") do |program|
             [TypeNode.new(EnumType.new(program, program, "Color", program.uint16))] of ASTNode
           end
         end
 
         it "with Non enum type" do
-          expect_raises(Crystal::TypeException, "undefined method 'base_type' for TypeNode of type String (must be an enum type)") do
-            assert_macro("e", "{{e.base_type}}", "UInt16") do |program|
+          expect_raises(Crystal::TypeException, "undefined method 'enum_base_type' for TypeNode of type String (must be an enum type)") do
+            assert_macro("e", "{{e.enum_base_type}}", "UInt16") do |program|
               [TypeNode.new(program.string)] of ASTNode
             end
           end

@@ -1603,11 +1603,11 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "includers"
         interpret_argless_method(method, args) { TypeNode.includers(type) }
-      when "base_type"
+      when "enum_base_type"
         interpret_argless_method(method, args) do
           type = self.type.instance_type
 
-          raise "undefined method 'base_type' for TypeNode of type #{type} (must be an enum type)" unless type.is_a? EnumType
+          raise "undefined method 'enum_base_type' for TypeNode of type #{type} (must be an enum type)" unless type.is_a? EnumType
 
           TypeNode.new type.base_type
         end
