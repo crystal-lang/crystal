@@ -186,6 +186,10 @@ module Crystal
       value.simple_literal?
     end
 
+    def needs_init_flag?
+      !(initializer || no_init_flag? || simple?)
+    end
+
     @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
     @computed_compile_time_value = false
 
