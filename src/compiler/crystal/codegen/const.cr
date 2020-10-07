@@ -209,7 +209,7 @@ class Crystal::CodeGenVisitor
   def read_const_pointer(const)
     const.read = true
 
-    if const == @program.argc || const == @program.argv || const.initializer || const.no_init_flag?
+    if const == @program.argc || const == @program.argv || const.initializer || const.no_init_flag? || const.simple?
       global_name = const.llvm_name
       global = declare_const(const)
 
