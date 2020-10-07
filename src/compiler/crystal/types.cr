@@ -3133,6 +3133,10 @@ module Crystal
     property vars : MetaVars?
     property? used = false
     property? visited = false
+
+    # Is this constant accessed with pointerof(...)?
+    property? pointer_read = false
+
     property visitor : MainVisitor?
 
     def initialize(program, namespace, name, @value)

@@ -183,10 +183,14 @@ module Crystal
     # Returns `true` if this constant's value is a simple literal, like
     # `nil`, a number, char, string or symbol literal.
     def simple?
+      return false if pointer_read?
+
       value.simple_literal?
     end
 
     def needs_init_flag?
+      return true if pointer_read?
+
       !(initializer || no_init_flag? || simple?)
     end
 
