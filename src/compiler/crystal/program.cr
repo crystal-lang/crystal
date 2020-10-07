@@ -118,6 +118,8 @@ module Crystal
 
     property codegen_target = Config.host_target
 
+    getter predefined_constants = Array(Const).new
+
     def initialize
       super(self, self, "main")
 
@@ -212,6 +214,9 @@ module Crystal
       argc_unsafe.no_init_flag = true
       argv_unsafe.no_init_flag = true
 
+      predefined_constants << argc_unsafe
+      predefined_constants << argv_unsafe
+
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
       const_initializers << argc_unsafe
       const_initializers << argv_unsafe
@@ -278,7 +283,9 @@ module Crystal
     end
 
     private def define_crystal_constant(name, value)
-      crystal.types[name] = Const.new self, crystal, name, value
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.no_init_flag = true
+      predefined_constants << const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
