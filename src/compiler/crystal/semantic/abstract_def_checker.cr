@@ -322,7 +322,7 @@ class Crystal::AbstractDefChecker
   end
 
   private def report_error(node, message)
-    node.raise(message, nil, Crystal::AbstractDefImplementationError)
+    node.raise(message, nil)
   end
 
   class ReplacePathWithTypeVar < Visitor

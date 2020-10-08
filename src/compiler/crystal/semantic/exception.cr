@@ -171,9 +171,6 @@ module Crystal
     end
   end
 
-  class AbstractDefImplementationError < TypeException
-  end
-
   class MethodTraceException < Exception
     def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
