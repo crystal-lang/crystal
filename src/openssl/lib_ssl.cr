@@ -99,6 +99,9 @@ lib LibSSL
     NO_TLS_V1_3 = 0x20000000
     NO_TLS_V1_2 = 0x08000000
     NO_TLS_V1_1 = 0x10000000
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+      NO_RENEGOTIATION = 0x40000000
+    {% end %}
 
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000

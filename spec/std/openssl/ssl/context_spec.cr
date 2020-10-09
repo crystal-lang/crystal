@@ -41,6 +41,9 @@ describe OpenSSL::SSL::Context do
     (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
     (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
     (context.options & OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE).should eq(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
+    {% end %}
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)

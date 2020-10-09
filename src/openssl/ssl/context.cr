@@ -191,6 +191,10 @@ abstract class OpenSSL::SSL::Context
       SINGLE_DH_USE
     ))
 
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      add_options(OpenSSL::SSL::Options::NO_RENEGOTIATION)
+    {% end %}
+
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
