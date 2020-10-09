@@ -387,6 +387,17 @@ describe BigDecimal do
     bd6.to_f!.should eq -1.1
   end
 
+  it "handles modulus correctly" do
+    (BigDecimal.new(13.0) % BigDecimal.new(4.0)).should eq(BigDecimal.new(1.0))
+    (BigDecimal.new(13.0) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-3.0))
+    (BigDecimal.new(-13.0) % BigDecimal.new(4.0)).should eq(BigDecimal.new(3.0))
+    (BigDecimal.new(-13.0) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-1.0))
+    (BigDecimal.new(11.5) % BigDecimal.new(4.0)).should eq(BigDecimal.new(3.5))
+    (BigDecimal.new(11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-0.5))
+    (BigDecimal.new(-11.5) % BigDecimal.new(4.0)).should eq(BigDecimal.new(0.5))
+    (BigDecimal.new(-11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-3.5))
+end
+
   it "hashes" do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
