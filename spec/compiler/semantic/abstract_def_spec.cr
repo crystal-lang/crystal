@@ -395,8 +395,8 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "warning if missing return type" do
-    assert_warning <<-CR,
+  it "errors if missing return type" do
+    assert_error <<-CR,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -407,11 +407,11 @@ describe "Semantic: abstract def" do
         end
       end
       CR
-      "warning in line 6\nWarning: this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+      "this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
-  it "warning if different return type" do
-    assert_warning <<-CR,
+  it "errors if different return type" do
+    assert_error <<-CR,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -425,7 +425,7 @@ describe "Semantic: abstract def" do
         end
       end
       CR
-      "warning in line 9\nWarning: this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
+      "this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
   end
 
   it "can return a more specific type" do
@@ -542,8 +542,8 @@ describe "Semantic: abstract def" do
     ))
   end
 
-  it "is missing a return type in subclass of generic subclass" do
-    assert_warning <<-CR,
+  it "errors if missing a return type in subclass of generic subclass" do
+    assert_error <<-CR,
         abstract class Foo(T)
           abstract def foo : T
         end
@@ -553,11 +553,11 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 6\nWarning: this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+      "this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
-  it "can't find parent return type" do
-    assert_warning <<-CR,
+  it "errors if can't find parent return type" do
+    assert_error <<-CR,
         abstract class Foo
           abstract def foo : Unknown
         end
@@ -567,11 +567,11 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 2\nWarning: can't resolve return type Unknown"
+      "can't resolve return type Unknown"
   end
 
-  it "can't find child return type" do
-    assert_warning <<-CR,
+  it "errors if can't find child return type" do
+    assert_error <<-CR,
         abstract class Foo
           abstract def foo : Int32
         end
@@ -581,7 +581,7 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 6\nWarning: can't resolve return type Unknown"
+      "can't resolve return type Unknown"
   end
 
   it "doesn't crash when abstract method is implemented by supertype (#8031)" do
