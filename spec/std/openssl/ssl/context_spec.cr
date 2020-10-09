@@ -111,7 +111,7 @@ describe OpenSSL::SSL::Context do
   end
 
   it "sets cipher_suites" do
-    cipher_suites = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    cipher_suites = OpenSSL::SSL::Context::CIPHER_SUITES_MODERN
     context = OpenSSL::SSL::Context::Client.new
     {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
       (context.cipher_suites = cipher_suites).should eq(cipher_suites)
