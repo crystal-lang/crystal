@@ -110,6 +110,18 @@ describe OpenSSL::SSL::Context do
     (context.ciphers = ciphers).should eq(ciphers)
   end
 
+  it "sets cipher_suites" do
+    cipher_suites = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
+    context = OpenSSL::SSL::Context::Client.new
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      (context.cipher_suites = cipher_suites).should eq(cipher_suites)
+    {% else %}
+      expect_raises(Exception, "SSL_CTX_set_ciphersuites not supported") do
+        (context.cipher_suites = cipher_suites).should eq(cipher_suites)
+      end
+    {% end %}
+  end
+
   it "adds temporary ecdh curve (P-256)" do
     context = OpenSSL::SSL::Context::Client.new
     context.set_tmp_ecdh_key

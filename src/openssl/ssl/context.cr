@@ -258,6 +258,16 @@ abstract class OpenSSL::SSL::Context
     ciphers
   end
 
+  def cipher_suites=(cipher_suites : String)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
+      raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
+      cipher_suites
+    {% else %}
+      raise "SSL_CTX_set_ciphersuites not supported"
+    {% end %}
+  end
+
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
   def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)

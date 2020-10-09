@@ -199,6 +199,7 @@ lib LibSSL
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
     fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
+    fun ssl_ctx_set_ciphersuites = SSL_CTX_set_ciphersuites(ctx : SSLContext, ciphers : Char*) : Int
   {% end %}
 
   @[Raises]
