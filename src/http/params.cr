@@ -221,7 +221,7 @@ module HTTP
     # *default* value when there is no such param.
     #
     # ```
-    # params.fetch("email", "none@example.org")           # => "john@example.org"
+    # params.fetch("email", "none@example.org")           # => "none@example.org"
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
     def fetch(name, default)

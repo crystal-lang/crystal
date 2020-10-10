@@ -74,10 +74,10 @@ enum HTTP::Status
   # ```
   # require "http/status"
   #
-  # HTTP::Status.new(100)  # => CONTINUE
-  # HTTP::Status.new(202)  # => ACCEPTED
-  # HTTP::Status.new(123)  # => 123
-  # HTTP::Status.new(1000) # raises ArgumentError
+  # HTTP::Status.new(100).to_s # => "CONTINUE"
+  # HTTP::Status.new(202).to_s # => "ACCEPTED"
+  # HTTP::Status.new(123).to_s # => "123"
+  # HTTP::Status.new(1000)     # raises ArgumentError
   # ```
   def self.new(status_code : Int32)
     raise ArgumentError.new("Invalid HTTP status code: #{status_code}") unless 100 <= status_code <= 999
@@ -150,7 +150,7 @@ enum HTTP::Status
   # require "http/status"
   #
   # HTTP::Status::INTERNAL_SERVER_ERROR.server_error? # => true
-  # HTTP::Status::METHOD_NOT_ALLOWED.server_error?    # => true
+  # HTTP::Status::METHOD_NOT_ALLOWED.server_error?    # => false
   # ```
   def server_error? : Bool
     500 <= code <= 599

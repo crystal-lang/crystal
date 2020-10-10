@@ -18,7 +18,7 @@ struct UUID
   # end
   #
   # example = Example.from_json(%({"id": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
-  # example.id # => UUID(ba714f86-cac6-42c7-8956-bcf5105e1b81)
+  # example.id.hexstring # => "ba714f86cac642c78956bcf5105e1b81"
   # ```
   def self.new(pull : JSON::PullParser)
     new(pull.read_string)

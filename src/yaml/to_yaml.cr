@@ -161,7 +161,7 @@ end
 #   include YAML::Serializable
 #
 #   @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
-#   values : Array(Time)
+#   property values : Array(Time)
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))

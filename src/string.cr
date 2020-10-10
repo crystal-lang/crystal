@@ -1235,7 +1235,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".downcase io
-  # io.to_s # => hello
+  # io.to_s # => "hello"
   # ```
   def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
@@ -1270,7 +1270,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".upcase io
-  # io.to_s # => HELLO
+  # io.to_s # => "HELLO"
   # ```
   def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
@@ -1312,7 +1312,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".capitalize io
-  # io.to_s # => Hello
+  # io.to_s # => "Hello"
   # ```
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
@@ -1357,7 +1357,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "x-men: the last stand".titleize io
-  # io.to_s # => X-men: The Last Stand
+  # io.to_s # => "X-men: The Last Stand"
   # ```
   def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     upcase_next = true
