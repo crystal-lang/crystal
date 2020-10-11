@@ -30,8 +30,11 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def end_inline_code
     @inside_inline_code = false
 
-    text = @code_buffer.to_s
+    @io << detect_code_link(@code_buffer.to_s)
+    super
+  end
 
+  def detect_code_link(text : String) : String
     # Check method reference (without #, but must be the whole text)
     if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
       name = $1
@@ -39,10 +42,7 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
       method = lookup_method @type, name, args
       if method
-        text = method_link method, "#{method.prefix}#{text}"
-        @io << text
-        super
-        return
+        return method_link method, "#{method.prefix}#{text}"
       end
     end
 
@@ -110,10 +110,6 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
       match_text
     end
-
-    @io << text
-
-    super
   end
 
   def begin_code(language = nil)
