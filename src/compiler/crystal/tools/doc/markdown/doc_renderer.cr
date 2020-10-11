@@ -36,9 +36,9 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
   def detect_code_link(text : String) : String
     # Check method reference (without #, but must be the whole text)
-    if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
+    if text =~ /\A([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(\(.+?\))?\Z/
       name = $1
-      args = $~.not_nil![2]? || ""
+      args = $2? || ""
 
       method = lookup_method @type, name, args
       if method
@@ -47,13 +47,13 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
     end
 
     # Check Type#method(...) or Type or #method(...)
-    text = text.gsub /\b
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
+    text.gsub %r(\b
+      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.+?\))?)
         |
       ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*)
         |
-      ((?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
-      /x do |match_text, match|
+      ([#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.+?\))?)
+      )x do |match_text, match|
       sharp_index = match_text.index('#')
       dot_index = match_text.index('.')
       kind = sharp_index ? :instance : :class
