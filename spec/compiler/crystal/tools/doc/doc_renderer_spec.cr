@@ -84,6 +84,12 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
+    it "finds sibling methods with self receiver" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, "self.bar", %(self<a href="Base.html#bar-instance-method">.bar</a>))
+      end
+    end
+
     it "doesn't find parents' methods" do
       {sub, sub_foo, nested, nested_foo}.each do |obj|
         assert_code_link(obj, "bar")
