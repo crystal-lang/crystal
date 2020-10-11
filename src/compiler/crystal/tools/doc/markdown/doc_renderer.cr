@@ -36,7 +36,7 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
   def detect_code_link(text : String) : String
     # Check method reference (without #, but must be the whole text)
-    if text =~ /\A([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(\(.+?\))?\Z/
+    if text =~ /\A([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?\Z/
       name = $1
       args = $2? || ""
 
@@ -48,11 +48,11 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
     # Check Type#method(...) or Type or #method(...)
     text.gsub %r(\b
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.+?\))?)
+      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
         |
       ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*)
         |
-      ([#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.+?\))?)
+      ([#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
       )x do |match_text, match|
       sharp_index = match_text.index('#')
       dot_index = match_text.index('.')

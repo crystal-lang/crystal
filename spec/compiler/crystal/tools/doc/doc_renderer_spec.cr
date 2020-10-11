@@ -106,16 +106,11 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
-    pending "finds method with zero args" do
-      {base, base_foo}.each do |obj|
-        assert_code_link(obj, "bar()", %(<a href="Base.html#bar-instance-method">#bar</a>()))
-      end
-    end
-
     it "finds method with zero args" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "#bar()", %(<a href="Base.html#bar-instance-method">#bar</a>()))
-        assert_code_link(obj, "Base#bar()", %(<a href="Base.html#bar-instance-method">Base#bar</a>()))
+        assert_code_link(obj, "bar()", %(<a href="Base.html#bar-instance-method">#bar()</a>))
+        assert_code_link(obj, "#bar()", %(<a href="Base.html#bar-instance-method">#bar()</a>))
+        assert_code_link(obj, "Base#bar()", %(<a href="Base.html#bar-instance-method">Base#bar()</a>))
       end
     end
 
@@ -141,16 +136,11 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
-    pending "finds method with args even with empty brackets" do
-      {base, base_foo}.each do |obj|
-        assert_code_link(obj, "foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2</a>()))
-      end
-    end
-
     it "finds method with args even with empty brackets" do
       {base, base_foo}.each do |obj|
-        assert_code_link(obj, "#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2</a>()))
-        assert_code_link(obj, "Base#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2</a>()))
+        assert_code_link(obj, "foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2()</a>))
+        assert_code_link(obj, "#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2()</a>))
+        assert_code_link(obj, "Base#foo2()", %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2()</a>))
       end
     end
 
