@@ -98,6 +98,13 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
+    it "doesn't match with different separator" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, ",baz")
+        assert_code_link(obj, "Base:bar", %(<a href="Base.html">Base</a>:bar))
+      end
+    end
+
     it "finds method with args" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "foo2(a, b)", %(<a href="Base.html#foo2(a,b)-instance-method">#foo2(a, b)</a>))
@@ -253,6 +260,13 @@ describe Doc::Markdown::DocRenderer do
     it "doesn't find type not at word boundary" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "aBase")
+      end
+    end
+
+    it "finds multiple kinds of things" do
+      {base, base_foo}.each do |obj|
+        assert_code_link(obj, "Base#foo2(a, a) and #foo3 and Base",
+          %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo3(a,b,c)-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
       end
     end
   end
