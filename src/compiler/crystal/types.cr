@@ -38,6 +38,19 @@ module Crystal
       program
     end
 
+    # The namespaces this type belongs to, excluding the `Program` itself.
+    def namespaces : Array(ModuleType)
+      namespace_types = [] of ModuleType
+
+      ns = self.namespace
+      until ns == program
+        namespace_types << ns
+        ns = ns.namespace
+      end
+
+      namespace_types
+    end
+
     # Returns `true` if this type is abstract.
     def abstract?
       false
