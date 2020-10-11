@@ -7,6 +7,7 @@ lib LibC
   W_OK       = 0x02
   X_OK       = 0x01
   SC_CLK_TCK =    3
+  SC_PAGESIZE = 47
 
   fun chroot(dirname : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int
