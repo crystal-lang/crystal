@@ -77,7 +77,7 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
-    pending "doesn't find sibling methods with fake receiver" do
+    it "doesn't find sibling methods with fake receiver" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "wrong#bar")
         assert_code_link(obj, "wrong.bar")
@@ -183,7 +183,7 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
-    pending "finds method of an absolute type" do
+    it "finds method of an absolute type" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "::Base::Nested#foo", %(<a href="Base/Nested.html#foo-instance-method">::Base::Nested#foo</a>))
         assert_code_link(obj, "::Base.baz", %(<a href="Base.html#baz-class-method">::Base.baz</a>))
@@ -250,7 +250,7 @@ describe Doc::Markdown::DocRenderer do
       end
     end
 
-    pending "doesn't find type not at word boundary" do
+    it "doesn't find type not at word boundary" do
       {base, base_foo}.each do |obj|
         assert_code_link(obj, "aBase")
       end

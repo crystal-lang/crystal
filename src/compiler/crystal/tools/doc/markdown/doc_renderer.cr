@@ -47,12 +47,12 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
     end
 
     # Check Type#method(...) or Type or #method(...)
-    text.gsub %r(\b
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
+    text.gsub %r(
+      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
         |
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*)
+      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*)
         |
-      ([#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
+      (\B[#\.][\w<=>+\-*\/\[\]&|?!^~]+[?!]?(?:\(.*?\))?)
       )x do |match_text, match|
       sharp_index = match_text.index('#')
       dot_index = match_text.index('.')
