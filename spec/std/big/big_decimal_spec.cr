@@ -396,7 +396,7 @@ describe BigDecimal do
     (BigDecimal.new(11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-0.5))
     (BigDecimal.new(-11.5) % BigDecimal.new(4.0)).should eq(BigDecimal.new(0.5))
     (BigDecimal.new(-11.5) % BigDecimal.new(-4.0)).should eq(BigDecimal.new(-3.5))
-end
+  end
 
   it "hashes" do
     bd1 = BigDecimal.new("123.456")

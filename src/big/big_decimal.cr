@@ -305,10 +305,6 @@ struct BigDecimal < Number
     BigDecimal.new(@value ** other, @scale * other)
   end
 
-  def **(other : BigDecimal) : BigDecimal
-    self ** other.value
-  end
-
   def ceil : BigDecimal
     mask = power_ten_to(@scale)
     diff = (mask - @value % mask) % mask
