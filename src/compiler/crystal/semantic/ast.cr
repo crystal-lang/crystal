@@ -784,6 +784,12 @@ module Crystal
     end
   end
 
+  class ProcLiteral
+    # If this ProcLiteral was created from expanding a ProcPointer,
+    # this holds the reference to it.
+    property proc_pointer : ProcPointer?
+  end
+
   class ProcPointer
     property expanded : ASTNode?
   end

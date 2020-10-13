@@ -276,7 +276,7 @@ describe "Semantic: closure" do
       foo = Foo.new
       LibC.foo(->foo.bar)
       ),
-      "can't send closure to C function (closured vars: self)"
+      "can't send closure to C function (closured vars: foo)"
   end
 
   it "errors if sending closured proc pointer to C (3)" do

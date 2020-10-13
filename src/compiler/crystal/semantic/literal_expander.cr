@@ -695,6 +695,7 @@ module Crystal
 
       body = Call.new(obj, node.name, call_args).at(node)
       proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal.proc_pointer = node
 
       Expressions.new([assign, proc_literal])
     end
