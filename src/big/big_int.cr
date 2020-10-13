@@ -404,7 +404,11 @@ struct BigInt < Int
 
   # Mutating +
   def add!(other : BigInt) : BigInt
-    LibGMP.add(mpz, self, other)
+    if @mpz == other.@mpz
+      mul!(2)
+    else
+      LibGMP.add(mpz, self, other)
+    end
     self
   end
 
@@ -422,7 +426,11 @@ struct BigInt < Int
 
   # Mutating -
   def sub!(other : BigInt) : BigInt
-    LibGMP.sub(mpz, self, other)
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.sub(mpz, self, other)
+    end
     self
   end
 
@@ -461,7 +469,16 @@ struct BigInt < Int
 
   # Mutating *
   def mul!(other : BigInt) : BigInt
-    LibGMP.mul(mpz, self, other)
+    if @mpz == other.@mpz
+      if self > 0
+        LibGMP.pow_ui(mpz, self, 2)
+      else
+        LibGMP.pow_ui(mpz, self, 2)
+        neg!
+      end
+    else
+      LibGMP.mul(mpz, self, other)
+    end
     self
   end
 
@@ -503,7 +520,11 @@ struct BigInt < Int
   end
 
   def unsafe_floored_div!(other : BigInt) : BigInt
-    LibGMP.fdiv_q(mpz, self, other)
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 1)
+    else
+      LibGMP.fdiv_q(mpz, self, other)
+    end
     self
   end
 
@@ -520,7 +541,11 @@ struct BigInt < Int
   end
 
   def unsafe_truncated_div!(other : BigInt) : BigInt
-    LibGMP.tdiv_q(mpz, self, other)
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 1)
+    else
+      LibGMP.tdiv_q(mpz, self, other)
+    end
     self
   end
 
@@ -555,7 +580,11 @@ struct BigInt < Int
   end
 
   def unsafe_floored_mod!(other : BigInt) : BigInt
-    LibGMP.fdiv_r(mpz, self, other)
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.fdiv_r(mpz, self, other)
+    end
     self
   end
 
@@ -573,7 +602,11 @@ struct BigInt < Int
   end
 
   def unsafe_truncated_mod!(other : BigInt) : BigInt
-    LibGMP.tdiv_r(mpz, self, other)
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.tdiv_r(mpz, self, other)
+    end
     self
   end
 
