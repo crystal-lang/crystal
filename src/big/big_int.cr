@@ -402,7 +402,7 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # Mutating +
+  # Mutating `#+`
   def add!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       mul!(2)
@@ -412,7 +412,7 @@ struct BigInt < Int
     self
   end
 
-  # Mutating +
+  # Mutating `#+`
   def add!(other : Int) : BigInt
     if other < 0
       sub!(other.abs)
@@ -424,7 +424,7 @@ struct BigInt < Int
     end
   end
 
-  # Mutating -
+  # Mutating `#-`
   def sub!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 0)
@@ -434,7 +434,7 @@ struct BigInt < Int
     self
   end
 
-  # Mutating -
+  # Mutating `#-`
   def sub!(other : Int) : BigInt
     if other < 0
       add!(other.abs)
@@ -446,17 +446,19 @@ struct BigInt < Int
     end
   end
 
+  # Mutating `#abs`
   def abs! : BigInt
     LibGMP.abs(mpz, self)
     self
   end
 
-  # Mutating unary -
+  # Mutating unary `#-`
   def neg! : BigInt
     LibGMP.neg(mpz, self)
     self
   end
 
+  # Mutating `#factorial`
   def factorial! : BigInt
     if self < 0
       raise ArgumentError.new("Factorial not defined for negative values")
@@ -467,7 +469,7 @@ struct BigInt < Int
     self
   end
 
-  # Mutating *
+  # Mutating `#*`
   def mul!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       if self > 0
@@ -482,28 +484,30 @@ struct BigInt < Int
     self
   end
 
-  # Mutating *
+  # Mutating `#*`
   def mul!(other : LibGMP::IntPrimitiveSigned) : BigInt
     LibGMP.mul_si(mpz, self, other)
     self
   end
 
-  # Mutating *
+  # Mutating `#*`
   def mul!(other : LibGMP::IntPrimitiveUnsigned) : BigInt
     LibGMP.mul_ui(mpz, self, other)
     self
   end
 
-  # Mutating *
+  # Mutating `#*`
   def mul!(other : Int) : BigInt
     mul!(other.to_big_i)
   end
 
+  # Mutating `#fdiv`
   def fdiv!(other : Int::Unsigned) : BigInt
     check_division_by_zero(other)
     unsafe_floored_div!(other)
   end
 
+  # Mutating `#fdiv`
   def fdiv!(other : Int) : BigInt
     check_division_by_zero(other)
 
@@ -514,11 +518,13 @@ struct BigInt < Int
     end
   end
 
+  # Mutating `#tdiv`
   def tdiv!(other : Int) : BigInt
     check_division_by_zero(other)
     unsafe_truncated_div!(other)
   end
 
+  # Mutating `#unsafe_floored_div`
   def unsafe_floored_div!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 1)
@@ -528,6 +534,7 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_floored_div`
   def unsafe_floored_div!(other : Int) : BigInt
     if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
       unsafe_floored_div!(other.to_big_i)
@@ -540,6 +547,7 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_truncated_div`
   def unsafe_truncated_div!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 1)
@@ -549,6 +557,7 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_truncated_div`
   def unsafe_truncated_div!(other : Int) : BigInt
     if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
       unsafe_truncated_div!(other.to_big_i)
@@ -561,7 +570,7 @@ struct BigInt < Int
     self
   end
 
-  # Mutating %
+  # Mutating `#%`
   def mod!(other : Int) : BigInt
     check_division_by_zero(other)
 
@@ -574,11 +583,13 @@ struct BigInt < Int
     end
   end
 
+  # Mutating `#remainder`
   def remainder!(other : Int) : BigInt
     check_division_by_zero(other)
     unsafe_truncated_mod!(other)
   end
 
+  # Mutating `#unsafe_floored_mod`
   def unsafe_floored_mod!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 0)
@@ -588,6 +599,7 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_floored_mod`
   def unsafe_floored_mod!(other : Int) : BigInt
     if other < LibGMP::Long::MIN || other > LibGMP::ULong::MAX
       unsafe_floored_mod!(other.to_big_i)
@@ -601,6 +613,7 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_truncated_mod`
   def unsafe_truncated_mod!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 0)
@@ -610,53 +623,55 @@ struct BigInt < Int
     self
   end
 
+  # Mutating `#unsafe_truncated_mod`
   def unsafe_truncated_mod!(other : LibGMP::IntPrimitive) : BigInt
     LibGMP.tdiv_r_ui(mpz, self, other.abs)
     self
   end
 
+  # Mutating `#unsafe_truncated_mod`
   def unsafe_truncated_mod!(other : Int) : BigInt
     LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i)
     self
   end
 
-  # Mutating ~
+  # Mutating `#~`
   def com! : BigInt
     LibGMP.com(mpz, self)
     self
   end
 
-  # Mutating &
+  # Mutating `#&`
   def and!(other : Int) : BigInt
     LibGMP.and(mpz, self, other.to_big_i)
     self
   end
 
-  # Mutating |
+  # Mutating `#|`
   def or!(other : Int) : BigInt
     LibGMP.ior(mpz, self, other.to_big_i)
     self
   end
 
-  # Mutating ^
+  # Mutating `#^`
   def xor!(other : Int) : BigInt
     LibGMP.xor(mpz, self, other.to_big_i)
     self
   end
 
-  # Mutating >>
+  # Mutating `#>>`
   def rshift!(other : Int) : BigInt
     LibGMP.fdiv_q_2exp(mpz, self, other)
     self
   end
 
-  # Mutating <<
+  # Mutating `#<<`
   def lshift!(other : Int) : BigInt
     LibGMP.mul_2exp(mpz, self, other)
     self
   end
 
-  # Mutating **
+  # Mutating `#**`
   def pow!(other : Int) : BigInt
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
@@ -1047,4 +1062,3 @@ struct Crystal::Hasher
     end
   end
 end
-
