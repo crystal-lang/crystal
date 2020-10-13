@@ -528,6 +528,10 @@ module Crystal
     def transform(node : ProcPointer)
       super
 
+      if expanded = node.expanded
+        return transform(expanded)
+      end
+
       if call = node.call?
         result = call.transform(self)
 

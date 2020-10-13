@@ -783,4 +783,8 @@ module Crystal
       Unreachable.new
     end
   end
+
+  class ProcPointer
+    property expanded : ASTNode?
+  end
 end
