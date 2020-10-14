@@ -139,7 +139,15 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def begin_link(url)
     @io << %(<a href=")
     @io << url
-    @io << %(" target="_blank">)
+    @io << '"'
+
+    # Don't open anchor links in new tab.
+    unless url.starts_with? '#'
+      @io << %( target="_blank")
+    end
+
+    @io << '>'
+
     @inside_link = true
   end
 
