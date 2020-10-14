@@ -50,7 +50,7 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
     text = text.gsub /\b
       ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
         |
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*)
+      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*(?:@[\w\d\-\_]+)*)
         |
       ((?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
       /x do |match_text, match|
@@ -84,9 +84,11 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
       # Type
       if match[2]?
-        another_type = @type.lookup_path(match_text)
+        search_text, anchor = match_text.includes?('@') ? match_text.split('@') : {match_text, nil}
+
+        another_type = @type.lookup_path(search_text)
         if another_type && another_type.must_be_included?
-          next type_link another_type, match_text
+          next type_link another_type, match_text, anchor
         end
       end
 
@@ -167,8 +169,8 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
     super(text)
   end
 
-  def type_link(type, text)
-    %(<a href="#{type.path_from(@type)}">#{text}</a>)
+  def type_link(type, text, anchor : String? = nil)
+    %(<a href="#{type.path_from(@type)}##{anchor}">#{text}</a>)
   end
 
   def method_link(method, text)
