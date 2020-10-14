@@ -424,7 +424,7 @@ struct BigInt < Int
     end
   end
 
-  # Mutating `#-`
+  # Mutating `#-(other)`
   def sub!(other : BigInt) : BigInt
     if @mpz == other.@mpz
       LibGMP.set_ui(mpz, 0)
@@ -636,7 +636,7 @@ struct BigInt < Int
   end
 
   # Mutating `#~`
-  def com! : BigInt
+  def complement! : BigInt
     LibGMP.com(mpz, self)
     self
   end

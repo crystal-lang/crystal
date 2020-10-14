@@ -446,7 +446,7 @@ describe "BigInt" do
   it "does bitwise not (mutating)" do
     a = BigInt.new("192623876123689865327")
     b = BigInt.new("-192623876123689865328")
-    a.com!
+    a.complement!
     a.should eq(b)
   end
 
@@ -607,4 +607,3 @@ describe "BigInt Math" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
   end
 end
-
