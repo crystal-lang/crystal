@@ -144,23 +144,10 @@ lib LibLLVMExt
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef
 
-  # build_call is deprecated in favor of build_call2, in preparation for opaque pointer types.
-  fun build_call = LLVMExtBuildCall(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                    args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                    bundle : LibLLVMExt::OperandBundleDefRef,
-                                    name : LibC::Char*) : LibLLVM::ValueRef
-
   fun build_call2 = LLVMExtBuildCall2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
                                       args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
                                       bundle : LibLLVMExt::OperandBundleDefRef,
                                       name : LibC::Char*) : LibLLVM::ValueRef
-
-  # build_invoke is deprecated in favor of build_invoke2, in preparation for opaque pointer types.
-  fun build_invoke = LLVMExtBuildInvoke(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                        args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                        then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
-                                        bundle : LibLLVMExt::OperandBundleDefRef,
-                                        name : LibC::Char*) : LibLLVM::ValueRef
 
   fun build_invoke2 = LLVMExtBuildInvoke2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
                                           args : LibLLVM::ValueRef*, arg_count : LibC::UInt,

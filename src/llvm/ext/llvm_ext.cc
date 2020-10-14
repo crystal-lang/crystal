@@ -425,11 +425,14 @@ OperandBundleDef *LLVMExtBuildOperandBundleDef(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCall(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildCall2(
+    LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     OperandBundleDef *Bundle, const char *Name) {
-#if LLVM_VERSION_GE(11, 0)
-  exit(1);
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+       (llvm::FunctionType*) unwrap(Ty), unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
 #elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
@@ -440,25 +443,16 @@ LLVMValueRef LLVMExtBuildCall(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCall2(
-    LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
-    OperandBundleDef *Bundle, const char *Name) {
-#if LLVM_VERSION_GE(11, 0)
-  unsigned Len = Bundle ? 1 : 0;
-  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
-  return wrap(unwrap(B)->CreateCall(
-       (llvm::FunctionType*) unwrap(Ty), unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
-#else
-  exit(1);
-#endif
-}
-
-LLVMValueRef LLVMExtBuildInvoke(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildInvoke2(
+    LLVMBuilderRef B,  LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
     const char *Name) {
-#if LLVM_VERSION_GE(11, 0)
-  exit(1);
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
 #elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
@@ -467,21 +461,6 @@ LLVMValueRef LLVMExtBuildInvoke(
                                       Bundles, Name));
 #else
   return LLVMBuildInvoke(B, Fn, Args, NumArgs, Then, Catch, Name);
-#endif
-}
-
-LLVMValueRef LLVMExtBuildInvoke2(
-    LLVMBuilderRef B,  LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
-    LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
-    const char *Name) {
-#if LLVM_VERSION_GE(11, 0)
-  unsigned Len = Bundle ? 1 : 0;
-  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
-  return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
-                                      makeArrayRef(unwrap(Args), NumArgs),
-                                      Bundles, Name));
-#elif LLVM_VERSION_GE(3, 8)
-  exit(1);
 #endif
 }
 

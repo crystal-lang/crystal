@@ -32,6 +32,8 @@ end
     IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
 
     IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
+    IS_LT_80 = IS_LT_70 || IS_70 || IS_71
+    IS_LT_110 = IS_LT_80 || IS_90 || IS_100 || IS_110
   end
 {% end %}
 
@@ -81,9 +83,13 @@ lib LibLLVM
   fun build_atomicrmw = LLVMBuildAtomicRMW(builder : BuilderRef, op : LLVM::AtomicRMWBinOp, ptr : ValueRef, val : ValueRef, ordering : LLVM::AtomicOrdering, singlethread : Int32) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : UInt8*) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
-  # LLVMBuildCall is deprecated in favor of LLVMBuildCall2, in preparation for opaque pointer types.
-  fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
-  fun build_call2 = LLVMBuildCall2(builder : BuilderRef, type : TypeRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
+  {% if LibLLVM::IS_LT_110 %}
+    # LLVMBuildCall is deprecated in favor of LLVMBuildCall2, in preparation for opaque pointer types.
+    fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
+  {% end %}
+  {% unless LibLLVM::IS_LT_80 %}
+    fun build_call2 = LLVMBuildCall2(builder : BuilderRef, type : TypeRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : UInt8*) : ValueRef
+  {% end %}
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef) : ValueRef
   fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : UInt8*) : ValueRef
@@ -102,9 +108,13 @@ lib LibLLVM
   fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : UInt8*, name : UInt8*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : LLVM::IntPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
-  # LLVMBuildInvoke is deprecated in favor of LLVMBuildInvoke2, in preparation for opaque pointer types.
-  fun build_invoke = LLVMBuildInvoke(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
-  fun build_invoke2 = LLVMBuildInvoke2(builder : BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
+  {% if LibLLVM::IS_LT_110 %}
+    # LLVMBuildInvoke is deprecated in favor of LLVMBuildInvoke2, in preparation for opaque pointer types.
+    fun build_invoke = LLVMBuildInvoke(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
+  {% end %}
+  {% unless LibLLVM::IS_LT_80 %}
+    fun build_invoke2 = LLVMBuildInvoke2(builder : BuilderRef, ty : TypeRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : UInt8*) : ValueRef
+  {% end %}
   fun build_landing_pad = LLVMBuildLandingPad(builder : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt32, name : UInt8*) : ValueRef
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : UInt8*) : ValueRef
   fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef

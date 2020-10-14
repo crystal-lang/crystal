@@ -52,10 +52,10 @@ class LLVM::Builder
   def call(func, name : String = "")
     # check_func(func)
 
-    {% if LibLLVM::IS_110 %}
-      Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
-    {% else %}
+    {% if LibLLVM::IS_LT_80 %}
       Value.new LibLLVM.build_call(self, func, nil, 0, name)
+    {% else %}
+      Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
     {% end %}
   end
 
@@ -64,10 +64,10 @@ class LLVM::Builder
     # check_value(arg)
 
     value = arg.to_unsafe
-    {% if LibLLVM::IS_110 %}
-      Value.new LibLLVM.build_call2(self, func.function_type func, pointerof(value), 1, name)
-    {% else %}
+    {% if LibLLVM::IS_LT_80 %}
       Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
+    {% else %}
+      Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
     {% end %}
   end
 
@@ -75,11 +75,7 @@ class LLVM::Builder
     # check_func(func)
     # check_values(args)
 
-    {% if LibLLVM::IS_110 %}
-      Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
-    {% else %}
-      Value.new LibLLVMExt.build_call(self, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
-    {% end %}
+    Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
   end
 
   def alloca(type, name = "")
@@ -222,11 +218,7 @@ class LLVM::Builder
   def invoke(fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 
-    {% if LibLLVM::IS_110 %}
-      Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
-    {% else %}
-      Value.new LibLLVMExt.build_invoke self, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
-    {% end %}
+    Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
   end
 
   def switch(value, otherwise, cases)
