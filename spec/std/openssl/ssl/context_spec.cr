@@ -139,6 +139,13 @@ describe OpenSSL::SSL::Context do
     end
   end
 
+  it "changes security level" do
+    context = OpenSSL::SSL::Context::Client.new
+    level = context.security_level
+    context.security_level = level + 1
+    context.security_level.should eq(level + 1)
+  end
+
   it "adds temporary ecdh curve (P-256)" do
     context = OpenSSL::SSL::Context::Client.new
     context.set_tmp_ecdh_key

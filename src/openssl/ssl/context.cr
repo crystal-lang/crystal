@@ -303,6 +303,25 @@ abstract class OpenSSL::SSL::Context
     {% end %}
   end
 
+  # Returns the security level used by this TLS context.
+  def security_level : Int32
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_get_security_level(@handle)
+    {% else %}
+      raise "SSL_CTX_get_security_level not supported"
+    {% end %}
+  end
+
+  # Sets the security level used by this TLS context.
+  def security_level=(value : Int32)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_set_security_level(@handle, value)
+      value
+    {% else %}
+      raise "SSL_CTX_set_security_level not supported"
+    {% end %}
+  end
+
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
   def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
