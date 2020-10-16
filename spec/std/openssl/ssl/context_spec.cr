@@ -101,16 +101,42 @@ describe OpenSSL::SSL::Context do
     expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
   end
 
-  pending "uses intermediate default ciphers" do
-    # Can't be checked because `Context#ciphers` is not implemented.
-    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_OLD
-    OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
-  end
+  describe "ciphers" do
+    pending "uses intermediate default ciphers" do
+      # Can't be checked because `Context#ciphers` is not implemented.
+      OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_OLD
+      OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+    end
 
-  it "sets ciphers" do
-    ciphers = "EDH+aRSA DES-CBC3-SHA !RC4"
-    context = OpenSSL::SSL::Context::Client.new
-    (context.ciphers = ciphers).should eq(ciphers)
+    it "sets ciphers" do
+      ciphers = "EDH+aRSA DES-CBC3-SHA !RC4"
+      context = OpenSSL::SSL::Context::Client.new
+      (context.ciphers = ciphers).should eq(ciphers)
+    end
+
+    it "sets cipher_suites" do
+      cipher_suites = OpenSSL::SSL::Context::CIPHER_SUITES_MODERN
+      context = OpenSSL::SSL::Context::Client.new
+      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+        (context.cipher_suites = cipher_suites).should eq(cipher_suites)
+      {% else %}
+        expect_raises(Exception, "SSL_CTX_set_ciphersuites not supported") do
+          (context.cipher_suites = cipher_suites).should eq(cipher_suites)
+        end
+      {% end %}
+    end
+
+    it "sets modern ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_modern_ciphers
+    end
+
+    it "sets intermediate ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_intermediate_ciphers
+    end
+
+    it "sets old ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_old_ciphers
+    end
   end
 
   it "adds temporary ecdh curve (P-256)" do
