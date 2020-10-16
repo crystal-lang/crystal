@@ -258,6 +258,7 @@ abstract class OpenSSL::SSL::Context
     ciphers
   end
 
+  # Specify a list of TLS cipher suites to use or discard.
   def cipher_suites=(cipher_suites : String)
     {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
@@ -265,6 +266,36 @@ abstract class OpenSSL::SSL::Context
       cipher_suites
     {% else %}
       raise "SSL_CTX_set_ciphersuites not supported"
+    {% end %}
+  end
+
+  # Sets the current ciphers and ciphers suites to **modern** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`.
+  def set_modern_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_MODERN
+    {% else %}
+      self.ciphers = CIPHERS_MODERN
+    {% end %}
+  end
+
+  # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`.
+  def set_intermediate_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
+    {% else %}
+      self.ciphers = CIPHERS_INTERMEDIATE
+    {% end %}
+  end
+
+  # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`.
+  def set_old_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_OLD
+    {% else %}
+      self.ciphers = CIPHERS_OLD
     {% end %}
   end
 
