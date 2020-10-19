@@ -363,6 +363,11 @@ class Socket < IO
 
   protected def recvfrom(bytes)
     sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = family
+    sockaddr.value = copy
+
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
     bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
