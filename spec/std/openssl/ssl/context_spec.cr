@@ -117,13 +117,7 @@ describe OpenSSL::SSL::Context do
     it "sets cipher_suites" do
       cipher_suites = OpenSSL::SSL::Context::CIPHER_SUITES_MODERN
       context = OpenSSL::SSL::Context::Client.new
-      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
-        (context.cipher_suites = cipher_suites).should eq(cipher_suites)
-      {% else %}
-        expect_raises(Exception, "SSL_CTX_set_ciphersuites not supported") do
-          (context.cipher_suites = cipher_suites).should eq(cipher_suites)
-        end
-      {% end %}
+      (context.cipher_suites = cipher_suites).should eq(cipher_suites)
     end
 
     it "sets modern ciphers" do
