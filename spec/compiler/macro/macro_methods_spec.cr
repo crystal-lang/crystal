@@ -10,6 +10,14 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
   container.class_vars[name] = var
 end
 
+private def assert_hash_delete(key, expected)
+  assert_macro("",
+    %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete #{key}}}),
+    [] of ASTNode,
+    expected
+  )
+end
+
 module Crystal
   describe Macro do
     describe "node methods" do
@@ -953,6 +961,13 @@ module Crystal
           end
         end
       end
+
+      describe "#delete" do
+        it "with String key" { assert_hash_delete %("1"), %({1 => 1, :"1" => :"1", true => true}) }
+        it "with Symbol key" { assert_hash_delete %(:"1"), %({"1" => "1", 1 => 1, true => true}) }
+        it "with Number key" { assert_hash_delete 1, %({"1" => "1", :"1" => :"1", true => true}) }
+        it "with Bool key" { assert_hash_delete true, %({"1" => "1", 1 => 1, :"1" => :"1"}) }
+      end
     end
 
     describe NamedTupleLiteral do
@@ -1061,6 +1076,24 @@ module Crystal
               %([{"k3", "v3"}, {"k3", "v3"}])
             )
           end
+        end
+      end
+
+      describe "#delete" do
+        it "quoted key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete "key-hyphen"}}),
+            [] of ASTNode,
+            %({foo: "bar"})
+          )
+        end
+
+        it "unquoted key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete "foo"}}),
+            [] of ASTNode,
+            %({"key-hyphen": "value"})
+          )
         end
       end
     end

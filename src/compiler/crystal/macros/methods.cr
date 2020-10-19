@@ -927,6 +927,16 @@ module Crystal
         interpret_argless_method(method, args) { @of.try(&.value) || Nop.new }
       when "type"
         interpret_argless_method(method, args) { @name || Nop.new }
+      when "delete"
+        interpret_one_arg_method(method, args) do |key|
+          unless key.is_a? Crystal::NumberLiteral | Crystal::SymbolLiteral | Crystal::StringLiteral | Crystal::BoolLiteral
+            key.raise "argument to HashLiteral#delete must be a number, bool, symbol, or string, not #{key.class_desc}:\n\n#{key}"
+          end
+
+          entries.reject! { |e| e.key == key }
+
+          self
+        end
       when "clear"
         interpret_argless_method(method, args) do
           entries.clear
@@ -947,6 +957,16 @@ module Crystal
   class NamedTupleLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter)
       case method
+      when "delete"
+        interpret_one_arg_method(method, args) do |key|
+          unless key.is_a? Crystal::StringLiteral
+            key.raise "argument to NamedTupleLiteral#delete must be a string, not #{key.class_desc}:\n\n#{key}"
+          end
+
+          entries.reject! { |e| e.key == key.value }
+
+          self
+        end
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
       when "keys"
