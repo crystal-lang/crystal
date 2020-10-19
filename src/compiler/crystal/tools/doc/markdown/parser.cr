@@ -4,6 +4,8 @@ class Crystal::Doc::Markdown::Parser
   record CodeFence, language : String
 
   @lines : Array(String)
+  @anchor_stack = [] of String
+  @last_anchor_level : Int32 = 0
 
   def initialize(text : String, @renderer : Renderer)
     @lines = text.lines
@@ -115,10 +117,24 @@ class Crystal::Doc::Markdown::Parser
       .strip                     # Strip leading/trailing whitespace
       .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
 
-    @renderer.begin_header level, anchor
+    if level < @last_anchor_level
+      # Go one beyond last_anchor_level to also remove the last actual anchor.
+      until (level - 1) == @last_anchor_level
+        @anchor_stack.pop?
+        @last_anchor_level -= 1
+      end
+    elsif level == @last_anchor_level
+      @anchor_stack.pop?
+    end
+
+    @anchor_stack << anchor
+
+    @renderer.begin_header level, @anchor_stack.join '-'
     process_line line
     @renderer.end_header level
     @line += increment
+
+    @last_anchor_level = level
 
     append_double_newline_if_has_more
   end
