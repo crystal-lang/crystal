@@ -13,7 +13,7 @@ ensure
   socket.close if socket
 end
 
-describe "OpenSSL::SSL::Context has sane client defaults" do
+describe "OpenSSL::SSL::Context has same client defaults" do
   {
     "expired.badssl.com",
     "wrong.host.badssl.com",
