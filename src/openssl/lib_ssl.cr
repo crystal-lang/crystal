@@ -241,6 +241,11 @@ lib LibSSL
     fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
   {% end %}
+
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
+    fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
+  {% end %}
 end
 
 {% unless compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
