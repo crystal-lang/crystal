@@ -592,14 +592,7 @@ module Crystal
 
       if obj = node.obj
         accept obj
-
-        # If obj is a primitive like an integer we need to pass
-        # the variable as is (without loading it)
-        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
-          call_self = context.vars[obj.name].pointer
-        else
-          call_self = @last
-        end
+        call_self = @last
       elsif owner.passed_as_self?
         call_self = llvm_self
       end

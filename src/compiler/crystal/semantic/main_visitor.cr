@@ -1236,6 +1236,13 @@ module Crystal
     def visit(node : ProcPointer)
       obj = node.obj
 
+      # If it's something like `->foo.bar` we turn it into a closure
+      # where `foo` is assigned to a temporary variable.
+      if obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
+        expand(node)
+        return false
+      end
+
       if obj
         obj.accept self
       end

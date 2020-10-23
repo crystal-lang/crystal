@@ -470,6 +470,10 @@ module Crystal
     property! call : Call
 
     def map_type(type)
+      if self.expanded
+        return type
+      end
+
       return nil unless call.type?
 
       arg_types = call.args.map &.type.virtual_type
