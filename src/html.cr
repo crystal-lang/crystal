@@ -24,7 +24,7 @@ module HTML
     string.gsub(SUBSTITUTIONS)
   end
 
-  # Same as `escape(string)` but ouputs the result to
+  # Same as `escape(string)` but outputs the result to
   # the given *io*.
   #
   # ```
