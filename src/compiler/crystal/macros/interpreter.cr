@@ -74,6 +74,9 @@ module Crystal
 
     record MacroVarKey, name : String, exps : Array(ASTNode)?
 
+    getter program
+    property? macro_method_mode = false
+
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil, @def : Def? = nil,
@@ -581,7 +584,47 @@ module Crystal
       false
     end
 
+    def visit(node : Return)
+      if macro_method_mode?
+        exp = node.exp
+        if exp
+          exp.accept self
+        else
+          @last = NilLiteral.new
+        end
+      else
+        cant_execute(node)
+      end
+    end
+
+    def visit(node : While)
+      while true
+        node.cond.accept self
+        break if !@last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
+    def visit(node : Until)
+      while true
+        node.cond.accept self
+        break if @last.truthy?
+        node.body.accept self
+      end
+      false
+    end
+
+    def visit(node : OpAssign)
+      @program.normalize(node).accept self
+      false
+    end
+
     def visit(node : ASTNode)
+      cant_execute(node)
+    end
+
+    def cant_execute(node)
       node.raise "can't execute #{node.class_desc} in a macro"
     end
 
