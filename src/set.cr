@@ -132,7 +132,7 @@ struct Set(T)
   # s.includes? 5 # => true
   # s.includes? 9 # => false
   # ```
-  def includes?(object)
+  def includes?(object : T)
     @hash.has_key?(object)
   end
 
@@ -144,7 +144,7 @@ struct Set(T)
   # s.delete 5
   # s.includes? 5 # => false
   # ```
-  def delete(object)
+  def delete(object : T)
     @hash.delete(object)
     self
   end
@@ -247,11 +247,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} - Set{'a', 'b', 'c'} # => Set{'z'}
   # ```
   def -(other : Set)
-    set = Set(T).new
-    each do |value|
-      set.add value unless other.includes?(value)
-    end
-    set
+    dup.subtract other
   end
 
   # Difference: returns a new set containing elements in this set that are not
@@ -311,7 +307,7 @@ struct Set(T)
   # ```
   def subtract(other : Enumerable)
     other.each do |value|
-      delete value
+      delete value if value.is_a? T
     end
     self
   end

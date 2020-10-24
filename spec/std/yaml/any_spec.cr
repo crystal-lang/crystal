@@ -29,8 +29,8 @@ describe YAML::Any do
     end
 
     it "gets hash" do
-      YAML.parse("foo: bar").as_h.should eq({"foo" => "bar"})
-      YAML.parse("foo: bar").as_h?.should eq({"foo" => "bar"})
+      YAML.parse("foo: bar").as_h.should eq({YAML::Any.new("foo") => "bar"})
+      YAML.parse("foo: bar").as_h?.should eq({YAML::Any.new("foo") => "bar"})
       YAML.parse("foo: bar")["foo"].as_h?.should be_nil
     end
 
