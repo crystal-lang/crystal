@@ -316,7 +316,7 @@ class Crystal::Call
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
-    # triggering a virtual lookup. But the context of lookup must be preseved.
+    # triggering a virtual lookup. But the context of lookup must be preserved.
     if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
@@ -787,7 +787,7 @@ class Crystal::Call
     end
 
     if yield_vars
-      # Check if tuple unpkacing is needed
+      # Check if tuple unpacking is needed
       if yield_vars.size == 1 &&
          (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
          block.args.size > 1

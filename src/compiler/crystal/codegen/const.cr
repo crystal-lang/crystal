@@ -1,6 +1,6 @@
 require "./codegen"
 
-# Constants are repesented with two LLVM global variables: one has the constant's
+# Constants are represented with two LLVM global variables: one has the constant's
 # value and the other has a flag that indicates whether the constant was already
 # initialized.
 #

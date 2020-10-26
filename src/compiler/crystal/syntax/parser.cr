@@ -4494,7 +4494,7 @@ module Crystal
       # end
       # ```
       #
-      # must always be parsed as the block beloning to `foo`,
+      # must always be parsed as the block belonging to `foo`,
       # never to `return`.
       @stop_on_do = true unless control
 
@@ -4701,7 +4701,7 @@ module Crystal
 
       # To determine to consume comma, looking-ahead is needed.
       # Consider `[ [] of Int32, Foo.new ]`, we want to parse it as `[ ([] of Int32), Foo.new ]` of course.
-      # If the parser consumes comma afrer Int32 quickly, it may cause parsing error.
+      # If the parser consumes comma after Int32 quickly, it may cause parsing error.
       unless @token.type == :"->" || (@token.type == :"," && type_start?(consume_newlines: true))
         if type.is_a?(Splat)
           raise "invalid type splat", type.location.not_nil!

@@ -761,7 +761,7 @@ module Crystal
             return type_var
           end
         else
-          # Restriction is not possible (maybe retur nil here?)
+          # Restriction is not possible (maybe return nil here?)
         end
       else
         type_var = type_var.type? || type_var
