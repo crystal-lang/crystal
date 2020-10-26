@@ -39,11 +39,11 @@ struct Log::Entry
   getter source : String
   getter severity : Severity
   getter message : String
-  getter timestamp = Time.local
+  getter timestamp : Time
   getter context : Metadata = Log.context.metadata
   getter data : Metadata
   getter exception : Exception?
 
-  def initialize(@source : String, @severity : Severity, @message : String, @data : Log::Metadata, @exception : Exception?)
+  def initialize(@source : String, @severity : Severity, @message : String, @data : Log::Metadata, @exception : Exception?, *, @timestamp = Time.local)
   end
 end

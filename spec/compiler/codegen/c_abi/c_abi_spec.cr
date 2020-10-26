@@ -199,4 +199,50 @@ describe "Code gen: C ABI" do
         (str.x + str.y + str.z).to_i32
       ), &.to_i.should eq(6))
   end
+
+  it "promotes variadic args (float to double)" do
+    test_c(
+      %(
+        #include <stdarg.h>
+
+        double foo(int n, ...) {
+          va_list args;
+          va_start(args, n);
+          return va_arg(args, double);
+        }
+      ),
+      %(
+        lib LibFoo
+          fun foo(n : Int32, ...) : Float64
+        end
+
+        LibFoo.foo(1, 1.0_f32)
+      ), &.to_f64.should eq(1.0))
+  end
+
+  [{"i8", -123},
+   {"u8", 255},
+   {"i16", -123},
+   {"u16", 65535},
+  ].each do |int_kind, int_value|
+    it "promotes variadic args (#{int_kind} to i32) (#9742)" do
+      test_c(
+        %(
+          #include <stdarg.h>
+
+          int foo(int n, ...) {
+            va_list args;
+            va_start(args, n);
+            return va_arg(args, int);
+          }
+        ),
+        %(
+          lib LibFoo
+            fun foo(n : Int32, ...) : Int32
+          end
+
+          LibFoo.foo(1, #{int_value}_#{int_kind})
+        ), &.to_i.should eq(int_value))
+    end
+  end
 end

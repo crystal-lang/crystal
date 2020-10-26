@@ -59,7 +59,7 @@ module YAML
   # ```
   #
   # `YAML::Field` properties:
-  # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
   # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)

@@ -666,6 +666,40 @@ module Crystal
       end
     end
 
+    # Expand this:
+    #
+    # ```
+    # ->foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # tmp = foo
+    # ->(x : X, y : Y) { tmp.bar(x, y) }
+    # ```
+    def expand(node : ProcPointer)
+      obj = node.obj.not_nil!
+
+      temp_var = new_temp_var.at(obj)
+      assign = Assign.new(temp_var, obj)
+      obj = temp_var
+
+      def_args = node.args.map do |arg|
+        Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
+      end
+
+      call_args = def_args.map do |def_arg|
+        Var.new(def_arg.name).at(def_arg).as(ASTNode)
+      end
+
+      body = Call.new(obj, node.name, call_args).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal.proc_pointer = node
+
+      Expressions.new([assign, proc_literal])
+    end
+
     private def regex_new_call(node, value)
       Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
     end

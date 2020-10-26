@@ -111,6 +111,18 @@ module Crystal
     it_parses "1 / -2", Call.new(1.int32, "/", -2.int32)
     it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", 3.int32), "+", Call.new(4.int32, "/", 5.int32))
     it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
+    it_parses "a = 1; b = 2; c = 3; a-b-c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
+    it_parses "a = 1; b = 2; c = 3; a-b -c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
     it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
     it_parses "1 + /foo/", Call.new(1.int32, "+", regex("foo"))
     it_parses "1+0", Call.new(1.int32, "+", 0.int32)
@@ -124,6 +136,7 @@ module Crystal
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
+    it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
 
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
@@ -197,13 +210,16 @@ module Crystal
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof offsetof typeof private protected asm out
-      end
+      end self in
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+
+      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block argument name", 1, 8
+      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block argument name", 1, 9
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -454,10 +470,10 @@ module Crystal
 
     ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
       it_parses "def #{op}; end;", Def.new(op)
+      it_parses "def #{op}(); end;", Def.new(op)
+      it_parses "def self.#{op}; end;", Def.new(op, receiver: "self".var)
+      it_parses "def self.#{op}(); end;", Def.new(op, receiver: "self".var)
     end
-
-    it_parses "def %(); end;", Def.new("%")
-    it_parses "def /(); end;", Def.new("/")
 
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)

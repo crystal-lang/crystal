@@ -14,6 +14,7 @@ module Crystal
     getter token : Token
     property line_number : Int32
     property column_number : Int32
+    property wants_symbol : Bool
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
@@ -2564,7 +2565,14 @@ module Crystal
             (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
         )
       when 's'
-        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
+        case next_char
+        when 'e'
+          next_char == 'l' && next_char == 'e' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :select
+        when 't'
+          next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
+        else
+          false
+        end
       when 'u'
         next_char == 'n' && (char = next_char) && (
           (char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :union) ||

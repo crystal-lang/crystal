@@ -310,7 +310,7 @@ def Union.new(pull : JSON::PullParser)
   {% end %}
 end
 
-# Reads a string from JSON parser as a time formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
+# Reads a string from JSON parser as a time formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
 # or other variations of [ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf).
 #
 # The JSON format itself does not specify a time data type, this method just

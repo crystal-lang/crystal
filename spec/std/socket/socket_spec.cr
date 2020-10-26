@@ -42,6 +42,17 @@ describe Socket do
     end
   end
 
+  it "accept raises timeout error if read_timeout is specified" do
+    server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
+    port = unused_local_port
+    server.bind("0.0.0.0", port)
+    server.read_timeout = 0.1
+    server.listen
+
+    expect_raises(IO::TimeoutError) { server.accept }
+    expect_raises(IO::TimeoutError) { server.accept? }
+  end
+
   it "sends messages" do
     port = unused_local_port
     server = Socket.tcp(Socket::Family::INET)

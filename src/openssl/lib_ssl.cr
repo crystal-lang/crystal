@@ -99,6 +99,9 @@ lib LibSSL
     NO_TLS_V1_3 = 0x20000000
     NO_TLS_V1_2 = 0x08000000
     NO_TLS_V1_1 = 0x10000000
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+      NO_RENEGOTIATION = 0x40000000
+    {% end %}
 
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
@@ -199,6 +202,7 @@ lib LibSSL
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
     fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
+    fun ssl_ctx_set_ciphersuites = SSL_CTX_set_ciphersuites(ctx : SSLContext, ciphers : Char*) : Int
   {% end %}
 
   @[Raises]
@@ -236,6 +240,11 @@ lib LibSSL
     fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
     fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+  {% end %}
+
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
+    fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
 end
 

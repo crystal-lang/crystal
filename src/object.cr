@@ -1287,6 +1287,9 @@ class Object
   # Defines an `==` method by comparing the given fields.
   #
   # The generated `==` method has a `self` restriction.
+  # For classes it will first compare by reference and return `true`
+  # when an object instance is compared with itself, without comparing
+  # any of the fields.
   #
   # ```
   # class Person
@@ -1299,6 +1302,9 @@ class Object
   # ```
   macro def_equals(*fields)
     def ==(other : self)
+      {% if @type.class? %}
+        return true if same?(other)
+      {% end %}
       {% for field in fields %}
         return false unless {{field.id}} == other.{{field.id}}
       {% end %}

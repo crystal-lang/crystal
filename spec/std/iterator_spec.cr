@@ -177,6 +177,10 @@ describe Iterator do
       iter.next.should eq({4, 5})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "doesn't include stop in return type" do
+      (1..3).each.cons_pair.to_a.should eq([{1, 2}, {2, 3}])
+    end
   end
 
   describe "cycle" do

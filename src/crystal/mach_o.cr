@@ -441,11 +441,15 @@ module Crystal
     end
 
     def uuid
-      @uuid ||= seek_to(LoadCommand::UUID) do
-        bytes = uninitialized UInt8[16]
-        @io.read_fully(bytes.to_slice)
-        UUID.new(bytes)
-      end.not_nil!
+      @uuid ||= begin
+        # ld has a -no_version_load_command options to suppress the LC_UUID entry.
+        # The Dwarf file generated in such scenario has a LC_UUID = 00000000-0000-0000-0000-000000000000.
+        seek_to(LoadCommand::UUID) do
+          bytes = uninitialized UInt8[16]
+          @io.read_fully(bytes.to_slice)
+          UUID.new(bytes)
+        end || UUID.new(StaticArray(UInt8, 16).new(0))
+      end
     end
 
     def symbols

@@ -204,7 +204,7 @@ struct XML::Node
       end
 
       if attribute?
-        io << " value="
+        io << " content="
         content.inspect(io)
       else
         attributes = self.attributes

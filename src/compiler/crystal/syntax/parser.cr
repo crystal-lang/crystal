@@ -504,7 +504,7 @@ module Crystal
       RangeLiteral.new(exp, right, exclusive).at(location).at_end(right)
     end
 
-    macro parse_operator(name, next_operator, node, operators)
+    macro parse_operator(name, next_operator, node, operators, right_associative = false)
       def parse_{{name.id}}
         location = @token.location
 
@@ -521,7 +521,7 @@ module Crystal
 
             slash_is_regex!
             next_token_skip_space_or_newline
-            right = parse_{{next_operator.id}}
+            right = parse_{{(right_associative ? name : next_operator).id}}
             left = ({{node.id}}).at(location).at_end(right)
             left.name_location = name_location if left.is_a?(Call)
           else
@@ -579,7 +579,7 @@ module Crystal
     end
 
     parse_operator :mul_or_div, :pow, "Call.new left, method, right", %(:"*", :"/", :"//", :"%", :"&*")
-    parse_operator :pow, :prefix, "Call.new left, method, right", %(:"**", :"&**")
+    parse_operator :pow, :prefix, "Call.new left, method, right", %(:"**", :"&**"), right_associative: true
 
     def parse_prefix
       name_location = @token.location
@@ -2145,7 +2145,7 @@ module Crystal
     end
 
     def needs_heredoc_indent_removed?(delimiter_state)
-      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent > 0
+      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent >= 0
     end
 
     def remove_heredoc_indent(pieces : Array, indent)
@@ -3416,7 +3416,8 @@ module Crystal
             raise "shouldn't reach this line"
           end
         end
-        next_token_skip_space
+
+        consume_def_or_macro_name
 
         if @token.type == :IDENT
           check_valid_def_name
@@ -3917,8 +3918,7 @@ module Crystal
              :extend, :class, :struct, :module, :enum, :while, :until, :return,
              :next, :break, :lib, :fun, :alias, :pointerof, :sizeof, :offsetof,
              :instance_sizeof, :typeof, :private, :protected, :asm, :out,
-        # `end` is also invalid because it maybe terminate `def` block.
-             :end
+             :self, :in, :end
           true
         else
           false
@@ -3930,7 +3930,7 @@ module Crystal
              "extend", "class", "struct", "module", "enum", "while", "until", "return",
              "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
-             "end"
+             "self", "in", "end"
           true
         else
           false
@@ -4056,6 +4056,16 @@ module Crystal
 
       is_var = var?(name)
 
+      # If the name is a var and '+' or '-' follow, never treat the name as a call
+      if is_var && next_comes_plus_or_minus?
+        var = Var.new(name)
+        var.doc = doc
+        var.location = name_location
+        var.end_location = name_location
+        next_token
+        return var
+      end
+
       @wants_regex = false
       next_token
 
@@ -4127,13 +4137,6 @@ module Crystal
             maybe_var = !force_call && is_var && !has_parentheses
             if maybe_var && args.size == 0
               Var.new(name)
-            elsif maybe_var && args.size == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
-              sign = num.value[0].to_s
-              num.value = num.value.byte_slice(1)
-              Call.new(Var.new(name), sign, args)
-            elsif maybe_var && args.size == 1 && (arg = args[0]) && arg.is_a?(Call) && !arg.obj.nil? &&
-                  arg.name.in?("+", "-") && (!arg.args || arg.args.size == 0)
-              Call.new(Var.new(name), arg.name, arg.obj.not_nil!)
             else
               call = Call.new(nil, name, args, nil, block_arg, named_args, global)
               call.name_location = name_location
@@ -4166,6 +4169,16 @@ module Crystal
       node.location = location
       node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
       node
+    end
+
+    def next_comes_plus_or_minus?
+      pos = current_pos
+      while current_char.ascii_whitespace?
+        next_char_no_column_increment
+      end
+      comes_plus_or_minus = current_char == '+' || current_char == '-'
+      self.current_pos = pos
+      comes_plus_or_minus
     end
 
     def preserve_stop_on_do(new_value = false)
@@ -4229,7 +4242,12 @@ module Crystal
 
           case @token.type
           when :IDENT
+            if @token.keyword? && invalid_internal_name?(@token.value)
+              raise "cannot use '#{@token}' as a block argument name", @token
+            end
+
             arg_name = @token.value.to_s
+
             if all_names.includes?(arg_name)
               raise "duplicated block argument name: #{arg_name}", @token
             end
@@ -4245,7 +4263,12 @@ module Crystal
             while true
               case @token.type
               when :IDENT
+                if @token.keyword? && invalid_internal_name?(@token.value)
+                  raise "cannot use '#{@token}' as a block argument name", @token
+                end
+
                 sub_arg_name = @token.value.to_s
+
                 if all_names.includes?(sub_arg_name)
                   raise "duplicated block argument name: #{sub_arg_name}", @token
                 end
@@ -4471,7 +4494,7 @@ module Crystal
       # end
       # ```
       #
-      # must always be parsed as the block beloning to `foo`,
+      # must always be parsed as the block belonging to `foo`,
       # never to `return`.
       @stop_on_do = true unless control
 
@@ -4678,7 +4701,7 @@ module Crystal
 
       # To determine to consume comma, looking-ahead is needed.
       # Consider `[ [] of Int32, Foo.new ]`, we want to parse it as `[ ([] of Int32), Foo.new ]` of course.
-      # If the parser consumes comma afrer Int32 quickly, it may cause parsing error.
+      # If the parser consumes comma after Int32 quickly, it may cause parsing error.
       unless @token.type == :"->" || (@token.type == :"," && type_start?(consume_newlines: true))
         if type.is_a?(Splat)
           raise "invalid type splat", type.location.not_nil!
