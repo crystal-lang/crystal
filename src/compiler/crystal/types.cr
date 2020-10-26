@@ -717,7 +717,7 @@ module Crystal
     end
 
     # Checks whether an exception needs to be raised because of a restriction
-    # failure. Only overwriten by literal types (NumberLiteralType and
+    # failure. Only overwritten by literal types (NumberLiteralType and
     # SymbolLiteralType) when they produce an ambiguous call.
     def check_restriction_exception
       nil
@@ -801,7 +801,7 @@ module Crystal
 
   # A Def with some metadata to speed up matching it against
   # a call signature, or against other defs:
-  # - max_size: the maxinum number of arguments that can be passed to the method
+  # - max_size: the maximum number of arguments that can be passed to the method
   # - min_size: the minimum number of arguments that can be passed to the method
   # - yields: whether the method has a block
   record DefWithMetadata,

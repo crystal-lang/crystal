@@ -411,7 +411,7 @@ describe "JSON mapping" do
       Unknown JSON attribute: foo
         parsing StrictJSONAttrPerson
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         {
           "name": "John",
@@ -443,7 +443,7 @@ describe "JSON mapping" do
       Missing JSON attribute: name
         parsing JSONAttrPerson at 1:1
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
@@ -454,7 +454,7 @@ describe "JSON mapping" do
       Expected BeginObject but was String at 1:1
         parsing StrictJSONAttrPerson at 0:0
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         "foo"
         JSON
@@ -466,7 +466,7 @@ describe "JSON mapping" do
     error_message = <<-MSG
       Couldn't parse (Int32 | Nil) from "foo" at 3:10
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         {
           "name": "John",
@@ -778,7 +778,7 @@ describe "JSON mapping" do
         Missing JSON attribute: foo
           parsing JSONAttrWithQueryAttributes at 1:1
         MSG
-      ex = expect_raises JSON::MappingError, error_message do
+      ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
@@ -847,13 +847,13 @@ describe "JSON mapping" do
     end
 
     it "raises if missing discriminator" do
-      expect_raises(JSON::MappingError, "Missing JSON discriminator field 'type'") do
+      expect_raises(::JSON::SerializableError, "Missing JSON discriminator field 'type'") do
         JSONShape.from_json("{}")
       end
     end
 
     it "raises if unknown discriminator value" do
-      expect_raises(JSON::MappingError, %(Unknown 'type' discriminator value: "unknown")) do
+      expect_raises(::JSON::SerializableError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
     end

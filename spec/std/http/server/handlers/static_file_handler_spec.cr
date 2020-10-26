@@ -250,4 +250,31 @@ describe HTTP::StaticFileHandler do
     response = handle HTTP::Request.new("GET", "/test.txt%0A")
     response.status_code.should eq(404)
   end
+
+  it "serve compressed content" do
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time + 1.second
+
+    headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
+    response = handle HTTP::Request.new("GET", "/test.txt", headers)
+    response.headers["Content-Encoding"].should eq("gzip")
+  end
+
+  it "still serve compressed content when modification time is very close" do
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.microsecond
+
+    headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
+    response = handle HTTP::Request.new("GET", "/test.txt", headers)
+    response.headers["Content-Encoding"].should eq("gzip")
+  end
+
+  it "doesn't serve compressed content if older than raw file" do
+    modification_time = File.info(datapath("static_file_handler", "test.txt")).modification_time
+    File.touch datapath("static_file_handler", "test.txt.gz"), modification_time - 1.second
+
+    headers = HTTP::Headers{"Accept-Encoding" => "gzip"}
+    response = handle HTTP::Request.new("GET", "/test.txt", headers)
+    response.headers["Content-Encoding"]?.should be_nil
+  end
 end

@@ -276,7 +276,7 @@ describe "Semantic: closure" do
       foo = Foo.new
       LibC.foo(->foo.bar)
       ),
-      "can't send closure to C function (closured vars: self)"
+      "can't send closure to C function (closured vars: foo)"
   end
 
   it "errors if sending closured proc pointer to C (3)" do
@@ -523,5 +523,30 @@ describe "Semantic: closure" do
       })
       ),
       "can't send closure to C function (closured vars: x)"
+  end
+
+  it "doesn't closure typeof local var" do
+    result = assert_type("x = 1; -> { typeof(x) }; x") { int32 }
+    program = result.program
+    var = program.vars["x"]
+    var.closured?.should be_false
+  end
+
+  it "doesn't closure typeof instance var (#9479)" do
+    result = assert_type("
+      class Foo
+        @x : Int32?
+
+        def foo
+          -> { typeof(@x) }
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
+    call.target_def.self_closured?.should be_false
   end
 end

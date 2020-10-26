@@ -193,7 +193,7 @@ module Crystal::System::File
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
-    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
+    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
       raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
     end
   end

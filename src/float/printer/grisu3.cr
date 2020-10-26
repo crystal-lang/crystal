@@ -341,7 +341,7 @@ module Float::Printer::Grisu3
     # the difference between w and boundary_minus/plus (a power of 2) and to
     # compute scaled_boundary_minus/plus by subtracting/adding from
     # scaled_w. However the code becomes much less readable and the speed
-    # enhancements are not terriffic.
+    # enhancements are not terrific.
     scaled_boundary_minus = boundaries[:minus] * ten_mk
     scaled_boundary_plus = boundaries[:plus] * ten_mk
 

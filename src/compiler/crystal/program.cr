@@ -581,8 +581,8 @@ module Crystal
       end
     end
 
-    def lookup_private_matches(filename, signature)
-      file_module?(filename).try &.lookup_matches(signature)
+    def lookup_private_matches(filename, signature, analyze_all = false)
+      file_module?(filename).try &.lookup_matches(signature, analyze_all: analyze_all)
     end
 
     def file_module?(filename)

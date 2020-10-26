@@ -166,7 +166,7 @@ struct Enum
 end
 
 struct Time
-  # Emits a string formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
+  # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just

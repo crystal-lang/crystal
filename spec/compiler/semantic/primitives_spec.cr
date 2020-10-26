@@ -224,7 +224,7 @@ describe "Semantic: primitives" do
       "method marked as Primitive must have an empty body"
   end
 
-  it "types va_arg primitive" do
+  pending_win32 "types va_arg primitive" do
     assert_type(%(
       struct VaList
         @[Primitive(:va_arg)]

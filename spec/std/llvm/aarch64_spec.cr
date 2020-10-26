@@ -9,6 +9,7 @@ private def abi
   triple = "aarch64-unknown-linux-gnu"
   target = LLVM::Target.from_triple(triple)
   machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
   LLVM::ABI::AArch64.new(machine)
 end
 

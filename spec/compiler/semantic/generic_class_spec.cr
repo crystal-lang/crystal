@@ -479,7 +479,7 @@ describe "Semantic: generic class" do
       "use a more specific type"
   end
 
-  it "errors on too nested generic instance" do
+  pending_win32 "errors on too nested generic instance" do
     assert_error %(
       class Foo(T)
       end
@@ -493,7 +493,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested generic instance, with union type" do
+  pending_win32 "errors on too nested generic instance, with union type" do
     assert_error %(
       class Foo(T)
       end
@@ -507,7 +507,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested tuple instance" do
+  pending_win32 "errors on too nested tuple instance" do
     assert_error %(
       def foo
         {typeof(foo)}

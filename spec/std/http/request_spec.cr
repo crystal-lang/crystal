@@ -408,7 +408,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.query.should eq("foo=not-bar&foo=baz&baz=qux")
+        request.query.should eq("foo=not-bar&baz=qux")
       end
 
       it "updates @resource when modified" do
@@ -416,7 +416,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.resource.should eq("/api/v3/some/resource?foo=not-bar&foo=baz&baz=qux")
+        request.resource.should eq("/api/v3/some/resource?foo=not-bar&baz=qux")
       end
 
       it "updates serialized form when modified" do
@@ -427,7 +427,7 @@ module HTTP
 
         io = IO::Memory.new
         request.to_io(io)
-        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")
+        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&baz=qux HTTP/1.1\r\n\r\n")
       end
 
       it "is affected when #query is modified" do

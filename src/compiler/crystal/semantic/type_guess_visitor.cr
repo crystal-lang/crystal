@@ -827,7 +827,7 @@ module Crystal
           if @splat.same?(arg)
             # If restriction is not splat (like `*foo : T`),
             # we cannot guess the type.
-            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # (We can also guess `Indexable(T)`, but it is not perfect.)
             # And this early return is no problem because splat argument
             # cannot have a default value.
             return unless restriction.is_a?(Splat)

@@ -191,6 +191,8 @@ class String
   # String.new(ptr) # => "abcd"
   # ```
   def self.new(chars : UInt8*)
+    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
+
     new(chars, LibC.strlen(chars))
   end
 
@@ -206,6 +208,8 @@ class String
   # String.new(ptr, 2) # => "ab"
   # ```
   def self.new(chars : UInt8*, bytesize, size = 0)
+    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
+
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
 
@@ -784,28 +788,11 @@ class String
   # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
   def []?(start : Int, count : Int)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
-    return byte_slice?(start, count) if ascii_only?
+    return byte_slice?(start, count) if single_byte_optimizable?
 
     start += size if start < 0
 
-    start_pos = nil
-    end_pos = nil
-
-    reader = Char::Reader.new(self)
-    i = 0
-
-    reader.each do |char|
-      if i == start
-        start_pos = reader.pos
-      elsif count >= 0 && i == start + count
-        end_pos = reader.pos
-        i += 1
-        break
-      end
-      i += 1
-    end
-
-    end_pos ||= reader.pos
+    start_pos, end_pos, end_index = find_start_end_and_index(start, count)
 
     if start_pos
       return "" if count == 0
@@ -817,7 +804,7 @@ class String
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
       end
-    elsif start == i
+    elsif start == end_index
       ""
     end
   end
@@ -880,7 +867,7 @@ class String
   # "hello".char_at(-6) { 'x' } # => 'x'
   # ```
   def char_at(index : Int, &)
-    if ascii_only?
+    if single_byte_optimizable?
       byte = byte_at?(index)
       if byte
         return byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT
@@ -898,6 +885,168 @@ class String
     else
       yield
     end
+  end
+
+  # Returns a new string that results from deleting characters
+  # at the given range.
+  #
+  # ```
+  # "abcdef".delete_at(1..3) # => "aef"
+  # ```
+  #
+  # Negative indices can be used to start counting from the end of the string:
+  #
+  # ```
+  # "abcdef".delete_at(-3..-2) # => "abcf"
+  # ```
+  #
+  # Raises `IndexError` if any index is outside the bounds of this string.
+  def delete_at(range : Range)
+    delete_at(*Indexable.range_to_index_and_count(range, size))
+  end
+
+  # Returns a new string that results from deleting the character
+  # at the given *index*.
+  #
+  # ```
+  # "abcde".delete_at(0) # => "bcde"
+  # "abcde".delete_at(2) # => "abde"
+  # "abcde".delete_at(4) # => "abcd"
+  # ```
+  #
+  # A negative *index* counts from the end of the string:
+  #
+  # ```
+  # "abcde".delete_at(-2) # => "abce"
+  # ```
+  #
+  # If *index* is outside the bounds of the string, `IndexError` is raised.
+  def delete_at(index : Int) : String
+    index += size if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    if byte_index && byte_index < @bytesize
+      char_bytesize = char_bytesize_at(byte_index)
+
+      new_bytesize = self.bytesize - char_bytesize
+      String.new(new_bytesize) do |buffer|
+        # Copy left part
+        buffer.copy_from(to_unsafe, byte_index)
+
+        # Copy right part
+        (buffer + byte_index).copy_from(
+          to_unsafe + byte_index + char_bytesize,
+          self.bytesize - byte_index - char_bytesize,
+        )
+
+        {new_bytesize, size - 1}
+      end
+    else
+      raise IndexError.new
+    end
+  end
+
+  # Returns a new string that results from deleting *count* characters
+  # starting at *index*.
+  #
+  # ```
+  # "abcdefg".delete_at(1, 3) # => "aefg"
+  # ```
+  #
+  # Deleting more characters than those in the string is valid, and just
+  # results in deleting up to the last character:
+  #
+  # ```
+  # "abcdefg".delete_at(3, 10) # => "abc"
+  # ```
+  #
+  # A negative *index* counts from the end of the string:
+  #
+  # ```
+  # "abcdefg".delete_at(-3, 2) # => "abcdg"
+  # ```
+  #
+  # If *count* is negative, `ArgumentError` is raised.
+  #
+  # If *index* is outside the bounds of the string, `ArgumentError`
+  # is raised.
+  #
+  # However, *index* can be the position that is exactly the end of the string:
+  #
+  # ```
+  # "abcd".delete_at(4, 3) # => "abcd"
+  # ```
+  def delete_at(index : Int, count : Int) : String
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
+    count = Math.min(count, size - index)
+
+    case count
+    when 0
+      return self
+    when size
+      return ""
+    else
+      if single_byte_optimizable?
+        byte_delete_at(index, count, count)
+      else
+        unicode_delete_at(index, count)
+      end
+    end
+  end
+
+  private def byte_delete_at(start, count, byte_count)
+    new_bytesize = bytesize - byte_count
+    String.new(new_bytesize) do |buffer|
+      # Copy left part
+      buffer.copy_from(to_unsafe, start)
+
+      # Copy right part
+      (buffer + start).copy_from(
+        to_unsafe + start + byte_count,
+        bytesize - start - byte_count,
+      )
+
+      {new_bytesize, size - count}
+    end
+  end
+
+  private def unicode_delete_at(start, count)
+    start_pos, end_pos, _ = find_start_end_and_index(start, count)
+
+    # That start is in bounds was already verified in `delete_at`
+    start_pos = start_pos.not_nil!
+
+    byte_count = end_pos - start_pos.not_nil!
+    byte_delete_at(start_pos, count, byte_count)
+  end
+
+  private def find_start_end_and_index(start, count)
+    start_pos = nil
+    end_pos = nil
+
+    reader = Char::Reader.new(self)
+    i = 0
+
+    reader.each do |char|
+      if i == start
+        start_pos = reader.pos
+      elsif i == start + count
+        end_pos = reader.pos
+        i += 1
+        break
+      end
+      i += 1
+    end
+
+    end_pos ||= reader.pos
+
+    {start_pos, end_pos, i}
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
@@ -950,7 +1099,7 @@ class String
     raise ArgumentError.new "Negative count" if count < 0
 
     start += bytesize if start < 0
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
 
     if 0 <= start < bytesize
       count = bytesize - start if start + count > bytesize
@@ -1069,7 +1218,7 @@ class String
   def downcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = unsafe_byte_at(i).unsafe_chr.downcase.ord.to_u8
@@ -1104,7 +1253,7 @@ class String
   def upcase(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = unsafe_byte_at(i).unsafe_chr.upcase.ord.to_u8
@@ -1140,7 +1289,7 @@ class String
   def capitalize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       return String.new(bytesize) do |buffer|
         bytesize.times do |i|
           byte = if i.zero?
@@ -1186,7 +1335,7 @@ class String
   def titleize(options : Unicode::CaseOptions = :none) : String
     return self if empty?
 
-    if ascii_only? && (options.none? || options.ascii?)
+    if single_byte_optimizable? && (options.none? || options.ascii?)
       upcase_next = true
 
       return String.new(bytesize) do |buffer|
@@ -1313,7 +1462,7 @@ class String
   def lchop? : String?
     return if empty?
 
-    if ascii_only?
+    if single_byte_optimizable?
       unsafe_byte_slice_string(1, bytesize - 1)
     else
       reader = Char::Reader.new(self)
@@ -1371,9 +1520,9 @@ class String
   # "".rchop?           # => nil
   # ```
   def rchop? : String?
-    return if bytesize <= 1
+    return if empty?
 
-    if to_unsafe[bytesize - 1] < 128 || ascii_only?
+    if to_unsafe[bytesize - 1] < 0x80 || single_byte_optimizable?
       return unsafe_byte_slice_string(0, bytesize - 1)
     end
 
@@ -1501,7 +1650,7 @@ class String
     bytes, count = String.char_bytes_and_bytesize(other)
 
     new_bytesize = bytesize + count
-    new_size = (ascii_only? && other.ascii?) ? new_bytesize : 0
+    new_size = (single_byte_optimizable? && other.ascii?) ? new_bytesize : 0
 
     insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
   end
@@ -1530,7 +1679,7 @@ class String
     raise IndexError.new unless byte_index
 
     new_bytesize = bytesize + other.bytesize
-    new_size = ascii_only? && other.ascii_only? ? new_bytesize : 0
+    new_size = single_byte_optimizable? && other.single_byte_optimizable? ? new_bytesize : 0
 
     insert_impl(byte_index, other.to_unsafe, other.bytesize, new_bytesize, new_size)
   end
@@ -2135,7 +2284,7 @@ class String
         buffer.value = byte
         buffer += 1
       end
-      {buffer, ascii_only? ? bytesize - (to_index - from_index) + 1 : 0}
+      {buffer, single_byte_optimizable? ? bytesize - (to_index - from_index) + 1 : 0}
     end
   end
 
@@ -2678,7 +2827,7 @@ class String
   def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
     return self <=> other unless case_insensitive
 
-    if ascii_only? && other.ascii_only?
+    if single_byte_optimizable? && other.single_byte_optimizable?
       position = 0
 
       while position < bytesize && position < other.bytesize
@@ -2847,7 +2996,7 @@ class String
   # ```
   def index(search : Char, offset = 0)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && ascii_only?
+    if search.ascii? && single_byte_optimizable?
       return to_slice.index(search.ord.to_u8, offset)
     end
 
@@ -2885,16 +3034,8 @@ class String
     pointer = to_unsafe
     end_pointer = pointer + bytesize
     while char_index < offset && pointer < end_pointer
-      byte = pointer.value
-      if byte < 0x80
-        pointer += 1
-      elsif byte < 0xe0
-        pointer += 2
-      elsif byte < 0xf0
-        pointer += 3
-      else
-        pointer += 4
-      end
+      char_bytesize = String.char_bytesize_at(pointer)
+      pointer += char_bytesize
       char_index += 1
     end
 
@@ -2918,18 +3059,14 @@ class String
       return if pointer >= end_pointer
 
       byte = head_pointer.value
-
-      # update a rolling hash of this text (heystack)
-      # thanks @MaxLap for suggesting this loop reduction
-      if byte < 0x80
-        update_hash 1
-      elsif byte < 0xe0
-        update_hash 2
-      elsif byte < 0xf0
-        update_hash 3
-      else
-        update_hash 4
+      char_bytesize = String.char_bytesize_at(head_pointer)
+      case char_bytesize
+      when 1 then update_hash 1
+      when 2 then update_hash 2
+      when 3 then update_hash 3
+      else        update_hash 4
       end
+
       char_index += 1
     end
   end
@@ -2954,7 +3091,7 @@ class String
   # ```
   def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
-    if search.ascii? && ascii_only?
+    if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
     end
 
@@ -3035,7 +3172,7 @@ class String
   end
 
   # :ditto:
-  def rindex(search : Regex, offset = size - 1)
+  def rindex(search : Regex, offset = size)
     offset += size if offset < 0
     return nil unless 0 <= offset <= size
 
@@ -3242,7 +3379,7 @@ class String
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
   def char_index_to_byte_index(index)
-    if ascii_only?
+    if single_byte_optimizable?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -3258,7 +3395,7 @@ class String
   # It is valid to pass `#bytesize` to *index*, and in this case the answer
   # will be the size of this string.
   def byte_index_to_char_index(index)
-    if ascii_only?
+    if single_byte_optimizable?
       return 0 <= index <= bytesize ? index : nil
     end
 
@@ -3330,7 +3467,7 @@ class String
     end
 
     yielded = 0
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
     index = 0
     i = 0
     looking_for_space = false
@@ -3521,7 +3658,7 @@ class String
     byte_offset = 0
     separator_bytesize = separator.bytesize
 
-    single_byte_optimizable = ascii_only?
+    single_byte_optimizable = single_byte_optimizable?
 
     i = 0
     stop = bytesize - separator.bytesize + 1
@@ -3611,7 +3748,7 @@ class String
 
     while match = separator.match_at_byte_index(self, match_offset)
       index = match.byte_begin(0)
-      match_bytesize = match[0].bytesize
+      match_bytesize = match.byte_end(0) - index
       next_offset = index + match_bytesize
 
       if next_offset == slice_offset
@@ -3843,7 +3980,7 @@ class String
   def reverse
     return self if bytesize <= 1
 
-    if ascii_only?
+    if single_byte_optimizable?
       String.new(bytesize) do |buffer|
         bytesize.times do |i|
           buffer[i] = self.to_unsafe[bytesize - i - 1]
@@ -3856,9 +3993,10 @@ class String
       String.new(bytesize) do |buffer|
         buffer += bytesize
         scan(/\X/) do |match|
-          grapheme = match[0]
-          buffer -= grapheme.bytesize
-          buffer.copy_from(grapheme.to_unsafe, grapheme.bytesize)
+          match_begin = match.byte_begin(0)
+          match_bytesize = match.byte_end(0) - match_begin
+          buffer -= match_bytesize
+          buffer.copy_from(to_unsafe + match_begin, match_bytesize)
         end
         {@bytesize, @length}
       end
@@ -4175,7 +4313,7 @@ class String
       index = match.byte_begin(0)
       $~ = match
       yield match
-      match_bytesize = match[0].bytesize
+      match_bytesize = match.byte_end(0) - index
       match_bytesize += 1 if match_bytesize == 0
       byte_offset = index + match_bytesize
     end
@@ -4225,7 +4363,7 @@ class String
   # array # => ['a', 'b', '☃']
   # ```
   def each_char : Nil
-    if ascii_only?
+    if single_byte_optimizable?
       each_byte do |byte|
         yield (byte < 0x80 ? byte.unsafe_chr : Char::REPLACEMENT)
       end
@@ -4606,7 +4744,7 @@ class String
   def ends_with?(char : Char) : Bool
     return false unless bytesize > 0
 
-    if char.ascii? || ascii_only?
+    if char.ascii? || single_byte_optimizable?
       return to_unsafe[bytesize - 1] == char.ord
     end
 
@@ -4634,7 +4772,7 @@ class String
     !!($~ = /#{re}\z/.match(self))
   end
 
-  # Interpolates *other* into the string using `Kernel#sprintf`.
+  # Interpolates *other* into the string using top-level `::sprintf`.
   #
   # ```
   # "I have %d apples" % 5                                             # => "I have 5 apples"
@@ -4673,6 +4811,18 @@ class String
   # "你好".ascii_only?    # => false
   # ```
   def ascii_only?
+    if @bytesize == size
+      each_byte do |byte|
+        return false unless byte < 0x80
+      end
+      true
+    else
+      false
+    end
+  end
+
+  # :nodoc:
+  def single_byte_optimizable?
     @bytesize == size
   end
 
@@ -4712,43 +4862,67 @@ class String
   end
 
   protected def char_bytesize_at(byte_index)
-    first = unsafe_byte_at(byte_index)
+    String.char_bytesize_at(to_unsafe + byte_index)
+  end
+
+  protected def self.char_bytesize_at(bytes : Pointer(UInt8))
+    first = bytes.value
 
     if first < 0x80
       return 1
     end
 
     if first < 0xc2
-      return 1
+      return 1 # Invalid
     end
 
-    second = unsafe_byte_at(byte_index + 1)
+    second = bytes[1]
+
     if (second & 0xc0) != 0x80
-      return 1
+      return 1 # Invalid
     end
 
     if first < 0xe0
       return 2
     end
 
-    third = unsafe_byte_at(byte_index + 2)
+    third = bytes[2]
+
     if (third & 0xc0) != 0x80
-      return 2
+      return 1 # Invalid
     end
 
     if first < 0xf0
+      if first == 0xe0 && second < 0xa0
+        return 1 # Invalid
+      end
+
+      if first == 0xed && second >= 0xa0
+        return 1 # Invalid
+      end
+
       return 3
     end
 
     if first == 0xf0 && second < 0x90
-      return 3
+      return 1 # Invalid
     end
 
     if first == 0xf4 && second >= 0x90
-      return 3
+      return 1 # Invalid
     end
 
-    return 4
+    fourth = bytes[3]
+
+    if (fourth & 0xc0) != 0x80
+      return 1 # Invalid
+    end
+
+    if first < 0xf5
+      return 4
+    end
+
+    1 # Invalid
   end
 
   # :nodoc:

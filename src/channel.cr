@@ -26,9 +26,12 @@ class Channel(T)
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
+  # :nodoc:
   record NotReady
+  # :nodoc:
   record UseDefault
 
+  # :nodoc:
   module SelectAction(S)
     abstract def execute : DeliveryState
     abstract def wait(context : SelectContext(S))
@@ -72,7 +75,7 @@ class Channel(T)
     end
   end
 
-  enum SelectState
+  private enum SelectState
     None   = 0
     Active = 1
     Done   = 2
@@ -117,7 +120,7 @@ class Channel(T)
     end
   end
 
-  enum DeliveryState
+  private enum DeliveryState
     None
     Delivered
     Closed
@@ -183,11 +186,14 @@ class Channel(T)
   # Both awaiting and subsequent calls to `#send` will consider the channel closed.
   # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
   # Calling `#close` on a closed channel does not have any effect.
-  def close : Nil
+  #
+  # It returns `true` when the channel was successfully closed, or `false` if it was already closed.
+  def close : Bool
     sender_list = Crystal::PointerLinkedList(Sender(T)).new
     receiver_list = Crystal::PointerLinkedList(Receiver(T)).new
 
     @lock.sync do
+      return false if @closed
       @closed = true
 
       @senders, sender_list = sender_list, @senders
@@ -196,6 +202,7 @@ class Channel(T)
 
     sender_list.each(&.value.close)
     receiver_list.each(&.value.close)
+    true
   end
 
   def closed?
@@ -269,7 +276,7 @@ class Channel(T)
   # end
   # channel.receive # => 1
   # ```
-  def receive
+  def receive : T
     receive_impl { raise ClosedError.new }
   end
 
@@ -277,11 +284,11 @@ class Channel(T)
   # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
   # Returns `nil` if the channel is closed or closes while waiting for receive.
-  def receive?
+  def receive? : T?
     receive_impl { return nil }
   end
 
-  def receive_impl
+  private def receive_impl
     receiver = Receiver(T).new
 
     @lock.lock
@@ -314,7 +321,7 @@ class Channel(T)
     end
   end
 
-  def receive_internal
+  protected def receive_internal
     if (queue = @queue) && !queue.empty?
       deque_value = queue.shift
       if sender_ptr = dequeue_sender
@@ -391,34 +398,29 @@ class Channel(T)
     nil
   end
 
+  # :nodoc:
   def self.select(*ops : SelectAction)
     self.select ops
   end
 
+  # :nodoc:
   def self.select(ops : Indexable(SelectAction))
     i, m = select_impl(ops, false)
     raise "BUG: blocking select returned not ready status" if m.is_a?(NotReady)
     return i, m
   end
 
-  @[Deprecated("Use Channel.non_blocking_select")]
-  def self.select(ops : Indexable(SelectAction), has_else)
-    # The overload of Channel.select(Indexable(SelectAction), Bool)
-    # is used by LiteralExpander with the second argument as `true`.
-    # This overload is kept as a transition, but 0.32 will emit calls to
-    # Channel.select or Channel.non_blocking_select directly
-    non_blocking_select(ops)
-  end
-
+  # :nodoc:
   def self.non_blocking_select(*ops : SelectAction)
     self.non_blocking_select ops
   end
 
+  # :nodoc:
   def self.non_blocking_select(ops : Indexable(SelectAction))
     select_impl(ops, true)
   end
 
-  def self.select_impl(ops : Indexable(SelectAction), non_blocking)
+  private def self.select_impl(ops : Indexable(SelectAction), non_blocking)
     # Sort the operations by the channel they contain
     # This is to avoid deadlocks between concurrent `select` calls
     ops_locks = ops
@@ -488,8 +490,7 @@ class Channel(T)
     LooseReceiveAction.new(self)
   end
 
-  # :nodoc:
-  class StrictReceiveAction(T)
+  private class StrictReceiveAction(T)
     include SelectAction(T)
     property receiver : Receiver(T)
 
@@ -553,8 +554,7 @@ class Channel(T)
     end
   end
 
-  # :nodoc:
-  class LooseReceiveAction(T)
+  private class LooseReceiveAction(T)
     include SelectAction(T)
     property receiver : Receiver(T)
 
@@ -618,8 +618,7 @@ class Channel(T)
     end
   end
 
-  # :nodoc:
-  class SendAction(T)
+  private class SendAction(T)
     include SelectAction(Nil)
     property sender : Sender(T)
 

@@ -67,10 +67,21 @@ module Crystal
       when "super", "previous_def"
         if node.args.empty? && !node.has_parentheses?
           if current_def = @current_def
+            splat_index = current_def.splat_index
             current_def.args.each_with_index do |arg, i|
               arg = Var.new(arg.name)
-              arg = Splat.new(arg) if i == current_def.splat_index
-              node.args.push arg
+
+              if splat_index && i > splat_index
+                # Past the splat index we must pass arguments as named arguments
+                named_args = node.named_args ||= Array(NamedArgument).new
+                named_args.push NamedArgument.new(arg.name, arg)
+              elsif i == splat_index
+                # At the splat index we must use a splat
+                node.args.push Splat.new(arg)
+              else
+                # Otherwise it's just a regular argument
+                node.args.push arg
+              end
             end
           end
           node.has_parentheses = true

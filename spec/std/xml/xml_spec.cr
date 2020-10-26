@@ -399,6 +399,12 @@ describe XML do
     res.should be_nil
   end
 
+  it "shows content when inspecting attribute" do
+    doc = XML.parse(%{<foo bar="baz"></foo>})
+    attr = doc.root.not_nil!.attributes.first
+    attr.inspect.should contain(%(content="baz"))
+  end
+
   it ".build" do
     XML.build do |builder|
       builder.element "foo" { }

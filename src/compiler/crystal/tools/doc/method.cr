@@ -38,7 +38,7 @@ class Crystal::Doc::Method
   end
 
   # Returns this method's docs ready to be shown (before formatting)
-  # in the UI. This includes copiying docs from previous def or
+  # in the UI. This includes copying docs from previous def or
   # ancestors and replacing `:inherit:` with the ancestor docs.
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.

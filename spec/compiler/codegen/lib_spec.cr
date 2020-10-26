@@ -15,11 +15,11 @@ describe "Code gen: lib" do
   it "call to void function" do
     run("
       lib LibC
-        fun srandom(x : UInt32) : Void
+        fun srand(x : UInt32) : Void
       end
 
       def foo
-        LibC.srandom(0_u32)
+        LibC.srand(0_u32)
       end
 
       foo

@@ -7,7 +7,7 @@ lib LibC
 
   struct Dirent
     d_ino : InoT
-    d_off : Long
+    d_off : OffT
     d_reclen : UShort
     d_type : Char
     d_name : StaticArray(Char, 256)
@@ -15,6 +15,6 @@ lib LibC
 
   fun closedir(dirp : DIR*) : Int
   fun opendir(name : Char*) : DIR*
-  fun readdir(dirp : DIR*) : Dirent*
+  fun readdir = readdir64(dirp : DIR*) : Dirent*
   fun rewinddir(dirp : DIR*) : Void
 end
