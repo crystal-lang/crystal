@@ -704,6 +704,27 @@ class Array(T)
     internal_delete { |e| e == obj }[1]
   end
 
+  # Deletes each element for which the given block returns `true`.
+  #
+  # ```
+  # a = [1, 2, 3, 4]
+  # a.delete_if &.odd?
+  # a # => [2, 4]
+  # ```
+  def delete_if
+    found = false
+    i = 0
+    while i < @size
+      if yield self[i]
+        delete_at(i)
+        found = true
+      else
+        i += 1
+      end
+    end
+    found
+  end
+
   # Removes the element at *index*, returning that element.
   # Raises `IndexError` if *index* is out of range.
   #

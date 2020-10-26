@@ -2292,4 +2292,10 @@ describe "Array" do
       ary.skip(-1)
     end
   end
+
+  it "#delete_if" do
+    a = [1, 2, 3, 4]
+    a.delete_if &.odd?
+    a.should eq [2, 4]
+  end
 end
