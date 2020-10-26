@@ -12,7 +12,7 @@ module Crystal
   # around in every step of a compilation to record and query this information.
   #
   # In a way, a Program is an alternative implementation to having global variables
-  # for all of this data, but modelled this way one can easily test and exercise
+  # for all of this data, but modeled this way one can easily test and exercise
   # programs because each one has its own definition of the types created,
   # methods instantiated, etc.
   #

@@ -58,7 +58,7 @@ class Fiber
       ldr     x19, [$1, #0]         // sp = new_context.stack_top (x19)
       mov     sp, x19
 
-      ldp     x0,  x1,  [sp, #20*8] // pop 1st argument (+ alignement)
+      ldp     x0,  x1,  [sp, #20*8] // pop 1st argument (+ alignment)
       ldp     x20, x19, [sp, #18*8]
       ldp     x22, x21, [sp, #16*8]
       ldp     x24, x23, [sp, #14*8]

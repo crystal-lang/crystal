@@ -462,7 +462,7 @@ module Crystal
     end
 
     # Copy existing LLVM types, possibly from another context,
-    # into this typer's context.
+    # into this type's context.
     def copy_types(types : Array(LLVM::Type))
       types.map do |type|
         copy_type(type).as(LLVM::Type)
@@ -470,7 +470,7 @@ module Crystal
     end
 
     # Copy an existing LLVM type, possibly from another context,
-    # into this typer's context.
+    # into this type's context.
     def copy_type(type : LLVM::Type)
       case type.kind
       when .void?

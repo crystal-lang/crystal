@@ -190,13 +190,13 @@ class Process
     @process_info.pid.to_i64
   end
 
-  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' input. Raises if a pipe wasn't asked when creating the process.
   getter! input : IO::FileDescriptor
 
-  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' output. Raises if a pipe wasn't asked when creating the process.
   getter! output : IO::FileDescriptor
 
-  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
   @process_info : Crystal::System::Process
