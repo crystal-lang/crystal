@@ -304,6 +304,12 @@ class YAMLCircle < YAMLShape
   property radius : Int32
 end
 
+class YAMLWithShape
+  include YAML::Serializable
+
+  property shape : YAMLShape
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -830,6 +836,13 @@ describe "YAML::Serializable" do
       expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
+    end
+
+    it "deserializes type which nests type with discriminator (#9849)" do
+      container = YAMLWithShape.from_yaml(%({"shape": {"type": "point", "x": 1, "y": 2}}))
+      point = container.shape.as(YAMLPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
     end
   end
 end
