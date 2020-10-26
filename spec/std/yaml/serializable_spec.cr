@@ -67,6 +67,21 @@ class YAMLAttrPersonEmittingNull
   property age : Int32?
 end
 
+struct YAMLAttrPersonWithSelectiveSerialization
+  include YAML::Serializable
+
+  property name : String
+
+  @[YAML::Field(ignore_serialize: true)]
+  property password : String
+
+  @[YAML::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 @[YAML::Serializable::Options(emit_nulls: true)]
 class YAMLAttrPersonEmittingNullsByOptions
   include YAML::Serializable
@@ -408,6 +423,16 @@ describe "YAML::Serializable" do
         YAML
     end
     ex.location.should eq({3, 1})
+  end
+
+  it "works with selective serialization" do
+    person = YAMLAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_yaml.should eq "---\nname: Vasya\ngenerated: generated-internally\n"
+
+    person_yaml = "---\nname: Vasya\ngenerated: should not set\npassword: update\n"
+    person = YAMLAttrPersonWithSelectiveSerialization.from_yaml(person_yaml)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
   end
 
   it "does to_yaml" do
