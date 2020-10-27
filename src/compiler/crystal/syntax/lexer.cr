@@ -2224,7 +2224,7 @@ module Crystal
         next_char
         start = current_pos
         if next_char == '%'
-          while (char = next_char).ascii_whitespace?
+          while (char = next_char_check_line).ascii_whitespace?
           end
 
           case char
@@ -2951,7 +2951,7 @@ module Crystal
       if char == '\n'
         incr_line_number
       else
-        incr_column_number = 1
+        incr_column_number
       end
       char
     end
