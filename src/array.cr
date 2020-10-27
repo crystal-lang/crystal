@@ -712,17 +712,7 @@ class Array(T)
   # a # => [2, 4]
   # ```
   def delete_if
-    found = false
-    i = 0
-    while i < @size
-      if yield self[i]
-        delete_at(i)
-        found = true
-      else
-        i += 1
-      end
-    end
-    found
+    reject! { |elem| yield(elem) }
   end
 
   # Removes the element at *index*, returning that element.
