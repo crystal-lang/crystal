@@ -254,15 +254,6 @@ module Crystal
         unless node.named_args
           node.raise "can only instantiate NamedTuple with named arguments"
         end
-      elsif instance_type.splat_index
-        if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
-        end
-
-        min_needed = instance_type.type_vars.size - 1
-        if node.type_vars.size < min_needed
-          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
-        end
       else
         if node.named_args
           node.raise "can only use named arguments with NamedTuple"
@@ -288,8 +279,20 @@ module Crystal
           end
         end
 
-        if knows_count && instance_type.type_vars.size != type_vars_count
-          node.wrong_number_of "type vars", instance_type, type_vars_count, instance_type.type_vars.size
+        if knows_count
+          if instance_type.splat_index
+            min_needed = instance_type.type_vars.size
+            min_needed -= 1 if instance_type.splat_index
+
+            if type_vars_count < min_needed
+              node.wrong_number_of "type vars", instance_type, type_vars_count, "#{min_needed}+"
+            end
+          else
+            needed_count = instance_type.type_vars.size
+            if type_vars_count != needed_count
+              node.wrong_number_of "type vars", instance_type, type_vars_count, needed_count
+            end
+          end
         end
       end
 
