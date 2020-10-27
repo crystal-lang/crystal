@@ -1148,4 +1148,11 @@ describe "Semantic: generic class" do
       GeneralMatrix(Int32).foo
     )) { int32 }
   end
+
+  it "errors if spaltting a non-tuple (#9853)" do
+    assert_error %(
+      Array(*Int32)
+      ),
+      "argument to splat must be a tuple type, not Int32"
+  end
 end
