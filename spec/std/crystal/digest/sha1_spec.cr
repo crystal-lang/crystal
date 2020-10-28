@@ -1,9 +1,9 @@
-require "spec"
-require "./spec_helper"
-require "digest/sha1"
+require "../../spec_helper"
+require "../../digest/spec_helper"
+require "crystal/digest/sha1"
 
-describe Digest::SHA1 do
-  it_acts_as_digest_algorithm Digest::SHA1
+describe Crystal::Digest::SHA1 do
+  it_acts_as_digest_algorithm Crystal::Digest::SHA1
 
   [
     {"", "da39a3ee5e6b4b0d3255bfef95601890afd80709", "2jmj7l5rSw0yVb/vlWAYkK/YBwk="},
@@ -15,12 +15,12 @@ describe Digest::SHA1 do
     {"fooø", "dcf4a1e3542b1a40a4ac2a3f7c92ffdb2d19812f", "3PSh41QrGkCkrCo/fJL/2y0ZgS8="},
   ].each do |(string, hexstring, base64digest)|
     it "does digest for #{string.inspect}" do
-      bytes = Digest::SHA1.digest(string)
+      bytes = Crystal::Digest::SHA1.digest(string)
       bytes.hexstring.should eq(hexstring)
     end
 
     it "resets" do
-      digest = Digest::SHA1.new
+      digest = Crystal::Digest::SHA1.new
       digest.update string
       digest.final.hexstring.should eq(hexstring)
 
@@ -30,7 +30,7 @@ describe Digest::SHA1 do
     end
 
     it "can't call #final more than once" do
-      digest = Digest::SHA1.new
+      digest = Crystal::Digest::SHA1.new
       digest.final
       expect_raises(Digest::FinalizedError) do
         digest.final
@@ -38,7 +38,7 @@ describe Digest::SHA1 do
     end
 
     it "does digest for #{string.inspect} in a block" do
-      bytes = Digest::SHA1.digest do |ctx|
+      bytes = Crystal::Digest::SHA1.digest do |ctx|
         string.each_char do |chr|
           ctx.update chr.to_s
         end
@@ -48,15 +48,15 @@ describe Digest::SHA1 do
     end
 
     it "does hexdigest for #{string.inspect}" do
-      Digest::SHA1.hexdigest(string).should eq(hexstring)
+      Crystal::Digest::SHA1.hexdigest(string).should eq(hexstring)
     end
 
     it "does base64digest for #{string.inspect}" do
-      Digest::SHA1.base64digest(string).should eq(base64digest)
+      Crystal::Digest::SHA1.base64digest(string).should eq(base64digest)
     end
   end
 
   it "returns the digest_size" do
-    Digest::SHA1.new.digest_size.should eq(20)
+    Crystal::Digest::SHA1.new.digest_size.should eq(20)
   end
 end

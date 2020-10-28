@@ -1,4 +1,4 @@
-require "./base"
+require "digest/base"
 
 # Implements the SHA1 digest algorithm.
 #
@@ -6,7 +6,7 @@ require "./base"
 # used in security-related components, like password hashing. For passwords, see
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
-class Digest::SHA1 < Digest::Base
+class Crystal::Digest::SHA1 < Digest::Base
   # This is a direct translation of https://tools.ietf.org/html/rfc3174#section-7
   # but we use loop unrolling for faster execution (about 1.07x slower than OpenSSL::SHA1).
 
