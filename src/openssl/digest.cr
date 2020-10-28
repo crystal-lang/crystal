@@ -1,4 +1,4 @@
-require "../lib_crypto"
+require "./lib_crypto"
 require "digest/base"
 
 module OpenSSL
