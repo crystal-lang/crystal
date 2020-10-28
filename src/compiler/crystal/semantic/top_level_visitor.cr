@@ -357,8 +357,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                       receiver.raise "can't define method in generic instance #{metaclass}"
                     when GenericModuleInstanceMetaclassType
                       receiver.raise "can't define method in generic instance #{metaclass}"
-                    else
-                      # go on
                     end
                     metaclass
                   end
@@ -824,8 +822,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
       return false
-    else
-      # go on
     end
 
     node.raise "can't apply visibility modifier"

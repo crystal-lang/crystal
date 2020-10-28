@@ -2717,8 +2717,6 @@ module Crystal
            !exp.block
           return
         end
-      else
-        # Go on
       end
 
       raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
@@ -3965,8 +3963,6 @@ module Crystal
           a_else = parse_expressions
         when :elsif
           a_else = parse_if check_end: false
-        else
-          # go on
         end
       end
 

@@ -128,13 +128,11 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
-    else # go on
     end
 
     case op
     when "+", "-", "*"
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
-    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)

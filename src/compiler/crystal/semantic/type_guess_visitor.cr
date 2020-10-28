@@ -319,8 +319,6 @@ module Crystal
         value = process_assign_instance_var(owner, target, value)
       when GenericModuleType
         value = process_assign_instance_var(owner, target, value)
-      else
-        # go on
       end
 
       unless current_type.allows_instance_vars?

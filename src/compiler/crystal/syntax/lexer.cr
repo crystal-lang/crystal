@@ -2462,8 +2462,6 @@ module Crystal
                 if delimiter_state.open_count == 0
                   delimiter_state = nil
                 end
-              else
-                # Nothing to do
               end
             end
 

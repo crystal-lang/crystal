@@ -43,8 +43,6 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
-    else
-      # Nothing
     end
 
     # Check if its call is inside LibFoo

@@ -239,8 +239,6 @@ module Crystal
         if (obj = cond.obj).is_a?(Var)
           filters = TypeFilters.new(obj, SimpleTypeFilter.new(cond.const.type))
         end
-      else
-        # go on
       end
 
       if filters

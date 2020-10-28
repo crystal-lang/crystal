@@ -468,8 +468,6 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
-            else
-              # go on
             end
           end
         end

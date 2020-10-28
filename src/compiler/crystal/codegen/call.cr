@@ -553,8 +553,6 @@ class Crystal::CodeGenVisitor
         else
           @last = llvm_nil
         end
-      else
-        # go on
       end
     end
 

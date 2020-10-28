@@ -2374,8 +2374,6 @@ class String
         buffer << capture
         index = end_index + 1
         first_index = index
-      else
-        # Nothing
       end
     end
 

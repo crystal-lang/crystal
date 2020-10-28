@@ -1428,8 +1428,6 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
-        else
-          # go on
         end
 
         temp_var = @program.new_temp_var.at(arg.location)
@@ -1573,8 +1571,6 @@ module Crystal
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
-        else
-          # go on, nothing special
         end
       end
 
@@ -1846,8 +1842,6 @@ module Crystal
       when Expressions
         return unless exp = exp.single_expression?
         return get_expression_var(exp)
-      else
-        # go on
       end
       nil
     end
@@ -1872,8 +1866,6 @@ module Crystal
         node.raise "can't cast to Reference yet"
       when @program.class_type
         node.raise "can't cast to Class yet"
-      else
-        # go on
       end
 
       obj_type = node.obj.type?
@@ -1979,8 +1971,6 @@ module Crystal
         elsif or_right_type_filters
           filter_vars or_right_type_filters.not
         end
-      else
-        # go on
       end
 
       before_else_vars = @vars.dup
@@ -2001,8 +1991,6 @@ module Crystal
           @or_left_type_filters = or_left_type_filters = then_type_filters
           @or_right_type_filters = or_right_type_filters = else_type_filters
           @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
-        else
-          # go on: a regular if
         end
       end
 
@@ -2294,8 +2282,6 @@ module Crystal
       when Expressions
         return unless node = node.single_expression?
         return get_while_cond_assign_target(node)
-      else
-        # go on
       end
 
       nil
@@ -2519,8 +2505,6 @@ module Crystal
           node.extra = convert_call
           return
         end
-      else
-        # go on
       end
 
       unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
@@ -3072,12 +3056,8 @@ module Crystal
           case element
           when Var         then element.accept(self)
           when InstanceVar then element.accept(self)
-          else
-            # Nothing to do
           end
         end
-      else
-        # Nothing to do
       end
 
       expand(node)
@@ -3131,8 +3111,6 @@ module Crystal
         case exp
         when Var, IsA, RespondsTo, Not
           return type_filters.not
-        else
-          # go on
         end
       end
 
