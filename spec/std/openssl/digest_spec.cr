@@ -58,4 +58,41 @@ describe OpenSSL::Digest do
 
     digest.final.hexstring.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae")
   end
+
+  describe ".dup" do
+    it "preserves type" do
+      OpenSSL::Digest.new("MD5").dup.class.should eq(OpenSSL::Digest)
+    end
+
+    it "preserves value" do
+      digest1 = OpenSSL::Digest.new("MD5")
+      digest1.update("a")
+      digest2 = digest1.dup
+
+      digest1.final.should eq(digest2.final)
+    end
+
+    it "leads to not sharing state" do
+      digest1 = OpenSSL::Digest.new("MD5")
+      digest1.update("a")
+
+      digest2 = digest1.dup
+
+      digest1.update("b")
+
+      digest1.final.should_not eq(digest2.final)
+    end
+
+    it "leads to deterministic updates" do
+      digest1 = OpenSSL::Digest.new("MD5")
+      digest1.update("a")
+
+      digest2 = digest1.dup
+
+      digest1.update("b")
+      digest2.update("b")
+
+      digest1.final.should eq(digest2.final)
+    end
+  end
 end

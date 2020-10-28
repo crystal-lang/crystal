@@ -44,4 +44,41 @@ def it_acts_as_digest_algorithm(type : T.class) forall T
     outer_res.should eq(res)
     inner_res.should eq(res)
   end
+
+  describe ".dup" do
+    it "preserves type" do
+      type.new.dup.class.should eq(type)
+    end
+
+    it "preserves value" do
+      digest1 = type.new
+      digest1.update("a")
+      digest2 = digest1.dup
+
+      digest1.final.should eq(digest2.final)
+    end
+
+    it "leads to not sharing state" do
+      digest1 = type.new
+      digest1.update("a")
+
+      digest2 = digest1.dup
+
+      digest1.update("b")
+
+      digest1.final.should_not eq(digest2.final)
+    end
+
+    it "leads to deterministic updates" do
+      digest1 = type.new
+      digest1.update("a")
+
+      digest2 = digest1.dup
+
+      digest1.update("b")
+      digest2.update("b")
+
+      digest1.final.should eq(digest2.final)
+    end
+  end
 end

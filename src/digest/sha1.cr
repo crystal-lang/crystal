@@ -11,4 +11,12 @@ class Digest::SHA1 < ::OpenSSL::Digest
   def initialize
     super("SHA1")
   end
+
+  protected def initialize(ctx : LibCrypto::EVP_MD_CTX)
+    super("SHA1", ctx)
+  end
+
+  def dup
+    self.class.new(dup_ctx)
+  end
 end

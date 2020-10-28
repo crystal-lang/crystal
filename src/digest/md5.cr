@@ -11,4 +11,12 @@ class Digest::MD5 < ::OpenSSL::Digest
   def initialize
     super("MD5")
   end
+
+  protected def initialize(ctx : LibCrypto::EVP_MD_CTX)
+    super("MD5", ctx)
+  end
+
+  def dup
+    self.class.new(dup_ctx)
+  end
 end

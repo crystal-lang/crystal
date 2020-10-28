@@ -6,4 +6,12 @@ class Digest::SHA256 < ::OpenSSL::Digest
   def initialize
     super("SHA256")
   end
+
+  protected def initialize(ctx : LibCrypto::EVP_MD_CTX)
+    super("SHA256", ctx)
+  end
+
+  def dup
+    self.class.new(dup_ctx)
+  end
 end

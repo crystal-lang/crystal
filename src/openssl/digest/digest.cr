@@ -18,6 +18,9 @@ module OpenSSL
       @ctx = new_evp_mt_ctx(name)
     end
 
+    protected def initialize(@name : String, @ctx : LibCrypto::EVP_MD_CTX)
+    end
+
     private def new_evp_mt_ctx(name)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
@@ -39,12 +42,16 @@ module OpenSSL
     end
 
     def dup
+      Digest.new(@name, dup_ctx)
+    end
+
+    protected def dup_ctx
       ctx = LibCrypto.evp_md_ctx_new
       if LibCrypto.evp_md_ctx_copy(ctx, @ctx) == 0
         LibCrypto.evp_md_ctx_free(ctx)
         raise Error.new("Unable to dup digest")
       end
-      Digest.new(@name, ctx)
+      ctx
     end
 
     private def reset_impl : Nil
