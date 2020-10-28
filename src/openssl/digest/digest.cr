@@ -1,6 +1,7 @@
 require "../lib_crypto"
 require "digest/base"
-require "./digest_base"
+
+# require "./digest_base"
 
 module OpenSSL
   class Digest < ::Digest::Base
@@ -8,15 +9,16 @@ module OpenSSL
 
     class UnsupportedError < Error; end
 
-    include DigestBase
+    # include DigestBase
 
     getter name : String
+    @ctx : LibCrypto::EVP_MD_CTX
 
-    def initialize(@name, @ctx : LibCrypto::EVP_MD_CTX)
-      raise Error.new("Invalid EVP_MD_CTX") unless @ctx
+    def initialize(@name : String)
+      @ctx = new_evp_mt_ctx(name)
     end
 
-    protected def self.new_evp_mt_ctx(name)
+    private def new_evp_mt_ctx(name)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
         raise UnsupportedError.new("Unsupported digest algorithm: #{name}")
@@ -28,11 +30,8 @@ module OpenSSL
       if LibCrypto.evp_digestinit_ex(ctx, md, nil) != 1
         raise Error.new "Digest initialization failed."
       end
+      raise Error.new("Invalid EVP_MD_CTX") unless ctx
       ctx
-    end
-
-    def self.new(name)
-      new(name, new_evp_mt_ctx(name))
     end
 
     def finalize
