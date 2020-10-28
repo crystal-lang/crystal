@@ -6,9 +6,13 @@ abstract class Digest
   class FinalizedError < Exception
   end
 
-  macro inherited
+  # The `Digest::Algorithm` module is used in the concrete subclass of `Digest`
+  # that does not require arguments in its construction.
+  #
+  # The modules adds convenient class methods as `Digest::MD5.digest`, `Digest::MD5.hexdigest`.
+  module Algorithm
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
-    def self.digest(data)
+    def digest(data)
       digest do |ctx|
         ctx.update(data.to_slice)
       end
@@ -26,7 +30,7 @@ abstract class Digest
     # end
     # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.digest(& : self ->) : Bytes
+    def digest(& : self ->) : Bytes
       context = new
       yield context
       context.final
@@ -39,7 +43,7 @@ abstract class Digest
     #
     # Digest::MD5.hexdigest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.hexdigest(data) : String
+    def hexdigest(data) : String
       hexdigest &.update(data)
     end
 
@@ -57,7 +61,7 @@ abstract class Digest
     # end
     # # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
-    def self.hexdigest(& : self ->) : String
+    def hexdigest(& : self ->) : String
       hashsum = digest do |ctx|
         yield ctx
       end
@@ -72,7 +76,7 @@ abstract class Digest
     #
     # Digest::SHA1.base64digest("foo") # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
     # ```
-    def self.base64digest(data) : String
+    def base64digest(data) : String
       base64digest &.update(data)
     end
 
@@ -89,7 +93,7 @@ abstract class Digest
     # end
     # # => "C+7Hteo/D9vJXQ3UfzxbwnXaijM="
     # ```
-    def self.base64digest(& : self -> _) : String
+    def base64digest(& : self -> _) : String
       hashsum = digest do |ctx|
         yield ctx
       end

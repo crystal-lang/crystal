@@ -3,6 +3,8 @@ require "openssl"
 
 # Implements the SHA512 digest algorithm.
 class Digest::SHA512 < ::OpenSSL::Digest
+  extend Algorithm
+
   def initialize
     super("SHA512")
   end

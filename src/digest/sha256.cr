@@ -3,6 +3,8 @@ require "openssl"
 
 # Implements the SHA256 digest algorithm.
 class Digest::SHA256 < ::OpenSSL::Digest
+  extend Algorithm
+
   def initialize
     super("SHA256")
   end
