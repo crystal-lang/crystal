@@ -238,6 +238,7 @@ class Crystal::AbstractDefChecker
 
     r1 = a1.restriction
     r2 = a2.restriction
+    return false if r1 && !r2
     if r2 && r1 && r1 != r2
       # Check if a1.restriction is contravariant with a2.restriction
       begin
