@@ -1149,7 +1149,7 @@ describe "Semantic: generic class" do
     )) { int32 }
   end
 
-  it "errors if spaltting a non-tuple (#9853)" do
+  it "errors if splatting a non-tuple (#9853)" do
     assert_error %(
       Array(*Int32)
       ),
