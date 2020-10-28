@@ -81,4 +81,9 @@ def it_acts_as_digest_algorithm(type : T.class) forall T
       digest1.final.should eq(digest2.final)
     end
   end
+
+  it "digest with file content" do
+    path = datapath("test_file.txt")
+    type.new.file(path).final.should eq(type.digest(File.read(path)))
+  end
 end

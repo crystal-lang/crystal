@@ -42,11 +42,6 @@ describe OpenSSL::Digest do
     OpenSSL::Digest.new("SHA256").block_size.should eq 64
   end
 
-  it "returns a base64 digest" do
-    digest = OpenSSL::Digest.new("SHA512").update "abc".to_slice
-    digest.base64digest.should eq "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw=="
-  end
-
   it "correctly reads from IO" do
     r, w = IO.pipe
     digest = OpenSSL::Digest.new("SHA256")
@@ -94,5 +89,10 @@ describe OpenSSL::Digest do
 
       digest1.final.should eq(digest2.final)
     end
+  end
+
+  it "digest with file content" do
+    path = datapath("test_file.txt")
+    OpenSSL::Digest.new("MD5").file(path).final.hexstring.should eq("a4f13879534d2b93a9a65a4b2d0dde9d")
   end
 end

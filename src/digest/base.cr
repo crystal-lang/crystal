@@ -131,6 +131,27 @@ abstract class Digest::Base
     self
   end
 
+  # Reads the file's content and updates the digest with it.
+  def file(file_name : Path | String) : self
+    File.open(file_name) do |io|
+      self << io
+    end
+  end
+
+  # Reads the io's data and updates the digest with it.
+  def update(io : IO) : self
+    buffer = uninitialized UInt8[4096]
+    while (read_bytes = io.read(buffer.to_slice)) > 0
+      self << buffer.to_slice[0, read_bytes]
+    end
+    self
+  end
+
+  # :ditto:
+  def <<(data) : self
+    update(data)
+  end
+
   # Dups and finishes the digest.
   @[Deprecated("Use `final` instead.")]
   def digest : Bytes

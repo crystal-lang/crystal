@@ -1,5 +1,3 @@
-require "./digest_base"
-
 module OpenSSL
   # Wraps an IO by calculating a specified digest on read or write operations.
   #

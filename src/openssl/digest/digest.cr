@@ -1,15 +1,11 @@
 require "../lib_crypto"
 require "digest/base"
 
-# require "./digest_base"
-
 module OpenSSL
   class Digest < ::Digest::Base
     class Error < OpenSSL::Error; end
 
     class UnsupportedError < Error; end
-
-    # include DigestBase
 
     getter name : String
     @ctx : LibCrypto::EVP_MD_CTX
