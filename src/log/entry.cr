@@ -19,16 +19,14 @@ enum Log::Severity
 
   def label
     case self
-    when Trace  then "TRACE"
-    when Debug  then "DEBUG"
-    when Info   then "INFO"
-    when Notice then "NOTICE"
-    when Warn   then "WARN"
-    when Error  then "ERROR"
-    when Fatal  then "FATAL"
-    when None   then "NONE"
-    else
-      raise "unreachable"
+    in Trace  then "TRACE"
+    in Debug  then "DEBUG"
+    in Info   then "INFO"
+    in Notice then "NOTICE"
+    in Warn   then "WARN"
+    in Error  then "ERROR"
+    in Fatal  then "FATAL"
+    in None   then "NONE"
     end
   end
 end

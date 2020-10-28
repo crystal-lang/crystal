@@ -1032,7 +1032,7 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[index]
       case abi_arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
         if cast = abi_arg_type.cast
           null_fun_types << cast
@@ -1040,11 +1040,11 @@ class Crystal::CodeGenVisitor
           null_fun_types << abi_arg_type.type
         end
         null_args << call_arg
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         # Pass argument as is (will be passed byval)
         null_args << call_arg
         null_fun_types << abi_arg_type.type.pointer
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # Ignore
       end
     end

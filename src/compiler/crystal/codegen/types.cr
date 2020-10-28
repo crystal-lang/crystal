@@ -201,7 +201,7 @@ module Crystal
         when CharLiteral
           @compile_time_value = value.value
         else
-          case type = value.type?
+          case value.type?
           when IntegerType, EnumType
             interpreter = MathInterpreter.new(namespace, visitor)
             @compile_time_value = interpreter.interpret(value) rescue nil
