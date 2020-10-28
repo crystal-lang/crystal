@@ -14,7 +14,7 @@ describe OpenSSL::Digest do
 
       digest.reset
       digest << "fooø"
-      digest.hexdigest.should eq(expected)
+      digest.final.hexstring.should eq(expected)
     end
   end
 
