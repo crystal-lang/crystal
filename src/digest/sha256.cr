@@ -1,4 +1,4 @@
-require "./base"
+require "./digest"
 require "openssl"
 
 # Implements the SHA256 digest algorithm.

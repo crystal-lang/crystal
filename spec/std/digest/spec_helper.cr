@@ -10,7 +10,7 @@ def it_acts_as_digest_algorithm(type : T.class) forall T
   end
 
   pending "#hexdigest can update within a loop by indirect expr (#9483)" do
-    algorithm = {} of String => Digest::Base.class
+    algorithm = {} of String => Digest.class
     algorithm["me"] = type
     i = 0
     algorithm["me"].hexdigest do |digest|

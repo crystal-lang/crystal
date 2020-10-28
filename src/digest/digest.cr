@@ -1,9 +1,11 @@
 require "base64"
 
-class Digest::FinalizedError < Exception
-end
+# The Digest module contains implementations of hashing algorithms like
+# `Digest::MD5`, `Digest::SHA1`, `Digest::SHA256`, or `Digest::SHA512`.
+abstract class Digest
+  class FinalizedError < Exception
+  end
 
-abstract class Digest::Base
   macro inherited
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
     def self.digest(data)

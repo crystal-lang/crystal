@@ -1,8 +1,8 @@
 require "./lib_crypto"
-require "digest/base"
+require "digest/digest"
 
 module OpenSSL
-  class Digest < ::Digest::Base
+  class Digest < ::Digest
     class Error < OpenSSL::Error; end
 
     class UnsupportedError < Error; end

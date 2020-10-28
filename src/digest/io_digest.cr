@@ -1,4 +1,4 @@
-require "./base"
+require "./digest"
 require "openssl"
 
 # Wraps an IO by calculating a specified digest on read or write operations.
@@ -16,7 +16,7 @@ require "openssl"
 # ```
 class IO::Digest < IO
   getter io : IO
-  getter digest_algorithm : ::Digest::Base
+  getter digest_algorithm : ::Digest
   getter mode : DigestMode
 
   delegate close, closed?, flush, peek, tty?, rewind, to: @io
@@ -27,7 +27,7 @@ class IO::Digest < IO
     Write
   end
 
-  def initialize(@io : IO, @digest_algorithm : ::Digest::Base, @mode = DigestMode::Read)
+  def initialize(@io : IO, @digest_algorithm : ::Digest, @mode = DigestMode::Read)
   end
 
   def initialize(@io : IO, algorithm : String, @mode = DigestMode::Read)
