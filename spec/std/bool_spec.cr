@@ -41,6 +41,13 @@ describe "Bool" do
     it { false.to_s.should eq("false") }
   end
 
+  describe "<=>" do
+    it { (false <=> true).should eq(-1) }
+    it { (true <=> false).should eq(1) }
+    it { (false <=> false).should eq(0) }
+    it { (true <=> true).should eq(0) }
+  end
+
   describe "clone" do
     it { true.clone.should be_true }
     it { false.clone.should be_false }
