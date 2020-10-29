@@ -1,4 +1,4 @@
-require "./comparable"
+require "comparable"
 
 # Bool has only two possible values: `true` and `false`. They are constructed using these literals:
 #
