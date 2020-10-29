@@ -43,6 +43,18 @@ struct Bool
     self != other
   end
 
+  # Compares this bool against another, according to their underlying value.
+  #
+  # ```
+  # false <=> true  # => -1
+  # true <=> false  # => 1
+  # true <=> true   # => 0
+  # false <=> false # => 0
+  # ```
+  def <=>(other : Bool) : Int32
+    self == other ? 0 : (self ? 1 : -1)
+  end
+
   # See `Object#hash(hasher)`
   def hash(hasher)
     hasher.bool(self)
@@ -63,18 +75,6 @@ struct Bool
   # Appends `"true"` for `true` and `"false"` for `false` to the given IO.
   def to_s(io : IO) : Nil
     io << to_s
-  end
-
-  # Compares this bool against another, according to their underlying value.
-  #
-  # ```
-  # false <=> true  # => -1
-  # true <=> false  # => 1
-  # true <=> true   # => 0
-  # false <=> false # => 0
-  # ```
-  def <=>(other : Bool) : Int32
-    self == other ? 0 : (self ? 1 : -1)
   end
 
   def clone : Bool

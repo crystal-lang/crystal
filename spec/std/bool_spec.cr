@@ -27,6 +27,13 @@ describe "Bool" do
     it { (true ^ true).should be_false }
   end
 
+  describe "<=>" do
+    it { (false <=> true).should eq(-1) }
+    it { (true <=> false).should eq(1) }
+    it { (false <=> false).should eq(0) }
+    it { (true <=> true).should eq(0) }
+  end
+
   describe "hash" do
     it { true.hash.should_not eq(false.hash) }
   end
@@ -39,13 +46,6 @@ describe "Bool" do
   describe "to_s" do
     it { true.to_s.should eq("true") }
     it { false.to_s.should eq("false") }
-  end
-
-  describe "<=>" do
-    it { (false <=> true).should eq(-1) }
-    it { (true <=> false).should eq(1) }
-    it { (false <=> false).should eq(0) }
-    it { (true <=> true).should eq(0) }
   end
 
   describe "clone" do
