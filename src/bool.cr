@@ -62,6 +62,10 @@ struct Bool
   def to_s(io : IO) : Nil
     io << to_s
   end
+  
+  def <=>(other : Bool) : Int32
+    self == other ? 0 : (self ? 1 : -1)
+  end
 
   def clone : Bool
     self
