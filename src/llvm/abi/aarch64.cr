@@ -27,8 +27,6 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                   check_array(type)
                 when Type::Kind::Struct
                   check_struct(type)
-                else
-                  # go on
                 end
 
     # Ensure we have at most four uniquely addressable members

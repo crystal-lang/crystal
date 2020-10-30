@@ -3069,8 +3069,6 @@ module Crystal
         else
           clear_object(node.exp)
         end
-      else
-        # nothing to do
       end
     end
 

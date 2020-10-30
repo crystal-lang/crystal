@@ -106,13 +106,13 @@ module Crystal
 
     def error_body(source, default_message) : String | Nil
       case filename = @filename
-      when VirtualFile
+      in VirtualFile
         return format_macro_error(filename)
-      when String
+      in String
         if File.file?(filename)
           return format_error_from_file(filename)
         end
-      else
+      in Nil
         # go on
       end
 
@@ -151,11 +151,11 @@ module Crystal
 
       String.build do |io|
         case filename
-        when String
+        in String
           io << filename_row_col_message(filename, line_number, column_number)
-        when VirtualFile
+        in VirtualFile
           io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
-        else
+        in Nil
           io << "unknown location"
         end
 
@@ -209,15 +209,15 @@ module Crystal
 
     def source_lines(filename)
       case filename
-      when Nil
+      in Nil
         nil
-      when String
+      in String
         if File.file? filename
           File.read_lines(filename)
         else
           nil
         end
-      when VirtualFile
+      in VirtualFile
         filename.source.lines
       end
     end
@@ -229,11 +229,11 @@ module Crystal
       column_number = macro_source.try &.column_number
 
       case source_filename
-      when String
+      in String
         io << colorize("#{relative_filename(source_filename)}:#{line_number}:#{column_number}").underline
-      when VirtualFile
+      in VirtualFile
         io << "macro '" << colorize("#{source_filename.macro.name}").underline << '\''
-      else
+      in Nil
         "unknown location"
       end
 

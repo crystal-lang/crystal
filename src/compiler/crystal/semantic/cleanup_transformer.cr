@@ -538,8 +538,6 @@ module Crystal
         if owner.passed_as_self?
           arg.raise "#{message} (closured vars: self)"
         end
-      else
-        # nothing to do
       end
     end
 

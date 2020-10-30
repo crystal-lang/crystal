@@ -394,8 +394,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
               expanded = expanded_type.value
             when Type
               expanded = TypeNode.new(expanded_type)
-            else
-              # go on
             end
           end
           expanded
@@ -486,8 +484,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     when @program.experimental_annotation
       # ditto DeprecatedAnnotation
       ExperimentalAnnotation.from(ann)
-    else
-      # go on
     end
   end
 
