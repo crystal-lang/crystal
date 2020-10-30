@@ -6,6 +6,8 @@ module Crystal::Doc
     property refname : String? = nil
     property source_url_pattern : String? = nil
 
+    class_property git_executable = "git"
+
     def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
 
@@ -54,7 +56,8 @@ module Crystal::Doc
     end
 
     def self.git_dir?
-      Process.run("git", ["rev-parse", "--is-inside-work-tree"]).success?
+      git_command(["rev-parse", "--is-inside-work-tree"]) { return false }
+      true
     end
 
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
@@ -112,14 +115,22 @@ module Crystal::Doc
       end
     end
 
+    # Tries to run git command with args.
+    # Yields block if exec fails or process status is not success.
+    def self.git_command(args, output : Process::Stdio = Process::Redirect::Close)
+      status = Process.run(git_executable, args, output: output)
+      yield unless status.success?
+      status
+    rescue File::Error | IO::Error
+      yield
+    end
+
     def self.git_remote
       # check whether inside git work-tree
-      status = Process.run("git", ["rev-parse", "--is-inside-work-tree"])
-      return unless status.success?
+      git_command(["rev-parse", "--is-inside-work-tree"]) { return }
 
       io = IO::Memory.new
-      status = Process.run("git", ["remote", "-v"], output: io)
-      return unless status.success?
+      git_command(["remote", "-v"], output: io) { return }
 
       remotes = io.to_s.lines.select(&.ends_with?(" (fetch)"))
 
@@ -134,10 +145,10 @@ module Crystal::Doc
     def self.git_clean?
       # Use git to determine if index and working directory are clean
       io = IO::Memory.new
-      status = Process.run("git", ["status", "--porcelain"], output: io)
+      git_command(["status", "--porcelain"], output: io) { return }
+
       # If clean, output of `git status --porcelain` is empty. Still need to check
       # the status code, to make sure empty doesn't mean error.
-      return unless status.success?
       io.rewind
       io.bytesize == 0
     end
@@ -145,8 +156,7 @@ module Crystal::Doc
     def self.git_ref(*, branch)
       io = IO::Memory.new
       # Check if current HEAD is tagged
-      status = Process.run("git", ["tag", "--points-at", "HEAD"], output: io)
-      return unless status.success?
+      git_command(["tag", "--points-at", "HEAD"], output: io) { return }
       io.rewind
       tags = io.to_s.lines
       # Return tag if commit is tagged, select first one if multiple
@@ -157,8 +167,7 @@ module Crystal::Doc
 
       if branch
         # Read current branch name
-        status = Process.run("git", ["rev-parse", "--abbrev-ref", "HEAD"], output: io)
-        return unless status.success?
+        git_command(["rev-parse", "--abbrev-ref", "HEAD"], output: io) { return }
 
         if branch_name = io.to_s.strip.presence
           return branch_name
@@ -167,8 +176,7 @@ module Crystal::Doc
       end
 
       # Otherwise, return current commit sha
-      status = Process.run("git", ["rev-parse", "HEAD"], output: io)
-      return unless status.success?
+      git_command(["rev-parse", "HEAD"], output: io) { return }
 
       if sha = io.to_s.strip.presence
         return sha
