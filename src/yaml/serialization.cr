@@ -242,7 +242,9 @@ module YAML
               @{{name}} = %var{name}
             {% end %}
           {% elsif value[:has_default] %}
-            @{{name}} = %var{name}.nil? ? {{value[:default]}} : %var{name}
+            if %found{name} && !%var{name}.nil?
+              @{{name}} = %var{name}
+            end
           {% else %}
             @{{name}} = (%var{name}).as({{value[:type]}})
           {% end %}

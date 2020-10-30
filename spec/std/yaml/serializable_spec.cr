@@ -319,6 +319,28 @@ class YAMLCircle < YAMLShape
   property radius : Int32
 end
 
+module YAMLNamespace
+  struct FooRequest
+    include YAML::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include YAML::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include YAML::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
+end
+
 class YAMLWithShape
   include YAML::Serializable
 
@@ -868,6 +890,14 @@ describe "YAML::Serializable" do
       point = container.shape.as(YAMLPoint)
       point.x.should eq(1)
       point.y.should eq(2)
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = YAMLNamespace::FooRequest.from_yaml(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end
