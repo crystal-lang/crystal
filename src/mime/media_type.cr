@@ -275,7 +275,7 @@ module MIME
             end
           end
 
-          # TODO: Using a different datastructure than `Hash` for storing
+          # TODO: Using a different data structure than `Hash` for storing
           # continuation sections could improve performance.
           normalized_key = "#{base_key}*#{section}"
           continuation_map = continuation[base_key]

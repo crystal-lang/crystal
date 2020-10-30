@@ -776,7 +776,7 @@ module Crystal
     end
   end
 
-  # Ficticious node to mean a location in code shouldn't be reached.
+  # Fictitious node to mean a location in code shouldn't be reached.
   # This is used in the implicit `else` branch of a case.
   class Unreachable < ASTNode
     def clone_without_location

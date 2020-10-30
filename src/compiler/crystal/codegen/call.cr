@@ -67,7 +67,7 @@ class Crystal::CodeGenVisitor
     obj = node.obj
 
     # Always accept obj: even if it's not passed as self this might
-    # involve intermerdiate calls with side effects.
+    # involve intermediate calls with side effects.
     if obj
       @needs_value = true
       accept obj

@@ -771,7 +771,7 @@ class Crystal::Call
       output = block_arg_restriction.output
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
-      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
+      # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"

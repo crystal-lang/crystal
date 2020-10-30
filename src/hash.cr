@@ -662,14 +662,14 @@ class Hash(K, V)
   end
 
   # Initializes `@entries` for a dup copy.
-  # Here we only need tu duplicate the buffer.
+  # Here we only need to duplicate the buffer.
   private def initialize_dup_entries(other)
     return if other.@entries.null?
 
     @entries = malloc_entries(other.entries_capacity)
 
     # Note that we only need to copy `entries_size` which
-    # are the effectives entries in use.
+    # are the effective entries in use.
     @entries.copy_from(other.@entries, other.entries_size)
   end
 

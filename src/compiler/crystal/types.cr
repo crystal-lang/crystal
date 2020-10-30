@@ -242,7 +242,7 @@ module Crystal
     # Returns the type that owns class vars for a type.
     #
     # This method returns self, but subclasses might override.
-    # For example, a metaclass's class_var_owner is the instance type.
+    # For example, a metaclass' class_var_owner is the instance type.
     def class_var_owner
       self
     end
@@ -2059,7 +2059,7 @@ module Crystal
     getter(metaclass) { GenericClassInstanceMetaclassType.new(self.program, self) }
   end
 
-  # An instantiated genric module, like Enumerable(Int32).
+  # An instantiated generic module, like Enumerable(Int32).
   class GenericModuleInstanceType < GenericInstanceType
     include InstanceVarContainer
     include InstanceVarInitializerContainer
@@ -2668,7 +2668,7 @@ module Crystal
 
   # An instantiated enum type.
   #
-  # TODO: right now this is not properly modelled. Ideally there
+  # TODO: right now this is not properly modeled. Ideally there
   # should be EnumType and EnumInstanceType, where EnumType would
   # be `Enum(T)` and given:
   #

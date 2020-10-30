@@ -243,7 +243,7 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other : Array(U)) forall U
-    # Heurisitic: if the combined size is small we just do a linear scan
+    # Heuristic: if the combined size is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
       ary = Array(T | U).new
@@ -300,7 +300,7 @@ class Array(T)
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U)) forall U
-    # Heurisitic: if any of the arrays is small we just do a linear scan
+    # Heuristic: if any of the arrays is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
