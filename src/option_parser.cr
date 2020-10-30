@@ -58,7 +58,7 @@
 #     welcome = true
 #     parser.banner = "Usage: example welcome"
 #   end
-#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-v", "--verbose", "Enabled verbose output") { verbose = true }
 #   parser.on("-h", "--help", "Show this help") do
 #     puts parser
 #     exit

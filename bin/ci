@@ -46,12 +46,16 @@ on_os() {
   os="$1"
   shift
 
-  verify_environment
+  if [ -z "$CI_NIX_SHELL" ]; then
+    verify_environment
 
-  if [ "$TRAVIS_OS_NAME" = "$os" ]; then
-    echo "${@}"
-    eval "${@}"
-    return $?
+    if [ "$TRAVIS_OS_NAME" = "$os" ]; then
+      echo "${@}"
+      eval "${@}"
+      return $?
+    else
+      return 0
+    fi
   else
     return 0
   fi
@@ -63,6 +67,20 @@ on_linux() {
 
 on_osx() {
   fail_on_error on_os "osx" "${@}"
+}
+
+on_nix_shell_eval() {
+  if [ -n "$CI_NIX_SHELL" ]; then
+    echo "${@}"
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
+on_nix_shell() {
+  fail_on_error on_nix_shell_eval "${@}"
 }
 
 on_github() {
@@ -181,6 +199,8 @@ with_build_env() {
     CRYSTAL_LIBRARY_PATH="~/crystal/embedded/lib" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
+
+  on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
 
   on_github echo "::endgroup::"
 }

@@ -2,6 +2,7 @@ require "../spec_helper"
 require "../../support/channel"
 
 {% unless flag?(:win32) %}
+  require "socket"
   require "big"
 {% end %}
 require "base64"
@@ -766,6 +767,24 @@ describe IO do
         io.set_encoding("UCS-2LE")
         io.read_string(11).should eq("Hello world")
         io.gets_to_end.should eq("\r\nFoo\nBar")
+      end
+
+      pending_win32 "gets ascii from socket (#9056)" do
+        server = TCPServer.new "localhost", 0
+        sock = TCPSocket.new "localhost", server.local_address.port
+        begin
+          sock.set_encoding("ascii")
+          spawn do
+            client = server.accept
+            message = client.gets
+            client << "#{message}\n"
+          end
+          sock << "K\n"
+          sock.gets.should eq("K")
+        ensure
+          server.close
+          sock.close
+        end
       end
     end
 

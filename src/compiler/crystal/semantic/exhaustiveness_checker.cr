@@ -287,7 +287,7 @@ struct Crystal::ExhaustivenessChecker
     end
 
     # Tries to cover this target with the given pattern.
-    # By default, a TypePatteren will cover a target.
+    # By default, a TypePattern will cover a target.
     # Other, more specific, patterns will partially cover a target.
     def cover(pattern : Pattern) : Nil
       case pattern

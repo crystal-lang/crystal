@@ -112,7 +112,7 @@ module Crystal
 
     private def compute_c_calling_convention
       # One case where this is not true if for LLVM instrinsics.
-      # For example overflow intrincis return a tuple, like {i32, i1}:
+      # For example overflow intrinsics return a tuple, like {i32, i1}:
       # in C ABI that is represented as i64, but we need to keep the original
       # type here, respecting LLVM types, not the C ABI.
       if self.is_a?(External)

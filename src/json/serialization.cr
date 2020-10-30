@@ -60,6 +60,8 @@ module JSON
   #
   # `JSON::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
+  # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
@@ -144,7 +146,7 @@ module JSON
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(pull : ::JSON::PullParser)
@@ -158,7 +160,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -268,7 +270,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
                 type:      ivar.type,

@@ -577,7 +577,9 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
-    exec_internal(request)
+    around_exec(request) do
+      exec_internal(request)
+    end
   end
 
   private def exec_internal(request)
@@ -615,8 +617,10 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
-    exec_internal(request) do |response|
-      yield response
+    around_exec(request) do
+      exec_internal(request) do |response|
+        yield response
+      end
     end
   end
 
@@ -860,6 +864,40 @@ class HTTP::Client
         client.basic_auth(user, password)
       end
       yield client, path
+    end
+  end
+
+  # This method is called when executing the request. Although it can be
+  # redefined, it is recommended to use the `def_around_exec` macro to be
+  # able to add new behaviors without loosing prior existing ones.
+  protected def around_exec(request)
+    yield
+  end
+
+  # This macro allows injecting code to be run before and after the execution
+  # of the request. It should return the yielded value. It must be called with 1
+  # block argument that will be used to pass the `HTTP::Request`.
+  #
+  # ```
+  # class HTTP::Client
+  #   def_around_exec do |request|
+  #     # do something before exec
+  #     res = yield
+  #     # do something after exec
+  #     res
+  #   end
+  # end
+  # ```
+  macro def_around_exec(&block)
+    protected def around_exec(%request)
+      previous_def do
+        {% if block.args.size != 1 %}
+          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+        {% end %}
+
+        {{ block.args.first.id }} = %request
+        {{ block.body }}
+      end
     end
   end
 end

@@ -801,22 +801,6 @@ class File < IO::FileDescriptor
     system_truncate(size)
   end
 
-  # Flushes all data written to this File to the disk device so that
-  # all changed information can be retrieved even if the system
-  # crashes or is rebooted. The call blocks until the device reports that
-  # the transfer has completed.
-  # To reduce disk activity the *flush_metadata* parameter can be set to false,
-  # then the syscall *fdatasync* will be used and only data required for
-  # subsequent data retrieval is flushed. Metadata such as modified time and
-  # access time is not written.
-  #
-  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
-  # and DragonFly BSD.
-  def fsync(flush_metadata = true) : Nil
-    flush
-    system_fsync(flush_metadata)
-  end
-
   # Yields an `IO` to read a section inside this file.
   # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)
@@ -842,44 +826,6 @@ class File < IO::FileDescriptor
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << '>'
-  end
-
-  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
-
-  def flock_shared(blocking = true)
-    flock_shared blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared(blocking = true)
-    system_flock_shared(blocking)
-  end
-
-  def flock_exclusive(blocking = true)
-    flock_exclusive blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive(blocking = true)
-    system_flock_exclusive(blocking)
-  end
-
-  # Removes an existing advisory lock held by this process.
-  def flock_unlock
-    system_flock_unlock
   end
 
   # Deletes this file.

@@ -332,6 +332,21 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+struct JSONAttrPersonWithSelectiveSerialization
+  include JSON::Serializable
+
+  property name : String
+
+  @[JSON::Field(ignore_serialize: true)]
+  property password : String
+
+  @[JSON::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -854,6 +869,16 @@ describe "JSON mapping" do
 
     JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+  end
+
+  it "json with selective serialization" do
+    person = JSONAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_json.should eq "{\"name\":\"Vasya\",\"generated\":\"generated-internally\"}"
+
+    person_json = "{\"name\":\"Vasya\",\"generated\":\"should not set\",\"password\":\"update\"}"
+    person = JSONAttrPersonWithSelectiveSerialization.from_json(person_json)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
   end
 
   describe "use_json_discriminator" do
