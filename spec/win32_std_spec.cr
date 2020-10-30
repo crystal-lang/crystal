@@ -46,7 +46,7 @@ require "./std/csv/csv_spec.cr"
 require "./std/deque_spec.cr"
 require "./std/digest/adler32_spec.cr"
 require "./std/digest/crc32_spec.cr"
-require "./std/digest/io_digest_spec.cr"
+# require "./std/digest/io_digest_spec.cr" (failed codegen)
 # require "./std/digest/md5_spec.cr" (failed codegen)
 # require "./std/digest/sha1_spec.cr" (failed codegen)
 # require "./std/digest/sha256_spec.cr" (failed codegen)
