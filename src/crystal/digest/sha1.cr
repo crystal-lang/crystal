@@ -7,7 +7,7 @@ require "digest/digest"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
 class Crystal::Digest::SHA1 < ::Digest
-  extend Algorithm
+  extend ::Digest::ClassMethods
 
   # This is a direct translation of https://tools.ietf.org/html/rfc3174#section-7
   # but we use loop unrolling for faster execution (about 1.07x slower than OpenSSL::SHA1).

@@ -6,11 +6,11 @@ abstract class Digest
   class FinalizedError < Exception
   end
 
-  # The `Digest::Algorithm` module is used in the concrete subclass of `Digest`
+  # The `Digest::ClassMethods` module is used in the concrete subclass of `Digest`
   # that does not require arguments in its construction.
   #
   # The modules adds convenient class methods as `Digest::MD5.digest`, `Digest::MD5.hexdigest`.
-  module Algorithm
+  module ClassMethods
     # Returns the hash of *data*. *data* must respond to `#to_slice`.
     def digest(data)
       digest do |ctx|

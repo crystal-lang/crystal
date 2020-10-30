@@ -7,7 +7,7 @@ require "digest/digest"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `OpenSSL::Digest.new("SHA256")`.
 class Crystal::Digest::MD5 < ::Digest
-  extend Algorithm
+  extend ::Digest::ClassMethods
 
   @i = StaticArray(UInt32, 2).new(0_u32)
   @buf = StaticArray(UInt32, 4).new(0_u32)

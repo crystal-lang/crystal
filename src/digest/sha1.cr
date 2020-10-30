@@ -8,7 +8,7 @@ require "openssl"
 # `Crypto::Bcrypt::Password`. For a generic cryptographic hash, use SHA-256 via
 # `Digest::SHA256`.
 class Digest::SHA1 < ::OpenSSL::Digest
-  extend Algorithm
+  extend ClassMethods
 
   def initialize
     super("SHA1")
