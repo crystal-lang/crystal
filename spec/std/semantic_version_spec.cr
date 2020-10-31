@@ -27,11 +27,11 @@ describe SemanticVersion do
   end
 
   it "compares build equivalence" do
-    sversions = [
-      "1.2.3+1",
-      "1.2.3+999",
-      "1.2.3+a",
-    ]
+    sversions = %w(
+      1.2.3+1
+      1.2.3+999
+      1.2.3+a
+    )
     versions = sversions.map { |s| SemanticVersion.parse(s) }.to_a
 
     versions.each_with_index do |v, i|
@@ -45,11 +45,11 @@ describe SemanticVersion do
 
   describe SemanticVersion::Prerelease do
     it "compares <" do
-      sprereleases = %w[
+      sprereleases = %w(
         alpha.1
         beta.1
         beta.2
-      ]
+      )
       prereleases = sprereleases.map { |s|
         SemanticVersion::Prerelease.parse(s)
       }
