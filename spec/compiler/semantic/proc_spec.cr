@@ -54,7 +54,7 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it "allows passing proc type if it is typedef'd" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32

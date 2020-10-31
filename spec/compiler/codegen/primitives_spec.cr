@@ -114,7 +114,7 @@ describe "Code gen: primitives" do
       ", inject_primitives: false).to_i.should eq(3)
   end
 
-  it "codeges crystal_type_id with union type" do
+  it "codegens crystal_type_id with union type" do
     run("
       class Foo
       end
@@ -221,10 +221,10 @@ describe "Code gen: primitives" do
   it "uses built-in llvm function that returns a tuple" do
     run(%(
       lib Intrinsics
-        fun sadd_i32_with_overlow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
+        fun sadd_i32_with_overflow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
       end
 
-      x, o = Intrinsics.sadd_i32_with_overlow(1, 2)
+      x, o = Intrinsics.sadd_i32_with_overflow(1, 2)
       x
       )).to_i.should eq(3)
   end

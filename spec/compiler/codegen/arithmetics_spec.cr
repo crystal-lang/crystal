@@ -17,7 +17,7 @@ require "../../spec_helper"
   }
 {% end %}
 
-describe "Code gen: arithmetics primitives" do
+describe "Code gen: arithmetic primitives" do
   describe "&+ addition" do
     {% for type in SupportedInts %}
       it "wrap around for {{type}}" do

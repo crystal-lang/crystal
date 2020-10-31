@@ -27,7 +27,7 @@ module Crystal
   # `Crystal.datum` macro is an internal helper to create data types that will hold
   # values of multiple kinds similar to `JSON::Any` and `YAML::Any`.
   #
-  # * **types**: contains a named tuple of prefixes and datatypes of each leaf
+  # * **types**: contains a named tuple of prefixes and data types of each leaf
   # * **hash_key_type** specifies the type used as the key of `Hash`
   # * **immutable**: will generate honor immutability of the values via `.clone`
   # * **target_type**: is the type where the macro is invoked (it's a workaround for #9099).

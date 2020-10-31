@@ -1013,7 +1013,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # In the case of:
       #
       #    class A(X); end
-      #    clsss B < A(Int32);end
+      #    class B < A(Int32);end
       #
       # we need to go from A(Int32) to A(X) to go up the hierarchy.
       if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)

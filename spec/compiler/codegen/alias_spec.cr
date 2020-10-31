@@ -101,7 +101,7 @@ describe "Code gen: alias" do
       ))
   end
 
-  it "lazyly solves aliases (#1346)" do
+  it "lazily solves aliases (#1346)" do
     run(%(
       class Session; end
 

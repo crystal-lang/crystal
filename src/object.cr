@@ -352,7 +352,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -603,7 +603,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -743,7 +743,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -859,7 +859,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -1128,7 +1128,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person

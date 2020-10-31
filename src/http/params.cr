@@ -217,7 +217,7 @@ module HTTP
       raw_params.fetch(name) { [] of String }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to provided
+    # Returns first value for specified param *name*. Falls back to provided
     # *default* value when there is no such param.
     #
     # ```
@@ -228,7 +228,7 @@ module HTTP
       fetch(name) { default }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to return value
+    # Returns first value for specified param *name*. Falls back to return value
     # of provided block when there is no such param.
     #
     # ```

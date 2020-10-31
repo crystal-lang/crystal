@@ -578,7 +578,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type variables of a module" do
+  it "can access type variables of a module" do
     run(%(
       module Foo(T)
         def self.foo
@@ -589,7 +589,7 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type variables that are not types" do
+  it "can access type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
@@ -600,7 +600,7 @@ describe "Code gen: macro" do
     )).to_b.should eq(true)
   end
 
-  it "can acccess type variables of a tuple" do
+  it "can access type variables of a tuple" do
     run(%(
       struct Tuple
         def foo

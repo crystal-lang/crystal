@@ -263,7 +263,7 @@ describe "Semantic: warnings" do
       "Error: too many named arguments (given 1, expected maximum 0)"
   end
 
-  it "detects top-level deprecated marcos" do
+  it "detects top-level deprecated macros" do
     assert_warning %(
       @[Deprecated("Do not use me")]
       macro foo

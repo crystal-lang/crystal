@@ -274,7 +274,7 @@ module Iterator(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # Chunks oo two items can be iterated using `#cons_pair`, an optimized
+  # Chunks of two items can be iterated using `#cons_pair`, an optimized
   # implementation for the special case of `size == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)

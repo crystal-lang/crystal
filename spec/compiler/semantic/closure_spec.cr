@@ -403,7 +403,7 @@ describe "Semantic: closure" do
       ") { proc_of(int32, float64) }
   end
 
-  it "errors if forwaring block arg doesn't match input type" do
+  it "errors if forwarding block arg doesn't match input type" do
     assert_error "
       def foo(&block : Int32 -> U)
         block
@@ -415,7 +415,7 @@ describe "Semantic: closure" do
       "expected block argument's argument #1 to be Int32, not Int64"
   end
 
-  it "errors if forwaring block arg doesn't match input type size" do
+  it "errors if forwarding block arg doesn't match input type size" do
     assert_error "
       def foo(&block : Int32, Int32 -> U)
         block

@@ -103,7 +103,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -207,7 +207,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts

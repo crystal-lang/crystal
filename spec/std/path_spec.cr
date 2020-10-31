@@ -628,7 +628,7 @@ describe Path do
       it_expands_path("../bin", {Dir.current.gsub('\\', '/'), "bin"}, {Path.windows(Dir.current).normalize.to_s, "bin"}, base: "x/../tmp", expand_base: true)
     end
 
-    describe "expand_path for commoms unix path give a full path" do
+    describe "expand_path for common unix path gives a full path" do
       it_expands_path("/tmp/", "/tmp/", "\\tmp\\")
       it_expands_path("/tmp/../../../tmp", "/tmp", "\\tmp")
       it_expands_path("", BASE_POSIX, BASE_WINDOWS)

@@ -1505,7 +1505,7 @@ module Enumerable(T)
     result
   end
 
-  # Tallys the collection.  Returns a hash where the keys are the
+  # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #

@@ -873,7 +873,7 @@ module Crystal
       if @is_initialize
         var_name = target.name
 
-        # Don't track instance variables nilabilty (for example, if they were
+        # Don't track instance variables nilability (for example, if they were
         # just assigned inside a branch) if they have an initializer
         unless scope.has_instance_var_initializer?(var_name)
           meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))

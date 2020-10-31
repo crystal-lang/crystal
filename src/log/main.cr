@@ -164,7 +164,7 @@ class Log
     # Log.info &.emit("Program started")                          # No data, same as Log.info { "Program started" }
     # Log.info &.emit("User logged in", user_id: 42)              # With entry data
     # Log.info &.emit(action: "Logged in", user_id: 42)           # Empty string message, only data
-    # Log.error exception: ex, &.emit("Oopps", account: {id: 42}) # With data and exception
+    # Log.error exception: ex, &.emit("Oops", account: {id: 42}) # With data and exception
     # ```
     def emit(message : String) : Entry
       emit(message, Metadata.empty)

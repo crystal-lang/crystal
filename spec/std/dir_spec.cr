@@ -126,7 +126,7 @@ describe "Dir" do
   end
 
   it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistant") do |path|
+    with_tempfile("nonexistent") do |path|
       expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
         Dir.delete(path)
       end

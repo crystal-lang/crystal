@@ -23,7 +23,7 @@ describe "Semantic: generic class" do
       "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
-  it "inhertis from generic with instantiation" do
+  it "inherits from generic with instantiation" do
     assert_type(%(
       class Foo(T)
         def t
@@ -38,7 +38,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (1)" do
+  it "inherits from generic with forwarding (1)" do
     assert_type(%(
       class Foo(T)
         def t
@@ -53,7 +53,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (2)" do
+  it "inherits from generic with forwarding (2)" do
     assert_type(%(
       class Foo(T)
       end
@@ -68,7 +68,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with instantiation with instance var" do
+  it "inherits from generic with instantiation with instance var" do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)

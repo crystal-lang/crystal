@@ -43,7 +43,7 @@ class Fiber
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
         vldmia sp!, {d8-d15}          // pop FPU registers
-        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + calleed-saved registers
+        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + callee-saved registers
 
         // avoid a stack corruption that will confuse the unwinder
         mov    r1, lr
@@ -52,7 +52,7 @@ class Fiber
         " :: "r"(current_context), "r"(new_context))
     {% elsif flag?(:arm) %}
       asm("
-        stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + calleed-saved registers
+        stmdb  sp!, {r0, r4-r11, lr}  // push 1st argument + callee-saved registers
         str    sp, [$0, #0]           // current_context.stack_top = sp
         mov    r4, #1                 // current_context.resumable = 1
         str    r4, [$0, #4]
@@ -60,7 +60,7 @@ class Fiber
         mov    r4, #0                 // new_context.resumable = 0
         str    r4, [$1, #4]
         ldr    sp, [$1, #0]           // sp = new_context.stack_top
-        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + calleed-saved registers
+        ldmia  sp!, {r0, r4-r11, lr}  // pop 1st argument + callee-saved registers
 
         // avoid a stack corruption that will confuse the unwinder
         mov    r1, lr

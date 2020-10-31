@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 describe "Backtrace" do
-  pending_win32 "prints file line:colunm" do
+  pending_win32 "prints file line:column" do
     source_file = datapath("backtrace_sample")
 
     # CallStack tries to make files relative to the current dir,
