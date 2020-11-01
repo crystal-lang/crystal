@@ -133,7 +133,9 @@ class Crystal::Doc::Generator
     return true if crystal_builtin?(type)
 
     # Don't include types whose namespace is :nodoc:
-    return false if type.namespaces.any? &->nodoc?(Crystal::Type)
+    type.each_namespace do |ns|
+      return false if nodoc? ns
+    end
 
     # Don't include lib types or types inside a lib type
     return false if type.is_a?(Crystal::LibType) || type.namespace.is_a?(LibType)
