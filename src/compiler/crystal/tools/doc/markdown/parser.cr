@@ -116,9 +116,9 @@ class Crystal::Doc::Markdown::Parser
       .strip                     # Strip leading/trailing whitespace
       .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
 
-    @anchor_map[anchor] += 1
+    seen_count = @anchor_map[anchor] += 1
 
-    if (seen_count = @anchor_map[anchor]) && (seen_count > 1)
+    if seen_count > 1
       anchor += "-#{seen_count - 1}"
     end
 
