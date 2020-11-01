@@ -1148,4 +1148,20 @@ describe "Semantic: generic class" do
       GeneralMatrix(Int32).foo
     )) { int32 }
   end
+
+  it "errors if splatting a non-tuple (#9853)" do
+    assert_error %(
+      Array(*Int32)
+      ),
+      "argument to splat must be a tuple type, not Int32"
+  end
+
+  it "correctly checks argument count when target type has a splat (#9855)" do
+    assert_type(%(
+      class T(A, B, *C)
+      end
+
+      T(*{Int32, Bool})
+      )) { generic_class("T", int32, bool).metaclass }
+  end
 end
