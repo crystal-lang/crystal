@@ -237,8 +237,8 @@ lib LibLLVM
   fun start_multithreaded = LLVMStartMultithreaded : Int32
   fun stop_multithreaded = LLVMStopMultithreaded
   fun is_multithreaded = LLVMIsMultithreaded : Int32
-  fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef?
-  fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef?
+  fun get_first_function = LLVMGetFirstFunction(m : ModuleRef) : ValueRef
+  fun get_next_function = LLVMGetNextFunction(f : ValueRef) : ValueRef
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
   fun get_next_instruction = LLVMGetNextInstruction(inst : ValueRef) : ValueRef
   fun get_global_pass_registry = LLVMGetGlobalPassRegistry : PassRegistryRef

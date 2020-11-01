@@ -422,15 +422,16 @@ describe "Semantic: lib" do
       "lib fun call is not supported in dispatch"
   end
 
-  it "allows passing nil or pointer to arg expecting pointer" do
-    assert_type(%(
+  it "disallows passing nil or pointer to arg expecting pointer" do
+    assert_error %(
       lib Foo
         fun foo(x : Int32*) : Int64
       end
 
       a = 1 == 1 ? nil : Pointer(Int32).malloc(1_u64)
       Foo.foo(a)
-      )) { int64 }
+      ),
+      "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)"
   end
 
   it "correctly attached link flags if there's a macro if" do

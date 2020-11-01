@@ -55,22 +55,6 @@ describe "Semantic: pointer" do
     assert_type("Pointer(Int32).new(123_u64)") { pointer_of(int32) }
   end
 
-  it "types nil or pointer type" do
-    result = assert_type("1 == 1 ? nil : Pointer(Int32).new(0_u64)") { nilable pointer_of(int32) }
-    result.node.type.should be_a(NilablePointerType)
-  end
-
-  it "types nil or pointer type with typedef" do
-    result = assert_type(%(
-      lib LibC
-        type T = Void*
-        fun foo : T?
-      end
-      LibC.foo
-      )) { nilable types["LibC"].types["T"] }
-    result.node.type.should be_a(NilablePointerType)
-  end
-
   it "types pointer of constant" do
     result = assert_type("
       FOO = 1
