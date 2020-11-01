@@ -22,6 +22,9 @@ private class HashWrapper(K, V)
   delegate each, to: @hash
 end
 
+private class HashSubclass(K, V) < Hash(K, V)
+end
+
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -428,6 +431,20 @@ describe "Hash" do
       1_000.times do |i|
         h1[i].should_not be(h2[i])
       end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "clones subclass" do
+      h1 = HashSubclass(Int32, Array(Int32)).new
+      h1[0] = [0]
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+
+      h1[0].should_not be(h2[0])
 
       h1.delete(0)
       h2[0].should eq([0])
