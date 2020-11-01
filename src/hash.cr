@@ -1787,7 +1787,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new
+    hash = self.class.new
     hash.initialize_dup(self)
     hash
   end

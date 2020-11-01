@@ -491,6 +491,20 @@ describe "Hash" do
       h1.delete(0)
       h2[0].should eq([0])
     end
+
+    it "dups subclass" do
+      h1 = HashSubclass(Int32, Array(Int32)).new
+      h1[0] = [0]
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+
+      h1[0].should be(h2[0])
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
   end
 
   it "initializes with block" do
