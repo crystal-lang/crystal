@@ -1,3 +1,5 @@
+require "./sys/socket"
+
 lib LibC
   O_RDONLY = 0x0000
   O_WRONLY = 0x0001

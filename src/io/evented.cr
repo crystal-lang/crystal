@@ -1,4 +1,5 @@
-{% skip_file if flag?(:win32) %}
+# TODO
+# {% skip_file if flag?(:win32) %}
 
 require "crystal/thread_local_value"
 

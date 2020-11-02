@@ -2,6 +2,7 @@ require "c/winnt"
 require "c/win_def"
 require "c/int_safe"
 
+@[Link("Kernel32")]
 lib LibC
   fun GetLastError : DWORD
   fun SetLastError(dwErrCode : DWORD)
@@ -12,6 +13,7 @@ lib LibC
   FORMAT_MESSAGE_FROM_HMODULE    = 0x00000800_u32
   FORMAT_MESSAGE_FROM_SYSTEM     = 0x00001000_u32
   FORMAT_MESSAGE_ARGUMENT_ARRAY  = 0x00002000_u32
+  FORMAT_MESSAGE_MAX_WIDTH_MASK  = 0x000000FF_u32
 
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
@@ -109,4 +111,5 @@ lib LibC
   MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x20_u32
 
   fun MoveFileExW(lpExistingFileName : LPWSTR, lpNewFileName : LPWSTR, dwFlags : DWORD) : BOOL
+  fun FormatMessageA(dwFlags : DWORD, lpSource : LPCVOID, dwMessageId : DWORD, dwLanguageId : DWORD, lpBuffer : LPSTR, nSize : DWORD, ...) : DWORD
 end

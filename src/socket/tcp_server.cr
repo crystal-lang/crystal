@@ -1,4 +1,7 @@
 require "./tcp_socket"
+{% if flag?(:win32) %}
+  require "c/sys/socket"
+{% end %}
 
 # A Transmission Control Protocol (TCP/IP) server.
 #
@@ -49,9 +52,15 @@ class TCPServer < TCPSocket
   end
 
   # Creates a TCPServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
-    super(fd: fd, family: family)
-  end
+  {% if flag?(:win32) %}
+    def initialize(*, socket : LibC::SOCKET, family : Family = Family::INET)
+      super(socket: SOCKET, family: family)
+    end
+  {% else %}
+    def initialize(*, fd : Int32, family : Family = Family::INET)
+      super(fd: fd, family: family)
+    end
+  {% end %}
 
   # Creates a new TCP server, listening on all local interfaces (`::`).
   def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
@@ -103,11 +112,21 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept? : TCPSocket?
-    if client_fd = accept_impl
-      sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
-      sock.sync = sync?
-      sock
+  {% if flag?(:win32) %}
+    def accept? : TCPSocket?
+      if client_socket = accept_impl
+        sock = TCPSocket.new(socket: client_socket, family: family, type: type, protocol: protocol)
+        sock.sync = sync?
+        sock
+      end
     end
-  end
+  {% else %}
+    def accept? : TCPSocket?
+      if client_fd = accept_impl
+        sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
+        sock.sync = sync?
+        sock
+      end
+    end
+  {% end %}
 end

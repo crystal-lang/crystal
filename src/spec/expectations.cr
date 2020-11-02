@@ -395,14 +395,12 @@ module Spec
       when Regex
         unless (ex_to_s =~ message)
           backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with message matching #{message.inspect}, " \
-               "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          fail "Expected #{klass} with message matching #{message.inspect}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       when String
         unless ex_to_s.includes?(message)
           backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: " \
-               "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          fail "Expected #{klass} with #{message.inspect}, got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
         end
       when Nil
         # No need to check the message
@@ -411,8 +409,7 @@ module Spec
       ex
     rescue ex
       backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-      fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
-           "#{backtrace}", file, line
+      fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n#{backtrace}", file, line
     else
       fail "Expected #{klass} but nothing was raised", file, line
     end
