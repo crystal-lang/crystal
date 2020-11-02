@@ -159,7 +159,7 @@ module Crystal
         end
       end
 
-      # Matrix of decompressed `Row` to search line number informations from the
+      # Matrix of decompressed `Row` to search line number information from the
       # address of an instruction.
       #
       # The matrix contains indexed references to `directories` and `files` to

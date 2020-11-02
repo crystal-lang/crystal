@@ -228,4 +228,24 @@ describe "Semantic: hooks" do
       {a1.x, a2.y}
       ), inject_primitives: false) { tuple_of([string, int32]) }
   end
+
+  it "does inherited macro through generic instance type (#9693)" do
+    assert_type("
+      class Foo(X)
+        macro inherited
+          def self.{{@type.name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      class Baz < Bar
+      end
+
+      Baz.baz
+      ") { int32 }
+  end
 end

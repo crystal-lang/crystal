@@ -402,27 +402,6 @@ describe Process do
     end
   end
 
-  describe "find_executable" do
-    pwd = Process::INITIAL_PWD
-    crystal_path = Path.new(pwd, "bin", "crystal").to_s
-
-    pending_win32 "resolves absolute executable" do
-      Process.find_executable(Path.new(pwd, "bin", "crystal")).should eq(crystal_path)
-    end
-
-    pending_win32 "resolves relative executable" do
-      Process.find_executable(Path.new("bin", "crystal")).should eq(crystal_path)
-      Process.find_executable(Path.new("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
-    end
-
-    pending_win32 "searches within PATH" do
-      (path = Process.find_executable("ls")).should_not be_nil
-      path.not_nil!.should match(/#{File::SEPARATOR}ls$/)
-
-      Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
-    end
-  end
-
   describe "quote_posix" do
     it { Process.quote_posix("").should eq "''" }
     it { Process.quote_posix(" ").should eq "' '" }
@@ -458,6 +437,32 @@ describe Process do
       it { Process.quote_windows([] of String).should eq "" }
       it { Process.quote_windows(["my file.txt", "another.txt"]).should eq %("my file.txt" another.txt) }
       it { Process.quote_windows(["foo ", "", " ", " bar"]).should eq %("foo " "" " " " bar") }
+    end
+  end
+
+  describe "parse_arguments" do
+    it { Process.parse_arguments("").should eq(%w[]) }
+    it { Process.parse_arguments(" ").should eq(%w[]) }
+    it { Process.parse_arguments("foo").should eq(%w[foo]) }
+    it { Process.parse_arguments("foo bar").should eq(%w[foo bar]) }
+    it { Process.parse_arguments(%q("foo bar" 'foo bar' baz)).should eq(["foo bar", "foo bar", "baz"]) }
+    it { Process.parse_arguments(%q("foo bar"'foo bar'baz)).should eq(["foo barfoo barbaz"]) }
+    it { Process.parse_arguments(%q(foo\ bar)).should eq(["foo bar"]) }
+    it { Process.parse_arguments(%q("foo\ bar")).should eq(["foo\\ bar"]) }
+    it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
+    it { Process.parse_arguments("\\").should eq(["\\"]) }
+    it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+
+    it "raises an error when double quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q["foo])
+      end
+    end
+
+    it "raises an error if single quote is unclosed" do
+      expect_raises ArgumentError, "Unmatched quote" do
+        Process.parse_arguments(%q['foo])
+      end
     end
   end
 end

@@ -41,6 +41,9 @@ describe OpenSSL::SSL::Context do
     (context.options & OpenSSL::SSL::Options::SINGLE_ECDH_USE).should eq(OpenSSL::SSL::Options::SINGLE_ECDH_USE)
     (context.options & OpenSSL::SSL::Options::SINGLE_DH_USE).should eq(OpenSSL::SSL::Options::SINGLE_DH_USE)
     (context.options & OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE).should eq(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
+    {% end %}
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
@@ -98,16 +101,43 @@ describe OpenSSL::SSL::Context do
     expect_raises(OpenSSL::Error) { context.private_key = datapath("test_file.txt") }
   end
 
-  pending "uses intermediate default ciphers" do
-    # Can't be checked because `Context#ciphers` is not implemented.
-    OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_OLD
-    OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+  describe "ciphers" do
+    pending "uses intermediate default ciphers" do
+      # Can't be checked because `Context#ciphers` is not implemented.
+      OpenSSL::SSL::Context::Client.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_OLD
+      OpenSSL::SSL::Context::Server.new.ciphers.should eq OpenSSL::SSL::Context::CIPHERS_INTERMEDIATE
+    end
+
+    it "sets ciphers" do
+      ciphers = "EDH+aRSA DES-CBC3-SHA !RC4"
+      context = OpenSSL::SSL::Context::Client.new
+      (context.ciphers = ciphers).should eq(ciphers)
+    end
+
+    it "sets cipher_suites" do
+      cipher_suites = OpenSSL::SSL::Context::CIPHER_SUITES_MODERN
+      context = OpenSSL::SSL::Context::Client.new
+      (context.cipher_suites = cipher_suites).should eq(cipher_suites)
+    end
+
+    it "sets modern ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_modern_ciphers
+    end
+
+    it "sets intermediate ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_intermediate_ciphers
+    end
+
+    it "sets old ciphers" do
+      OpenSSL::SSL::Context::Client.new.set_old_ciphers
+    end
   end
 
-  it "sets ciphers" do
-    ciphers = "EDH+aRSA DES-CBC3-SHA !RC4"
+  it "changes security level" do
     context = OpenSSL::SSL::Context::Client.new
-    (context.ciphers = ciphers).should eq(ciphers)
+    level = context.security_level
+    context.security_level = level + 1
+    context.security_level.should eq(level + 1)
   end
 
   it "adds temporary ecdh curve (P-256)" do

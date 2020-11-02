@@ -48,18 +48,23 @@ class HTTP::WebSocket
     new(Protocol.new(host, path, port, tls, headers))
   end
 
+  # Called when the server sends a ping to a client.
   def on_ping(&@on_ping : String ->)
   end
 
+  # Called when the server receives a pong from a client.
   def on_pong(&@on_pong : String ->)
   end
 
+  # Called when the server receives a text message from a client.
   def on_message(&@on_message : String ->)
   end
 
+  # Called when the server receives a binary message from a client.
   def on_binary(&@on_binary : Bytes ->)
   end
 
+  # Called when the server closes a client's connection.
   def on_close(&@on_close : CloseCode, String ->)
   end
 
@@ -67,6 +72,7 @@ class HTTP::WebSocket
     raise IO::Error.new "Closed socket" if closed?
   end
 
+  # Sends a message payload (message) to the client.
   def send(message)
     check_open
     @ws.send(message)
@@ -102,12 +108,29 @@ class HTTP::WebSocket
     close(nil, message)
   end
 
+  # Sends a close frame to the client, and closes the connection.
+  # The close frame may contain a body (message) that indicates the reason for closing.
   def close(code : CloseCode | Int? = nil, message = nil)
     return if closed?
     @closed = true
     @ws.close(code, message)
   end
 
+  # Continuously receives messages and calls previously set callbacks until the websocket is closed.
+  # Ping and pong messages are automatically handled.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = WebSocket.new(uri)
+  #
+  # # Set callback
+  # ws.on_message do |msg|
+  #   ws.send "response"
+  # end
+  #
+  # # Start infinite loop
+  # ws.run
+  # ```
   def run
     loop do
       begin

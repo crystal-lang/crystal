@@ -23,7 +23,7 @@ class Log::Metadata
   # How many entries are potentially overriden from parent (ie: initial entries.size)
   @overriden_size = uninitialized Int32
   # How many entries are stored from @first.
-  # Initially are @overriden_size, the one explictly overriden in entries argument.
+  # Initially are @overriden_size, the one explicitly overriden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32

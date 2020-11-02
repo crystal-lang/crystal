@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_playground) %}
+
 require "../../../spec_helper"
 
 private def instrument(source)

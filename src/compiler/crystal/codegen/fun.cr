@@ -88,8 +88,12 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute LLVM::Attribute::UWTable
         if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
-          context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
-          context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
+          {% if compare_versions(Crystal::LLVM_VERSION, "8.0.0") < 0 %}
+            context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
+            context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
+          {% else %}
+            context.fun.add_target_dependent_attribute "frame-pointer", "all"
+          {% end %}
         end
 
         new_entry_block
@@ -325,27 +329,27 @@ class Crystal::CodeGenVisitor
     llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.size)
     abi_info.arg_types.each do |arg_type|
       case arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         llvm_args_types << (arg_type.cast || arg_type.type)
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         llvm_args_types << arg_type.type.pointer
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # ignore
       end
     end
 
     ret_type = abi_info.return_type
-    case ret_type.kind
-    when LLVM::ABI::ArgKind::Direct
-      llvm_return_type = (ret_type.cast || ret_type.type)
-    when LLVM::ABI::ArgKind::Indirect
-      sret = true
-      offset += 1
-      llvm_args_types.insert 0, ret_type.type.pointer
-      llvm_return_type = llvm_context.void
-    else
-      llvm_return_type = llvm_context.void
-    end
+    llvm_return_type =
+      case ret_type.kind
+      in .direct?
+        ret_type.cast || ret_type.type
+      in .indirect?
+        offset += 1
+        llvm_args_types.insert 0, ret_type.type.pointer
+        llvm_context.void
+      in .ignore?
+        llvm_context.void
+      end
 
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 

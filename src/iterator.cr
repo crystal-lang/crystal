@@ -338,18 +338,17 @@ module Iterator(T)
     def initialize(@iterator : I)
     end
 
-    def next
+    def next : {T, T} | Iterator::Stop
       elem = wrapped_next
-      return elem if elem.is_a?(Iterator::Stop)
+      last_elem = @last_elem
 
-      if @last_elem.is_a?(Iterator::Stop)
+      if last_elem.is_a?(Iterator::Stop)
         @last_elem = elem
-
         self.next
       else
+        value = {last_elem, elem}
         @last_elem, elem = elem, @last_elem
-
-        {elem, @last_elem}
+        value
       end
     end
   end

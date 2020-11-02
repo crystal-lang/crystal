@@ -847,4 +847,38 @@ describe "Code gen: proc" do
       end
     ))
   end
+
+  it "closures var on ->var.call (#8584)" do
+    run(%(
+      def bar(x)
+        x
+      end
+
+      struct Foo
+        def initialize
+          @value = 1
+        end
+
+        def value
+          bar(@value)
+          @value
+        end
+      end
+
+      def get_proc_a
+        foo = Foo.new
+        ->foo.value
+      end
+
+      def get_proc_b
+        foo = Foo.new
+        ->{ foo.value }
+      end
+
+      proc_a = get_proc_a
+      proc_b = get_proc_b
+      proc_b.call
+      proc_a.call
+      )).to_i.should eq(1)
+  end
 end

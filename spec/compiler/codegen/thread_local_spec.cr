@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 {% if !flag?(:openbsd) %}
   describe "Codegen: thread local" do
-    it "works with class variables" do
+    pending_win32 "works with class variables" do
       run(%(
       require "prelude"
 

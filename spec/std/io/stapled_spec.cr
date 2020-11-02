@@ -80,7 +80,7 @@ describe IO::Stapled do
     reader = IO::Memory.new "cletus"
     io = IO::Stapled.new reader, IO::Memory.new
     io.peek.should eq "cletus".to_slice
-    io.skip(4).should eq(4)
+    io.skip(4)
     io.peek.should eq "us".to_slice
   end
 
@@ -88,7 +88,7 @@ describe IO::Stapled do
     reader = IO::Memory.new "cletus"
     io = IO::Stapled.new reader, IO::Memory.new
     io.peek.should eq "cletus".to_slice
-    io.skip_to_end.should eq(6)
+    io.skip_to_end
     io.peek.should eq Bytes.empty
   end
 

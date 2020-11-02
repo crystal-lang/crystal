@@ -41,7 +41,7 @@ module HTTP
       super
     end
 
-    def skip(bytes_count : Int) : Int64
+    def skip(bytes_count)
       ensure_send_continue
       super
     end
@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count : Int) : Int64
+    def skip(bytes_count)
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -164,18 +164,14 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count : Int) : Int64
-      bytes_count = bytes_count.to_i64
+    def skip(bytes_count)
       ensure_send_continue
-
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
         @chunk_remaining -= bytes_count
       else
         super
       end
-
-      bytes_count
     end
 
     # Checks if the last read consumed a chunk and we

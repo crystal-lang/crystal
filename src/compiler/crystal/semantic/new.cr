@@ -14,7 +14,7 @@ module Crystal
         define_default_new(file_module)
       end
 
-      # Once we are done with the expansions we mark `initialze` methods
+      # Once we are done with the expansions we mark `initialize` methods
       # without an explicit visibility as `protected`.
       new_expansions.each do |expansion|
         original = expansion[:original]

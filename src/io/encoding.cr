@@ -27,8 +27,7 @@ class IO
       @closed = false
     end
 
-    def write(io, slice : Bytes) : Int64
-      bytes_written = 0i64
+    def write(io, slice : Bytes)
       inbuf_ptr = slice.to_unsafe
       inbytesleft = LibC::SizeT.new(slice.size)
       outbuf = uninitialized UInt8[1024]
@@ -39,9 +38,8 @@ class IO
         if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
-        bytes_written &+= io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
+        io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
-      bytes_written
     end
 
     def close
@@ -80,14 +78,6 @@ class IO
         if @in_buffer_left == 0
           @in_buffer = @buffer.to_unsafe
           @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
-        end
-
-        # If we just have a few bytes to decode, read more, just in case these don't produce a character
-        if @in_buffer_left < 16
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-          @buffer.copy_from(@in_buffer, @in_buffer_left)
-          @in_buffer = @buffer.to_unsafe
-          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
         end
 
         # If, after refilling the buffer, we couldn't read new bytes

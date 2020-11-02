@@ -21,7 +21,7 @@ lib LibC
   @[ReturnsTwice]
   fun fork : PidT
   fun fsync(fd : Int) : Int
-  fun ftruncate(fd : Int, length : OffT) : Int
+  fun ftruncate = ftruncate64(fd : Int, length : OffT) : Int
   fun getcwd(buf : Char*, size : SizeT) : Char*
   fun gethostname(name : Char*, len : SizeT) : Int
   fun getpgid(pid : PidT) : PidT
@@ -31,11 +31,11 @@ lib LibC
   fun ttyname_r(fd : Int, buf : Char*, buffersize : SizeT) : Int
   fun lchown(file : Char*, owner : UidT, group : GidT) : Int
   fun link(from : Char*, to : Char*) : Int
-  fun lockf(fd : Int, cmd : Int, len : OffT) : Int
-  fun lseek(fd : Int, offset : OffT, whence : Int) : OffT
+  fun lockf = lockf64(fd : Int, cmd : Int, len : OffT) : Int
+  fun lseek = lseek64(fd : Int, offset : OffT, whence : Int) : OffT
   fun pipe(pipedes : StaticArray(Int, 2)) : Int
   fun read(fd : Int, buf : Void*, nbytes : SizeT) : SSizeT
-  fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
+  fun pread = pread64(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(path : Char*) : Int
   fun symlink(from : Char*, to : Char*) : Int
   fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT

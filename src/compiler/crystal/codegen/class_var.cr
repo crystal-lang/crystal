@@ -181,8 +181,6 @@ class Crystal::CodeGenVisitor
       return read_virtual_class_var_ptr(class_var, owner)
     when VirtualMetaclassType
       return read_virtual_metaclass_class_var_ptr(class_var, owner)
-    else
-      # go on
     end
 
     initializer = class_var.initializer

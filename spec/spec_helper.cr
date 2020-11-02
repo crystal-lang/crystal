@@ -257,11 +257,7 @@ def run(code, filename = nil, inject_primitives = true, debug = Crystal::Debug::
 end
 
 def test_c(c_code, crystal_code, *, file = __FILE__)
-  with_tempfile("temp_abi.c", "temp_abi.o", file: file) do |c_filename, o_filename|
-    File.write(c_filename, c_code)
-
-    `#{Crystal::Compiler::CC} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
-
+  with_temp_c_object_file(c_code, file: file) do |o_filename|
     yield run(%(
     require "prelude"
 

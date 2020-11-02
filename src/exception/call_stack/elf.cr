@@ -2,7 +2,7 @@ require "crystal/elf"
 require "c/link"
 
 struct Exception::CallStack
-  protected def self.load_dwarf
+  protected def self.load_dwarf_impl
     phdr_callback = LibC::DlPhdrCallback.new do |info, size, data|
       # The first entry is the header for the current program
       read_dwarf_sections(info.value.addr)
@@ -10,7 +10,6 @@ struct Exception::CallStack
     end
 
     LibC.dl_iterate_phdr(phdr_callback, nil)
-    @@dwarf_loaded = true
   end
 
   protected def self.read_dwarf_sections(base_address = 0)

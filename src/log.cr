@@ -80,6 +80,8 @@
 #
 # If you need to change the default level, backend or sources call `Log.setup` upon startup.
 #
+# NOTE: Calling `setup` will override previous `setup` calls.
+#
 # ```
 # Log.setup(:debug)                     # Log debug and above for all sources to STDOUT
 # Log.setup("myapp.*, http.*", :notice) # Log notice and above for myapp.* and http.* sources only, and log nothing for any other source.
@@ -105,7 +107,7 @@
 # sources errors (or higher) to an elasticsearch backend.
 #
 # ```
-# Log.setup |c|
+# Log.setup do |c|
 #   backend = Log::IOBackend.new
 #
 #   c.bind "*", :warn, backend
@@ -153,5 +155,6 @@ require "./log/setup"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
+require "./log/dispatch"
 
 Log.setup

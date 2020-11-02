@@ -95,7 +95,7 @@ struct Time::Span
     @nanoseconds = nanoseconds.to_i32
   end
 
-  # Creates a new `Time::Span` from the *nanosenconds* given
+  # Creates a new `Time::Span` from the *nanoseconds* given
   #
   # Nanoseconds get normalized in the range of `0...1_000_000_000`,
   # the nanosecond overflow gets added as seconds.

@@ -195,6 +195,7 @@ end
     ret = LibUnwind.raise_exception(unwind_ex)
     Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
     Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
     LibC.exit(ret)
   end
 
