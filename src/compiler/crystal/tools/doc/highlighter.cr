@@ -90,6 +90,8 @@ module Crystal::Doc::Highlighter
         else
           io << token
         end
+      when :UNDERSCORE
+        io << '_'
       else
         io << token
       end
