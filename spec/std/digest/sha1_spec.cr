@@ -22,11 +22,11 @@ describe Digest::SHA1 do
     it "resets" do
       digest = Digest::SHA1.new
       digest.update string
-      digest.final.hexstring.should eq(hexstring)
+      digest.hexfinal.should eq(hexstring)
 
       digest.reset
       digest.update string
-      digest.final.hexstring.should eq(hexstring)
+      digest.hexfinal.should eq(hexstring)
     end
 
     it "can't call #final more than once" do

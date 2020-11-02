@@ -22,7 +22,7 @@ abstract class Digest::Base
     #   ctx.update "f"
     #   ctx.update "oo"
     # end
-    # digest.to_slice.hexstring # => "acbd18db4cc2f85cedef654fccc4a4d8"
+    # digest.hexfinal # => "acbd18db4cc2f85cedef654fccc4a4d8"
     # ```
     def self.digest(& : self ->) : Bytes
       context = new
@@ -118,6 +118,14 @@ abstract class Digest::Base
     final dst
   end
 
+  # Writes the final digest output to `dst`.
+  #
+  # Faster than the `Bytes` allocating version.
+  # Use when hashing in loops.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final(dst)` call may be used to get an intermediate hash value.
   def final(dst : Bytes) : Bytes
     check_finished
     @finished = true
@@ -125,6 +133,53 @@ abstract class Digest::Base
     dst
   end
 
+  # Returns a hexadecimal-encoded digest in a new `String`.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  def hexfinal : String
+    sary = uninitialized StaticArray(UInt8, 64)
+    tmp = sary.to_slice[0, digest_size]
+    final tmp
+    tmp.hexstring
+  end
+
+  # Writes a hexadecimal-encoded digest to `dst`.
+  #
+  # Faster than the `String` allocating version.
+  # Use when hashing in loops.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  def hexfinal(dst : Bytes) : Nil
+    dsize = digest_size
+    unless dst.bytesize == dsize * 2
+      raise ArgumentError.new("Incorrect dst size: #{dst.bytesize}, expected: #{dsize * 2}")
+    end
+
+    sary = uninitialized StaticArray(UInt8, 64)
+    tmp = sary.to_slice[0, dsize]
+    final tmp
+    tmp.hexstring dst
+  end
+
+  # Writes a hexadecimal-encoded digest to `IO`.
+  #
+  # Faster than the `String` allocating version.
+  #
+  # This method can only be called once and raises `FinalizedError` on subsequent calls.
+  #
+  # NOTE: `.dup.final` call may be used to get an intermediate hash value.
+  def hexfinal(io : IO) : Nil
+    sary = uninitialized StaticArray(UInt8, 128)
+    tmp = sary.to_slice[0, digest_size * 2]
+    hexfinal tmp
+    io << tmp
+  end
+
+  # Resets the state of this object.  Use to get another hash value without creating a new object.
   def reset : self
     reset_impl
     @finished = false

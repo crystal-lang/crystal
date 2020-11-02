@@ -41,11 +41,19 @@ describe Digest::MD5 do
   it "resets" do
     digest = Digest::MD5.new
     digest.update "foo"
-    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+    digest.hexfinal.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
 
     digest.reset
     digest.update "foo"
-    digest.final.hexstring.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+    digest.hexfinal.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
+  end
+
+  it "#hexfinal" do
+    digest = Digest::MD5.new
+    digest.update "foo"
+    dst = Bytes.new digest.digest_size * 2
+    digest.hexfinal(dst)
+    String.new(dst).should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 
   it "can't call final twice" do
@@ -53,6 +61,9 @@ describe Digest::MD5 do
     digest.final
     expect_raises(Digest::FinalizedError) do
       digest.final
+    end
+    expect_raises(Digest::FinalizedError) do
+      digest.hexfinal
     end
   end
 
