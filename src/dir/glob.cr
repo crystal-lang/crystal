@@ -171,10 +171,10 @@ class Dir
             fullpath = Path[path].join("").to_s
           end
 
-          if dir_entry
-            yield fullpath if dir_entry.dir?
-          else
-            yield fullpath if dir?(fullpath)
+          if dir_entry && !dir_entry.dir?.nil?
+            yield fullpath
+          elsif dir?(fullpath)
+            yield fullpath
           end
         in EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
@@ -187,8 +187,12 @@ class Dir
 
           each_child(path) do |entry|
             if cmd.matches?(entry.name)
-              if entry.dir?
-                fullpath = join(path, entry.name)
+              is_dir = entry.dir?
+              fullpath = join(path, entry.name)
+              if is_dir.nil?
+                is_dir = dir?(fullpath)
+              end
+              if is_dir
                 path_stack << {next_pos, fullpath, entry}
               end
             end
@@ -248,7 +252,12 @@ class Dir
                 yield fullpath if next_cmd.matches?(entry.name)
               end
 
-              if entry.dir?
+              is_dir = entry.dir?
+              if is_dir.nil?
+                is_dir = dir?(fullpath)
+              end
+
+              if is_dir
                 path_stack << {next_pos, fullpath, entry}
 
                 dir_path_stack.push fullpath

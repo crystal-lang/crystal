@@ -13,7 +13,8 @@ lib LibC
     dd_lock : Void*
   end
 
-  DT_DIR = 4
+  DT_UNKNOWN = 0
+  DT_DIR     = 4
 
   struct Dirent
     d_fileno : InoT
