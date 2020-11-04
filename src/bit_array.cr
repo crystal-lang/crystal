@@ -38,10 +38,6 @@ struct BitArray
     return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
   end
 
-  def ==(other)
-    false
-  end
-
   def unsafe_fetch(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
@@ -241,6 +237,13 @@ struct BitArray
     hasher = size.hash(hasher)
     hasher = to_slice.hash(hasher)
     hasher
+  end
+
+  # Returns a new `BitArray` with all of the same elements.
+  def dup
+    bit_array = BitArray.new(@size)
+    @bits.copy_to(bit_array.@bits, malloc_size)
+    bit_array
   end
 
   private def bit_index_and_sub_index(index)

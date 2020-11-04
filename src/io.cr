@@ -32,7 +32,6 @@ require "c/errno"
 #   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     nil
 #   end
 # end
 #
@@ -260,7 +259,7 @@ abstract class IO
   end
 
   # Writes a formatted string to this IO.
-  # For details on the format string, see `Kernel::sprintf`.
+  # For details on the format string, see top-level `::printf`.
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
@@ -268,7 +267,6 @@ abstract class IO
   # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -471,6 +469,7 @@ abstract class IO
     else
       write(slice)
     end
+
     nil
   end
 
@@ -1114,12 +1113,12 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst) : UInt64
+  def self.copy(src, dst) : Int64
     buffer = uninitialized UInt8[4096]
-    count = 0_u64
+    count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
-      count += len
+      count &+= len
     end
     count
   end
@@ -1134,16 +1133,16 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int) : UInt64
+  def self.copy(src, dst, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
-    limit = limit.to_u64
+    limit = limit.to_i64
 
     buffer = uninitialized UInt8[4096]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
-      remaining -= len
+      remaining &-= len
     end
     limit - remaining
   end

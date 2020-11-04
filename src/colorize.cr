@@ -150,16 +150,6 @@ module Colorize
   end
 end
 
-@[Deprecated("Use `Colorize.with`")]
-def with_color
-  Colorize.with
-end
-
-@[Deprecated("Use `Colorize.with.fore(color)`")]
-def with_color(color : Symbol)
-  Colorize.with.fore(color)
-end
-
 module Colorize::ObjectExtensions
   def colorize
     Colorize::Object.new(self)
@@ -224,12 +214,16 @@ module Colorize
     blue : UInt8 do
     def fore(io : IO) : Nil
       io << "38;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
 
     def back(io : IO) : Nil
       io << "48;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
   end
 end

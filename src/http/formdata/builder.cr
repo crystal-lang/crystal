@@ -91,19 +91,19 @@ module HTTP::FormData
 
         if creation_time = metadata.creation_time
           io << %(; creation-date=")
-          creation_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          creation_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 
         if modification_time = metadata.modification_time
           io << %(; modification-date=")
-          modification_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          modification_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 
         if read_time = metadata.read_time
           io << %(; read-date=")
-          read_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          read_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 

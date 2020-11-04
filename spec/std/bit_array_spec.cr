@@ -74,6 +74,10 @@ describe "BitArray" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares other type" do
+      from_int(3, 0b101).should_not eq("other type")
+    end
   end
 
   describe "[]" do
@@ -336,5 +340,14 @@ describe "BitArray" do
     iter.next.should be_false
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "provides dup" do
+    a = BitArray.new(2)
+    b = a.dup
+
+    b[0] = true
+    a[0].should be_false
+    b[0].should be_true
   end
 end

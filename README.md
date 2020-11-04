@@ -64,6 +64,8 @@ Questions or suggestions? Ask on the [Crystal Forum](https://forum.crystal-lang.
 Contributing
 ------------
 
+The Crystal repository is hosted at [crystal-lang/crystal](https://github.com/crystal-lang/crystal) on GitHub.
+
 Read the general [Contributing guide](https://github.com/crystal-lang/crystal/blob/master/CONTRIBUTING.md), and then:
 
 1. Fork it (<https://github.com/crystal-lang/crystal/fork>)

@@ -69,7 +69,7 @@ module Crystal
     property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
-    # (useful to type-check a prorgam)
+    # (useful to type-check a program)
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
@@ -95,7 +95,7 @@ module Crystal
 
     # Codegen target to use in the compilation.
     # If not set, asks LLVM the default one for the current machine.
-    property codegen_target = Config.default_target
+    property codegen_target = Config.host_target
 
     # If `true`, prints the link command line that is performed
     # to create the executable.
@@ -153,6 +153,9 @@ module Crystal
     # Whether to use llvm ThinLTO for linking
     property thin_lto = false
 
+    # Program that was created for the last compilation.
+    property! program : Program
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -198,7 +201,7 @@ module Crystal
     end
 
     private def new_program(sources)
-      program = Program.new
+      @program = program = Program.new
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
@@ -274,7 +277,7 @@ module Crystal
       units = llvm_modules.map do |type_name, info|
         llvm_mod = info.mod
         llvm_mod.target = target_triple
-        CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
+        CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
       if @cross_compile
@@ -304,7 +307,7 @@ module Crystal
     private def cross_compile(program, units, output_filename)
       unit = units.first
       llvm_mod = unit.llvm_mod
-      object_name = "#{output_filename}.o"
+      object_name = output_filename + program.object_extension
 
       optimize llvm_mod if @release
 
@@ -318,7 +321,7 @@ module Crystal
     end
 
     private def print_command(command, args)
-      stdout.puts command.sub(%("${@}"), args && args.join(" "))
+      stdout.puts command.sub(%("${@}"), args && Process.quote(args))
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
@@ -327,7 +330,10 @@ module Crystal
         # Execute and expand `subcommands`.
         lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}` } if expand
 
-        args = %(#{object_names.join(" ")} "/Fe#{output_filename}" #{lib_flags} #{@link_flags})
+        object_arg = Process.quote_windows(object_names)
+        output_arg = Process.quote_windows("/Fe#{output_filename}")
+
+        args = %(/nologo #{object_arg} #{output_arg} #{lib_flags} #{@link_flags})
         cmd = "#{CL} #{args}"
 
         if cmd.to_utf16.size > 32000
@@ -339,7 +345,7 @@ module Crystal
 
           args_filename = "#{output_dir}/linker_args.txt"
           File.write(args_filename, args_bytes)
-          cmd = "#{CL} @#{args_filename}"
+          cmd = "#{CL} #{Process.quote_windows("@" + args_filename)}"
         end
 
         {cmd, nil}
@@ -359,9 +365,8 @@ module Crystal
 
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
-        link_flags += " -static" if static?
 
-        { %(#{cc} "${@}" -o '#{output_filename}' #{link_flags} #{program.lib_flags}), object_names }
+        { %(#{cc} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags}), object_names }
       end
     end
 
@@ -597,9 +602,10 @@ module Crystal
       getter original_name
       getter llvm_mod
       getter? reused_previous_compilation = false
+      @object_extension : String
 
-      def initialize(@compiler : Compiler, @name : String, @llvm_mod : LLVM::Module,
-                     @output_dir : String, @bc_flags_changed : Bool)
+      def initialize(@compiler : Compiler, program : Program, @name : String,
+                     @llvm_mod : LLVM::Module, @output_dir : String, @bc_flags_changed : Bool)
         @name = "_main" if @name == ""
         @original_name = @name
         @name = String.build do |str|
@@ -621,6 +627,8 @@ module Crystal
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
           @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
         end
+
+        @object_extension = program.object_extension
       end
 
       def compile
@@ -690,6 +698,8 @@ module Crystal
 
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
+          # Delete existing .o file. It cannot be used anymore.
+          File.delete(object_name) if File.exists?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose
@@ -721,7 +731,7 @@ module Crystal
           llvm_mod.print_to_file "#{output_filename}.ll"
         end
         if emit_target.obj?
-          FileUtils.cp(object_name, "#{output_filename}.o")
+          FileUtils.cp(object_name, output_filename + @object_extension)
         end
       end
 
@@ -730,7 +740,7 @@ module Crystal
       end
 
       def object_filename
-        "#{@name}.o"
+        @name + @object_extension
       end
 
       def temporary_object_name

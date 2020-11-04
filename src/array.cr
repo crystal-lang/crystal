@@ -47,8 +47,7 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
-  # Size of an Array that we consider small to do linear scans
-  # or other optimizations instead of using a lookup Hash.
+  # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
 
   # Returns the number of elements in the array.
@@ -244,7 +243,7 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other : Array(U)) forall U
-    # Heurisitic: if the combined size is small we just do a linear scan
+    # Heuristic: if the combined size is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size + other.size <= SMALL_ARRAY_SIZE
       ary = Array(T | U).new
@@ -301,7 +300,7 @@ class Array(T)
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U)) forall U
-    # Heurisitic: if any of the arrays is small we just do a linear scan
+    # Heuristic: if any of the arrays is small we just do a linear scan
     # instead of using a Hash for lookup.
     if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
       ary = Array(T).new
@@ -751,6 +750,11 @@ class Array(T)
   # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int)
+    index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
     val = self[index, count]
     count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
@@ -1596,11 +1600,45 @@ class Array(T)
     self
   end
 
+  # Returns `self` with all the elements shifted `n` times.
+  #
+  # ```
+  # a1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a3 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  #
+  # a1.rotate!
+  # a2.rotate!(1)
+  # a3.rotate!(3)
+  #
+  # a1 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a2 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a3 # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # ```
   def rotate!(n = 1)
     return self if size == 0
     n %= size
-    return self if n == 0
-    if n <= size // 2
+
+    if n == 0
+    elsif n == 1
+      tmp = self[0]
+      @buffer.move_from(@buffer + n, size - n)
+      self[-1] = tmp
+    elsif n == (size - 1)
+      tmp = self[-1]
+      (@buffer + size - n).move_from(@buffer, n)
+      self[0] = tmp
+    elsif n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer, n)
+      @buffer.move_from(@buffer + n, size - n)
+      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
+    elsif size - n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
+      (@buffer + size - n).move_from(@buffer, n)
+      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
+    elsif n <= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
@@ -1612,6 +1650,15 @@ class Array(T)
     self
   end
 
+  # Returns an array with all the elements shifted `n` times.
+  #
+  # ```
+  # a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a.rotate    # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(1) # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(3) # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # a           # => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # ```
   def rotate(n = 1)
     return self if size == 0
     n %= size
@@ -1875,7 +1922,7 @@ class Array(T)
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << ']'
     end
     io << "[...]" unless executed

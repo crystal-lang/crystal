@@ -98,7 +98,7 @@ module Crystal
 
     private def self.git_config(key)
       String.build do |io|
-        Process.run("git", ["--config", key], output: io)
+        Process.run("git", ["config", "--get", key], output: io)
       end.strip.presence
     end
 

@@ -380,7 +380,7 @@ module Spec
     def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__) forall T
       yield
     rescue ex : T
-      # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
+      # We usually bubble Spec::AssertionFailed, unless this is the expected exception
       if ex.is_a?(Spec::AssertionFailed) && klass != Spec::AssertionFailed
         raise ex
       end

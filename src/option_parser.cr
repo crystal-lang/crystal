@@ -58,7 +58,7 @@
 #     welcome = true
 #     parser.banner = "Usage: example welcome"
 #   end
-#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-v", "--verbose", "Enabled verbose output") { verbose = true }
 #   parser.on("-h", "--help", "Show this help") do
 #     puts parser
 #     exit
@@ -203,16 +203,16 @@ class OptionParser
 
   private def parse_flag_definition(flag : String)
     case flag
-    when /--(\S+)\s+\[\S+\]/
+    when /\A--(\S+)\s+\[\S+\]\z/
       {"--#{$1}", FlagValue::Optional}
-    when /--(\S+)(\s+|\=)(\S+)?/
+    when /\A--(\S+)(\s+|\=)(\S+)?\z/
       {"--#{$1}", FlagValue::Required}
-    when /--\S+/
+    when /\A--\S+\z/
       # This can't be merged with `else` otherwise /-(.)/ matches
       {flag, FlagValue::None}
-    when /-(.)\s*\[\S+\]/
+    when /\A-(.)\s*\[\S+\]\z/
       {flag[0..1], FlagValue::Optional}
-    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+    when /\A-(.)\s+\S+\z/, /\A-(.)\s+\z/, /\A-(.)\S+\z/
       {flag[0..1], FlagValue::Required}
     else
       # This happens for -f without argument
@@ -221,7 +221,7 @@ class OptionParser
   end
 
   # Adds a separator, with an optional header message, that will be used to
-  # print the help. The seperator is placed between the flags registered (`#on`)
+  # print the help. The separator is placed between the flags registered (`#on`)
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
@@ -274,7 +274,7 @@ class OptionParser
       io << banner
       io << '\n'
     end
-    @flags.join '\n', io
+    @flags.join io, '\n'
   end
 
   private def append_flag(flag, description)
@@ -366,7 +366,9 @@ class OptionParser
           value = nil
         end
 
-        if handler = @handlers[flag]?
+        # Fetch handler of the flag.
+        # If value is given even though handler does not take value, it is invalid, then it is skipped.
+        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
           handled_args << arg_index
 
           # Pull in the next argument if we don't already have it and an argument

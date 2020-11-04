@@ -10,7 +10,7 @@ module OpenSSL
     end
 
     # Reads the io's data and updates the digest with it.
-    def update(io : IO) : Digest
+    def update(io : IO) : self
       buffer = uninitialized UInt8[4096]
       while (read_bytes = io.read(buffer.to_slice)) > 0
         self << buffer.to_slice[0, read_bytes]
@@ -19,26 +19,17 @@ module OpenSSL
     end
 
     # :ditto:
-    def <<(data) : Digest
+    def <<(data) : self
       update(data)
     end
 
-    # Clones and finishes the digest.
-    def digest : Bytes
-      self.clone.finish
-    end
-
     # Returns a base64-encoded digest.
+    @[Deprecated("Use `Base64.strict_encode(final)` instead.")]
     def base64digest : String
       Base64.strict_encode(digest)
     end
 
-    # Returns a hexadecimal-encoded digest.
-    def hexdigest : String
-      digest.hexstring
-    end
-
-    # :ditto:
+    @[Deprecated("Use `io << final.hexstring` instead.")]
     def to_s(io : IO) : Nil
       io << hexdigest
     end

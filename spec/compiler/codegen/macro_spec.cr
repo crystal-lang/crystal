@@ -578,6 +578,17 @@ describe "Code gen: macro" do
     )).to_string.should eq("Int32")
   end
 
+  it "can acccess type variables of a module" do
+    run(%(
+      module Foo(T)
+        def self.foo
+          {{ @type.type_vars.first.name.stringify }}
+        end
+      end
+      Foo(Int32).foo
+    )).to_string.should eq("Int32")
+  end
+
   it "can acccess type variables that are not types" do
     run(%(
       class Foo(T)

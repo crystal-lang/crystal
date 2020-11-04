@@ -112,11 +112,6 @@ class Deque(T)
     equals?(other) { |x, y| x == y }
   end
 
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Concatenation. Returns a new `Deque` built by concatenating
   # two deques together to create a third. The type of the new deque
   # is the union of the types of both the other deques.
@@ -336,7 +331,7 @@ class Deque(T)
   def inspect(io : IO) : Nil
     executed = exec_recursive(:inspect) do
       io << "Deque{"
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << '}'
     end
     io << "Deque{...}" unless executed

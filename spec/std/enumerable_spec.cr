@@ -17,6 +17,17 @@ private class SpecEmptyEnumerable
   end
 end
 
+private class SpecCountUpIterator
+  include Iterator(Int32)
+
+  def initialize(@size : Int32, @count = 0)
+  end
+
+  def next
+    (@count += 1) <= @size ? (@count - 1) : stop
+  end
+end
+
 describe "Enumerable" do
   describe "all? with block" do
     it "returns true" do
@@ -492,16 +503,6 @@ describe "Enumerable" do
     end
   end
 
-  describe "grep" do
-    it "works with regexes for instance" do
-      ["Alice", "Bob", "Cipher", "Anna"].grep(/^A/).should eq ["Alice", "Anna"]
-    end
-
-    it "returns empty array if nothing matches" do
-      %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
-    end
-  end
-
   describe "group_by" do
     it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
@@ -620,25 +621,59 @@ describe "Enumerable" do
     end
   end
 
-  describe "join" do
-    it "joins with separator and block" do
-      str = [1, 2, 3].join(", ") { |x| x + 1 }
-      str.should eq("2, 3, 4")
+  describe "#join" do
+    it "()" do
+      [1, 2, 3].join.should eq("123")
     end
 
-    it "joins without separator and block" do
+    it "(separator)" do
+      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
+    end
+
+    it "(&)" do
       str = [1, 2, 3].join { |x| x + 1 }
       str.should eq("234")
     end
 
-    it "joins with io and block" do
+    it "(separator, &)" do
+      str = [1, 2, 3].join(", ") { |x| x + 1 }
+      str.should eq("2, 3, 4")
+    end
+
+    it "(io)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io)
+      io.to_s.should eq("123")
+    end
+
+    it "(io, separator)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(io, ", ")
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(separator, io) (deprecated)" do
+      io = IO::Memory.new
+      ["Ruby", "Crystal", "Python"].join(", ", io)
+      io.to_s.should eq "Ruby, Crystal, Python"
+    end
+
+    it "(io, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io) { |x, io| io << x + 1 }
+      io.to_s.should eq("234")
+    end
+
+    it "(io, separator, &)" do
+      io = IO::Memory.new
+      [1, 2, 3].join(io, ", ") { |x, io| io << x + 1 }
+      io.to_s.should eq("2, 3, 4")
+    end
+
+    it "(separator, io, &) (deprecated)" do
       str = IO::Memory.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
-    end
-
-    it "joins with only separator" do
-      ["Ruby", "Crystal", "Python"].join(", ").should eq "Ruby, Crystal, Python"
     end
   end
 
@@ -1004,6 +1039,18 @@ describe "Enumerable" do
 
     it "with block" do
       (1..3).to_h { |i| {i, i ** 2} }.should eq({1 => 1, 2 => 4, 3 => 9})
+    end
+  end
+
+  describe "zip" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip(1..3, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, 3, 4}])
+    end
+  end
+
+  describe "zip?" do
+    it "works for Iterators as receiver" do
+      SpecCountUpIterator.new(3).zip?(1..2, 2..4).should eq([{0, 1, 2}, {1, 2, 3}, {2, nil, 4}])
     end
   end
 end

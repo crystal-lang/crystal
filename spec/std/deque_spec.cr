@@ -145,6 +145,15 @@ describe "Deque" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares other types" do
+      a = Deque{1, 2, 3}
+      b = Deque{:foo, :bar}
+      c = "other type"
+      (a == b).should be_false
+      (b == c).should be_false
+      (a == c).should be_false
+    end
   end
 
   describe "+" do

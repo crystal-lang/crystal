@@ -71,13 +71,19 @@ describe "YAML serialization" do
 
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
+      Float32.from_yaml(".nan").nan?.should be_true
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
+      Float32.from_yaml("-.inf").should eq(-Float32::INFINITY)
     end
 
     it "does Float64#from_yaml" do
       value = Float64.from_yaml("1.5")
       value.should eq(1.5)
       value.should be_a(Float64)
+
+      Float64.from_yaml(".nan").nan?.should be_true
+      Float64.from_yaml(".inf").should eq(Float64::INFINITY)
+      Float64.from_yaml("-.inf").should eq(-Float64::INFINITY)
     end
 
     it "does Array#from_yaml" do
@@ -275,8 +281,36 @@ describe "YAML serialization" do
       Int32.from_yaml(1.to_yaml).should eq(1)
     end
 
+    it "does for Float32" do
+      Float32.from_yaml(1.5_f32.to_yaml).should eq(1.5_f32)
+    end
+
+    it "does for Float32 (infinity)" do
+      Float32.from_yaml(Float32::INFINITY.to_yaml).should eq(Float32::INFINITY)
+    end
+
+    it "does for Float32 (-infinity)" do
+      Float32.from_yaml((-Float32::INFINITY).to_yaml).should eq(-Float32::INFINITY)
+    end
+
+    it "does for Float32 (nan)" do
+      Float32.from_yaml(Float32::NAN.to_yaml).nan?.should be_true
+    end
+
     it "does for Float64" do
       Float64.from_yaml(1.5.to_yaml).should eq(1.5)
+    end
+
+    it "does for Float64 (infinity)" do
+      Float64.from_yaml(Float64::INFINITY.to_yaml).should eq(Float64::INFINITY)
+    end
+
+    it "does for Float64 (-infinity)" do
+      Float64.from_yaml((-Float64::INFINITY).to_yaml).should eq(-Float64::INFINITY)
+    end
+
+    it "does for Float64 (nan)" do
+      Float64.from_yaml(Float64::NAN.to_yaml).nan?.should be_true
     end
 
     it "does for String" do
@@ -349,7 +383,7 @@ describe "YAML serialization" do
 
     it "does for utc time" do
       time = Time.utc(2010, 11, 12, 1, 2, 3)
-      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.000000000\n")
     end
 
     it "does for time at date" do
@@ -385,9 +419,9 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
+      expected = /\A---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: ?\n\z/
 
-      data.to_yaml.should eq(expected)
+      data.to_yaml.should match(expected)
     end
 
     it "writes to a stream" do
@@ -408,7 +442,7 @@ describe "YAML serialization" do
       h[1] = 2
       h[h] = h
 
-      h.to_yaml.should eq("--- &1\n1: 2\n*1: *1\n")
+      h.to_yaml.should match(/\A--- &1\n1: 2\n\*1 ?: \*1\n\z/)
     end
   end
 end

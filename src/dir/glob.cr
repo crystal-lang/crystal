@@ -4,12 +4,12 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.[](*patterns) : Array(String)
+  def self.[](*patterns : Path | String) : Array(String)
     glob(patterns)
   end
 
   # :ditto:
-  def self.[](patterns : Enumerable(String)) : Array(String)
+  def self.[](patterns : Enumerable) : Array(String)
     glob(patterns)
   end
 
@@ -20,12 +20,12 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false) : Array(String)
+  def self.glob(*patterns : Path | String, match_hidden = false) : Array(String)
     glob(patterns, match_hidden: match_hidden)
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
+  def self.glob(patterns : Enumerable, match_hidden = false) : Array(String)
     paths = [] of String
     glob(patterns, match_hidden: match_hidden) do |path|
       paths << path
@@ -40,14 +40,14 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false, &block : String -> _)
+  def self.glob(*patterns : Path | String, match_hidden = false, &block : String -> _)
     glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
   end
 
   # :ditto:
-  def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
+  def self.glob(patterns : Enumerable, match_hidden = false, &block : String -> _)
     Globber.glob(patterns, match_hidden: match_hidden) do |path|
       yield path
     end
@@ -72,8 +72,11 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
+    def self.glob(patterns : Enumerable, **options, &block : String -> _)
       patterns.each do |pattern|
+        if pattern.is_a?(Path)
+          pattern = pattern.to_posix.to_s
+        end
         sequences = compile(pattern)
 
         sequences.each do |sequence|
@@ -156,10 +159,10 @@ class Dir
 
         next_pos = pos - 1
         case cmd
-        when RootDirectory
+        in RootDirectory
           raise "unreachable" if path
           path_stack << {next_pos, root, nil}
-        when DirectoriesOnly
+        in DirectoriesOnly
           raise "unreachable" unless path
           # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
           if path == File::SEPARATOR_STRING
@@ -173,13 +176,13 @@ class Dir
           else
             yield fullpath if dir?(fullpath)
           end
-        when EntryMatch
+        in EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
             next if !options[:match_hidden] && entry.name.starts_with?('.')
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
-        when DirectoryMatch
+        in DirectoryMatch
           next_cmd = sequence[next_pos]?
 
           each_child(path) do |entry|
@@ -190,15 +193,15 @@ class Dir
               end
             end
           end
-        when ConstantEntry
+        in ConstantEntry
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
-        when ConstantDirectory
+        in ConstantDirectory
           path_stack << {next_pos, join(path, cmd.path), nil}
           # Don't check if full exists. It just costs us time
           # and the downstream node will be able to check properly.
-        when RecursiveDirectories
+        in RecursiveDirectories
           path_stack << {next_pos, path, nil}
           next_cmd = sequence[next_pos]?
 
@@ -243,8 +246,6 @@ class Dir
                 yield fullpath if next_cmd.path == entry.name
               when EntryMatch
                 yield fullpath if next_cmd.matches?(entry.name)
-              else
-                # go on
               end
 
               if entry.dir?
@@ -264,8 +265,6 @@ class Dir
               dir = dir_stack.last
             end
           end
-        else
-          raise "unreachable"
         end
       end
     end

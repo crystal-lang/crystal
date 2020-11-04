@@ -52,7 +52,7 @@ class Hash(K, V)
   # There are two main data structures:
   #
   # - @entries:
-  #     A continguous buffer (Pointer) of hash entries (Entry) in the order
+  #     A contiguous buffer (Pointer) of hash entries (Entry) in the order
   #     they were inserted. This makes it possible for Hash to preserve
   #     order of insertion.
   #     An entry holds a key-value pair together with the key's hash code.
@@ -140,7 +140,7 @@ class Hash(K, V)
   # shift of the buffer (expensive).
   #
   # There might be other optimizations to try out, like not using Linear Probing,
-  # but for now this implementaton is much faster than the old one which used
+  # but for now this implementation is much faster than the old one which used
   # linked lists (closed addressing).
   #
   # All methods that deal with this implementation come after the constructors.
@@ -523,7 +523,7 @@ class Hash(K, V)
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
   # deleted. In that case the entries table is simply compacted.
-  # However, in case of a resize deleted entries are also compcated.
+  # However, in case of a resize deleted entries are also compacted.
   private def resize : Nil
     # Only do an actual resize (grow `@entries` buffer) if we don't
     # have many deleted elements.
@@ -662,14 +662,14 @@ class Hash(K, V)
   end
 
   # Initializes `@entries` for a dup copy.
-  # Here we only need tu duplicate the buffer.
+  # Here we only need to duplicate the buffer.
   private def initialize_dup_entries(other)
     return if other.@entries.null?
 
     @entries = malloc_entries(other.entries_capacity)
 
     # Note that we only need to copy `entries_size` which
-    # are the effectives entries in use.
+    # are the effective entries in use.
     @entries.copy_from(other.@entries, other.entries_size)
   end
 
@@ -1255,7 +1255,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each(& : Tuple(K, V) ->) : Nil
+  def each : Nil
     each_entry_with_index do |entry, i|
       yield({entry.key, entry.value})
     end
@@ -1787,7 +1787,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new
+    hash = self.class.new
     hash.initialize_dup(self)
     hash
   end
@@ -1801,7 +1801,7 @@ class Hash(K, V)
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
   def clone
-    hash = Hash(K, V).new
+    hash = self.class.new
     hash.initialize_clone(self)
     hash
   end

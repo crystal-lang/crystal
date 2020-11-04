@@ -3,27 +3,42 @@ require "./exception"
 
 module Crystal
   struct CrystalPath
-    class Error < LocationlessException
+    class NotFoundError < LocationlessException
+      getter filename
+      getter relative_to
+
+      def initialize(@filename : String, @relative_to : String?)
+      end
     end
+
+    private DEFAULT_LIB_PATH = "lib"
 
     def self.default_path
-      ENV["CRYSTAL_PATH"]? || Crystal::Config.path
+      ENV["CRYSTAL_PATH"]? || begin
+        if Crystal::Config.path.blank?
+          DEFAULT_LIB_PATH
+        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
+          Crystal::Config.path
+        else
+          {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
+        end
+      end
     end
 
-    @crystal_path : Array(String)
+    property entries : Array(String)
 
-    def initialize(path = CrystalPath.default_path, codegen_target = Config.default_target)
-      @crystal_path = path.split(Process::PATH_DELIMITER).reject &.empty?
+    def initialize(path = CrystalPath.default_path, codegen_target = Config.host_target)
+      @entries = path.split(Process::PATH_DELIMITER).reject &.empty?
       add_target_path(codegen_target)
     end
 
     private def add_target_path(codegen_target)
       target = "#{codegen_target.architecture}-#{codegen_target.os_name}"
 
-      @crystal_path.each do |path|
+      @entries.each do |path|
         path = File.join(path, "lib_c", target)
         if Dir.exists?(path)
-          @crystal_path << path unless @crystal_path.includes?(path)
+          @entries << path unless @entries.includes?(path)
           return
         end
       end
@@ -38,7 +53,9 @@ module Crystal
         result = find_in_crystal_path(filename)
       end
 
-      cant_find_file filename, relative_to unless result
+      unless result
+        raise NotFoundError.new(filename, relative_to)
+      end
 
       result = [result] if result.is_a?(String)
       result
@@ -144,30 +161,12 @@ module Crystal
     end
 
     private def find_in_crystal_path(filename)
-      @crystal_path.each do |path|
+      @entries.each do |path|
         required = find_in_path_relative_to_dir(filename, path)
         return required if required
       end
 
       nil
-    end
-
-    private def cant_find_file(filename, relative_to)
-      error = "can't find file '#{filename}'"
-
-      if filename.starts_with? '.'
-        error += " relative to '#{relative_to}'" if relative_to
-      else
-        error = <<-NOTE
-          #{error}
-
-          If you're trying to require a shard:
-          - Did you remember to run `shards install`?
-          - Did you make sure you're running the compiler in the same directory as your shard.yml?
-          NOTE
-      end
-
-      raise Error.new(error)
     end
   end
 end

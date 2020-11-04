@@ -315,7 +315,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -325,6 +325,8 @@ module Crystal
       if expanded = node.expanded
         return expanded.transform self
       end
+
+      @program.check_call_to_deprecated_method(node)
 
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
@@ -391,7 +393,7 @@ module Crystal
         end
       end
 
-      # Check if the block has its type freezed and it doesn't match the current type
+      # Check if the block has its type frozen and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
@@ -498,33 +500,53 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
-        case arg
-        when ProcLiteral
-          if arg.def.closure?
-            vars = ClosuredVarsCollector.collect arg.def
-            unless vars.empty?
-              message += " (closured vars: #{vars.join ", "})"
-            end
+        check_arg_is_not_closure(node, message, arg)
+      end
+    end
 
-            arg.raise message
-          end
-        when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
+    def check_arg_is_not_closure(node, message, arg)
+      case arg
+      when Expressions
+        arg.expressions.each do |exp|
+          check_arg_is_not_closure(node, message, exp)
+        end
+      when ProcLiteral
+        if proc_pointer = arg.proc_pointer
+          case proc_pointer.obj
+          when Var
+            arg.raise "#{message} (closured vars: #{proc_pointer.obj})"
+          when InstanceVar
             arg.raise "#{message} (closured vars: self)"
           end
+          return
+        end
 
-          owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
+        if arg.def.closure?
+          vars = ClosuredVarsCollector.collect arg.def
+          unless vars.empty?
+            message += " (closured vars: #{vars.join ", "})"
           end
-        else
-          # nothing to do
+
+          arg.raise message
+        end
+      when ProcPointer
+        if arg.obj.try &.type?.try &.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
+        end
+
+        owner = arg.call.target_def.owner
+        if owner.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
         end
       end
     end
 
     def transform(node : ProcPointer)
       super
+
+      if expanded = node.expanded
+        return transform(expanded)
+      end
 
       if call = node.call?
         result = call.transform(self)
@@ -790,7 +812,7 @@ module Crystal
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node

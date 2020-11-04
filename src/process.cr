@@ -156,7 +156,7 @@ class Process
   #
   # Available only on Unix-like operating systems.
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
@@ -190,13 +190,13 @@ class Process
     @process_info.pid.to_i64
   end
 
-  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' input. Raises if a pipe wasn't asked when creating the process.
   getter! input : IO::FileDescriptor
 
-  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' output. Raises if a pipe wasn't asked when creating the process.
   getter! output : IO::FileDescriptor
 
-  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
   @process_info : Crystal::System::Process

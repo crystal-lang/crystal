@@ -1,26 +1,10 @@
 require "spec"
 require "log"
 require "log/spec"
+require "../../support/env"
 
 private def s(value : Log::Severity)
   value
-end
-
-private def with_env(**values)
-  old_values = {} of String => String?
-  begin
-    values.each do |key, value|
-      key = key.to_s
-      old_values[key] = ENV[key]?
-      ENV[key] = value
-    end
-
-    yield
-  ensure
-    old_values.each do |key, old_value|
-      ENV[key] = old_value
-    end
-  end
 end
 
 describe "Log.setup_from_env" do
@@ -63,9 +47,9 @@ describe "Log.setup_from_env" do
     it "is used if no LOG_LEVEL is set" do
       with_env "LOG_LEVEL": nil do
         builder = Log::Builder.new
-        Log.setup_from_env(builder: builder, default_level: :warning)
+        Log.setup_from_env(builder: builder, default_level: :warn)
 
-        builder.for("").initial_level.should eq(s(:warning))
+        builder.for("").initial_level.should eq(s(:warn))
       end
     end
 

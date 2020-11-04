@@ -819,4 +819,66 @@ describe "Code gen: proc" do
       a
       )).to_i.should eq(3)
   end
+
+  it "calls function pointer" do
+    run(%(
+      require "prelude"
+
+      fun foo(f : Int32 -> Int32) : Int32
+        f.call(1)
+      end
+
+      foo(->(x : Int32) { x &+ 1 })
+    )).to_i.should eq(2)
+  end
+
+  it "casts from function pointer to proc" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        Pointer(Proc((Void* -> Void*), Void*)).new(0_u64).value.call(a)
+      end
+    ))
+  end
+
+  it "takes pointerof function pointer" do
+    codegen(%(
+      fun a(a : Void* -> Void*)
+        pointerof(a).value.call(Pointer(Void).new(0_u64))
+      end
+    ))
+  end
+
+  it "closures var on ->var.call (#8584)" do
+    run(%(
+      def bar(x)
+        x
+      end
+
+      struct Foo
+        def initialize
+          @value = 1
+        end
+
+        def value
+          bar(@value)
+          @value
+        end
+      end
+
+      def get_proc_a
+        foo = Foo.new
+        ->foo.value
+      end
+
+      def get_proc_b
+        foo = Foo.new
+        ->{ foo.value }
+      end
+
+      proc_a = get_proc_a
+      proc_b = get_proc_b
+      proc_b.call
+      proc_a.call
+      )).to_i.should eq(1)
+  end
 end

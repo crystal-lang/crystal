@@ -23,7 +23,6 @@ class HTTP::Server::RequestProcessor
   end
 
   def process(input, output)
-    must_close = true
     response = Response.new(output)
 
     begin
@@ -47,7 +46,7 @@ class HTTP::Server::RequestProcessor
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
-        begin
+        Log.with_context do
           @handler.call(context)
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
@@ -63,12 +62,14 @@ class HTTP::Server::RequestProcessor
           response.output.close
         end
 
-        if response.upgraded?
-          must_close = false
+        output.flush
+
+        # If there is an upgrade handler, hand over
+        # the connection to it and return
+        if upgrade_handler = response.upgrade_handler
+          upgrade_handler.call(output)
           return
         end
-
-        output.flush
 
         break unless request.keep_alive?
 
@@ -87,18 +88,10 @@ class HTTP::Server::RequestProcessor
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
           break unless body.closed?
-        else
-          # Nothing to do
         end
       end
     rescue IO::Error
       # IO-related error, nothing to do
-    ensure
-      begin
-        input.close if must_close
-      rescue IO::Error
-        # IO-related error, nothing to do
-      end
     end
   end
 end

@@ -36,6 +36,16 @@ module Crystal::Macros
   def flag?(name) : BoolLiteral
   end
 
+  # Returns whether a [compile-time flag](https://crystal-lang.org/docs/syntax_and_semantics/compile_time_flags.html)
+  # is set for the *host* platform, which can differ from the target platform
+  # (`flag?`) during cross-compilation.
+  #
+  # ```
+  # {{ host_flag?(:win32) }} # true or false
+  # ```
+  def host_flag?(name) : BoolLiteral
+  end
+
   # Prints AST nodes at compile-time. Useful for debugging macros.
   def puts(*expressions) : Nop
   end
@@ -456,6 +466,10 @@ module Crystal::Macros
     def strip : StringLiteral
     end
 
+    # Similar to `String#titleize`.
+    def titleize : StringLiteral
+    end
+
     # Similar to `String#to_i`.
     def to_i(base = 10)
     end
@@ -555,6 +569,10 @@ module Crystal::Macros
 
     # Similar to `String#strip`.
     def strip : SymbolLiteral
+    end
+
+    # Similar to `String#titleize`.
+    def titleize : SymbolLiteral
     end
 
     # Similar to `String#tr`.
@@ -1597,7 +1615,7 @@ module Crystal::Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
@@ -1717,6 +1735,10 @@ module Crystal::Macros
     def strip : MacroId
     end
 
+    # Similar to `String#titleize`.
+    def titleize : MacroId
+    end
+
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : MacroId
     end
@@ -1728,24 +1750,99 @@ module Crystal::Macros
 
   # Represents a type in the program, like `Int32` or `String`.
   class TypeNode < ASTNode
-    # Returns `true` if this type is abstract.
+    # Returns `true` if `self` is abstract, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # abstract struct Two; end
+    #
+    # class Three; end
+    #
+    # abstract class Four; end
+    #
+    # {{One.abstract?}}   # => false
+    # {{Two.abstract?}}   # => true
+    # {{Three.abstract?}} # => false
+    # {{Four.abstract?}}  # => true
+    # ```
     def abstract? : BoolLiteral
     end
 
-    # Returns `true` if this type is a union type, `false` otherwise.
+    # Returns `true` if `self` is a union type, otherwise `false`.
     #
-    # See also: `union_types`.
+    # See also: `#union_types`.
+    #
+    # ```
+    # {{String.union?}}              # => false
+    # {{String?.union?}}             # => true
+    # {{Union(String, Bool).union?}} # => true
+    # ```
     def union? : BoolLiteral
     end
 
-    # Returns `true` if this type is nilable (if it has `Nil` amongst its types).
+    # Returns `true` if `self` is nilable (if it has `Nil` amongst its types), otherwise `false`.
+    #
+    # ```
+    # {{String.nilable?}}                   # => false
+    # {{String?.nilable?}}                  # => true
+    # {{Union(String, Bool, Nil).nilable?}} # => true
+    # ```
     def nilable? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `module`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.module?}}   # => true
+    # {{Two.module?}}   # => false
+    # {{Three.module?}} # => false
+    # ```
+    def module? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `class`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.class?}}   # => false
+    # {{Two.class?}}   # => true
+    # {{Three.class?}} # => false
+    # ```
+    def class? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `struct`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.struct?}}   # => false
+    # {{Two.struct?}}   # => false
+    # {{Three.struct?}} # => true
+    # ```
+    def struct? : BoolLiteral
     end
 
     # Returns the types forming a union type, if this is a union type.
     # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
     #
-    # See also: `union?`.
+    # See also: `#union?`.
     def union_types : ArrayLiteral(TypeNode)
     end
 

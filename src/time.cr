@@ -189,7 +189,7 @@ require "crystal/system/time"
 # computer's wall clock has changed between both calls.
 #
 # As an alternative, the operating system also provides a monotonic clock.
-# Its time-line has no specfied starting point but is strictly linearly
+# Its time-line has no specified starting point but is strictly linearly
 # increasing.
 #
 # This monotonic clock should always be used for measuring elapsed time.
@@ -410,7 +410,10 @@ struct Time
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
-           0 <= hour <= 23 &&
+           (
+             0 <= hour <= 23 ||
+             (hour == 24 && minute == 0 && second == 0 && nanosecond == 0)
+           ) &&
            0 <= minute <= 59 &&
            0 <= second <= 59 &&
            0 <= nanosecond <= 999_999_999
@@ -581,7 +584,7 @@ struct Time
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are increased by the specified amount.
+  # representations of month and year are increased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
@@ -599,7 +602,7 @@ struct Time
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are decreased by the specified amount.
+  # representations of month and year are decreased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
@@ -1034,13 +1037,13 @@ struct Time
   #
   # The name of the location is appended unless it is a fixed zone offset.
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s "%F %T", io
+    to_s io, "%F %T"
 
     if with_nanoseconds
       if @nanoseconds == 0
         io << ".0"
       else
-        to_s ".%N", io
+        to_s io, ".%N"
       end
     end
 
@@ -1060,7 +1063,7 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s("%F %T ", io)
+    to_s(io, "%F %T ")
 
     if utc?
       io << "UTC"
@@ -1084,8 +1087,16 @@ struct Time
   # Formats this `Time` according to the pattern in *format* to the given *io*.
   #
   # See `Time::Format` for details.
-  def to_s(format : String, io : IO) : Nil
+  def to_s(io : IO, format : String) : Nil
     Format.new(format).format(self, io)
+  end
+
+  # Formats this `Time` according to the pattern in *format* to the given *io*.
+  #
+  # See `Time::Format` for details.
+  @[Deprecated("Use `#to_s(io : IO, format : String)` instead")]
+  def to_s(format : String, io : IO) : Nil
+    to_s(io, format)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
@@ -1097,14 +1108,21 @@ struct Time
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
   # freedom to rigidly define a fixed format intended for use in internet
   # protocols and standards.
-  def to_rfc3339
-    Format::RFC_3339.format(to_utc)
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(*, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
-  def to_rfc3339(io : IO)
-    Format::RFC_3339.format(to_utc, io)
+  #
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(io : IO, *, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).

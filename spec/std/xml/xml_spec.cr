@@ -242,6 +242,31 @@ describe XML do
     end
   end
 
+  it "escapes content" do
+    doc = XML.parse(<<-XML)
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+
+    root = doc.root.not_nil!
+    root.text = "<foo>"
+    root.text.should eq("<foo>")
+
+    root.to_xml.should eq(%(<name>&lt;foo&gt;</name>))
+  end
+
+  it "escapes content HTML fragment" do
+    doc = XML.parse_html(<<-XML, XML::HTMLParserOptions.default | XML::HTMLParserOptions::NOIMPLIED | XML::HTMLParserOptions::NODEFDTD)
+      <p>foo</p>
+      XML
+
+    node = doc.children.first
+    node.text = "<foo>"
+    node.text.should eq("<foo>")
+
+    node.to_xml.should eq(%(<p>&lt;foo&gt;</p>))
+  end
+
   it "gets empty content" do
     doc = XML.parse("<foo/>")
     doc.children.first.content.should eq("")
@@ -372,6 +397,12 @@ describe XML do
 
     res = root.delete("biz")
     res.should be_nil
+  end
+
+  it "shows content when inspecting attribute" do
+    doc = XML.parse(%{<foo bar="baz"></foo>})
+    attr = doc.root.not_nil!.attributes.first
+    attr.inspect.should contain(%(content="baz"))
   end
 
   it ".build" do

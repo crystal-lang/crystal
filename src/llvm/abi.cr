@@ -1,3 +1,4 @@
+# Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi.rs
 abstract class LLVM::ABI
   getter target_data : TargetData
   getter? osx : Bool

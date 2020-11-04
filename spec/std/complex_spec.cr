@@ -118,7 +118,7 @@ describe "Complex" do
 
   describe "+" do
     it "+ complex" do
-      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(5.43, 27.12))
+      (+Complex.new(-5.43, -27.12)).should eq(Complex.new(-5.43, -27.12))
     end
 
     it "complex + complex" do

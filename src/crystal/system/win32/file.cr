@@ -193,7 +193,7 @@ module Crystal::System::File
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
-    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), 0) == 0
+    if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
       raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
     end
   end
@@ -209,12 +209,26 @@ module Crystal::System::File
   end
 
   def self.utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
-    times = LibC::Utimbuf64.new
-    times.actime = access_time.to_unix
-    times.modtime = modification_time.to_unix
-
-    if LibC._wutime64(to_windows_path(path), pointerof(times)) != 0
-      raise ::File::Error.from_errno("Error setting time on file", file: path)
+    atime = Crystal::System::Time.to_filetime(access_time)
+    mtime = Crystal::System::Time.to_filetime(modification_time)
+    handle = LibC.CreateFileW(
+      to_windows_path(path),
+      LibC::FILE_WRITE_ATTRIBUTES,
+      LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
+      nil,
+      LibC::OPEN_EXISTING,
+      LibC::FILE_ATTRIBUTE_NORMAL,
+      LibC::HANDLE.null
+    )
+    if handle == LibC::INVALID_HANDLE_VALUE
+      raise ::File::Error.from_winerror("Error setting time on file", file: path)
+    end
+    begin
+      if LibC.SetFileTime(handle, nil, pointerof(atime), pointerof(mtime)) == 0
+        raise ::File::Error.from_winerror("Error setting time on file", file: path)
+      end
+    ensure
+      LibC.CloseHandle(handle)
     end
   end
 
@@ -241,6 +255,8 @@ module Crystal::System::File
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    raise NotImplementedError.new("File#fsync")
+    if LibC._commit(fd) != 0
+      raise IO::Error.from_errno("Error syncing file")
+    end
   end
 end

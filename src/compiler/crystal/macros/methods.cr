@@ -51,7 +51,7 @@ module Crystal
         interpret_debug(node)
       when "env"
         interpret_env(node)
-      when "flag?"
+      when "flag?", "host_flag?"
         interpret_flag?(node)
       when "puts"
         interpret_puts(node)
@@ -145,10 +145,18 @@ module Crystal
     def interpret_flag?(node)
       if node.args.size == 1
         node.args[0].accept self
-        flag = @last.to_macro_id
-        @last = BoolLiteral.new(@program.has_flag?(flag))
+        flag_name = @last.to_macro_id
+        flags = case node.name
+                when "flag?"
+                  @program.flags
+                when "host_flag?"
+                  @program.host_flags
+                else
+                  raise "Bug: unexpected macro method #{node.name}"
+                end
+        @last = BoolLiteral.new(flags.includes?(flag_name))
       else
-        node.wrong_number_of_arguments "macro call 'flag?'", node.args.size, 1
+        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end
     end
 
@@ -257,7 +265,7 @@ module Crystal
       if result.status.success?
         @last = MacroId.new(result.stdout)
       else
-        command = "#{original_filename} #{run_args.map(&.inspect).join " "}"
+        command = "#{Process.quote(original_filename)} #{Process.quote(run_args)}"
 
         message = IO::Memory.new
         message << "Error executing run (exit code: #{result.status.exit_code}): #{command}\n"
@@ -344,22 +352,22 @@ module Crystal
         end
       when "line_number"
         interpret_argless_method("line_number", args) do
-          line_number = location.try &.original_location.try &.line_number
+          line_number = location.try &.expanded_location.try &.line_number
           line_number ? NumberLiteral.new(line_number) : NilLiteral.new
         end
       when "column_number"
         interpret_argless_method("column_number", args) do
-          column_number = location.try &.original_location.try &.column_number
+          column_number = location.try &.expanded_location.try &.column_number
           column_number ? NumberLiteral.new(column_number) : NilLiteral.new
         end
       when "end_line_number"
         interpret_argless_method("end_line_number", args) do
-          line_number = end_location.try &.original_location.try &.line_number
+          line_number = end_location.try &.expanded_location.try &.line_number
           line_number ? NumberLiteral.new(line_number) : NilLiteral.new
         end
       when "end_column_number"
         interpret_argless_method("end_column_number", args) do
-          column_number = end_location.try &.original_location.try &.column_number
+          column_number = end_location.try &.expanded_location.try &.column_number
           column_number ? NumberLiteral.new(column_number) : NilLiteral.new
         end
       when "=="
@@ -752,6 +760,8 @@ module Crystal
         end
       when "strip"
         interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "titleize"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.titleize) }
       when "to_i"
         case args.size
         when 0
@@ -1555,6 +1565,12 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
+      when "module?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.module?) }
+      when "class?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && !type.struct?) }
+      when "struct?"
+        interpret_argless_method(method, args) { BoolLiteral.new(type.class? && type.struct?) }
       when "nilable?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.nilable?) }
       when "union_types"
@@ -1733,7 +1749,7 @@ module Crystal
     end
 
     def self.type_vars(type)
-      if type.is_a?(GenericClassInstanceType)
+      if type.is_a?(GenericClassInstanceType) || type.is_a?(GenericModuleInstanceType)
         if type.is_a?(TupleInstanceType)
           if type.tuple_types.empty?
             empty_no_return_array

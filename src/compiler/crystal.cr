@@ -6,6 +6,6 @@
 require "log"
 require "./crystal/**"
 
-Log.setup_from_env(default_level: :warning, default_sources: "crystal.*")
+Log.setup_from_env(default_level: :warn, default_sources: "crystal.*")
 
 Crystal::Command.run

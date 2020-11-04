@@ -50,7 +50,7 @@ require "base64"
 # anchored values (see `YAML::PullParser` for an explanation of this).
 #
 # Crystal primitive types, `Time`, `Bytes` and `Union` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ### Dumping with `YAML.dump` or `#to_yaml`
@@ -64,7 +64,7 @@ require "base64"
 # `to_yaml(builder : YAML::Nodes::Builder`).
 #
 # Crystal primitive types, `Time` and `Bytes` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ```
