@@ -9,7 +9,7 @@ require "openssl"
 # require "digest"
 #
 # underlying_io = IO::Memory.new("foo")
-# io = IO::Digest.new(underlying_io, "SHA256")
+# io = IO::Digest.new(underlying_io, Digest::SHA256.new)
 # buffer = Bytes.new(256)
 # io.read(buffer)
 # io.final.hexstring # => "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
@@ -20,7 +20,7 @@ class IO::Digest < IO
   getter mode : DigestMode
 
   delegate close, closed?, flush, peek, tty?, rewind, to: @io
-  delegate final, base64digest, to: @digest_algorithm
+  delegate final, to: @digest_algorithm
 
   enum DigestMode
     Read
@@ -28,10 +28,6 @@ class IO::Digest < IO
   end
 
   def initialize(@io : IO, @digest_algorithm : ::Digest, @mode = DigestMode::Read)
-  end
-
-  def initialize(@io : IO, algorithm : String, @mode = DigestMode::Read)
-    @digest_algorithm = OpenSSL::Digest.new(algorithm)
   end
 
   def read(slice : Bytes)

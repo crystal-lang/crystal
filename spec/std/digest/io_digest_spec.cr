@@ -4,18 +4,7 @@ require "digest"
 describe IO::Digest do
   it "calculates digest from reading" do
     base_io = IO::Memory.new("foo")
-    base_digest = OpenSSL::Digest.new("SHA256")
-    io = IO::Digest.new(base_io, base_digest)
-    slice = Bytes.new(256)
-    io.read(slice).should eq(3)
-
-    slice[0, 3].should eq("foo".to_slice)
-    io.final.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae".hexbytes)
-  end
-
-  it "can be created with algorithm name" do
-    base_io = IO::Memory.new("foo")
-    io = IO::Digest.new(base_io, "SHA256")
+    io = IO::Digest.new(base_io, ::Digest::SHA256.new)
     slice = Bytes.new(256)
     io.read(slice).should eq(3)
 
