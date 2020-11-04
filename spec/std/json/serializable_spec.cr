@@ -478,7 +478,7 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at 1:1
+        parsing JSONAttrPerson at line 1, column 1
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
@@ -488,8 +488,8 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected BeginObject but was String at 1:1
-        parsing StrictJSONAttrPerson at 0:0
+      Expected BeginObject but was String at line 1, column 1
+        parsing StrictJSONAttrPerson at line 0, column 0
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
@@ -501,7 +501,7 @@ describe "JSON mapping" do
 
   it "raises if data type does not match" do
     error_message = <<-MSG
-      Couldn't parse (Int32 | Nil) from "foo" at 3:10
+      Couldn't parse (Int32 | Nil) from "foo" at line 3, column 10
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
@@ -813,7 +813,7 @@ describe "JSON mapping" do
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at 1:1
+          parsing JSONAttrWithQueryAttributes at line 1, column 1
         MSG
       ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
