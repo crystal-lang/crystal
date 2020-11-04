@@ -167,18 +167,6 @@ abstract class Digest
     update(data)
   end
 
-  # Dups and finishes the digest.
-  @[Deprecated("Use `final` instead.")]
-  def digest : Bytes
-    dup.final
-  end
-
-  # Returns a hexadecimal-encoded digest.
-  @[Deprecated("Use `final.hexstring` instead.")]
-  def hexdigest : String
-    digest.hexstring
-  end
-
   private def check_finished : Nil
     raise FinalizedError.new("finish already called") if @finished
   end
