@@ -46,8 +46,8 @@ describe YAML::Schema::FailSafe do
   it_raises_on_parse %(
     this: "gives"
       an: "error"
-  ), "did not find expected key at 3:7, while parsing a block mapping at 2:5"
-  it_raises_on_parse ":", "did not find expected key at 1:1, while parsing a block mapping at 1:1"
+  ), "did not find expected key at line 3, column 7, while parsing a block mapping at line 2, column 5"
+  it_raises_on_parse ":", "did not find expected key at line 1, column 1, while parsing a block mapping at line 1, column 1"
 
   # parse_all
   it_parses "321", "321"
@@ -66,6 +66,6 @@ describe YAML::Schema::FailSafe do
     this: "raises"
       an: "yaml"
         parse: "exception"
-  ), "did not find expected key at 3:7, while parsing a block mapping at 2:5"
-  it_raises_on_parse_all ":", "did not find expected key at 1:1, while parsing a block mapping at 1:1"
+  ), "did not find expected key at line 3, column 7, while parsing a block mapping at line 2, column 5"
+  it_raises_on_parse_all ":", "did not find expected key at line 1, column 1, while parsing a block mapping at line 1, column 1"
 end
