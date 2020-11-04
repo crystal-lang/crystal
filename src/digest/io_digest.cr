@@ -1,7 +1,7 @@
 require "./digest"
 require "openssl"
 
-# Wraps an IO by calculating a specified digest on read or write operations.
+# Wraps an `IO` by calculating a specified `Digest` on read or write operations.
 #
 # ### Example
 #

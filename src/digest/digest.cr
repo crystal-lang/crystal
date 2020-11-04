@@ -1,7 +1,16 @@
 require "base64"
 
-# The Digest module contains implementations of hashing algorithms like
-# `Digest::MD5`, `Digest::SHA1`, `Digest::SHA256`, or `Digest::SHA512`.
+# `Digest` is the base type of hashing algorithms like `Digest::MD5`,
+# `Digest::SHA1`, `Digest::SHA256`, or `Digest::SHA512`.
+#
+# A `Digest` instance holds the state of an ongoing hash calculation.
+# It can receive new data to include in the hash via `#update`, `#<<`, or `#file`.
+# Once all data is included, use `#final` to get the hash. This will mark the
+# ongoing calculation as finished. A finished calculation can't receive new data.
+#
+# A `digest.dup.final` call may be used to get an intermediate hash value.
+#
+# Use `#reset` to reuse the `Digest` instance for a new calculation.
 abstract class Digest
   class FinalizedError < Exception
   end
