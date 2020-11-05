@@ -1939,6 +1939,14 @@ module Crystal
         end_loc.column_number.should eq(3)
       end
 
+      it "gets corrects end location for var + var" do
+        parser = Parser.new("foo = 1\nfoo + nfoo; 1")
+        node = parser.parse.as(Expressions).expressions[1].as(Call).obj.as(Var)
+        end_loc = node.end_location.not_nil!
+        end_loc.line_number.should eq(2)
+        end_loc.column_number.should eq(3)
+      end
+
       it "gets corrects end location for block with { ... }" do
         parser = Parser.new("foo { 1 + 2 }; 1")
         node = parser.parse.as(Expressions).expressions[0].as(Call)

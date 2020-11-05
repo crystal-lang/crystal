@@ -4057,7 +4057,7 @@ module Crystal
         var = Var.new(name)
         var.doc = doc
         var.location = name_location
-        var.end_location = name_location
+        var.end_location = end_location
         next_token
         return var
       end
