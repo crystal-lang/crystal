@@ -1849,4 +1849,31 @@ describe "Code gen: macro" do
       (Foo.new || Bar.new).foo
     )).to_string.should eq("Foo")
   end
+
+  it "keeps heredoc contents inside macro" do
+    run(%(
+      macro foo
+        <<-FOO
+          %foo
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  %foo")
+  end
+
+  it "keeps heredoc contents with interpolation inside macro" do
+    run(%q(
+      require "prelude"
+
+      macro foo
+        %foo = 42
+        <<-FOO
+          #{ %foo }
+        FOO
+      end
+
+      foo
+    )).to_string.should eq("  42")
+  end
 end
