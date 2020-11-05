@@ -1215,6 +1215,7 @@ class Hash(K, V)
   # h.delete_if { |key, value| key.starts_with?("fo") }
   # h # => { "bar" => "qux" }
   # ```
+  @[Deprecated("Use `#reject!` instead")]
   def delete_if
     keys_to_delete = [] of K
     each do |key, value|
