@@ -625,20 +625,17 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't duplicate overload on generic class class method (#2385)" do
-    nodes = parse(%(
+    error = assert_error <<-CR,
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      ))
-    begin
-      semantic(nodes)
-    rescue ex : TypeException
-      msg = ex.to_s.lines.map(&.strip)
-      msg.count("- Foo(T).foo(x : Int32)").should eq(1)
-    end
+      CR
+      inject_primitives: false
+
+    error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
 
   # Given:
