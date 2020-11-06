@@ -430,7 +430,7 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
+    # See `Spec::Expectations` for available expectations.
     def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
@@ -441,7 +441,7 @@ module Spec
 
     # Validates an expectation and fails the example if it does not match.
     #
-    # See `Spec::Expecations` for available expectations.
+    # See `Spec::Expectations` for available expectations.
     def should(expectation, file = __FILE__, line = __LINE__)
       unless expectation.match self
         fail(expectation.failure_message(self), file, line)
@@ -460,7 +460,7 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
+    # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)
@@ -480,7 +480,7 @@ module Spec
     # typeof(x) # => Int32
     # ```
     #
-    # See `Spec::Expecations` for available expectations.
+    # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)
@@ -491,7 +491,7 @@ module Spec
 
     # Validates an expectation and fails the example if it matches.
     #
-    # See `Spec::Expecations` for available expectations.
+    # See `Spec::Expectations` for available expectations.
     def should_not(expectation, file = __FILE__, line = __LINE__)
       if expectation.match self
         fail(expectation.negative_failure_message(self), file, line)

@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter size : Int32
 
-    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)

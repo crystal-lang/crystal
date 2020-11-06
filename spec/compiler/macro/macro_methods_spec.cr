@@ -253,7 +253,7 @@ module Crystal
         assert_macro "", "{{~1}}", [] of ASTNode, "-2"
       end
 
-      it "exetutes kind" do
+      it "executes kind" do
         assert_macro "", "{{-128i8.kind}}", [] of ASTNode, ":i8"
         assert_macro "", "{{1e-123_f32.kind}}", [] of ASTNode, ":f32"
         assert_macro "", "{{1.0.kind}}", [] of ASTNode, ":f64"

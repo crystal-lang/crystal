@@ -26,7 +26,7 @@ describe Log::BroadcastBackend do
     backend_b.entries.should eq([error_entry])
   end
 
-  it "overwritting log level overwrites to all backends" do
+  it "overwriting log level overwrites to all backends" do
     main = Log::BroadcastBackend.new
     backend_a = Log::MemoryBackend.new
     backend_b = Log::MemoryBackend.new

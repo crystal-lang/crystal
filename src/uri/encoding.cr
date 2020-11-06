@@ -187,7 +187,7 @@ class URI
   #
   # This method enables some customization, but typical use cases can be implemented
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
-  # `.deode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
+  # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize

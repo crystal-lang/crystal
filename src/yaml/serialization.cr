@@ -152,7 +152,7 @@ module YAML
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
