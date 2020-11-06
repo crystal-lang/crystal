@@ -309,3 +309,34 @@ module String::RawConverter
     json.raw(value)
   end
 end
+
+# Converter to be used with `JSON::Serializable` to write and read
+# an `Enum` exclusively as a `String`.
+#
+# This is useful if you wish to serialise to `String`, instead of
+# the default of a number representation of the `Enum`.
+#
+# ```
+# require "json"
+#
+# class EnumStringMessage
+#   include JSON::Serializable
+#
+#   enum Hint
+#     Up
+#     Down
+#   end
+#
+#   @[JSON::Field(converter: Enum::StringConverter(EnumStringMessage::Hint))]
+#   getter hint : Hint
+# end
+#
+# message = EnumStringMessage.from_json(%({"hint":"Up"}))
+# message.hint    # => EnumStringMessage::Hint::Up
+# message.to_json # => %({"hint":"Up"})
+# ```
+module Enum::StringConverter(T)
+  def self.to_json(value : T, json : JSON::Builder)
+    json.string(value.to_s)
+  end
+end

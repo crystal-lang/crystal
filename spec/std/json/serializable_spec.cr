@@ -191,6 +191,18 @@ class JSONAttrWithSmallIntegers
   property bar : Int8
 end
 
+class JSONAttrWithEnumString
+  include JSON::Serializable
+
+  enum Hint
+    One
+    Two
+  end
+
+  @[YAML::Field(converter: Enum::StringConverter(JSONAttrWithEnumString::Hint))]
+  property hint : Hint
+end
+
 class JSONAttrWithTimeEpoch
   include JSON::Serializable
 
@@ -681,6 +693,14 @@ describe "JSON mapping" do
       json = JSONAttrWithDefaults.from_json(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "uses Enum::StringConverter(T)" do
+    string = %({"hint":"One"})
+    message = JSONAttrWithEnumString.from_json(string)
+    message.hint.should be_a(JSONAttrWithEnumString::Hint)
+    message.hint.should eq(JSONAttrWithEnumString::Hint::One)
+    message.to_json.should eq(string)
   end
 
   it "uses Time::EpochConverter" do

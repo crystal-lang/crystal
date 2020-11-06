@@ -322,6 +322,15 @@ module YAML::ArrayConverter(Converter)
   end
 end
 
+module Enum::StringConverter(T)
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.class}"
+    end
+    T.parse(node.value)
+  end
+end
+
 struct Slice
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {% if T != UInt8 %}

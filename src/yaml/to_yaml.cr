@@ -178,6 +178,12 @@ module YAML::ArrayConverter(Converter)
   end
 end
 
+module Enum::StringConverter(T)
+  def self.to_yaml(value : T, yaml : YAML::Nodes::Builder)
+    yaml.scalar value.to_s
+  end
+end
+
 struct Slice
   def to_yaml(yaml : YAML::Nodes::Builder)
     {% if T != UInt8 %}

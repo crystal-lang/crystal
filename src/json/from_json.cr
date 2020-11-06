@@ -370,3 +370,13 @@ module String::RawConverter
     value.read_raw
   end
 end
+
+module Enum::StringConverter(T)
+  def self.from_json(pull : JSON::PullParser) : T
+    if pull.kind.string?
+      T.parse(pull.read_string)
+    else
+      raise "Expecting string in JSON for #{T.class}, not #{pull.kind}"
+    end
+  end
+end

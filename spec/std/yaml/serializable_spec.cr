@@ -204,6 +204,18 @@ class YAMLAttrWithSmallIntegers
   property bar : Int8
 end
 
+class YAMLAttrWithEnumString
+  include YAML::Serializable
+
+  enum Hint
+    One
+    Two
+  end
+
+  @[YAML::Field(converter: Enum::StringConverter(YAMLAttrWithEnumString::Hint))]
+  property hint : Hint
+end
+
 class YAMLAttrWithTimeEpoch
   include YAML::Serializable
 
@@ -755,6 +767,13 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({}))
       yaml.h.should eq [1, 2, 3]
     end
+  end
+
+  it "uses Enum::StringConverter(T)" do
+    message = YAMLAttrWithEnumString.from_yaml(%({"hint":"One"}))
+    message.hint.should be_a(YAMLAttrWithEnumString::Hint)
+    message.hint.should eq(YAMLAttrWithEnumString::Hint::One)
+    message.to_yaml.should eq("---\nhint: One\n")
   end
 
   it "uses Time::EpochConverter" do
