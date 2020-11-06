@@ -121,7 +121,7 @@ module Crystal::Doc
       status = Process.run(git_executable, args, output: output)
       yield unless status.success?
       status
-    rescue File::Error | IO::Error
+    rescue IO::Error
       yield
     end
 
