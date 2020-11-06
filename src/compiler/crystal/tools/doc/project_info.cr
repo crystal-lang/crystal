@@ -130,10 +130,12 @@ module Crystal::Doc
 
     def self.git_clean?
       # Use git to determine if index and working directory are clean
-      capture = Crystal::Git.git_capture(["status", "--porcelain"]) { return }
+      capture = Crystal::Git.git_capture(["status", "--porcelain"]) do
+        # In case the command failed to execute or returned error status, return false
+        return false
+      end
 
-      # If clean, output of `git status --porcelain` is empty. Still need to check
-      # the status code, to make sure empty doesn't mean error.
+      # Index is clean if output is empty (and program status is success, checked by git_capture)
       capture.bytesize == 0
     end
 
