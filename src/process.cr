@@ -126,6 +126,8 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
@@ -139,6 +141,8 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
@@ -155,6 +159,8 @@ class Process
   # Replaces the current process with a new one. This function never returns.
   #
   # Available only on Unix-like operating systems.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
@@ -218,6 +224,8 @@ class Process
   #   the *command* to safely insert them there.
   # * On Windows this is implemented by passing the string as-is to the
   #   process, and passing *args* is not supported.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
