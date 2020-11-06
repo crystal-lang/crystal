@@ -6,8 +6,6 @@ module Crystal::Doc
     property refname : String? = nil
     property source_url_pattern : String? = nil
 
-    class_property git_executable = "git"
-
     def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
 
@@ -56,7 +54,7 @@ module Crystal::Doc
     end
 
     def self.git_dir?
-      git_command(["rev-parse", "--is-inside-work-tree"]) { return false }
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) { return false }
       true
     end
 
@@ -115,27 +113,11 @@ module Crystal::Doc
       end
     end
 
-    # Tries to run git command with args.
-    # Yields block if exec fails or process status is not success.
-    def self.git_command(args, output : Process::Stdio = Process::Redirect::Close)
-      status = Process.run(git_executable, args, output: output)
-      yield unless status.success?
-      status
-    rescue IO::Error
-      yield
-    end
-
-    def self.git_capture(args)
-      io = IO::Memory.new
-      git_command(args, output: io) { yield }
-      io.to_s
-    end
-
     def self.git_remote
       # check whether inside git work-tree
-      git_command(["rev-parse", "--is-inside-work-tree"]) { return }
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) { return }
 
-      capture = git_capture(["remote", "-v"]) { return }
+      capture = Crystal::Git.git_capture(["remote", "-v"]) { return }
       remotes = capture.lines.select(&.ends_with?(" (fetch)"))
 
       git_remote = remotes.find(&.starts_with?("origin\t")) || remotes.first? || return
@@ -148,7 +130,7 @@ module Crystal::Doc
 
     def self.git_clean?
       # Use git to determine if index and working directory are clean
-      capture = git_capture(["status", "--porcelain"]) { return }
+      capture = Crystal::Git.git_capture(["status", "--porcelain"]) { return }
 
       # If clean, output of `git status --porcelain` is empty. Still need to check
       # the status code, to make sure empty doesn't mean error.
@@ -157,7 +139,7 @@ module Crystal::Doc
 
     def self.git_ref(*, branch)
       # Check if current HEAD is tagged
-      capture = git_capture(["tag", "--points-at", "HEAD"]) { return }
+      capture = Crystal::Git.git_capture(["tag", "--points-at", "HEAD"]) { return }
       tags = capture.lines
       # Return tag if commit is tagged, select first one if multiple
       if tag = tags.first?
@@ -166,7 +148,7 @@ module Crystal::Doc
 
       if branch
         # Read current branch name
-        capture = git_capture(["rev-parse", "--abbrev-ref", "HEAD"]) { return }
+        capture = Crystal::Git.git_capture(["rev-parse", "--abbrev-ref", "HEAD"]) { return }
 
         if branch_name = capture.strip.presence
           return branch_name
@@ -174,7 +156,7 @@ module Crystal::Doc
       end
 
       # Otherwise, return current commit sha
-      capture = git_capture(["rev-parse", "HEAD"]) { return }
+      capture = Crystal::Git.git_capture(["rev-parse", "HEAD"]) { return }
 
       if sha = capture.strip.presence
         return sha
