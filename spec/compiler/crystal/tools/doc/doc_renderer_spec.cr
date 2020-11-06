@@ -2,11 +2,11 @@ require "../../../spec_helper"
 
 private def assert_code_link(obj, before, after = before)
   renderer = Doc::Markdown::DocRenderer.new(obj, IO::Memory.new)
-  renderer.detect_code_link(before).should eq(after)
+  renderer.expand_code_links(before).should eq(after)
 end
 
 describe Doc::Markdown::DocRenderer do
-  describe "detect_code_link" do
+  describe "expand_code_links" do
     program = semantic("
       class Base
         def foo

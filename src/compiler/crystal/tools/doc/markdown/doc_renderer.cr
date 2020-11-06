@@ -30,11 +30,11 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def end_inline_code
     @inside_inline_code = false
 
-    @io << detect_code_link(@code_buffer.to_s)
+    @io << expand_code_links(@code_buffer.to_s)
     super
   end
 
-  def detect_code_link(text : String) : String
+  def expand_code_links(text : String) : String
     # Check method reference (without #, but must be the whole text)
     if text =~ /\A([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?\Z/
       name = $1
