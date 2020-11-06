@@ -93,11 +93,8 @@ class Log
     # the value.
     # ```
     # Log.define_formatter TestFormatter, "#{source(before: '[', after: "] ")}#{message}"
-    #
-    # io = IO::Memory.new
-    # entry = Log::Entry.new("source", :info, "message", Log::Metadata.empty, nil)
-    # TestFormatter.format(entry, io)
-    # io.rewind.gets # => "[source] message"
+    # Log.setup(:info, Log::IOBackend.new(formatter: TestFormatter))
+    # Log.for("foo.bar").info { "Hello" } # => - [foo.bar] Hello
     # ```
     def source(*, before = nil, after = nil)
       if @entry.source.size > 0
