@@ -91,31 +91,6 @@ describe "Complex" do
     Complex.new(1.5, -2.5).inv.should eq(Complex.new(0.17647058823529413, 0.29411764705882354))
   end
 
-  it "sqrt" do
-    Complex.new(1.32, 7.25).sqrt.should be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
-    Complex.new(7.11, -0.9).sqrt.should be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
-    Complex.new(-2.2, 6.22).sqrt.should be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
-    Complex.new(-8.3, -1.11).sqrt.should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
-  end
-
-  it "exp" do
-    Complex.new(1.15, -5.1).exp.should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
-  end
-
-  describe "logarithms" do
-    it "log" do
-      Complex.new(1.25, -4.7).log.should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
-    end
-
-    it "log2" do
-      Complex.new(-9.1, 3.2).log2.should eq(Complex.new(3.2699671225858946, +4.044523592551345))
-    end
-
-    it "log10" do
-      Complex.new(2.11, 1.21).log10.should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
-    end
-  end
-
   describe "+" do
     it "+ complex" do
       (+Complex.new(-5.43, -27.12)).should eq(Complex.new(-5.43, -27.12))
@@ -201,5 +176,30 @@ describe "Complex" do
   it "rounds" do
     (Complex.new(1.125, 0.875).round(2)).should eq(Complex.new(1.13, 0.88))
     (Complex.new(1.125, 0.875).round(digits: 1)).should eq(Complex.new(1.1, 0.9))
+  end
+
+  describe "Math" do
+    it "exp" do
+      Math.exp(Complex.new(1.15, -5.1)).should be_close(Complex.new(1.1937266270566773, 2.923901365414129), 1e-15)
+    end
+
+    it "log" do
+      Math.log(Complex.new(1.25, -4.7)).should eq(Complex.new(1.5817344087982312, -1.3108561866063686))
+    end
+
+    it "log2" do
+      Math.log2(Complex.new(-9.1, 3.2)).should eq(Complex.new(3.2699671225858946, +4.044523592551345))
+    end
+
+    it "log10" do
+      Math.log10(Complex.new(2.11, 1.21)).should eq(Complex.new(0.38602142355392594, +0.22612668967405536))
+    end
+
+    it "sqrt" do
+      Math.sqrt(Complex.new(1.32, 7.25)).should be_close(Complex.new(2.0843687106374236, 1.739135682425128), 1e-15)
+      Math.sqrt(Complex.new(7.11, -0.9)).should be_close(Complex.new(2.671772413453534, -0.1684275194002508), 1e-15)
+      Math.sqrt(Complex.new(-2.2, 6.22)).should be_close(Complex.new(1.4828360708935342, 2.0973323087062226), 1e-15)
+      Math.sqrt(Complex.new(-8.3, -1.11)).should be_close(Complex.new(0.1922159681400434, -2.8873771797962275), 1e-15)
+    end
   end
 end
