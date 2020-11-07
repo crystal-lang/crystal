@@ -321,7 +321,7 @@ describe "Semantic: lib" do
       "'static' link argument must be a Bool"
   end
 
-  it "errors if foruth argument is not a bool" do
+  it "errors if fourth argument is not a bool" do
     assert_error %(
       @[Link("foo", "bar", true, 1)]
       lib LibFoo

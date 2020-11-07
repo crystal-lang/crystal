@@ -220,12 +220,12 @@ class Channel(T)
     @lock.lock
 
     case send_internal(value)
-    when DeliveryState::Delivered
+    in .delivered?
       @lock.unlock
-    when DeliveryState::Closed
+    in .closed?
       @lock.unlock
       raise ClosedError.new
-    else
+    in .none?
       sender.fiber = Fiber.current
       sender.data = value
       @senders.push pointerof(sender)
@@ -234,11 +234,11 @@ class Channel(T)
       Crystal::Scheduler.reschedule
 
       case sender.state
-      when DeliveryState::Delivered
+      in .delivered?
         # ignore
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      else
+      in .none?
         raise "BUG: Fiber was awaken without channel delivery state set"
       end
     end
@@ -296,14 +296,14 @@ class Channel(T)
     state, value = receive_internal
 
     case state
-    when DeliveryState::Delivered
+    in .delivered?
       @lock.unlock
       raise "BUG: Unexpected UseDefault value for delivered receive" if value.is_a?(UseDefault)
       value
-    when DeliveryState::Closed
+    in .closed?
       @lock.unlock
       yield
-    else
+    in .none?
       receiver.fiber = Fiber.current
       @receivers.push pointerof(receiver)
       @lock.unlock
@@ -311,11 +311,11 @@ class Channel(T)
       Crystal::Scheduler.reschedule
 
       case receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         receiver.data
-      when DeliveryState::Closed
+      in .closed?
         yield
-      else
+      in .none?
         raise "BUG: Fiber was awaken without channel delivery state set"
       end
     end
@@ -434,13 +434,13 @@ class Channel(T)
       state = op.execute
 
       case state
-      when DeliveryState::Delivered
+      in .delivered?
         ops_locks.each &.unlock
         return index, op.result
-      when DeliveryState::Closed
+      in .closed?
         ops_locks.each &.unlock
         return index, op.default_result
-      else
+      in .none?
         # do nothing
       end
     end
@@ -520,14 +520,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(T))
       case @receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      when DeliveryState::None
+      in .none?
         raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 
@@ -584,14 +582,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(T))
       case @receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         nil
-      when DeliveryState::None
+      in .none?
         raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 
@@ -643,14 +639,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(Nil))
       case @sender.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      when DeliveryState::None
+      in .none?
         raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 

@@ -154,7 +154,7 @@ class HTTP::Client::Response
 
       it "missing status" do
         expect_raises(Exception, "Invalid HTTP response") do
-          Response.from_io?(IO::Memory.new("HTTTP/1.0\n\nNot an HTTP response"))
+          Response.from_io?(IO::Memory.new("HTTP/1.0\n\nNot an HTTP response"))
         end
       end
 

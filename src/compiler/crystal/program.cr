@@ -12,7 +12,7 @@ module Crystal
   # around in every step of a compilation to record and query this information.
   #
   # In a way, a Program is an alternative implementation to having global variables
-  # for all of this data, but modelled this way one can easily test and exercise
+  # for all of this data, but modeled this way one can easily test and exercise
   # programs because each one has its own definition of the types created,
   # methods instantiated, etc.
   #
@@ -118,6 +118,8 @@ module Crystal
 
     property codegen_target = Config.host_target
 
+    getter predefined_constants = Array(Const).new
+
     def initialize
       super(self, self, "main")
 
@@ -209,6 +211,12 @@ module Crystal
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
+      argc_unsafe.no_init_flag = true
+      argv_unsafe.no_init_flag = true
+
+      predefined_constants << argc_unsafe
+      predefined_constants << argv_unsafe
+
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
       const_initializers << argc_unsafe
       const_initializers << argv_unsafe
@@ -275,7 +283,9 @@ module Crystal
     end
 
     private def define_crystal_constant(name, value)
-      crystal.types[name] = Const.new self, crystal, name, value
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.no_init_flag = true
+      predefined_constants << const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }

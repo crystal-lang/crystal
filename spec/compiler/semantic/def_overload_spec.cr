@@ -235,7 +235,7 @@ describe "Semantic: def overload" do
     ") { int32 }
   end
 
-  it "prefers more specifc overload than one with free variables" do
+  it "prefers more specific overload than one with free variables" do
     assert_type("
       require \"prelude\"
       def foo(x : Array(T), y : T)

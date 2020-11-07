@@ -564,7 +564,7 @@ describe "Enumerable" do
   end
 
   describe "index with a block" do
-    it "returns the index of the first element where the blcok returns true" do
+    it "returns the index of the first element where the block returns true" do
       ["Alice", "Bob"].index { |name| name.size < 4 }.should eq 1
     end
 

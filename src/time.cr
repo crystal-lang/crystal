@@ -578,7 +578,7 @@ struct Time
   #
   # It adds the number of months with overflow increasing the year.
   # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
+  # valid day of the month.
   #
   # For example, adding `1.month` to `2007-03-31` would result in the invalid
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
@@ -596,7 +596,7 @@ struct Time
   #
   # It adds the number of months with overflow decreasing the year.
   # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
+  # valid day of the month.
   #
   # For example, subtracting `1.month` from `2007-05-31` would result in the invalid
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
@@ -646,7 +646,7 @@ struct Time
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
   end
 
-  # Returns a copy of this `Time` shifted by the amount of calendrical units
+  # Returns a copy of this `Time` shifted by the amount of calendaric units
   # provided as arguments.
   #
   # Positive values result in a later time, negative values in an earlier time.
@@ -654,7 +654,7 @@ struct Time
   # This operates on the local time-line, such that the local date-time
   # representation of the result will be apart by the specified amounts, but the
   # elapsed time between both instances might not equal to the combined default
-  # durations
+  # duration.
   # This is the case for example when adding a day over a daylight-savings time
   # change:
   #
@@ -833,7 +833,7 @@ struct Time
 
       # The week number depends on whether the previous year has 52 or 53 weeks
       # which can be determined by the day of week of January 1.
-      # The year has 53 weeks if Januar 1 is on a Friday or the year was a leap
+      # The year has 53 weeks if January 1 is on a Friday or the year was a leap
       # year and January 1 is on a Saturday.
       jan1_day_of_week = DayOfWeek.from_value((day_of_week.to_i - day_year + 1) % 7)
 
@@ -867,7 +867,7 @@ struct Time
   # * `week`: `1..53`
   # * `day_of_week`: `1..7`
   def self.week_date(year : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
-    # For this calculation we need to know the weekday of Januar 4.
+    # For this calculation we need to know the weekday of January 4.
     # The number of the day plus a fixed offset of 4 gives a correction value
     # for this year.
     jan4_day_of_week = Time.utc(year, 1, 4).day_of_week
@@ -925,7 +925,7 @@ struct Time
 
   # Returns the day of the year.
   #
-  # The value range is `1..365` in normal yars and `1..366` in leap years.
+  # The value range is `1..365` in normal years and `1..366` in leap years.
   def day_of_year : Int32
     year_month_day_day_year[3]
   end
@@ -1348,7 +1348,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the beginning of the seconds.
   #
-  # This essentially scaps off `nanoseconds`.
+  # This essentially resets `nanoseconds` to 0.
   def at_beginning_of_second : Time
     Time.new(seconds: total_seconds, nanoseconds: 0, location: location)
   end
@@ -1454,7 +1454,7 @@ struct Time
     @seconds + offset
   end
 
-  # Returns the calendrical representation of this instance's date.
+  # Returns the calendaric representation of this instance's date.
   #
   # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
   # day (`1..31`) and ordinal day of the year (`1..366`).
@@ -1483,7 +1483,7 @@ struct Time
 
     ordinal_day_in_year = total_days + 1
 
-    if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leapyear
+    if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leap year
       days_per_month = DAYS_MONTH_LEAP
     else
       days_per_month = DAYS_MONTH

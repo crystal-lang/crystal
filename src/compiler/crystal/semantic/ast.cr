@@ -776,11 +776,21 @@ module Crystal
     end
   end
 
-  # Ficticious node to mean a location in code shouldn't be reached.
+  # Fictitious node to mean a location in code shouldn't be reached.
   # This is used in the implicit `else` branch of a case.
   class Unreachable < ASTNode
     def clone_without_location
       Unreachable.new
     end
+  end
+
+  class ProcLiteral
+    # If this ProcLiteral was created from expanding a ProcPointer,
+    # this holds the reference to it.
+    property proc_pointer : ProcPointer?
+  end
+
+  class ProcPointer
+    property expanded : ASTNode?
   end
 end

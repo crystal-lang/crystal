@@ -52,7 +52,7 @@ class Hash(K, V)
   # There are two main data structures:
   #
   # - @entries:
-  #     A continguous buffer (Pointer) of hash entries (Entry) in the order
+  #     A contiguous buffer (Pointer) of hash entries (Entry) in the order
   #     they were inserted. This makes it possible for Hash to preserve
   #     order of insertion.
   #     An entry holds a key-value pair together with the key's hash code.
@@ -523,7 +523,7 @@ class Hash(K, V)
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
   # deleted. In that case the entries table is simply compacted.
-  # However, in case of a resize deleted entries are also compcated.
+  # However, in case of a resize deleted entries are also compacted.
   private def resize : Nil
     # Only do an actual resize (grow `@entries` buffer) if we don't
     # have many deleted elements.
@@ -662,14 +662,14 @@ class Hash(K, V)
   end
 
   # Initializes `@entries` for a dup copy.
-  # Here we only need tu duplicate the buffer.
+  # Here we only need to duplicate the buffer.
   private def initialize_dup_entries(other)
     return if other.@entries.null?
 
     @entries = malloc_entries(other.entries_capacity)
 
     # Note that we only need to copy `entries_size` which
-    # are the effectives entries in use.
+    # are the effective entries in use.
     @entries.copy_from(other.@entries, other.entries_size)
   end
 
@@ -1787,7 +1787,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new
+    hash = self.class.new
     hash.initialize_dup(self)
     hash
   end
@@ -1802,12 +1802,12 @@ class Hash(K, V)
   # ```
   def clone
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
-      clone = Hash(K, V).new
+      clone = self.class.new
       clone.initialize_clone(self)
       clone
     {% else %}
       exec_recursive_clone do |hash|
-        clone = Hash(K, V).new
+        clone = self.class.new
         hash[object_id] = clone.object_id
         clone.initialize_clone(self)
         clone

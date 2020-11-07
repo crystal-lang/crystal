@@ -96,7 +96,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "codegens statis array size after instantiating" do
+  it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)
         def size

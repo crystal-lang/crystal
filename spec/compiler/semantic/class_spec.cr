@@ -716,7 +716,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "cant't use implicit initialize if defined in parent" do
+  it "can't use implicit initialize if defined in parent" do
     assert_error %(
       class Foo
         def initialize(x)

@@ -128,13 +128,11 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
-    else # go on
     end
 
     case op
     when "+", "-", "*"
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
-    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
@@ -1032,7 +1030,7 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[index]
       case abi_arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
         if cast = abi_arg_type.cast
           null_fun_types << cast
@@ -1040,11 +1038,11 @@ class Crystal::CodeGenVisitor
           null_fun_types << abi_arg_type.type
         end
         null_args << call_arg
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         # Pass argument as is (will be passed byval)
         null_args << call_arg
         null_fun_types << abi_arg_type.type.pointer
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # Ignore
       end
     end

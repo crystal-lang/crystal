@@ -2374,8 +2374,6 @@ class String
         buffer << capture
         index = end_index + 1
         first_index = index
-      else
-        # Nothing
       end
     end
 
@@ -3282,7 +3280,7 @@ class String
     {pre, mid, post}
   end
 
-  # Returns the index of the _first_ ocurrence of *byte* in the string, or `nil` if not present.
+  # Returns the index of the _first_ occurrence of *byte* in the string, or `nil` if not present.
   # If *offset* is present, it defines the position to start the search.
   #
   # Negative *offset* can be used to start the search from the end of the string.
@@ -4152,7 +4150,7 @@ class String
     right_padding.times { io << char }
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```

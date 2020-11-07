@@ -479,7 +479,7 @@ describe "JSON serialization" do
     end
   end
 
-  it "provide symetric encoding and decoding for Union types" do
+  it "provide symmetric encoding and decoding for Union types" do
     a = 1.as(Float64 | Int32)
     b = (Float64 | Int32).from_json(a.to_json)
     a.class.should eq(Int32)

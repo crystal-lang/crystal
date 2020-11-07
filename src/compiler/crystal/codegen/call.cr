@@ -67,7 +67,7 @@ class Crystal::CodeGenVisitor
     obj = node.obj
 
     # Always accept obj: even if it's not passed as self this might
-    # involve intermerdiate calls with side effects.
+    # involve intermediate calls with side effects.
     if obj
       @needs_value = true
       accept obj
@@ -217,11 +217,11 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         # Pass argument as is (will be passed byval)
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # Ignore
         next
       end
@@ -522,7 +522,7 @@ class Crystal::CodeGenVisitor
       else
         abi_return = abi_info(external).return_type
         case abi_return.kind
-        when LLVM::ABI::ArgKind::Direct
+        in .direct?
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
@@ -535,9 +535,9 @@ class Crystal::CodeGenVisitor
             memcpy(final_value_casted, cast2, size, align, int1(0))
             @last = final_value
           end
-        when LLVM::ABI::ArgKind::Indirect
+        in .indirect?
           @last = @sret_value.not_nil!
-        when LLVM::ABI::ArgKind::Ignore
+        in .ignore?
           # Nothing
         end
       end
@@ -553,8 +553,6 @@ class Crystal::CodeGenVisitor
         else
           @last = llvm_nil
         end
-      else
-        # go on
       end
     end
 

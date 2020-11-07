@@ -345,7 +345,7 @@ describe "Int" do
       a.should eq(6)
     end
 
-    it "does downards" do
+    it "does downwards" do
       a = 0
       4.to(2) { |i| a += i }.should be_nil
       a.should eq(9)
@@ -782,7 +782,7 @@ describe "Int" do
   end
 
   describe "#bit_length" do
-    it "for primitve integers" do
+    it "for primitive integers" do
       0.bit_length.should eq(0)
       0b1.bit_length.should eq(1)
       0b1001.bit_length.should eq(4)

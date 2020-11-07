@@ -22,6 +22,9 @@ private class HashWrapper(K, V)
   delegate each, to: @hash
 end
 
+private class HashSubclass(K, V) < Hash(K, V)
+end
+
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -439,6 +442,20 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
+
+    it "clones subclass" do
+      h1 = HashSubclass(Int32, Array(Int32)).new
+      h1[0] = [0]
+      h2 = h1.clone
+      h1.should_not be(h2)
+      h1.should eq(h2)
+      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+
+      h1[0].should_not be(h2[0])
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
   end
 
   describe "dup" do
@@ -477,6 +494,20 @@ describe "Hash" do
       1_000.times do |i|
         h1[i].should be(h2[i])
       end
+
+      h1.delete(0)
+      h2[0].should eq([0])
+    end
+
+    it "dups subclass" do
+      h1 = HashSubclass(Int32, Array(Int32)).new
+      h1[0] = [0]
+      h2 = h1.dup
+      h1.should_not be(h2)
+      h1.should eq(h2)
+      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+
+      h1[0].should be(h2[0])
 
       h1.delete(0)
       h2[0].should eq([0])
@@ -1092,7 +1123,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.reject(:b, :d).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
-    it "does not change currrent hash" do
+    it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.reject(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
@@ -1103,7 +1134,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.reject!(:b, :d).should eq({:a => 2}) }
     it { {:a => 2, :b => 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
-    it "changes currrent hash" do
+    it "changes current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.reject!(:b, :c)
       h.should eq({:a => 3})
@@ -1115,7 +1146,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select([:b, :a]).should eq({:a => 2, :b => 3}) }
-    it "does not change currrent hash" do
+    it "does not change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h2 = h.select(:b, :c)
       h.should eq({:a => 3, :b => 6, :c => 9})
@@ -1127,7 +1158,7 @@ describe "Hash" do
     it { {:a => 2, :b => 3}.select!.should eq({} of Symbol => Int32) }
     it { {:a => 2, :b => 3}.select!(:b, :a).should eq({:a => 2, :b => 3}) }
     it { {:a => 2, :b => 3}.select!([:b, :a]).should eq({:a => 2, :b => 3}) }
-    it "does change currrent hash" do
+    it "does change current hash" do
       h = {:a => 3, :b => 6, :c => 9}
       h.select!(:b, :c)
       h.should eq({:b => 6, :c => 9})

@@ -443,10 +443,10 @@ struct Crystal::TypeDeclarationProcessor
 
       # We must also take into account those variables that are
       # initialized outside of an initializer
-      non_nilable_outisde = compute_non_nilable_outside(owner)
+      non_nilable_outside = compute_non_nilable_outside(owner)
 
       # And add them all into one array
-      non_nilable = merge_non_nilable_vars(non_nilable, non_nilable_outisde)
+      non_nilable = merge_non_nilable_vars(non_nilable, non_nilable_outside)
 
       if non_nilable
         @non_nilable_instance_vars[owner] = non_nilable
@@ -550,23 +550,23 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def compute_non_nilable_outside(owner)
-    non_nilable_outisde = nil
-    non_nilable_outisde = compute_non_nilable_outside_single(owner, non_nilable_outisde)
+    non_nilable_outside = nil
+    non_nilable_outside = compute_non_nilable_outside_single(owner, non_nilable_outside)
     owner.ancestors.each do |ancestor|
       ancestor = uninstantiate(ancestor)
-      non_nilable_outisde = compute_non_nilable_outside_single(ancestor, non_nilable_outisde)
+      non_nilable_outside = compute_non_nilable_outside_single(ancestor, non_nilable_outside)
     end
-    non_nilable_outisde
+    non_nilable_outside
   end
 
-  private def compute_non_nilable_outside_single(owner, non_nilable_outisde)
+  private def compute_non_nilable_outside_single(owner, non_nilable_outside)
     if vars = @instance_vars_outside[owner]?
-      non_nilable_outisde ||= [] of String
+      non_nilable_outside ||= [] of String
       vars.each do |name|
-        non_nilable_outisde << name unless non_nilable_outisde.includes?(name)
+        non_nilable_outside << name unless non_nilable_outside.includes?(name)
       end
     end
-    non_nilable_outisde
+    non_nilable_outside
   end
 
   private def find_initialize_infos(owner)

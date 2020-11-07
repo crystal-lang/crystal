@@ -31,7 +31,7 @@ require "./http/params"
 # For hierarchical URIs, the path of the original is resolved against the path of the base
 # and then normalized. See `#resolve` for examples.
 #
-# *Relativization* is the inverse of resolution as that it procudes an URI that
+# *Relativization* is the inverse of resolution as that it procures an URI that
 # resolves to the original when resolved against the base.
 #
 # For normalized URIs, the following is true:
@@ -285,7 +285,7 @@ class URI
   # * `scheme` is lowercased.
   # * `host` is lowercased.
   # * `port` is removed if it is the `.default_port?` of the scheme.
-  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  # * `path` is resolved to a minimal, semantic equivalent representation removing
   #    dot segments `/.` and `/..`.
   #
   # ```

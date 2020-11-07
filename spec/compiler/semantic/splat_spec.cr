@@ -457,7 +457,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in geneic type" do
+  it "matches splat in generic type" do
     assert_type(%(
       class Foo(*T)
       end

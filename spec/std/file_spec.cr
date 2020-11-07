@@ -499,7 +499,7 @@ describe "File" do
     end
 
     it "raises when file doesn't exist" do
-      with_tempfile("nonexistant_file.txt") do |path|
+      with_tempfile("nonexistent_file.txt") do |path|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
           File.delete(path)
         end
@@ -1209,14 +1209,14 @@ describe "File" do
     end
 
     it "raises if path contains non-existent directory" do
-      with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
+      with_tempfile(File.join("nonexistent-dir", "touch.txt")) do |path|
         expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end
     end
 
-    # TODO: there is no file which is reliably unwritable on windows
+    # TODO: there is no file which is reliably nonwriteable on windows
     pending_win32 "raises if file cannot be accessed" do
       expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")

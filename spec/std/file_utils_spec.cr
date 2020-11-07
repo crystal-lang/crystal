@@ -229,7 +229,7 @@ describe "FileUtils" do
     end
 
     it "raises an error if non correct arguments" do
-      with_tempfile("mv-nonexitent") do |path|
+      with_tempfile("mv-nonexistent") do |path|
         expect_raises(File::NotFoundError, "Error renaming file: '#{File.join(path, "a")}' -> '#{File.join(path, "b")}'") do
           FileUtils.mv(File.join(path, "a"), File.join(path, "b"))
         end
@@ -310,7 +310,7 @@ describe "FileUtils" do
       FileUtils.mkdir([datapath, datapath], 0o700)
     end
 
-    with_tempfile("mkdir-nonexisting") do |path|
+    with_tempfile("mkdir-nonexistent") do |path|
       expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
         FileUtils.mkdir([path, datapath], 0o700)
       end
@@ -340,7 +340,7 @@ describe "FileUtils" do
   end
 
   it "tests rmdir with an non existing path" do
-    with_tempfile("rmdir-nonexisting") do |path|
+    with_tempfile("rmdir-nonexistent") do |path|
       expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}'") do
         FileUtils.rmdir(path)
       end
@@ -348,7 +348,7 @@ describe "FileUtils" do
   end
 
   it "tests rmdir with multiple non existing path" do
-    with_tempfile("rmdir-nonexisting") do |path|
+    with_tempfile("rmdir-nonexistent") do |path|
       expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}1'") do
         FileUtils.rmdir(["#{path}1", "#{path}2"])
       end
@@ -376,7 +376,7 @@ describe "FileUtils" do
   end
 
   it "tests rm with non existing path" do
-    with_tempfile("rm-nonexistinent") do |path|
+    with_tempfile("rm-nonexistent") do |path|
       expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
         FileUtils.rm(path)
       end

@@ -120,7 +120,7 @@ describe "Semantic: tuples" do
       "recursive splat expansion"
   end
 
-  it "errors on recusrive splat expansion (1) (#361)" do
+  it "errors on recursive splat expansion (1) (#361)" do
     assert_error %(
       require "prelude"
 

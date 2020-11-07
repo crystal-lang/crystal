@@ -43,8 +43,6 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
-    else
-      # Nothing
     end
 
     # Check if its call is inside LibFoo
@@ -316,7 +314,7 @@ class Crystal::Call
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
-    # triggering a virtual lookup. But the context of lookup must be preseved.
+    # triggering a virtual lookup. But the context of lookup must be preserved.
     if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
@@ -771,7 +769,7 @@ class Crystal::Call
       output = block_arg_restriction.output
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
-      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
+      # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
@@ -787,7 +785,7 @@ class Crystal::Call
     end
 
     if yield_vars
-      # Check if tuple unpkacing is needed
+      # Check if tuple unpacking is needed
       if yield_vars.size == 1 &&
          (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
          block.args.size > 1

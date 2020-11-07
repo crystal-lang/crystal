@@ -69,7 +69,7 @@ module Crystal
     property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
-    # (useful to type-check a prorgam)
+    # (useful to type-check a program)
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel

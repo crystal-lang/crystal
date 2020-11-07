@@ -2202,6 +2202,7 @@ module Crystal
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
+      heredocs = macro_state.heredocs
       yields = false
 
       if skip_whitespace
@@ -2224,7 +2225,7 @@ module Crystal
         next_char
         start = current_pos
         if next_char == '%'
-          while (char = next_char).ascii_whitespace?
+          while (char = next_char_check_line).ascii_whitespace?
           end
 
           case char
@@ -2250,7 +2251,7 @@ module Crystal
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2261,7 +2262,7 @@ module Crystal
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         @token.raw = "%"
         return @token
       end
@@ -2272,13 +2273,13 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -2311,7 +2312,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2334,7 +2335,7 @@ module Crystal
           beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         end
       end
@@ -2379,6 +2380,18 @@ module Crystal
           incr_line_number 0
           whitespace = true
           beginning_of_line = true
+          char = next_char
+
+          if !delimiter_state && heredocs && !heredocs.empty?
+            delimiter_state = heredocs.shift
+          end
+
+          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+            char = current_char
+            delimiter_state = heredocs.try &.shift?
+          end
+
+          next
         when '\\'
           char = next_char
           if delimiter_state
@@ -2437,6 +2450,13 @@ module Crystal
             end
             @macro_curly_count -= 1
           end
+        when '<'
+          if !delimiter_state && @delimiter_state_stack.empty? && (heredoc_delimiter_state = lookahead { check_heredoc_start })
+            heredocs ||= [] of Token::DelimiterState
+            heredocs << heredoc_delimiter_state
+            char = current_char
+            next
+          end
         else
           if !delimiter_state && whitespace && lookahead { char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char) }
             yields = true
@@ -2462,8 +2482,6 @@ module Crystal
                 if delimiter_state.open_count == 0
                   delimiter_state = nil
                 end
-              else
-                # Nothing to do
               end
             end
 
@@ -2484,7 +2502,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
       set_token_raw_from_start(start)
 
       @token
@@ -2584,6 +2602,64 @@ module Crystal
       else
         false
       end
+    end
+
+    def check_heredoc_start
+      return nil unless current_char == '<' && next_char == '<' && next_char == '-'
+
+      has_single_quote = false
+      found_closing_single_quote = false
+
+      char = next_char
+      start_here = current_pos
+
+      if char == '\''
+        has_single_quote = true
+        char = next_char
+        start_here = current_pos
+      end
+
+      return nil unless ident_part?(char)
+
+      end_here = 0
+
+      while true
+        char = next_char
+        case
+        when char == '\r'
+          if peek_next_char == '\n'
+            end_here = current_pos
+            next_char
+            break
+          else
+            return nil
+          end
+        when char == '\n'
+          end_here = current_pos
+          break
+        when ident_part?(char)
+          # ok
+        when char == '\0'
+          return nil
+        else
+          if char == '\'' && has_single_quote
+            found_closing_single_quote = true
+            end_here = current_pos
+            next_char
+            break
+          elsif has_single_quote
+            # wait until another quote
+          else
+            end_here = current_pos
+            break
+          end
+        end
+      end
+
+      return nil if has_single_quote && !found_closing_single_quote
+
+      here = string_range(start_here, end_here)
+      Token::DelimiterState.new(:heredoc, here, here, allow_escapes: !has_single_quote)
     end
 
     def consume_octal_escape(char)
@@ -2951,7 +3027,7 @@ module Crystal
       if char == '\n'
         incr_line_number
       else
-        incr_column_number = 1
+        incr_column_number
       end
       char
     end

@@ -148,11 +148,11 @@ jobs:
 
       - name: Set up environment
         run: |
-          echo "::set-env name=CRYSTAL_PATH::$(pwd)\src"
-          echo "::set-env name=LIB::${env:LIB};$(pwd)\libs"
-          echo "::set-env name=TERM::dumb"
-          echo "::set-env name=LLVM_CONFIG::$(pwd)\llvm\bin\llvm-config.exe"
-          echo "::set-env name=SOURCE_DATE_EPOCH::$(Get-Date -Millisecond 0 -UFormat %s)"
+          echo "CRYSTAL_PATH=$(pwd)\src" >> ${env:GITHUB_ENV}
+          echo "LIB=${env:LIB};$(pwd)\libs" >> ${env:GITHUB_ENV}
+          echo "TERM=dumb" >> ${env:GITHUB_ENV}
+          echo "LLVM_CONFIG=$(pwd)\llvm\bin\llvm-config.exe" >> ${env:GITHUB_ENV}
+          echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
         uses: actions/download-artifact@v1

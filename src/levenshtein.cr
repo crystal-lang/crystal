@@ -1,4 +1,4 @@
-# Levensthein distance methods.
+# Levenshtein distance methods.
 module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
   #

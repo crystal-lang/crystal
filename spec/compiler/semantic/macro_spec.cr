@@ -470,19 +470,16 @@ describe "Semantic: macro" do
   end
 
   it "can't define new variables (#466)" do
-    nodes = parse(%(
+    error = assert_error <<-CR,
       macro foo
         hello = 1
       end
 
       foo
       hello
-      ))
-    begin
-      semantic nodes
-    rescue ex : TypeException
-      ex.to_s.should_not match(/did you mean/)
-    end
+      CR
+      inject_primitives: false
+    error.to_s.should_not contain("did you mean")
   end
 
   it "finds macro in included generic module" do
@@ -1447,21 +1444,21 @@ describe "Semantic: macro" do
   end
 
   it "has correct location after expanding assignment after instance var" do
-    result = semantic(%( #  1
-      macro foo(x)       #  2
-        @{{x}}           #  3
-                         #  4
-        def bar          #  5
-        end              #  6
-      end                #  7
-                         #  8
-      class Foo          #  9
-        foo(x = 1)       # 10
+    result = semantic <<-CR, inject_primitives: false
+      macro foo(x)       #  1
+        @{{x}}           #  2
+                         #  3
+        def bar          #  4
+        end              #  5
+      end                #  6
+                         #  7
+      class Foo          #  8
+        foo(x = 1)       #  9
       end
-    ), inject_primitives: false)
+      CR
 
     method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
-    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(10)
+    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
   it "executes OpAssign (#9356)" do

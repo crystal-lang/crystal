@@ -1,4 +1,5 @@
 require "uri/punycode"
+require "log"
 
 # An `SSL::Context` represents a generic secure socket protocol configuration.
 #
@@ -191,6 +192,10 @@ abstract class OpenSSL::SSL::Context
       SINGLE_DH_USE
     ))
 
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      add_options(OpenSSL::SSL::Options::NO_RENEGOTIATION)
+    {% end %}
+
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
@@ -251,11 +256,82 @@ abstract class OpenSSL::SSL::Context
 
   # Specify a list of TLS ciphers to use or discard.
   #
-  # This affects only TLSv1.2 and below.
+  # This affects only TLSv1.2 and below. See `#security_level=` for some
+  # sensible system configuration.
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
     ciphers
+  end
+
+  # Specify a list of TLS cipher suites to use or discard.
+  #
+  # See `#security_level=` for some sensible system configuration.
+  def cipher_suites=(cipher_suites : String)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
+      raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
+    {% else %}
+      Log.warn { "SSL_CTX_set_ciphersuites not supported" }
+    {% end %}
+    cipher_suites
+  end
+
+  # Sets the current ciphers and ciphers suites to **modern** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`. See `#security_level=` for some
+  # sensible system configuration.
+  def set_modern_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_MODERN
+    {% else %}
+      self.ciphers = CIPHERS_MODERN
+    {% end %}
+  end
+
+  # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`. See `#security_level=` for some
+  # sensible system configuration.
+  def set_intermediate_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
+    {% else %}
+      self.ciphers = CIPHERS_INTERMEDIATE
+    {% end %}
+  end
+
+  # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
+  # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`. See `#security_level=` for some
+  # sensible system configuration.
+  def set_old_ciphers
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      self.cipher_suites = CIPHER_SUITES_OLD
+    {% else %}
+      self.ciphers = CIPHERS_OLD
+    {% end %}
+  end
+
+  # Returns the security level used by this TLS context.
+  def security_level : Int32
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_get_security_level(@handle)
+    {% else %}
+      Log.warn { "SSL_CTX_get_security_level not supported" }
+      0
+    {% end %}
+  end
+
+  # Sets the security level used by this TLS context. The default system
+  # security level might disable some ciphers.
+  #
+  # * https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_security_level.html
+  # * https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
+  def security_level=(value : Int32)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_set_security_level(@handle, value)
+    {% else %}
+      Log.warn { "SSL_CTX_set_security_level not supported" }
+    {% end %}
+    value
   end
 
   # Adds a temporary ECDH key curve to the TLS context. This is required to
