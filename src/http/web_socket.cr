@@ -121,7 +121,7 @@ class HTTP::WebSocket
   #
   # ```
   # # Open websocket connection
-  # ws = WebSocket.new(uri)
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
   #
   # # Set callback
   # ws.on_message do |msg|

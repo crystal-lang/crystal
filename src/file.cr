@@ -723,6 +723,7 @@ class File < IO::FileDescriptor
   # Permission bits are copied too.
   #
   # ```
+  # File.touch("afile")
   # File.chmod("afile", 0o600)
   # File.copy("afile", "afile_copy")
   # File.info("afile_copy").permissions.value # => 0o600

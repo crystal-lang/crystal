@@ -221,6 +221,7 @@ module HTTP
     # *default* value when there is no such param.
     #
     # ```
+    # params["email"] = "john@example.org"
     # params.fetch("email", "none@example.org")           # => "john@example.org"
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
@@ -232,6 +233,7 @@ module HTTP
     # of provided block when there is no such param.
     #
     # ```
+    # params.delete("email")
     # params.fetch("email") { raise "Email is missing" }              # raises "Email is missing"
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```
