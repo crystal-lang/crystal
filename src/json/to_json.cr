@@ -161,7 +161,7 @@ end
 
 struct Enum
   def to_json(json : JSON::Builder)
-    json.number(value)
+    json.string(to_s.underscore)
   end
 end
 

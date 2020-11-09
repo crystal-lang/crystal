@@ -9,6 +9,7 @@ enum YAMLSpecEnum
   Zero
   One
   Two
+  OneHundred
 end
 
 @[Flags]
@@ -189,13 +190,15 @@ describe "YAML serialization" do
     it "does for Enum with number" do
       YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
 
-      expect_raises(Exception, "Unknown enum YAMLSpecEnum value: 3") do
-        YAMLSpecEnum.from_yaml(%("3"))
+      expect_raises(Exception, "Unknown enum YAMLSpecEnum value: 4") do
+        YAMLSpecEnum.from_yaml(%("4"))
       end
     end
 
     it "does for Enum with string" do
       YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
+
+      YAMLSpecEnum.from_yaml(%("one_hundred")).should eq(YAMLSpecEnum::OneHundred)
 
       expect_raises(ArgumentError, "Unknown enum YAMLSpecEnum value: Three") do
         YAMLSpecEnum.from_yaml(%("Three"))
@@ -401,6 +404,10 @@ describe "YAML serialization" do
 
     it "does for Enum" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
+      YAMLSpecEnum::One.to_yaml.should eq "--- one\n"
+
+      YAMLSpecEnum.from_yaml(YAMLSpecEnum::OneHundred.to_yaml).should eq(YAMLSpecEnum::OneHundred)
+      YAMLSpecEnum::OneHundred.to_yaml.should eq "--- one_hundred\n"
     end
 
     it "does for utc time" do

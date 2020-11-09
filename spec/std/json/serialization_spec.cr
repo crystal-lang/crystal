@@ -11,6 +11,7 @@ enum JSONSpecEnum
   Zero
   One
   Two
+  OneHundred
 end
 
 @[Flags]
@@ -215,13 +216,15 @@ describe "JSON serialization" do
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
-      expect_raises(Exception, "Unknown enum JSONSpecEnum value: 3") do
-        JSONSpecEnum.from_json("3")
+      expect_raises(Exception, "Unknown enum JSONSpecEnum value: 4") do
+        JSONSpecEnum.from_json("4")
       end
     end
 
     it "does for Enum with string" do
       JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+
+      JSONSpecEnum.from_json(%("one_hundred")).should eq(JSONSpecEnum::OneHundred)
 
       expect_raises(ArgumentError, "Unknown enum JSONSpecEnum value: Three") do
         JSONSpecEnum.from_json(%("Three"))
@@ -443,7 +446,8 @@ describe "JSON serialization" do
     end
 
     it "does for Enum" do
-      JSONSpecEnum::One.to_json.should eq("1")
+      JSONSpecEnum::One.to_json.should eq(%("one"))
+      JSONSpecEnum::OneHundred.to_json.should eq(%("one_hundred"))
     end
 
     pending_win32 "does for BigInt" do
