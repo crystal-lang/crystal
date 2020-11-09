@@ -13,11 +13,11 @@ module Crystal::Git
 
   def self.git_capture(args)
     String.build do |io|
-      git_command(args, output: io) { yield }
+      git_command(args, output: io) { return }
     end
   end
 
   def self.git_config(key)
-    git_capture(["config", "--get", key]) { nil }.presence
+    git_capture(["config", "--get", key]).presence
   end
 end

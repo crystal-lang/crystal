@@ -117,7 +117,7 @@ module Crystal::Doc
       # check whether inside git work-tree
       Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) { return }
 
-      capture = Crystal::Git.git_capture(["remote", "-v"]) { return }
+      capture = Crystal::Git.git_capture(["remote", "-v"]) || return
       remotes = capture.lines.select(&.ends_with?(" (fetch)"))
 
       git_remote = remotes.find(&.starts_with?("origin\t")) || remotes.first? || return
@@ -130,10 +130,8 @@ module Crystal::Doc
 
     def self.git_clean?
       # Use git to determine if index and working directory are clean
-      capture = Crystal::Git.git_capture(["status", "--porcelain"]) do
-        # In case the command failed to execute or returned error status, return false
-        return false
-      end
+      # In case the command failed to execute or returned error status, return false
+      capture = Crystal::Git.git_capture(["status", "--porcelain"]) || return false
 
       # Index is clean if output is empty (and program status is success, checked by git_capture)
       capture.bytesize == 0
@@ -141,7 +139,7 @@ module Crystal::Doc
 
     def self.git_ref(*, branch)
       # Check if current HEAD is tagged
-      capture = Crystal::Git.git_capture(["tag", "--points-at", "HEAD"]) { return }
+      capture = Crystal::Git.git_capture(["tag", "--points-at", "HEAD"]) || return
       tags = capture.lines
       # Return tag if commit is tagged, select first one if multiple
       if tag = tags.first?
@@ -150,7 +148,7 @@ module Crystal::Doc
 
       if branch
         # Read current branch name
-        capture = Crystal::Git.git_capture(["rev-parse", "--abbrev-ref", "HEAD"]) { return }
+        capture = Crystal::Git.git_capture(["rev-parse", "--abbrev-ref", "HEAD"]) || return
 
         if branch_name = capture.strip.presence
           return branch_name
@@ -158,7 +156,7 @@ module Crystal::Doc
       end
 
       # Otherwise, return current commit sha
-      capture = Crystal::Git.git_capture(["rev-parse", "HEAD"]) { return }
+      capture = Crystal::Git.git_capture(["rev-parse", "HEAD"]) || return
 
       if sha = capture.strip.presence
         return sha
