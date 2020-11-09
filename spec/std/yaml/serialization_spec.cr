@@ -377,6 +377,11 @@ describe "YAML serialization" do
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
 
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      BigDecimal.from_yaml(big.to_yaml).should eq(big)
+    end
+
     it "does for Enum" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
     end
