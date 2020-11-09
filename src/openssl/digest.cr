@@ -1,22 +1,23 @@
-require "../lib_crypto"
-require "digest/base"
-require "./digest_base"
+require "./lib_crypto"
+require "digest/digest"
 
 module OpenSSL
-  class Digest < ::Digest::Base
+  class Digest < ::Digest
     class Error < OpenSSL::Error; end
 
     class UnsupportedError < Error; end
 
-    include DigestBase
-
     getter name : String
+    @ctx : LibCrypto::EVP_MD_CTX
 
-    def initialize(@name, @ctx : LibCrypto::EVP_MD_CTX)
-      raise Error.new("Invalid EVP_MD_CTX") unless @ctx
+    def initialize(@name : String)
+      @ctx = new_evp_mt_ctx(name)
     end
 
-    protected def self.new_evp_mt_ctx(name)
+    protected def initialize(@name : String, @ctx : LibCrypto::EVP_MD_CTX)
+    end
+
+    private def new_evp_mt_ctx(name)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
         raise UnsupportedError.new("Unsupported digest algorithm: #{name}")
@@ -28,11 +29,8 @@ module OpenSSL
       if LibCrypto.evp_digestinit_ex(ctx, md, nil) != 1
         raise Error.new "Digest initialization failed."
       end
+      raise Error.new("Invalid EVP_MD_CTX") unless ctx
       ctx
-    end
-
-    def self.new(name)
-      new(name, new_evp_mt_ctx(name))
     end
 
     def finalize
@@ -40,12 +38,16 @@ module OpenSSL
     end
 
     def dup
+      Digest.new(@name, dup_ctx)
+    end
+
+    protected def dup_ctx
       ctx = LibCrypto.evp_md_ctx_new
       if LibCrypto.evp_md_ctx_copy(ctx, @ctx) == 0
         LibCrypto.evp_md_ctx_free(ctx)
         raise Error.new("Unable to dup digest")
       end
-      Digest.new(@name, ctx)
+      ctx
     end
 
     private def reset_impl : Nil

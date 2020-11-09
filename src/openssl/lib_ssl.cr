@@ -1,5 +1,9 @@
 require "./lib_crypto"
 
+{% if flag?(:without_openssl) %}
+  {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
+{% end %}
+
 {% begin %}
   lib LibSSL
     {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
