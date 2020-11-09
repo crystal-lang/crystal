@@ -436,6 +436,13 @@ describe "Hash" do
       h2[0].should eq([0])
     end
 
+    it "clones recursive hash" do
+      h = {} of RecursiveHash => RecursiveHash
+      h[h] = h
+      clone = h.clone
+      clone.should be(clone.first[1])
+    end
+
     it "clones subclass" do
       h1 = HashSubclass(Int32, Array(Int32)).new
       h1[0] = [0]

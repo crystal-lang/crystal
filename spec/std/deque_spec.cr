@@ -216,6 +216,13 @@ describe "Deque" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive type" do
+    deq = Deque(RecursiveDeque).new
+    deq << deq
+    clone = deq.clone
+    clone.should be(clone.first)
+  end
+
   describe "concat" do
     it "concats deque" do
       a = Deque{1, 2, 3}

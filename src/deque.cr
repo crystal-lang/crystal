@@ -163,7 +163,18 @@ class Deque(T)
   #
   # Use `#dup` if you want a shallow copy.
   def clone
-    Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Deque(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.

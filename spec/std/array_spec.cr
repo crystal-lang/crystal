@@ -458,6 +458,13 @@ describe "Array" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive array" do
+    ary = [] of RecursiveArray
+    ary << ary
+    clone = ary.clone
+    clone[0].should be(clone)
+  end
+
   it "does compact" do
     a = [1, nil, 2, nil, 3]
     b = a.compact.should eq([1, 2, 3])
