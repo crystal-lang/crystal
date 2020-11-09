@@ -127,19 +127,19 @@ describe "JSON serialization" do
       tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.from_json("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    it "does for BigFloat from int" do
+    pending_win32 "does for BigFloat from int" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
@@ -163,13 +163,13 @@ describe "JSON serialization" do
       uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
 
-    it "does for BigDecimal from int" do
+    pending_win32 "does for BigDecimal from int" do
       big = BigDecimal.from_json("1234")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234"))
     end
 
-    it "does for BigDecimal from float" do
+    pending_win32 "does for BigDecimal from float" do
       big = BigDecimal.from_json("1234.05")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
@@ -398,17 +398,17 @@ describe "JSON serialization" do
       JSONSpecEnum::One.to_json.should eq("1")
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       big.to_json.should eq("123456789123456789123456789123456789123456789")
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end
 
-    it "does for BigDecimal" do
+    pending_win32 "does for BigDecimal" do
       big = BigDecimal.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end
