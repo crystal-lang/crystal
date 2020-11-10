@@ -5,15 +5,14 @@ module Crystal::Git
   # Yields block if exec fails or process status is not success.
   def self.git_command(args, output : Process::Stdio = Process::Redirect::Close)
     status = Process.run(executable, args, output: output)
-    yield unless status.success?
-    status
+    return status.success?
   rescue IO::Error
-    yield
+    false
   end
 
   def self.git_capture(args)
     String.build do |io|
-      git_command(args, output: io) { return }
+      git_command(args, output: io) || return
     end
   end
 

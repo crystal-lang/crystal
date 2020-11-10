@@ -250,7 +250,7 @@ module Crystal
 
     class GitInitView < View
       def render
-        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT) { }
+        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
       end
 
       def path

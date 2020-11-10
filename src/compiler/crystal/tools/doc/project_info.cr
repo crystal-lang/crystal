@@ -54,8 +54,7 @@ module Crystal::Doc
     end
 
     def self.git_dir?
-      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) { return false }
-      true
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"])
     end
 
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
@@ -115,7 +114,7 @@ module Crystal::Doc
 
     def self.git_remote
       # check whether inside git work-tree
-      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) { return }
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) || return
 
       capture = Crystal::Git.git_capture(["remote", "-v"]) || return
       remotes = capture.lines.select(&.ends_with?(" (fetch)"))
