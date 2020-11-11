@@ -2,6 +2,7 @@
 
 require "ecr/macros"
 require "option_parser"
+require "./git"
 
 module Crystal
   module Init
@@ -96,22 +97,16 @@ module Crystal
       config
     end
 
-    private def self.git_config(key)
-      String.build do |io|
-        Process.run("git", ["config", "--get", key], output: io)
-      end.strip.presence
-    end
-
     def self.fetch_author
-      git_config("user.name") || "your-name-here"
+      Crystal::Git.git_config("user.name") || "your-name-here"
     end
 
     def self.fetch_email
-      git_config("user.email") || "your-email-here"
+      Crystal::Git.git_config("user.email") || "your-email-here"
     end
 
     def self.fetch_github_name
-      git_config("github.user") || "your-github-user"
+      Crystal::Git.git_config("github.user") || "your-github-user"
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -255,7 +250,7 @@ module Crystal
 
     class GitInitView < View
       def render
-        Process.run("git", ["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
+        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
       end
 
       def path
