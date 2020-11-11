@@ -160,8 +160,8 @@ describe "FileUtils" do
     it "deletes read-only file" do
       with_tempfile("rm_r") do |path|
         Dir.mkdir(path)
-        Dir.mkdir(File.join(path, ".git"))
-        File.write(f = File.join(path, ".git", "c"), "")
+        Dir.mkdir(File.join(path, "b"))
+        File.write(f = File.join(path, "b", "c"), "")
         File.chmod(f, 0o555)
 
         FileUtils.rm_r(path)
