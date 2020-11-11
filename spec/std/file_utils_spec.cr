@@ -157,6 +157,18 @@ describe "FileUtils" do
       end
     end
 
+    it "deletes read-only file" do
+      with_tempfile("rm_r") do |path|
+        Dir.mkdir(path)
+        Dir.mkdir(File.join(path, ".git"))
+        File.write(f = File.join(path, ".git", "c"), "")
+        File.chmod(f, 0o555)
+
+        FileUtils.rm_r(path)
+        Dir.exists?(path).should be_false
+      end
+    end
+
     it "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
