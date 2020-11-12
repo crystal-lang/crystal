@@ -318,7 +318,8 @@ describe "Dir" do
         File.write(target / "a.txt", "")
         File.symlink(target, Path[path, "glob", "dir"])
 
-        Dir["#{path}/glob/*/a.txt"].sort.should eq [
+        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
           "#{path}/glob/dir/a.txt"
         ]
       end
