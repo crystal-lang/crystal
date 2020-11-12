@@ -288,7 +288,7 @@ class Dir
     end
 
     private def self.dir?(path)
-      if info = File.info?(path, follow_symlinks: false)
+      if info = File.info?(path, follow_symlinks: true)
         info.type.directory?
       else
         false

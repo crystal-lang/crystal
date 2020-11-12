@@ -16,7 +16,7 @@ module Crystal::System::Dir
 
       dir = case entry.value.d_type
             when LibC::DT_DIR     then true
-            when LibC::DT_UNKNOWN then nil
+            when LibC::DT_UNKNOWN, LibC::DT_LINK then nil
             else                       false
             end
       Entry.new(name, dir)

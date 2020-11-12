@@ -309,6 +309,21 @@ describe "Dir" do
       end
     end
 
+    pending_win32 "matches symlink dir" do
+      with_tempfile "symlink_dir" do |path|
+        Dir.mkdir_p(Path[path, "glob"])
+        target = Path[path, "target"]
+        Dir.mkdir_p(target)
+
+        File.write(target / "a.txt", "")
+        File.symlink(target, Path[path, "glob", "dir"])
+
+        Dir["#{path}/glob/*/a.txt"].sort.should eq [
+          "#{path}/glob/dir/a.txt"
+        ]
+      end
+    end
+
     it "empty pattern" do
       Dir[""].should eq [] of String
     end
