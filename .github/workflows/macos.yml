@@ -13,8 +13,8 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
-      - uses: cachix/install-nix-action@v10
-      - uses: cachix/cachix-action@v6
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
