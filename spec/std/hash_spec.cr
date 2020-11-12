@@ -598,16 +598,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
     h2 = h1.select! { |k, v| k == :b }
+    h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:b => 2})
     h2.should be(h1)
-  end
-
-  it "returns nil when using select! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.select! { true }
-    h2.should eq(nil)
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "rejects" do
@@ -622,16 +615,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
     h2 = h1.reject! { |k, v| k == :b }
+    h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:a => 1, :c => 3})
     h2.should be(h1)
-  end
-
-  it "returns nil when using reject! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.reject! { false }
-    h2.should eq(nil)
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "compacts" do
@@ -646,16 +632,9 @@ describe "Hash" do
     h1 = {:a => 1, :b => 2, :c => nil}
 
     h2 = h1.compact!
+    h2.should be_a(Hash(Symbol, Int32 | Nil))
     h2.should eq({:a => 1, :b => 2})
     h2.should be(h1)
-  end
-
-  it "returns nil when using compact! and no changes were made" do
-    h1 = {:a => 1, :b => 2, :c => 3}
-
-    h2 = h1.compact!
-    h2.should be_nil
-    h1.should eq({:a => 1, :b => 2, :c => 3})
   end
 
   it "transforms keys" do
