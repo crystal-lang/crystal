@@ -17,6 +17,6 @@ module Crystal::Git
   end
 
   def self.git_config(key)
-    git_capture(["config", "--get", key]).presence
+    git_capture(["config", "--get", key]).try(&.strip).presence
   end
 end
