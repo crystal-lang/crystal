@@ -88,7 +88,7 @@ describe "Dir" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
       Dir.exists?(path).should be_true
-      Dir.rmdir(path)
+      Dir.delete(path)
       Dir.exists?(path).should be_false
     end
   end
