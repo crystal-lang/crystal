@@ -18,7 +18,7 @@ jobs:
           LLVM_TARGETS=X86 bin/crystal build --cross-compile --target x86_64-pc-windows-msvc src/compiler/crystal.cr -Dwithout_playground
 
       - name: Upload Crystal object file
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: objs
           path: crystal.obj
@@ -31,14 +31,14 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@1eed9c12159dd2d2f8804980fbba1abe36ff77d2
+        uses: ilammy/msvc-dev-cmd@ed94116c4d30d2091601b81f339a2eaa1c2ba0a6
 
       - name: Download Crystal source
         uses: actions/checkout@v2
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: libs
           key: win-libs-${{ hashFiles('.github/workflows/win.yml') }}
@@ -123,7 +123,7 @@ jobs:
 
       - name: Cache LLVM
         id: cache-llvm
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: llvm
           key: llvm-libs-10.0.0
@@ -155,7 +155,7 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$(Get-Date -Millisecond 0 -UFormat %s)" >> ${env:GITHUB_ENV}
 
       - name: Download Crystal object file
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: objs
       - name: Build LLVM extensions
@@ -176,7 +176,7 @@ jobs:
           cp bin/crystal.exe crystal/
           cp libs/* crystal/
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: crystal
           path: crystal
