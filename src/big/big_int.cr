@@ -391,6 +391,17 @@ struct BigInt < Int
     result == 0 ? self : result
   end
 
+  # Computes `GCD(self,other)`, as well as its Bézout coefficients.
+  #
+  # ```
+  # g, s, t = 7.to_big_i.gcd_ext(2.to_big_i) # => {1, 1, -3}
+  # ```
+  def gcd_ext(other : BigInt) : {BigInt, BigInt, BigInt}
+    a = BigInt.new
+    b = BigInt.new
+    {BigInt.new { |mpz| LibGMP.gcd_ext(mpz, a, b, self, other) }, a, b}
+  end
+
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
