@@ -320,7 +320,7 @@ describe "Dir" do
 
         Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
         Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
-          "#{path}/glob/dir/a.txt"
+          "#{path}/glob/dir/a.txt",
         ]
       end
     end
