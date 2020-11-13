@@ -33,7 +33,7 @@ describe Crystal::Doc::ProjectInfo do
         File.write("shard.yml", "name: foo\nversion: 1.0")
       end
 
-      it "git missing" do
+      pending_win32 "git missing" do
         Crystal::Git.executable = "git-missing-executable"
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
