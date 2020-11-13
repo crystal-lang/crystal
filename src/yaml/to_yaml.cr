@@ -123,7 +123,12 @@ end
 
 struct Enum
   def to_yaml(yaml : YAML::Nodes::Builder)
-    yaml.scalar to_s.underscore
+    string = to_s.underscore
+    if YAML::Schema::Core.reserved_string?(string)
+      yaml.scalar string, style: YAML::ScalarStyle::DOUBLE_QUOTED
+    else
+      yaml.scalar string
+    end
   end
 end
 
