@@ -384,7 +384,17 @@ module FileUtils
       end
       Dir.delete(path)
     else
-      File.delete(path)
+      {% if flag?(:win32) %}
+        begin
+          File.delete(path)
+        rescue File::AccessDeniedError
+          # To be able to delete read-only files (e.g. ones under .git/) on Windows.
+          File.chmod(path, 0o666)
+          File.delete(path)
+        end
+      {% else %}
+        File.delete(path)
+      {% end %}
     end
   end
 
