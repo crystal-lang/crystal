@@ -1,4 +1,7 @@
 <ul>
+  <li>
+    <a href="<%= current_type.try(&.path_to("")) %>api-index.html" %>API Index</a>
+  </li>
   <% types.each do |type| %>
   <li class="<%= (type.program? || type.types.empty?) ? "" : ("parent" + (type.current?(current_type) || type.parents_of?(current_type) ? " open" : "")) %> <%= type.current?(current_type) ? "current" : "" %>" data-id="<%= type.html_id %>" data-name="<%= type.full_name.downcase %>">
       <a href="<%= type.path_from(current_type) %>"><%= type.name %></a>
