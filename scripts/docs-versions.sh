@@ -8,7 +8,7 @@ awk '
   BEGIN {
     print "{"
     print "  \"versions\": ["
-    printf "    {\"name\": \"master\", \"url\": \"/api/master/\", \"released\": false}"
+    printf "    {\"name\": \"nightly\", \"url\": \"/api/master/\", \"released\": false}"
   }
 
   {
