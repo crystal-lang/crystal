@@ -120,6 +120,8 @@ module Crystal
 
     getter predefined_constants = Array(Const).new
 
+    property compiler : Compiler?
+
     def initialize
       super(self, self, "main")
 

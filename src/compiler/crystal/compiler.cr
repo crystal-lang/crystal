@@ -202,6 +202,7 @@ module Crystal
 
     private def new_program(sources)
       @program = program = Program.new
+      program.compiler = self
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
