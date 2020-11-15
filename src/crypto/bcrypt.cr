@@ -47,7 +47,7 @@ class Crypto::Bcrypt
     0x64657253, 0x63727944, 0x6f756274,
   )
 
-  # Hashes a password using Bcrypt.
+  # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes`.
   #
   # ```
   # require "crypto/bcrypt"
@@ -61,7 +61,7 @@ class Crypto::Bcrypt
     new(passwordb, saltb, cost).to_s
   end
 
-  # Creates a new Bcrypt object from a string password and a salt.
+  # Creates a new `Bcrypt` object from the given *password* with *salt* and *cost*.
   #
   # ```
   # require "crypto/bcrypt"
@@ -80,7 +80,7 @@ class Crypto::Bcrypt
   getter salt : Bytes
   getter cost : Int32
 
-  # Creates a new Bcrypt object from a password and a salt in bytes.
+  # Creates a new `Bcrypt` object from the given *password* with *salt* in bytes and *cost*.
   #
   # ```
   # require "crypto/bcrypt"
