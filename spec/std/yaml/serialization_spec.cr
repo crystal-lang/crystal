@@ -404,10 +404,10 @@ describe "YAML serialization" do
 
     it "does for Enum" do
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
-      YAMLSpecEnum::One.to_yaml.should eq "--- one\n"
+      assert_yaml_document_end(YAMLSpecEnum::One.to_yaml, "--- one\n")
 
       YAMLSpecEnum.from_yaml(YAMLSpecEnum::OneHundred.to_yaml).should eq(YAMLSpecEnum::OneHundred)
-      YAMLSpecEnum::OneHundred.to_yaml.should eq "--- one_hundred\n"
+      assert_yaml_document_end(YAMLSpecEnum::OneHundred.to_yaml, "--- one_hundred\n")
     end
 
     it "does for utc time" do
