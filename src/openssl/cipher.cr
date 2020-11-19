@@ -1,7 +1,7 @@
 require "random/secure"
 require "openssl"
 
-# A class which can be used to encrypt and decrypt string data using a specified cipher.
+# A class which can be used to encrypt and decrypt an IO using a specified cipher.
 # ```
 # require "random/secure"
 # key : Bytes = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
@@ -74,13 +74,13 @@ class OpenSSL::Cipher
     iv
   end
 
-  # Sets the key using Random::Secure.
+  # Sets the key using `Random::Secure`.
   def random_key
     key = Random::Secure.random_bytes key_len
     self.key = key
   end
 
-  # Sets the iv using Random::Secure.
+  # Sets the iv using `Random::Secure`.
   def random_iv
     iv = Random::Secure.random_bytes iv_len
     self.iv = iv
