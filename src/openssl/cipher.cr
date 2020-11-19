@@ -52,7 +52,7 @@ class OpenSSL::Cipher
     cipherinit cipher: cipher, key: "\0" * LibCrypto::EVP_MAX_KEY_LENGTH
   end
 
-  # Sets this cipher to encrytion mode.
+  # Sets this cipher to encryption mode.
   def encrypt
     cipherinit enc: 1
   end
@@ -74,13 +74,13 @@ class OpenSSL::Cipher
     iv
   end
 
-  # Sets the key using Random::Secure
+  # Sets the key using Random::Secure.
   def random_key
     key = Random::Secure.random_bytes key_len
     self.key = key
   end
 
-  # Sets the iv using Random::Secure
+  # Sets the iv using Random::Secure.
   def random_iv
     iv = Random::Secure.random_bytes iv_len
     self.iv = iv
@@ -103,7 +103,7 @@ class OpenSSL::Cipher
     buffer[0, buffer_length]
   end
 
-  # Outputs the decrypted or encrypted buffer
+  # Outputs the decrypted or encrypted buffer.
   def final
     buffer_length = block_size
     buffer = Bytes.new(buffer_length)
