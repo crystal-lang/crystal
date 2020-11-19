@@ -52,7 +52,7 @@ class OpenSSL::Cipher
     cipherinit cipher: cipher, key: "\0" * LibCrypto::EVP_MAX_KEY_LENGTH
   end
 
-  # Sets this cipher to be a encrytion mode.
+  # Sets this cipher to encrytion mode.
   def encrypt
     cipherinit enc: 1
   end
