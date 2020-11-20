@@ -80,8 +80,9 @@ class File
   # *encoding* and *invalid* are passed to `IO#set_encoding`.
   #
   # It is the caller's responsibility to remove the file when no longer needed.
-  def self.tempfile(suffix : String? = nil, *, dir : String = Dir.tempdir, encoding = nil, invalid = nil)
-    tempfile(prefix: nil, suffix: suffix, dir: dir, encoding: encoding, invalid: invalid)
+  def self.tempfile(prefix : String? = nil, suffix : String? = nil, *,
+                    dir : String = Dir.tempdir, encoding = nil, invalid = nil)
+    tempfile(prefix: prefix, suffix: suffix, dir: dir, encoding: encoding, invalid: invalid)
   end
 
   # Creates a temporary file and yields it to the given block. It is closed and returned at the end of this method call.
