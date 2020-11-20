@@ -603,6 +603,17 @@ describe Iterator do
       iter.next.should eq({3, 'c'})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "takes multiple Iterators" do
+      r1 = (1..4).each
+      r2 = ('a'..'c').each
+      r3 = ("U".."Z").each
+      iter = r1.zip(r2, r3)
+      iter.next.should eq({1, 'a', "U"})
+      iter.next.should eq({2, 'b', "V"})
+      iter.next.should eq({3, 'c', "W"})
+      iter.next.should be_a(Iterator::Stop)
+    end
   end
 
   describe "integration" do
