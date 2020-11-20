@@ -21,6 +21,7 @@
 - Remove unnecessary `def ==(other)` fallbacks. ([#9571](https://github.com/crystal-lang/crystal/pull/9571), thanks @MakeNowJust)
 - Refactor several `case` statements with exhaustive `case`/`in`. ([#9656](https://github.com/crystal-lang/crystal/pull/9656), thanks @Sija)
 - Remove `Kernel` mentions in docs. ([#9549](https://github.com/crystal-lang/crystal/pull/9549), thanks @toddsundsted)
+- Fix example codes in multiple places. ([#9818](https://github.com/crystal-lang/crystal/pull/9818), thanks @maiha)
 - Fix typos and misspelling. ([#9636](https://github.com/crystal-lang/crystal/pull/9636), [#9638](https://github.com/crystal-lang/crystal/pull/9638), [#9561](https://github.com/crystal-lang/crystal/pull/9561), [#9786](https://github.com/crystal-lang/crystal/pull/9786), [#9840](https://github.com/crystal-lang/crystal/pull/9840), [#9844](https://github.com/crystal-lang/crystal/pull/9844), [#9854](https://github.com/crystal-lang/crystal/pull/9854), [#9869](https://github.com/crystal-lang/crystal/pull/9869), thanks @kubo, @m-o-e, @mgomes, @philipp-classen, @dukeraphaelng, @camreeves, @docelic)
 
 ### Numeric
@@ -29,6 +30,7 @@
 - **(performance)** Use unchecked arithmetics in `Int#times`. ([#9511](https://github.com/crystal-lang/crystal/pull/9511), thanks @waj)
 - Fix `sprintf` for zero left padding a negative number. ([#9725](https://github.com/crystal-lang/crystal/pull/9725), thanks @asterite)
 - Make `Complex` unary plus returns `self`. ([#9719](https://github.com/crystal-lang/crystal/pull/9719), thanks @asterite)
+- Fix `BigDecimal#to_s` for numbers between `-1` and `0`. ([#9897](https://github.com/crystal-lang/crystal/pull/9897), thanks @dukeraphaelng)
 
 ### Text
 
@@ -40,11 +42,14 @@
 
 ### Collections
 
+- **(breaking-change)** Make `Hash#reject!`, `Hash#select!`, and `Hash#compact!` consistent with `Array` and return `self`. ([#9904](https://github.com/crystal-lang/crystal/pull/9904), thanks @caspiano)
+- **(breaking-change)** Deprecate `Hash#delete_if` in favor of `Hash#reject!`, add `Dequeue#reject!` and `Dequeue#select!`. ([#9878](https://github.com/crystal-lang/crystal/pull/9878), thanks @caspiano)
 - **(breaking-change)** Drop deprecated `Enumerable#grep`. ([#9711](https://github.com/crystal-lang/crystal/pull/9711), thanks @j8r)
 - **(performance)** `Array#rotate` optimization for small arrays. ([#8516](https://github.com/crystal-lang/crystal/pull/8516), thanks @wontruefree)
-- Add `BitArray#dup`. ([#9550](https://github.com/crystal-lang/crystal/pull/9550), thanks @andremedeiros)
 - Fix `Hash#dup` and `Hash#clone` to return correct type for subclasses. ([#9871](https://github.com/crystal-lang/crystal/pull/9871), thanks @vlazar)
 - Fix `Iterator#cons_pair` return type. ([#9788](https://github.com/crystal-lang/crystal/pull/9788), thanks @asterite)
+- Handle recursive structures in `def_clone`, `Hash`, `Array`, `Dequeue`. ([#9800](https://github.com/crystal-lang/crystal/pull/9800), thanks @asterite)
+- Add `BitArray#dup`. ([#9550](https://github.com/crystal-lang/crystal/pull/9550), thanks @andremedeiros)
 - Update `Enumerable#sum(initial, &)` docs. ([#9860](https://github.com/crystal-lang/crystal/pull/9860), thanks @jage)
 
 ### Serialization
@@ -64,7 +69,10 @@
 
 - Enable large-file support on i386-linux-gnu. ([#9478](https://github.com/crystal-lang/crystal/pull/9478), thanks @kubo)
 - Windows: allow creating symlinks without admin rights. ([#9767](https://github.com/crystal-lang/crystal/pull/9767), thanks @oprypin)
+- Fix `Dir.glob` when `readdir` doesn't report file type. ([#9877](https://github.com/crystal-lang/crystal/pull/9877), thanks @straight-shoota)
 - Move `File#fsync`, `File#flock_exclusive`, `File#flock_shared`, and `File#flock_unlock` methods to `IO::FileDescriptor`. ([#9794](https://github.com/crystal-lang/crystal/pull/9794), thanks @naqvis)
+- Call `IO#flush` on builder finish methods. ([#9321](https://github.com/crystal-lang/crystal/pull/9321), thanks @straight-shoota)
+- Windows: enable `FileUtils` specs. ([#9902](https://github.com/crystal-lang/crystal/pull/9902), thanks @oprypin)
 
 ### Networking
 
@@ -97,6 +105,7 @@
 
 - **(security)** Fix `"force-peer"` `verify_mode` setup. ([#9668](https://github.com/crystal-lang/crystal/pull/9668), thanks @PhilAtWysdom)
 - **(security)** Force secure renegotiation on server to prevent Secure Client-Initiated Renegotiation vulnerability attack. ([#9815](https://github.com/crystal-lang/crystal/pull/9815), thanks @bcardiff)
+- **(breaking-change)** Refactor `Digest` and introduce `Digest::MD5`, `Digest::SHA1`, `Digest::SHA256`, `Digest::SHA512` backed by openssl. ([#9864](https://github.com/crystal-lang/crystal/pull/9864), thanks @bcardiff)
 - Fix overflows in MD5 and SHA1. ([#9781](https://github.com/crystal-lang/crystal/pull/9781), thanks @bcardiff)
 - Add `OpenSSL::SSL::Context#set_modern_ciphers` and related methods to set ciphers and cipher suites in a more portable fashion. ([#9814](https://github.com/crystal-lang/crystal/pull/9814), thanks @bcardiff)
 - Add `OpenSSL::SSL::Context#security_level`. ([#9831](https://github.com/crystal-lang/crystal/pull/9831), thanks @bcardiff)
@@ -111,6 +120,7 @@
 - Fix `Process.find_executable` to check the found path is executable and add Windows support. ([#9365](https://github.com/crystal-lang/crystal/pull/9365), thanks @oprypin)
 - Add `Process.parse_arguments` and fix `CRYSTAL_OPTS` parsing. ([#9518](https://github.com/crystal-lang/crystal/pull/9518), thanks @MakeNowJust)
 - Port to NetBSD. ([#9360](https://github.com/crystal-lang/crystal/pull/9360), thanks @niacat)
+- Add note about raising `IO::Error` to `Process` methods. ([#9894](https://github.com/crystal-lang/crystal/pull/9894), thanks @straight-shoota)
 
 ### Runtime
 
@@ -136,6 +146,8 @@
 - Refactor helper methods in `call_error.cr`. ([#9376](https://github.com/crystal-lang/crystal/pull/9376), thanks @straight-shoota)
 - Print a message pointing to the online playground if compiled without it. ([#9622](https://github.com/crystal-lang/crystal/pull/9622), thanks @deiv)
 - Make missing `__crystal_raise_overflow` error more clear. ([#9686](https://github.com/crystal-lang/crystal/pull/9686), thanks @3n-k1)
+- Fix `Command#report_warnings` to gracefully handle missing `Compiler#program`. ([#9866](https://github.com/crystal-lang/crystal/pull/9866), thanks @straight-shoota)
+- Fix `Process.run` uses in compiler to handle exec failure. ([#9893](https://github.com/crystal-lang/crystal/pull/9893), [#9911](https://github.com/crystal-lang/crystal/pull/9911), [#9913](https://github.com/crystal-lang/crystal/pull/9913), thanks @straight-shoota, @bcardiff, @oprypin)
 - Code clean-ups. ([#9468](https://github.com/crystal-lang/crystal/pull/9468), thanks @MakeNowJust)
 - Refactors for compiler specs. ([#9379](https://github.com/crystal-lang/crystal/pull/9379), thanks @straight-shoota)
 - Windows CI: Fix and enable compiler specs. ([#9348](https://github.com/crystal-lang/crystal/pull/9348), [#9560](https://github.com/crystal-lang/crystal/pull/9560), thanks @oprypin)
@@ -177,11 +189,13 @@
 
 ### Doc generator
 
+- Linkification: refactor, fix edge cases and add specs. ([#9817](https://github.com/crystal-lang/crystal/pull/9817), thanks @oprypin)
 - Correctly render underscores in code blocks. ([#9822](https://github.com/crystal-lang/crystal/pull/9822), thanks @Blacksmoke16)
 
 ## Others
 
-- CI improvements and housekeeping. ([#9513](https://github.com/crystal-lang/crystal/pull/9513), [#9512](https://github.com/crystal-lang/crystal/pull/9512), [#9515](https://github.com/crystal-lang/crystal/pull/9515), [#9514](https://github.com/crystal-lang/crystal/pull/9514), [#9609](https://github.com/crystal-lang/crystal/pull/9609), [#9642](https://github.com/crystal-lang/crystal/pull/9642), [#9758](https://github.com/crystal-lang/crystal/pull/9758), [#9763](https://github.com/crystal-lang/crystal/pull/9763), [#9850](https://github.com/crystal-lang/crystal/pull/9850), thanks @jhass, @bcardiff, @waj, @oprypin)
+- CI improvements and housekeeping. ([#9513](https://github.com/crystal-lang/crystal/pull/9513), [#9512](https://github.com/crystal-lang/crystal/pull/9512), [#9515](https://github.com/crystal-lang/crystal/pull/9515), [#9514](https://github.com/crystal-lang/crystal/pull/9514), [#9609](https://github.com/crystal-lang/crystal/pull/9609), [#9642](https://github.com/crystal-lang/crystal/pull/9642), [#9758](https://github.com/crystal-lang/crystal/pull/9758), [#9763](https://github.com/crystal-lang/crystal/pull/9763), [#9850](https://github.com/crystal-lang/crystal/pull/9850), [#9906](https://github.com/crystal-lang/crystal/pull/9906), [#9912](https://github.com/crystal-lang/crystal/pull/9912), thanks @jhass, @bcardiff, @waj, @oprypin)
+- Add timeout to individual specs on multi-threading. ([#9865](https://github.com/crystal-lang/crystal/pull/9865), thanks @bcardiff)
 - Initial AArch64 CI. ([#9508](https://github.com/crystal-lang/crystal/pull/9508), [#9582](https://github.com/crystal-lang/crystal/pull/9582), thanks @jhass, @waj)
 - Update distribution-scripts and use LLVM 10 on Linux packages. ([#9710](https://github.com/crystal-lang/crystal/pull/9710), thanks @bcardiff)
 - Update distribution-scripts and publish nightly packages to bintray. ([#9663](https://github.com/crystal-lang/crystal/pull/9663), thanks @bcardiff)
@@ -190,6 +204,7 @@
 - Allow overriding `CRYSTAL_PATH` in `bin/crystal` wrapper . ([#9632](https://github.com/crystal-lang/crystal/pull/9632), thanks @bcardiff)
 - Makefile: support changing the current crystal via env var and argument. ([#9471](https://github.com/crystal-lang/crystal/pull/9471), thanks @bcardiff)
 - Windows CI: Avoid looking for globally installed libs. ([#9507](https://github.com/crystal-lang/crystal/pull/9507), thanks @oprypin)
+- Windows CI: Patch LLVM to fix broken build. ([#9907](https://github.com/crystal-lang/crystal/pull/9907), thanks @oprypin)
 - Update installation link in CONTRIBUTING.md. ([#9448](https://github.com/crystal-lang/crystal/pull/9448), thanks @wontruefree)
 
 # 0.35.1 (2020-06-19)
