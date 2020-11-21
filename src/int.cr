@@ -1158,7 +1158,7 @@ struct UInt128
   Number.expand_div [Float64], Float64
 
   def &-
-    # TODO: use 0_u128 - self
+    # TODO: use 0_u128 &- self
     UInt128.new(0) &- self
   end
 
