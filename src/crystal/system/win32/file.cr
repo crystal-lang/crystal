@@ -187,14 +187,14 @@ module Crystal::System::File
 
   def self.link(old_path : String, new_path : String) : Nil
     if LibC.CreateHardLinkW(to_windows_path(new_path), to_windows_path(old_path), nil) == 0
-      raise ::File::Error.from_winerror("Error creating hard link", file: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating link", file: old_path, other: new_path)
     end
   end
 
   def self.symlink(old_path : String, new_path : String) : Nil
     # TODO: support directory symlinks (copy Go's stdlib logic here)
     if LibC.CreateSymbolicLinkW(to_windows_path(new_path), to_windows_path(old_path), LibC::SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE) == 0
-      raise ::File::Error.from_winerror("Error creating symbolic link", file: old_path, other: new_path)
+      raise ::File::Error.from_winerror("Error creating symlink", file: old_path, other: new_path)
     end
   end
 
