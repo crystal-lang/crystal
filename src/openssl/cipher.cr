@@ -1,7 +1,7 @@
 require "random/secure"
 require "openssl"
 
-# A class which can be used to encrypt and decrypt an IO using a specified cipher.
+# A class which can be used to encrypt and decrypt data using a specified cipher.
 #
 # ```
 # require "random/secure"
