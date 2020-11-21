@@ -194,8 +194,6 @@ class Crystal::Call
       return if convert_numeric_argument self_arg, unaliased_type, expected_type, actual_type, index
     when FloatType
       return if convert_numeric_argument self_arg, unaliased_type, expected_type, actual_type, index
-    else
-      # go on
     end
 
     implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|

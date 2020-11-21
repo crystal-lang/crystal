@@ -7,13 +7,14 @@ module Crystal::System::Dir
   # In particular we only care about the name and whether its
   # a directory or not to improve the performance of Dir.glob
   # by avoid having to call File.info on every directory entry.
+  # If dir is nil, the type is unknown.
   # In the future we might change Dir's API to expose these entries
   # with more info but right now it's not necessary.
   struct Entry
     getter name
     getter? dir
 
-    def initialize(@name : String, @dir : Bool)
+    def initialize(@name : String, @dir : Bool?)
     end
   end
 

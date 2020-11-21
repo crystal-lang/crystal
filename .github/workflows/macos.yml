@@ -1,0 +1,29 @@
+name: macOS CI
+
+on: [push, pull_request]
+
+env:
+  SPEC_SPLIT_DOTS: 160
+  CI_NIX_SHELL: true
+
+jobs:
+  test_macos:
+    runs-on: macos-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
+        with:
+          name: crystal-ci
+          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci build

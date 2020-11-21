@@ -155,7 +155,7 @@ module Crystal
     # pkg-config is not installed, or the module does not exist.
     private def pkg_config(mod, static = false) : String?
       return unless pkg_config_path = PKG_CONFIG_PATH
-      return unless Process.run(pkg_config_path, {mod}).success?
+      return unless (Process.run(pkg_config_path, {mod}).success? rescue nil)
 
       args = ["--libs"]
       args << "--static" if static

@@ -792,7 +792,7 @@ describe "Semantic: module" do
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
 
-  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+  it "works ok in a case where a typed-def type has an underlying type that has an included generic module (bug)" do
     assert_type(%(
       lib LibC
         type X = Void*

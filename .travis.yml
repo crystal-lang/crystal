@@ -41,12 +41,5 @@ env:
     - secure: Zd/tZVmV2dRMao9z+ky5BywSKuWOF3MiKsZetwd1upZ+uj9qzfbOZMnWFW9dlA+Co4MyYqP/I6ADzRpoKLINUqEIPcAPNYQB1qG79SafrRAvTqcjtEHTn2wXh2ZGu3f1T+SCK0ZD3xx1ML8502ENzXjvq+dEmi4kknqmPudkb6k=
 
 notifications:
-  irc:
-    channels:
-      - secure: iarUM4VAMZxdZZQxDrQy+MpxygaFFXJJ1bxvafehnk2vjWbifmnQHZx5z3POaSfp76q+hdqSgBrK/QnGwd8NY70wD+bR0Vb5JQoHwEyHyGbLczHp606SXRl7c/ZMozfOk4bo0X5EPPtie+2mtkjSUB03TI4NYY/5LMFhCw79zsU=
-    use_notice: true
-    skip_join: true
-    template:
-      - "%{repository_slug}#%{commit} (%{branch} - %{commit_subject}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=

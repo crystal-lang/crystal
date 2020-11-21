@@ -126,7 +126,7 @@ describe "Dir" do
   end
 
   it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistant") do |path|
+    with_tempfile("nonexistent") do |path|
       expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
         Dir.delete(path)
       end
@@ -366,6 +366,24 @@ describe "Dir" do
 
       it "ignores hidden files recursively" do
         Dir.glob("#{datapath}/dir/dots/**/*", match_hidden: false).size.should eq 0
+      end
+    end
+
+    context "with path" do
+      expected = [
+        datapath("dir", "f1.txt"),
+        datapath("dir", "f2.txt"),
+        datapath("dir", "g2.txt"),
+      ]
+
+      it "posix path" do
+        Dir[Path.posix(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.posix(datapath, "dir", "*.txt")]].sort.should eq expected
+      end
+
+      it "windows path" do
+        Dir[Path.windows(datapath, "dir", "*.txt")].sort.should eq expected
+        Dir[[Path.windows(datapath, "dir", "*.txt")]].sort.should eq expected
       end
     end
   end

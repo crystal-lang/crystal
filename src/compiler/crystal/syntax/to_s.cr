@@ -1562,6 +1562,7 @@ module Crystal
       with_indent do
         node.accept self
       end
+      newline if node.keyword == :"("
     end
 
     def accept_with_indent(node : Nop)

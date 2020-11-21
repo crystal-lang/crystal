@@ -182,13 +182,13 @@ module Float::Printer::IEEE
 
   private def exponent(d64 : UInt64)
     return DENORMAL_EXPONENT_64 if denormal?(d64)
-    baised_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
-    baised_e - EXPONENT_BIAS_64
+    biased_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
+    biased_e - EXPONENT_BIAS_64
   end
 
   private def exponent(d32 : UInt32)
     return DENORMAL_EXPONENT_32 if denormal?(d32)
-    baised_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
-    baised_e - EXPONENT_BIAS_32
+    biased_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
+    biased_e - EXPONENT_BIAS_32
   end
 end

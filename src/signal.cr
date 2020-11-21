@@ -229,7 +229,7 @@ module Crystal::Signal
   # signals that would be sent to the parent process through the signal
   # pipe.
   #
-  # We keep a signal set to because accessing @@handlers ins't thread safe —a
+  # We keep a signal set to because accessing @@handlers isn't thread safe —a
   # thread could be mutating the hash while another one forked. This allows to
   # only reset a few signals (fast) rather than all (very slow).
   #

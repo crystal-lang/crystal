@@ -146,10 +146,6 @@ module HTTP
       self.raw_params == other.raw_params
     end
 
-    def ==(other)
-      false
-    end
-
     # Returns first value for specified param name.
     #
     # ```
@@ -189,14 +185,26 @@ module HTTP
     # ```
     delegate empty?, to: raw_params
 
-    # Sets first *value* for specified param *name*.
+    # Sets the *name* key to *value*.
     #
     # ```
-    # params["item"] = "pencil"
+    # require "http/params"
+    #
+    # params = HTTP::Params{"a" => ["b", "c"]}
+    # params["a"] = "d"
+    # params["a"]           # => "d"
+    # params.fetch_all("a") # => ["d"]
+    #
+    # params["a"] = ["e", "f"]
+    # params["a"]           # => "e"
+    # params.fetch_all("a") # => ["e", "f"]
     # ```
-    def []=(name, value)
-      raw_params[name] ||= [""]
-      raw_params[name][0] = value
+    def []=(name, value : String | Array(String))
+      raw_params[name] =
+        case value
+        in String        then [value]
+        in Array(String) then value
+        end
     end
 
     # Returns all values for specified param *name*.
@@ -209,10 +217,11 @@ module HTTP
       raw_params.fetch(name) { [] of String }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to provided
+    # Returns first value for specified param *name*. Falls back to provided
     # *default* value when there is no such param.
     #
     # ```
+    # params["email"] = "john@example.org"
     # params.fetch("email", "none@example.org")           # => "john@example.org"
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
@@ -220,10 +229,11 @@ module HTTP
       fetch(name) { default }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to return value
+    # Returns first value for specified param *name*. Falls back to return value
     # of provided block when there is no such param.
     #
     # ```
+    # params.delete("email")
     # params.fetch("email") { raise "Email is missing" }              # raises "Email is missing"
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```

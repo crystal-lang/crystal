@@ -1,12 +1,13 @@
 require "spec"
 require "socket"
 require "../../spec_helper"
+require "../../socket/spec_helper"
 require "../../../support/ssl"
 
 describe OpenSSL::SSL::Socket do
   describe OpenSSL::SSL::Socket::Server do
     it "auto accept client by default" do
-      TCPServer.open(0) do |tcp_server|
+      TCPServer.open("127.0.0.1", 0) do |tcp_server|
         server_context, client_context = ssl_context_pair
 
         spawn do
@@ -23,7 +24,7 @@ describe OpenSSL::SSL::Socket do
     end
 
     it "doesn't accept client when specified" do
-      TCPServer.open(0) do |tcp_server|
+      TCPServer.open("127.0.0.1", 0) do |tcp_server|
         server_context, client_context = ssl_context_pair
 
         spawn do
@@ -42,7 +43,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "returns the cipher that is currently in use" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
 
     OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
@@ -58,7 +59,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "returns the TLS version" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
 
     OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
@@ -74,7 +75,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "accepts clients that only write then close the connection" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     # in tls 1.3, if clients don't read anything and close the connection
     # the server still try and write to it a ticket, resulting in a "pipe failure"
@@ -96,7 +97,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "closes connection to server that doesn't properly terminate SSL session" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     server_context.disable_session_resume_tickets # avoid Broken pipe
 
@@ -116,7 +117,7 @@ describe OpenSSL::SSL::Socket do
   end
 
   it "interprets graceful EOF of underlying socket as SSL termination" do
-    tcp_server = TCPServer.new(0)
+    tcp_server = TCPServer.new("127.0.0.1", 0)
     server_context, client_context = ssl_context_pair
     server_context.disable_session_resume_tickets # avoid Broken pipe
 

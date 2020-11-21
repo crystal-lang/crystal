@@ -15,7 +15,7 @@ class Compress::Zlib::Writer < IO
   # Creates a new writer to the given *io*.
   def initialize(@io : IO, @level = Zlib::DEFAULT_COMPRESSION, @sync_close = false, @dict : Bytes? = nil)
     @wrote_header = false
-    @adler32 = Digest::Adler32.initial
+    @adler32 = ::Digest::Adler32.initial
     @flate_io = Compress::Deflate::Writer.new(@io, level: level, dict: @dict)
   end
 
@@ -44,17 +44,15 @@ class Compress::Zlib::Writer < IO
   end
 
   # See `IO#write`.
-  def write(slice : Bytes) : Int64
+  def write(slice : Bytes) : Nil
     check_open
 
-    return 0i64 if slice.empty?
+    return if slice.empty?
 
     write_header unless @wrote_header
 
     @flate_io.write(slice)
-    @adler32 = Digest::Adler32.update(slice, @adler32)
-
-    slice.size.to_i64
+    @adler32 = ::Digest::Adler32.update(slice, @adler32)
   end
 
   # Flushes data, forcing writing the zlib header if no
@@ -115,7 +113,7 @@ class Compress::Zlib::Writer < IO
     @io.write_byte flg
 
     if dict
-      dict_checksum = Digest::Adler32.checksum(dict)
+      dict_checksum = ::Digest::Adler32.checksum(dict)
       @io.write_bytes(dict_checksum, IO::ByteFormat::BigEndian)
     end
   end

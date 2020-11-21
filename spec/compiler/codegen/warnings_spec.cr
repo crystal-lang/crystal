@@ -242,7 +242,7 @@ describe "Code gen: warnings" do
       def foo
       end
       CR
-      "Error: first argument must be a String"
+      "first argument must be a String"
   end
 
   it "errors if too many arguments" do
@@ -251,7 +251,7 @@ describe "Code gen: warnings" do
       def foo
       end
       CR
-      "Error: wrong number of deprecated annotation arguments (given 2, expected 1)"
+      "wrong number of deprecated annotation arguments (given 2, expected 1)"
   end
 
   it "errors if invalid named arguments" do
@@ -260,6 +260,6 @@ describe "Code gen: warnings" do
       def foo
       end
       CR
-      "Error: too many named arguments (given 1, expected maximum 0)"
+      "too many named arguments (given 1, expected maximum 0)"
   end
 end

@@ -1,7 +1,7 @@
 require "option_parser"
 require "file_utils"
 require "colorize"
-require "digest/md5"
+require "crystal/digest/md5"
 
 module Crystal
   @[Flags]
@@ -69,7 +69,7 @@ module Crystal
     property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
-    # (useful to type-check a prorgam)
+    # (useful to type-check a program)
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
@@ -153,6 +153,9 @@ module Crystal
     # Whether to use llvm ThinLTO for linking
     property thin_lto = false
 
+    # Program that was created for the last compilation.
+    property! program : Program
+
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
@@ -198,7 +201,7 @@ module Crystal
     end
 
     private def new_program(sources)
-      program = Program.new
+      @program = program = Program.new
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
@@ -622,7 +625,7 @@ module Crystal
 
         if @name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
-          @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
+          @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
         @object_extension = program.object_extension
@@ -695,6 +698,8 @@ module Crystal
 
         # If there's a memory buffer, it means we must create a .o from it
         if memory_buffer
+          # Delete existing .o file. It cannot be used anymore.
+          File.delete(object_name) if File.exists?(object_name)
           # Create the .bc file (for next compilations)
           File.write(bc_name, memory_buffer.to_slice)
           memory_buffer.dispose

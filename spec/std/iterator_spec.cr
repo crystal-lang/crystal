@@ -177,6 +177,10 @@ describe Iterator do
       iter.next.should eq({4, 5})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "doesn't include stop in return type" do
+      (1..3).each.cons_pair.to_a.should eq([{1, 2}, {2, 3}])
+    end
   end
 
   describe "cycle" do
@@ -266,7 +270,7 @@ describe Iterator do
   end
 
   describe "in_groups_of" do
-    it "creats groups of one" do
+    it "creates groups of one" do
       iter = (1..3).each.in_groups_of(1)
       iter.next.should eq([1])
       iter.next.should eq([2])
@@ -274,7 +278,7 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
-    it "creats a group of two" do
+    it "creates a group of two" do
       iter = (1..3).each.in_groups_of(2)
       iter.next.should eq([1, 2])
       iter.next.should eq([3, nil])
@@ -299,7 +303,7 @@ describe Iterator do
       iter.to_a.should eq [[1, 2], [3, 'z']]
     end
 
-    it "creats a group of two with reuse = true" do
+    it "creates a group of two with reuse = true" do
       iter = (1..3).each.in_groups_of(2, reuse: true)
 
       a = iter.next

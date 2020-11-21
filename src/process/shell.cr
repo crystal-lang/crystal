@@ -102,4 +102,60 @@ class Process
   def self.quote_windows(arg : String) : String
     quote_windows({arg})
   end
+
+  # Split a *line* string into the array of tokens in the same way the POSIX shell.
+  #
+  # ```
+  # Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]) # => ["foo bar", "\\hello/", "Fizz Buzz"]
+  # ```
+  #
+  # See https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_03
+  def self.parse_arguments(line : String) : Array(String)
+    tokens = [] of String
+
+    reader = Char::Reader.new(line)
+
+    while reader.has_next?
+      # skip whitespace
+      while reader.current_char.ascii_whitespace?
+        reader.next_char
+      end
+      break unless reader.has_next?
+
+      token = String.build do |str|
+        while reader.has_next? && !reader.current_char.ascii_whitespace?
+          quote = nil
+          if reader.current_char.in?('\'', '"')
+            quote = reader.current_char
+            reader.next_char
+          end
+
+          until (char = reader.current_char) == quote || (!quote && char.ascii_whitespace?)
+            break unless reader.has_next?
+            reader.next_char
+            if char == '\\' && quote != '\''
+              str << char if quote == '"'
+              char = reader.current_char
+              if reader.has_next?
+                reader.next_char
+              else
+                break if quote == '"'
+                char = '\\'
+              end
+            end
+            str << char
+          end
+
+          if quote
+            raise ArgumentError.new("Unmatched quote") unless reader.has_next?
+            reader.next_char
+          end
+        end
+      end
+
+      tokens << token
+    end
+
+    tokens
+  end
 end

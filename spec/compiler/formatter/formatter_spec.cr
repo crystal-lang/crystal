@@ -219,12 +219,12 @@ describe Crystal::Formatter do
   assert_format "def foo(a : T) forall T \n  #\nend", "def foo(a : T) forall T\n  #\nend"
   assert_format "def foo(a : T, b : U) forall T, U\n  #\nend", "def foo(a : T, b : U) forall T, U\n  #\nend"
   assert_format "def foo(a : T, b : U) forall T, U         #\n  #\nend", "def foo(a : T, b : U) forall T, U #\n  #\nend"
-  assert_format "def foo(a : T) forall T\n  #\n\nend", "def foo(a : T) forall T\n  #\n\nend"
-  assert_format "def foo(a : T) forall T\n  #\n\n\nend", "def foo(a : T) forall T\n  #\n\nend"
+  assert_format "def foo(a : T) forall T\n  #\n\nend", "def foo(a : T) forall T\n  #\nend"
+  assert_format "def foo(a : T) forall T\n  #\n\n\nend", "def foo(a : T) forall T\n  #\nend"
   assert_format "def foo\n  1\n  #\nrescue\nend"
-  assert_format "def foo\n  1 #\n\nrescue\nend"
   assert_format "def foo\n  1 #\nrescue\nend"
-  assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\n\nrescue\nend"
+  assert_format "def foo\n  1 #\nrescue\nend"
+  assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\nrescue\nend"
 
   assert_format "loop do\n  1\nrescue\n  2\nend"
   assert_format "loop do\n  1\n  loop do\n    2\n  rescue\n    3\n  end\n  4\nend"
@@ -277,6 +277,7 @@ describe Crystal::Formatter do
   assert_format "foo 1,\n2", "foo 1,\n  2"
   assert_format "foo 1, a: 1,\nb: 2,\nc: 3", "foo 1, a: 1,\n  b: 2,\n  c: 3"
   assert_format "foo 1,\na: 1,\nb: 2,\nc: 3", "foo 1,\n  a: 1,\n  b: 2,\n  c: 3"
+  assert_format "foo bar:baz, qux:other", "foo bar: baz, qux: other"
   assert_format "foo(\n  1, 2, &block)", "foo(\n  1, 2, &block)"
   assert_format "foo(\n  1, 2,\n&block)", "foo(\n  1, 2,\n  &block)"
   assert_format "foo(\n  1,\n  2\n) do\n  1\nend"
@@ -999,6 +1000,8 @@ describe Crystal::Formatter do
   assert_format "<<-FOO\n#{"foo"}bar\nFOO"
   assert_format "<<-FOO\nbar#{"foo"}\nFOO"
   assert_format "<<-FOO\nbar#{"foo"}bar\nFOO"
+  assert_format "<<-FOO\nfoo\n#{"foo"}\nFOO"
+  assert_format "<<-FOO\nfoo\n#{1}\nFOO"
 
   assert_format "#!shebang\n1 + 2"
 
@@ -1666,5 +1669,76 @@ describe Crystal::Formatter do
   assert_format <<-CODE
     1 # foo
     / #{1} /
+    CODE
+
+  assert_format <<-BEFORE,
+    def foo
+      # Comment
+
+
+    end
+    BEFORE
+    <<-AFTER
+    def foo
+      # Comment
+    end
+    AFTER
+
+  assert_format <<-BEFORE,
+    def foo
+      1
+      # Comment
+
+
+    end
+    BEFORE
+    <<-AFTER
+    def foo
+      1
+      # Comment
+    end
+    AFTER
+
+  assert_format <<-CODE
+    def foo
+      1
+    end
+
+    # Comment
+
+    def bar
+      2
+    end
+    CODE
+
+  assert_format <<-CODE
+    require "foo"
+
+    @x : Int32
+
+    class Bar
+    end
+    CODE
+
+  assert_format <<-CODE
+    x = <<-FOO
+      hello
+      FOO
+
+    def bar
+    end
+    CODE
+
+  assert_format <<-CODE
+    foo 1, # comment
+      do
+      end
+    CODE
+
+  assert_format <<-CODE
+    foo 1, # comment
+      # bar
+      do
+      end
     CODE
 end

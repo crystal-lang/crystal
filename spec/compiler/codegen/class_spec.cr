@@ -116,7 +116,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "codgens virtual method of generic class" do
+  it "codegens virtual method of generic class" do
     run("
       require \"char\"
 

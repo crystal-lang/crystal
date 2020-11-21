@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 describe "semantic: case" do
-  it "doesn't check ehxaustiveness when using 'when'" do
+  it "doesn't check exhaustiveness when using 'when'" do
     assert_no_errors %(
         a = 1 || nil
         case a

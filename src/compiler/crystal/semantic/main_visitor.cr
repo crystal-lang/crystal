@@ -58,11 +58,11 @@ module Crystal
     property yield_vars : Array(Var)?
 
     # In vars we store the types of variables as we traverse the nodes.
-    # These type are not cummulative: if you do `x = 1`, 'x' will have
+    # These type are not cumulative: if you do `x = 1`, 'x' will have
     # type Int32. Then if you do `x = false`, 'x' will have type Bool.
     getter vars
 
-    # Here we store the cummulative types of variables as we traverse the nodes.
+    # Here we store the cumulative types of variables as we traverse the nodes.
     getter meta_vars : MetaVars
     property is_initialize : Bool
     property exception_handler_vars : MetaVars? = nil
@@ -127,7 +127,7 @@ module Crystal
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
-      # so the codegen phase knows the cummulative types to do allocas.
+      # so the codegen phase knows the cumulative types to do allocas.
       unless meta_vars
         if typed_def = @typed_def
           meta_vars = typed_def.vars = MetaVars.new
@@ -254,15 +254,6 @@ module Crystal
         unless node.named_args
           node.raise "can only instantiate NamedTuple with named arguments"
         end
-      elsif instance_type.splat_index
-        if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
-        end
-
-        min_needed = instance_type.type_vars.size - 1
-        if node.type_vars.size < min_needed
-          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
-        end
       else
         if node.named_args
           node.raise "can only use named arguments with NamedTuple"
@@ -273,8 +264,12 @@ module Crystal
         knows_count = true
         node.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
-            if type_var.type?
-              type_vars_count += type_var.type.as(TupleInstanceType).size
+            if (type_var_type = type_var.type?)
+              unless type_var_type.is_a?(TupleInstanceType)
+                type_var.raise "argument to splat must be a tuple type, not #{type_var_type}"
+              end
+
+              type_vars_count += type_var_type.size
             else
               knows_count = false
               break
@@ -284,8 +279,20 @@ module Crystal
           end
         end
 
-        if knows_count && instance_type.type_vars.size != type_vars_count
-          node.wrong_number_of "type vars", instance_type, type_vars_count, instance_type.type_vars.size
+        if knows_count
+          if instance_type.splat_index
+            min_needed = instance_type.type_vars.size
+            min_needed -= 1 if instance_type.splat_index
+
+            if type_vars_count < min_needed
+              node.wrong_number_of "type vars", instance_type, type_vars_count, "#{min_needed}+"
+            end
+          else
+            needed_count = instance_type.type_vars.size
+            if type_vars_count != needed_count
+              node.wrong_number_of "type vars", instance_type, type_vars_count, needed_count
+            end
+          end
         end
       end
 
@@ -843,7 +850,7 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
-        # `InstanceVar` assignment appered in block is not checked
+        # `InstanceVar` assignment appeared in block is not checked
         # by `Crystal::InstanceVarsInitializerVisitor` because this block
         # may be passed to a macro. So, it checks here.
         if current_type.is_a?(Program) || current_type.is_a?(FileModule)
@@ -873,7 +880,7 @@ module Crystal
       if @is_initialize
         var_name = target.name
 
-        # Don't track instance variables nilabilty (for example, if they were
+        # Don't track instance variables nilability (for example, if they were
         # just assigned inside a branch) if they have an initializer
         unless scope.has_instance_var_initializer?(var_name)
           meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
@@ -1236,6 +1243,13 @@ module Crystal
     def visit(node : ProcPointer)
       obj = node.obj
 
+      # If it's something like `->foo.bar` we turn it into a closure
+      # where `foo` is assigned to a temporary variable.
+      if obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
+        expand(node)
+        return false
+      end
+
       if obj
         obj.accept self
       end
@@ -1288,7 +1302,7 @@ module Crystal
       if expand_macro(node)
         # It can happen that this call is inside an ArrayLiteral or HashLiteral,
         # was expanded but isn't bound to the expansion because the call (together
-        # with its expantion) was cloned.
+        # with its expansion) was cloned.
         if (expanded = node.expanded) && (!node.dependencies? || !node.type?)
           node.bind_to(expanded)
         end
@@ -1421,8 +1435,6 @@ module Crystal
         case exp
         when Var, InstanceVar, ClassVar, Global
           next
-        else
-          # go on
         end
 
         temp_var = @program.new_temp_var.at(arg.location)
@@ -1566,8 +1578,6 @@ module Crystal
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
-        else
-          # go on, nothing special
         end
       end
 
@@ -1839,8 +1849,6 @@ module Crystal
       when Expressions
         return unless exp = exp.single_expression?
         return get_expression_var(exp)
-      else
-        # go on
       end
       nil
     end
@@ -1865,8 +1873,6 @@ module Crystal
         node.raise "can't cast to Reference yet"
       when @program.class_type
         node.raise "can't cast to Class yet"
-      else
-        # go on
       end
 
       obj_type = node.obj.type?
@@ -1972,8 +1978,6 @@ module Crystal
         elsif or_right_type_filters
           filter_vars or_right_type_filters.not
         end
-      else
-        # go on
       end
 
       before_else_vars = @vars.dup
@@ -1994,8 +1998,6 @@ module Crystal
           @or_left_type_filters = or_left_type_filters = then_type_filters
           @or_right_type_filters = or_right_type_filters = else_type_filters
           @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
-        else
-          # go on: a regular if
         end
       end
 
@@ -2287,8 +2289,6 @@ module Crystal
       when Expressions
         return unless node = node.single_expression?
         return get_while_cond_assign_target(node)
-      else
-        # go on
       end
 
       nil
@@ -2431,9 +2431,6 @@ module Crystal
     end
 
     def visit_va_arg(node)
-      if program.has_flag? "windows"
-        node.raise "va_arg is not yet supported on Windows"
-      end
       arg = call.not_nil!.args[0]? || node.raise("requires type argument")
       node.type = arg.type.instance_type
     end
@@ -2515,8 +2512,6 @@ module Crystal
           node.extra = convert_call
           return
         end
-      else
-        # go on
       end
 
       unsafe_call = Conversions.to_unsafe(node, Var.new("value").at(node), self, actual_type, expected_type)
@@ -2562,6 +2557,7 @@ module Crystal
       when Path
         exp.accept self
         if const = exp.target_const
+          const.pointer_read = true
           const.value
         end
       when ReadInstanceVar
@@ -3068,12 +3064,8 @@ module Crystal
           case element
           when Var         then element.accept(self)
           when InstanceVar then element.accept(self)
-          else
-            # Nothing to do
           end
         end
-      else
-        # Nothing to do
       end
 
       expand(node)
@@ -3127,8 +3119,6 @@ module Crystal
         case exp
         when Var, IsA, RespondsTo, Not
           return type_filters.not
-        else
-          # go on
         end
       end
 
@@ -3168,6 +3158,7 @@ module Crystal
 
     def visit(node : Unreachable)
       node.type = @program.no_return
+      @unreachable = true
     end
 
     # # Helpers
@@ -3214,6 +3205,8 @@ module Crystal
     end
 
     def check_self_closured
+      return if @typeof_nest > 0
+
       scope = @scope
       return unless scope
 

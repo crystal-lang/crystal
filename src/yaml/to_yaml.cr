@@ -80,6 +80,21 @@ struct Number
   end
 end
 
+struct Float
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    infinite = self.infinite?
+    if infinite == 1
+      yaml.scalar(".inf")
+    elsif infinite == -1
+      yaml.scalar("-.inf")
+    elsif nan?
+      yaml.scalar(".nan")
+    else
+      yaml.scalar self.to_s
+    end
+  end
+end
+
 struct Nil
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.scalar ""
@@ -146,7 +161,7 @@ end
 #   include YAML::Serializable
 #
 #   @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
-#   values : Array(Time)
+#   property values : Array(Time)
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))

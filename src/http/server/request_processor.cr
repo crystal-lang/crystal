@@ -46,7 +46,7 @@ class HTTP::Server::RequestProcessor
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
-        begin
+        Log.with_context do
           @handler.call(context)
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
@@ -88,8 +88,6 @@ class HTTP::Server::RequestProcessor
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
           break unless body.closed?
-        else
-          # Nothing to do
         end
       end
     rescue IO::Error

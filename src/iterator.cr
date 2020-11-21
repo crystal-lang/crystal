@@ -274,7 +274,7 @@ module Iterator(T)
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
   #
-  # Chunks oo two items can be iterated using `#cons_pair`, an optimized
+  # Chunks of two items can be iterated using `#cons_pair`, an optimized
   # implementation for the special case of `size == 2` which avoids heap
   # allocations.
   def cons(n : Int, reuse = false)
@@ -338,18 +338,17 @@ module Iterator(T)
     def initialize(@iterator : I)
     end
 
-    def next
+    def next : {T, T} | Iterator::Stop
       elem = wrapped_next
-      return elem if elem.is_a?(Iterator::Stop)
+      last_elem = @last_elem
 
-      if @last_elem.is_a?(Iterator::Stop)
+      if last_elem.is_a?(Iterator::Stop)
         @last_elem = elem
-
         self.next
       else
+        value = {last_elem, elem}
         @last_elem, elem = elem, @last_elem
-
-        {elem, @last_elem}
+        value
       end
     end
   end

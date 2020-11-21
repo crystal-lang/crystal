@@ -12,11 +12,10 @@ private class ReverseResponseOutput < IO
   def initialize(@output : IO)
   end
 
-  def write(slice : Bytes) : Int64
+  def write(slice : Bytes) : Nil
     slice.reverse_each do |byte|
       @output.write_byte(byte)
     end
-    slice.size.to_i64
   end
 
   def read(slice : Bytes)
@@ -90,6 +89,14 @@ describe HTTP::Server::Response do
     response.print("567890")
     response.close
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n1234567890")
+  end
+
+  it "doesn't override content-length when there's no body" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.content_length = 10
+    response.close
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n")
   end
 
   it "adds header" do

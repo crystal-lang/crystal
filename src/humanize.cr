@@ -64,7 +64,7 @@ struct Number
   SI_PREFIXES = { {'y', 'z', 'a', 'f', 'p', 'n', 'µ', 'm'}, {nil, 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'} }
 
   # SI prefixes used by `#humanize`. Equal to `SI_PREFIXES` but prepends the
-  # prefix with a space charater.
+  # prefix with a space character.
   SI_PREFIXES_PADDED = ->(magnitude : Int32, _number : Float64) do
     magnitude = Number.prefix_index(magnitude)
     {magnitude, (magnitude == 0 ? " " : si_prefix(magnitude))}
