@@ -2,37 +2,38 @@ require "random/secure"
 require "openssl"
 
 # A class which can be used to encrypt and decrypt an IO using a specified cipher.
+#
 # ```
 # require "random/secure"
-# key : Bytes = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
-# iv : Bytes = Random::Secure.random_bytes(32) # You can also use OpenSSL::Cipher#random_iv to do this same thing
-
-
+#
+# key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
+# iv = Random::Secure.random_bytes(32) # You can also use OpenSSL::Cipher#random_iv to do this same thing
+#
 # def encrypt(data)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.encrypt
 #   cipher.key = key
 #   cipher.iv = iv
-
+#
 #   io = IO::Memory.new
 #   io.write(cipher.update(data))
 #   io.write(cipher.final)
 #   io.rewind
-
+#
 #   io.to_slice
 # end
-
+#
 # def decrypt(data)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.decrypt
 #   cipher.key = key
 #   cipher.iv = iv
-
+#
 #   io = IO::Memory.new
 #   io.write(cipher.update(data))
 #   io.write(cipher.final)
 #   io.rewind
-
+#
 #   io.gets_to_end
 # end
 # ```
