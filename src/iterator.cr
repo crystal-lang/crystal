@@ -1259,7 +1259,11 @@ module Iterator(T)
 
   protected def self.zip_impl(*iterators : *U) forall U
     {% begin %}
-      Zip(U, Tuple({{ *U.type_vars.map &.type_vars.first }})).new(iterators)
+      Zip(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(iterators[{{ i }}].first),
+        {% end %}
+      )).new(iterators)
     {% end %}
   end
 
