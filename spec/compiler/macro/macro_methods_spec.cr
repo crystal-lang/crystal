@@ -10,14 +10,6 @@ private def declare_class_var(container : ClassVarContainer, name, var_type : Ty
   container.class_vars[name] = var
 end
 
-private def assert_hash_delete(key, expected)
-  assert_macro("",
-    %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete #{key}}}),
-    [] of ASTNode,
-    expected
-  )
-end
-
 module Crystal
   describe Macro do
     describe "node methods" do
@@ -963,10 +955,37 @@ module Crystal
       end
 
       describe "#delete" do
-        it "with String key" { assert_hash_delete %("1"), %({1 => 1, :"1" => :"1", true => true}) }
-        it "with Symbol key" { assert_hash_delete %(:"1"), %({"1" => "1", 1 => 1, true => true}) }
-        it "with Number key" { assert_hash_delete 1, %({"1" => "1", :"1" => :"1", true => true}) }
-        it "with Bool key" { assert_hash_delete true, %({"1" => "1", 1 => 1, :"1" => :"1"}) }
+        it "with String key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete "1"}}),
+            [] of ASTNode,
+            %({1 => 1, :"1" => :"1", true => true})
+          )
+        end
+
+        it "with Symbol key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete :"1"}}),
+            [] of ASTNode,
+            %({"1" => "1", 1 => 1, true => true})
+          )
+        end
+
+        it "with Number key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete 1}}),
+            [] of ASTNode,
+            %({"1" => "1", :"1" => :"1", true => true})
+          )
+        end
+
+        it "with Bool key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete true}}),
+            [] of ASTNode,
+            %({"1" => "1", 1 => 1, :"1" => :"1"})
+          )
+        end
       end
     end
 
