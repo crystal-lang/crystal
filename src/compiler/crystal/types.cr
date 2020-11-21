@@ -21,11 +21,6 @@ module Crystal
       nil
     end
 
-    # Returns `true` if this type has the give attribute.
-    def has_attribute?(name)
-      false
-    end
-
     # An opaque id of every type. 0 for Nil, non zero for others, so we can
     # sort types by opaque_id and have Nil in the beginning.
     def opaque_id
@@ -77,7 +72,7 @@ module Crystal
       false
     end
 
-    # Returns `true` if this type has the `@[Packed]` attribute on it
+    # Returns `true` if this type has the `@[Packed]` annotation on it
     # (only applicable for C structs)
     def packed?
       false
@@ -1218,11 +1213,6 @@ module Crystal
 
     def force_add_subclass
       superclass.try &.add_subclass(self)
-    end
-
-    def has_attribute?(name)
-      return true if packed? && name == "Packed"
-      false
     end
 
     def type_desc
@@ -2708,11 +2698,6 @@ module Crystal
       types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
       program.const_initializers << const
       const
-    end
-
-    def has_attribute?(name)
-      return true if flags? && name == "Flags"
-      false
     end
 
     def lookup_new_in_ancestors?

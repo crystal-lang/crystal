@@ -1622,11 +1622,6 @@ module Crystal
           value = arg.to_string("argument to 'TypeNode#has_method?'")
           TypeNode.has_method?(type, value)
         end
-      when "has_attribute?"
-        interpret_one_arg_method(method, args) do |arg|
-          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
-          BoolLiteral.new(!!type.has_attribute?(value))
-        end
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)

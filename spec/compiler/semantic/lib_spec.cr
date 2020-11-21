@@ -366,7 +366,7 @@ describe "Semantic: lib" do
       "'lib' link argument must be a String"
   end
 
-  it "clears attributes after lib" do
+  it "clears annotations after lib" do
     assert_type(%(
       @[Link("foo")]
       lib LibFoo
@@ -494,7 +494,7 @@ describe "Semantic: lib" do
       "can't define method in lib LibC"
   end
 
-  it "reopens lib and adds more link attributes" do
+  it "reopens lib and adds more link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -514,7 +514,7 @@ describe "Semantic: lib" do
     attrs[1].lib.should eq("SDLMain")
   end
 
-  it "reopens lib and adds same link attributes" do
+  it "reopens lib and adds same link annotations" do
     result = semantic(%(
       @[Link("SDL")]
       lib LibSDL
@@ -533,7 +533,7 @@ describe "Semantic: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
-  it "gathers link attributes from macro expression" do
+  it "gathers link annotations from macro expression" do
     result = semantic(%(
       {% begin %}
         @[Link("SDL")]

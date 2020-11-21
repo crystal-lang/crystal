@@ -770,31 +770,6 @@ describe "Code gen: macro" do
       )).to_string.should eq("Green")
   end
 
-  it "says that enum has Flags attribute" do
-    run(%(
-      @[Flags]
-      enum Color
-        Red
-        Green
-        Blue
-      end
-
-      {{Color.has_attribute?("Flags")}}
-      )).to_b.should be_true
-  end
-
-  it "says that enum doesn't have Flags attribute" do
-    run(%(
-      enum Color
-        Red
-        Green
-        Blue
-      end
-
-      {{Color.has_attribute?("Flags")}}
-      )).to_b.should be_false
-  end
-
   it "gets methods" do
     run(%(
       class Foo
