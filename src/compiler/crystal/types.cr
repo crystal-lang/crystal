@@ -38,6 +38,15 @@ module Crystal
       program
     end
 
+    # Yields each namespace this type belongs to, excluding the `Program` itself.
+    def each_namespace(& : ModuleType ->) : Nil
+      ns = self.namespace
+      until ns == program
+        yield ns
+        ns = ns.namespace
+      end
+    end
+
     # Returns `true` if this type is abstract.
     def abstract?
       false
