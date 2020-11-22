@@ -9,7 +9,7 @@ class Thread
   @detached = Atomic(UInt8).new(0)
   @main_fiber : Fiber?
   getter iocp = LibC::HANDLE.null
-  
+
   # :nodoc:
   property next : Thread?
 
@@ -23,9 +23,9 @@ class Thread
   def initialize
     @main_fiber = Fiber.new(stack_address, self)
     @iocp = LibC.CreateIoCompletionPort(LibC::INVALID_HANDLE_VALUE, nil, 0, 0)
-    
-    if(@iocp == LibC::HANDLE.null)
-      raise RuntimeError.from_winerror("Failed to create i/o completion port for thread") 
+
+    if (@iocp == LibC::HANDLE.null)
+      raise RuntimeError.from_winerror("Failed to create i/o completion port for thread")
     end
 
     @@threads.push(self)

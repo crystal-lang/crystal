@@ -18,7 +18,6 @@ end
 
 @[Link("advapi32")]
 lib LibC
-
   struct OVERLAPPED_ENTRY
     lpCompletionKey : ULONG_PTR
     lpOverlapped : WSAOVERLAPPED*
@@ -26,12 +25,12 @@ lib LibC
     dwNumberOfBytesTransferred : DWORD
   end
 
-  fun WSAGetLastError() : Int
-    
+  fun WSAGetLastError : Int
+
   fun CreateIoCompletionPort(
-    fileHandle : HANDLE, 
-    existingCompletionPort : HANDLE, 
-    completionKey : ULONG_PTR, 
+    fileHandle : HANDLE,
+    existingCompletionPort : HANDLE,
+    completionKey : ULONG_PTR,
     numberOfConcurrentThreads : DWORD
   ) : HANDLE
 
@@ -40,7 +39,7 @@ lib LibC
     lpNumberOfBytesTransferred : DWORD*,
     lpCompletionKey : ULONG_PTR*,
     lpOverlapped : WSAOVERLAPPED*,
-    dwMilliseconds : DWORD,
+    dwMilliseconds : DWORD
   ) : BOOL
 
   fun GetQueuedCompletionStatusEx(
@@ -50,6 +49,5 @@ lib LibC
     ulNumEntriesRemoved : ULong*,
     dwMilliseconds : DWORD,
     fAlertable : BOOL
-    ) : BOOL
-
+  ) : BOOL
 end

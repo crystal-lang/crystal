@@ -13,7 +13,7 @@ module Crystal::EventLoop
       unless time_elapsed > next_event.wake_in
         sleepy_time = (next_event.wake_in - time_elapsed).total_milliseconds.to_i
         io_entry = Slice.new(1, LibC::OVERLAPPED_ENTRY.new)
-        
+
         if LibC.GetQueuedCompletionStatusEx(Thread.current.iocp, io_entry, 1, out removed, sleepy_time, false)
           if removed == 1 && io_entry.first.lpOverlapped
             next_event = io_entry.first.lpOverlapped.value.cEvent.unsafe_as(Crystal::Event)
@@ -83,7 +83,7 @@ struct Crystal::Event
     @wake_in = time_span
     Crystal::EventLoop.enqueue(self)
   end
-  
+
   def to_unsafe
     pointerof(LibC::WSAOVERLAPPED.new(self))
   end
