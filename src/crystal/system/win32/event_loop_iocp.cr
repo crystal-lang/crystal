@@ -85,6 +85,6 @@ struct Crystal::Event
   end
 
   def to_unsafe
-    pointerof(LibC::WSAOVERLAPPED.new(self))
+    WSAOVERLAPPED.new(self)
   end
 end
