@@ -591,6 +591,15 @@ describe Iterator do
       iter.next.should eq({3, "a"})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "does with object, with block" do
+      tuples = [] of {Int32, String}
+      object = "a"
+      (1..3).each.with_object(object) do |value, obj|
+        tuples << {value, obj}
+      end.should be(object)
+      tuples.should eq([{1, object}, {2, object}, {3, object}])
+    end
   end
 
   describe "zip" do
