@@ -497,6 +497,24 @@ module Spec
         fail(expectation.negative_failure_message(self), file, line)
       end
     end
+
+    # Asserts return from yielded block and fails the example unless it's truthy.
+    #
+    # ```
+    # %w().assert &.empty?
+    # ```
+    def assert(file = __FILE__, line = __LINE__)
+      fail("Assertion failed", file, line) unless yield self
+    end
+
+    # Asserts return from yielded block and fails the example unless it's falsey.
+    #
+    # ```
+    # %w(foo).refute &.empty?
+    # ```
+    def refute(file = __FILE__, line = __LINE__)
+      fail("Assertion failed", file, line) if yield self
+    end
   end
 end
 

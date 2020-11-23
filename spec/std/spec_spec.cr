@@ -115,6 +115,20 @@ describe "Spec matchers" do
     end
   end
 
+  describe "assert" do
+    it "passes when the block return value is truthy" do
+      "hello world!".assert &.includes?('o')
+      "hello world!".assert &.['!']?
+    end
+  end
+
+  describe "refute" do
+    it "passes when the block return value is falsey" do
+      "hello world!".refute &.includes?('x')
+      "hello world!".refute &.['@']?
+    end
+  end
+
   it "detects a nesting `it`" do
     ex = expect_raises(Spec::NestingSpecError) { it { } }
     ex.message.should eq "can't nest `it` or `pending`"
