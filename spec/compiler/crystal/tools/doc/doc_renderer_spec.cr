@@ -275,5 +275,14 @@ describe Doc::Markdown::DocRenderer do
           %(<a href="Base.html#foo2(a,b)-instance-method">Base#foo2(a, a)</a> and <a href="Base.html#foo3(a,b,c)-instance-method">#foo3</a> and <a href="Base.html">Base</a>))
       end
     end
+
+    it "does not break when referencing lib type (#9928)" do
+      program = semantic("lib LibFoo; BAR = 0; end", wants_doc: true).program
+      generator = Doc::Generator.new(program, [""])
+
+      # TODO: There should not be a link to LibFoo::Bar in the first place
+      # because LibFoo is undocumented
+      assert_code_link(generator.type(program), "LibFoo::BAR", %(<a href="LibFoo.html#BAR">LibFoo::BAR</a>))
+    end
   end
 end
