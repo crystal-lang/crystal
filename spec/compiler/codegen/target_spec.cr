@@ -8,9 +8,9 @@ describe Crystal::Codegen::Target do
     target = Target.new("x86_64-linux-gnu")
     target.to_s.should eq("x86_64-unknown-linux-gnu")
     target.pointer_bit_width.should eq(64)
-    target.linux?.should be_true
-    target.unix?.should be_true
-    target.gnu?.should be_true
+    target.assert &.linux?
+    target.assert &.unix?
+    target.assert &.gnu?
   end
 
   it "normalizes triples" do

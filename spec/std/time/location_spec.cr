@@ -11,22 +11,22 @@ class Time::Location
           standard_time = location.lookup(Time.utc(2017, 11, 22))
           standard_time.name.should eq "CET"
           standard_time.offset.should eq 3600
-          standard_time.dst?.should be_false
+          standard_time.refute &.dst?
 
           summer_time = location.lookup(Time.utc(2017, 10, 22))
           summer_time.name.should eq "CEST"
           summer_time.offset.should eq 7200
-          summer_time.dst?.should be_true
+          summer_time.assert &.dst?
 
-          location.utc?.should be_false
-          location.fixed?.should be_false
+          location.refute &.utc?
+          location.refute &.fixed?
 
           with_env("TZ", nil) do
-            location.local?.should be_false
+            location.refute &.local?
           end
 
           with_env("TZ", "Europe/Berlin") do
-            location.local?.should be_true
+            location.assert &.local?
           end
 
           Location.load("Europe/Berlin", {ZONEINFO_ZIP}).should eq location
@@ -148,18 +148,18 @@ class Time::Location
       location = Location::UTC
       location.name.should eq "UTC"
 
-      location.utc?.should be_true
-      location.fixed?.should be_true
+      location.assert &.utc?
+      location.assert &.fixed?
 
       # this could fail if no source for localtime is available
       unless Location.local.utc?
-        location.local?.should be_false
+        location.refute &.local?
       end
 
       zone = location.lookup(Time.utc)
       zone.name.should eq "UTC"
       zone.offset.should eq 0
-      zone.dst?.should be_false
+      zone.refute &.dst?
     end
 
     it ".local" do
@@ -197,7 +197,7 @@ class Time::Location
       it "with empty TZ" do
         with_zoneinfo do
           with_env("TZ", "") do
-            Location.load_local.utc?.should be_true
+            Location.load_local.assert &.utc?
           end
         end
       end
@@ -210,9 +210,9 @@ class Time::Location
         location.zones.should eq [Zone.new(nil, -9012, false)]
         location.transitions.size.should eq 0
 
-        location.utc?.should be_false
-        location.fixed?.should be_true
-        location.local?.should be_false
+        location.refute &.utc?
+        location.assert &.fixed?
+        location.refute &.local?
       end
 
       it "with name" do
@@ -221,9 +221,9 @@ class Time::Location
         location.zones.should eq [Zone.new("Fixed", 1800, false)]
         location.transitions.size.should eq 0
 
-        location.utc?.should be_false
-        location.fixed?.should be_true
-        location.local?.should be_false
+        location.refute &.utc?
+        location.assert &.fixed?
+        location.refute &.local?
       end
 
       it "positive" do
@@ -266,17 +266,17 @@ class Time::Location
           summer = location.lookup(time - 1.second)
           summer.name.should eq "CEST"
           summer.offset.should eq 2 * SECONDS_PER_HOUR
-          summer.dst?.should be_true
+          summer.assert &.dst?
 
           winter = location.lookup(time)
           winter.name.should eq "CET"
           winter.offset.should eq 1 * SECONDS_PER_HOUR
-          winter.dst?.should be_false
+          winter.refute &.dst?
 
           last_ns = location.lookup(time - 1.nanosecond)
           last_ns.name.should eq "CEST"
           last_ns.offset.should eq 2 * SECONDS_PER_HOUR
-          last_ns.dst?.should be_true
+          last_ns.assert &.dst?
         end
       end
 

@@ -33,7 +33,7 @@ describe VaList do
 
         puts LibFoo.foo
       )) do |status, output|
-      status.success?.should be_true
+      status.assert &.success?
       output.to_i.should eq(6)
     end
   end

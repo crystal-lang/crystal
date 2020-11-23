@@ -113,7 +113,7 @@ describe Time do
       t1.hour.should eq(0)
       t1.minute.should eq(0)
       t1.second.should eq(0)
-      t1.local?.should be_true
+      t1.assert &.local?
 
       t2 = Time.local 2002, 2, 25, 15, 25, 13, nanosecond: 8
       t2.date.should eq({2002, 2, 25})
@@ -124,7 +124,7 @@ describe Time do
       t2.minute.should eq(25)
       t2.second.should eq(13)
       t2.nanosecond.should eq(8)
-      t2.local?.should be_true
+      t2.assert &.local?
     end
 
     it "initializes max value" do
@@ -200,7 +200,7 @@ describe Time do
     time = Time.unix(seconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.to_unix.should eq(seconds)
-    time.utc?.should be_true
+    time.assert &.utc?
   end
 
   it ".unix_ms" do
@@ -208,7 +208,7 @@ describe Time do
     time = Time.unix_ms(milliseconds)
     time.should eq(Time.utc(2015, 8, 12, 18, 29, 15))
     time.to_unix_ms.should eq(milliseconds)
-    time.utc?.should be_true
+    time.assert &.utc?
   end
 
   describe ".local without arguments" do
@@ -437,9 +437,9 @@ describe Time do
 
     it "preserves location when adding" do
       time = Time.utc
-      time.utc?.should be_true
+      time.assert &.utc?
 
-      (time + 5.minutes).utc?.should be_true
+      (time + 5.minutes).assert &.utc?
 
       location = Time::Location.fixed(1234)
       time = Time.local(location)

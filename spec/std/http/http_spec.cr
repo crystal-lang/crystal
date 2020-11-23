@@ -27,7 +27,7 @@ describe HTTP do
   it "parses and is UTC (#2744)" do
     date = "Mon, 09 Sep 2011 23:36:00 GMT"
     parsed_time = HTTP.parse_time(date).not_nil!
-    parsed_time.utc?.should be_true
+    parsed_time.assert &.utc?
   end
 
   it "parses and is local (#2744)" do

@@ -209,7 +209,7 @@ describe IO::Memory do
     io = IO::Memory.new
     io << "abc"
     io.close
-    io.closed?.should be_true
+    io.assert &.closed?
 
     expect_raises(IO::Error, "Closed stream") { io.gets_to_end }
     expect_raises(IO::Error, "Closed stream") { io.print "hi" }

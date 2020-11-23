@@ -311,14 +311,14 @@ describe JSON::Builder do
   it "#next_is_object_key?" do
     io = IO::Memory.new
     builder = JSON::Builder.new(io)
-    builder.next_is_object_key?.should be_false
+    builder.refute &.next_is_object_key?
     builder.start_document
-    builder.next_is_object_key?.should be_false
+    builder.refute &.next_is_object_key?
     builder.start_object
-    builder.next_is_object_key?.should be_true
+    builder.assert &.next_is_object_key?
     builder.scalar("foo")
-    builder.next_is_object_key?.should be_false
+    builder.refute &.next_is_object_key?
     builder.scalar("bar")
-    builder.next_is_object_key?.should be_true
+    builder.assert &.next_is_object_key?
   end
 end

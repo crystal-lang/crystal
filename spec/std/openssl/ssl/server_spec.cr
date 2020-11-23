@@ -11,7 +11,7 @@ describe OpenSSL::SSL::Server do
 
       ssl_server.close
 
-      tcp_server.closed?.should be_true
+      tcp_server.assert &.closed?
     end
   end
 
@@ -23,7 +23,7 @@ describe OpenSSL::SSL::Server do
 
       ssl_server.close
 
-      tcp_server.closed?.should be_false
+      tcp_server.refute &.closed?
     end
   end
 
@@ -34,7 +34,7 @@ describe OpenSSL::SSL::Server do
 
       ssl_server.context.should eq context
       ssl_server.wrapped.should eq tcp_server
-      ssl_server.sync_close?.should be_false
+      ssl_server.refute &.sync_close?
     end
   end
 
@@ -48,7 +48,7 @@ describe OpenSSL::SSL::Server do
       end
 
       ssl_server.try(&.closed?).should be_true
-      tcp_server.closed?.should be_true
+      tcp_server.assert &.closed?
     end
   end
 

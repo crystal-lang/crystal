@@ -44,7 +44,7 @@ describe "Process.run" do
     if exp
       it "runs '#{command}' as '#{exp}'" do
         output = Process.run command, &.output.gets_to_end
-        $?.success?.should be_true
+        $?.assert &.success?
         output.should eq exp
       end
     else

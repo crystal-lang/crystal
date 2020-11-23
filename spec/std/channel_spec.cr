@@ -69,13 +69,13 @@ describe Channel do
 
   it "does not raise or change its status when it is closed more than once" do
     ch = Channel(Int32).new
-    ch.closed?.should be_false
+    ch.refute &.closed?
 
     ch.close
-    ch.closed?.should be_true
+    ch.assert &.closed?
 
     ch.close
-    ch.closed?.should be_true
+    ch.assert &.closed?
   end
 
   describe ".select" do
@@ -627,9 +627,9 @@ describe "unbuffered" do
 
   it "can be closed" do
     ch = Channel(Int32).new
-    ch.closed?.should be_false
+    ch.refute &.closed?
     ch.close.should be_true
-    ch.closed?.should be_true
+    ch.assert &.closed?
     ch.close.should be_false
     expect_raises(Channel::ClosedError) { ch.receive }
   end
@@ -798,9 +798,9 @@ describe "buffered" do
 
   it "can be closed" do
     ch = Channel(Int32).new(10)
-    ch.closed?.should be_false
+    ch.refute &.closed?
     ch.close
-    ch.closed?.should be_true
+    ch.assert &.closed?
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 

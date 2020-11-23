@@ -154,9 +154,9 @@ describe "Spec" do
       saved = Spec.use_colors?
       begin
         Spec.use_colors = false
-        Spec.use_colors?.should be_false
+        Spec.refute &.use_colors?
         Spec.use_colors = true
-        Spec.use_colors?.should be_true
+        Spec.assert &.use_colors?
       ensure
         Spec.use_colors = saved
       end

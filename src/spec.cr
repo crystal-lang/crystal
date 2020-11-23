@@ -19,11 +19,11 @@ require "./spec/dsl"
 #
 #   describe "#empty?" do
 #     it "is empty when no elements are in the array" do
-#       ([] of Int32).empty?.should be_true
+#       ([] of Int32).assert &.empty?
 #     end
 #
 #     it "is not empty if there are elements in the array" do
-#       [1].empty?.should be_false
+#       [1].refute &.empty?
 #     end
 #   end
 #

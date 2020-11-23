@@ -30,7 +30,7 @@ describe "Hash" do
     it "size should be zero" do
       h = {} of Int32 => Int32
       h.size.should eq(0)
-      h.empty?.should be_true
+      h.assert &.empty?
     end
   end
 
@@ -399,7 +399,7 @@ describe "Hash" do
     it "clones empty hash" do
       h1 = {} of Int32 => Int32
       h2 = h1.clone
-      h2.empty?.should be_true
+      h2.assert &.empty?
     end
 
     it "clones small hash" do
@@ -462,7 +462,7 @@ describe "Hash" do
     it "dups empty hash" do
       h1 = {} of Int32 => Int32
       h2 = h1.dup
-      h2.empty?.should be_true
+      h2.assert &.empty?
     end
 
     it "dups small hash" do
@@ -657,7 +657,7 @@ describe "Hash" do
 
     h2 = h1.transform_keys { |x| x + 1 }
     h2.should be_a(Hash(Int32, Symbol))
-    h2.empty?.should be_true
+    h2.assert &.empty?
   end
 
   it "transforms values" do
@@ -680,7 +680,7 @@ describe "Hash" do
 
     h2 = h1.transform_values { |x| x + 1 }
     h2.should be_a(Hash(Symbol, Int32))
-    h2.empty?.should be_true
+    h2.assert &.empty?
   end
 
   it "transform values in place" do
@@ -793,7 +793,7 @@ describe "Hash" do
     h.each_value.to_a.should eq([4])
 
     h.shift.should eq({3, 4})
-    h.empty?.should be_true
+    h.assert &.empty?
 
     expect_raises(IndexError) do
       h.shift
@@ -807,7 +807,7 @@ describe "Hash" do
     20.times do |i|
       h.shift.should eq({i, i})
     end
-    h.empty?.should be_true
+    h.assert &.empty?
   end
 
   it "shifts: delete elements in the middle position and then in the first position" do
@@ -823,7 +823,7 @@ describe "Hash" do
   it "shifts?" do
     h = {1 => 2}
     h.shift?.should eq({1, 2})
-    h.empty?.should be_true
+    h.assert &.empty?
     h.shift?.should be_nil
   end
 
@@ -879,7 +879,7 @@ describe "Hash" do
   it "clears" do
     h = {1 => 2, 3 => 4}
     h.clear
-    h.empty?.should be_true
+    h.assert &.empty?
     h.to_a.size.should eq(0)
   end
 
@@ -887,10 +887,10 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.shift
     h.clear
-    h.empty?.should be_true
+    h.assert &.empty?
     h.to_a.size.should eq(0)
     h[5] = 6
-    h.empty?.should be_false
+    h.refute &.empty?
     h[5].should eq(6)
     h.should eq({5 => 6})
   end
@@ -1217,9 +1217,9 @@ describe "Hash" do
     it "small hash" do
       string = "foo"
       h = {string => 1}
-      h.compare_by_identity?.should be_false
+      h.refute &.compare_by_identity?
       h.compare_by_identity
-      h.compare_by_identity?.should be_true
+      h.assert &.compare_by_identity?
       h[string]?.should eq(1)
       h["fo" + "o"]?.should be_nil
     end
@@ -1242,12 +1242,12 @@ describe "Hash" do
 
     it "retains compare_by_identity on dup" do
       h = ({} of String => Int32).compare_by_identity
-      h.dup.compare_by_identity?.should be_true
+      h.dup.assert &.compare_by_identity?
     end
 
     it "retains compare_by_identity on clone" do
       h = ({} of String => Int32).compare_by_identity
-      h.clone.compare_by_identity?.should be_true
+      h.clone.assert &.compare_by_identity?
     end
   end
 

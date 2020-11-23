@@ -143,7 +143,7 @@ describe UDPSocket do
       client = UDPSocket.new(Socket::Family::INET)
       client.bind("localhost", 0)
       client.broadcast = true
-      client.broadcast?.should be_true
+      client.assert &.broadcast?
       client.connect("255.255.255.255", port)
       client.send("broadcast").should eq(9)
       client.close

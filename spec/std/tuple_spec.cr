@@ -17,8 +17,8 @@ describe "Tuple" do
   end
 
   it "checks empty?" do
-    Tuple.new.empty?.should be_true
-    {1}.empty?.should be_false
+    Tuple.new.assert &.empty?
+    {1}.refute &.empty?
   end
 
   it "does []" do

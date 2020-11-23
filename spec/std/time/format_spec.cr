@@ -180,7 +180,7 @@ describe Time::Format do
     t.minute.should eq(0)
     t.second.should eq(0)
     t.millisecond.should eq(0)
-    t.local?.should be_true
+    t.assert &.local?
   end
 
   it "parse fails without time zone" do
@@ -419,47 +419,47 @@ describe Time::Format do
     {"+0000", "+00:00", "+00:00:00"}.zip(patterns) do |string, pattern|
       time = Time.parse!(string, pattern)
       time.offset.should eq 0
-      time.utc?.should be_false
-      time.location.fixed?.should be_true
+      time.refute &.utc?
+      time.location.assert &.fixed?
     end
 
     {"-0000", "-00:00", "-00:00:00"}.zip(patterns) do |string, pattern|
       time = Time.parse!(string, pattern)
       time.offset.should eq 0
-      time.utc?.should be_false
-      time.location.fixed?.should be_true
+      time.refute &.utc?
+      time.location.assert &.fixed?
     end
 
     {"-0200", "-02:00", "-02:00:00"}.zip(patterns) do |string, pattern|
       time = Time.parse!(string, pattern)
       time.offset.should eq -2 * 3600
-      time.utc?.should be_false
-      time.location.fixed?.should be_true
+      time.refute &.utc?
+      time.location.assert &.fixed?
     end
 
     {"Z", "Z", "Z"}.zip(patterns) do |string, pattern|
       time = Time.parse!(string, pattern)
       time.offset.should eq 0
-      time.utc?.should be_true
-      time.location.fixed?.should be_true
+      time.assert &.utc?
+      time.location.assert &.fixed?
     end
 
     {"UTC", "UTC", "UTC"}.zip(patterns) do |string, pattern|
       time = Time.parse!(string, pattern)
       time.offset.should eq 0
-      time.utc?.should be_true
-      time.location.fixed?.should be_true
+      time.assert &.utc?
+      time.location.assert &.fixed?
     end
 
     time = Time.parse!("+04:12:39", "%::z")
     time.offset.should eq 4 * 3600 + 12 * 60 + 39
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
 
     time = Time.parse!("-04:12:39", "%::z")
     time.offset.should eq -1 * (4 * 3600 + 12 * 60 + 39)
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
   end
 
   it "raises when time zone missing" do
@@ -485,44 +485,44 @@ describe Time::Format do
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 Z hi", "%F %T %z hi")
-    time.utc?.should be_true
+    time.assert &.utc?
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
   end
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 UTC hi", "%F %T %z hi")
-    time.utc?.should be_true
+    time.assert &.utc?
     time.to_utc.to_s.should eq("2014-10-31 10:11:12 UTC")
   end
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 -06:00 hi", "%F %T %z hi")
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
     time.offset.should eq -6 * 3600
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 +05:00 hi", "%F %T %z hi")
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
     time.offset.should eq 5 * 3600
     time.to_utc.to_s.should eq("2014-10-31 05:11:12 UTC")
   end
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 -06:00:00 hi", "%F %T %z hi")
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
     time.offset.should eq -6 * 3600
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
 
   it do
     time = Time.parse!("2014-10-31 10:11:12 -060000 hi", "%F %T %z hi")
-    time.utc?.should be_false
-    time.location.fixed?.should be_true
+    time.refute &.utc?
+    time.location.assert &.fixed?
     time.offset.should eq -6 * 3600
     time.to_utc.to_s.should eq("2014-10-31 16:11:12 UTC")
   end
@@ -635,7 +635,7 @@ describe Time::Format do
   it "can parse in location" do
     with_zoneinfo do
       time = Time.parse("2014-10-31 11:12:13", "%F %T", Time::Location::UTC)
-      time.utc?.should be_true
+      time.assert &.utc?
 
       location = Time::Location.load("Europe/Berlin")
       time = Time.parse("2016-11-24 14:32:02", "%F %T", location)

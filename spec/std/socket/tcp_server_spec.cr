@@ -8,17 +8,17 @@ describe TCPServer do
 
         server = TCPServer.new(address, port)
 
-        server.reuse_port?.should be_false
-        server.reuse_address?.should be_true
+        server.refute &.reuse_port?
+        server.assert &.reuse_address?
 
         local_address = Socket::IPAddress.new(address, port)
         server.local_address.should eq local_address
 
-        server.closed?.should be_false
+        server.refute &.closed?
 
         server.close
 
-        server.closed?.should be_true
+        server.assert &.closed?
         expect_raises(Socket::Error, "getsockname: ") do
           server.local_address
         end

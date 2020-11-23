@@ -11,8 +11,8 @@ describe JSON::Any do
     it "gets bool" do
       JSON.parse("true").as_bool.should be_true
       JSON.parse("false").as_bool.should be_false
-      JSON.parse("true").as_bool?.should be_true
-      JSON.parse("false").as_bool?.should be_false
+      JSON.parse("true").assert &.as_bool?
+      JSON.parse("false").refute &.as_bool?
       JSON.parse("2").as_bool?.should be_nil
     end
 

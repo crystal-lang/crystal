@@ -805,17 +805,17 @@ describe "YAML::Serializable" do
     it "parses person with absent attributes" do
       yaml = YAMLAttrWithPresence.from_yaml("---\nfirst_name:\n")
       yaml.first_name.should be_nil
-      yaml.first_name_present?.should be_true
+      yaml.assert &.first_name_present?
       yaml.last_name.should be_nil
-      yaml.last_name_present?.should be_false
+      yaml.refute &.last_name_present?
     end
   end
 
   describe "with query attributes" do
     it "defines query getter" do
       yaml = YAMLAttrWithQueryAttributes.from_yaml(%({"foo": true}))
-      yaml.foo?.should be_true
-      yaml.bar?.should be_false
+      yaml.assert &.foo?
+      yaml.refute &.bar?
     end
 
     it "defines query getter with class restriction" do
@@ -828,15 +828,15 @@ describe "YAML::Serializable" do
 
     it "defines non-query setter and presence methods" do
       yaml = YAMLAttrWithQueryAttributes.from_yaml(%({"foo": false}))
-      yaml.bar_present?.should be_false
+      yaml.refute &.bar_present?
       yaml.bar = true
-      yaml.bar?.should be_true
+      yaml.assert &.bar?
     end
 
     it "maps non-query attributes" do
       yaml = YAMLAttrWithQueryAttributes.from_yaml(%({"foo": false, "is_bar": false}))
-      yaml.bar_present?.should be_true
-      yaml.bar?.should be_false
+      yaml.assert &.bar_present?
+      yaml.refute &.bar?
       yaml.bar = true
       yaml.to_yaml.should eq("---\nfoo: false\nis_bar: true\n")
     end

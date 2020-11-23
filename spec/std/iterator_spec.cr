@@ -196,7 +196,7 @@ describe Iterator do
     it "cycles an empty array" do
       ary = [] of Int32
       values = ary.each.cycle.to_a
-      values.empty?.should be_true
+      values.assert &.empty?
     end
 
     it "cycles N times" do

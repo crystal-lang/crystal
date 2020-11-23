@@ -133,8 +133,8 @@ describe "Array" do
   end
 
   it "does *" do
-    (([] of Int32) * 10).empty?.should be_true
-    ([1, 2, 3] * 0).empty?.should be_true
+    (([] of Int32) * 10).assert &.empty?
+    ([1, 2, 3] * 0).assert &.empty?
     ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -645,11 +645,11 @@ describe "Array" do
 
   describe "empty" do
     it "is empty" do
-      ([] of Int32).empty?.should be_true
+      ([] of Int32).assert &.empty?
     end
 
     it "is not empty" do
-      [1].empty?.should be_false
+      [1].refute &.empty?
     end
   end
 
@@ -1828,9 +1828,9 @@ describe "Array" do
 
     it "transposes empty array" do
       e = [] of Array(Int32)
-      e.transpose.empty?.should be_true
-      [e].transpose.empty?.should be_true
-      [e, e, e].transpose.empty?.should be_true
+      e.transpose.assert &.empty?
+      [e].transpose.assert &.empty?
+      [e, e, e].transpose.assert &.empty?
     end
 
     it "raises IndexError error when size of element is invalid" do

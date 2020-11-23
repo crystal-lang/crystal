@@ -4,12 +4,12 @@ require "./spec_helper"
 describe "exit" do
   it "exits normally with status 0" do
     status, _ = compile_and_run_source "exit"
-    status.success?.should be_true
+    status.assert &.success?
   end
 
   it "exits with given error code" do
     status, _ = compile_and_run_source "exit 42"
-    status.success?.should be_false
+    status.refute &.success?
     status.exit_code.should eq(42)
   end
 end
@@ -22,7 +22,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_true
+    status.assert &.success?
     output.should eq("handler code\n")
   end
 
@@ -50,7 +50,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_true
+    status.assert &.success?
     output.should eq <<-OUTPUT
                        second handler code
                        first handler code
@@ -76,7 +76,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_true
+    status.assert &.success?
     output.should eq <<-OUTPUT
                        third handler code
                        second handler code, explicit exit!
@@ -103,7 +103,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     status.exit_code.should eq(42)
     output.should eq <<-OUTPUT
                        third handler code, exit code: 0
@@ -133,7 +133,7 @@ describe "at_exit" do
       exit 21
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     status.exit_code.should eq(42)
     output.should eq <<-OUTPUT
                        third handler code, exit code: 21
@@ -161,7 +161,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     status.exit_code.should eq(1)
     output.should eq <<-OUTPUT
                        third handler code, exit code: 0
@@ -185,7 +185,7 @@ describe "at_exit" do
       raise "Kaboom!"
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     error.should contain <<-OUTPUT
                            second handler code
                            first handler code
@@ -202,7 +202,7 @@ describe "at_exit" do
       raise "Kaboom!"
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     error.should contain <<-OUTPUT
                            Kaboom!
                            Unhandled exception: Kaboom!
@@ -226,7 +226,7 @@ describe "at_exit" do
       end
     CODE
 
-    status.success?.should be_true
+    status.assert &.success?
     output.should eq("3\n4\n1\n2\n")
   end
 end
@@ -237,7 +237,7 @@ describe "seg fault" do
       puts Pointer(Int64).null.value
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     error.should contain("Invalid memory access")
     error.should_not contain("Stack overflow")
   end
@@ -259,7 +259,7 @@ describe "seg fault" do
       foo
     CODE
 
-      status.success?.should be_false
+      status.refute &.success?
       error.should contain("Stack overflow")
     end
   {% end %}
@@ -278,7 +278,7 @@ describe "seg fault" do
       sleep 60.seconds
     CODE
 
-    status.success?.should be_false
+    status.refute &.success?
     error.should contain("Stack overflow")
   end
 end

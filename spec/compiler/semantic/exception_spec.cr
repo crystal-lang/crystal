@@ -60,7 +60,7 @@ describe "Semantic: exception" do
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
-    def_instance.not_nil!.raises?.should be_true
+    def_instance.not_nil!.assert &.raises?
   end
 
   it "marks method calling lib fun that raises as raises" do
@@ -77,7 +77,7 @@ describe "Semantic: exception" do
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
-    def_instance.not_nil!.raises?.should be_true
+    def_instance.not_nil!.assert &.raises?
   end
 
   it "types exception var with no types" do
@@ -248,7 +248,7 @@ describe "Semantic: exception" do
       )) { int32 }
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises?.should be_true
+    a_def.not_nil!.assert &.raises?
   end
 
   it "marks def as raises" do
@@ -262,13 +262,13 @@ describe "Semantic: exception" do
       )) { int32 }
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises?.should be_true
+    a_def.not_nil!.assert &.raises?
   end
 
   it "marks proc literal as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)
-    call.target_def.raises?.should be_true
+    call.target_def.assert &.raises?
   end
 
   it "shadows local variable (1)" do

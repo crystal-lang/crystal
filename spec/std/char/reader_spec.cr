@@ -14,7 +14,7 @@ describe "Char::Reader" do
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(0)
     reader.error.should be_nil
-    reader.has_next?.should be_false
+    reader.refute &.has_next?
 
     expect_raises IndexError do
       reader.next_char
@@ -25,9 +25,9 @@ describe "Char::Reader" do
     reader = Char::Reader.new("a")
     reader.pos.should eq(0)
     reader.current_char.should eq('a')
-    reader.has_next?.should be_true
+    reader.assert &.has_next?
     reader.next_char.ord.should eq(0)
-    reader.has_next?.should be_false
+    reader.refute &.has_next?
 
     expect_raises IndexError do
       reader.next_char
@@ -38,7 +38,7 @@ describe "Char::Reader" do
     reader = Char::Reader.new("há日本語")
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(104)
-    reader.has_next?.should be_true
+    reader.assert &.has_next?
 
     reader.next_char.ord.should eq(225)
 
@@ -48,10 +48,10 @@ describe "Char::Reader" do
     reader.next_char.ord.should eq(26085)
     reader.next_char.ord.should eq(26412)
     reader.next_char.ord.should eq(35486)
-    reader.has_next?.should be_true
+    reader.assert &.has_next?
 
     reader.next_char.ord.should eq(0)
-    reader.has_next?.should be_false
+    reader.refute &.has_next?
 
     expect_raises IndexError do
       reader.next_char
@@ -90,20 +90,20 @@ describe "Char::Reader" do
     reader = Char::Reader.new(at_end: "")
     reader.pos.should eq(0)
     reader.current_char.ord.should eq(0)
-    reader.has_previous?.should be_false
+    reader.refute &.has_previous?
   end
 
   it "gets previous char (ascii)" do
     reader = Char::Reader.new(at_end: "hello")
     reader.pos.should eq(4)
     reader.current_char.should eq('o')
-    reader.has_previous?.should be_true
+    reader.assert &.has_previous?
 
     reader.previous_char.should eq('l')
     reader.previous_char.should eq('l')
     reader.previous_char.should eq('e')
     reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
+    reader.refute &.has_previous?
 
     expect_raises IndexError do
       reader.previous_char
@@ -114,13 +114,13 @@ describe "Char::Reader" do
     reader = Char::Reader.new(at_end: "há日本語")
     reader.pos.should eq(9)
     reader.current_char.should eq('語')
-    reader.has_previous?.should be_true
+    reader.assert &.has_previous?
 
     reader.previous_char.should eq('本')
     reader.previous_char.should eq('日')
     reader.previous_char.should eq('á')
     reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
+    reader.refute &.has_previous?
   end
 
   it "starts at pos" do

@@ -39,7 +39,7 @@ describe "Semantic: const" do
       Foo
     )) do
       foo = types["Foo"]
-      foo.module?.should be_true
+      foo.assert &.module?
       foo.metaclass
     end
   end
@@ -53,7 +53,7 @@ describe "Semantic: const" do
       Foo
     )) do
       foo = types["Foo"]
-      foo.class?.should be_true
+      foo.assert &.class?
       foo.metaclass
     end
 
@@ -65,7 +65,7 @@ describe "Semantic: const" do
       Foo
     )) do
       foo = types["Foo"]
-      foo.struct?.should be_true
+      foo.assert &.struct?
       foo.metaclass
     end
 
@@ -77,7 +77,7 @@ describe "Semantic: const" do
       Foo
     )) do
       foo = types["Foo"]
-      foo.module?.should be_true
+      foo.assert &.module?
       foo.metaclass
     end
   end

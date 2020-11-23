@@ -108,8 +108,8 @@ describe "Slice" do
   end
 
   it "does empty?" do
-    Slice.new(0, 0).empty?.should be_true
-    Slice.new(1, 0).empty?.should be_false
+    Slice.new(0, 0).assert &.empty?
+    Slice.new(1, 0).refute &.empty?
   end
 
   it "raises if size is negative on new" do
@@ -450,7 +450,7 @@ describe "Slice" do
 
   it "creates empty slice" do
     slice = Slice(Int32).empty
-    slice.empty?.should be_true
+    slice.assert &.empty?
   end
 
   it "creates read-only slice" do
@@ -476,14 +476,14 @@ describe "Slice" do
   it "#[]" do
     slice = Slice.new(6) { |i| i + 1 }
     subslice = slice[2..4]
-    subslice.read_only?.should be_false
+    subslice.refute &.read_only?
     subslice.size.should eq(3)
     subslice.should eq(Slice.new(3) { |i| i + 3 })
   end
 
   it "#[] keeps read-only value" do
     slice = Slice.new(6, read_only: true) { |i| i + 1 }
-    slice[2..4].read_only?.should be_true
+    slice[2..4].assert &.read_only?
   end
 
   describe "#clone" do

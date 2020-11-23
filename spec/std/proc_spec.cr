@@ -37,14 +37,14 @@ describe "Proc" do
   it "gets closure data for non-closure" do
     f = ->{ 1 }
     f.closure_data.address.should eq(0)
-    f.closure?.should be_false
+    f.refute &.closure?
   end
 
   it "gets closure data for closure" do
     a = 1
     f = ->{ a }
     f.closure_data.address.should be > 0
-    f.closure?.should be_true
+    f.assert &.closure?
   end
 
   it "does new" do

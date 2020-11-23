@@ -277,28 +277,28 @@ describe Object do
   describe "getter?" do
     it "uses getter?" do
       obj = TestObject.new
-      obj.getter7?.should be_true
+      obj.assert &.getter7?
       typeof(obj.@getter7).should eq(Bool)
       typeof(obj.getter7?).should eq(Bool)
     end
 
     it "uses getter? with type declaration" do
       obj = TestObject.new
-      obj.getter8?.should be_true
+      obj.assert &.getter8?
       typeof(obj.@getter8).should eq(Bool)
       typeof(obj.getter8?).should eq(Bool)
     end
 
     it "uses getter? with type declaration and default value" do
       obj = TestObject.new
-      obj.getter9?.should be_true
+      obj.assert &.getter9?
       typeof(obj.@getter9).should eq(Bool)
       typeof(obj.getter9?).should eq(Bool)
     end
 
     it "uses getter? with default value" do
       obj = TestObject.new
-      obj.getter10?.should be_true
+      obj.assert &.getter10?
       typeof(obj.@getter10).should eq(Bool)
       typeof(obj.getter10?).should eq(Bool)
     end
@@ -308,7 +308,7 @@ describe Object do
       typeof(obj.@getter14).should eq(Bool?)
       typeof(obj.getter14?).should eq(Bool)
       obj.@getter14.should be_nil
-      obj.getter14?.should be_true
+      obj.assert &.getter14?
       obj.@getter14.should be_true
     end
 
@@ -317,7 +317,7 @@ describe Object do
       typeof(obj.@getter15).should eq(Bool?)
       typeof(obj.getter15?).should eq(Bool)
       obj.@getter15.should be_nil
-      obj.getter15?.should be_true
+      obj.assert &.getter15?
       obj.@getter15.should be_true
     end
   end
@@ -423,30 +423,30 @@ describe Object do
   describe "property?" do
     it "uses property?" do
       obj = TestObject.new
-      obj.property7?.should be_true
+      obj.assert &.property7?
       obj.property7 = false
-      obj.property7?.should be_false
+      obj.refute &.property7?
     end
 
     it "uses property? with type declaration" do
       obj = TestObject.new
-      obj.property8?.should be_true
+      obj.assert &.property8?
       obj.property8 = false
-      obj.property8?.should be_false
+      obj.refute &.property8?
     end
 
     it "uses property? with type declaration and default value" do
       obj = TestObject.new
-      obj.property9?.should be_true
+      obj.assert &.property9?
       obj.property9 = false
-      obj.property9?.should be_false
+      obj.refute &.property9?
     end
 
     it "uses property? with default value" do
       obj = TestObject.new
-      obj.property10?.should be_true
+      obj.assert &.property10?
       obj.property10 = false
-      obj.property10?.should be_false
+      obj.refute &.property10?
     end
 
     it "uses property? with type declaration and block" do
@@ -454,7 +454,7 @@ describe Object do
       typeof(obj.@property14).should eq(Bool?)
       typeof(obj.property14?).should eq(Bool)
       obj.@property14.should be_nil
-      obj.property14?.should be_true
+      obj.assert &.property14?
       obj.@property14.should be_true
     end
 
@@ -463,7 +463,7 @@ describe Object do
       typeof(obj.@property15).should eq(Bool?)
       typeof(obj.property15?).should eq(Bool)
       obj.@property15.should be_nil
-      obj.property15?.should be_true
+      obj.assert &.property15?
       obj.@property15.should be_true
     end
   end

@@ -174,7 +174,7 @@ describe Process do
       end
     CODE
 
-    status.success?.should be_true
+    status.assert &.success?
     output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
   end
 
@@ -373,24 +373,24 @@ describe Process do
     Process.exists?(Process.ppid).should be_true
 
     process = Process.new(*standing_command)
-    process.exists?.should be_true
-    process.terminated?.should be_false
+    process.assert &.exists?
+    process.refute &.terminated?
 
     # Kill, zombie now
     process.signal(Signal::KILL)
-    process.exists?.should be_true
-    process.terminated?.should be_false
+    process.assert &.exists?
+    process.refute &.terminated?
 
     # Reap, gone now
     process.wait
-    process.exists?.should be_false
-    process.terminated?.should be_true
+    process.refute &.exists?
+    process.assert &.terminated?
   end
 
   pending_win32 "terminates the process" do
     process = Process.new(*standing_command)
-    process.exists?.should be_true
-    process.terminated?.should be_false
+    process.assert &.exists?
+    process.refute &.terminated?
 
     process.terminate
     process.wait

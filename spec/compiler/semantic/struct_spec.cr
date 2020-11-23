@@ -8,7 +8,7 @@ describe "Semantic: struct" do
       Foo
       ") do
       str = types["Foo"].as(NonGenericClassType)
-      str.struct?.should be_true
+      str.assert &.struct?
       str.metaclass
     end
   end
@@ -20,10 +20,10 @@ describe "Semantic: struct" do
       Foo(Int32)
       ") do
       str = types["Foo"].as(GenericClassType)
-      str.struct?.should be_true
+      str.assert &.struct?
 
       str_inst = str.instantiate([int32] of TypeVar)
-      str_inst.struct?.should be_true
+      str_inst.assert &.struct?
       str_inst.metaclass
     end
   end

@@ -14,14 +14,14 @@ describe Compress::Zip do
 
     Compress::Zip::Reader.open(io) do |zip|
       entry = zip.next_entry.not_nil!
-      entry.file?.should be_true
-      entry.dir?.should be_false
+      entry.assert &.file?
+      entry.refute &.dir?
       entry.filename.should eq("foo.txt")
       entry.compression_method.should eq(Compress::Zip::CompressionMethod::DEFLATED)
       entry.crc32.should eq(0)
       entry.compressed_size.should eq(0)
       entry.uncompressed_size.should eq(0)
-      entry.extra.empty?.should be_true
+      entry.extra.assert &.empty?
       entry.io.gets_to_end.should eq("contents of foo")
 
       entry = zip.next_entry.not_nil!
@@ -132,13 +132,13 @@ describe Compress::Zip do
     Compress::Zip::Reader.open(io) do |zip|
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("one/")
-      entry.file?.should be_false
-      entry.dir?.should be_true
+      entry.refute &.file?
+      entry.assert &.dir?
       entry.io.gets_to_end.should eq("")
 
       entry = zip.next_entry.not_nil!
       entry.filename.should eq("two/")
-      entry.dir?.should be_true
+      entry.assert &.dir?
       entry.io.gets_to_end.should eq("")
     end
   end
@@ -199,7 +199,7 @@ describe Compress::Zip do
     Compress::Zip::Writer.open(io) do |zip|
       file = File.open(filename)
       zip.add "foo.txt", file
-      file.closed?.should be_true
+      file.assert &.closed?
     end
 
     io.rewind

@@ -309,7 +309,7 @@ describe "Deque" do
     end
 
     it "is not empty" do
-      Deque{1}.empty?.should be_false
+      Deque{1}.refute &.empty?
     end
   end
 

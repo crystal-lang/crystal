@@ -792,14 +792,14 @@ describe "String" do
   end
 
   describe "empty?" do
-    it { "a".empty?.should be_false }
-    it { "".empty?.should be_true }
+    it { "a".refute &.empty? }
+    it { "".assert &.empty? }
   end
 
   describe "blank?" do
-    it { " \t\n".blank?.should be_true }
-    it { "\u{1680}\u{2029}".blank?.should be_true }
-    it { "hello".blank?.should be_false }
+    it { " \t\n".assert &.blank? }
+    it { "\u{1680}\u{2029}".assert &.blank? }
+    it { "hello".refute &.blank? }
   end
 
   describe "presence" do
@@ -2013,14 +2013,14 @@ describe "String" do
 
   describe "ascii_only?" do
     it "answers ascii_only?" do
-      "a".ascii_only?.should be_true
-      "あ".ascii_only?.should be_false
+      "a".assert &.ascii_only?
+      "あ".refute &.ascii_only?
 
       str = String.new(1) do |buffer|
         buffer.value = 'a'.ord.to_u8
         {1, 0}
       end
-      str.ascii_only?.should be_true
+      str.assert &.ascii_only?
 
       str = String.new(4) do |buffer|
         count = 0
@@ -2030,11 +2030,11 @@ describe "String" do
         end
         {count, 0}
       end
-      str.ascii_only?.should be_false
+      str.refute &.ascii_only?
     end
 
     it "broken UTF-8 is not ascii_only" do
-      "\xED\xA0\x80\xED\xBF\xBF".ascii_only?.should be_false
+      "\xED\xA0\x80\xED\xBF\xBF".refute &.ascii_only?
     end
   end
 
@@ -2667,10 +2667,10 @@ describe "String" do
     "barbar".insert(0, "foo").size.should eq(9)
     "ともだち".insert(0, "ねこ").size.should eq(6)
 
-    "foo".insert(0, 'a').ascii_only?.should be_true
-    "foo".insert(0, 'あ').ascii_only?.should be_false
-    "".insert(0, 'a').ascii_only?.should be_true
-    "".insert(0, 'あ').ascii_only?.should be_false
+    "foo".insert(0, 'a').assert &.ascii_only?
+    "foo".insert(0, 'あ').refute &.ascii_only?
+    "".insert(0, 'a').assert &.ascii_only?
+    "".insert(0, 'あ').refute &.ascii_only?
   end
 
   it "hexbytes" do
@@ -2734,8 +2734,8 @@ describe "String" do
     end
 
     it "valid_encoding?" do
-      "hello".valid_encoding?.should be_true
-      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+      "hello".assert &.valid_encoding?
+      String.new(Bytes[255, 0]).refute &.valid_encoding?
     end
 
     it "scrubs" do

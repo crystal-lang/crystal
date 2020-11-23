@@ -301,7 +301,7 @@ module HTTP
       io = IO::Memory.new
       client = Client.new(io)
       client.close
-      io.closed?.should be_true
+      io.assert &.closed?
       expect_raises(Exception, "This HTTP::Client cannot be reconnected") do
         client.get("/")
       end

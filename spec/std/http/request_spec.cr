@@ -294,7 +294,7 @@ module HTTP
     describe "keep-alive" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
-        request.keep_alive?.should be_false
+        request.refute &.keep_alive?
       end
 
       it "is true in HTTP/1.0 if `Connection: keep-alive` header is present" do
@@ -302,13 +302,13 @@ module HTTP
         headers["Connection"] = "keep-alive"
         original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.0"
-        request.keep_alive?.should be_true
+        request.assert &.keep_alive?
         headers.should eq(original_headers)
       end
 
       it "is true by default in HTTP/1.1" do
         request = Request.new "GET", "/", version: "HTTP/1.1"
-        request.keep_alive?.should be_true
+        request.assert &.keep_alive?
       end
 
       it "is false in HTTP/1.1 if `Connection: close` header is present" do
@@ -316,7 +316,7 @@ module HTTP
         headers["Connection"] = "close"
         original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.1"
-        request.keep_alive?.should be_false
+        request.refute &.keep_alive?
         headers.should eq(original_headers)
       end
     end

@@ -6,8 +6,8 @@ describe "Semantic: struct" do
     mod = result.program
 
     bar = mod.types["LibFoo"].types["Bar"].as(NonGenericClassType)
-    bar.extern?.should be_true
-    bar.extern_union?.should be_false
+    bar.assert &.extern?
+    bar.refute &.extern_union?
     bar.instance_vars["@x"].type.should eq(mod.int32)
     bar.instance_vars["@y"].type.should eq(mod.float64)
   end
@@ -258,7 +258,7 @@ describe "Semantic: struct" do
       end
       ))
     foo_struct = result.program.types["LibFoo"].types["Struct"].as(NonGenericClassType)
-    foo_struct.packed?.should be_true
+    foo_struct.assert &.packed?
   end
 
   it "errors on empty c struct (#633)" do

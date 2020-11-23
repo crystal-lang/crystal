@@ -312,10 +312,10 @@ describe "IO::Buffered" do
       str = IO::Memory.new
 
       io = BufferedWrapper.new(str)
-      io.sync?.should be_false
+      io.refute &.sync?
 
       io.sync = true
-      io.sync?.should be_true
+      io.assert &.sync?
 
       io.write_byte 1_u8
 
@@ -329,10 +329,10 @@ describe "IO::Buffered" do
       str = IO::Memory.new "abc"
 
       io = BufferedWrapper.new(str)
-      io.read_buffering?.should be_true
+      io.assert &.read_buffering?
 
       io.read_buffering = false
-      io.read_buffering?.should be_false
+      io.refute &.read_buffering?
 
       byte = Bytes.new(1)
       io.read_fully(byte)
@@ -347,7 +347,7 @@ describe "IO::Buffered" do
       str.pos = 0
 
       io = BufferedWrapper.new(str)
-      io.read_buffering?.should be_true
+      io.assert &.read_buffering?
 
       io.buffer_size.times do
         byte = Bytes.new(1)
@@ -356,7 +356,7 @@ describe "IO::Buffered" do
       end
 
       io.read_buffering = false
-      io.read_buffering?.should be_false
+      io.refute &.read_buffering?
 
       str << "bcde"
       str.pos -= 4
@@ -372,10 +372,10 @@ describe "IO::Buffered" do
       str = IO::Memory.new "abc"
 
       io = BufferedWrapper.new(str)
-      io.read_buffering?.should be_true
+      io.assert &.read_buffering?
 
       io.read_buffering = false
-      io.read_buffering?.should be_false
+      io.refute &.read_buffering?
 
       io.read_byte.should eq('a'.ord.to_u8)
 
@@ -388,14 +388,14 @@ describe "IO::Buffered" do
       str.pos = 0
 
       io = BufferedWrapper.new(str)
-      io.read_buffering?.should be_true
+      io.assert &.read_buffering?
 
       io.buffer_size.times do
         io.read_byte.should eq('a'.ord.to_u8)
       end
 
       io.read_buffering = false
-      io.read_buffering?.should be_false
+      io.refute &.read_buffering?
 
       str << "bcde"
       str.pos -= 4

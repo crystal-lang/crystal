@@ -37,8 +37,8 @@ module Compress::Zlib
       io = IO::Memory.new(Bytes[120, 156, 3, 0, 0, 0, 0, 1])
       reader = Reader.new(io)
       reader.close
-      reader.closed?.should be_true
-      io.closed?.should be_false
+      reader.assert &.closed?
+      io.refute &.closed?
 
       expect_raises IO::Error, "Closed stream" do
         reader.gets
@@ -49,8 +49,8 @@ module Compress::Zlib
       io = IO::Memory.new(Bytes[120, 156, 3, 0, 0, 0, 0, 1])
       reader = Reader.new(io, sync_close: true)
       reader.close
-      reader.closed?.should be_true
-      io.closed?.should be_true
+      reader.assert &.closed?
+      io.assert &.closed?
     end
 
     it "can be closed with sync (2)" do
@@ -58,8 +58,8 @@ module Compress::Zlib
       reader = Reader.new(io)
       reader.sync_close = true
       reader.close
-      reader.closed?.should be_true
-      io.closed?.should be_true
+      reader.assert &.closed?
+      io.assert &.closed?
     end
 
     it "should not read from empty stream" do

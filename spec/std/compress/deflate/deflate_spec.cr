@@ -65,8 +65,8 @@ module Compress::Deflate
       io = IO::Memory.new
       writer = Writer.new(io)
       writer.close
-      writer.closed?.should be_true
-      io.closed?.should be_false
+      writer.assert &.closed?
+      io.refute &.closed?
 
       expect_raises IO::Error, "Closed stream" do
         writer.print "a"
@@ -77,8 +77,8 @@ module Compress::Deflate
       io = IO::Memory.new
       writer = Writer.new(io, sync_close: true)
       writer.close
-      writer.closed?.should be_true
-      io.closed?.should be_true
+      writer.assert &.closed?
+      io.assert &.closed?
     end
 
     it "can be closed with sync (2)" do
@@ -86,8 +86,8 @@ module Compress::Deflate
       writer = Writer.new(io)
       writer.sync_close = true
       writer.close
-      writer.closed?.should be_true
-      io.closed?.should be_true
+      writer.assert &.closed?
+      io.assert &.closed?
     end
 
     describe ".open" do

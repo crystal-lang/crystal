@@ -4,7 +4,7 @@ require "set"
 describe "Set" do
   describe "an empty set" do
     it "is empty" do
-      Set(Nil).new.empty?.should be_true
+      Set(Nil).new.assert &.empty?
     end
 
     it "has size 0" do
@@ -401,11 +401,11 @@ describe "Set" do
     it "compares by identity" do
       string = "foo"
       set = Set{string, "bar", "baz"}
-      set.compare_by_identity?.should be_false
+      set.refute &.compare_by_identity?
       set.includes?(string).should be_true
 
       set.compare_by_identity
-      set.compare_by_identity?.should be_true
+      set.assert &.compare_by_identity?
 
       set.includes?("fo" + "o").should be_false
       set.includes?(string).should be_true
@@ -413,12 +413,12 @@ describe "Set" do
 
     it "retains compare_by_identity on dup" do
       set = Set(String).new.compare_by_identity
-      set.dup.compare_by_identity?.should be_true
+      set.dup.assert &.compare_by_identity?
     end
 
     it "retains compare_by_identity on clone" do
       set = Set(String).new.compare_by_identity
-      set.clone.compare_by_identity?.should be_true
+      set.clone.assert &.compare_by_identity?
     end
   end
 end

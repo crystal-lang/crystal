@@ -244,10 +244,10 @@ describe "BitArray" do
 
   it "inverts all bits" do
     ary = BitArray.new(100)
-    ary.none?.should be_true
+    ary.assert &.none?
 
     ary.invert
-    ary.all?.should be_true
+    ary.assert &.all?
 
     ary[50] = false
     ary[33] = false

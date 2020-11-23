@@ -55,7 +55,7 @@ describe "File" do
     it "reads entire file from proc virtual filesystem" do
       str1 = File.open "/proc/self/cmdline", &.gets_to_end
       str2 = File.read "/proc/self/cmdline"
-      str2.empty?.should be_false
+      str2.refute &.empty?
       str2.should eq(str1)
     end
   {% end %}
@@ -727,14 +727,14 @@ describe "File" do
   describe "close" do
     it "is not closed when opening" do
       File.open(datapath("test_file.txt")) do |file|
-        file.closed?.should be_false
+        file.refute &.closed?
       end
     end
 
     it "is closed when closed" do
       file = File.new(datapath("test_file.txt"))
       file.close
-      file.closed?.should be_true
+      file.assert &.closed?
     end
 
     it "should not raise when closing twice" do

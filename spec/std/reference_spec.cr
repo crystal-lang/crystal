@@ -70,7 +70,7 @@ describe "Reference" do
   end
 
   it "should not be nil" do
-    Reference.new.nil?.should be_false
+    Reference.new.refute &.nil?
   end
 
   it "should be false when negated" do

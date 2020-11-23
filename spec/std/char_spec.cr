@@ -37,72 +37,72 @@ describe "Char" do
   end
 
   describe "ascii_uppercase?" do
-    it { 'a'.ascii_uppercase?.should be_false }
-    it { 'A'.ascii_uppercase?.should be_true }
-    it { '1'.ascii_uppercase?.should be_false }
-    it { ' '.ascii_uppercase?.should be_false }
+    it { 'a'.refute &.ascii_uppercase? }
+    it { 'A'.assert &.ascii_uppercase? }
+    it { '1'.refute &.ascii_uppercase? }
+    it { ' '.refute &.ascii_uppercase? }
   end
 
   describe "uppercase?" do
-    it { 'A'.uppercase?.should be_true }
-    it { 'Á'.uppercase?.should be_true }
-    it { 'Ā'.uppercase?.should be_true }
-    it { 'Ą'.uppercase?.should be_true }
-    it { 'ā'.uppercase?.should be_false }
-    it { 'á'.uppercase?.should be_false }
-    it { 'a'.uppercase?.should be_false }
-    it { '1'.uppercase?.should be_false }
-    it { ' '.uppercase?.should be_false }
+    it { 'A'.assert &.uppercase? }
+    it { 'Á'.assert &.uppercase? }
+    it { 'Ā'.assert &.uppercase? }
+    it { 'Ą'.assert &.uppercase? }
+    it { 'ā'.refute &.uppercase? }
+    it { 'á'.refute &.uppercase? }
+    it { 'a'.refute &.uppercase? }
+    it { '1'.refute &.uppercase? }
+    it { ' '.refute &.uppercase? }
   end
 
   describe "ascii_lowercase?" do
-    it { 'a'.ascii_lowercase?.should be_true }
-    it { 'A'.ascii_lowercase?.should be_false }
-    it { '1'.ascii_lowercase?.should be_false }
-    it { ' '.ascii_lowercase?.should be_false }
+    it { 'a'.assert &.ascii_lowercase? }
+    it { 'A'.refute &.ascii_lowercase? }
+    it { '1'.refute &.ascii_lowercase? }
+    it { ' '.refute &.ascii_lowercase? }
   end
 
   describe "lowercase?" do
-    it { 'a'.lowercase?.should be_true }
-    it { 'á'.lowercase?.should be_true }
-    it { 'ā'.lowercase?.should be_true }
-    it { 'ă'.lowercase?.should be_true }
-    it { 'A'.lowercase?.should be_false }
-    it { 'Á'.lowercase?.should be_false }
-    it { '1'.lowercase?.should be_false }
-    it { ' '.lowercase?.should be_false }
+    it { 'a'.assert &.lowercase? }
+    it { 'á'.assert &.lowercase? }
+    it { 'ā'.assert &.lowercase? }
+    it { 'ă'.assert &.lowercase? }
+    it { 'A'.refute &.lowercase? }
+    it { 'Á'.refute &.lowercase? }
+    it { '1'.refute &.lowercase? }
+    it { ' '.refute &.lowercase? }
   end
 
   describe "ascii_letter?" do
-    it { 'a'.ascii_letter?.should be_true }
-    it { 'A'.ascii_letter?.should be_true }
-    it { '1'.ascii_letter?.should be_false }
-    it { ' '.ascii_letter?.should be_false }
+    it { 'a'.assert &.ascii_letter? }
+    it { 'A'.assert &.ascii_letter? }
+    it { '1'.refute &.ascii_letter? }
+    it { ' '.refute &.ascii_letter? }
   end
 
   describe "alphanumeric?" do
-    it { 'a'.alphanumeric?.should be_true }
-    it { 'A'.alphanumeric?.should be_true }
-    it { '1'.alphanumeric?.should be_true }
-    it { ' '.alphanumeric?.should be_false }
+    it { 'a'.assert &.alphanumeric? }
+    it { 'A'.assert &.alphanumeric? }
+    it { '1'.assert &.alphanumeric? }
+    it { ' '.refute &.alphanumeric? }
   end
 
   describe "ascii_whitespace?" do
     [' ', '\t', '\n', '\v', '\f', '\r'].each do |char|
-      it { char.ascii_whitespace?.should be_true }
+      it { char.assert &.ascii_whitespace? }
     end
-    it { 'A'.ascii_whitespace?.should be_false }
+    it { 'A'.refute &.ascii_whitespace? }
   end
 
   describe "hex?" do
     "0123456789abcdefABCDEF".each_char do |char|
-      it { char.hex?.should be_true }
+      it { char.assert &.hex? }
     end
     ('g'..'z').each do |char|
-      it { char.hex?.should be_false }
+      it { char.refute &.hex? }
     end
     [' ', '-', '\0'].each do |char|
-      it { char.hex?.should be_false }
+      it { char.refute &.hex? }
     end
   end
 
@@ -373,27 +373,27 @@ describe "Char" do
   end
 
   it "does number?" do
-    '1'.number?.should be_true
-    '٠'.number?.should be_true
-    '٢'.number?.should be_true
-    'a'.number?.should be_false
+    '1'.assert &.number?
+    '٠'.assert &.number?
+    '٢'.assert &.number?
+    'a'.refute &.number?
   end
 
   it "does ascii_control?" do
-    'ù'.ascii_control?.should be_false
-    'a'.ascii_control?.should be_false
-    '\u0019'.ascii_control?.should be_true
+    'ù'.refute &.ascii_control?
+    'a'.refute &.ascii_control?
+    '\u0019'.assert &.ascii_control?
   end
 
   it "does mark?" do
-    0x300.chr.mark?.should be_true
+    0x300.chr.assert &.mark?
   end
 
   it "does ascii?" do
-    'a'.ascii?.should be_true
-    127.chr.ascii?.should be_true
-    128.chr.ascii?.should be_false
-    '酒'.ascii?.should be_false
+    'a'.assert &.ascii?
+    127.chr.assert &.ascii?
+    128.chr.refute &.ascii?
+    '酒'.refute &.ascii?
   end
 
   describe "clone" do

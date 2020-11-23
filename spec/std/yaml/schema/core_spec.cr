@@ -89,7 +89,7 @@ describe YAML::Schema::Core do
   it "parses nan" do
     {".nan", ".NaN", ".NAN"}.each do |string|
       value = YAML::Schema::Core.parse_scalar(string)
-      value.as(Float64).nan?.should be_true
+      value.as(Float64).assert &.nan?
     end
   end
 
@@ -202,7 +202,7 @@ describe YAML::Schema::Core do
   it_parses "!!float 2.3e4", 2.3e4
 
   it "parses !!float .nan" do
-    YAML::Schema::Core.parse("!!float .nan").as_f.nan?.should be_true
+    YAML::Schema::Core.parse("!!float .nan").as_f.assert &.nan?
   end
 
   it_parses "!!float .inf", Float64::INFINITY

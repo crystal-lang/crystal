@@ -14,18 +14,18 @@ describe XML do
     )
     doc.document.should eq(doc)
     doc.name.should eq("document")
-    doc.attributes.empty?.should be_true
+    doc.attributes.assert &.empty?
     doc.namespace.should be_nil
 
     people = doc.root.not_nil!
     people.name.should eq("people")
     people.type.should eq(XML::Node::Type::ELEMENT_NODE)
 
-    people.attributes.empty?.should be_true
+    people.attributes.assert &.empty?
 
     children = doc.children
     children.size.should eq(1)
-    children.empty?.should be_false
+    children.refute &.empty?
 
     people = children[0]
     people.name.should eq("people")
@@ -46,7 +46,7 @@ describe XML do
     text.content.should eq("\n")
 
     attrs = person.attributes
-    attrs.empty?.should be_false
+    attrs.refute &.empty?
     attrs.size.should eq(2)
 
     attr = attrs[0]

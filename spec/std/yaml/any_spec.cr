@@ -11,8 +11,8 @@ describe YAML::Any do
     it "gets bool" do
       YAML.parse("true").as_bool.should be_true
       YAML.parse("false").as_bool.should be_false
-      YAML.parse("true").as_bool?.should be_true
-      YAML.parse("false").as_bool?.should be_false
+      YAML.parse("true").assert &.as_bool?
+      YAML.parse("false").refute &.as_bool?
       YAML.parse("2").as_bool?.should be_nil
     end
 

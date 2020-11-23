@@ -82,7 +82,7 @@ end
 
 describe Path do
   describe ".new" do
-    it { Path.new("foo").native?.should be_true }
+    it { Path.new("foo").assert &.native? }
     it { Path.new("foo").to_s.should eq "foo" }
 
     it "fails with null byte" do
@@ -102,8 +102,8 @@ describe Path do
   end
 
   describe ".posix" do
-    it { Path.posix("foo").posix?.should be_true }
-    it { Path.posix("foo").windows?.should be_false }
+    it { Path.posix("foo").assert &.posix? }
+    it { Path.posix("foo").refute &.windows? }
     it { Path.posix("foo").to_s.should eq "foo" }
 
     it "fails with null byte" do
@@ -123,8 +123,8 @@ describe Path do
   end
 
   describe ".windows" do
-    it { Path.windows("foo").posix?.should be_false }
-    it { Path.windows("foo").windows?.should be_true }
+    it { Path.windows("foo").refute &.posix? }
+    it { Path.windows("foo").assert &.windows? }
     it { Path.windows("foo").to_s.should eq "foo" }
 
     it "fails with null byte" do
@@ -145,7 +145,7 @@ describe Path do
 
   it ".[]" do
     Path["foo"].should eq Path.new("foo")
-    Path["foo"].native?.should be_true
+    Path["foo"].assert &.native?
     Path["foo", "bar", "baz"].should eq Path.new("foo", "bar", "baz")
     Path["/foo", "bar", "baz"].should eq Path.new("/foo", "bar", "baz")
   end

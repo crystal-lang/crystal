@@ -4,7 +4,7 @@ require "string_pool"
 describe StringPool do
   it "is empty" do
     pool = StringPool.new
-    pool.empty?.should be_true
+    pool.assert &.empty?
     pool.size.should eq(0)
   end
 

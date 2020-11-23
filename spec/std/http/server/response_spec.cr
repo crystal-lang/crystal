@@ -36,8 +36,8 @@ describe HTTP::Server::Response do
     io = IO::Memory.new
     response = Response.new(io)
     response.close
-    response.closed?.should be_true
-    io.closed?.should be_false
+    response.assert &.closed?
+    io.refute &.closed?
     expect_raises(IO::Error, "Closed stream") { response << "foo" }
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
   end
@@ -174,8 +174,8 @@ describe HTTP::Server::Response do
     response.headers["Foo"] = "Bar"
     response.cookies["Bar"] = "Foo"
     response.reset
-    response.headers.empty?.should be_true
-    response.cookies.empty?.should be_true
+    response.headers.assert &.empty?
+    response.cookies.assert &.empty?
   end
 
   it "writes cookie headers" do
@@ -231,7 +231,7 @@ describe HTTP::Server::Response do
       io.close
       response.print("Hello")
       expect_raises(HTTP::Server::ClientError) { response.flush }
-      response.closed?.should be_true
+      response.assert &.closed?
     end
   end
 end

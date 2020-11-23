@@ -182,7 +182,7 @@ describe "Semantic: module" do
       Foo
       ") do
       foo = types["Foo"]
-      foo.module?.should be_true
+      foo.assert &.module?
       foo.metaclass
     end
   end
@@ -194,7 +194,7 @@ describe "Semantic: module" do
       Foo
       ") do
       foo = types["Foo"]
-      foo.module?.should be_true
+      foo.assert &.module?
       foo.metaclass
     end
   end

@@ -97,7 +97,7 @@ describe File do
           filepath = tempfile.path
         end
         tempfile.path.should eq filepath
-        tempfile.closed?.should be_true
+        tempfile.assert &.closed?
 
         filepath = filepath.not_nil!
         File.exists?(filepath).should be_true
@@ -108,9 +108,9 @@ describe File do
       it "accepts single suffix argument" do
         tempfile = File.tempfile(".bar") do |tempfile|
           File.exists?(tempfile.path).should be_true
-          tempfile.closed?.should be_false
+          tempfile.refute &.closed?
         end
-        tempfile.closed?.should be_true
+        tempfile.assert &.closed?
 
         File.extname(tempfile.path).should eq(".bar")
 
@@ -122,9 +122,9 @@ describe File do
       it "accepts prefix and suffix arguments" do
         tempfile = File.tempfile("foo", ".bar") do |tempfile|
           File.exists?(tempfile.path).should be_true
-          tempfile.closed?.should be_false
+          tempfile.refute &.closed?
         end
-        tempfile.closed?.should be_true
+        tempfile.assert &.closed?
 
         File.extname(tempfile.path).should eq(".bar")
         File.basename(tempfile.path).starts_with?("foo").should be_true

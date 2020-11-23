@@ -248,9 +248,9 @@ module HTTP
 
     describe "#empty?" do
       it "test empty?" do
-        Params.parse("foo=bar&foo=baz&baz=qux").empty?.should be_false
-        Params.parse("").empty?.should be_true
-        Params.new.empty?.should be_true
+        Params.parse("foo=bar&foo=baz&baz=qux").refute &.empty?
+        Params.parse("").assert &.empty?
+        Params.new.assert &.empty?
       end
     end
 

@@ -50,10 +50,10 @@ describe Class do
   end
 
   it "#nilable" do
-    Int32.nilable?.should be_false
-    Nil.nilable?.should be_true
-    (Int32 | String).nilable?.should be_false
-    Int32?.nilable?.should be_true
+    Int32.refute &.nilable?
+    Nil.assert &.nilable?
+    (Int32 | String).refute &.nilable?
+    Int32?.assert &.nilable?
   end
 
   it "does to_s" do

@@ -71,7 +71,7 @@ describe "YAML serialization" do
 
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
-      Float32.from_yaml(".nan").nan?.should be_true
+      Float32.from_yaml(".nan").assert &.nan?
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
       Float32.from_yaml("-.inf").should eq(-Float32::INFINITY)
     end
@@ -81,7 +81,7 @@ describe "YAML serialization" do
       value.should eq(1.5)
       value.should be_a(Float64)
 
-      Float64.from_yaml(".nan").nan?.should be_true
+      Float64.from_yaml(".nan").assert &.nan?
       Float64.from_yaml(".inf").should eq(Float64::INFINITY)
       Float64.from_yaml("-.inf").should eq(-Float64::INFINITY)
     end
@@ -294,7 +294,7 @@ describe "YAML serialization" do
     end
 
     it "does for Float32 (nan)" do
-      Float32.from_yaml(Float32::NAN.to_yaml).nan?.should be_true
+      Float32.from_yaml(Float32::NAN.to_yaml).assert &.nan?
     end
 
     it "does for Float64" do
@@ -310,7 +310,7 @@ describe "YAML serialization" do
     end
 
     it "does for Float64 (nan)" do
-      Float64.from_yaml(Float64::NAN.to_yaml).nan?.should be_true
+      Float64.from_yaml(Float64::NAN.to_yaml).assert &.nan?
     end
 
     it "does for String" do

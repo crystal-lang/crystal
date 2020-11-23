@@ -33,8 +33,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(9)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_false
+    token.refute &.suppress_leading?
+    token.refute &.suppress_trailing?
 
     token = lexer.next_token
     token.type.should eq(t :string)
@@ -54,8 +54,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(4)
-    token.suppress_leading?.should be_true
-    token.suppress_trailing?.should be_false
+    token.assert &.suppress_leading?
+    token.refute &.suppress_trailing?
   end
 
   it "lexes with <% -%>" do
@@ -66,8 +66,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(3)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_true
+    token.refute &.suppress_leading?
+    token.assert &.suppress_trailing?
   end
 
   it "lexes with -% inside string" do
@@ -92,8 +92,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_false
+    token.refute &.suppress_leading?
+    token.refute &.suppress_trailing?
 
     token = lexer.next_token
     token.type.should eq(t :string)
@@ -113,8 +113,8 @@ describe "ECR::Lexer" do
     token.value.should eq(" foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(4)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_true
+    token.refute &.suppress_leading?
+    token.assert &.suppress_trailing?
   end
 
   it "lexes with <%# %>" do
@@ -131,8 +131,8 @@ describe "ECR::Lexer" do
     token.value.should eq("# foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(9)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_false
+    token.refute &.suppress_leading?
+    token.refute &.suppress_trailing?
 
     token = lexer.next_token
     token.type.should eq(t :string)
@@ -152,8 +152,8 @@ describe "ECR::Lexer" do
     token.value.should eq("# foo ")
     token.line_number.should eq(1)
     token.column_number.should eq(3)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_true
+    token.refute &.suppress_leading?
+    token.assert &.suppress_trailing?
   end
 
   it "lexes with <%% %>" do
@@ -170,8 +170,8 @@ describe "ECR::Lexer" do
     token.value.should eq("<% foo %>")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_false
+    token.refute &.suppress_leading?
+    token.refute &.suppress_trailing?
 
     token = lexer.next_token
     token.type.should eq(t :string)
@@ -197,8 +197,8 @@ describe "ECR::Lexer" do
     token.value.should eq("<%= foo %>")
     token.line_number.should eq(1)
     token.column_number.should eq(10)
-    token.suppress_leading?.should be_false
-    token.suppress_trailing?.should be_false
+    token.refute &.suppress_leading?
+    token.refute &.suppress_trailing?
 
     token = lexer.next_token
     token.type.should eq(t :string)

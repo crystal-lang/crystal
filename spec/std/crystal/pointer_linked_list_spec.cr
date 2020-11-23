@@ -34,7 +34,7 @@ describe Crystal::PointerLinkedList do
   describe "empty?" do
     it "return true if there is no element in list" do
       list = Crystal::PointerLinkedList(TestedObject).new
-      list.empty?.should be_true
+      list.assert &.empty?
     end
   end
 

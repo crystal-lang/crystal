@@ -338,7 +338,7 @@ describe HTTP::Server do
 
       run_server(server) do
         server.close
-        server.listening?.should be_false
+        server.refute &.listening?
 
         expect_raises(Exception, "Can't re-start closed server") do
           server.listen
@@ -404,7 +404,7 @@ describe HTTP::Server do
         HTTP::Client.get("https://#{address}/", tls: client_context).body.should eq "ok"
       end
 
-      server.closed?.should be_false
+      server.refute &.closed?
       select
       when ret = server_done.receive
         fail("Server finished with #{ret}")
@@ -469,7 +469,7 @@ describe HTTP::Server do
 
           server.close
 
-          socket.closed?.should be_false
+          socket.refute &.closed?
           socket.gets.should eq "bar"
         end
       end

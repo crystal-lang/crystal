@@ -19,30 +19,30 @@ describe IO::Stapled do
     it "does not close underlying IOs" do
       reader, writer = IO::Memory.new, IO::Memory.new
       io = IO::Stapled.new reader, writer
-      io.sync_close?.should be_false
+      io.refute &.sync_close?
       io.close
-      io.closed?.should be_true
-      reader.closed?.should be_false
-      writer.closed?.should be_false
+      io.assert &.closed?
+      reader.refute &.closed?
+      writer.refute &.closed?
     end
 
     it "closes underlying IOs when sync_close is true" do
       reader, writer = IO::Memory.new, IO::Memory.new
       io = IO::Stapled.new reader, writer, sync_close: true
-      io.sync_close?.should be_true
+      io.assert &.sync_close?
       io.close
-      io.closed?.should be_true
-      reader.closed?.should be_true
-      writer.closed?.should be_true
+      io.assert &.closed?
+      reader.assert &.closed?
+      writer.assert &.closed?
     end
 
     it "stops access to underlying IOs" do
       reader, writer = IO::Memory.new("cle"), IO::Memory.new
       io = IO::Stapled.new reader, writer
       io.close
-      io.closed?.should be_true
-      reader.closed?.should be_false
-      writer.closed?.should be_false
+      io.assert &.closed?
+      reader.refute &.closed?
+      writer.refute &.closed?
 
       expect_raises(IO::Error, "Closed stream") do
         io.gets
@@ -60,12 +60,12 @@ describe IO::Stapled do
     reader, writer = IO::Memory.new, IO::Memory.new
     io = IO::Stapled.new reader, writer
     io.sync_close = false
-    io.sync_close?.should be_false
+    io.refute &.sync_close?
     io.sync_close = true
-    io.sync_close?.should be_true
+    io.assert &.sync_close?
     io.close
-    reader.closed?.should be_true
-    writer.closed?.should be_true
+    reader.assert &.closed?
+    writer.assert &.closed?
   end
 
   it "#peek delegates to reader" do
@@ -96,8 +96,8 @@ describe IO::Stapled do
     it "creates a bidirectional pipe" do
       a, b = IO::Stapled.pipe
       begin
-        a.sync_close?.should be_true
-        b.sync_close?.should be_true
+        a.assert &.sync_close?
+        b.assert &.sync_close?
         a.puts "john"
         b.gets.should eq "john"
         b.puts "paul"
@@ -112,8 +112,8 @@ describe IO::Stapled do
       ext_a, ext_b = nil, nil
       IO::Stapled.pipe do |a, b|
         ext_a, ext_b = a, b
-        a.sync_close?.should be_true
-        b.sync_close?.should be_true
+        a.assert &.sync_close?
+        b.assert &.sync_close?
         a.puts "john"
         b.gets.should eq "john"
         b.puts "paul"
@@ -121,8 +121,8 @@ describe IO::Stapled do
         a.sync_close = false
         b.sync_close = false
       end
-      ext_a.not_nil!.closed?.should be_true
-      ext_b.not_nil!.closed?.should be_true
+      ext_a.not_nil!.assert &.closed?
+      ext_b.not_nil!.assert &.closed?
     end
   end
 end

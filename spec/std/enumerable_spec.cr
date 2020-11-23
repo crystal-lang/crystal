@@ -41,11 +41,11 @@ describe "Enumerable" do
 
   describe "all? without block" do
     it "returns true" do
-      [15].all?.should be_true
+      [15].assert &.all?
     end
 
     it "returns false" do
-      [nil, true, 99].all?.should be_false
+      [nil, true, 99].refute &.all?
     end
   end
 
@@ -71,11 +71,11 @@ describe "Enumerable" do
 
   describe "any? without block" do
     it "returns true if at least one element is truthy" do
-      [nil, true, 99].any?.should be_true
+      [nil, true, 99].assert &.any?
     end
 
     it "returns false if all elements are falsey" do
-      [nil, false].any?.should be_false
+      [nil, false].refute &.any?
     end
   end
 
@@ -435,8 +435,8 @@ describe "Enumerable" do
   end
 
   describe "empty?" do
-    it { SpecEnumerable.new.empty?.should be_false }
-    it { SpecEmptyEnumerable.new.empty?.should be_true }
+    it { SpecEnumerable.new.refute &.empty? }
+    it { SpecEmptyEnumerable.new.assert &.empty? }
   end
 
   describe "find" do
@@ -853,8 +853,8 @@ describe "Enumerable" do
   end
 
   describe "none? without block" do
-    it { [nil, false].none?.should be_true }
-    it { [nil, false, true].none?.should be_false }
+    it { [nil, false].assert &.none? }
+    it { [nil, false, true].refute &.none? }
   end
 
   describe "none? with pattern" do
@@ -866,9 +866,9 @@ describe "Enumerable" do
     it { [1, 2, 2, 3].one? { |x| x == 1 }.should eq(true) }
     it { [1, 2, 2, 3].one? { |x| x == 2 }.should eq(false) }
     it { [1, 2, 2, 3].one? { |x| x == 0 }.should eq(false) }
-    it { [1, 2, false].one?.should be_false }
-    it { [1, false, false].one?.should be_true }
-    it { [false].one?.should be_false }
+    it { [1, 2, false].refute &.one? }
+    it { [1, false, false].assert &.one? }
+    it { [false].refute &.one? }
     it { [1, 5, 9].one?(3..6).should be_true }
     it { [1, false, 2].one?(Int32).should be_false }
   end

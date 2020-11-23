@@ -271,8 +271,8 @@ describe "NamedTuple" do
   end
 
   it "does empty" do
-    {a: 1}.empty?.should be_false
-    NamedTuple.new.empty?.should be_true
+    {a: 1}.refute &.empty?
+    NamedTuple.new.assert &.empty?
   end
 
   it "does to_a" do

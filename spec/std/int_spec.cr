@@ -99,13 +99,13 @@ describe "Int" do
   end
 
   describe "even?" do
-    it { 2.even?.should be_true }
-    it { 3.even?.should be_false }
+    it { 2.assert &.even? }
+    it { 3.refute &.even? }
   end
 
   describe "odd?" do
-    it { 2.odd?.should be_false }
-    it { 3.odd?.should be_true }
+    it { 2.refute &.odd? }
+    it { 3.assert &.odd? }
   end
 
   describe "succ" do

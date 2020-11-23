@@ -29,7 +29,7 @@ describe XML do
     h1 = body.children.find { |node| node.name == "h1" }.not_nil!
 
     attrs = h1.attributes
-    attrs.empty?.should be_false
+    attrs.refute &.empty?
     attrs.size.should eq(1)
 
     attr = attrs[0]
@@ -76,7 +76,7 @@ describe XML do
       <html>
       </html>
     ))
-    doc.document?.should be_true
+    doc.assert &.document?
     doc.name.should eq("document")
   end
 end

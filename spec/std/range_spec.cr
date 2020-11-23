@@ -51,12 +51,12 @@ describe "Range" do
     r = 1..5
     r.begin.should eq(1)
     r.end.should eq(5)
-    r.excludes_end?.should be_false
+    r.refute &.excludes_end?
 
     r = 1...5
     r.begin.should eq(1)
     r.end.should eq(5)
-    r.excludes_end?.should be_true
+    r.assert &.excludes_end?
   end
 
   it "includes?" do
@@ -80,11 +80,11 @@ describe "Range" do
   end
 
   it "is empty with .. and begin > end" do
-    (1..0).to_a.empty?.should be_true
+    (1..0).to_a.assert &.empty?
   end
 
   it "is empty with ... and begin > end" do
-    (1...0).to_a.empty?.should be_true
+    (1...0).to_a.assert &.empty?
   end
 
   it "is not empty with .. and begin == end" do
@@ -314,11 +314,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).each.to_a.empty?.should be_true
+      (1..0).each.to_a.assert &.empty?
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).each.to_a.empty?.should be_true
+      (1...0).each.to_a.assert &.empty?
     end
 
     it "is not empty with .. and begin == end" do
@@ -362,11 +362,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).reverse_each.to_a.empty?.should be_true
+      (1..0).reverse_each.to_a.assert &.empty?
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).reverse_each.to_a.empty?.should be_true
+      (1...0).reverse_each.to_a.assert &.empty?
     end
 
     it "is not empty with .. and begin == end" do
@@ -449,11 +449,11 @@ describe "Range" do
     end
 
     it "is empty with .. and begin > end" do
-      (1..0).step(1).to_a.empty?.should be_true
+      (1..0).step(1).to_a.assert &.empty?
     end
 
     it "is empty with ... and begin > end" do
-      (1...0).step(1).to_a.empty?.should be_true
+      (1...0).step(1).to_a.assert &.empty?
     end
 
     it "is not empty with .. and begin == end" do

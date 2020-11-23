@@ -434,7 +434,7 @@ describe "Semantic: enum" do
       ))
 
     method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
-    method.always_inline?.should be_true
+    method.assert &.always_inline?
   end
 
   it "errors if defining initialize in Enum (#7238)" do

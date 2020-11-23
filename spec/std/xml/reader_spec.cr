@@ -252,25 +252,25 @@ module XML
     describe "#empty_element?" do
       it "checks if the node is empty" do
         reader = Reader.new("<root/>")
-        reader.empty_element?.should be_false
+        reader.refute &.empty_element?
         reader.read
-        reader.empty_element?.should be_true
+        reader.assert &.empty_element?
         reader = Reader.new("<root></root>")
         reader.read
-        reader.empty_element?.should be_false
+        reader.refute &.empty_element?
       end
     end
 
     describe "#has_attributes?" do
       it "checks if the node has attributes" do
         reader = Reader.new(%{<root id="1"><child/></root>})
-        reader.has_attributes?.should be_false
+        reader.refute &.has_attributes?
         reader.read # <root id="1">
-        reader.has_attributes?.should be_true
+        reader.assert &.has_attributes?
         reader.read # <child/>
-        reader.has_attributes?.should be_false
+        reader.refute &.has_attributes?
         reader.read # </root>
-        reader.has_attributes?.should be_true
+        reader.assert &.has_attributes?
       end
     end
 

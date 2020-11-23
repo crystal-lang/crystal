@@ -243,8 +243,8 @@ describe "Float" do
   end
 
   it "does nan?" do
-    1.5.nan?.should be_false
-    (0.0 / 0.0).nan?.should be_true
+    1.5.refute &.nan?
+    (0.0 / 0.0).assert &.nan?
   end
 
   it "does infinite?" do
@@ -258,11 +258,11 @@ describe "Float" do
   end
 
   it "does finite?" do
-    0.0.finite?.should be_true
-    1.5.finite?.should be_true
-    (1.0/0.0).finite?.should be_false
-    (-1.0/0.0).finite?.should be_false
-    (-0.0/0.0).finite?.should be_false
+    0.0.assert &.finite?
+    1.5.assert &.finite?
+    (1.0/0.0).refute &.finite?
+    (-1.0/0.0).refute &.finite?
+    (-0.0/0.0).refute &.finite?
   end
 
   it "does unary -" do

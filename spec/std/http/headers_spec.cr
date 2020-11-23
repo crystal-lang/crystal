@@ -4,7 +4,7 @@ require "http/headers"
 describe HTTP::Headers do
   it "is empty" do
     headers = HTTP::Headers.new
-    headers.empty?.should be_true
+    headers.assert &.empty?
   end
 
   it "is case insensitive" do
@@ -68,7 +68,7 @@ describe HTTP::Headers do
   it "deletes" do
     headers = HTTP::Headers{"Foo" => "bar"}
     headers.delete("foo").should eq("bar")
-    headers.empty?.should be_true
+    headers.assert &.empty?
   end
 
   it "equals another hash" do

@@ -2712,7 +2712,7 @@ describe "Semantic: instance var" do
     foo.instance_vars["@x"].type.should eq(result.program.int32)
 
     bar = result.program.types["Bar"].as(NonGenericClassType)
-    bar.instance_vars.empty?.should be_true
+    bar.instance_vars.assert &.empty?
   end
 
   it "infers type from custom array literal" do

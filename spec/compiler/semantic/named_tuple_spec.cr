@@ -298,7 +298,7 @@ describe "Semantic: named tuples" do
       x.named_args
       ") do
       meta = named_tuple_of({"a": int32, "b": float64, "c": char}).metaclass
-      meta.metaclass?.should be_true
+      meta.assert &.metaclass?
       meta
     end
   end

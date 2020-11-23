@@ -198,16 +198,16 @@ describe "URI" do
   end
 
   describe "#absolute?" do
-    it { URI.parse("http://www.example.com/foo").absolute?.should be_true }
-    it { URI.parse("http://www.example.com").absolute?.should be_true }
-    it { URI.parse("http://127.0.0.1").absolute?.should be_true }
-    it { URI.parse("http://[::1]/").absolute?.should be_true }
-    it { URI.parse("/foo").absolute?.should be_false }
-    it { URI.parse("foo").absolute?.should be_false }
+    it { URI.parse("http://www.example.com/foo").assert &.absolute? }
+    it { URI.parse("http://www.example.com").assert &.absolute? }
+    it { URI.parse("http://127.0.0.1").assert &.absolute? }
+    it { URI.parse("http://[::1]/").assert &.absolute? }
+    it { URI.parse("/foo").refute &.absolute? }
+    it { URI.parse("foo").refute &.absolute? }
   end
 
   describe "#relative?" do
-    it { URI.parse("/foo").relative?.should be_true }
+    it { URI.parse("/foo").assert &.relative? }
   end
 
   describe "#normalize" do
@@ -266,12 +266,12 @@ describe "URI" do
   end
 
   describe "#opaque?" do
-    it { URI.new.opaque?.should be_false }
-    it { URI.new("foo").opaque?.should be_true }
-    it { URI.new("foo", "example.com").opaque?.should be_false }
-    it { URI.new("foo", "").opaque?.should be_false }
-    it { URI.new("foo", path: "foo").opaque?.should be_true }
-    it { URI.new("foo", path: "/foo").opaque?.should be_false }
+    it { URI.new.refute &.opaque? }
+    it { URI.new("foo").assert &.opaque? }
+    it { URI.new("foo", "example.com").refute &.opaque? }
+    it { URI.new("foo", "").refute &.opaque? }
+    it { URI.new("foo", path: "foo").assert &.opaque? }
+    it { URI.new("foo", path: "/foo").refute &.opaque? }
   end
 
   describe "#userinfo" do

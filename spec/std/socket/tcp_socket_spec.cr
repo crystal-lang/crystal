@@ -12,8 +12,8 @@ describe TCPSocket do
 
             sock = server.accept
 
-            sock.closed?.should be_false
-            client.closed?.should be_false
+            sock.refute &.closed?
+            client.refute &.closed?
 
             sock.local_address.port.should eq(port)
             sock.local_address.address.should eq(address)
@@ -107,9 +107,9 @@ describe TCPSocket do
       TCPSocket.open("localhost", port) do |client|
         # test protocol specific socket options
         (client.tcp_nodelay = true).should be_true
-        client.tcp_nodelay?.should be_true
+        client.assert &.tcp_nodelay?
         (client.tcp_nodelay = false).should be_false
-        client.tcp_nodelay?.should be_false
+        client.refute &.tcp_nodelay?
 
         {% unless flag?(:openbsd) %}
           (client.tcp_keepalive_idle = 42).should eq 42
