@@ -207,6 +207,8 @@ module Crystal
       types["Proc"] = @proc = ProcType.new self, self, "Proc", value, ["T", "R"]
       types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
       types["Crystal"] = @crystal = NonGenericModuleType.new self, self, "Crystal"
+      crystal.types["Macros"] = macros = NonGenericModuleType.new self, crystal, "Macros"
+      define_crystal_macros_ast_nodes(macros)
 
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
@@ -286,6 +288,22 @@ module Crystal
       crystal.types[name] = const = Const.new self, crystal, name, value
       const.no_init_flag = true
       predefined_constants << const
+    end
+
+    private def define_crystal_macros_ast_nodes(macros)
+      macros.types["ASTNode"] = ast_node = NonGenericClassType.new self, macros, "ASTNode", nil
+
+      %w(Annotation Arg ArrayLiteral Assign BinaryOp Block BoolLiteral
+        Call Case Cast CharLiteral ClassDef ClassVar Def Expressions
+        Generic Global HashLiteral If ImplicitObj InstanceVar IsA Macro
+        MacroId MetaVar MultiAssign NamedArgument NamedTupleLiteral NilableCast
+        NilLiteral Nop NumberLiteral OffsetOf Path ProcLiteral ProcNotation ProcPointer
+        RangeLiteral ReadInstanceVar RegexLiteral Require RespondsTo Splat
+        StringInterpolation StringLiteral SymbolLiteral TupleLiteral TypeDeclaration
+        TypeNode UnaryExpression UninitializedVar Union Var VisibilityModifier
+        When While).each do |name|
+        macros.types[name] = NonGenericClassType.new self, macros, name, ast_node
+      end
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
