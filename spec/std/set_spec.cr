@@ -63,9 +63,14 @@ describe "Set" do
       set.includes?(3).should be_true
     end
 
-    it "returns self" do
+    it "returns true when the object was present" do
       set = Set{1, 2, 3}
-      set.delete(2).should eq(set)
+      set.delete(2).should be_true
+    end
+
+    it "returns false when the object was absent" do
+      set = Set{1, 2, 3}
+      set.delete(0).should be_false
     end
   end
 
