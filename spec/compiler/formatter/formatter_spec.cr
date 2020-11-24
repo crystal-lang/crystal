@@ -1729,6 +1729,32 @@ describe Crystal::Formatter do
     end
     CODE
 
+  assert_format <<-BEFORE, <<-AFTER
+    begin
+      1
+      # Comment
+
+
+    end
+    BEFORE
+    begin
+      1
+      # Comment
+    end
+    AFTER
+
+  assert_format <<-BEFORE, <<-AFTER
+    begin
+      # Comment
+
+
+    end
+    BEFORE
+    begin
+      # Comment
+    end
+    AFTER
+
   assert_format <<-CODE
     foo 1, # comment
       do
