@@ -1474,4 +1474,23 @@ describe "Semantic: macro" do
       {% end %}
       )) { int32 }
   end
+
+  it "executes MultiAssign" do
+    assert_type(%(
+      {% begin %}
+        {% a, b = 1, 2 %}
+        { {{a}}, {{b}} }
+      {% end %}
+      )) { tuple_of([int32, int32] of Type) }
+  end
+
+  it "executes MultiAssign with ArrayLiteral value" do
+    assert_type(%(
+      {% begin %}
+        {% xs = [1, 2] %}
+        {% a, b = xs %}
+        { {{a}}, {{b}} }
+      {% end %}
+      )) { tuple_of([int32, int32] of Type) }
+  end
 end
