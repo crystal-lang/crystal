@@ -559,6 +559,14 @@ describe "Hash" do
     result.should eq({:foo => "bar", :foobar => "foo"})
   end
 
+  it "merges other type with block" do
+    h1 = {1 => "foo"}
+    h2 = {1 => "bar", "fizz" => "buzz"}
+
+    h3 = h1.merge(h2) { |k, v1, v2| v1 + v2 }
+    h3.should eq({1 => "foobar", "fizz" => "buzz"})
+  end
+
   it "merges!" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}
