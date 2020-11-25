@@ -230,11 +230,11 @@ module Crystal
     def restrict_type_to_freeze_type(freeze_type, type)
       if freeze_type.is_a?(ProcInstanceType)
         # We allow assigning Proc(*T, R) to Proc(*T, Nil)
-        if freeze_type.return_type.nil_type?
-          if (type.is_a?(UnionType) && type.union_types.all?(&.implements?(freeze_type))) ||
-             type.implements?(freeze_type)
-            return freeze_type
-          end
+        if freeze_type.return_type.nil_type? &&
+           type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) && a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
         end
 
         # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
