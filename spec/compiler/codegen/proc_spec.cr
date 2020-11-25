@@ -908,7 +908,7 @@ describe "Code gen: proc" do
     ))
   end
 
-  it "doesn't crash when taking a proc pointer that multidispatches (#3822)" do
+  it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do
     run(%(
       class Foo
         def initialize(@proc : Proc(Bar, Nil))
@@ -932,6 +932,35 @@ describe "Code gen: proc" do
       end
 
       Foo.new(->test(Bar))
+    ))
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on a module (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      module Moo
+        def self.test(bar : Bar)
+          if bar.is_a? Baz
+            test bar
+          end
+        end
+
+        def self.test(baz : Baz)
+        end
+      end
+
+      Foo.new(->Moo.test(Bar))
     ))
   end
 end

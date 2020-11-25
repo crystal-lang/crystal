@@ -1256,6 +1256,15 @@ module Crystal
         obj.accept self
       end
 
+      # If it's something like `->Foo.bar` and `Foo` is not a lib type,
+      # it could also be producing a multidispatch so we rewrite that too
+      # (lib types can never produce a mutlidispatch and in that case we can
+      # actually generate a function pointer that points right into the C fun).
+      if obj.is_a?(Path) && !obj.type.is_a?(LibType)
+        expand(node)
+        return false
+      end
+
       # The call might have been created if this is a proc pointer at the top-level
       call = node.call? || Call.new(obj, node.name).at(obj)
       prepare_call(call)

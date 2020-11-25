@@ -679,7 +679,19 @@ module Crystal
     # ->(x : X, y : Y) { tmp.bar(x, y) }
     # ```
     #
-    # And expand this:
+    # Expand this:
+    #
+    # ```
+    # ->Foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { Foo.bar(x, y) }
+    # ```
+    #
+    # Expand this:
     #
     # ```
     # ->bar(X, Y)
@@ -695,7 +707,7 @@ module Crystal
     def expand(node : ProcPointer)
       obj = node.obj
 
-      if obj
+      if obj && !obj.is_a?(Path)
         temp_var = new_temp_var.at(obj)
         assign = Assign.new(temp_var, obj)
         obj = temp_var
