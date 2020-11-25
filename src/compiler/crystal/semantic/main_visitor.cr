@@ -1245,16 +1245,9 @@ module Crystal
 
       # If it's something like `->foo.bar` we turn it into a closure
       # where `foo` is assigned to a temporary variable.
-      if obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
-        expand(node)
-        return false
-      end
-
-      # If it's something like `->bar` where the implicit `self` is something
-      # that is passed as self in the codegen phase (like a class, or a virtual class)
-      # then we also turn it into a closure because ProcPointer doesn't support
-      # multidispatch and in the end the behavior is equivalent.
-      if !obj && (scope = @scope) && scope.passed_as_self?
+      # If it's something like `->foo` then we also turn it into a closure
+      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
+      if !obj || obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
         expand(node)
         return false
       end

@@ -907,4 +907,31 @@ describe "Code gen: proc" do
       Child1.new.as(Parent).get
     ))
   end
+
+  it "doesn't crash when taking a proc pointer that multidispatches (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      def test(bar : Bar)
+        if bar.is_a? Baz
+          test bar
+        end
+      end
+
+      def test(baz : Baz)
+      end
+
+      Foo.new(->test(Bar))
+    ))
+  end
 end
