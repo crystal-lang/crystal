@@ -1250,6 +1250,15 @@ module Crystal
         return false
       end
 
+      # If it's something like `->bar` where the implicit `self` is something
+      # that is passed as self in the codegen phase (like a class, or a virtual class)
+      # then we also turn it into a closure because ProcPointer doesn't support
+      # multidispatch and in the end the behavior is equivalent.
+      if !obj && (scope = @scope) && scope.passed_as_self?
+        expand(node)
+        return false
+      end
+
       if obj
         obj.accept self
       end
