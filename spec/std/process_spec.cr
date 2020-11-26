@@ -94,74 +94,100 @@ describe Process do
     end
   end
 
-  it "run waits for the process" do
-    Process.run(*exit_code_command(0)).exit_code.should eq(0)
-  end
-
-  it "runs true in block" do
-    Process.run(*exit_code_command(0)) { }
-    $?.exit_code.should eq(0)
-  end
-
-  it "receives arguments in array" do
-    command, args = exit_code_command(123)
-    Process.run(command, args.to_a).exit_code.should eq(123)
-  end
-
-  it "receives arguments in tuple" do
-    command, args = exit_code_command(123)
-    Process.run(command, args.as(Tuple)).exit_code.should eq(123)
-  end
-
-  it "redirects output to /dev/null" do
-    # This doesn't test anything but no output should be seen while running tests
-    command, args = {% if flag?(:win32) %}
-                      {"cmd.exe", {"/c", "dir"}}
-                    {% else %}
-                      {"/bin/ls", [] of String}
-                    {% end %}
-    Process.run(command, args, output: Process::Redirect::Close).exit_code.should eq(0)
-  end
-
-  it "gets output" do
-    value = Process.run(*shell_command("echo hello")) do |proc|
-      proc.output.gets_to_end
+  describe ".run" do
+    it "run waits for the process" do
+      Process.run(*exit_code_command(0)).exit_code.should eq(0)
     end
-    value.should eq("hello#{newline}")
-  end
 
-  pending_win32 "sends input in IO" do
-    value = Process.run(*stdin_to_stdout_command, input: IO::Memory.new("hello")) do |proc|
-      proc.input?.should be_nil
-      proc.output.gets_to_end
+    it "runs true in block" do
+      Process.run(*exit_code_command(0)) { }
+      $?.exit_code.should eq(0)
     end
-    value.should eq("hello")
-  end
 
-  it "sends output to IO" do
-    output = IO::Memory.new
-    Process.run(*shell_command("echo hello"), output: output)
-    output.to_s.should eq("hello#{newline}")
-  end
-
-  it "sends error to IO" do
-    error = IO::Memory.new
-    Process.run(*shell_command("1>&2 echo hello"), error: error)
-    error.to_s.should eq("hello#{newline}")
-  end
-
-  it "controls process in block" do
-    value = Process.run(*stdin_to_stdout_command, error: :inherit) do |proc|
-      proc.input.puts "hello"
-      proc.input.close
-      proc.output.gets_to_end
+    it "receives arguments in array" do
+      command, args = exit_code_command(123)
+      Process.run(command, args.to_a).exit_code.should eq(123)
     end
-    value.should eq("hello#{newline}")
-  end
 
-  it "closes ios after block" do
-    Process.run(*stdin_to_stdout_command) { }
-    $?.exit_code.should eq(0)
+    it "receives arguments in tuple" do
+      command, args = exit_code_command(123)
+      Process.run(command, args.as(Tuple)).exit_code.should eq(123)
+    end
+
+    it "redirects output to /dev/null" do
+      # This doesn't test anything but no output should be seen while running tests
+      command, args = {% if flag?(:win32) %}
+                        {"cmd.exe", {"/c", "dir"}}
+                      {% else %}
+                        {"/bin/ls", [] of String}
+                      {% end %}
+      Process.run(command, args, output: Process::Redirect::Close).exit_code.should eq(0)
+    end
+
+    it "gets output" do
+      value = Process.run(*shell_command("echo hello")) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should eq("hello#{newline}")
+    end
+
+    pending_win32 "sends input in IO" do
+      value = Process.run(*stdin_to_stdout_command, input: IO::Memory.new("hello")) do |proc|
+        proc.input?.should be_nil
+        proc.output.gets_to_end
+      end
+      value.should eq("hello")
+    end
+
+    it "sends output to IO" do
+      output = IO::Memory.new
+      Process.run(*shell_command("echo hello"), output: output)
+      output.to_s.should eq("hello#{newline}")
+    end
+
+    it "sends error to IO" do
+      error = IO::Memory.new
+      Process.run(*shell_command("1>&2 echo hello"), error: error)
+      error.to_s.should eq("hello#{newline}")
+    end
+
+    it "controls process in block" do
+      value = Process.run(*stdin_to_stdout_command, error: :inherit) do |proc|
+        proc.input.puts "hello"
+        proc.input.close
+        proc.output.gets_to_end
+      end
+      value.should eq("hello#{newline}")
+    end
+
+    it "closes ios after block" do
+      Process.run(*stdin_to_stdout_command) { }
+      $?.exit_code.should eq(0)
+    end
+
+    it "sets working directory" do
+      parent = File.dirname(Dir.current)
+      command = {% if flag?(:win32) %}
+                  "cmd.exe /c echo %cd%"
+                {% else %}
+                  "pwd"
+                {% end %}
+      value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
+        proc.output.gets_to_end
+      end
+      value.should eq "#{parent}#{newline}"
+    end
+
+    pending_win32 "disallows passing arguments to nowhere" do
+      expect_raises ArgumentError, /args.+@/ do
+        Process.run("foo bar", {"baz"}, shell: true)
+      end
+    end
+
+    pending_win32 "looks up programs in the $PATH with a shell" do
+      proc = Process.run(*exit_code_command(0), shell: true, output: Process::Redirect::Close)
+      proc.exit_code.should eq(0)
+    end
   end
 
   pending_win32 "chroot raises when unprivileged" do
@@ -176,30 +202,6 @@ describe Process do
 
     status.success?.should be_true
     output.should eq("#<RuntimeError:Failed to chroot: Operation not permitted>\n")
-  end
-
-  it "sets working directory" do
-    parent = File.dirname(Dir.current)
-    command = {% if flag?(:win32) %}
-                "cmd.exe /c echo %cd%"
-              {% else %}
-                "pwd"
-              {% end %}
-    value = Process.run(command, shell: true, chdir: parent, output: Process::Redirect::Pipe) do |proc|
-      proc.output.gets_to_end
-    end
-    value.should eq "#{parent}#{newline}"
-  end
-
-  pending_win32 "disallows passing arguments to nowhere" do
-    expect_raises ArgumentError, /args.+@/ do
-      Process.run("foo bar", {"baz"}, shell: true)
-    end
-  end
-
-  pending_win32 "looks up programs in the $PATH with a shell" do
-    proc = Process.run(*exit_code_command(0), shell: true, output: Process::Redirect::Close)
-    proc.exit_code.should eq(0)
   end
 
   pending_win32 "allows passing huge argument lists to a shell" do
