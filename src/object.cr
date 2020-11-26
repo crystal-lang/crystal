@@ -86,72 +86,65 @@ class Object
     hash(Crystal::Hasher.new).result
   end
 
-  # Returns a string representation of this object.
+  # Returns a nicely readable and concise string representation of this object,
+  # typically intended for users.
   #
-  # Descendants must usually **not** override this method. Instead,
-  # they must override `to_s(io)`, which must append to the given
-  # IO object.
+  # This method should usually **not** be overridden. It delegates to
+  # `#to_s(IO)` which can be overridden for custom implementations.
+  #
+  # See `#inspect` for related method.
   def to_s : String
     String.build do |io|
       to_s io
     end
   end
 
-  # Appends a `String` representation of this object
-  # to the given `IO` object.
+  # Prints a nicely readable and concise string representation of this object,
+  # typically intended for users, to *io*.
   #
-  # An object must never append itself to the io argument,
-  # as this will in turn call `to_s(io)` on it.
+  # This method is called when an object is used in string interpolation:
+  # In `"foo #{bar} baz"`, the value interpolated for `#{foo}` is the result of
+  # `foo.to_s`.
+  #
+  # Implementations must not append `self` to *io* which would lead to an
+  # endless loop.
+  #
+  # See `#inspect(IO)` for related method.
   abstract def to_s(io : IO) : Nil
 
-  # Returns a `String` representation of this object suitable
-  # to be embedded inside other expressions, sometimes providing
-  # more information about this object.
+  # Returns an unambiguous and information-rich string representation of this
+  # object, typically intended for developers.
   #
-  # `#inspect` (and `#inspect(io)`) are the methods used when
-  # you invoke `#to_s` or `#inspect` on an object that holds
-  # other objects and wants to show them. For example when you
-  # invoke `Array#to_s`, `#inspect` will be invoked on each element:
+  # This method should usually **not** be overridden. It delegates to
+  # `#inspect(IO)` which can be overridden for custom implementations.
   #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # ary.inspect # => ["one", "two", "three, etc."]
-  # ```
-  #
-  # Note that if Array invoked `#to_s` on each of the elements
-  # above, the output would have been this:
-  #
-  # ```
-  # ary = ["one", "two", "three, etc."]
-  # # If inspect invoked to_s on each element...
-  # ary.inspect # => [one, two, three, etc.]
-  # ```
-  #
-  # Note that it's not clear how many elements the array has,
-  # or which are they, because `#to_s` doesn't guarantee that
-  # the string representation is clearly delimited (in the case
-  # of `String` the quotes are not shown).
-  #
-  # Also note that sometimes the output of `#inspect` will look
-  # like a Crystal expression that will compile, but this isn't
-  # always the case, nor is it necessary. Notably, `Reference#inspect`
-  # and `Struct#inspect` return values that don't compile.
-  #
-  # Classes must usually **not** override this method. Instead,
-  # they must override `inspect(io)`, which must append to the
-  # given `IO` object.
+  # See `#to_s` for related method.
   def inspect : String
     String.build do |io|
       inspect io
     end
   end
 
-  # Appends a string representation of this object
-  # to the given `IO` object.
+  # Prints an unambiguous and information-rich string representation of this
+  # object, typically intended for developers, to *io*.
   #
-  # Similar to `to_s(io)`, but usually appends more information
-  # about this object.
-  # See `#inspect`.
+  # The representation should be self-contained with the end being clearly
+  # identifiable.
+  # A Crystal expression that recreates an object with the same value (given an
+  # identical environment) is an ideal representation. It doesn't need to be
+  # actual code that compiles, but a resemblance is recommended.
+  # When this is not possible (for example for non-printable internal state)
+  # another useful description will do.
+  #
+  # It is advisable to have an appropriate `#inspect` implementation on every
+  # type. Default implementations are provided by `Struct#inspect` and
+  # `Reference#inspect`.
+  #
+  # It is similar to `#to_s(IO)`, but often provides more information.
+  # For types that don't provide a custom implementation of  this method,
+  # default implementation delegates to `#to_s(IO)`.
+  #
+  # `::p` and `::p!` use this method to present an object.
   def inspect(io : IO) : Nil
     to_s io
   end

@@ -1930,6 +1930,17 @@ class Array(T)
     self
   end
 
+  # Prints a nicely readable and concise string representation of this array
+  # to *io*.
+  #
+  # The result resembles an array literal but it does not necessarily compile.
+  #
+  # It invokes `#inspect(io)` on each element to avoid ambiguity.
+  #
+  # ```
+  # ["one", "two, three"].inspect # => ["one", "two, three"]
+  # #                               vs [one, two, three]
+  # ```
   def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
