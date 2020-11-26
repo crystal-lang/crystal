@@ -801,6 +801,9 @@ module Crystal
         target.raise ex.message
       end
 
+      meta_var.increase_assigned_count
+      check_closured meta_var
+
       simple_var = MetaVar.new(var_name)
 
       # When we assign to a local variable with a fixed type, and it's
@@ -810,8 +813,6 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        meta_var.increase_assigned_count
-        check_closured meta_var
         check_closure_multibound(meta_var, simple_var)
       end
 
