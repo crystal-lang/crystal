@@ -618,4 +618,25 @@ describe "Semantic: closure" do
       ),
       "undefined method '&+'"
   end
+
+  it "..." do
+    assert_type(%(
+      def capture(&block)
+        block.call
+      end
+
+      def foo
+        yield nil
+      end
+
+      z = nil
+      foo do |x|
+        capture do
+          x = 1
+        end
+        z = x
+      end
+      z
+      )) { nilable int32 }
+  end
 end

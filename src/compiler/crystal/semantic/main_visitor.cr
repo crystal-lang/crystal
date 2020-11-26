@@ -112,7 +112,7 @@ module Crystal
     # Type filters for `exp` in `!exp`, used after a `while`
     @before_not_type_filters : TypeFilters?
 
-    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
+    def initialize(program, vars = MetaVars.new, @typed_def = nil, meta_vars = nil, increase_assigned_count = true)
       super(program, vars)
       @while_stack = [] of While
       @needs_type_filters = 0
@@ -137,7 +137,7 @@ module Crystal
         vars.each do |name, var|
           meta_var = new_meta_var(name)
           meta_var.bind_to(var)
-          meta_var.increase_assigned_count
+          meta_var.increase_assigned_count if increase_assigned_count
           meta_vars[name] = meta_var
         end
       end
@@ -1115,7 +1115,7 @@ module Crystal
 
       @block_nest += 1
 
-      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars)
+      block_visitor = MainVisitor.new(program, before_block_vars, @typed_def, meta_vars, increase_assigned_count: false)
       block_visitor.yield_vars = @yield_vars
       block_visitor.match_context = @match_context
       block_visitor.untyped_def = @untyped_def
@@ -1163,6 +1163,7 @@ module Crystal
 
     def bind_block_var(node, target, meta_vars, before_block_vars)
       meta_var = new_meta_var(target.name, context: node)
+      meta_var.increase_assigned_count
       meta_var.bind_to(target)
       meta_vars[target.name] = meta_var
 
@@ -1206,6 +1207,7 @@ module Crystal
         fun_vars[arg.name] = fun_var
 
         meta_var = new_meta_var(arg.name, context: node.def)
+        meta_var.increase_assigned_count
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
       end
@@ -1214,7 +1216,7 @@ module Crystal
       node.def.bind_to node.def.body
       node.def.vars = meta_vars
 
-      block_visitor = MainVisitor.new(program, fun_vars, node.def, meta_vars)
+      block_visitor = MainVisitor.new(program, fun_vars, node.def, meta_vars, increase_assigned_count: false)
       block_visitor.current_type = current_type
       block_visitor.yield_vars = @yield_vars
       block_visitor.match_context = @match_context
