@@ -92,7 +92,7 @@ class Object
   # This method should usually **not** be overridden. It delegates to
   # `#to_s(IO)` which can be overridden for custom implementations.
   #
-  # See `#inspect` for related method.
+  # Also see `#inspect`.
   def to_s : String
     String.build do |io|
       to_s io
@@ -102,14 +102,14 @@ class Object
   # Prints a nicely readable and concise string representation of this object,
   # typically intended for users, to *io*.
   #
-  # This method is called when an object is used in string interpolation:
+  # This method is called when an object is used within string interpolation:
   # In `"foo #{bar} baz"`, the value interpolated for `#{foo}` is the result of
   # `foo.to_s`.
   #
   # Implementations must not append `self` to *io* which would lead to an
   # endless loop.
   #
-  # See `#inspect(IO)` for related method.
+  # Also see `#inspect(IO)`.
   abstract def to_s(io : IO) : Nil
 
   # Returns an unambiguous and information-rich string representation of this
@@ -118,7 +118,7 @@ class Object
   # This method should usually **not** be overridden. It delegates to
   # `#inspect(IO)` which can be overridden for custom implementations.
   #
-  # See `#to_s` for related method.
+  # Also see `#to_s`.
   def inspect : String
     String.build do |io|
       inspect io
@@ -128,8 +128,7 @@ class Object
   # Prints an unambiguous and information-rich string representation of this
   # object, typically intended for developers, to *io*.
   #
-  # The representation should be self-contained with the end being clearly
-  # identifiable.
+  # The representation should be clearly delimited.
   # A Crystal expression that recreates an object with the same value (given an
   # identical environment) is an ideal representation. It doesn't need to be
   # actual code that compiles, but a resemblance is recommended.
@@ -141,7 +140,7 @@ class Object
   # `Reference#inspect`.
   #
   # It is similar to `#to_s(IO)`, but often provides more information.
-  # For types that don't provide a custom implementation of  this method,
+  # For types that don't provide a custom implementation of this method,
   # default implementation delegates to `#to_s(IO)`.
   #
   # `::p` and `::p!` use this method to present an object.
