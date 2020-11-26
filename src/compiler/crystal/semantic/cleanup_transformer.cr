@@ -518,18 +518,23 @@ module Crystal
           when InstanceVar
             arg.raise "#{message} (closured vars: self)"
           end
-          return
         end
 
         if arg.def.closure?
           vars = ClosuredVarsCollector.collect arg.def
-          unless vars.empty?
+          if vars.empty?
+            message += " (closured vars: self)"
+          else
             message += " (closured vars: #{vars.join ", "})"
           end
 
           arg.raise message
         end
       when ProcPointer
+        if expanded = arg.expanded
+          return check_arg_is_not_closure(node, message, expanded)
+        end
+
         if arg.obj.try &.type?.try &.passed_as_self?
           arg.raise "#{message} (closured vars: self)"
         end

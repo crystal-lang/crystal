@@ -1243,26 +1243,8 @@ module Crystal
     def visit(node : ProcPointer)
       obj = node.obj
 
-      # If it's something like `->foo.bar` we turn it into a closure
-      # where `foo` is assigned to a temporary variable.
-      # If it's something like `->foo` then we also turn it into a closure
-      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
-      if !obj || obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
-        expand(node)
-        return false
-      end
-
       if obj
         obj.accept self
-      end
-
-      # If it's something like `->Foo.bar` and `Foo` is not a lib type,
-      # it could also be producing a multidispatch so we rewrite that too
-      # (lib types can never produce a mutlidispatch and in that case we can
-      # actually generate a function pointer that points right into the C fun).
-      if obj.is_a?(Path) && !obj.type.is_a?(LibType)
-        expand(node)
-        return false
       end
 
       # The call might have been created if this is a proc pointer at the top-level
@@ -1276,6 +1258,24 @@ module Crystal
           (io << " for " << obj.type) if obj
           io << "\n\n'" << node.name << "' exists as a macro, but macros can't be used in proc pointers"
         end)
+      end
+
+      # If it's something like `->foo.bar` we turn it into a closure
+      # where `foo` is assigned to a temporary variable.
+      # If it's something like `->foo` then we also turn it into a closure
+      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
+      if !obj || obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
+        expand(node)
+        return false
+      end
+
+      # If it's something like `->Foo.bar` and `Foo` is not a lib type,
+      # it could also be producing a multidispatch so we rewrite that too
+      # (lib types can never produce a mutlidispatch and in that case we can
+      # actually generate a function pointer that points right into the C fun).
+      if obj.is_a?(Path) && !obj.type.is_a?(LibType)
+        expand(node)
+        return false
       end
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
