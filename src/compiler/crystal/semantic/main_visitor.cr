@@ -137,6 +137,7 @@ module Crystal
         vars.each do |name, var|
           meta_var = new_meta_var(name)
           meta_var.bind_to(var)
+          meta_var.increase_assigned_count
           meta_vars[name] = meta_var
         end
       end
@@ -357,6 +358,7 @@ module Crystal
 
         meta_var = @meta_vars[node.name]
         check_closured meta_var
+        check_closure_multibound meta_var, var
 
         if var.nil_if_read?
           # Once we know a variable is nil if read we mark it as nilable
@@ -365,10 +367,6 @@ module Crystal
 
           meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
           node.bind_to(@program.nil_var)
-        end
-
-        if meta_var.closured?
-          var.bind_to(meta_var)
         end
 
         node.bind_to(var)
@@ -803,9 +801,6 @@ module Crystal
         target.raise ex.message
       end
 
-      meta_var.assigned_to = true
-      check_closured meta_var
-
       simple_var = MetaVar.new(var_name)
 
       # When we assign to a local variable with a fixed type, and it's
@@ -815,9 +810,9 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        if meta_var.closured?
-          simple_var.bind_to(meta_var)
-        end
+        meta_var.increase_assigned_count
+        check_closured meta_var
+        check_closure_multibound(meta_var, simple_var)
       end
 
       @vars[var_name] = simple_var
@@ -885,7 +880,7 @@ module Crystal
         unless scope.has_instance_var_initializer?(var_name)
           meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
           meta_var.bind_to value
-          meta_var.assigned_to = true
+          meta_var.increase_assigned_count
 
           simple_var = MetaVar.new(var_name)
           simple_var.bind_to(target)
@@ -2546,7 +2541,7 @@ module Crystal
       case exp = node.exp
       when Var
         meta_var = @meta_vars[exp.name]
-        meta_var.assigned_to = true
+        meta_var.increase_assigned_count
         meta_var
       when InstanceVar
         lookup_instance_var exp
@@ -2703,8 +2698,9 @@ module Crystal
         var = @vars[node_name] = new_meta_var(node_name)
         meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
         check_closured(meta_var)
+        check_closure_multibound(meta_var, var)
         meta_var.bind_to(var)
-        meta_var.assigned_to = true
+        meta_var.increase_assigned_count
 
         if types
           unified_type = @program.type_merge(types).not_nil!
@@ -3168,6 +3164,10 @@ module Crystal
     end
 
     def check_closured(var)
+      unless @while_stack.empty?
+        var.inside_loop = true
+      end
+
       return if @typeof_nest > 0
 
       if var.name == "self"
@@ -3177,7 +3177,12 @@ module Crystal
 
       context = current_context
       var_context = var.context
-      if !var_context.same?(context)
+      if var_context.same?(context)
+        var_context = var_context.context if var_context.is_a?(Block)
+        if var.closured?
+          mark_as_closured(var, var_context)
+        end
+      else
         # If the contexts are not the same, it might be that we are in a block
         # inside a method, or a block inside another block. We don't want
         # those cases to closure a variable. So if any context is a block
@@ -3188,19 +3193,31 @@ module Crystal
 
         closured = !context.same?(var_context)
         if closured
-          var.closured = true
-
-          # Go up and mark proc literal defs as closured until we get
-          # to the context where the variable is defined
-          visitor = self
-          while visitor
-            visitor_context = visitor.closure_context
-            break if visitor_context == var_context
-
-            visitor_context.closure = true if visitor_context.is_a?(Def)
-            visitor = visitor.parent
-          end
+          mark_as_closured(var, var_context)
         end
+      end
+    end
+
+    def mark_as_closured(var, var_context)
+      var.closured = true
+
+      if var.closured_multibound?
+        # Bind all local vars related to the metavar and bind them
+        # to the metavar. This is a fix for #5609.
+        var.local_vars?.try &.each do |local_var|
+          local_var.bind_to_unless_bound var
+        end
+      end
+
+      # Go up and mark proc literal defs as closured until we get
+      # to the context where the variable is defined
+      visitor = self
+      while visitor
+        visitor_context = visitor.closure_context
+        break if visitor_context == var_context
+
+        visitor_context.closure = true if visitor_context.is_a?(Def)
+        visitor = visitor.parent
       end
     end
 
@@ -3335,7 +3352,7 @@ module Crystal
       meta_var = (@meta_vars[name] ||= new_meta_var(name))
       meta_var.bind_to value
       meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
-      meta_var.assigned_to = true
+      meta_var.increase_assigned_count
       check_closured meta_var
 
       @vars[name] = meta_var
@@ -3410,6 +3427,17 @@ module Crystal
       nil_exp.location = node.location
       nil_exp.type = @program.nil
       nil_exp
+    end
+
+    # If the metavar is a closure multibound then bind var
+    # to it. Otherwise add it to the local vars so that they could
+    # be bound later on.
+    def check_closure_multibound(meta_var, var)
+      if meta_var.closured_multibound?
+        var.bind_to_unless_bound(meta_var)
+      else
+        meta_var.local_vars << var
+      end
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)

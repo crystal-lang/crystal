@@ -164,6 +164,14 @@ module Crystal
       nodes.each &.remove_observer self
     end
 
+    def bound_to?(node : ASTNode)
+      @dependencies.try &.any? &.same?(node)
+    end
+
+    def bind_to_unless_bound(node : ASTNode)
+      bind_to(node) unless bound_to?(node)
+    end
+
     def add_observer(observer)
       observers = @observers ||= [] of ASTNode
       observers.push observer
