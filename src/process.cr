@@ -135,6 +135,17 @@ class Process
     status
   end
 
+  # Executes a process and waits for it to complete.
+  #
+  # By default the process is configured without input, output or error.
+  #
+  # Returns `nil` if executing the command fails (for example if the executable doesn't exist).
+  def self.run?(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status?
+    run(command, args, env, clear_env, shell, input, output, error, chdir)
+  rescue IO::Error
+  end
+
   # Executes a process, yields the block, and then waits for it to finish.
   #
   # By default the process is configured to use pipes for input, output and error. These
@@ -154,6 +165,20 @@ class Process
       process.terminate
       raise ex
     end
+  end
+
+  # Executes a process, yields the block, and then waits for it to finish.
+  #
+  # By default the process is configured to use pipes for input, output and error. These
+  # will be closed automatically at the end of the block.
+  #
+  # Returns the block's value.
+  #
+  # Returns `nil` if executing the command fails (for example if the executable doesn't exist).
+  def self.run?(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
+    run(command, args, env, clear_env, shell, input, output, error, chdir) { yield }
+  rescue IO::Error
   end
 
   # Replaces the current process with a new one. This function never returns.

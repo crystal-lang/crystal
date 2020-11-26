@@ -94,6 +94,20 @@ describe Process do
     end
   end
 
+  describe ".run?" do
+    it "executes successful process" do
+      Process.run?(*exit_code_command(0)).try(&.exit_code).should eq(0)
+    end
+
+    it "executes failing process" do
+      Process.run?(*exit_code_command(1)).try(&.exit_code).should eq(1)
+    end
+
+    it "returns nil when exec failed" do
+      Process.run?("program-that-does-not-exist").should be_nil
+    end
+  end
+
   describe ".run" do
     it "run waits for the process" do
       Process.run(*exit_code_command(0)).exit_code.should eq(0)
