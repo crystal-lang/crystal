@@ -2700,7 +2700,7 @@ module Crystal
         meta_var.bind_to(var)
         meta_var.increase_assigned_count
         check_closured(meta_var)
-        check_closure_multibound(meta_var, var)
+        # check_closure_multibound(meta_var, var)
 
         if types
           unified_type = @program.type_merge(types).not_nil!
