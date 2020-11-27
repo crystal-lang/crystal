@@ -803,7 +803,7 @@ module Crystal
       end
 
       meta_var.assigned_to = true
-      check_closured meta_var, meta_var_to_mark_as_mutably_closured: (meta_var_existed ? meta_var : nil)
+      check_closured meta_var, mark_as_mutably_closured: meta_var_existed
 
       simple_var = MetaVar.new(var_name)
 
@@ -3165,7 +3165,7 @@ module Crystal
       match_context.try &.free_vars
     end
 
-    def check_closured(var, meta_var_to_mark_as_mutably_closured : MetaVar? = nil)
+    def check_closured(var, mark_as_mutably_closured : Bool = false)
       return if @typeof_nest > 0
 
       if var.name == "self"
@@ -3178,7 +3178,7 @@ module Crystal
       if var_context.same?(context)
         var_context = var_context.context if var_context.is_a?(Block)
         if var.closured?
-          mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured)
+          mark_as_closured(var, var_context, mark_as_mutably_closured)
         end
       else
         # If the contexts are not the same, it might be that we are in a block
@@ -3191,21 +3191,19 @@ module Crystal
 
         closured = !context.same?(var_context)
         if closured
-          mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured)
+          mark_as_closured(var, var_context, mark_as_mutably_closured)
         end
       end
     end
 
-    def mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured : MetaVar?)
+    def mark_as_closured(var, var_context, mark_as_mutably_closured : Bool)
       # This is a bit tricky: when we assign to a variable we create a new metavar
       # for it if it didn't exist. If it did exist, and right now we are forming
       # a closure, then we also want to mark it as readonly.
       # We already do this in `assign_to_meta_var` but that's done **before**
-      # we detect a closure in an assignment. So that login needs to be replicated here.
-      if meta_var_to_mark_as_mutably_closured
-        meta_var_to_mark_as_mutably_closured.mutably_closured = true
-      end
-
+      # we detect a closure in an assignment. So that logic needs to be replicated here,
+      # and it must happen before we actually mark is as closured.
+      var.mutably_closured = true if mark_as_mutably_closured
       var.mark_as_closured
 
       # Go up and mark proc literal defs as closured until we get
