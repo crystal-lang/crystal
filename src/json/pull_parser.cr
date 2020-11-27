@@ -6,6 +6,8 @@
 # You must be careful when calling those methods, as they move forward into the JSON input you are pulling.
 # Calling `read_string` twice will return the next two strings (if possible), not twice the same.
 #
+# If you try to read a token which is not the one currently under the cursor location, an exception `ParseException` will be raised.
+#
 # Example:
 # ```
 # input = %(
@@ -46,6 +48,15 @@
 #     end
 #   end
 # end
+# ```
+#
+# This example fails:
+# ```
+# pull = JSON::PullParser.new(input)
+# pull.read_begin_object
+# pull.read_object_key # => "type"
+# pull.read_string # => "event"
+# pull.read_end_object # => raise an exception. The current token is a string ("values"), not the end of an object.
 # ```
 class JSON::PullParser
   enum Kind
@@ -135,6 +146,7 @@ class JSON::PullParser
   # Reads a whole array.
   #
   # It reads the beginning of the array, yield each value of the array, and reads the end of the array.
+  # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the array.
   #
   # If the array is empty, it does not yield.
   def read_array
@@ -165,6 +177,7 @@ class JSON::PullParser
   # Reads a whole object.
   #
   # It reads the beginning of the object, yield each key and key location, and reads the end of the object.
+  # You have to consumes the values, if any, so the pull parser does not fail when reading the end of the object.
   #
   # If the object is empty, it does not yield.
   def read_object
@@ -184,7 +197,7 @@ class JSON::PullParser
     nil
   end
 
-  # Reads a boolean value.
+  # Reads a `Bool` value.
   def read_bool
     expect_kind :bool
     @bool_value.tap { read_next }
@@ -212,18 +225,20 @@ class JSON::PullParser
 
   # Read the next value and returns it.
   #
-  # If the value is a null, boolean, integer or string, it is returned as is.
-  # If the value is an array or an object, it returns a string representing it.
+  # The value is returned as a json string.
+  # If the value is an array or an object, it returns a string representing the full value.
   # If the value in unknown, it raises a `ParseException`.
   #
   # ```
-  # pull = JSON::PullParser.new(input)
-  # pull.read_begin_object
-  # pull.read_object_key
-  # pull.read_raw # => "event"
-  # pull.read_object_key
-  # pull.read_raw # => "[1,4,\"three\",10]"
-  # pull.read_end_object
+  # pull = JSON::PullParser.new %([nil, true, 1, "foo", [1, "two"], {"foo": "bar"}])
+  # pull.read_begin_array
+  # pull.read_raw # => "nil"
+  # pull.read_raw # => "true"
+  # pull.read_raw # => "1"
+  # pull.read_raw # => "foo"
+  # pull.read_raw # => "[1, \"two\"]"
+  # pull.read_raw # => "{\"foo\": \"bar\"}"
+  # pull.read_end_array
   # ```
   def read_raw
     case @kind
@@ -291,7 +306,7 @@ class JSON::PullParser
     @string_value.tap { read_next }
   end
 
-  # Reads a boolean or a null value, and returns it.
+  # Reads a `Bool` or a null value, and returns it.
   def read_bool_or_null
     read_null_or { read_bool }
   end
@@ -331,18 +346,18 @@ class JSON::PullParser
     end
   end
 
-  # Reads an object's keys and yield when *key* is found.
+  # Reads an object keys and yield when *key* is found.
   #
-  # All the other object's keys are skipped.
+  # All the other object keys are skipped.
   def on_key(key)
     read_object do |some_key|
       some_key == key ? yield : skip
     end
   end
 
-  # Reads an object's keys and yield when *key* is found. If not found, raise an `Exception`.
+  # Reads an object keys and yield when *key* is found. If not found, raise an `Exception`.
   #
-  # All the other object's keys are skipped.
+  # All the other object keys are skipped.
   def on_key!(key)
     found = false
     value = uninitialized typeof(yield)
@@ -372,15 +387,17 @@ class JSON::PullParser
     @kind
   end
 
-  # Reads a boolean value and returns it. If the value is not a boolean, returns nil.
+  # Reads a `Bool` value and returns it.
+  #
+  # If the value is not a `Bool`, returns `nil`.
   def read?(klass : Bool.class)
     read_bool if kind.bool?
   end
 
   {% for type in [Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32] %}
-    # Reads an {{type}} value and returns it. If the value is not an integer, returns nil.
+    # Reads an {{type}} value and returns it.
     #
-    # If the value is an integer but does not fit in a {{type}} variable, it returns nil.
+    # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
     def read?(klass : {{type}}.class)
       {{type}}.new(int_value).tap { read_next } if kind.int?
     rescue OverflowError
@@ -388,9 +405,9 @@ class JSON::PullParser
     end
   {% end %}
 
-  # Reads an Int64 value and returns it. If the value is not an integer, returns nil.
+  # Reads an `Int64` value and returns it.
   #
-  # If the value is an integer but does not fit in a Int64 variable, it returns nil.
+  # If the value is not an integer or does not fin in an `Int64` variable, it returns `nil`.
   def read?(klass : UInt64.class)
     # UInt64 is a special case due to exceeding bounds of @int_value
     UInt64.new(raw_value).tap { read_next } if kind.int?
@@ -398,9 +415,9 @@ class JSON::PullParser
     nil
   end
 
-  # Reads an Float32 value and returns it. If the value is not an integer, returns nil.
+  # Reads an `Float32` value and returns it.
   #
-  # If the value is an integer but does not fit in a Float32 variable, it returns nil.
+  # If the value is not an integer or does not fit in an `Float32`, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
   def read?(klass : Float32.class)
     return read_int.to_f32 if kind.int?
@@ -409,16 +426,18 @@ class JSON::PullParser
     nil
   end
 
-  # Reads an Float64 value and returns it. If the value is not an integer, returns nil.
+  # Reads an `Float64` value and returns it.
   #
-  # If the value is an integer but does not fit in a Float64 variable, it returns nil.
+  # If the value is not an integer or does not fit in a `Float64` variable, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
   def read?(klass : Float64.class)
     return read_int.to_f64 if kind.int?
     return read_float.to_f64 if kind.float?
   end
 
-  # Reads a string value and returns it. If the value is not a string, returns nil.
+  # Reads a `String` value and returns it.
+  #
+  # If the value is not a `String`, returns `nil`.
   def read?(klass : String.class)
     read_string if kind.string?
   end
@@ -545,8 +564,8 @@ class JSON::PullParser
 
   # Returns the current location.
   #
-  # The location is a tuple {line number, column number}.
-  def location
+  # The location is a tuple `{line number, column number}`.
+  def location : Tuple(Int32, Int32)
     @location
   end
 
