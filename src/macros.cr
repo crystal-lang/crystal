@@ -203,9 +203,9 @@ end
 # end
 # ```
 macro unreachable!(message = nil)
-  {% if message.nil? %}
-    raise error
-  {% else %}
+  {% if message.is_a?(NilLiteral)  %}
     raise "BUG: unreachable"
+  {% else %}
+    raise {{message}}
   {% end %}
 end
