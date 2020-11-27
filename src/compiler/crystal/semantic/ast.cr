@@ -497,8 +497,8 @@ module Crystal
       end
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
+      io << " (mutably-closured)" if mutably_closured?
       io << " (assigned-to)" if assigned_to?
-      io << " (readonly)" if readonly?
       io << " (object id: #{object_id})"
     end
 
