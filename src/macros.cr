@@ -185,3 +185,27 @@ macro p!(*exps)
     }
   {% end %}
 end
+
+# Raises an exception.
+# Useful to signal an unreachable section of the code.
+#
+# ```
+# values = ["a", "b"]
+# idx = Random.rand(2)
+#
+# case values[idx]
+# when "a"
+#   1
+# when "b"
+#   2
+# else
+#   unreachable!
+# end
+# ```
+macro unreachable!(message = nil)
+  {% if message.nil? %}
+    raise error
+  {% else %}
+    raise "BUG: unreachable"
+  {% end %}
+end
