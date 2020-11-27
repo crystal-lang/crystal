@@ -367,7 +367,7 @@ module Crystal
           node.bind_to(@program.nil_var)
         end
 
-        check_closured_and_not_readonly meta_var, var
+        check_mutably_closured meta_var, var
 
         node.bind_to(var)
 
@@ -803,7 +803,7 @@ module Crystal
       end
 
       meta_var.assigned_to = true
-      check_closured meta_var, meta_var_to_mark_as_not_readonly: (meta_var_existed ? meta_var : nil)
+      check_closured meta_var, meta_var_to_mark_as_mutably_closured: (meta_var_existed ? meta_var : nil)
 
       simple_var = MetaVar.new(var_name)
 
@@ -814,7 +814,7 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        check_closured_and_not_readonly(meta_var, simple_var)
+        check_mutably_closured(meta_var, simple_var)
       end
 
       @vars[var_name] = simple_var
@@ -2702,7 +2702,7 @@ module Crystal
         meta_var.bind_to(var)
         meta_var.assigned_to = true
         check_closured(meta_var)
-        check_closured_and_not_readonly(meta_var, var)
+        check_mutably_closured(meta_var, var)
 
         if types
           unified_type = @program.type_merge(types).not_nil!
@@ -3165,7 +3165,7 @@ module Crystal
       match_context.try &.free_vars
     end
 
-    def check_closured(var, meta_var_to_mark_as_not_readonly : MetaVar? = nil)
+    def check_closured(var, meta_var_to_mark_as_mutably_closured : MetaVar? = nil)
       return if @typeof_nest > 0
 
       if var.name == "self"
@@ -3178,7 +3178,7 @@ module Crystal
       if var_context.same?(context)
         var_context = var_context.context if var_context.is_a?(Block)
         if var.closured?
-          mark_as_closured(var, var_context, meta_var_to_mark_as_not_readonly)
+          mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured)
         end
       else
         # If the contexts are not the same, it might be that we are in a block
@@ -3191,19 +3191,19 @@ module Crystal
 
         closured = !context.same?(var_context)
         if closured
-          mark_as_closured(var, var_context, meta_var_to_mark_as_not_readonly)
+          mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured)
         end
       end
     end
 
-    def mark_as_closured(var, var_context, meta_var_to_mark_as_not_readonly : MetaVar?)
+    def mark_as_closured(var, var_context, meta_var_to_mark_as_mutably_closured : MetaVar?)
       # This is a bit tricky: when we assign to a variable we create a new metavar
       # for it if it didn't exist. If it did exist, and right now we are forming
       # a closure, then we also want to mark it as readonly.
       # We already do this in `assign_to_meta_var` but that's done **before**
       # we detect a closure in an assignment. So that login needs to be replicated here.
-      if meta_var_to_mark_as_not_readonly
-        meta_var_to_mark_as_not_readonly.readonly = false
+      if meta_var_to_mark_as_mutably_closured
+        meta_var_to_mark_as_mutably_closured.mutably_closured = true
       end
 
       var.mark_as_closured
@@ -3369,16 +3369,16 @@ module Crystal
       meta_var_existed = !!meta_var
       if meta_var
         # This var gets assigned a new value and it already existed before this line.
-        # If it's also a closured var it means it's not closure-readonly anymore.
-        meta_var.readonly = false if meta_var.closured?
+        # If it's also a closured var it means it has become mutably closured.
+        meta_var.mutably_closured = true if meta_var.closured?
       else
         @meta_vars[name] = meta_var = new_meta_var(name)
       end
 
       # If a variable is being assigned inside a loop then it's considered
-      # as not readonly, at least when it comes to consider that for a closure:
-      # it will get a value assigned to it multiple times exactly because it's in a loop.
-      meta_var.readonly = false if inside_loop?
+      # as mutably closured: it will get a value assigned to it multiple times
+      # exactly because it's in a loop.
+      meta_var.mutably_closured = true if inside_loop?
 
       {meta_var, meta_var_existed}
     end
@@ -3455,8 +3455,8 @@ module Crystal
     # to it (it gets all types assigned to meta_var).
     # Otherwise, add it to the local vars so that they could be
     # bond later on, if the meta_var stops being readonly.
-    def check_closured_and_not_readonly(meta_var, var)
-      if meta_var.closured? && !meta_var.readonly?
+    def check_mutably_closured(meta_var, var)
+      if meta_var.closured? && meta_var.mutably_closured?
         var.bind_to(meta_var)
       else
         meta_var.local_vars << var
