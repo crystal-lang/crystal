@@ -55,7 +55,7 @@
 # pull = JSON::PullParser.new(input)
 # pull.read_begin_object
 # pull.read_object_key # => "type"
-# pull.read_string # => "event"
+# pull.read_string     # => "event"
 # pull.read_end_object # => raise an exception. The current token is a string ("values"), not the end of an object.
 # ```
 class JSON::PullParser
