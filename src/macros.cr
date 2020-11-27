@@ -203,7 +203,7 @@ end
 # end
 # ```
 macro unreachable!(message = nil)
-  {% if message.is_a?(NilLiteral)  %}
+  {% if message.is_a?(NilLiteral) %}
     raise "BUG: unreachable"
   {% else %}
     raise {{message}}
