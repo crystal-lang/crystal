@@ -619,6 +619,21 @@ describe "Semantic: closure" do
       "undefined method '&+'"
   end
 
+  it "considers var as closure-readonly if it was assigned multiple times before it was closured" do
+    assert_no_errors(%(
+      def capture(&block)
+        block
+      end
+
+      x = "hello"
+      x = 1
+
+      capture do
+        x &+ 1
+      end
+      ))
+  end
+
   it "correctly captures type of closured block arg" do
     assert_type(%(
       def capture(&block)
