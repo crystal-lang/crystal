@@ -3376,11 +3376,21 @@ module Crystal
       # If a variable is being assigned inside a while then it's considered
       # as mutably closured: it will get a value assigned to it multiple times
       # exactly because it's in a loop.
-      # If a variable is being assigned inside a block... well, we don't know.
-      # It could be that the `yield` is inside a `while` or not but right
-      # now we have no way to detect that, so we assume that can happen
-      # and always mark the var as mutably closured.
-      meta_var.mutably_closured = true if inside_while? || @block
+      meta_var.mutably_closured = true if inside_while?
+
+      # If a variable is being assigned to inside a block:
+      # - if the variable is a new variable then there's no need to mark is a mutably
+      #   closured because unless it gets assigned again it will be a different
+      #   variable alloction each time
+      # - if the variable already existed but it's assigned in the same context
+      #   as before, if it's not closured already then it still shouldn't
+      #   be marked as mutably closured
+      # - otherwise, we mark it as mutably closured. The block might happen
+      #   in a while loop, or invoked multiple times: we don't know, so we must
+      #   mark is as such until the compiler gets smarter (if really necessary)
+      if @block && meta_var_existed && !current_context.same?(meta_var.context)
+        meta_var.mutably_closured = true
+      end
 
       {meta_var, meta_var_existed}
     end
