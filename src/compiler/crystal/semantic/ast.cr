@@ -436,10 +436,10 @@ module Crystal
     # Is this metavar assigned a value?
     property? assigned_to = false
 
-    # Is this metavar mutable? This means it got a value assigned to it more than once.
-    # If that's the case, when it's closured then all local variable related to
+    # Is this metavar readonly? This means it got a value assigned to it just once.
+    # If that's not the case, when it's closured then all local variable related to
     # it will also be bound to it.
-    property? mutable = false
+    property? readonly = true
 
     # Local variables associated with this meta variable.
     # Can be Var or MetaVar.
@@ -452,12 +452,12 @@ module Crystal
     def mark_as_closured
       @closured = true
 
-      return unless mutable?
+      return if readonly?
 
       local_vars = @local_vars
       return unless local_vars
 
-      # If a meta var is mutable and it became a closure we must
+      # If a meta var is not readonly and it became a closure we must
       # bind all previously related local vars to it so that
       # they get all types assigned to it.
       local_vars.each &.bind_to self
@@ -497,7 +497,7 @@ module Crystal
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
       io << " (assigned-to)" if assigned_to?
-      io << " (mutable)" if mutable?
+      io << " (readonly)" if readonly?
       io << " (object id: #{object_id})"
     end
 

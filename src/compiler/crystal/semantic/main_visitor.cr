@@ -367,7 +367,7 @@ module Crystal
           node.bind_to(@program.nil_var)
         end
 
-        check_closured_and_mutable meta_var, var
+        check_closured_and_not_readonly meta_var, var
 
         node.bind_to(var)
 
@@ -814,7 +814,7 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        check_closured_and_mutable(meta_var, simple_var)
+        check_closured_and_not_readonly(meta_var, simple_var)
       end
 
       @vars[var_name] = simple_var
@@ -2702,7 +2702,7 @@ module Crystal
         meta_var.bind_to(var)
         meta_var.assigned_to = true
         check_closured(meta_var)
-        check_closured_and_mutable(meta_var, var)
+        check_closured_and_not_readonly(meta_var, var)
 
         if types
           unified_type = @program.type_merge(types).not_nil!
@@ -3359,16 +3359,16 @@ module Crystal
       meta_var = @meta_vars[name]?
       if meta_var
         # This var is part of an assignment and it already existed before this line.
-        # That means it was mutated.
-        meta_var.mutable = true
+        # That means it's not readonly anymore.
+        meta_var.readonly = false
       else
         @meta_vars[name] = meta_var = new_meta_var(name)
       end
 
       # If a variable is being assigned inside a loop then it's considered
-      # mutable, at least when it comes to consider that for a closure:
+      # as not readonly, at least when it comes to consider that for a closure:
       # it will get a value assigned to it multiple times exactly because it's in a loop.
-      meta_var.mutable = true if inside_loop?
+      meta_var.readonly = false if inside_loop?
 
       meta_var
     end
@@ -3441,12 +3441,12 @@ module Crystal
       nil_exp
     end
 
-    # If the meta_var is closured and it's mutable, then bind var
+    # If the meta_var is closured but not readonly, then bind var
     # to it (it gets all types assigned to meta_var).
     # Otherwise, add it to the local vars so that they could be
-    # bond later on, if the meta_var becomes mutable.
-    def check_closured_and_mutable(meta_var, var)
-      if meta_var.closured? && meta_var.mutable?
+    # bond later on, if the meta_var stops being readonly.
+    def check_closured_and_not_readonly(meta_var, var)
+      if meta_var.closured? && !meta_var.readonly?
         var.bind_to(meta_var)
       else
         meta_var.local_vars << var
