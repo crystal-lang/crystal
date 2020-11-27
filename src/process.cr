@@ -141,7 +141,7 @@ class Process
   #
   # Returns `nil` if executing the command fails (for example if the executable doesn't exist).
   def self.run?(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status?
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status?
     run(command, args, env, clear_env, shell, input, output, error, chdir)
   rescue IO::Error
   end
@@ -176,7 +176,7 @@ class Process
   #
   # Returns `nil` if executing the command fails (for example if the executable doesn't exist).
   def self.run?(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
+                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
     run(command, args, env, clear_env, shell, input, output, error, chdir) { yield }
   rescue IO::Error
   end
