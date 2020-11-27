@@ -619,7 +619,7 @@ describe "Semantic: closure" do
       "undefined method '&+'"
   end
 
-  it "..." do
+  it "correctly captures type of closured block arg" do
     assert_type(%(
       def capture(&block)
         block.call

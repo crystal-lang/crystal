@@ -367,7 +367,7 @@ module Crystal
           node.bind_to(@program.nil_var)
         end
 
-        check_closure_multibound meta_var, var
+        check_closured_and_mutable meta_var, var
 
         node.bind_to(var)
 
@@ -814,7 +814,7 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        check_closure_multibound(meta_var, simple_var)
+        check_closured_and_mutable(meta_var, simple_var)
       end
 
       @vars[var_name] = simple_var
@@ -2702,7 +2702,7 @@ module Crystal
         meta_var.bind_to(var)
         meta_var.assigned_to = true
         check_closured(meta_var)
-        check_closure_multibound(meta_var, var)
+        check_closured_and_mutable(meta_var, var)
 
         if types
           unified_type = @program.type_merge(types).not_nil!
@@ -3197,15 +3197,7 @@ module Crystal
     end
 
     def mark_as_closured(var, var_context)
-      var.closured = true
-
-      if var.closured_multibound?
-        # Bind all local vars related to the metavar and bind them
-        # to the metavar. This is a fix for #5609.
-        var.local_vars?.try &.each do |local_var|
-          local_var.bind_to_unless_bound var
-        end
-      end
+      var.mark_as_closured
 
       # Go up and mark proc literal defs as closured until we get
       # to the context where the variable is defined
@@ -3367,12 +3359,17 @@ module Crystal
       meta_var = @meta_vars[name]?
       if meta_var
         # This var is part of an assignment and it already existed before this line.
-        # That means it's not readonly anymore.
-        meta_var.readonly = false
+        # That means it was mutated.
+        meta_var.mutable = true
       else
         @meta_vars[name] = meta_var = new_meta_var(name)
       end
-      meta_var.readonly = false if inside_loop?
+
+      # If a variable is being assigned inside a loop then it's considered
+      # mutable, at least when it comes to consider that for a closure:
+      # it will get a value assigned to it multiple times exactly because it's in a loop.
+      meta_var.mutable = true if inside_loop?
+
       meta_var
     end
 
@@ -3444,12 +3441,13 @@ module Crystal
       nil_exp
     end
 
-    # If the metavar is a closure multibound then bind var
-    # to it. Otherwise add it to the local vars so that they could
-    # be bound later on.
-    def check_closure_multibound(meta_var, var)
-      if meta_var.closured_multibound?
-        var.bind_to_unless_bound(meta_var)
+    # If the meta_var is closured and it's mutable, then bind var
+    # to it (it gets all types assigned to meta_var).
+    # Otherwise, add it to the local vars so that they could be
+    # bond later on, if the meta_var becomes mutable.
+    def check_closured_and_mutable(meta_var, var)
+      if meta_var.closured? && meta_var.mutable?
+        var.bind_to(meta_var)
       else
         meta_var.local_vars << var
       end

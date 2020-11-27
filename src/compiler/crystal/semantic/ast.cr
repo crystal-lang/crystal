@@ -431,22 +431,37 @@ module Crystal
 
     # A variable is closured if it's used in a ProcLiteral context
     # where it wasn't created.
-    property? closured = false
+    getter? closured = false
 
     # Is this metavar assigned a value?
     property? assigned_to = false
 
-    # Is this metavar readonly? This means it was assigned once
-    # and then read, never reassigned again.
-    # If not, when it's closured then all local variable related to
+    # Is this metavar mutable? This means it got a value assigned to it more than once.
+    # If that's the case, when it's closured then all local variable related to
     # it will also be bound to it.
-    property? readonly = true
+    property? mutable = false
 
     # Local variables associated with this meta variable.
     # Can be Var or MetaVar.
     property(local_vars) { [] of ASTNode }
 
     def initialize(@name : String, @type : Type? = nil)
+    end
+
+    # Marks this variable as closured.
+    def mark_as_closured
+      @closured = true
+
+      return unless mutable?
+
+      local_vars = @local_vars
+      return unless local_vars
+
+      # If a meta var is mutable and it became a closure we must
+      # bind all previously related local vars to it so that
+      # they get all types assigned to it.
+      local_vars.each &.bind_to self
+      local_vars = nil
     end
 
     # True if this variable belongs to the given context
@@ -463,11 +478,6 @@ module Crystal
     # Is this metavar associated with any local vars?
     def local_vars?
       @local_vars
-    end
-
-    # TODO: rename and document
-    def closured_multibound?
-      closured? && !readonly?
     end
 
     def ==(other : self)
@@ -487,7 +497,7 @@ module Crystal
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
       io << " (assigned-to)" if assigned_to?
-      io << " (readonly)" if readonly?
+      io << " (mutable)" if mutable?
       io << " (object id: #{object_id})"
     end
 
