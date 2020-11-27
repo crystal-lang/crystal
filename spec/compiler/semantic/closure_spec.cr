@@ -603,6 +603,56 @@ describe "Semantic: closure" do
       "undefined method '&+'"
   end
 
+  it "does assign all types to metavar if closured but only assigned to once in a loop through block" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+
+      def loop
+        while 1 == 1
+          yield
+        end
+      end
+
+      x = 1
+      loop do
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
+  it "does assign all types to metavar if closured but only assigned to once in a loop through captured block" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+
+      def loop(&block)
+        while 1 == 1
+          block.call
+        end
+      end
+
+      x = 1
+      loop do
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
   it "considered as closure if assigned once but comes from a method arg" do
     assert_error %(
       def capture(&block)

@@ -3373,10 +3373,14 @@ module Crystal
         @meta_vars[name] = meta_var = new_meta_var(name)
       end
 
-      # If a variable is being assigned inside a loop then it's considered
+      # If a variable is being assigned inside a while then it's considered
       # as mutably closured: it will get a value assigned to it multiple times
       # exactly because it's in a loop.
-      meta_var.mutably_closured = true if inside_loop?
+      # If a variable is being assigned inside a block... well, we don't know.
+      # It could be that the `yield` is inside a `while` or not but right
+      # now we have no way to detect that, so we assume that can happen
+      # and always mark the var as mutably closured.
+      meta_var.mutably_closured = true if inside_while? || @block
 
       {meta_var, meta_var_existed}
     end
@@ -3389,7 +3393,7 @@ module Crystal
       @untyped_def || @block_context
     end
 
-    def inside_loop?
+    def inside_while?
       !@while_stack.empty?
     end
 
