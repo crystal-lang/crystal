@@ -436,6 +436,16 @@ module Crystal
     # Is this metavar assigned a value?
     property? assigned_to = false
 
+    # Is this metavar readonly? This means it was assigned once
+    # and then read, never reassigned again.
+    # If not, when it's closured then all local variable related to
+    # it will also be bound to it.
+    property? readonly = true
+
+    # Local variables associated with this meta variable.
+    # Can be Var or MetaVar.
+    property(local_vars) { [] of ASTNode }
+
     def initialize(@name : String, @type : Type? = nil)
     end
 
@@ -448,6 +458,16 @@ module Crystal
     # True if this variable belongs to the given context.
     def belongs_to?(context)
       @context.same?(context)
+    end
+
+    # Is this metavar associated with any local vars?
+    def local_vars?
+      @local_vars
+    end
+
+    # TODO: rename and document
+    def closured_multibound?
+      closured? && !readonly?
     end
 
     def ==(other : self)
@@ -467,6 +487,7 @@ module Crystal
       io << " (nil-if-read)" if nil_if_read?
       io << " (closured)" if closured?
       io << " (assigned-to)" if assigned_to?
+      io << " (readonly)" if readonly?
       io << " (object id: #{object_id})"
     end
 

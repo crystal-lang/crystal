@@ -549,4 +549,92 @@ describe "Semantic: closure" do
     call = node.expressions[-2].as(Call)
     call.target_def.self_closured?.should be_false
   end
+
+  it "correctly detects previous var as closured (#5609)" do
+    assert_error %(
+      def block(&block)
+        block.call
+      end
+      def times
+        yield
+        yield
+      end
+      x = 1
+      times do
+        if x.is_a?(Int32)
+          x &+ 2
+        end
+        block do
+          x = "hello"
+        end
+      end
+      ),
+      "undefined method '&+' for String"
+  end
+
+  it "doesn't assign all types to metavar if closured but only assigned to once" do
+    semantic(%(
+      def capture(&block)
+        block
+      end
+      x = 1 == 2 ? 1 : nil
+      if x
+        capture do
+          x &+ 1
+        end
+      end
+      ))
+  end
+
+  it "does assign all types to metavar if closured but only assigned to once in a loop" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+      while 1 == 1
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
+  it "considered as closure if assigned once but comes from a method arg" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+      def foo(x)
+        capture do
+          x &+ 1
+        end
+        x = 1 == 2 ? 1 : nil
+      end
+      foo(1)
+      ),
+      "undefined method '&+'"
+  end
+
+  it "..." do
+    assert_type(%(
+      def capture(&block)
+        block.call
+      end
+      def foo
+        yield nil
+      end
+      z = nil
+      foo do |x|
+        capture do
+          x = 1
+        end
+        z = x
+      end
+      z
+      )) { nilable int32 }
+  end
 end
