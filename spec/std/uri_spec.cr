@@ -184,8 +184,11 @@ describe "URI" do
 
   describe "#full_path" do
     it { URI.new(path: "/foo").full_path.should eq("/foo") }
+    it { URI.new(path: "/foo", fragment: "anchor").full_path.should eq("/foo#anchor") }
     it { URI.new.full_path.should eq("/") }
+    it { URI.new(fragment: "anchor").full_path.should eq("/#anchor") }
     it { URI.new(path: "/foo", query: "q=1").full_path.should eq("/foo?q=1") }
+    it { URI.new(path: "/foo", query: "q=1", fragment: "anchor").full_path.should eq("/foo?q=1#anchor") }
     it { URI.new(path: "/", query: "q=1").full_path.should eq("/?q=1") }
     it { URI.new(query: "q=1").full_path.should eq("/?q=1") }
     it { URI.new(path: "/a%3Ab").full_path.should eq("/a%3Ab") }

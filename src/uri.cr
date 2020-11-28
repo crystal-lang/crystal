@@ -197,8 +197,12 @@ class URI
   def full_path : String
     String.build do |str|
       str << (@path.empty? ? '/' : @path)
-      if (query = @query) && !query.empty?
+      if query = @query.presence
         str << '?' << query
+      end
+
+      if fragment = @fragment.presence
+        str << '#' << fragment
       end
     end
   end
