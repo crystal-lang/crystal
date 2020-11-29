@@ -2323,6 +2323,22 @@ module Crystal
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           next_char
+        elsif char == 'Q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'i' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
+          next_char
+        elsif char == 'w' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
+          next_char
+        elsif char == 'x' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
+          next_char
         elsif char == 'r' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)

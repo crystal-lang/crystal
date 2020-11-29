@@ -53,6 +53,7 @@ class JSON::Builder
     when DocumentEndState
       # okay
     end
+    @io.flush
   end
 
   def document

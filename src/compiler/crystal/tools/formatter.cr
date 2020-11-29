@@ -220,9 +220,14 @@ module Crystal
         write "begin"
         @indent += 2
         write_line
-        next_token_skip_space_or_newline
-        if @token.type == :";"
-          next_token_skip_space_or_newline
+        next_token
+        # Corner case: an empty `begin ... end`.
+        # In this case, we should not skip space because it will do in the below loop.
+        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+          skip_space_or_newline
+          if @token.type == :";"
+            next_token_skip_space_or_newline
+          end
         end
         has_begin = true
         base_indent = @indent
@@ -231,6 +236,7 @@ module Crystal
       end
 
       last_aligned_assign = nil
+      last_found_comment = false
       max_length = nil
       skip_space
 
@@ -283,7 +289,7 @@ module Crystal
         end
 
         if last?(i, node.expressions)
-          skip_space_or_newline last: true
+          last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
             unless found_comment
@@ -307,7 +313,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline
+      if has_newline && !last_found_comment
         write_line
         write_indent
       end
@@ -4660,7 +4666,7 @@ module Crystal
     end
 
     def write_indent(indent, node)
-      write_indent(indent)
+      write_indent(indent) unless node.is_a?(Nop)
       indent(indent, node)
     end
 

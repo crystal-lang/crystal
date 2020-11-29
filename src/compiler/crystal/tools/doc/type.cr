@@ -27,6 +27,8 @@ class Crystal::Doc::Type
       :struct
     when AnnotationType
       :annotation
+    when LibType
+      :module
     else
       raise "Unhandled type in `kind`: #{@type}"
     end

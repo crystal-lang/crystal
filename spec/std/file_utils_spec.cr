@@ -79,7 +79,7 @@ describe "FileUtils" do
       end
     end
 
-    it "copies permissions" do
+    pending_win32 "copies permissions" do
       with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
         File.write(src_path, "foo")
         File.chmod(src_path, 0o700)
@@ -157,7 +157,7 @@ describe "FileUtils" do
       end
     end
 
-    it "doesn't follow symlinks" do
+    pending_win32 "doesn't follow symlinks" do
       with_tempfile("rm_r-removed", "rm_r-linked") do |removed_path, linked_path|
         link_path = File.join(removed_path, "link")
         file_path = File.join(linked_path, "file")
@@ -230,7 +230,7 @@ describe "FileUtils" do
 
     it "raises an error if non correct arguments" do
       with_tempfile("mv-nonexistent") do |path|
-        expect_raises(File::NotFoundError, "Error renaming file: '#{File.join(path, "a")}' -> '#{File.join(path, "b")}'") do
+        expect_raises(File::NotFoundError, "Error renaming file: '#{File.join(path, "a").inspect_unquoted}' -> '#{File.join(path, "b").inspect_unquoted}'") do
           FileUtils.mv(File.join(path, "a"), File.join(path, "b"))
         end
       end
@@ -300,18 +300,18 @@ describe "FileUtils" do
   end
 
   it "tests mkdir with an existing path" do
-    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
       Dir.mkdir(datapath, 0o700)
     end
   end
 
   it "tests mkdir with multiples existing paths" do
-    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
+    expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
       FileUtils.mkdir([datapath, datapath], 0o700)
     end
 
     with_tempfile("mkdir-nonexistent") do |path|
-      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath}'") do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath.inspect_unquoted}'") do
         FileUtils.mkdir([path, datapath], 0o700)
       end
     end
@@ -333,7 +333,7 @@ describe "FileUtils" do
   it "tests mkdir_p with multiple existing path" do
     FileUtils.mkdir_p([datapath, datapath]).should be_nil
     with_tempfile("mkdir_p-existing") do |path|
-      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt")}'") do
+      expect_raises(File::AlreadyExistsError, "Unable to create directory: '#{datapath("test_file.txt").inspect_unquoted}'") do
         FileUtils.mkdir_p([datapath("test_file.txt"), path])
       end
     end
@@ -341,7 +341,7 @@ describe "FileUtils" do
 
   it "tests rmdir with an non existing path" do
     with_tempfile("rmdir-nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}'") do
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
         FileUtils.rmdir(path)
       end
     end
@@ -349,20 +349,20 @@ describe "FileUtils" do
 
   it "tests rmdir with multiple non existing path" do
     with_tempfile("rmdir-nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path}1'") do
+      expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}1'") do
         FileUtils.rmdir(["#{path}1", "#{path}2"])
       end
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    expect_raises(File::Error, "Unable to remove directory: '#{datapath}'") do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
       FileUtils.rmdir(datapath)
     end
   end
 
   it "tests rmdir with multiple path that cannot be removed" do
-    expect_raises(File::Error, "Unable to remove directory: '#{datapath}'") do
+    expect_raises(File::Error, "Unable to remove directory: '#{datapath.inspect_unquoted}'") do
       FileUtils.rmdir([datapath, datapath])
     end
   end
@@ -377,7 +377,7 @@ describe "FileUtils" do
 
   it "tests rm with non existing path" do
     with_tempfile("rm-nonexistent") do |path|
-      expect_raises(File::NotFoundError, "Error deleting file: '#{path}'") do
+      expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
         FileUtils.rm(path)
       end
     end
@@ -398,7 +398,7 @@ describe "FileUtils" do
       File.write(path1, "")
       File.write(path2, "")
 
-      expect_raises(File::NotFoundError, "Error deleting file: '#{path2}'") do
+      expect_raises(File::NotFoundError, "Error deleting file: '#{path2.inspect_unquoted}'") do
         FileUtils.rm([path1, path2, path2])
       end
     end
@@ -406,40 +406,31 @@ describe "FileUtils" do
 
   describe "ln" do
     it "creates a hardlink" do
-      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_src", "ln_dst") do |path1, path2|
         FileUtils.touch(path1)
         FileUtils.ln(path1, path2)
         File.exists?(path2).should be_true
         File.symlink?(path2).should be_false
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
 
     it "creates a hardlink inside a destination dir" do
-      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}/"
-      path3 = File.join(path2, File.basename(path1))
-
-      begin
+      with_tempfile("ln_src", "ln_dst_dir") do |path1, path2|
+        path2 += File::SEPARATOR
+        path3 = File.join(path2, File.basename(path1))
         FileUtils.touch(path1)
         FileUtils.mkdir(path2)
         FileUtils.ln(path1, path2)
         File.exists?(path3).should be_true
         File.symlink?(path3).should be_false
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
 
     it "creates multiple hardlinks inside a destination dir" do
-      paths = Array.new(3) { |i| "/tmp/crystal_ln_test_#{Process.pid + i}" }
-      dir_path = "/tmp/crystal_ln_test_#{Process.pid + 3}/"
+      with_tempfile("ln_src_1", "ln_src_2", "ln_src_3", "ln_dst_dir") do |path1, path2, path3, dir_path|
+        paths = [path1, path2, path3]
+        dir_path += File::SEPARATOR
 
-      begin
         paths.each { |path| FileUtils.touch(path) }
         FileUtils.mkdir(dir_path)
         FileUtils.ln(paths, dir_path)
@@ -449,73 +440,54 @@ describe "FileUtils" do
           File.exists?(link_path).should be_true
           File.symlink?(link_path).should be_false
         end
-      ensure
-        FileUtils.rm_rf(paths)
-        FileUtils.rm_rf(dir_path)
       end
     end
 
     it "fails with a nonexistent source" do
-      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
-
-      ex = expect_raises(File::NotFoundError, "Error creating link: '#{path1}' -> '#{path2}'") do
-        FileUtils.ln(path1, path2)
+      with_tempfile("ln_src_missing", "ln_dst_missing") do |path1, path2|
+        ex = expect_raises(File::NotFoundError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
+          FileUtils.ln(path1, path2)
+        end
       end
     end
 
     it "fails with an extant destination" do
-      path1 = "/tmp/crystal_ln_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_src", "ln_dst_exists") do |path1, path2|
         FileUtils.touch([path1, path2])
 
-        expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1}' -> '#{path2}'") do
+        expect_raises(File::AlreadyExistsError, "Error creating link: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
           FileUtils.ln(path1, path2)
         end
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
   end
 
   describe "ln_s" do
     it "creates a symlink" do
-      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_s_src", "ln_s_dst") do |path1, path2|
         FileUtils.touch(path1)
         FileUtils.ln_s(path1, path2)
         File.exists?(path2).should be_true
         File.symlink?(path2).should be_true
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
 
     it "creates a symlink inside a destination dir" do
-      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}/"
-      path3 = File.join(path2, File.basename(path1))
+      with_tempfile("ln_s_src", "ln_s_dst_dir") do |path1, path2|
+        path3 = File.join(path2, File.basename(path1))
 
-      begin
         FileUtils.touch(path1)
         FileUtils.mkdir(path2)
         FileUtils.ln_s(path1, path2)
         File.exists?(path3).should be_true
         File.symlink?(path3).should be_true
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
 
     it "creates multiple symlinks inside a destination dir" do
-      paths = Array.new(3) { |i| "/tmp/crystal_ln_s_test_#{Process.pid + i}" }
-      dir_path = "/tmp/crystal_ln_s_test_#{Process.pid + 3}/"
-
-      begin
+      with_tempfile("ln_s_src_1", "ln_s_src_2", "ln_s_src_3", "ln_s_dst_dir") do |path1, path2, path3, dir_path|
+        paths = [path1, path2, path3]
+        dir_path += File::SEPARATOR
         paths.each { |path| FileUtils.touch(path) }
         FileUtils.mkdir(dir_path)
         FileUtils.ln_s(paths, dir_path)
@@ -525,51 +497,35 @@ describe "FileUtils" do
           File.exists?(link_path).should be_true
           File.symlink?(link_path).should be_true
         end
-      ensure
-        FileUtils.rm_rf(paths)
-        FileUtils.rm_rf(dir_path)
       end
     end
 
-    it "works with a nonexistent source" do
-      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
-
-      begin
+    pending_win32 "works with a nonexistent source" do
+      with_tempfile("ln_s_src_missing", "ln_s_dst_missing") do |path1, path2|
         FileUtils.ln_s(path1, path2)
         File.exists?(path2).should be_false
         File.symlink?(path2).should be_true
 
-        expect_raises(File::NotFoundError, "Error resolving real path: '#{path2}'") do
+        expect_raises(File::NotFoundError, "Error resolving real path: '#{path2.inspect_unquoted}'") do
           File.real_path(path2)
         end
-      ensure
-        FileUtils.rm_rf(path2)
       end
     end
 
     it "fails with an extant destination" do
-      path1 = "/tmp/crystal_ln_s_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_s_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_s_src", "ln_s_dst_exists") do |path1, path2|
         FileUtils.touch([path1, path2])
 
-        expect_raises(File::AlreadyExistsError, "Error creating symlink: '#{path1}' -> '#{path2}'") do
+        expect_raises(File::AlreadyExistsError, "Error creating symlink: '#{path1.inspect_unquoted}' -> '#{path2.inspect_unquoted}'") do
           FileUtils.ln_s(path1, path2)
         end
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
   end
 
   describe "ln_sf" do
     it "overwrites a destination file" do
-      path1 = "/tmp/crystal_ln_sf_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_sf_src", "ln_sf_dst_exists") do |path1, path2|
         FileUtils.touch([path1, path2])
         File.symlink?(path1).should be_false
         File.symlink?(path2).should be_false
@@ -577,17 +533,14 @@ describe "FileUtils" do
         FileUtils.ln_sf(path1, path2)
         File.symlink?(path1).should be_false
         File.symlink?(path2).should be_true
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
 
     it "overwrites a destination file inside a dir" do
-      dir = "/tmp/crystal_ln_sf_test_#{Process.pid}/"
-      path1 = File.join(dir, "crystal_ln_sf_test_#{Process.pid + 1}")
-      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
+      with_tempfile("ln_sf_dst_dir", "ln_sf_dst") do |dir, path2|
+        dir += File::SEPARATOR
+        path1 = File.join(dir, File.basename(path2))
 
-      begin
         FileUtils.mkdir(dir)
         FileUtils.touch([path1, path2])
         File.symlink?(path1).should be_false
@@ -596,18 +549,16 @@ describe "FileUtils" do
         FileUtils.ln_sf(path2, dir)
         File.symlink?(path1).should be_true
         File.symlink?(path2).should be_false
-      ensure
-        FileUtils.rm_rf([dir, path2])
       end
     end
 
     it "creates multiple symlinks in a destination dir, with overwrites" do
-      dir = "/tmp/crystal_ln_sf_test_#{Process.pid + 3}"
-      paths1 = Array.new(3) { |i| "crystal_ln_sf_test_#{Process.pid + i}" }
-      paths2 = paths1.map { |p| File.join("/tmp/", p) }
-      paths3 = paths1.map { |p| File.join(dir, p) }
+      with_tempfile("ln_sf_src_dir", "ln_sf_dst_dir") do |src_dir, dir|
+        paths1 = Array.new(3) { |i| "exists_#{i}" }
+        paths2 = paths1.map { |p| File.join(src_dir, p) }
+        paths3 = paths1.map { |p| File.join(dir, p) }
 
-      begin
+        FileUtils.mkdir(src_dir)
         FileUtils.mkdir(dir)
         FileUtils.touch(paths2 + paths3)
         (paths2 + paths3).each { |p| File.symlink?(p).should be_false }
@@ -615,24 +566,16 @@ describe "FileUtils" do
         FileUtils.ln_sf(paths2, dir)
         paths2.each { |p| File.symlink?(p).should be_false }
         paths3.each { |p| File.symlink?(p).should be_true }
-      ensure
-        FileUtils.rm_rf(paths2)
-        FileUtils.rm_rf(dir)
       end
     end
 
     it "creates a symlink even if there's nothing to overwrite" do
-      path1 = "/tmp/crystal_ln_sf_test_#{Process.pid}"
-      path2 = "/tmp/crystal_ln_sf_test_#{Process.pid + 1}"
-
-      begin
+      with_tempfile("ln_sf_src", "ln_sf_dst") do |path1, path2|
         FileUtils.touch(path1)
         File.exists?(path2).should be_false
 
         FileUtils.ln_sf(path1, path2)
         File.symlink?(path2).should be_true
-      ensure
-        FileUtils.rm_rf([path1, path2])
       end
     end
   end

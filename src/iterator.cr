@@ -1238,36 +1238,54 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as `Tuple`s.
+  # Returns an iterator that returns the elements of this iterator and *others*
+  # traversed in tandem as `Tuple`s.
+  #
+  # Iteration stops when any of the iterators runs out of elements.
   #
   # ```
   # iter1 = [4, 5, 6].each
   # iter2 = [7, 8, 9].each
-  # iter = iter1.zip(iter2)
-  # iter.next # => {4, 7}
-  # iter.next # => {5, 8}
-  # iter.next # => {6, 9}
+  # iter3 = ['a', 'b', 'c', 'd'].each
+  # iter = iter1.zip(iter2, iter3)
+  # iter.next # => {4, 7, 'a'}
+  # iter.next # => {5, 8, 'b'}
+  # iter.next # => {6, 9, 'c'}
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def zip(other : Iterator(U)) forall U
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  def zip(*others : Iterator) : Iterator
+    Iterator.zip_impl(self, *others)
   end
 
-  private struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
+  protected def self.zip_impl(*iterators : *U) forall U
+    {% begin %}
+      Zip(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(iterators[{{ i }}].first),
+        {% end %}
+      )).new(iterators)
+    {% end %}
+  end
 
-    def initialize(@iterator1 : I1, @iterator2 : I2)
+  private struct Zip(Is, Ts)
+    include Iterator(Ts)
+
+    def initialize(@iterators : Is)
     end
 
     def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
+      {% begin %}
+        {% for i in 0...Is.size %}
+          %v{i} = @iterators[{{ i }}].next
+          return stop if %v{i}.is_a?(Stop)
+        {% end %}
 
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
+        Tuple.new(
+          {% for i in 0...Is.size %}
+            %v{i},
+          {% end %}
+        )
+      {% end %}
     end
   end
 
