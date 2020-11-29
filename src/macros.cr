@@ -191,9 +191,7 @@ end
 #
 # ```
 # values = ["a", "b"]
-# idx = Random.rand(2)
-#
-# case values[idx]
+# case values.sample
 # when "a"
 #   1
 # when "b"
