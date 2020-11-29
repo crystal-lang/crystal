@@ -502,6 +502,15 @@ module Crystal
     # Is this variable "unsafe" (no need to check if it was initialized)?
     property? uninitialized = false
 
+    # Was this class_var already read during the codegen phase?
+    # If not, and we are at the place that declares the class var, we can
+    # directly initialize it now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the class var was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
     def kind
       case name[0]
       when '@'
