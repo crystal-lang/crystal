@@ -163,6 +163,8 @@ describe "Int" do
     it { 4.lcm(6).should eq(12) }
     it { 0.lcm(2).should eq(0) }
     it { 2.lcm(0).should eq(0) }
+
+    it "doesn't silently overflow" { 2_000_000.lcm(3_000_000).should eq(6_000_000) }
   end
 
   describe "to_s in base" do
