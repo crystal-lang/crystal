@@ -612,6 +612,14 @@ class Crystal::CodeGenVisitor
       end
       arg
     when from_type.rank < to_type.rank
+      # extending a signed integer to an unsigned one (eg: Int8 to UInt16)
+      # may still lead to underflow
+      if checked
+        if from_type.signed? && to_type.unsigned?
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
       extend_int from_type, to_type, arg
     else
       if checked
