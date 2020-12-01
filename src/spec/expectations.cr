@@ -41,10 +41,12 @@ module Spec
 
     begin
       # Invoke `diff` command and fix up its output.
-      result = `#{diff_command} -u #{expected_file.path} #{actual_file.path}`
-      result = result.sub(/^\-{3} .+?$/m, "--- expected")
-      result = result.sub(/^\+{3} .+?$/m, "+++ actual")
-      result
+      process = Process.new(diff_command, ["-u", expected_file.path, actual_file.path], output: Process::Redirect::Pipe)
+      output = process.output.gets_to_end.chomp
+      process.wait
+      output = output.sub(/^\-{3} .+?$/m, "--- expected")
+      output = output.sub(/^\+{3} .+?$/m, "+++ actual")
+      output
     ensure
       # Clean up tempolary files!
       expected_file.delete
