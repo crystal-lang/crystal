@@ -141,4 +141,48 @@ describe "expectations" do
       expect_raises(Exception, "Ops") { raise Exception.new("Ops") }
     end
   end
+
+  describe "Spec.diff" do
+    it { Spec.diff("", "").should be_nil }
+    it { Spec.diff("foo", "bar").should be_nil }
+    it { Spec.diff("foo\nbar", "foo\nbar").should eq("") }
+    it { Spec.diff("bar\nfoo", "foo\nbar").should eq(<<-DIFF + "\n") }
+      --- expected
+      +++ actual
+      @@ -1,2 +1,2 @@
+      -bar
+       foo
+      +bar
+      DIFF
+  end
+
+  describe "Spec.diff_values" do
+    it { Spec.diff_values("", "").should be_nil }
+    it { Spec.diff_values("foo", "bar").should be_nil }
+
+    it "shows diff of two long arrays" do
+      xs = (1..100).to_a
+      ys = xs[0...50] + [-1] + xs[50...100]
+      Spec.diff_values(xs, ys).should eq(<<-DIFF + "\n")
+       --- expected
+       +++ actual
+       @@ -48,6 +48,7 @@
+         48,
+         49,
+         50,
+       + -1,
+         51,
+         52,
+         53,
+       DIFF
+    end
+
+    it "shows the message when the diff is empty" do
+      xs = (1..100).to_a
+      Spec.diff_values(xs, xs).should eq(<<-MSG)
+        No visible difference in the `Array(Int32)#pretty_inspect` output.
+        You should look at the implementation of `#==` on Array(Int32) or its members.
+        MSG
+    end
+  end
 end

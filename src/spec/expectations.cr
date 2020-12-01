@@ -1,4 +1,57 @@
 module Spec
+  # A list of diff command candidates.
+  DIFF_COMMANDS = %w(gdiff diff)
+
+  # A diff command path to use in diff computation.
+  class_property diff_command : String? do
+    DIFF_COMMANDS.compact_map { |name| Process.find_executable(name) }.first?
+  end
+
+  # Compute the difference between two values *expected_value* and *actual_value*
+  # by using `diff` command.
+  def self.diff_values(expected_value, actual_value)
+    expected = expected_value.pretty_inspect
+    actual = actual_value.pretty_inspect
+
+    result = diff expected, actual
+
+    # When the diff output is nothing even though the two values do not equal,
+    # it returns a fallback message so far.
+    if result && result.empty?
+      klass = expected_value.class
+      return <<-MSG
+        No visible difference in the `#{klass}#pretty_inspect` output.
+        You should look at the implementation of `#==` on #{klass} or its members.
+        MSG
+    end
+
+    result
+  end
+
+  # Compute the difference between two strings *expected* and *actual*
+  # by using `diff` command.
+  def self.diff(expected, actual)
+    # If the diff command is available and outputs contain a newline,
+    # then it computes diff of them.
+    diff_command = Spec.diff_command
+    return unless diff_command && (expected.includes?('\n') || actual.includes?('\n'))
+
+    expected_file = File.tempfile("expected") { |f| f.puts expected }
+    actual_file = File.tempfile("actual") { |f| f.puts actual }
+
+    begin
+      # Invoke `diff` command and fix up its output.
+      result = `#{diff_command} -u #{expected_file.path} #{actual_file.path}`
+      result = result.sub(/^\-{3} .+?$/m, "--- expected")
+      result = result.sub(/^\+{3} .+?$/m, "+++ actual")
+      result
+    ensure
+      # Clean up tempolary files!
+      expected_file.delete
+      actual_file.delete
+    end
+  end
+
   # :nodoc:
   struct EqualExpectation(T)
     def initialize(@expected_value : T)
@@ -46,7 +99,18 @@ module Spec
           expected += " : #{@expected_value.class}"
           got += " : #{actual_value.class}"
         end
-        "Expected: #{expected}\n     got: #{got}"
+        msg = <<-MSG
+          Expected: #{expected}
+               got: #{got}
+          MSG
+        if diff = Spec.diff_values(expected_value, actual_value)
+          return <<-MSG
+            #{msg}
+
+            #{diff}
+            MSG
+        end
+        msg
       end
     end
 
