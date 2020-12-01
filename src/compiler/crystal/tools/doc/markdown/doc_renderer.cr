@@ -98,7 +98,7 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
   def end_code
     if @inside_code
-      text = Highlighter.highlight @code_buffer.to_s
+      text = Highlighter.highlight(@code_buffer.to_s)
       @io << text
     end
 
