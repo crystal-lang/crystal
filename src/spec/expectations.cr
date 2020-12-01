@@ -44,9 +44,8 @@ module Spec
       process = Process.new(diff_command, ["-u", expected_file.path, actual_file.path], output: Process::Redirect::Pipe)
       output = process.output.gets_to_end.chomp
       process.wait
-      output = output.sub(/^\-{3} .+?$/m, "--- expected")
-      output = output.sub(/^\+{3} .+?$/m, "+++ actual")
-      output
+      # Remove `--- expected` and `+++ actual` lines.
+      output.sub(/^-{3} .+?\n/m, "").sub(/^\+{3} .+?\n/m, "")
     ensure
       # Clean up tempolary files!
       expected_file.delete
@@ -106,9 +105,10 @@ module Spec
                got: #{got}
           MSG
         if diff = Spec.diff_values(expected_value, actual_value)
-          return <<-MSG
+          msg = <<-MSG
             #{msg}
 
+            Difference:
             #{diff}
             MSG
         end

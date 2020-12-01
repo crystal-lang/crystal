@@ -27,8 +27,7 @@ describe "Spec matchers" do
         Expected: #{xs.inspect}
              got: #{ys.inspect}
 
-        --- expected
-        +++ actual
+        Difference:
         @@ -48,6 +48,7 @@
           48,
           49,

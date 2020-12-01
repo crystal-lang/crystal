@@ -147,8 +147,6 @@ describe "expectations" do
     it { Spec.diff("foo", "bar").should be_nil }
     it { Spec.diff("foo\nbar", "foo\nbar").should eq("") }
     it { Spec.diff("bar\nfoo", "foo\nbar").should eq(<<-DIFF) }
-      --- expected
-      +++ actual
       @@ -1,2 +1,2 @@
       -bar
        foo
@@ -164,8 +162,6 @@ describe "expectations" do
       xs = (1..100).to_a
       ys = xs[0...50] + [-1] + xs[50...100]
       Spec.diff_values(xs, ys).should eq(<<-DIFF)
-       --- expected
-       +++ actual
        @@ -48,6 +48,7 @@
          48,
          49,
