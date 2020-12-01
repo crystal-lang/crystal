@@ -5,6 +5,7 @@ module Crystal::Doc
     property json_config_url : String? = nil
     property refname : String? = nil
     property source_url_pattern : String? = nil
+    property canonical_base_url : String? = nil
 
     def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
