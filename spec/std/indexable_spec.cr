@@ -258,4 +258,80 @@ describe Indexable do
       a.should eq([0, 1, 2])
     end
   end
+
+  describe "cartesian_product" do
+    it "does with 1 other Indexable" do
+      elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(3))
+      elems.should eq([{0, 0}, {0, 1}, {0, 2}, {1, 0}, {1, 1}, {1, 2}])
+
+      elems = SafeIndexable.new(2).cartesian_product(SafeIndexable.new(0))
+      elems.empty?.should be_true
+
+      elems = SafeIndexable.new(0).cartesian_product(SafeIndexable.new(3))
+      elems.empty?.should be_true
+    end
+
+    it "does with >1 other Indexables" do
+      elems = SafeIndexable.new(2).cartesian_product(SafeStringIndexable.new(2), SafeIndexable.new(2))
+      elems.should eq([
+        {0, "0", 0}, {0, "0", 1}, {0, "1", 0}, {0, "1", 1},
+        {1, "0", 0}, {1, "0", 1}, {1, "1", 0}, {1, "1", 1},
+      ])
+    end
+  end
+
+  describe "each_product" do
+    it "does with 1 other Indexable, with block" do
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(3)
+      indexable.each_product(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      r.should eq([0, "0", 0, "1", 1, "0", 1, "1", 2, "0", 2, "1"])
+
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(3)
+      indexable.each_product(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
+      r.empty?.should be_true
+
+      r = [] of Int32 | String
+      indexable = SafeIndexable.new(0)
+      indexable.each_product(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      r.empty?.should be_true
+    end
+
+    it "does with 1 other Indexable, without block" do
+      iter = SafeIndexable.new(3).each_product(SafeStringIndexable.new(2))
+      iter.next.should eq({0, "0"})
+      iter.next.should eq({0, "1"})
+      iter.next.should eq({1, "0"})
+      iter.next.should eq({1, "1"})
+      iter.next.should eq({2, "0"})
+      iter.next.should eq({2, "1"})
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "does with >1 other Indexables, with block" do
+      r = [] of Int32 | String
+      i1 = SafeIndexable.new(2)
+      i2 = SafeIndexable.new(3)
+      i3 = SafeIndexable.new(4)
+      i1.each_product(i2, i3) { |a, b, c| r << a + b + c }
+      r.should eq([0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6])
+    end
+
+    it "does with >1 other Indexables, without block" do
+      i1 = SafeStringIndexable.new(2)
+      i2 = SafeStringIndexable.new(2)
+      i3 = SafeIndexable.new(2)
+      iter = i1.each_product(i2, i3)
+      iter.next.should eq({"0", "0", 0})
+      iter.next.should eq({"0", "0", 1})
+      iter.next.should eq({"0", "1", 0})
+      iter.next.should eq({"0", "1", 1})
+      iter.next.should eq({"1", "0", 0})
+      iter.next.should eq({"1", "0", 1})
+      iter.next.should eq({"1", "1", 0})
+      iter.next.should eq({"1", "1", 1})
+      iter.next.should be_a(Iterator::Stop)
+    end
+  end
 end

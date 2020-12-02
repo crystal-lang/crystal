@@ -170,6 +170,143 @@ module Indexable(T)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of `self` and *others* as `Tuple`s.
+  # Traversal of elements starts from the last `Indexable` argument.
+  #
+  # ```
+  # [1, 2, 3].cartesian_product({'a', 'b'})                     # => [{1, 'a'}, {1, 'b'}, {2, 'a'}, {2, 'b'}, {3, 'a'}, {3, 'b'}]
+  # ['a', 'b'].cartesian_product({1, 2}, {'c', 'd'}).map &.join # => ["a1c", "a1d", "a2c", "a2d", "b1c", "b1d", "b2c", "b2d"]
+  # ```
+  def cartesian_product(*others : Indexable)
+    capacity = others.product(size, &.size)
+    result = Array(typeof(cartesian_product_type(*others))).new(capacity)
+    each_product(*others) do |product|
+      result << product
+    end
+    result
+  end
+
+  private def cartesian_product_type(*others)
+    v = each_product(*others).next
+    raise "" if v.is_a?(Iterator::Stop)
+    v
+  end
+
+  # Yields each ordered combination of the elements taken from each of `self`
+  # and *others* as a `Tuple`.
+  # Traversal of elements starts from the last `Indexable` argument.
+  #
+  # ```
+  # ["Alice", "Bob"].each_product({1, 2, 3}) do |name, n|
+  #   puts "#{n}. #{name}"
+  # end
+  # ```
+  #
+  # Prints
+  #
+  # ```text
+  # 1. Alice
+  # 2. Alice
+  # 3. Alice
+  # 1. Bob
+  # 2. Bob
+  # 3. Bob
+  # ```
+  def each_product(*others : Indexable, &block)
+    Indexable.each_product_impl(self, *others) { |v| yield v }
+  end
+
+  protected def self.each_product_impl(*indexables : *U, &block) forall U
+    lens = indexables.map &.size
+    return if lens.any? &.zero?
+
+    n = indexables.size
+    indices = Array.new(n, 0)
+    indices[-1] -= 1
+
+    while true
+      i = n - 1
+      indices[i] += 1
+
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+
+      {% begin %}
+        yield Tuple.new(
+          {% for i in 0...U.size %}
+            indexables[{{ i }}].unsafe_fetch(indices[{{ i }}]),
+          {% end %}
+        )
+      {% end %}
+    end
+  end
+
+  # Returns an iterator that enumerates the ordered combinations of elements
+  # taken from each of `self` and *others* as `Tuple`s.
+  # Traversal of elements starts from the last `Indexable` argument.
+  #
+  # ```
+  # iter = {1, 2, 3}.each_product({'a', 'b'})
+  # iter.next # => {1, 'a'}
+  # iter.next # => {1, 'b'}
+  # iter.next # => {2, 'a'}
+  # iter.next # => {2, 'b'}
+  # iter.next # => {3, 'a'}
+  # iter.next # => {3, 'b'}
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def each_product(*others : Indexable)
+    Indexable.each_product_impl(self, *others)
+  end
+
+  protected def self.each_product_impl(*indexables : *U) forall U
+    return Iterator.of(Iterator.stop) if indexables.any? &.empty?
+
+    {% begin %}
+      CartesianProductIterator(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(indexables[{{ i }}].to_a.first),
+        {% end %}
+      )).new(indexables)
+    {% end %}
+  end
+
+  private class CartesianProductIterator(Is, Ts)
+    include Iterator(Ts)
+
+    @indices : Array(Int32)
+
+    def initialize(@indexables : Is)
+      @indices = Array.new(@indexables.size, 0)
+      @indices[-1] -= 1
+    end
+
+    def next
+      i = @indices.size - 1
+      @indices[i] += 1
+
+      while @indices[i] >= @indexables[i].size
+        @indices[i] = 0
+        i -= 1
+        return stop if i < 0
+        @indices[i] += 1
+      end
+
+      {% begin %}
+        Ts.new(
+          {% for i in 0...Is.size %}
+            @indexables[{{ i }}].unsafe_fetch(@indices[{{ i }}]),
+          {% end %}
+        )
+      {% end %}
+    end
+  end
+
   # Calls the given block once for each element in `self`, passing that
   # element as a parameter.
   #
