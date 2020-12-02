@@ -234,7 +234,7 @@ struct BitArray
   # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
   # It's useful for reading and writing a bit array from a byte buffer directly.
   #
-  # It is undefined behaviour to set any of the unused bits of a bit array to
+  # WARNING: It is undefined behaviour to set any of the unused bits of a bit array to
   # `true` via a slice.
   def to_slice : Bytes
     Slice.new(@bits.as(Pointer(UInt8)), bytesize)
