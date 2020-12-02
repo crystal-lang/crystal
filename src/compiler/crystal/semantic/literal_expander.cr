@@ -678,12 +678,40 @@ module Crystal
     # tmp = foo
     # ->(x : X, y : Y) { tmp.bar(x, y) }
     # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->Foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { Foo.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { bar(x, y) }
+    # ```
+    #
+    # in case the implicit `self` is a class or a virtual class.
     def expand(node : ProcPointer)
-      obj = node.obj.not_nil!
+      obj = node.obj
 
-      temp_var = new_temp_var.at(obj)
-      assign = Assign.new(temp_var, obj)
-      obj = temp_var
+      if obj && !obj.is_a?(Path)
+        temp_var = new_temp_var.at(obj)
+        assign = Assign.new(temp_var, obj)
+        obj = temp_var
+      end
 
       def_args = node.args.map do |arg|
         Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
@@ -697,7 +725,11 @@ module Crystal
       proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
       proc_literal.proc_pointer = node
 
-      Expressions.new([assign, proc_literal])
+      if assign
+        Expressions.new([assign, proc_literal])
+      else
+        proc_literal
+      end
     end
 
     private def regex_new_call(node, value)

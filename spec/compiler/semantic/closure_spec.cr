@@ -262,6 +262,26 @@ describe "Semantic: closure" do
       "can't send closure to C function (closured vars: self)"
   end
 
+  it "errors if sending closured proc pointer to C (1.2)" do
+    assert_error %(
+      lib LibC
+        fun foo(callback : ->)
+      end
+
+      class Foo
+        def foo
+          LibC.foo(->{ bar })
+        end
+
+        def bar
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "can't send closure to C function (closured vars: self)"
+  end
+
   it "errors if sending closured proc pointer to C (2)" do
     assert_error %(
       lib LibC
