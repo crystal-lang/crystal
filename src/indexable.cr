@@ -193,6 +193,25 @@ module Indexable(T)
     v
   end
 
+  # Returns an `Array` of all ordered combinations of elements taken from each
+  # of the *indexables* as `Array`s.
+  # Traversal of elements starts from the last `Indexable`.
+  #
+  # `#cartesian_product` is preferred over this class method when the quantity
+  # of *indexables* is known in advance.
+  #
+  # ```
+  # Indexable.cartesian_product([[1, 2, 3], [4, 5]]) # => [[1, 4], [1, 5], [2, 4], [2, 5], [3, 4], [3, 5]]
+  # ```
+  def self.cartesian_product(indexables : Indexable(Indexable))
+    capacity = indexables.product(&.size)
+    result = Array(typeof(indexables.to_a.map &.first)).new(capacity)
+    each_product(indexables) do |product|
+      result << product
+    end
+    result
+  end
+
   # Yields each ordered combination of the elements taken from each of `self`
   # and *others* as a `Tuple`.
   # Traversal of elements starts from the last `Indexable` argument.
@@ -246,6 +265,87 @@ module Indexable(T)
     end
   end
 
+  # Yields each ordered combination of the elements taken from each of the
+  # *indexables* as `Array`s.
+  # Traversal of elements starts from the last `Indexable`.
+  #
+  # `#each_product` is preferred over this class method when the quantity of
+  # *indexables* is known in advance.
+  #
+  # ```
+  # Indexable.each_product([%w[Alice Bob Carol], [1, 2]]) do |name, n|
+  #   puts "#{n}. #{name}"
+  # end
+  # ```
+  #
+  # Prints
+  #
+  # ```text
+  # 1. Alice
+  # 2. Alice
+  # 1. Bob
+  # 2. Bob
+  # 1. Carol
+  # 2. Carol
+  # ```
+  #
+  # By default, a new `Array` is created and yielded for each combination.
+  #
+  # * If *reuse* is an `Array`, it will be reused
+  # * If *reuse* is truthy, the method will create a new `Array` and reuse it
+  # * If *reuse* is falsey, no `Array`s will be reused.
+  #
+  # This can be used to prevent many memory allocations when each combination of
+  # interest is to be used in a read-only fashion.
+  def self.each_product(indexables : Indexable(Indexable), reuse = false, &block)
+    return if indexables.empty?
+    lens = indexables.map &.size
+    return if lens.any? &.==(0)
+
+    n = indexables.size
+    pool = Array.new(n) { |i| indexables.unsafe_fetch(i).first }
+    indices = Array.new(n, 0)
+    reuse = check_reuse(pool, n, reuse)
+
+    while true
+      yield pool_slice(pool, n, reuse)
+
+      i = n - 1
+      indices[i] += 1
+
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        pool[i] = indexables[i].unsafe_fetch(0)
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+
+      pool[i] = indexables[i].unsafe_fetch(indices[i])
+    end
+  end
+
+  protected def self.check_reuse(pool, size, reuse)
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = typeof(pool).new(size)
+      end
+    else
+      reuse = nil
+    end
+    reuse
+  end
+
+  protected def self.pool_slice(pool, size, reuse)
+    if reuse
+      reuse.clear
+      size.times { |i| reuse << pool[i] }
+      reuse
+    else
+      pool[0, size]
+    end
+  end
+
   # Returns an iterator that enumerates the ordered combinations of elements
   # taken from each of `self` and *others* as `Tuple`s.
   # Traversal of elements starts from the last `Indexable` argument.
@@ -268,7 +368,7 @@ module Indexable(T)
     return Iterator.of(Iterator.stop) if indexables.any? &.empty?
 
     {% begin %}
-      CartesianProductIterator(U, Tuple(
+      CartesianProductIteratorT(U, Tuple(
         {% for i in 0...U.size %}
           typeof(indexables[{{ i }}].to_a.first),
         {% end %}
@@ -276,7 +376,36 @@ module Indexable(T)
     {% end %}
   end
 
-  private class CartesianProductIterator(Is, Ts)
+  # Returns an iterator that enumerates the ordered combinations of elements
+  # taken from the *indexables* as `Array`s.
+  # Traversal of elements starts from the last `Indexable`.
+  #
+  # `#each_product` is preferred over this class method when the quantity of
+  # *indexables* is known in advance.
+  #
+  # ```
+  # iter = Indexable.each_product([%w[N S], %w[E W]])
+  # iter.next # => ["N", "E"]
+  # iter.next # => ["N", "W"]
+  # iter.next # => ["S", "E"]
+  # iter.next # => ["S", "W"]
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new `Array` is created and returned for each combination.
+  #
+  # * If *reuse* is an `Array`, it will be reused
+  # * If *reuse* is truthy, the method will create a new `Array` and reuse it
+  # * If *reuse* is falsey, no `Array`s will be reused.
+  #
+  # This can be used to prevent many memory allocations when each combination of
+  # interest is to be used in a read-only fashion.
+  def self.each_product(indexables : Indexable(Indexable), reuse = false)
+    return Iterator.of(Iterator.stop) if indexables.any? &.empty?
+    CartesianProductIteratorN(typeof(indexables), typeof(indexables.to_a.map &.first)).new(indexables, reuse)
+  end
+
+  private class CartesianProductIteratorT(Is, Ts)
     include Iterator(Ts)
 
     @indices : Array(Int32)
@@ -304,6 +433,45 @@ module Indexable(T)
           {% end %}
         )
       {% end %}
+    end
+  end
+
+  private class CartesianProductIteratorN(Is, Ts)
+    include Iterator(Ts)
+
+    @indices : Array(Int32)
+    @pool : Ts
+    @reuse : Ts?
+
+    def initialize(@indexables : Is, reuse)
+      n = @indexables.size
+      @pool = Array.new(n) { |i| indexables.unsafe_fetch(i).first }
+      @indices = Array.new(n, 0)
+      @indices[-1] -= 1
+
+      if reuse
+        if reuse.is_a?(Ts)
+          @reuse = reuse
+        else
+          @reuse = Ts.new(n)
+        end
+      end
+    end
+
+    def next
+      i = @indices.size - 1
+      @indices[i] += 1
+
+      while @indices[i] >= @indexables[i].size
+        @indices[i] = 0
+        @pool[i] = @indexables[i].unsafe_fetch(0)
+        i -= 1
+        return stop if i < 0
+        @indices[i] += 1
+      end
+
+      @pool[i] = @indexables[i].unsafe_fetch(@indices[i])
+      Indexable.pool_slice(@pool, @indexables.size, @reuse)
     end
   end
 
