@@ -102,12 +102,18 @@ class Object
   # Prints a nicely readable and concise string representation of this object,
   # typically intended for users, to *io*.
   #
-  # This method is called when an object is used within string interpolation:
-  # In `"foo #{bar} baz"`, the value interpolated for `#{foo}` is the result of
-  # `foo.to_s`.
+  # This method is called when an object is interpolated in a string literal:
+  # ```cr
+  # "foo #{bar} baz" # calls bar.to_io(io)
+  # ```
   #
-  # Implementations must not append `self` to *io* which would lead to an
-  # endless loop.
+  # `IO#<<` calls this method to append an object to itself:
+  # ```cr
+  # io << bar # calls bar.to_s(io)
+  # ```
+  #
+  # Thus implementations must not interpolate `self` in a string literal or call
+  # `io << self` which both would lead to an endless loop.
   #
   # Also see `#inspect(IO)`.
   abstract def to_s(io : IO) : Nil
