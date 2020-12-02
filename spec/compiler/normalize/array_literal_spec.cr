@@ -6,10 +6,20 @@ describe "Normalize: array literal" do
   end
 
   it "normalizes non-empty with of" do
-    assert_expand "[1, 2] of Int", "__temp_1 = ::Array(Int).new(2)\n__temp_1.to_unsafe[0] = 1\n__temp_1.to_unsafe[1] = 2\n__temp_1.size = 2\n__temp_1"
+    assert_expand "[1, 2] of Int8", <<-CR
+      __temp_1 = ::Array(Int8).new(2, __temp_2 = uninitialized Int8)
+      __temp_1.to_unsafe[0] = 1
+      __temp_1.to_unsafe[1] = 2
+      __temp_1
+      CR
   end
 
   it "normalizes non-empty without of" do
-    assert_expand "[1, 2]", "__temp_1 = ::Array(typeof(1, 2)).new(2)\n__temp_1.to_unsafe[0] = 1\n__temp_1.to_unsafe[1] = 2\n__temp_1.size = 2\n__temp_1"
+    assert_expand "[1, 2]", <<-CR
+      __temp_1 = ::Array(typeof(1, 2)).new(2, __temp_2 = uninitialized typeof(1, 2))
+      __temp_1.to_unsafe[0] = 1
+      __temp_1.to_unsafe[1] = 2
+      __temp_1
+      CR
   end
 end
