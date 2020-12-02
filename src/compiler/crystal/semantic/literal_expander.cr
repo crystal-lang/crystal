@@ -42,8 +42,7 @@ module Crystal
       else
         ary_var = new_temp_var.at(node)
 
-        uninitialized_var = UninitializedVar.new(new_temp_var.at(node), type_var.clone).at(node)
-        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node), uninitialized_var] of ASTNode).at(node)
+        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
         buffer = Call.new(ary_var, "to_unsafe")
 
