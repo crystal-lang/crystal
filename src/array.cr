@@ -1028,6 +1028,14 @@ class Array(T)
     @size = size.to_i
   end
 
+  # :nodoc:
+  #
+  # This method is used by LiteralExpander to properly configure an Array
+  # instance created from a literal.
+  def unsafe_size=(size : Int)
+    self.size = size
+  end
+
   # Optimized version of `Enumerable#map`.
   def map(&block : T -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i] }
