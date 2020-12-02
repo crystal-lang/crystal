@@ -20,4 +20,8 @@ describe "Semantic: array" do
   it "types array literal size correctly" do
     assert_type("require \"prelude\"; [1].size") { int32 }
   end
+
+  it "assignment in array literal works (#3195)" do
+    assert_type("require \"prelude\"; [a = 1]; a") { int32 }
+  end
 end

@@ -176,4 +176,12 @@ describe "Code gen: array literal spec" do
       custom.value
       )).to_i.should eq(6)
   end
+
+  it "assignment in array literal works" do
+    run("require \"prelude\"; [a = 1]; a").to_i.should eq(1)
+  end
+
+  it "assignment in array-like literal works" do
+    run("require \"prelude\"; Array(Int32){a = 1}; a").to_i.should eq(1)
+  end
 end
