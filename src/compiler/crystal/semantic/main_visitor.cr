@@ -1461,9 +1461,9 @@ module Crystal
     # If it's a super or previous_def call inside an initialize we treat
     # set instance vars from superclasses to not-nil.
     def check_super_or_previous_def_in_initialize(node)
-      if @is_initialize && !node.obj && (node.name == "super" || node.name == "previous_def")
+      if @is_initialize && (node.super? || node.previous_def?)
         all_vars = scope.all_instance_vars.keys
-        all_vars -= scope.instance_vars.keys if node.name == "super"
+        all_vars -= scope.instance_vars.keys if node.super?
         all_vars.each do |name|
           instance_var = scope.lookup_instance_var(name)
 
@@ -1730,7 +1730,7 @@ module Crystal
           end
         end
 
-        if node.name == "super"
+        if node.super?
           @in_super += 1
         end
 
@@ -1738,7 +1738,7 @@ module Crystal
       end
 
       def end_visit(node : Call)
-        if node.name == "super"
+        if node.super?
           @in_super -= 1
         end
       end

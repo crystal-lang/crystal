@@ -16,7 +16,7 @@ class Crystal::CodeGenVisitor
       return false
     end
 
-    owner = node.name == "super" ? node.scope : node.target_def.owner
+    owner = node.super? ? node.scope : node.target_def.owner
 
     call_args, has_out = prepare_call_args node, owner
 
@@ -357,7 +357,7 @@ class Crystal::CodeGenVisitor
     call.uses_with_scope = node.uses_with_scope?
     call.name_location = node.name_location
 
-    is_super = node.name == "super"
+    is_super = node.super?
 
     with_cloned_context do
       context.vars = new_vars
