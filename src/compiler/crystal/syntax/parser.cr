@@ -760,10 +760,12 @@ module Crystal
           check_void_value atomic, location
 
           name_location = @token.location
+          end_location = token_end_location
           @wants_regex = false
           next_token_skip_space
           atomic = Call.new(atomic, "[]").at(location)
           atomic.name_location = name_location
+          atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         when :"["
@@ -781,6 +783,7 @@ module Crystal
           end
           skip_space_or_newline
           check :"]"
+          end_location = token_end_location
           @wants_regex = false
           next_token
 
@@ -801,6 +804,7 @@ module Crystal
 
           atomic = Call.new(atomic, method_name, (args || [] of ASTNode), block, block_arg, named_args).at(location)
           atomic.name_location = name_location
+          atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else

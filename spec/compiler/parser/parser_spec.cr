@@ -1081,6 +1081,8 @@ module Crystal
     it_parses %({"foo": 1, "bar": 2}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32), NamedTupleLiteral::Entry.new("bar", 2.int32)])
 
     assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
+    assert_syntax_error "{a[0]: 1}", "expecting token '=>', not ':'"
+    assert_syntax_error "{a[]: 1}", "expecting token '=>', not ':'"
 
     it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
     it_parses "{} of Int32 -> Int32 => Int32", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new(ProcNotation.new(["Int32".path] of ASTNode, "Int32".path), "Int32".path))
