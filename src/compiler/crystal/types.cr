@@ -607,7 +607,7 @@ module Crystal
         if index
           index
         else
-          index = instance_vars.key_index(name)
+          index = hash_key_index instance_vars, name
           if index
             superclass.all_instance_vars_count + index
           else
@@ -615,8 +615,15 @@ module Crystal
           end
         end
       else
-        instance_vars.key_index(name)
+        hash_key_index instance_vars, name
       end
+    end
+
+    private def hash_key_index(hash, key)
+      hash.each_with_index do |(my_key, my_value), index|
+        return index if key == my_key
+      end
+      nil
     end
 
     def lookup_instance_var(name)

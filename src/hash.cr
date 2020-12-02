@@ -1368,21 +1368,6 @@ class Hash(K, V)
     to_a_impl &.value
   end
 
-  # Returns the index of the given key, or `nil` when not found.
-  # The keys are ordered based on when they were inserted.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.key_index("foo") # => 0
-  # h.key_index("qux") # => nil
-  # ```
-  def key_index(key)
-    each_with_index do |(my_key, my_value), index|
-      return index if key == my_key
-    end
-    nil
-  end
-
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
   # A value in *other* takes precedence over the one in this hash.
   #
