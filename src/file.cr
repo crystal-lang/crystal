@@ -194,7 +194,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.size("foo") # => 3
   # ```
-  def self.size(filename : Path | String) : UInt64
+  def self.size(filename : Path | String) : Int64
     info(filename).size
   end
 

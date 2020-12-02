@@ -27,8 +27,8 @@ struct Crystal::System::FileInfo < ::File::Info
     @reparse_tag = LibC::DWORD.new(0)
   end
 
-  def size : UInt64
-    (@file_attributes.nFileSizeHigh.to_u64 << 32) | @file_attributes.nFileSizeLow.to_u64
+  def size : Int64
+    ((@file_attributes.nFileSizeHigh.to_u64 << 32) | @file_attributes.nFileSizeLow.to_u64).to_i64
   end
 
   def permissions : ::File::Permissions
