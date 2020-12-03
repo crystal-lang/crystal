@@ -20,6 +20,20 @@ module Crystal
     getter? wants_doc : Bool
     @block_arg_name : String?
 
+    record PossibleIndentError, declaration : Symbol, start_line : Int32, end_line : Int32
+
+    # A possible indent error happens when we are expecting a minimum indent and we get a smaller one
+    @possible_indent_error : PossibleIndentError?
+
+    record IndentInfo, line : Int32, indent : Int32
+
+    # This is the expected indent for every expression. It increases as declarations nest,
+    # and decreases as declarations unnest.
+    @indent_info = IndentInfo.new(1, 0)
+
+    # This is the current declaration (class, module, etc.)
+    @declaration : Symbol?
+
     def self.parse(str, string_pool : StringPool? = nil, def_vars = [Set(String).new]) : ASTNode
       new(str, string_pool, def_vars).parse
     end
@@ -1006,7 +1020,9 @@ module Crystal
         # when adding or removing keyword to handle here.
         case @token.value
         when :begin
-          check_type_declaration { parse_begin }
+          nesting_expression(:begin) do
+            check_type_declaration { parse_begin }
+          end
         when :nil
           check_type_declaration { node_and_next_token NilLiteral.new }
         when :true
@@ -1027,11 +1043,17 @@ module Crystal
               when :IDENT
                 case @token.value
                 when :def
-                  parse_def is_abstract: true, doc: doc
+                  nesting_expression(:def) do
+                    parse_def is_abstract: true, doc: doc
+                  end
                 when :class
-                  parse_class_def is_abstract: true, doc: doc
+                  nesting_expression(:class) do
+                    parse_class_def is_abstract: true, doc: doc
+                  end
                 when :struct
-                  parse_class_def is_abstract: true, is_struct: true, doc: doc
+                  nesting_expression(:struct) do
+                    parse_class_def is_abstract: true, is_struct: true, doc: doc
+                  end
                 else
                   unexpected_token
                 end
@@ -1041,15 +1063,19 @@ module Crystal
             end
           end
         when :def
-          check_type_declaration do
-            check_not_inside_def("can't define def") do
-              parse_def
+          nesting_expression(:def) do
+            check_type_declaration do
+              check_not_inside_def("can't define def") do
+                parse_def
+              end
             end
           end
         when :macro
-          check_type_declaration do
-            check_not_inside_def("can't define macro") do
-              parse_macro
+          nesting_expression(:macro) do
+            check_type_declaration do
+              check_not_inside_def("can't define macro") do
+                parse_macro
+              end
             end
           end
         when :require
@@ -1059,13 +1085,21 @@ module Crystal
             end
           end
         when :case
-          check_type_declaration { parse_case }
+          nesting_expression(:case) do
+            check_type_declaration { parse_case }
+          end
         when :select
-          check_type_declaration { parse_select }
+          nesting_expression(:select) do
+            check_type_declaration { parse_select }
+          end
         when :if
-          check_type_declaration { parse_if }
+          nesting_expression(:if) do
+            check_type_declaration { parse_if }
+          end
         when :unless
-          check_type_declaration { parse_unless }
+          nesting_expression(:unless) do
+            check_type_declaration { parse_unless }
+          end
         when :include
           check_type_declaration do
             check_not_inside_def("can't include") do
@@ -1079,33 +1113,45 @@ module Crystal
             end
           end
         when :class
-          check_type_declaration do
-            check_not_inside_def("can't define class") do
-              parse_class_def
+          nesting_expression(:class) do
+            check_type_declaration do
+              check_not_inside_def("can't define class") do
+                parse_class_def
+              end
             end
           end
         when :struct
-          check_type_declaration do
-            check_not_inside_def("can't define struct") do
-              parse_class_def is_struct: true
+          nesting_expression(:struct) do
+            check_type_declaration do
+              check_not_inside_def("can't define struct") do
+                parse_class_def is_struct: true
+              end
             end
           end
         when :module
-          check_type_declaration do
-            check_not_inside_def("can't define module") do
-              parse_module_def
+          nesting_expression(:module) do
+            check_type_declaration do
+              check_not_inside_def("can't define module") do
+                parse_module_def
+              end
             end
           end
         when :enum
-          check_type_declaration do
-            check_not_inside_def("can't define enum") do
-              parse_enum_def
+          nesting_expression(:enum) do
+            check_type_declaration do
+              check_not_inside_def("can't define enum") do
+                parse_enum_def
+              end
             end
           end
         when :while
-          check_type_declaration { parse_while }
+          nesting_expression(:while) do
+            check_type_declaration { parse_while }
+          end
         when :until
-          check_type_declaration { parse_until }
+          nesting_expression(:until) do
+            check_type_declaration { parse_until }
+          end
         when :return
           check_type_declaration { parse_return }
         when :next
@@ -1113,15 +1159,19 @@ module Crystal
         when :break
           check_type_declaration { parse_break }
         when :lib
-          check_type_declaration do
-            check_not_inside_def("can't define lib") do
-              parse_lib
+          nesting_expression(:lib) do
+            check_type_declaration do
+              check_not_inside_def("can't define lib") do
+                parse_lib
+              end
             end
           end
         when :fun
-          check_type_declaration do
-            check_not_inside_def("can't define fun") do
-              parse_fun_def top_level: true, require_body: true
+          nesting_expression(:fun) do
+            check_type_declaration do
+              check_not_inside_def("can't define fun") do
+                parse_fun_def top_level: true, require_body: true
+              end
             end
           end
         when :alias
@@ -1147,9 +1197,11 @@ module Crystal
         when :asm
           check_type_declaration { parse_asm }
         when :annotation
-          check_type_declaration do
-            check_not_inside_def("can't define annotation") do
-              parse_annotation_def
+          nesting_expression(:annotation) do
+            check_type_declaration do
+              check_not_inside_def("can't define annotation") do
+                parse_annotation_def
+              end
             end
           end
         else
@@ -1168,6 +1220,85 @@ module Crystal
         node_and_next_token Underscore.new
       else
         unexpected_token_in_atomic
+      end
+    end
+
+    # Track that a nesting expression beings, mainly to set the expected
+    # indent for the next lines and to detect an incorrect indent to suggest
+    # that to the user in case they forget an `end`.
+    def nesting_expression(declaration : Symbol)
+      line_at_start = line_number
+      indent_at_start = @indent
+
+      old_indent_info = @indent_info
+      old_declaration = @declaration
+      @indent_info = IndentInfo.new(line_at_start, indent_at_start)
+      @declaration = declaration
+
+      value = yield
+
+      @indent_info = old_indent_info
+      @declaration = old_declaration
+
+      value
+    end
+
+    def indent=(indent)
+      super
+
+      if (declaration = @declaration) && !@possible_indent_error && (indent < @indent_info.indent || (indent == @indent_info.indent && !next_keyword_matches_current_indent?))
+        @possible_indent_error = PossibleIndentError.new(declaration, @indent_info.line, line_number)
+      end
+    end
+
+    # Some keywrods are expected to match the current indent. For example an
+    # `end` will always match the minimum expected indent. Same goes for
+    # `else` when the current declaration is an `if`.
+    # This repeats a tiny bit of logic from Lexer but it's the most efficient way
+    # to do it without modifying the existing `@token`.
+    def next_keyword_matches_current_indent?
+      pos = current_pos
+      begin
+        if current_char == 'e'
+          next_char_no_column_increment
+          if current_char == 'n'
+            next_char_no_column_increment
+            if current_char == 'd'
+              next_char_no_column_increment
+              return current_char == '\0' || current_char.whitespace?
+            end
+          elsif current_char == 'l' && (@declaration == :if || @declaration == :unless || @declaration == :case)
+            next_char_no_column_increment
+            if current_char == 's'
+              next_char_no_column_increment
+              if current_char == 'e'
+                next_char_no_column_increment
+                return current_char == '\0' || current_char.whitespace?
+              elsif current_char == 'i' && @declaration == :if
+                next_char_no_column_increment
+                if current_char == 'f'
+                  next_char_no_column_increment
+                  return current_char == '\0' || current_char.whitespace?
+                end
+              end
+            end
+          end
+        elsif current_char == 'w' && @declaration == :case
+          next_char_no_column_increment
+          if current_char == 'h'
+            next_char_no_column_increment
+            if current_char == 'e'
+              next_char_no_column_increment
+              if current_char == 'n'
+                next_char_no_column_increment
+                return current_char == '\0' || current_char.whitespace?
+              end
+            end
+          end
+        end
+        false
+      ensure
+        self.current_pos = pos
       end
     end
 
@@ -1267,6 +1398,9 @@ module Crystal
         yield
       else
         suffix = @def_nest > 0 ? " inside def" : " inside fun"
+        if (possible_indent_error = @possible_indent_error)
+          suffix += "\n\nDid you forget an `end` right before line #{possible_indent_error.end_line} to match the `#{possible_indent_error.declaration}` at line `#{possible_indent_error.start_line}`?"
+        end
         raise message + suffix, @token.line_number, @token.column_number
       end
     end
@@ -4190,8 +4324,10 @@ module Crystal
         return block if stop_on_do
 
         raise "block already specified with &" if block
-        parse_block2 do |body|
-          parse_exception_handler body, implicit: true
+        nesting_expression(:do) do
+          parse_block2 do |body|
+            parse_exception_handler body, implicit: true
+          end
         end
       else
         parse_curly_block(block)
@@ -6001,7 +6137,27 @@ module Crystal
     end
 
     def check_ident(value)
-      raise "expecting identifier '#{value}', not '#{@token}'", @token unless @token.keyword?(value)
+      unless @token.keyword?(value)
+        raise_with_possible_indent_error value, "expecting identifier '#{value}', not '#{@token}'", @token
+      end
+
+      if value == :end
+        @last_end_indent_info = IndentInfo.new(line_number, @indent)
+      end
+    end
+
+    def raise_with_possible_indent_error(value, message, token)
+      if value == :end && @token.type == :EOF && (possible_indent_error = @possible_indent_error)
+        message = <<-MESSAGE
+          missing `end` before this line to match `#{possible_indent_error.declaration}` at line #{possible_indent_error.start_line}
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          MESSAGE
+        raise message, possible_indent_error.end_line, 1, @filename
+      end
+
+      raise message, token
     end
 
     def check_ident

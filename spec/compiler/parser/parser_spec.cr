@@ -2080,6 +2080,183 @@ module Crystal
         exps = Parser.parse(code).as(Expressions)
         exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
+
+      context "missing end" do
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            class Bar
+              class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            private class Bar
+              private class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            abstract class Bar
+              abstract class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            class Bar
+              class Baz
+                @x : Int32 = 0
+
+              class Qux
+              end
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            class Bar
+              foo do
+                x = 0
+
+              class Qux
+              end
+            end
+          end
+          CODE
+          missing `end` before this line to match `do` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            class Bar
+              foo do
+                x = 0
+
+              @x : Int32
+
+              class Qux
+              end
+            end
+          end
+          CODE
+          missing `end` before this line to match `do` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 6
+          class Foo
+            class Bar
+              begin
+                x = 0
+
+              @x : Int32
+
+              class Qux
+              end
+            end
+          end
+          CODE
+          missing `end` before this line to match `begin` at line 3
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 9
+          class Foo
+            def foo
+            end
+
+            class Bar
+              class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 6
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 11
+          class Foo
+            if 1
+            elsif 2
+            else
+            end
+
+            class Bar
+              class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 8
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+
+        assert_syntax_error <<-CODE, <<-ERROR, line: 11
+          class Foo
+            case 1
+            when 2
+            else
+            end
+
+            class Bar
+              class Baz
+                @x : Int32 = 0
+
+            end
+          end
+          CODE
+          missing `end` before this line to match `class` at line 8
+
+          Note: the above line number is just a suggestion based on the general indentation of the file.
+          The missing `end` could be somewhere else.
+          ERROR
+      end
     end
   end
 end

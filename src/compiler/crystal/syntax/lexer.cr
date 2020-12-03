@@ -20,6 +20,9 @@ module Crystal
     @token_end_location : Location?
     @string_pool : StringPool
 
+    # The indent (amount of whitespace) of the current line
+    @indent = 0
+
     # This is an interface for storing data associated to a heredoc
     module HeredocItem
     end
@@ -1365,6 +1368,7 @@ module Crystal
     end
 
     def consume_whitespace
+      start_column = column_number
       start_pos = current_pos
       @token.type = :SPACE
       next_char
@@ -1376,6 +1380,7 @@ module Crystal
           if next_char == '\n'
             next_char
             incr_line_number
+            start_column = 1
             @token.passed_backslash_newline = true
           else
             unknown_token
@@ -1384,9 +1389,17 @@ module Crystal
           break
         end
       end
+
+      # If we just consumed some whitespace at the beginning of the line,
+      # that's the line's indent.
+      self.indent = column_number - 1 if start_column == 1
+
       if @count_whitespace
         @token.value = string_range(start_pos)
       end
+    end
+
+    def indent=(@indent)
     end
 
     def consume_newlines
@@ -3023,6 +3036,9 @@ module Crystal
         @stacked_line_number += 1
         @stacked_column_number = column_number if column_number
       end
+
+      # If we just entered a new line, if no whitespace follows it means there's no indent
+      self.indent = 0 unless current_char.whitespace?
     end
 
     def next_char_no_column_increment
