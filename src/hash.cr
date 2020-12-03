@@ -1748,27 +1748,25 @@ class Hash(K, V)
   end
 
   # Returns `true` if `self` is a subset of *other*.
-  def <(other : Hash)
-    return false if size >= other.size
-    self <= other
+  def proper_subset?(other : Hash)
+    return false if other.size <= size
+    all? { |key, value| other[key]? == value }
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
-  def <=(other : Hash)
-    return false if size > other.size
-    all? do |key, value|
-      other[key]? == value
-    end
+  def subset?(other : Hash)
+    return false if other.size < size
+    all? { |key, value| other[key]? == value }
   end
 
   # Returns `true` if *other* is a subset of `self`.
-  def >(other : Hash)
-    other < self
+  def superset?(other : Hash)
+    other.subset?(self)
   end
 
   # Returns `true` if *other* is a subset of `self` or equals to `self`.
-  def >=(other : Hash)
-    other <= self
+  def proper_superset?(other : Hash)
+    other.proper_subset?(self)
   end
 
   # See `Object#hash(hasher)`

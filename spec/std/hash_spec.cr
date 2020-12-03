@@ -105,43 +105,43 @@ describe "Hash" do
     h3 = {"c" => 3}
     h4 = {} of Nil => Nil
 
-    describe "<" do
+    describe "#proper_subset?" do
       it do
-        (h1 < h2).should be_true
-        (h2 < h1).should be_false
-        (h1 < h1).should be_false
-        (h1 < h3).should be_false
-        (h1 < h4).should be_false
+        h1.proper_subset?(h2).should be_true
+        h2.proper_subset?(h1).should be_false
+        h1.proper_subset?(h1).should be_false
+        h1.proper_subset?(h3).should be_false
+        h1.proper_subset?(h4).should be_false
       end
     end
 
-    describe "<=" do
+    describe "#subset?" do
       it do
-        (h1 <= h2).should be_true
-        (h2 <= h1).should be_false
-        (h1 <= h1).should be_true
-        (h1 <= h3).should be_false
-        (h1 <= h4).should be_false
+        h1.subset?(h2).should be_true
+        h2.subset?(h1).should be_false
+        h1.subset?(h1).should be_true
+        h1.subset?(h3).should be_false
+        h1.subset?(h4).should be_false
       end
     end
 
-    describe ">" do
+    describe "#proper_superset?" do
       it do
-        (h1 > h2).should be_false
-        (h2 > h1).should be_true
-        (h1 > h1).should be_false
-        (h1 > h3).should be_false
-        (h1 > h4).should be_true
+        h1.proper_superset?(h2).should be_false
+        h2.proper_superset?(h1).should be_true
+        h1.proper_superset?(h1).should be_false
+        h1.proper_superset?(h3).should be_false
+        h1.proper_superset?(h4).should be_true
       end
     end
 
-    describe ">=" do
+    describe "#superset?" do
       it do
-        (h1 >= h2).should be_false
-        (h2 >= h1).should be_true
-        (h1 >= h1).should be_true
-        (h1 >= h3).should be_false
-        (h1 >= h4).should be_true
+        h1.superset?(h2).should be_false
+        h2.superset?(h1).should be_true
+        h1.superset?(h1).should be_true
+        h1.superset?(h3).should be_false
+        h1.superset?(h4).should be_true
       end
     end
   end
