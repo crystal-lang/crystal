@@ -307,26 +307,26 @@ describe Indexable do
     end
   end
 
-  describe "#each_product" do
+  describe "#each_cartesian" do
     it "does with 1 other Indexable, with block" do
       r = [] of Int32 | String
       indexable = SafeIndexable.new(3)
-      indexable.each_product(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
       r.should eq([0, "0", 0, "1", 1, "0", 1, "1", 2, "0", 2, "1"])
 
       r = [] of Int32 | String
       indexable = SafeIndexable.new(3)
-      indexable.each_product(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
+      indexable.each_cartesian(SafeStringIndexable.new(0)) { |a, b| r << a; r << b }
       r.empty?.should be_true
 
       r = [] of Int32 | String
       indexable = SafeIndexable.new(0)
-      indexable.each_product(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
+      indexable.each_cartesian(SafeStringIndexable.new(2)) { |a, b| r << a; r << b }
       r.empty?.should be_true
     end
 
     it "does with 1 other Indexable, without block" do
-      iter = SafeIndexable.new(3).each_product(SafeStringIndexable.new(2))
+      iter = SafeIndexable.new(3).each_cartesian(SafeStringIndexable.new(2))
       iter.next.should eq({0, "0"})
       iter.next.should eq({0, "1"})
       iter.next.should eq({1, "0"})
@@ -341,7 +341,7 @@ describe Indexable do
       i1 = SafeIndexable.new(2)
       i2 = SafeIndexable.new(3)
       i3 = SafeIndexable.new(4)
-      i1.each_product(i2, i3) { |a, b, c| r << a + b + c }
+      i1.each_cartesian(i2, i3) { |a, b, c| r << a + b + c }
       r.should eq([0, 1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5, 1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6])
     end
 
@@ -349,7 +349,7 @@ describe Indexable do
       i1 = SafeStringIndexable.new(2)
       i2 = SafeStringIndexable.new(2)
       i3 = SafeIndexable.new(2)
-      iter = i1.each_product(i2, i3)
+      iter = i1.each_cartesian(i2, i3)
       iter.next.should eq({"0", "0", 0})
       iter.next.should eq({"0", "0", 1})
       iter.next.should eq({"0", "1", 0})
@@ -362,18 +362,18 @@ describe Indexable do
     end
   end
 
-  describe ".each_product" do
+  describe ".each_cartesian" do
     it "does with an Indexable of Indexables, with block" do
       r = [] of Int32
-      Indexable.each_product(SafeNestedIndexable.new(3, 2)) { |v| r.concat(v) }
+      Indexable.each_cartesian(SafeNestedIndexable.new(3, 2)) { |v| r.concat(v) }
       r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
 
       r = [] of Int32
-      Indexable.each_product(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
+      Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
       r.empty?.should be_true
 
       r = [] of Int32
-      Indexable.each_product(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
+      Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
       r.empty?.should be_true
     end
 
@@ -382,7 +382,7 @@ describe Indexable do
       object_ids = Set(UInt64).new
       indexables = SafeNestedIndexable.new(3, 2)
 
-      Indexable.each_product(indexables, reuse: true) do |v|
+      Indexable.each_cartesian(indexables, reuse: true) do |v|
         object_ids << v.object_id
         r.concat(v)
       end
@@ -396,7 +396,7 @@ describe Indexable do
       buf = [] of Int32
       indexables = SafeNestedIndexable.new(3, 2)
 
-      Indexable.each_product(indexables, reuse: buf) do |v|
+      Indexable.each_cartesian(indexables, reuse: buf) do |v|
         v.should be(buf)
         r.concat(v)
       end
@@ -405,7 +405,7 @@ describe Indexable do
     end
 
     it "does with an Indexable of Indexables, without block" do
-      iter = Indexable.each_product(SafeNestedIndexable.new(2, 3))
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 3))
       iter.next.should eq([0, 0])
       iter.next.should eq([0, 1])
       iter.next.should eq([0, 2])
@@ -419,7 +419,7 @@ describe Indexable do
     end
 
     it "does with reuse = true, without block" do
-      iter = Indexable.each_product(SafeNestedIndexable.new(2, 2), reuse: true)
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 2), reuse: true)
       buf = iter.next
       buf.should eq([0, 0])
       iter.next.should be(buf)
@@ -433,7 +433,7 @@ describe Indexable do
 
     it "does with reuse = array, without block" do
       buf = [] of Int32
-      iter = Indexable.each_product(SafeNestedIndexable.new(2, 2), reuse: buf)
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(2, 2), reuse: buf)
       iter.next.should be(buf)
       buf.should eq([0, 0])
       iter.next.should be(buf)
