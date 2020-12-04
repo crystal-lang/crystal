@@ -171,14 +171,11 @@ struct StaticArray(T, N)
     {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
-
-        self
-      else
-        fill { value }
+        return self
       end
-    {% else %}
-      fill { value }
     {% end %}
+
+    fill { value }
   end
 
   # Yields each index of `self` to the given block and then assigns

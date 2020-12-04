@@ -879,14 +879,11 @@ class Array(T)
     {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
-
-        self
-      else
-        fill { value }
+        return self
       end
-    {% else %}
-      fill { value }
     {% end %}
+
+    fill { value }
   end
 
   # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
