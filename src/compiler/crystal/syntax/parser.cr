@@ -4127,7 +4127,7 @@ module Crystal
       end
 
       if block && block_arg
-        raise "can't forward block argument and specify block together", location
+        raise "can't use captured and non-captured blocks together", location
       end
 
       node =
