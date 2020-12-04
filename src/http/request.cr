@@ -246,6 +246,7 @@ class HTTP::Request
   end
 
   # Returns request host from headers.
+  @[Deprecated("Use `#hostname` instead.")]
   def host
     host = @headers["Host"]?
     return unless host
@@ -278,6 +279,7 @@ class HTTP::Request
   end
 
   # Returns request host with port from headers.
+  @[Deprecated(%q(Use `headers["Host"]?` instead.))]
   def host_with_port
     @headers["Host"]?
   end
