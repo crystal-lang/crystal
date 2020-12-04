@@ -253,6 +253,30 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
+  # Extracts the hostname from `Host` header.
+  #
+  # Returns `nil` if `Host` header is missing.
+  #
+  # If the `Host` header contains a port number, it is stripped off.
+  def hostname : String?
+    header = @headers["Host"]?
+    return unless header
+
+    host, _, port = header.rpartition(":")
+    if host.nil?
+      # no colon in header
+      return port
+    end
+
+    port = port.to_i?(whitespace: false)
+    unless port && Socket::IPAddress.valid_port?(port)
+      # what we identified as port is not valid, so use the entire header
+      host = header
+    end
+
+    URI.unwrap_ipv6(host)
+  end
+
   # Returns request host with port from headers.
   def host_with_port
     @headers["Host"]?
