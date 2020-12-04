@@ -264,15 +264,15 @@ class HTTP::Request
     return unless header
 
     host, _, port = header.rpartition(":")
-    if host.nil?
+    if host.empty?
       # no colon in header
-      return port
-    end
-
-    port = port.to_i?(whitespace: false)
-    unless port && Socket::IPAddress.valid_port?(port)
-      # what we identified as port is not valid, so use the entire header
       host = header
+    else
+      port = port.to_i?(whitespace: false)
+      unless port && Socket::IPAddress.valid_port?(port)
+        # what we identified as port is not valid, so use the entire header
+        host = header
+      end
     end
 
     URI.unwrap_ipv6(host)
