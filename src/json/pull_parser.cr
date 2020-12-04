@@ -352,6 +352,7 @@ class JSON::PullParser
   #
   # Returns the return value of the block or `Nil` if the key was not read.
   def on_key(key, & : self -> _)
+    result = nil
     read_object do |some_key|
       if some_key == key
         result = yield self
