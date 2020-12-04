@@ -256,7 +256,7 @@ class HTTP::Request
 
   # Extracts the hostname from `Host` header.
   #
-  # Returns `nil` if `Host` header is missing.
+  # Returns `nil` if the `Host` header is missing.
   #
   # If the `Host` header contains a port number, it is stripped off.
   def hostname : String?
