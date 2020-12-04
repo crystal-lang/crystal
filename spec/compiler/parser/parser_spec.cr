@@ -620,6 +620,8 @@ module Crystal
     it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
     it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
 
+    assert_syntax_error "foo(&block) {}"
+
     it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
       block: Block.new(["a".var, "__arg0".var, "__arg1".var],
         Expressions.new([
