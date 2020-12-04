@@ -195,7 +195,8 @@ module Indexable(T)
 
   # Returns an `Array` of all ordered combinations of elements taken from each
   # of the *indexables* as `Array`s.
-  # Traversal of elements starts from the last `Indexable`.
+  # Traversal of elements starts from the last `Indexable`. If *indexables* is
+  # empty, the returned product contains exactly one empty `Array`.
   #
   # `#cartesian_product` is preferred over this class method when the quantity
   # of *indexables* is known in advance.
@@ -267,7 +268,8 @@ module Indexable(T)
 
   # Yields each ordered combination of the elements taken from each of the
   # *indexables* as `Array`s.
-  # Traversal of elements starts from the last `Indexable`.
+  # Traversal of elements starts from the last `Indexable`. If *indexables* is
+  # empty, yields an empty `Array` exactly once.
   #
   # `#each_cartesian` is preferred over this class method when the quantity of
   # *indexables* is known in advance.
@@ -298,7 +300,6 @@ module Indexable(T)
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
   def self.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)
-    return if indexables.empty?
     lens = indexables.map &.size
     return if lens.any? &.==(0)
 
@@ -310,18 +311,18 @@ module Indexable(T)
     while true
       yield pool_slice(pool, n, reuse)
 
-      i = n - 1
-      indices[i] += 1
+      i = n
 
-      while indices[i] >= lens[i]
-        indices[i] = 0
-        pool[i] = indexables[i].unsafe_fetch(0)
+      while true
         i -= 1
         return if i < 0
         indices[i] += 1
+        if move_to_next = (indices[i] >= lens[i])
+          indices[i] = 0
+        end
+        pool[i] = indexables[i].unsafe_fetch(indices[i])
+        break unless move_to_next
       end
-
-      pool[i] = indexables[i].unsafe_fetch(indices[i])
     end
   end
 
@@ -378,7 +379,8 @@ module Indexable(T)
 
   # Returns an iterator that enumerates the ordered combinations of elements
   # taken from the *indexables* as `Array`s.
-  # Traversal of elements starts from the last `Indexable`.
+  # Traversal of elements starts from the last `Indexable`. If *indexables* is
+  # empty, the returned iterator produces one empty `Array`, then stops.
   #
   # `#each_cartesian` is preferred over this class method when the quantity of
   # *indexables* is known in advance.
@@ -401,8 +403,13 @@ module Indexable(T)
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
   def self.each_cartesian(indexables : Indexable(Indexable), reuse = false)
-    return Iterator.of(Iterator.stop) if indexables.any? &.empty?
-    CartesianProductIteratorN(typeof(indexables), typeof(indexables.to_a.map &.first)).new(indexables, reuse)
+    if indexables.empty?
+      CartesianProductIteratorEmpty(typeof(indexables.to_a.map &.first)).new(reuse)
+    elsif indexables.any? &.empty?
+      Iterator.of(Iterator.stop)
+    else
+      CartesianProductIteratorN(typeof(indexables), typeof(indexables.to_a.map &.first)).new(indexables, reuse)
+    end
   end
 
   private class CartesianProductIteratorT(Is, Ts)
@@ -472,6 +479,32 @@ module Indexable(T)
 
       @pool[i] = @indexables[i].unsafe_fetch(@indices[i])
       Indexable.pool_slice(@pool, @indexables.size, @reuse)
+    end
+  end
+
+  private class CartesianProductIteratorEmpty(Ts)
+    include Iterator(Ts)
+
+    @pool : Ts
+    @reuse : Ts?
+    @yielded = false
+
+    def initialize(reuse)
+      @pool = Ts.new
+
+      if reuse
+        if reuse.is_a?(Ts)
+          @reuse = reuse
+        else
+          @reuse = Ts.new
+        end
+      end
+    end
+
+    def next
+      return stop if @yielded
+      @yielded = true
+      Indexable.pool_slice(@pool, 0, @reuse)
     end
   end
 

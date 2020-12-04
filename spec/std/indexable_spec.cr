@@ -303,7 +303,10 @@ describe Indexable do
       elems.empty?.should be_true
 
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 3))
-      elems.empty?.should be_true
+      elems.should eq([[] of Int32])
+
+      elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 0))
+      elems.should eq([[] of Int32])
     end
   end
 
@@ -369,11 +372,15 @@ describe Indexable do
       r.should eq([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1])
 
       r = [] of Int32
+      Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
+      r.empty?.should be_true
+
+      r = [] of Int32
       Indexable.each_cartesian(SafeNestedIndexable.new(0, 2)) { |v| r.concat(v) }
       r.empty?.should be_true
 
       r = [] of Int32
-      Indexable.each_cartesian(SafeNestedIndexable.new(3, 0)) { |v| r.concat(v) }
+      Indexable.each_cartesian(SafeNestedIndexable.new(0, 0)) { |v| r.concat(v) }
       r.empty?.should be_true
     end
 
@@ -415,6 +422,10 @@ describe Indexable do
       iter.next.should eq([2, 0])
       iter.next.should eq([2, 1])
       iter.next.should eq([2, 2])
+      iter.next.should be_a(Iterator::Stop)
+
+      iter = Indexable.each_cartesian(SafeNestedIndexable.new(0, 3))
+      iter.next.should eq([] of Int32)
       iter.next.should be_a(Iterator::Stop)
     end
 
