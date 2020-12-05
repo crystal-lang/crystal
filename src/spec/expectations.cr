@@ -1,10 +1,42 @@
 module Spec
   # A list of diff command candidates.
-  DIFF_COMMANDS = %w(gdiff diff)
+  DIFF_COMMANDS = [
+    %w(git diff --no-index -U3),
+    %w(gdiff -u),
+    %w(diff -u),
+  ]
 
-  # A diff command path to use in diff computation.
-  class_property diff_command : String? do
-    DIFF_COMMANDS.compact_map { |name| Process.find_executable(name) }.first?
+  # A diff command path and options to use in diff computation.
+  class_property diff_command : Array(String)? do
+    DIFF_COMMANDS.each.compact_map { |cmd| check_diff_command(cmd) }.first?
+  end
+
+  # Checks the given `diff` command works.
+  # It takes an array of strings as `diff` command and options,
+  # and it returns a new array with resolved path and options if it works,
+  # otherwise it returns `nil`.
+  private def self.check_diff_command(cmd)
+    name = Process.find_executable(cmd[0])
+    return unless name
+    opts = cmd[1..]
+
+    begin
+      tmp_file = File.tempfile { |f| f.puts "check_diff" }
+
+      # Try to invoke `diff` against a temporary file.
+      process = Process.new(name, opts + [tmp_file.path, tmp_file.path], output: Process::Redirect::Pipe)
+      output = process.output.gets_to_end.chomp
+      status = process.wait
+
+      # When the `diff` exists with success status and its output is empty,
+      # we assume the `diff` command works.
+      return unless status.success? && output.empty?
+    ensure
+      # Clean up temporary files!
+      tmp_file.try &.delete
+    end
+
+    [name] + opts
   end
 
   # Compute the difference between two values *expected_value* and *actual_value*
@@ -35,21 +67,23 @@ module Spec
     # then it computes diff of them.
     diff_command = Spec.diff_command
     return unless diff_command && (expected.includes?('\n') || actual.includes?('\n'))
-
-    expected_file = File.tempfile("expected") { |f| f.puts expected }
-    actual_file = File.tempfile("actual") { |f| f.puts actual }
+    diff_command_name = diff_command[0]
+    diff_command_opts = diff_command[1..]
 
     begin
+      expected_file = File.tempfile("expected") { |f| f.puts expected }
+      actual_file = File.tempfile("actual") { |f| f.puts actual }
+
       # Invoke `diff` command and fix up its output.
-      process = Process.new(diff_command, ["-u", expected_file.path, actual_file.path], output: Process::Redirect::Pipe)
+      process = Process.new(diff_command_name, diff_command_opts + [expected_file.path, actual_file.path], output: Process::Redirect::Pipe)
       output = process.output.gets_to_end.chomp
       process.wait
       # Remove `--- expected` and `+++ actual` lines.
-      output.sub(/^-{3} .+?\n/m, "").sub(/^\+{3} .+?\n/m, "")
+      output.gsub(/^(-{3}|\+{3}|diff --\w+|index) .+?\n/m, "")
     ensure
       # Clean up temporary files!
-      expected_file.delete
-      actual_file.delete
+      expected_file.try &.delete
+      actual_file.try &.delete
     end
   end
 
