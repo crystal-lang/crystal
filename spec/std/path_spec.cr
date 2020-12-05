@@ -47,10 +47,10 @@ end
 
 private def assert_paths_raw(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
   it %(#{label} "#{path}" (posix)), file, line do
-    block.call(Path.posix(path)).should eq(posix)
+    block.call(Path.posix(path)).should eq(posix), file: file, line: line
   end
   it %(#{label} "#{path}" (windows)), file, line do
-    block.call(Path.windows(path)).should eq(windows)
+    block.call(Path.windows(path)).should eq(windows), file: file, line: line
   end
 end
 
@@ -343,6 +343,11 @@ describe Path do
     assert_paths_raw("/foo/bar/foo.", "", &.extension)
     assert_paths_raw("test", "", &.extension)
     assert_paths_raw("test.ext/foo", "", &.extension)
+    assert_paths_raw("test.ext/foo/", "", &.extension)
+    assert_paths_raw("test.ext/", ".ext", &.extension)
+    assert_paths_raw("test/.", "", &.extension)
+    assert_paths_raw("test\\.", "", &.extension)
+    assert_paths_raw("test.ext\\", ".ext\\", ".ext", &.extension)
   end
 
   describe "#absolute?" do
