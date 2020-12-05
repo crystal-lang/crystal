@@ -837,4 +837,38 @@ describe Path do
       path.relative_to(Path.windows("C:cwd")).should eq path
     end
   end
+
+  describe "#stem" do
+    assert_paths_raw("foo.txt", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw(".txt", ".txt", &.stem)
+    assert_paths_raw(".txt.txt", ".txt", &.stem)
+    assert_paths_raw("foo.", "foo.", &.stem)
+    assert_paths_raw("foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar/foo.txt", "foo", &.stem)
+    assert_paths_raw("bar/foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar/.txt", ".txt", &.stem)
+    assert_paths_raw("bar/.txt.txt", ".txt", &.stem)
+    assert_paths_raw("bar/foo.", "foo.", &.stem)
+    assert_paths_raw("bar/foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar/foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar\\foo.txt", "bar\\foo", "foo", &.stem)
+    assert_paths_raw("bar\\foo.txt.txt", "bar\\foo.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar\\.txt", "bar\\", ".txt", &.stem)
+    assert_paths_raw("bar\\.txt.txt", "bar\\.txt", ".txt", &.stem)
+    assert_paths_raw("bar\\foo.", "bar\\foo.", "foo.", &.stem)
+    assert_paths_raw("bar\\foo.txt.", "bar\\foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar\\foo..txt", "bar\\foo.", "foo.", &.stem)
+
+    assert_paths_raw("foo.txt/", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt/", "foo.txt", &.stem)
+    assert_paths_raw(".txt/", ".txt", &.stem)
+    assert_paths_raw(".txt.txt/", ".txt", &.stem)
+    assert_paths_raw("foo./", "foo.", &.stem)
+    assert_paths_raw("foo.txt./", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt/", "foo.", &.stem)
+  end
 end

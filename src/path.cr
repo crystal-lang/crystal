@@ -390,6 +390,19 @@ struct Path
     String.new(bytes[current, slice_end - current])
   end
 
+  # Returns the last component of this path without the extension.
+  #
+  # This is equivalent to `self.basename(self.extension)`.
+  #
+  # ```
+  # Path["file.cr"].stem     # => "file"
+  # Path["file.tar.gz"].stem # => "file.tar"
+  # Path["foo/file.cr"].stem # => "file"
+  # ```
+  def stem
+    basename(extension)
+  end
+
   # Removes redundant elements from this path and returns the shortest equivalent path by purely lexical processing.
   # It applies the following rules iteratively until no further processing can be done:
   #
