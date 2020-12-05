@@ -47,7 +47,7 @@ module Spec
       # Remove `--- expected` and `+++ actual` lines.
       output.sub(/^-{3} .+?\n/m, "").sub(/^\+{3} .+?\n/m, "")
     ensure
-      # Clean up tempolary files!
+      # Clean up temporary files!
       expected_file.delete
       actual_file.delete
     end
