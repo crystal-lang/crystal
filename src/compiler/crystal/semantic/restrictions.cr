@@ -97,6 +97,9 @@ module Crystal
         min = Math.min(max_size, other.max_size)
       end
 
+      # All free variables in `self.def` and `other.def` respectively
+      all_free_vars = [] of {String, String}
+
       (0...min).each do |index|
         self_arg = self.def.args[index]
         other_arg = other.def.args[index]
@@ -108,7 +111,9 @@ module Crystal
           # If this is a splat arg and the other not, this is not stricter than the other
           return false if index == self.def.splat_index
 
-          return false unless self_type.restriction_of?(other_type, owner)
+          if !add_free_vars(self_type, other_type, self.def, other.def, all_free_vars)
+            return false unless self_type.restriction_of?(other_type, owner)
+          end
         end
       end
 
@@ -121,7 +126,9 @@ module Crystal
 
           if self_restriction && other_restriction
             # If both splat have restrictions, check which one is stricter
-            return false unless self_restriction.restriction_of?(other_restriction, owner)
+            if !add_free_vars(self_restriction, other_restriction, self.def, other.def, all_free_vars)
+              return false unless self_restriction.restriction_of?(other_restriction, owner)
+            end
           elsif self_restriction
             # If only self has a restriction, it's stricter than the other
             return true
@@ -155,7 +162,9 @@ module Crystal
           return false if self_restriction == nil && other_restriction != nil
 
           if self_restriction && other_restriction
-            return false unless self_restriction.restriction_of?(other_restriction, owner)
+            if !add_free_vars(self_restriction, other_restriction, self.def, other.def, all_free_vars)
+              return false unless self_restriction.restriction_of?(other_restriction, owner)
+            end
           end
         end
 
@@ -172,7 +181,9 @@ module Crystal
 
       # If both double splat have restrictions, check which one is stricter
       if self_double_splat_restriction && other_double_splat_restriction
-        return false unless self_double_splat_restriction.restriction_of?(other_double_splat_restriction, owner)
+        if !add_free_vars(self_double_splat_restriction, other_double_splat_restriction, self.def, other.def, all_free_vars)
+          return false unless self_double_splat_restriction.restriction_of?(other_double_splat_restriction, owner)
+        end
       elsif self_double_splat_restriction
         # If only self has a restriction, it's stricter than the other
         return true
@@ -181,7 +192,69 @@ module Crystal
         return false
       end
 
+      # Check free vars (using `index` to generate unique vars for each underscore)
+      self_free_vars = all_free_vars.map_with_index do |(free_var, _), index|
+        free_var == "_" ? index : free_var
+      end
+      other_free_vars = all_free_vars.map_with_index do |(_, free_var), index|
+        free_var == "_" ? index : free_var
+      end
+
+      # If the other uses the same free var for different free vars in self,
+      # then self is never stricter than other (e.g. `T, _` vs `T, T`)
+      (0...all_free_vars.size).group_by { |index| other_free_vars[index] }.each_value do |indices|
+        opposite_free_vars = indices.map { |i| self_free_vars[i] }
+        return false if opposite_free_vars.any? { |var| var != opposite_free_vars.first }
+      end
+      # If self uses the same free var for different free vars in the other,
+      # then self is stricter
+      (0...all_free_vars.size).group_by { |index| self_free_vars[index] }.each_value do |indices|
+        opposite_free_vars = indices.map { |i| other_free_vars[i] }
+        return true if opposite_free_vars.any? { |var| var != opposite_free_vars.first }
+      end
+
       true
+    end
+
+    # Adds all corresponding free type variables of *self_def* used in
+    # *self_type* and free type variables of *other_def* used in *other_type*
+    # into *all_free_vars*. Returns `true` if at least one pair was added.
+    #
+    # If both types use free vars in the same way, we check their usage after
+    # all other factors are considered. In this case
+    # `self_type.restriction_of?(other_type)` will be ignored.
+    private def add_free_vars(self_type, other_type, self_def, other_def, all_free_vars)
+      # `T` vs `U`, where `T` and `U` are free type vars of the respective defs (including `_`)
+      self_free_var = free_var_name?(self_type, self_def)
+      if self_free_var
+        other_free_var = free_var_name?(other_type, other_def)
+        if other_free_var
+          all_free_vars << {self_free_var, other_free_var}
+          return true
+        end
+      end
+
+      # `A(..., T, ...)` vs `A(..., U, ...)`: consider corresponding types in the type lists
+      if self_type.is_a?(Generic) && other_type.is_a?(Generic)
+        return false unless self_type.name == other_type.name && self_type.type_vars.size == other_type.type_vars.size
+
+        added = false
+        self_type.type_vars.zip(other_type.type_vars) do |type_var, other_type_var|
+          added = add_free_vars(type_var, other_type_var, self_def, other_def, all_free_vars) || added
+        end
+        return added
+      end
+
+      false
+    end
+
+    # Returns *type*'s name if it represents a free variable of the given *owner_def*.
+    private def free_var_name?(type, owner_def)
+      return "_" if type.is_a?(Underscore)
+
+      return nil unless type.is_a?(Path) && type.names.size == 1
+      first_name = type.names.first
+      first_name if owner_def.free_vars.try &.includes?(first_name)
     end
 
     def required_named_arguments
@@ -269,6 +342,10 @@ module Crystal
       # end
       # ```
       false
+    end
+
+    def restriction_of?(other : Underscore, owner)
+      true
     end
 
     def restriction_of?(other, owner)

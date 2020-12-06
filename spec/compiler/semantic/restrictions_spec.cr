@@ -123,6 +123,148 @@ describe "Restrictions" do
       end
     end
 
+    describe "multiple free vars vs underscores" do
+      it "inserts repeated var before distinct vars" do
+        assert_type(%(
+          def foo(a : T, b : U) forall T, U
+            1
+          end
+
+          def foo(a : T, b : T) forall T
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : _, b : _)
+            1
+          end
+
+          def foo(a : T, b : T) forall T
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+      end
+
+      it "keeps repeated var before distinct vars" do
+        assert_type(%(
+          def foo(a : T, b : T) forall T
+            true
+          end
+
+          def foo(a : T, b : U) forall T, U
+            1
+          end
+
+          foo(1, 1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : T, b : T) forall T
+            true
+          end
+
+          def foo(a : _, b : _)
+            1
+          end
+
+          foo(1, 1)
+          )) { bool }
+      end
+
+      it "considers distinct vars equal" do
+        assert_type(%(
+          def foo(a : _)
+            1
+          end
+
+          def foo(a : T) forall T
+            true
+          end
+
+          foo(1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : T) forall T
+            1
+          end
+
+          def foo(a : _)
+            true
+          end
+
+          foo(1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : T, b : U) forall T, U
+            1
+          end
+
+          def foo(a : U, b : T) forall T, U
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : _, b : T) forall T
+            1
+          end
+
+          def foo(a : T, b : U) forall T, U
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : T, b : U) forall T, U
+            1
+          end
+
+          def foo(a : _, b : _)
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+
+        assert_type(%(
+          def foo(a : _, b : _)
+            1
+          end
+
+          def foo(a : T, b : U) forall T, U
+            true
+          end
+
+          foo(1, 1)
+          )) { bool }
+      end
+
+      it "does not reorder ambiguously reused free vars" do
+        assert_type(%(
+          def foo(a : T, b : T, c : U) forall T, U
+            true
+          end
+
+          def foo(a : T, b : U, c : U) forall T, U
+            1
+          end
+
+          foo(1, 1, 1)
+          )) { bool }
+      end
+    end
+
     describe "Generic vs Path" do
       it "inserts typed Generic before untyped Path" do
         assert_type(%(
@@ -222,6 +364,66 @@ describe "Restrictions" do
 
           foo(Array(Int32).new)
           )) { bool }
+      end
+
+      describe "unique type parameter vs Underscore" do
+        it "inserts untyped Generic before underscored Generic" do
+          assert_type(%(
+            def foo(a : Array(_))
+              1
+            end
+
+            def foo(a : Array(T)) forall T
+              true
+            end
+
+            foo(Array(Int32).new)
+            )) { bool }
+        end
+
+        it "inserts underscored Generic before untyped Generic" do
+          assert_type(%(
+            def foo(a : Array(T)) forall T
+              1
+            end
+
+            def foo(a : Array(_))
+              true
+            end
+
+            foo(Array(Int32).new)
+            )) { bool }
+        end
+      end
+
+      describe "duplicate type parameter vs Underscore" do
+        it "inserts untyped Generic before underscored Generic" do
+          assert_type(%(
+            def foo(a : Hash(_, _))
+              1
+            end
+
+            def foo(a : Hash(T, T)) forall T
+              true
+            end
+
+            foo(Hash(Int32, Int32).new)
+            )) { bool }
+        end
+
+        it "keeps untyped Generic before underscored Generic" do
+          assert_type(%(
+            def foo(a : Hash(T, T)) forall T
+              true
+            end
+
+            def foo(a : Hash(_, _))
+              1
+            end
+
+            foo(Hash(Int32, Int32).new)
+            )) { bool }
+        end
       end
     end
 
