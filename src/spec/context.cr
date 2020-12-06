@@ -218,10 +218,10 @@ module Spec
         top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
         top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
         percent = (top_n_time * 100) / elapsed_time.total_seconds
-        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time.humanize} seconds, #{percent.round(2)}% of total time):"
         top_n.each do |res|
           puts "  #{res.description}"
-          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
+          res_elapsed = res.elapsed.not_nil!.total_seconds.humanize
           if Spec.use_colors?
             res_elapsed = res_elapsed.colorize.bold
           end
