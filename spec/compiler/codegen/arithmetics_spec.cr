@@ -211,6 +211,23 @@ describe "Code gen: arithmetic primitives" do
         end
       {% end %}
 
+      {% if [UInt16, UInt32, UInt64].includes?(type) %}
+        it "raises overflow if lower than {{type}}::MIN (#9997)" do
+          run(%(
+            require "prelude"
+
+            v = -1_i8
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          )).to_i.should eq(1)
+        end
+      {% end %}
+
       {% if ![Int128].includes?(type) && SupportedInts.includes?(Int128) %}
         it "raises overflow if lower than {{type}}::MIN (using Int128)" do
           run(%(
