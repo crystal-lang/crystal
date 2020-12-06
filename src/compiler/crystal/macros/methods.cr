@@ -2456,7 +2456,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       index += object.elements.size if index < 0
 
       unless 0 <= index < object.elements.size
-        index_node.raise "index out of bounds (index: #{index}, size: #{object.elements.size}"
+        index_node.raise "index out of bounds (index: #{index}, size: #{object.elements.size})"
       end
 
       object.elements[index] = value
