@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:unix) && !flag?(:openbsd) && !flag?(:linux) %}
+{% skip_file unless flag?(:unix) && !flag?(:netbsd) && !flag?(:openbsd) && !flag?(:linux) %}
 
 module Crystal::System::Random
   @@initialized = false
@@ -11,7 +11,7 @@ module Crystal::System::Random
     return unless urandom.info.type.character_device?
 
     urandom.close_on_exec = true
-    urandom.sync = true # don't buffer bytes
+    urandom.read_buffering = false
     @@urandom = urandom
   end
 

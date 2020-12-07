@@ -32,11 +32,11 @@ module Crystal
   end
 
   class ContextResult
-    JSON.mapping({
-      status:   {type: String},
-      message:  {type: String},
-      contexts: {type: Array(HashStringType), nilable: true},
-    })
+    include JSON::Serializable
+
+    property status : String
+    property message : String
+    property contexts : Array(HashStringType)?
 
     def initialize(@status, @message)
     end
@@ -72,8 +72,10 @@ module Crystal
   end
 
   class RechableVisitor < Visitor
+    @visited_typed_defs : Set(Def)
+
     def initialize(@context_visitor : Crystal::ContextVisitor)
-      @visited_typed_defs = Set(UInt64).new
+      @visited_typed_defs = Set(Def).new.compare_by_identity
     end
 
     def visit(node : Call)
@@ -91,9 +93,7 @@ module Crystal
     end
 
     def visit(node : Def)
-      should_visit = !@visited_typed_defs.includes?(node.object_id)
-      @visited_typed_defs << node.object_id if should_visit
-      return should_visit
+      @visited_typed_defs.add?(node)
     end
 
     def visit(node)

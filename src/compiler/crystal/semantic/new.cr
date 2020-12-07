@@ -13,6 +13,13 @@ module Crystal
       file_modules.each_value do |file_module|
         define_default_new(file_module)
       end
+
+      # Once we are done with the expansions we mark `initialize` methods
+      # without an explicit visibility as `protected`.
+      new_expansions.each do |expansion|
+        original = expansion[:original]
+        original.visibility = Visibility::Protected if original.visibility.public?
+      end
     end
 
     def define_default_new(type)
@@ -30,6 +37,8 @@ module Crystal
                 false
               when NonGenericClassType, GenericClassType
                 true
+              else
+                false
               end
 
       if check
@@ -130,10 +139,11 @@ module Crystal
       new_def.splat_index = splat_index
       new_def.double_splat = double_splat.clone
       new_def.yields = yields
-      new_def.visibility = Visibility::Private if visibility.private?
+      new_def.visibility = visibility
       new_def.new = true
       new_def.doc = doc
       new_def.free_vars = free_vars
+      new_def.annotations = annotations
 
       # Forward block argument if any
       if uses_block_arg?
@@ -177,7 +187,7 @@ module Crystal
         # Check if the argument has to be passed as a named argument
         if splat_index && i > splat_index
           named_args ||= [] of NamedArgument
-          named_args << NamedArgument.new(arg.name, Var.new(arg.name).at(self)).at(self)
+          named_args << NamedArgument.new(arg.external_name, Var.new(arg.name).at(self)).at(self)
         else
           new_var = Var.new(arg.name).at(self)
           new_var = Splat.new(new_var).at(self) if i == splat_index
@@ -266,7 +276,11 @@ module Crystal
           named_args.each do |named_arg|
             str << ':'
             str << named_arg
-            def_args << Arg.new(named_arg)
+
+            # When **opts is expanded for named arguments, we must use internal
+            # names that won't clash with local variables defined in the method.
+            temp_name = instance_type.program.new_temp_var_name
+            def_args << Arg.new(temp_name, external_name: named_arg)
             i += 1
           end
         end
@@ -276,7 +290,9 @@ module Crystal
 
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index).at(self)
       expansion.yields = yields
-      expansion.visibility = Visibility::Private if visibility.private?
+      expansion.visibility = visibility
+      expansion.annotations = annotations
+
       if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone

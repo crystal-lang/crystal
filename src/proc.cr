@@ -190,11 +190,11 @@ struct Proc
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "#<"
     io << {{@type.name.stringify}}
     io << ":0x"
-    pointer.address.to_s(16, io)
+    pointer.address.to_s(io, 16)
     if closure?
       io << ":closure"
     end

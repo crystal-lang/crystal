@@ -6,7 +6,9 @@
 # `Macros` module are top-level methods that you can invoke, like `puts` and `run`.
 module Crystal::Macros
   # Compares two [semantic versions](http://semver.org/).
-  # Returns `-1` if `v1 < v2`, `0` if `v1 == v2` and `1` if `v1 > v2`.
+  #
+  # Returns `-1`, `0` or `1` depending on whether *v1* is lower than *v2*,
+  # equal to *v2* or greater than *v2*.
   #
   # ```
   # {{ compare_versions("1.10.0", "1.2.0") }} # => 1
@@ -34,12 +36,34 @@ module Crystal::Macros
   def flag?(name) : BoolLiteral
   end
 
-  # Prints an AST node at compile-time. Useful for debugging macros.
-  def puts(expression) : Nop
+  # Returns whether a [compile-time flag](https://crystal-lang.org/docs/syntax_and_semantics/compile_time_flags.html)
+  # is set for the *host* platform, which can differ from the target platform
+  # (`flag?`) during cross-compilation.
+  #
+  # ```
+  # {{ host_flag?(:win32) }} # true or false
+  # ```
+  def host_flag?(name) : BoolLiteral
+  end
+
+  # Prints AST nodes at compile-time. Useful for debugging macros.
+  def puts(*expressions) : Nop
   end
 
   # Same as `puts`.
-  def p(expression) : Nop
+  def p(*expressions) : Nop
+  end
+
+  # Same as `puts`.
+  def pp(*expressions) : Nop
+  end
+
+  # Prints macro expressions together with their values at compile-time. Useful for debugging macros.
+  def p!(*expressions) : Nop
+  end
+
+  # Same as `p!`
+  def pp!(*expressions) : Nop
   end
 
   # Executes a system command and returns the output as a `MacroId`.
@@ -47,7 +71,7 @@ module Crystal::Macros
   def `(command) : MacroId
   end
 
-  # ditto
+  # :ditto:
   def system(command) : MacroId
   end
 
@@ -55,10 +79,30 @@ module Crystal::Macros
   def raise(message) : NoReturn
   end
 
+  # Reads a file and returns a `StringLiteral` with its contents.
+  #
+  # Gives a compile-time error if the file doesn't exist or if
+  # reading the file fails.
+  #
+  # To read a file relative to where the macro is defined, use:
+  #
+  # ```
+  # read_file("#{__DIR__}/some_file.txt")
+  # ```
+  #
+  # NOTE: Relative paths are resolved to the current working directory.
+  def read_file(filename) : StringLiteral
+  end
+
+  # Same as `read_file`, except that `nil` is returned on any I/O failure
+  # instead of issuing a compile-time failure.
+  def read_file?(filename) : StringLiteral | NilLiteral
+  end
+
   # Compiles and execute a Crystal program and returns its output
   # as a `MacroId`.
   #
-  # The file denote by *filename* must be a valid Crystal program.
+  # The file denoted by *filename* must be a valid Crystal program.
   # This macro invocation passes *args* to the program as regular
   # program arguments. The program must output a valid Crystal expression.
   # This output is the result of this macro invocation, as a `MacroId`.
@@ -94,7 +138,7 @@ module Crystal::Macros
   # shell commands at compile time, or other macro run programs). It's also strongly
   # discouraged to have a macro run program take a lot of time, because this will
   # slow down compilation times. Reading files is OK, opening an HTTP connection
-  # at compile-time will most likely result if very slow compilations.
+  # at compile-time will most likely result in very slow compilations.
   def run(filename, *args) : MacroId
   end
 
@@ -242,19 +286,19 @@ module Crystal::Macros
     def <(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def >=(other : NumberLiteral) : BoolLiteral
     end
 
-    # ditto
+    # :ditto:
     def <=>(other : NumberLiteral) : NumberLiteral
     end
 
@@ -270,8 +314,14 @@ module Crystal::Macros
     def *(other : NumberLiteral) : NumberLiteral
     end
 
-    # Same as `Number#/`
-    def /(other : NumberLiteral) : NumberLiteral
+    # MathInterpreter only works with Integer and Number#/ : Float
+    #
+    # # Same as `Number#/`
+    # def /(other : NumberLiteral) : NumberLiteral
+    # end
+
+    # Same as `Number#//`
+    def //(other : NumberLiteral) : NumberLiteral
     end
 
     # Same as `Number#%`
@@ -353,7 +403,7 @@ module Crystal::Macros
     end
 
     # Similar to `String#camelcase`.
-    def camelcase : StringLiteral
+    def camelcase(*, lower : BoolLiteral = false) : StringLiteral
     end
 
     # Similar to `String#capitalize`.
@@ -366,6 +416,10 @@ module Crystal::Macros
 
     # Similar to `String#chomp`.
     def chomp : StringLiteral
+    end
+
+    # Similar to `String#count`.
+    def count(other : CharLiteral) : NumberLiteral
     end
 
     # Similar to `String#downcase`.
@@ -410,6 +464,10 @@ module Crystal::Macros
 
     # Similar to `String#strip`.
     def strip : StringLiteral
+    end
+
+    # Similar to `String#titleize`.
+    def titleize : StringLiteral
     end
 
     # Similar to `String#to_i`.
@@ -513,6 +571,10 @@ module Crystal::Macros
     def strip : SymbolLiteral
     end
 
+    # Similar to `String#titleize`.
+    def titleize : SymbolLiteral
+    end
+
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : SymbolLiteral
     end
@@ -525,11 +587,11 @@ module Crystal::Macros
   # An array literal.
   class ArrayLiteral < ASTNode
     # Similar to `Enumerable#any?`
-    def any?(&block) : BoolLiteral
+    def any?(&) : BoolLiteral
     end
 
     # Similar to `Enumerable#all?`
-    def all?(&block) : BoolLiteral
+    def all?(&) : BoolLiteral
     end
 
     # Returns a `MacroId` with all of this array's elements joined
@@ -551,7 +613,7 @@ module Crystal::Macros
     end
 
     # Similar to `Enumerable#find`
-    def find(&block) : ASTNode | NilLiteral
+    def find(&) : ASTNode | NilLiteral
     end
 
     # Similar to `Array#first`, but returns a `NilLiteral` if the array is empty.
@@ -575,19 +637,35 @@ module Crystal::Macros
     end
 
     # Similar to `Enumerable#map`
-    def map(&block) : ArrayLiteral
+    def map(&) : ArrayLiteral
+    end
+
+    # Similar to `Enumerable#map_with_index`
+    def map_with_index(&) : ArrayLiteral
+    end
+
+    # Similar to `Array#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `Enumerable#each_with_index`
+    def each_with_index(&) : Nil
     end
 
     # Similar to `Enumerable#select`
-    def select(&block) : ArrayLiteral
+    def select(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#reject`
-    def reject(&block) : ArrayLiteral
+    def reject(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#reduce`
-    def reduce(&block) : ASTNode
+    def reduce(&) : ASTNode
+    end
+
+    # Similar to `Enumerable#reduce`
+    def reduce(memo : ASTNode, &) : ASTNode
     end
 
     # Similar to `Array#shuffle`
@@ -596,6 +674,10 @@ module Crystal::Macros
 
     # Similar to `Array#sort`
     def sort : ArrayLiteral
+    end
+
+    # Similar to `Array#sort_by`
+    def sort_by(&) : ArrayLiteral
     end
 
     # Similar to `Array#uniq`
@@ -607,11 +689,11 @@ module Crystal::Macros
     end
 
     # Similar to `Array#[]=`.
-    def []=(index : NumberLiteral, value : ASTNode)
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
 
     # Similar to `Array#unshift`.
-    def unshift : ArrayLiteral
+    def unshift(value : ASTNode) : ArrayLiteral
     end
 
     # Similar to `Array#push`.
@@ -645,6 +727,10 @@ module Crystal::Macros
     def clear : HashLiteral
     end
 
+    # Similar to `Hash#each`
+    def each(&) : Nil
+    end
+
     # Similar to `Hash#empty?`
     def empty? : BoolLiteral
     end
@@ -674,7 +760,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#[]=`
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -708,6 +794,14 @@ module Crystal::Macros
 
   # A named tuple literal.
   class NamedTupleLiteral < ASTNode
+    # Similar to `NamedTuple#each`
+    def each(&) : Nil
+    end
+
+    # Similar to `NamedTuple#each_with_index`
+    def each_with_index(&) : Nil
+    end
+
     # Similar to `NamedTuple#empty?`
     def empty? : BoolLiteral
     end
@@ -737,11 +831,11 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#[]` but returns `NilLiteral` if *key* is undefined.
-    def [](key : ASTNode) : ASTNode
+    def [](key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
     end
 
     # Adds or replaces a key.
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
   end
 
@@ -749,6 +843,10 @@ module Crystal::Macros
   class RangeLiteral < ASTNode
     # Similar to `Range#begin`
     def begin : ASTNode
+    end
+
+    # Similar to `Range#each`
+    def each(&) : Nil
     end
 
     # Similar to `Range#end`
@@ -761,7 +859,7 @@ module Crystal::Macros
 
     # Similar to `Enumerable#map` for a `Range`.
     # Only works on ranges of `NumberLiteral`s considered as integers.
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
     end
 
     # Similar to `Enumerable#to_a` for a `Range`.
@@ -784,7 +882,7 @@ module Crystal::Macros
 
   # A tuple literal.
   #
-  # It's macro methods are the same as `ArrayLiteral`
+  # Its macro methods are nearly the same as `ArrayLiteral`.
   class TupleLiteral < ASTNode
   end
 
@@ -807,14 +905,19 @@ module Crystal::Macros
     def default_value : ASTNode
     end
 
-    # Returns whether this variable has a default value (which.
-    # can in turn be `nil`).
+    # Returns whether this variable has a default value
+    # (which can in turn be `nil`).
     def has_default_value? : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this variable.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -827,8 +930,16 @@ module Crystal::Macros
 
     # Returns the value of a named argument,
     # or NilLiteral if the named argument isn't
-    # used in this attribute.
-    def [](name : SymbolLiteral) : ASTNode
+    # used on `self`.
+    def [](name : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    end
+
+    # Returns a `TupleLiteral` representing the positional arguments on `self`.
+    def args : TupleLiteral
+    end
+
+    # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
+    def named_args : NamedTupleLiteral
     end
   end
 
@@ -1050,6 +1161,10 @@ module Crystal::Macros
     def block_arg : Arg | Nop
     end
 
+    # Returns `true` if this method can be called with a block, `false` otherwise.
+    def accepts_block? : BoolLiteral
+    end
+
     # Returns the return type of the method, if specified.
     def return_type : ASTNode | Nop
     end
@@ -1067,9 +1182,14 @@ module Crystal::Macros
     def visibility : SymbolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this method.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
   end
 
@@ -1129,6 +1249,17 @@ module Crystal::Macros
 
   # An `out` expression.
   class Out < UnaryExpression
+  end
+
+  # An `offsetof` expression.
+  class OffsetOf < ASTNode
+    # Returns the type that has been used in this `offsetof` expression.
+    def type : ASTNode
+    end
+
+    # Returns the instance variable used in this `offsetof` expression.
+    def instance_var : ASTNode
+    end
   end
 
   # A visibility modifier
@@ -1230,6 +1361,12 @@ module Crystal::Macros
     # returns a `NilLiteral`.
     def resolve? : ASTNode | NilLiteral
     end
+
+    # Returns this path inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
+    end
   end
 
   # A class definition.
@@ -1266,6 +1403,22 @@ module Crystal::Macros
 
     # Returns the named arguments of this instantiation, if any.
     def named_args : NamedTupleLiteral | NilLiteral
+    end
+
+    # Resolves this generic to a `TypeNode` if it denotes a type,
+    # or otherwise gives a compile-time error.
+    def resolve : ASTNode
+    end
+
+    # Resolves this path to a `TypeNode` if it denotes a type,
+    # or otherwise returns a `NilLiteral`.
+    def resolve? : ASTNode | NilLiteral
+    end
+
+    # Returns this generic inside an array literal.
+    # This method exists so you can call `types` on the type of a type
+    # declaration and get all types, whether it's a Generic, Path or Union.
+    def types : ArrayLiteral(ASTNode)
     end
   end
 
@@ -1334,6 +1487,16 @@ module Crystal::Macros
 
   # A type union, like `(Int32 | String)`.
   class Union < ASTNode
+    # Resolves this union to a `TypeNode`. Gives a compile-time error
+    # if any type inside the union can't be resolved.
+    def resolve : ASTNode
+    end
+
+    # Resolves this union to a `TypeNode`. Returns a `NilLiteral`
+    # if any type inside the union can't be resolved.
+    def resolve? : ASTNode | NilLiteral
+    end
+
     # Returns the types of this union.
     def types : ArrayLiteral(ASTNode)
     end
@@ -1452,7 +1615,7 @@ module Crystal::Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
@@ -1572,6 +1735,10 @@ module Crystal::Macros
     def strip : MacroId
     end
 
+    # Similar to `String#titleize`.
+    def titleize : MacroId
+    end
+
     # Similar to `String#tr`.
     def tr(from : StringLiteral, to : StringLiteral) : MacroId
     end
@@ -1583,29 +1750,114 @@ module Crystal::Macros
 
   # Represents a type in the program, like `Int32` or `String`.
   class TypeNode < ASTNode
-    # Returns `true` if this type is abstract.
+    # Returns `true` if `self` is abstract, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # abstract struct Two; end
+    #
+    # class Three; end
+    #
+    # abstract class Four; end
+    #
+    # {{One.abstract?}}   # => false
+    # {{Two.abstract?}}   # => true
+    # {{Three.abstract?}} # => false
+    # {{Four.abstract?}}  # => true
+    # ```
     def abstract? : BoolLiteral
     end
 
-    # Returns `true` if this type is a union type, `false` otherwise.
+    # Returns `true` if `self` is a union type, otherwise `false`.
     #
-    # See also: `union_types`.
+    # See also: `#union_types`.
+    #
+    # ```
+    # {{String.union?}}              # => false
+    # {{String?.union?}}             # => true
+    # {{Union(String, Bool).union?}} # => true
+    # ```
     def union? : BoolLiteral
     end
 
-    # Returns `true` if this type is nilable (if it has `Nil` amongst its types).
+    # Returns `true` if `self` is nilable (if it has `Nil` amongst its types), otherwise `false`.
+    #
+    # ```
+    # {{String.nilable?}}                   # => false
+    # {{String?.nilable?}}                  # => true
+    # {{Union(String, Bool, Nil).nilable?}} # => true
+    # ```
     def nilable? : BoolLiteral
     end
 
-    # Returns the types comforming a union type, if this is a union type.
-    # Gives a compile error otherwise.
+    # Returns `true` if `self` is a `module`, otherwise `false`.
     #
-    # See also: `union?`.
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.module?}}   # => true
+    # {{Two.module?}}   # => false
+    # {{Three.module?}} # => false
+    # ```
+    def module? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `class`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.class?}}   # => false
+    # {{Two.class?}}   # => true
+    # {{Three.class?}} # => false
+    # ```
+    def class? : BoolLiteral
+    end
+
+    # Returns `true` if `self` is a `struct`, otherwise `false`.
+    #
+    # ```
+    # module One; end
+    #
+    # class Two; end
+    #
+    # struct Three; end
+    #
+    # {{One.struct?}}   # => false
+    # {{Two.struct?}}   # => false
+    # {{Three.struct?}} # => true
+    # ```
+    def struct? : BoolLiteral
+    end
+
+    # Returns the types forming a union type, if this is a union type.
+    # Otherwise returns this single type inside an array literal (so you can safely call `union_types` on any type and treat all types uniformly).
+    #
+    # See also: `#union?`.
     def union_types : ArrayLiteral(TypeNode)
     end
 
-    # Returns the fully qualified name of this type.
-    def name : MacroId
+    # Returns the fully qualified name of this type.  Optionally without *generic_args* if `self` is a generic type; see `#type_vars`.
+    #
+    # ```
+    # class Foo(T); end
+    #
+    # module Bar::Baz; end
+    #
+    # {{Bar::Baz.name}}                 # => Bar::Baz
+    # {{Foo.name}}                      # => Foo(T)
+    # {{Foo.name(generic_args: false)}} # => Foo
+    # ```
+    def name(*, generic_args : BoolLiteral = true) : MacroId
     end
 
     # Returns the type variables of the generic type. If the type is not
@@ -1615,6 +1867,10 @@ module Crystal::Macros
 
     # Returns the instance variables of this type.
     def instance_vars : ArrayLiteral(MetaVar)
+    end
+
+    # Returns the class variables of this type.
+    def class_vars : ArrayLiteral(MetaVar)
     end
 
     # Returns all ancestors of this type.
@@ -1627,6 +1883,10 @@ module Crystal::Macros
 
     # Returns the direct subclasses of this type.
     def subclasses : ArrayLiteral(TypeNode)
+    end
+
+    # Returns all the types `self` is directly included in.
+    def includers : ArrayLiteral(TypeNode)
     end
 
     # Returns all subclasses of this type.
@@ -1668,9 +1928,14 @@ module Crystal::Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns any `Annotation` with the given `type`
-    # attached to this type.
-    def annotation(type : TypeNode) : Annotation
+    # Returns the last `Annotation` with the given `type`
+    # attached to this variable or `NilLiteral` if there are none.
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
@@ -1721,6 +1986,14 @@ module Crystal::Macros
     # {{ Bar.overrides?(Foo, "two") }} # => false
     # ```
     def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve : TypeNode
+    end
+
+    # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.
+    def resolve? : TypeNode
     end
 
     # Returns `true` if *other* is an ancestor of `self`.

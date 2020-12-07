@@ -10,18 +10,18 @@ struct OAuth::AuthorizationHeader
     return unless value
 
     @str << ", " unless @first
-    @str << key
+    URI.encode_www_form key, @str
     @str << %(=")
-    URI.escape value, @str
+    URI.encode_www_form value, @str
     @str << '"'
     @first = false
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     @str.to_s(io)
   end
 
-  def to_s
+  def to_s : String
     @str.to_s
   end
 end

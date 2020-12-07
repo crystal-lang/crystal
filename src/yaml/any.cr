@@ -126,10 +126,48 @@ struct YAML::Any
     end
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  def dig?(index_or_key, *subkeys) : YAML::Any?
+    self[index_or_key]?.try &.dig?(*subkeys)
+  end
+
+  # :nodoc:
+  def dig?(index_or_key) : YAML::Any?
+    case @raw
+    when Hash, Array
+      self[index_or_key]?
+    else
+      nil
+    end
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise raises.
+  def dig(index_or_key, *subkeys) : YAML::Any
+    self[index_or_key].dig(*subkeys)
+  end
+
+  # :nodoc:
+  def dig(index_or_key) : YAML::Any
+    self[index_or_key]
+  end
+
   # Checks that the underlying value is `Nil`, and returns `nil`.
   # Raises otherwise.
   def as_nil : Nil
     @raw.as(Nil)
+  end
+
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Raises otherwise.
+  def as_bool : Bool
+    @raw.as(Bool)
+  end
+
+  # Checks that the underlying value is `Bool`, and returns its value.
+  # Returns `nil` otherwise.
+  def as_bool? : Bool?
+    as_bool if @raw.is_a?(Bool)
   end
 
   # Checks that the underlying value is `String`, and returns its value.
@@ -165,7 +203,7 @@ struct YAML::Any
   # Checks that the underlying value is `Int64`, and returns its value as `Int32`.
   # Returns `nil` otherwise.
   def as_i? : Int32?
-    @raw.as?(Int64).try &.to_i
+    as_i if @raw.is_a?(Int)
   end
 
   # Checks that the underlying value is `Float64`, and returns its value.
@@ -178,6 +216,18 @@ struct YAML::Any
   # Returns `nil` otherwise.
   def as_f? : Float64?
     @raw.as?(Float64)
+  end
+
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Raises otherwise.
+  def as_f32 : Float32
+    @raw.as(Float).to_f32
+  end
+
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
+  # Returns `nil` otherwise.
+  def as_f32? : Float32?
+    as_f32 if @raw.is_a?(Float)
   end
 
   # Checks that the underlying value is `Time`, and returns its value.
@@ -229,12 +279,12 @@ struct YAML::Any
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
   # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 
@@ -259,6 +309,35 @@ struct YAML::Any
   # :nodoc:
   def to_yaml(io)
     raw.to_yaml(io)
+  end
+
+  def to_json(builder : JSON::Builder)
+    if (raw = self.raw).is_a?(Slice)
+      raise "Can't serialize #{raw.class} to JSON"
+    else
+      raw.to_json(builder)
+    end
+  end
+
+  # Returns a new YAML::Any instance with the `raw` value `dup`ed.
+  def dup
+    Any.new(raw.dup)
+  end
+
+  # Returns a new YAML::Any instance with the `raw` value `clone`ed.
+  def clone
+    Any.new(raw.clone)
+  end
+
+  # Forwards `to_json_object_key` to `raw` if it responds to that method,
+  # raises `JSON::Error` otherwise.
+  def to_json_object_key
+    raw = @raw
+    if raw.responds_to?(:to_json_object_key)
+      raw.to_json_object_key
+    else
+      raise JSON::Error.new("can't convert #{raw.class} to a JSON object key")
+    end
   end
 end
 

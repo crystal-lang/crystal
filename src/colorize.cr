@@ -14,19 +14,39 @@
 #
 # There are alternative ways to change the foreground color:
 # ```
+# require "colorize"
+#
 # "foo".colorize.fore(:green)
 # "foo".colorize.green
 # ```
 #
 # To change the background color, the following methods are available:
 # ```
+# require "colorize"
+#
 # "foo".colorize.back(:green)
 # "foo".colorize.on(:green)
 # "foo".colorize.on_green
 # ```
 #
+# You can also pass an RGB color to `colorize`:
+# ```
+# require "colorize"
+#
+# "foo".colorize(Colorize::ColorRGB.new(0, 255, 255)) # => "foo" in aqua
+# ```
+#
+# Or an 8-bit color:
+# ```
+# require "colorize"
+#
+# "foo".colorize(Colorize::Color256.new(208)) # => "foo" in orange
+# ```
+#
 # It's also possible to change the text decoration:
 # ```
+# require "colorize"
+#
 # "foo".colorize.mode(:underline)
 # "foo".colorize.underline
 # ```
@@ -34,20 +54,31 @@
 # The `colorize` method returns a `Colorize::Object` instance,
 # which allows chaining methods together:
 # ```
+# require "colorize"
+#
 # "foo".colorize.fore(:yellow).back(:blue).mode(:underline)
 # ```
 #
 # With the `toggle` method you can temporarily disable adding the escape codes.
 # Settings of the instance are preserved however and can be turned back on later:
 # ```
-# "foo".colorize(:red).toggle(false)
-# # => "foo" without color
-# "foo".colorize(:red).toggle(false).toggle(true)
-# # => "foo" in red
+# require "colorize"
+#
+# "foo".colorize(:red).toggle(false)              # => "foo" without color
+# "foo".colorize(:red).toggle(false).toggle(true) # => "foo" in red
+# ```
+#
+# The color `:default` will just leave the object as it is (but it's an `Colorize::Object(String)` then).
+# That's handy in for example conditions:
+# ```
+# require "colorize"
+#
+# "foo".colorize(some_bool ? :green : :default)
 # ```
 #
 # Available colors are:
 # ```
+# :default
 # :black
 # :red
 # :green
@@ -83,6 +114,8 @@ module Colorize
   # The default value is `true`.
   #
   # ```
+  # require "colorize"
+  #
   # Colorize.enabled = true
   # "hello".colorize.red.to_s # => "\e[31mhello\e[0m"
   #
@@ -91,22 +124,30 @@ module Colorize
   # ```
   class_property? enabled : Bool = true
 
-  # Make `Colorize.enabled` `true` if and only if both of `STDOUT.tty?` and `STDERR.tty?` are `true`.
+  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
+  # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
+  # This is determined by the environment variable called `TERM`.
+  # If `TERM=dumb`, color won't be enabled.
   def self.on_tty_only!
-    self.enabled = STDOUT.tty? && STDERR.tty?
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
   end
 
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
-end
 
-def with_color
-  "".colorize
-end
-
-def with_color(color : Symbol)
-  "".colorize(color)
+  # Helper method to use colorize with `IO`.
+  #
+  # ```
+  # io = IO::Memory.new
+  # io << "not-green"
+  # Colorize.with.green.bold.surround(io) do
+  #   io << "green and bold if Colorize.enabled"
+  # end
+  # ```
+  def self.with
+    "".colorize
+  end
 end
 
 module Colorize::ObjectExtensions
@@ -173,12 +214,16 @@ module Colorize
     blue : UInt8 do
     def fore(io : IO) : Nil
       io << "38;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
 
     def back(io : IO) : Nil
       io << "48;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
   end
 end
@@ -201,7 +246,7 @@ struct Colorize::Object(T)
   private MODE_REVERSE_FLAG   = 16
   private MODE_HIDDEN_FLAG    = 32
 
-  private COLORS = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
+  private COLORS = %w(default black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
   private MODES  = %w(bold bright dim underline blink reverse hidden)
 
   @fore : Color
@@ -283,13 +328,13 @@ struct Colorize::Object(T)
     self
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     surround(io) do
       io << @object
     end
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     surround(io) do
       @object.inspect(io)
     end

@@ -322,7 +322,7 @@ describe "Semantic: struct" do
       )) { int32 }
   end
 
-  it "errors if invoking to_i32 and got error in that call" do
+  it "errors if invoking to_i32! and got error in that call" do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -331,7 +331,7 @@ describe "Semantic: struct" do
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           1 + 'a'
         end
       end
@@ -339,10 +339,10 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "converting from Foo to Int32 by invoking 'to_i32'"
+      "converting from Foo to Int32 by invoking 'to_i32!'"
   end
 
-  it "errors if invoking to_i32 and got wrong type" do
+  it "errors if invoking to_i32! and got wrong type" do
     assert_error %(
       lib LibFoo
         struct Foo
@@ -351,7 +351,7 @@ describe "Semantic: struct" do
       end
 
       class Foo
-        def to_i32
+        def to_i32!
           'a'
         end
       end
@@ -359,7 +359,7 @@ describe "Semantic: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+      "invoked 'to_i32!' to convert from Foo to Int32, but got Char"
   end
 
   it "errors if invoking to_unsafe and got error in that call" do

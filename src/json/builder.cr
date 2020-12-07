@@ -16,6 +16,11 @@ class JSON::Builder
 
   @indent : String?
 
+  # By default the maximum nesting of arrays/objects is 99. Nesting more
+  # than this will result in a JSON::Error. Changing the value of this property
+  # allows more/less nesting.
+  property max_nesting = 99
+
   # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
     @state = [StartState.new] of State
@@ -45,7 +50,10 @@ class JSON::Builder
       raise JSON::Error.new("Unterminated JSON array")
     when ObjectState
       raise JSON::Error.new("Unterminated JSON object")
+    when DocumentEndState
+      # okay
     end
+    @io.flush
   end
 
   def document
@@ -124,7 +132,7 @@ class JSON::Builder
           io << '0' if ord < 0x1000
           io << '0' if ord < 0x100
           io << '0' if ord < 0x10
-          ord.to_s(16, io)
+          ord.to_s(io, 16)
           reader.next_char
           start_pos = reader.pos
           next
@@ -158,7 +166,7 @@ class JSON::Builder
   # Writes the start of an array.
   def start_array
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ArrayState.new(empty: true)
     @io << '['
   end
@@ -173,7 +181,7 @@ class JSON::Builder
     end
     write_indent state
     @io << ']'
-    @current_indent -= 1
+    decrease_indent
     end_scalar
   end
 
@@ -187,7 +195,7 @@ class JSON::Builder
   # Writes the start of an object.
   def start_object
     start_scalar
-    @current_indent += 1
+    increase_indent
     @state.push ObjectState.new(empty: true, name: true)
     @io << '{'
   end
@@ -205,7 +213,7 @@ class JSON::Builder
     end
     write_indent state
     @io << '}'
-    @current_indent -= 1
+    decrease_indent
     end_scalar
   end
 
@@ -221,17 +229,17 @@ class JSON::Builder
     null
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : Bool)
     bool(value)
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : Int | Float)
     number(value)
   end
 
-  # ditto
+  # :ditto:
   def scalar(value : String)
     string(value)
   end
@@ -275,6 +283,13 @@ class JSON::Builder
     end
   end
 
+  # Returns `true` if the next thing that must pushed into this
+  # builder is an object key (so a string) or the end of an object.
+  def next_is_object_key? : Bool
+    state = @state.last
+    state.is_a?(ObjectState) && state.name
+  end
+
   private def scalar(string = false)
     start_scalar(string)
     yield.tap { end_scalar(string) }
@@ -283,6 +298,8 @@ class JSON::Builder
   private def start_scalar(string = false)
     object_value = false
     case state = @state.last
+    when DocumentStartState
+      # okay
     when StartState
       raise JSON::Error.new("Write before start_document")
     when DocumentEndState
@@ -308,6 +325,8 @@ class JSON::Builder
     when ObjectState
       colon if state.name
       @state[-1] = ObjectState.new(empty: false, name: !state.name)
+    else
+      raise "Bug: unexpected state: #{state.class}"
     end
   end
 
@@ -348,6 +367,17 @@ class JSON::Builder
       @io << indent
     end
   end
+
+  private def increase_indent
+    @current_indent += 1
+    if @current_indent > @max_nesting
+      raise JSON::Error.new("Nesting of #{@current_indent} is too deep")
+    end
+  end
+
+  private def decrease_indent
+    @current_indent -= 1
+  end
 end
 
 module JSON
@@ -379,11 +409,12 @@ module JSON
   end
 
   # Writes JSON into the given `IO`. A `JSON::Builder` is yielded to the block.
-  def self.build(io : IO, indent = nil)
+  def self.build(io : IO, indent = nil) : Nil
     builder = JSON::Builder.new(io)
     builder.indent = indent if indent
     builder.document do
       yield builder
     end
+    io.flush
   end
 end

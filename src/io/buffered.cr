@@ -1,16 +1,17 @@
 # The `IO::Buffered` mixin enhances an `IO` with input/output buffering.
 #
-# The buffering behaviour can be turned on/off with the `#sync=` method.
+# The buffering behaviour can be turned on/off with the `#sync=` and
+# `#read_buffering=` methods.
 #
 # Additionally, several methods, like `#gets`, are implemented in a more
 # efficient way.
 module IO::Buffered
-  BUFFER_SIZE = 8192
-
   @in_buffer_rem = Bytes.empty
   @out_count = 0
   @sync = false
+  @read_buffering = true
   @flush_on_newline = false
+  @buffer_size = 8192
 
   # Reads at most *slice.size* bytes from the wrapped `IO` into *slice*.
   # Returns the number of bytes read.
@@ -29,13 +30,27 @@ module IO::Buffered
   # Rewinds the wrapped `IO`.
   abstract def unbuffered_rewind
 
+  # Return the buffer size used
+  def buffer_size
+    @buffer_size
+  end
+
+  # Set the buffer size of both the read and write buffer
+  # Cannot be changed after any of the buffers have been allocated
+  def buffer_size=(value)
+    if @in_buffer || @out_buffer
+      raise ArgumentError.new("Cannot change buffer_size after buffers have been allocated")
+    end
+    @buffer_size = value
+  end
+
   # :nodoc:
   def read_byte : UInt8?
     check_open
 
-    fill_buffer if !sync? && @in_buffer_rem.empty?
+    fill_buffer if read_buffering? && @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
-      return nil unless sync?
+      return nil if read_buffering?
 
       byte = uninitialized UInt8
       if read(Slice.new(pointerof(byte), 1)) == 1
@@ -61,7 +76,7 @@ module IO::Buffered
       # If we are asked to read more than half the buffer's size,
       # read directly into the slice, as it's not worth the extra
       # memory copy.
-      if sync? || count >= BUFFER_SIZE / 2
+      if !read_buffering? || count >= @buffer_size // 2
         return unbuffered_read(slice[0, count]).to_i
       else
         fill_buffer
@@ -70,7 +85,7 @@ module IO::Buffered
     end
 
     to_read = Math.min(count, @in_buffer_rem.size)
-    slice.copy_from(@in_buffer_rem.pointer(to_read), to_read)
+    slice.copy_from(@in_buffer_rem.to_unsafe, to_read)
     @in_buffer_rem += to_read
     to_read
   end
@@ -110,8 +125,10 @@ module IO::Buffered
   end
 
   # Buffered implementation of `IO#write(slice)`.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_open
+
+    return if slice.empty?
 
     count = slice.size
 
@@ -130,18 +147,17 @@ module IO::Buffered
       end
     end
 
-    if count >= BUFFER_SIZE
+    if count >= @buffer_size
       flush
       return unbuffered_write slice[0, count]
     end
 
-    if count > BUFFER_SIZE - @out_count
+    if count > @buffer_size - @out_count
       flush
     end
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
-    nil
   end
 
   # :nodoc:
@@ -152,7 +168,7 @@ module IO::Buffered
       return super
     end
 
-    if @out_count >= BUFFER_SIZE
+    if @out_count >= @buffer_size
       flush
     end
     out_buffer[@out_count] = byte
@@ -163,6 +179,29 @@ module IO::Buffered
     end
   end
 
+  # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
+  # will be done (that is, writing to this `IO` is immediately synced to the
+  # underlying `IO`).
+  def sync=(sync)
+    flush if sync && !@sync
+    @sync = !!sync
+  end
+
+  # Determines if this `IO` does write buffering. If `true`, no buffering is done.
+  def sync?
+    @sync
+  end
+
+  # Turns on/off `IO` **read** buffering.
+  def read_buffering=(read_buffering)
+    @read_buffering = !!read_buffering
+  end
+
+  # Determines whether this `IO` buffers reads.
+  def read_buffering?
+    @read_buffering
+  end
+
   # Turns on/off flushing the underlying `IO` when a newline is written.
   def flush_on_newline=(flush_on_newline)
     @flush_on_newline = !!flush_on_newline
@@ -171,19 +210,6 @@ module IO::Buffered
   # Determines if this `IO` flushes automatically when a newline is written.
   def flush_on_newline?
     @flush_on_newline
-  end
-
-  # Turns on/off `IO` buffering. When *sync* is set to `true`, no buffering
-  # will be done (that is, writing to this `IO` is immediately synced to the
-  # underlying `IO`).
-  def sync=(sync)
-    flush if sync && !@sync
-    @sync = !!sync
-  end
-
-  # Determines if this `IO` does buffering. If `true`, no buffering is done.
-  def sync?
-    @sync
   end
 
   # Flushes any buffered data and the underlying `IO`. Returns `self`.
@@ -210,15 +236,15 @@ module IO::Buffered
 
   private def fill_buffer
     in_buffer = in_buffer()
-    size = unbuffered_read(Slice.new(in_buffer, BUFFER_SIZE)).to_i
+    size = unbuffered_read(Slice.new(in_buffer, @buffer_size)).to_i
     @in_buffer_rem = Slice.new(in_buffer, size)
   end
 
   private def in_buffer
-    @in_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32).as(UInt8*)
+    @in_buffer ||= GC.malloc_atomic(@buffer_size.to_u32).as(UInt8*)
   end
 
   private def out_buffer
-    @out_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32).as(UInt8*)
+    @out_buffer ||= GC.malloc_atomic(@buffer_size.to_u32).as(UInt8*)
   end
 end

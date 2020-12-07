@@ -28,7 +28,8 @@ class UNIXSocket < Socket
     super family, type, Protocol::IP
   end
 
-  protected def initialize(fd : Int32, type : Type, @path : String? = nil)
+  # Creates a UNIXSocket from an already configured raw file descriptor
+  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
     super fd, Family::UNIX, type, Protocol::IP
   end
 
@@ -45,9 +46,11 @@ class UNIXSocket < Socket
     end
   end
 
-  # Returns a pair of unamed UNIX sockets.
+  # Returns a pair of unnamed UNIX sockets.
   #
   # ```
+  # require "socket"
+  #
   # left, right = UNIXSocket.pair
   #
   # spawn do
@@ -68,13 +71,13 @@ class UNIXSocket < Socket
     {% end %}
 
     if LibC.socketpair(Family::UNIX, socktype, 0, fds) != 0
-      raise Errno.new("socketpair:")
+      raise Socket::Error.new("socketpair:")
     end
 
-    {UNIXSocket.new(fds[0], type), UNIXSocket.new(fds[1], type)}
+    {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
-  # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
+  # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.

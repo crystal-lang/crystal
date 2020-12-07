@@ -43,7 +43,7 @@ $(function(){
   session.onChange = function() {
     saveAsLastCode();
   };
-  $(window).unload(function(){
+  $(window).on("unload", function(){
     saveAsLastCode();
   });
 
@@ -62,7 +62,7 @@ $(function(){
 
   $("#saveAsGist").click(function(e) {
     if (Playground.settings.getGithubToken() == '') {
-      window.open('/settings.html');
+      window.open('/settings');
       return;
     }
 

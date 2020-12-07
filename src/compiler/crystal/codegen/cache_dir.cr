@@ -31,9 +31,18 @@ module Crystal
     def directory_for(filename : String)
       dir = compute_dir
 
-      name = filename.gsub('/', '-')
-      while name.starts_with?('-')
-        name = name[1..-1]
+      filename = ::Path[filename]
+      name = String.build do |io|
+        filename.each_part do |part|
+          if io.empty?
+            if part == "#{filename.anchor}"
+              part = "#{filename.drive}"[..0]
+            end
+          else
+            io << '-'
+          end
+          io << part
+        end
       end
       output_dir = File.join(dir, name)
       Dir.mkdir_p(output_dir)
@@ -81,7 +90,7 @@ module Crystal
         begin
           Dir.mkdir_p(candidate)
           return @dir = candidate
-        rescue Errno
+        rescue File::Error
           # Try next one
         end
       end
@@ -107,10 +116,10 @@ module Crystal
     private def cleanup_dirs(entries)
       entries
         .select { |dir| Dir.exists?(dir) }
-        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.epoch(0) }
+        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
         .reverse!
         .skip(10)
-        .each { |name| `rm -rf "#{name}"` rescue nil }
+        .each { |name| `rm -rf -- #{Process.quote(name)}` rescue nil }
     end
 
     private def gather_cache_entries(dir)

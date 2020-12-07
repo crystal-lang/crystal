@@ -61,22 +61,6 @@ describe "Semantic: primitives" do
     assert_type("1 + 2") { int32 }
   end
 
-  it "types sizeof" do
-    assert_type("sizeof(Float64)") { int32 }
-  end
-
-  it "types sizeof NoReturn (missing type) (#5717)" do
-    assert_type("x = nil; x ? sizeof(typeof(x)) : 1") { int32 }
-  end
-
-  it "types instance_sizeof" do
-    assert_type("instance_sizeof(Reference)") { int32 }
-  end
-
-  it "types instance_sizeof NoReturn (missing type) (#5717)" do
-    assert_type("x = nil; x ? instance_sizeof(typeof(x)) : 1") { int32 }
-  end
-
   it "errors when comparing void (#225)" do
     assert_error %(
       lib LibFoo
@@ -238,5 +222,18 @@ describe "Semantic: primitives" do
       end
       ),
       "method marked as Primitive must have an empty body"
+  end
+
+  pending_win32 "types va_arg primitive" do
+    assert_type(%(
+      struct VaList
+        @[Primitive(:va_arg)]
+        def next(type)
+        end
+      end
+
+      list = VaList.new
+      list.next(Int32)
+      )) { int32 }
   end
 end

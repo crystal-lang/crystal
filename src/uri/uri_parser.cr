@@ -10,11 +10,6 @@ class URI
     #   ports greater than 2^16-1 are not errors
     property uri : URI
 
-    # overridden in specs to test step transitions
-    macro step(method)
-      return {{method}}
-    end
-
     @input : UInt8*
 
     def initialize(input)
@@ -32,84 +27,84 @@ class URI
       self
     end
 
-    def parse_scheme_start
+    private def parse_scheme_start
       if alpha?
-        step parse_scheme
+        parse_scheme
       else
-        step parse_no_scheme
+        parse_no_scheme
       end
     end
 
-    def parse_scheme
+    private def parse_scheme
       start = @ptr
       loop do
         if alpha? || numeric? || c === '-' || c === '.' || c === '+'
           @ptr += 1
         elsif c === ':'
-          @uri.scheme = from_input(start)
+          @uri.scheme = from_input(start).downcase
           if @input[@ptr + 1] === '/'
             @ptr += 2
-            step parse_path_or_authority
+            return parse_path_or_authority
           else
-            # greatly deviates from spec as described, but is correct behavior
-            @uri.opaque = String.new(@input + @ptr + 1)
-            step nil
+            @ptr += 1
+            return parse_path
           end
         else
           @ptr = 0
-          step parse_no_scheme
+          return parse_no_scheme
         end
       end
     end
 
-    def parse_path_or_authority
+    private def parse_path_or_authority
       if c === '/'
-        step parse_authority
+        @uri.host = ""
+        parse_authority
       else
         @ptr -= 1
-        step parse_path
+        parse_path
       end
     end
 
-    def parse_no_scheme
+    private def parse_no_scheme
       case c
       when '#'
-        step parse_fragment
+        parse_fragment
       else
-        step parse_relative
+        parse_relative
       end
     end
 
-    def parse_authority
+    private def parse_authority
       @ptr += 1
       start = @ptr
       loop do
         if c === '@'
           @ptr = start
-          step parse_userinfo
+          return parse_userinfo
         elsif end_of_host?
           @ptr = start
-          step parse_host
+          return parse_host
         else
           @ptr += 1
         end
       end
     end
 
-    def parse_userinfo
+    private def parse_userinfo
       start = @ptr
       password_flag = false
       loop do
         if c === '@'
           if password_flag
-            @uri.password = URI.unescape(from_input(start))
+            @uri.password = URI.decode_www_form(from_input(start))
           else
-            @uri.user = URI.unescape(from_input(start))
+            @uri.user = URI.decode_www_form(from_input(start))
           end
           @ptr += 1
-          step parse_host
+          return parse_host
         elsif c === ':'
-          @uri.user = URI.unescape(from_input(start))
+          @uri.user = URI.decode_www_form(from_input(start))
           password_flag = true
           @ptr += 1
           start = @ptr
@@ -119,18 +114,18 @@ class URI
       end
     end
 
-    def parse_host
+    private def parse_host
       start = @ptr
       bracket_flag = false
-      step parse_path if c === '/'
+      return parse_path if c === '/'
       loop do
         if c === ':' && !bracket_flag
-          @uri.host = from_input(start)
+          @uri.host = URI.decode(from_input(start))
           @ptr += 1
-          step parse_port
+          return parse_port
         elsif end_of_host?
-          @uri.host = from_input(start)
-          step parse_path
+          @uri.host = URI.decode(from_input(start))
+          return parse_path
         else
           bracket_flag = true if c === '['
           bracket_flag = false if c === ']'
@@ -139,90 +134,93 @@ class URI
       end
     end
 
-    def parse_port
+    private def parse_port
       start = @ptr
       loop do
         if numeric?
           @ptr += 1
         elsif end_of_host?
-          @uri.port = (start...@ptr).reduce(0) do |memo, i|
-            (memo * 10) + (@input[i] - '0'.ord)
+          unless start == @ptr
+            @uri.port = (start...@ptr).reduce(0) do |memo, i|
+              (memo * 10) + (@input[i] - '0'.ord)
+            end
           end
-          step parse_path
+          return parse_path
         else
           raise URI::Error.new("Invalid URI: bad port at character #{@ptr}")
         end
       end
     end
 
-    def parse_relative
+    private def parse_relative
       case c
       when '\0'
-        step nil
+        nil
       when '/'
-        step parse_relative_slash
+        parse_relative_slash
       when '?'
-        step parse_query
+        parse_query
       when '#'
-        step parse_fragment
+        parse_fragment
       else
-        step parse_path
+        parse_path
       end
     end
 
-    def parse_relative_slash
+    private def parse_relative_slash
       if @input[@ptr + 1] === '/'
         @ptr += 1
-        step parse_authority
+        @uri.host ||= ""
+        parse_authority
       else
-        step parse_path
+        parse_path
       end
     end
 
-    def parse_path
+    private def parse_path
       start = @ptr
       loop do
         case c
         when '\0'
           @uri.path = from_input(start)
-          step nil
+          return nil
         when '?'
           @uri.path = from_input(start)
-          step parse_query
+          return parse_query
         when '#'
           @uri.path = from_input(start)
-          step parse_fragment
+          return parse_fragment
         else
           @ptr += 1
         end
       end
     end
 
-    def parse_query
+    private def parse_query
       @ptr += 1
       start = @ptr
       loop do
         case c
         when '\0'
           @uri.query = from_input(start)
-          step nil
+          return nil
         when '#'
           @uri.query = from_input(start)
-          step parse_fragment
+          return parse_fragment
         else
           @ptr += 1
         end
       end
     end
 
-    def parse_fragment
+    private def parse_fragment
       @ptr += 1
       start = @ptr
       loop do
         case c
         when '\0'
           @uri.fragment = from_input(start)
-          step nil
+          return nil
         else
           @ptr += 1
         end

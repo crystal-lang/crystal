@@ -29,7 +29,7 @@ describe "Code gen: class" do
 
       f = Foo.new(2)
       g = Foo.new(40)
-      f.coco + g.coco
+      f.coco &+ g.coco
       ").to_i.should eq(42)
   end
 
@@ -116,7 +116,7 @@ describe "Code gen: class" do
       ").to_i.should eq(1)
   end
 
-  it "codgens virtual method of generic class" do
+  it "codegens virtual method of generic class" do
     run("
       require \"char\"
 
@@ -136,7 +136,7 @@ describe "Code gen: class" do
         end
       end
 
-      Foo(Int32).new.foo.to_i
+      Foo(Int32).new.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -318,7 +318,7 @@ describe "Code gen: class" do
   it "runs with nilable instance var" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -336,14 +336,14 @@ describe "Code gen: class" do
       end
 
       bar = Bar.new
-      bar.x.to_i
+      bar.x.to_i!
       ").to_i.should eq(0)
   end
 
   it "runs with nil instance var when inheriting" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -366,7 +366,7 @@ describe "Code gen: class" do
       end
 
       bar = Bar.new
-      bar.x.to_i
+      bar.x.to_i!
       ").to_i.should eq(0)
   end
 
@@ -447,6 +447,8 @@ describe "Code gen: class" do
 
   it "allows using self in class scope" do
     run(%(
+      require "prelude"
+
       class Foo
         def self.foo
           1
@@ -504,15 +506,7 @@ describe "Code gen: class" do
 
   it "does to_s for virtual metaclass type (3)" do
     run(%(
-      class Class
-        def name : String
-          {{ @type.name.stringify }}
-        end
-
-        def to_s
-          name
-        end
-      end
+      require "prelude"
 
       class Foo; end
       class Bar < Foo; end
@@ -654,7 +648,7 @@ describe "Code gen: class" do
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
     codegen(%(
       class Klass
-        def f(arg)
+        def self.f(arg)
         end
 
         @a : Proc(String, Nil) = ->f(String)
@@ -721,6 +715,8 @@ describe "Code gen: class" do
 
   it "codegens singleton (#718)" do
     run(%(
+      require "prelude"
+
       class Singleton
         @@instance = new
 
@@ -1038,5 +1034,41 @@ describe "Code gen: class" do
       foo.foo = {Foo.new(2), Foo.new(3)}
       foo.x
       ), inject_primitives: false).to_i.should eq(1)
+  end
+
+  it "runs instance variable initializer at the class level" do
+    run(%(
+      class Foo
+        @x : Int32 = bar
+
+        def self.bar
+          42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )).to_i.should eq(42)
+  end
+
+  it "runs instance variable initializer at the class level, for generic type" do
+    run(%(
+      class Foo(T)
+        @x : T = bar
+
+        def self.bar
+          42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )).to_i.should eq(42)
   end
 end

@@ -1,4 +1,5 @@
 require "c/sys/file"
+require "file/error"
 
 # :nodoc:
 module Crystal::System::File
@@ -7,67 +8,23 @@ module Crystal::System::File
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
-      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+      raise ::File::Error.from_errno("Error opening file with mode '#{mode}'", file: filename)
     end
     fd
   end
 
-  private def self.open_flag(mode)
-    if mode.size == 0
-      raise "Invalid access mode #{mode}"
-    end
+  def self.mktemp(prefix, suffix, dir) : {LibC::Int, String}
+    dir = dir + ::File::SEPARATOR
+    path = "#{dir}#{prefix}.XXXXXX#{suffix}"
 
-    m = 0
-    o = 0
-    case mode[0]
-    when 'r'
-      m = LibC::O_RDONLY
-    when 'w'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_TRUNC
-    when 'a'
-      m = LibC::O_WRONLY
-      o = LibC::O_CREAT | LibC::O_APPEND
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    case mode.size
-    when 1
-      # Nothing
-    when 2
-      case mode[1]
-      when '+'
-        m = LibC::O_RDWR
-      when 'b'
-        # Nothing
-      else
-        raise "Invalid access mode #{mode}"
-      end
-    else
-      raise "Invalid access mode #{mode}"
-    end
-
-    oflag = m | o
-  end
-
-  def self.mktemp(name, extension)
-    tmpdir = tempdir + ::File::SEPARATOR
-    path = "#{tmpdir}#{name}.XXXXXX#{extension}"
-
-    if extension
-      fd = LibC.mkstemps(path, extension.bytesize)
+    if suffix
+      fd = LibC.mkstemps(path, suffix.bytesize)
     else
       fd = LibC.mkstemp(path)
     end
 
-    raise Errno.new("mkstemp") if fd == -1
+    raise ::File::Error.from_errno("Error creating temporary file", file: path) if fd == -1
     {fd, path}
-  end
-
-  def self.tempdir
-    tmpdir = ENV["TMPDIR"]? || "/tmp"
-    tmpdir.rchop(::File::SEPARATOR)
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
@@ -81,12 +38,16 @@ module Crystal::System::File
     if ret == 0
       FileInfo.new(stat)
     else
-      if {Errno::ENOENT, Errno::ENOTDIR}.includes? Errno.value
+      if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
         return nil
       else
-        raise Errno.new("Unable to get info for '#{path}'")
+        raise ::File::Error.from_errno("Unable to get file info", file: path)
       end
     end
+  end
+
+  def self.info(path, follow_symlinks)
+    info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
   end
 
   def self.exists?(path)
@@ -115,44 +76,64 @@ module Crystal::System::File
           else
             LibC.chown(path, uid, gid)
           end
-    raise Errno.new("Error changing owner of '#{path}'") if ret == -1
+    raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
   def self.chmod(path, mode)
     if LibC.chmod(path, mode) == -1
-      raise Errno.new("Error changing permissions of '#{path}'")
+      raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
 
   def self.delete(path)
     err = LibC.unlink(path.check_no_null_byte)
     if err == -1
-      raise Errno.new("Error deleting file '#{path}'")
+      raise ::File::Error.from_errno("Error deleting file", file: path)
     end
   end
 
   def self.real_path(path)
     real_path_ptr = LibC.realpath(path, nil)
-    raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
+    raise ::File::Error.from_errno("Error resolving real path", file: path) unless real_path_ptr
     String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
   end
 
   def self.link(old_path, new_path)
     ret = LibC.link(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
+    raise ::File::Error.from_errno("Error creating link", file: old_path, other: new_path) if ret != 0
     ret
   end
 
   def self.symlink(old_path, new_path)
     ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
-    raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
+    raise ::File::Error.from_errno("Error creating symlink", file: old_path, other: new_path) if ret != 0
     ret
+  end
+
+  def self.readlink(path) : String
+    buf = Bytes.new 256
+    # First pass at 256 bytes handles all normal occurrences in 1 system call.
+    # Second pass at 1024 bytes handles outliers?
+    # Third pass is the max or double what Linux/MacOS can store.
+    3.times do |iter|
+      bytesize = LibC.readlink(path, buf, buf.bytesize)
+      if bytesize == -1
+        raise ::File::Error.from_errno("Cannot read link", file: path)
+      elsif bytesize == buf.bytesize
+        break if iter >= 2
+        buf = Bytes.new(buf.bytesize * 4)
+      else
+        return String.new(buf.to_unsafe, bytesize)
+      end
+    end
+
+    raise ::File::Error.from_errno("Cannot read link", Errno::ENAMETOOLONG, file: path)
   end
 
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
+      raise ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
     end
   end
 
@@ -162,14 +143,14 @@ module Crystal::System::File
     timevals[1] = to_timeval(mtime)
     ret = LibC.utimes(filename, timevals)
     if ret != 0
-      raise Errno.new("Error setting time to file '#{filename}'")
+      raise ::File::Error.from_errno("Error setting time on file", file: filename)
     end
   end
 
   private def self.to_timeval(time : ::Time)
     t = uninitialized LibC::Timeval
-    t.tv_sec = typeof(t.tv_sec).new(time.to_local.epoch)
-    t.tv_usec = typeof(t.tv_usec).new(0)
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_usec = typeof(t.tv_usec).new(time.nanosecond // ::Time::NANOSECONDS_PER_MICROSECOND)
     t
   end
 
@@ -177,7 +158,7 @@ module Crystal::System::File
     flush
     code = LibC.ftruncate(fd, size)
     if code != 0
-      raise Errno.new("Error truncating file '#{path}'")
+      raise ::File::Error.from_errno("Error truncating file", file: path)
     end
   end
 
@@ -196,10 +177,27 @@ module Crystal::System::File
   private def flock(op : LibC::FlockOp, blocking : Bool = true)
     op |= LibC::FlockOp::NB unless blocking
 
-    if LibC.flock(@fd, op) != 0
-      raise Errno.new("flock")
+    if LibC.flock(fd, op) != 0
+      raise IO::Error.from_errno("Error applying or removing file lock")
     end
 
     nil
+  end
+
+  private def system_fsync(flush_metadata = true) : Nil
+    ret =
+      if flush_metadata
+        LibC.fsync(fd)
+      else
+        {% if flag?(:dragonfly) %}
+          LibC.fsync(fd)
+        {% else %}
+          LibC.fdatasync(fd)
+        {% end %}
+      end
+
+    if ret != 0
+      raise IO::Error.from_errno("Error syncing file")
+    end
   end
 end

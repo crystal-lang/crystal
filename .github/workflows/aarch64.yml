@@ -1,0 +1,107 @@
+name: AArch64 CI
+
+on: [push, pull_request]
+
+jobs:
+  musl-build:
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Build Crystal
+        uses: docker://jhass/crystal:0.35.0-alpine-build
+        with:
+          args: make crystal
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v1
+        with:
+          name: crystal-aarch64-musl
+          path: .build/crystal
+  musl-test-stdlib:
+    needs: musl-build
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v1
+        with:
+          name: crystal-aarch64-musl
+          path: .build/
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run stdlib specs
+        uses: docker://jhass/crystal:0.35.0-alpine-build
+        with:
+          args: make std_spec
+  musl-test-compiler:
+    needs: musl-build
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v1
+        with:
+          name: crystal-aarch64-musl
+          path: .build/
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run compiler specs
+        uses: docker://jhass/crystal:0.35.0-alpine-build
+        with:
+          args: make compiler_spec
+  gnu-build:
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Build Crystal
+        uses: docker://jhass/crystal:0.35.0-build
+        with:
+          args: make crystal
+      - name: Upload Crystal executable
+        uses: actions/upload-artifact@v1
+        with:
+          name: crystal-aarch64-gnu
+          path: .build/crystal
+  gnu-test-stdlib:
+    needs: gnu-build
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v1
+        with:
+          name: crystal-aarch64-gnu
+          path: .build/
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run stdlib specs
+        uses: docker://jhass/crystal:0.35.0-build
+        with:
+          args: make std_spec
+  gnu-test-compiler:
+    needs: gnu-build
+    runs-on: [linux, ARM64]
+    if: github.repository == 'crystal-lang/crystal'
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+      - name: Download Crystal executable
+        uses: actions/download-artifact@v1
+        with:
+          name: crystal-aarch64-gnu
+          path: .build/
+      - name: Mark downloaded compiler as executable
+        run: chmod +x .build/crystal
+      - name: Run compiler specs
+        uses: docker://jhass/crystal:0.35.0-build
+        with:
+          args: make compiler_spec

@@ -31,9 +31,9 @@ struct XML::NodeSet
   # See `Object#hash(hasher)`
   def_hash object_id
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 
@@ -45,7 +45,7 @@ struct XML::NodeSet
     @set.address
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     join '\n', io
   end
 

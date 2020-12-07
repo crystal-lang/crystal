@@ -74,6 +74,10 @@ describe "BitArray" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares other type" do
+      from_int(3, 0b101).should_not eq("other type")
+    end
   end
 
   describe "[]" do
@@ -104,6 +108,14 @@ describe "BitArray" do
     it "gets on range with start higher than negative end" do
       from_int(3, 0b011)[1..-1].should eq(from_int(2, 0b11))
       from_int(3, 0b011)[2..-2].should eq(BitArray.new(0))
+    end
+
+    it "gets on endless range" do
+      from_int(6, 0b011110)[2..nil].should eq(from_int(4, 0b1110))
+    end
+
+    it "gets on beginless range" do
+      from_int(6, 0b011110)[nil..2].should eq(from_int(3, 0b011))
     end
 
     it "raises on index out of bounds with range" do
@@ -295,7 +307,7 @@ describe "BitArray" do
     slice[1] = 0b01010101_u8
     slice[5] = 0b11111101_u8
     ary.each_with_index do |e, i|
-      e.should eq({1, 3, 5, 7, 8, 10, 12, 14, 40, 42}.includes?(i))
+      e.should eq(i.in?(1, 3, 5, 7, 8, 10, 12, 14, 40, 42))
     end
   end
 
@@ -308,12 +320,6 @@ describe "BitArray" do
     iter.next.should be_true
     iter.next.should be_false
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should be_true
-
-    iter.rewind
-    iter.cycle.first(3).to_a.should eq([true, false, true])
   end
 
   it "provides an index iterator" do
@@ -323,9 +329,6 @@ describe "BitArray" do
     iter.next.should eq(0)
     iter.next.should eq(1)
     iter.next.should be_a(Iterator::Stop)
-
-    iter.rewind
-    iter.next.should eq(0)
   end
 
   it "provides a reverse iterator" do
@@ -337,8 +340,14 @@ describe "BitArray" do
     iter.next.should be_false
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
+  end
 
-    iter.rewind
-    iter.next.should be_false
+  it "provides dup" do
+    a = BitArray.new(2)
+    b = a.dup
+
+    b[0] = true
+    a[0].should be_false
+    b[0].should be_true
   end
 end

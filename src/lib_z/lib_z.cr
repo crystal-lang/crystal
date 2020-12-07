@@ -66,19 +66,13 @@ lib LibZ
                                    window_bits : Int32, mem_level : Int32, strategy : Int32,
                                    version : UInt8*, stream_size : Int32) : Error
   fun deflate(stream : ZStream*, flush : Flush) : Error
-  fun deflateEnd(stream : ZStream*) : Int32
+  fun deflateEnd(stream : ZStream*) : Error
   fun deflateReset(stream : ZStream*) : Error
   fun deflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Int
 
   fun inflateInit2 = inflateInit2_(stream : ZStream*, window_bits : Int32, version : UInt8*, stream_size : Int32) : Error
   fun inflate(stream : ZStream*, flush : Flush) : Error
-  fun inflateEnd(stream : ZStream*) : Int32
-  fun inflateReset(stream : ZStream*) : Int32
-  fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Int
-
-  alias InFunc = Void*, UInt8** -> UInt
-  alias OutFunc = Void*, UInt8*, UInt -> Int
-
-  fun inflateBackInit = inflateBackInit_(stream : ZStream*, window_bits : Int, window : UInt8*, version : UInt8*, stream_size : Int) : Int
-  fun inflateBack(stream : ZStream*, in : InFunc, in_desc : Void*, out : OutFunc, out_desc : Void*) : Int
+  fun inflateEnd(stream : ZStream*) : Error
+  fun inflateSetDictionary(stream : ZStream*, dictionary : UInt8*, len : UInt) : Error
+  fun zError(error : Error) : UInt8*
 end

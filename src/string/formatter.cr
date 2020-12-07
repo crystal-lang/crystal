@@ -118,6 +118,8 @@ struct String::Formatter(A)
       val = consume_dynamic_value
       flags.width = val
       flags.width_size = val.to_s.size
+    else
+      # no width
     end
     flags
   end
@@ -172,6 +174,8 @@ struct String::Formatter(A)
 
   private def consume_type(flags, arg = nil, arg_specified = false)
     case char = current_char
+    when 'c'
+      char flags, arg, arg_specified
     when 's'
       string flags, arg, arg_specified
     when 'b'
@@ -197,6 +201,14 @@ struct String::Formatter(A)
     end
   end
 
+  def char(flags, arg, arg_specified)
+    arg = next_arg unless arg_specified
+
+    pad 1, flags if flags.left_padding?
+    @io << arg
+    pad 1, flags if flags.right_padding?
+  end
+
   def string(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
@@ -217,21 +229,28 @@ struct String::Formatter(A)
 
       if flags.left_padding?
         if flags.padding_char == '0'
-          @io << '+' if flags.plus
+          if flags.plus
+            if int >= 0
+              @io << '+'
+            else
+              @io << '-'
+              int = int.abs
+            end
+          end
           @io << ' ' if flags.space
         end
 
         pad_int int, flags
       end
 
-      if int > 0
+      if int >= 0
         unless flags.padding_char == '0'
           @io << '+' if flags.plus
           @io << ' ' if flags.space
         end
       end
 
-      int.to_s(flags.base, @io, upcase: flags.type == 'X')
+      int.to_s(@io, flags.base, upcase: flags.type == 'X')
 
       if flags.right_padding?
         pad_int int, flags
@@ -241,7 +260,7 @@ struct String::Formatter(A)
     end
   end
 
-  # We don't actually format the float ourselves, we delegate to sprintf
+  # We don't actually format the float ourselves, we delegate to snprintf
   def float(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
@@ -275,6 +294,7 @@ struct String::Formatter(A)
 
     io = IO::Memory.new(Bytes.new(format_buf, capacity))
     io << '%'
+    io << '#' if flags.sharp
     io << '+' if flags.plus
     io << '-' if flags.minus
     io << '0' if flags.zero
@@ -299,7 +319,7 @@ struct String::Formatter(A)
 
   def pad_int(int, flags)
     size = int.to_s(flags.base).bytesize
-    size += 1 if int > 0 && (flags.plus || flags.space)
+    size += 1 if int >= 0 && (flags.plus || flags.space)
     pad size, flags
   end
 
@@ -308,7 +328,7 @@ struct String::Formatter(A)
   end
 
   private def current_arg
-    @args.at(@arg_index) { raise ArgumentError.new("Too few arguments") }
+    @args.fetch(@arg_index) { raise ArgumentError.new("Too few arguments") }
   end
 
   def next_arg

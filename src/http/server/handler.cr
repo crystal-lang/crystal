@@ -1,10 +1,14 @@
+require "./context"
+
 # A handler is a class which includes `HTTP::Handler` and implements the `call` method.
 # You can use a handler to intercept any incoming request and can modify the response.
-# These can be used for request throttling, ip-based whitelisting, adding custom headers e.g.
+# These can be used for request throttling, ip-based filtering, adding custom headers e.g.
 #
 # ### A custom handler
 #
 # ```
+# require "http/server/handler"
+#
 # class CustomHandler
 #   include HTTP::Handler
 #
@@ -15,7 +19,7 @@
 # end
 # ```
 module HTTP::Handler
-  property next : Handler | Proc | Nil
+  property next : Handler | HandlerProc | Nil
 
   abstract def call(context : HTTP::Server::Context)
 
@@ -23,13 +27,11 @@ module HTTP::Handler
     if next_handler = @next
       next_handler.call(context)
     else
-      context.response.status_code = 404
-      context.response.headers["Content-Type"] = "text/plain"
-      context.response.puts "Not Found"
+      context.response.respond_with_status(:not_found)
     end
   end
 
-  alias Proc = HTTP::Server::Context ->
+  alias HandlerProc = HTTP::Server::Context ->
 end
 
 require "./handlers/*"

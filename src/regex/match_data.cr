@@ -54,7 +54,7 @@ class Regex
       group_size + 1
     end
 
-    # Return the position of the first character of the *n*th match.
+    # Returns the position of the first character of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -68,7 +68,7 @@ class Regex
       @string.byte_index_to_char_index byte_begin(n)
     end
 
-    # Return the position of the next character after the match.
+    # Returns the position of the next character after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -82,7 +82,7 @@ class Regex
       @string.byte_index_to_char_index byte_end(n)
     end
 
-    # Return the position of the first byte of the *n*th match.
+    # Returns the position of the first byte of the *n*th match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -98,7 +98,7 @@ class Regex
       @ovector[n * 2]
     end
 
-    # Return the position of the next byte after the match.
+    # Returns the position of the next byte after the match.
     #
     # When *n* is `0` or not given, uses the match of the entire `Regex`.
     # Otherwise, uses the match of the *n*th capture group.
@@ -325,11 +325,11 @@ class Regex
       hash
     end
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       to_s(io)
     end
 
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       name_table = @regex.name_table
 
       io << "Regex::MatchData("
@@ -375,6 +375,13 @@ class Regex
       return false unless string == other.string
 
       return @ovector.memcmp(other.@ovector, size * 2) == 0
+    end
+
+    # See `Object#hash(hasher)`
+    def hash(hasher)
+      hasher = regex.hash hasher
+      hasher = string.hash hasher
+      Slice.new(@ovector, size * 2).hash(hasher)
     end
 
     private def check_index_out_of_bounds(index)

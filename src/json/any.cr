@@ -2,12 +2,14 @@
 # and can be used for traversing dynamic or unknown JSON structures.
 #
 # ```
+# require "json"
+#
 # obj = JSON.parse(%({"access": [{"name": "mapping", "speed": "fast"}, {"name": "any", "speed": "slow"}]}))
 # obj["access"][1]["name"].as_s  # => "any"
 # obj["access"][1]["speed"].as_s # => "slow"
 # ```
 #
-# Note that methods used to traverse a JSON structure, `#[]`, `#[]?` and `#each`,
+# Note that methods used to traverse a JSON structure, `#[]` and `#[]?`,
 # always return a `JSON::Any` to allow further traversal. To convert them to `String`,
 # `Int32`, etc., use the `as_` methods, such as `#as_s`, `#as_i`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
@@ -20,23 +22,23 @@ struct JSON::Any
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when :null
+    when .null?
       new pull.read_null
-    when :bool
+    when .bool?
       new pull.read_bool
-    when :int
+    when .int?
       new pull.read_int
-    when :float
+    when .float?
       new pull.read_float
-    when :string
+    when .string?
       new pull.read_string
-    when :begin_array
+    when .begin_array?
       ary = [] of JSON::Any
       pull.read_array do
         ary << new(pull)
       end
       new ary
-    when :begin_object
+    when .begin_object?
       hash = {} of String => JSON::Any
       pull.read_object do |key|
         hash[key] = new(pull)
@@ -115,6 +117,32 @@ struct JSON::Any
     end
   end
 
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+    self[index_or_key]?.try &.dig?(*subkeys)
+  end
+
+  # :nodoc:
+  def dig?(index_or_key : String | Int) : JSON::Any?
+    case @raw
+    when Hash, Array
+      self[index_or_key]?
+    else
+      nil
+    end
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise raises.
+  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+    self[index_or_key].dig(*subkeys)
+  end
+
+  # :nodoc:
+  def dig(index_or_key : String | Int) : JSON::Any
+    self[index_or_key]
+  end
+
   # Checks that the underlying value is `Nil`, and returns `nil`.
   # Raises otherwise.
   def as_nil : Nil
@@ -160,13 +188,13 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Raises otherwise.
   def as_f : Float64
-    @raw.as(Float).to_f
+    @raw.as(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`.
   # Returns `nil` otherwise.
   def as_f? : Float64?
-    as_f if @raw.is_a?(Float64)
+    @raw.as?(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
@@ -178,7 +206,7 @@ struct JSON::Any
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`.
   # Returns `nil` otherwise.
   def as_f32? : Float32?
-    as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
+    as_f32 if @raw.is_a?(Float)
   end
 
   # Checks that the underlying value is `String`, and returns its value.
@@ -218,12 +246,12 @@ struct JSON::Any
   end
 
   # :nodoc:
-  def inspect(io)
+  def inspect(io : IO) : Nil
     @raw.inspect(io)
   end
 
   # :nodoc:
-  def to_s(io)
+  def to_s(io : IO) : Nil
     @raw.to_s(io)
   end
 
@@ -248,6 +276,20 @@ struct JSON::Any
   # :nodoc:
   def to_json(json : JSON::Builder)
     raw.to_json(json)
+  end
+
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    raw.to_yaml(yaml)
+  end
+
+  # Returns a new JSON::Any instance with the `raw` value `dup`ed.
+  def dup
+    Any.new(raw.dup)
+  end
+
+  # Returns a new JSON::Any instance with the `raw` value `clone`ed.
+  def clone
+    Any.new(raw.clone)
   end
 end
 

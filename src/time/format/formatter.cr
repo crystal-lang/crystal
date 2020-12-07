@@ -20,11 +20,19 @@ struct Time::Format
     end
 
     def year_divided_by_100
-      io << time.year / 100
+      io << time.year // 100
     end
 
     def full_or_short_year
       year
+    end
+
+    def calendar_week_year
+      pad4(time.calendar_week[0], '0')
+    end
+
+    def calendar_week_year_modulo100
+      pad2(time.calendar_week[0] % 100, '0')
     end
 
     def month
@@ -53,6 +61,10 @@ struct Time::Format
 
     def short_month_name_upcase
       io << get_short_month_name.upcase
+    end
+
+    def calendar_week_week
+      pad2(time.calendar_week[1], '0')
     end
 
     def day_of_month
@@ -124,7 +136,7 @@ struct Time::Format
     end
 
     def microseconds
-      pad6 time.nanosecond / 1000, '0'
+      pad6 time.nanosecond // 1000, '0'
     end
 
     def nanoseconds
@@ -135,10 +147,14 @@ struct Time::Format
       nanoseconds
     end
 
-    def second_fraction?(fraction_digits = nil)
-      unless time.nanosecond == 0 || fraction_digits == 0
-        char '.'
-        second_fraction
+    def second_fraction?(fraction_digits : Int = 9)
+      case fraction_digits
+      when 0
+      when 3 then char '.'; milliseconds
+      when 6 then char '.'; microseconds
+      when 9 then char '.'; nanoseconds
+      else
+        raise ArgumentError.new("Invalid fraction digits: #{fraction_digits}")
       end
     end
 
@@ -151,21 +167,19 @@ struct Time::Format
     end
 
     def day_of_week_monday_1_7
-      v = time.day_of_week.value
-      v = 7 if v == 0
-      io << v
-    end
-
-    def day_of_week_sunday_0_6
       io << time.day_of_week.value
     end
 
-    def epoch
-      io << time.epoch
+    def day_of_week_sunday_0_6
+      io << time.day_of_week.value % 7
+    end
+
+    def unix_seconds
+      io << time.to_unix
     end
 
     def time_zone(with_seconds = false)
-      time_zone_offset(allow_seconds: with_seconds)
+      time_zone_offset(format_seconds: with_seconds)
     end
 
     def time_zone_z_or_offset(**options)
@@ -176,12 +190,12 @@ struct Time::Format
       end
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
-      time.zone.format(io, with_colon: force_colon, with_seconds: allow_seconds)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true)
+      time.zone.format(io, with_colon: force_colon, with_seconds: format_seconds)
     end
 
     def time_zone_colon(with_seconds = false)
-      time_zone_offset(force_colon: true, allow_seconds: with_seconds)
+      time_zone_offset(force_colon: true, format_seconds: with_seconds)
     end
 
     def time_zone_colon_with_seconds
@@ -193,7 +207,7 @@ struct Time::Format
     end
 
     def time_zone_rfc2822
-      time_zone_offset(allow_colon: false, allow_seconds: false)
+      time_zone_offset(allow_colon: false)
     end
 
     def time_zone_gmt_or_rfc2822(**options)
@@ -225,7 +239,7 @@ struct Time::Format
     end
 
     def get_day_name
-      DAY_NAMES[time.day_of_week.value]
+      DAY_NAMES[time.day_of_week.value % 7]
     end
 
     def get_short_day_name

@@ -18,13 +18,15 @@ class Socket
     #   because different servers may handle the `mail` or `http` services for
     #   example.
     # - *family* is optional and defaults to `Family::UNSPEC`
-    # - *type* is the intented socket type (e.g. `Type::STREAM`) and must be
+    # - *type* is the intended socket type (e.g. `Type::STREAM`) and must be
     #   specified.
-    # - *protocol* is the intented socket protocol (e.g. `Protocol::TCP`) and
+    # - *protocol* is the intended socket protocol (e.g. `Protocol::TCP`) and
     #   should be specified.
     #
     # Example:
     # ```
+    # require "socket"
+    #
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
@@ -67,13 +69,25 @@ class Socket
           end
 
           unless addrinfo = addrinfo.try(&.next?)
-            if error.is_a?(Errno) && error.errno == Errno::ECONNREFUSED
-              raise Errno.new("Error connecting to '#{domain}:#{service}'", error.errno)
+            if error.is_a?(Socket::ConnectError)
+              raise Socket::ConnectError.from_errno("Error connecting to '#{domain}:#{service}'")
             else
               raise error if error
             end
           end
         end
+      end
+    end
+
+    class Error < Socket::Error
+      getter error_code : Int32
+
+      def self.new(error_code, domain)
+        new error_code, String.new(LibC.gai_strerror(error_code)), domain
+      end
+
+      def initialize(@error_code, message, domain)
+        super("Hostname lookup for #{domain} failed: #{message}")
       end
     end
 
@@ -107,9 +121,13 @@ class Socket
       when 0
         # success
       when LibC::EAI_NONAME
-        raise Socket::Error.new("No address found for #{domain}:#{service} over #{protocol}")
+        raise Error.new(ret, "No address found", domain)
+      when LibC::EAI_SOCKTYPE
+        raise Error.new(ret, "The requested socket type #{type} protocol #{protocol} is not supported", domain)
+      when LibC::EAI_SERVICE
+        raise Error.new(ret, "The requested service #{service} is not available for the requested socket type #{type}", domain)
       else
-        raise Socket::Error.new("getaddrinfo: #{String.new(LibC.gai_strerror(ret))}")
+        raise Error.new(ret, domain)
       end
 
       begin
@@ -119,11 +137,13 @@ class Socket
       end
     end
 
-    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # Resolves *domain* for the TCP protocol and returns an `Array` of possible
     # `Addrinfo`. See `#resolve` for details.
     #
     # Example:
     # ```
+    # require "socket"
+    #
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
     def self.tcp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
@@ -141,7 +161,9 @@ class Socket
     #
     # Example:
     # ```
-    # addrinfos = Socket::Addrinfo.tcp("example.org", 53)
+    # require "socket"
+    #
+    # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
     def self.udp(domain, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP)
@@ -167,6 +189,8 @@ class Socket
         addrinfo.value.ai_addr.as(LibC::SockaddrIn6*).copy_to(pointerof(@addr).as(LibC::SockaddrIn6*), 1)
       when Family::INET
         addrinfo.value.ai_addr.as(LibC::SockaddrIn*).copy_to(pointerof(@addr).as(LibC::SockaddrIn*), 1)
+      else
+        # TODO: (asterite) UNSPEC and UNIX unsupported?
       end
     end
 

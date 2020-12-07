@@ -45,7 +45,7 @@
 struct Struct
   # Returns `true` if this struct is equal to *other*.
   #
-  # Both structs's instance vars are compared to each other. Thus, two
+  # Both structs' instance vars are compared to each other. Thus, two
   # structs are considered equal if each of their instance variables are
   # equal. Subclasses should override this method to provide specific
   # equality semantics.
@@ -106,7 +106,6 @@ struct Struct
       @{{ivar.id}}.inspect(io)
     {% end %}
     io << ')'
-    nil
   end
 
   def pretty_print(pp) : Nil
@@ -132,7 +131,7 @@ struct Struct
   end
 
   # Same as `#inspect(io)`.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 end

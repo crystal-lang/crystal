@@ -1,5 +1,6 @@
 require "../abi"
 
+# Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     arg_tys = Array(LLVM::Type).new(atys.size)
@@ -53,7 +54,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   end
 
   def classify(type)
-    words = (size(type) + 7) / 8
+    words = (size(type) + 7) // 8
     reg_classes = Array.new(words, RegClass::NoClass)
     if words > 4
       all_mem(reg_classes)
@@ -70,8 +71,8 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     misalign = off % t_align
     if misalign != 0
-      i = off / 8
-      e = (off + t_size + 7) / 8
+      i = off // 8
+      e = (off + t_size + 7) // 8
       while i < e
         unify(cls, ix + 1, RegClass::Memory)
         i += 1
@@ -81,11 +82,11 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
     case ty.kind
     when Type::Kind::Integer, Type::Kind::Pointer
-      unify(cls, ix + off / 8, RegClass::Int)
+      unify(cls, ix + off // 8, RegClass::Int)
     when Type::Kind::Float
-      unify(cls, ix + off / 8, (off % 8 == 4) ? RegClass::SSEFv : RegClass::SSEFs)
+      unify(cls, ix + off // 8, (off % 8 == 4) ? RegClass::SSEFv : RegClass::SSEFs)
     when Type::Kind::Double
-      unify(cls, ix + off / 8, RegClass::SSEDs)
+      unify(cls, ix + off // 8, RegClass::SSEDs)
     when Type::Kind::Struct
       classify_struct(ty.struct_element_types, cls, ix, off, ty.packed_struct?)
     when Type::Kind::Array
@@ -225,7 +226,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def align(type : Type)
     case type.kind
     when Type::Kind::Integer
-      (type.int_width + 7) / 8
+      (type.int_width + 7) // 8
     when Type::Kind::Float
       4
     when Type::Kind::Double
@@ -250,7 +251,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def size(type : Type)
     case type.kind
     when Type::Kind::Integer
-      (type.int_width + 7) / 8
+      (type.int_width + 7) // 8
     when Type::Kind::Float
       4
     when Type::Kind::Double
@@ -277,7 +278,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
 
   def align(offset, type)
     align = align(type)
-    (offset + align - 1) / align * align
+    (offset + align - 1) // align * align
   end
 
   enum RegClass

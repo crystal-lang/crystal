@@ -44,4 +44,18 @@ describe OpenSSL::Cipher do
     s3.to_s.should eq(data)
     s3.to_slice.should eq(s4.to_slice)
   end
+
+  it "authenticated?" do
+    begin
+      cipher = OpenSSL::Cipher.new("aes-128-gcm")
+      cipher.authenticated?.should eq(true)
+    rescue ArgumentError
+      # This system doesn't support GCM ciphers
+      # Silently skip, as this method will never return true
+      # Remove when macOS platforms target >= v10.13
+    end
+
+    cipher = OpenSSL::Cipher.new("aes-128-cbc")
+    cipher.authenticated?.should eq(false)
+  end
 end

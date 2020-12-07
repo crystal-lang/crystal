@@ -15,10 +15,10 @@ module Spec
   # :nodoc:
   def self.relative_file(file)
     cwd = Dir.current
-    if file.starts_with?(cwd)
-      file = file[cwd.size..-1]
-      file = file[1..-1] if file.starts_with?('/')
+    if basename = file.lchop? cwd
+      basename.lchop '/'
+    else
+      file
     end
-    file
   end
 end

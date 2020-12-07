@@ -178,7 +178,7 @@ describe "Semantic: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { union_of types["Bar"], types["Baz"] }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and subclass as one type" do
@@ -516,7 +516,7 @@ describe "Semantic: class" do
       foo = Foo.new
       foo.@y
       ),
-      "Can't infer the type of instance variable '@y' of Foo"
+      "can't infer the type of instance variable '@y' of Foo"
   end
 
   it "errors if reading ivar from non-ivar container" do
@@ -603,7 +603,7 @@ describe "Semantic: class" do
 
       Bar.new(Foo.new).foo
       ",
-      "Can't infer the type of instance variable '@x' of Foo"
+      "can't infer the type of instance variable '@x' of Foo"
   end
 
   it "doesn't mark instance variable as nilable if calling another initialize" do
@@ -716,7 +716,7 @@ describe "Semantic: class" do
       )) { int32 }
   end
 
-  it "cant't use implicit initialize if defined in parent" do
+  it "can't use implicit initialize if defined in parent" do
     assert_error %(
       class Foo
         def initialize(x)
@@ -854,7 +854,7 @@ describe "Semantic: class" do
   it "doesn't crash on instance variable assigned a proc, and never instantiated (#923)" do
     assert_type(%(
       class Klass
-        def f(arg)
+        def self.f(arg)
         end
 
         @a  : Proc(String, Nil) = ->f(String)
@@ -961,7 +961,7 @@ describe "Semantic: class" do
       f = Foo.new
       f.@foo
       ),
-      "Can't infer the type of instance variable '@foo' of Foo"
+      "can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "doesn't crash with top-level initialize (#2601)" do
@@ -1059,7 +1059,7 @@ describe "Semantic: class" do
 
       Foo.bar
       ),
-      "undefined method 'bar' for Foo:Class"
+      "undefined method 'bar' for Foo.class"
   end
 
   it "inherits self twice (#5495)" do
@@ -1074,5 +1074,83 @@ describe "Semantic: class" do
 
       { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
     )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
+  end
+
+  it "errors if reading instance var of union type (#7187)" do
+    assert_error %(
+      class Foo
+        @x = 1
+      end
+
+      class Bar
+        @x = 1
+      end
+
+      z = Foo.new || Bar.new
+      z.@x
+      ),
+      "can't read instance variables of union types (@x of (Bar | Foo))"
+  end
+
+  it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo
+        abstract def foo?
+      end
+
+      abstract class Bar < Foo
+      end
+
+      Pointer(Foo).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on abstract class with generic subclasses but no instances (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo
+        abstract def foo?
+      end
+
+      class Bar(T) < Foo
+        def foo?
+          true
+        end
+      end
+
+      Pointer(Foo).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on abstract generic class (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+        abstract def foo?
+      end
+
+      Pointer(Foo(Int32)).malloc(1_u64).value.foo?
+      )) { no_return }
+  end
+
+  it "types as no return if calling method on generic class with subclasses (#6996)" do
+    assert_type(%(
+      require "prelude"
+
+      abstract class Foo(T)
+        abstract def foo?
+      end
+
+      abstract class Bar(T) < Foo(T)
+      end
+
+      Bar(Int32)
+
+      Pointer(Foo(Int32)).malloc(1_u64).value.foo?
+      )) { no_return }
   end
 end

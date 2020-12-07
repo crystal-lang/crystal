@@ -1,17 +1,19 @@
 require "./printer/*"
 
-# Float::Printer is based on Grisu3 algorithm described in the 2004 paper
+# :nodoc:
+#
+# `Float::Printer` is based on Grisu3 algorithm described in the 2004 paper
 # "Printing Floating-Point Numbers Quickly and Accurately with Integers" by
 # Florian Loitsch.
 module Float::Printer
   extend self
   BUFFER_SIZE = 128
 
-  # Converts Float *v* to a string representation and prints it onto *io*
+  # Converts `Float` *v* to a string representation and prints it onto *io*.
   #
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
-  def print(v : Float64 | Float32, io : IO)
+  def print(v : Float64 | Float32, io : IO) : Nil
     d = IEEE.to_uint(v)
 
     if IEEE.sign(d) < 0
@@ -42,7 +44,7 @@ module Float::Printer
       if v.class == Float64
         LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%.17g", v)
       else
-        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v)
+        LibC.snprintf(buffer.to_unsafe, BUFFER_SIZE, "%g", v.to_f64)
       end
       len = LibC.strlen(buffer)
       io.write_utf8 buffer.to_slice[0, len]

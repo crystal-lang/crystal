@@ -4,10 +4,6 @@ lib LibCrystalMain
 end
 
 module Crystal
-  @@stdin_is_blocking = false
-  @@stdout_is_blocking = false
-  @@stderr_is_blocking = false
-
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes the GC
@@ -38,8 +34,6 @@ module Crystal
   def self.main(&block)
     GC.init
 
-    remember_blocking_state
-
     status =
       begin
         yield
@@ -48,14 +42,18 @@ module Crystal
         1
       end
 
-    AtExitHandlers.exception = ex if ex
+    status = Crystal::AtExitHandlers.run status, ex
+    ignore_stdio_errors { STDOUT.flush }
+    ignore_stdio_errors { STDERR.flush }
 
-    status = AtExitHandlers.run status
-    STDOUT.flush
-    STDERR.flush
-    restore_blocking_state
-
+    raise ex if ex
     status
+  end
+
+  # :nodoc:
+  def self.ignore_stdio_errors
+    yield
+  rescue IO::Error
   end
 
   # Main method run by all Crystal programs at startup.
@@ -81,7 +79,7 @@ module Crystal
   #
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
-  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main)
+  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main(Int32, UInt8**))
   # end
   # ```
   #
@@ -92,6 +90,9 @@ module Crystal
     main do
       main_user_code(argc, argv)
     end
+  rescue ex
+    Crystal::System.print_exception "Unhandled exception", ex
+    1
   end
 
   # Executes the main user code. This normally is executed
@@ -102,26 +103,6 @@ module Crystal
   # more details.
   def self.main_user_code(argc : Int32, argv : UInt8**)
     LibCrystalMain.__crystal_main(argc, argv)
-  end
-
-  # :nodoc:
-  def self.remember_blocking_state
-    {% if flag?(:win32) %}
-      @@stdin_is_blocking = true
-      @@stdout_is_blocking = true
-      @@stderr_is_blocking = true
-    {% else %}
-      @@stdin_is_blocking = IO::FileDescriptor.fcntl(0, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-      @@stdout_is_blocking = IO::FileDescriptor.fcntl(1, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-      @@stderr_is_blocking = IO::FileDescriptor.fcntl(2, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
-    {% end %}
-  end
-
-  # :nodoc:
-  def self.restore_blocking_state
-    STDIN.blocking = @@stdin_is_blocking
-    STDOUT.blocking = @@stdout_is_blocking
-    STDERR.blocking = @@stderr_is_blocking
   end
 end
 

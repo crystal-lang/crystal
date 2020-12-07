@@ -1,11 +1,4 @@
-# A `BigDecimal` represents arbitrary precision decimals.
-#
-# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
-# Value contains the actual value, and scale tells the decimal point place.
-# e.g. value=1234, scale=2 => 12.34
-#
-# The general idea and some of the arithmetic algorithms were adapted from
-# the MIT/APACHE -licensed https://github.com/akubera/bigdecimal-rs
+require "big"
 
 class InvalidBigDecimalException < Exception
   def initialize(big_decimal_str : String, reason : String)
@@ -13,6 +6,14 @@ class InvalidBigDecimalException < Exception
   end
 end
 
+# A `BigDecimal` can represent arbitrarily large precision decimals.
+#
+# It is internally represented by a pair of `BigInt` and `UInt64`: value and scale.
+# Value contains the actual value, and scale tells the decimal point place.
+# E.g. when value is `1234` and scale `2`, the result is `12.34`.
+#
+# The general idea and some of the arithmetic algorithms were adapted from
+# the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
   ZERO                       = BigInt.new(0)
   TEN                        = BigInt.new(10)
@@ -35,6 +36,9 @@ struct BigDecimal < Number
   end
 
   # Creates a new `BigDecimal` from `BigRational`.
+  #
+  # NOTE: BigRational are fundamentally more precise than BigDecimals,
+  # which makes initialization from them risky.
   def self.new(num : BigRational)
     num.numerator.to_big_d / num.denominator.to_big_d
   end
@@ -61,6 +65,8 @@ struct BigDecimal < Number
   def initialize(str : String)
     # Strip leading '+' char to smooth out cases with strings like "+123"
     str = str.lchop('+')
+    # Strip '_' to make it compatible with int literals like "1_000_000"
+    str = str.delete('_')
 
     raise InvalidBigDecimalException.new(str, "Zero size") if str.bytesize == 0
 
@@ -187,19 +193,19 @@ struct BigDecimal < Number
     div other
   end
 
-  def /(other : Int)
-    self / BigDecimal.new(other)
-  end
+  Number.expand_div [BigInt, BigFloat], BigDecimal
+  Number.expand_div [BigRational], BigRational
 
   # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
   # ```
-  # BigDecimal(1).div(BigDecimal(2))    # => BigDecimal(@value=5, @scale=2)
-  # BigDecimal(1).div(BigDecimal(3), 5) # => BigDecimal(@value=33333, @scale=5)
+  # BigDecimal.new(1).div(BigDecimal.new(2))    # => BigDecimal(@value=5, @scale=2)
+  # BigDecimal.new(1).div(BigDecimal.new(3), 5) # => BigDecimal(@value=33333, @scale=5)
   # ```
   def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
     check_division_by_zero other
+    other.factor_powers_of_ten
 
     scale = @scale - other.scale
     numerator, denominator = @value, other.@value
@@ -251,13 +257,16 @@ struct BigDecimal < Number
   # Scales a `BigDecimal` to another `BigDecimal`, so they can be
   # computed easier.
   def scale_to(new_scale : BigDecimal) : BigDecimal
-    new_scale = new_scale.scale
+    in_scale(new_scale.scale)
+  end
 
+  # :nodoc:
+  def in_scale(new_scale : UInt64) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
     elsif @scale > new_scale
       scale_diff = @scale - new_scale.to_big_i
-      BigDecimal.new(@value / power_ten_to(scale_diff), new_scale)
+      BigDecimal.new(@value // power_ten_to(scale_diff), new_scale)
     elsif @scale < new_scale
       scale_diff = new_scale - @scale.to_big_i
       BigDecimal.new(@value * power_ten_to(scale_diff), new_scale)
@@ -266,7 +275,36 @@ struct BigDecimal < Number
     end
   end
 
-  def to_s(io : IO)
+  # Raises the decimal to the *other*th power
+  #
+  # ```
+  # require "big"
+  #
+  # BigDecimal.new(1234, 2) ** 2 # => 152.2756
+  # ```
+  def **(other : Int) : BigDecimal
+    if other < 0
+      raise ArgumentError.new("Negative exponent isn't supported")
+    end
+    BigDecimal.new(@value ** other, @scale * other)
+  end
+
+  def ceil : BigDecimal
+    mask = power_ten_to(@scale)
+    diff = (mask - @value % mask) % mask
+    value = self + BigDecimal.new(diff, @scale)
+    value.in_scale(0)
+  end
+
+  def floor : BigDecimal
+    in_scale(0)
+  end
+
+  def trunc : BigDecimal
+    self < 0 ? ceil : floor
+  end
+
+  def to_s(io : IO) : Nil
     factor_powers_of_ten
 
     s = @value.to_s
@@ -287,98 +325,199 @@ struct BigDecimal < Number
         io << '0'
       end
       io << s[1..-1]
+    elsif (offset = s.size - @scale) == 1 && @value < 0
+      io << "-0." << s[offset..-1]
     else
-      offset = s.size - @scale
       io << s[0...offset] << '.' << s[offset..-1]
     end
   end
 
-  def inspect(io)
-    to_s(io)
-    io << "_big_d"
+  # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
+  def to_big_i
+    trunc.value
+  end
+
+  # Converts to `BigFloat`.
+  def to_big_f
+    BigFloat.new(to_s)
   end
 
   def to_big_d
     self
   end
 
+  def to_big_r
+    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+  end
+
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i64
-    if @value >= 0
-      (@value / TEN ** @scale).to_i64
-    else
-      -(@value.abs / TEN ** @scale).to_i64
-    end
+    to_big_i.to_i64
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i32
-    to_i64.to_i32
+    to_big_i.to_i32
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i16
-    to_i64.to_i16
+    to_big_i.to_i16
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i8
-    to_i64.to_i8
+    to_big_i.to_i8
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_i
     to_i32
   end
 
-  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `Int8`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
+  def to_i8!
+    to_big_i.to_i8!
+  end
+
+  # Converts to `Int16`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
+  def to_i16!
+    to_big_i.to_i16!
+  end
+
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
+  def to_i32!
+    to_big_i.to_i32!
+  end
+
+  # Converts to `Int64`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
+  def to_i64!
+    to_big_i.to_i64!
+  end
+
+  # Converts to `Int32`. Truncates anything on the right side of the decimal point.
+  # In case of overflow a wrapping is performed.
+  def to_i!
+    to_i32!
+  end
+
+  private def to_big_u
+    raise OverflowError.new if self < 0
+    to_big_u!
+  end
+
+  private def to_big_u!
+    (@value.abs // TEN ** @scale)
+  end
+
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_u64
-    (@value.abs / TEN ** @scale).to_u64
+    to_big_u.to_u64
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_u32
-    to_u64.to_u32
+    to_big_u.to_u32
   end
 
-  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_u16
-    to_u64.to_u16
+    to_big_u.to_u16
   end
 
-  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_u8
-    to_u64.to_u8
+    to_big_u.to_u8
   end
 
-  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
-  # converting negative to positive.
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
+  # Raises `OverflowError` in case of overflow.
   def to_u
     to_u32
   end
 
+  # Converts to `UInt8`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  # In case of overflow a wrapping is performed.
+  def to_u8!
+    to_big_u!.to_u8!
+  end
+
+  # Converts to `UInt16`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  # In case of overflow a wrapping is performed.
+  def to_u16!
+    to_big_u!.to_u16!
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  # In case of overflow a wrapping is performed.
+  def to_u32!
+    to_big_u!.to_u32!
+  end
+
+  # Converts to `UInt64`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  # In case of overflow a wrapping is performed.
+  def to_u64!
+    to_big_u!.to_u64!
+  end
+
+  # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
+  # converting negative to positive.
+  # In case of overflow a wrapping is performed.
+  def to_u!
+    to_u32!
+  end
+
   # Converts to `Float64`.
+  # Raises `OverflowError` in case of overflow.
   def to_f64
     to_s.to_f64
   end
 
   # Converts to `Float32`.
+  # Raises `OverflowError` in case of overflow.
   def to_f32
     to_f64.to_f32
   end
 
   # Converts to `Float64`.
+  # Raises `OverflowError` in case of overflow.
   def to_f
     to_f64
   end
 
-  # Converts to `BigFloat`.
-  def to_big_f
-    BigFloat.new(to_s)
+  # Converts to `Float32`.
+  # In case of overflow a wrapping is performed.
+  def to_f32!
+    to_f64.to_f32!
+  end
+
+  # Converts to `Float64`.
+  # In case of overflow a wrapping is performed.
+  def to_f64!
+    to_f64
+  end
+
+  # Converts to `Float64`.
+  # In case of overflow a wrapping is performed.
+  def to_f!
+    to_f64!
   end
 
   def clone
@@ -409,7 +548,7 @@ struct BigDecimal < Number
 
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
-  private def factor_powers_of_ten
+  protected def factor_powers_of_ten
     while @scale > 0
       quotient, remainder = value.divmod(TEN)
       break if remainder != 0
@@ -424,6 +563,10 @@ struct Int
   include Comparable(BigDecimal)
 
   # Converts `self` to `BigDecimal`.
+  # ```
+  # require "big"
+  # 12123415151254124124.to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end
@@ -443,10 +586,6 @@ struct Int
   def *(other : BigDecimal)
     other * self
   end
-
-  def /(other : BigDecimal)
-    to_big_d / other
-  end
 end
 
 struct Float
@@ -460,6 +599,10 @@ struct Float
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes conversion to them risky.
+  # ```
+  # require "big"
+  # 1212341515125412412412421.0.to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end
@@ -480,6 +623,10 @@ end
 
 class String
   # Converts `self` to `BigDecimal`.
+  # ```
+  # require "big"
+  # "1212341515125412412412421".to_big_d
+  # ```
   def to_big_d
     BigDecimal.new(self)
   end

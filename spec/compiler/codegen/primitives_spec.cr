@@ -55,15 +55,27 @@ describe "Code gen: primitives" do
   end
 
   it "codegens 1 + 2" do
-    run(%(1 + 2)).to_i.should eq(3)
+    run(%(require "prelude"; 1 + 2)).to_i.should eq(3)
   end
 
-  it "codegens 1 + 2" do
-    run(%(1 - 2)).to_i.should eq(-1)
+  it "codegens 1 &+ 2" do
+    run(%(1 &+ 2)).to_i.should eq(3)
+  end
+
+  it "codegens 1 - 2" do
+    run(%(require "prelude"; 1 - 2)).to_i.should eq(-1)
+  end
+
+  it "codegens 1 &- 2" do
+    run(%(1 &- 2)).to_i.should eq(-1)
   end
 
   it "codegens 2 * 3" do
-    run(%(2 * 3)).to_i.should eq(6)
+    run(%(require "prelude"; 2 * 3)).to_i.should eq(6)
+  end
+
+  it "codegens 2 &* 3" do
+    run(%(2 &* 3)).to_i.should eq(6)
   end
 
   it "codegens 8.unsafe_div 3" do
@@ -86,12 +98,12 @@ describe "Code gen: primitives" do
     run("
       struct Int64
         def foo
-          to_u64
+          to_u64!
         end
       end
 
       a = 1_i64
-      a.foo.to_i
+      a.foo.to_i!
       ").to_i.should eq(1)
   end
 
@@ -102,7 +114,7 @@ describe "Code gen: primitives" do
       ", inject_primitives: false).to_i.should eq(3)
   end
 
-  it "codeges crystal_type_id with union type" do
+  it "codegens crystal_type_id with union type" do
     run("
       class Foo
       end
@@ -155,7 +167,7 @@ describe "Code gen: primitives" do
         fun foo : K
       end
 
-      Test.foo.to_i
+      Test.foo.to_i!
       ))
   end
 
@@ -166,7 +178,7 @@ describe "Code gen: primitives" do
         fun foo : K
       end
 
-      Test.foo + 1
+      Test.foo &+ 1
       ))
   end
 
@@ -209,10 +221,10 @@ describe "Code gen: primitives" do
   it "uses built-in llvm function that returns a tuple" do
     run(%(
       lib Intrinsics
-        fun sadd_i32_with_overlow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
+        fun sadd_i32_with_overflow = "llvm.sadd.with.overflow.i32"(a : Int32, b : Int32) : {Int32, Bool}
       end
 
-      x, o = Intrinsics.sadd_i32_with_overlow(1, 2)
+      x, o = Intrinsics.sadd_i32_with_overflow(1, 2)
       x
       )).to_i.should eq(3)
   end
@@ -224,5 +236,52 @@ describe "Code gen: primitives" do
 
       Foo.new.crystal_type_id == Foo.crystal_instance_type_id
       )).to_b.should be_true
+  end
+
+  describe "va_arg" do
+    # On Windows and AArch64 llvm's va_arg instruction works incorrectly.
+    {% unless flag?(:win32) || flag?(:aarch64) %}
+      it "uses llvm's va_arg instruction" do
+        mod = codegen(%(
+          struct VaList
+            @[Primitive(:va_arg)]
+            def next(type)
+            end
+          end
+
+          list = VaList.new
+          list.next(Int32)
+        ))
+        str = mod.to_s
+        str.should contain("va_arg %VaList* %list")
+      end
+
+      it "works with C code" do
+        test_c(
+          %(
+            extern int foo_f(int,...);
+            int foo() {
+              return foo_f(3,1,2,3);
+            }
+          ),
+          %(
+            lib LibFoo
+              fun foo() : LibC::Int
+            end
+
+            fun foo_f(count : Int32, ...) : LibC::Int
+              sum = 0
+              VaList.open do |list|
+                count.times do |i|
+                  sum += list.next(Int32)
+                end
+              end
+              sum
+            end
+
+            LibFoo.foo
+          ), &.to_i.should eq(6))
+      end
+    {% end %}
   end
 end

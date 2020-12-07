@@ -9,7 +9,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -30,7 +30,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element : T)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -51,7 +51,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element : T)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -72,7 +72,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element : T)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -95,7 +95,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element : T)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -118,7 +118,7 @@ describe "Code gen: array literal spec" do
         end
 
         def <<(element)
-          @value += element
+          @value &+= element
         end
 
         def value
@@ -140,7 +140,7 @@ describe "Code gen: array literal spec" do
           end
 
           def <<(element)
-            @value += element
+            @value &+= element
           end
 
           def value
@@ -163,7 +163,7 @@ describe "Code gen: array literal spec" do
           end
 
           def <<(element : T)
-            @value += element
+            @value &+= element
           end
 
           def value

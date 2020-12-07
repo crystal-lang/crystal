@@ -17,8 +17,11 @@ struct Time::Format
       "PDT" => Location.fixed("PDT", -7 * 3600),
     }
 
-    @epoch : Int64?
+    @unix_seconds : Int64?
     @location : Location?
+    @calendar_week_week : Int32?
+    @calendar_week_year : Int32?
+    @day_of_week : Time::DayOfWeek?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -30,14 +33,29 @@ struct Time::Format
       @second = 0
       @nanosecond = 0
       @pm = false
+      @hour_is_12 = false
       @nanosecond_offset = 0_i64
     end
 
     def time(location : Location? = nil)
-      @hour += 12 if @pm
+      if @hour_is_12
+        if @hour > 12
+          raise ArgumentError.new("Invalid hour for 12-hour clock")
+        end
 
-      if epoch = @epoch
-        return Time.epoch(epoch)
+        if @pm
+          @hour += 12 unless @hour == 12
+        else
+          if @hour == 0
+            raise ArgumentError.new("Invalid hour for 12-hour clock")
+          end
+
+          @hour = 0 if @hour == 12
+        end
+      end
+
+      if unix_seconds = @unix_seconds
+        return Time.unix(unix_seconds)
       end
 
       location = @location || location
@@ -45,8 +63,14 @@ struct Time::Format
         raise "Time format did not include time zone and no default location provided", pos: false
       end
 
-      time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
-      time = time.add_span 0, @nanosecond_offset
+      if (calendar_week_week = @calendar_week_week) && (calendar_week_year = @calendar_week_year) && (day_of_week = @day_of_week)
+        # If all components of a week date are available, they are used to create a Time instance
+        time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      else
+        time = Time.local @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+      end
+
+      time = time.shift 0, @nanosecond_offset
 
       time
     end
@@ -79,6 +103,14 @@ struct Time::Format
               else
                 year
               end
+    end
+
+    def calendar_week_year
+      @calendar_week_year = consume_number(4)
+    end
+
+    def calendar_week_year_modulo100
+      @calendar_week_year = consume_number(2)
     end
 
     def month
@@ -129,6 +161,10 @@ struct Time::Format
 
     def short_month_name_upcase
       month_name
+    end
+
+    def calendar_week_week
+      @calendar_week_week = consume_number(2)
     end
 
     def day_of_month
@@ -182,18 +218,22 @@ struct Time::Format
     end
 
     def hour_24_zero_padded
+      @hour_is_12 = false
       @hour = consume_number(2)
     end
 
     def hour_24_blank_padded
+      @hour_is_12 = false
       @hour = consume_number_blank_padded(2)
     end
 
     def hour_12_zero_padded
       hour_24_zero_padded
+      @hour_is_12 = true
     end
 
     def hour_12_blank_padded
+      @hour_is_12 = true
       @hour = consume_number_blank_padded(2)
     end
 
@@ -248,7 +288,7 @@ struct Time::Format
       string = consume_string
       case string.downcase
       when "am"
-        # skip
+        @pm = false
       when "pm"
         @pm = true
       else
@@ -261,24 +301,26 @@ struct Time::Format
     end
 
     def day_of_week_monday_1_7
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
     def day_of_week_sunday_0_6
-      consume_number(1)
+      @day_of_week = Time::DayOfWeek.from_value(consume_number(1))
     end
 
-    def epoch
-      epoch_negative = false
+    def unix_seconds
+      negative = false
       case current_char
       when '-'
-        epoch_negative = true
+        negative = true
         next_char
       when '+'
         next_char
+      else
+        # no sign prefix
       end
 
-      @epoch = consume_number_i64(19) * (epoch_negative ? -1 : 1)
+      @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
     end
 
     def time_zone(with_seconds = false)
@@ -311,13 +353,13 @@ struct Time::Format
     end
 
     def time_zone_z
-      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+      raise "Invalid timezone" unless current_char.in?('Z', 'z')
 
       @location = Location::UTC
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true, force_zero_padding = true, force_minutes = true)
       case current_char
       when '-'
         sign = -1
@@ -365,7 +407,7 @@ struct Time::Format
       end
 
       seconds = 0
-      if @reader.has_next? && allow_seconds
+      if @reader.has_next? && parse_seconds
         pos = @reader.pos
         if char == ':'
           char = next_char

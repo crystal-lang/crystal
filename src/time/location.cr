@@ -6,7 +6,7 @@ require "./location/loader"
 #
 # It contains a list of zone offsets and rules for transitioning between them.
 #
-# If a location has only one offset (such as `UTC`) it is considerd
+# If a location has only one offset (such as `UTC`) it is considered
 # *fixed*.
 #
 # A `Location` instance is usually retrieved by name using
@@ -17,7 +17,7 @@ require "./location/loader"
 # ```
 # location = Time::Location.load("Europe/Berlin")
 # location # => #<Time::Location Europe/Berlin>
-# time = Time.new(2016, 2, 15, 21, 1, 10, location: location)
+# time = Time.local(2016, 2, 15, 21, 1, 10, location: location)
 # time # => 2016-02-15 21:01:10 +01:00 Europe/Berlin
 # ```
 #
@@ -40,7 +40,7 @@ require "./location/loader"
 # The local time zone can be accessed as `Time::Location.local`.
 #
 # It is initially configured according to system environment settings,
-# but it's value can be changed:
+# but its value can be changed:
 #
 # ```
 # location = Time::Location.local
@@ -94,7 +94,7 @@ class Time::Location
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
-      # Maximium offsets of IANA time zone database are -12:00 and +14:00.
+      # Maximum offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
@@ -109,7 +109,7 @@ class Time::Location
     #
     # It contains the `name`, hour-minute-second format (see `#format`),
     # `offset` in seconds and `"DST"` if `#dst?`, otherwise `"STD"`.
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::Zone("
       io << @name << ' ' unless @name.nil?
       format(io)
@@ -126,7 +126,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(io : IO, with_colon = true, with_seconds = :auto)
       sign, hours, minutes, seconds = sign_hours_minutes_seconds
 
@@ -148,7 +148,7 @@ class Time::Location
     # When *with_colon* is `false`, the format is `+HHmmss`.
     #
     # When *with_seconds* is `false`, seconds are omitted; when `:auto`, seconds
-    # are ommitted if `0`.
+    # are omitted if `0`.
     def format(with_colon = true, with_seconds = :auto)
       String.build do |io|
         format(io, with_colon: with_colon, with_seconds: with_seconds)
@@ -165,8 +165,8 @@ class Time::Location
         sign = '+'
       end
       seconds = offset % 60
-      minutes = offset / 60
-      hours = minutes / 60
+      minutes = offset // 60
+      hours = minutes // 60
       minutes = minutes % 60
       {sign, hours, minutes, seconds}
     end
@@ -176,10 +176,10 @@ class Time::Location
   record ZoneTransition, when : Int64, index : UInt8, standard : Bool, utc : Bool do
     getter? standard, utc
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.epoch(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s("%F %T", io)
       if standard?
         io << " STD"
       else
@@ -239,7 +239,7 @@ class Time::Location
   # `"UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
-  # The implementation uses a list of system-specifc paths to look for a time
+  # The implementation uses a list of system-specific paths to look for a time
   # zone database.
   # The first time zone database entry matching the given name that is
   # successfully loaded and parsed is returned.
@@ -260,12 +260,12 @@ class Time::Location
   # ```
   # # This tries to load the file `/usr/share/zoneinfo/Custom/Location`
   # ENV["ZONEINFO"] = "/usr/share/zoneinfo/"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   #
   # # This tries to load the file `Custom/Location` in the uncompressed ZIP
   # # file at `/path/to/zoneinfo.zip`
   # ENV["ZONEINFO"] = "/path/to/zoneinfo.zip"
-  # Location.load("Custom/Location")
+  # Time::Location.load("Custom/Location")
   # ```
   #
   # If the location name cannot be found, `InvalidLocationNameError` is raised.
@@ -313,9 +313,9 @@ class Time::Location
   # The value can be changed to overwrite the system default:
   #
   # ```
-  # Time.now.location # => #<Time::Location America/New_York>
+  # Time.local.location # => #<Time::Location America/New_York>
   # Time::Location.local = Time::Location.load("Europe/Berlin")
-  # Time.now.location # => #<Time::Location Europe/Berlin>
+  # Time.local.location # => #<Time::Location Europe/Berlin>
   # ```
   class_property(local : Location) { load_local }
 
@@ -334,12 +334,17 @@ class Time::Location
   def self.load_local : Location
     case tz = ENV["TZ"]?
     when "", "UTC"
-      UTC
+      return UTC
     when Nil
       if localtime = Crystal::System::Time.load_localtime
         return localtime
       end
     else
+      if zoneinfo = ENV["ZONEINFO"]?
+        if location = load_from_dir_or_zip(tz, zoneinfo)
+          return location
+        end
+      end
       if location = load?(tz, Crystal::System::Time.zone_sources)
         return location
       end
@@ -359,11 +364,11 @@ class Time::Location
   end
 
   # Prints `name` to *io*.
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << name
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << "#<Time::Location "
     to_s(io)
     io << '>'
@@ -377,31 +382,31 @@ class Time::Location
 
   # Returns the time zone offset observed at *time*.
   def lookup(time : Time) : Zone
-    lookup(time.epoch)
+    lookup(time.to_unix)
   end
 
-  # Returns the time zone offset observed at *epoch*.
+  # Returns the time zone offset observed at *unix_seconds*.
   #
-  # *epoch* expresses the number of seconds since UNIX epoch
+  # *unix_seconds* expresses the number of seconds since UNIX epoch
   # (`1970-01-01 00:00:00 UTC`).
-  def lookup(epoch : Int) : Zone
-    unless @cached_range[0] <= epoch < @cached_range[1]
-      @cached_zone, @cached_range = lookup_with_boundaries(epoch)
+  def lookup(unix_seconds : Int) : Zone
+    unless @cached_range[0] <= unix_seconds < @cached_range[1]
+      @cached_zone, @cached_range = lookup_with_boundaries(unix_seconds)
     end
 
     @cached_zone
   end
 
   # :nodoc:
-  def lookup_with_boundaries(epoch : Int) : {Zone, {Int64, Int64}}
+  def lookup_with_boundaries(unix_seconds : Int) : {Zone, {Int64, Int64}}
     case
     when zones.empty?
       return Zone::UTC, {Int64::MIN, Int64::MAX}
-    when transitions.empty? || epoch < transitions.first.when
+    when transitions.empty? || unix_seconds < transitions.first.when
       return lookup_first_zone, {Int64::MIN, transitions[0]?.try(&.when) || Int64::MAX}
     else
       tx_index = transitions.bsearch_index do |transition|
-        transition.when > epoch
+        transition.when > unix_seconds
       end || transitions.size
 
       tx_index -= 1 unless tx_index == 0

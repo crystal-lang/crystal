@@ -67,14 +67,14 @@ module OpenSSL
   class Error < Exception
     getter! code : LibCrypto::ULong
 
-    def initialize(message = nil, fetched = false)
+    def initialize(message = nil, fetched = false, cause : Exception? = nil)
       @code ||= LibCrypto::ULong.new(0)
 
       if fetched
-        super(message)
+        super(message, cause: cause)
       else
         @code, error = fetch_error_details
-        super(message ? "#{message}: #{error}" : error)
+        super(message ? "#{message}: #{error}" : error, cause: cause)
       end
     end
 
@@ -90,12 +90,13 @@ module OpenSSL
     alias Options = LibSSL::Options
     alias VerifyMode = LibSSL::VerifyMode
     alias ErrorType = LibSSL::SSLError
-    {% if LibSSL::OPENSSL_102 %}
-    alias X509VerifyFlags = LibCrypto::X509VerifyFlags
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+      alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 
     class Error < OpenSSL::Error
       getter error : ErrorType
+      getter? underlying_eof : Bool = false
 
       def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
         @error = LibSSL.ssl_get_error(ssl, return_code)
@@ -109,8 +110,10 @@ module OpenSSL
             case return_code
             when 0
               message = "Unexpected EOF"
+              @underlying_eof = true
             when -1
-              raise Errno.new(func || "OpenSSL")
+              cause = RuntimeError.from_errno(func || "OpenSSL")
+              message = "I/O error"
             else
               message = "Unknown error"
             end
@@ -121,7 +124,7 @@ module OpenSSL
           message = @error.to_s
         end
 
-        super(func ? "#{func}: #{message}" : message, true)
+        super(func ? "#{func}: #{message}" : message, true, cause: cause)
       end
     end
   end
@@ -129,6 +132,8 @@ end
 
 require "./openssl/bio"
 require "./openssl/ssl/*"
-require "./openssl/digest/*"
+require "./openssl/digest"
 require "./openssl/md5"
 require "./openssl/x509/x509"
+require "./openssl/pkcs5"
+require "./openssl/cipher"

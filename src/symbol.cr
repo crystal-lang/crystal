@@ -20,8 +20,8 @@ struct Symbol
     hasher.symbol(self)
   end
 
-  # Compares symbol with other based on `String#<=>` method. Returns `-1`, `0`
-  # or `+1` depending on whether symbol is less than, equal to,
+  # Compares symbol with other based on `String#<=>` method.
+  # Returns `-1`, `0` or `1` depending on whether symbol is less than, equal to,
   # or greater than *other*.
   #
   # See `String#<=>` for more information.
@@ -34,7 +34,7 @@ struct Symbol
   # ```
   # :crystal.inspect # => ":crystal"
   # ```
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     io << ':'
 
     value = to_s
@@ -50,7 +50,7 @@ struct Symbol
   # ```
   # :crystal.to_s # => "crystal"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << to_s
   end
 
@@ -62,7 +62,7 @@ struct Symbol
   # ```
   def self.needs_quotes?(string) : Bool
     case string
-    when "+", "-", "*", "/", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
+    when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
       # Nothing
     when "&", "|", "^", "~", "**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
       # Nothing

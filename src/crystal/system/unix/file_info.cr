@@ -2,8 +2,8 @@ struct Crystal::System::FileInfo < ::File::Info
   def initialize(@stat : LibC::Stat)
   end
 
-  def size : UInt64
-    @stat.st_size.to_u64
+  def size : Int64
+    @stat.st_size.to_i64
   end
 
   def permissions : ::File::Permissions
@@ -36,6 +36,7 @@ struct Crystal::System::FileInfo < ::File::Info
     flags |= ::File::Flags::SetUser if @stat.st_mode.bits_set? LibC::S_ISUID
     flags |= ::File::Flags::SetGroup if @stat.st_mode.bits_set? LibC::S_ISGID
     flags |= ::File::Flags::Sticky if @stat.st_mode.bits_set? LibC::S_ISVTX
+    flags
   end
 
   def modification_time : ::Time
@@ -46,12 +47,12 @@ struct Crystal::System::FileInfo < ::File::Info
     {% end %}
   end
 
-  def owner : UInt32
-    @stat.st_uid.to_u32
+  def owner_id : String
+    @stat.st_uid.to_s
   end
 
-  def group : UInt32
-    @stat.st_gid.to_u32
+  def group_id : String
+    @stat.st_gid.to_s
   end
 
   def same_file?(other : ::File::Info) : Bool

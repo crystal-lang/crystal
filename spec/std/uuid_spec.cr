@@ -92,6 +92,7 @@ describe "UUID" do
     uuid = UUID.new(uuid, version: UUID::Version::V2, variant: UUID::Variant::Microsoft)
     uuid.version.should eq UUID::Version::V2
     uuid.variant.should eq UUID::Variant::Microsoft
+    uuid.bytes.should eq(UInt8.static_array(80, 161, 29, 166, 55, 123, 43, 223, 217, 240, 7, 111, 157, 182, 28, 147))
     uuid.to_s.should eq "50a11da6-377b-2bdf-d9f0-076f9db61c93"
   end
 
@@ -124,5 +125,23 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new "cda08c86-6413-474f-8822-a6646e0fb19G" }
     expect_raises(ArgumentError) { UUID.new "2b1bfW06368947e59ac07c3ffdaf514c" }
     expect_raises(ArgumentError) { UUID.new "xyz:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892" }
+  end
+
+  describe "v4?" do
+    it "returns true if UUID is v4, false otherwise" do
+      uuid = UUID.random
+      uuid.v4?.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      uuid.v4?.should eq(false)
+    end
+  end
+
+  describe "v4!" do
+    it "returns true if UUID is v4, raises otherwise" do
+      uuid = UUID.random
+      uuid.v4!.should eq(true)
+      uuid = UUID.new("00000000-0000-0000-0000-000000000000", version: UUID::Version::V5)
+      expect_raises(UUID::Error) { uuid.v4! }
+    end
   end
 end

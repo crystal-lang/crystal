@@ -45,7 +45,7 @@ module Crystal
     end
 
     # Returns the doc comment attached to this node. Not every node
-    # supports having doc domments, so by default this returns `nil`.
+    # supports having doc comments, so by default this returns `nil`.
     def doc
     end
 
@@ -55,8 +55,8 @@ module Crystal
     def doc=(doc)
     end
 
-    def name_column_number
-      @location.try(&.column_number) || 0
+    def name_location
+      nil
     end
 
     def name_size
@@ -97,7 +97,7 @@ module Crystal
     end
 
     # It yields `nil` always.
-    # (It is overrided by `Expressions` to implement `#single_expression`.)
+    # (It is overriden by `Expressions` to implement `#single_expression`.)
     def single_expression?
       nil
     end
@@ -296,7 +296,11 @@ module Crystal
   class StringInterpolation < ASTNode
     property expressions : Array(ASTNode)
 
-    def initialize(@expressions : Array(ASTNode))
+    # Removed indentation size.
+    # This property is only available when this is created from heredoc.
+    property heredoc_indent : Int32
+
+    def initialize(@expressions : Array(ASTNode), @heredoc_indent = 0)
     end
 
     def accept_children(visitor)
@@ -337,6 +341,10 @@ module Crystal
 
     def self.map(values, of = nil)
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
+    end
+
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
     end
 
     def accept_children(visitor)
@@ -450,6 +458,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) })
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
+    end
+
     def accept_children(visitor)
       elements.each &.accept visitor
     end
@@ -538,17 +550,15 @@ module Crystal
     property block : Block?
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
-    property name_column_number : Int32
-    property name_size = -1
+    property name_location : Location?
+    @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
-    property? has_parentheses : Bool
+    property? has_parentheses = false
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, global = false, @name_column_number = 0, has_parentheses = false)
-      @global = !!global
-      @has_parentheses = !!has_parentheses
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
         block.call = self
       end
@@ -577,6 +587,8 @@ module Crystal
       @name_size
     end
 
+    setter name_size
+
     def accept_children(visitor)
       @obj.try &.accept visitor
       @args.each &.accept visitor
@@ -586,20 +598,19 @@ module Crystal
     end
 
     def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parentheses)
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global)
+      clone.name_location = name_location
+      clone.has_parentheses = has_parentheses?
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
     end
 
-    def name_location
-      loc = location.not_nil!
-      Location.new(loc.filename, loc.line_number, name_column_number)
-    end
-
     def name_end_location
-      loc = location.not_nil!
-      Location.new(loc.filename, loc.line_number, name_column_number + name_size)
+      loc = @name_location
+      return unless loc
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size)
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
@@ -725,6 +736,7 @@ module Crystal
     property target : ASTNode
     property op : String
     property value : ASTNode
+    property name_location : Location?
 
     def initialize(@target, @op, @value)
     end
@@ -955,7 +967,7 @@ module Crystal
     property block_arg : Arg?
     property return_type : ASTNode?
     property yields : Int32?
-    property name_column_number = 0
+    property name_location : Location?
     property splat_index : Int32?
     property doc : String?
     property visibility = Visibility::Public
@@ -992,7 +1004,7 @@ module Crystal
       a_def.calls_previous_def = calls_previous_def?
       a_def.uses_block_arg = uses_block_arg?
       a_def.assigns_special_var = assigns_special_var?
-      a_def.name_column_number = name_column_number
+      a_def.name_location = name_location
       a_def.visibility = visibility
       a_def
     end
@@ -1006,7 +1018,7 @@ module Crystal
     property body : ASTNode
     property double_splat : Arg?
     property block_arg : Arg?
-    property name_column_number = 0
+    property name_location : Location?
     property splat_index : Int32?
     property doc : String?
     property visibility = Visibility::Public
@@ -1026,7 +1038,9 @@ module Crystal
     end
 
     def clone_without_location
-      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index, @double_splat.clone)
+      m = Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index, @double_splat.clone)
+      m.name_location = name_location
+      m
     end
 
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
@@ -1074,6 +1088,25 @@ module Crystal
     def clone_without_location
       Out.new(@exp.clone)
     end
+  end
+
+  class OffsetOf < ASTNode
+    property offsetof_type : ASTNode
+    property instance_var : ASTNode
+
+    def initialize(@offsetof_type, @instance_var)
+    end
+
+    def accept_children(visitor)
+      @offsetof_type.accept visitor
+      @instance_var.accept visitor
+    end
+
+    def clone_without_location
+      OffsetOf.new(@offsetof_type.clone, @instance_var.clone)
+    end
+
+    def_equals_and_hash @offsetof_type, @instance_var
   end
 
   class VisibilityModifier < ASTNode
@@ -1149,8 +1182,9 @@ module Crystal
   class When < ASTNode
     property conds : Array(ASTNode)
     property body : ASTNode
+    property? exhaustive : Bool
 
-    def initialize(@conds, body = nil)
+    def initialize(@conds : Array(ASTNode), body : ASTNode? = nil, @exhaustive = false)
       @body = Expressions.from body
     end
 
@@ -1160,18 +1194,22 @@ module Crystal
     end
 
     def clone_without_location
-      When.new(@conds.clone, @body.clone)
+      When.new(@conds.clone, @body.clone, @exhaustive)
     end
 
-    def_equals_and_hash @conds, @body
+    def_equals_and_hash @conds, @body, @exhaustive
   end
 
   class Case < ASTNode
     property cond : ASTNode?
     property whens : Array(When)
     property else : ASTNode?
+    property? exhaustive : Bool
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@cond : ASTNode?, @whens : Array(When), @else : ASTNode?, @exhaustive : Bool)
+      @whens.each do |wh|
+        wh.exhaustive = self.exhaustive?
+      end
     end
 
     def accept_children(visitor)
@@ -1181,10 +1219,10 @@ module Crystal
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@cond.clone, @whens.clone, @else.clone, @exhaustive)
     end
 
-    def_equals_and_hash @cond, @whens, @else
+    def_equals_and_hash @exhaustive, @cond, @whens, @else
   end
 
   class Select < ASTNode
@@ -1235,7 +1273,6 @@ module Crystal
   class Path < ASTNode
     property names : Array(String)
     property? global : Bool
-    property name_size = 0
     property visibility = Visibility::Public
 
     def initialize(@names : Array, @global = false)
@@ -1249,6 +1286,10 @@ module Crystal
       new names, true
     end
 
+    def name_size
+      names.sum(&.size) + (names.size + (global? ? 0 : -1)) * 2
+    end
+
     # Returns true if this path has a single component
     # with the given name
     def single?(name)
@@ -1257,7 +1298,6 @@ module Crystal
 
     def clone_without_location
       ident = Path.new(@names.clone, @global)
-      ident.name_size = name_size
       ident
     end
 
@@ -1275,14 +1315,14 @@ module Crystal
     property body : ASTNode
     property superclass : ASTNode?
     property type_vars : Array(String)?
-    property name_column_number : Int32
+    property name_location : Location?
     property doc : String?
     property splat_index : Int32?
     property? abstract : Bool
     property? struct : Bool
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @splat_index = nil)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1292,7 +1332,9 @@ module Crystal
     end
 
     def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number, @splat_index)
+      clone = ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @splat_index)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
@@ -1309,11 +1351,11 @@ module Crystal
     property body : ASTNode
     property type_vars : Array(String)?
     property splat_index : Int32?
-    property name_column_number : Int32
+    property name_location : Location?
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @splat_index = nil)
+    def initialize(@name, body = nil, @type_vars = nil, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1322,7 +1364,9 @@ module Crystal
     end
 
     def clone_without_location
-      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number, @splat_index)
+      clone = ModuleDef.new(@name, @body.clone, @type_vars.clone, @splat_index)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body, @type_vars, @splat_index
@@ -1336,16 +1380,18 @@ module Crystal
   class AnnotationDef < ASTNode
     property name : Path
     property doc : String?
-    property name_column_number : Int32
+    property name_location : Location?
 
-    def initialize(@name, @name_column_number = 0)
+    def initialize(@name)
     end
 
     def accept_children(visitor)
     end
 
     def clone_without_location
-      AnnotationDef.new(@name, @name_column_number)
+      clone = AnnotationDef.new(@name)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name
@@ -1724,10 +1770,10 @@ module Crystal
   class LibDef < ASTNode
     property name : String
     property body : ASTNode
-    property name_column_number : Int32
+    property name_location : Location?
     property visibility = Visibility::Public
 
-    def initialize(@name, body = nil, @name_column_number = 0)
+    def initialize(@name, body = nil)
       @body = Expressions.from body
     end
 
@@ -1736,7 +1782,9 @@ module Crystal
     end
 
     def clone_without_location
-      LibDef.new(@name, @body.clone, @name_column_number)
+      clone = LibDef.new(@name, @body.clone)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @body
@@ -1770,9 +1818,9 @@ module Crystal
   class TypeDef < ASTNode
     property name : String
     property type_spec : ASTNode
-    property name_column_number : Int32
+    property name_location : Location?
 
-    def initialize(@name, @type_spec, @name_column_number = 0)
+    def initialize(@name, @type_spec)
     end
 
     def accept_children(visitor)
@@ -1780,7 +1828,9 @@ module Crystal
     end
 
     def clone_without_location
-      TypeDef.new(@name, @type_spec.clone, @name_column_number)
+      clone = TypeDef.new(@name, @type_spec.clone)
+      clone.name_location = name_location
+      clone
     end
 
     def_equals_and_hash @name, @type_spec
@@ -1849,12 +1899,12 @@ module Crystal
   end
 
   class Alias < ASTNode
-    property name : String
+    property name : Path
     property value : ASTNode
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name : String, @value : ASTNode)
+    def initialize(@name : Path, @value : ASTNode)
     end
 
     def accept_children(visitor)
@@ -1862,7 +1912,7 @@ module Crystal
     end
 
     def clone_without_location
-      Alias.new(@name, @value.clone)
+      Alias.new(@name.clone, @value.clone)
     end
 
     def_equals_and_hash @name, @value
@@ -2046,7 +2096,7 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {% for x1, x2, ... , xn in exp %}
+  #    {% for x1, x2, ..., xn in exp %}
   #      body
   #    {% end %}
   class MacroFor < ASTNode
@@ -2144,7 +2194,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      (location.try(&.original_location) || location).try(&.line_number) || 0
+      (location.try(&.expanded_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)
@@ -2168,26 +2218,26 @@ module Crystal
 
   class Asm < ASTNode
     property text : String
-    property output : AsmOperand?
+    property outputs : Array(AsmOperand)?
     property inputs : Array(AsmOperand)?
     property clobbers : Array(String)?
     property? volatile : Bool
     property? alignstack : Bool
     property? intel : Bool
 
-    def initialize(@text, @output = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
+    def initialize(@text, @outputs = nil, @inputs = nil, @clobbers = nil, @volatile = false, @alignstack = false, @intel = false)
     end
 
     def accept_children(visitor)
-      @output.try &.accept visitor
+      @outputs.try &.each &.accept visitor
       @inputs.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Asm.new(@text, @output.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
+      Asm.new(@text, @outputs.clone, @inputs.clone, @clobbers, @volatile, @alignstack, @intel)
     end
 
-    def_equals_and_hash text, output, inputs, clobbers, volatile?, alignstack?, intel?
+    def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?
   end
 
   class AsmOperand < ASTNode

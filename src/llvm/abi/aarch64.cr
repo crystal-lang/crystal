@@ -59,7 +59,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     elements.each do |element|
       opt_homog_agg = homogeneous_aggregate?(element)
 
-      # field isn't itself oan HFA, so we aren't either
+      # field isn't itself an HFA, so we aren't either
       return unless opt_homog_agg
       field_type, field_members = opt_homog_agg
 
@@ -101,7 +101,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(rty, cast)
       else
@@ -130,11 +130,11 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                elsif size <= 8
                  context.int64
                else
-                 context.int64.array(((size + 7) / 8).to_u64)
+                 context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(aty, cast)
       else
-        ArgType.indirect(aty, LLVM::Attribute::ByVal)
+        ArgType.indirect(aty, nil)
       end
     end
   end

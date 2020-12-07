@@ -5,11 +5,10 @@ require "json"
 
 module Crystal
   class ImplementationResult
-    JSON.mapping({
-      status:          {type: String},
-      message:         {type: String},
-      implementations: {type: Array(ImplementationTrace), nilable: true},
-    })
+    include JSON::Serializable
+    property status : String
+    property message : String
+    property implementations : Array(ImplementationTrace)?
 
     def initialize(@status, @message)
     end
@@ -33,13 +32,13 @@ module Crystal
   # It keeps track of macro expansion in a human friendly way and
   # pointing to the exact line an expansion and method definition occurs.
   class ImplementationTrace
-    JSON.mapping({
-      line:     {type: Int32},
-      column:   {type: Int32},
-      filename: {type: String},
-      macro:    {type: String, nilable: true},
-      expands:  {type: ImplementationTrace, nilable: true},
-    })
+    include JSON::Serializable
+
+    property line : Int32
+    property column : Int32
+    property filename : String
+    property macro : String?
+    property expands : ImplementationTrace?
 
     def initialize(loc : Location)
       f = loc.filename
@@ -108,34 +107,26 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.location
-        if @target_location.between?(node.name_location, node.name_end_location)
-          if target_defs = node.target_defs
-            target_defs.each do |target_def|
-              @locations << target_def.location.not_nil!
-            end
-          end
-        else
-          contains_target(node)
+      return contains_target(node) unless node.location && @target_location.between?(node.name_location, node.name_end_location)
+
+      if target_defs = node.target_defs
+        target_defs.each do |target_def|
+          @locations << target_def.location.not_nil!
         end
+      end
+    end
+
+    def visit(node : Path)
+      return contains_target(node) unless (loc = node.location) && (end_loc = node.end_location) && @target_location.between?(loc, end_loc)
+
+      target = node.target_const || node.target_type
+      target.try &.locations.try &.each do |loc|
+        @locations << loc
       end
     end
 
     def visit(node)
       contains_target(node)
-    end
-
-    private def contains_target(node)
-      if loc_start = node.location
-        loc_end = node.end_location || loc_start
-        # if it is not between, it could be the case that node is the top level Expressions
-        # in which the (start) location might be in one file and the end location in another.
-        @target_location.between?(loc_start, loc_end) || loc_start.filename != loc_end.filename
-      else
-        # if node has no location, assume they may contain the target.
-        # for example with the main expressions ast node this matters
-        true
-      end
     end
   end
 end

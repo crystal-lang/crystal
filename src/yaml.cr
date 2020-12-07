@@ -2,6 +2,7 @@ require "./yaml/*"
 require "./yaml/schema/*"
 require "./yaml/schema/core/*"
 require "./yaml/nodes/*"
+require "semantic_version"
 
 require "base64"
 
@@ -49,7 +50,7 @@ require "base64"
 # anchored values (see `YAML::PullParser` for an explanation of this).
 #
 # Crystal primitive types, `Time`, `Bytes` and `Union` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ### Dumping with `YAML.dump` or `#to_yaml`
@@ -63,7 +64,7 @@ require "base64"
 # `to_yaml(builder : YAML::Nodes::Builder`).
 #
 # Crystal primitive types, `Time` and `Bytes` implement
-# this method. `YAML.mapping` can be used to implement this method
+# this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
 # ```
@@ -156,5 +157,12 @@ module YAML
   # Serializes an object to YAML, writing it to *io*.
   def self.dump(object, io : IO)
     object.to_yaml(io)
+  end
+
+  # Returns the used version of `libyaml`.
+  def self.libyaml_version : SemanticVersion
+    LibYAML.yaml_get_version(out major, out minor, out patch)
+
+    SemanticVersion.new(major, minor, patch)
   end
 end

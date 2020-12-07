@@ -56,9 +56,21 @@ class Reference
     hasher.reference(self)
   end
 
+  # Appends a String representation of this object
+  # which includes its class name, its object address
+  # and the values of all instance variables.
+  #
+  # ```
+  # class Person
+  #   def initialize(@name : String, @age : Int32)
+  #   end
+  # end
+  #
+  # Person.new("John", 32).inspect # => #<Person:0x10fd31f20 @name="John", @age=32>
+  # ```
   def inspect(io : IO) : Nil
     io << "#<" << {{@type.name.id.stringify}} << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
 
     executed = exec_recursive(:inspect) do
       {% for ivar, i in @type.instance_vars %}
@@ -73,7 +85,6 @@ class Reference
       io << " ..."
     end
     io << '>'
-    nil
   end
 
   def pretty_print(pp) : Nil
@@ -105,17 +116,39 @@ class Reference
     {% end %}
   end
 
+  # Appends a short String representation of this object
+  # which includes its class name and its object address.
+  #
+  # ```
+  # class Person
+  #   def initialize(@name : String, @age : Int32)
+  #   end
+  # end
+  #
+  # Person.new("John", 32).to_s # => #<Person:0x10a199f20>
+  # ```
   def to_s(io : IO) : Nil
     io << "#<" << self.class.name << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
     io << '>'
-    nil
   end
 
   # :nodoc:
   module ExecRecursive
+    alias Registry = Hash({UInt64, Symbol}, Bool)
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
     def self.hash
-      @@exec_recursive ||= {} of {UInt64, Symbol} => Bool
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
     end
   end
 
@@ -126,9 +159,56 @@ class Reference
       false
     else
       hash[key] = true
-      value = yield
+      yield
       hash.delete(key)
       true
     end
+  end
+
+  # :nodoc:
+  module ExecRecursiveClone
+    alias Registry = Hash(UInt64, UInt64)
+
+    {% if flag?(:preview_mt) %}
+      @@exec_recursive = Crystal::ThreadLocalValue(Registry).new
+    {% else %}
+      @@exec_recursive = Registry.new
+    {% end %}
+
+    def self.hash
+      {% if flag?(:preview_mt) %}
+        @@exec_recursive.get { Registry.new }
+      {% else %}
+        @@exec_recursive
+      {% end %}
+    end
+  end
+
+  # Helper method to perform clone by also checking recursiveness.
+  # When clone is wanted, call this method. Then create the clone
+  # instance without any contents (don't fill it out yet), then
+  # put the clone's object id into the hash yielded into the block.
+  # At the end of the block return the cloned object.
+  #
+  # For example:
+  #
+  # ```
+  # def clone
+  #   exec_recursive_clone do |hash|
+  #     clone = SomeClass.new
+  #     hash[object_id] = clone.object_id
+  #     # fill out the clone object
+  #     clone
+  #   end
+  # end
+  # ```
+  private def exec_recursive_clone
+    hash = ExecRecursiveClone.hash
+    clone_object_id = hash[object_id]?
+    unless clone_object_id
+      clone_object_id = yield(hash).object_id
+      hash.delete(object_id)
+    end
+    Pointer(Void).new(clone_object_id).as(self)
   end
 end

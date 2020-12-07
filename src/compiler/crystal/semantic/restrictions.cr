@@ -261,6 +261,13 @@ module Crystal
         end
       end
 
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(Foo))
+      # end
+      # ```
       false
     end
 
@@ -281,15 +288,38 @@ module Crystal
 
   class Generic
     def restriction_of?(other : Path, owner)
-      other_type = owner.lookup_type?(self)
-      if other_type
-        self_type = owner.lookup_path(other)
-        if self_type
+      # ```
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # def foo(param : Int32)
+      # end
+      # ```
+      #
+      # Here, self is `Array`, other is `Int32`
+
+      self_type = owner.lookup_type?(self)
+      if self_type
+        other_type = owner.lookup_path(other)
+        if other_type
           return self_type.restriction_of?(other_type, owner)
         end
       end
 
-      false
+      # `Array(T)` is always more strict than `Foo`
+      #
+      # Useful in cases where `Array(T)` overload must be checked before
+      # `T` overload:
+      # ```
+      # def foo(param : T) forall T
+      # end
+      #
+      # def foo(param : Array(T)) forall T
+      # end
+      #
+      # foo([1])
+      # ```
+      true
     end
 
     def restriction_of?(other : Generic, owner)
@@ -304,15 +334,56 @@ module Crystal
     end
   end
 
+  class GenericClassType
+    def restriction_of?(other : GenericClassInstanceType, owner)
+      # ```
+      # def foo(param : Array)
+      # end
+      #
+      # def foo(param : Array(Int32))
+      # end
+      # ```
+      #
+      # Here, self is `Array`, other is `Array(Int32)`
+
+      # Even when the underlying generic type is the same,
+      # `SomeGeneric` is never a restriction of `SomeGeneric(X)`
+      false
+    end
+  end
+
+  class GenericClassInstanceType
+    def restriction_of?(other : GenericClassType, owner)
+      # ```
+      # def foo(param : Array(Int32))
+      # end
+      #
+      # def foo(param : Array)
+      # end
+      # ```
+      #
+      # Here, self is `Array(Int32)`, other is `Array`
+
+      # When the underlying generic type is the same:
+      # `SomeGeneric(X)` is always a restriction of `SomeGeneric`
+      self.generic_type == other
+    end
+  end
+
   class Metaclass
     def restriction_of?(other : Metaclass, owner)
-      self_type = owner.lookup_type?(self)
-      other_type = owner.lookup_type?(other)
-      if self_type && other_type
-        self_type.restriction_of?(other_type, owner)
-      else
-        self == other
+      name.restriction_of?(other.name, owner)
+    end
+
+    def restriction_of?(other : Path, owner)
+      other_type = owner.lookup_type(other)
+
+      # Special case: when comparing Foo.class to Class, Foo.class has precedence
+      if other_type == other_type.program.class_type
+        return true
       end
+
+      super
     end
   end
 
@@ -355,7 +426,16 @@ module Crystal
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restrict(union_type, context) }
+      restricted = nil
+
+      other.union_types.each do |union_type|
+        # Apply the restriction logic on each union type, even if we already
+        # have a match, so that we can detect ambiguous calls between of
+        # literal types against aliases that resolve to union types.
+        restriction = restrict(union_type, context)
+        restricted ||= restriction
+      end
+
       restricted ? self : nil
     end
 
@@ -500,7 +580,7 @@ module Crystal
 
   class UnionType
     def restriction_of?(type, owner)
-      self == type || union_types.any? &.restriction_of?(type, owner)
+      self == type || union_types.all? &.restriction_of?(type, owner)
     end
 
     def restrict(other : Union, context)
@@ -680,6 +760,8 @@ module Crystal
             context.set_free_var(name, type_var)
             return type_var
           end
+        else
+          # Restriction is not possible (maybe return nil here?)
         end
       else
         type_var = type_var.type? || type_var
@@ -837,7 +919,9 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.generic_types.values.each do |instance|
+        other.generic_types.each_value do |instance|
+          next if instance.unbound? || instance.abstract?
+
           if instance.implements?(base_type)
             return instance
           end
@@ -953,6 +1037,9 @@ module Crystal
     end
 
     def restrict(other : VirtualMetaclassType, context)
+      # A module class can't be restricted into a class
+      return nil if instance_type.module?
+
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       restricted ? self : nil
     end
@@ -1088,12 +1175,25 @@ module Crystal
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
+        # If checking the return type, any type matches Nil
+        if i == other.type_vars.size - 1 && nil_type?(other_type_var, context)
+          # Also, all other types matched, so the matching type is this proc type
+          # except that it has a Nil return type
+          new_proc_arg_types = arg_types.dup
+          new_proc_arg_types << program.nil_type
+          return program.proc_of(new_proc_arg_types)
+        end
+
         proc_type = arg_types[i]? || return_type
         restricted = proc_type.restrict other_type_var, context
         return nil unless restricted == proc_type
       end
 
       self
+    end
+
+    def nil_type?(node, context)
+      node.is_a?(Path) && context.defining_type.lookup_path(node).is_a?(NilType)
     end
 
     def compatible_with?(other : ProcInstanceType)
@@ -1121,47 +1221,62 @@ module Crystal
   class NumberLiteralType
     def restrict(other, context)
       if other.is_a?(IntegerType) || other.is_a?(FloatType)
-        if literal.can_be_autocast_to?(other)
-          if @matched_type && @matched_type != other
-            literal.raise "ambiguous call matches both #{@matched_type} and #{other}"
-          end
-
-          @matched_type = other
+        # Check for an exact match, which can't produce an ambiguous call
+        if literal.type == other
+          set_exact_match(other)
+          other
+        elsif !exact_match? && literal.can_be_autocast_to?(other)
+          add_match(other)
           other
         else
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
-          type = @matched_type || literal.type
+          type = @match || literal.type
         end
         type
       end
+    end
+
+    def compatible_with?(type)
+      literal.type == type || literal.can_be_autocast_to?(type)
     end
   end
 
   class SymbolLiteralType
     def restrict(other, context)
-      if other.is_a?(EnumType)
-        if other.find_member(literal.value)
-          if @matched_type && @matched_type != other
-            literal.raise "ambiguous call matches both #{@matched_type} and #{other}"
-          end
-
-          @matched_type = other
+      case other
+      when SymbolType
+        set_exact_match(other)
+        other
+      when EnumType
+        if !exact_match? && other.find_member(literal.value)
+          add_match(other)
           other
         else
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
-          type = @matched_type || literal.type
+          type = @match || literal.type
         end
         type
+      end
+    end
+
+    def compatible_with?(type)
+      case type
+      when SymbolType
+        true
+      when EnumType
+        !!(type.find_member(literal.value))
+      else
+        false
       end
     end
   end

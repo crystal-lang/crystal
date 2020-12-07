@@ -1,5 +1,5 @@
 class Class
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -145,8 +145,8 @@ class Class
     self == ::Nil
   end
 
-  def to_s(io)
-    io << name
+  def to_s(io : IO) : Nil
+    io << {{ @type.name.stringify }}
   end
 
   def dup

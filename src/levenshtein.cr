@@ -1,4 +1,4 @@
-# Levensthein distance methods.
+# Levenshtein distance methods.
 module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
   #
@@ -48,6 +48,8 @@ module Levenshtein
   # Finds the closest string to a given string amongst many strings.
   #
   # ```
+  # require "levenshtein"
+  #
   # finder = Levenshtein::Finder.new "hallo"
   # finder.test "hay"
   # finder.test "hall"
@@ -99,12 +101,35 @@ module Levenshtein
     end
   end
 
+  # Finds the best match for *name* among strings added within the given block.
+  # *tolerance* can be used to set maximum Levenshtein distance allowed.
+  #
+  # ```
+  # require "levenshtein"
+  #
+  # best_match = Levenshtein.find("hello") do |l|
+  #   l.test "hulk"
+  #   l.test "holk"
+  #   l.test "halka"
+  #   l.test "ello"
+  # end
+  # best_match # => "ello"
+  # ```
   def self.find(name, tolerance = nil)
     Finder.find(name, tolerance) do |sn|
       yield sn
     end
   end
 
+  # Finds the best match for *name* among strings provided in *all_names*.
+  # *tolerance* can be used to set maximum Levenshtein distance allowed.
+  #
+  # ```
+  # require "levenshtein"
+  #
+  # Levenshtein.find("hello", ["hullo", "hel", "hall", "hell"], 2) # => "hullo"
+  # Levenshtein.find("hello", ["hurlo", "hel", "hall"], 1)         # => nil
+  # ```
   def self.find(name, all_names, tolerance = nil)
     Finder.find(name, all_names, tolerance)
   end

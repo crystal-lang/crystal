@@ -146,4 +146,17 @@ describe "Semantic: uninitialized" do
       x = uninitialized Int32
       )) { int32 }
   end
+
+  it "uses virtual type for uninitialized (#8216)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Sub < Base
+      end
+
+      u = uninitialized Base
+      u
+      )) { types["Base"].virtual_type! }
+  end
 end

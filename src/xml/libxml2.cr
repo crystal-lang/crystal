@@ -1,9 +1,14 @@
-require "./type"
+require "./node/type"
+require "./reader/type"
 require "./parser_options"
 require "./html_parser_options"
 require "./save_options"
 
-@[Link("xml2")]
+{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
+  @[Link("xml2", pkg_config: "libxml-2.0")]
+{% else %}
+  @[Link("xml2")]
+{% end %}
 lib LibXML
   alias Int = LibC::Int
 
@@ -15,7 +20,7 @@ lib LibXML
 
   struct NS
     next : NS*
-    type : XML::Type
+    type : XML::Node::Type
     href : UInt8*
     prefix : UInt8*
     _private : Void*
@@ -24,7 +29,7 @@ lib LibXML
 
   struct NodeCommon
     _private : Void*
-    type : XML::Type
+    type : XML::Node::Type
     name : UInt8*
     children : Node*
     last : Node*
@@ -94,8 +99,13 @@ lib LibXML
   fun xmlParserInputBufferCreateIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, enc : Int) : InputBuffer
   fun xmlNewTextReader(input : InputBuffer, uri : UInt8*) : XMLTextReader
 
+  fun xmlReaderForMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+  fun xmlReaderForIO(ioread : (Void*, UInt8*, Int) -> Int, ioclose : Void* -> Int, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : XMLTextReader
+
   fun xmlTextReaderRead(reader : XMLTextReader) : Int
-  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Type
+  fun xmlTextReaderNext(reader : XMLTextReader) : Int
+  fun xmlTextReaderNextSibling(reader : XMLTextReader) : Int
+  fun xmlTextReaderNodeType(reader : XMLTextReader) : XML::Reader::Type
   fun xmlTextReaderConstName(reader : XMLTextReader) : UInt8*
   fun xmlTextReaderIsEmptyElement(reader : XMLTextReader) : Int
   fun xmlTextReaderConstValue(reader : XMLTextReader) : UInt8*
@@ -103,6 +113,14 @@ lib LibXML
   fun xmlTextReaderAttributeCount(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToFirstAttribute(reader : XMLTextReader) : Int
   fun xmlTextReaderMoveToNextAttribute(reader : XMLTextReader) : Int
+  fun xmlTextReaderMoveToAttribute(reader : XMLTextReader, name : UInt8*) : Int
+  fun xmlTextReaderGetAttribute(reader : XMLTextReader, name : UInt8*) : UInt8*
+  fun xmlTextReaderMoveToElement(reader : XMLTextReader) : Int
+  fun xmlTextReaderDepth(reader : XMLTextReader) : Int
+  fun xmlTextReaderReadInnerXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderReadOuterXml(reader : XMLTextReader) : UInt8*
+  fun xmlTextReaderExpand(reader : XMLTextReader) : Node*
+  fun xmlTextReaderCurrentNode(reader : XMLTextReader) : Node*
 
   fun xmlTextReaderSetErrorHandler(reader : XMLTextReader, f : TextReaderErrorFunc) : Void
 
@@ -294,6 +312,8 @@ lib LibXML
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 
   fun xmlSetProp(node : Node*, name : UInt8*, value : UInt8*) : Attr*
+
+  fun xmlUnsetProp(node : Node*, name : UInt8*) : Int
 
   fun xmlValidateNameValue(value : UInt8*) : Int
 end

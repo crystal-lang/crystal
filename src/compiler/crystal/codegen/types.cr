@@ -167,6 +167,15 @@ module Crystal
   class Const
     property initializer : LLVM::Value?
 
+    # Was this constant already read during the codegen phase?
+    # If not, and we are at the place that declares the constant, we can
+    # directly initialize the constant now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the constant was initialized or
+    # not when reading it.
+    property? no_init_flag = false
+
     def initialized_llvm_name
       "#{llvm_name}:init"
     end
@@ -174,7 +183,15 @@ module Crystal
     # Returns `true` if this constant's value is a simple literal, like
     # `nil`, a number, char, string or symbol literal.
     def simple?
+      return false if pointer_read?
+
       value.simple_literal?
+    end
+
+    def needs_init_flag?
+      return true if pointer_read?
+
+      !(initializer || no_init_flag? || simple?)
     end
 
     @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
@@ -192,7 +209,7 @@ module Crystal
         when CharLiteral
           @compile_time_value = value.value
         else
-          case type = value.type?
+          case value.type?
           when IntegerType, EnumType
             interpreter = MathInterpreter.new(namespace, visitor)
             @compile_time_value = interpreter.interpret(value) rescue nil

@@ -25,8 +25,9 @@
 struct NamedTuple
   # Creates a named tuple that will contain the given arguments.
   #
-  # This method is useful in macros and generic code because with it you can
-  # creates empty named tuples, something that you can't do with a tuple literal.
+  # With a named tuple literal you cannot create an empty named tuple.
+  # This method doesn't have this limitation, which makes it especially
+  # useful in macros and generic code.
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
@@ -66,8 +67,10 @@ struct NamedTuple
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%({"thing": "world", "n": 2})).as_h
-  # speak_about(**{thing: String, n: Int64}.from(data)) # => "I see 2 worlds"
+  # hash = JSON.parse(%({"thing": "world", "n": 2})).as_h # hash : Hash(String, JSON::Any)
+  # hash = hash.transform_values(&.raw)                   # hash : Hash(String, JSON::Any::Type)
+  #
+  # speak_about(**{thing: String, n: Int64}.from(hash)) # => "I see 2 worlds"
   # ```
   def from(hash : Hash)
     if size != hash.size
@@ -117,6 +120,45 @@ struct NamedTuple
   # ```
   def []?(key : Symbol | String)
     fetch(key, nil)
+  end
+
+  # Traverses the depth of a structure and returns the value.
+  # Returns `nil` if not found.
+  #
+  # ```
+  # h = {a: {b: [10, 20, 30]}}
+  # h.dig? "a", "b"                # => [10, 20, 30]
+  # h.dig? "a", "b", "c", "d", "e" # => nil
+  # ```
+  def dig?(key : Symbol | String, *subkeys)
+    if (value = self[key]?) && value.responds_to?(:dig?)
+      value.dig?(*subkeys)
+    end
+  end
+
+  # :nodoc:
+  def dig?(key : Symbol | String)
+    self[key]?
+  end
+
+  # Traverses the depth of a structure and returns the value, otherwise
+  # raises `KeyError`.
+  #
+  # ```
+  # h = {a: {b: [10, 20, 30]}}
+  # h.dig "a", "b"                # => [10, 20, 30]
+  # h.dig "a", "b", "c", "d", "e" # raises KeyError
+  # ```
+  def dig(key : Symbol | String, *subkeys)
+    if (value = self[key]) && value.responds_to?(:dig)
+      return value.dig(*subkeys)
+    end
+    raise KeyError.new "NamedTuple value not diggable for key: #{key.inspect}"
+  end
+
+  # :nodoc:
+  def dig(key : Symbol | String)
+    self[key]
   end
 
   # Returns the value for the given *key*, if there's such key, otherwise returns *default_value*.
@@ -171,7 +213,7 @@ struct NamedTuple
     merge(**other)
   end
 
-  # ditto
+  # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
     {
@@ -204,7 +246,7 @@ struct NamedTuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -224,7 +266,13 @@ struct NamedTuple
     {% end %}
   end
 
-  protected def sorted_keys
+  # Returns a `Tuple` of symbols with the keys in this named tuple, sorted by name.
+  #
+  # ```
+  # tuple = {foo: 1, bar: 2, baz: 3}
+  # tuple.sorted_keys # => {:bar, :baz, :foo}
+  # ```
+  def sorted_keys
     {% begin %}
       Tuple.new(
         {% for key in T.keys.sort %}
@@ -264,7 +312,7 @@ struct NamedTuple
     false
   end
 
-  # ditto
+  # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
       return true if {{key.stringify}} == key
@@ -278,7 +326,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_s # => %({name: "Crystal", year: 2011})
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     {% for key, value, i in T %}
       {% if i > 0 %}
@@ -442,7 +490,7 @@ struct NamedTuple
   # ```
   def to_h
     {% if T.size == 0 %}
-      {% raise "Can't convert an empty NamedTuple to a Hash" %}
+      {} of NoReturn => NoReturn
     {% else %}
       {
         {% for key in T %}
@@ -492,7 +540,7 @@ struct NamedTuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : NamedTuple)
     return false unless sorted_keys == other.sorted_keys
 

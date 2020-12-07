@@ -45,7 +45,7 @@ class Crystal::Call
       return recalculate_lib_call obj_type
     end
 
-    # Check if it's call inside LibFoo
+    # Check if its call is inside LibFoo
     # (can happen when assigning the call to a constant)
     if !obj && (lib_type = scope()).is_a?(LibType)
       return recalculate_lib_call lib_type
@@ -53,7 +53,27 @@ class Crystal::Call
 
     check_not_lib_out_args
 
+    # We can't type a call if any argument has a NoReturn type
+    #
+    # Note: we could make `NoReturn` match any type and instantiate methods,
+    # but it's a bit pointless because the call will never be made if we got
+    # there with something that's NoReturn.
+    #
+    # The only problem is that we might be missing out some errors, for example:
+    #
+    # ```
+    # def foo(x, y : Int32)
+    # end
+    #
+    # x = exit
+    #
+    # # Here the second argument should produce an error, but it doesn't
+    # foo(x, "y")
+    # ```
+    #
+    # So this is definitely a tradeoff.
     return if args.any? &.type?.try &.no_return?
+    return if named_args.try &.any? &.value.type?.try &.no_return?
 
     return unless obj_and_args_types_set?
 
@@ -107,7 +127,15 @@ class Crystal::Call
     else
       arg_types = args.map(&.type(with_literals: with_literals))
       named_args_types = NamedArgumentType.from_args(named_args, with_literals)
-      lookup_matches_without_splat arg_types, named_args_types, with_literals
+      matches = lookup_matches_without_splat arg_types, named_args_types, with_literals
+
+      # If we checked for automatic casts, see if an ambiguous call was produced
+      if with_literals
+        arg_types.each &.check_restriction_exception
+        named_args_types.try &.each &.type.check_restriction_exception
+      end
+
+      matches
     end
   end
 
@@ -217,7 +245,7 @@ class Crystal::Call
     matches = lookup_matches_checking_expansion(owner, signature, with_literals: with_literals)
 
     if matches.empty? && owner.class? && owner.abstract?
-      matches = owner.virtual_type.lookup_matches(signature)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
@@ -226,34 +254,34 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil
+    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents, with_literals: with_literals)
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
     if matches.empty? && !obj && owner != program && search_in_toplevel
-      program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
+      program_matches = lookup_matches_with_signature(program, signature, search_in_parents, with_literals)
       matches = program_matches unless program_matches.empty?
     end
 
-    if matches.empty? && owner.class? && owner.abstract? && name != "super"
-      matches = owner.virtual_type.lookup_matches(signature)
+    if matches.empty? && owner.class? && owner.abstract? && !super?
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
       defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
-        matches = owner.lookup_matches(signature)
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       elsif with_scope = @with_scope
         defined_method_missing = with_scope.check_method_missing(signature, self)
         if defined_method_missing
-          matches = with_scope.lookup_matches(signature)
+          matches = with_scope.lookup_matches(signature, analyze_all: with_literals)
           @uses_with_scope = true
         end
       end
@@ -265,7 +293,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_literals: with_literals)
       end
     end
@@ -280,20 +308,20 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type
+    instantiate signature, matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
-    # triggering a virtual lookup. But the context of lookup must be preseved.
+    # triggering a virtual lookup. But the context of lookup must be preserved.
     if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
         if search_in_parents
-          target.lookup_matches signature
+          target.lookup_matches(signature, analyze_all: with_literals)
         else
-          target.lookup_matches_without_parents signature
+          target.lookup_matches_without_parents(signature, analyze_all: with_literals)
         end
       end
       matches.each do |match|
@@ -302,36 +330,38 @@ class Crystal::Call
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents, with_literals) }
     end
   end
 
-  def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents, with_literals)
     location = self.location
     if location && (filename = location.original_filename)
-      matches = owner.lookup_private_matches filename, signature
+      matches = owner.lookup_private_matches(filename, signature, analyze_all: with_literals)
     end
 
     if matches
       if matches.empty?
-        matches = owner.lookup_matches signature
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       end
     else
-      matches = owner.lookup_matches signature
+      matches = owner.lookup_matches(signature, analyze_all: with_literals)
     end
 
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature, search_in_parents)
+  def lookup_matches_with_signature(owner, signature, search_in_parents, with_literals)
     if search_in_parents
-      owner.lookup_matches signature
+      owner.lookup_matches(signature, analyze_all: with_literals)
     else
-      owner.lookup_matches_without_parents signature
+      owner.lookup_matches_without_parents(signature, analyze_all: with_literals)
     end
   end
 
-  def instantiate(matches, owner, self_type)
+  def instantiate(signature, matches, owner, self_type, with_literals)
+    matches.each &.remove_literals if with_literals
+
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
@@ -472,7 +502,6 @@ class Crystal::Call
       in_bounds = (0 <= index < instance_type.size)
       if nilable || in_bounds
         indexer_def = yield instance_type, (in_bounds ? index : -1)
-        arg_types.map!(&.remove_literal)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       elsif instance_type.size == 0
@@ -485,25 +514,20 @@ class Crystal::Call
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    arg = args.first
-
-    case arg
+    case arg = args.first
     when SymbolLiteral, StringLiteral
       name = arg.value
-    end
-
-    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
-        arg_types.map!(&.remove_literal)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
+    else
+      nil
     end
-    nil
   end
 
   def replace_splats
@@ -627,7 +651,6 @@ class Crystal::Call
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
     context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
-    arg_types.map!(&.remove_literal)
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
@@ -639,7 +662,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
@@ -672,6 +695,8 @@ class Crystal::Call
         return result
       when Type::DefInMacroLookup
         return nil
+      else
+        # Check next target
       end
     end
   end
@@ -744,23 +769,23 @@ class Crystal::Call
       output = block_arg_restriction.output
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
-      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
-      block_arg_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
-      unless block_arg_type.is_a?(ProcInstanceType)
-        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
+      # is valid too only if Foo is an alias/typedef that refers to a FunctionType
+      block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
+      unless block_arg_restriction_type.is_a?(ProcInstanceType)
+        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
         return nil, nil
       end
 
-      yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
+      yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
         Var.new("var#{i}", input)
       end
-      output = block_arg_type.return_type
+      output = block_arg_restriction_type.return_type
       output_type = output
       output_type = program.nil if output_type.void?
     end
 
     if yield_vars
-      # Check if tuple unpkacing is needed
+      # Check if tuple unpacking is needed
       if yield_vars.size == 1 &&
          (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
          block.args.size > 1
@@ -795,7 +820,7 @@ class Crystal::Call
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
-          Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
+          Crystal.check_type_can_be_stored(output, output_type, "can't use #{output_type} as a block return type")
           output_type = output_type.virtual_type
         end
       end
@@ -951,7 +976,7 @@ class Crystal::Call
   end
 
   private def cant_infer_block_return_type
-    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
+    raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
   end
 
   private def lookup_node_type(context, node)
@@ -1112,5 +1137,13 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+  end
+
+  def super?
+    !obj && name == "super"
+  end
+
+  def previous_def?
+    !obj && name == "previous_def"
   end
 end

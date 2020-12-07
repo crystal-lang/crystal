@@ -48,6 +48,8 @@ module YAML
   # To change how individual instance variables are parsed and serialized, the annotation `YAML::Field`
   # can be placed on the instance variable. Annotating property, getter and setter macros is also allowed.
   # ```
+  # require "yaml"
+  #
   # class A
   #   include YAML::Serializable
   #
@@ -57,14 +59,18 @@ module YAML
   # ```
   #
   # `YAML::Field` properties:
-  # * **ignore**: if `true` skip this field in seriazation and deserialization (by default false)
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
+  # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the yaml object (by default the name of the instance variable)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::PullParser)` and `to_yaml(value, YAML::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
-  # * **presense**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_yaml(YAML::ParseContext, YAML::Nodes::Node)` and `to_yaml(value, YAML::Nodes::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
   #
   # Deserialization also respects default values of variables:
   # ```
+  # require "yaml"
+  #
   # struct A
   #   include YAML::Serializable
   #   @a : Int32
@@ -83,6 +89,8 @@ module YAML
   # document will be stored in a `Hash(String, YAML::Any)`. On serialization, any keys inside yaml_unmapped
   # will be serialized appended to the current yaml object.
   # ```
+  # require "yaml"
+  #
   # struct A
   #   include YAML::Serializable
   #   include YAML::Serializable::Unmapped
@@ -100,12 +108,23 @@ module YAML
   # * **emit_nulls**: if `true`, emits a `null` value for all nilable properties (by default nulls are not emitted)
   #
   # ```
+  # require "yaml"
+  #
   # @[YAML::Serializable::Options(emit_nulls: true)]
   # class A
   #   include YAML::Serializable
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Discriminator field
+  #
+  # A very common YAML serialization strategy for handling different objects
+  # under a same hierarchy is to use a discriminator field. For example in
+  # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
+  # field, and the rest of the fields, and their meaning, depend on its value.
+  #
+  # You can use `YAML::Serializable.use_yaml_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -115,6 +134,10 @@ module YAML
       # so it overloads well with other possible initializes
 
       def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        new_from_yaml_node(ctx, node)
+      end
+
+      private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
@@ -123,27 +146,27 @@ module YAML
 
         ctx.record_anchor(node, instance)
 
-        instance.initialize(ctx, node, nil)
+        instance.initialize(__context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-          super
+          new_from_yaml_node(ctx, node)
         end
       end
     end
 
-    def initialize(ctx : YAML::ParseContext, node : ::YAML::Nodes::Node, dummy : Nil)
+    def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -172,32 +195,28 @@ module YAML
 
             key = key_node.value
 
-            {% if properties.size > 0 %}
-              case key
-              {% for name, value in properties %}
-                when {{value[:key]}}
-                  %found{name} = true
-                  begin
-                    %var{name} =
-                      {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
+            case key
+            {% for name, value in properties %}
+              when {{value[:key]}}
+                %found{name} = true
+                begin
+                  %var{name} =
+                    {% if value[:nilable] || value[:has_default] %} YAML::Schema::Core.parse_null_or(value_node) { {% end %}
 
-                      {% if value[:converter] %}
-                        {{value[:converter]}}.from_yaml(ctx, value_node)
-                      {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                        {{value[:type]}}.new(ctx, value_node)
-                      {% else %}
-                        ::Union({{value[:type]}}).new(ctx, value_node)
-                      {% end %}
+                    {% if value[:converter] %}
+                      {{value[:converter]}}.from_yaml(ctx, value_node)
+                    {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                      {{value[:type]}}.new(ctx, value_node)
+                    {% else %}
+                      ::Union({{value[:type]}}).new(ctx, value_node)
+                    {% end %}
 
-                    {% if value[:nilable] || value[:has_default] %} } {% end %}
-                  end
-              {% end %}
-              else
-                on_unknown_yaml_attribute(ctx, key, key_node, value_node)
-              end
-            {% else %}
-              on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+                  {% if value[:nilable] || value[:has_default] %} } {% end %}
+                end
             {% end %}
+            else
+              on_unknown_yaml_attribute(ctx, key, key_node, value_node)
+            end
           end
         when YAML::Nodes::Scalar
           if node.value.empty? && node.style.plain? && !node.tag
@@ -223,7 +242,9 @@ module YAML
               @{{name}} = %var{name}
             {% end %}
           {% elsif value[:has_default] %}
-            @{{name}} = %var{name}.nil? ? {{value[:default]}} : %var{name}
+            if %found{name} && !%var{name}.nil?
+              @{{name}} = %var{name}
+            end
           {% else %}
             @{{name}} = (%var{name}).as({{value[:type]}})
           {% end %}
@@ -253,7 +274,7 @@ module YAML
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::YAML::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
                 type:      ivar.type,
@@ -313,6 +334,82 @@ module YAML
           key.to_yaml(yaml)
           value.to_yaml(yaml)
         end
+      end
+    end
+
+    # Tells this class to decode YAML by using a field as a discriminator.
+    #
+    # - *field* must be the field name to use as a discriminator
+    # - *mapping* must be a hash or named tuple where each key-value pair
+    #   maps a discriminator value to a class to deserialize
+    #
+    # For example:
+    #
+    # ```
+    # require "yaml"
+    #
+    # abstract class Shape
+    #   include YAML::Serializable
+    #
+    #   use_yaml_discriminator "type", {point: Point, circle: Circle}
+    #
+    #   property type : String
+    # end
+    #
+    # class Point < Shape
+    #   property x : Int32
+    #   property y : Int32
+    # end
+    #
+    # class Circle < Shape
+    #   property x : Int32
+    #   property y : Int32
+    #   property radius : Int32
+    # end
+    #
+    # Shape.from_yaml(%(
+    #   type: point
+    #   x: 1
+    #   y: 2
+    # )) # => #<Point:0x10373ae20 @type="point", @x=1, @y=2>
+    #
+    # Shape.from_yaml(%(
+    #   type: circle
+    #   x: 1
+    #   y: 2
+    #   radius: 3
+    # )) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
+    # ```
+    macro use_yaml_discriminator(field, mapping)
+      {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
+        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+      {% end %}
+
+      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+        ctx.read_alias(node, \{{@type}}) do |obj|
+          return obj
+        end
+
+        unless node.is_a?(YAML::Nodes::Mapping)
+          node.raise "expected YAML mapping, not #{node.class}"
+        end
+
+        node.each do |key, value|
+          next unless key.is_a?(YAML::Nodes::Scalar) && value.is_a?(YAML::Nodes::Scalar)
+          next unless key.value == {{field.id.stringify}}
+
+          discriminator_value = value.value
+          case discriminator_value
+          {% for key, value in mapping %}
+            when {{key.id.stringify}}
+              return {{value.id}}.new(ctx, node)
+          {% end %}
+          else
+            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
+          end
+        end
+
+        node.raise "Missing YAML discriminator field '{{field.id}}'"
       end
     end
   end

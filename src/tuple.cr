@@ -66,10 +66,10 @@ struct Tuple
   include Indexable(Union(*T))
   include Comparable(Tuple)
 
-  # Creates a tuple that will contain the given arguments.
+  # Creates a tuple that will contain the given values.
   #
   # This method is useful in macros and generic code because with it you can
-  # creates empty tuples, something that you can't do with a tuple literal.
+  # create empty tuples, something that you can't do with a tuple literal.
   #
   # ```
   # Tuple.new(1, "hello", 'x') #=> {1, "hello", 'x'}
@@ -84,8 +84,8 @@ struct Tuple
   # Creates a tuple from the given array, with elements casted to the given types.
   #
   # ```
-  # Tuple(String, Int64).from(["world", 2])       # => {"world", 2}
-  # Tuple(String, Int64).from(["world", 2]).class # => {String, Int64}
+  # Tuple(String, Int64).from(["world", 2_i64])       # => {"world", 2_i64}
+  # Tuple(String, Int64).from(["world", 2_i64]).class # => Tuple(String, Int64)
   # ```
   #
   # See also: `#from`.
@@ -101,11 +101,13 @@ struct Tuple
   # This allows you to easily pass an array as individual arguments to a method.
   #
   # ```
+  # require "json"
+  #
   # def speak_about(thing : String, n : Int64)
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%(["world", 2])).as_a
+  # data = JSON.parse(%(["world", 2])).as_a.map(&.raw)
   # speak_about(*{String, Int64}.from(data)) # => "I see 2 worlds"
   # ```
   def from(array : Array)
@@ -122,7 +124,7 @@ struct Tuple
     {% end %}
   end
 
-  def unsafe_at(index : Int)
+  def unsafe_fetch(index : Int)
     self[index]
   end
 
@@ -205,7 +207,7 @@ struct Tuple
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
-  # and their elements are equal to each other when  compared with `==`.
+  # and their elements are equal to each other when compared with `==`.
   #
   # ```
   # t1 = {1, "hello"}
@@ -222,7 +224,7 @@ struct Tuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Tuple)
     return false unless size == other.size
 
@@ -269,13 +271,13 @@ struct Tuple
     true
   end
 
-  # Implements the comparison operator.
+  # The comparison operator.
   #
-  # Each object in each tuple is compared (using the `<=>` operator).
+  # Each object in each tuple is compared using the `<=>` operator.
   #
   # Tuples are compared in an "element-wise" manner; the first element of this tuple is
   # compared with the first one of *other* using the `<=>` operator, then each of the second elements,
-  # etc. As soon as the result of any such comparison is non zero
+  # etc. As soon as the result of any such comparison is non-zero
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
   # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
@@ -284,11 +286,9 @@ struct Tuple
   #
   # ```
   # {"a", "a", "c"} <=> {"a", "b", "c"} # => -1
-  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => +1
+  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => 1
   # {1, 2} <=> {1, 2.0}                 # => 0
   # ```
-  #
-  # See also: `Object#<=>`.
   def <=>(other : self)
     {% for i in 0...T.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
@@ -297,7 +297,7 @@ struct Tuple
     0
   end
 
-  # ditto
+  # :ditto:
   def <=>(other : Tuple)
     min_size = Math.min(size, other.size)
     min_size.times do |i|
@@ -372,8 +372,17 @@ struct Tuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
+  end
+
+  def to_a
+    Array(Union(*T)).build(size) do |buffer|
+      {% for i in 0...T.size %}
+        buffer[{{i}}] = self[{{i}}]
+      {% end %}
+      size
+    end
   end
 
   # Appends a string representation of this tuple to the given `IO`.
@@ -382,9 +391,9 @@ struct Tuple
   # tuple = {1, "hello"}
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 
@@ -414,11 +423,14 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
   # ```
-  def map_with_index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], {{i}}),
+          (yield self[{{i}}], offset + {{i}}),
         {% end %}
       )
     {% end %}

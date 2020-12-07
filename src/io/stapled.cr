@@ -15,10 +15,10 @@ class IO::Stapled < IO
 
   # Returns `true` if this `IO` is closed.
   #
-  # Underlying ÌO`s might have a different status.
+  # Underlying `IO`s might have a different status.
   getter? closed : Bool = false
 
-  # Creates a new `IO::Stapled` which reads from *reader*  and writes to *writer*-
+  # Creates a new `IO::Stapled` which reads from *reader* and writes to *writer*.
   def initialize(@reader : IO, @writer : IO, @sync_close : Bool = false)
   end
 
@@ -43,7 +43,7 @@ class IO::Stapled < IO
     @reader.gets(delimiter, limit, chomp)
   end
 
-  # Peeks into *reader*.
+  # Peeks into `reader`.
   def peek : Bytes?
     check_open
 
@@ -57,8 +57,15 @@ class IO::Stapled < IO
     @reader.skip(bytes_count)
   end
 
+  # Skips `reader`.
+  def skip_to_end : Nil
+    check_open
+
+    @reader.skip_to_end
+  end
+
   # Writes a byte to `writer`.
-  def write_byte(byte : UInt8) : Nil
+  def write_byte(byte : UInt8)
     check_open
 
     @writer.write_byte(byte)
@@ -68,10 +75,12 @@ class IO::Stapled < IO
   def write(slice : Bytes) : Nil
     check_open
 
+    return if slice.empty?
+
     @writer.write(slice)
   end
 
-  # `Flushes `writer`.
+  # Flushes `writer`.
   def flush : self
     check_open
 
@@ -80,9 +89,9 @@ class IO::Stapled < IO
     self
   end
 
-  # Closes this ÌO`.
+  # Closes this `IO`.
   #
-  # If `sync_close?` is `true`it will also close the underlying ÌO`s.
+  # If `sync_close?` is `true`, it will also close the underlying `IO`s.
   def close : Nil
     return if @closed
     @closed = true
@@ -96,7 +105,7 @@ class IO::Stapled < IO
   # Creates a pair of bidirectional pipe endpoints connected with each other
   # and passes them to the given block.
   #
-  # Both endpoints and the underlying ÌO`s are closed after the block
+  # Both endpoints and the underlying `IO`s are closed after the block
   # (even if `sync_close?` is `false`).
   def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
     IO.pipe(read_blocking, write_blocking) do |a_read, a_write|

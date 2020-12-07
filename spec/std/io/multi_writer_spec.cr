@@ -1,4 +1,5 @@
 require "spec"
+require "../spec_helper"
 
 describe "IO::MultiWriter" do
   describe "#write" do
@@ -47,6 +48,24 @@ describe "IO::MultiWriter" do
       writer.close
 
       io.closed?.should eq(true)
+    end
+  end
+
+  describe "#flush" do
+    it "writes to IO and File" do
+      with_tempfile("multiple_writer_spec") do |path|
+        io = IO::Memory.new
+
+        File.open(path, "w") do |file|
+          writer = IO::MultiWriter.new(io, file)
+
+          writer.puts "foo bar"
+          writer.flush
+        end
+
+        io.to_s.should eq("foo bar\n")
+        File.read(path).should eq("foo bar\n")
+      end
     end
   end
 end

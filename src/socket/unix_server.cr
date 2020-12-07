@@ -23,7 +23,7 @@ class UNIXServer < UNIXSocket
 
   # Creates a named UNIX socket, listening on a filesystem pathname.
   #
-  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # Always deletes any existing filesystem pathname first, in order to cleanup
   # any leftover socket file.
   #
   # The server is of stream type by default, but this can be changed for
@@ -31,10 +31,10 @@ class UNIXServer < UNIXSocket
   # ```
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
-  def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
+  def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path)) do |error|
+    bind(UNIXAddress.new(path), path) do |error|
       close(delete: false)
       raise error
     end
@@ -43,6 +43,11 @@ class UNIXServer < UNIXSocket
       close
       raise error
     end
+  end
+
+  # Creates a UNIXServer from an already configured raw file descriptor
+  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+    super(fd: fd, type: type, path: @path)
   end
 
   # Creates a new UNIX server and yields it to the block. Eventually closes the
@@ -64,7 +69,7 @@ class UNIXServer < UNIXSocket
   # this method.
   def accept? : UNIXSocket?
     if client_fd = accept_impl
-      sock = UNIXSocket.new(client_fd, type, @path)
+      sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
       sock.sync = sync?
       sock
     end

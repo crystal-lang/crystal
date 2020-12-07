@@ -75,10 +75,10 @@ describe "Deque" do
     it "works the same as array when inserting at 1/8 size and deleting at 3/4 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size / 8, i) }
+          step { c.insert(c.size // 8, i) }
         end
         1000.times do
-          step { c.delete_at(c.size * 3 / 4) }
+          step { c.delete_at(c.size * 3 // 4) }
         end
       end
     end
@@ -86,10 +86,10 @@ describe "Deque" do
     it "works the same as array when inserting at 3/4 size and deleting at 1/8 size" do
       DequeTester.new.test do
         1000.times do
-          step { c.insert(c.size * 3 / 4, i) }
+          step { c.insert(c.size * 3 // 4, i) }
         end
         1000.times do
-          step { c.delete_at(c.size / 8) }
+          step { c.delete_at(c.size // 8) }
         end
       end
     end
@@ -145,6 +145,15 @@ describe "Deque" do
       (b == c).should be_false
       (a == d).should be_false
     end
+
+    it "compares other types" do
+      a = Deque{1, 2, 3}
+      b = Deque{:foo, :bar}
+      c = "other type"
+      (a == b).should be_false
+      (b == c).should be_false
+      (a == c).should be_false
+    end
   end
 
   describe "+" do
@@ -176,10 +185,6 @@ describe "Deque" do
       Deque{1, 2, 3}[2]?.should eq(3)
       Deque{1, 2, 3}[3]?.should be_nil
     end
-
-    it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
-    end
   end
 
   describe "[]=" do
@@ -209,6 +214,13 @@ describe "Deque" do
     b.should eq(a)
     a.should_not be(b)
     a[0].should_not be(b[0])
+  end
+
+  it "does clone with recursive type" do
+    deq = Deque(RecursiveDeque).new
+    deq << deq
+    clone = deq.clone
+    clone.should be(clone.first)
   end
 
   describe "concat" do
@@ -319,7 +331,7 @@ describe "Deque" do
     end
 
     it "raises when empty" do
-      expect_raises IndexError do
+      expect_raises Enumerable::EmptyError do
         Deque(Int32).new.first
       end
     end
@@ -452,6 +464,24 @@ describe "Deque" do
     end
   end
 
+  describe "reject!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject! &.even?
+      a2.should eq(Deque{1, 3, 5})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject!(2..4)
+      a2.should eq(Deque{1, 5})
+      a2.should be(a1)
+    end
+  end
+
   describe "rotate!" do
     it "rotates" do
       a = Deque{1, 2, 3, 4, 5}
@@ -483,6 +513,24 @@ describe "Deque" do
       a = Deque{1}
       a.rotate!
       a.should eq(Deque{1})
+    end
+  end
+
+  describe "select!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select! &.even?
+      a2.should eq(Deque{2, 4})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select!(2..4)
+      a2.should eq(Deque{2, 3, 4})
+      a2.should be(a1)
     end
   end
 
@@ -549,7 +597,7 @@ describe "Deque" do
 
   describe "to_s" do
     it "does to_s" do
-      it { Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}") }
+      Deque{1, 2, 3}.to_s.should eq("Deque{1, 2, 3}")
     end
 
     it "does with recursive" do
@@ -574,9 +622,6 @@ describe "Deque" do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(1)
     end
 
     it "cycles" do
@@ -603,9 +648,6 @@ describe "Deque" do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0)
     end
 
     it "works while modifying deque" do
@@ -628,9 +670,6 @@ describe "Deque" do
       iter.next.should eq(2)
       iter.next.should eq(1)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(3)
     end
   end
 

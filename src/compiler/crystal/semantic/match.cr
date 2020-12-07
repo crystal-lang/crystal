@@ -117,6 +117,11 @@ module Crystal
 
     def initialize(@def, @arg_types, @context, @named_arg_types = nil)
     end
+
+    def remove_literals
+      @arg_types.map!(&.remove_literal)
+      @named_arg_types.try &.map! { |arg| NamedArgumentType.new(arg.name, arg.type.remove_literal) }
+    end
   end
 
   struct Matches
@@ -153,6 +158,10 @@ module Crystal
 
     def size
       @matches.try(&.size) || 0
+    end
+
+    def [](*args)
+      Matches.new(@matches.try &.[](*args), @cover, @owner, @success)
     end
   end
 end

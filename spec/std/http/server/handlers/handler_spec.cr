@@ -1,5 +1,5 @@
 require "spec"
-require "http/server"
+require "http/server/handler"
 
 private class EmptyHTTPHandler
   include HTTP::Handler
@@ -23,6 +23,6 @@ describe HTTP::Handler do
     io.rewind
     response = HTTP::Client::Response.from_io(io)
     response.status_code.should eq(404)
-    response.body.should eq("Not Found\n")
+    response.body.should eq("404 Not Found\n")
   end
 end
