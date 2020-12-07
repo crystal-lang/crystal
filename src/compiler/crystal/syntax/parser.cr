@@ -4126,6 +4126,10 @@ module Crystal
         block = parse_block(block)
       end
 
+      if block && block_arg
+        raise "can't use captured and non-captured blocks together", location
+      end
+
       node =
         if block || block_arg || global
           call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
@@ -4138,7 +4142,7 @@ module Crystal
             if maybe_var && args.size == 0
               Var.new(name)
             else
-              call = Call.new(nil, name, args, nil, block_arg, named_args, global)
+              call = Call.new(nil, name, args, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
@@ -4154,11 +4158,11 @@ module Crystal
               end
               Var.new(name)
             else
-              if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+              if !force_call && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              call = Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global)
+              call = Call.new(nil, name, [] of ASTNode, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
