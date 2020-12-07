@@ -269,6 +269,8 @@ class HTTP::Request
       host = header
     else
       port = port.to_i?(whitespace: false)
+      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
+      # win32
       unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
         # what we identified as port is not valid, so use the entire header
         host = header
