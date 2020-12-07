@@ -11,6 +11,9 @@ module Spec
     DIFF_COMMANDS.each.compact_map { |cmd| check_diff_command(cmd) }.first?
   end
 
+  # A flag whether it uses diff on generating a expectation message.
+  class_property? use_diff : Bool { diff_command != nil }
+
   # Checks the given `diff` command works.
   # It takes an array of strings as `diff` command and options,
   # and it returns a new array with resolved path and options if it works,
@@ -24,13 +27,13 @@ module Spec
       tmp_file = File.tempfile { |f| f.puts "check_diff" }
 
       # Try to invoke `diff` against a temporary file.
-      process = Process.new(name, opts + [tmp_file.path, tmp_file.path], output: Process::Redirect::Pipe)
-      output = process.output.gets_to_end.chomp
-      status = process.wait
-
       # When the `diff` exists with success status and its output is empty,
       # we assume the `diff` command works.
-      return unless status.success? && output.empty?
+      output = String.build do |io|
+        status = Process.run(name, opts + [tmp_file.path, tmp_file.path], output: io)
+        return unless status.success?
+      end
+      return unless output.empty?
     ensure
       # Clean up temporary files!
       tmp_file.try &.delete
@@ -63,6 +66,8 @@ module Spec
   # Compute the difference between two strings *expected* and *actual*
   # by using `diff` command.
   def self.diff(expected, actual)
+    return unless Spec.use_diff?
+
     # If the diff command is available and outputs contain a newline,
     # then it computes diff of them.
     diff_command = Spec.diff_command
@@ -75,11 +80,11 @@ module Spec
       actual_file = File.tempfile("actual") { |f| f.puts actual }
 
       # Invoke `diff` command and fix up its output.
-      process = Process.new(diff_command_name, diff_command_opts + [expected_file.path, actual_file.path], output: Process::Redirect::Pipe)
-      output = process.output.gets_to_end.chomp
-      process.wait
+      output = String.build do |io|
+        Process.run(diff_command_name, diff_command_opts + [expected_file.path, actual_file.path], output: io)
+      end
       # Remove `--- expected` and `+++ actual` lines.
-      output.gsub(/^(-{3}|\+{3}|diff --\w+|index) .+?\n/m, "")
+      output.chomp.gsub(/^(-{3}|\+{3}|diff --\w+|index) .+?\n/m, "")
     ensure
       # Clean up temporary files!
       expected_file.try &.delete
