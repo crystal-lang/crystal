@@ -167,7 +167,7 @@ struct StaticArray(T, N)
   # array.fill(2)                       # => StaticArray[2, 2, 2]
   # array                               # => StaticArray[2, 2, 2]
   # ```
-  def fill(value : T)
+  def fill(value : T) : self
     {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
@@ -186,7 +186,7 @@ struct StaticArray(T, N)
   # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
   # array                    # => StaticArray[0, 1, 4, 9]
   # ```
-  def fill
+  def fill(& : Int32 -> T) : self
     size.times do |i|
       to_unsafe[i] = yield i
     end

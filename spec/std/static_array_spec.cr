@@ -79,7 +79,7 @@ describe "StaticArray" do
     a.to_s.should eq("StaticArray[1, 2, 3]")
   end
 
-  it "fills" do
+  it "does #fill, without block" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.fill(0).should eq(StaticArray[0, 0, 0])
     a.should eq(StaticArray[0, 0, 0])
@@ -87,7 +87,7 @@ describe "StaticArray" do
     a.should eq(StaticArray[2, 2, 2])
   end
 
-  it "fills, with block" do
+  it "does #fill, with block" do
     a = StaticArray(Int32, 4).new { |i| i + 1 }
     a.fill { |i| i * i }.should eq(StaticArray[0, 1, 4, 9])
     a.should eq(StaticArray[0, 1, 4, 9])
