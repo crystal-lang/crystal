@@ -8,12 +8,26 @@
 # directory, which usually is just `require "spec"` but could
 # be anything else (for example the `minitest` shard).
 
+# Gain access to OptionParser for spec runner to include it in the usage
+# instructions.
+require "spec/cli"
+
 class Crystal::Command
   private def spec
     compiler = new_compiler
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        puts
+
+        runtime_options = Spec.option_parser
+        runtime_options.banner = "Runtime options (passed to spec runner):"
+        puts runtime_options
+        exit
+      end
     end
 
     # Assume spec files end with ".cr" and optionally with a colon and a number

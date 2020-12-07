@@ -19,8 +19,6 @@ module Spec
     pending: '*',
   }
 
-  @@use_colors = true
-
   # :nodoc:
   def self.color(str, status)
     if use_colors?
@@ -28,15 +26,6 @@ module Spec
     else
       str
     end
-  end
-
-  # :nodoc:
-  def self.use_colors?
-    @@use_colors
-  end
-
-  # :nodoc:
-  def self.use_colors=(@@use_colors)
   end
 
   # :nodoc:
@@ -70,46 +59,6 @@ module Spec
   end
 
   # :nodoc:
-  class_getter randomizer_seed : UInt64?
-  class_getter randomizer : Random::PCG32?
-
-  # :nodoc:
-  def self.order=(mode)
-    seed =
-      case mode
-      when "default"
-        nil
-      when "random"
-        Random::Secure.rand(1..99999).to_u64 # 5 digits or less for simplicity
-      when UInt64
-        mode
-      else
-        raise ArgumentError.new("order must be either 'default', 'random', or a numeric seed value")
-      end
-
-    @@randomizer_seed = seed
-    @@randomizer = seed ? Random::PCG32.new(seed) : nil
-  end
-
-  # :nodoc:
-  def self.pattern=(pattern)
-    @@pattern = Regex.new(Regex.escape(pattern))
-  end
-
-  # :nodoc:
-  def self.line=(@@line : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest=(@@slowest : Int32)
-  end
-
-  # :nodoc:
-  def self.slowest
-    @@slowest
-  end
-
-  # :nodoc:
   def self.to_human(span : Time::Span)
     total_milliseconds = span.total_milliseconds
     if total_milliseconds < 1
@@ -130,22 +79,6 @@ module Spec
     "#{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
   end
 
-  # :nodoc:
-  def self.add_location(file, line)
-    locations = @@locations ||= {} of String => Array(Int32)
-    lines = locations[File.expand_path(file)] ||= [] of Int32
-    lines << line
-  end
-
-  # :nodoc:
-  def self.add_tag(tag)
-    if anti_tag = tag.lchop?('~')
-      (@@anti_tags ||= Set(String).new) << anti_tag
-    else
-      (@@tags ||= Set(String).new) << tag
-    end
-  end
-
   record SplitFilter, remainder : Int32, quotient : Int32
 
   @@split_filter : SplitFilter? = nil
@@ -158,12 +91,6 @@ module Spec
       @@split_filter = nil
     end
   end
-
-  # :nodoc:
-  class_property? fail_fast = false
-
-  # :nodoc:
-  class_property? focus = false
 
   # Instructs the spec runner to execute the given block
   # before each spec in the spec suite.
