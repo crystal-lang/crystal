@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 private class SpecException < Exception
   getter value : Int32
@@ -20,7 +20,7 @@ describe "Spec matchers" do
       1.should eq(1)
     end
 
-    it "should raise an exception with diff when the values are long" do
+    pending_diff "should raise an exception with diff when the values are long" do
       xs = (1..100).to_a
       ys = xs[0...50] + [-1] + xs[50...100]
       msg = <<-MSG

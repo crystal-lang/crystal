@@ -1,4 +1,18 @@
-require "spec"
+require "../spec_helper"
+
+private def it_on_diff_and_no_diff(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, &block)
+  it(description, file, line, end_line, &block)
+
+  it("#{description} [no diff]", file, line, end_line) do
+    old_use_diff = Spec.use_diff
+    begin
+      Spec.use_diff = false
+      yield
+    ensure
+      Spec.use_diff = old_use_diff
+    end
+  end
+end
 
 describe "expectations" do
   describe "be" do
@@ -145,8 +159,8 @@ describe "expectations" do
   describe "Spec.diff" do
     it { Spec.diff("", "").should be_nil }
     it { Spec.diff("foo", "bar").should be_nil }
-    it { Spec.diff("foo\nbar", "foo\nbar").should eq("") }
-    it { Spec.diff("bar\nfoo", "foo\nbar").should eq(<<-DIFF) }
+    pending_diff { Spec.diff("foo\nbar", "foo\nbar").should eq("") }
+    pending_diff { Spec.diff("bar\nfoo", "foo\nbar").should eq(<<-DIFF) }
       @@ -1,2 +1,2 @@
       -bar
        foo
@@ -158,7 +172,7 @@ describe "expectations" do
     it { Spec.diff_values("", "").should be_nil }
     it { Spec.diff_values("foo", "bar").should be_nil }
 
-    it "shows diff of two long arrays" do
+    pending_diff "shows diff of two long arrays" do
       xs = (1..100).to_a
       ys = xs[0...50] + [-1] + xs[50...100]
       Spec.diff_values(xs, ys).should eq(<<-DIFF)
@@ -173,7 +187,7 @@ describe "expectations" do
        DIFF
     end
 
-    it "shows the message when the diff is empty" do
+    pending_diff "shows the message when the diff is empty" do
       xs = (1..100).to_a
       Spec.diff_values(xs, xs).should eq(<<-MSG)
         No visible difference in the `Array(Int32)#pretty_inspect` output.
