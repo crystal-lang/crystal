@@ -78,7 +78,22 @@ struct Tuple
   # {}                         # syntax error
   # ```
   def self.new(*args : *T)
-    args
+    {% if @type.name(generic_args: false) == "Tuple" %}
+      # deduced type vars
+      args
+    {% elsif @type.name(generic_args: false) == "Tuple()" %}
+      # special case: empty tuple
+      args
+    {% else %}
+      # explicitly provided type vars
+      {% begin %}
+        {
+          {% for i in 0...@type.size %}
+            args[{{ i }}].as(typeof(0.unsafe_as(self)[{{ i }}])),
+          {% end %}
+        }
+      {% end %}
+    {% end %}
   end
 
   # Creates a tuple from the given array, with elements casted to the given types.
