@@ -70,6 +70,16 @@ class String
   end
 end
 
+struct Path
+  def to_json(json : JSON::Builder)
+    @name.to_json(json)
+  end
+
+  def to_json_object_key
+    @name
+  end
+end
+
 struct Symbol
   def to_json(json : JSON::Builder)
     json.string(to_s)
@@ -156,7 +166,7 @@ struct Enum
 end
 
 struct Time
-  # Emits a string formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
+  # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just
@@ -169,20 +179,21 @@ struct Time
   end
 end
 
-# Converter to be used with `JSON.mapping`
+# Converter to be used with `JSON::Serializable`
 # to serialize the `Array(T)` elements with the custom converter.
 #
 # ```
 # require "json"
 #
-# class Timestamp
-#   JSON.mapping({
-#     values: {type: Array(Time), converter: JSON::ArrayConverter(Time::EpochConverter)},
-#   })
+# class TimestampArray
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: JSON::ArrayConverter(Time::EpochConverter))]
+#   property dates : Array(Time)
 # end
 #
-# timestamp = Timestamp.from_json(%({"dates":[1459859781,1567628762]}))
-# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp = TimestampArray.from_json(%({"dates":[1459859781,1567628762]}))
+# timestamp.dates   # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
 module JSON::ArrayConverter(Converter)
@@ -195,21 +206,22 @@ module JSON::ArrayConverter(Converter)
   end
 end
 
-# Converter to be used with `JSON.mapping`
+# Converter to be used with `JSON::Serializable`
 # to serialize the `Hash(K, V)` values elements with the custom converter.
 #
 # ```
 # require "json"
 #
-# class Timestamp
-#   JSON.mapping({
-#     values: {type: Hash(String, Time), converter: JSON::HashValueConverter(Time::EpochConverter)},
-#   })
+# class TimestampHash
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: JSON::HashValueConverter(Time::EpochConverter))]
+#   property birthdays : Hash(String, Time)
 # end
 #
-# timestamp = Timestamp.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
-# timestamp.values  # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
-# timestamp.to_json # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
+# timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
+# timestamp.birthdays # => {"foo" => 2016-04-05 12:36:21 UTC, "bar" => 2019-09-04 20:26:02 UTC)}
+# timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
 # ```
 module JSON::HashValueConverter(Converter)
   def self.to_json(values : Hash, builder : JSON::Builder)
@@ -223,7 +235,7 @@ module JSON::HashValueConverter(Converter)
   end
 end
 
-# Converter to be used with `JSON.mapping` and `YAML.mapping`
+# Converter to be used with `JSON::Serializable` and `YAML::Serializable`
 # to serialize a `Time` instance as the number of seconds
 # since the unix epoch. See `Time#to_unix`.
 #
@@ -231,9 +243,10 @@ end
 # require "json"
 #
 # class Person
-#   JSON.mapping({
-#     birth_date: {type: Time, converter: Time::EpochConverter},
-#   })
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: Time::EpochConverter)]
+#   property birth_date : Time
 # end
 #
 # person = Person.from_json(%({"birth_date": 1459859781}))
@@ -246,7 +259,7 @@ module Time::EpochConverter
   end
 end
 
-# Converter to be used with `JSON.mapping` and `YAML.mapping`
+# Converter to be used with `JSON::Serializable` and `YAML::Serializable`
 # to serialize a `Time` instance as the number of milliseconds
 # since the unix epoch. See `Time#to_unix_ms`.
 #
@@ -254,9 +267,10 @@ end
 # require "json"
 #
 # class Timestamp
-#   JSON.mapping({
-#     value: {type: Time, converter: Time::EpochMillisConverter},
-#   })
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: Time::EpochMillisConverter)]
+#   property value : Time
 # end
 #
 # timestamp = Timestamp.from_json(%({"value": 1459860483856}))
@@ -269,7 +283,7 @@ module Time::EpochMillisConverter
   end
 end
 
-# Converter to be used with `JSON.mapping` to read the raw
+# Converter to be used with `JSON::Serializable` to read the raw
 # value of a JSON object property as a `String`.
 #
 # It can be useful to read ints and floats without losing precision,
@@ -280,9 +294,10 @@ end
 # require "json"
 #
 # class Raw
-#   JSON.mapping({
-#     value: {type: String, converter: String::RawConverter},
-#   })
+#   include JSON::Serializable
+#
+#   @[JSON::Field(converter: String::RawConverter)]
+#   property value : String
 # end
 #
 # raw = Raw.from_json(%({"value": 123456789876543212345678987654321}))

@@ -68,9 +68,30 @@ class String
   end
 end
 
+struct Path
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    @name.to_yaml(yaml)
+  end
+end
+
 struct Number
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.scalar self.to_s
+  end
+end
+
+struct Float
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    infinite = self.infinite?
+    if infinite == 1
+      yaml.scalar(".inf")
+    elsif infinite == -1
+      yaml.scalar("-.inf")
+    elsif nan?
+      yaml.scalar(".nan")
+    else
+      yaml.scalar self.to_s
+    end
   end
 end
 
@@ -130,16 +151,17 @@ module Time::EpochMillisConverter
   end
 end
 
-# Converter to be used with `YAML.mapping`
+# Converter to be used with `YAML::Serializable`
 # to serialize the `Array(T)` elements with the custom converter.
 #
 # ```
 # require "yaml"
 #
 # class Timestamp
-#   YAML.mapping({
-#     values: {type: Array(Time), converter: YAML::ArrayConverter(Time::EpochConverter)},
-#   })
+#   include YAML::Serializable
+#
+#   @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+#   property values : Array(Time)
 # end
 #
 # timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))

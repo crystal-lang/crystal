@@ -28,26 +28,66 @@ class Process
     end
   end
 
+  private def self.is_executable_file?(path)
+    unless File.info?(path, follow_symlinks: true).try &.file?
+      return false
+    end
+    {% if flag?(:win32) %}
+      # This is *not* a temporary stub.
+      # Windows doesn't have "executable" metadata for files, so it also doesn't have files that are "not executable".
+      true
+    {% else %}
+      File.executable?(path)
+    {% end %}
+  end
+
   # Searches an executable, checking for an absolute path, a path relative to
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
-  def self.find_executable(name, path = ENV["PATH"]?, pwd = Dir.current)
-    if name.starts_with?(File::SEPARATOR)
-      return name
+  def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
+    find_executable_possibilities(Path.new(name), path, pwd) do |p|
+      if is_executable_file?(p)
+        return p.to_s
+      end
     end
-
-    if name.includes?(File::SEPARATOR)
-      return File.expand_path(name, pwd)
-    end
-
-    return unless path
-
-    path.split(PATH_DELIMITER).each do |path|
-      executable = File.join(path, name)
-      return executable if File.exists?(executable)
-    end
-
     nil
+  end
+
+  private def self.find_executable_possibilities(name, path, pwd)
+    return if name.to_s.empty?
+
+    {% if flag?(:win32) %}
+      # https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw#parameters
+      # > If the file name does not contain an extension, .exe is appended.
+      # See find_executable_spec.cr for cases this needs to match, based on CreateProcessW behavior.
+      basename = name.ends_with_separator? ? "" : name.basename
+      basename = "" if basename == name.anchor.to_s
+      if (basename.empty? ? !name.anchor : !basename.includes?("."))
+        name = Path.new("#{name}.exe")
+      end
+    {% end %}
+
+    if name.absolute?
+      yield name
+    end
+
+    # check if the name includes a separator
+    count_parts = 0
+    name.each_part do
+      count_parts += 1
+      break if count_parts > 1
+    end
+    has_separator = (count_parts > 1)
+
+    if {{ flag?(:win32) }} || has_separator
+      yield name.expand(pwd)
+    end
+
+    if path && !has_separator
+      path.split(PATH_DELIMITER).each do |path_entry|
+        yield Path.new(path_entry, name)
+      end
+    end
   end
 end
 
@@ -70,12 +110,26 @@ end
       String.new(buf)
     end
   end
-{% elsif flag?(:freebsd) %}
+{% elsif flag?(:freebsd) || flag?(:dragonfly) %}
   require "c/sysctl"
 
   class Process
     private def self.executable_path_impl
       mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC, LibC::KERN_PROC_PATHNAME, -1]
+      buf = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
+      size = LibC::SizeT.new(LibC::PATH_MAX)
+
+      if LibC.sysctl(mib, 4, buf, pointerof(size), nil, 0) == 0
+        String.new(buf, size - 1)
+      end
+    end
+  end
+{% elsif flag?(:netbsd) %}
+  require "c/sysctl"
+
+  class Process
+    private def self.executable_path_impl
+      mib = Int32[LibC::CTL_KERN, LibC::KERN_PROC_ARGS, -1, LibC::KERN_PROC_PATHNAME]
       buf = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
       size = LibC::SizeT.new(LibC::PATH_MAX)
 

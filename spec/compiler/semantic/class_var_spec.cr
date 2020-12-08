@@ -437,7 +437,7 @@ describe "Semantic: class var" do
       )) { int32 }
   end
 
-  it "doesn't error on recursive depdendency if var is nilable (#2943)" do
+  it "doesn't error on recursive dependency if var is nilable (#2943)" do
     assert_type(%(
       class Foo
         @@foo : Int32?

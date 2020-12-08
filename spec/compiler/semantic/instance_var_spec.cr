@@ -2582,7 +2582,7 @@ describe "Semantic: instance var" do
       )) { types["Bar"] }
   end
 
-  it "errors on udefined instance var and subclass calling super" do
+  it "errors on undefined instance var and subclass calling super" do
     assert_error %(
       class Foo
         def initialize(@x)
@@ -3106,7 +3106,7 @@ describe "Semantic: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
-  it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
+  it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
     assert_type(%(
       class Foo
         @x = 1
@@ -4591,7 +4591,7 @@ describe "Semantic: instance var" do
       )) { types["Foo"] }
   end
 
-  it "doesn't error if not initiliazed in macro def but outside it" do
+  it "doesn't error if not initialized in macro def but outside it" do
     assert_type(%(
       class Foo
         @x = 1
@@ -4921,7 +4921,7 @@ describe "Semantic: instance var" do
       )) { types["Baz"] }
   end
 
-  it "can guess the type from splat argument with splated type" do
+  it "can guess the type from splat argument with splatted type" do
     assert_type(%(
       class Foo
         def initialize(*@foo : *{Int32})
@@ -4936,7 +4936,7 @@ describe "Semantic: instance var" do
     )) { tuple_of([int32]) }
   end
 
-  it "can guess the type from splat argument with splated type variable" do
+  it "can guess the type from splat argument with splatted type variable" do
     assert_type(%(
       class Foo(T)
         def initialize(*@foo : *T)
@@ -4951,7 +4951,7 @@ describe "Semantic: instance var" do
     )) { tuple_of([int32, int32]) }
   end
 
-  it "cannot guess the type from splat argument with not splated type" do
+  it "cannot guess the type from splat argument with not splatted type" do
     assert_error %(
       class Foo
         def initialize(*@foo : Int32)
@@ -4967,7 +4967,7 @@ describe "Semantic: instance var" do
       "can't infer the type of instance variable '@foo' of Foo"
   end
 
-  it "can guess the type from double-splat argument with double-splated type" do
+  it "can guess the type from double-splat argument with double-splatted type" do
     assert_type(%(
       class Foo
         def initialize(**@foo : **{foo: Int32})
@@ -4982,7 +4982,7 @@ describe "Semantic: instance var" do
     )) { named_tuple_of({"foo": int32}) }
   end
 
-  it "can guess the type from double-splat argument with double-splated type variable" do
+  it "can guess the type from double-splat argument with double-splatted type variable" do
     assert_type(%(
       class Foo(T)
         def initialize(**@foo : **T)
@@ -4997,7 +4997,7 @@ describe "Semantic: instance var" do
     )) { named_tuple_of({"foo": int32, "bar": int32}) }
   end
 
-  it "cannot guess the type from double-splat argument with not double-splated type" do
+  it "cannot guess the type from double-splat argument with not double-splatted type" do
     assert_error %(
       class Foo
         def initialize(**@foo : Int32)

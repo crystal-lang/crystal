@@ -62,7 +62,7 @@ describe "Code gen: tuple" do
     run("
       struct Pointer
         def self.malloc(size : Int)
-          malloc(size.to_u64)
+          malloc(size.to_u64!)
         end
       end
 

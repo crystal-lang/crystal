@@ -15,45 +15,45 @@ module HTTP
     it "serialize GET" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/", headers
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with query params)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/greet?q=hello&name=world", headers
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with cookie)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
       request = Request.new "GET", "/", headers
       request.cookies << Cookie.new("foo", "bar")
 
       io = IO::Memory.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize GET (with cookies, from headers)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
       headers["Cookie"] = "foo=bar"
-      orignal_headers = headers.dup
+      original_headers = headers.dup
 
       request = Request.new "GET", "/", headers
 
@@ -73,7 +73,7 @@ module HTTP
       io.clear
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
-      headers.should eq(orignal_headers)
+      headers.should eq(original_headers)
     end
 
     it "serialize POST (with body)" do
@@ -300,10 +300,10 @@ module HTTP
       it "is true in HTTP/1.0 if `Connection: keep-alive` header is present" do
         headers = HTTP::Headers.new
         headers["Connection"] = "keep-alive"
-        orignal_headers = headers.dup
+        original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.0"
         request.keep_alive?.should be_true
-        headers.should eq(orignal_headers)
+        headers.should eq(original_headers)
       end
 
       it "is true by default in HTTP/1.1" do
@@ -314,10 +314,10 @@ module HTTP
       it "is false in HTTP/1.1 if `Connection: close` header is present" do
         headers = HTTP::Headers.new
         headers["Connection"] = "close"
-        orignal_headers = headers.dup
+        original_headers = headers.dup
         request = Request.new "GET", "/", headers: headers, version: "HTTP/1.1"
         request.keep_alive?.should be_false
-        headers.should eq(orignal_headers)
+        headers.should eq(original_headers)
       end
     end
 
@@ -408,7 +408,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.query.should eq("foo=not-bar&foo=baz&baz=qux")
+        request.query.should eq("foo=not-bar&baz=qux")
       end
 
       it "updates @resource when modified" do
@@ -416,7 +416,7 @@ module HTTP
         params = request.query_params
 
         params["foo"] = "not-bar"
-        request.resource.should eq("/api/v3/some/resource?foo=not-bar&foo=baz&baz=qux")
+        request.resource.should eq("/api/v3/some/resource?foo=not-bar&baz=qux")
       end
 
       it "updates serialized form when modified" do
@@ -427,7 +427,7 @@ module HTTP
 
         io = IO::Memory.new
         request.to_io(io)
-        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")
+        io.to_s.should eq("GET /api/v3/some/resource?foo=not-bar&baz=qux HTTP/1.1\r\n\r\n")
       end
 
       it "is affected when #query is modified" do

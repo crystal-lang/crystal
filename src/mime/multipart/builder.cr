@@ -184,6 +184,7 @@ module MIME::Multipart
       end
 
       @state = :FINISHED
+      @io.flush
     end
 
     private def fail(msg)

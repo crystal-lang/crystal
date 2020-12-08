@@ -44,13 +44,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with namspace" do
+  it "writes element with namespace" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1) { }
     end
   end
 
-  it "writes element with namspace, without block" do
+  it "writes element with namespace, without block" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1)
     end
@@ -170,19 +170,29 @@ describe XML::Builder do
     end
   end
 
-  it "writes cdata" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata("hello")
+  describe "#cdata" do
+    it "writes cdata" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("hello")
+        end
       end
     end
-  end
 
-  it "writes cdata with block" do
-    assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
-      element("foo") do
-        cdata do
-          text "hello"
+    it "escapes ]]> sequences" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[One]]]]><![CDATA[>Two]]]]><![CDATA[>Three]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata("One]]>Two]]>Three")
+        end
+      end
+    end
+
+    it "writes cdata with block" do
+      assert_built(%{<?xml version="1.0"?>\n<foo><![CDATA[hello]]></foo>\n}) do |xml|
+        element("foo") do
+          cdata do
+            text "hello"
+          end
         end
       end
     end

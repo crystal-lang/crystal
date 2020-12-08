@@ -58,7 +58,7 @@
 #     welcome = true
 #     parser.banner = "Usage: example welcome"
 #   end
-#   parser.on("-v", "--verbose", "Enabled servose output") { verbose = true }
+#   parser.on("-v", "--verbose", "Enabled verbose output") { verbose = true }
 #   parser.on("-h", "--help", "Show this help") do
 #     puts parser
 #     exit
@@ -203,16 +203,16 @@ class OptionParser
 
   private def parse_flag_definition(flag : String)
     case flag
-    when /--(\S+)\s+\[\S+\]/
+    when /\A--(\S+)\s+\[\S+\]\z/
       {"--#{$1}", FlagValue::Optional}
-    when /--(\S+)(\s+|\=)(\S+)?/
+    when /\A--(\S+)(\s+|\=)(\S+)?\z/
       {"--#{$1}", FlagValue::Required}
-    when /--\S+/
+    when /\A--\S+\z/
       # This can't be merged with `else` otherwise /-(.)/ matches
       {flag, FlagValue::None}
-    when /-(.)\s*\[\S+\]/
+    when /\A-(.)\s*\[\S+\]\z/
       {flag[0..1], FlagValue::Optional}
-    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+    when /\A-(.)\s+\S+\z/, /\A-(.)\s+\z/, /\A-(.)\S+\z/
       {flag[0..1], FlagValue::Required}
     else
       # This happens for -f without argument
@@ -221,7 +221,7 @@ class OptionParser
   end
 
   # Adds a separator, with an optional header message, that will be used to
-  # print the help. The seperator is placed between the flags registered (`#on`)
+  # print the help. The separator is placed between the flags registered (`#on`)
   # before, and the flags registered after the call.
   #
   # This way, you can group the different options in an easier to read way.
@@ -274,7 +274,7 @@ class OptionParser
       io << banner
       io << '\n'
     end
-    @flags.join '\n', io
+    @flags.join io, '\n'
   end
 
   private def append_flag(flag, description)
@@ -293,8 +293,7 @@ class OptionParser
     end
   end
 
-  # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  private def with_preserved_state
     old_flags = @flags.clone
     old_handlers = @handlers.clone
     old_banner = @banner
@@ -303,137 +302,148 @@ class OptionParser
     old_invalid_option = @invalid_option
     old_before_each = @before_each
 
-    # List of indexes in `args` which have been handled and must be deleted
-    handled_args = [] of Int32
-    double_dash_index = nil
+    begin
+      yield
+    ensure
+      @flags = old_flags
+      @handlers = old_handlers
+      @stop = false
+      @banner = old_banner
+      @unknown_args = old_unknown_args
+      @missing_option = old_missing_option
+      @invalid_option = old_invalid_option
+      @before_each = old_before_each
+    end
+  end
 
-    arg_index = 0
-    while arg_index < args.size
-      arg = args[arg_index]
+  # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
+  def parse(args = ARGV)
+    with_preserved_state do
+      # List of indexes in `args` which have been handled and must be deleted
+      handled_args = [] of Int32
+      double_dash_index = nil
 
-      if @stop
-        double_dash_index = arg_index - 1
-        @stop = false
-        break
-      end
+      arg_index = 0
+      while arg_index < args.size
+        arg = args[arg_index]
 
-      if before_each = @before_each
-        before_each.call(arg)
-      end
-
-      # -- means to stop parsing arguments
-      if arg == "--"
-        double_dash_index = arg_index
-        handled_args << arg_index
-        break
-      end
-
-      if arg.starts_with?("--")
-        value_index = arg.index('=')
-        if value_index
-          flag = arg[0...value_index]
-          value = arg[value_index + 1..-1]
-        else
-          flag = arg
-          value = nil
+        if @stop
+          double_dash_index = arg_index - 1
+          @stop = false
+          break
         end
-      elsif arg.starts_with?('-')
-        if arg.size > 2
-          flag = arg[0..1]
-          value = arg[2..-1]
-        else
-          flag = arg
-          value = nil
+
+        if before_each = @before_each
+          before_each.call(arg)
         end
-      else
-        flag = arg
-        value = nil
-      end
 
-      if handler = @handlers[flag]?
-        handled_args << arg_index
+        # -- means to stop parsing arguments
+        if arg == "--"
+          double_dash_index = arg_index
+          handled_args << arg_index
+          break
+        end
 
-        # Pull in the next argument if we don't already have it and an argument
-        # is taken (i.e. not FlagValue::None)
-        if !value && !handler.value_type.none?
-          value = args[arg_index + 1]?
-          if value
-            handled_args << arg_index + 1
-            arg_index += 1
+        if arg.starts_with?("--")
+          value_index = arg.index('=')
+          if value_index
+            flag = arg[0...value_index]
+            value = arg[value_index + 1..-1]
+          else
+            flag = arg
+            value = nil
           end
+        elsif arg.starts_with?('-')
+          if arg.size > 2
+            flag = arg[0..1]
+            value = arg[2..-1]
+          else
+            flag = arg
+            value = nil
+          end
+        else
+          flag = arg
+          value = nil
         end
 
-        # If we require a value and we don't have one, call missing option
-        @missing_option.call(flag) if handler.value_type.required? && value.nil?
+        # Fetch handler of the flag.
+        # If value is given even though handler does not take value, it is invalid, then it is skipped.
+        if (handler = @handlers[flag]?) && !(handler.value_type.none? && value)
+          handled_args << arg_index
 
-        # If this is a subcommand (flag not starting with -), delete all
-        # subcommands since they are no longer valid.
-        unless flag.starts_with?('-')
-          @handlers.select! { |k, v| k.starts_with?('-') }
-          @flags.select! { |flag| flag.starts_with?("    -") }
+          # Pull in the next argument if we don't already have it and an argument
+          # is taken (i.e. not FlagValue::None)
+          if !value && !handler.value_type.none?
+            value = args[arg_index + 1]?
+            if value
+              handled_args << arg_index + 1
+              arg_index += 1
+            end
+          end
+
+          # If we require a value and we don't have one, call missing option
+          @missing_option.call(flag) if handler.value_type.required? && value.nil?
+
+          # If this is a subcommand (flag not starting with -), delete all
+          # subcommands since they are no longer valid.
+          unless flag.starts_with?('-')
+            @handlers.select! { |k, v| k.starts_with?('-') }
+            @flags.select! { |flag| flag.starts_with?("    -") }
+          end
+
+          handler.block.call(value || "")
         end
 
-        handler.block.call(value || "")
+        arg_index += 1
       end
 
-      arg_index += 1
-    end
-
-    # We're about to delete all the unhandled arguments in args so double_dash_index
-    # is about to change. Arguments are only handled before "--", so we're deleting
-    # nothing after "--", which means it's index is decremented by handled_args.size.
-    # But actually we also added "--" itself to handled_args so we change it's index
-    # by one less.
-    if double_dash_index
-      double_dash_index -= handled_args.size - 1
-    end
-
-    # After argument parsing, delete handled arguments from args.
-    # We reverse so that we delete args from
-    handled_args.reverse!
-    i = 0
-    args.reject! do
-      # handled_args is sorted in reverse so we know that i <= handled_args.last
-      handled = i == handled_args.last?
-
-      # Maintain the i <= handled_args.last invariant
-      handled_args.pop if handled
-
-      i += 1
-
-      handled
-    end
-
-    # Since we've deleted all handled arguments, `args` is all unknown arguments
-    # which we split by the index of any double dash argument
-    if unknown_args = @unknown_args
+      # We're about to delete all the unhandled arguments in args so double_dash_index
+      # is about to change. Arguments are only handled before "--", so we're deleting
+      # nothing after "--", which means it's index is decremented by handled_args.size.
+      # But actually we also added "--" itself to handled_args so we change it's index
+      # by one less.
       if double_dash_index
-        before_dash = args[0...double_dash_index]
-        after_dash = args[double_dash_index..-1]
-      else
-        before_dash = args
-        after_dash = [] of String
+        double_dash_index -= handled_args.size - 1
       end
-      unknown_args.call(before_dash, after_dash)
-    end
 
-    # We consider any remaining arguments which start with '-' to be invalid
-    args.each_with_index do |arg, index|
-      break if double_dash_index && index >= double_dash_index
+      # After argument parsing, delete handled arguments from args.
+      # We reverse so that we delete args from
+      handled_args.reverse!
+      i = 0
+      args.reject! do
+        # handled_args is sorted in reverse so we know that i <= handled_args.last
+        handled = i == handled_args.last?
 
-      if arg.starts_with?('-') && arg != "-"
-        @invalid_option.call(arg)
+        # Maintain the i <= handled_args.last invariant
+        handled_args.pop if handled
+
+        i += 1
+
+        handled
+      end
+
+      # Since we've deleted all handled arguments, `args` is all unknown arguments
+      # which we split by the index of any double dash argument
+      if unknown_args = @unknown_args
+        if double_dash_index
+          before_dash = args[0...double_dash_index]
+          after_dash = args[double_dash_index..-1]
+        else
+          before_dash = args
+          after_dash = [] of String
+        end
+        unknown_args.call(before_dash, after_dash)
+      end
+
+      # We consider any remaining arguments which start with '-' to be invalid
+      args.each_with_index do |arg, index|
+        break if double_dash_index && index >= double_dash_index
+
+        if arg.starts_with?('-') && arg != "-"
+          @invalid_option.call(arg)
+        end
       end
     end
-  ensure
-    @flags = old_flags.not_nil!
-    @handlers = old_handlers.not_nil!
-    @stop = false
-    @banner = old_banner
-    @unknown_args = old_unknown_args
-    @missing_option = old_missing_option.not_nil!
-    @invalid_option = old_invalid_option.not_nil!
-    @before_each = old_before_each
   end
 
   @[Deprecated("Use `parse` instead.")]

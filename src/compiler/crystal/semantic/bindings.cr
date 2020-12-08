@@ -228,10 +228,21 @@ module Crystal
     #
     # Special cases are listed inside the method body.
     def restrict_type_to_freeze_type(freeze_type, type)
-      # We allow assigning Proc(*T, R) to Proc(*T, Nil)
-      if freeze_type.is_a?(ProcInstanceType) && freeze_type.return_type.nil_type?
-        if (type.is_a?(UnionType) && type.union_types.all?(&.implements?(freeze_type))) ||
-           type.implements?(freeze_type)
+      if freeze_type.is_a?(ProcInstanceType)
+        # We allow assigning Proc(*T, R) to Proc(*T, Nil)
+        if freeze_type.return_type.nil_type? &&
+           type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) && a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
+        end
+
+        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        if type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) &&
+             (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
+             a_type.arg_types == freeze_type.arg_types
+           }
           return freeze_type
         end
       end
@@ -470,6 +481,10 @@ module Crystal
     property! call : Call
 
     def map_type(type)
+      if self.expanded
+        return type
+      end
+
       return nil unless call.type?
 
       arg_types = call.args.map &.type.virtual_type

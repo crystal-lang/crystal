@@ -26,7 +26,7 @@
 class YAML::Builder
   @box : Void*
 
-  # By default the maximum nesting of sequences/amppings is 99. Nesting more
+  # By default the maximum nesting of sequences/mappings is 99. Nesting more
   # than this will result in a YAML::Error. Changing the value of this property
   # allows more/less nesting.
   property max_nesting = 99
@@ -72,6 +72,7 @@ class YAML::Builder
   # Ends a YAML stream.
   def end_stream
     emit stream_end
+    @io.flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
@@ -183,6 +184,8 @@ class YAML::Builder
   # Flushes any pending data to the underlying `IO`.
   def flush
     LibYAML.yaml_emitter_flush(@emitter)
+
+    @io.flush
   end
 
   def finalize

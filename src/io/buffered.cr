@@ -158,7 +158,6 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
-    nil
   end
 
   # :nodoc:

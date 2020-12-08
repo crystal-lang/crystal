@@ -1,6 +1,8 @@
 require "./basetsd"
 
 lib LibC
+  CREATE_UNICODE_ENVIRONMENT = 0x00000400
+
   struct PROCESS_INFORMATION
     hProcess : HANDLE
     hThread : HANDLE
@@ -39,6 +41,8 @@ lib LibC
                      bInheritHandles : BOOL, dwCreationFlags : DWORD,
                      lpEnvironment : Void*, lpCurrentDirectory : LPWSTR,
                      lpStartupInfo : STARTUPINFOW*, lpProcessInformation : PROCESS_INFORMATION*) : BOOL
+  fun GetProcessTimes(hProcess : HANDLE, lpCreationTime : FILETIME*, lpExitTime : FILETIME*,
+                      lpKernelTime : FILETIME*, lpUserTime : FILETIME*) : BOOL
 
   PROCESS_QUERY_INFORMATION = 0x0400
 end

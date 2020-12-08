@@ -2,11 +2,10 @@
 
 require "ecr/macros"
 require "option_parser"
+require "./git"
 
 module Crystal
   module Init
-    WHICH_GIT_COMMAND = "which git >/dev/null"
-
     class Error < ::Exception
       def self.new(message, opts : OptionParser)
         new("#{message}\n#{opts}\n")
@@ -99,27 +98,15 @@ module Crystal
     end
 
     def self.fetch_author
-      if system(WHICH_GIT_COMMAND)
-        user_name = `git config --get user.name`.strip
-        user_name = nil if user_name.empty?
-      end
-      user_name || "your-name-here"
+      Crystal::Git.git_config("user.name") || "your-name-here"
     end
 
     def self.fetch_email
-      if system(WHICH_GIT_COMMAND)
-        user_email = `git config --get user.email`.strip
-        user_email = nil if user_email.empty?
-      end
-      user_email || "your-email-here"
+      Crystal::Git.git_config("user.email") || "your-email-here"
     end
 
     def self.fetch_github_name
-      if system(WHICH_GIT_COMMAND)
-        github_user = `git config --get github.user`.strip
-        github_user = nil if github_user.empty?
-      end
-      github_user || "your-github-user"
+      Crystal::Git.git_config("github.user") || "your-github-user"
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -263,17 +250,11 @@ module Crystal
 
     class GitInitView < View
       def render
-        return unless system(WHICH_GIT_COMMAND)
-        return command if config.silent
-        puts command
+        Crystal::Git.git_command(["init", config.dir], output: config.silent ? Process::Redirect::Close : STDOUT)
       end
 
       def path
         ".git"
-      end
-
-      private def command
-        `git init #{config.dir}`
       end
     end
 

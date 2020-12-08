@@ -28,7 +28,6 @@ require "./spec/dsl"
 #   end
 #
 #   # lots more specs
-#
 # end
 # ```
 #
@@ -133,7 +132,7 @@ OptionParser.parse do |opts|
     junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path))
     Spec.add_formatter(junit_formatter)
   end
-  opts.on("--help", "show this help") do |pattern|
+  opts.on("-h", "--help", "show this help") do |pattern|
     puts opts
     exit
   end

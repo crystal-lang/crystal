@@ -62,13 +62,13 @@ class Process
   end
 
   # Returns a `Tms` for the current process. For the children times, only those
-  # of terminated children are returned.
-  #
-  # Available only on Unix-like operating systems.
+  # of terminated children are returned on Unix; they are zero on Windows.
   def self.times : Tms
     Crystal::System::Process.times
   end
 
+  # :nodoc:
+  #
   # Runs the given block inside a new process and
   # returns a `Process` representing the new child process.
   #
@@ -90,6 +90,8 @@ class Process
     end
   end
 
+  # :nodoc:
+  #
   # Duplicates the current process.
   # Returns a `Process` representing the new child process in the current process
   # and `nil` inside the new child process.
@@ -124,6 +126,8 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
@@ -137,6 +141,8 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.run(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : String? = nil)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
@@ -153,8 +159,10 @@ class Process
   # Replaces the current process with a new one. This function never returns.
   #
   # Available only on Unix-like operating systems.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def self.exec(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
-                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil)
+                input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : String? = nil) : NoReturn
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
 
     input = exec_stdio_to_fd(input, for: STDIN)
@@ -188,13 +196,13 @@ class Process
     @process_info.pid.to_i64
   end
 
-  # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' input. Raises if a pipe wasn't asked when creating the process.
   getter! input : IO::FileDescriptor
 
-  # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' output. Raises if a pipe wasn't asked when creating the process.
   getter! output : IO::FileDescriptor
 
-  # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
+  # A pipe to this process' error. Raises if a pipe wasn't asked when creating the process.
   getter! error : IO::FileDescriptor
 
   @process_info : Crystal::System::Process
@@ -216,6 +224,8 @@ class Process
   #   the *command* to safely insert them there.
   # * On Windows this is implemented by passing the string as-is to the
   #   process, and passing *args* is not supported.
+  #
+  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
   def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : String? = nil)
     command_args = Crystal::System::Process.prepare_args(command, args, shell)
@@ -439,20 +449,6 @@ def `(command) : String
   status = process.wait
   $? = status
   output
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork { yield }
-end
-
-# See also: `Process.fork`
-#
-# Available only on Unix-like operating systems.
-def fork
-  Process.fork
 end
 
 require "./process/*"

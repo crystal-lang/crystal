@@ -132,7 +132,7 @@ end
 
 require "./openssl/bio"
 require "./openssl/ssl/*"
-require "./openssl/digest/*"
+require "./openssl/digest"
 require "./openssl/md5"
 require "./openssl/x509/x509"
 require "./openssl/pkcs5"

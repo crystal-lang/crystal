@@ -30,49 +30,44 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def end_inline_code
     @inside_inline_code = false
 
-    text = @code_buffer.to_s
+    @io << expand_code_links(@code_buffer.to_s)
+    super
+  end
 
+  def expand_code_links(text : String) : String
     # Check method reference (without #, but must be the whole text)
-    if text =~ /\A((?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?)(\(.+?\))?\Z/
+    if text =~ /\A([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?\Z/
       name = $1
-      args = $~.not_nil![2]? || ""
+      args = $2? || ""
 
       method = lookup_method @type, name, args
       if method
-        text = method_link method, "#{method.prefix}#{text}"
-        @io << text
-        super
-        return
+        return method_link method, "#{method.prefix}#{text}"
       end
     end
 
     # Check Type#method(...) or Type or #method(...)
-    text = text.gsub /\b
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*(?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
+    text.gsub %r(
+      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*|\B|(?<=\bself))([#.])([\w<=>+\-*\/\[\]&|?!^~]+[?!]?)(?:\((.*?)\))?
         |
-      ((?:\:\:)?[A-Z]\w+(?:\:\:[A-Z]\w+)*)
-        |
-      ((?:\#|\.)(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
-      /x do |match_text, match|
-      sharp_index = match_text.index('#')
-      dot_index = match_text.index('.')
-      kind = sharp_index ? :instance : :class
-
-      # Type#method(...)
-      if match[1]?
-        separator_index = (sharp_index || dot_index).not_nil!
-        type_name = match_text[0...separator_index]
-
-        paren_index = match_text.index('(')
-
-        if paren_index
-          method_name = match_text[separator_index + 1...paren_index]
-          method_args = match_text[paren_index + 1..-2]
-        else
-          method_name = match_text[separator_index + 1..-1]
-          method_args = ""
+      ((?:\B::)?\b[A-Z]\w+(?:\:\:[A-Z]\w+)*)
+      )x do |match_text|
+      if $5?
+        # Type
+        another_type = @type.lookup_path(match_text)
+        if another_type && another_type.must_be_included?
+          next type_link another_type, match_text
         end
+        next match_text
+      end
 
+      type_name = $1.presence
+      kind = $2 == "#" ? :instance : :class
+      method_name = $3
+      method_args = $4? || ""
+
+      if type_name
+        # Type#method(...)
         another_type = @type.lookup_path(type_name)
         if another_type && @type.must_be_included?
           method = lookup_method another_type, method_name, method_args, kind
@@ -80,28 +75,8 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
             next method_link method, match_text
           end
         end
-      end
-
-      # Type
-      if match[2]?
-        another_type = @type.lookup_path(match_text)
-        if another_type && another_type.must_be_included?
-          next type_link another_type, match_text
-        end
-      end
-
-      # #method(...)
-      if match[3]?
-        paren_index = match_text.index('(')
-
-        if paren_index
-          method_name = match_text[1...paren_index]
-          method_args = match_text[paren_index + 1..-2]
-        else
-          method_name = match_text[1..-1]
-          method_args = ""
-        end
-
+      else
+        # #method(...)
         method = lookup_method @type, method_name, method_args, kind
         if method && method.must_be_included?
           next method_link method, match_text
@@ -110,10 +85,6 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
       match_text
     end
-
-    @io << text
-
-    super
   end
 
   def begin_code(language = nil)
@@ -127,7 +98,7 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
 
   def end_code
     if @inside_code
-      text = Highlighter.highlight @code_buffer.to_s
+      text = Highlighter.highlight(@code_buffer.to_s)
       @io << text
     end
 

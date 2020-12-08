@@ -465,7 +465,7 @@ describe "Semantic: ssa" do
       ") { nilable char }
   end
 
-  it "types while with break doesn't infect initial vas" do
+  it "types while with break doesn't infect initial vars" do
     assert_type("
       a = 1
       b = 1

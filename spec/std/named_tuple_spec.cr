@@ -280,11 +280,6 @@ describe "NamedTuple" do
     tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
   end
 
-  it "does key_index" do
-    tup = {a: 1, b: 'a'}
-    tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
-  end
-
   it "does map" do
     tup = {a: 1, b: 'a'}
     strings = tup.map { |k, v| "#{k.inspect}-#{v.inspect}" }
@@ -350,6 +345,11 @@ describe "NamedTuple" do
   it "does keys" do
     tup = {a: 1, b: 2}
     tup.keys.should eq({:a, :b})
+  end
+
+  it "does sorted_keys" do
+    tup = {foo: 1, bar: 2, baz: 3}
+    tup.sorted_keys.should eq({:bar, :baz, :foo})
   end
 
   it "does values" do

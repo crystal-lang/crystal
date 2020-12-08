@@ -33,7 +33,7 @@ struct XML::NodeSet
 
   def inspect(io : IO) : Nil
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

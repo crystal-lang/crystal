@@ -105,7 +105,7 @@ class Time::Location
             end
           end
 
-          with_zoneinfo("nonexising_zipfile.zip") do
+          with_zoneinfo("nonexistent_zipfile.zip") do
             expect_raises(InvalidLocationNameError) do
               Location.load("Europe/Berlin")
             end
