@@ -1432,4 +1432,15 @@ describe "Block inference" do
       Node.new.sum
       )) { int32 }
   end
+
+  it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
+    semantic(%(
+      def foo(&)
+      end
+
+      foo do
+        typeof(bar)
+      end
+      ))
+  end
 end

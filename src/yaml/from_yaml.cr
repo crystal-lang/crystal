@@ -1,4 +1,14 @@
-def Object.from_yaml(string_or_io : String | IO) : self
+# Deserializes the given YAML in *string_or_io* into
+# an instance of `self`. This simply creates an instance of
+# `YAML::ParseContext` and invokes `new(parser, yaml)`:
+# classes that want to provide YAML deserialization must provide an
+# `def initialize(parser : YAML::ParseContext, yaml : string_or_io)`
+# method.
+#
+# ```
+# Hash(String, String).from_yaml("{env: production}") # => {"env" => "production"}
+# ```
+def Object.from_yaml(string_or_io : String | IO)
   new(YAML::ParseContext.new, parse_yaml(string_or_io))
 end
 
@@ -64,6 +74,10 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   else
     node.raise "Expected String, not #{node.class.name}"
   end
+end
+
+def Path.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+  new(String.new(ctx, node))
 end
 
 def Float32.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -175,6 +189,7 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% begin %}
     {% for key in T.keys %}
       %var{key.id} = nil
+      %found{key.id} = false
     {% end %}
 
     YAML::Schema::Core.each(node) do |key, value|
@@ -183,19 +198,22 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
         {% for key, type in T %}
           when {{key.stringify}}
             %var{key.id} = {{type}}.new(ctx, value)
+            %found{key.id} = true
         {% end %}
+      else
+        # ignore the key
       end
     end
 
-    {% for key in T.keys %}
-      if %var{key.id}.nil?
+    {% for key, type in T %}
+      if %var{key.id}.nil? && !%found{key.id} && !{{type.nilable?}}
         node.raise "Missing yaml attribute: {{key}}"
       end
     {% end %}
 
     {
-      {% for key in T.keys %}
-        {{key}}: %var{key.id},
+      {% for key, type in T %}
+        {{key}}: (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
@@ -224,7 +242,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       {% end %}
     {% end %}
 
-    node.raise("Error deserailizing alias")
+    node.raise("Error deserializing alias")
   end
 
   {% begin %}
@@ -285,6 +303,22 @@ module Time::EpochMillisConverter
     end
 
     Time.unix_ms(node.value.to_i64)
+  end
+end
+
+module YAML::ArrayConverter(Converter)
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+    unless node.is_a?(YAML::Nodes::Sequence)
+      node.raise "Expected sequence, not #{node.class}"
+    end
+
+    ary = Array(typeof(Converter.from_yaml(ctx, node))).new
+
+    node.each do |value|
+      ary << Converter.from_yaml(ctx, value)
+    end
+
+    ary
   end
 end
 

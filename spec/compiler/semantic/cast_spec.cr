@@ -359,4 +359,14 @@ describe "Semantic: cast" do
       x.foo if x
       )) { nil_type }
   end
+
+  it "considers else to be unreachable (#9658)" do
+    assert_type(%(
+      case 1
+      in Int32
+        v = 1
+      end
+      v
+      )) { int32 }
+  end
 end

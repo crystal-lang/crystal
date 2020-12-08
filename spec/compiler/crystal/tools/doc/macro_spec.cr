@@ -4,7 +4,7 @@ describe Doc::Macro do
   describe "args_to_s" do
     it "shows simple args" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg, "bar".arg]
@@ -14,7 +14,7 @@ describe Doc::Macro do
 
     it "shows splat arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg], splat_index: 0
@@ -24,7 +24,7 @@ describe Doc::Macro do
 
     it "shows simple arg and splat arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg, "bar".arg], splat_index: 1
@@ -34,7 +34,7 @@ describe Doc::Macro do
 
     it "shows double splat arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", double_splat: "foo".arg
@@ -44,7 +44,7 @@ describe Doc::Macro do
 
     it "shows double splat arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", double_splat: "foo".arg
@@ -54,7 +54,7 @@ describe Doc::Macro do
 
     it "shows simple arg and double splat arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg], double_splat: "bar".arg
@@ -64,7 +64,7 @@ describe Doc::Macro do
 
     it "shows block arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", block_arg: "foo".arg
@@ -74,7 +74,7 @@ describe Doc::Macro do
 
     it "shows simple arg and block arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg], block_arg: "bar".arg
@@ -84,7 +84,7 @@ describe Doc::Macro do
 
     it "shows external name of arg" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg(external_name: "bar")]
@@ -94,7 +94,7 @@ describe Doc::Macro do
 
     it "shows external name of arg with quotes and escaping" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg(external_name: "<<-< uouo fish life")]
@@ -104,7 +104,7 @@ describe Doc::Macro do
 
     it "shows default value with highlighting" do
       program = Program.new
-      generator = Doc::Generator.new program, ["."], ".", "html", nil
+      generator = Doc::Generator.new program, ["."]
       doc_type = Doc::Type.new generator, program
 
       a_macro = Macro.new "foo", ["foo".arg(default_value: 1.int32)]

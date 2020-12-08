@@ -3,6 +3,8 @@ require "./syntax/ast"
 module Crystal
   # Abstract base class of all types
   abstract class Type
+    include Annotatable
+
     # Returns the program where this type belongs.
     getter program
 
@@ -36,9 +38,37 @@ module Crystal
       program
     end
 
+    # Yields each namespace this type belongs to, excluding the `Program` itself.
+    def each_namespace(& : ModuleType ->) : Nil
+      ns = self.namespace
+      until ns == program
+        yield ns
+        ns = ns.namespace
+      end
+    end
+
     # Returns `true` if this type is abstract.
     def abstract?
       false
+    end
+
+    # Returns `true` if this type is abstract and it has no
+    # concrete subclasses. This can happen if this type has abstract
+    # subclasses, or non-abstract generic subclasses without instantiations.
+    def abstract_leaf?
+      type = self.devirtualize
+
+      case type
+      when GenericType
+        (type.abstract? && type.generic_types.empty?) ||
+          (type.generic_types.all? { |name, type| type.abstract_leaf? })
+      when GenericClassInstanceType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      when ClassType
+        type.abstract? && type.subclasses.all?(&.abstract_leaf?)
+      else
+        false
+      end
     end
 
     # Returns `true` if this type is a struct.
@@ -221,7 +251,7 @@ module Crystal
     # Returns the type that owns class vars for a type.
     #
     # This method returns self, but subclasses might override.
-    # For example, a metaclass's class_var_owner is the instance type.
+    # For example, a metaclass' class_var_owner is the instance type.
     def class_var_owner
       self
     end
@@ -310,17 +340,18 @@ module Crystal
     # If `allow_same_namespace` is true (the default), `protected` also means
     # the types are in the same namespace. Otherwise, it means they are just
     # in the same type hierarchy.
-    def has_protected_acces_to?(type, allow_same_namespace = true)
-      owner = self
+    def has_protected_access_to?(type, allow_same_namespace = true)
+      owner = self.devirtualize
+      type = type.devirtualize
 
       # Allow two different generic instantiations
       # of the same type to have protected access
       type = type.generic_type.as(Type) if type.is_a?(GenericInstanceType)
       owner = owner.generic_type.as(Type) if owner.is_a?(GenericInstanceType)
 
-      self.implements?(type) ||
-        type.implements?(self) ||
-        (allow_same_namespace && same_namespace?(type))
+      owner.implements?(type) ||
+        type.implements?(owner) ||
+        (allow_same_namespace && owner.same_namespace?(type))
     end
 
     # Returns true if `self` and *other* are in the same namespace.
@@ -549,6 +580,10 @@ module Crystal
       raise "BUG: #{self} doesn't implement instance_vars"
     end
 
+    def class_vars
+      raise "BUG: #{self} doesn't implement class_vars"
+    end
+
     def all_instance_vars
       if superclass = self.superclass
         superclass.all_instance_vars.merge(instance_vars)
@@ -557,13 +592,22 @@ module Crystal
       end
     end
 
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      all_class_vars.merge!(class_vars)
+      parents.try &.each do |parent|
+        all_class_vars.merge!(parent.all_class_vars)
+      end
+      all_class_vars
+    end
+
     def index_of_instance_var(name)
       if superclass = self.superclass
         index = superclass.index_of_instance_var(name)
         if index
           index
         else
-          index = instance_vars.key_index(name)
+          index = instance_vars.index { |k, v| k == name }
           if index
             superclass.all_instance_vars_count + index
           else
@@ -571,7 +615,7 @@ module Crystal
           end
         end
       else
-        instance_vars.key_index(name)
+        instance_vars.index { |k, v| k == name }
       end
     end
 
@@ -677,32 +721,28 @@ module Crystal
       end
     end
 
-    # Adds an annotation with the given type and value
-    def add_annotation(annotation_type : AnnotationType, value : Annotation)
-      annotations = @annotations ||= {} of AnnotationType => Array(Annotation)
-      annotations[annotation_type] ||= [] of Annotation
-      annotations[annotation_type] << value
-    end
-
-    # Returns the last defined annotation with the given type, if any, or `nil` otherwise
-    def annotation(annotation_type) : Annotation?
-      @annotations.try &.[annotation_type]?.try &.last?
-    end
-
-    # Returns all annotations with the given type, if any, or `nil` otherwise
-    def annotations(annotation_type) : Array(Annotation)?
-      @annotations.try &.[annotation_type]?
-    end
-
     def get_instance_var_initializer(name)
       nil
     end
 
     # Checks whether an exception needs to be raised because of a restriction
-    # failure. Only overwriten by literal types (NumberLiteralType and
+    # failure. Only overwritten by literal types (NumberLiteralType and
     # SymbolLiteralType) when they produce an ambiguous call.
     def check_restriction_exception
       nil
+    end
+
+    # Yields self and returns true if the block returns a truthy value.
+    # UnionType overrides it and yields all types in turn and returns
+    # true if for each of them the block returns true.
+    def all?
+      (yield self) ? true : false
+    end
+
+    def to_s(*, generic_args : Bool = true)
+      String.build do |io|
+        to_s_with_options io, generic_args: generic_args
+      end
     end
 
     def inspect(io : IO) : Nil
@@ -777,7 +817,7 @@ module Crystal
 
   # A Def with some metadata to speed up matching it against
   # a call signature, or against other defs:
-  # - max_size: the maxinum number of arguments that can be passed to the method
+  # - max_size: the maximum number of arguments that can be passed to the method
   # - min_size: the minimum number of arguments that can be passed to the method
   # - yields: whether the method has a block
   record DefWithMetadata,
@@ -871,6 +911,8 @@ module Crystal
     end
 
     def add_macro(a_macro)
+      a_macro.owner = self
+
       case a_macro.name
       when "inherited"
         return add_hook :inherited, a_macro
@@ -884,6 +926,8 @@ module Crystal
         if a_macro.args.size != 1
           raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
+      else
+        # normal macro
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
@@ -1192,10 +1236,6 @@ module Crystal
       superclass.try &.add_subclass(self)
     end
 
-    def struct?
-      @struct
-    end
-
     def has_attribute?(name)
       return true if packed? && name == "Packed"
       false
@@ -1364,7 +1404,7 @@ module Crystal
 
   abstract class LiteralType < Type
     # The most exact match type, or the first match otherwise
-    @match : Type?
+    getter match : Type?
 
     # All matches. It's nil if `@match` is an exact match.
     @all_matches : Set(Type)?
@@ -1528,6 +1568,9 @@ module Crystal
 
       instance.after_initialize
 
+      # Notify that a subclass/instance of self was added
+      self.notify_subclass_added if self.is_a?(SubclassObservable)
+
       # Notify parents that an instance was added
       notify_parents_subclass_added(self)
 
@@ -1591,7 +1634,7 @@ module Crystal
       # Check if automatic cast can be done
       if instance_var.type != value.type &&
          (value.is_a?(NumberLiteral) || value.is_a?(SymbolLiteral))
-        if casted_value = MainVisitor.check_automatic_cast(value, instance_var.type)
+        if casted_value = MainVisitor.check_automatic_cast(@program, value, instance_var.type)
           value = casted_value
         end
       end
@@ -1618,7 +1661,7 @@ module Crystal
   end
 
   # An un-bound type parameter of a generic type.
-  #
+
   # For example, given:
   #
   # ```
@@ -1753,7 +1796,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1813,7 +1856,7 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(", ", io, &.to_s(io))
+        type_vars.join(io, ", ", &.to_s(io))
         io << ')'
       end
     end
@@ -1940,26 +1983,28 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       generic_type.append_full_name(io)
-      io << '('
-      type_vars.each_value.with_index do |type_var, i|
-        io << ", " if i > 0
-        if type_var.is_a?(Var)
-          if i == splat_index
-            tuple = type_var.type.as(TupleInstanceType)
-            tuple.tuple_types.join(", ", io) do |tuple_type|
-              tuple_type = tuple_type.devirtualize unless codegen
-              tuple_type.to_s_with_options(io, codegen: codegen)
+      if generic_args
+        io << '('
+        type_vars.each_value.with_index do |type_var, i|
+          io << ", " if i > 0
+          if type_var.is_a?(Var)
+            if i == splat_index
+              tuple = type_var.type.as(TupleInstanceType)
+              tuple.tuple_types.join(io, ", ") do |tuple_type|
+                tuple_type = tuple_type.devirtualize unless codegen
+                tuple_type.to_s_with_options(io, codegen: codegen)
+              end
+            else
+              type_var_type = type_var.type
+              type_var_type = type_var_type.devirtualize unless codegen
+              type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
-            type_var_type = type_var.type
-            type_var_type = type_var_type.devirtualize unless codegen
-            type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
+            type_var.to_s(io)
           end
-        else
-          type_var.to_s(io)
         end
+        io << ')'
       end
-      io << ')'
     end
   end
 
@@ -2030,7 +2075,7 @@ module Crystal
     getter(metaclass) { GenericClassInstanceMetaclassType.new(self.program, self) }
   end
 
-  # An instantiated genric module, like Enumerable(Int32).
+  # An instantiated generic module, like Enumerable(Int32).
   class GenericModuleInstanceType < GenericInstanceType
     include InstanceVarContainer
     include InstanceVarInitializerContainer
@@ -2097,10 +2142,6 @@ module Crystal
       else
         self
       end
-    end
-
-    def filter_by_responds_to(name)
-      including_types.try &.filter_by_responds_to(name)
     end
 
     def filter_by_responds_to(name)
@@ -2358,7 +2399,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "Tuple("
-      @tuple_types.join(", ", io) do |tuple_type|
+      @tuple_types.join(io, ", ") do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
       end
@@ -2475,7 +2516,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
-      @entries.join(", ", io) do |entry|
+      @entries.join(io, ", ") do |entry|
         if Symbol.needs_quotes?(entry.name)
           entry.name.inspect(io)
         else
@@ -2547,8 +2588,12 @@ module Crystal
       super(program, namespace, name)
     end
 
-    delegate remove_typedef, remove_indirection, pointer?, defs,
+    delegate remove_typedef, pointer?, defs,
       macros, reference_link?, parents, to: typedef
+
+    def remove_indirection
+      self
+    end
 
     def type_def_type?
       true
@@ -2639,7 +2684,7 @@ module Crystal
 
   # An instantiated enum type.
   #
-  # TODO: right now this is not properly modelled. Ideally there
+  # TODO: right now this is not properly modeled. Ideally there
   # should be EnumType and EnumInstanceType, where EnumType would
   # be `Enum(T)` and given:
   #
@@ -2677,7 +2722,7 @@ module Crystal
 
     def add_constant(constant)
       types[constant.name] = const = Const.new(program, self, constant.name, constant.default_value.not_nil!)
-      program.class_var_and_const_initializers << const
+      program.const_initializers << const
       const
     end
 
@@ -3013,6 +3058,10 @@ module Crystal
       program.type_merge(new_union_types) || program.no_return
     end
 
+    def all?
+      union_types.all? { |union_type| yield union_type }
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << '(' unless skip_union_parens
       union_types = @union_types
@@ -3021,7 +3070,7 @@ module Crystal
         union_types = @union_types.dup
         union_types << union_types.delete_at(nil_type_index)
       end
-      union_types.join(" | ", io) do |type|
+      union_types.join(io, " | ") do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
       end
@@ -3104,6 +3153,10 @@ module Crystal
     property vars : MetaVars?
     property? used = false
     property? visited = false
+
+    # Is this constant accessed with pointerof(...)?
+    property? pointer_read = false
+
     property visitor : MainVisitor?
 
     def initialize(program, namespace, name, @value)
@@ -3238,6 +3291,13 @@ module Crystal
       nil
     end
 
+    def all_class_vars
+      all_class_vars = {} of String => MetaTypeVar
+      @class_vars.try { |v| all_class_vars.merge!(v) }
+      all_class_vars.merge!(base_type.all_class_vars)
+      all_class_vars
+    end
+
     def replace_type_parameters(instance)
       base_type.replace_type_parameters(instance).virtual_type
     end
@@ -3353,6 +3413,8 @@ private def add_instance_var_initializer(including_types, name, value, meta_vars
       type.add_instance_var_initializer(name, value, meta_vars)
     when Crystal::GenericModuleType
       type.add_instance_var_initializer(name, value, meta_vars)
+    else
+      # skip
     end
   end
 end

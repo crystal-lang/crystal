@@ -1,6 +1,10 @@
 require "./enums"
 
-@[Link("yaml")]
+{% if compare_versions(Crystal::VERSION, "0.35.0-0") >= 0 %}
+  @[Link("yaml", pkg_config: "yaml-0.1")]
+{% else %}
+  @[Link("yaml")]
+{% end %}
 lib LibYAML
   alias Int = LibC::Int
 
@@ -143,6 +147,7 @@ lib LibYAML
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int
   fun yaml_emitter_delete(emitter : Emitter*)
   fun yaml_emitter_flush(emitter : Emitter*) : Int
+  fun yaml_emitter_set_unicode(emitter : Emitter*, unicode : Int)
 
   fun yaml_get_version(major : LibC::Int*, minor : LibC::Int*, patch : LibC::Int*)
 end

@@ -60,7 +60,7 @@ class TCPSocket < IPSocket
     end
   end
 
-  # Returns `true` if the Nable algorithm is disabled.
+  # Returns `true` if the Nagle algorithm is disabled.
   def tcp_nodelay?
     getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
   end
@@ -75,6 +75,8 @@ class TCPSocket < IPSocket
     def tcp_keepalive_idle
       optname = {% if flag?(:darwin) %}
         LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}
@@ -84,6 +86,8 @@ class TCPSocket < IPSocket
     def tcp_keepalive_idle=(val : Int)
       optname = {% if flag?(:darwin) %}
         LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
       {% else %}
         LibC::TCP_KEEPIDLE
       {% end %}

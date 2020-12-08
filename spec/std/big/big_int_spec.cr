@@ -145,10 +145,32 @@ describe "BigInt" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
-    (10.to_big_i / 3.to_big_i).should eq(3.to_big_i)
-    (10.to_big_i / 3).should eq(3.to_big_i)
-    (10 / 3.to_big_i).should eq(3.to_big_i)
+    (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
+    (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
+    (10 / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     ((Int64::MAX.to_big_i * 2.to_big_i) / Int64::MAX).should eq(2.to_big_i)
   end
 
@@ -160,18 +182,18 @@ describe "BigInt" do
   end
 
   it "divides with negative numbers" do
-    (7.to_big_i / 2).should eq(3.to_big_i)
-    (7.to_big_i / 2.to_big_i).should eq(3.to_big_i)
-    (7.to_big_i / -2).should eq(-4.to_big_i)
-    (7.to_big_i / -2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / 2).should eq(-4.to_big_i)
-    (-7.to_big_i / 2.to_big_i).should eq(-4.to_big_i)
-    (-7.to_big_i / -2).should eq(3.to_big_i)
-    (-7.to_big_i / -2.to_big_i).should eq(3.to_big_i)
+    (7.to_big_i / 2).should eq(3.5.to_big_f)
+    (7.to_big_i / 2.to_big_i).should eq(3.5.to_big_f)
+    (7.to_big_i / -2).should eq(-3.5.to_big_f)
+    (7.to_big_i / -2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2).should eq(-3.5.to_big_f)
+    (-7.to_big_i / 2.to_big_i).should eq(-3.5.to_big_f)
+    (-7.to_big_i / -2).should eq(3.5.to_big_f)
+    (-7.to_big_i / -2.to_big_i).should eq(3.5.to_big_f)
 
-    (-6.to_big_i / 2).should eq(-3.to_big_i)
-    (6.to_big_i / -2).should eq(-3.to_big_i)
-    (-6.to_big_i / -2).should eq(3.to_big_i)
+    (-6.to_big_i / 2).should eq(-3.to_big_f)
+    (6.to_big_i / -2).should eq(-3.to_big_f)
+    (-6.to_big_i / -2).should eq(3.to_big_f)
   end
 
   it "divides with negative numbers" do
@@ -334,19 +356,21 @@ describe "BigInt" do
     a_17 = a * 17
 
     (abc * b).gcd(abc * c).should eq(abc)
+    abc.gcd(a_17).should eq(a)
     (abc * b).lcm(abc * c).should eq(abc * b * c)
     (abc * b).gcd(abc * c).should be_a(BigInt)
 
     (a_17).gcd(17).should eq(17)
-    (17).gcd(a_17).should eq(17)
     (-a_17).gcd(17).should eq(17)
-    (-17).gcd(a_17).should eq(17)
-
-    (a_17).gcd(17).should be_a(Int::Unsigned)
-    (17).gcd(a_17).should be_a(Int::Unsigned)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
 
     (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
     (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
+
+    (a_17).gcd(17).should be_a(Int::Unsigned)
   end
 
   it "can use Number::[]" do
@@ -366,6 +390,8 @@ describe "BigInt" do
     big.to_u8!.should eq(210)
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
+
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
 
     u64 = big.to_u64
     u64.should eq(1234567890)
@@ -409,6 +435,38 @@ describe "BigInt" do
   describe "#humanize_bytes" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.to_big_i.digits.should eq([0])
+      1.to_big_i.digits.should eq([1])
+      10.to_big_i.digits.should eq([0, 1])
+      123.to_big_i.digits.should eq([3, 2, 1])
+      123456789.to_big_i.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.to_big_i.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.to_big_i.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.to_big_i.digits
+      end
+    end
   end
 end
 

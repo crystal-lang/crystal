@@ -9,14 +9,14 @@ module Crystal
     @filename : String | VirtualFile | Nil
 
     def to_s(io) : Nil
-      to_s_with_source(nil, io)
+      to_s_with_source(io, nil)
     end
 
     def warning=(warning)
       @warning = !!warning
     end
 
-    abstract def to_s_with_source(source, io)
+    abstract def to_s_with_source(io : IO, source)
 
     def to_json(json : JSON::Builder)
       json.array do
@@ -43,7 +43,7 @@ module Crystal
 
     def to_s_with_source(source)
       String.build do |io|
-        to_s_with_source source, io
+        to_s_with_source(io, source)
       end
     end
 
@@ -56,7 +56,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@color)
+      Colorize.with.toggle(@color)
     end
 
     def replace_leading_tabs_with_spaces(line)
@@ -77,11 +77,11 @@ module Crystal
   end
 
   class LocationlessException < Exception
-    def to_s_with_source(source, io)
+    def to_s_with_source(io : IO, source)
       io << @message
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       io << @message
     end
 
@@ -106,12 +106,14 @@ module Crystal
 
     def error_body(source, default_message) : String | Nil
       case filename = @filename
-      when VirtualFile
+      in VirtualFile
         return format_macro_error(filename)
-      when String
+      in String
         if File.file?(filename)
           return format_error_from_file(filename)
         end
+      in Nil
+        # go on
       end
 
       return format_error(source) if source
@@ -149,11 +151,11 @@ module Crystal
 
       String.build do |io|
         case filename
-        when String
+        in String
           io << filename_row_col_message(filename, line_number, column_number)
-        when VirtualFile
+        in VirtualFile
           io << "macro '" << colorize("#{filename.macro.name}").underline << '\''
-        else
+        in Nil
           io << "unknown location"
         end
 
@@ -207,12 +209,16 @@ module Crystal
 
     def source_lines(filename)
       case filename
-      when String
+      in Nil
+        nil
+      in String
         if File.file? filename
-          source_lines = File.read_lines(filename)
+          File.read_lines(filename)
+        else
+          nil
         end
-      when VirtualFile
-        source_lines = filename.source.lines
+      in VirtualFile
+        filename.source.lines
       end
     end
 
@@ -223,11 +229,11 @@ module Crystal
       column_number = macro_source.try &.column_number
 
       case source_filename
-      when String
+      in String
         io << colorize("#{relative_filename(source_filename)}:#{line_number}:#{column_number}").underline
-      when VirtualFile
+      in VirtualFile
         io << "macro '" << colorize("#{source_filename.macro.name}").underline << '\''
-      else
+      in Nil
         "unknown location"
       end
 
@@ -242,20 +248,25 @@ module Crystal
 
     def minimize_indentation(source)
       min_leading_white_space =
-        source.map do |line|
-          if match = line.match(/^(\s+)\S/)
-            spaces = match[1]?
-            spaces.size if spaces
-          end
-        end
-          .compact
-          .min
+        source.min_of? { |line| leading_white_space(line) } || 0
 
-      source = source.map do |line|
-        replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
+      if min_leading_white_space > 0
+        source = source.map do |line|
+          replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
+        end
       end
 
       {source, min_leading_white_space}
+    end
+
+    private def leading_white_space(line)
+      match = line.match(/^(\s+)\S/)
+      return 0 unless match
+
+      spaces = match[1]?
+      return 0 unless spaces
+
+      spaces.size
     end
 
     def append_expanded_macro(io, source)

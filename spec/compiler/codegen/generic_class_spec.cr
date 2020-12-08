@@ -96,7 +96,7 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
-  it "codegens statis array size after instantiating" do
+  it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)
         def size
@@ -355,6 +355,68 @@ describe "Code gen: generic class type" do
       if x.is_a?(Bar)
         x.foo
       end
+      ))
+  end
+
+  it "doesn't crash on generic type restriction with initially no subtypes (#8411)" do
+    codegen(%(
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+
+      Baz(Int32).new
+      ))
+  end
+
+  it "doesn't crash on generic type restriction with no subtypes (#7583)" do
+    codegen(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Baz(T) < Foo
+        def baz
+        end
+      end
+
+      def x(z)
+      end
+
+      f = uninitialized Foo
+      if f.is_a?(Baz)
+        x(f.baz)
+      end
+      ))
+  end
+
+  it "doesn't override guessed instance var in generic type if already declared in superclass (#9431)" do
+    codegen(%(
+      class Foo
+        @x = 0
+      end
+
+      class Bar(T) < Foo
+        @x = 0
+      end
+
+      class Baz < Bar(Int32)
+        @valid = true
+      end
+
+      Baz.new
       ))
   end
 end

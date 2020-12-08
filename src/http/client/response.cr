@@ -1,4 +1,3 @@
-require "../client"
 require "../common"
 require "mime/media_type"
 
@@ -63,7 +62,7 @@ class HTTP::Client::Response
   end
 
   def mime_type : MIME::MediaType?
-    if content_type = headers["Content-Type"]?
+    if content_type = headers["Content-Type"]?.presence
       MIME::MediaType.parse(content_type)
     end
   end
@@ -149,5 +148,7 @@ class HTTP::Client::Response
     HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
       return yield new status, nil, headers, status_message, http_version, body
     end
+
+    nil
   end
 end

@@ -2,7 +2,7 @@ require "spec"
 require "yaml"
 
 private def assert_built(expected, expect_document_end = false)
-  # libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+  # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
   # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
   # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
   if expect_document_end
@@ -21,6 +21,12 @@ describe YAML::Builder do
   it "writes scalar" do
     assert_built("--- 1\n", expect_document_end: true) do
       scalar(1)
+    end
+  end
+
+  it "writes alias" do
+    assert_built("--- *key\n") do
+      itself.alias "key"
     end
   end
 
@@ -115,6 +121,23 @@ describe YAML::Builder do
     end
   end
 
+  it "writes mapping with alias" do
+    assert_built("---\nfoo: *bar\n") do
+      mapping do
+        scalar "foo"
+        itself.alias "bar"
+      end
+    end
+  end
+
+  it "writes mapping with merge" do
+    assert_built("---\n<<: *key\n") do
+      mapping do
+        merge "key"
+      end
+    end
+  end
+
   it "writes mapping with style" do
     assert_built("--- {foo: 1, bar: 2}\n") do
       mapping(style: YAML::MappingStyle::FLOW) do
@@ -154,5 +177,29 @@ describe YAML::Builder do
     expect_raises(YAML::Error, "Nesting of 4 is too deep") do
       builder.start_mapping
     end
+  end
+
+  it ".build (with block)" do
+    String.build do |io|
+      YAML::Builder.build(io) do |builder|
+        builder.stream do
+          builder.document do
+            builder.scalar(1)
+          end
+        end
+      end
+    end.should eq 1.to_yaml
+  end
+
+  it ".new (with block)" do
+    String.build do |io|
+      YAML::Builder.new(io) do |builder|
+        builder.stream do
+          builder.document do
+            builder.scalar(1)
+          end
+        end
+      end
+    end.should eq 1.to_yaml
   end
 end

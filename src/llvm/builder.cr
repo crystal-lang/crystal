@@ -89,6 +89,14 @@ class LLVM::Builder
     Value.new LibLLVM.build_load(self, ptr, name)
   end
 
+  def store_volatile(value, ptr)
+    store(value, ptr).tap { |v| v.volatile = true }
+  end
+
+  def load_volatile(ptr, name = "")
+    load(ptr, name).tap { |v| v.volatile = true }
+  end
+
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
@@ -119,7 +127,7 @@ class LLVM::Builder
     Value.new LibLLVM.build_extract_value(self, value, index, name)
   end
 
-  {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
+  {% for name in %w(bit_cast zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
     def {{name.id}}(value, type, name = "")
       # check_type({{name}}, type)
       # check_value(value)
@@ -225,6 +233,10 @@ class LLVM::Builder
 
   def fence(ordering, singlethread, name = "")
     Value.new LibLLVM.build_fence(self, ordering, singlethread ? 1 : 0, name)
+  end
+
+  def va_arg(list, type, name = "")
+    Value.new LibLLVM.build_va_arg(self, list, type, name)
   end
 
   def set_current_debug_location(line, column, scope, inlined_at = nil)

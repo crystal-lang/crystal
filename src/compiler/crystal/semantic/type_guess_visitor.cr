@@ -78,7 +78,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      # Check for an argument that mathces this var, and see
+      # Check for an argument that matches this var, and see
       # if it has a default value. If so, we do a `self` check
       # to make sure `self` isn't used
       if (arg = args_hash[node.name]?) && (default_value = arg.default_value)
@@ -110,6 +110,8 @@ module Crystal
           process_uninitialized_instance_var(owner, var, node.declared_type)
         when GenericModuleType
           process_uninitialized_instance_var(owner, var, node.declared_type)
+        else
+          # TODO: can this be reached?
         end
       end
     end
@@ -190,6 +192,8 @@ module Crystal
             process_lib_out(owner, exp, type)
           when GenericModuleType
             process_lib_out(owner, exp, type)
+          else
+            # TODO: can this be reached?
           end
         end
       end
@@ -278,6 +282,8 @@ module Crystal
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
                 add_type_info(owner_vars, target.name, tuple_type, target)
+              else
+                # TODO: can this be reached?
               end
             end
           end
@@ -819,7 +825,7 @@ module Crystal
           if @splat.same?(arg)
             # If restriction is not splat (like `*foo : T`),
             # we cannot guess the type.
-            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # (We can also guess `Indexable(T)`, but it is not perfect.)
             # And this early return is no problem because splat argument
             # cannot have a default value.
             return unless restriction.is_a?(Splat)

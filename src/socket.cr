@@ -10,7 +10,23 @@ class Socket < IO
   include IO::Buffered
   include IO::Evented
 
-  class Error < Exception
+  class Error < IO::Error
+    private def self.new_from_errno(message, errno, **opts)
+      case errno
+      when Errno::ECONNREFUSED
+        Socket::ConnectError.new(message, **opts)
+      when Errno::EADDRINUSE
+        Socket::BindError.new(message, **opts)
+      else
+        super message, errno, **opts
+      end
+    end
+  end
+
+  class ConnectError < Error
+  end
+
+  class BindError < Error
   end
 
   enum Type
@@ -38,7 +54,11 @@ class Socket < IO
   # :nodoc:
   SOMAXCONN = 128
 
-  getter fd : Int32
+  @volatile_fd : Atomic(Int32)
+
+  def fd : Int32
+    @volatile_fd.get
+  end
 
   @closed : Bool
 
@@ -67,9 +87,9 @@ class Socket < IO
   def initialize(@family, @type, @protocol = Protocol::IP, blocking = false)
     @closed = false
     fd = LibC.socket(family, type, protocol)
-    raise Errno.new("failed to create socket:") if fd == -1
+    raise Socket::Error.from_errno("Failed to create socket") if fd == -1
     init_close_on_exec(fd)
-    @fd = fd
+    @volatile_fd = Atomic.new(fd)
 
     self.sync = true
     unless blocking
@@ -78,9 +98,10 @@ class Socket < IO
   end
 
   # Creates a Socket from an existing socket file descriptor.
-  def initialize(@fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+  def initialize(fd : Int32, @family, @type, @protocol = Protocol::IP, blocking = false)
+    @volatile_fd = Atomic.new(fd)
     @closed = false
-    init_close_on_exec(@fd)
+    init_close_on_exec(fd)
 
     self.sync = true
     unless blocking
@@ -122,8 +143,8 @@ class Socket < IO
     connect(addr, timeout) { |error| raise error }
   end
 
-  # Tries to connect to a remote address. Yields an `IO::Timeout` or an
-  # `Errno` error if the connection failed.
+  # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
+  # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil)
     timeout = timeout.seconds unless timeout.is_a? Time::Span | Nil
     loop do
@@ -134,11 +155,11 @@ class Socket < IO
       when Errno::EISCONN
         return
       when Errno::EINPROGRESS, Errno::EALREADY
-        wait_writable(timeout: timeout) do |error|
-          return yield IO::Timeout.new("connect timed out")
+        wait_writable(timeout: timeout) do
+          return yield IO::TimeoutError.new("connect timed out")
         end
       else
-        return yield Errno.new("connect")
+        return yield Socket::ConnectError.from_errno("connect")
       end
     end
   end
@@ -153,7 +174,7 @@ class Socket < IO
   # ```
   def bind(host : String, port : Int)
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
-      bind(addrinfo) { |errno| errno }
+      bind(addrinfo, "#{host}:#{port}") { |errno| errno }
     end
   end
 
@@ -167,7 +188,7 @@ class Socket < IO
   # ```
   def bind(port : Int)
     Addrinfo.resolve("::", port, @family, @type, @protocol) do |addrinfo|
-      bind(addrinfo) { |errno| errno }
+      bind(addrinfo, "::#{port}") { |errno| errno }
     end
   end
 
@@ -179,15 +200,15 @@ class Socket < IO
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
-  def bind(addr)
-    bind(addr) { |errno| raise errno }
+  def bind(addr : Socket::Address)
+    bind(addr, addr.to_s) { |errno| raise errno }
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Errno` if the binding failed.
-  def bind(addr)
+  # Yields an `Socket::BindError` if the binding failed.
+  private def bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield Errno.new("bind")
+      yield BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
@@ -197,10 +218,10 @@ class Socket < IO
   end
 
   # Tries to listen for connections on the previously bound socket.
-  # Yields an `Errno` on failure.
+  # Yields an `Socket::Error` on failure.
   def listen(backlog : Int = SOMAXCONN)
     unless LibC.listen(fd, backlog) == 0
-      yield Errno.new("listen")
+      yield Socket::Error.from_errno("Listen failed")
     end
   end
 
@@ -217,8 +238,8 @@ class Socket < IO
   # socket.puts Time.utc
   # socket.close
   # ```
-  def accept
-    accept? || raise IO::Error.new("Closed stream")
+  def accept : Socket
+    accept? || raise Socket::Error.new("Closed stream")
   end
 
   # Accepts an incoming connection.
@@ -250,13 +271,20 @@ class Socket < IO
         if closed?
           return
         elsif Errno.value == Errno::EAGAIN
-          wait_readable
+          wait_acceptable
+          return if closed?
         else
-          raise Errno.new("accept")
+          raise Socket::Error.from_errno("accept")
         end
       else
         return client_fd
       end
+    end
+  end
+
+  private def wait_acceptable
+    wait_readable(raise_if_closed: false) do
+      raise TimeoutError.new("Accept timed out")
     end
   end
 
@@ -292,7 +320,7 @@ class Socket < IO
   def send(message, to addr : Address) : Int32
     slice = message.to_slice
     bytes_sent = LibC.sendto(fd, slice.to_unsafe.as(Void*), slice.size, 0, addr, addr.size)
-    raise Errno.new("Error sending datagram to #{addr}") if bytes_sent == -1
+    raise Socket::Error.from_errno("Error sending datagram to #{addr}") if bytes_sent == -1
     # to_i32 is fine because string/slice sizes are an Int32
     bytes_sent.to_i32
   end
@@ -335,6 +363,11 @@ class Socket < IO
 
   protected def recvfrom(bytes)
     sockaddr = Pointer(LibC::SockaddrStorage).malloc.as(LibC::Sockaddr*)
+    # initialize sockaddr with the initialized family of the socket
+    copy = sockaddr.value
+    copy.sa_family = family
+    sockaddr.value = copy
+
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
 
     bytes_read = evented_read(bytes, "Error receiving datagram") do |slice|
@@ -355,13 +388,13 @@ class Socket < IO
   end
 
   private def shutdown(how)
-    if LibC.shutdown(@fd, how) != 0
-      raise Errno.new("shutdown #{how}")
+    if LibC.shutdown(fd, how) != 0
+      raise Socket::Error.from_errno("shutdown #{how}")
     end
   end
 
   def inspect(io : IO) : Nil
-    io << "#<#{self.class}:fd #{@fd}>"
+    io << "#<#{self.class}:fd #{fd}>"
   end
 
   def send_buffer_size
@@ -391,15 +424,15 @@ class Socket < IO
   end
 
   def reuse_port?
-    ret = getsockopt(LibC::SO_REUSEPORT, 0) do |errno|
-      # If SO_REUSEPORT is not supported, the return value should be `false`
-      if errno.errno == Errno::ENOPROTOOPT
-        return false
-      else
-        raise errno
-      end
+    getsockopt(LibC::SO_REUSEPORT, 0) do |value|
+      return value != 0
     end
-    ret != 0
+
+    if Errno.value == Errno::ENOPROTOOPT
+      return false
+    else
+      raise Socket::Error.from_errno("getsockopt")
+    end
   end
 
   def reuse_port=(val : Bool)
@@ -452,22 +485,23 @@ class Socket < IO
   end
 
   # Returns the modified *optval*.
-  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
-    getsockopt(optname, optval, level) { |errno| raise errno }
+  protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    getsockopt(optname, optval, level) { |value| return value }
+    raise Socket::Error.from_errno("getsockopt")
   end
 
   protected def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
-    yield Errno.new("getsockopt") if ret == -1
-    optval
+    yield optval if ret == 0
+    ret
   end
 
   # NOTE: *optval* is restricted to `Int32` until sizeof works on variables.
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
-    raise Errno.new("setsockopt") if ret == -1
+    raise Socket::Error.from_errno("setsockopt") if ret == -1
     ret
   end
 
@@ -515,12 +549,12 @@ class Socket < IO
 
   def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
-    raise Errno.new("fcntl() failed") if r == -1
+    raise Socket::Error.from_errno("fcntl() failed") if r == -1
     r
   end
 
   def fcntl(cmd, arg = 0)
-    self.class.fcntl @fd, cmd, arg
+    self.class.fcntl fd, cmd, arg
   end
 
   def finalize
@@ -539,35 +573,42 @@ class Socket < IO
 
   private def unbuffered_read(slice : Bytes)
     evented_read(slice, "Error reading socket") do
-      LibC.recv(@fd, slice, slice.size, 0).to_i32
+      LibC.recv(fd, slice, slice.size, 0).to_i32
     end
   end
 
   private def unbuffered_write(slice : Bytes)
     evented_write(slice, "Error writing to socket") do |slice|
-      LibC.send(@fd, slice, slice.size, 0)
+      LibC.send(fd, slice, slice.size, 0)
     end
   end
 
   private def unbuffered_rewind
-    raise IO::Error.new("Can't rewind")
+    raise Socket::Error.new("Can't rewind")
   end
 
   private def unbuffered_close
     return if @closed
 
+    # Perform libevent cleanup before LibC.close.
+    # Using a file descriptor after it has been closed is never defined and can
+    # always lead to undefined results. This is not specific to libevent.
+    @closed = true
+    evented_close
+
+    # Clear the @volatile_fd before actually closing it in order to
+    # reduce the chance of reading an outdated fd value
+    _fd = @volatile_fd.swap(-1)
+
     err = nil
-    if LibC.close(@fd) != 0
+    if LibC.close(_fd) != 0
       case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else
-        err = Errno.new("Error closing socket")
+        err = Socket::Error.from_errno("Error closing socket")
       end
     end
-
-    @closed = true
-    evented_close
 
     raise err if err
   end

@@ -334,4 +334,20 @@ describe "Semantic: alias" do
       f.call(a.itself)
       )) { nil_type }
   end
+
+  it "overloads union type through alias" do
+    assert_type(%(
+      alias X = Int8 | Int32
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x : X)
+        'a'
+      end
+
+      foo(1)
+     ), inject_primitives: false) { int32 }
+  end
 end

@@ -31,8 +31,8 @@ class Crystal::RecursiveStructChecker
   end
 
   def check_single(type)
-    return if @all_checked.includes?(type)
-    @all_checked << type
+    has_not_been_checked = @all_checked.add?(type)
+    return unless has_not_been_checked
 
     if struct?(type)
       target = type

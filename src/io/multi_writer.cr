@@ -29,7 +29,7 @@ class IO::MultiWriter < IO
     @writers = writers.map(&.as(IO)).to_a
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?

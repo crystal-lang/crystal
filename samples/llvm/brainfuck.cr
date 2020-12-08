@@ -167,6 +167,8 @@ class Program
         i = matching_close_index
       when ']'
         abort "Unmatched ']' at position #{i}"
+      else
+        # skip
       end
       i += 1
     end

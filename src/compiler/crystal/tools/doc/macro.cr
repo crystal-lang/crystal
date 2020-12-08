@@ -23,6 +23,10 @@ class Crystal::Doc::Macro
     @macro.doc
   end
 
+  def doc_copied_from
+    nil
+  end
+
   def source_link
     @generator.source_link(@macro)
   end
@@ -39,7 +43,7 @@ class Crystal::Doc::Macro
   end
 
   def anchor
-    '#' + URI.escape(id)
+    '#' + URI.encode(id)
   end
 
   def prefix
@@ -94,7 +98,7 @@ class Crystal::Doc::Macro
 
   def arg_to_s(arg : Arg, io : IO) : Nil
     if arg.external_name != arg.name
-      name = arg.external_name.empty? ? "_" : arg.external_name
+      name = arg.external_name.presence || "_"
       if Symbol.needs_quotes? name
         HTML.escape name.inspect, io
       else
@@ -141,7 +145,6 @@ class Crystal::Doc::Macro
   end
 
   def annotations(annotation_type)
-    # macros does not support annotations
-    nil
+    @macro.annotations(annotation_type)
   end
 end

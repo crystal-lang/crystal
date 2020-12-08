@@ -218,8 +218,8 @@ module Enumerable(T)
   # of the collection, removing `nil` values.
   #
   # ```
-  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [#<Regex::MatchData "Al">, nil]
-  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [#<Regex::MatchData "Al">]
+  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [Regex::MatchData("Al"), nil]
+  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
     ary = [] of typeof((yield first).not_nil!)
@@ -289,6 +289,10 @@ module Enumerable(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks of two items can be iterated using `#each_cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def each_cons(count : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{count}" if count <= 0
     if reuse.nil? || reuse.is_a?(Bool)
@@ -311,6 +315,40 @@ module Enumerable(T)
       end
     end
     nil
+  end
+
+  # Iterates over the collection yielding pairs of adjacent items,
+  # but advancing one by one.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].each_cons_pair do |a, b|
+  #   puts "#{a}, #{b}"
+  # end
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2
+  # 2, 3
+  # 3, 4
+  # 4, 5
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#each_cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def each_cons_pair(& : (T, T) -> _) : Nil
+    last_elem = uninitialized T
+    first_iteration = true
+    each do |elem|
+      if first_iteration
+        first_iteration = false
+      else
+        yield last_elem, elem
+      end
+      last_elem = elem
+    end
   end
 
   # Iterates over the collection in slices of size *count*,
@@ -441,18 +479,38 @@ module Enumerable(T)
     if_none
   end
 
-  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
-  # if the collection is empty.
+  # Returns the first element in the collection,
+  # If the collection is empty, calls the block and returns its value.
+  #
+  # ```
+  # ([1, 2, 3]).first { 4 }   # => 1
+  # ([] of Int32).first { 4 } # => 4
+  # ```
   def first
     each { |e| return e }
-    raise Enumerable::EmptyError.new
+    yield
+  end
+
+  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
+  # if the collection is empty.
+  #
+  # ```
+  # ([1, 2, 3]).first   # => 1
+  # ([] of Int32).first # raises Enumerable::EmptyError
+  # ```
+  def first
+    first { raise Enumerable::EmptyError.new }
   end
 
   # Returns the first element in the collection.
   # When the collection is empty, returns `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).first?   # => 1
+  # ([] of Int32).first? # => nil
+  # ```
   def first?
-    each { |e| return e }
-    nil
+    first { nil }
   end
 
   # Returns a new array with the concatenated results of running the block
@@ -475,16 +533,6 @@ module Enumerable(T)
       end
     end
     ary
-  end
-
-  # Returns an `Array` with all the elements in the collection that
-  # match the `RegExp` *pattern*.
-  #
-  # ```
-  # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
-  # ```
-  def grep(pattern)
-    self.select { |elem| pattern === elem }
   end
 
   # Returns a `Hash` whose keys are each different value that the passed block
@@ -628,7 +676,8 @@ module Enumerable(T)
   # Just like the other variant, but you can set the initial value of the accumulator.
   #
   # ```
-  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i } # => 25
+  # [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }             # => 25
+  # [1, 2, 3].reduce([] of Int32) { |memo, i| memo.unshift(i) } # => [3, 2, 1]
   # ```
   def reduce(memo)
     each do |elem|
@@ -663,7 +712,7 @@ module Enumerable(T)
   # ```
   def join(separator = "")
     String.build do |io|
-      join separator, io
+      join io, separator
     end
   end
 
@@ -673,9 +722,9 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5].join(", ") { |i| -i } # => "-1, -2, -3, -4, -5"
   # ```
-  def join(separator = "")
+  def join(separator = "", & : T ->)
     String.build do |io|
-      join(separator, io) do |elem|
+      join(io, separator) do |elem|
         io << yield elem
       end
     end
@@ -684,7 +733,7 @@ module Enumerable(T)
   # Prints to *io* all the elements in the collection, separated by *separator*.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT)
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
   # ```
   #
   # Prints:
@@ -692,17 +741,33 @@ module Enumerable(T)
   # ```text
   # 1, 2, 3, 4, 5
   # ```
-  def join(separator, io)
-    join(separator, io) do |elem|
+  def join(io : IO, separator = "")
+    join(io, separator) do |elem|
       elem.to_s(io)
     end
+  end
+
+  # Prints to *io* all the elements in the collection, separated by *separator*.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2, 3, 4, 5
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "") instead`))]
+  def join(separator, io : IO)
+    join(io, separator)
   end
 
   # Prints to *io* the concatenation of the elements, with the possibility of
   # controlling how the printing is done via a block.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT) { |i, io| io << "(#{i})" }
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
   # ```
   #
   # Prints:
@@ -710,9 +775,28 @@ module Enumerable(T)
   # ```text
   # (1), (2), (3), (4), (5)
   # ```
-  def join(separator, io)
+  def join(io : IO, separator = "", & : T, IO ->)
     each_with_index do |elem, i|
       io << separator if i > 0
+      yield elem, io
+    end
+  end
+
+  # Prints to *io* the concatenation of the elements, with the possibility of
+  # controlling how the printing is done via a block.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # (1), (2), (3), (4), (5)
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "", & : T, IO ->) instead`))]
+  def join(separator, io : IO)
+    join(io, separator) do |elem, io|
       yield elem, io
     end
   end
@@ -734,9 +818,12 @@ module Enumerable(T)
   # ["Alice", "Bob"].map_with_index { |name, i| "User ##{i}: #{name}" }
   # # => ["User #0: Alice", "User #1: Bob"]
   # ```
-  def map_with_index(&block : T, Int32 -> U) forall U
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
     ary = [] of U
-    each_with_index { |e, i| ary << yield e, i }
+    each_with_index(offset) { |e, i| ary << yield e, i }
     ary
   end
 
@@ -787,7 +874,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         obj = elem
       end
@@ -820,7 +907,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
@@ -876,7 +963,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         obj = elem
       end
@@ -909,7 +996,7 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
       found = true
@@ -962,11 +1049,11 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
         objmin = elem
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
         objmax = elem
       end
@@ -1003,16 +1090,20 @@ module Enumerable(T)
 
     each_with_index do |elem, i|
       value = yield elem
-      if i == 0 || value < min
+      if i == 0 || compare_or_raise(value, min) < 0
         min = value
       end
-      if i == 0 || value > max
+      if i == 0 || compare_or_raise(value, max) > 0
         max = value
       end
       found = true
     end
 
     {found, {min, max}}
+  end
+
+  private def compare_or_raise(value, memo)
+    value <=> memo || raise ArgumentError.new("Comparison of #{value} and #{memo} failed")
   end
 
   # Returns `true` if the passed block returns `true`
@@ -1179,9 +1270,10 @@ module Enumerable(T)
   #
   # ```
   # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
+  # ["Alice", "Bob"].select(/^A/)   # => ["Alice"]
   # ```
   def select(pattern)
-    self.select { |e| pattern === e }
+    self.select { |elem| pattern === elem }
   end
 
   # Returns the number of elements in the collection.
@@ -1191,6 +1283,17 @@ module Enumerable(T)
   # ```
   def size
     count { true }
+  end
+
+  # Returns `true` if `self` is empty, `false` otherwise.
+  #
+  # ```
+  # ([] of Int32).empty? # => true
+  # ([1]).empty?         # => false
+  # ```
+  def empty?
+    each { return false }
+    true
   end
 
   # Returns an `Array` with the first *count* elements removed
@@ -1290,7 +1393,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum(1) { |name| name.size } # => 9 (1 + 5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # If the collection is empty, returns *initial*.
   #
   # ```
   # ([] of String).sum(1) { |name| name.size } # => 1
@@ -1402,7 +1505,7 @@ module Enumerable(T)
     result
   end
 
-  # Tallys the collection.  Returns a hash where the keys are the
+  # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #
@@ -1520,6 +1623,7 @@ module Enumerable(T)
   # a.zip(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, 6, 6}]
   # ```
   def zip(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip(*others) { |e| break e }.not_nil!)).new(size)
     zip(*others) { |e| pairs << e }
     pairs
@@ -1590,6 +1694,7 @@ module Enumerable(T)
   # a.zip?(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, nil, nil}]
   # ```
   def zip?(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip?(*others) { |e| break e }.not_nil!)).new(size)
     zip?(*others) { |e| pairs << e }
     pairs
@@ -1598,30 +1703,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               raise IndexError.new
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
@@ -1638,30 +1748,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip?(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]?
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]?
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               other_elem{{type_index}} = nil
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
@@ -1673,5 +1788,19 @@ module Enumerable(T)
         })
       end
     {% end %}
+  end
+
+  # :nodoc:
+  private struct Reflect(X)
+    # For now it's just a way to implement `Enumerable#sum` in a way that the
+    # initial value given to it has the type of the first type in the union,
+    # if the type is a union.
+    def self.first
+      {% if X.union? %}
+        {{X.union_types.first}}
+      {% else %}
+        X
+      {% end %}
+    end
   end
 end

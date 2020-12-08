@@ -128,7 +128,7 @@ describe "Codegen: double splat" do
   it "removes literal types in all matches (#6239)" do
     run(%(
       def foo(y : Float64)
-        y.to_i
+        y.to_i!
       end
 
       def bar(x : Float64, **args)

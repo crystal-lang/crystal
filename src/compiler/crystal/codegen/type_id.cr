@@ -69,6 +69,6 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(type)
-    int(@llvm_id.type_id(type))
+    int(@program.llvm_id.type_id(type))
   end
 end

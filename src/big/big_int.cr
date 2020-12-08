@@ -53,7 +53,7 @@ struct BigInt < Int
     end
   end
 
-  # ditto
+  # :ditto:
   def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, num)
@@ -62,9 +62,24 @@ struct BigInt < Int
     end
   end
 
-  # ditto
-  def initialize(num : Float)
+  # :ditto:
+  def initialize(num : Float::Primitive)
     LibGMP.init_set_d(out @mpz, num)
+  end
+
+  # :ditto:
+  def self.new(num : BigFloat)
+    num.to_big_i
+  end
+
+  # :ditto:
+  def self.new(num : BigDecimal)
+    num.to_big_i
+  end
+
+  # :ditto:
+  def self.new(num : BigRational)
+    num.to_big_i
   end
 
   # Returns *num*. Useful for generic code that does `T.new(...)` with `T`
@@ -152,6 +167,15 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
   end
 
+  def factorial : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
+  end
+
   def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
@@ -172,10 +196,13 @@ struct BigInt < Int
     self * other
   end
 
-  @[Deprecated("BigInt#/ will return a BigFloat in 0.29.0. Use BigInt#// for integer division.")]
-  def /(other : Int) : BigInt
-    # TODO replace to float division
-    self // other
+  Number.expand_div [BigInt], BigFloat
+  Number.expand_div [BigDecimal], BigDecimal
+  Number.expand_div [BigRational], BigRational
+
+  def //(other : Int::Unsigned) : BigInt
+    check_division_by_zero other
+    unsafe_floored_div(other)
   end
 
   def //(other : Int) : BigInt
@@ -337,6 +364,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
+  # :nodoc:
+  #
+  # Because every Int needs this method.
+  def unsafe_shr(count : Int) : self
+    self >> count
+  end
+
   def <<(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
   end
@@ -348,21 +382,29 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
+  # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
+  # :ditto:
   def gcd(other : Int) : Int
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
+  # :ditto:
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
+  end
+
+  def bit_length : Int32
+    LibGMP.sizeinbase(self, 2).to_i
   end
 
   # TODO: improve this
@@ -379,7 +421,7 @@ struct BigInt < Int
     String.new(to_cstr)
   end
 
-  # ditto
+  # :ditto:
   def to_s(io : IO) : Nil
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
@@ -395,14 +437,20 @@ struct BigInt < Int
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
   def to_s(base : Int) : String
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
     String.new(cstr)
   end
 
-  def digits : Array(Int32)
+  # :nodoc:
+  def digits(base = 10) : Array(Int32)
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
     ary = [] of Int32
-    self.to_s.each_char { |c| ary << c - '0' }
+    self.to_s(base).each_char { |c| ary << c.to_i(base) }
+    ary.reverse!
     ary
   end
 
@@ -475,10 +523,11 @@ struct BigInt < Int
   end
 
   def to_u32
-    LibGMP.get_ui(self).to_u32
+    to_u64.to_u32
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
       LibGMP.get_ui(self).to_u64
     else
@@ -540,6 +589,14 @@ struct BigInt < Int
 
   def to_big_f
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
+  end
+
+  def to_big_d
+    BigDecimal.new(self)
+  end
+
+  def to_big_r
+    BigRational.new(self)
   end
 
   def clone
@@ -605,23 +662,16 @@ struct Int
     self * other
   end
 
-  @[Deprecated("Int#/(other: BigInt) will return a BigFloat in 0.29.0. Use Int#// for integer division.")]
-  def /(other : BigInt) : BigInt
-    self // other
-  end
-
-  def //(other : BigInt) : BigInt
-    to_big_i // other
-  end
-
   def %(other : BigInt) : BigInt
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
-    other.gcm(self)
+  # Returns the greatest common divisor of `self` and *other*.
+  def gcd(other : BigInt) : Int
+    other.gcd(self)
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     other.lcm(self)
   end
@@ -670,12 +720,12 @@ class String
 end
 
 module Math
-  # Returns the sqrt of a `BigInt`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)

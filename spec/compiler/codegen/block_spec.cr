@@ -235,7 +235,7 @@ describe "Code gen: block" do
         a
       end
 
-      foo {}.to_i
+      foo {}.to_i!
     ").to_i.should eq(1)
   end
 
@@ -262,7 +262,7 @@ describe "Code gen: block" do
         true ? return 1 : return 1.1
       end
 
-      foo {}.to_i
+      foo {}.to_i!
     ").to_i.should eq(1)
   end
 
@@ -314,7 +314,7 @@ describe "Code gen: block" do
         bar(x) { |z| z }
       end
 
-      foo.to_i
+      foo.to_i!
     ").to_i.should eq(1)
   end
 
@@ -450,7 +450,7 @@ describe "Code gen: block" do
         1 &+ yield
       end
 
-      foo { break 2 }.to_i
+      foo { break 2 }.to_i!
     ").to_i.should eq(2)
   end
 
@@ -557,7 +557,7 @@ describe "Code gen: block" do
 
   it "can use self inside a block called from dispatch" do
     run("
-      struct Nil; def to_i; 0; end; end
+      struct Nil; def to_i!; 0; end; end
 
       class Foo
         def do; yield; end
@@ -585,7 +585,7 @@ describe "Code gen: block" do
       end
 
       123.foo
-      Global.x.to_i
+      Global.x.to_i!
     ").to_i.should eq(123)
   end
 
@@ -835,7 +835,7 @@ describe "Code gen: block" do
         yield 1 || 1.5
       end
 
-      foo { |x| x }.to_i
+      foo { |x| x }.to_i!
       ").to_i.should eq(1)
   end
 
@@ -860,7 +860,7 @@ describe "Code gen: block" do
       a = Foo.new(1) || Foo.new(1.5)
       a.each do |x|
         x.abs
-      end.to_i
+      end.to_i!
       ").to_i.should eq(1)
   end
 
@@ -1121,7 +1121,7 @@ describe "Code gen: block" do
           LibC.exit(1)
         end
 
-        def to_i
+        def to_i!
           0
         end
       end
@@ -1143,7 +1143,7 @@ describe "Code gen: block" do
         end
       end
 
-      extra.to_i
+      extra.to_i!
       )).to_i.should eq(1)
   end
 
@@ -1426,7 +1426,7 @@ describe "Code gen: block" do
 
       total = 0
       foo do |*args|
-        total &+= args[0].to_i
+        total &+= args[0].to_i!
       end
       total
       )).to_i.should eq(3)
@@ -1521,5 +1521,20 @@ describe "Code gen: block" do
       end
       foo{|_, _| }
       ))
+  end
+
+  it "doesn't crash on yield exp without a type (#8100)" do
+    codegen(%(
+      def foo
+        x = 1
+        if x.is_a?(Char)
+          yield x
+        else
+          yield x
+        end
+      end
+
+      foo { |x| }
+    ))
   end
 end

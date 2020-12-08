@@ -114,7 +114,7 @@ module HTTP
     #
     # The yielded object has an `add` method that accepts two arguments,
     # a key (`String`) and a value (`String` or `Nil`).
-    # Keys and values are escaped using `URI#escape`.
+    # Keys and values are escaped using `URI.encode_www_form`.
     #
     # ```
     # require "http/params"
@@ -127,9 +127,9 @@ module HTTP
     # params # => "color=black&name=crystal&year=2012+-+today"
     # ```
     def self.build(&block : Builder ->) : String
-      form_builder = Builder.new
-      yield form_builder
-      form_builder.to_s
+      String.build do |io|
+        yield Builder.new(io)
+      end
     end
 
     protected getter raw_params
@@ -144,10 +144,6 @@ module HTTP
 
     def ==(other : self)
       self.raw_params == other.raw_params
-    end
-
-    def ==(other)
-      false
     end
 
     # Returns first value for specified param name.
@@ -189,14 +185,26 @@ module HTTP
     # ```
     delegate empty?, to: raw_params
 
-    # Sets first *value* for specified param *name*.
+    # Sets the *name* key to *value*.
     #
     # ```
-    # params["item"] = "pencil"
+    # require "http/params"
+    #
+    # params = HTTP::Params{"a" => ["b", "c"]}
+    # params["a"] = "d"
+    # params["a"]           # => "d"
+    # params.fetch_all("a") # => ["d"]
+    #
+    # params["a"] = ["e", "f"]
+    # params["a"]           # => "e"
+    # params.fetch_all("a") # => ["e", "f"]
     # ```
-    def []=(name, value)
-      raw_params[name] ||= [""]
-      raw_params[name][0] = value
+    def []=(name, value : String | Array(String))
+      raw_params[name] =
+        case value
+        in String        then [value]
+        in Array(String) then value
+        end
     end
 
     # Returns all values for specified param *name*.
@@ -209,10 +217,11 @@ module HTTP
       raw_params.fetch(name) { [] of String }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to provided
+    # Returns first value for specified param *name*. Falls back to provided
     # *default* value when there is no such param.
     #
     # ```
+    # params["email"] = "john@example.org"
     # params.fetch("email", "none@example.org")           # => "john@example.org"
     # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
@@ -220,10 +229,11 @@ module HTTP
       fetch(name) { default }
     end
 
-    # Returns first value for specified param *name*. Fallbacks to return value
+    # Returns first value for specified param *name*. Falls back to return value
     # of provided block when there is no such param.
     #
     # ```
+    # params.delete("email")
     # params.fetch("email") { raise "Email is missing" }              # raises "Email is missing"
     # params.fetch("non_existent_param") { "default computed value" } # => "default computed value"
     # ```
@@ -313,7 +323,6 @@ module HTTP
     # params = HTTP::Params.parse("item=keychain&item=keynote&email=john@example.org")
     # params.to_s # => "item=keychain&item=keynote&email=john%40example.org"
     # ```
-    # TODO: `to_s` should escape @ to %40 ?
     def to_s(io : IO) : Nil
       builder = Builder.new(io)
       each do |name, value|
@@ -322,13 +331,8 @@ module HTTP
     end
 
     # :nodoc:
-    def self.encode_www_form_component(string : String, io : IO)
-      URI.escape(string, io, true)
-    end
-
-    # :nodoc:
     def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
-      URI.unescape_one query, bytesize, i, byte, char, buffer, true
+      URI.decode_one query, bytesize, i, byte, char, buffer, true
     end
 
     # HTTP params builder.
@@ -336,10 +340,7 @@ module HTTP
     # Every parameter added is directly written to an `IO`,
     # where keys and values are properly escaped.
     class Builder
-      @io : IO
-      @first : Bool
-
-      def initialize(@io = IO::Memory.new)
+      def initialize(@io : IO)
         @first = true
       end
 
@@ -347,9 +348,9 @@ module HTTP
       def add(key, value : String?)
         @io << '&' unless @first
         @first = false
-        URI.escape key, @io
+        URI.encode_www_form key, @io
         @io << '='
-        Params.encode_www_form_component value, @io if value
+        URI.encode_www_form value, @io if value
         self
       end
 
@@ -357,10 +358,6 @@ module HTTP
       def add(key, values : Array)
         values.each { |value| add(key, value) }
         self
-      end
-
-      def to_s(io : IO) : Nil
-        io << @io.to_s
       end
     end
   end

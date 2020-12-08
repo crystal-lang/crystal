@@ -1,6 +1,5 @@
 require "spec"
 require "openssl/pkcs5"
-require "openssl/algorithm"
 
 describe OpenSSL::PKCS5 do
   it "computes pbkdf2_hmac_sha1" do

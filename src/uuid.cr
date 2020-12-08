@@ -30,7 +30,7 @@ struct UUID
     V5 = 5
   end
 
-  protected getter bytes : StaticArray(UInt8, 16)
+  @bytes : StaticArray(UInt8, 16)
 
   # Generates UUID from *bytes*, applying *version* and *variant* to the UUID if
   # present.

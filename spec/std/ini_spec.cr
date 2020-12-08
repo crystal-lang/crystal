@@ -77,7 +77,7 @@ describe "INI" do
   end
 
   describe "build to an INI-formatted output" do
-    it "build from a Hash" do
+    it "builds from a Hash" do
       INI.build({
         "general" => {
           "log_level" => 'D',
@@ -91,7 +91,7 @@ describe "INI" do
         },
       }, true).should eq(File.read datapath("test_file.ini"))
     end
-    it "build from a NamedTuple" do
+    it "builds from a NamedTuple" do
       INI.build({
         "general": {
           "log_level": 'D',
@@ -105,8 +105,17 @@ describe "INI" do
         },
       }, true).should eq(File.read datapath("test_file.ini"))
     end
-    it "build with no spaces around `=`" do
+
+    it "builds with no spaces around `=`" do
       INI.build({"foo" => {"a" => "1"}}, false).should eq("[foo]\na=1\n\n")
+    end
+
+    it "builds with no sections" do
+      INI.build({"" => {"a" => "1"}}, false).should eq("a=1\n")
+    end
+
+    it "builds an empty section before non-empty sections" do
+      INI.build({"foo" => {"a" => "1"}, "" => {"b" => "2"}}, false).should eq("b=2\n[foo]\na=1\n\n")
     end
   end
 end

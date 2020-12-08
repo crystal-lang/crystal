@@ -1,6 +1,7 @@
-require "callstack"
+require "./exception/call_stack"
+require "system_error"
 
-CallStack.skip(__FILE__)
+Exception::CallStack.skip(__FILE__)
 
 # Represents errors that occur during application execution.
 #
@@ -16,6 +17,8 @@ class Exception
   # This is useful for wrapping exceptions and retaining the original
   # exception information.
   getter cause : Exception?
+
+  # :nodoc:
   property callstack : CallStack?
 
   def initialize(@message : String? = nil, @cause : Exception? = nil)
@@ -121,7 +124,7 @@ end
 # Raised when attempting to divide an integer by 0.
 #
 # ```
-# 1 / 0 # raises DivisionByZeroError (Division by 0)
+# 1 // 0 # raises DivisionByZeroError (Division by 0)
 # ```
 class DivisionByZeroError < Exception
   def initialize(message = "Division by 0")
@@ -162,4 +165,9 @@ class NilAssertionError < Exception
   def initialize(message = "Nil assertion failed")
     super(message)
   end
+end
+
+# Raised when there is an internal runtime error
+class RuntimeError < Exception
+  include SystemError
 end

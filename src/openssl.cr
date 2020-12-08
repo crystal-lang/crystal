@@ -96,6 +96,7 @@ module OpenSSL
 
     class Error < OpenSSL::Error
       getter error : ErrorType
+      getter? underlying_eof : Bool = false
 
       def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
         @error = LibSSL.ssl_get_error(ssl, return_code)
@@ -109,8 +110,9 @@ module OpenSSL
             case return_code
             when 0
               message = "Unexpected EOF"
+              @underlying_eof = true
             when -1
-              cause = Errno.new(func || "OpenSSL")
+              cause = RuntimeError.from_errno(func || "OpenSSL")
               message = "I/O error"
             else
               message = "Unknown error"
@@ -130,7 +132,7 @@ end
 
 require "./openssl/bio"
 require "./openssl/ssl/*"
-require "./openssl/digest/*"
+require "./openssl/digest"
 require "./openssl/md5"
 require "./openssl/x509/x509"
 require "./openssl/pkcs5"

@@ -66,6 +66,8 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
       initializers << Initializer.new(current_type, target, value, MetaVars.new)
       node.type = @program.nil
       return
+    else
+      # TODO: can this happen?
     end
   end
 
@@ -96,7 +98,7 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
          (scope_initializer = scope_initializers[index])
         cloned_value = value.clone
         cloned_value.accept MainVisitor.new(program)
-        if casted_value = MainVisitor.check_automatic_cast(cloned_value, scope.lookup_instance_var(i.target.name).type)
+        if casted_value = MainVisitor.check_automatic_cast(@program, cloned_value, scope.lookup_instance_var(i.target.name).type)
           scope_initializer.value = casted_value
           next
         end

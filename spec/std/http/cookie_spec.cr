@@ -1,5 +1,6 @@
 require "spec"
 require "http/cookie"
+require "http/headers"
 
 private def parse_first_cookie(header)
   cookies = HTTP::Cookie::Parser.parse_cookies(header)
@@ -204,7 +205,7 @@ module HTTP
     describe "expiration_time" do
       it "sets expiration_time to be current when max-age=0" do
         cookie = parse_set_cookie("bla=1; max-age=0")
-        (Time.now - cookie.expiration_time.not_nil!).should be <= 1.seconds
+        (Time.utc - cookie.expiration_time.not_nil!).should be <= 1.seconds
       end
 
       it "sets expiration_time with old date" do
@@ -214,14 +215,14 @@ module HTTP
 
       it "sets future expiration_time with max-age" do
         cookie = parse_set_cookie("bla=1; max-age=1")
-        (cookie.expiration_time.not_nil!).should be > Time.now
+        (cookie.expiration_time.not_nil!).should be > Time.utc
       end
 
       it "sets future expiration_time with max-age and future cookie creation time" do
         cookie = parse_set_cookie("bla=1; max-age=1")
-        cookie_expiration = cookie.expiration_time(time_reference: Time.now + 20.seconds).not_nil!
-        (Time.now + 20.seconds).should be < cookie_expiration
-        (Time.now + 21.seconds).should be >= cookie_expiration
+        cookie_expiration = cookie.expiration_time(time_reference: Time.utc + 20.seconds).not_nil!
+        (Time.utc + 20.seconds).should be < cookie_expiration
+        (Time.utc + 21.seconds).should be >= cookie_expiration
       end
 
       it "sets future expiration_time with expires" do
@@ -252,17 +253,21 @@ module HTTP
       end
 
       it "not expired with future expires" do
-        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000")
+        cookie = parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 1} 00:00:00 -0000")
         cookie.expired?.should be_false
       end
 
       it "sets past expiration_time with max-age and future time reference" do
         cookie = parse_set_cookie("bla=1; max-age=1")
-        cookie_expiration = cookie.expiration_time(time_reference: Time.now - 20.seconds).not_nil!
-        (Time.now - 20.seconds).should be < cookie_expiration
-        (Time.now - 18.seconds).should be > cookie_expiration
-        cookie_expired = cookie.expired?(time_reference: Time.now - 20.seconds)
+        cookie_expiration = cookie.expiration_time(time_reference: Time.utc - 20.seconds).not_nil!
+        (Time.utc - 20.seconds).should be < cookie_expiration
+        (Time.utc - 18.seconds).should be > cookie_expiration
+        cookie_expired = cookie.expired?(time_reference: Time.utc - 20.seconds)
         cookie_expired.should be_true
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan #{Time.utc.year + 2} 00:00:00 -0000").expired?.should eq false
       end
 
       it "not expired when max-age and expires are not provided" do
@@ -287,6 +292,44 @@ module HTTP
       cookies.has_key?("a").should be_true
     end
 
+    it "allows adding and retrieving cookies with reserved chars" do
+      cookies = Cookies.new
+      cookies << Cookie.new("a[0]", "b+c%20")
+      cookies["d"] = "e+f"
+
+      cookies["a[0]"].value.should eq "b+c%20"
+      cookies["d"].value.should eq "e+f"
+    end
+
+    it "allows retrieving the size of the cookies collection" do
+      cookies = Cookies.new
+      cookies.size.should eq 0
+      cookies << Cookie.new("1", "2")
+      cookies.size.should eq 1
+      cookies << Cookie.new("3", "4")
+      cookies.size.should eq 2
+    end
+
+    it "allows clearing the cookies collection" do
+      cookies = Cookies.new
+      cookies << Cookie.new("test_key", "test_value")
+      cookies << Cookie.new("a", "b")
+      cookies << Cookie.new("c", "d")
+      cookies.clear
+      cookies.should be_empty
+    end
+
+    it "allows deleting a particular cookie by key" do
+      cookies = Cookies.new
+      cookies << Cookie.new("the_key", "the_value")
+      cookies << Cookie.new("not_the_key", "not_the_value")
+      cookies << Cookie.new("a", "b")
+      cookies.has_key?("the_key").should be_true
+      cookies.delete("the_key").not_nil!.value.should eq "the_value"
+      cookies.has_key?("the_key").should be_false
+      cookies.size.should eq 2
+    end
+
     describe "adding request headers" do
       it "overwrites a pre-existing Cookie header" do
         headers = Headers.new
@@ -300,6 +343,14 @@ module HTTP
         cookies.add_request_headers(headers)
 
         headers["Cookie"].should eq "a=b"
+      end
+
+      it "use encode_www_form to write the cookie's value" do
+        headers = Headers.new
+        cookies = Cookies.new
+        cookies << Cookie.new("a[0]", "b+c")
+        cookies.add_request_headers(headers)
+        headers["Cookie"].should eq "a%5B0%5D=b%2Bc"
       end
 
       it "merges multiple cookies into one Cookie header" do
@@ -357,6 +408,14 @@ module HTTP
 
         headers.get("Set-Cookie").includes?("a=b; path=/").should be_true
         headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
+      end
+
+      it "uses encode_www_form on Set-Cookie" do
+        headers = Headers.new
+        cookies = Cookies.new
+        cookies << Cookie.new("a[0]", "b+c")
+        cookies.add_response_headers(headers)
+        headers.get("Set-Cookie").includes?("a%5B0%5D=b%2Bc; path=/").should be_true
       end
 
       describe "when no cookies are set" do

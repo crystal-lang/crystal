@@ -580,7 +580,7 @@ module Crystal
 
   class UnionType
     def restriction_of?(type, owner)
-      self == type || union_types.any? &.restriction_of?(type, owner)
+      self == type || union_types.all? &.restriction_of?(type, owner)
     end
 
     def restrict(other : Union, context)
@@ -760,6 +760,8 @@ module Crystal
             context.set_free_var(name, type_var)
             return type_var
           end
+        else
+          # Restriction is not possible (maybe return nil here?)
         end
       else
         type_var = type_var.type? || type_var
@@ -1173,12 +1175,25 @@ module Crystal
       end
 
       other.type_vars.each_with_index do |other_type_var, i|
+        # If checking the return type, any type matches Nil
+        if i == other.type_vars.size - 1 && nil_type?(other_type_var, context)
+          # Also, all other types matched, so the matching type is this proc type
+          # except that it has a Nil return type
+          new_proc_arg_types = arg_types.dup
+          new_proc_arg_types << program.nil_type
+          return program.proc_of(new_proc_arg_types)
+        end
+
         proc_type = arg_types[i]? || return_type
         restricted = proc_type.restrict other_type_var, context
         return nil unless restricted == proc_type
       end
 
       self
+    end
+
+    def nil_type?(node, context)
+      node.is_a?(Path) && context.defining_type.lookup_path(node).is_a?(NilType)
     end
 
     def compatible_with?(other : ProcInstanceType)
@@ -1217,13 +1232,17 @@ module Crystal
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
           type = @match || literal.type
         end
         type
       end
+    end
+
+    def compatible_with?(type)
+      literal.type == type || literal.can_be_autocast_to?(type)
     end
   end
 
@@ -1241,12 +1260,23 @@ module Crystal
           literal.type.restrict(other, context)
         end
       else
-        type = super(other, context) ||
-               literal.type.restrict(other, context)
+        type = literal.type.restrict(other, context) ||
+               super(other, context)
         if type == self
           type = @match || literal.type
         end
         type
+      end
+    end
+
+    def compatible_with?(type)
+      case type
+      when SymbolType
+        true
+      when EnumType
+        !!(type.find_member(literal.value))
+      else
+        false
       end
     end
   end

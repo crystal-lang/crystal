@@ -300,7 +300,7 @@ describe "Code gen: method_missing" do
   it "does method_missing with assignment (2) (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -315,7 +315,7 @@ describe "Code gen: method_missing" do
       end
 
       foo = Foo.new
-      foo.bar(1).to_i
+      foo.bar(1).to_i!
       )).to_i.should eq(1)
   end
 

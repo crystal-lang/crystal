@@ -7,7 +7,7 @@ def sd_genmat
   (0...9).each do |i|
     (0...9).each do |j|
       (0...9).each do |k|
-        mc[r] = [9 * i + j, (i / 3 * 3 + j / 3) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243]
+        mc[r] = [9 * i + j, (i // 3 * 3 + j // 3) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243]
         r += 1
       end
     end
@@ -116,7 +116,7 @@ def sd_solve(mr, mc, s)
     (0...81).each { |j| o.push((s[j].ord - 49).to_i32) }
     (0...i).each do |j|
       r = mr[cc[j]][cr[j]]
-      o[r / 9] = r % 9 + 1
+      o[r // 9] = r % 9 + 1
     end
     ret.push(o)
     i, dir = i - 1, -1

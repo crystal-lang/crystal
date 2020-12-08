@@ -45,7 +45,7 @@ module Crystal
     end
 
     # Returns the doc comment attached to this node. Not every node
-    # supports having doc domments, so by default this returns `nil`.
+    # supports having doc comments, so by default this returns `nil`.
     def doc
     end
 
@@ -97,7 +97,7 @@ module Crystal
     end
 
     # It yields `nil` always.
-    # (It is overrided by `Expressions` to implement `#single_expression`.)
+    # (It is overriden by `Expressions` to implement `#single_expression`.)
     def single_expression?
       nil
     end
@@ -296,7 +296,11 @@ module Crystal
   class StringInterpolation < ASTNode
     property expressions : Array(ASTNode)
 
-    def initialize(@expressions : Array(ASTNode))
+    # Removed indentation size.
+    # This property is only available when this is created from heredoc.
+    property heredoc_indent : Int32
+
+    def initialize(@expressions : Array(ASTNode), @heredoc_indent = 0)
     end
 
     def accept_children(visitor)
@@ -337,6 +341,10 @@ module Crystal
 
     def self.map(values, of = nil)
       new(values.map { |value| (yield value).as(ASTNode) }, of: of)
+    end
+
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) }, of: nil)
     end
 
     def accept_children(visitor)
@@ -450,6 +458,10 @@ module Crystal
       new(values.map { |value| (yield value).as(ASTNode) })
     end
 
+    def self.map_with_index(values)
+      new(values.map_with_index { |value, idx| (yield value, idx).as(ASTNode) })
+    end
+
     def accept_children(visitor)
       elements.each &.accept visitor
     end
@@ -539,7 +551,7 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-    property name_size = -1
+    @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
@@ -574,6 +586,8 @@ module Crystal
       end
       @name_size
     end
+
+    setter name_size
 
     def accept_children(visitor)
       @obj.try &.accept visitor
@@ -722,6 +736,7 @@ module Crystal
     property target : ASTNode
     property op : String
     property value : ASTNode
+    property name_location : Location?
 
     def initialize(@target, @op, @value)
     end
@@ -1167,8 +1182,9 @@ module Crystal
   class When < ASTNode
     property conds : Array(ASTNode)
     property body : ASTNode
+    property? exhaustive : Bool
 
-    def initialize(@conds, body = nil)
+    def initialize(@conds : Array(ASTNode), body : ASTNode? = nil, @exhaustive = false)
       @body = Expressions.from body
     end
 
@@ -1178,18 +1194,22 @@ module Crystal
     end
 
     def clone_without_location
-      When.new(@conds.clone, @body.clone)
+      When.new(@conds.clone, @body.clone, @exhaustive)
     end
 
-    def_equals_and_hash @conds, @body
+    def_equals_and_hash @conds, @body, @exhaustive
   end
 
   class Case < ASTNode
     property cond : ASTNode?
     property whens : Array(When)
     property else : ASTNode?
+    property? exhaustive : Bool
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@cond : ASTNode?, @whens : Array(When), @else : ASTNode?, @exhaustive : Bool)
+      @whens.each do |wh|
+        wh.exhaustive = self.exhaustive?
+      end
     end
 
     def accept_children(visitor)
@@ -1199,10 +1219,10 @@ module Crystal
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@cond.clone, @whens.clone, @else.clone, @exhaustive)
     end
 
-    def_equals_and_hash @cond, @whens, @else
+    def_equals_and_hash @exhaustive, @cond, @whens, @else
   end
 
   class Select < ASTNode
@@ -1253,7 +1273,6 @@ module Crystal
   class Path < ASTNode
     property names : Array(String)
     property? global : Bool
-    property name_size = 0
     property visibility = Visibility::Public
 
     def initialize(@names : Array, @global = false)
@@ -1267,6 +1286,10 @@ module Crystal
       new names, true
     end
 
+    def name_size
+      names.sum(&.size) + (names.size + (global? ? 0 : -1)) * 2
+    end
+
     # Returns true if this path has a single component
     # with the given name
     def single?(name)
@@ -1275,7 +1298,6 @@ module Crystal
 
     def clone_without_location
       ident = Path.new(@names.clone, @global)
-      ident.name_size = name_size
       ident
     end
 
@@ -2074,7 +2096,7 @@ module Crystal
 
   # for inside a macro:
   #
-  #    {% for x1, x2, ... , xn in exp %}
+  #    {% for x1, x2, ..., xn in exp %}
   #      body
   #    {% end %}
   class MacroFor < ASTNode
@@ -2172,7 +2194,7 @@ module Crystal
     end
 
     def self.expand_line(location)
-      (location.try(&.original_location) || location).try(&.line_number) || 0
+      (location.try(&.expanded_location) || location).try(&.line_number) || 0
     end
 
     def self.expand_file_node(location)

@@ -56,7 +56,7 @@ struct Float::Printer::DiyFP
     new frac.to_u64, exp
   end
 
-  # Returns a new `DiyFP` caculated as `self - other`.
+  # Returns a new `DiyFP` calculated as `self - other`.
   #
   # The exponents of both numbers must be the same and the `frac` of `self`
   # must be greater than the *other*.
@@ -68,7 +68,7 @@ struct Float::Printer::DiyFP
 
   MASK32 = 0xFFFFFFFF_u32
 
-  # Returns a new `DiyFP` caculated as `self * other`.
+  # Returns a new `DiyFP` calculated as `self * other`.
   #
   # Simply "emulates" a 128 bit multiplication.
   # However: the resulting number only contains 64 bits. The least

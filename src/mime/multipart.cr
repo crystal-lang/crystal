@@ -43,11 +43,7 @@ module MIME::Multipart
     type = MIME::MediaType.parse?(content_type)
 
     if type && type.type == "multipart"
-      boundary = type["boundary"]?
-
-      if boundary && !boundary.empty?
-        boundary
-      end
+      type["boundary"]?.presence
     end
   end
 
@@ -83,7 +79,7 @@ module MIME::Multipart
 
   # Yields a `Multipart::Builder` to the given block, writing to *io* and
   # using *boundary*. `#finish` is automatically called on the builder.
-  def self.build(io, boundary = Multipart.generate_boundary)
+  def self.build(io : IO, boundary : String = Multipart.generate_boundary)
     builder = Builder.new(io, boundary)
     yield builder
     builder.finish
@@ -91,7 +87,7 @@ module MIME::Multipart
 
   # Yields a `Multipart::Builder` to the given block, returning the generated
   # message as a `String`.
-  def self.build(boundary = Multipart.generate_boundary)
+  def self.build(boundary : String = Multipart.generate_boundary)
     String.build do |io|
       build(io, boundary) { |g| yield g }
     end
@@ -104,7 +100,7 @@ module MIME::Multipart
   #
   # MIME::Multipart.generate_boundary # => "---------------------------dQu6bXHYb4m5zrRC3xPTGwV"
   # ```
-  def self.generate_boundary
+  def self.generate_boundary : String
     "--------------------------#{Random::Secure.urlsafe_base64(18)}"
   end
 

@@ -5,8 +5,7 @@ private class NoPeekIO < IO
     0
   end
 
-  def write(bytes : Bytes)
-    0
+  def write(bytes : Bytes) : Nil
   end
 
   def peek

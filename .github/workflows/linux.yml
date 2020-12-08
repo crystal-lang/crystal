@@ -1,0 +1,101 @@
+name: Linux CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_OS_NAME: linux
+  SPEC_SPLIT_DOTS: 160
+
+jobs:
+  test_linux:
+    env:
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci build
+
+  test_linux_32:
+    env:
+      ARCH: i386
+      ARCH_CMD: linux32
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci with_build_env 'make std_spec threads=1'
+
+  test_alpine:
+    env:
+      ARCH: x86_64-musl
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci build
+
+  test_preview_mt:
+    env:
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Make Crystal
+        run: bin/ci with_build_env 'make crystal'
+
+      - name: Test
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt"'
+
+  check_format:
+    env:
+      ARCH: x86_64
+      ARCH_CMD: linux64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Check Format
+        run: bin/ci format

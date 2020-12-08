@@ -1,6 +1,6 @@
 require "c/synchapi"
 
-struct CallStack
+struct Exception::CallStack
   def self.skip(*args)
     # do nothing
   end
@@ -60,10 +60,34 @@ abstract class IO
   end
 end
 
-class Process
-  def self.exit(status = 0)
-    LibC.exit(status)
+class Mutex
+  enum Protection
+    Checked
+    Reentrant
+    Unchecked
   end
+
+  def initialize(@protection : Protection = :checked)
+  end
+
+  def lock
+  end
+
+  def unlock
+  end
+
+  def synchronize
+    lock
+    begin
+      yield
+    ensure
+      unlock
+    end
+  end
+end
+
+enum Signal
+  KILL = 0
 end
 
 def sleep(seconds : Number)

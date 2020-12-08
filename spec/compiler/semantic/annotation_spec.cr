@@ -12,6 +12,97 @@ describe "Semantic: annotation" do
     type.name.should eq("Foo")
   end
 
+  describe "arguments" do
+    describe "#args" do
+      it "returns an empty TupleLiteral if there are none defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo]
+          module Moo
+          end
+
+          {% if (pos_args = Moo.annotation(Foo).args) && pos_args.is_a? TupleLiteral && pos_args.empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns a TupleLiteral if there are positional arguments defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(1, "foo", true)]
+            module Moo
+          end
+
+          {% if Moo.annotation(Foo).args == {1, "foo", true} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+    end
+
+    describe "#named_args" do
+      it "returns an empty NamedTupleLiteral if there are none defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo]
+          module Moo
+          end
+
+          {% if (args = Moo.annotation(Foo).named_args) && args.is_a? NamedTupleLiteral && args.empty? %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+
+      it "returns a NamedTupleLiteral if there are named arguments defined" do
+        assert_type(%(
+          annotation Foo
+          end
+
+          @[Foo(extra: "three", "foo": 99)]
+            module Moo
+          end
+
+          {% if Moo.annotation(Foo).named_args == {extra: "three", foo: 99} %}
+            1
+          {% else %}
+            'a'
+          {% end %}
+        )) { int32 }
+      end
+    end
+
+    it "returns a correctly with named and positional args" do
+      assert_type(%(
+        annotation Foo
+        end
+
+        @[Foo(1, "foo", true, foo: "bar", "cat": 0..0)]
+          module Moo
+        end
+
+        {% if Moo.annotation(Foo).args == {1, "foo", true} && Moo.annotation(Foo).named_args == {foo: "bar", cat: 0..0} %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      )) { int32 }
+    end
+  end
+
   describe "#annotations" do
     it "returns an empty array if there are none defined" do
       assert_type(%(
@@ -639,7 +730,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -825,5 +916,59 @@ describe "Semantic: annotation" do
         {{ Child.superclass.annotation(Ann)[0] }}
       )) { int32 }
     end
+  end
+
+  it "errors when annotate instance variable in subclass" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Base
+        @x : Nil
+      end
+
+      class Child < Base
+        @[Foo]
+        @x : Nil
+      end
+      ),
+      "can't annotate @x in Child because it was first defined in Base"
+  end
+
+  it "errors if wanting to add type inside annotation (1) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo
+      end
+
+      Ann::Foo.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
+
+  it "errors if wanting to add type inside annotation (2) (#8614)" do
+    assert_error %(
+      annotation Ann
+      end
+
+      class Ann::Foo::Bar
+      end
+
+      Ann::Foo::Bar.new
+      ),
+      "can't declare type inside annotation Ann"
+  end
+
+  it "doesn't bleed annotation from class into class variable (#8314)" do
+    semantic(%(
+      annotation Attr; end
+
+      @[Attr]
+      class Bar
+        @@x = 0
+      end
+      ))
   end
 end
