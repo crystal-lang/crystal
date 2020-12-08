@@ -51,9 +51,11 @@ struct BigFloat
     when .int?
       pull.read_int
       value = pull.raw_value
-    else
+    when .float?
       pull.read_float
       value = pull.raw_value
+    else
+      value = pull.read_string
     end
     new(value)
   end
