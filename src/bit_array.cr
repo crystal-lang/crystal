@@ -28,6 +28,7 @@ struct BitArray
   def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
+    clear_unused_bits if initial
   end
 
   def ==(other : BitArray)
@@ -35,7 +36,7 @@ struct BitArray
     # NOTE: If BitArray implements resizing, there may be more than 1 binary
     # representation and their hashes for equivalent BitArrays after a downsize as the
     # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
+    return LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
   def unsafe_fetch(index : Int)
@@ -165,6 +166,9 @@ struct BitArray
         i += 1
       end
 
+      # The last assignment to `bits` might refer to a `UInt32` in the middle of
+      # the buffer, so the last `UInt32` of `ba` might contain unused bits.
+      ba.clear_unused_bits
       ba
     end
   end
@@ -202,6 +206,7 @@ struct BitArray
     malloc_size.times do |i|
       @bits[i] = ~@bits[i]
     end
+    clear_unused_bits
   end
 
   # Creates a string representation of self.
@@ -228,8 +233,11 @@ struct BitArray
   # Returns a `Bytes` able to read and write bytes from a buffer.
   # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
   # It's useful for reading and writing a bit array from a byte buffer directly.
+  #
+  # WARNING: It is undefined behaviour to set any of the unused bits of a bit array to
+  # `true` via a slice.
   def to_slice : Bytes
-    Slice.new(@bits.as(Pointer(UInt8)), (@size / 8.0).ceil.to_i)
+    Slice.new(@bits.as(Pointer(UInt8)), bytesize)
   end
 
   # See `Object#hash(hasher)`
@@ -257,7 +265,17 @@ struct BitArray
     index.divmod(32)
   end
 
+  protected def clear_unused_bits
+    # There are no unused bits if `size` is a multiple of 32.
+    bit_index, sub_index = @size.divmod(32)
+    @bits[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+  end
+
+  private def bytesize
+    (@size - 1) // 8 + 1
+  end
+
   private def malloc_size
-    (@size / 32.0).ceil.to_i
+    (@size - 1) // 32 + 1
   end
 end
