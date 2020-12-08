@@ -458,6 +458,13 @@ describe "Array" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive array" do
+    ary = [] of RecursiveArray
+    ary << ary
+    clone = ary.clone
+    clone[0].should be(clone)
+  end
+
   it "does compact" do
     a = [1, nil, 2, nil, 3]
     b = a.compact.should eq([1, 2, 3])
@@ -1804,7 +1811,7 @@ describe "Array" do
   end
 
   describe "transpose" do
-    it "transeposes elements" do
+    it "transposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
       [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
       [[:a]].transpose.should eq([[:a]])

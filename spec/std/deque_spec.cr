@@ -216,6 +216,13 @@ describe "Deque" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive type" do
+    deq = Deque(RecursiveDeque).new
+    deq << deq
+    clone = deq.clone
+    clone.should be(clone.first)
+  end
+
   describe "concat" do
     it "concats deque" do
       a = Deque{1, 2, 3}
@@ -457,6 +464,24 @@ describe "Deque" do
     end
   end
 
+  describe "reject!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject! &.even?
+      a2.should eq(Deque{1, 3, 5})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.reject!(2..4)
+      a2.should eq(Deque{1, 5})
+      a2.should be(a1)
+    end
+  end
+
   describe "rotate!" do
     it "rotates" do
       a = Deque{1, 2, 3, 4, 5}
@@ -488,6 +513,24 @@ describe "Deque" do
       a = Deque{1}
       a.rotate!
       a.should eq(Deque{1})
+    end
+  end
+
+  describe "select!" do
+    it "with block" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select! &.even?
+      a2.should eq(Deque{2, 4})
+      a2.should be(a1)
+    end
+
+    it "with pattern" do
+      a1 = Deque{1, 2, 3, 4, 5}
+
+      a2 = a1.select!(2..4)
+      a2.should eq(Deque{2, 3, 4})
+      a2.should be(a1)
     end
   end
 

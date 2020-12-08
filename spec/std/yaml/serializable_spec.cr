@@ -67,6 +67,21 @@ class YAMLAttrPersonEmittingNull
   property age : Int32?
 end
 
+struct YAMLAttrPersonWithSelectiveSerialization
+  include YAML::Serializable
+
+  property name : String
+
+  @[YAML::Field(ignore_serialize: true)]
+  property password : String
+
+  @[YAML::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 @[YAML::Serializable::Options(emit_nulls: true)]
 class YAMLAttrPersonEmittingNullsByOptions
   include YAML::Serializable
@@ -304,6 +319,34 @@ class YAMLCircle < YAMLShape
   property radius : Int32
 end
 
+module YAMLNamespace
+  struct FooRequest
+    include YAML::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include YAML::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include YAML::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
+end
+
+class YAMLWithShape
+  include YAML::Serializable
+
+  property shape : YAMLShape
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -402,6 +445,16 @@ describe "YAML::Serializable" do
         YAML
     end
     ex.location.should eq({3, 1})
+  end
+
+  it "works with selective serialization" do
+    person = YAMLAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_yaml.should eq "---\nname: Vasya\ngenerated: generated-internally\n"
+
+    person_yaml = "---\nname: Vasya\ngenerated: should not set\npassword: update\n"
+    person = YAMLAttrPersonWithSelectiveSerialization.from_yaml(person_yaml)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
   end
 
   it "does to_yaml" do
@@ -830,6 +883,21 @@ describe "YAML::Serializable" do
       expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
+    end
+
+    it "deserializes type which nests type with discriminator (#9849)" do
+      container = YAMLWithShape.from_yaml(%({"shape": {"type": "point", "x": 1, "y": 2}}))
+      point = container.shape.as(YAMLPoint)
+      point.x.should eq(1)
+      point.y.should eq(2)
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = YAMLNamespace::FooRequest.from_yaml(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end

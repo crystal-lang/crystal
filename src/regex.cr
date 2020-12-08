@@ -515,7 +515,7 @@ class Regex
     end
   end
 
-  # Match at byte index. It behaves like `#match_at_byte_inbdex`, however it returns `Bool` value.
+  # Match at byte index. It behaves like `#match_at_byte_index`, however it returns `Bool` value.
   # It neither returns `MatchData` nor assigns it to the `$~` variable.
   def matches_at_byte_index?(str, byte_index = 0, options = Regex::Options::None) : Bool
     return false if byte_index > str.bytesize
@@ -561,6 +561,19 @@ class Regex
     end
 
     lookup
+  end
+
+  # Returns the number of (named & non-named) capture groups.
+  #
+  # ```
+  # /(?:.+)/.capture_count     # => 0
+  # /(?<foo>.+)/.capture_count # => 1
+  # /(.)/.capture_count        # => 1
+  # /(.)|(.)/.capture_count    # => 2
+  # ```
+  def capture_count : Int32
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_CAPTURECOUNT, out capture_count)
+    capture_count
   end
 
   # Convert to `String` in subpattern format. Produces a `String` which can be

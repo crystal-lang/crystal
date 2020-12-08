@@ -18,11 +18,11 @@ describe "Set" do
       set_from_array.size.should eq(3)
       set_from_array.to_a.sort.should eq([2, 4, 6])
 
-      set_from_tulpe = Set.new({1, "hello", 'x'})
-      set_from_tulpe.size.should eq(3)
-      set_from_tulpe.to_a.includes?(1).should be_true
-      set_from_tulpe.to_a.includes?("hello").should be_true
-      set_from_tulpe.to_a.includes?('x').should be_true
+      set_from_tuple = Set.new({1, "hello", 'x'})
+      set_from_tuple.size.should eq(3)
+      set_from_tuple.to_a.includes?(1).should be_true
+      set_from_tuple.to_a.includes?("hello").should be_true
+      set_from_tuple.to_a.includes?('x').should be_true
     end
   end
 
@@ -63,9 +63,14 @@ describe "Set" do
       set.includes?(3).should be_true
     end
 
-    it "returns self" do
+    it "returns true when the object was present" do
       set = Set{1, 2, 3}
-      set.delete(2).should eq(set)
+      set.delete(2).should be_true
+    end
+
+    it "returns false when the object was absent" do
+      set = Set{1, 2, 3}
+      set.delete(0).should be_false
     end
   end
 

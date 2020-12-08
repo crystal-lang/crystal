@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../support/tempfile"
 
 describe Socket do
   describe ".unix" do
@@ -73,6 +74,20 @@ describe Socket do
   ensure
     socket.try &.close
     server.try &.close
+  end
+
+  it "sends datagram over unix socket" do
+    with_tempfile("datagram_unix") do |path|
+      server = Socket.unix(Socket::Type::DGRAM)
+      server.bind Socket::UNIXAddress.new(path)
+
+      client = Socket.unix(Socket::Type::DGRAM)
+      client.connect Socket::UNIXAddress.new(path)
+      client.send "foo"
+
+      message, _ = server.receive
+      message.should eq "foo"
+    end
   end
 
   describe "#bind" do

@@ -393,7 +393,7 @@ module Crystal
         when LLVM::Value    then value
         when LLVM::Function then value.to_value
         when Nil            then LLVM::Value.null
-        else                     raise "Unsuported value type: #{value.class}"
+        else                     raise "Unsupported value type: #{value.class}"
         end
       end
       llvm_context.md_node(values)

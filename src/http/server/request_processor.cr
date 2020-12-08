@@ -88,8 +88,6 @@ class HTTP::Server::RequestProcessor
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
           break unless body.closed?
-        else
-          # Nothing to do
         end
       end
     rescue IO::Error

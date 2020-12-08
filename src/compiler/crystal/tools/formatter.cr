@@ -220,9 +220,14 @@ module Crystal
         write "begin"
         @indent += 2
         write_line
-        next_token_skip_space_or_newline
-        if @token.type == :";"
-          next_token_skip_space_or_newline
+        next_token
+        # Corner case: an empty `begin ... end`.
+        # In this case, we should not skip space because it will do in the below loop.
+        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+          skip_space_or_newline
+          if @token.type == :";"
+            next_token_skip_space_or_newline
+          end
         end
         has_begin = true
         base_indent = @indent
@@ -231,6 +236,7 @@ module Crystal
       end
 
       last_aligned_assign = nil
+      last_found_comment = false
       max_length = nil
       skip_space
 
@@ -283,7 +289,7 @@ module Crystal
         end
 
         if last?(i, node.expressions)
-          skip_space_or_newline last: true
+          last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
             unless found_comment
@@ -307,7 +313,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline
+      if has_newline && !last_found_comment
         write_line
         write_indent
       end
@@ -2052,7 +2058,7 @@ module Crystal
 
     # If we are formatting macro contents, if there are nested macro
     # control structures they are definitely escaped with `\`,
-    # because otherwise we wouln't be able to format the contents.
+    # because otherwise we wouldn't be able to format the contents.
     # So here we append those slashes. In theory the nesting can be
     # very deep but it's usually just one level.
     private def write_macro_slashes
@@ -3069,8 +3075,6 @@ module Crystal
         else
           clear_object(node.exp)
         end
-      else
-        # nothing to do
       end
     end
 
@@ -3712,33 +3716,25 @@ module Crystal
         needs_indent = false
         write_indent
         write_keyword :when
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
         write " "
         a_when.condition.accept self
-        skip_space
-        if @token.type == :";"
-          next_token_skip_space
+        found_comment = skip_space(@indent + 2)
+        if @token.type == :";" || @token.keyword?(:then)
+          sep = @token.type == :";" ? "; " : " then "
+          next_token
+          skip_space(@indent + 2)
           if @token.type == :NEWLINE
             write_line
-            skip_space_or_newline
+            skip_space_or_newline(@indent + 2)
             needs_indent = true
           else
-            write "; "
-            skip_space_or_newline
-          end
-        elsif @token.keyword?(:then)
-          next_token_skip_space
-          if @token.type == :NEWLINE
-            write_line
-            skip_space_or_newline
-            needs_indent = true
-          else
-            write " then "
-            skip_space_or_newline
+            write sep
+            skip_space_or_newline(@indent + 2)
           end
         else
-          write_line
-          skip_space_or_newline
+          write_line unless found_comment
+          skip_space_or_newline(@indent + 2)
           needs_indent = true
         end
         if needs_indent
@@ -3747,15 +3743,17 @@ module Crystal
           a_when.body.accept self
           write_line
         end
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       if node_else = node.else
         write_indent
         write_keyword :else
-        skip_space_or_newline
+        found_comment = skip_space(@indent + 2)
+        write_line unless found_comment
+        skip_space_or_newline(@indent + 2)
         format_nested(node_else)
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       write_indent
@@ -4662,7 +4660,7 @@ module Crystal
     end
 
     def write_indent(indent, node)
-      write_indent(indent)
+      write_indent(indent) unless node.is_a?(Nop)
       indent(indent, node)
     end
 

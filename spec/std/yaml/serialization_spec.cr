@@ -1,5 +1,4 @@
 require "../spec_helper"
-require "spec"
 require "yaml"
 {% unless flag?(:win32) %}
   require "big"
@@ -14,7 +13,7 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
-# libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+# libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)

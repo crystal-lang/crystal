@@ -527,6 +527,12 @@ end
   LibExt.setup_sigfault_handler
 {% end %}
 
+{% if flag?(:debug) && !flag?(:win32) %}
+  # load dwarf on start up of the program when compiled with --debug
+  # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
+  Exception::CallStack.load_dwarf
+{% end %}
+
 {% if flag?(:preview_mt) %}
   Crystal::Scheduler.init_workers
 {% end %}

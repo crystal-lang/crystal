@@ -558,6 +558,9 @@ describe Crystal::Formatter do
   assert_format "select   \n when  foo  ;  2 \n end", "select\nwhen foo; 2\nend"
   assert_format "select   \n when  foo \n 2 \n else \n 3 \n end", "select\nwhen foo\n  2\nelse\n  3\nend"
   assert_format "def foo\nselect   \n when  foo \n 2 \n else \n 3 \nend\nend", "def foo\n  select\n  when foo\n    2\n  else\n    3\n  end\nend"
+  assert_format "select\nwhen foo\n  # foo\n  # bar\nelse\n  # foo\n  # bar\nend"
+  assert_format "select\nwhen foo # foo\n  # bar\nelse # foo\n  # bar\nend"
+  assert_format "begin\n  select\n  when foo\n    # foo\n    # bar\n  else\n    # foo\n    # bar\n  end\nend"
 
   assert_format "foo.@bar"
 
@@ -1728,6 +1731,32 @@ describe Crystal::Formatter do
     def bar
     end
     CODE
+
+  assert_format <<-BEFORE, <<-AFTER
+    begin
+      1
+      # Comment
+
+
+    end
+    BEFORE
+    begin
+      1
+      # Comment
+    end
+    AFTER
+
+  assert_format <<-BEFORE, <<-AFTER
+    begin
+      # Comment
+
+
+    end
+    BEFORE
+    begin
+      # Comment
+    end
+    AFTER
 
   assert_format <<-CODE
     foo 1, # comment

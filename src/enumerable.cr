@@ -1393,7 +1393,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum(1) { |name| name.size } # => 9 (1 + 5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # If the collection is empty, returns *initial*.
   #
   # ```
   # ([] of String).sum(1) { |name| name.size } # => 1
@@ -1505,7 +1505,7 @@ module Enumerable(T)
     result
   end
 
-  # Tallys the collection.  Returns a hash where the keys are the
+  # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #

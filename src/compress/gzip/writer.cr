@@ -37,7 +37,7 @@ class Compress::Gzip::Writer < IO
   # Creates a new writer to the given *io*.
   def initialize(@io : IO, @level = Compress::Gzip::DEFAULT_COMPRESSION, @sync_close = false)
     # CRC32 of written data
-    @crc32 = Digest::CRC32.initial
+    @crc32 = ::Digest::CRC32.initial
 
     # Total size of the original (uncompressed) input data modulo 2^32.
     @isize = 0
@@ -77,7 +77,7 @@ class Compress::Gzip::Writer < IO
     flate_io.write(slice)
 
     # Update CRC32 and total data size
-    @crc32 = Digest::CRC32.update(slice, @crc32)
+    @crc32 = ::Digest::CRC32.update(slice, @crc32)
 
     # Using wrapping addition here because isize is only 32 bits wide but
     # uncompressed data size can be bigger.

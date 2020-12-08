@@ -52,7 +52,7 @@ class Hash(K, V)
   # There are two main data structures:
   #
   # - @entries:
-  #     A continguous buffer (Pointer) of hash entries (Entry) in the order
+  #     A contiguous buffer (Pointer) of hash entries (Entry) in the order
   #     they were inserted. This makes it possible for Hash to preserve
   #     order of insertion.
   #     An entry holds a key-value pair together with the key's hash code.
@@ -523,7 +523,7 @@ class Hash(K, V)
   # no more available entries to add.
   # Might not result in a resize if there are many entries marked as
   # deleted. In that case the entries table is simply compacted.
-  # However, in case of a resize deleted entries are also compcated.
+  # However, in case of a resize deleted entries are also compacted.
   private def resize : Nil
     # Only do an actual resize (grow `@entries` buffer) if we don't
     # have many deleted elements.
@@ -662,14 +662,14 @@ class Hash(K, V)
   end
 
   # Initializes `@entries` for a dup copy.
-  # Here we only need tu duplicate the buffer.
+  # Here we only need to duplicate the buffer.
   private def initialize_dup_entries(other)
     return if other.@entries.null?
 
     @entries = malloc_entries(other.entries_capacity)
 
     # Note that we only need to copy `entries_size` which
-    # are the effectives entries in use.
+    # are the effective entries in use.
     @entries.copy_from(other.@entries, other.entries_size)
   end
 
@@ -1215,6 +1215,7 @@ class Hash(K, V)
   # h.delete_if { |key, value| key.starts_with?("fo") }
   # h # => { "bar" => "qux" }
   # ```
+  @[Deprecated("Use `#reject!` instead")]
   def delete_if
     keys_to_delete = [] of K
     each do |key, value|
@@ -1399,7 +1400,7 @@ class Hash(K, V)
     hash
   end
 
-  def merge(other : Hash(L, W), &block : K, V, W -> V | W) forall L, W
+  def merge(other : Hash(L, W), &block : L, V, W -> V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
     hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
@@ -1451,7 +1452,7 @@ class Hash(K, V)
     reject { |k, v| !yield(k, v) }
   end
 
-  # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made
+  # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
   def select!(&block : K, V -> _)
     reject! { |k, v| !yield(k, v) }
   end
@@ -1468,13 +1469,12 @@ class Hash(K, V)
     end
   end
 
-  # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns `nil` if no changes were made.
+  # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
   def reject!(&block : K, V -> _)
-    num_entries = size
     each do |key, value|
       delete(key) if yield(key, value)
     end
-    num_entries == size ? nil : self
+    self
   end
 
   # Returns a new `Hash` without the given keys.
@@ -1551,7 +1551,7 @@ class Hash(K, V)
     end
   end
 
-  # Removes all `nil` value from `self`. Returns `nil` if no changes were made.
+  # Removes all `nil` value from `self`. Returns `self`.
   #
   # ```
   # hash = {"hello" => "world", "foo" => nil}
@@ -1787,7 +1787,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = Hash(K, V).new
+    hash = self.class.new
     hash.initialize_dup(self)
     hash
   end
@@ -1801,9 +1801,18 @@ class Hash(K, V)
   # hash_a # => {"foobar" => {"foo" => "bar"}}
   # ```
   def clone
-    hash = Hash(K, V).new
-    hash.initialize_clone(self)
-    hash
+    {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
+      clone = self.class.new
+      clone.initialize_clone(self)
+      clone
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = self.class.new
+        hash[object_id] = clone.object_id
+        clone.initialize_clone(self)
+        clone
+      end
+    {% end %}
   end
 
   def inspect(io : IO) : Nil

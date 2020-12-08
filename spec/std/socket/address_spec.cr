@@ -248,7 +248,7 @@ describe Socket do
   it "==" do
     a = Socket::IPAddress.new("127.0.0.1", 8080)
     b = Socket::UNIXAddress.new("some_path")
-    c = "sonme_path"
+    c = "some_path"
     (a == a).should be_true
     (b == b).should be_true
     (a == b).should be_false

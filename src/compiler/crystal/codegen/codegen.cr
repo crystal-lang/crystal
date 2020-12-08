@@ -245,7 +245,7 @@ module Crystal
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
 
-      initialize_argv_and_argc
+      initialize_predefined_constants
 
       if @debug.line_numbers?
         set_current_debug_location Location.new(@program.filename || "(no name)", 1, 1)
@@ -309,8 +309,6 @@ module Crystal
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
              ONCE_INIT, ONCE
           @codegen.accept node
-        else
-          # go on
         end
 
         false
@@ -592,14 +590,7 @@ module Crystal
 
       if obj = node.obj
         accept obj
-
-        # If obj is a primitive like an integer we need to pass
-        # the variable as is (without loading it)
-        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
-          call_self = context.vars[obj.name].pointer
-        else
-          call_self = @last
-        end
+        call_self = @last
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -1111,8 +1102,6 @@ module Crystal
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
-      else
-        # go on
       end
 
       @last = llvm_nil

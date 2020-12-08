@@ -1,6 +1,6 @@
 require "./codegen"
 
-# Constants are repesented with two LLVM global variables: one has the constant's
+# Constants are represented with two LLVM global variables: one has the constant's
 # value and the other has a flag that indicates whether the constant was already
 # initialized.
 #
@@ -31,18 +31,12 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   @const_mutex : LLVM::Value?
 
-  # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
+  # The special constants ARGC_UNSAFE and ARGV_UNSAFE (and others) need to be initialized
   # as soon as the program starts, because we have access to argc and argv
-  # in the main function
-  def initialize_argv_and_argc
-    {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
-      const = @program.types[name].as(Const)
-      global = declare_const(const)
-      request_value do
-        accept const.value
-      end
-      store @last, global
-      global.initializer = @last.type.null
+  # in the main function.
+  def initialize_predefined_constants
+    @program.predefined_constants.each do |const|
+      initialize_no_init_flag_const(const)
     end
   end
 
@@ -209,7 +203,7 @@ class Crystal::CodeGenVisitor
   def read_const_pointer(const)
     const.read = true
 
-    if const == @program.argc || const == @program.argv || const.initializer || const.no_init_flag?
+    if !const.needs_init_flag?
       global_name = const.llvm_name
       global = declare_const(const)
 

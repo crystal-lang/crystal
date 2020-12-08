@@ -177,54 +177,6 @@ struct Complex
     conj / abs2
   end
 
-  # `Complex#sqrt` was inspired by the [following blog post](https://pavpanchekha.com/casio/)
-  # of Pavel Panchekha on floating point precision.
-  #
-  def sqrt
-    r = abs
-
-    re = if @real >= 0
-           0.5 * Math.sqrt(2.0 * (r + @real))
-         else
-           @imag.abs / Math.sqrt(2 * (r - @real))
-         end
-
-    im = if @real <= 0
-           0.5 * Math.sqrt(2.0 * (r - @real))
-         else
-           @imag.abs / Math.sqrt(2 * (r + @real))
-         end
-
-    Complex.new(re, @imag >= 0 ? im : -im)
-  end
-
-  # Calculates the exp of `self`.
-  #
-  # ```
-  # require "complex"
-  #
-  # Complex.new(4, 2).exp # => -22.720847417619233 + 49.645957334580565i
-  # ```
-  def exp
-    r = Math.exp(@real)
-    Complex.new(r * Math.cos(@imag), r * Math.sin(@imag))
-  end
-
-  # Calculates the log of `self`.
-  def log
-    Complex.new(Math.log(abs), phase)
-  end
-
-  # Calculates the log2 of `self`.
-  def log2
-    log / Math::LOG2
-  end
-
-  # Calculates the log10 of `self`.
-  def log10
-    log / Math::LOG10
-  end
-
   # Returns `self`.
   def +
     self
@@ -340,5 +292,88 @@ struct Number
 
   def /(other : Complex)
     self * other.inv
+  end
+end
+
+module Math
+  # Calculates the exponential of the complex number `z`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.exp(4 + 2.i) # => -22.720847417619233 + 49.645957334580565i
+  # ```
+  def exp(z : Complex)
+    r = exp(z.real)
+    Complex.new(r * cos(z.imag), r * sin(z.imag))
+  end
+
+  # Calculates the natural logarithm of the complex number `z`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log(4 + 2.i) # => 1.4978661367769956 + 0.4636476090008061i
+  # ```
+  def log(z : Complex)
+    Complex.new(Math.log(z.abs), z.phase)
+  end
+
+  # Calculates the base-2 logarithm of the complex number `z`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log2(4 + 2.i) # => 2.1609640474436813 + 0.6689021062254881i
+  # ```
+  def log2(z : Complex)
+    log(z) / LOG2
+  end
+
+  # Calculates the base-10 logarithm of the complex number `z`.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log10(4 + 2.i) # => 0.6505149978319906 + 0.20135959813668655i
+  # ```
+  def log10(z : Complex)
+    log(z) / LOG10
+  end
+
+  # Calculates the square root of the complex number `z`.
+  # Inspired by the [following blog post](https://pavpanchekha.com/blog/casio-mathjs.html) of Pavel Panchekha on floating point precision.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.sqrt(4 + 2.i) # => 2.0581710272714924 + 0.48586827175664565i
+  # ```
+  #
+  # Although the imaginary number is defined as i = sqrt(-1),
+  # calling `Math.sqrt` with a negative number will return `-NaN`.
+  # To obtain the result in the complex plane, `Math.sqrt` must
+  # be called with a complex number.
+  #
+  # ```
+  # Math.sqrt(-1.0)         # => -NaN
+  # Math.sqrt(-1.0 + 0.0.i) # => 0.0 + 1.0i
+  # ```
+  def sqrt(z : Complex)
+    r = z.abs
+
+    re = if z.real >= 0
+           0.5 * sqrt(2.0 * (r + z.real))
+         else
+           z.imag.abs / sqrt(2.0 * (r - z.real))
+         end
+
+    im = if z.real <= 0
+           0.5 * sqrt(2.0 * (r - z.real))
+         else
+           z.imag.abs / sqrt(2.0 * (r + z.real))
+         end
+
+    Complex.new(re, z.imag >= 0 ? im : -im)
   end
 end

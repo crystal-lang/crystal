@@ -1235,7 +1235,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".downcase io
-  # io.to_s # => hello
+  # io.to_s # => "hello"
   # ```
   def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
@@ -1270,7 +1270,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".upcase io
-  # io.to_s # => HELLO
+  # io.to_s # => "HELLO"
   # ```
   def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char do |char|
@@ -1312,7 +1312,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "hEllO".capitalize io
-  # io.to_s # => Hello
+  # io.to_s # => "Hello"
   # ```
   def capitalize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     each_char_with_index do |char, i|
@@ -1357,7 +1357,7 @@ class String
   # ```
   # io = IO::Memory.new
   # "x-men: the last stand".titleize io
-  # io.to_s # => X-men: The Last Stand
+  # io.to_s # => "X-men: The Last Stand"
   # ```
   def titleize(io : IO, options : Unicode::CaseOptions = :none) : Nil
     upcase_next = true
@@ -2374,8 +2374,6 @@ class String
         buffer << capture
         index = end_index + 1
         first_index = index
-      else
-        # Nothing
       end
     end
 
@@ -3282,7 +3280,7 @@ class String
     {pre, mid, post}
   end
 
-  # Returns the index of the _first_ ocurrence of *byte* in the string, or `nil` if not present.
+  # Returns the index of the _first_ occurrence of *byte* in the string, or `nil` if not present.
   # If *offset* is present, it defines the position to start the search.
   #
   # Negative *offset* can be used to start the search from the end of the string.
@@ -4152,7 +4150,7 @@ class String
     right_padding.times { io << char }
   end
 
-  # Adds instances of *char* to left ond right of the string until it is at least size of *len*,
+  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```

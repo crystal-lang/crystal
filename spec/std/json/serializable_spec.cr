@@ -332,6 +332,21 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+struct JSONAttrPersonWithSelectiveSerialization
+  include JSON::Serializable
+
+  property name : String
+
+  @[JSON::Field(ignore_serialize: true)]
+  property password : String
+
+  @[JSON::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -349,6 +364,28 @@ class JSONCircle < JSONShape
   property x : Int32
   property y : Int32
   property radius : Int32
+end
+
+module JSONNamespace
+  struct FooRequest
+    include JSON::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include JSON::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include JSON::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
 end
 
 describe "JSON mapping" do
@@ -441,7 +478,7 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at 1:1
+        parsing JSONAttrPerson at line 1, column 1
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
@@ -451,8 +488,8 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected BeginObject but was String at 1:1
-        parsing StrictJSONAttrPerson at 0:0
+      Expected BeginObject but was String at line 1, column 1
+        parsing StrictJSONAttrPerson at line 0, column 0
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
@@ -464,7 +501,7 @@ describe "JSON mapping" do
 
   it "raises if data type does not match" do
     error_message = <<-MSG
-      Couldn't parse (Int32 | Nil) from "foo" at 3:10
+      Couldn't parse (Int32 | Nil) from "foo" at line 3, column 10
       MSG
     ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
@@ -776,7 +813,7 @@ describe "JSON mapping" do
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at 1:1
+          parsing JSONAttrWithQueryAttributes at line 1, column 1
         MSG
       ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
@@ -834,6 +871,16 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
   end
 
+  it "json with selective serialization" do
+    person = JSONAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_json.should eq "{\"name\":\"Vasya\",\"generated\":\"generated-internally\"}"
+
+    person_json = "{\"name\":\"Vasya\",\"generated\":\"should not set\",\"password\":\"update\"}"
+    person = JSONAttrPersonWithSelectiveSerialization.from_json(person_json)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
+  end
+
   describe "use_json_discriminator" do
     it "deserializes with discriminator" do
       point = JSONShape.from_json(%({"type": "point", "x": 1, "y": 2})).as(JSONPoint)
@@ -856,6 +903,14 @@ describe "JSON mapping" do
       expect_raises(::JSON::SerializableError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = JSONNamespace::FooRequest.from_json(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end

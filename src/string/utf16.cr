@@ -137,7 +137,7 @@ class String
       elsif 0xd800 <= byte < 0xdc00 &&
             (i + 1) < slice.size &&
             0xdc00 <= slice[i + 1] <= 0xdfff
-        # Surrougate pair
+        # Surrogate pair
         codepoint = ((byte - 0xd800) << 10) + (slice[i + 1] - 0xdc00) + 0x10000
         i += 1
       else
@@ -162,7 +162,7 @@ class String
         codepoint = byte
       elsif 0xd800 <= byte < 0xdc00 &&
             0xdc00 <= (pointer + 1).value <= 0xdfff
-        # Surrougate pair
+        # Surrogate pair
         pointer = pointer + 1
         codepoint = ((byte - 0xd800) << 10) + (pointer.value - 0xdc00) + 0x10000
       else

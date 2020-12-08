@@ -2,8 +2,8 @@ struct Crystal::System::FileInfo < ::File::Info
   def initialize(@stat : LibC::Stat)
   end
 
-  def size : UInt64
-    @stat.st_size.to_u64
+  def size : Int64
+    @stat.st_size.to_i64
   end
 
   def permissions : ::File::Permissions

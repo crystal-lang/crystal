@@ -760,10 +760,12 @@ module Crystal
           check_void_value atomic, location
 
           name_location = @token.location
+          end_location = token_end_location
           @wants_regex = false
           next_token_skip_space
           atomic = Call.new(atomic, "[]").at(location)
           atomic.name_location = name_location
+          atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         when :"["
@@ -781,6 +783,7 @@ module Crystal
           end
           skip_space_or_newline
           check :"]"
+          end_location = token_end_location
           @wants_regex = false
           next_token
 
@@ -801,6 +804,7 @@ module Crystal
 
           atomic = Call.new(atomic, method_name, (args || [] of ASTNode), block, block_arg, named_args).at(location)
           atomic.name_location = name_location
+          atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -1629,7 +1633,7 @@ module Crystal
       end
       skip_statement_end
 
-      body = push_visbility { parse_expressions }
+      body = push_visibility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -1703,7 +1707,7 @@ module Crystal
       type_vars, splat_index = parse_type_vars
       skip_statement_end
 
-      body = push_visbility { parse_expressions }
+      body = push_visibility { parse_expressions }
 
       end_location = token_end_location
       check_ident :end
@@ -2717,8 +2721,6 @@ module Crystal
            !exp.block
           return
         end
-      else
-        # Go on
       end
 
       raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
@@ -3965,8 +3967,6 @@ module Crystal
           a_else = parse_expressions
         when :elsif
           a_else = parse_if check_end: false
-        else
-          # go on
         end
       end
 
@@ -4061,7 +4061,7 @@ module Crystal
         var = Var.new(name)
         var.doc = doc
         var.location = name_location
-        var.end_location = name_location
+        var.end_location = end_location
         next_token
         return var
       end
@@ -4494,7 +4494,7 @@ module Crystal
       # end
       # ```
       #
-      # must always be parsed as the block beloning to `foo`,
+      # must always be parsed as the block belonging to `foo`,
       # never to `return`.
       @stop_on_do = true unless control
 
@@ -4701,7 +4701,7 @@ module Crystal
 
       # To determine to consume comma, looking-ahead is needed.
       # Consider `[ [] of Int32, Foo.new ]`, we want to parse it as `[ ([] of Int32), Foo.new ]` of course.
-      # If the parser consumes comma afrer Int32 quickly, it may cause parsing error.
+      # If the parser consumes comma after Int32 quickly, it may cause parsing error.
       unless @token.type == :"->" || (@token.type == :"," && type_start?(consume_newlines: true))
         if type.is_a?(Splat)
           raise "invalid type splat", type.location.not_nil!
@@ -5358,7 +5358,7 @@ module Crystal
       name_location = @token.location
       next_token_skip_statement_end
 
-      body = push_visbility { parse_lib_body_expressions }
+      body = push_visibility { parse_lib_body_expressions }
 
       check_ident :end
       end_location = token_end_location
@@ -6041,7 +6041,7 @@ module Crystal
       name == "self" || @def_vars.last.includes?(name)
     end
 
-    def push_visbility
+    def push_visibility
       old_visibility = @visibility
       @visibility = nil
       value = yield

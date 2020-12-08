@@ -203,7 +203,7 @@ module MIME
   # Looks up the MIME type associated with the extension in *filename*.
   #
   # A case-sensitive search is tried first, if this yields no result, it is
-  # matched case-insensitive. Runs the fiven block if extension is not registered.
+  # matched case-insensitive. Runs the given block if extension is not registered.
   def self.from_filename(filename : String, &block)
     from_extension(File.extname(filename)) { |extension| yield extension }
   end

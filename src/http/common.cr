@@ -62,8 +62,12 @@ module HTTP
             case encoding
             when "gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             when "deflate"
               body = Compress::Deflate::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             else
               # not a format we support
             end

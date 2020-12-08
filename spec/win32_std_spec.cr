@@ -35,6 +35,8 @@ require "./std/crypto/bcrypt_spec.cr"
 require "./std/crypto/blowfish_spec.cr"
 require "./std/crypto/subtle_spec.cr"
 require "./std/crystal/compiler_rt/mulodi4_spec.cr"
+require "./std/crystal/digest/md5_spec.cr"
+require "./std/crystal/digest/sha1_spec.cr"
 require "./std/crystal/hasher_spec.cr"
 require "./std/crystal/pointer_linked_list_spec.cr"
 require "./std/csv/csv_build_spec.cr"
@@ -44,8 +46,11 @@ require "./std/csv/csv_spec.cr"
 require "./std/deque_spec.cr"
 require "./std/digest/adler32_spec.cr"
 require "./std/digest/crc32_spec.cr"
-require "./std/digest/md5_spec.cr"
-require "./std/digest/sha1_spec.cr"
+# require "./std/digest/io_digest_spec.cr" (failed codegen)
+# require "./std/digest/md5_spec.cr" (failed codegen)
+# require "./std/digest/sha1_spec.cr" (failed codegen)
+# require "./std/digest/sha256_spec.cr" (failed codegen)
+# require "./std/digest/sha512_spec.cr" (failed codegen)
 require "./std/dir_spec.cr"
 require "./std/double_spec.cr"
 require "./std/ecr/ecr_lexer_spec.cr"
@@ -57,7 +62,7 @@ require "./std/exception/call_stack_spec.cr"
 require "./std/exception_spec.cr"
 require "./std/file/tempfile_spec.cr"
 require "./std/file_spec.cr"
-# require "./std/file_utils_spec.cr"
+require "./std/file_utils_spec.cr"
 require "./std/float_printer/diy_fp_spec.cr"
 require "./std/float_printer/grisu3_spec.cr"
 require "./std/float_printer/ieee_spec.cr"
@@ -147,7 +152,6 @@ require "./std/named_tuple_spec.cr"
 # require "./std/oauth2/session_spec.cr" (failed codegen)
 require "./std/object_spec.cr"
 # require "./std/openssl/cipher_spec.cr" (failed codegen)
-# require "./std/openssl/digest_io_spec.cr" (failed codegen)
 # require "./std/openssl/digest_spec.cr" (failed codegen)
 # require "./std/openssl/hmac_spec.cr" (failed codegen)
 # require "./std/openssl/pkcs5_spec.cr" (failed codegen)

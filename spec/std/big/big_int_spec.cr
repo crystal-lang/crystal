@@ -362,9 +362,15 @@ describe "BigInt" do
 
     (a_17).gcd(17).should eq(17)
     (-a_17).gcd(17).should eq(17)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
+
+    (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
+    (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (a_17).lcm(17).should eq(a_17)
   end
 
   it "can use Number::[]" do
