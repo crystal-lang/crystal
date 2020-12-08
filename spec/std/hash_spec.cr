@@ -835,12 +835,6 @@ describe "Hash" do
     h.shift?.should be_nil
   end
 
-  it "gets key index" do
-    h = {1 => 2, 3 => 4}
-    h.key_index(3).should eq(1)
-    h.key_index(2).should be_nil
-  end
-
   it "inserts many" do
     times = 1000
     h = {} of Int32 => Int32
