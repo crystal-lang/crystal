@@ -1122,7 +1122,7 @@ describe "Semantic: generic class" do
 
       Gen(String).new
       ),
-      "method must return Bool but it is returning Nil"
+      "method Gen(String)#valid? must return Bool but it is returning Nil"
   end
 
   it "resolves T through metaclass inheritance (#7914)" do
