@@ -284,7 +284,9 @@ module Crystal
       if @cross_compile
         cross_compile program, units, output_filename
       else
-        result = codegen program, units, output_filename, output_dir
+        result = with_file_lock(output_dir) do
+          codegen program, units, output_filename, output_dir
+        end
 
         {% if flag?(:darwin) %}
           run_dsymutil(output_filename) unless debug.none?
@@ -294,6 +296,19 @@ module Crystal
       CacheDir.instance.cleanup if @cleanup
 
       result
+    end
+
+    private def with_file_lock(output_dir)
+      {% if flag?(:win32) %}
+        # TODO: use flock when it's supported in Windows
+        yield
+      {% else %}
+        File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
+          file.flock_exclusive do
+            yield
+          end
+        end
+      {% end %}
     end
 
     private def run_dsymutil(filename)
