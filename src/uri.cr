@@ -183,7 +183,24 @@ class URI
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
   def hostname
-    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
+    host.try { |host| self.class.unwrap_ipv6(host) }
+  end
+
+  # Unwraps IPv6 address wrapped in square brackets.
+  #
+  # Everything that is not wrapped in square brackets is returned unchanged.
+  #
+  # ```cr
+  # URI.unwrap_ipv6("[::1]") # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1") # => "127.0.0.1"
+  # URI.unwrap_ipv6("example.com") # => "example.com"
+  # ```
+  def self.unwrap_ipv6(host)
+    if host.starts_with?('[') && host.ends_with?(']')
+      host.byte_slice(1, host.bytesize - 2)
+    else
+      host
+    end
   end
 
   # Returns the full path of this URI.

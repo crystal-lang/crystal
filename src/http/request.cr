@@ -246,6 +246,7 @@ class HTTP::Request
   end
 
   # Returns request host from headers.
+  @[Deprecated("Use `#hostname` instead.")]
   def host
     host = @headers["Host"]?
     return unless host
@@ -253,7 +254,34 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
+  # Extracts the hostname from `Host` header.
+  #
+  # Returns `nil` if the `Host` header is missing.
+  #
+  # If the `Host` header contains a port number, it is stripped off.
+  def hostname : String?
+    header = @headers["Host"]?
+    return unless header
+
+    host, _, port = header.rpartition(":")
+    if host.empty?
+      # no colon in header
+      host = header
+    else
+      port = port.to_i?(whitespace: false)
+      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
+      # win32
+      unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
+        # what we identified as port is not valid, so use the entire header
+        host = header
+      end
+    end
+
+    URI.unwrap_ipv6(host)
+  end
+
   # Returns request host with port from headers.
+  @[Deprecated(%q(Use `headers["Host"]?` instead.))]
   def host_with_port
     @headers["Host"]?
   end
