@@ -67,7 +67,7 @@ class Crystal::Command
     source_filename = File.expand_path("spec")
 
     source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].to_posix}")
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
     }.join('\n')
     sources = [Compiler::Source.new(source_filename, source)]
 
