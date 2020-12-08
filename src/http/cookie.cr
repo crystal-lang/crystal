@@ -19,23 +19,23 @@ module HTTP
     property value : String
     property path : String
     property expires : Time?
-    property max_age : Time::Span?
     property domain : String?
     property secure : Bool
     property http_only : Bool
     property samesite : SameSite?
     property extension : String?
+    property max_age : Time::Span?
+    getter creation_time : Time
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name : String, value : String, @path : String = "/",
+    def initialize(@name : String, @value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
-                   @max_age : Time::Span? = nil)
-      @creation_time = Time.utc
-      @name = name
-      @value = value
+                   *,
+                   @max_age : Time::Span? = nil, @creation_time = Time.utc)
+      raise "Invalid max_age" if @max_age.try { |max_age| max_age < Time::Span.zero }
     end
 
     def to_set_cookie_header
@@ -69,20 +69,24 @@ module HTTP
       URI.encode_www_form(value, io)
     end
 
-    def expiration_time(time_reference = @creation_time)
+    # Returns the expiration time of this cookie.
+    def expiration_time : Time?
       if max_age = @max_age
-        time_reference + max_age
+        @creation_time + max_age
       else
         @expires
       end
     end
 
-    # Returns the expiration status of this cookie as a `Bool` given a creation time
-    def expired?(time_reference = @creation_time)
-      if @max_age == 0.seconds
+    # Returns the expiration status of this cookie as a `Bool`.
+    #
+    # *time_reference* can be passed to use a different reference time for
+    # comparison. Default is the current time (`Time.utc`).
+    def expired?(time_reference = Time.utc) : Bool
+      if @max_age.try &.zero?
         true
-      elsif (time = expiration_time(time_reference)) && time < Time.utc
-        true
+      elsif expiration_time = self.expiration_time
+        expiration_time <= time_reference
       else
         false
       end
@@ -146,12 +150,12 @@ module HTTP
           URI.decode_www_form(match["name"]), URI.decode_www_form(match["value"]),
           path: match["path"]? || "/",
           expires: expires,
-          max_age: max_age,
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
-          extension: match["extension"]?
+          extension: match["extension"]?,
+          max_age: max_age,
         )
       end
 
