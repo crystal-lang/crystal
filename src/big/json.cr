@@ -2,20 +2,6 @@ require "json"
 require "big"
 
 class JSON::Builder
-  # Writes a big integer.
-  def number(number : BigInt)
-    scalar do
-      @io << number
-    end
-  end
-
-  # Writes a big float.
-  def number(number : BigFloat)
-    scalar do
-      @io << number
-    end
-  end
-
   # Writes a big decimal.
   def number(number : BigDecimal)
     scalar do
