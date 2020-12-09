@@ -53,19 +53,6 @@ struct Time::Span
   # @nanoseconds can either be negative or positive).
   @nanoseconds : Int32
 
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_hours : Int, _minutes : Int, _seconds : Int)
-    new(0, _hours, _minutes, _seconds)
-  end
-
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, nanoseconds : Int = 0)
-    new(
-      seconds: compute_seconds(_days, _hours, _minutes, _seconds),
-      nanoseconds: nanoseconds.to_i64,
-    )
-  end
-
   # Creates a new `Time::Span` from *seconds* and *nanoseconds*.
   #
   # Nanoseconds get normalized in the range of `0...1_000_000_000`,
