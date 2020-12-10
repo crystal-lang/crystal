@@ -483,7 +483,6 @@ module Crystal
       it_parses "foo(a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
-      it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
 
       it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
@@ -918,6 +917,16 @@ module Crystal
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
+
+    assert_syntax_error "macro foo=;end"
+    assert_syntax_error "macro []=;end"
+    assert_syntax_error "macro <;end"
+
+    assert_syntax_error "macro Foo;end"
+    assert_syntax_error "macro foo.bar;end"
+    assert_syntax_error "macro Foo.bar;end"
+    assert_syntax_error "macro foo&&;end"
+    assert_syntax_error "macro foo"
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
