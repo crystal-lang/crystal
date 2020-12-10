@@ -2962,12 +2962,22 @@ module Crystal
 
       name_location = @token.location
 
-      if @token.type == :IDENT
+      if @token.type == :CONST
+        raise "macro can't have a receiver"
+      elsif @token.type == :IDENT
         check_valid_def_name
+
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
       else
         check_valid_def_op_name
+        next_token_skip_space
       end
-      next_token_skip_space
 
       args = [] of Arg
 
@@ -3024,8 +3034,12 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
+      when :";", :"NEWLINE"
+        # Skip
+      when :"."
+        raise "macro can't have a receiver"
       else
-        # keep going
+        unexpected_token
       end
 
       end_location = nil

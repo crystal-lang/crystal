@@ -891,6 +891,8 @@ module Crystal
 
     it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
     it_parses "macro [];end", Macro.new("[]", [] of Arg, Expressions.new)
+    it_parses "macro foo=;end", Macro.new("foo=", [] of Arg, Expressions.new)
+    it_parses "macro []=;end", Macro.new("[]=", [] of Arg, Expressions.new)
     it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x); 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x)\n 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
@@ -918,6 +920,12 @@ module Crystal
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
+
+    assert_syntax_error "macro Foo;end", "macro can't have a receiver"
+    assert_syntax_error "macro foo.bar;end", "macro can't have a receiver"
+    assert_syntax_error "macro Foo.bar;end", "macro can't have a receiver"
+    assert_syntax_error "macro foo&&;end"
+    assert_syntax_error "macro foo"
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
