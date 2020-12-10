@@ -1418,17 +1418,17 @@ class Array(T)
   # Yields each ordered combination of the elements taken from each of the
   # *arrays* as `Array`s.
   # Traversal of elements starts from the last given array.
-  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
+  @[Deprecated("Use `Indexable.product_each(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(arrays : Array(Array), reuse = false)
-    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
+    Indexable.product_each(arrays, reuse: reuse) { |r| yield r }
   end
 
   # Yields each ordered combination of the elements taken from each of the
   # *arrays* as `Array`s.
   # Traversal of elements starts from the last given array.
-  @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
+  @[Deprecated("Use `Indexable#product_each(*others : Indexable, &block)` instead")]
   def self.each_product(*arrays : Array, reuse = false)
-    Indexable.each_cartesian(arrays.to_a, reuse: reuse) { |r| yield r }
+    Indexable.product_each(arrays.to_a, reuse: reuse) { |r| yield r }
   end
 
   def repeated_permutations(size : Int = self.size)
@@ -1447,7 +1447,7 @@ class Array(T)
     if size == 0
       yield([] of T)
     else
-      Indexable.each_cartesian(Array.new(size, self), reuse: reuse) { |r| yield r }
+      Indexable.product_each(Array.new(size, self), reuse: reuse) { |r| yield r }
     end
   end
 
@@ -1528,7 +1528,7 @@ class Array(T)
   # Yields each ordered combination of the elements taken from each of `self`
   # and *enumerable* as a `Tuple`.
   # Traversal of elements starts from *enumerable*.
-  @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
+  @[Deprecated("Use `Indexable#product_each(*others : Indexable, &block)` instead")]
   def product(enumerable : Enumerable, &block)
     self.each { |a| enumerable.each { |b| yield a, b } }
   end
