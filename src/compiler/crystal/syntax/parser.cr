@@ -3496,14 +3496,6 @@ module Crystal
           index += 1
         end
 
-        if name.ends_with?('=')
-          if name != "[]=" && (args.size > 1 || found_splat || found_double_splat)
-            raise "setter method '#{name}' cannot have more than one argument"
-          elsif found_block
-            raise "setter method '#{name}' cannot have a block"
-          end
-        end
-
         if splat_index == args.size - 1 && args.last.name.empty?
           raise "named arguments must follow bare *", args.last.location.not_nil!
         end
@@ -3531,6 +3523,22 @@ module Crystal
           # OK
         else
           unexpected_token
+        end
+      end
+
+      if name.ends_with?('=') && !name.in?("<=", "==", ">=", "!=", "===")
+        if name != "[]=" && (args.size != 1 || found_splat || found_double_splat)
+          raise "setter method '#{name}' must have exactly one positional argument"
+        elsif name == "[]=" && args.size < 1
+          raise "setter method '#{name}' must have at least one positional argument"
+        elsif found_block
+          raise "setter method '#{name}' cannot have a block"
+        end
+
+        args.each(within: 0...splat_index) do |arg|
+          if arg.default_value
+            raise "setter method '#{name}' cannot have default positional arguments"
+          end
         end
       end
 

@@ -180,6 +180,7 @@ module Crystal
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)
     it_parses "def foo; end", Def.new("foo")
+    it_parses "def foo(); end", Def.new("foo")
     it_parses "def foo(var); end", Def.new("foo", ["var".arg])
     it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg])
     it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg])
@@ -194,14 +195,21 @@ module Crystal
     assert_syntax_error "def foo?=(x); end", "unexpected token: ?"
 
     # #5856
-    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one argument"
-    assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
-    assert_syntax_error "def []=(&block); end", "setter method '[]=' cannot have a block"
+    assert_syntax_error "def foo=(a,b); end", "setter method 'foo=' must have exactly one positional argument"
+    assert_syntax_error "def foo=(a = 1, b = 2); end", "setter method 'foo=' must have exactly one positional argument"
+    assert_syntax_error "def foo=(*args); end", "setter method 'foo=' must have exactly one positional argument"
+    assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' must have exactly one positional argument"
+    assert_syntax_error "def foo=(x, &block); end", "setter method 'foo=' cannot have a block"
+    assert_syntax_error "def []=(x, &block); end", "setter method '[]=' cannot have a block"
     assert_syntax_error "f.[]= do |a| end", "setter method '[]=' cannot be called with a block"
     assert_syntax_error "f.[]= { |bar| }", "setter method '[]=' cannot be called with a block"
+
+    # #10023
+    assert_syntax_error "def foo=; end", "setter method 'foo=' must have exactly one positional argument"
+    assert_syntax_error "def []=; end", "setter method '[]=' must have at least one positional argument"
+    assert_syntax_error "def foo=(a = 1); end", "setter method 'foo=' cannot have default positional arguments"
+    assert_syntax_error "def []=(a = 1); end", "setter method '[]=' cannot have default positional arguments"
+    it_parses "def []=(a, *b, c = 1); end", Def.new("[]=", ["a".arg, "b".arg, Arg.new("c", 1.int32)], splat_index: 1)
 
     # #5895, #6042, #5997
     %w(
@@ -224,8 +232,7 @@ module Crystal
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
-    it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
-    it_parses "def self.foo=()\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
+    it_parses "def self.foo=(a)\n1\nend", Def.new("foo=", ["a".arg], body: 1.int32, receiver: "self".var)
     it_parses "def Foo.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "Foo".path)
     it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: ["Foo", "Bar"].path)
 
