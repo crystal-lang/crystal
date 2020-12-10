@@ -37,9 +37,17 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   record FinishedHook, scope : ModuleType, macro : Macro
   @finished_hooks = [] of FinishedHook
 
+  @defs_in_scope : Array(Def)?
+
   @method_added_running = false
 
   @last_doc : String?
+
+  def visit(node : Require)
+    with_new_defs_in_scope do
+      super
+    end
+  end
 
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
@@ -380,7 +388,27 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.raise "enums can't define an `initialize` method, try using `def self.new`"
     end
 
-    target_type.add_def node
+    if @in_macro_expansion || @in_hook_expansion
+      # Don't check whether a method was redefined in the same scope if this
+      # happens inside macros or expansion hooks becuase those have use cases
+      target_type.add_def node
+    else
+      defs_in_scope = @defs_in_scope ||= [] of Def
+      defs_in_scope << node
+
+      existing_def = target_type.add_def node
+      if existing_def && defs_in_scope.any? &.same?(existing_def)
+        node.raise <<-MSG
+      this method was previously defined in this same scope on line #{existing_def.location.not_nil!.line_number}.
+
+      A method can be redefined by reopening a type, but it can't be redefined
+      right after you defined it for the first time in the same file.
+
+      This is most likely a mistake you made.
+      MSG
+      end
+    end
+
     node.set_type @program.nil
 
     if is_instance_method
@@ -1177,6 +1205,22 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope = program.check_private(node) || scope
     end
     scope
+  end
+
+  def pushing_type(type : ModuleType)
+    with_new_defs_in_scope do
+      super do
+        yield
+      end
+    end
+  end
+
+  def with_new_defs_in_scope
+    old_defs_in_scope = @defs_in_scope
+    @defs_in_scope = nil
+    value = yield
+    @defs_in_scope = old_defs_in_scope
+    value
   end
 
   # Turns all finished macros into expanded nodes, and
