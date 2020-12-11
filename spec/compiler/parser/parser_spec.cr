@@ -210,6 +210,9 @@ module Crystal
     assert_syntax_error "def foo=(a = 1); end", "setter method 'foo=' cannot have default positional arguments"
     assert_syntax_error "def []=(a = 1); end", "setter method '[]=' cannot have default positional arguments"
     it_parses "def []=(a, *b, c = 1); end", Def.new("[]=", ["a".arg, "b".arg, Arg.new("c", 1.int32)], splat_index: 1)
+    assert_syntax_error "def []=(*, a); end", "setter method '[]=' must have at least one positional argument"
+    assert_syntax_error "def []=(*a); end", "setter method '[]=' must have at least one positional argument"
+    it_parses "def []=(*a : Int); end", Def.new("[]=", [Arg.new("a", restriction: "Int".path)], splat_index: 0)
 
     # #5895, #6042, #5997
     %w(

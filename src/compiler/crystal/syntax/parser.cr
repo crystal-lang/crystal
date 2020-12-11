@@ -3529,9 +3529,19 @@ module Crystal
       if name.ends_with?('=') && !name.in?("<=", "==", ">=", "!=", "===")
         if name != "[]=" && (args.size != 1 || found_splat || found_double_splat)
           raise "setter method '#{name}' must have exactly one positional argument"
-        elsif name == "[]=" && args.size < 1
-          raise "setter method '#{name}' must have at least one positional argument"
-        elsif found_block
+        elsif name == "[]="
+          if args.empty?
+            raise "setter method '#{name}' must have at least one positional argument"
+          elsif splat_index == 0
+            # disallow `[]=(*, x)` and `[]=(*x)`
+            first_arg = args.first
+            if first_arg.name.empty? || !first_arg.restriction
+              raise "setter method '#{name}' must have at least one positional argument"
+            end
+          end
+        end
+
+        if found_block
           raise "setter method '#{name}' cannot have a block"
         end
 
