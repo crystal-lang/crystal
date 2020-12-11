@@ -383,7 +383,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
+      ", "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -405,7 +405,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "method must return Bar(Int32) but it is returning Baz2"
+      ", "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do

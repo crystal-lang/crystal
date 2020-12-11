@@ -5042,7 +5042,7 @@ describe "Semantic: instance var" do
 
       Foo.new
       ),
-      "method must return Gen(T) but it is returning Nil"
+      "method Gen(T).new must return Gen(T) but it is returning Nil"
   end
 
   it "guesses virtual array type (1) (#5342)" do
