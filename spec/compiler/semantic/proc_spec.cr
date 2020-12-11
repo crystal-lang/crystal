@@ -1132,7 +1132,7 @@ describe "Semantic: proc" do
         end
       end
 
-      foo
-    )) { proc_of string }
+      foo.not_nil!
+    )) { proc_of string, nil_type }
   end
 end
