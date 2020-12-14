@@ -524,33 +524,6 @@ jobs:
 
 workflows:
   version: 2
-  test_all_platforms:
-    jobs:
-      - test_linux:
-          filters: &unless_maintenance
-            branches:
-              ignore:
-                - /release\/.+/
-                - /package\/.+/
-                - /.*\bci\b.*/
-      - test_linux32_std:
-          filters: *unless_maintenance
-      - test_alpine:
-          filters: *unless_maintenance
-      # - test_darwin:
-      #     filters: *unless_maintenance
-      - test_preview_mt:
-          filters: *unless_maintenance
-      - check_format:
-          filters: *unless_maintenance
-      - sync_docs_s3:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - test_linux
-
   tagged_release:
     jobs:
       - test_linux:
