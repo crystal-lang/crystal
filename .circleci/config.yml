@@ -136,20 +136,6 @@ jobs:
       - store_artifacts:
           path: ~/test-results/spec
 
-  check_format:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci format
-
   sync_docs_s3:
     machine: true
     steps:
@@ -652,9 +638,7 @@ workflows:
       - test_linux
       - test_linux32_std
       - test_alpine
-      # - test_darwin
       - test_preview_mt
-      - check_format
       - prepare_common
       - prepare_nightly:
           requires:
