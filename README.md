@@ -1,5 +1,9 @@
 # Crystal
 
+![Linux CI](https://github.com/crystal-lang/crystal/workflows/Linux%20CI/badge.svg)
+![macOS CI](https://github.com/crystal-lang/crystal/workflows/macOS%20CI/badge.svg)
+![AArch64 CI](https://github.com/crystal-lang/crystal/workflows/AArch64%20CI/badge.svg)
+![Windows CI](https://github.com/crystal-lang/crystal/workflows/Windows%20CI/badge.svg)
 [![CircleCI Build Status](https://circleci.com/gh/crystal-lang/crystal/tree/master.svg?style=shield)](https://circleci.com/gh/crystal-lang/crystal)
 [![Join the chat at https://gitter.im/crystal-lang/crystal](https://badges.gitter.im/crystal-lang/crystal.svg)](https://gitter.im/crystal-lang/crystal)
 [![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
