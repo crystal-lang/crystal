@@ -136,20 +136,6 @@ jobs:
       - store_artifacts:
           path: ~/test-results/spec
 
-  sync_docs_s3:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          echo $CIRCLE_SHA1 > /tmp/workspace/docs/revision.txt
-      - run: |
-          docker run -v /tmp/workspace/docs:/docs \
-            -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-            -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-            mesosphere/aws-cli \
-            s3 sync /docs/ s3://crystal-api/api/master --delete
-
   prepare_common:
     docker:
       - image: docker:stable-git
