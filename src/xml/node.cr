@@ -94,6 +94,7 @@ struct XML::Node
   def content=(content)
     check_no_null_byte(content)
     LibXML.xmlNodeSetContent(self, content)
+    content
   end
 
   # Gets the document for this Node as a `XML::Node`.
@@ -270,17 +271,18 @@ struct XML::Node
       raise XML::Error.new("Can't set name of XML #{type}", 0)
     end
 
-    name = name.to_s
+    name_str = name.to_s
 
-    if name.includes? '\0'
-      raise XML::Error.new("Invalid node name: #{name.inspect} (contains null character)", 0)
+    if name_str.includes? '\0'
+      raise XML::Error.new("Invalid node name: #{name_str.inspect} (contains null character)", 0)
     end
 
-    if LibXML.xmlValidateNameValue(name) == 0
-      raise XML::Error.new("Invalid node name: #{name.inspect}", 0)
+    if LibXML.xmlValidateNameValue(name_str) == 0
+      raise XML::Error.new("Invalid node name: #{name_str.inspect}", 0)
     end
 
-    LibXML.xmlNodeSetName(self, name)
+    LibXML.xmlNodeSetName(self, name_str)
+    name
   end
 
   # Returns the namespace for this node or `nil` if not found.
@@ -571,6 +573,7 @@ struct XML::Node
   # :nodoc:
   def errors=(errors)
     @node.value._private = errors.as(Void*)
+    errors
   end
 
   # Returns the list of `XML::Error` found when parsing this document.

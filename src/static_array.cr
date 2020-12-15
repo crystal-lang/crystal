@@ -205,6 +205,7 @@ struct StaticArray(T, N)
     size.times do |i|
       to_unsafe[i] = value
     end
+    value
   end
 
   # Modifies `self` by randomizing the order of elements in the array

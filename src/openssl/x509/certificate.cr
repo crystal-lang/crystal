@@ -39,6 +39,7 @@ module OpenSSL::X509
     # Refer to `Name.parse` for the format.
     def subject=(subject : String)
       self.subject = Name.parse(subject)
+      subject
     end
 
     def subject=(subject : Name)

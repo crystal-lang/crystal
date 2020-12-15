@@ -72,6 +72,7 @@ class HTTP::Request
 
   def content_length=(length : Int)
     headers["Content-Length"] = length.to_s
+    length
   end
 
   def content_length
@@ -81,11 +82,13 @@ class HTTP::Request
   def body=(body : String)
     @body = IO::Memory.new(body)
     self.content_length = body.bytesize
+    body
   end
 
   def body=(body : Bytes)
     @body = IO::Memory.new(body)
     self.content_length = body.size
+    body
   end
 
   def body=(@body : IO)
@@ -93,6 +96,7 @@ class HTTP::Request
 
   def body=(@body : Nil)
     @headers["Content-Length"] = "0" if @method == "POST" || @method == "PUT"
+    body
   end
 
   def to_io(io)

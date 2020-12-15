@@ -281,6 +281,7 @@ class HTTP::Client
   # ```
   def read_timeout=(read_timeout : Number)
     @read_timeout = read_timeout.to_f
+    read_timeout
   end
 
   # Sets the read timeout with a `Time::Span`, to wait when reading before raising an `IO::TimeoutError`.
@@ -298,18 +299,21 @@ class HTTP::Client
   # ```
   def read_timeout=(read_timeout : Time::Span)
     self.read_timeout = read_timeout.total_seconds
+    read_timeout
   end
 
   # Sets the write timeout - if any chunk of request is not written
   # within the number of seconds provided, `IO::TimeoutError` exception is raised.
   def write_timeout=(write_timeout : Number)
     @write_timeout = write_timeout.to_f
+    write_timeout
   end
 
   # Sets the write timeout - if any chunk of request is not written
   # within the provided `Time::Span`,  `IO::TimeoutError` exception is raised.
   def write_timeout=(write_timeout : Time::Span)
     self.write_timeout = write_timeout.total_seconds
+    write_timeout
   end
 
   # Sets the number of seconds to wait when connecting, before raising an `IO::TimeoutError`.
@@ -327,6 +331,7 @@ class HTTP::Client
   # ```
   def connect_timeout=(connect_timeout : Number)
     @connect_timeout = connect_timeout.to_f
+    connect_timeout
   end
 
   # Sets the open timeout with a `Time::Span` to wait when connecting, before raising an `IO::TimeoutError`.
@@ -344,6 +349,7 @@ class HTTP::Client
   # ```
   def connect_timeout=(connect_timeout : Time::Span)
     self.connect_timeout = connect_timeout.total_seconds
+    connect_timeout
   end
 
   # **This method has no effect right now**
@@ -363,6 +369,7 @@ class HTTP::Client
   # ```
   def dns_timeout=(dns_timeout : Number)
     @dns_timeout = dns_timeout.to_f
+    dns_timeout
   end
 
   # **This method has no effect right now**
@@ -382,6 +389,7 @@ class HTTP::Client
   # ```
   def dns_timeout=(dns_timeout : Time::Span)
     self.dns_timeout = dns_timeout.total_seconds
+    dns_timeout
   end
 
   # Adds a callback to execute before each request. This is usually

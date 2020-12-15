@@ -176,6 +176,7 @@ module Crystal
           end
         end
       end
+      value
     end
 
     # Returns the minimum and maximum number of arguments that must

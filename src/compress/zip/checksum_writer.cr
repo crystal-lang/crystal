@@ -24,6 +24,7 @@ module Compress::Zip
     def io=(@io)
       @count = 0_u32
       @crc32 = ::Digest::CRC32.initial
+      io
     end
   end
 end

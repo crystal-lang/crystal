@@ -53,6 +53,7 @@ module Crystal
     # having doc comments, so by default this does nothing and some
     # subclasses implement this.
     def doc=(doc)
+      doc
     end
 
     def name_location
@@ -64,6 +65,7 @@ module Crystal
     end
 
     def visibility=(visibility : Visibility)
+      visibility
     end
 
     def visibility

@@ -1023,6 +1023,7 @@ class Array(T)
   # :nodoc:
   protected def size=(size : Int)
     @size = size.to_i
+    size
   end
 
   # Optimized version of `Enumerable#map`.

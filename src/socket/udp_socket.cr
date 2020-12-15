@@ -115,6 +115,7 @@ class UDPSocket < IPSocket
     else
       raise Socket::Error.new "Unsupported IP address family: #{@family}"
     end
+    val
   end
 
   # Returns the current value of the `hoplimit` field on uni-cast packets.

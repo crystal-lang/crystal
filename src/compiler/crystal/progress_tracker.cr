@@ -64,10 +64,12 @@ module Crystal
 
     def stage_progress=(@stage_progress)
       print_progress
+      stage_progress
     end
 
     def stage_progress_total=(@stage_progress_total)
       print_progress
+      stage_progress_total
     end
   end
 end

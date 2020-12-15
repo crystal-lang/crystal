@@ -535,6 +535,7 @@ class Socket < IO
       flags |= LibC::O_NONBLOCK
     end
     fcntl(LibC::F_SETFL, flags)
+    value
   end
 
   def close_on_exec?

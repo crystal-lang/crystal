@@ -15,6 +15,7 @@ module Crystal
 
     def color=(color)
       @color = !!color
+      color
     end
 
     def has_location?

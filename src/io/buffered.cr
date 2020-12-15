@@ -185,6 +185,7 @@ module IO::Buffered
   def sync=(sync)
     flush if sync && !@sync
     @sync = !!sync
+    sync
   end
 
   # Determines if this `IO` does write buffering. If `true`, no buffering is done.
@@ -195,6 +196,7 @@ module IO::Buffered
   # Turns on/off `IO` **read** buffering.
   def read_buffering=(read_buffering)
     @read_buffering = !!read_buffering
+    read_buffering
   end
 
   # Determines whether this `IO` buffers reads.
@@ -205,6 +207,7 @@ module IO::Buffered
   # Turns on/off flushing the underlying `IO` when a newline is written.
   def flush_on_newline=(flush_on_newline)
     @flush_on_newline = !!flush_on_newline
+    flush_on_newline
   end
 
   # Determines if this `IO` flushes automatically when a newline is written.

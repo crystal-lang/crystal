@@ -703,6 +703,7 @@ module Crystal
     end
 
     def private=(set_private)
+      set_private
     end
 
     # Returns true if *name* if an unbound type variable in this (generic) type.
@@ -1217,6 +1218,7 @@ module Crystal
     def superclass=(@superclass)
       @depth = superclass ? (superclass.depth + 1) : 0
       parents.push superclass if superclass
+      superclass
     end
 
     def add_subclass(subclass)

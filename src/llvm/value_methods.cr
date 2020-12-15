@@ -4,6 +4,7 @@ module LLVM::ValueMethods
 
   def name=(name)
     LibLLVM.set_value_name(self, name)
+    name
   end
 
   def name
@@ -36,6 +37,7 @@ module LLVM::ValueMethods
 
   def thread_local=(thread_local)
     LibLLVM.set_thread_local(self, thread_local ? 1 : 0)
+    thread_local
   end
 
   def thread_local?
@@ -44,6 +46,7 @@ module LLVM::ValueMethods
 
   def linkage=(linkage)
     LibLLVM.set_linkage(self, linkage)
+    linkage
   end
 
   def linkage
@@ -52,6 +55,7 @@ module LLVM::ValueMethods
 
   def call_convention=(call_convention)
     LibLLVM.set_instruction_call_convention(self, call_convention)
+    call_convention
   end
 
   def call_convention
@@ -60,6 +64,7 @@ module LLVM::ValueMethods
 
   def global_constant=(global_constant)
     LibLLVM.set_global_constant(self, global_constant ? 1 : 0)
+    global_constant
   end
 
   def global_constant?
@@ -68,6 +73,7 @@ module LLVM::ValueMethods
 
   def initializer=(initializer)
     LibLLVM.set_initializer(self, initializer)
+    initializer
   end
 
   def initializer
@@ -77,14 +83,17 @@ module LLVM::ValueMethods
 
   def volatile=(volatile)
     LibLLVM.set_volatile(self, volatile ? 1 : 0)
+    volatile
   end
 
   def ordering=(ordering)
     LibLLVMExt.set_ordering(self, ordering)
+    ordering
   end
 
   def alignment=(bytes)
     LibLLVM.set_alignment(self, bytes)
+    bytes
   end
 
   def const_int_get_sext_value

@@ -161,7 +161,7 @@ module Crystal::Signal
     end
   end
 
-  def self.child_handler=(handler : Handler) : Nil
+  def self.child_handler=(handler : Handler)
     @@child_handler = handler
   end
 

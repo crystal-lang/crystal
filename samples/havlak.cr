@@ -98,16 +98,19 @@ class SimpleLoop
   def parent=(parent : SimpleLoop)
     @parent = parent
     parent.add_child_loop(self)
+    parent
   end
 
   def header=(bb : BasicBlock)
     @basic_blocks.add(bb)
     @header = bb
+    bb
   end
 
   def nesting_level=(level)
     @nesting_level = level
     @root = true if level == 0
+    level
   end
 end
 

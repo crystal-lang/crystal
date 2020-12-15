@@ -109,6 +109,7 @@ module YAML::Nodes
     # Appends two nodes into this mapping.
     def []=(key, value)
       @nodes << key << value
+      value
     end
 
     # Appends a single node into this mapping.

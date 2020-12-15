@@ -61,6 +61,7 @@ struct BitArray
     else
       @bits[bit_index] &= ~(1 << sub_index)
     end
+    value
   end
 
   # Returns all elements that are within the given range.

@@ -14,16 +14,19 @@ module Crystal
     def color=(color)
       @color = !!color
       inner.try &.color=(color)
+      color
     end
 
     def error_trace=(error_trace)
       @error_trace = !!error_trace
       inner.try &.error_trace=(error_trace)
+      error_trace
     end
 
     def warning=(warning)
       super
       inner.try &.warning=(warning)
+      warning
     end
 
     def self.for_node(node, message, inner = nil)

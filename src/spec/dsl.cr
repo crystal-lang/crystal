@@ -89,11 +89,13 @@ module Spec
 
     @@randomizer_seed = seed
     @@randomizer = seed ? Random::PCG32.new(seed) : nil
+    mode
   end
 
   # :nodoc:
   def self.pattern=(pattern)
     @@pattern = Regex.new(Regex.escape(pattern))
+    pattern
   end
 
   # :nodoc:

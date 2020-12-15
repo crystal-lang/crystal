@@ -5,22 +5,27 @@ class LLVM::PassManagerBuilder
 
   def opt_level=(level)
     LibLLVM.pass_manager_builder_set_opt_level self, level
+    level
   end
 
   def size_level=(level)
     LibLLVM.pass_manager_builder_set_size_level self, level
+    level
   end
 
   def disable_unroll_loops=(value)
     LibLLVM.pass_manager_builder_set_disable_unroll_loops self, value ? 1 : 0
+    value
   end
 
   def disable_simplify_lib_calls=(value)
     LibLLVM.pass_manager_builder_set_disable_simplify_lib_calls self, value ? 1 : 0
+    value
   end
 
   def use_inliner_with_threshold=(threshold)
     LibLLVM.pass_manager_builder_use_inliner_with_threshold self, threshold
+    threshold
   end
 
   def populate(pm : FunctionPassManager)

@@ -41,6 +41,7 @@ module Crystal::System::FileDescriptor
       new_flags |= LibC::O_NONBLOCK
     end
     fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    value
   end
 
   private def system_close_on_exec?

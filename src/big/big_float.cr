@@ -91,6 +91,7 @@ struct BigFloat < Float
 
   def self.default_precision=(prec : Int)
     LibGMP.mpf_set_default_prec(prec.to_u64)
+    prec
   end
 
   def <=>(other : BigFloat)
