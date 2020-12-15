@@ -1043,6 +1043,10 @@ class Array(T)
   # a.insert(-1, "z") # => ["x", "a", "y", "b", "c", "z"]
   # ```
   def insert(index : Int, object : T)
+    if index == 0
+      return unshift(object)
+    end
+
     if index < 0
       index += size + 1
     end
@@ -1051,15 +1055,9 @@ class Array(T)
       raise IndexError.new
     end
 
-    # See if we can move backwards if we have space
-    if index == 0 && @offset_to_buffer > 0
-      shift_buffer_by(-1)
-      @buffer.value = object
-    else
-      check_needs_resize
-      (@buffer + index + 1).move_from(@buffer + index, size - index)
-      @buffer[index] = object
-    end
+    check_needs_resize
+    (@buffer + index + 1).move_from(@buffer + index, size - index)
+    @buffer[index] = object
 
     @size += 1
 
@@ -2197,41 +2195,30 @@ class Array(T)
   # a.unshift(1)   # => [1, "c", "a", "b"]
   # ```
   def unshift(object : T)
-    if @offset_to_buffer > 0
-      shift_buffer_by(-1)
-      @buffer.value = object
-    else
-      check_needs_resize
-      (@buffer + 1).move_from(@buffer, size)
-      @buffer[0] = object
+    # If we have no more room left before the beginning of the array
+    # we make the array larger, but point the buffer to start at the middle
+    # of the entire allocated memory. In this way, if more elements are unshift
+    # later we won't need a reallocation right away. This is similar to what
+    # happens when we push and we don't have more room, except that toward
+    # the beginning.
+    if @offset_to_buffer == 0
+      double_capacity_for_unshift
     end
 
+    # At this point we are sure @offset_to_buffer is greater than zero
+    shift_buffer_by(-1)
+    @buffer.value = object
     @size += 1
+
     self
   end
 
   # Prepend multiple values. The same as `unshift`, but takes an arbitrary number
   # of values to add to the array. Returns `self`.
   def unshift(*values : T)
-    # Check if we have enough offset from the buffer to fit the values
-    if @offset_to_buffer >= values.size
-      shift_buffer_by(-values.size)
-      values.each_with_index do |value, i|
-        @buffer[i] = value
-      end
-      @size += values.size
-      return self
+    values.reverse_each do |value|
+      unshift(value)
     end
-
-    resize_if_cant_insert(values.size)
-
-    move_value = values.size
-    @buffer.move_to(@buffer + move_value, @size)
-
-    values.each_with_index do |value, i|
-      @buffer[i] = value
-    end
-    @size += values.size
     self
   end
 
@@ -2242,7 +2229,7 @@ class Array(T)
 
   private def check_needs_resize
     # We have to compare against the actual capacity in case `@buffer` was moved
-    return unless @size == remaining_capacity
+    return unless needs_resize?
 
     # If the array is not empty and more than half of the elements were shifted
     # then we avoid a resize and just move the elements to the left.
@@ -2304,6 +2291,10 @@ class Array(T)
     end
   end
 
+  private def needs_resize?
+    @size == remaining_capacity
+  end
+
   def remaining_capacity
     @capacity - @offset_to_buffer
   end
@@ -2319,6 +2310,28 @@ class Array(T)
     else
       @buffer = Pointer(T).malloc(@capacity)
     end
+  end
+
+  # Similar to double capacity, except that after reallocating the buffer
+  # we point it to the middle of the buffer in case more unshifts come right away.
+  # This assumes @offset_to_buffer is zero.
+  private def double_capacity_for_unshift
+    resize_to_capacity_for_unshift(@capacity == 0 ? 3 : (@capacity * 2))
+  end
+
+  private def resize_to_capacity_for_unshift(capacity)
+    @capacity = capacity
+    half = @capacity // 2
+
+    if @buffer
+      @buffer = root_buffer.realloc(@capacity)
+      @buffer.move_to(@buffer + half, @capacity - half)
+      @buffer.clear(half)
+    else
+      @buffer = Pointer(T).malloc(@capacity)
+    end
+
+    shift_buffer_by(half)
   end
 
   private def resize_if_cant_insert(insert_size)

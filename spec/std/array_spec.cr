@@ -1554,6 +1554,22 @@ describe "Array" do
       a.should eq [3, 1, 2]
     end
 
+    it "unshifts one elements three times" do
+      a = [] of Int32
+      3.times do |i|
+        a.unshift(i)
+      end
+      a.should eq([2, 1, 0])
+    end
+
+    it "unshifts one element multiple times" do
+      a = [1, 2]
+      (3..100).each do |i|
+        a.unshift(i)
+      end
+      a.should eq((3..100).to_a.reverse + [1, 2])
+    end
+
     it "unshifts multiple elements" do
       a = [1, 2]
       a.unshift(3, 4).should be(a)
