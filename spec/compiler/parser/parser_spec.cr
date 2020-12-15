@@ -483,7 +483,6 @@ module Crystal
       it_parses "foo(a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
-      it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
 
       it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
@@ -891,8 +890,6 @@ module Crystal
 
     it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
     it_parses "macro [];end", Macro.new("[]", [] of Arg, Expressions.new)
-    it_parses "macro foo=;end", Macro.new("foo=", [] of Arg, Expressions.new)
-    it_parses "macro []=;end", Macro.new("[]=", [] of Arg, Expressions.new)
     it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x); 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x)\n 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
@@ -921,11 +918,16 @@ module Crystal
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
+    assert_syntax_error "macro foo=;end", "macro can't be a setter"
     assert_syntax_error "macro Foo;end", "macro can't have a receiver"
     assert_syntax_error "macro foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro Foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro foo&&;end"
     assert_syntax_error "macro foo"
+
+    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
+      assert_syntax_error "macro #{op};end", "only '[]' can be used as an operator macro"
+    end
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 

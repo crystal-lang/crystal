@@ -2969,13 +2969,14 @@ module Crystal
 
         next_token
         if @token.type == :"="
-          name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
+          raise "macro can't be a setter"
         end
+        skip_space
       else
         check_valid_def_op_name
+        if @token.type != :"[]"
+          raise "only '[]' can be used as an operator macro", @token
+        end
         next_token_skip_space
       end
 
