@@ -1415,7 +1415,10 @@ module Iterator(T)
         @init = nil
       end
 
-      @iterator.each do |val|
+      while true
+        val = @iterator.next
+        break if val.is_a?(Iterator::Stop)
+
         key = @original_block.call(val)
 
         if @acc.same_as?(key)
