@@ -631,6 +631,11 @@ module Indexable(T)
         value
       end
     end
+
+    def rewind
+      @index = 0
+      self
+    end
   end
 
   private class ReverseItemIterator(A, T)

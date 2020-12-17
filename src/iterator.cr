@@ -144,6 +144,38 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
+  # Returns a copy of this iterator.
+  # Advancing the copy doesn't advance the original iterator.
+  #
+  # This method is implemented by creating a copy of this iterator with
+  # all fields copied over, dupping any field that is an `Iterator`.
+  # This method should be overwritten if a different dup behavior is needed,
+  # for example if an `Iterator` holds an array of iterators.
+  def dup
+    {% begin %}
+      {% if @type < ::Reference %}
+        dup = self.class.allocate
+        dup_ptr = dup.as(Void*)
+        dup_ptr.copy_from(self.as(Void*), instance_sizeof(self))
+      {% else %}
+        dup = self
+        dup_ptr = pointerof(dup)
+      {% end %}
+
+      {% for name in @type.instance_vars %}
+        if (var = @{{name.id}}).is_a?(Iterator)
+          (dup_ptr + offsetof(self, @{{name.id}})).as(typeof(@{{name.id}})*).value = var.dup
+        end
+      {% end %}
+
+      {% if @type < ::Reference %}
+        GC.add_finalizer(dup) if dup.responds_to?(:finalize)
+      {% end %}
+
+      dup
+    {% end %}
+  end
+
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
   # Compared to `.chain(Iterator(Iter))`, it has better performance when the quantity of
@@ -472,6 +504,7 @@ module Iterator(T)
     end
   end
 
+  # Returns `self`.
   def each
     self
   end
@@ -484,9 +517,15 @@ module Iterator(T)
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
   def each : Nil
+    it = self
+    if it.responds_to?(:rewind)
+      it = it.dup
+      it.rewind
+    end
+
     while true
-      value = self.next
-      break if value.is_a?(Stop)
+      value = it.next
+      break if value.is_a?(Iterator::Stop)
       yield value
     end
   end
@@ -750,6 +789,11 @@ module Iterator(T)
       value = wrapped_next
       @func.call(value)
     end
+
+    def rewind
+      @iterator.rewind
+      self
+    end
   end
 
   # Returns an iterator that only returns elements for which the passed in
@@ -866,6 +910,11 @@ module Iterator(T)
         end
       end
     end
+
+    def rewind
+      @iterator.rewind
+      self
+    end
   end
 
   private struct SelectType(I, T)
@@ -882,6 +931,11 @@ module Iterator(T)
           return value
         end
       end
+    end
+
+    def rewind
+      @iterator.rewind
+      self
     end
   end
 

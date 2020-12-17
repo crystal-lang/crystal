@@ -614,6 +614,13 @@ struct Path
       @reader = reader
       return 0
     end
+
+    def rewind
+      @reader.pos = 0
+      @last_was_separator = false
+      @anchor_processed = false
+      self
+    end
   end
 
   private def windows_drive?

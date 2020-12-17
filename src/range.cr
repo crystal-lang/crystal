@@ -414,6 +414,12 @@ struct Range(B, E)
         end
       end
     end
+
+    def rewind
+      @current = @range.begin
+      @reached_end = false
+      self
+    end
   end
 
   private class ReverseIterator(B, E)

@@ -325,6 +325,14 @@ describe Iterator do
       iter.next.should eq(6)
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "does rewind" do
+      iter = (1..3).each.map &.*(2)
+      iter.next.should eq(2)
+      iter.next.should eq(4)
+      iter.rewind
+      iter.next.should eq(2)
+    end
   end
 
   describe "reject" do
@@ -356,6 +364,14 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    it "does select with Range iterator, rewinds" do
+      iter = (1..3).each.select &.>=(2)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.rewind
+      iter.next.should eq(2)
+    end
+
     it "does with pattern" do
       iter = (1..10).each.select(3..5)
       iter.next.should eq(3)
@@ -364,10 +380,26 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    it "does with pattern, rewinds" do
+      iter = (1..10).each.select(3..5)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.rewind
+      iter.next.should eq(3)
+    end
+
     it "does with type" do
       ary = [1, nil, 3, false].each.select(Int32).to_a
       ary.should eq([1, 3])
       ary.should be_a(Array(Int32))
+    end
+
+    it "does with type, rewinds" do
+      ary = [1, nil, 3, false].each.select(Int32)
+      ary.next.should eq(1)
+      ary.next.should eq(3)
+      ary.rewind
+      ary.next.should eq(1)
     end
   end
 
