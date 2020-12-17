@@ -144,6 +144,14 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
+  # Rewinds this iterator.
+  #
+  # By default raises `NotImplementedError` but includers typically
+  # override this method.
+  def rewind
+    raise NotImplementedError.new("#{self.class}#rewind")
+  end
+
   # Returns a copy of this iterator.
   # Advancing the copy doesn't advance the original iterator.
   #
@@ -517,10 +525,15 @@ module Iterator(T)
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
   def each : Nil
-    it = self
-    if it.responds_to?(:rewind)
-      it = it.dup
-      it.rewind
+    it = dup
+
+    begin
+      it = it.rewind
+    rescue NotImplementedError
+      # It's fine: we couldn't rewind the copy, but in most cases
+      # this will still give the correct result if we assume `next`
+      # wasn't called on any iterator (if the iterators are only
+      # used as internal iterators).
     end
 
     while true
@@ -1263,6 +1276,12 @@ module Iterator(T)
       value = {v, @index}
       @index += 1
       value
+    end
+
+    def rewind
+      @iterator.rewind
+      @index = @offset
+      self
     end
   end
 
