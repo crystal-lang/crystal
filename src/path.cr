@@ -574,6 +574,9 @@ struct Path
       @anchor_processed = false
     end
 
+    def initialize(@path : Path, @reader : Char::Reader, @last_was_separator : Bool, @anchor_processed : Bool)
+    end
+
     def next
       start_pos = next_pos
 
@@ -1019,7 +1022,7 @@ struct Path
       end
 
       path /= ".." unless base_part == "."
-      base_iterator.each do
+      until base_iterator.next.is_a?(Iterator::Stop)
         path /= ".."
       end
     end
@@ -1027,7 +1030,7 @@ struct Path
     # target_path is not consumed, so we append what's left to the relative path
     if target_part.is_a?(String)
       path /= target_part
-      target_iterator.each do |part|
+      while !(part = target_iterator.next).is_a?(Iterator::Stop)
         path /= part
       end
     end

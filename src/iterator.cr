@@ -520,6 +520,9 @@ module Iterator(T)
   # Calls the given block once for each element, passing that element
   # as a parameter.
   #
+  # Note that all elements in the iterator are yielded starting from the
+  # beginning, regardless of whether `next` was previously called or not.
+  #
   # ```
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
