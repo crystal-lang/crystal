@@ -298,6 +298,9 @@ class Crystal::CodeGenVisitor
         Phi.open(self, node) do |phi|
           context.return_phi = phi
 
+          # Reset vars that are declared inside the def and are nilable
+          reset_nilable_vars(target_def)
+
           request_value do
             accept target_def.body
           end

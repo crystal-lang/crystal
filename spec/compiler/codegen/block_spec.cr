@@ -1537,4 +1537,46 @@ describe "Code gen: block" do
       foo { |x| }
     ))
   end
+
+  it "clears nilable var before inlining block method (#10087)" do
+    run(%(
+      class Foo
+        @@x = 0
+
+        def self.inc
+          @@x &+= 1
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      def foo(x)
+        if x == 0
+          bug = "Hello"
+        end
+
+        if bug
+          Foo.inc
+        end
+
+        yield
+      end
+
+      def bar
+        i = 0
+        while i < 2
+          yield i
+          i &+= 1
+        end
+      end
+
+      bar do |z|
+        foo(z) { }
+      end
+
+      Foo.x
+    )).to_i.should eq(1)
+  end
 end

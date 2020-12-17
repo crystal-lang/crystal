@@ -1492,8 +1492,8 @@ module Crystal
 
       Phi.open(self, block, @needs_value) do |phi|
         with_cloned_context(block_context) do |old|
-          # Reset those vars that are declared inside the block and are nilable.
-          reset_block_vars block
+          # Reset vars that are declared inside the block and are nilable
+          reset_nilable_vars block
 
           context.break_phi = old.return_phi
           context.next_phi = phi
@@ -1817,12 +1817,13 @@ module Crystal
       end
     end
 
-    def reset_block_vars(block)
-      vars = block.vars
+    # Sets to nil any variable in node that is nilable.
+    def reset_nilable_vars(node)
+      vars = node.vars
       return unless vars
 
       vars.each do |name, var|
-        if var.context == block && bound_to_mod_nil?(var)
+        if var.context == node && bound_to_mod_nil?(var)
           context_var = context.vars[name]
           assign context_var.pointer, context_var.type, @program.nil, llvm_nil
         end
