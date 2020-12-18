@@ -101,7 +101,7 @@ jobs:
         run: bin/ci format
 
   deploy_api_docs:
-    if: github.repository_owner == 'crystal-lang' && github.event_name == 'push' && github.ref == 'refs/heads/cleanup-cis'
+    if: github.repository_owner == 'crystal-lang' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
       ARCH: x86_64
       ARCH_CMD: linux64
@@ -131,4 +131,4 @@ jobs:
 
       - name: Deploy API docs to S3
         run: |
-          aws s3 sync ./docs s3://crystal-api/api/master --delete --dryrun
+          aws s3 sync ./docs s3://crystal-api/api/master --delete
