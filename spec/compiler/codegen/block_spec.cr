@@ -1543,40 +1543,32 @@ describe "Code gen: block" do
       class Foo
         @@x = 0
 
-        def self.inc
-          @@x &+= 1
-        end
-
-        def self.x
+        def self.bar
+          i = 0
+          while i < 2
+            yield i
+            i &+= 1
+          end
           @@x
         end
-      end
 
-      def foo(x)
-        if x == 0
-          bug = "Hello"
+        def self.foo(x)
+          if x == 0
+            bug = "Hello"
+          end
+
+          if bug
+            @@x &+= 1
+          end
+
+          yield
         end
 
-        if bug
-          Foo.inc
-        end
-
-        yield
       end
 
-      def bar
-        i = 0
-        while i < 2
-          yield i
-          i &+= 1
-        end
+      Foo.bar do |z|
+        Foo.foo(z) { }
       end
-
-      bar do |z|
-        foo(z) { }
-      end
-
-      Foo.x
     )).to_i.should eq(1)
   end
 end
