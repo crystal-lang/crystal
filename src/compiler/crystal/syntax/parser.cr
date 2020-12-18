@@ -2962,22 +2962,20 @@ module Crystal
 
       name_location = @token.location
 
-      if @token.type == :CONST
+      case @token.type
+      when :CONST
         raise "macro can't have a receiver"
-      elsif @token.type == :IDENT
+      when :IDENT
         check_valid_def_name
-
         next_token
         if @token.type == :"="
           raise "macro can't be a setter"
         end
         skip_space
-      else
-        check_valid_def_op_name
-        if @token.type != :"[]"
-          raise "only '[]' can be used as an operator macro", @token
-        end
+      when :"[]"
         next_token_skip_space
+      else
+        raise "invalid macro name"
       end
 
       args = [] of Arg

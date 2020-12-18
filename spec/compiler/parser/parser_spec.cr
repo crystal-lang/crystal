@@ -925,8 +925,8 @@ module Crystal
     assert_syntax_error "macro foo&&;end"
     assert_syntax_error "macro foo"
 
-    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
-      assert_syntax_error "macro #{op};end", "only '[]' can be used as an operator macro"
+    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "!", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
+      assert_syntax_error "macro #{op};end", "invalid macro name"
     end
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
@@ -1758,7 +1758,9 @@ module Crystal
     %w(! is_a? as as? responds_to? nil?).each do |name|
       assert_syntax_error "def #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
       assert_syntax_error "def self.#{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
-      assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+      if name != "!"
+        assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+      end
     end
 
     assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
