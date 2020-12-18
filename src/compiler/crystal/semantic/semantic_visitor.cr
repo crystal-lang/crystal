@@ -16,6 +16,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   @untyped_def : Def?
   @typed_def : Def?
   @block : Block?
+  @in_macro_expansion = false
+  @in_hook_expansion = false
 
   def initialize(@program, @vars = MetaVars.new)
     @current_type = @program
@@ -95,7 +97,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
     pushing_type(node.resolved_type) do
-      node.hook_expansions.try &.each &.accept self
+      accept_hooks node
       node.body.accept self
     end
     node.set_type(@program.nil)
@@ -134,14 +136,14 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : Include)
     check_outside_exp node, "include"
-    node.hook_expansions.try &.each &.accept self
+    accept_hooks node
     node.set_type(@program.nil)
     false
   end
 
   def visit(node : Extend)
     check_outside_exp node, "extend"
-    node.hook_expansions.try &.each &.accept self
+    accept_hooks node
     node.set_type(@program.nil)
     false
   end
@@ -154,7 +156,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : Def)
     check_outside_exp node, "declare def"
-    node.hook_expansions.try &.each &.accept self
+    accept_hooks node
     node.set_type(@program.nil)
     false
   end
@@ -273,7 +275,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     if expanded = node.expanded
       @exp_nest -= 1
       eval_macro(node) do
-        expanded.accept self
+        in_macro_expansion do
+          expanded.accept self
+        end
       end
       @exp_nest += 1
       return true
@@ -357,7 +361,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
 
-    generated_nodes.accept self
+    in_macro_expansion do
+      generated_nodes.accept self
+    end
     generated_nodes
   end
 
@@ -554,6 +560,20 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     read_annotations
     yield
     @current_type = old_type
+  end
+
+  def accept_hooks(node)
+    old_in_hook_expansion = @in_hook_expansion
+    @in_hook_expansion = true
+    node.hook_expansions.try &.each &.accept self
+    @in_hook_expansion = old_in_hook_expansion
+  end
+
+  def in_macro_expansion
+    old_in_macro_expansion = @in_macro_expansion
+    @in_macro_expansion = true
+    yield
+    @in_macro_expansion = old_in_macro_expansion
   end
 
   # Returns the current annotations and clears them for subsequent readers.

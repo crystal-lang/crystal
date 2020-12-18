@@ -170,7 +170,7 @@ class Log
       emit(message, Metadata.empty)
     end
 
-    def emit(message : String, **kwargs) : Entry
+    def emit(message : String, **kwargs : Object) : Entry
       emit(message, kwargs)
     end
 
