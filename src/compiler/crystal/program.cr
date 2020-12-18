@@ -579,7 +579,7 @@ module Crystal
 
     def add_def(node : Def)
       if node.receiver.nil? && node.name.in?("super", "previous_def")
-        node.raise "top-level 'def #{node.name}' is not allowed due to no way to call this"
+        node.raise "top-level 'def #{node.name}' is not allowed"
       end
 
       if file_module = check_private(node)
