@@ -171,7 +171,8 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    @query = query.try(&.to_s)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.

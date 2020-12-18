@@ -176,6 +176,12 @@ describe "URI" do
     end
   end
 
+  describe ".new" do
+    it "with query params" do
+      URI.new(query: URI::Params.parse("foo=bar&foo=baz")).should eq URI.parse("?foo=bar&foo=baz")
+    end
+  end
+
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }

@@ -26,7 +26,7 @@
 # require "http/client"
 #
 # params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
-# response = HTTP::Client.get "http://www.example.com?" + params
+# response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
 #
