@@ -150,7 +150,7 @@ enum HTTP::Status
   # require "http/status"
   #
   # HTTP::Status::INTERNAL_SERVER_ERROR.server_error? # => true
-  # HTTP::Status::METHOD_NOT_ALLOWED.server_error?    # => true
+  # HTTP::Status::METHOD_NOT_ALLOWED.server_error?    # => false
   # ```
   def server_error? : Bool
     500 <= code <= 599

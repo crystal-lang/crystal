@@ -352,7 +352,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -603,7 +603,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -743,7 +743,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -859,7 +859,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -1128,7 +1128,7 @@ class Object
     # ```
     #
     # An assignment can be passed too, but in this case the type of the
-    # variable must be easily inferrable from the initial value:
+    # variable must be easily inferable from the initial value:
     #
     # ```
     # class Person
@@ -1287,6 +1287,9 @@ class Object
   # Defines an `==` method by comparing the given fields.
   #
   # The generated `==` method has a `self` restriction.
+  # For classes it will first compare by reference and return `true`
+  # when an object instance is compared with itself, without comparing
+  # any of the fields.
   #
   # ```
   # class Person
@@ -1299,6 +1302,9 @@ class Object
   # ```
   macro def_equals(*fields)
     def ==(other : self)
+      {% if @type.class? %}
+        return true if same?(other)
+      {% end %}
       {% for field in fields %}
         return false unless {{field.id}} == other.{{field.id}}
       {% end %}
@@ -1350,10 +1356,20 @@ class Object
   macro def_clone
     # Returns a copy of `self` with all instance variables cloned.
     def clone
-      clone = \{{@type}}.allocate
-      clone.initialize_copy(self)
-      GC.add_finalizer(clone) if clone.responds_to?(:finalize)
-      clone
+      \{% if @type < Reference && !@type.instance_vars.map(&.type).all? { |t| t == ::Bool || t == ::Char || t == ::Symbol || t == ::String || t < ::Number::Primitive } %}
+        exec_recursive_clone do |hash|
+          clone = \{{@type}}.allocate
+          hash[object_id] = clone.object_id
+          clone.initialize_copy(self)
+          GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+          clone
+        end
+      \{% else %}
+        clone = \{{@type}}.allocate
+        clone.initialize_copy(self)
+        GC.add_finalizer(clone) if clone.responds_to?(:finalize)
+        clone
+      \{% end %}
     end
 
     protected def initialize_copy(other)

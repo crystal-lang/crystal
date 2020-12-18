@@ -5,6 +5,7 @@ module Crystal::Doc
     property json_config_url : String? = nil
     property refname : String? = nil
     property source_url_pattern : String? = nil
+    property canonical_base_url : String? = nil
 
     def initialize(@name : String? = nil, @version : String? = nil, @refname : String? = nil, @source_url_pattern : String? = nil)
     end
@@ -54,7 +55,7 @@ module Crystal::Doc
     end
 
     def self.git_dir?
-      Process.run("git", ["rev-parse", "--is-inside-work-tree"]).success?
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"])
     end
 
     VERSION_TAG = /^v(\d+[-.][-.a-zA-Z\d]+)$/
@@ -114,14 +115,10 @@ module Crystal::Doc
 
     def self.git_remote
       # check whether inside git work-tree
-      status = Process.run("git", ["rev-parse", "--is-inside-work-tree"])
-      return unless status.success?
+      Crystal::Git.git_command(["rev-parse", "--is-inside-work-tree"]) || return
 
-      io = IO::Memory.new
-      status = Process.run("git", ["remote", "-v"], output: io)
-      return unless status.success?
-
-      remotes = io.to_s.lines.select(&.ends_with?(" (fetch)"))
+      capture = Crystal::Git.git_capture(["remote", "-v"]) || return
+      remotes = capture.lines.select(&.ends_with?(" (fetch)"))
 
       git_remote = remotes.find(&.starts_with?("origin\t")) || remotes.first? || return
 
@@ -133,44 +130,35 @@ module Crystal::Doc
 
     def self.git_clean?
       # Use git to determine if index and working directory are clean
-      io = IO::Memory.new
-      status = Process.run("git", ["status", "--porcelain"], output: io)
-      # If clean, output of `git status --porcelain` is empty. Still need to check
-      # the status code, to make sure empty doesn't mean error.
-      return unless status.success?
-      io.rewind
-      io.bytesize == 0
+      # In case the command failed to execute or returned error status, return false
+      capture = Crystal::Git.git_capture(["status", "--porcelain"]) || return false
+
+      # Index is clean if output is empty (and program status is success, checked by git_capture)
+      capture.bytesize == 0
     end
 
     def self.git_ref(*, branch)
-      io = IO::Memory.new
       # Check if current HEAD is tagged
-      status = Process.run("git", ["tag", "--points-at", "HEAD"], output: io)
-      return unless status.success?
-      io.rewind
-      tags = io.to_s.lines
+      capture = Crystal::Git.git_capture(["tag", "--points-at", "HEAD"]) || return
+      tags = capture.lines
       # Return tag if commit is tagged, select first one if multiple
       if tag = tags.first?
         return tag
       end
-      io.clear
 
       if branch
         # Read current branch name
-        status = Process.run("git", ["rev-parse", "--abbrev-ref", "HEAD"], output: io)
-        return unless status.success?
+        capture = Crystal::Git.git_capture(["rev-parse", "--abbrev-ref", "HEAD"]) || return
 
-        if branch_name = io.to_s.strip.presence
+        if branch_name = capture.strip.presence
           return branch_name
         end
-        io.clear
       end
 
       # Otherwise, return current commit sha
-      status = Process.run("git", ["rev-parse", "HEAD"], output: io)
-      return unless status.success?
+      capture = Crystal::Git.git_capture(["rev-parse", "HEAD"]) || return
 
-      if sha = io.to_s.strip.presence
+      if sha = capture.strip.presence
         return sha
       end
     end

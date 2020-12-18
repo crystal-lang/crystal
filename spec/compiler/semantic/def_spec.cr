@@ -272,7 +272,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method top-level foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -285,7 +285,7 @@ describe "Semantic: def" do
 
       Foo.new.foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method Foo#foo must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -298,7 +298,7 @@ describe "Semantic: def" do
 
       Foo.foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method Foo.foo must return Int32 but it is returning Char"
   end
 
   it "is ok if returns Int32? with explicit return" do

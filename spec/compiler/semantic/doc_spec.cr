@@ -415,6 +415,21 @@ describe "Semantic: doc" do
     type.doc.should eq("Some description")
   end
 
+  it "attaches doc to annotation in macro expansion (#9628)" do
+    result = semantic %(
+      macro ann
+        annotation MyAnnotation
+        end
+      end
+
+      # Some description
+      ann
+    ), wants_doc: true
+    program = result.program
+    type = program.types["MyAnnotation"]
+    type.doc.should eq("Some description")
+  end
+
   context "doc before annotation" do
     it "attached to struct/class" do
       result = semantic %(

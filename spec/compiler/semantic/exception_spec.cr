@@ -116,7 +116,7 @@ describe "Semantic: exception" do
       ") { int32 }
   end
 
-  it "types var as nialble if previously nilable (1)" do
+  it "types var as nilable if previously nilable (1)" do
     assert_type("
       if 1 == 2
         a = 1
@@ -130,7 +130,7 @@ describe "Semantic: exception" do
       ") { nilable int32 }
   end
 
-  it "types var as nialble if previously nilable (2)" do
+  it "types var as nilable if previously nilable (2)" do
     assert_type("
       if 1 == 2
         a = 1
@@ -144,11 +144,11 @@ describe "Semantic: exception" do
       ") { nilable int32 }
   end
 
-  it "errors if catched exception is not a subclass of Exception" do
+  it "errors if caught exception is not a subclass of Exception" do
     assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
   end
 
-  it "errors if catched exception is not a subclass of Exception without var" do
+  it "errors if caught exception is not a subclass of Exception without var" do
     assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
   end
 

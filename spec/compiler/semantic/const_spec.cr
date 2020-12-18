@@ -334,7 +334,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in unintialized" do
+  it "errors if using const in uninitialized" do
     assert_error %(
       A = 1
 

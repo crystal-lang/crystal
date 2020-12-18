@@ -166,7 +166,7 @@ struct Enum
 end
 
 struct Time
-  # Emits a string formated according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
+  # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   #
   # The JSON format itself does not specify a time data type, this method just
@@ -216,7 +216,7 @@ end
 #   include JSON::Serializable
 #
 #   @[JSON::Field(converter: JSON::HashValueConverter(Time::EpochConverter))]
-#   birthdays : Hash(String, Time)
+#   property birthdays : Hash(String, Time)
 # end
 #
 # timestamp = TimestampHash.from_json(%({"birthdays":{"foo":1459859781,"bar":1567628762}}))
@@ -246,7 +246,7 @@ end
 #   include JSON::Serializable
 #
 #   @[JSON::Field(converter: Time::EpochConverter)]
-#   birth_date : Time
+#   property birth_date : Time
 # end
 #
 # person = Person.from_json(%({"birth_date": 1459859781}))
@@ -270,7 +270,7 @@ end
 #   include JSON::Serializable
 #
 #   @[JSON::Field(converter: Time::EpochMillisConverter)]
-#   value : Time
+#   property value : Time
 # end
 #
 # timestamp = Timestamp.from_json(%({"value": 1459860483856}))
@@ -297,7 +297,7 @@ end
 #   include JSON::Serializable
 #
 #   @[JSON::Field(converter: String::RawConverter)]
-#   value : String
+#   property value : String
 # end
 #
 # raw = Raw.from_json(%({"value": 123456789876543212345678987654321}))

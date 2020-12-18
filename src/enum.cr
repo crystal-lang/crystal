@@ -47,7 +47,7 @@
 # Color.new(1).to_s # => "Green"
 # ```
 #
-# Values that don't correspond to an enum's constants are allowed: the value
+# Values that don't correspond to enum's constants are allowed: the value
 # will still be of type Color, but when printed you will get the underlying value:
 #
 # ```

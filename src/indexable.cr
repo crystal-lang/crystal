@@ -137,7 +137,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #
@@ -156,7 +156,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #

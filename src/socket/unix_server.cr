@@ -23,7 +23,7 @@ class UNIXServer < UNIXSocket
 
   # Creates a named UNIX socket, listening on a filesystem pathname.
   #
-  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # Always deletes any existing filesystem pathname first, in order to cleanup
   # any leftover socket file.
   #
   # The server is of stream type by default, but this can be changed for

@@ -39,7 +39,19 @@ File.open(DEFAULTS_FILE, "w") do |file|
       # available at #{json["href"]}.
       #
       # See https://wiki.mozilla.org/Security/Server_Side_TLS for details.
-      CIPHERS_#{level.upcase} = "#{all_ciphers.join(" ")}"
+      CIPHERS_#{level.upcase} = "#{all_ciphers.join(":")}"
+
+      # The list of secure ciphersuites on **#{level}** compatibility level as per Mozilla
+      # recommendations.
+      #
+      # The oldest clients supported by this configuration are:
+      # * #{clients.join("\n  # * ")}
+      #
+      # This list represents version #{json["version"]} of the #{level} configuration
+      # available at #{json["href"]}.
+      #
+      # See https://wiki.mozilla.org/Security/Server_Side_TLS for details.
+      CIPHER_SUITES_#{level.upcase} = "#{ciphersuites.join(":")}"
     CR
   end
   file.puts "end"

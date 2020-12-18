@@ -357,7 +357,7 @@ struct Slice(T)
 
   # Copies the contents of this slice into *target*.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. dest.size < self.size.
   #
   # ```
@@ -376,7 +376,7 @@ struct Slice(T)
 
   # Copies the contents of *source* into this slice.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def copy_from(source : self)
     source.copy_to(self)
@@ -396,7 +396,7 @@ struct Slice(T)
   # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. `dest.size < self.size`.
   #
   # ```
@@ -418,7 +418,7 @@ struct Slice(T)
   # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
   #
-  # Raises `IndexError` if the desination slice cannot fit the data being transferred.
+  # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
   def move_from(source : self)
     source.move_to(self)

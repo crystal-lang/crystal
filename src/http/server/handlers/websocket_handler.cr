@@ -3,12 +3,6 @@
 require "base64"
 require "http/web_socket"
 
-{% if flag?(:without_openssl) %}
-  require "digest/sha1"
-{% else %}
-  require "openssl/sha1"
-{% end %}
-
 # A handler which adds websocket functionality to an `HTTP::Server`.
 #
 # When a request can be upgraded, the associated `HTTP::Websocket` and

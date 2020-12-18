@@ -546,4 +546,54 @@ describe "Semantic: automatic cast" do
       fill()
       )) { types["AnotherColor"] }
   end
+
+  it "doesn't do multidispatch if an overload matches exactly (#8217)" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo(x : Int64)
+          x
+        end
+
+        def foo(*xs : Int64)
+          xs
+        end
+      end
+
+      class Baz < Foo
+        def foo(x : Int64)
+          x
+        end
+
+        def foo(*xs : Int64)
+          xs
+        end
+      end
+
+      Baz.new.as(Foo).foo(1)
+      )) { int64 }
+  end
+
+  it "doesn't autocast number on union (#8655)" do
+    assert_type(%(
+      def foo(x : UInt8 | Int32, y : Float64)
+        x
+      end
+
+      foo(255, 60)
+      )) { int32 }
+  end
+
+  it "says ambiguous call on union (#8655)" do
+    assert_error %(
+      def foo(x : UInt64 | Int64, y : Float64)
+        x
+      end
+
+      foo(255, 60)
+      ),
+      "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
+  end
 end

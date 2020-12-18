@@ -155,5 +155,6 @@ require "./log/setup"
 require "./log/log"
 require "./log/memory_backend"
 require "./log/io_backend"
+require "./log/dispatch"
 
 Log.setup

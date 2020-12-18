@@ -1,5 +1,4 @@
 require "../spec_helper"
-require "spec"
 require "yaml"
 {% unless flag?(:win32) %}
   require "big"
@@ -14,7 +13,7 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
-# libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+# libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)
@@ -72,13 +71,19 @@ describe "YAML serialization" do
 
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
+      Float32.from_yaml(".nan").nan?.should be_true
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
+      Float32.from_yaml("-.inf").should eq(-Float32::INFINITY)
     end
 
     it "does Float64#from_yaml" do
       value = Float64.from_yaml("1.5")
       value.should eq(1.5)
       value.should be_a(Float64)
+
+      Float64.from_yaml(".nan").nan?.should be_true
+      Float64.from_yaml(".inf").should eq(Float64::INFINITY)
+      Float64.from_yaml("-.inf").should eq(-Float64::INFINITY)
     end
 
     it "does Array#from_yaml" do
@@ -276,8 +281,36 @@ describe "YAML serialization" do
       Int32.from_yaml(1.to_yaml).should eq(1)
     end
 
+    it "does for Float32" do
+      Float32.from_yaml(1.5_f32.to_yaml).should eq(1.5_f32)
+    end
+
+    it "does for Float32 (infinity)" do
+      Float32.from_yaml(Float32::INFINITY.to_yaml).should eq(Float32::INFINITY)
+    end
+
+    it "does for Float32 (-infinity)" do
+      Float32.from_yaml((-Float32::INFINITY).to_yaml).should eq(-Float32::INFINITY)
+    end
+
+    it "does for Float32 (nan)" do
+      Float32.from_yaml(Float32::NAN.to_yaml).nan?.should be_true
+    end
+
     it "does for Float64" do
       Float64.from_yaml(1.5.to_yaml).should eq(1.5)
+    end
+
+    it "does for Float64 (infinity)" do
+      Float64.from_yaml(Float64::INFINITY.to_yaml).should eq(Float64::INFINITY)
+    end
+
+    it "does for Float64 (-infinity)" do
+      Float64.from_yaml((-Float64::INFINITY).to_yaml).should eq(-Float64::INFINITY)
+    end
+
+    it "does for Float64 (nan)" do
+      Float64.from_yaml(Float64::NAN.to_yaml).nan?.should be_true
     end
 
     it "does for String" do
@@ -342,6 +375,11 @@ describe "YAML serialization" do
     pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
+    end
+
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      BigDecimal.from_yaml(big.to_yaml).should eq(big)
     end
 
     it "does for Enum" do

@@ -458,6 +458,13 @@ describe "Array" do
     a[0].should_not be(b[0])
   end
 
+  it "does clone with recursive array" do
+    ary = [] of RecursiveArray
+    ary << ary
+    clone = ary.clone
+    clone[0].should be(clone)
+  end
+
   it "does compact" do
     a = [1, nil, 2, nil, 3]
     b = a.compact.should eq([1, 2, 3])
@@ -1804,7 +1811,7 @@ describe "Array" do
   end
 
   describe "transpose" do
-    it "transeposes elements" do
+    it "transposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
       [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
       [[:a]].transpose.should eq([[:a]])
@@ -1866,6 +1873,30 @@ describe "Array" do
     it { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
     it { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
     it { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(5)
+      a.should eq([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-5)
+      a.should eq([45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(20)
+      a.should eq([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-20)
+      a.should eq([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
   end
 
   describe "permutations" do

@@ -90,7 +90,7 @@ struct Set(T)
   # ```
   # s = Set{1, 5}
   # s.includes? 8 # => false
-  # s << 8
+  # s.add(8)
   # s.includes? 8 # => true
   # ```
   def add(object : T)
@@ -136,17 +136,18 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the *object* from the set and returns `self`.
+  # Removes the *object* from the set and returns `true` if it was present, otherwise returns `false`.
   #
   # ```
   # s = Set{1, 5}
   # s.includes? 5 # => true
-  # s.delete 5
+  # s.delete 5    # => true
   # s.includes? 5 # => false
+  # s.delete 5    # => false
   # ```
-  def delete(object)
-    @hash.delete(object)
-    self
+  def delete(object) : Bool
+    @hash.delete(object) { return false }
+    true
   end
 
   # Returns the number of elements in the set.

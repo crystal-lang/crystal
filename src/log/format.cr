@@ -36,7 +36,9 @@ class Log
   #
   # This can be used to create efficient formatters:
   # ```
-  # struct MyFormat < Log::StaticFormat
+  # require "log"
+  #
+  # struct MyFormat < Log::StaticFormatter
   #   def run
   #     string "- "
   #     severity
@@ -90,7 +92,9 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     # ```
-    # source(before: '[', after: ']') # => [http.server]
+    # Log.define_formatter TestFormatter, "#{source(before: '[', after: "] ")}#{message}"
+    # Log.setup(:info, Log::IOBackend.new(formatter: TestFormatter))
+    # Log.for("foo.bar").info { "Hello" } # => - [foo.bar] Hello
     # ```
     def source(*, before = nil, after = nil)
       if @entry.source.size > 0

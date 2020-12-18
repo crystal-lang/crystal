@@ -59,7 +59,7 @@ class Log
           dsl.emit(result.to_s)
         end
 
-      backend.write entry
+      backend.dispatch entry
     end
   {% end %}
 end

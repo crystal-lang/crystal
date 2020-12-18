@@ -503,16 +503,6 @@ describe "Enumerable" do
     end
   end
 
-  describe "grep" do
-    it "works with regexes for instance" do
-      ["Alice", "Bob", "Cipher", "Anna"].grep(/^A/).should eq ["Alice", "Anna"]
-    end
-
-    it "returns empty array if nothing matches" do
-      %w(Alice Bob Mallory).grep(/nothing/).should eq [] of String
-    end
-  end
-
   describe "group_by" do
     it { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
@@ -574,7 +564,7 @@ describe "Enumerable" do
   end
 
   describe "index with a block" do
-    it "returns the index of the first element where the blcok returns true" do
+    it "returns the index of the first element where the block returns true" do
       ["Alice", "Bob"].index { |name| name.size < 4 }.should eq 1
     end
 

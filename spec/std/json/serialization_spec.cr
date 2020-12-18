@@ -408,6 +408,11 @@ describe "JSON serialization" do
       big.to_json.should eq("1234.567891011121314")
     end
 
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      big.to_json.should eq("1234.567891011121314")
+    end
+
     it "does for UUID" do
       uuid = UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff")
       uuid.to_json.should eq("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")
@@ -479,7 +484,7 @@ describe "JSON serialization" do
     end
   end
 
-  it "provide symetric encoding and decoding for Union types" do
+  it "provide symmetric encoding and decoding for Union types" do
     a = 1.as(Float64 | Int32)
     b = (Float64 | Int32).from_json(a.to_json)
     a.class.should eq(Int32)

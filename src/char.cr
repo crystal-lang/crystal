@@ -331,8 +331,6 @@ struct Char
         else # at the beginning of the set or escaped
           return not_negated if self == char
         end
-      else
-        # go on
       end
 
       if range && previous

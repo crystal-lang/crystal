@@ -2,16 +2,6 @@ require "./common"
 require "uri"
 require "http/params"
 
-# TODO: Remove this once `Socket` is working on Windows
-{% begin %}
-private alias RemoteAddressType =
-  {% if flag?(:win32) %}
-    String?
-  {% else %}
-    Socket::Address?
-  {% end %}
-{% end %}
-
 # An HTTP request.
 #
 # It serves both to perform requests by an `HTTP::Client` and to
@@ -30,14 +20,20 @@ class HTTP::Request
   @query_params : Params?
   @uri : URI?
 
-  # The network address that sent the request to an HTTP server.
-  #
-  # `HTTP::Server` will try to fill this property, and its value
-  # will have a format like "IP:port", but this format is not guaranteed.
-  # Middlewares can overwrite this value.
-  #
-  # This property is not used by `HTTP::Client`.
-  property remote_address : RemoteAddressType
+  {% unless flag?(:win32) %}
+    # The network address that sent the request to an HTTP server.
+    #
+    # `HTTP::Server` will try to fill this property, and its value
+    # will have a format like "IP:port", but this format is not guaranteed.
+    # Middlewares can overwrite this value.
+    #
+    # This property is not used by `HTTP::Client`.
+    property remote_address : Socket::Address?
+  {% else %}
+    # TODO: Remove this once `Socket` is working on Windows
+
+    property remote_address : Nil
+  {% end %}
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
     # Duplicate headers to prevent the request from modifying data that the user might hold.
@@ -119,11 +115,9 @@ class HTTP::Request
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
-      {% unless flag?(:win32) %}
-        if io.responds_to?(:remote_address)
-          request.remote_address = io.remote_address
-        end
-      {% end %}
+      if io.responds_to?(:remote_address)
+        request.remote_address = io.remote_address
+      end
 
       return request
     end
@@ -252,6 +246,7 @@ class HTTP::Request
   end
 
   # Returns request host from headers.
+  @[Deprecated("Use `#hostname` instead.")]
   def host
     host = @headers["Host"]?
     return unless host
@@ -259,7 +254,34 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
+  # Extracts the hostname from `Host` header.
+  #
+  # Returns `nil` if the `Host` header is missing.
+  #
+  # If the `Host` header contains a port number, it is stripped off.
+  def hostname : String?
+    header = @headers["Host"]?
+    return unless header
+
+    host, _, port = header.rpartition(":")
+    if host.empty?
+      # no colon in header
+      host = header
+    else
+      port = port.to_i?(whitespace: false)
+      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
+      # win32
+      unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
+        # what we identified as port is not valid, so use the entire header
+        host = header
+      end
+    end
+
+    URI.unwrap_ipv6(host)
+  end
+
   # Returns request host with port from headers.
+  @[Deprecated(%q(Use `headers["Host"]?` instead.))]
   def host_with_port
     @headers["Host"]?
   end

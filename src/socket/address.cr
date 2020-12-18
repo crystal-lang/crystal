@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter size : Int32
 
-    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)
@@ -50,10 +50,6 @@ class Socket
     end
 
     abstract def to_unsafe : LibC::Sockaddr*
-
-    def ==(other)
-      false
-    end
   end
 
   # IP address representation.
@@ -71,7 +67,7 @@ class Socket
   # ```
   #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
-  # resolve an IP, or don't know whether a `String` constains an IP or a domain
+  # resolve an IP, or don't know whether a `String` contains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     UNSPECIFIED  = "0.0.0.0"
@@ -295,6 +291,13 @@ class Socket
       {% end %}
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    # Returns `true` if *port* is a valid port number.
+    #
+    # Valid port numbers are in the range `0..65_535`.
+    def self.valid_port?(port : Int) : Bool
+      port.in?(0..UInt16::MAX)
     end
   end
 

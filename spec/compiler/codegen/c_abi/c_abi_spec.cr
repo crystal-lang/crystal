@@ -199,4 +199,91 @@ describe "Code gen: C ABI" do
         (str.x + str.y + str.z).to_i32
       ), &.to_i.should eq(6))
   end
+
+  {% if flag?(:win32) || flag?(:aarch64) %}
+    pending "accepts large struct in a callback (for real) (#9533)"
+  {% else %}
+    it "accepts large struct in a callback (for real)" do
+      test_c(
+        %(
+          struct s {
+              long long x, y, z;
+          };
+
+          void ccaller(void (*func)(struct s)) {
+              struct s v = {1, 2, 3};
+              func(v);
+          }
+        ),
+        %(
+          lib LibFoo
+            struct S
+              x : Int64
+              y : Int64
+              z : Int64
+            end
+
+            fun ccaller(func : (S) ->)
+          end
+
+          module Global
+            class_property x = 0i64
+          end
+
+          fun callback(v : LibFoo::S)
+            Global.x = v.x &+ v.y &+ v.z
+          end
+
+          LibFoo.ccaller(->callback)
+
+          Global.x
+        ), &.to_string.should eq("6"))
+    end
+  {% end %}
+
+  it "promotes variadic args (float to double)" do
+    test_c(
+      %(
+        #include <stdarg.h>
+
+        double foo(int n, ...) {
+          va_list args;
+          va_start(args, n);
+          return va_arg(args, double);
+        }
+      ),
+      %(
+        lib LibFoo
+          fun foo(n : Int32, ...) : Float64
+        end
+
+        LibFoo.foo(1, 1.0_f32)
+      ), &.to_f64.should eq(1.0))
+  end
+
+  [{"i8", -123},
+   {"u8", 255},
+   {"i16", -123},
+   {"u16", 65535},
+  ].each do |int_kind, int_value|
+    it "promotes variadic args (#{int_kind} to i32) (#9742)" do
+      test_c(
+        %(
+          #include <stdarg.h>
+
+          int foo(int n, ...) {
+            va_list args;
+            va_start(args, n);
+            return va_arg(args, int);
+          }
+        ),
+        %(
+          lib LibFoo
+            fun foo(n : Int32, ...) : Int32
+          end
+
+          LibFoo.foo(1, #{int_value}_#{int_kind})
+        ), &.to_i.should eq(int_value))
+    end
+  end
 end

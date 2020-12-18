@@ -689,7 +689,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#[]=`.
-    def []=(index : NumberLiteral, value : ASTNode)
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
 
     # Similar to `Array#unshift`.
@@ -760,7 +760,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#[]=`
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -835,7 +835,7 @@ module Crystal::Macros
     end
 
     # Adds or replaces a key.
-    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
   end
 
@@ -1615,7 +1615,7 @@ module Crystal::Macros
   # class MagicConstant < ASTNode
   # end
 
-  # A fictitious node representing an idenfitifer like, `foo`, `Bar` or `something_else`.
+  # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
   # The parser doesn't create this nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`

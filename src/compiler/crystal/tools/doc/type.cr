@@ -27,6 +27,8 @@ class Crystal::Doc::Type
       :struct
     when AnnotationType
       :annotation
+    when LibType
+      :module
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -90,8 +92,6 @@ class Crystal::Doc::Type
       superclass = type.superclass
     when GenericClassInstanceType
       superclass = type.superclass
-    else
-      # go on
     end
 
     if superclass
@@ -268,8 +268,6 @@ class Crystal::Doc::Type
             next
           when NonGenericClassType
             next if subclass.extern?
-          else
-            # go on
           end
 
           next unless @generator.must_include?(subclass)

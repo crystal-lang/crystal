@@ -357,8 +357,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                       receiver.raise "can't define method in generic instance #{metaclass}"
                     when GenericModuleInstanceMetaclassType
                       receiver.raise "can't define method in generic instance #{metaclass}"
-                    else
-                      # go on
                     end
                     metaclass
                   end
@@ -824,8 +822,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # Don't give an error yet: wait to see if the
       # call doesn't resolve to a method/macro
       return false
-    else
-      # go on
     end
 
     node.raise "can't apply visibility modifier"
@@ -1013,8 +1009,18 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       node.add_hook_expansion(expansion)
     end
 
-    if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)
-      run_hooks(superclass.metaclass, current_type, kind, node)
+    if kind == :inherited
+      # In the case of:
+      #
+      #    class A(X); end
+      #    class B < A(Int32);end
+      #
+      # we need to go from A(Int32) to A(X) to go up the hierarchy.
+      if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)
+        run_hooks(type_with_hooks.instance_type.generic_type.metaclass, current_type, kind, node)
+      elsif (superclass = type_with_hooks.instance_type.superclass)
+        run_hooks(superclass.metaclass, current_type, kind, node)
+      end
     end
   end
 
@@ -1147,7 +1153,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         next_type = base_type.lookup_path_item(name, lookup_in_namespace: false, include_private: true, location: path.location)
         if next_type
           if next_type.is_a?(ASTNode)
-            path.raise "execpted #{name} to be a type"
+            path.raise "expected #{name} to be a type"
           end
         else
           base_type = check_type_is_type_container(base_type, path)

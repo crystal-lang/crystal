@@ -38,6 +38,15 @@ module Crystal
       program
     end
 
+    # Yields each namespace this type belongs to, excluding the `Program` itself.
+    def each_namespace(& : ModuleType ->) : Nil
+      ns = self.namespace
+      until ns == program
+        yield ns
+        ns = ns.namespace
+      end
+    end
+
     # Returns `true` if this type is abstract.
     def abstract?
       false
@@ -242,7 +251,7 @@ module Crystal
     # Returns the type that owns class vars for a type.
     #
     # This method returns self, but subclasses might override.
-    # For example, a metaclass's class_var_owner is the instance type.
+    # For example, a metaclass' class_var_owner is the instance type.
     def class_var_owner
       self
     end
@@ -598,7 +607,7 @@ module Crystal
         if index
           index
         else
-          index = instance_vars.key_index(name)
+          index = instance_vars.index { |k, v| k == name }
           if index
             superclass.all_instance_vars_count + index
           else
@@ -606,7 +615,7 @@ module Crystal
           end
         end
       else
-        instance_vars.key_index(name)
+        instance_vars.index { |k, v| k == name }
       end
     end
 
@@ -717,10 +726,17 @@ module Crystal
     end
 
     # Checks whether an exception needs to be raised because of a restriction
-    # failure. Only overwriten by literal types (NumberLiteralType and
+    # failure. Only overwritten by literal types (NumberLiteralType and
     # SymbolLiteralType) when they produce an ambiguous call.
     def check_restriction_exception
       nil
+    end
+
+    # Yields self and returns true if the block returns a truthy value.
+    # UnionType overrides it and yields all types in turn and returns
+    # true if for each of them the block returns true.
+    def all?
+      (yield self) ? true : false
     end
 
     def to_s(*, generic_args : Bool = true)
@@ -801,7 +817,7 @@ module Crystal
 
   # A Def with some metadata to speed up matching it against
   # a call signature, or against other defs:
-  # - max_size: the maxinum number of arguments that can be passed to the method
+  # - max_size: the maximum number of arguments that can be passed to the method
   # - min_size: the minimum number of arguments that can be passed to the method
   # - yields: whether the method has a block
   record DefWithMetadata,
@@ -1645,7 +1661,7 @@ module Crystal
   end
 
   # An un-bound type parameter of a generic type.
-  #
+
   # For example, given:
   #
   # ```
@@ -2059,7 +2075,7 @@ module Crystal
     getter(metaclass) { GenericClassInstanceMetaclassType.new(self.program, self) }
   end
 
-  # An instantiated genric module, like Enumerable(Int32).
+  # An instantiated generic module, like Enumerable(Int32).
   class GenericModuleInstanceType < GenericInstanceType
     include InstanceVarContainer
     include InstanceVarInitializerContainer
@@ -2668,7 +2684,7 @@ module Crystal
 
   # An instantiated enum type.
   #
-  # TODO: right now this is not properly modelled. Ideally there
+  # TODO: right now this is not properly modeled. Ideally there
   # should be EnumType and EnumInstanceType, where EnumType would
   # be `Enum(T)` and given:
   #
@@ -3042,6 +3058,10 @@ module Crystal
       program.type_merge(new_union_types) || program.no_return
     end
 
+    def all?
+      union_types.all? { |union_type| yield union_type }
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << '(' unless skip_union_parens
       union_types = @union_types
@@ -3133,6 +3153,10 @@ module Crystal
     property vars : MetaVars?
     property? used = false
     property? visited = false
+
+    # Is this constant accessed with pointerof(...)?
+    property? pointer_read = false
+
     property visitor : MainVisitor?
 
     def initialize(program, namespace, name, @value)

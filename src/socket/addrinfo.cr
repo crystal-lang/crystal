@@ -137,7 +137,7 @@ class Socket
       end
     end
 
-    # Resolves *domain* for the UDP protocol and returns an `Array` of possible
+    # Resolves *domain* for the TCP protocol and returns an `Array` of possible
     # `Addrinfo`. See `#resolve` for details.
     #
     # Example:

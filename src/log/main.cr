@@ -46,6 +46,8 @@ class Log
 
   @@builder = Builder.new
 
+  at_exit { @@builder.close }
+
   # Returns the default `Log::Builder` used for `Log.for` calls.
   def self.builder
     @@builder
@@ -64,7 +66,7 @@ class Log
   # :ditto:
   def self.context=(value : Log::Context)
     # NOTE: There is a need for `Metadata` and `Context` setters in
-    # becuase `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
+    # because `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
     # but if the metadata is built manually the construct `Log.context = metadata` will be used.
     Log.context = value.metadata
   end
@@ -159,10 +161,10 @@ class Log
     # Emits a logs entry with a message, and data attached to
     #
     # ```
-    # Log.info &.emit("Program started")                          # No data, same as Log.info { "Program started" }
-    # Log.info &.emit("User logged in", user_id: 42)              # With entry data
-    # Log.info &.emit(action: "Logged in", user_id: 42)           # Empty string message, only data
-    # Log.error exception: ex, &.emit("Oopps", account: {id: 42}) # With data and exception
+    # Log.info &.emit("Program started")                         # No data, same as Log.info { "Program started" }
+    # Log.info &.emit("User logged in", user_id: 42)             # With entry data
+    # Log.info &.emit(action: "Logged in", user_id: 42)          # Empty string message, only data
+    # Log.error exception: ex, &.emit("Oops", account: {id: 42}) # With data and exception
     # ```
     def emit(message : String) : Entry
       emit(message, Metadata.empty)
