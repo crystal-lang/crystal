@@ -353,10 +353,10 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
+      it "out of range max (shift days)" do
         # this will be fixed with raise on overflow
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -368,10 +368,10 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
+      it "out of range min (shift days)" do
         # this will be fixed with raise on overflow
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
