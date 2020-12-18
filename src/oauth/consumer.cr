@@ -102,10 +102,8 @@ class OAuth::Consumer
     uri.query = HTTP::Params.build do |form|
       form.add "oauth_token", request_token.token
       form.add "oauth_callback", oauth_callback if oauth_callback
-      if query = uri.query
-        HTTP::Params.parse(query).each do |key, value|
-          form.add key, value
-        end
+      uri.query_params.each do |key, value|
+        form.add key, Value
       end
       yield form
     end

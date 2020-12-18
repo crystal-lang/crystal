@@ -99,10 +99,8 @@ class OAuth2::Client
       form.add "response_type", "code"
       form.add "scope", scope unless scope.nil?
       form.add "state", state unless state.nil?
-      if query = uri.query
-        HTTP::Params.parse(query).each do |key, value|
-          form.add key, value
-        end
+      uri.query_params.each do |key, value|
+        form.add key, value
       end
       yield form
     end

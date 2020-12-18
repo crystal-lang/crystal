@@ -54,7 +54,7 @@ class HTTP::Request
   # Returns a convenience wrapper around querying and setting query params,
   # see `HTTP::Params`.
   def query_params
-    @query_params ||= parse_query_params
+    @query_params ||= uri.query_params
   end
 
   def resource
@@ -290,13 +290,9 @@ class HTTP::Request
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
-  private def parse_query_params
-    HTTP::Params.parse(uri.query || "")
-  end
-
   private def update_query_params
     return unless @query_params
-    @query_params = parse_query_params
+    @query_params = uri.query_params
   end
 
   private def update_uri
