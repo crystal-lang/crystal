@@ -344,6 +344,24 @@ describe "URI" do
     end
   end
 
+  describe "#query_params=" do
+    it "empty" do
+      uri = URI.new
+      params = URI::Params.new
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq ""
+    end
+
+    it "params with values" do
+      uri = URI.new
+      params = URI::Params.parse("foo=bar&foo=baz")
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq "foo=bar&foo=baz"
+    end
+  end
+
   describe "#==" do
     it { URI.parse("http://example.com").should eq(URI.parse("http://example.com")) }
   end

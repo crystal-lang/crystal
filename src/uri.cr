@@ -251,6 +251,19 @@ class URI
     URI::Params.parse(@query || "")
   end
 
+  # Sets `query` to stringified *params*.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.new
+  # uri.query_params = URI::Params.parse("foo=bar&foo=baz")
+  # uri.to_s # => "?foo=bar&foo=baz"
+  # ```
+  def query_params=(params : URI::Params)
+    self.query = params.to_s
+  end
+
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
