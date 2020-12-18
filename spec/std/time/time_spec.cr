@@ -354,7 +354,6 @@ describe Time do
       end
 
       it "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
         time = Time.utc(2002, 2, 25, 15, 25, 13)
         expect_raises OverflowError do
           time.shift days: 10000000
@@ -369,7 +368,6 @@ describe Time do
       end
 
       it "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
         time = Time.utc(2002, 2, 25, 15, 25, 13)
         expect_raises OverflowError do
           time.shift days: -10000000
