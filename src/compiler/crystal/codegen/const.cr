@@ -1,6 +1,6 @@
 require "./codegen"
 
-# Constants are repesented with two LLVM global variables: one has the constant's
+# Constants are represented with two LLVM global variables: one has the constant's
 # value and the other has a flag that indicates whether the constant was already
 # initialized.
 #
@@ -29,18 +29,14 @@ require "./codegen"
 # and can be done in any order (they have no side effects).
 
 class Crystal::CodeGenVisitor
-  # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
+  @const_mutex : LLVM::Value?
+
+  # The special constants ARGC_UNSAFE and ARGV_UNSAFE (and others) need to be initialized
   # as soon as the program starts, because we have access to argc and argv
-  # in the main function
-  def initialize_argv_and_argc
-    {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
-      const = @program.types[name].as(Const)
-      global = declare_const(const)
-      request_value do
-        accept const.value
-      end
-      store @last, global
-      global.initializer = @last.type.null
+  # in the main function.
+  def initialize_predefined_constants
+    @program.predefined_constants.each do |const|
+      initialize_no_init_flag_const(const)
     end
   end
 
@@ -48,7 +44,15 @@ class Crystal::CodeGenVisitor
     global_name = const.llvm_name
     global = @main_mod.globals[global_name]? ||
              @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
-    global.linkage = LLVM::Linkage::Internal if @single_module
+
+    type = const.value.type
+    # TODO: there's an LLVM bug that prevents us from having internal globals of type i128 or u128:
+    # https://bugs.llvm.org/show_bug.cgi?id=42932
+    # so we just use global.
+    if @single_module && !(type.is_a?(IntegerType) && (type.kind == :i128 || type.kind == :u128))
+      global.linkage = LLVM::Linkage::Internal if @single_module
+    end
+
     global
   end
 
@@ -86,29 +90,52 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def initialize_no_init_flag_const(const)
+    global = declare_const(const)
+
+    with_cloned_context do
+      # "self" in a constant is the constant's namespace
+      context.type = const.namespace
+
+      # Start with fresh variables
+      context.vars = LLVMVars.new
+
+      alloca_vars const.vars
+      request_value do
+        accept const.value
+      end
+    end
+
+    const_type = const.value.type
+    if const_type.passed_by_value?
+      @last = load @last
+    end
+
+    store @last, global
+
+    global.initializer = @last.type.null
+
+    global
+  end
+
   def initialize_const(const)
+    # If the constant wasn't read yet, we can initialize it right now and
+    # avoid checking an "initialized" flag every time we read it.
+    unless const.read?
+      const.no_init_flag = true
+      return initialize_no_init_flag_const(const)
+    end
+
     # Maybe the constant was simple and doesn't need a real initialization
-    return if const.initializer
-
     global, initialized_flag = declare_const_and_initialized_flag(const)
-
-    initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
-
-    initialized = load(initialized_flag)
-    cond initialized, initialized_block, not_initialized_block
-
-    position_at_end not_initialized_block
-    store int1(1), initialized_flag
+    return global if const.initializer
 
     init_function_name = "~#{const.initialized_llvm_name}"
     func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
     func = check_main_fun init_function_name, func
-    call func
 
-    br initialized_block
-
-    position_at_end initialized_block
-
+    set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
+    run_once(initialized_flag, func)
     global
   end
 
@@ -174,7 +201,9 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const_pointer(const)
-    if const == @program.argc || const == @program.argv || const.initializer
+    const.read = true
+
+    if !const.needs_init_flag?
       global_name = const.llvm_name
       global = declare_const(const)
 
@@ -189,31 +218,13 @@ class Crystal::CodeGenVisitor
     read_function_name = "~#{const.llvm_name}:read"
     func = @main_mod.functions[read_function_name]? || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
-    @last = call func
-    @last
+    call func
   end
 
   def create_read_const_function(fun_name, const)
-    global, initialized_flag = declare_const_and_initialized_flag(const)
-
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(const.value.type).pointer) do |func|
-        initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
-
-        initialized = load(initialized_flag)
-        cond initialized, initialized_block, not_initialized_block
-
-        position_at_end not_initialized_block
-        store int1(1), initialized_flag
-
-        init_function_name = "~#{const.initialized_llvm_name}"
-        func = @main_mod.functions[init_function_name]? || create_initialize_const_function(init_function_name, const)
-        call func
-
-        br initialized_block
-
-        position_at_end initialized_block
-
+        global = initialize_const(const)
         ret global
       end
     end

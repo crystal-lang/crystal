@@ -48,6 +48,8 @@ module JSON
   # To change how individual instance variables are parsed and serialized, the annotation `JSON::Field`
   # can be placed on the instance variable. Annotating property, getter and setter macros is also allowed.
   # ```
+  # require "json"
+  #
   # class A
   #   include JSON::Serializable
   #
@@ -58,6 +60,8 @@ module JSON
   #
   # `JSON::Field` properties:
   # * **ignore**: if `true` skip this field in serialization and deserialization (by default false)
+  # * **ignore_serialize**: if `true` skip this field in serialization (by default false)
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
   # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
@@ -66,6 +70,8 @@ module JSON
   #
   # Deserialization also respects default values of variables:
   # ```
+  # require "json"
+  #
   # struct A
   #   include JSON::Serializable
   #   @a : Int32
@@ -84,6 +90,8 @@ module JSON
   # document will be stored in a `Hash(String, JSON::Any)`. On serialization, any keys inside json_unmapped
   # will be serialized and appended to the current json object.
   # ```
+  # require "json"
+  #
   # struct A
   #   include JSON::Serializable
   #   include JSON::Serializable::Unmapped
@@ -101,12 +109,23 @@ module JSON
   # * **emit_nulls**: if `true`, emits a `null` value for all nilable properties (by default nulls are not emitted)
   #
   # ```
+  # require "json"
+  #
   # @[JSON::Serializable::Options(emit_nulls: true)]
   # class A
   #   include JSON::Serializable
   #   @a : Int32?
   # end
   # ```
+  #
+  # ### Discriminator field
+  #
+  # A very common JSON serialization strategy for handling different objects
+  # under a same hierarchy is to use a discriminator field. For example in
+  # [GeoJSON](https://tools.ietf.org/html/rfc7946) each object has a "type"
+  # field, and the rest of the fields, and their meaning, depend on its value.
+  #
+  # You can use `JSON::Serializable.use_json_discriminator` for this use case.
   module Serializable
     annotation Options
     end
@@ -116,6 +135,10 @@ module JSON
       # so it overloads well with other possible initializes
 
       def self.new(pull : ::JSON::PullParser)
+        new_from_json_pull_parser(pull)
+      end
+
+      private def self.new_from_json_pull_parser(pull : ::JSON::PullParser)
         instance = allocate
         instance.initialize(__pull_for_json_serializable: pull)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
@@ -123,11 +146,11 @@ module JSON
       end
 
       # When the type is inherited, carry over the `new`
-      # so it can compete with other possible intializes
+      # so it can compete with other possible initializes
 
       macro inherited
         def self.new(pull : ::JSON::PullParser)
-          super
+          new_from_json_pull_parser(pull)
         end
       end
     end
@@ -137,7 +160,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
             {%
               properties[ivar.id] = {
                 type:        ivar.type,
@@ -162,9 +185,9 @@ module JSON
         begin
           pull.read_begin_object
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, nil, *%location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, nil, *%location, exc)
         end
-        while pull.kind != :end_object
+        until pull.kind.end_object?
           %key_location = pull.location
           key = pull.read_object_key
           case key
@@ -191,7 +214,7 @@ module JSON
 
                 {% if value[:nilable] || value[:has_default] %} } {% end %}
               rescue exc : ::JSON::ParseException
-                raise ::JSON::MappingError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+                raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
               end
           {% end %}
           else
@@ -203,7 +226,7 @@ module JSON
         {% for name, value in properties %}
           {% unless value[:nilable] || value[:has_default] %}
             if %var{name}.nil? && !%found{name} && !::Union({{value[:type]}}).nilable?
-              raise ::JSON::MappingError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
+              raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, nil, *%location, nil)
             end
           {% end %}
 
@@ -214,7 +237,9 @@ module JSON
               @{{name}} = %var{name}
             {% end %}
           {% elsif value[:has_default] %}
-            @{{name}} = %var{name}.nil? ? {{value[:default]}} : %var{name}
+            if %found{name} && !%var{name}.nil?
+              @{{name}} = %var{name}
+            end
           {% else %}
             @{{name}} = (%var{name}).as({{value[:type]}})
           {% end %}
@@ -245,7 +270,7 @@ module JSON
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
-          {% unless ann && ann[:ignore] %}
+          {% unless ann && (ann[:ignore] || ann[:ignore_serialize]) %}
             {%
               properties[ivar.id] = {
                 type:      ivar.type,
@@ -308,7 +333,7 @@ module JSON
 
     module Strict
       protected def on_unknown_json_attribute(pull, key, key_location)
-        raise ::JSON::MappingError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
+        raise ::JSON::SerializableError.new("Unknown JSON attribute: #{key}", self.class.to_s, nil, *key_location, nil)
       end
     end
 
@@ -320,7 +345,7 @@ module JSON
         json_unmapped[key] = begin
           JSON::Any.new(pull)
         rescue exc : ::JSON::ParseException
-          raise ::JSON::MappingError.new(exc.message, self.class.to_s, key, *key_location, exc)
+          raise ::JSON::SerializableError.new(exc.message, self.class.to_s, key, *key_location, exc)
         end
       end
 
@@ -328,6 +353,102 @@ module JSON
         json_unmapped.each do |key, value|
           json.field(key) { value.to_json(json) }
         end
+      end
+    end
+
+    # Tells this class to decode JSON by using a field as a discriminator.
+    #
+    # - *field* must be the field name to use as a discriminator
+    # - *mapping* must be a hash or named tuple where each key-value pair
+    #   maps a discriminator value to a class to deserialize
+    #
+    # For example:
+    #
+    # ```
+    # require "json"
+    #
+    # abstract class Shape
+    #   include JSON::Serializable
+    #
+    #   use_json_discriminator "type", {point: Point, circle: Circle}
+    #
+    #   property type : String
+    # end
+    #
+    # class Point < Shape
+    #   property x : Int32
+    #   property y : Int32
+    # end
+    #
+    # class Circle < Shape
+    #   property x : Int32
+    #   property y : Int32
+    #   property radius : Int32
+    # end
+    #
+    # Shape.from_json(%({"type": "point", "x": 1, "y": 2}))               # => #<Point:0x10373ae20 @type="point", @x=1, @y=2>
+    # Shape.from_json(%({"type": "circle", "x": 1, "y": 2, "radius": 3})) # => #<Circle:0x106a4cea0 @type="circle", @x=1, @y=2, @radius=3>
+    # ```
+    macro use_json_discriminator(field, mapping)
+      {% unless mapping.is_a?(HashLiteral) || mapping.is_a?(NamedTupleLiteral) %}
+        {% mapping.raise "mapping argument must be a HashLiteral or a NamedTupleLiteral, not #{mapping.class_name.id}" %}
+      {% end %}
+
+      def self.new(pull : ::JSON::PullParser)
+        location = pull.location
+
+        discriminator_value = nil
+
+        # Try to find the discriminator while also getting the raw
+        # string value of the parsed JSON, so then we can pass it
+        # to the final type.
+        json = String.build do |io|
+          JSON.build(io) do |builder|
+            builder.start_object
+            pull.read_object do |key|
+              if key == {{field.id.stringify}}
+                discriminator_value = pull.read_string
+                builder.field(key, discriminator_value)
+              else
+                builder.field(key) { pull.read_raw(builder) }
+              end
+            end
+            builder.end_object
+          end
+        end
+
+        unless discriminator_value
+          raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
+        end
+
+        case discriminator_value
+        {% for key, value in mapping %}
+          when {{key.id.stringify}}
+            {{value.id}}.from_json(json)
+        {% end %}
+        else
+          raise ::JSON::SerializableError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
+        end
+      end
+    end
+  end
+
+  class SerializableError < ParseException
+    getter klass : String
+    getter attribute : String?
+
+    def initialize(message : String?, @klass : String, @attribute : String?, line_number : Int32, column_number : Int32, cause)
+      message = String.build do |io|
+        io << message
+        io << "\n  parsing "
+        io << klass
+        if attribute = @attribute
+          io << '#' << attribute
+        end
+      end
+      super(message, line_number, column_number, cause)
+      if cause
+        @line_number, @column_number = cause.location
       end
     end
   end

@@ -21,7 +21,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(call)
-          {{call.args.join(" + ").id}}
+          {{call.args.join(" &+ ").id}}
         end
       end
 
@@ -45,7 +45,7 @@ describe "Code gen: method_missing" do
 
       a = 0
       Foo.new.foo do |x|
-        a += x
+        a &+= x
       end
       a
       )).to_i.should eq(6)
@@ -55,7 +55,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         def foo_something
-          1 + 2
+          1 &+ 2
         end
 
         macro method_missing(call)
@@ -300,7 +300,7 @@ describe "Code gen: method_missing" do
   it "does method_missing with assignment (2) (bug)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -315,7 +315,7 @@ describe "Code gen: method_missing" do
       end
 
       foo = Foo.new
-      foo.bar(1).to_i
+      foo.bar(1).to_i!
       )).to_i.should eq(1)
   end
 
@@ -339,7 +339,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Foo
         macro method_missing(call)
-          {{call.args.join(" + ").id}}
+          {{call.args.join(" &+ ").id}}
         end
       end
 
@@ -351,7 +351,7 @@ describe "Code gen: method_missing" do
     run(%(
       class Wrapped
         def foo(x, y, z)
-          x + y + z
+          x &+ y &+ z
         end
       end
 
@@ -386,7 +386,7 @@ describe "Code gen: method_missing" do
     run(%(
       class A
         macro method_missing(call)
-          x + y
+          x &+ y
         end
       end
 
@@ -399,7 +399,7 @@ describe "Code gen: method_missing" do
     run(%(
       class A
         macro method_missing(call)
-          {{call.named_args[0].name}} +
+          {{call.named_args[0].name}} &+
             {{call.named_args[1].name}}
         end
       end

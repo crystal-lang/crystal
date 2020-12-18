@@ -20,7 +20,7 @@ struct Time::Format
     end
 
     def year_divided_by_100
-      io << time.year / 100
+      io << time.year // 100
     end
 
     def full_or_short_year
@@ -136,7 +136,7 @@ struct Time::Format
     end
 
     def microseconds
-      pad6 time.nanosecond / 1000, '0'
+      pad6 time.nanosecond // 1000, '0'
     end
 
     def nanoseconds
@@ -147,10 +147,14 @@ struct Time::Format
       nanoseconds
     end
 
-    def second_fraction?(fraction_digits = nil)
-      unless time.nanosecond == 0 || fraction_digits == 0
-        char '.'
-        second_fraction
+    def second_fraction?(fraction_digits : Int = 9)
+      case fraction_digits
+      when 0
+      when 3 then char '.'; milliseconds
+      when 6 then char '.'; microseconds
+      when 9 then char '.'; nanoseconds
+      else
+        raise ArgumentError.new("Invalid fraction digits: #{fraction_digits}")
       end
     end
 
@@ -175,7 +179,7 @@ struct Time::Format
     end
 
     def time_zone(with_seconds = false)
-      time_zone_offset(allow_seconds: with_seconds)
+      time_zone_offset(format_seconds: with_seconds)
     end
 
     def time_zone_z_or_offset(**options)
@@ -186,12 +190,12 @@ struct Time::Format
       end
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true)
-      time.zone.format(io, with_colon: force_colon, with_seconds: allow_seconds)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true)
+      time.zone.format(io, with_colon: force_colon, with_seconds: format_seconds)
     end
 
     def time_zone_colon(with_seconds = false)
-      time_zone_offset(force_colon: true, allow_seconds: with_seconds)
+      time_zone_offset(force_colon: true, format_seconds: with_seconds)
     end
 
     def time_zone_colon_with_seconds
@@ -203,7 +207,7 @@ struct Time::Format
     end
 
     def time_zone_rfc2822
-      time_zone_offset(allow_colon: false, allow_seconds: false)
+      time_zone_offset(allow_colon: false)
     end
 
     def time_zone_gmt_or_rfc2822(**options)

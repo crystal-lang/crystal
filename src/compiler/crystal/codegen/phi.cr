@@ -33,6 +33,10 @@ class Crystal::CodeGenVisitor
       @codegen.llvm_typer
     end
 
+    def unreachable
+      @codegen.unreachable
+    end
+
     def add(value, type : Nil, last = false)
       unreachable
     end

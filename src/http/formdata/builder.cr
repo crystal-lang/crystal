@@ -4,6 +4,8 @@ module HTTP::FormData
   # ### Example
   #
   # ```
+  # require "http"
+  #
   # io = IO::Memory.new
   # builder = HTTP::FormData::Builder.new(io, "aA47")
   # builder.field("name", "joe")
@@ -15,7 +17,7 @@ module HTTP::FormData
   class Builder
     # Creates a new `FormData::Builder` which writes to *io*, using the
     # multipart boundary *boundary*.
-    def initialize(@io : IO, @boundary = Multipart.generate_boundary)
+    def initialize(@io : IO, @boundary = MIME::Multipart.generate_boundary)
       @state = :START
     end
 
@@ -89,19 +91,19 @@ module HTTP::FormData
 
         if creation_time = metadata.creation_time
           io << %(; creation-date=")
-          creation_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          creation_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 
         if modification_time = metadata.modification_time
           io << %(; modification-date=")
-          modification_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          modification_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 
         if read_time = metadata.read_time
           io << %(; read-date=")
-          read_time.to_s("%a, %d %b %Y %H:%M:%S %z", io)
+          read_time.to_s(io, "%a, %d %b %Y %H:%M:%S %z")
           io << '"'
         end
 

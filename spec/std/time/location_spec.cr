@@ -8,12 +8,12 @@ class Time::Location
           location = Location.load("Europe/Berlin")
 
           location.name.should eq "Europe/Berlin"
-          standard_time = location.lookup(Time.new(2017, 11, 22))
+          standard_time = location.lookup(Time.utc(2017, 11, 22))
           standard_time.name.should eq "CET"
           standard_time.offset.should eq 3600
           standard_time.dst?.should be_false
 
-          summer_time = location.lookup(Time.new(2017, 10, 22))
+          summer_time = location.lookup(Time.utc(2017, 10, 22))
           summer_time.name.should eq "CEST"
           summer_time.offset.should eq 7200
           summer_time.dst?.should be_true
@@ -105,7 +105,7 @@ class Time::Location
             end
           end
 
-          with_zoneinfo("nonexising_zipfile.zip") do
+          with_zoneinfo("nonexistent_zipfile.zip") do
             expect_raises(InvalidLocationNameError) do
               Location.load("Europe/Berlin")
             end
@@ -156,7 +156,7 @@ class Time::Location
         location.local?.should be_false
       end
 
-      zone = location.lookup(Time.now)
+      zone = location.lookup(Time.utc)
       zone.name.should eq "UTC"
       zone.offset.should eq 0
       zone.dst?.should be_false

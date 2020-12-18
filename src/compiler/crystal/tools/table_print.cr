@@ -32,9 +32,11 @@ module Crystal
         when :right
           "%+#{available_width}s" % cell.text
         when :center
-          left = " " * ((available_width - cell.text.size) / 2)
+          left = " " * ((available_width - cell.text.size) // 2)
           right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
+        else
+          raise "Unknown alignment: #{cell.align}"
         end
       end
     end

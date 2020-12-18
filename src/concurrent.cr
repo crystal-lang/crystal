@@ -1,11 +1,10 @@
 require "fiber"
 require "channel"
 require "crystal/scheduler"
-require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
@@ -17,7 +16,7 @@ end
 
 # Blocks the current Fiber for the specified time span.
 #
-# While this fiber is waiting this time other ready-to-execute
+# While this fiber is waiting this time, other ready-to-execute
 # fibers might start their execution.
 def sleep(time : Time::Span)
   Crystal::Scheduler.sleep(time)
@@ -58,8 +57,11 @@ end
 #
 # 2.times { ch.receive }
 # ```
-def spawn(*, name : String? = nil, &block)
+def spawn(*, name : String? = nil, same_thread = false, &block)
   fiber = Fiber.new(name, &block)
+  if same_thread
+    fiber.@current_thread.set(Thread.current)
+  end
   Crystal::Scheduler.enqueue fiber
   fiber
 end
@@ -94,7 +96,11 @@ end
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
 # *i* are passed to a `Proc` that eventually invokes the call.
-macro spawn(call, *, name = nil)
+macro spawn(call, *, name = nil, same_thread = false, &block)
+  {% if block %}
+    {% raise "`spawn(call)` can't be invoked with a block, did you mean `spawn(name: ...) { ... }`?" %}
+  {% end %}
+
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
@@ -106,7 +112,7 @@ macro spawn(call, *, name = nil)
         {% end %}
       {% end %}
       ) {
-      spawn(name: {{name}}) do
+      spawn(name: {{name}}, same_thread: {{same_thread}}) do
         {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
             __arg{{i}},
@@ -128,83 +134,4 @@ macro spawn(call, *, name = nil)
       {{call}}
     end
   {% end %}
-end
-
-# Wraps around exceptions re-raised from concurrent calls.
-# The original exception can be accessed via `#cause`.
-class ConcurrentExecutionException < Exception
-end
-
-# Runs the commands passed as arguments concurrently (in Fibers) and waits
-# for them to finish.
-#
-# ```
-# def say(word)
-#   puts word
-# end
-#
-# # Will print out the three words concurrently
-# parallel(
-#   say("concurrency"),
-#   say("is"),
-#   say("easy")
-# )
-# ```
-#
-# Can also be used to conveniently collect the return values of the
-# concurrent operations.
-#
-# ```
-# def concurrent_job(word)
-#   word
-# end
-#
-# a, b, c =
-#   parallel(
-#     concurrent_job("concurrency"),
-#     concurrent_job("is"),
-#     concurrent_job("easy")
-#   )
-#
-# a # => "concurrency"
-# b # => "is"
-# c # => "easy"
-# ```
-#
-# Due to the concurrent nature of this macro, it is highly recommended
-# to handle any exceptions within the concurrent calls. Unhandled
-# exceptions raised within the concurrent operations will be re-raised
-# inside the parent fiber as `ConcurrentExecutionException`, with the
-# `cause` attribute set to the original exception.
-macro parallel(*jobs)
-  %channel = Channel(Exception | Nil).new
-
-  {% for job, i in jobs %}
-    %ret{i} = uninitialized typeof({{job}})
-    spawn do
-      begin
-        %ret{i} = {{job}}
-      rescue e : Exception
-        %channel.send e
-      else
-        %channel.send nil
-      end
-    end
-  {% end %}
-
-  {{ jobs.size }}.times do
-    %value = %channel.receive
-    if %value.is_a?(Exception)
-      raise ConcurrentExecutionException.new(
-        "An unhandled error occured inside a `parallel` call",
-        cause: %value
-      )
-    end
-  end
-
-  {
-    {% for job, i in jobs %}
-      %ret{i},
-    {% end %}
-  }
 end

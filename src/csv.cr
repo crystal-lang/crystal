@@ -20,7 +20,7 @@
 # A CSV instance holds a cursor to the current row in the CSV. The cursor
 # is advanced by invoking `#next`, which returns `true` if a next row was found,
 # and `false` otherwise. A first call to `#next` is required to position the
-# csv parser in the first row.
+# CSV parser in the first row.
 #
 # Once positioned in a row, values can be obtained with the several `#[]` methods,
 # which can accept a header name, column position, or header name pattern as a `Regex`.
@@ -65,6 +65,8 @@ class CSV
   # non-standard csv cell separators and quote characters.
   #
   # ```
+  # require "csv"
+  #
   # CSV.parse("one,two\nthree")
   # # => [["one", "two"], ["three"]]
   # CSV.parse("one;two\n'three;'", separator: ';', quote_char: '\'')
@@ -79,6 +81,8 @@ class CSV
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
+  # require "csv"
+  #
   # CSV.each_row("one,two\nthree") do |row|
   #   puts row
   # end
@@ -101,6 +105,8 @@ class CSV
   # See `CSV.parse` about the *separator* and *quote_char* arguments.
   #
   # ```
+  # require "csv"
+  #
   # rows = CSV.each_row("one,two\nthree")
   # rows.next # => ["one", "two"]
   # rows.next # => ["three"]
@@ -114,6 +120,8 @@ class CSV
   # Takes optional *quoting* argument to define quote behavior.
   #
   # ```
+  # require "csv"
+  #
   # result = CSV.build do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
@@ -137,6 +145,8 @@ class CSV
   # that writes to the given `IO`.
   #
   # ```
+  # require "csv"
+  #
   # io = IO::Memory.new
   # io.puts "HEADER"
   # CSV.build(io) do |csv|
@@ -145,9 +155,10 @@ class CSV
   # end
   # io.to_s # => "HEADER\none,two\nthree\n"
   # ```
-  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC)
+  def self.build(io : IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR, quoting : Builder::Quoting = Builder::Quoting::RFC) : Nil
     builder = Builder.new(io, separator, quote_char, quoting)
     yield builder
+    io.flush
   end
 
   @headers : Array(String)?
@@ -282,6 +293,13 @@ class CSV
   # Returns the current row as a `Row` instance.
   def row : Row
     Row.new(self, current_row.dup)
+  end
+
+  # Rewinds this CSV to the beginning, rewinding the underlying IO if any.
+  def rewind
+    @parser.rewind
+    @parser.next_row if @headers
+    @traversed = false
   end
 
   private def row_internal

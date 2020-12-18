@@ -47,7 +47,7 @@ private def gen_bound(v : Float64 | Float32)
   return fp.frac, b[:minus].frac, b[:plus].frac
 end
 
-describe "Float64 boundaires" do
+describe "Float64 boundaries" do
   it "boundaries 1.5" do
     fp, mi, pl = gen_bound(1.5)
     # 1.5 does not have a significand of the form 2^p (for some p).
@@ -97,7 +97,7 @@ describe "Float64 boundaires" do
   end
 end
 
-describe "Float32 boundaires" do
+describe "Float32 boundaries" do
   it "boundaries 1.5" do
     fp, mi, pl = gen_bound(1.5_f32)
     # 1.5 does not have a significand of the form 2^p (for some p).

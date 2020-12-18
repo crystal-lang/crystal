@@ -12,7 +12,7 @@ class IO::Memory < IO
   @capacity : Int32
 
   # Creates an empty, resizeable and writeable `IO::Memory` with the given
-  # initialize capactiy for the internal buffer.
+  # initial *capacity* for the internal buffer.
   #
   # ```
   # io = IO::Memory.new
@@ -82,7 +82,7 @@ class IO::Memory < IO
 
   # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
   # or if it's non-resizeable and a resize is needed.
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     check_writeable
     check_open
 
@@ -104,8 +104,6 @@ class IO::Memory < IO
 
     @pos += count
     @bytesize = @pos if @pos > @bytesize
-
-    nil
   end
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
@@ -206,7 +204,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip_to_end
+  def skip_to_end : Nil
     check_open
 
     @pos = @bytesize
@@ -397,7 +395,7 @@ class IO::Memory < IO
   # io.print 1, 2, 3
   # io.to_s # => "123"
   # ```
-  def to_s
+  def to_s : String
     String.new @buffer, @bytesize
   end
 
@@ -414,7 +412,7 @@ class IO::Memory < IO
   end
 
   # Appends this internal buffer to the given `IO`.
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io.write(to_slice)
   end
 

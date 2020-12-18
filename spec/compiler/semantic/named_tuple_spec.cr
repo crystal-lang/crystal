@@ -321,4 +321,15 @@ describe "Semantic: named tuples" do
       end
     )) { nil_type }
   end
+
+  it "doesn't crash on named tuple type recursion (#7162)" do
+    assert_type(%(
+      def call(*args)
+        call({a: 1})
+        1
+      end
+
+      call("")
+      )) { int32 }
+  end
 end

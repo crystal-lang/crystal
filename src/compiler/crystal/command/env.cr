@@ -2,19 +2,21 @@
 
 class Crystal::Command
   private def env
-    if ARGV.size == 1 && {"--help", "-h"}.includes?(ARGV[0])
+    if ARGV.size == 1 && ARGV[0].in?("--help", "-h")
       env_usage
     end
 
     vars = {
-      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
-      "CRYSTAL_PATH"      => CrystalPath.default_path,
-      "CRYSTAL_VERSION"   => Config.version || "",
+      "CRYSTAL_CACHE_DIR"    => CacheDir.instance.dir,
+      "CRYSTAL_PATH"         => CrystalPath.default_path,
+      "CRYSTAL_VERSION"      => Config.version || "",
+      "CRYSTAL_LIBRARY_PATH" => CrystalLibraryPath.default_path,
+      "CRYSTAL_OPTS"         => ENV.fetch("CRYSTAL_OPTS", ""),
     }
 
     if ARGV.empty?
       vars.each do |key, value|
-        puts "#{key}=#{value.inspect}"
+        puts "#{key}=#{Process.quote(value)}"
       end
     else
       ARGV.each do |key|

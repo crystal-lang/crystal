@@ -1,6 +1,16 @@
 require "spec"
+require "big"
+require "complex"
+require "../support/number"
 
 describe "Number" do
+  {% for number_type in BUILTIN_NUMBER_TYPES %}
+    it_unchecked_initializes_from_value_to {{number_type}}
+    it_initializes_from_value_to {{number_type}}
+  {% end %}
+
+  it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}})
+
   describe "significant" do
     it "10 base" do
       1234.567.significant(1).should eq(1000)
@@ -69,34 +79,17 @@ describe "Number" do
       123_456.123456.round(-5).should eq(100_000)
       753.155.round(-5, base: 2).should eq(768)
     end
-  end
 
-  describe "clamp" do
-    it "clamps integers" do
-      -5.clamp(-10, 100).should eq(-5)
-      -5.clamp(10, 100).should eq(10)
-      5.clamp(10, 100).should eq(10)
-      50.clamp(10, 100).should eq(50)
-      500.clamp(10, 100).should eq(100)
-
-      50.clamp(10..100).should eq(50)
+    it "accepts unsigned precision" do
+      123.round(UInt8.new(3)).should eq(123)
+      11.308.round(UInt8.new(3)).should eq(11.308)
+      11.308.round(UInt8.new(2)).should eq(11.31)
     end
 
-    it "clamps floats" do
-      -5.5.clamp(-10.1, 100.1).should eq(-5.5)
-      -5.5.clamp(10.1, 100.1).should eq(10.1)
-      5.5.clamp(10.1, 100.1).should eq(10.1)
-      50.5.clamp(10.1, 100.1).should eq(50.5)
-      500.5.clamp(10.1, 100.1).should eq(100.1)
-
-      50.5.clamp(10.1..100.1).should eq(50.5)
-    end
-
-    it "fails with an exclusive range" do
-      expect_raises(ArgumentError) do
-        range = Range.new(1, 2, exclusive: true)
-        5.clamp(range)
-      end
+    it "handle medium amount of digits" do
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
+      6543210987654321.0.round(-15).should eq(7000000000000000.0)
     end
   end
 
@@ -118,7 +111,7 @@ describe "Number" do
     0.sign.should eq(0)
   end
 
-  it "divides and calculs the modulo" do
+  it "divides and calculates the modulo" do
     11.divmod(3).should eq({3, 2})
     11.divmod(-3).should eq({-4, -1})
 
@@ -160,7 +153,7 @@ describe "Number" do
     slice.size.should eq(3)
     slice[0].should eq(1)
     slice[1].should eq(2)
-    slice[2].should eq(300.to_u8)
+    slice[2].should eq(300.to_u8!)
   end
 
   it "creates a static array" do
@@ -169,7 +162,7 @@ describe "Number" do
     ary.size.should eq(3)
     ary[0].should eq(1)
     ary[1].should eq(2)
-    ary[2].should eq(300.to_u8)
+    ary[2].should eq(300.to_u8!)
   end
 
   it "test zero?" do
@@ -190,6 +183,7 @@ describe "Number" do
         when 0 then x.should eq(0.0)
         when 1 then x.should eq(0.1)
         when 2 then x.should eq(0.2)
+        else        fail "shouldn't happen"
         end
         count += 1
       end
@@ -201,9 +195,6 @@ describe "Number" do
       iter.next.should eq(0.1)
       iter.next.should eq(0.2)
       iter.next.should be_a(Iterator::Stop)
-
-      iter.rewind
-      iter.next.should eq(0.0)
     end
 
     it "iterator without limit" do
@@ -216,4 +207,16 @@ describe "Number" do
       iter.next.should eq(1000)
     end
   end
+
+  floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float32], Float32
+  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES}}, Float32
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float64], Float64
+  division_between_returns [Float64], {{BUILTIN_INTEGER_TYPES}}, Float64
+
+  division_between_returns [Float32], [Float32], Float32
+  division_between_returns {{BUILTIN_FLOAT_TYPES}}, [Float64], Float64
+  division_between_returns [Float64], {{BUILTIN_FLOAT_TYPES}}, Float64
 end

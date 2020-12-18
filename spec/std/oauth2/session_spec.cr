@@ -6,7 +6,7 @@ module OAuth2
     client = Client.new "localhost", "client_id", "client_secret", redirect_uri: "uri", authorize_uri: "/baz"
     token = OAuth2::AccessToken::Bearer.new("token", 3600)
     session = Session.new(client, token) { |s| }
-    session = Session.new(client, token, Time.new) { |s| }
+    session = Session.new(client, token, Time.utc) { |s| }
     session.authenticate(HTTP::Client.new("localhost"))
   end)
 end

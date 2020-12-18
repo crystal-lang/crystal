@@ -272,7 +272,7 @@ describe "Semantic: def" do
 
       foo
       ),
-      "type must be Int32, not Char"
+      "method must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on instance method" do
@@ -285,7 +285,7 @@ describe "Semantic: def" do
 
       Foo.new.foo
       ),
-      "type must be Int32, not Char"
+      "method must return Int32 but it is returning Char"
   end
 
   it "errors if return type doesn't match on class method" do
@@ -298,7 +298,7 @@ describe "Semantic: def" do
 
       Foo.foo
       ),
-      "type must be Int32, not Char"
+      "method must return Int32 but it is returning Char"
   end
 
   it "is ok if returns Int32? with explicit return" do
@@ -485,5 +485,17 @@ describe "Semantic: def" do
 
       foo
     ), "there's no self in this scope"
+  end
+
+  it "points error at name (#6937)" do
+    ex = assert_error <<-CODE,
+      1.
+        foobar
+      CODE
+      "undefined method",
+      inject_primitives: false
+    ex.line_number.should eq(2)
+    ex.column_number.should eq(3)
+    ex.size.should eq(6)
   end
 end

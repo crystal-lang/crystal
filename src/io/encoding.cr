@@ -1,3 +1,7 @@
+{% unless flag?(:win32) %}
+  require "crystal/iconv"
+{% end %}
+
 class IO
   # Has the `name` and the `invalid` option.
   struct EncodingOptions
@@ -19,7 +23,7 @@ class IO
 
   private class Encoder
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
+      @iconv = Crystal::Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
     end
 
@@ -31,7 +35,7 @@ class IO
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        if err == Iconv::ERROR
+        if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
@@ -58,7 +62,7 @@ class IO
     @in_buffer : Pointer(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
-      @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
+      @iconv = Crystal::Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
       @buffer = Bytes.new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
@@ -76,14 +80,6 @@ class IO
           @in_buffer_left = LibC::SizeT.new(io.read(@buffer))
         end
 
-        # If we just have a few bytes to decode, read more, just in case these don't produce a character
-        if @in_buffer_left < 16
-          buffer_remaining = BUFFER_SIZE - @in_buffer_left - (@in_buffer - @buffer.to_unsafe)
-          @buffer.copy_from(@in_buffer, @in_buffer_left)
-          @in_buffer = @buffer.to_unsafe
-          @in_buffer_left += LibC::SizeT.new(io.read(Slice.new(@in_buffer + @in_buffer_left, buffer_remaining)))
-        end
-
         # If, after refilling the buffer, we couldn't read new bytes
         # it means we reached the end
         break if @in_buffer_left == 0
@@ -95,7 +91,7 @@ class IO
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
         # Check for errors
-        if result == Iconv::ERROR
+        if result == Crystal::Iconv::ERROR
           case Errno.value
           when Errno::EILSEQ
             # For an illegal sequence we just skip one byte and we'll continue next
@@ -112,6 +108,8 @@ class IO
             if old_in_buffer_left == @in_buffer_left
               @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
             end
+          else
+            # Not an error we can handle
           end
 
           # Continue decoding after an error

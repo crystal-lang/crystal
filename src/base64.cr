@@ -51,7 +51,7 @@ module Base64
     end
   end
 
-  # Write the base64-encoded version of *data* to *io*.
+  # Writes the base64-encoded version of *data* to *io*.
   # This method complies with [RFC 2045](https://tools.ietf.org/html/rfc2045).
   # Line feeds are added to every 60 encoded characters.
   #
@@ -109,7 +109,7 @@ module Base64
     end
   end
 
-  # Write the base64-encoded version of *data* with no newlines to *io*.
+  # Writes the base64-encoded version of *data* with no newlines to *io*.
   # This method complies with [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
   # ```
@@ -147,7 +147,7 @@ module Base64
     end
   end
 
-  # Write the base64-encoded version of *data* using a urlsafe alphabet to *io*.
+  # Writes the base64-encoded version of *data* using a urlsafe alphabet to *io*.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
   # Alphabet" in [RFC 4648](https://tools.ietf.org/html/rfc4648).
   #
@@ -166,7 +166,7 @@ module Base64
     Slice.new(buf, appender.size.to_i32)
   end
 
-  # Write the base64-decoded version of *data* to *io*.
+  # Writes the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data, io : IO)
     count = 0
@@ -191,7 +191,7 @@ module Base64
 
   private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 4
-    size += size / LINE_SIZE if new_lines
+    size += size // LINE_SIZE if new_lines
     size
   end
 
@@ -202,7 +202,7 @@ module Base64
   private def to_base64(data, chars, pad = false)
     bytes = chars.to_unsafe
     size = data.size
-    cstr = data.pointer(size)
+    cstr = data.to_unsafe
     endcstr = cstr + size - size % 3
     while cstr < endcstr
       n = Intrinsics.bswap32(cstr.as(UInt32*).value)
@@ -234,7 +234,7 @@ module Base64
   private def from_base64(data)
     size = data.size
     dt = DECODE_TABLE.to_unsafe
-    cstr = data.pointer(size)
+    cstr = data.to_unsafe
     start_cstr = cstr
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
@@ -250,9 +250,9 @@ module Base64
       break if cstr > endcstr
       a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
 
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
-      yield (c << 6 | d).to_u8
+      yield (a << 2 | b >> 4).to_u8!
+      yield (b << 4 | c >> 2).to_u8!
+      yield (c << 6 | d).to_u8!
     end
 
     while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
@@ -262,11 +262,11 @@ module Base64
     mod = (endcstr - cstr) % 4
     if mod == 2
       a, b = next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
+      yield (a << 2 | b >> 4).to_u8!
     elsif mod == 3
       a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8
-      yield (b << 4 | c >> 2).to_u8
+      yield (a << 2 | b >> 4).to_u8!
+      yield (b << 4 | c >> 2).to_u8!
     elsif mod != 0
       raise Error.new("Wrong size")
     end

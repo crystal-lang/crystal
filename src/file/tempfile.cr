@@ -17,7 +17,7 @@ class File
         io << '-'
       end
 
-      io << Time.now.to_s("%Y%m%d")
+      io << Time.local.to_s("%Y%m%d")
       io << '-'
 
       {% unless flag?(:win32) %}

@@ -11,6 +11,13 @@ private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   end
 end
 
+private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
+  it "does not highlight #{code.inspect} due to error", file, line do
+    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted.should eq(code), file, line
+  end
+end
+
 describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "foo", "foo"
   it_highlights "foo bar", "foo bar"
@@ -41,7 +48,8 @@ describe "Crystal::Doc::Highlighter#highlight" do
     case when select then of rescue ensure is_a? alias sizeof
     as as? typeof for in with self super private asm
     nil? abstract pointerof
-    protected uninitialized instance_sizeof
+    protected uninitialized instance_sizeof offsetof
+    annotation verbatim
   ).each do |kw|
     it_highlights kw, %(<span class="k">#{kw}</span>)
   end
@@ -53,7 +61,7 @@ describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "def foo", %(<span class="k">def</span> <span class="m">foo</span>)
 
   %w(
-    + - * / = == < <= > >= ! != =~ !~ & | ^ ~ **
+    + - * &+ &- &* / // = == < <= > >= ! != =~ !~ & | ^ ~ **
     >> << % [] []? []= <=> ===
   ).each do |op|
     it_highlights "1 #{op} 2", %(<span class="n">1</span> <span class="o">#{HTML.escape(op)}</span> <span class="n">2</span>)
@@ -75,4 +83,33 @@ describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "%w(foo  bar\n  baz)", %(<span class="s">%w(foo  bar\n  baz)</span>)
   it_highlights "%w<foo bar baz>", %(<span class="s">%w&lt;foo bar baz&gt;</span>)
   it_highlights "%i(foo bar baz)", %(<span class="s">%i(foo bar baz)</span>)
+
+  it_highlights <<-CR, <<-HTML
+    foo, bar = <<-FOO, <<-BAR
+      foo
+      FOO
+      bar
+      BAR
+    CR
+    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
+    <span class="s">  foo
+      FOO</span>
+    <span class="s">  bar
+      BAR</span>
+    HTML
+
+  it_does_not_highlight <<-CR
+    foo, bar = <<-FOO, <<-BAR
+      foo
+      FOO
+    CR
+
+  it_does_not_highlight <<-CR
+    foo, bar = <<-FOO, <<-BAR
+      foo
+    CR
+
+  it_does_not_highlight "\"foo"
+  it_does_not_highlight "%w[foo"
+  it_does_not_highlight "%i[foo"
 end

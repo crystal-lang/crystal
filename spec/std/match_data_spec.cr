@@ -265,4 +265,11 @@ describe "Regex::MatchData" do
     m2.should be_truthy
     m1.should eq(m2)
   end
+
+  it "hashes" do
+    re = /(a|b)/
+    hash = re.match("a").hash
+    hash.should eq(re.match("a").hash)
+    hash.should_not eq(re.match("b").hash)
+  end
 end

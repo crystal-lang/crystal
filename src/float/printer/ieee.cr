@@ -113,7 +113,7 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d64 & SIGNIFICAND_MASK_64) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d64) != DENORMAL_EXPONENT_64)
-    calcualted_exp = exponent(d64)
+    calculated_exp = exponent(d64)
     calc_denormal = denormal?(d64)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
@@ -133,7 +133,7 @@ module Float::Printer::IEEE
     physical_significand_is_zero = (d32 & SIGNIFICAND_MASK_32) == 0
 
     lower_bound_closer = physical_significand_is_zero && (exponent(d32) != DENORMAL_EXPONENT_32)
-    calcualted_exp = exponent(d32)
+    calculated_exp = exponent(d32)
     calc_denormal = denormal?(d32)
     f, e = if lower_bound_closer
              {(w.frac << 2) - 1, w.exp - 2}
@@ -152,7 +152,7 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_64
     else
       frac = (d64 & SIGNIFICAND_MASK_64) + HIDDEN_BIT_64
-      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) - EXPONENT_BIAS_64).to_i
+      exp = (((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64) &- EXPONENT_BIAS_64).to_i!
     end
 
     {frac, exp}
@@ -166,7 +166,7 @@ module Float::Printer::IEEE
       exp = 1 - EXPONENT_BIAS_32
     else
       frac = (d32 & SIGNIFICAND_MASK_32) + HIDDEN_BIT_32
-      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) - EXPONENT_BIAS_32).to_i
+      exp = (((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32) &- EXPONENT_BIAS_32).to_i!
     end
 
     {frac.to_u64, exp}
@@ -182,13 +182,13 @@ module Float::Printer::IEEE
 
   private def exponent(d64 : UInt64)
     return DENORMAL_EXPONENT_64 if denormal?(d64)
-    baised_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
-    baised_e - EXPONENT_BIAS_64
+    biased_e = ((d64 & EXPONENT_MASK_64) >> PHYSICAL_SIGNIFICAND_SIZE_64).to_i
+    biased_e - EXPONENT_BIAS_64
   end
 
   private def exponent(d32 : UInt32)
     return DENORMAL_EXPONENT_32 if denormal?(d32)
-    baised_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
-    baised_e - EXPONENT_BIAS_32
+    biased_e = ((d32 & EXPONENT_MASK_32) >> PHYSICAL_SIGNIFICAND_SIZE_32).to_i
+    biased_e - EXPONENT_BIAS_32
   end
 end

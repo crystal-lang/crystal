@@ -1,5 +1,9 @@
 require "./lib_crypto"
 
+{% if flag?(:without_openssl) %}
+  {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
+{% end %}
+
 {% begin %}
   lib LibSSL
     {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
@@ -27,6 +31,7 @@ lib LibSSL
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
+  type SSLCipher = Void*
 
   alias VerifyCallback = (Int, LibCrypto::X509_STORE_CTX) -> Int
   alias CertVerifyCallback = (LibCrypto::X509_STORE_CTX, Void*) -> Int
@@ -95,8 +100,12 @@ lib LibSSL
 
     NO_SSL_V3   = 0x02000000
     NO_TLS_V1   = 0x04000000
+    NO_TLS_V1_3 = 0x20000000
     NO_TLS_V1_2 = 0x08000000
     NO_TLS_V1_1 = 0x10000000
+    {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+      NO_RENEGOTIATION = 0x40000000
+    {% end %}
 
     NETSCAPE_CA_DN_BUG              = 0x20000000
     NETSCAPE_DEMO_CIPHER_CHANGE_BUG = 0x40000000
@@ -107,11 +116,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000000
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000000
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000000
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000000
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000000
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000000
       TLS_D5_BUG                       = 0x00000000
       TLS_BLOCK_PADDING_BUG            = 0x00000000
-      NO_SSL_V2                         = 0x00000000
+      NO_SSL_V2                        = 0x00000000
       SINGLE_ECDH_USE                  = 0x00000000
       SINGLE_DH_USE                    = 0x00000000
     {% else %}
@@ -119,11 +128,11 @@ lib LibSSL
       NETSCAPE_CHALLENGE_BUG           = 0x00000002
       NETSCAPE_REUSE_CIPHER_CHANGE_BUG = 0x00000008
       SSLREF2_REUSE_CERT_TYPE_BUG      = 0x00000010
-      MICROSOFT_BIG_SSL_V3_BUFFER       = 0x00000020
+      MICROSOFT_BIG_SSL_V3_BUFFER      = 0x00000020
       SSLEAY_080_CLIENT_DH_BUG         = 0x00000080
       TLS_D5_BUG                       = 0x00000100
       TLS_BLOCK_PADDING_BUG            = 0x00000200
-      NO_SSL_V2                         = 0x01000000
+      NO_SSL_V2                        = 0x01000000
       SINGLE_ECDH_USE                  = 0x00080000
       SINGLE_DH_USE                    = 0x00100000
     {% end %}
@@ -155,10 +164,15 @@ lib LibSSL
   fun tlsv1_2_method = TLSv1_2_method : SSLMethod
 
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
+  fun ssl_get_servername = SSL_get_servername(ssl : SSL, host_type : TLSExt) : UInt8*
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)
+
+  fun ssl_get_current_cipher = SSL_get_current_cipher(ssl : SSL) : SSLCipher
+  fun ssl_cipher_get_name = SSL_CIPHER_get_name(cipher : SSLCipher) : UInt8*
+  fun ssl_get_version = SSL_get_version(ssl : SSL) : UInt8*
 
   @[Raises]
   fun ssl_new = SSL_new(context : SSLContext) : SSL
@@ -192,6 +206,7 @@ lib LibSSL
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
     fun ssl_ctx_clear_options = SSL_CTX_clear_options(ctx : SSLContext, larg : ULong) : ULong
+    fun ssl_ctx_set_ciphersuites = SSL_CTX_set_ciphersuites(ctx : SSLContext, ciphers : Char*) : Int
   {% end %}
 
   @[Raises]
@@ -199,6 +214,12 @@ lib LibSSL
 
   # Hostname validation for OpenSSL <= 1.0.1
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
+
+  # control TLS 1.3 session ticket generation
+  {% if compare_versions(OPENSSL_VERSION, "1.1.1") >= 0 %}
+    fun ssl_ctx_set_num_tickets = SSL_CTX_set_num_tickets(ctx : SSLContext, larg : LibC::SizeT) : Int
+    fun ssl_set_num_tickets = SSL_set_num_tickets(ctx : SSL, larg : LibC::SizeT) : Int
+  {% end %}
 
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun tls_method = TLS_method : SSLMethod
@@ -218,9 +239,16 @@ lib LibSSL
   {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
     alias X509VerifyParam = LibCrypto::X509VerifyParam
 
+    fun dtls_method = DTLS_method : SSLMethod
+
     fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
     fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+  {% end %}
+
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
+    fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
 end
 

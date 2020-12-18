@@ -5,15 +5,15 @@ describe "MacroExpander" do
     assert_macro "", "1 + 2", [] of ASTNode, "1 + 2"
   end
 
-  it "expands macro with string sustitution" do
+  it "expands macro with string substitution" do
     assert_macro "x", "{{x}}", ["hello".string] of ASTNode, %("hello")
   end
 
-  it "expands macro with symbol sustitution" do
+  it "expands macro with symbol substitution" do
     assert_macro "x", "{{x}}", ["hello".symbol] of ASTNode, ":hello"
   end
 
-  it "expands macro with argument-less call sustitution" do
+  it "expands macro with argument-less call substitution" do
     assert_macro "x", "{{x}}", ["hello".call] of ASTNode, "hello"
   end
 
@@ -61,7 +61,7 @@ describe "MacroExpander" do
     assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, %("hellotrueworld")
   end
 
-  it "expands macro with var sustitution" do
+  it "expands macro with var substitution" do
     assert_macro "x", "{{x}}", ["hello".var] of ASTNode, "hello"
   end
 
@@ -155,5 +155,19 @@ describe "MacroExpander" do
 
   it "can't use `yield` outside a macro" do
     assert_error %({{yield}}), "can't use `{{yield}}` outside a macro"
+  end
+
+  it "outputs invisible location pragmas" do
+    node = 42.int32
+    node.location = Location.new "foo.cr", 10, 20
+    assert_macro "node", %({{node}}), [node] of ASTNode, "42", {
+      0 => [
+        Lexer::LocPushPragma.new,
+        Lexer::LocSetPragma.new("foo.cr", 10, 20),
+      ] of Lexer::LocPragma,
+      2 => [
+        Lexer::LocPopPragma.new,
+      ] of Lexer::LocPragma,
+    }
   end
 end

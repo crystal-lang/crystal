@@ -19,7 +19,7 @@
 # ints = uninitialized Int32[3]
 # ints[0] = 0
 # ints[1] = 8
-# ints[3] = 15
+# ints[2] = 15
 # ```
 #
 # For number types there is also `Number.static_array` which can be used to initialize
@@ -35,7 +35,7 @@
 struct StaticArray(T, N)
   include Indexable(T)
 
-  # Create a new `StaticArray` with the given *args*. The type of the
+  # Creates a new `StaticArray` with the given *args*. The type of the
   # static array will be the union of the type of the given *args*,
   # and its size will be the number of elements in *args*.
   #
@@ -174,7 +174,7 @@ struct StaticArray(T, N)
   end
 
   # Modifies `self` by randomizing the order of elements in the array
-  # using the given *random* number generator.  Returns `self`.
+  # using the given *random* number generator. Returns `self`.
   #
   # ```
   # a = StaticArray(Int32, 3).new { |i| i + 1 } # => StaticArray[1, 2, 3]
@@ -209,14 +209,20 @@ struct StaticArray(T, N)
   end
 
   # Like `map!`, but the block gets passed both the element and its index.
-  def map_with_index!(&block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
 
   # Like `map`, but the block gets passed both the element and its index.
-  def map_with_index(&block : (T, Int32) -> U) forall U
-    StaticArray(U, N).new { |i| yield to_unsafe[i], i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 
   # Reverses the elements of this array in-place, then returns `self`.
@@ -259,9 +265,9 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.to_s # => "StaticArray[1, 2, 3]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "StaticArray["
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

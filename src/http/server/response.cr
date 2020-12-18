@@ -1,7 +1,11 @@
+require "http/headers"
+require "http/status"
+require "http/cookie"
+
 class HTTP::Server
   # The response to configure and write to in an `HTTP::Server` handler.
   #
-  # The response `status_code` and `headers` must be configured before writing
+  # The response `status` and `headers` must be configured before writing
   # the response body. Once response output is written, changing the `status`
   # and `headers` properties has no effect.
   #
@@ -10,7 +14,6 @@ class HTTP::Server
   #
   # A response can be upgraded with the `upgrade` method. Once invoked, headers
   # are written and the connection `IO` (a socket) is yielded to the given block.
-  # The block must invoke `close` afterwards, the server won't do it in this case.
   # This is useful to implement protocol upgrades, such as websockets.
   class Response < IO
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
@@ -28,14 +31,18 @@ class HTTP::Server
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status_code : Int32
+    property status : HTTP::Status
+
+    # :nodoc:
+    property upgrade_handler : (IO ->)?
+
+    @cookies : HTTP::Cookies?
 
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
-      @status_code = 200
+      @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = output = @original_output = Output.new(@io)
       output.response = self
     end
@@ -45,9 +52,8 @@ class HTTP::Server
       # This method is called by RequestProcessor to avoid allocating a new instance for each iteration.
       @headers.clear
       @cookies = nil
-      @status_code = 200
+      @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = @original_output
       @original_output.reset
     end
@@ -62,8 +68,19 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
+    # Convenience method to retrieve the HTTP status code.
+    def status_code
+      status.code
+    end
+
+    # Convenience method to set the HTTP status code.
+    def status_code=(status_code : Int32)
+      self.status = HTTP::Status.new(status_code)
+      status_code
+    end
+
     # See `IO#write(slice)`.
-    def write(slice : Bytes)
+    def write(slice : Bytes) : Nil
       return if slice.empty?
 
       @output.write(slice)
@@ -79,19 +96,11 @@ class HTTP::Server
       raise "Can't read from HTTP::Server::Response"
     end
 
-    # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
-    # The block must invoke `close` afterwards, the server won't do it in this case.
+    # Upgrades this response, writing headers and yielding the connection `IO` (a socket) to the given block.
     # This is useful to implement protocol upgrades, such as websockets.
-    def upgrade
-      @upgraded = true
+    def upgrade(&block : IO ->)
       write_headers
-      flush
-      yield @io
-    end
-
-    # :nodoc:
-    def upgraded?
-      @upgraded
+      @upgrade_handler = block
     end
 
     # Flushes the output. This method must be implemented if wrapping the response output.
@@ -102,6 +111,8 @@ class HTTP::Server
     # Closes this response, writing headers and body if not done yet.
     # This method must be implemented if wrapping the response output.
     def close
+      return if closed?
+
       @output.close
     end
 
@@ -110,20 +121,32 @@ class HTTP::Server
       @output.closed?
     end
 
-    # Generates an error response using *message* and *code*.
+    @status_message : String?
+
+    # Sends *status* and *message* as response.
     #
-    # Calls `reset` and then writes the given message.
-    def respond_with_error(message = "Internal Server Error", code = 500)
+    # This method calls `#reset` to remove any previous settings and writes the
+    # given *status* and *message* to the response IO. Finally, it closes the
+    # response.
+    #
+    # If *message* is `nil`, the default message for *status* is used provided
+    # by `HTTP::Status#description`.
+    def respond_with_status(status : HTTP::Status, message : String? = nil)
       reset
-      @status_code = code
+      @status = status
+      @status_message = message ||= @status.description
       self.content_type = "text/plain"
-      self << code << ' ' << message << '\n'
-      flush
+      self << @status.code << ' ' << message << '\n'
+      close
+    end
+
+    # :ditto:
+    def respond_with_status(status : Int, message : String? = nil)
+      respond_with_status(HTTP::Status.new(status), message)
     end
 
     protected def write_headers
-      status_message = HTTP.default_status_message_for(@status_code)
-      @io << @version << ' ' << @status_code << ' ' << status_message << "\r\n"
+      @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
       headers.each do |name, values|
         values.each do |value|
           @io << name << ": " << value << "\r\n"
@@ -152,6 +175,7 @@ class HTTP::Server
 
       def initialize(@io)
         @chunked = false
+        @closed = false
       end
 
       def reset
@@ -180,27 +204,37 @@ class HTTP::Server
         ensure_headers_written
 
         if @chunked
-          slice.size.to_s(16, @io)
+          slice.size.to_s(@io, 16)
           @io << "\r\n"
           @io.write(slice)
           @io << "\r\n"
         else
           @io.write(slice)
         end
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while writing data to the client", ex)
       end
 
-      def closed?
+      def closed? : Bool
         @closed
       end
 
       def close
-        unless response.wrote_headers?
+        return if closed?
+
+        if !response.wrote_headers? && !response.headers.has_key?("Content-Length")
           response.content_length = @out_count
         end
 
         ensure_headers_written
 
         super
+
+        if @chunked
+          @io << "0\r\n\r\n"
+          @io.flush
+        end
       end
 
       private def ensure_headers_written
@@ -214,7 +248,6 @@ class HTTP::Server
       end
 
       private def unbuffered_close
-        @io << "0\r\n\r\n" if @chunked
         @closed = true
       end
 
@@ -224,7 +257,13 @@ class HTTP::Server
 
       private def unbuffered_flush
         @io.flush
+      rescue ex : IO::Error
+        unbuffered_close
+        raise ClientError.new("Error while flushing data to the client", ex)
       end
     end
+  end
+
+  class ClientError < Exception
   end
 end

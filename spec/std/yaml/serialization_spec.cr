@@ -1,7 +1,9 @@
-require "spec"
+require "../spec_helper"
 require "yaml"
-require "big"
-require "big/yaml"
+{% unless flag?(:win32) %}
+  require "big"
+  require "big/yaml"
+{% end %}
 
 enum YAMLSpecEnum
   Zero
@@ -11,12 +13,11 @@ end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
-# libyaml 0.2.1 removed the errorneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
+# libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected)
-  major, minor, _ = YAML.libyaml_version
-  if major == 0 && minor < 2
+  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
     expected += "...\n"
   end
 
@@ -56,25 +57,41 @@ describe "YAML serialization" do
       String.from_yaml("hello").should eq("hello")
     end
 
-    it "raises on reserved string" do
-      expect_raises(YAML::ParseException) do
-        String.from_yaml(%(1.2))
-      end
+    it "does String#from_yaml (empty string)" do
+      String.from_yaml("").should eq("")
+    end
+
+    it "can parse string that looks like a number" do
+      String.from_yaml(%(1.2)).should eq ("1.2")
+    end
+
+    it "does Path.from_yaml" do
+      Path.from_yaml(%("foo/bar")).should eq(Path.new("foo/bar"))
     end
 
     it "does Float32#from_yaml" do
       Float32.from_yaml("1.5").should eq(1.5_f32)
+      Float32.from_yaml(".nan").nan?.should be_true
       Float32.from_yaml(".inf").should eq(Float32::INFINITY)
+      Float32.from_yaml("-.inf").should eq(-Float32::INFINITY)
     end
 
     it "does Float64#from_yaml" do
       value = Float64.from_yaml("1.5")
       value.should eq(1.5)
       value.should be_a(Float64)
+
+      Float64.from_yaml(".nan").nan?.should be_true
+      Float64.from_yaml(".inf").should eq(Float64::INFINITY)
+      Float64.from_yaml("-.inf").should eq(-Float64::INFINITY)
     end
 
     it "does Array#from_yaml" do
       Array(Int32).from_yaml("---\n- 1\n- 2\n- 3\n").should eq([1, 2, 3])
+    end
+
+    it "does Set#from_yaml" do
+      Set(Int32).from_yaml("---\n- 1\n- 2\n- 2\n").should eq(Set.new([1, 2]))
     end
 
     it "does Array#from_yaml from IO" do
@@ -133,16 +150,34 @@ describe "YAML serialization" do
       tuple.should be_a(NamedTuple(x: Int32, y: String))
     end
 
-    it "does for BigInt" do
+    it "does for named tuple with nilable fields (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello"}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
+    it "does for named tuple with nilable fields and null (#8089)" do
+      tuple = NamedTuple(x: Int32?, y: String).from_yaml(%({"y": "hello", "x": null}))
+      tuple.should eq({x: nil, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32?, y: String))
+    end
+
+    pending_win32 "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
+    end
+
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.from_yaml("1234.567891011121314")
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.567891011121314"))
     end
 
     it "does for Enum with number" do
@@ -168,8 +203,8 @@ describe "YAML serialization" do
       value.should eq(Time.utc(2014, 1, 2))
     end
 
-    it "deserializes union" do
-      Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+    it "deserializes union with nil, string and int (#7936)" do
+      Array(Int32 | String | Nil).from_yaml(%([1, "hello", null])).should eq([1, "hello", nil])
     end
 
     it "deserializes time" do
@@ -233,6 +268,10 @@ describe "YAML serialization" do
       Nil.from_yaml(nil.to_yaml).should eq(nil)
     end
 
+    it "does for Nil (empty string)" do
+      Nil.from_yaml("").should eq(nil)
+    end
+
     it "does for Bool" do
       Bool.from_yaml(true.to_yaml).should eq(true)
       Bool.from_yaml(false.to_yaml).should eq(false)
@@ -242,8 +281,36 @@ describe "YAML serialization" do
       Int32.from_yaml(1.to_yaml).should eq(1)
     end
 
+    it "does for Float32" do
+      Float32.from_yaml(1.5_f32.to_yaml).should eq(1.5_f32)
+    end
+
+    it "does for Float32 (infinity)" do
+      Float32.from_yaml(Float32::INFINITY.to_yaml).should eq(Float32::INFINITY)
+    end
+
+    it "does for Float32 (-infinity)" do
+      Float32.from_yaml((-Float32::INFINITY).to_yaml).should eq(-Float32::INFINITY)
+    end
+
+    it "does for Float32 (nan)" do
+      Float32.from_yaml(Float32::NAN.to_yaml).nan?.should be_true
+    end
+
     it "does for Float64" do
       Float64.from_yaml(1.5.to_yaml).should eq(1.5)
+    end
+
+    it "does for Float64 (infinity)" do
+      Float64.from_yaml(Float64::INFINITY.to_yaml).should eq(Float64::INFINITY)
+    end
+
+    it "does for Float64 (-infinity)" do
+      Float64.from_yaml((-Float64::INFINITY).to_yaml).should eq(-Float64::INFINITY)
+    end
+
+    it "does for Float64 (nan)" do
+      Float64.from_yaml(Float64::NAN.to_yaml).nan?.should be_true
     end
 
     it "does for String" do
@@ -262,10 +329,18 @@ describe "YAML serialization" do
       String.from_yaml("hel\\lo".to_yaml).should eq("hel\\lo")
     end
 
+    it "does for String with unicode characters (#8131)" do
+      "你好".to_yaml.should contain("你好")
+    end
+
     it "quotes string if reserved" do
       ["1", "1.2", "true", "2010-11-12"].each do |string|
         string.to_yaml.should eq(%(--- "#{string}"\n))
       end
+    end
+
+    it "does for Path" do
+      Path.from_yaml(Path.new("foo", "bar", "baz").to_yaml).should eq(Path.new("foo", "bar", "baz"))
     end
 
     it "does for Array" do
@@ -292,12 +367,12 @@ describe "YAML serialization" do
       {x: 1, y: "hello"}.to_yaml.should eq({:x => 1, :y => "hello"}.to_yaml)
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       BigInt.from_yaml(big.to_yaml).should eq(big)
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
@@ -308,7 +383,7 @@ describe "YAML serialization" do
 
     it "does for utc time" do
       time = Time.utc(2010, 11, 12, 1, 2, 3)
-      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03\n")
+      assert_yaml_document_end(time.to_yaml, "--- 2010-11-12 01:02:03.000000000\n")
     end
 
     it "does for time at date" do
@@ -322,7 +397,13 @@ describe "YAML serialization" do
     end
 
     it "does for bytes" do
-      "hello".to_slice.to_yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      yaml = "hello".to_slice.to_yaml
+
+      if YAML.libyaml_version < SemanticVersion.new(0, 2, 2)
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n'\n")
+      else
+        yaml.should eq("--- !!binary 'aGVsbG8=\n\n  '\n")
+      end
     end
 
     it "does a full document" do
@@ -338,9 +419,9 @@ describe "YAML serialization" do
         :null  => nil,
       }
 
-      expected = "---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: \n"
+      expected = /\A---\nhello: World\ninteger: 2\nfloat: 3.5\nhash:\n  a: 1\n  b: 2\narray:\n- 1\n- 2\n- 3\nnull: ?\n\z/
 
-      data.to_yaml.should eq(expected)
+      data.to_yaml.should match(expected)
     end
 
     it "writes to a stream" do
@@ -361,7 +442,7 @@ describe "YAML serialization" do
       h[1] = 2
       h[h] = h
 
-      h.to_yaml.should eq("--- &1\n1: 2\n*1: *1\n")
+      h.to_yaml.should match(/\A--- &1\n1: 2\n\*1 ?: \*1\n\z/)
     end
   end
 end

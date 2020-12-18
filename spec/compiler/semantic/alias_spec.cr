@@ -317,4 +317,37 @@ describe "Semantic: alias" do
       Foo(Bar).new(Foo.new(1).as(Bar))
     ), "can't cast Foo(Int32) to Bar"
   end
+
+  it "can pass recursive alias to proc" do
+    assert_type(%(
+      class Object
+        def itself
+          self
+        end
+      end
+
+      alias Rec = Int32 | Array(Rec)
+
+      a = uninitialized Rec
+
+      f = ->(x : Rec) {}
+      f.call(a.itself)
+      )) { nil_type }
+  end
+
+  it "overloads union type through alias" do
+    assert_type(%(
+      alias X = Int8 | Int32
+
+      def foo(x : Int32)
+        1
+      end
+
+      def foo(x : X)
+        'a'
+      end
+
+      foo(1)
+     ), inject_primitives: false) { int32 }
+  end
 end

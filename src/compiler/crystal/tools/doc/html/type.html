@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new(type, canonical_base_url) %>
-  <meta id="repository-name" content="<%= type.repository_name %>">
-  <title><%= type.full_name %> - <%= type.repository_name %></title>
+  <%= HeadTemplate.new(project_info, type) %>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <title><%= type.full_name %> - <%= project_info.name %> <%= project_info.version %></title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "<%= type.path_to "" %>";
+  </script>
 </head>
 <body>
 
-<%= SidebarTemplate.new(type.repository_name, types, type) %>
+<%= Crystal::Doc::SVG_DEFS %>
+<%= SidebarTemplate.new(project_info, types, type) %>
 
 <div class="main-content">
 <h1 class="type-name">
@@ -24,13 +28,19 @@
 
 
 <% if doc = type.formatted_doc %>
-  <h2>Overview</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("overview") %>
+    Overview
+  </h2>
 
   <%= doc %>
 <% end %>
 
 <% if type.alias? %>
-  <h2>Alias Definition</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("alias-definition") %>
+    Alias Definition
+  </h2>
   <code><%= type.formatted_alias_definition %></code>
 <% end %>
 
@@ -40,14 +50,17 @@
 <%= OtherTypesTemplate.new("Direct including types", type, type.including_types) %>
 
 <% if locations = type.locations %>
-  <h2>Defined in:</h2>
+  <h2>
+    <%= Crystal::Doc.anchor_link("defined-in") %>
+    Defined in:
+  </h2>
   <% locations.each do |location| %>
-    <% if url = location.url %>
-      <a href="<%= url %>#L<%= location.line_number %>" target="_blank">
-        <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
+    <% if url = project_info.source_url(location) %>
+      <a href="<%= url %>" target="_blank">
+        <%= location.filename_in_project %><% if location.show_line_number %>:<%= location.line_number %><% end %>
       </a>
     <% else %>
-      <%= location.filename %><% if location.show_line_number %>:<%= location.line_number %><% end %>
+      <%= location.filename_in_project %><% if location.show_line_number %>:<%= location.line_number %><% end %>
     <% end %>
     <br/>
   <% end %>
@@ -55,9 +68,15 @@
 
 <% unless type.constants.empty? %>
   <% if type.enum? %>
-    <h2>Enum Members</h2>
+    <h2>
+      <%= Crystal::Doc.anchor_link("enum-members") %>
+      Enum Members
+    </h2>
   <% else %>
-    <h2>Constant Summary</h2>
+    <h2>
+      <%= Crystal::Doc.anchor_link("constant-summary") %>
+      Constant Summary
+    </h2>
   <% end %>
   <dl>
     <% type.constants.each do |const| %>

@@ -93,8 +93,8 @@ struct Crystal::Hasher
   end
 
   private def permute(v : UInt64)
-    @a = rotl32(@a ^ v) * C1
-    @b = (rotl32(@b) ^ v) * C2
+    @a = rotl32(@a ^ v) &* C1
+    @b = (rotl32(@b) ^ v) &* C2
     self
   end
 
@@ -102,16 +102,16 @@ struct Crystal::Hasher
     a, b = @a, @b
     a ^= (a >> 23) ^ (a >> 40)
     b ^= (b >> 23) ^ (b >> 40)
-    a *= C1
-    b *= C2
+    a &*= C1
+    b &*= C2
     a ^= a >> 32
     b ^= b >> 32
-    a + b
+    a &+ b
   end
 
   def nil
-    @a += @b
-    @b += 1
+    @a &+= @b
+    @b &+= 1
     self
   end
 
@@ -176,7 +176,7 @@ struct Crystal::Hasher
 
   def float(value : Float32)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float32 and Int32 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int32)
@@ -196,7 +196,7 @@ struct Crystal::Hasher
 
   def float(value : Float64)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float64 and Int64 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int64)
@@ -244,7 +244,7 @@ struct Crystal::Hasher
   end
 
   private def read_u24(ptr, rest)
-    ptr[0].to_u64 | (ptr[rest/2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
+    ptr[0].to_u64 | (ptr[rest // 2].to_u64 << 8) | (ptr[rest - 1].to_u64 << 16)
   end
 
   private def read_u32(ptr)
@@ -289,8 +289,7 @@ struct Crystal::Hasher
     value.crystal_type_id.hash(self)
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     io << "#{self.class}(hidden_state)"
-    nil
   end
 end

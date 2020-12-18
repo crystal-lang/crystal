@@ -29,7 +29,7 @@ describe "Codegen: responds_to?" do
     run("class Reference; def foo; end; end; (1 == 2 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
 
-  it "codegends responds_to? with generic class (1)" do
+  it "codegens responds_to? with generic class (1)" do
     run(%(
       class Foo(T)
         def foo
@@ -40,7 +40,7 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_true
   end
 
-  it "codegends responds_to? with generic class (2)" do
+  it "codegens responds_to? with generic class (2)" do
     run(%(
       class Foo(T)
         def foo

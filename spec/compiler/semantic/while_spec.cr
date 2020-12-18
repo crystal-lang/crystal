@@ -15,7 +15,7 @@ describe "Semantic: while" do
 
   it "reports break cannot be used outside a while" do
     assert_error "break",
-      "Invalid break"
+      "invalid break"
   end
 
   it "types while true as NoReturn" do
@@ -32,7 +32,7 @@ describe "Semantic: while" do
 
   it "reports next cannot be used outside a while" do
     assert_error "next",
-      "Invalid next"
+      "invalid next"
   end
 
   it "uses var type inside while if endless loop" do
@@ -196,5 +196,34 @@ describe "Semantic: while" do
       end
       b
       )) { nilable types["Foo"] }
+  end
+
+  it "doesn't type var as nilable after break inside rescue" do
+    assert_type(%(
+      while true
+        begin
+          foo = 1
+          break
+        rescue
+        end
+      end
+      foo
+      )) { int32 }
+  end
+
+  it "types variable as nilable if raise before assign" do
+    assert_type(%(
+      require "prelude"
+
+      while true
+        begin
+          raise "oops"
+          foo = 12345
+        rescue
+        end
+        break
+      end
+      foo
+      )) { nilable int32 }
   end
 end

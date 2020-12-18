@@ -41,7 +41,7 @@ struct LLVM::Target
     target_machine ? TargetMachine.new(target_machine) : raise "Couldn't create target machine"
   end
 
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << "LLVM::Target(name="
     name.inspect(io)
     io << ", description="
@@ -49,7 +49,7 @@ struct LLVM::Target
     io << ')'
   end
 
-  def inspect(io)
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 

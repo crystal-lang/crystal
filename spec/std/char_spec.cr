@@ -373,10 +373,10 @@ describe "Char" do
   end
 
   it "does number?" do
-    it { '1'.number?.should be_true }
-    it { '٠'.number?.should be_true }
-    it { '٢'.number?.should be_true }
-    it { 'a'.number?.should be_false }
+    '1'.number?.should be_true
+    '٠'.number?.should be_true
+    '٢'.number?.should be_true
+    'a'.number?.should be_false
   end
 
   it "does ascii_control?" do

@@ -47,6 +47,9 @@ class Array(T)
   include Indexable(T)
   include Comparable(Array)
 
+  # Size of an Array that we consider small to do linear scans or other optimizations.
+  private SMALL_ARRAY_SIZE = 16
+
   # Returns the number of elements in the array.
   #
   # ```
@@ -55,7 +58,7 @@ class Array(T)
   getter size : Int32
   @capacity : Int32
 
-  # Creates a new empty Array.
+  # Creates a new empty `Array`.
   def initialize
     @size = 0
     @capacity = 0
@@ -167,11 +170,13 @@ class Array(T)
     false
   end
 
-  # Combined comparison operator. Returns *0* if `self` equals *other*, *1* if
-  # `self` is greater than *other* and *-1* if `self` is smaller than *other*.
+  # Combined comparison operator.
+  #
+  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
+  # or is greater than *other*.
   #
   # It compares the elements of both arrays in the same position using the
-  # `<=>` operator.  As soon as one of such comparisons returns a non-zero
+  # `<=>` operator. As soon as one of such comparisons returns a non-zero
   # value, that result is the return value of the comparison.
   #
   # If all elements are equal, the comparison is based on the size of the arrays.
@@ -202,6 +207,16 @@ class Array(T)
   def &(other : Array(U)) forall U
     return Array(T).new if self.empty? || other.empty?
 
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if self.size + other.size <= SMALL_ARRAY_SIZE * 2
+      ary = Array(T).new
+      each do |elem|
+        ary << elem if !ary.includes?(elem) && other.includes?(elem)
+      end
+      return ary
+    end
+
     hash = other.to_lookup_hash
     hash_size = hash.size
     Array(T).build(Math.min(size, other.size)) do |buffer|
@@ -228,6 +243,19 @@ class Array(T)
   #
   # See also: `#uniq`.
   def |(other : Array(U)) forall U
+    # Heuristic: if the combined size is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size + other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T | U).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      other.each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
     Array(T | U).build(size + other.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
@@ -272,6 +300,16 @@ class Array(T)
   # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U)) forall U
+    # Heuristic: if any of the arrays is small we just do a linear scan
+    # instead of using a Hash for lookup.
+    if size <= SMALL_ARRAY_SIZE || other.size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless other.includes?(elem)
+      end
+      return ary
+    end
+
     ary = Array(T).new(Math.max(size - other.size, 0))
     hash = other.to_lookup_hash
     each do |obj|
@@ -286,11 +324,31 @@ class Array(T)
   # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
   # ```
   def *(times : Int)
-    ary = Array(T).new(size * times)
-    times.times do
-      ary.concat(self)
+    if times == 0 || empty?
+      return Array(T).new
     end
-    ary
+
+    if times == 1
+      return dup
+    end
+
+    if size == 1
+      return Array(T).new(times, first)
+    end
+
+    new_size = size * times
+    Array(T).build(new_size) do |buffer|
+      buffer.copy_from(to_unsafe, size)
+      n = size
+
+      while n <= new_size // 2
+        (buffer + n).copy_from(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).copy_from(buffer, new_size - n)
+      new_size
+    end
   end
 
   # Append. Alias for `push`.
@@ -341,7 +399,13 @@ class Array(T)
   def []=(index : Int, count : Int, value : T)
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
-    index = check_index_out_of_bounds index
+    index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
+    raise IndexError.new unless 0 <= index <= size
+
     count = index + count <= size ? count : size - index
 
     case count
@@ -370,8 +434,12 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a[1...1] = 6
   # a # => [1, 6, 2, 3, 4, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[2...] = 6
+  # a # => [1, 2, 6]
   # ```
-  def []=(range : Range(Int, Int), value : T)
+  def []=(range : Range, value : T)
     self[*Indexable.range_to_index_and_count(range, size)] = value
   end
 
@@ -393,7 +461,13 @@ class Array(T)
   def []=(index : Int, count : Int, values : Array(T))
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
-    index = check_index_out_of_bounds index
+    index += size if index < 0
+
+    # We allow index == size because the range to replace
+    # can start at exactly the end of the array.
+    # So, we can't use check_index_out_of_bounds.
+    raise IndexError.new unless 0 <= index <= size
+
     count = index + count <= size ? count : size - index
     diff = values.size - count
 
@@ -432,8 +506,12 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a[1..3] = [6, 7, 8, 9, 10]
   # a # => [1, 6, 7, 8, 9, 10, 5]
+  #
+  # a = [1, 2, 3, 4, 5]
+  # a[2..] = [6, 7, 8, 9, 10]
+  # a # => [1, 2, 6, 7, 8, 9, 10]
   # ```
-  def []=(range : Range(Int, Int), values : Array(T))
+  def []=(range : Range, values : Array(T))
     self[*Indexable.range_to_index_and_count(range, size)] = values
   end
 
@@ -443,7 +521,7 @@ class Array(T)
   # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
-  # Raises `IndexError` if the starting index is out of range.
+  # Raises `IndexError` if the range's start is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
@@ -452,9 +530,21 @@ class Array(T)
   # a[6..10]   # raise IndexError
   # a[5..10]   # => []
   # a[-2...-1] # => ["d"]
+  # a[2..]     # => ["c", "d", "e"]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
+  end
+
+  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+  #
+  # ```
+  # a = ["a", "b", "c", "d", "e"]
+  # a[6..10]? # => nil
+  # a[6..]?   # => nil
+  # ```
+  def []?(range : Range)
+    self[*Indexable.range_to_index_and_count(range, size)]?
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -464,34 +554,37 @@ class Array(T)
   # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
-  # Raises `IndexError` if the starting index is out of range.
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[-3, 3] # => ["c", "d", "e"]
-  # a[6, 1]  # raise IndexError
   # a[1, 2]  # => ["b", "c"]
   # a[5, 1]  # => []
+  # a[6, 1]  # raises IndexError
   # ```
   def [](start : Int, count : Int)
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    self[start, count]? || raise IndexError.new
+  end
 
-    if start == size
-      return Array(T).new
-    end
+  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    return Array(T).new if start == size
 
     start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
 
-    if count == 0
-      return Array(T).new
-    end
+    if 0 <= start <= size
+      return Array(T).new if count == 0
 
-    count = Math.min(count, size - start)
+      count = Math.min(count, size - start)
 
-    Array(T).build(count) do |buffer|
-      buffer.copy_from(@buffer + start, count)
-      count
+      Array(T).build(count) do |buffer|
+        buffer.copy_from(@buffer + start, count)
+        count
+      end
     end
   end
 
@@ -529,7 +622,18 @@ class Array(T)
   # ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
-    Array(T).new(size) { |i| @buffer[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Array(T).new(size) { |i| @buffer[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Array(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone.as(T)
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Returns a copy of `self` with all `nil` elements removed.
@@ -572,7 +676,7 @@ class Array(T)
     self
   end
 
-  # ditto
+  # :ditto:
   def concat(other : Enumerable)
     left_before_resize = @capacity - @size
     len = @size
@@ -640,7 +744,7 @@ class Array(T)
   # a                    # => ["ant", "dog"]
   # a.delete_at(99..100) # raises IndexError
   # ```
-  def delete_at(range : Range(Int, Int))
+  def delete_at(range : Range)
     index, count = Indexable.range_to_index_and_count(range, self.size)
     delete_at(index, count)
   end
@@ -657,6 +761,11 @@ class Array(T)
   # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int)
+    index += size if index < 0
+    unless 0 <= index <= size
+      raise IndexError.new
+    end
+
     val = self[index, count]
     count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
@@ -754,7 +863,7 @@ class Array(T)
   # a = [1, 2, 3, 4, 5, 6]
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
-  def fill(range : Range(Int, Int))
+  def fill(range : Range)
     fill(*Indexable.range_to_index_and_count(range, size)) do |i|
       yield i
     end
@@ -767,7 +876,17 @@ class Array(T)
   # a.fill(9) # => [9, 9, 9]
   # ```
   def fill(value : T)
-    fill { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        to_unsafe.clear(size)
+
+        self
+      else
+        fill { value }
+      end
+    {% else %}
+      fill { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
@@ -779,7 +898,21 @@ class Array(T)
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
   def fill(value : T, from : Int)
-    fill(from) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size
+
+        (to_unsafe + from).clear(size - from)
+
+        self
+      else
+        fill(from) { value }
+      end
+    {% else %}
+      fill(from) { value }
+    {% end %}
   end
 
   # Replaces every element in `self`, starting at *from* and only *count* times,
@@ -792,7 +925,23 @@ class Array(T)
   # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, from : Int, count : Int)
-    fill(from, count) { value }
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        return self if count <= 0
+
+        from += size if from < 0
+
+        raise IndexError.new unless 0 <= from < size && from + count <= size
+
+        (to_unsafe + from).clear(count)
+
+        self
+      else
+        fill(from, count) { value }
+      end
+    {% else %}
+      fill(from, count) { value }
+    {% end %}
   end
 
   # Replaces every element in *range* with *value*. Returns `self`.
@@ -803,8 +952,18 @@ class Array(T)
   # a = [1, 2, 3, 4, 5]
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
-  def fill(value : T, range : Range(Int, Int))
-    fill(range) { value }
+  def fill(value : T, range : Range)
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        fill(value, *Indexable.range_to_index_and_count(range, size))
+
+        self
+      else
+        fill(range) { value }
+      end
+    {% else %}
+      fill(range) { value }
+    {% end %}
   end
 
   # Returns the first *n* elements of the array.
@@ -846,7 +1005,7 @@ class Array(T)
   end
 
   # :nodoc:
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     to_s io
   end
 
@@ -890,17 +1049,58 @@ class Array(T)
   # Modifies `self`, keeping only the elements in the collection for which the
   # passed block returns `true`. Returns `self`.
   #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select! { |x| x > 3 }
+  # ary # => [6, 4, 8]
+  # ```
+  #
   # See also: `Array#select`.
   def select!
     reject! { |elem| !yield(elem) }
   end
 
+  # Modifies `self`, keeping only the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select!(3..7)
+  # ary # => [6, 4]
+  # ```
+  #
+  # See also: `Array#reject!`.
+  def select!(pattern)
+    self.select! { |elem| pattern === elem }
+  end
+
   # Modifies `self`, deleting the elements in the collection for which the
   # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.reject! { |x| x > 3 }
+  # ary # => [1, 2]
+  # ```
   #
   # See also: `Array#reject`.
   def reject!
     internal_delete { |e| yield e }
+    self
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.reject!(3..7)
+  # ary # => [1, 2, 8]
+  # ```
+  #
+  # See also: `Array#select!`.
+  def reject!(pattern)
+    reject! { |elem| pattern === elem }
     self
   end
 
@@ -913,7 +1113,7 @@ class Array(T)
     match = nil
     while i1 < @size
       e = @buffer[i1]
-      if yield e
+      if yield e, i1
         match = e
       else
         if i1 != i2
@@ -936,13 +1136,19 @@ class Array(T)
   end
 
   # Optimized version of `Enumerable#map_with_index`.
-  def map_with_index(&block : T, Int32 -> U) forall U
-    Array(U).new(size) { |i| yield @buffer[i], i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
+    Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
 
   # Like `map_with_index`, but mutates `self` instead of allocating a new object.
-  def map_with_index!(&block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
 
@@ -1405,11 +1611,45 @@ class Array(T)
     self
   end
 
+  # Returns `self` with all the elements shifted `n` times.
+  #
+  # ```
+  # a1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a3 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  #
+  # a1.rotate!
+  # a2.rotate!(1)
+  # a3.rotate!(3)
+  #
+  # a1 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a2 # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a3 # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # ```
   def rotate!(n = 1)
     return self if size == 0
     n %= size
-    return self if n == 0
-    if n <= size / 2
+
+    if n == 0
+    elsif n == 1
+      tmp = self[0]
+      @buffer.move_from(@buffer + n, size - n)
+      self[-1] = tmp
+    elsif n == (size - 1)
+      tmp = self[-1]
+      (@buffer + size - n).move_from(@buffer, n)
+      self[0] = tmp
+    elsif n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer, n)
+      @buffer.move_from(@buffer + n, size - n)
+      (@buffer + size - n).copy_from(tmp_buffer.to_unsafe, n)
+    elsif size - n <= SMALL_ARRAY_SIZE
+      tmp_buffer = uninitialized StaticArray(T, SMALL_ARRAY_SIZE)
+      tmp_buffer.to_unsafe.copy_from(@buffer + n, size - n)
+      (@buffer + size - n).move_from(@buffer, n)
+      @buffer.copy_from(tmp_buffer.to_unsafe, size - n)
+    elsif n <= size // 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
       (@buffer + size - n).copy_from(tmp.to_unsafe, n)
@@ -1421,6 +1661,15 @@ class Array(T)
     self
   end
 
+  # Returns an array with all the elements shifted `n` times.
+  #
+  # ```
+  # a = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # a.rotate    # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(1) # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+  # a.rotate(3) # => [3, 4, 5, 6, 7, 8, 9, 0, 1, 2]
+  # a           # => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  # ```
   def rotate(n = 1)
     return self if size == 0
     n %= size
@@ -1547,7 +1796,7 @@ class Array(T)
   end
 
   # Modifies `self` by randomizing the order of elements in the collection
-  # using the given *random* number generator.  Returns `self`.
+  # using the given *random* number generator. Returns `self`.
   def shuffle!(random = Random::DEFAULT)
     @buffer.shuffle!(size, random)
     self
@@ -1579,7 +1828,11 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
-  def sort(&block : T, T -> Int32) : Array(T)
+  def sort(&block : T, T -> U) : Array(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
     dup.sort! &block
   end
 
@@ -1592,7 +1845,7 @@ class Array(T)
   # a # => [1, 2, 3]
   # ```
   def sort! : Array(T)
-    Array.intro_sort!(@buffer, @size)
+    Slice.new(to_unsafe, size).sort!
     self
   end
 
@@ -1609,8 +1862,12 @@ class Array(T)
   # a.sort! { |a, b| b <=> a }
   # a # => [3, 2, 1]
   # ```
-  def sort!(&block : T, T -> Int32) : Array(T)
-    Array.intro_sort!(@buffer, @size, block)
+  def sort!(&block : T, T -> U) : Array(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    Slice.new(to_unsafe, size).sort!(&block)
     self
   end
 
@@ -1673,10 +1930,10 @@ class Array(T)
     self
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     executed = exec_recursive(:to_s) do
       io << '['
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << ']'
     end
     io << "[...]" unless executed
@@ -1733,7 +1990,22 @@ class Array(T)
   # a      # => [ "a", "a", "b", "b", "c" ]
   # ```
   def uniq
-    uniq &.itself
+    if size <= 1
+      return dup
+    end
+
+    # Heuristic: for a small array it's faster to do a linear scan
+    # than creating a Hash to find out duplicates.
+    if size <= SMALL_ARRAY_SIZE
+      ary = Array(T).new
+      each do |elem|
+        ary << elem unless ary.includes?(elem)
+      end
+      return ary
+    end
+
+    # Convert the Array into a Hash and then ask for its values
+    to_lookup_hash.values
   end
 
   # Returns a new `Array` by removing duplicate values in `self`, using the block's
@@ -1761,6 +2033,20 @@ class Array(T)
   # a       # => ["a", "b", "c"]
   # ```
   def uniq!
+    if size <= 1
+      return self
+    end
+
+    # Heuristic: for small arrays we do a linear scan, which is usually
+    # faster than creating an intermediate Hash.
+    if size <= SMALL_ARRAY_SIZE
+      # We simply delete elements we've seen before
+      internal_delete do |elem, index|
+        (0...index).any? { |subindex| elem == to_unsafe[subindex] }
+      end
+      return self
+    end
+
     uniq! &.itself
   end
 
@@ -1852,202 +2138,6 @@ class Array(T)
     end
   end
 
-  protected def self.intro_sort!(a, n)
-    return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2)
-    insertion_sort!(a, n)
-  end
-
-  protected def self.quick_sort_for_intro_sort!(a, n, d)
-    while n > 16
-      if d == 0
-        heap_sort!(a, n)
-        return
-      end
-      d -= 1
-      center_median!(a, n)
-      c = partition_for_quick_sort!(a, n)
-      quick_sort_for_intro_sort!(c, n - (c - a), d)
-      n = c - a
-    end
-  end
-
-  protected def self.heap_sort!(a, n)
-    (n / 2).downto 0 do |p|
-      heapify!(a, p, n)
-    end
-    while n > 1
-      n -= 1
-      a.value, a[n] = a[n], a.value
-      heapify!(a, 0, n)
-    end
-  end
-
-  protected def self.heapify!(a, p, n)
-    v, c = a[p], p
-    while c < (n - 1) / 2
-      c = 2 * (c + 1)
-      c -= 1 if a[c] < a[c - 1]
-      break unless v <= a[c]
-      a[p] = a[c]
-      p = c
-    end
-    if n & 1 == 0 && c == n / 2 - 1
-      c = 2 * c + 1
-      if v < a[c]
-        a[p] = a[c]
-        p = c
-      end
-    end
-    a[p] = v
-  end
-
-  protected def self.center_median!(a, n)
-    b, c = a + n / 2, a + n - 1
-    if a.value <= b.value
-      if b.value <= c.value
-        return
-      elsif a.value <= c.value
-        b.value, c.value = c.value, b.value
-      else
-        a.value, b.value, c.value = c.value, a.value, b.value
-      end
-    elsif a.value <= c.value
-      a.value, b.value = b.value, a.value
-    elsif b.value <= c.value
-      a.value, b.value, c.value = b.value, c.value, a.value
-    else
-      a.value, c.value = c.value, a.value
-    end
-  end
-
-  protected def self.partition_for_quick_sort!(a, n)
-    v, l, r = a[n / 2], a + 1, a + n - 1
-    loop do
-      while l.value < v
-        l += 1
-      end
-      r -= 1
-      while v < r.value
-        r -= 1
-      end
-      return l unless l < r
-      l.value, r.value = r.value, l.value
-      l += 1
-    end
-  end
-
-  protected def self.insertion_sort!(a, n)
-    (1...n).each do |i|
-      l = a + i
-      v = l.value
-      p = l - 1
-      while l > a && v < p.value
-        l.value = p.value
-        l, p = p, p - 1
-      end
-      l.value = v
-    end
-  end
-
-  protected def self.intro_sort!(a, n, comp)
-    return if n < 2
-    quick_sort_for_intro_sort!(a, n, Math.log2(n).to_i * 2, comp)
-    insertion_sort!(a, n, comp)
-  end
-
-  protected def self.quick_sort_for_intro_sort!(a, n, d, comp)
-    while n > 16
-      if d == 0
-        heap_sort!(a, n, comp)
-        return
-      end
-      d -= 1
-      center_median!(a, n, comp)
-      c = partition_for_quick_sort!(a, n, comp)
-      quick_sort_for_intro_sort!(c, n - (c - a), d, comp)
-      n = c - a
-    end
-  end
-
-  protected def self.heap_sort!(a, n, comp)
-    (n / 2).downto 0 do |p|
-      heapify!(a, p, n, comp)
-    end
-    while n > 1
-      n -= 1
-      a.value, a[n] = a[n], a.value
-      heapify!(a, 0, n, comp)
-    end
-  end
-
-  protected def self.heapify!(a, p, n, comp)
-    v, c = a[p], p
-    while c < (n - 1) / 2
-      c = 2 * (c + 1)
-      c -= 1 if comp.call(a[c], a[c - 1]) < 0
-      break unless comp.call(v, a[c]) <= 0
-      a[p] = a[c]
-      p = c
-    end
-    if n & 1 == 0 && c == n / 2 - 1
-      c = 2 * c + 1
-      if comp.call(v, a[c]) < 0
-        a[p] = a[c]
-        p = c
-      end
-    end
-    a[p] = v
-  end
-
-  protected def self.center_median!(a, n, comp)
-    b, c = a + n / 2, a + n - 1
-    if comp.call(a.value, b.value) <= 0
-      if comp.call(b.value, c.value) <= 0
-        return
-      elsif comp.call(a.value, c.value) <= 0
-        b.value, c.value = c.value, b.value
-      else
-        a.value, b.value, c.value = c.value, a.value, b.value
-      end
-    elsif comp.call(a.value, c.value) <= 0
-      a.value, b.value = b.value, a.value
-    elsif comp.call(b.value, c.value) <= 0
-      a.value, b.value, c.value = b.value, c.value, a.value
-    else
-      a.value, c.value = c.value, a.value
-    end
-  end
-
-  protected def self.partition_for_quick_sort!(a, n, comp)
-    v, l, r = a[n / 2], a + 1, a + n - 1
-    loop do
-      while l < a + n && comp.call(l.value, v) < 0
-        l += 1
-      end
-      r -= 1
-      while r >= a && comp.call(v, r.value) < 0
-        r -= 1
-      end
-      return l unless l < r
-      l.value, r.value = r.value, l.value
-      l += 1
-    end
-  end
-
-  protected def self.insertion_sort!(a, n, comp)
-    (1...n).each do |i|
-      l = a + i
-      v = l.value
-      p = l - 1
-      while l > a && comp.call(v, p.value) < 0
-        l.value = p.value
-        l, p = p, p - 1
-      end
-      l.value = v
-    end
-  end
-
   protected def to_lookup_hash
     to_lookup_hash { |elem| elem }
   end
@@ -2129,15 +2219,6 @@ class Array(T)
       @stop = true
       stop
     end
-
-    def rewind
-      @cycles = (@n - @size + 1..@n).to_a.reverse!
-      @pool.replace(@array)
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
-    end
   end
 
   private class CombinationIterator(T)
@@ -2199,15 +2280,6 @@ class Array(T)
       @stop = true
       stop
     end
-
-    def rewind
-      @pool.replace(@copy)
-      @indices = (0...@size).to_a
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
-    end
   end
 
   private class RepeatedCombinationIterator(T)
@@ -2265,17 +2337,6 @@ class Array(T)
 
       @stop = true
       stop
-    end
-
-    def rewind
-      if @n > 0
-        @indices.fill(0)
-        @pool.fill(@copy[0])
-      end
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-      self
     end
   end
 

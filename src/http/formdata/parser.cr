@@ -1,8 +1,8 @@
 module HTTP::FormData
   class Parser
-    # Create a new parser which parses *io* with multipart boundary *boundary*.
+    # Creates a new parser which parses *io* with multipart boundary *boundary*.
     def initialize(io, boundary)
-      @multipart = Multipart::Parser.new(io, boundary)
+      @multipart = MIME::Multipart::Parser.new(io, boundary)
     end
 
     # Parses the next form-data part and yields field name, io, `FileMetadata`,
@@ -15,6 +15,8 @@ module HTTP::FormData
     # into memory.
     #
     # ```
+    # require "http"
+    #
     # form_data = "--aA40\r\nContent-Disposition: form-data; name=\"field1\"; filename=\"foo.txt\"; size=13\r\nContent-Type: text/plain\r\n\r\nfield data\r\n--aA40--"
     # parser = HTTP::FormData::Parser.new(IO::Memory.new(form_data), "aA40")
     # parser.next do |part|

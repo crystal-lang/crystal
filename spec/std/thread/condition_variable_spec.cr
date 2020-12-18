@@ -1,3 +1,11 @@
+{% if flag?(:musl) %}
+  # FIXME: These thread specs occasionally fail on musl/alpine based ci, so
+  # they're disabled for now to reduce noise.
+  # See https://github.com/crystal-lang/crystal/issues/8738
+  pending Thread::ConditionVariable
+  {% skip_file %}
+{% end %}
+
 require "spec"
 
 describe Thread::ConditionVariable do
@@ -37,7 +45,7 @@ describe Thread::ConditionVariable do
     # first, and signal into the void.
     #
     # since increments to waiting are synchronized, at least 4 threads are
-    # guaranteed to be waiting when waiting is 5, which is enough for futher
+    # guaranteed to be waiting when waiting is 5, which is enough for further
     # tests to never hangup.
     until waiting == 5
       Thread.yield

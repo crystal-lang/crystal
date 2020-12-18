@@ -24,11 +24,11 @@ describe "Code gen: op assign" do
       end
 
       def foo
-        Global.value += 1
+        Global.value &+= 1
         Foo.new
       end
 
-      foo.bar += 2
+      foo.bar &+= 2
 
       Global.value
       )).to_i.should eq(1)
@@ -57,16 +57,16 @@ describe "Code gen: op assign" do
       end
 
       def foo
-        Global.value += 1
+        Global.value &+= 1
         Foo.new
       end
 
       def bar
-        Global.value += 10
+        Global.value &+= 10
         0
       end
 
-      foo[bar] += 2
+      foo[bar] &+= 2
 
       Global.value
       )).to_i.should eq(11)

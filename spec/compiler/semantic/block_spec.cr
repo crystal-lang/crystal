@@ -1075,7 +1075,7 @@ describe "Block inference" do
 
       bar
       ),
-      "can't break from captured block"
+      "can't break from captured block, try using `next`."
   end
 
   it "errors if doing next in proc literal" do
@@ -1085,7 +1085,7 @@ describe "Block inference" do
       }
       foo.call
       ),
-      "Invalid next"
+      "invalid next"
   end
 
   it "does next from captured block" do
@@ -1403,5 +1403,44 @@ describe "Block inference" do
       end
       i
       ), inject_primitives: false) { int32 }
+  end
+
+  it "can infer block type given that the method has a return type (#7160)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          0
+        end
+      end
+
+      class Node
+        @child : Node?
+
+        def sum : Int32
+          if child = @child
+            child.call(&.sum)
+          else
+            0
+          end
+        end
+
+        def call(&block : self -> T) forall T
+          T.foo
+        end
+      end
+
+      Node.new.sum
+      )) { int32 }
+  end
+
+  it "doesn't crash on cleaning up typeof node without dependencies (#8669)" do
+    semantic(%(
+      def foo(&)
+      end
+
+      foo do
+        typeof(bar)
+      end
+      ))
   end
 end

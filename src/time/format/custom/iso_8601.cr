@@ -96,11 +96,11 @@ struct Time::Format
         digits = @reader.pos - pos
         if digits > 6
           # make sure to avoid overflow
-          decimals = decimals / 10_i64 ** (digits - 6)
+          decimals = decimals // 10_i64 ** (digits - 6)
           digits = 6
         end
 
-        @nanosecond_offset = decimals.to_i64 * 10 ** 9 / 10 ** digits * decimal_seconds
+        @nanosecond_offset = decimals.to_i64 * 10 ** 9 // 10 ** digits * decimal_seconds
       end
     end
   end

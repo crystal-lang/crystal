@@ -33,11 +33,26 @@ struct Time::Format
       @second = 0
       @nanosecond = 0
       @pm = false
+      @hour_is_12 = false
       @nanosecond_offset = 0_i64
     end
 
     def time(location : Location? = nil)
-      @hour += 12 if @pm
+      if @hour_is_12
+        if @hour > 12
+          raise ArgumentError.new("Invalid hour for 12-hour clock")
+        end
+
+        if @pm
+          @hour += 12 unless @hour == 12
+        else
+          if @hour == 0
+            raise ArgumentError.new("Invalid hour for 12-hour clock")
+          end
+
+          @hour = 0 if @hour == 12
+        end
+      end
 
       if unix_seconds = @unix_seconds
         return Time.unix(unix_seconds)
@@ -52,10 +67,10 @@ struct Time::Format
         # If all components of a week date are available, they are used to create a Time instance
         time = Time.week_date calendar_week_year, calendar_week_week, day_of_week, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       else
-        time = Time.new @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
+        time = Time.local @year, @month, @day, @hour, @minute, @second, nanosecond: @nanosecond, location: location
       end
 
-      time = time.add_span 0, @nanosecond_offset
+      time = time.shift 0, @nanosecond_offset
 
       time
     end
@@ -203,18 +218,22 @@ struct Time::Format
     end
 
     def hour_24_zero_padded
+      @hour_is_12 = false
       @hour = consume_number(2)
     end
 
     def hour_24_blank_padded
+      @hour_is_12 = false
       @hour = consume_number_blank_padded(2)
     end
 
     def hour_12_zero_padded
       hour_24_zero_padded
+      @hour_is_12 = true
     end
 
     def hour_12_blank_padded
+      @hour_is_12 = true
       @hour = consume_number_blank_padded(2)
     end
 
@@ -269,7 +288,7 @@ struct Time::Format
       string = consume_string
       case string.downcase
       when "am"
-        # skip
+        @pm = false
       when "pm"
         @pm = true
       else
@@ -297,6 +316,8 @@ struct Time::Format
         next_char
       when '+'
         next_char
+      else
+        # no sign prefix
       end
 
       @unix_seconds = consume_number_i64(19) * (negative ? -1 : 1)
@@ -332,13 +353,13 @@ struct Time::Format
     end
 
     def time_zone_z
-      raise "Invalid timezone" unless {'Z', 'z'}.includes? current_char
+      raise "Invalid timezone" unless current_char.in?('Z', 'z')
 
       @location = Location::UTC
       next_char
     end
 
-    def time_zone_offset(force_colon = false, allow_colon = true, allow_seconds = true, force_zero_padding = true, force_minutes = true)
+    def time_zone_offset(force_colon = false, allow_colon = true, format_seconds = false, parse_seconds = true, force_zero_padding = true, force_minutes = true)
       case current_char
       when '-'
         sign = -1
@@ -386,7 +407,7 @@ struct Time::Format
       end
 
       seconds = 0
-      if @reader.has_next? && allow_seconds
+      if @reader.has_next? && parse_seconds
         pos = @reader.pos
         if char == ':'
           char = next_char

@@ -267,7 +267,7 @@ describe "Semantic: ssa" do
         LibC.exit
       end
       a
-      )) { union_of [int32, char, string] of Type }
+      )) { string }
   end
 
   it "types a var after rescue as being nilable" do
@@ -465,7 +465,7 @@ describe "Semantic: ssa" do
       ") { nilable char }
   end
 
-  it "types while with break doesn't infect initial vas" do
+  it "types while with break doesn't infect initial vars" do
     assert_type("
       a = 1
       b = 1

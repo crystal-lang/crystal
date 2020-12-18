@@ -42,7 +42,7 @@ struct Float
   end
 
   def //(other)
-    (self / other).floor
+    self.fdiv(other).floor
   end
 
   def %(other)
@@ -65,15 +65,11 @@ struct Float
     !nan? && !infinite?
   end
 
-  def fdiv(other)
-    self / other
-  end
-
   def modulo(other)
     if other == 0.0
       raise DivisionByZeroError.new
     else
-      self - other * self.fdiv(other).floor
+      self - other * (self // other)
     end
   end
 
@@ -139,6 +135,14 @@ struct Float32
     value.to_f32
   end
 
+  # Returns a `Float32` by invoking `to_f32!` on *value*.
+  def self.new!(value)
+    value.to_f32!
+  end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
+  Number.expand_div [Float64], Float64
+
   def ceil
     LibM.ceil_f32(self)
   end
@@ -171,19 +175,14 @@ struct Float32
     self ** other.to_f32
   end
 
-  def to_s
+  def to_s : String
     String.build(22) do |buffer|
       Printer.print(self, buffer)
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     Printer.print(self, io)
-  end
-
-  def inspect(io)
-    to_s(io)
-    io << "_f32"
   end
 
   def clone
@@ -223,6 +222,14 @@ struct Float64
     value.to_f64
   end
 
+  # Returns a `Float64` by invoking `to_f64!` on *value*.
+  def Float64.new!(value)
+    value.to_f64!
+  end
+
+  Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
+  Number.expand_div [Float32], Float64
+
   def ceil
     LibM.ceil_f64(self)
   end
@@ -255,13 +262,13 @@ struct Float64
     self ** other.to_f64
   end
 
-  def to_s
+  def to_s : String
     String.build(22) do |buffer|
       Printer.print(self, buffer)
     end
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     Printer.print(self, io)
   end
 

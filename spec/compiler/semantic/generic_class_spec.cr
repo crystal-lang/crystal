@@ -23,7 +23,7 @@ describe "Semantic: generic class" do
       "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
-  it "inhertis from generic with instantiation" do
+  it "inherits from generic with instantiation" do
     assert_type(%(
       class Foo(T)
         def t
@@ -38,7 +38,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (1)" do
+  it "inherits from generic with forwarding (1)" do
     assert_type(%(
       class Foo(T)
         def t
@@ -53,7 +53,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (2)" do
+  it "inherits from generic with forwarding (2)" do
     assert_type(%(
       class Foo(T)
       end
@@ -68,7 +68,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with instantiation with instance var" do
+  it "inherits from generic with instantiation with instance var" do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)
@@ -479,7 +479,7 @@ describe "Semantic: generic class" do
       "use a more specific type"
   end
 
-  it "errors on too nested generic instance" do
+  pending_win32 "errors on too nested generic instance" do
     assert_error %(
       class Foo(T)
       end
@@ -493,7 +493,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested generic instance, with union type" do
+  pending_win32 "errors on too nested generic instance, with union type" do
     assert_error %(
       class Foo(T)
       end
@@ -507,7 +507,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested tuple instance" do
+  pending_win32 "errors on too nested tuple instance" do
     assert_error %(
       def foo
         {typeof(foo)}
@@ -625,20 +625,17 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't duplicate overload on generic class class method (#2385)" do
-    nodes = parse(%(
+    error = assert_error <<-CR,
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      ))
-    begin
-      semantic(nodes)
-    rescue ex : TypeException
-      msg = ex.to_s.lines.map(&.strip)
-      msg.count("- Foo(T).foo(x : Int32)").should eq(1)
-    end
+      CR
+      inject_primitives: false
+
+    error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
 
   # Given:
@@ -1075,5 +1072,93 @@ describe "Semantic: generic class" do
       f = Foo(1).new
       f.foo
       )) { generic_class "Foo", 1.int32 }
+  end
+
+  it "doesn't consider unbound generic instantiations as concrete (#7200)" do
+    assert_type(%(
+      module Moo
+      end
+
+      abstract class Foo(T)
+        include Moo
+
+        def call
+          T.as(Int32.class)
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class MooHolder
+        def initialize(@moo : Moo)
+        end
+      end
+
+      moo = MooHolder.new(Bar(Int32).new)
+      moo.@moo.call
+      )) { int32.metaclass }
+  end
+
+  it "shows error due to generic instantiation (#7083)" do
+    assert_error %(
+      abstract class Base
+      end
+
+      class Gen(T) < Base
+        def valid? : Bool
+          # true
+        end
+      end
+
+      class Other < Base
+        def valid?
+          true
+        end
+      end
+
+      x = Pointer(Base).malloc(1)
+      x.value.valid?
+
+      Gen(String).new
+      ),
+      "method must return Bool but it is returning Nil"
+  end
+
+  it "resolves T through metaclass inheritance (#7914)" do
+    assert_type(%(
+      struct Int32
+        def self.foo
+          1
+        end
+      end
+
+      class Matrix(T)
+        def self.foo
+          T.foo
+        end
+      end
+
+      class GeneralMatrix(T) < Matrix(T)
+      end
+
+      GeneralMatrix(Int32).foo
+    )) { int32 }
+  end
+
+  it "errors if splatting a non-tuple (#9853)" do
+    assert_error %(
+      Array(*Int32)
+      ),
+      "argument to splat must be a tuple type, not Int32"
+  end
+
+  it "correctly checks argument count when target type has a splat (#9855)" do
+    assert_type(%(
+      class T(A, B, *C)
+      end
+
+      T(*{Int32, Bool})
+      )) { generic_class("T", int32, bool).metaclass }
   end
 end

@@ -36,4 +36,36 @@ describe "Semantic: nilable cast" do
       Bar.new.as?(Foo)
       )) { nilable types["Foo"].virtual_type! }
   end
+
+  it "doesn't crash with typeof no-type (#7441)" do
+    assert_type(%(
+      a = 1
+      if a.is_a?(Char)
+        1.as?(typeof(a))
+      else
+        ""
+      end
+      )) { string }
+  end
+
+  it "casts to module" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Base
+      end
+
+      class Foo < Base
+        include Moo
+      end
+
+      class Bar < Base
+        include Moo
+      end
+
+      base = (Foo.new || Bar.new)
+      base.as?(Moo)
+      )) { union_of([types["Foo"], types["Bar"], nil_type] of Type) }
+  end
 end

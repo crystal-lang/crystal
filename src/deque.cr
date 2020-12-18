@@ -11,7 +11,6 @@
 # [circular buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 class Deque(T)
   include Indexable(T)
-  include Comparable(Deque)
 
   # This Deque is based on a circular buffer. It works like a normal array, but when an item is removed from the left
   # side, instead of shifting all the items, only the start position is shifted. This can lead to configurations like:
@@ -113,11 +112,6 @@ class Deque(T)
     equals?(other) { |x, y| x == y }
   end
 
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Concatenation. Returns a new `Deque` built by concatenating
   # two deques together to create a third. The type of the new deque
   # is the union of the types of both the other deques.
@@ -169,7 +163,18 @@ class Deque(T)
   #
   # Use `#dup` if you want a shallow copy.
   def clone
-    Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Deque(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -188,20 +193,86 @@ class Deque(T)
   # a             # => Deque{"a", "c"}
   # ```
   def delete(obj)
-    found = false
+    match = internal_delete { |i| i == obj }
+    !match.nil?
+  end
+
+  # Modifies `self`, keeping only the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.select! { |x| x > 3 }
+  # a # => Deque{6, 4, 8}
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!
+    reject! { |elem| !yield(elem) }
+  end
+
+  # Modifies `self`, keeping only the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select!(3..7)
+  # ary # => [6, 4]
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!(pattern)
+    self.select! { |elem| pattern === elem }
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject! { |x| x > 3 }
+  # a # => Deque{1, 2}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!
+    internal_delete { |e| yield e }
+    self
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject!(3..7)
+  # a # => Deque{1, 2, 8}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!(pattern)
+    reject! { |elem| pattern === elem }
+    self
+  end
+
+  # `reject!` and `delete` implementation:
+  # returns the last matching element, or nil
+  private def internal_delete
+    match = nil
     i = 0
     while i < @size
-      if self[i] == obj
+      e = self[i]
+      if yield e
+        match = e
         delete_at(i)
-        found = true
       else
         i += 1
       end
     end
-    found
+    match
   end
 
-  # Delete the item that is present at the *index*. Items to the right
+  # Deletes the item that is present at the *index*. Items to the right
   # of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
@@ -224,7 +295,7 @@ class Deque(T)
     rindex -= @capacity if rindex >= @capacity
     value = @buffer[rindex]
 
-    if index > @size / 2
+    if index > @size // 2
       # Move following items to the left, starting with the first one
       # [56-01234] -> [6x-01235]
       dst = rindex
@@ -296,7 +367,7 @@ class Deque(T)
     rindex = @start + index
     rindex -= @capacity if rindex >= @capacity
 
-    if index > @size / 2
+    if index > @size // 2
       # Move following items to the right, starting with the last one
       # [56-01234] -> [4560123^]
       dst = @start + @size
@@ -330,10 +401,10 @@ class Deque(T)
     self
   end
 
-  def inspect(io : IO)
+  def inspect(io : IO) : Nil
     executed = exec_recursive(:inspect) do
       io << "Deque{"
-      join ", ", io, &.inspect(io)
+      join io, ", ", &.inspect(io)
       io << '}'
     end
     io << "Deque{...}" unless executed
@@ -421,7 +492,7 @@ class Deque(T)
       @start = (@start + n) % @capacity
     else
       # Turn *n* into an equivalent index in range -size/2 .. size/2
-      half = @size / 2
+      half = @size // 2
       if n.abs >= half
         n = (n + half) % @size - half
       end
@@ -483,7 +554,7 @@ class Deque(T)
     self
   end
 
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     inspect(io)
   end
 

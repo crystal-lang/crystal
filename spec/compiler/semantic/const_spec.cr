@@ -228,7 +228,9 @@ describe "Semantic: const" do
       )) { bool }
   end
 
-  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + ZED"].each do |node|
+  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2",
+   "1 + 2", "1 + ZED", "ZED - 1", "ZED * 2", "ZED // 2",
+   "1 &+ ZED", "ZED &- 1", "ZED &* 2"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
       semantic(%(
         ZED = 10
@@ -237,6 +239,7 @@ describe "Semantic: const" do
           def +; 0; end
           def ~; 0; end
           def -; 0; end
+          def //(other); 0; end
         end
 
         CONST1 = foo
@@ -331,7 +334,7 @@ describe "Semantic: const" do
       "A is not a type, it's a constant"
   end
 
-  it "errors if using const in unintialized" do
+  it "errors if using const in uninitialized" do
     assert_error %(
       A = 1
 

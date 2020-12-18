@@ -25,8 +25,9 @@
 struct NamedTuple
   # Creates a named tuple that will contain the given arguments.
   #
-  # This method is useful in macros and generic code because with it you can
-  # creates empty named tuples, something that you can't do with a tuple literal.
+  # With a named tuple literal you cannot create an empty named tuple.
+  # This method doesn't have this limitation, which makes it especially
+  # useful in macros and generic code.
   #
   # ```
   # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
@@ -66,8 +67,10 @@ struct NamedTuple
   #   "I see #{n} #{thing}s"
   # end
   #
-  # data = JSON.parse(%({"thing": "world", "n": 2})).as_h
-  # speak_about(**{thing: String, n: Int64}.from(data)) # => "I see 2 worlds"
+  # hash = JSON.parse(%({"thing": "world", "n": 2})).as_h # hash : Hash(String, JSON::Any)
+  # hash = hash.transform_values(&.raw)                   # hash : Hash(String, JSON::Any::Type)
+  #
+  # speak_about(**{thing: String, n: Int64}.from(hash)) # => "I see 2 worlds"
   # ```
   def from(hash : Hash)
     if size != hash.size
@@ -210,7 +213,7 @@ struct NamedTuple
     merge(**other)
   end
 
-  # ditto
+  # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
     {
@@ -243,7 +246,7 @@ struct NamedTuple
   end
 
   # Same as `to_s`.
-  def inspect
+  def inspect : String
     to_s
   end
 
@@ -263,7 +266,13 @@ struct NamedTuple
     {% end %}
   end
 
-  protected def sorted_keys
+  # Returns a `Tuple` of symbols with the keys in this named tuple, sorted by name.
+  #
+  # ```
+  # tuple = {foo: 1, bar: 2, baz: 3}
+  # tuple.sorted_keys # => {:bar, :baz, :foo}
+  # ```
+  def sorted_keys
     {% begin %}
       Tuple.new(
         {% for key in T.keys.sort %}
@@ -303,7 +312,7 @@ struct NamedTuple
     false
   end
 
-  # ditto
+  # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
       return true if {{key.stringify}} == key
@@ -317,7 +326,7 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_s # => %({name: "Crystal", year: 2011})
   # ```
-  def to_s(io)
+  def to_s(io : IO) : Nil
     io << '{'
     {% for key, value, i in T %}
       {% if i > 0 %}
@@ -531,7 +540,7 @@ struct NamedTuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : NamedTuple)
     return false unless sorted_keys == other.sorted_keys
 

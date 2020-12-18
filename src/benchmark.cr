@@ -1,7 +1,7 @@
 require "./benchmark/**"
 
 # The Benchmark module provides methods for benchmarking Crystal code, giving
-# detailed reports on the time taken for each task.
+# detailed reports on the time and memory taken for each task.
 #
 # ### Measure the number of iterations per second of each task
 #
@@ -26,6 +26,8 @@ require "./benchmark/**"
 # calculation time. This can be configured:
 #
 # ```
+# require "benchmark"
+#
 # Benchmark.ips(warmup: 4, calculation: 10) do |x|
 #   x.report("sleep") { sleep 0.01 }
 # end
@@ -135,5 +137,16 @@ module Benchmark
   # ```
   def realtime : Time::Span
     Time.measure { yield }
+  end
+
+  # Returns the memory in bytes that the given block consumes.
+  #
+  # ```
+  # Benchmark.memory { Array(Int32).new } # => 32
+  # ```
+  def memory
+    bytes_before_measure = GC.stats.total_bytes
+    yield
+    (GC.stats.total_bytes - bytes_before_measure).to_i64
   end
 end

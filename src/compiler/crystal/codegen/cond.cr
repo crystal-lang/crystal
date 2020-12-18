@@ -36,7 +36,7 @@ class Crystal::CodeGenVisitor
     cond = llvm_true
 
     if has_nil || has_bool || has_pointer
-      type_id = load union_type_id(@last)
+      type_id, value_ptr = union_type_and_value_pointer(@last, type)
 
       if has_nil
         is_nil = equal? type_id, type_id(@program.nil)
@@ -44,7 +44,7 @@ class Crystal::CodeGenVisitor
       end
 
       if has_bool
-        value = load(bit_cast union_value(@last), llvm_context.int1.pointer)
+        value = load(bit_cast value_ptr, llvm_context.int1.pointer)
         is_bool = equal? type_id, type_id(@program.bool)
         cond = and cond, not(and(is_bool, not(value)))
       end
@@ -54,7 +54,7 @@ class Crystal::CodeGenVisitor
           next unless union_type.is_a?(PointerInstanceType)
 
           is_pointer = equal? type_id, type_id(union_type)
-          pointer_value = load(bit_cast union_value(@last), llvm_type(union_type).pointer)
+          pointer_value = load(bit_cast value_ptr, llvm_type(union_type).pointer)
           pointer_null = null_pointer?(pointer_value)
           cond = and cond, not(and(is_pointer, pointer_null))
         end

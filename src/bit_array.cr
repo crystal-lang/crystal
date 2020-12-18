@@ -1,10 +1,8 @@
-# BitArray is an array data structure that compactly stores bits.
+# `BitArray` is an array data structure that compactly stores bits.
 #
 # Bits externally represented as `Bool`s are stored internally as
 # `UInt32`s. The total number of bits stored is set at creation and is
 # immutable.
-#
-# `BitArray` includes all the methods in `Enumerable`.
 #
 # ### Example
 #
@@ -23,7 +21,7 @@ struct BitArray
   # The number of bits the BitArray stores
   getter size : Int32
 
-  # Create a new `BitArray` of *size* bits.
+  # Creates a new `BitArray` of *size* bits.
   #
   # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
@@ -40,10 +38,6 @@ struct BitArray
     return LibC.memcmp(@bits, other.@bits, malloc_size) == 0
   end
 
-  def ==(other)
-    false
-  end
-
   def unsafe_fetch(index : Int)
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
@@ -54,6 +48,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] = true
   # ```
@@ -75,6 +71,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -85,7 +83,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     self[*Indexable.range_to_index_and_count(range, size)]
   end
 
@@ -99,6 +97,8 @@ struct BitArray
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[0] = true; ba[2] = true; ba[4] = true
   # ba # => BitArray[10101]
@@ -147,7 +147,7 @@ struct BitArray
     else
       ba = BitArray.new(count)
       start_bit_index, start_sub_index = start.divmod(32)
-      end_bit_index = (start + count) / 32
+      end_bit_index = (start + count) // 32
 
       i = 0
       bits = @bits[start_bit_index]
@@ -175,6 +175,8 @@ struct BitArray
   # Raises `IndexError` if trying to access a bit outside the array's range.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[3] # => false
   # ba.toggle(3)
@@ -188,6 +190,8 @@ struct BitArray
   # Inverts all bits in the array. Falses become `true` and vice versa.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba[2] = true; ba[3] = true
   # ba # => BitArray[00110]
@@ -203,10 +207,12 @@ struct BitArray
   # Creates a string representation of self.
   #
   # ```
+  # require "bit_array"
+  #
   # ba = BitArray.new(5)
   # ba.to_s # => "BitArray[00000]"
   # ```
-  def to_s(io : IO)
+  def to_s(io : IO) : Nil
     io << "BitArray["
     each do |value|
       io << (value ? '1' : '0')
@@ -214,8 +220,8 @@ struct BitArray
     io << ']'
   end
 
-  # ditto
-  def inspect(io : IO)
+  # :ditto:
+  def inspect(io : IO) : Nil
     to_s(io)
   end
 
@@ -231,6 +237,13 @@ struct BitArray
     hasher = size.hash(hasher)
     hasher = to_slice.hash(hasher)
     hasher
+  end
+
+  # Returns a new `BitArray` with all of the same elements.
+  def dup
+    bit_array = BitArray.new(@size)
+    @bits.copy_to(bit_array.@bits, malloc_size)
+    bit_array
   end
 
   private def bit_index_and_sub_index(index)

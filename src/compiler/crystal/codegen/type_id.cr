@@ -48,10 +48,6 @@ class Crystal::CodeGenVisitor
     builder.select null_pointer?(fun_ptr), type_id(@program.nil), type_id(type.proc_type)
   end
 
-  private def type_id_impl(value, type : MixedUnionType)
-    load(union_type_id(value))
-  end
-
   private def type_id_impl(value, type : VirtualMetaclassType)
     value
   end
@@ -73,6 +69,6 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(type)
-    int(@llvm_id.type_id(type))
+    int(@program.llvm_id.type_id(type))
   end
 end

@@ -29,12 +29,19 @@ require "./enumerable"
 # (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3).to_a # => [6, 12, 18]
 # ```
 #
+# Because iterators only go forward, when using methods that consume it entirely or partially –
+# `to_a`, `any?`, `count`, `none?`, `one?` and `size` – subsequent calls will give a different
+# result as there will be less elements to consume.
+#
+# ```
+# iter = (0...100).each
+# iter.size # => 100
+# iter.size # => 0
+# ```
+#
 # To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
-#
-# Additionally, an `Iterator` can implement `rewind`, which must rewind the iterator to
-# its initial state. This is needed to implement the `cycle` method.
 #
 # For example, this is an iterator that returns a sequence of `N` zeros:
 #
@@ -54,18 +61,10 @@ require "./enumerable"
 #       stop
 #     end
 #   end
-#
-#   def rewind
-#     @produced = 0
-#     self
-#   end
 # end
 #
 # zeros = Zeros.new(5)
 # zeros.to_a # => [0, 0, 0, 0, 0]
-#
-# zeros.rewind
-# zeros.first(3).to_a # => [0, 0, 0]
 # ```
 #
 # The standard library provides iterators for many classes, like `Array`, `Hash`, `Range`, `String` and `IO`.
@@ -86,12 +85,6 @@ module Iterator(T)
   # To use it, include this module in your iterator and make sure that the wrapped
   # iterator is stored in the `@iterator` instance variable.
   module IteratorWrapper
-    # Rewinds the wrapped iterator and returns `self`.
-    def rewind
-      @iterator.rewind
-      self
-    end
-
     # Invokes `next` on the wrapped iterator and returns `stop` if
     # the given value was a `Iterator::Stop`. Otherwise, returns the value.
     macro wrapped_next
@@ -106,7 +99,7 @@ module Iterator(T)
     Iterator.stop
   end
 
-  # ditto
+  # :ditto:
   def self.stop
     Stop::INSTANCE
   end
@@ -123,10 +116,6 @@ module Iterator(T)
 
     def next
       @element
-    end
-
-    def rewind
-      self
     end
   end
 
@@ -154,9 +143,6 @@ module Iterator(T)
   # Returns the next element in this iterator, or `Iterator::Stop::INSTANCE` if there
   # are no more elements.
   abstract def next
-
-  # Rewinds the iterator to its original state.
-  abstract def rewind
 
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
@@ -195,19 +181,13 @@ module Iterator(T)
         value
       end
     end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
-      @iterator1_consumed = false
-    end
   end
 
   # The same as `#chain`, but have better performance when the quantity of
   # iterators to chain is large (usually greater than 4) or undetermined.
   #
   # ```
-  # array_of_iters = [[1], [2, 3], [4, 5, 6]]
+  # array_of_iters = [[1], [2, 3], [4, 5, 6]].each.map &.each
   # iter = Iterator(Int32).chain array_of_iters
   # iter.next # => 1
   # iter.next # => 2
@@ -230,14 +210,6 @@ module Iterator(T)
 
     def initialize(@iterators)
       @current = @iterators.next
-    end
-
-    def rewind
-      @iterators.rewind
-      @iterators.each &.rewind
-      @iterators.rewind
-      @current = @iterators.next
-      self
     end
 
     def next : T | Stop
@@ -293,34 +265,34 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   #
-  # By default, a new array is created and yielded for each consecutive when invoking `next`.
+  # By default, a new array is created and returned for each consecutive call of `next`.
   # * If *reuse* is given, the array can be reused
-  # * If *reuse* is an `Array`, this array will be reused
-  # * If *reuse* is truthy, the method will create a new array and reuse it.
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse*  is an instance of `Array`, `Deque` or a similar collection type (implementing `#<<`, `#shift` and `#size`) it will be used.
+  # * If *reuse* is falsey, the array will not be reused.
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks of two items can be iterated using `#cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
-    Cons(typeof(self), T, typeof(n)).new(self, n, reuse)
+    if reuse.nil? || reuse.is_a?(Bool)
+      Cons(typeof(self), T, typeof(n), Array(T)).new(self, n, Array(T).new(n), reuse)
+    else
+      Cons(typeof(self), T, typeof(n), typeof(reuse)).new(self, n, reuse, reuse)
+    end
   end
 
-  private struct Cons(I, T, N)
+  private struct Cons(I, T, N, V)
     include Iterator(Array(T))
     include IteratorWrapper
 
-    def initialize(@iterator : I, @n : N, reuse)
-      if reuse
-        if reuse.is_a?(Array)
-          @values = reuse
-        else
-          @values = Array(T).new(@n)
-        end
-        @reuse = true
-      else
-        @values = Array(T).new(@n)
-        @reuse = false
-      end
+    def initialize(@iterator : I, @n : N, values : V, reuse)
+      @values = values
+      @reuse = !!reuse
     end
 
     def next
@@ -337,10 +309,47 @@ module Iterator(T)
         @values.dup
       end
     end
+  end
 
-    def rewind
-      @values.clear
-      super
+  # Returns an iterator that returns consecutive pairs of adjacent items.
+  #
+  # ```
+  # iter = (1..5).each.cons_pair
+  # iter.next # => {1, 2}
+  # iter.next # => {2, 3}
+  # iter.next # => {3, 4}
+  # iter.next # => {4, 5}
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def cons_pair : Iterator({T, T})
+    ConsTuple(typeof(self), T).new(self)
+  end
+
+  private struct ConsTuple(I, T)
+    include Iterator({T, T})
+    include IteratorWrapper
+
+    @last_elem : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I)
+    end
+
+    def next : {T, T} | Iterator::Stop
+      elem = wrapped_next
+      last_elem = @last_elem
+
+      if last_elem.is_a?(Iterator::Stop)
+        @last_elem = elem
+        self.next
+      else
+        value = {last_elem, elem}
+        @last_elem, elem = elem, @last_elem
+        value
+      end
     end
   end
 
@@ -367,16 +376,36 @@ module Iterator(T)
     include IteratorWrapper
 
     def initialize(@iterator : I)
+      @values = [] of T
+      @use_values = false
+      @index = 0
     end
 
     def next
-      value = @iterator.next
-      if value.is_a?(Stop)
-        @iterator.rewind
-        @iterator.next
-      else
-        value
+      if @use_values
+        return stop if @values.empty?
+
+        if @index >= @values.size
+          @index = 1
+          return @values.first
+        end
+
+        @index += 1
+        return @values[@index - 1]
       end
+
+      value = @iterator.next
+
+      if value.is_a?(Stop)
+        @use_values = true
+        return stop if @values.empty?
+
+        @index = 1
+        return @values.first
+      end
+
+      @values << value
+      value
     end
   end
 
@@ -404,25 +433,42 @@ module Iterator(T)
 
     def initialize(@iterator : I, @n : N)
       @count = 0
+      @values = [] of T
+      @use_values = false
+      @index = 0
     end
 
     def next
       return stop if @count >= @n
+
+      if @count > 0
+        return stop if @values.empty?
+
+        if @index >= @values.size
+          @count += 1
+          return stop if @count >= @n
+
+          @index = 1
+          return @values.first
+        end
+
+        @index += 1
+        return @values[@index - 1]
+      end
+
       value = @iterator.next
+
       if value.is_a?(Stop)
         @count += 1
         return stop if @count >= @n
+        return stop if @values.empty?
 
-        @iterator.rewind
-        @iterator.next
-      else
-        value
+        @index = 1
+        return @values.first
       end
-    end
 
-    def rewind
-      @count = 0
-      super
+      @values << value
+      value
     end
   end
 
@@ -515,15 +561,6 @@ module Iterator(T)
       end
     end
 
-    def rewind
-      @generators.each &.rewind
-      @generators.clear
-      @generators << @iterator
-      @stopped.each &.rewind
-      @stopped.clear
-      self
-    end
-
     def self.element_type(element)
       case element
       when Stop
@@ -604,14 +641,6 @@ module Iterator(T)
           value
         end
       end
-    end
-
-    def rewind
-      @nest_iterator.try &.rewind
-      @nest_iterator = nil
-      @stopped.each &.rewind
-      @stopped.clear
-      super
     end
 
     def self.iterator_type(iter, func)
@@ -735,6 +764,36 @@ module Iterator(T)
     Reject(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an iterator that only returns elements
+  # that are **not** of the given *type*.
+  #
+  # ```
+  # iter = [1, false, 3, true].each.reject(Bool)
+  # iter.next # => 1
+  # iter.next # => 3
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def reject(type : U.class) forall U
+    SelectType(typeof(self), typeof(begin
+      e = first
+      e.is_a?(U) ? raise("") : e
+    end)).new(self)
+  end
+
+  # Returns an iterator that only returns elements
+  # where `pattern === element` does not hold.
+  #
+  # ```
+  # iter = [2, 3, 1, 5, 4, 6].each.reject(3..5)
+  # iter.next # => 2
+  # iter.next # => 1
+  # iter.next # => 6
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def reject(pattern)
+    reject { |elem| pattern === elem }
+  end
+
   private struct Reject(I, T, B)
     include Iterator(T)
     include IteratorWrapper
@@ -765,6 +824,33 @@ module Iterator(T)
     Select(typeof(self), T, U).new(self, func)
   end
 
+  # Returns an iterator that only returns elements
+  # of the given *type*.
+  #
+  # ```
+  # iter = [1, false, 3, nil].each.select(Int32)
+  # iter.next # => 1
+  # iter.next # => 3
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def select(type : U.class) forall U
+    SelectType(typeof(self), U).new(self)
+  end
+
+  # Returns an iterator that only returns elements
+  # where `pattern === element`.
+  #
+  # ```
+  # iter = [1, 3, 2, 5, 4, 6].each.select(3..5)
+  # iter.next # => 3
+  # iter.next # => 5
+  # iter.next # => 4
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def select(pattern)
+    self.select { |elem| pattern === elem }
+  end
+
   private struct Select(I, T, B)
     include Iterator(T)
     include IteratorWrapper
@@ -776,6 +862,23 @@ module Iterator(T)
       while true
         value = wrapped_next
         if @func.call(value)
+          return value
+        end
+      end
+    end
+  end
+
+  private struct SelectType(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : I)
+    end
+
+    def next
+      while true
+        value = wrapped_next
+        if value.is_a?(T)
           return value
         end
       end
@@ -810,11 +913,6 @@ module Iterator(T)
       end
       @iterator.next
     end
-
-    def rewind
-      @n = @original
-      super
-    end
   end
 
   # Returns an iterator that only starts to return elements once the given block
@@ -848,11 +946,6 @@ module Iterator(T)
           return value
         end
       end
-    end
-
-    def rewind
-      @returned_false = false
-      super
     end
   end
 
@@ -967,11 +1060,6 @@ module Iterator(T)
         stop
       end
     end
-
-    def rewind
-      @n = @original
-      super
-    end
   end
 
   # Returns an iterator that returns elements while the given block returns a
@@ -1004,11 +1092,6 @@ module Iterator(T)
         @returned_false = true
         stop
       end
-    end
-
-    def rewind
-      @returned_false = false
-      super
     end
   end
 
@@ -1090,11 +1173,6 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @hash.clear
-      super
-    end
   end
 
   # Returns an iterator that returns a `Tuple` of the element and its index.
@@ -1132,11 +1210,6 @@ module Iterator(T)
       @index += 1
       value
     end
-
-    def rewind
-      @index = @offset
-      super
-    end
   end
 
   # Returns an iterator that returns a `Tuple` of the element and a given object.
@@ -1165,42 +1238,54 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as `Tuple`s.
+  # Returns an iterator that returns the elements of this iterator and *others*
+  # traversed in tandem as `Tuple`s.
+  #
+  # Iteration stops when any of the iterators runs out of elements.
   #
   # ```
   # iter1 = [4, 5, 6].each
   # iter2 = [7, 8, 9].each
-  # iter = iter1.zip(iter2)
-  # iter.next # => {4, 7}
-  # iter.next # => {5, 8}
-  # iter.next # => {6, 9}
+  # iter3 = ['a', 'b', 'c', 'd'].each
+  # iter = iter1.zip(iter2, iter3)
+  # iter.next # => {4, 7, 'a'}
+  # iter.next # => {5, 8, 'b'}
+  # iter.next # => {6, 9, 'c'}
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def zip(other : Iterator(U)) forall U
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  def zip(*others : Iterator) : Iterator
+    Iterator.zip_impl(self, *others)
   end
 
-  private struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
+  protected def self.zip_impl(*iterators : *U) forall U
+    {% begin %}
+      Zip(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(iterators[{{ i }}].first),
+        {% end %}
+      )).new(iterators)
+    {% end %}
+  end
 
-    def initialize(@iterator1 : I1, @iterator2 : I2)
+  private struct Zip(Is, Ts)
+    include Iterator(Ts)
+
+    def initialize(@iterators : Is)
     end
 
     def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
+      {% begin %}
+        {% for i in 0...Is.size %}
+          %v{i} = @iterators[{{ i }}].next
+          return stop if %v{i}.is_a?(Stop)
+        {% end %}
 
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
-    end
-
-    def rewind
-      @iterator1.rewind
-      @iterator2.rewind
-      self
+        Tuple.new(
+          {% for i in 0...Is.size %}
+            %v{i},
+          {% end %}
+        )
+      {% end %}
     end
   end
 
@@ -1279,15 +1364,351 @@ module Iterator(T)
       stop
     end
 
-    def rewind
-      @iterator.rewind
-      init_state
-    end
-
     private def init_state
       @init = nil
       @acc.reset
       self
+    end
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **after** the given block's value is _truthy_.
+  #
+  # For example, to get chunks that end at each uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #                   ^         ^    ^
+  # iter = ary.slice_after(&.uppercase?)
+  # iter.next # => ['a', 'b', 'C']
+  # iter.next # => ['d', 'E']
+  # iter.next # => ['F']
+  # iter.next # => ['g', 'h']
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_after(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    SliceAfter(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **after** the given pattern is matched
+  # with `pattern === element`.
+  #
+  # For example, to get chunks that end at each ASCII uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #                   ^         ^    ^
+  # iter = ary.slice_after('A'..'Z')
+  # iter.next # => ['a', 'b', 'C']
+  # iter.next # => ['d', 'E']
+  # iter.next # => ['F']
+  # iter.next # => ['g', 'h']
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_after(pattern, reuse : Bool | Array(T) = false)
+    slice_after(reuse) { |elem| pattern === elem }
+  end
+
+  # :nodoc:
+  class SliceAfter(I, T, B)
+    include Iterator(Array(T))
+
+    def initialize(@iterator : I, @block : T -> B, reuse)
+      @end = false
+      @clear_on_next = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @clear_on_next
+        @values.clear
+        @clear_on_next = false
+      end
+
+      while true
+        value = @iterator.next
+
+        if value.is_a?(Stop)
+          @end = true
+          if @values.empty?
+            return stop
+          else
+            return @reuse ? @values : @values.dup
+          end
+        end
+
+        @values << value
+
+        if @block.call(value)
+          @clear_on_next = true
+          return @reuse ? @values : @values.dup
+        end
+      end
+    end
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **before** the given block's value is _truthy_.
+  #
+  # For example, to get chunks that end just before each uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #              ^         ^    ^
+  # iter = ary.slice_before(&.uppercase?)
+  # iter.next # => ['a', 'b']
+  # iter.next # => ['C', 'd']
+  # iter.next # => ['E']
+  # iter.next # => ['F', 'g', 'h']
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_before(reuse : Bool | Array(T) = false, &block : T -> B) forall B
+    SliceBefore(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # Returns an iterator over chunks of elements, where each
+  # chunk ends right **before** the given pattern is matched
+  # with `pattern === element`.
+  #
+  # For example, to get chunks that end just before each ASCII uppercase letter:
+  #
+  # ```
+  # ary = ['a', 'b', 'C', 'd', 'E', 'F', 'g', 'h']
+  # #              ^         ^    ^
+  # iter = ary.slice_before('A'..'Z')
+  # iter.next # => ['a', 'b']
+  # iter.next # => ['C', 'd']
+  # iter.next # => ['E']
+  # iter.next # => ['F', 'g', 'h']
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def slice_before(pattern, reuse : Bool | Array(T) = false)
+    slice_before(reuse) { |elem| pattern === elem }
+  end
+
+  # :nodoc:
+  class SliceBefore(I, T, B)
+    include Iterator(Array(T))
+
+    @has_value_to_add = false
+    @value_to_add : T?
+
+    def initialize(@iterator : I, @block : T -> B, reuse)
+      @end = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @has_value_to_add
+        @has_value_to_add = false
+        @values.clear
+        @values << @value_to_add.as(T)
+        @value_to_add = nil
+      end
+
+      while true
+        value = @iterator.next
+
+        if value.is_a?(Stop)
+          @end = true
+          if @values.empty?
+            return stop
+          else
+            return @reuse ? @values : @values.dup
+          end
+        end
+
+        if !@values.empty? && @block.call(value)
+          @has_value_to_add = true
+          @value_to_add = value
+          return @reuse ? @values : @values.dup
+        end
+
+        @values << value
+      end
+    end
+  end
+
+  # Returns an iterator for each chunked elements where the ends
+  # of chunks are defined by the block, when the block's value
+  # over a pair of elements is _truthy_.
+  #
+  # For example, one-by-one increasing subsequences can be chunked as follows:
+  #
+  # ```
+  # ary = [1, 2, 4, 9, 10, 11, 12, 15, 16, 19, 20, 21]
+  # iter = ary.slice_when { |i, j| i + 1 != j }
+  # iter.next # => [1, 2]
+  # iter.next # => [4]
+  # iter.next # => [9, 10, 11, 12]
+  # iter.next # => [15, 16]
+  # iter.next # => [19, 20, 21]
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  #
+  # See also `#chunk_while`, which works similarly but the block's condition is inverted.
+  def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    SliceWhen(typeof(self), T, B).new(self, block, reuse)
+  end
+
+  # Returns an iterator for each chunked elements where elements
+  # are kept in a given chunk as long as the block's value over
+  # a pair of elements is _truthy_.
+  #
+  # For example, one-by-one increasing subsequences can be chunked as follows:
+  #
+  # ```
+  # ary = [1, 2, 4, 9, 10, 11, 12, 15, 16, 19, 20, 21]
+  # iter = ary.chunk_while { |i, j| i + 1 == j }
+  # iter.next # => [1, 2]
+  # iter.next # => [4]
+  # iter.next # => [9, 10, 11, 12]
+  # iter.next # => [15, 16]
+  # iter.next # => [19, 20, 21]
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # By default, a new array is created and yielded for each slice when invoking `next`.
+  # * If *reuse* is `false`, the method will create a new array for each chunk
+  # * If *reuse* is `true`, the method will create a new array and reuse it.
+  # * If *reuse* is an `Array`, that array will be reused
+  #
+  # This can be used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  #
+  # See also `#slice_when`, which works similarly but the block's condition is inverted.
+  def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+    SliceWhen(typeof(self), T, B).new(self, block, reuse, negate: true)
+  end
+
+  # :nodoc:
+  class SliceWhen(I, T, B)
+    include Iterator(Array(T))
+
+    @has_previous_value = false
+    @previous_value : T?
+
+    def initialize(@iterator : I, @block : T, T -> B, reuse, @negate = false)
+      @end = false
+
+      if reuse
+        if reuse.is_a?(Array)
+          @values = reuse
+        else
+          @values = [] of T
+        end
+        @reuse = true
+      else
+        @values = [] of T
+        @reuse = false
+      end
+    end
+
+    def next
+      return stop if @end
+
+      if @has_previous_value
+        v1 = @previous_value.as(T)
+        @has_previous_value = false
+        @previous_value = nil
+        @values.clear
+      else
+        v1 = @iterator.next
+        return end_value if v1.is_a?(Stop)
+      end
+
+      while true
+        @values << v1
+
+        v2 = @iterator.next
+        return end_value if v2.is_a?(Stop)
+
+        cond = @block.call(v1, v2)
+        cond = !cond if @negate
+        if cond
+          @has_previous_value = true
+          @previous_value = v2
+          return @reuse ? @values : @values.dup
+        end
+
+        v1 = v2
+      end
+    end
+
+    private def end_value
+      @end = true
+      if @values.empty?
+        stop
+      else
+        @reuse ? @values : @values.dup
+      end
     end
   end
 end

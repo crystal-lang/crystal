@@ -10,6 +10,8 @@ class Spec::TAPFormatter < Spec::Formatter
       @io << "not ok"
     when :pending
       @io << "ok"
+    else
+      # shouldn't happen (TODO: maybe turn this into an enum?)
     end
 
     @counter += 1
@@ -23,7 +25,7 @@ class Spec::TAPFormatter < Spec::Formatter
     @io.puts
   end
 
-  def finish
+  def finish(elapsed_time, aborted)
     @io << "1.." << @counter
     @io.puts
   end

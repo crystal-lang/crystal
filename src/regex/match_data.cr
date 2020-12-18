@@ -325,11 +325,11 @@ class Regex
       hash
     end
 
-    def inspect(io : IO)
+    def inspect(io : IO) : Nil
       to_s(io)
     end
 
-    def to_s(io : IO)
+    def to_s(io : IO) : Nil
       name_table = @regex.name_table
 
       io << "Regex::MatchData("
@@ -375,6 +375,13 @@ class Regex
       return false unless string == other.string
 
       return @ovector.memcmp(other.@ovector, size * 2) == 0
+    end
+
+    # See `Object#hash(hasher)`
+    def hash(hasher)
+      hasher = regex.hash hasher
+      hasher = string.hash hasher
+      Slice.new(@ovector, size * 2).hash(hasher)
     end
 
     private def check_index_out_of_bounds(index)
