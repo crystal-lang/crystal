@@ -1693,14 +1693,14 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil)
+    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil, reset_nilable_vars = true)
       self_closured = obj.is_a?(Def) && obj.self_closured?
       closured_vars = closured_vars(vars, obj)
-      alloca_non_closured_vars(vars, obj, args)
+      alloca_non_closured_vars(vars, obj, args, reset_nilable_vars)
       malloc_closure closured_vars, context, parent_context, self_closured
     end
 
-    def alloca_non_closured_vars(vars, obj = nil, args = nil)
+    def alloca_non_closured_vars(vars, obj = nil, args = nil, reset_nilable_vars = true)
       return unless vars
 
       in_alloca_block do
@@ -1737,7 +1737,7 @@ module Crystal
             context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
-            if bound_to_mod_nil?(var)
+            if reset_nilable_vars && bound_to_mod_nil?(var)
               assign ptr, var_type, @program.nil, llvm_nil
             end
           else

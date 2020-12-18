@@ -292,7 +292,10 @@ class Crystal::CodeGenVisitor
         set_ensure_exception_handler(target_def)
 
         args_base_index = create_local_copy_of_block_self(self_type, call_args)
-        alloca_vars target_def.vars, target_def
+
+        # Don't reset nilable vars here because we do it right before inlining the method body
+        alloca_vars target_def.vars, target_def, reset_nilable_vars: false
+
         create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
 
         Phi.open(self, node) do |phi|
