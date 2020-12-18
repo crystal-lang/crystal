@@ -522,7 +522,7 @@ workflows:
           filters: *per_tag
       - test_alpine:
           filters: *per_tag
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *per_tag
       - test_preview_mt:
           filters: *per_tag
@@ -597,6 +597,7 @@ workflows:
       - test_linux
       - test_linux32_std
       - test_alpine
+      # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
       - test_preview_mt
       - prepare_common
       - prepare_nightly:
@@ -659,7 +660,7 @@ workflows:
           filters: *maintenance
       - test_alpine:
           filters: *maintenance
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *maintenance
       - test_preview_mt:
           filters: *maintenance
