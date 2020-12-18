@@ -1,6 +1,6 @@
 require "./uri/uri_parser"
 require "./uri/encoding"
-require "./http/params"
+require "./uri/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -66,7 +66,7 @@ require "./http/params"
 # (see `.reserved?`), while `.encode` does not. The decode methods are
 # identical except for the handling of `+` characters.
 #
-# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# NOTE: `URI::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.
 class URI
   class Error < Exception
@@ -238,16 +238,16 @@ class URI
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
-  # Returns a `HTTP::Params` of the URI#query.
+  # Returns a `URI::Params` of the URI#query.
   #
   # ```
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
   # ```
-  def query_params : HTTP::Params
-    HTTP::Params.parse(@query || "")
+  def query_params : URI::Params
+    URI::Params.parse(@query || "")
   end
 
   def to_s(io : IO) : Nil

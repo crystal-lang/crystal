@@ -17,7 +17,7 @@ class HTTP::Request
   getter body : IO?
   property version : String
   @cookies : Cookies?
-  @query_params : Params?
+  @query_params : URI::Params?
   @uri : URI?
 
   {% unless flag?(:win32) %}
@@ -52,7 +52,7 @@ class HTTP::Request
   end
 
   # Returns a convenience wrapper around querying and setting query params,
-  # see `HTTP::Params`.
+  # see `URI::Params`.
   def query_params
     @query_params ||= uri.query_params
   end
