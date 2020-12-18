@@ -207,11 +207,10 @@ module Crystal
         return false if opposite_free_vars.any? { |var| var != opposite_free_vars.first }
       end
       # If self uses the same free var for different free vars in the other,
-      # then self is stricter
-      (0...all_free_vars.size).group_by { |index| self_free_vars[index] }.each_value do |indices|
-        opposite_free_vars = indices.map { |i| other_free_vars[i] }
-        return true if opposite_free_vars.any? { |var| var != opposite_free_vars.first }
-      end
+      # then self is stricter (i.e. as above except `self_free_vars` and
+      # `other_free_vars` are swapped)
+      # We don't need this check because at this point self is always a
+      # restriction of the other.
 
       true
     end
