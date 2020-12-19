@@ -18,7 +18,27 @@ class Fiber
   @[NoInline]
   @[Naked]
   def self.swapcontext(current_context, new_context) : Nil
-    asm("
+    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") >= 0 %}
+      #                %ecx           , %eax
+      asm("
+      pushl %edi        // push 1st argument (because of initial resume)
+      pushl %ebx        // push callee-saved registers on the stack
+      pushl %ebp
+      pushl %esi
+      movl %esp, 0(%ecx)  // current_context.stack_top = %esp
+      movl $$1, 4(%ecx)   // current_context.resumable = 1
+
+      movl $$0, 4(%eax)   // new_context.resumable = 0
+      movl 0(%eax), %esp  // %esp = new_context.stack_top
+      popl %esi         // pop callee-saved registers from the stack
+      popl %ebp
+      popl %ebx
+      popl %edi         // pop first argument (for initial resume)
+      ")
+    {% else %}
+      # On LLVM < 9.0 using the previous code emits some additional
+      # instructions that breaks the context switching.
+      asm("
       pushl %edi        // push 1st argument (because of initial resume)
       pushl %ebx        // push callee-saved registers on the stack
       pushl %ebp
@@ -33,5 +53,6 @@ class Fiber
       popl %ebx
       popl %edi         // pop first argument (for initial resume)
       " :: "r"(current_context), "r"(new_context))
+    {% end %}
   end
 end
