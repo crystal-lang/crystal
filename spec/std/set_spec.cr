@@ -396,6 +396,79 @@ describe "Set" do
     empty_set.proper_superset?(empty_set).should be_false
   end
 
+  describe "#sample" do
+    it "gets one sample" do
+      Set{1}.sample.should eq(1)
+
+      set = Set{1, 2, 3}
+      set.includes?(set.sample).should be_true
+    end
+
+    it "gets one sample with random" do
+      set = Set{1, 2, 3}
+      set.sample(Random.new(1)).should eq(2)
+    end
+
+    it "gets sample of empty set raises" do
+      expect_raises IndexError do
+        Set(Int32).new.sample
+      end
+    end
+
+    it "gets sample of k elements from empty set doesn't raise" do
+      empty_set = Set(Int32).new
+      empty_set.sample(0).should eq(empty_set)
+      empty_set.sample(1).should eq(empty_set)
+      empty_set.sample(2).should eq(empty_set)
+    end
+
+    it "gets sample of negative count elements raises" do
+      expect_raises ArgumentError do
+        Set{1}.sample(-1)
+      end
+    end
+
+    it "gets sample of 0 elements" do
+      Set{1}.sample(0).should eq(Set(Int32).new)
+    end
+
+    it "gets sample of 1 elements" do
+      Set{1}.sample(1).should eq(Set{1})
+
+      set = Set{1, 2, 3}
+      x = set.sample(1)
+      x.size.should eq(1)
+      x = x.to_a.first
+      set.includes?(x).should be_true
+    end
+
+    it "gets sample of k elements out of n" do
+      a = Set{1, 2, 3, 4, 5}
+      b = a.sample(3)
+      b.size.should eq(3)
+
+      b.each do |e|
+        a.includes?(e).should be_true
+      end
+    end
+
+    it "gets sample of k elements out of n, where k > n" do
+      a = Set{1, 2, 3, 4, 5}
+      b = a.sample(10)
+      b.size.should eq(5)
+
+      b.each do |e|
+        a.includes?(e).should be_true
+      end
+    end
+
+    it "gets sample of k elements out of n, with random" do
+      a = Set{1, 2, 3, 4, 5}
+      b = a.sample(3, Random.new(1))
+      b.should eq(Set{4, 3, 1})
+    end
+  end
+
   it "has object_id" do
     Set(Int32).new.object_id.should be > 0
   end

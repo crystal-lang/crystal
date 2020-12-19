@@ -1908,6 +1908,56 @@ class Hash(K, V)
     hash
   end
 
+  # :nodoc:
+  def sample_impl(random = Random::DEFAULT)
+    raise IndexError.new if size == 0
+
+    index = @first
+    to_skip = random.rand(size)
+
+    while to_skip > 0
+      entry = get_entry(index)
+      to_skip -= 1 unless entry.deleted?
+      index += 1
+    end
+
+    yield get_entry(index)
+  end
+
+  # :nodoc:
+  def sample_impl(n : Int, random = Random::DEFAULT)
+    if n < 0
+      raise ArgumentError.new("Can't get negative count sample")
+    end
+
+    case n
+    when 0
+      return
+    when 1
+      sample_impl(random) { |entry| yield entry } unless empty?
+    else
+      n = {size, n}.min
+      indices = Array(Int32).new(n)
+
+      each_entry_with_index do |entry, i|
+        if i < n
+          indices << i
+        else
+          j = random.rand(i + 1)
+          if j <= n
+            indices.to_unsafe[j] = i
+          end
+        end
+      end
+
+      indices.shuffle!(random)
+
+      indices.each do |index|
+        yield get_entry(index)
+      end
+    end
+  end
+
   struct Entry(K, V)
     getter key, value, hash
 

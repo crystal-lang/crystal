@@ -463,6 +463,42 @@ struct Set(T)
     other.proper_subset?(self)
   end
 
+  # Returns a random element from `self`, using the given *random* number generator.
+  #
+  # Raises `IndexError` if `self` is empty.
+  #
+  # ```
+  # a = Set{1, 3, 5, 7, 9}
+  # a.sample                # => 3
+  # a.sample                # => 9
+  # a.sample(Random.new(1)) # => 5
+  # ```
+  def sample(random = Random::DEFAULT)
+    @hash.sample_impl(random) do |entry|
+      entry.key
+    end
+  end
+
+  # Returns a `Set` of *n* random elements from `self`, using the given *random*
+  # number generator. All elements are drawn without replacement; if *n* is
+  # larger than the size of this set, the returned `Set` has the same size as `self`.
+  #
+  # Raises `ArgumentError` if *n* is negative.
+  #
+  # ```
+  # a = Set{1, 3, 5, 7, 9}
+  # a.sample(2)                # => Set{9, 5}
+  # a.sample(2)                # => Set{5, 3}
+  # a.sample(2, Random.new(1)) # => Set{9, 1}
+  # ```
+  def sample(n : Int, random = Random::DEFAULT)
+    values = Set(T).new
+    @hash.sample_impl(n, random) do |entry|
+      values << entry.key
+    end
+    values
+  end
+
   # :nodoc:
   def object_id
     @hash.object_id
