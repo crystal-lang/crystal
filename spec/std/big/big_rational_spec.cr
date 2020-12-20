@@ -240,9 +240,12 @@ describe BigRational do
   end
 
   it "#hash" do
+    a = br(-10, 3)
+
     b = br(10, 3)
-    hash = b.hash
-    hash.should eq(b.to_f64.hash)
+    b.hash.should eq(b.to_s.hash)
+
+    a.hash.should_not eq(b.hash)
   end
 
   it "is a number" do

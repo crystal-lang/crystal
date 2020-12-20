@@ -203,8 +203,7 @@ struct BigRational < Number
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
-  # TODO: improve this
-  def_hash to_f64
+  def_hash to_s
 
   # Returns the `Float64` representing this rational.
   def to_f
