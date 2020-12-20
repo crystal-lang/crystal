@@ -211,14 +211,14 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io : IO) : Nil
-    args_to_html(io, links: false)
+    args_to_html(io, html: false)
   end
 
   def args_to_html
     String.build { |io| args_to_html io }
   end
 
-  def args_to_html(io : IO, links : Bool = true) : Nil
+  def args_to_html(io : IO, html : Bool = true) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
@@ -229,7 +229,7 @@ class Crystal::Doc::Method
       @def.args.each_with_index do |arg, i|
         io << ", " if printed
         io << '*' if @def.splat_index == i
-        arg_to_html arg, io, links: links
+        arg_to_html arg, io, html: html
         printed = true
       end
       if double_splat = @def.double_splat
@@ -241,7 +241,7 @@ class Crystal::Doc::Method
       if block_arg = @def.block_arg
         io << ", " if printed
         io << '&'
-        arg_to_html block_arg, io, links: links
+        arg_to_html block_arg, io, html: html
       elsif @def.yields
         io << ", " if printed
         io << '&'
@@ -254,10 +254,10 @@ class Crystal::Doc::Method
       # Nothing to do
     when ASTNode
       io << " : "
-      node_to_html return_type, io, links: links
+      node_to_html return_type, io, html: html
     when Crystal::Type
       io << " : "
-      @type.type_to_html return_type, io, links: links
+      @type.type_to_html return_type, io, html: html
     end
 
     if free_vars = @def.free_vars
@@ -268,7 +268,7 @@ class Crystal::Doc::Method
     io
   end
 
-  def arg_to_html(arg : Arg, io, links = true)
+  def arg_to_html(arg : Arg, io, html = true)
     if arg.external_name != arg.name
       name = arg.external_name.presence || "_"
       if Symbol.needs_quotes? name
@@ -283,10 +283,10 @@ class Crystal::Doc::Method
 
     if restriction = arg.restriction
       io << " : "
-      node_to_html restriction, io, links: links
+      node_to_html restriction, io, html: html
     elsif type = arg.type?
       io << " : "
-      @type.type_to_html type, io, links: links
+      @type.type_to_html type, io, html: html
     end
 
     if default_value = arg.default_value
@@ -295,8 +295,8 @@ class Crystal::Doc::Method
     end
   end
 
-  def node_to_html(node, io, links = true)
-    @type.node_to_html node, io, links: links
+  def node_to_html(node, io, html = true)
+    @type.node_to_html node, io, html: html
   end
 
   def must_be_included?
