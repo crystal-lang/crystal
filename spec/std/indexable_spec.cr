@@ -258,4 +258,30 @@ describe Indexable do
       a.should eq([0, 1, 2])
     end
   end
+
+  describe "#==" do
+    it "equal" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(3)
+      c = SafeMixedIndexable.new(4)
+
+      a.should eq b
+      b.should eq a
+
+      a.should_not eq c
+      c.should_not eq a
+    end
+  end
+
+  describe "#hash" do
+    a = SafeStringIndexable.new(3)
+    b = SafeMixedIndexable.new(3)
+    c = SafeMixedIndexable.new(4)
+
+    a.hash.should eq b.hash
+    b.hash.should eq a.hash
+
+    a.hash.should_not eq c.hash
+    c.hash.should_not eq a.hash
+  end
 end

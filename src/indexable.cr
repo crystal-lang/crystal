@@ -439,6 +439,35 @@ module Indexable(T)
     size == 0 ? yield : unsafe_fetch(0)
   end
 
+  # Returns `true` if each element in `self` is equal to each
+  # corresponding element in *other*.
+  #
+  # ```
+  # [1, 2, 3] == {1, 2, 3} # => true
+  # [1, 2, 3] == {2, 3}    # => false
+  # ```
+  #
+  # Two indexables are defined to be equal if they contain the same elements in
+  # the same order. This definition ensures that comparison works
+  # properly across different implementing types.
+  def ==(other : Indexable)
+    equals?(other) { |x, y| x == y }
+  end
+
+  # Equality with an object that is not `Indexable`. Always returns `false`.
+  def ==(other)
+    false
+  end
+
+  # Appends this indexable to *hasher* and returns the modified *hasher*.
+  #
+  # The hash is computed by hashing `size` and then hashing each element in order.
+  # This ensures that any `Indexable` implementation results in the same hash
+  # (given the same contents) and that two hashes who test equal (`==`) also
+  # produce the same hash.
+  #
+  # Implementing types should usually not override this method.
+  #
   # See `Object#hash(hasher)`
   def hash(hasher)
     hasher = size.hash(hasher)

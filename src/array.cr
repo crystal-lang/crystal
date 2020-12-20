@@ -184,23 +184,6 @@ class Array(T)
   # ```
   getter size : Int32
 
-  # Equality. Returns `true` if each element in `self` is equal to each
-  # corresponding element in *other*.
-  #
-  # ```
-  # ary = [1, 2, 3]
-  # ary == [1, 2, 3] # => true
-  # ary == [2, 3]    # => false
-  # ```
-  def ==(other : Array)
-    equals?(other) { |x, y| x == y }
-  end
-
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
   # Combined comparison operator.
   #
   # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*

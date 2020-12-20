@@ -224,20 +224,6 @@ struct Tuple
     true
   end
 
-  # :ditto:
-  def ==(other : Tuple)
-    return false unless size == other.size
-
-    size.times do |i|
-      return false unless self[i] == other[i]
-    end
-    true
-  end
-
-  def ==(other)
-    false
-  end
-
   # Returns `true` if case equality holds for the elements in `self` and *other*.
   #
   # ```
@@ -307,8 +293,9 @@ struct Tuple
     size <=> other.size
   end
 
-  # See `Object#hash(hasher)`
+  # Optimized implementation of `Indexable#hash(hasher)`.
   def hash(hasher)
+    hasher = {{ T.size }}.hash(hasher)
     {% for i in 0...T.size %}
       hasher = self[{{i}}].hash(hasher)
     {% end %}
