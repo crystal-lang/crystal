@@ -228,8 +228,13 @@ describe "BigFloat" do
   end
 
   it "#hash" do
+    a = -123.to_big_f
+    a.hash.should eq BigFloat.new("-123").hash
+
     b = 123.to_big_f
-    b.hash.should eq(b.to_f64.hash)
+    b.hash.should eq(b.to_s.hash)
+
+    a.hash.should_not eq(b.hash)
   end
 
   it "clones" do
