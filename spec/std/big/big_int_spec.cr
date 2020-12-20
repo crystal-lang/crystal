@@ -398,6 +398,76 @@ describe "BigInt" do
     u64.should be_a(UInt64)
   end
 
+  context "conversion to 64-bit" do
+    it "above 64 bits" do
+      big = BigInt.new("9" * 20)
+      big.to_i64.should eq(7766279631452241919) # wrong
+      big.to_u64.should eq(7766279631452241919) # wrong
+      big.to_i64!.should eq(7766279631452241919)
+      big.to_u64!.should eq(7766279631452241919)
+
+      big = BigInt.new("9" * 32)
+      big.to_i64.should eq(408965003513692159)  # wrong
+      big.to_u64.should eq(9632337040368467967) # wrong
+      big.to_i64!.should eq(408965003513692159) # wrong
+      big.to_u64!.should eq(9632337040368467967)
+    end
+
+    it "between 63 and 64 bits" do
+      big = BigInt.new(i = 9999999999999999999)
+      big.to_i64.should eq(776627963145224191) # wrong
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(776627963145224191) # wrong
+      big.to_u64!.should eq(i)
+    end
+
+    it "between 32 and 63 bits" do
+      big = BigInt.new(i = 9999999999999)
+      big.to_i64.should eq(i)
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(i)
+    end
+
+    it "negative under 32 bits" do
+      big = BigInt.new(i = -9999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(9999) # wrong
+    end
+
+    it "negative between 32 and 63 bits" do
+      big = BigInt.new(i = -9999999999999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(9999999999999) # wrong
+    end
+
+    it "negative between 63 and 64 bits" do
+      big = BigInt.new("-9999999999999999999")
+      big.to_i64.should eq(-776627963145224191) # wrong
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-776627963145224191) # wrong
+      big.to_u64!.should eq(9999999999999999999) # wrong
+    end
+
+    it "negative above 64 bits" do
+      big = BigInt.new("-" + "9" * 20)
+      big.to_i64.should eq(-7766279631452241919) # wrong
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-7766279631452241919)
+      big.to_u64!.should eq(7766279631452241919) # wrong
+
+      big = BigInt.new("-" + "9" * 32)
+      big.to_i64.should eq(-408965003513692159) # wrong
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-408965003513692159) # wrong
+      big.to_u64!.should eq(9632337040368467967) # wrong
+    end
+  end
+
   {% if flag?(:x86_64) %}
     # For 32 bits libgmp can't seem to be able to do it
     it "can cast UInt64::MAX to UInt64 (#2264)" do
