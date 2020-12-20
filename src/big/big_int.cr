@@ -407,8 +407,7 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: improve this
-  def_hash to_u64
+  def_hash to_s
 
   # Returns a string representation of self.
   #

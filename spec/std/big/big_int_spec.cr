@@ -421,7 +421,7 @@ describe "BigInt" do
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
-    b3 = 6.to_big_i
+    b3 = -5.to_big_i
 
     b1.hash.should eq(b2.hash)
     b1.hash.should_not eq(b3.hash)
