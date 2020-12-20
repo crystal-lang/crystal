@@ -171,6 +171,8 @@ struct HTTP::Headers
     self
   end
 
+  def_hash @hash
+
   def ==(other : self)
     self == other.@hash
   end

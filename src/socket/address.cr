@@ -236,6 +236,13 @@ class Socket
       {% end %}
     end
 
+    def hash(hasher)
+      hasher = family.hash(hasher)
+      hasher = port.hash(hasher)
+      hasher = address.hash(hasher)
+      hasher
+    end
+
     def ==(other : IPAddress)
       family == other.family &&
         port == other.port &&
