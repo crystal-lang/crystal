@@ -776,6 +776,7 @@ class Crystal::Doc::Type
       builder.field "enum", enum?
       builder.field "alias", alias?
       builder.field "aliased", alias_definition.to_s
+      builder.field "aliased_html", formatted_alias_definition
       builder.field "const", const?
       builder.field "constants", constants
       builder.field "included_modules" do

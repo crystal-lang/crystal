@@ -151,6 +151,7 @@ class Crystal::Doc::Macro
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
+      builder.field "args_html", args_to_html
       builder.field "source_link", source_link
       builder.field "def", self.macro
     end
