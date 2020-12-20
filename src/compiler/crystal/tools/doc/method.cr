@@ -272,7 +272,11 @@ class Crystal::Doc::Method
     if arg.external_name != arg.name
       name = arg.external_name.presence || "_"
       if Symbol.needs_quotes? name
-        HTML.escape name.inspect, io
+        if html
+          HTML.escape name.inspect, io
+        else
+          name.inspect io
+        end
       else
         io << name
       end
@@ -291,7 +295,11 @@ class Crystal::Doc::Method
 
     if default_value = arg.default_value
       io << " = "
-      io << Highlighter.highlight(default_value.to_s)
+      if html
+        io << Highlighter.highlight(default_value.to_s)
+      else
+        io << default_value
+      end
     end
   end
 
