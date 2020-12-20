@@ -524,9 +524,7 @@ struct BigDecimal < Number
     self
   end
 
-  def hash(hasher)
-    hasher.string(to_s)
-  end
+  def_hash to_s
 
   # Returns the *quotient* as absolutely negative if `self` and *other* have
   # different signs, otherwise returns the *quotient*.
