@@ -389,7 +389,7 @@ describe BigDecimal do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
     bd3 = BigDecimal.new("1.23456")
-    bd4 = BigDecimal.new("123456")
+    bd4 = BigDecimal.new("-123456")
     bd5 = BigDecimal.new("0")
 
     hash = {} of BigDecimal => String
@@ -403,7 +403,7 @@ describe BigDecimal do
     hash[BigDecimal.new("123.456")].should eq "bd1"
     hash[BigDecimal.new("0.12345")].should eq "bd2"
     hash[BigDecimal.new("1.23456")].should eq "bd3"
-    hash[BigDecimal.new("123456")].should eq "bd4"
+    hash[BigDecimal.new("-123456")].should eq "bd4"
     hash[BigDecimal.new("0")].should eq "bd5"
 
     # not found
