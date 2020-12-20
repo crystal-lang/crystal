@@ -1059,7 +1059,6 @@ struct Path
   # Path.windows("foo") <=> Path.windows("FOO") # => 0
   # ```
   def <=>(other : Path)
-    p! self.@name, self.@kind, other.@name, other.@kind, @name.compare(other.@name, case_insensitive: true), windows? || other.windows?
     ord = @name.compare(other.@name, case_insensitive: windows? || other.windows?)
     return ord if ord != 0
 
