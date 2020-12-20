@@ -407,8 +407,8 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: improve this
-  def_hash to_u64
+  # TODO: check hash equality for numbers >= 2**63
+  def_hash to_i64!
 
   # Returns a string representation of self.
   #
