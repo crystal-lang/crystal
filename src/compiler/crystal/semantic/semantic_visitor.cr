@@ -269,11 +269,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     node.raise "can't #{op} dynamically" if inside_exp?
   end
 
-  def expand_macro(node, raise_on_missing_const = true, first_pass = false)
+  def expand_macro(node, raise_on_missing_const = true, first_pass = false, accept = true)
     if expanded = node.expanded
       @exp_nest -= 1
       eval_macro(node) do
-        expanded.accept self
+        expanded.accept self if accept
       end
       @exp_nest += 1
       return true
@@ -311,7 +311,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     args = expand_macro_arguments(node, expansion_scope)
 
     @exp_nest -= 1
-    generated_nodes = expand_macro(the_macro, node, visibility: node.visibility) do
+    generated_nodes = expand_macro(the_macro, node, visibility: node.visibility, accept: accept) do
       old_args = node.args
       node.args = args
       expanded_macro, macro_expansion_pragmas = @program.expand_macro the_macro, node, expansion_scope, expansion_scope, @untyped_def
@@ -327,7 +327,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     true
   end
 
-  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility)
+  def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true)
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -357,7 +357,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
 
-    generated_nodes.accept self
+    generated_nodes.accept self if accept
     generated_nodes
   end
 
@@ -406,10 +406,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     args
   end
 
-  def expand_inline_macro(node, mode = nil)
+  def expand_inline_macro(node, mode = nil, accept = true)
     if expanded = node.expanded
       eval_macro(node) do
-        expanded.accept self
+        expanded.accept self if accept
       end
       return expanded
     end
@@ -418,7 +418,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
     skip_macro_exception = nil
 
-    generated_nodes = expand_macro(the_macro, node, mode: mode, visibility: :public) do
+    generated_nodes = expand_macro(the_macro, node, mode: mode, visibility: :public, accept: accept) do
       begin
         @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
       rescue ex : SkipMacroException

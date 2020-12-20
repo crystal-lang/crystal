@@ -381,6 +381,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     target_type.add_def node
+
     node.set_type @program.nil
 
     if is_instance_method
@@ -633,13 +634,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit_enum_member(node, member, counter, all_value, overflow, **options)
     case member
     when MacroIf
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroExpression
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when MacroFor
-      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum)
+      expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
       visit_enum_member(node, expanded, counter, all_value, overflow, **options)
     when Expressions
       visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
