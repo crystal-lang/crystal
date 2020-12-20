@@ -8,6 +8,7 @@
 module Indexable(T)
   include Iterable(T)
   include Enumerable(T)
+  include Comparable(Indexable)
 
   # Returns the number of elements in this container.
   abstract def size
@@ -402,6 +403,36 @@ module Indexable(T)
   # ```
   def empty?
     size == 0
+  end
+
+  # The comparison operator.
+  #
+  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*,
+  # equals *other* or is greater than *other*.
+  #
+  # ```
+  # [8] <=> [1, 2, 3] # => 1
+  # [2] <=> [4, 2, 3] # => -1
+  # [1, 2] <=> [1, 2] # => 0
+  # [1, 2] <=> {1, 2} # => 0
+  # ```
+  #
+  # Indexables are compared in an "element-wise" manner; the first element of
+  # `self` is compared with the first one of *other* using the `<=>` operator,
+  # then the second elements, etc.
+  # As soon as any such comparison is non-zero (i.e. the two corresponding
+  # elements are not equal), that result is returned for the whole comparison.
+  #
+  # If all common elements are equal, the comparison is based on the size of the
+  # indexables. If both have exactly the same number of elements and all
+  # elements are equal, both indexables are equal and the result is `0`.
+  def <=>(other : Indexable)
+    min_size = Math.min(size, other.size)
+    0.upto(min_size - 1) do |i|
+      n = self.unsafe_fetch(i) <=> other.unsafe_fetch(i)
+      return n if n != 0
+    end
+    size <=> other.size
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.

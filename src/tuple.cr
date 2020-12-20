@@ -64,7 +64,6 @@
 # ```
 struct Tuple
   include Indexable(Union(*T))
-  include Comparable(Tuple)
 
   # Creates a tuple that will contain the given values.
   #
@@ -281,16 +280,6 @@ struct Tuple
       return cmp unless cmp == 0
     {% end %}
     0
-  end
-
-  # :ditto:
-  def <=>(other : Tuple)
-    min_size = Math.min(size, other.size)
-    min_size.times do |i|
-      cmp = self[i] <=> other[i]
-      return cmp unless cmp == 0
-    end
-    size <=> other.size
   end
 
   # Optimized implementation of `Indexable#hash(hasher)`.

@@ -19,12 +19,12 @@ private class SafeStringIndexable
 
   property size
 
-  def initialize(@size : Int32)
+  def initialize(@size : Int32, @offset = 0)
   end
 
   def unsafe_fetch(i)
     raise IndexError.new unless 0 <= i < size
-    i.to_s
+    (i + @offset).to_s
   end
 end
 
@@ -283,5 +283,31 @@ describe Indexable do
 
     a.hash.should_not eq c.hash
     c.hash.should_not eq a.hash
+  end
+
+  describe "#<=>" do
+    it "equal" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(3)
+
+      (a <=> b).should eq 0
+      (b <=> a).should eq 0
+    end
+
+    it "different elements" do
+      a = SafeStringIndexable.new(3, 1)
+      b = SafeMixedIndexable.new(3)
+
+      (a <=> b).should eq 1
+      (b <=> a).should eq -1
+    end
+
+    it "different size" do
+      a = SafeStringIndexable.new(3)
+      b = SafeMixedIndexable.new(4)
+
+      (a <=> b).should eq -1
+      (b <=> a).should eq 1
+    end
   end
 end
