@@ -10,15 +10,15 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
       parser.wants_doc = emit_doc
       node = parser.parse
       node.to_s(str, emit_doc: emit_doc)
-      str.to_s.should eq(expected), file, line
+      str.to_s.should eq(expected), file: file, line: line
 
       # Check keeping information for `to_s` on clone
       cloned = node.clone
       str.clear
       cloned.to_s(str, emit_doc: emit_doc)
-      str.to_s.should eq(expected), file, line
+      str.to_s.should eq(expected), file: file, line: line
     else
-      source.to_s.should eq(expected), file, line
+      source.to_s.should eq(expected), file: file, line: line
     end
   end
 end
