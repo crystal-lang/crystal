@@ -87,50 +87,138 @@ struct Number
     %array
   end
 
-  # Invokes the given block with the sequence of numbers starting at `self`,
-  # incremented by *by* on each call, and with an optional *to*.
+  # Iterates from `self` to *limit* incrementing by the amount of *step* on each
+  # iteration.
   #
   # ```
-  # 3.step(to: 10, by: 2) do |n|
-  #   puts n
+  # ary = [] of Int32
+  # 1.step(to: 4, by: 2) do |x|
+  #   ary << x
   # end
+  # ary                       # => [1, 3]
+  # 1.step(to: 4, by: 2).to_a # => [1, 3]
   # ```
   #
-  # Output:
+  # The type of each iterated element is `typeof(self + step)`.
   #
-  # ```text
-  # 3
-  # 5
-  # 7
-  # 9
-  # ```
-  def step(*, to = nil, by = 1)
-    x = self + (by - by)
+  # If *to* is `nil`, iteration is open ended.
+  #
+  # The starting point (`self`) is always iterated as first element, with two
+  # exceptions:
+  # * if `self` and *to* don't compare (i.e. `(self <=> to).nil?`). Example:
+  #   `1.0.step(Float::NAN)`
+  # * if the direction of *to* differs from the direction of `by`. Example:
+  #   `1.step(to: 2, by: -1)`
+  #
+  # In those cases the iteration is empty.
+  def step(*, to limit = nil, by step)
+    # type of current should be the result of adding `step`:
+    current = self + (step - step)
 
-    if to
-      if by > 0
-        while x <= to
-          yield x
-          x += by
-        end
-      elsif by < 0
-        while x >= to
-          yield x
-          x += by
-        end
+    if limit == current
+      yield current
+      return
+    elsif step.zero?
+      raise ArgumentError.new("Zero step size")
+    end
+
+    direction = step.sign
+
+    if limit
+      return unless (limit <=> current).try(&.sign) == direction
+
+      yield current
+
+      while ((limit - current) <=> step) == direction
+        current += step
+        yield current
+      end
+
+      if (limit - current <=> step) == 0
+        yield current + step
       end
     else
       while true
-        yield x
-        x += by
+        yield current
+        current += step
       end
     end
 
     self
   end
 
-  def step(*, to = nil, by = 1)
-    StepIterator.new(self + (by - by), to, by)
+  # :ditto:
+  def step(*, to limit = nil, &)
+    if limit
+      direction = limit <=> self
+    end
+    step = self.class.new(direction.try(&.sign) || 1)
+
+    step(to: limit, by: step) do |x|
+      yield x
+    end
+  end
+
+  # :ditto:
+  def step(*, to limit = nil, by step)
+    raise ArgumentError.new("Zero step size") if step.zero? && limit != self
+
+    StepIterator.new(self + (step - step), limit, step)
+  end
+
+  # :ditto:
+  def step(*, to limit = nil)
+    if limit
+      direction = limit <=> self
+    end
+    step = self.class.new(direction.try(&.sign) || 1)
+
+    step(to: limit, by: step)
+  end
+
+  class StepIterator(T, L, B)
+    include Iterator(T)
+
+    @current : T
+    @limit : L
+    @step : B
+    @started = false
+    @reached_end = false
+
+    def initialize(@current : T, @limit : L, @step : B)
+    end
+
+    def next
+      return stop if @reached_end
+      limit = @limit
+
+      if !@started
+        if limit
+          unless (limit <=> @current).try(&.sign).in?(0, @step.sign)
+            @reached_end = true
+            return stop
+          end
+        end
+
+        @started = true
+        @reached_end = @current == limit
+        @current
+      elsif limit
+        if (limit - @current <=> @step) == @step.sign
+          @current += @step
+        else
+          @reached_end = true
+
+          if (limit - @current <=> @step) == 0
+            @current + @step
+          else
+            stop
+          end
+        end
+      else
+        @current += @step
+      end
+    end
   end
 
   # Returns the absolute value of this number.
@@ -253,36 +341,5 @@ struct Number
   # ```
   def zero? : Bool
     self == 0
-  end
-
-  private class StepIterator(T, L, B)
-    include Iterator(T)
-
-    @n : T
-    @to : L
-    @by : B
-    @original : T
-
-    def initialize(@n : T, @to : L, @by : B)
-      @original = @n
-    end
-
-    def next
-      if to = @to
-        if @by > 0
-          return stop if @n > to
-        elsif @by < 0
-          return stop if @n < to
-        end
-
-        value = @n
-        @n += @by
-        value
-      else
-        value = @n
-        @n += @by
-        value
-      end
-    end
   end
 end
