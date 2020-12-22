@@ -733,7 +733,6 @@ end
 # ```
 #
 # NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
-#
 def timeout_select_action(timeout : Time::Span)
   Channel::TimeoutAction.new(timeout)
 end
