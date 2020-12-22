@@ -239,6 +239,29 @@ struct Number
         @current += @step
       end
     end
+
+    # Overrides `Enumerable#sum` to use more performant implementation on integer
+    # ranges.
+    def sum(initial)
+      super if @reached_end
+
+      current = @current
+      limit = @limit
+      step = @step
+
+      if current.is_a?(Int) && limit.is_a?(Int) && step.is_a?(Int)
+        limit -= 1 if @exclusive
+        n = (limit - current) // step + 1
+        if n >= 0
+          limit = current + (n - 1) * step
+          initial + n * (current + limit) // 2
+        else
+          initial
+        end
+      else
+        super
+      end
+    end
   end
 
   # Returns the absolute value of this number.
