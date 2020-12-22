@@ -384,6 +384,24 @@ describe "Range" do
     end
   end
 
+  describe "sample" do
+    it "raises on open range" do
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (1..(true ? nil : 1)).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        ((true ? nil : 1)..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        ((true ? nil : 1)..(true ? nil : 1)).sample
+      end
+    end
+
+    it "samples a float range" do
+      (1.2..3.4).should contain((1.2..3.4).sample)
+    end
+  end
+
   describe "step" do
     it "does with inclusive range" do
       a = 1..5

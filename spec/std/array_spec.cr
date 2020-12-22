@@ -1096,68 +1096,6 @@ describe "Array" do
     end
   end
 
-  describe "sample" do
-    it "sample" do
-      [1].sample.should eq(1)
-
-      x = [1, 2, 3].sample
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "sample with random" do
-      x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(2)
-    end
-
-    it "gets sample of negative count elements raises" do
-      expect_raises ArgumentError do
-        [1].sample(-1)
-      end
-    end
-
-    it "gets sample of 0 elements" do
-      [1].sample(0).should eq([] of Int32)
-    end
-
-    it "gets sample of 1 elements" do
-      [1].sample(1).should eq([1])
-
-      x = [1, 2, 3].sample(1)
-      x.size.should eq(1)
-      x = x.first
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "gets sample of k elements out of n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3)
-      set = Set.new(b)
-      set.size.should eq(3)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, where k > n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(10)
-      b.size.should eq(5)
-      set = Set.new(b)
-      set.size.should eq(5)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, with random" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 1])
-    end
-  end
-
   describe "shift" do
     it "shifts when non empty" do
       a = [1, 2, 3]

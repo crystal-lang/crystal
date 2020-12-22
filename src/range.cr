@@ -323,8 +323,8 @@ struct Range(B, E)
     to_s(io)
   end
 
-  # If `self` is a `Int` range, it provides O(1) implementation,
-  # otherwise it is same as `Enumerable#sum`.
+  # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
+  # an `Int` range.
   def sum(initial)
     b = self.begin
     e = self.end
@@ -339,6 +339,48 @@ struct Range(B, E)
       end
     else
       super
+    end
+  end
+
+  # Optimized version of `Enumerable#sample` that runs in O(1) time when `self`
+  # is an `Int` or `Float` range. In these cases, this range is considered to be
+  # a distribution of numeric values rather than a collection of elements, and
+  # the method simply calls `random.rand(self)`.
+  #
+  # Raises `ArgumentError` if `self` is an open range.
+  def sample(random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    {% if B < Int && E < Int %}
+      random.rand(self)
+    {% elsif B < Float && E < Float %}
+      random.rand(self)
+    {% else %}
+      if self.begin.nil? || self.end.nil?
+        raise ArgumentError.new("Can't sample an open range")
+      end
+      super
+    {% end %}
+  end
+
+  # :nodoc:
+  def sample(n : Int, random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    if self.begin.nil? || self.end.nil?
+      raise ArgumentError.new("Can't sample an open range")
+    end
+
+    return super unless n == 1
+
+    if empty?
+      [] of B
+    else
+      [sample(random)]
     end
   end
 
