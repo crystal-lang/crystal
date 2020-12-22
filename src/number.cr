@@ -111,7 +111,7 @@ struct Number
   #   `1.step(to: 2, by: -1)`
   #
   # In those cases the iteration is empty.
-  def step(*, to limit = nil, by step)
+  def step(*, to limit = nil, by step, &) : Nil
     # type of current should be the result of adding `step`:
     current = self + (step - step)
 
@@ -148,7 +148,7 @@ struct Number
   end
 
   # :ditto:
-  def step(*, to limit = nil, &)
+  def step(*, to limit = nil, &) : Nil
     if limit
       direction = limit <=> self
     end
