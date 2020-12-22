@@ -190,6 +190,13 @@ describe "Number" do
     it_iterates "negative Int", [-1, -2, -3, -4, -5], -1.step(to: -5)
     it_iterates "negative Float", [-1.0, -2.0, -3.0, -4.0, -5.0], -1.0.step(to: -5.0)
 
+    it_iterates "downto Int", [3, 2, 1, 0], 3.step(to: 0)
+    it_iterates "downto Int by", [3, 2, 1, 0], 3.step(to: 0, by: -1)
+    it_iterates "downto UInt", [3, 2, 1, 0] of UInt8, 3u8.step(to: 0)
+    it_iterates "downto UInt by", [3, 2, 1, 0] of UInt8, 3u8.step(to: 0, by: -1)
+    it_iterates "downto Float", [3.0, 2.0, 1.0, 0.0], 3.0.step(to: 0)
+    it_iterates "downto Float by", [3.0, 2.0, 1.0, 0.0], 3.0.step(to: 0, by: -1)
+
     it_iterates "by Int", [1, 3, 5], 1.step(to: 5, by: 2)
     it_iterates "by Float", [1.0, 3.0, 5.0], 1.0.step(to: 5.0, by: 2.0)
     it_iterates "by Float half", [1.0, 2.5, 4.0], 1.0.step(to: 5.0, by: 1.5)
@@ -200,6 +207,7 @@ describe "Number" do
 
     it_iterates "missing end Int", [1, 3], 1.step(to: 4, by: 2)
     it_iterates "missing end Float", [1.0, 3.0], 1.0.step(to: 4.0, by: 2.0)
+    it_iterates "missing end UInt", [3, 1] of UInt8, 3u8.step(to: 0, by: -2)
 
     it_iterates "Int to Float", [1, 2, 3, 4, 5], 1.step(to: 5.0)
     it_iterates "Int to Float by", [1, 2, 3, 4, 5], 1.step(to: 5.0, by: 1)

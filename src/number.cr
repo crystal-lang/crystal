@@ -152,7 +152,7 @@ struct Number
     if limit
       direction = limit <=> self
     end
-    step = self.class.new(direction.try(&.sign) || 1)
+    step = direction.try(&.sign) || 1
 
     step(to: limit, by: step) do |x|
       yield x
@@ -171,7 +171,7 @@ struct Number
     if limit
       direction = limit <=> self
     end
-    step = self.class.new(direction.try(&.sign) || 1)
+    step = direction.try(&.sign) || 1
 
     step(to: limit, by: step)
   end
