@@ -583,11 +583,19 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
-    response = exec_internal_single(request)
+    begin
+      response = exec_internal_single(request)
+    rescue e : IO::Error
+      raise e unless e.os_error == Errno::EPIPE
+    end
     return handle_response(response) if response
 
     # Server probably closed the connection, so retry one
-    close
+    begin
+      close
+    rescue e : IO::Error
+      raise e unless e.os_error == Errno::EPIPE
+    end
     request.body.try &.rewind
     response = exec_internal_single(request)
     return handle_response(response) if response
@@ -761,6 +769,7 @@ class HTTP::Client
   # Closes this client. If used again, a new connection will be opened.
   def close
     @io.try &.close
+  ensure
     @io = nil
   end
 
