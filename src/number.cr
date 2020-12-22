@@ -89,14 +89,17 @@ struct Number
 
   # Iterates from `self` to *limit* incrementing by the amount of *step* on each
   # iteration.
+  # If *exclusive* is `true`, *limit* is excluded from the iteration.
   #
   # ```
   # ary = [] of Int32
   # 1.step(to: 4, by: 2) do |x|
   #   ary << x
   # end
-  # ary                       # => [1, 3]
-  # 1.step(to: 4, by: 2).to_a # => [1, 3]
+  # ary                                        # => [1, 3]
+  # 1.step(to: 4, by: 2).to_a                  # => [1, 3]
+  # 1.step(to: 4, by: 1).to_a                  # => [1, 2, 3, 4]
+  # 1.step(to: 4, by: 1, exclusive: true).to_a # => [1, 2, 3]
   # ```
   #
   # The type of each iterated element is `typeof(self + step)`.
@@ -111,14 +114,14 @@ struct Number
   #   `1.step(to: 2, by: -1)`
   #
   # In those cases the iteration is empty.
-  def step(*, to limit = nil, by step, &) : Nil
+  def step(*, to limit = nil, by step, exclusive : Bool = false, &) : Nil
     # type of current should be the result of adding `step`:
     current = self + (step - step)
 
     if limit == current
       # Only yield current if it's also the limit.
       # Step size doesn't matter in this case: `1.step(to: 1, by: 0)` yields `1`
-      yield current
+      yield current unless exclusive
       return
     end
 
@@ -132,9 +135,12 @@ struct Number
 
       yield current
 
-      # only proceed if difference to limit is at least as big as step size to
-      # avoid potential overflow errors.
-      while ((limit - current) <=> step).try(&.sign).in?(0, direction)
+      while true
+        # only proceed if difference to limit is at least as big as step size to
+        # avoid potential overflow errors.
+        sign = ((limit - current) <=> step).try(&.sign)
+        break unless sign == direction || (sign == 0 && !exclusive)
+
         current += step
         yield current
       end
@@ -149,32 +155,32 @@ struct Number
   end
 
   # :ditto:
-  def step(*, to limit = nil, &) : Nil
+  def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self
     end
     step = direction.try(&.sign) || 1
 
-    step(to: limit, by: step) do |x|
+    step(to: limit, by: step, exclusive: exclusive) do |x|
       yield x
     end
   end
 
   # :ditto:
-  def step(*, to limit = nil, by step)
+  def step(*, to limit = nil, by step, exclusive : Bool = false)
     raise ArgumentError.new("Zero step size") if step.zero? && limit != self
 
-    StepIterator.new(self + (step - step), limit, step)
+    StepIterator.new(self + (step - step), limit, step, exclusive: exclusive)
   end
 
   # :ditto:
-  def step(*, to limit = nil)
+  def step(*, to limit = nil, exclusive : Bool = false)
     if limit
       direction = limit <=> self
     end
     step = direction.try(&.sign) || 1
 
-    step(to: limit, by: step)
+    step(to: limit, by: step, exclusive: exclusive)
   end
 
   class StepIterator(T, L, B)
@@ -186,7 +192,7 @@ struct Number
     @at_start = true
     @reached_end = false
 
-    def initialize(@current : T, @limit : L, @step : B)
+    def initialize(@current : T, @limit : L, @step : B, @exclusive : Bool)
     end
 
     def next
@@ -197,13 +203,14 @@ struct Number
         @at_start = false
 
         if limit
+          sign = (limit <=> @current).try(&.sign)
+          @reached_end = sign == 0
+
           # iteration is empty if limit and step are in different directions
-          unless (limit <=> @current).try(&.sign).in?(0, @step.sign)
+          if (!@reached_end && sign != @step.sign) || (@reached_end && @exclusive)
             @reached_end = true
             return stop
           end
-
-          @reached_end = (@current <=> limit) == 0
         end
 
         @current
@@ -216,11 +223,16 @@ struct Number
         when 0
           # distance is exactly step size, so we're at the end
           @reached_end = true
-          @current + @step
+          if @exclusive
+            stop
+          else
+            @current + @step
+          end
         else
           # we've either overshot the limit or the comparison failed, so we can't
           # continue
           @reached_end = true
+
           stop
         end
       else
