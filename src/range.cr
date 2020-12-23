@@ -357,10 +357,17 @@ struct Range(B, E)
       random.rand(self)
     {% elsif B < Float && E < Float %}
       random.rand(self)
-    {% else %}
-      if self.begin.nil? || self.end.nil?
+    {% elsif B.nilable? || E.nilable? %}
+      b = self.begin
+      e = self.end
+
+      if b.nil? || e.nil?
         raise ArgumentError.new("Can't sample an open range")
       end
+
+      closed_range = @exclusive ? (b...e) : (b..e)
+      closed_range.sample(random)
+    {% else %}
       super
     {% end %}
   end
