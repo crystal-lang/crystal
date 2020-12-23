@@ -56,7 +56,7 @@ class Array(T)
   # The capacity of `@buffer`.
   # Note that, because `@buffer` moves on shift, the actual
   # capacity (the allocated memory) starts at `@buffer - @offset_to_buffer`.
-  # The actualy capacity is also given by the `remaining_capacity` internal method.
+  # The actual capacity is also given by the `remaining_capacity` internal method.
   @capacity : Int32
 
   # Offset to the buffer that was originally allocated, and which needs to

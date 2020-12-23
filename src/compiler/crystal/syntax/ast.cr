@@ -97,7 +97,7 @@ module Crystal
     end
 
     # It yields `nil` always.
-    # (It is overriden by `Expressions` to implement `#single_expression`.)
+    # (It is overridden by `Expressions` to implement `#single_expression`.)
     def single_expression?
       nil
     end
