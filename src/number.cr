@@ -116,26 +116,27 @@ struct Number
     current = self + (step - step)
 
     if limit == current
+      # Only yield current if it's also the limit.
+      # Step size doesn't matter in this case: `1.step(to: 1, by: 0)` yields `1`
       yield current
       return
-    elsif step.zero?
-      raise ArgumentError.new("Zero step size")
     end
+
+    raise ArgumentError.new("Zero step size") if step.zero?
 
     direction = step.sign
 
     if limit
+      # if limit and step size have different directions, we can't iterate
       return unless (limit <=> current).try(&.sign) == direction
 
       yield current
 
-      while ((limit - current) <=> step) == direction
+      # only proceed if difference to limit is at least as big as step size to
+      # avoid potential overflow errors.
+      while ((limit - current) <=> step).try(&.sign).in?(0, direction)
         current += step
         yield current
-      end
-
-      if (limit - current <=> step) == 0
-        yield current + step
       end
     else
       while true
@@ -182,7 +183,7 @@ struct Number
     @current : T
     @limit : L
     @step : B
-    @started = false
+    @at_start = true
     @reached_end = false
 
     def initialize(@current : T, @limit : L, @step : B)
@@ -192,28 +193,35 @@ struct Number
       return stop if @reached_end
       limit = @limit
 
-      if !@started
+      if @at_start
+        @at_start = false
+
         if limit
+          # iteration is empty if limit and step are in different directions
           unless (limit <=> @current).try(&.sign).in?(0, @step.sign)
             @reached_end = true
             return stop
           end
+
+          @reached_end = (@current <=> limit) == 0
         end
 
-        @started = true
-        @reached_end = @current == limit
         @current
       elsif limit
-        if (limit - @current <=> @step) == @step.sign
+        # compare distance to current with step size
+        case (limit - @current <=> @step).try(&.sign)
+        when @step.sign
+          # distance is more than step size, so iteration proceeds
           @current += @step
-        else
+        when 0
+          # distance is exactly step size, so we're at the end
           @reached_end = true
-
-          if (limit - @current <=> @step) == 0
-            @current + @step
-          else
-            stop
-          end
+          @current + @step
+        else
+          # we've either overshot the limit or the comparison failed, so we can't
+          # continue
+          @reached_end = true
+          stop
         end
       else
         @current += @step
