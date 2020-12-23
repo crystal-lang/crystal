@@ -4558,7 +4558,7 @@ class String
   end
 
   # Returns a representation of `self` using character escapes for special characters
-  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  # and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
   #
   # ```
   # "\u{1f48e} - à la carte\n".dump # => %("\\u{1F48E} - \\u00E0 la carte\\n")
@@ -4570,7 +4570,7 @@ class String
   end
 
   # Appends `self` to the given `IO` object using character escapes for special characters
-  # and and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
+  # and non-ascii characters (unicode codepoints > 128), wrapped in quotes.
   def dump(io : IO) : Nil
     dump_or_inspect(io) do |char, error|
       dump_char(char, error, io)
@@ -4578,7 +4578,7 @@ class String
   end
 
   # Returns a representation of `self` using character escapes for special characters
-  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  # and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
   #
   # ```
   # "\u{1f48e} - à la carte\n".dump_unquoted # => %(\\u{1F48E} - \\u00E0 la carte\\n)
@@ -4590,7 +4590,7 @@ class String
   end
 
   # Appends `self` to the given `IO` object using character escapes for special characters
-  # and and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
+  # and non-ascii characters (unicode codepoints > 128), but not wrapped in quotes.
   def dump_unquoted(io : IO) : Nil
     dump_or_inspect_unquoted(io) do |char, error|
       dump_char(char, error, io)

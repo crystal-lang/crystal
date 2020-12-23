@@ -63,8 +63,8 @@ module Crystal
 
     def transform(node : Call)
       # Copy enclosing def's args to super/previous_def without parenthesis
-      case node.name
-      when "super", "previous_def"
+      case node
+      when .super?, .previous_def?
         if node.args.empty? && !node.has_parentheses?
           if current_def = @current_def
             splat_index = current_def.splat_index

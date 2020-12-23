@@ -270,7 +270,7 @@ class Crystal::Call
       matches = program_matches unless program_matches.empty?
     end
 
-    if matches.empty? && owner.class? && owner.abstract? && name != "super"
+    if matches.empty? && owner.class? && owner.abstract? && !super?
       matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
@@ -1137,5 +1137,13 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+  end
+
+  def super?
+    !obj && name == "super"
+  end
+
+  def previous_def?
+    !obj && name == "previous_def"
   end
 end

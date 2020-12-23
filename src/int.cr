@@ -431,8 +431,8 @@ struct Int
     end
   end
 
-  # Returns the greatest common divisor of `self` and `other`. Signed
-  # integers may raise overflow if either has value equal to `MIN` of
+  # Returns the greatest common divisor of `self` and *other*. Signed
+  # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
   #
   # ```
@@ -475,8 +475,11 @@ struct Int
     u.unsafe_shl shift
   end
 
+  # Returns the least common multiple of `self` and *other*.
+  #
+  # Raises `OverflowError` in case of overflow.
   def lcm(other : Int)
-    (self * other).abs // gcd(other)
+    (self // gcd(other) * other).abs
   end
 
   def divisible_by?(num)

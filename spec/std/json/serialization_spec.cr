@@ -408,6 +408,11 @@ describe "JSON serialization" do
       big.to_json.should eq("1234.567891011121314")
     end
 
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      big.to_json.should eq("1234.567891011121314")
+    end
+
     it "does for UUID" do
       uuid = UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff")
       uuid.to_json.should eq("\"ee843b26-56d8-472b-b343-0b94ed9077ff\"")

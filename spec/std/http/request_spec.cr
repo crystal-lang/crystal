@@ -444,6 +444,35 @@ module HTTP
         request.host.should eq("host.example.org")
       end
 
+      it "#hostname" do
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org"})
+        request.hostname.should eq("host.example.org")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0"})
+        request.hostname.should eq("0.0.0.0")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]"})
+        request.hostname.should eq("1234:5678::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[::1]"})
+        request.hostname.should eq("::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000"})
+        request.hostname.should eq("host.example.org")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0:3000"})
+        request.hostname.should eq("0.0.0.0")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80"})
+        request.hostname.should eq("1234:5678::1")
+
+        request = Request.new("GET", "/", HTTP::Headers{"Host" => "[::1]:3000"})
+        request.hostname.should eq("::1")
+
+        request = Request.new("GET", "/")
+        request.hostname.should be_nil
+      end
+
       it "gets request host with port from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
         request.host_with_port.should eq("host.example.org:3000")

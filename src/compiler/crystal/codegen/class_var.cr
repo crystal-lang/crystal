@@ -141,7 +141,7 @@ class Crystal::CodeGenVisitor
               discard = true
             elsif @last.constant? && (type.is_a?(PrimitiveType) || type.is_a?(EnumType))
               global.initializer = @last
-              discard = true
+              discard = type.is_a?(EnumType) || node.simple_literal?
             else
               global.initializer = llvm_type(type).null
               assign global, type, node.type, @last

@@ -118,6 +118,15 @@ describe Socket::IPAddress do
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED, 0).unspecified?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED6, 0).unspecified?.should be_true
   end
+
+  it ".valid_port?" do
+    Socket::IPAddress.valid_port?(0).should be_true
+    Socket::IPAddress.valid_port?(80).should be_true
+    Socket::IPAddress.valid_port?(65_535).should be_true
+
+    Socket::IPAddress.valid_port?(-1).should be_false
+    Socket::IPAddress.valid_port?(65_536).should be_false
+  end
 end
 
 describe Socket::UNIXAddress do

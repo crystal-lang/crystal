@@ -367,9 +367,7 @@ module Crystal
           node.bind_to(@program.nil_var)
         end
 
-        if meta_var.closured?
-          var.bind_to(meta_var)
-        end
+        check_mutably_closured meta_var, var
 
         node.bind_to(var)
 
@@ -481,7 +479,7 @@ module Crystal
           node.raise "can't infer type of type declaration"
         end
 
-        meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
+        meta_var, _ = assign_to_meta_var(var.name)
         if (existing_type = meta_var.type?) && existing_type != var_type
           node.raise "variable '#{var.name}' already declared with type #{existing_type}"
         end
@@ -763,7 +761,8 @@ module Crystal
       value.accept self
 
       var_name = target.name
-      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+      meta_var, meta_var_existed = assign_to_meta_var(var_name)
+
       freeze_type = meta_var.freeze_type
 
       if freeze_type
@@ -804,7 +803,7 @@ module Crystal
       end
 
       meta_var.assigned_to = true
-      check_closured meta_var
+      check_closured meta_var, mark_as_mutably_closured: meta_var_existed
 
       simple_var = MetaVar.new(var_name)
 
@@ -815,9 +814,7 @@ module Crystal
       else
         simple_var.bind_to(target)
 
-        if meta_var.closured?
-          simple_var.bind_to(meta_var)
-        end
+        check_mutably_closured(meta_var, simple_var)
       end
 
       @vars[var_name] = simple_var
@@ -883,7 +880,7 @@ module Crystal
         # Don't track instance variables nilability (for example, if they were
         # just assigned inside a branch) if they have an initializer
         unless scope.has_instance_var_initializer?(var_name)
-          meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+          meta_var, _ = assign_to_meta_var(var_name)
           meta_var.bind_to value
           meta_var.assigned_to = true
 
@@ -1243,13 +1240,6 @@ module Crystal
     def visit(node : ProcPointer)
       obj = node.obj
 
-      # If it's something like `->foo.bar` we turn it into a closure
-      # where `foo` is assigned to a temporary variable.
-      if obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
-        expand(node)
-        return false
-      end
-
       if obj
         obj.accept self
       end
@@ -1265,6 +1255,24 @@ module Crystal
           (io << " for " << obj.type) if obj
           io << "\n\n'" << node.name << "' exists as a macro, but macros can't be used in proc pointers"
         end)
+      end
+
+      # If it's something like `->foo.bar` we turn it into a closure
+      # where `foo` is assigned to a temporary variable.
+      # If it's something like `->foo` then we also turn it into a closure
+      # because it could be doing a mutlidispatch and that's not supported in ProcPointer.
+      if !obj || obj.is_a?(Var) || obj.is_a?(InstanceVar) || obj.is_a?(ClassVar)
+        expand(node)
+        return false
+      end
+
+      # If it's something like `->Foo.bar` and `Foo` is not a lib type,
+      # it could also be producing a multidispatch so we rewrite that too
+      # (lib types can never produce a mutlidispatch and in that case we can
+      # actually generate a function pointer that points right into the C fun).
+      if obj.is_a?(Path) && !obj.type.is_a?(LibType)
+        expand(node)
+        return false
       end
 
       # Check if it's ->LibFoo.foo, so we deduce the type from that method
@@ -1461,9 +1469,9 @@ module Crystal
     # If it's a super or previous_def call inside an initialize we treat
     # set instance vars from superclasses to not-nil.
     def check_super_or_previous_def_in_initialize(node)
-      if @is_initialize && !node.obj && (node.name == "super" || node.name == "previous_def")
+      if @is_initialize && (node.super? || node.previous_def?)
         all_vars = scope.all_instance_vars.keys
-        all_vars -= scope.instance_vars.keys if node.name == "super"
+        all_vars -= scope.instance_vars.keys if node.super?
         all_vars.each do |name|
           instance_var = scope.lookup_instance_var(name)
 
@@ -1730,7 +1738,7 @@ module Crystal
           end
         end
 
-        if node.name == "super"
+        if node.super?
           @in_super += 1
         end
 
@@ -1738,7 +1746,7 @@ module Crystal
       end
 
       def end_visit(node : Call)
-        if node.name == "super"
+        if node.super?
           @in_super -= 1
         end
       end
@@ -2701,10 +2709,11 @@ module Crystal
 
       if node_name = node.name
         var = @vars[node_name] = new_meta_var(node_name)
-        meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
-        check_closured(meta_var)
+        meta_var, _ = assign_to_meta_var(node_name)
         meta_var.bind_to(var)
         meta_var.assigned_to = true
+        check_closured(meta_var)
+        check_mutably_closured(meta_var, var)
 
         if types
           unified_type = @program.type_merge(types).not_nil!
@@ -3167,7 +3176,7 @@ module Crystal
       match_context.try &.free_vars
     end
 
-    def check_closured(var)
+    def check_closured(var, mark_as_mutably_closured : Bool = false)
       return if @typeof_nest > 0
 
       if var.name == "self"
@@ -3177,7 +3186,12 @@ module Crystal
 
       context = current_context
       var_context = var.context
-      if !var_context.same?(context)
+      if var_context.same?(context)
+        var_context = var_context.context if var_context.is_a?(Block)
+        if var.closured?
+          mark_as_closured(var, var_context, mark_as_mutably_closured)
+        end
+      else
         # If the contexts are not the same, it might be that we are in a block
         # inside a method, or a block inside another block. We don't want
         # those cases to closure a variable. So if any context is a block
@@ -3188,19 +3202,30 @@ module Crystal
 
         closured = !context.same?(var_context)
         if closured
-          var.closured = true
-
-          # Go up and mark proc literal defs as closured until we get
-          # to the context where the variable is defined
-          visitor = self
-          while visitor
-            visitor_context = visitor.closure_context
-            break if visitor_context == var_context
-
-            visitor_context.closure = true if visitor_context.is_a?(Def)
-            visitor = visitor.parent
-          end
+          mark_as_closured(var, var_context, mark_as_mutably_closured)
         end
+      end
+    end
+
+    def mark_as_closured(var, var_context, mark_as_mutably_closured : Bool)
+      # This is a bit tricky: when we assign to a variable we create a new metavar
+      # for it if it didn't exist. If it did exist, and right now we are forming
+      # a closure, then we also want to mark it as readonly.
+      # We already do this in `assign_to_meta_var` but that's done **before**
+      # we detect a closure in an assignment. So that logic needs to be replicated here,
+      # and it must happen before we actually mark is as closured.
+      var.mutably_closured = true if mark_as_mutably_closured
+      var.mark_as_closured
+
+      # Go up and mark proc literal defs as closured until we get
+      # to the context where the variable is defined
+      visitor = self
+      while visitor
+        visitor_context = visitor.closure_context
+        break if visitor_context == var_context
+
+        visitor_context.closure = true if visitor_context.is_a?(Def)
+        visitor = visitor.parent
       end
     end
 
@@ -3332,7 +3357,7 @@ module Crystal
     end
 
     def define_special_var(name, value)
-      meta_var = (@meta_vars[name] ||= new_meta_var(name))
+      meta_var, _ = assign_to_meta_var(name)
       meta_var.bind_to value
       meta_var.bind_to program.nil_var unless meta_var.dependencies.any? &.same?(program.nil_var)
       meta_var.assigned_to = true
@@ -3348,12 +3373,49 @@ module Crystal
       meta_var
     end
 
+    def assign_to_meta_var(name, context = current_context)
+      meta_var = @meta_vars[name]?
+      meta_var_existed = !!meta_var
+      if meta_var
+        # This var gets assigned a new value and it already existed before this line.
+        # If it's also a closured var it means it has become mutably closured.
+        meta_var.mutably_closured = true if meta_var.closured?
+      else
+        @meta_vars[name] = meta_var = new_meta_var(name)
+      end
+
+      # If a variable is being assigned inside a while then it's considered
+      # as mutably closured: it will get a value assigned to it multiple times
+      # exactly because it's in a loop.
+      meta_var.mutably_closured = true if inside_while?
+
+      # If a variable is being assigned to inside a block:
+      # - if the variable is a new variable then there's no need to mark is a mutably
+      #   closured because unless it gets assigned again it will be a different
+      #   variable alloction each time
+      # - if the variable already existed but it's assigned in the same context
+      #   as before, if it's not closured already then it still shouldn't
+      #   be marked as mutably closured
+      # - otherwise, we mark it as mutably closured. The block might happen
+      #   in a while loop, or invoked multiple times: we don't know, so we must
+      #   mark is as such until the compiler gets smarter (if really necessary)
+      if @block && meta_var_existed && !current_context.same?(meta_var.context)
+        meta_var.mutably_closured = true
+      end
+
+      {meta_var, meta_var_existed}
+    end
+
     def block=(@block)
       @block_context = @block
     end
 
     def inside_block?
       @untyped_def || @block_context
+    end
+
+    def inside_while?
+      !@while_stack.empty?
     end
 
     def lookup_class_var(node)
@@ -3410,6 +3472,18 @@ module Crystal
       nil_exp.location = node.location
       nil_exp.type = @program.nil
       nil_exp
+    end
+
+    # If the meta_var is closured but not readonly, then bind var
+    # to it (it gets all types assigned to meta_var).
+    # Otherwise, add it to the local vars so that they could be
+    # bond later on, if the meta_var stops being readonly.
+    def check_mutably_closured(meta_var, var)
+      if meta_var.closured? && meta_var.mutably_closured?
+        var.bind_to(meta_var)
+      else
+        meta_var.local_vars << var
+      end
     end
 
     def visit(node : When | Unless | Until | MacroLiteral | OpAssign)

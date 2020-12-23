@@ -506,4 +506,31 @@ describe "Codegen: const" do
       test(ch)
     )).to_b.should be_true
   end
+
+  it "runs const side effects (#8862)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x = 0
+
+        def self.set
+          @@x = 3
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      a = HELLO
+
+      HELLO = begin
+        Foo.set
+        1 &+ 2
+      end
+
+      a &+ Foo.x
+      )).to_i.should eq(6)
+  end
 end

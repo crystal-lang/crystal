@@ -46,7 +46,7 @@ class Crystal::Call
       raise_matches_not_found_for_virtual_metaclass_new owner
     end
 
-    if name == "super"
+    if super?
       defs = owner.lookup_defs_without_parents(def_name)
     else
       defs = owner.lookup_defs(def_name)

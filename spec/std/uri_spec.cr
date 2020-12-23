@@ -723,4 +723,11 @@ describe "URI" do
       assert_relativize("mailto:urbi@orbi.va#bar", "mailto:urbi@orbi.va", "mailto:urbi@orbi.va")
     end
   end
+
+  it ".unwrap_ipv6" do
+    URI.unwrap_ipv6("[::1]").should eq("::1")
+    URI.unwrap_ipv6("127.0.0.1").should eq("127.0.0.1")
+    URI.unwrap_ipv6("example.com").should eq("example.com")
+    URI.unwrap_ipv6("[1234:5678::1]").should eq "1234:5678::1"
+  end
 end
