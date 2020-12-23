@@ -399,7 +399,7 @@ describe "Range" do
 
     it "samples a float range as a distribution" do
       (1.2..3.4).should contain((1.2..3.4).sample)
-      (1.2..3.4).sample(Random.new(1)).should eq(2.9317256017544837)
+      (1.2..3.4).sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
     end
 
     it "samples a range with nilable types" do
