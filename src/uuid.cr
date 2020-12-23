@@ -176,6 +176,8 @@ struct UUID
     @bytes == other.@bytes
   end
 
+  def_hash @bytes
+
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil
     io << "UUID("

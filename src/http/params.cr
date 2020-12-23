@@ -146,6 +146,8 @@ module HTTP
       self.raw_params == other.raw_params
     end
 
+    def_hash raw_params
+
     # Returns first value for specified param name.
     #
     # ```

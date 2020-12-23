@@ -236,12 +236,7 @@ class Socket
       {% end %}
     end
 
-    def hash(hasher)
-      hasher = family.hash(hasher)
-      hasher = port.hash(hasher)
-      hasher = address.hash(hasher)
-      hasher
-    end
+    def_hash family, port, address
 
     def ==(other : IPAddress)
       family == other.family &&
@@ -386,6 +381,8 @@ class Socket
     def ==(other : UNIXAddress)
       path == other.path
     end
+
+    def_hash path
 
     def to_s(io : IO) : Nil
       io << path
