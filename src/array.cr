@@ -177,6 +177,16 @@ class Array(T)
     ary
   end
 
+  # :nodoc:
+  #
+  # This method is used by LiteralExpander to efficiently create an Array
+  # instance from a literal.
+  def self.unsafe_build(capacity : Int) : self
+    ary = Array(T).new(capacity)
+    ary.size = capacity
+    ary
+  end
+
   # Returns the number of elements in the array.
   #
   # ```
