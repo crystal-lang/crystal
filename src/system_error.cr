@@ -61,7 +61,7 @@ module SystemError
     # Create an instance of the exception that wraps a system error
     #
     # This is a factory method and by default it creates an instance
-    # of the current class. It can be overriden to generate different
+    # of the current class. It can be overridden to generate different
     # classes based on the `errno` or keyword arguments.
     protected def new_from_errno(message : String, errno : Errno, **opts)
       self.new(message, **opts)
@@ -91,7 +91,7 @@ module SystemError
       # Create an instance of the exception that wraps a system error
       #
       # This is a factory method and by default it creates an instance
-      # of the current class. It can be overriden to generate different
+      # of the current class. It can be overridden to generate different
       # classes based on the `winerror` or keyword arguments.
       protected def new_from_winerror(message : String, winerror : WinError, **opts)
         new_from_errno(message, winerror.to_errno, **opts)

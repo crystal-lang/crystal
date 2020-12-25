@@ -119,8 +119,8 @@ class Crystal::Doc::Method
     nil
   end
 
-  def source_link
-    @generator.source_link(@def)
+  def location
+    @generator.relative_location(@def)
   end
 
   def prefix
@@ -326,7 +326,7 @@ class Crystal::Doc::Method
       builder.field "args", args
       builder.field "args_string", args_to_s
       builder.field "args_html", args_to_html
-      builder.field "source_link", source_link
+      builder.field "location", location
       builder.field "def", self.def
     end
   end
