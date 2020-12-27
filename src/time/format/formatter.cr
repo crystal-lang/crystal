@@ -218,6 +218,14 @@ struct Time::Format
       end
     end
 
+    def time_zone_name(zone = false)
+      if zone
+        io << time.zone.name
+      else
+        io << time.location
+      end
+    end
+
     def char(char, *alternatives)
       io << char
     end
