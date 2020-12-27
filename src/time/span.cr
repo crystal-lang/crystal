@@ -228,6 +228,7 @@ struct Time::Span
   end
 
   # Alias of `abs`.
+  @[Deprecated("Use `#abs` instead.")]
   def duration : Time::Span
     abs
   end
