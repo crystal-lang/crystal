@@ -70,19 +70,21 @@ describe Time::Format do
       t.to_s("%^Z").should eq("UTC")
       t.to_s("%Z").should eq("UTC")
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
-      zoned.to_s("%z").should eq("+0100")
-      zoned.to_s("%:z").should eq("+01:00")
-      zoned.to_s("%::z").should eq("+01:00:00")
-      zoned.to_s("%^Z").should eq("CET")
-      zoned.to_s("%Z").should eq("Europe/Berlin")
+      with_zoneinfo do
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
+        zoned.to_s("%z").should eq("+0100")
+        zoned.to_s("%:z").should eq("+01:00")
+        zoned.to_s("%::z").should eq("+01:00:00")
+        zoned.to_s("%^Z").should eq("CET")
+        zoned.to_s("%Z").should eq("Europe/Berlin")
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
-      zoned.to_s("%z").should eq("-0300")
-      zoned.to_s("%:z").should eq("-03:00")
-      zoned.to_s("%::z").should eq("-03:00:00")
-      zoned.to_s("%^Z").should eq("-03")
-      zoned.to_s("%Z").should eq("America/Buenos_Aires")
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+        zoned.to_s("%z").should eq("-0300")
+        zoned.to_s("%:z").should eq("-03:00")
+        zoned.to_s("%::z").should eq("-03:00:00")
+        zoned.to_s("%^Z").should eq("-03")
+        zoned.to_s("%Z").should eq("America/Buenos_Aires")
+      end
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
       offset.to_s("%z").should eq("+0230")
@@ -494,16 +496,18 @@ describe Time::Format do
       time.utc?.should be_false
       time.location.fixed?.should be_true
 
-      time = Time.parse!("CET", pattern)
-      time.offset.should eq 3600
-      time.utc?.should be_false
-      time.location.fixed?.should be_false
+      with_zoneinfo do
+        time = Time.parse!("CET", pattern)
+        time.offset.should eq 3600
+        time.utc?.should be_false
+        time.location.fixed?.should be_false
 
-      time = Time.parse!("Europe/Berlin", pattern)
-      time.location.should eq Time::Location.load("Europe/Berlin")
+        time = Time.parse!("Europe/Berlin", pattern)
+        time.location.should eq Time::Location.load("Europe/Berlin")
 
-      expect_raises(Time::Location::InvalidLocationNameError) do
-        Time.parse!("INVALID", pattern)
+        expect_raises(Time::Location::InvalidLocationNameError) do
+          Time.parse!("INVALID", pattern)
+        end
       end
     end
   end
