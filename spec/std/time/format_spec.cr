@@ -499,11 +499,6 @@ describe Time::Format do
       time.utc?.should be_false
       time.location.fixed?.should be_false
 
-      time = Time.parse!("PST", pattern)
-      time.offset.should eq -28800
-      time.utc?.should be_false
-      time.location.fixed?.should be_true
-
       time = Time.parse!("Europe/Berlin", pattern)
       time.location.should eq Time::Location.load("Europe/Berlin")
 
