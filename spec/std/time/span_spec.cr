@@ -201,7 +201,13 @@ describe Time::Span do
       t3.nanoseconds.should eq(11_000_000)
       t3.to_s.should eq("3.05:07:09.011000000")
 
-      # TODO check overflow
+      expect_raises(OverflowError) do
+        Time::Span::MAX + Time::Span.new(seconds: 1)
+      end
+      expect_raises(OverflowError) do
+        Time::Span.new(seconds: Int64::MAX) + Time::Span.new(seconds: 1)
+      end
+      (Time::Span.new(nanoseconds: Int64::MAX) + Time::Span.new(nanoseconds: 1)).should eq Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775808
     end
 
     it "#-" do
@@ -211,7 +217,13 @@ describe Time::Span do
 
       t3.to_s.should eq("1.01:01:01.001000000")
 
-      # TODO check overflow
+      expect_raises(OverflowError) do
+        Time::Span::MIN - Time::Span.new(seconds: 1)
+      end
+      expect_raises(OverflowError) do
+        Time::Span.new(seconds: Int64::MIN) - Time::Span.new(seconds: 1)
+      end
+      (Time::Span.new(nanoseconds: Int64::MIN) - Time::Span.new(nanoseconds: 1)).should eq -Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775809
     end
 
     it "#*" do
@@ -222,7 +234,15 @@ describe Time::Span do
       t2.should eq(Time::Span.new days: 315, hours: 7, minutes: 5, seconds: 2, nanoseconds: 61_000_000)
       t3.should eq(Time::Span.new days: 2, hours: 14, minutes: 1, seconds: 31, nanoseconds: 500_000)
 
-      # TODO check overflow
+      expect_raises(OverflowError) do
+        Time::Span::MAX * 2
+      end
+      t = Time::Span.new(seconds: Int64::MAX // 2 + 1)
+      expect_raises(OverflowError) do
+        t * 2
+      end
+      t = Time::Span.new(nanoseconds: Int64::MAX // 2 + 1)
+      (t * 2).should eq Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775808
     end
 
     it "#/(Number)" do
@@ -233,7 +253,9 @@ describe Time::Span do
       t2.should eq(Time::Span.new(days: 1, hours: 13, minutes: 31, seconds: 31, nanoseconds: 501_000_000) + Time::Span.new(nanoseconds: 500_000))
       t3.should eq(Time::Span.new days: 2, hours: 2, minutes: 2, seconds: 2, nanoseconds: 2_000_000)
 
-      # TODO check overflow
+      expect_raises(DivisionByZeroError) do
+        Time::Span::MAX / 0
+      end
     end
 
     it "#/(self)" do
