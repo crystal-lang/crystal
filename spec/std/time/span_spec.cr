@@ -243,6 +243,14 @@ describe Time::Span do
       ratio2 = 45.seconds / 1.minute
       ratio2.should eq(0.75)
     end
+
+    it "#sign" do
+      Time::Span.new(days: 2).sign.should eq 1
+      Time::Span.new(days: -2).sign.should eq -1
+      Time::Span.new.sign.should eq 0
+      Time::Span.new(nanoseconds: -2).sign.should eq -1
+      Time::Span.new(nanoseconds: 2).sign.should eq 1
+    end
   end
 
   it "test to_s" do
