@@ -1345,8 +1345,11 @@ module Enumerable(T)
   # ```
   # ([] of Int32).sum # => 0
   # ```
+  #
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
   def sum
-    sum Reflect(T).first.zero
+    sum Reflect(T).first.additive_identity
   end
 
   # Adds *initial* and all the elements in the collection together.
@@ -1366,6 +1369,9 @@ module Enumerable(T)
   # ```
   # ([] of Int32).sum(7) # => 7
   # ```
+  #
+  # This method calls `.additive_identity` on the element type to determine the
+  # type of the sum value.
   def sum(initial)
     sum initial, &.itself
   end
@@ -1381,8 +1387,11 @@ module Enumerable(T)
   # ```
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
+  #
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
   def sum(&block)
-    sum(Reflect(typeof(yield first)).first.zero) do |value|
+    sum(Reflect(typeof(yield first)).first.additive_identity) do |value|
       yield value
     end
   end
@@ -1416,8 +1425,11 @@ module Enumerable(T)
   # ```
   # ([] of Int32).product # => 1
   # ```
+  #
+  # This method calls `.multiplicative_identity` on the element type to determine the
+  # type of the sum value.
   def product
-    product Reflect(T).first.zero + 1
+    product Reflect(T).first.multiplicative_identity
   end
 
   # Multiplies *initial* and all the elements in the collection
@@ -1452,8 +1464,11 @@ module Enumerable(T)
   # ```
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
+  #
+  # This method calls `.multiplicative_identity` on the yielded type to determine the
+  # type of the sum value.
   def product(&block)
-    product(Reflect(typeof(yield first)).first.zero + 1) do |value|
+    product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
       yield value
     end
   end

@@ -19,7 +19,7 @@ struct RangeSpecIntWrapper
     value <=> other.value
   end
 
-  def self.zero
+  def self.additive_identity
     RangeSpecIntWrapper.new(0)
   end
 

@@ -4,8 +4,38 @@ struct Number
 
   alias Primitive = Int::Primitive | Float::Primitive
 
+  # Returns the value zero in the respective type.
+  #
+  # ```cr
+  # Int32.zero   # => 0
+  # Float64.zero # => 0.0
+  # ```
   def self.zero : self
     new(0)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # For numerical types, it is the value `0` expressed in the respective type.
+  #
+  # ```cr
+  # Int32.additive_identity   # => 0
+  # Float64.additive_identity # => 0.0
+  # ```
+  def self.additive_identity
+    zero
+  end
+
+  # Returns the multiplicative identity of this type.
+  #
+  # For numerical types, it is the value `1` expressed in the respective type.
+  #
+  # ```cr
+  # Int32.multiplicative_identity   # => 1
+  # Float64.multiplicative_identity # => 1.0
+  # ```
+  def self.multiplicative_identity
+    new(1)
   end
 
   # Returns self.
