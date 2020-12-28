@@ -397,7 +397,7 @@ module JSON
       def self.new(pull : ::JSON::PullParser)
         location = pull.location
 
-        discriminator_value : String | Int64 | Bool | Nil = nil
+        discriminator_value = nil
 
         # Try to find the discriminator while also getting the raw
         # string value of the parsed JSON, so then we can pass it
@@ -416,7 +416,7 @@ module JSON
                 when .bool?
                   discriminator_value = pull.bool_value
                 else
-                  raise ::JSON::MappingError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
+                  raise ::JSON::SerializableError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
                 end
                 builder.field(key, discriminator_value)
                 pull.read_next
