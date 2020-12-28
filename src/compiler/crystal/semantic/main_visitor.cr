@@ -93,7 +93,7 @@ module Crystal
     @in_type_args = 0
 
     @while_stack : Array(While)
-    @type_filters : TypeFilters?
+    @type_filters : TypeFilters = TypeFilters.new
     @needs_type_filters : Int32
     @typeof_nest : Int32
     @found_self_in_initialize_call : Array(ASTNode)?
@@ -101,13 +101,6 @@ module Crystal
     @block_context : Block?
     @file_module : FileModule?
     @while_vars : MetaVars?
-
-    # Separate type filters for an `a || b` expression.
-    # We need these to filter types on an else branch of an
-    # if that has an or expression, using boolean logic:
-    # `!(a || b)` is `!a && !b`
-    @or_left_type_filters : TypeFilters?
-    @or_right_type_filters : TypeFilters?
 
     # Type filters for `exp` in `!exp`, used after a `while`
     @before_not_type_filters : TypeFilters?
@@ -146,8 +139,6 @@ module Crystal
 
     def visit_any(node)
       @unreachable = false
-      @or_left_type_filters = nil
-      @or_right_type_filters = nil
       super
     end
 
@@ -791,7 +782,7 @@ module Crystal
       node.bind_to value
 
       value_type_filters = @type_filters
-      @type_filters = nil
+      @type_filters = TypeFilters.new
 
       # Save variable assignment location for debugging output
       meta_var.location ||= target.location
@@ -822,7 +813,7 @@ module Crystal
       check_exception_handler_vars var_name, value
 
       if needs_type_filters?
-        @type_filters = TypeFilters.and(TypeFilters.truthy(target), value_type_filters)
+        @type_filters = value_type_filters.assign_var(target)
       end
 
       if target.special_var?
@@ -1069,7 +1060,7 @@ module Crystal
 
       node.bind_to block
 
-      @type_filters = nil
+      @type_filters = TypeFilters.new
       false
     end
 
@@ -1388,7 +1379,7 @@ module Crystal
 
       check_call_in_initialize node
 
-      @type_filters = nil
+      @type_filters = TypeFilters.new
       @unreachable = true if node.no_returns?
 
       false
@@ -1936,76 +1927,50 @@ module Crystal
         node.cond.accept self
       end
 
-      or_left_type_filters = @or_left_type_filters
-      or_right_type_filters = @or_right_type_filters
-      cond_type_filters = @type_filters
       cond_vars = @vars
+      cond_type_filters = @type_filters
 
-      @type_filters = nil
+      # then branch
       @vars = cond_vars.dup
+      @type_filters = TypeFilters.new
       @unreachable = false
 
       filter_vars cond_type_filters
-
       before_then_vars = @vars.dup
 
       node.then.accept self
 
       then_vars = @vars
       then_type_filters = @type_filters
-      @type_filters = nil
       then_unreachable = @unreachable
 
+      # else branch
       @vars = cond_vars.dup
+      @type_filters = TypeFilters.new
       @unreachable = false
 
-      # The only cases where we can deduce something for the 'else'
-      # block is when the condition is a Var (in the else it must be
-      # nil), IsA (in the else it's not that type), RespondsTo
-      # (in the else it doesn't respond to that message) or Not.
-      case cond = node.cond.single_expression
-      when Var, IsA, RespondsTo, Not
-        filter_vars cond_type_filters, &.not
-      when Or
-        # Try to apply boolean logic: `!(a || b)` is `!a && !b`
-        cond_left = cond.left.single_expression
-        cond_right = cond.right.single_expression
-
-        #  We can't deduce anything for sub && or || expressions
-        or_left_type_filters = nil if cond_left.is_a?(And) || cond_left.is_a?(Or)
-        or_right_type_filters = nil if cond_right.is_a?(And) || cond_right.is_a?(Or)
-
-        # No need to deduce anything for temp vars created by the compiler (won't be used by a user)
-        or_left_type_filters = nil if or_left_type_filters && or_left_type_filters.temp_var?
-
-        if or_left_type_filters && or_right_type_filters
-          filters = TypeFilters.and(or_left_type_filters.not, or_right_type_filters.not)
-          filter_vars filters
-        elsif or_left_type_filters
-          filter_vars or_left_type_filters.not
-        elsif or_right_type_filters
-          filter_vars or_right_type_filters.not
-        end
-      end
-
+      filter_vars cond_type_filters.not
       before_else_vars = @vars.dup
+
       node.else.accept self
 
       else_vars = @vars
       else_type_filters = @type_filters
-      @type_filters = nil
       else_unreachable = @unreachable
 
       merge_if_vars node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable
 
+      @type_filters = TypeFilters.new
       if needs_type_filters?
         case node
         when .and?
-          @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
+          # `a && b` is expanded to `a ? b : a`
+          # We don't use `else_type_filters` because if `a` is a temp var
+          # assignment then `cond_type_filters` would contain more information
+          @type_filters = TypeFilters.and(cond_type_filters, then_type_filters)
         when .or?
-          @or_left_type_filters = or_left_type_filters = then_type_filters
-          @or_right_type_filters = or_right_type_filters = else_type_filters
-          @type_filters = TypeFilters.or(cond_type_filters, then_type_filters, else_type_filters)
+          # `a || b` is expanded to `a ? a : b`
+          @type_filters = TypeFilters.or(cond_type_filters, else_type_filters)
         end
       end
 
@@ -2135,7 +2100,7 @@ module Crystal
 
       filter_vars cond_type_filters
 
-      @type_filters = nil
+      @type_filters = TypeFilters.new
       @block, old_block = nil, @block
 
       @while_stack.push node
@@ -2175,15 +2140,7 @@ module Crystal
           return
         end
 
-        if node.cond.is_a?(Not)
-          after_while_type_filters = @not_type_filters
-        else
-          after_while_type_filters = not_type_filters(node.cond, cond_type_filters)
-        end
-
-        if after_while_type_filters
-          filter_vars(after_while_type_filters)
-        end
+        filter_vars cond_type_filters.not
       end
 
       node.type = @program.nil
@@ -2321,7 +2278,7 @@ module Crystal
     end
 
     def filter_vars(filters)
-      filters.try &.each do |name, filter|
+      filters.each do |name, filter|
         existing_var = @vars[name]
         filtered_var = MetaVar.new(name)
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
@@ -3113,25 +3070,10 @@ module Crystal
       node.update
 
       if needs_type_filters?
-        @not_type_filters = @type_filters
-        @type_filters = not_type_filters(node.exp, @type_filters)
-      else
-        @type_filters = nil
-        @not_type_filters = nil
+        @type_filters = @type_filters.not
       end
 
       false
-    end
-
-    private def not_type_filters(exp, type_filters)
-      if type_filters
-        case exp
-        when Var, IsA, RespondsTo, Not
-          return type_filters.not
-        end
-      end
-
-      nil
     end
 
     def visit(node : VisibilityModifier)
@@ -3330,7 +3272,7 @@ module Crystal
     end
 
     def request_type_filters
-      @type_filters = nil
+      @type_filters = TypeFilters.new
       @needs_type_filters += 1
       begin
         yield

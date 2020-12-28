@@ -32,16 +32,20 @@ module Crystal
   abstract class TypeFilter
     def self.and(type_filter1, type_filter2)
       if type_filter1 == type_filter2
-        return type_filter1
-      else
+        type_filter1
+      elsif type_filter1 && type_filter2
         AndTypeFilter.new(type_filter1, type_filter2)
+      elsif type_filter1
+        type_filter1
+      elsif type_filter2
+        type_filter2
       end
     end
 
     def self.or(type_filter1, type_filter2)
       if type_filter1 == type_filter2
-        return type_filter1
-      else
+        type_filter1
+      elsif type_filter1 && type_filter2
         OrTypeFilter.new(type_filter1, type_filter2)
       end
     end
@@ -83,6 +87,11 @@ module Crystal
       type
     end
 
+    def not
+      # !(a && b) -> !a || !b
+      TypeFilter.or(@filter1.not, @filter2.not)
+    end
+
     def ==(other : self)
       @filter1 == other.@filter1 && @filter2 == other.@filter2
     end
@@ -105,6 +114,11 @@ module Crystal
               type1 || type2
             end
       res
+    end
+
+    def not
+      # !(a || b) -> !a && !b
+      TypeFilter.and(@filter1.not, @filter2.not)
     end
 
     def ==(other : self)
@@ -249,14 +263,20 @@ module Crystal
   end
 
   struct TypeFilters
+    protected getter pos = {} of String => TypeFilter
+    protected getter neg = {} of String => TypeFilter
+
     def initialize
-      @filters = {} of String => TypeFilter
+    end
+
+    protected def initialize(*, @pos, @neg)
     end
 
     def self.new(node, filter)
-      new_filter = new
-      new_filter[node.name] = filter
-      new_filter
+      new_filters = new
+      new_filters.pos[node.name] = filter
+      new_filters.neg[node.name] = filter.not
+      new_filters
     end
 
     def self.truthy(node)
@@ -264,87 +284,72 @@ module Crystal
     end
 
     def self.and(filters1, filters2)
-      if filters1 && filters2
-        new_filters = TypeFilters.new
-        all_keys = (filters1.keys + filters2.keys).uniq!
-        all_keys.each do |name|
-          filter1 = filters1[name]?
-          filter2 = filters2[name]?
-          if filter1 && filter2
-            new_filters[name] = TypeFilter.and(filter1, filter2)
-          elsif filter1
-            new_filters[name] = filter1
-          elsif filter2
-            new_filters[name] = filter2
-          end
+      return new if filters1.empty? && filters2.empty?
+
+      new_filters = new
+      all_keys = (filters1.pos.keys + filters1.neg.keys + filters2.pos.keys + filters2.neg.keys).uniq!
+      all_keys.each do |name|
+        if filter = TypeFilter.and(filters1.pos[name]?, filters2.pos[name]?)
+          new_filters.pos[name] = filter
         end
-        new_filters
-      elsif filters1
-        filters1
-      else
-        filters2
+        if filter = TypeFilter.or(filters1.neg[name]?, filters2.neg[name]?)
+          new_filters.neg[name] = filter
+        end
       end
+      new_filters
     end
 
     def self.or(filters1, filters2)
-      if filters1 && filters2
-        new_filters = TypeFilters.new
-        all_keys = (filters1.keys + filters2.keys).uniq!
-        all_keys.each do |name|
-          filter1 = filters1[name]?
-          filter2 = filters2[name]?
-          if filter1 && filter2
-            new_filters[name] = TypeFilter.or(filter1, filter2)
-          end
+      return new if filters1.empty? && filters2.empty?
+
+      new_filters = new
+      all_keys = (filters1.pos.keys + filters1.neg.keys + filters2.pos.keys + filters2.neg.keys).uniq!
+      all_keys.each do |name|
+        if filter = TypeFilter.or(filters1.pos[name]?, filters2.pos[name]?)
+          new_filters.pos[name] = filter
         end
-        new_filters
-      else
-        nil
+        if filter = TypeFilter.and(filters1.neg[name]?, filters2.neg[name]?)
+          new_filters.neg[name] = filter
+        end
       end
+      new_filters
     end
 
-    def self.and(filters1, filters2, filters3)
-      and(filters1, and(filters2, filters3))
+    def not
+      TypeFilters.new pos: neg.dup, neg: pos.dup
     end
 
-    def self.or(filters1, filters2, filters3)
-      or(filters1, or(filters2, filters3))
-    end
+    # If we have
+    #
+    #   if a = b
+    #     ...
+    #   end
+    #
+    # then `a` and `b` must have the same truthiness. Thus we can strengthen the
+    # negation of the condition from `!a || !b` to `!a && !b`, which usually
+    # provides a stricter filter.
+    def assign_var(target)
+      name = target.name
+      filter = TruthyFilter.instance
 
-    def [](name)
-      @filters[name]
-    end
-
-    def []?(name)
-      @filters[name]?
-    end
-
-    def []=(name, filter)
-      @filters[name] = filter
+      new_filters = dup
+      new_filters.pos[name] = TypeFilter.and(new_filters.pos[name]?, filter).not_nil!
+      new_filters.neg[name] = TypeFilter.and(new_filters.neg[name]?, filter.not).not_nil!
+      new_filters
     end
 
     def each
-      @filters.each do |key, value|
+      pos.each do |key, value|
         yield key, value
       end
     end
 
-    def keys
-      @filters.keys
+    def empty?
+      pos.empty? && neg.empty?
     end
 
-    def not
-      filters = TypeFilters.new
-      each do |key, value|
-        filters[key] = value.not
-      end
-      filters
-    end
-
-    # Returns true if this filter is only applied to
-    # a temporary variable created by the compiler
-    def temp_var?
-      @filters.size == 1 && @filters.first_key.starts_with?("__temp_")
+    def dup
+      TypeFilters.new pos: pos.dup, neg: neg.dup
     end
   end
 end
