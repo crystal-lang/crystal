@@ -365,8 +365,7 @@ struct Range(B, E)
         raise ArgumentError.new("Can't sample an open range")
       end
 
-      closed_range = @exclusive ? (b...e) : (b..e)
-      closed_range.sample(random)
+      Range.new(b, e, @exclusive).sample(random)
     {% else %}
       super
     {% end %}
