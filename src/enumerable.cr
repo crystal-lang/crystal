@@ -1349,7 +1349,12 @@ module Enumerable(T)
   # This method calls `.additive_identity` on the yielded type to determine the
   # type of the sum value.
   def sum
-    sum Reflect(T).first.additive_identity
+    {% if T == String %}
+      # optimize for string
+      join
+    {% else %}
+      sum Reflect(T).first.additive_identity
+    {% end %}
   end
 
   # Adds *initial* and all the elements in the collection together.

@@ -963,6 +963,10 @@ describe "Enumerable" do
       typeof([1.5, 2.5, 3.5].sum).should eq(Float64)
       typeof([1, 2, 3].sum(&.to_f)).should eq(Float64)
     end
+
+    it "strings" do
+      ["foo", "bar"].sum.should eq "foobar"
+    end
   end
 
   describe "product" do
