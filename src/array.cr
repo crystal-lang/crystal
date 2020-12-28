@@ -1413,6 +1413,16 @@ class Array(T)
     reuse
   end
 
+  # :inherit:
+  def sum
+    {% if T < Array %}
+      # optimize for array
+      flatten
+    {% else %}
+      super
+    {% end %}
+  end
+
   # Returns a new `Array` that is a one-dimensional flattening of `self` (recursively).
   #
   # That is, for every element that is an array or an iterator, extract its elements into the new array.
