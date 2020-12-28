@@ -78,7 +78,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      # Check for an argument that mathces this var, and see
+      # Check for an argument that matches this var, and see
       # if it has a default value. If so, we do a `self` check
       # to make sure `self` isn't used
       if (arg = args_hash[node.name]?) && (default_value = arg.default_value)
@@ -319,8 +319,6 @@ module Crystal
         value = process_assign_instance_var(owner, target, value)
       when GenericModuleType
         value = process_assign_instance_var(owner, target, value)
-      else
-        # go on
       end
 
       unless current_type.allows_instance_vars?
@@ -827,7 +825,7 @@ module Crystal
           if @splat.same?(arg)
             # If restriction is not splat (like `*foo : T`),
             # we cannot guess the type.
-            # (We can also guess `Indexable(T)`, but it is not perfact.)
+            # (We can also guess `Indexable(T)`, but it is not perfect.)
             # And this early return is no problem because splat argument
             # cannot have a default value.
             return unless restriction.is_a?(Splat)

@@ -46,7 +46,7 @@ class UNIXSocket < Socket
     end
   end
 
-  # Returns a pair of unamed UNIX sockets.
+  # Returns a pair of unnamed UNIX sockets.
   #
   # ```
   # require "socket"
@@ -77,7 +77,7 @@ class UNIXSocket < Socket
     {UNIXSocket.new(fd: fds[0], type: type), UNIXSocket.new(fd: fds[1], type: type)}
   end
 
-  # Creates a pair of unamed UNIX sockets (see `pair`) and yields them to the
+  # Creates a pair of unnamed UNIX sockets (see `pair`) and yields them to the
   # block. Eventually closes both sockets when the block returns.
   #
   # Returns the value of the block.

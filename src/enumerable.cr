@@ -535,17 +535,6 @@ module Enumerable(T)
     ary
   end
 
-  # Returns an `Array` with all the elements in the collection that
-  # match the `RegExp` *pattern*.
-  #
-  # ```
-  # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
-  # ```
-  @[Deprecated("Use `#select` instead")]
-  def grep(pattern)
-    self.select { |elem| pattern === elem }
-  end
-
   # Returns a `Hash` whose keys are each different value that the passed block
   # returned when run for each element in the collection, and which values are
   # an `Array` of the elements for which the block returned that value.
@@ -723,7 +712,7 @@ module Enumerable(T)
   # ```
   def join(separator = "")
     String.build do |io|
-      join separator, io
+      join io, separator
     end
   end
 
@@ -733,9 +722,9 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5].join(", ") { |i| -i } # => "-1, -2, -3, -4, -5"
   # ```
-  def join(separator = "")
+  def join(separator = "", & : T ->)
     String.build do |io|
-      join(separator, io) do |elem|
+      join(io, separator) do |elem|
         io << yield elem
       end
     end
@@ -744,7 +733,7 @@ module Enumerable(T)
   # Prints to *io* all the elements in the collection, separated by *separator*.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT)
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
   # ```
   #
   # Prints:
@@ -752,17 +741,33 @@ module Enumerable(T)
   # ```text
   # 1, 2, 3, 4, 5
   # ```
-  def join(separator, io)
-    join(separator, io) do |elem|
+  def join(io : IO, separator = "")
+    join(io, separator) do |elem|
       elem.to_s(io)
     end
+  end
+
+  # Prints to *io* all the elements in the collection, separated by *separator*.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2, 3, 4, 5
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "") instead`))]
+  def join(separator, io : IO)
+    join(io, separator)
   end
 
   # Prints to *io* the concatenation of the elements, with the possibility of
   # controlling how the printing is done via a block.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT) { |i, io| io << "(#{i})" }
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
   # ```
   #
   # Prints:
@@ -770,9 +775,28 @@ module Enumerable(T)
   # ```text
   # (1), (2), (3), (4), (5)
   # ```
-  def join(separator, io)
+  def join(io : IO, separator = "", & : T, IO ->)
     each_with_index do |elem, i|
       io << separator if i > 0
+      yield elem, io
+    end
+  end
+
+  # Prints to *io* the concatenation of the elements, with the possibility of
+  # controlling how the printing is done via a block.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # (1), (2), (3), (4), (5)
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "", & : T, IO ->) instead`))]
+  def join(separator, io : IO)
+    join(io, separator) do |elem, io|
       yield elem, io
     end
   end
@@ -1369,7 +1393,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum(1) { |name| name.size } # => 9 (1 + 5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # If the collection is empty, returns *initial*.
   #
   # ```
   # ([] of String).sum(1) { |name| name.size } # => 1
@@ -1481,7 +1505,7 @@ module Enumerable(T)
     result
   end
 
-  # Tallys the collection.  Returns a hash where the keys are the
+  # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #
@@ -1599,6 +1623,7 @@ module Enumerable(T)
   # a.zip(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, 6, 6}]
   # ```
   def zip(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip(*others) { |e| break e }.not_nil!)).new(size)
     zip(*others) { |e| pairs << e }
     pairs
@@ -1669,6 +1694,7 @@ module Enumerable(T)
   # a.zip?(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, nil, nil}]
   # ```
   def zip?(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip?(*others) { |e| break e }.not_nil!)).new(size)
     zip?(*others) { |e| pairs << e }
     pairs

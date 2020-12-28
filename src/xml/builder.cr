@@ -5,10 +5,13 @@
 # without a matching `start_element`, or trying to use
 # a non-string value as an object's field name)
 struct XML::Builder
+  private CDATA_END    = "]]>"
+  private CDATA_ESCAPE = "]]]]><![CDATA[>"
+
   @box : Void*
 
   # Creates a builder that writes to the given *io*.
-  def initialize(io : IO)
+  def initialize(@io : IO)
     @box = Box.box(io)
     buffer = LibXML.xmlOutputBufferCreateIO(
       ->(ctx, buffer, len) {
@@ -180,14 +183,17 @@ struct XML::Builder
 
   # Emits the start of a `CDATA` section, invokes the block
   # and then emits the end of the `CDATA` section.
-  def cdata
+  #
+  # NOTE: `CDATA` end sequences written within the block
+  # need to be escaped manually.
+  def cdata(&)
     start_cdata
     yield.tap { end_cdata }
   end
 
-  # Emits a `CDATA` section.
+  # Emits a `CDATA` section.  Escapes nested `CDATA` end sequences.
   def cdata(text : String) : Nil
-    call WriteCDATA, string_to_unsafe(text)
+    call WriteCDATA, string_to_unsafe(text.gsub(CDATA_END, CDATA_ESCAPE))
   end
 
   # Emits the start of a comment.
@@ -243,6 +249,8 @@ struct XML::Builder
   # this writer's `IO`.
   def flush
     call Flush
+
+    @io.flush
   end
 
   # Sets the indent string.
@@ -370,7 +378,6 @@ module XML
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
-    io.flush
     v
   end
 end

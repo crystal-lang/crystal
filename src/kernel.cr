@@ -467,6 +467,10 @@ end
 # passed as the second argument to the block, if the program terminates
 # normally or `exit(status)` is called explicitly, then the second argument
 # will be `nil`.
+#
+# NOTE: If `at_exit` is called inside an `at_exit` handler, it will be called
+# right after the current `at_exit` handler ends, and then other handlers
+# will be invoked.
 def at_exit(&handler : Int32, Exception? ->) : Nil
   Crystal::AtExitHandlers.add(handler)
 end
@@ -521,6 +525,12 @@ end
 
   Signal.setup_default_handlers
   LibExt.setup_sigfault_handler
+{% end %}
+
+{% if flag?(:debug) && !flag?(:win32) %}
+  # load dwarf on start up of the program when compiled with --debug
+  # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
+  Exception::CallStack.load_dwarf
 {% end %}
 
 {% if flag?(:preview_mt) %}

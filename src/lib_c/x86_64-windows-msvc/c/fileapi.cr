@@ -32,6 +32,7 @@ lib LibC
 
   OPEN_EXISTING = 3
 
+  FILE_ATTRIBUTE_NORMAL      =       0x80
   FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
 
   FILE_SHARE_READ   = 0x1
@@ -79,4 +80,7 @@ lib LibC
   fun FindFirstFileW(lpFileName : LPWSTR, lpFindFileData : WIN32_FIND_DATAW*) : HANDLE
   fun FindNextFileW(hFindFile : HANDLE, lpFindFileData : WIN32_FIND_DATAW*) : BOOL
   fun FindClose(hFindFile : HANDLE) : BOOL
+
+  fun SetFileTime(hFile : HANDLE, lpCreationTime : FILETIME*,
+                  lpLastAccessTime : FILETIME*, lpLastWriteTime : FILETIME*) : BOOL
 end

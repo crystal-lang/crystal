@@ -12,7 +12,9 @@ struct UUID
   # require "uuid/json"
   #
   # class Example
-  #   JSON.mapping id: UUID
+  #   include JSON::Serializable
+  #
+  #   property id : UUID
   # end
   #
   # example = Example.from_json(%({"id": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))

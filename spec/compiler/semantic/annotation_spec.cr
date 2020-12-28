@@ -730,7 +730,7 @@ describe "Semantic: annotation" do
           end
 
           def foo
-            {% if @type.instance_vars.first.annotations(Foo) %}
+            {% if @type.instance_vars.first.annotation(Foo) %}
               1
             {% else %}
               'a'
@@ -916,6 +916,23 @@ describe "Semantic: annotation" do
         {{ Child.superclass.annotation(Ann)[0] }}
       )) { int32 }
     end
+  end
+
+  it "errors when annotate instance variable in subclass" do
+    assert_error %(
+      annotation Foo
+      end
+
+      class Base
+        @x : Nil
+      end
+
+      class Child < Base
+        @[Foo]
+        @x : Nil
+      end
+      ),
+      "can't annotate @x in Child because it was first defined in Base"
   end
 
   it "errors if wanting to add type inside annotation (1) (#8614)" do

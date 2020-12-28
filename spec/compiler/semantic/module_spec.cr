@@ -383,7 +383,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
+      ", "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -405,7 +405,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "method must return Bar(Int32) but it is returning Baz2"
+      ", "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
@@ -792,7 +792,7 @@ describe "Semantic: module" do
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
 
-  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+  it "works ok in a case where a typed-def type has an underlying type that has an included generic module (bug)" do
     assert_type(%(
       lib LibC
         type X = Void*

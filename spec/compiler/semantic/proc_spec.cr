@@ -54,7 +54,7 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it "allows passing proc type if it is typedef'd" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
@@ -889,6 +889,18 @@ describe "Semantic: proc" do
       )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
+  it "*doesn't* merge Proc that returns NoReturn with another one that returns something else (#9971)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { LibC.exit }
+      a || b
+      )) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
+  end
+
   it "merges return type" do
     assert_type(%(
       a = ->(x : Int32) { 1 }
@@ -1068,5 +1080,43 @@ describe "Semantic: proc" do
 
       foo
       )) { proc_of nil_type }
+  end
+
+  it "can use @ivar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        @foo = Foo.new
+
+        def foo
+          ->@foo.foo
+        end
+      end
+
+      Bar.new.foo
+    )) { proc_of int32 }
+  end
+
+  it "can use @@cvar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        @@foo = new
+
+        def self.foo
+          ->@@foo.foo
+        end
+
+        def foo
+          1
+        end
+      end
+
+      Foo.foo
+    )) { proc_of int32 }
   end
 end

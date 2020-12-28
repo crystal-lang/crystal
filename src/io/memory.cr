@@ -104,8 +104,6 @@ class IO::Memory < IO
 
     @pos += count
     @bytesize = @pos if @pos > @bytesize
-
-    nil
   end
 
   # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
@@ -206,7 +204,7 @@ class IO::Memory < IO
   end
 
   # :nodoc:
-  def skip_to_end
+  def skip_to_end : Nil
     check_open
 
     @pos = @bytesize

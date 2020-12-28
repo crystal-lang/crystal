@@ -187,7 +187,7 @@ class URI
   #
   # This method enables some customization, but typical use cases can be implemented
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
-  # `.deode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
+  # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize
@@ -222,7 +222,7 @@ class URI
       else
         io.write_byte '%'.ord.to_u8
         io.write_byte '0'.ord.to_u8 if byte < 16
-        byte.to_s(16, io, upcase: true)
+        byte.to_s(io, 16, upcase: true)
       end
     end
     io

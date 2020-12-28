@@ -26,6 +26,14 @@ class Log
     end
   end
 
+  @[Deprecated("Use default_level, default_sources named arguments")]
+  def self.setup_from_env(*, builder : Log::Builder = Log.builder,
+                          level : String,
+                          sources : String,
+                          backend = Log::IOBackend.new)
+    Log.setup(sources, Log::Severity.parse(level), backend, builder: builder)
+  end
+
   # Setups logging based on `LOG_LEVEL` environment variable.
   def self.setup_from_env(*, builder : Log::Builder = Log.builder,
                           default_level : Log::Severity = Log::Severity::Info,

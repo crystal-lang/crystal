@@ -389,6 +389,15 @@ describe "Array" do
       a.should eq([6, 7, 4, 5])
     end
 
+    it "optimizes when index is 0" do
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      buffer = a.@buffer
+      a[0..2] = 10
+      a.should eq([10, 4, 5, 6, 7, 8])
+      a.@offset_to_buffer.should eq(2)
+      a.@buffer.should eq(buffer + 2)
+    end
+
     it "replaces entire range with a value for empty array (#8341)" do
       a = [] of Int32
       a[..] = 6
@@ -456,6 +465,13 @@ describe "Array" do
     b.should eq(a)
     a.should_not be(b)
     a[0].should_not be(b[0])
+  end
+
+  it "does clone with recursive array" do
+    ary = [] of RecursiveArray
+    ary << ary
+    clone = ary.clone
+    clone[0].should be(clone)
   end
 
   it "does compact" do
@@ -528,6 +544,15 @@ describe "Array" do
       a.should eq([1, 3, 4])
     end
 
+    it "deletes at beginning is same as shift" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      a.delete_at(0)
+      a.should eq([2, 3, 4])
+      a.@offset_to_buffer.should eq(1)
+      a.@buffer.should eq(buffer + 1)
+    end
+
     it "deletes use range" do
       a = [1, 2, 3]
       a.delete_at(1).should eq(2)
@@ -586,6 +611,20 @@ describe "Array" do
       a = [1, 2, 3, 4]
       a.delete_at(-3).should eq(2)
       a.should eq([1, 3, 4])
+    end
+
+    it "deletes negative index with range" do
+      a = [1, 2, 3, 4, 5, 6]
+      a.delete_at(-3, 2).should eq([4, 5])
+      a.should eq([1, 2, 3, 6])
+    end
+
+    it "deletes negative index with range, out of bounds" do
+      a = [1, 2, 3, 4, 5, 6]
+
+      expect_raises IndexError do
+        a.delete_at(-7, 2)
+      end
     end
 
     it "deletes out of bounds" do
@@ -1152,6 +1191,101 @@ describe "Array" do
         a.shift(-1)
       end
     end
+
+    it "shifts one and resizes" do
+      a = [1, 2, 3, 4]
+      old_capacity = a.@capacity
+      a.shift.should eq(1)
+      a.@offset_to_buffer.should eq(1)
+      a << 5
+      a.@capacity.should eq(old_capacity * 2)
+      a.@offset_to_buffer.should eq(1)
+      a.size.should eq(4)
+      a.should eq([2, 3, 4, 5])
+    end
+
+    it "shifts almost all and then avoid resize" do
+      a = [1, 2, 3, 4]
+      old_capacity = a.@capacity
+      (1..3).each do |i|
+        a.shift.should eq(i)
+      end
+      a.@offset_to_buffer.should eq(3)
+      a << 5
+      a.@capacity.should eq(old_capacity)
+      a.@offset_to_buffer.should eq(0)
+      a.size.should eq(2)
+      a.should eq([4, 5])
+    end
+
+    it "shifts and then concats Array" do
+      size = 10_000
+      a = (1..size).to_a
+      (size - 1).times do
+        a.shift
+      end
+      a.size.should eq(1)
+      a.concat((1..size).to_a)
+      a.size.should eq(size + 1)
+      a.should eq([size] + (1..size).to_a)
+    end
+
+    it "shifts and then concats Enumerable" do
+      size = 10_000
+      a = (1..size).to_a
+      (size - 1).times do
+        a.shift
+      end
+      a.size.should eq(1)
+      a.concat((1..size))
+      a.size.should eq(size + 1)
+      a.should eq([size] + (1..size).to_a)
+    end
+
+    it "shifts all" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      4.times do
+        a.shift
+      end
+      a.size.should eq(0)
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
+    end
+
+    it "shifts all after pop" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      a.pop
+      3.times do
+        a.shift
+      end
+      a.size.should eq(0)
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
+    end
+
+    it "pops after shift" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      3.times do
+        a.shift
+      end
+      a.pop
+      a.size.should eq(0)
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
+    end
+
+    it "shifts all with shift(n)" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      a.shift
+      a.shift(3)
+      a.size.should eq(0)
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
+    end
   end
 
   describe "shuffle" do
@@ -1420,6 +1554,22 @@ describe "Array" do
       a.should eq [3, 1, 2]
     end
 
+    it "unshifts one elements three times" do
+      a = [] of Int32
+      3.times do |i|
+        a.unshift(i)
+      end
+      a.should eq([2, 1, 0])
+    end
+
+    it "unshifts one element multiple times" do
+      a = [1, 2]
+      (3..100).each do |i|
+        a.unshift(i)
+      end
+      a.should eq((3..100).to_a.reverse + [1, 2])
+    end
+
     it "unshifts multiple elements" do
       a = [1, 2]
       a.unshift(3, 4).should be(a)
@@ -1430,6 +1580,26 @@ describe "Array" do
       a = [] of Int32
       a.unshift(1, 2, 3).should be(a)
       a.should eq([1, 2, 3])
+    end
+
+    it "unshifts after shift" do
+      a = [1, 2, 3, 4]
+      buffer = a.@buffer
+      a.shift
+      a.unshift(10)
+      a.should eq([10, 2, 3, 4])
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
+    end
+
+    it "unshifts many after many shifts" do
+      a = [1, 2, 3, 4, 5, 6, 7, 8]
+      buffer = a.@buffer
+      3.times { a.shift }
+      a.unshift(10, 20, 30)
+      a.should eq([10, 20, 30, 4, 5, 6, 7, 8])
+      a.@offset_to_buffer.should eq(0)
+      a.@buffer.should eq(buffer)
     end
   end
 
@@ -1790,7 +1960,7 @@ describe "Array" do
   end
 
   describe "transpose" do
-    it "transeposes elements" do
+    it "transposes elements" do
       [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
       [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
       [[:a]].transpose.should eq([[:a]])
@@ -1852,6 +2022,30 @@ describe "Array" do
     it { a = [1, 2, 3]; a.rotate(3001).should eq([2, 3, 1]); a.should eq([1, 2, 3]) }
     it { a = [1, 2, 3]; a.rotate(-1).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
     it { a = [1, 2, 3]; a.rotate(-3001).should eq([3, 1, 2]); a.should eq([1, 2, 3]) }
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(5)
+      a.should eq([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-5)
+      a.should eq([45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(20)
+      a.should eq([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19])
+    end
+
+    it do
+      a = Array(Int32).new(50) { |i| i }
+      a.rotate!(-20)
+      a.should eq([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
+    end
   end
 
   describe "permutations" do

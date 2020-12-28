@@ -23,7 +23,7 @@
       <% end %>
       <br/>
       <div>
-        <% if source_link = method.source_link %>
+        <% if source_link = method.location.try(&.url) %>
           [<a href="<%= source_link %>" target="_blank">View source</a>]
         <% end %>
       </div>
