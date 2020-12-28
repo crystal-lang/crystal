@@ -1353,8 +1353,17 @@ module Enumerable(T)
       # optimize for string
       join
     {% else %}
-      sum Reflect(T).first.additive_identity
+      sum additive_identity(Reflect(T))
     {% end %}
+  end
+
+  private def additive_identity(reflect)
+    type = reflect.first
+    if type.responds_to? :additive_identity
+      type.additive_identity
+    else
+      type.zero
+    end
   end
 
   # Adds *initial* and all the elements in the collection together.
@@ -1396,7 +1405,7 @@ module Enumerable(T)
   # This method calls `.additive_identity` on the yielded type to determine the
   # type of the sum value.
   def sum(&block)
-    sum(Reflect(typeof(yield first)).first.additive_identity) do |value|
+    sum(additive_identity(Reflect(typeof(yield first)))) do |value|
       yield value
     end
   end
