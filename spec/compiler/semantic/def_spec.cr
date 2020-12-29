@@ -512,4 +512,18 @@ describe "Semantic: def" do
       z
     )) { int32 }
   end
+
+  it "types []= setter" do
+    assert_type(%(
+      class Foo
+        def []=(x, y)
+          'a'
+        end
+      end
+
+      foo = Foo.new
+      z = foo[1] = 1
+      z
+    )) { int32 }
+  end
 end

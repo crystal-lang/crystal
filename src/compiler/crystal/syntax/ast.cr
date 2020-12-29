@@ -614,9 +614,17 @@ module Crystal
     end
 
     def setter?
-      name.ends_with?('=') &&
-        !(33 <= name.byte_at(0) <= 64) && # first letter must not be a symbol like `=` or `!`
-        args.size == 1 && !named_args && !block && !block_arg
+      (
+        (
+          args.size == 1 &&
+            name.ends_with?('=') &&
+            !(33 <= name.byte_at(0) <= 64) # first letter must not be a symbol like `=` or `!`
+        ) ||
+          (
+            name == "[]=" &&
+              args.size == 2
+          )
+      ) && !named_args && !block && !block_arg
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?

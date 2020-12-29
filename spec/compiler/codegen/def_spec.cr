@@ -584,6 +584,21 @@ describe "Code gen: def" do
       )).to_i.should eq(123)
   end
 
+  it "codegens []= setter (non-inlineable body, non-struct)" do
+    run(%(
+      class Foo
+        def []=(x, y)
+          'a'
+          'b'
+        end
+      end
+
+      foo = Foo.new
+      z = foo["x"] = 123
+      z
+      )).to_i.should eq(123)
+  end
+
   it "codegens setter (non-inlineable body, struct)" do
     run(%(
       class Foo
@@ -604,6 +619,26 @@ describe "Code gen: def" do
       )).to_i.should eq(123)
   end
 
+  it "codegens []= setter (non-inlineable body, struct)" do
+    run(%(
+      class Foo
+        def []=(x, y)
+          'a'
+          'b'
+        end
+      end
+
+      struct Bar
+        @x = 123
+        def x; @x; end
+      end
+
+      foo = Foo.new
+      z = foo["x"] = Bar.new
+      z.x
+      )).to_i.should eq(123)
+  end
+
   it "codegens setter (inlineable body, non-struct)" do
     run(%(
       class Foo
@@ -614,6 +649,20 @@ describe "Code gen: def" do
 
       foo = Foo.new
       z = foo.x = 123
+      z
+      )).to_i.should eq(123)
+  end
+
+  it "codegens []= setter (inlineable body, non-struct)" do
+    run(%(
+      class Foo
+        def []=(x, y)
+          'a'
+        end
+      end
+
+      foo = Foo.new
+      z = foo["x"] = 123
       z
       )).to_i.should eq(123)
   end
@@ -633,6 +682,25 @@ describe "Code gen: def" do
 
       foo = Foo.new
       z = foo.x = Bar.new
+      z.x
+      )).to_i.should eq(123)
+  end
+
+  it "codegens []= setter (inlineable body, struct)" do
+    run(%(
+      class Foo
+        def []=(x, y)
+          'a'
+        end
+      end
+
+      struct Bar
+        @x = 123
+        def x; @x; end
+      end
+
+      foo = Foo.new
+      z = foo["x"] = Bar.new
       z.x
       )).to_i.should eq(123)
   end

@@ -99,7 +99,9 @@ class Crystal::Call
 
     # For a setter like `foo.x = y` we'd like to use `y`'s type
     if self.setter?
-      bind_to args.first
+      # uses args.last instead of args.first because for []= setters, the assigned
+      # value is the second (and last) arg. Other setters have only one arg.
+      bind_to args.last
     else
       bind_to matches if matches
       bind_to block.break if block
