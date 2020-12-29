@@ -332,13 +332,7 @@ describe "Set" do
     i.should eq(4)
   end
 
-  it "gets each iterator" do
-    iter = Set{1, 2, 3}.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], Set{1, 2, 3}.each
 
   it "check subset" do
     set = Set{1, 2, 3}

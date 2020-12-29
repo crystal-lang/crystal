@@ -531,32 +531,8 @@ describe "Int" do
     (53 % 532_000_782_588_491_410).should eq(53)
   end
 
-  it "does times" do
-    i = sum = 0
-    3.times do |n|
-      i += 1
-      sum += n
-    end.should be_nil
-    i.should eq(3)
-    sum.should eq(3)
-  end
-
-  it "gets times iterator" do
-    iter = 3.times
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "gets times iterator for UInt32 (#5019)" do
-    iter = 4_u32.times
-    iter.next.should be_a(UInt32)
-
-    ary = 4_u32.times.to_a
-    ary.should be_a(Array(UInt32))
-    ary.should eq([0, 1, 2, 3])
-  end
+  it_iterates "#times", [0, 1, 2], 3.times
+  it_iterates "#times for UInt32 (#5019)", [0_u32, 1_u32, 2_u32, 3_u32], 4_u32.times
 
   it "does %" do
     (7 % 5).should eq(2)
