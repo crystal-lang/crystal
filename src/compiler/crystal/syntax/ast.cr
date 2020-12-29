@@ -557,7 +557,6 @@ module Crystal
     property? global : Bool
     property? expansion = false
     property? has_parentheses = false
-    property? setter = false
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
@@ -604,7 +603,6 @@ module Crystal
       clone.has_parentheses = has_parentheses?
       clone.name_size = name_size
       clone.expansion = expansion?
-      clone.setter = setter?
       clone
     end
 
