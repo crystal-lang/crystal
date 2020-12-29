@@ -31,24 +31,11 @@ describe Time::Span do
 
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
-
-    t1 = Time::Span.new(1, 2, 3)
-    t1.to_s.should eq("01:02:03")
-    typeof(t1).should eq(Time::Span)
-
-    t1 = Time::Span.new(1, 2, 3, 4, 5)
-    t1.to_s.should eq("1.02:03:04.000000005")
-    typeof(t1).should eq(Time::Span)
   end
 
   it "initializes with big seconds value" do
     t = Time::Span.new hours: 0, minutes: 0, seconds: 1231231231231
     t.total_seconds.should eq(1231231231231)
-  end
-
-  it "initialize deprecated constructors" do
-    t = Time::Span.new(0, 0, 0, 0, nanoseconds: 1)
-    t.total_nanoseconds.should eq(1)
   end
 
   it "days overflows" do

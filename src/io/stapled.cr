@@ -57,8 +57,15 @@ class IO::Stapled < IO
     @reader.skip(bytes_count)
   end
 
+  # Skips `reader`.
+  def skip_to_end : Nil
+    check_open
+
+    @reader.skip_to_end
+  end
+
   # Writes a byte to `writer`.
-  def write_byte(byte : UInt8) : Nil
+  def write_byte(byte : UInt8)
     check_open
 
     @writer.write_byte(byte)

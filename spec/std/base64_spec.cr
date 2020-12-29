@@ -1,6 +1,6 @@
 require "spec"
 require "base64"
-require "digest/md5"
+require "crystal/digest/md5"
 
 describe "Base64" do
   context "simple test" do
@@ -82,7 +82,7 @@ describe "Base64" do
     it "big message" do
       a = "a" * 100000
       b = Base64.encode(a)
-      Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Digest::MD5.hexdigest(a))
+      Crystal::Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Crystal::Digest::MD5.hexdigest(a))
     end
 
     it "works for most characters" do
@@ -90,7 +90,7 @@ describe "Base64" do
         65536.times { |i| buf << (i + 1).chr }
       end
       b = Base64.encode(a)
-      Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Digest::MD5.hexdigest(a))
+      Crystal::Digest::MD5.hexdigest(Base64.decode_string(b)).should eq(Crystal::Digest::MD5.hexdigest(a))
     end
   end
 

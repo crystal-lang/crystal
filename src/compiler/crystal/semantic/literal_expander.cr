@@ -465,7 +465,11 @@ module Crystal
         a_if = wh_if
       end
 
-      a_if.not_nil!.else = node.else || Unreachable.new
+      if node.exhaustive?
+        a_if.not_nil!.else = node.else || Unreachable.new
+      elsif node_else = node.else
+        a_if.not_nil!.else = node_else
+      end
 
       final_if = final_if.not_nil!
       final_exp = if assigns && !assigns.empty?
@@ -524,7 +528,7 @@ module Crystal
       call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
-      a_case = Case.new(case_cond, case_whens, case_else).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)
       Expressions.from([multi, a_case] of ASTNode).at(node)
     end
 
@@ -631,11 +635,11 @@ module Crystal
         case obj
         when Path
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         else
           # no special treatment
@@ -659,6 +663,72 @@ module Crystal
           end
           return implicit_call
         end
+      end
+    end
+
+    # Expand this:
+    #
+    # ```
+    # ->foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # tmp = foo
+    # ->(x : X, y : Y) { tmp.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->Foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { Foo.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { bar(x, y) }
+    # ```
+    #
+    # in case the implicit `self` is a class or a virtual class.
+    def expand(node : ProcPointer)
+      obj = node.obj
+
+      if obj && !obj.is_a?(Path)
+        temp_var = new_temp_var.at(obj)
+        assign = Assign.new(temp_var, obj)
+        obj = temp_var
+      end
+
+      def_args = node.args.map do |arg|
+        Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
+      end
+
+      call_args = def_args.map do |def_arg|
+        Var.new(def_arg.name).at(def_arg).as(ASTNode)
+      end
+
+      body = Call.new(obj, node.name, call_args).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal.proc_pointer = node
+
+      if assign
+        Expressions.new([assign, proc_literal])
+      else
+        proc_literal
       end
     end
 

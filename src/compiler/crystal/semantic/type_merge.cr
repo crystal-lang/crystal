@@ -273,22 +273,6 @@ module Crystal
     end
   end
 
-  class ProcInstanceType
-    def common_ancestor(other : ProcInstanceType)
-      # For Proc(..., NoReturn), Proc(..., T) we keep Proc(..., T)
-      if return_type.no_return? && arg_types == other.arg_types
-        return other
-      end
-
-      # Same but the other way around
-      if other.return_type.no_return? && arg_types == other.arg_types
-        return self
-      end
-
-      nil
-    end
-  end
-
   class TupleInstanceType
     def common_ancestor(other : TupleInstanceType)
       return nil unless self.size == other.size

@@ -91,16 +91,16 @@ module Crystal
       io.flush
     end
 
-    def to_s_with_source(source, io)
-      append_to_s source, io
+    def to_s_with_source(io : IO, source)
+      append_to_s io, source
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       inner = @inner
 
       unless @error_trace || inner.is_a? MethodTraceException
         if inner && inner.has_location?
-          return inner.append_to_s(source, io)
+          return inner.append_to_s(io, source)
         end
       end
 
@@ -134,7 +134,7 @@ module Crystal
         return unless inner.has_location?
         io << "\n\n"
         io << '\n' unless inner.is_a? MethodTraceException
-        inner.append_to_s source, io
+        inner.append_to_s io, source
       end
     end
 
@@ -183,8 +183,8 @@ module Crystal
     def to_json_single(json)
     end
 
-    def to_s_with_source(source, io)
-      append_to_s(source, io)
+    def to_s_with_source(io : IO, source)
+      append_to_s(io, source)
     end
 
     def has_trace?
@@ -195,7 +195,7 @@ module Crystal
       @nil_reason || has_trace? && @show
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       nil_reason = @nil_reason
 
       if !@show

@@ -146,6 +146,7 @@ body {
   color: inherit;
   font-family: inherit;
   font-size: inherit;
+  line-height: inherit;
 }
 .project-versions-nav:focus {
   outline: none;
@@ -457,6 +458,12 @@ span.flag.purple {
   background-color: #2E1052;
   color: #ECE1F9;
   border-color: #1F0B37;
+}
+
+span.flag.lime {
+  background-color: #a3ff00;
+  color: #222222;
+  border-color: #00ff1e;
 }
 
 .tooltip>span {

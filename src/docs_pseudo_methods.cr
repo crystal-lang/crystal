@@ -50,7 +50,7 @@ end
 
 # Returns the instance size of the given class as number of bytes.
 #
-# *type* must be a constant or `typeof()` expresion. It cannot be evaluated at runtime.
+# *type* must be a constant or `typeof()` expression. It cannot be evaluated at runtime.
 #
 # ```
 # instance_sizeof(String)    # => 16
@@ -173,7 +173,7 @@ class Object
   # typeof(a.as?(Int32)) # => Int32 | Nil
   # a.as?(Int32)         # => 1
   #
-  # typeof(a.as?(Bool)) # => Nil
+  # typeof(a.as?(Bool)) # => Bool | Nil
   # a.as?(Bool)         # => nil
   #
   # typeof(a.as?(String)) # => String | Nil

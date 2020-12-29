@@ -14,7 +14,7 @@ class Crystal::Command
     sitemap_changefreq = "never"
     project_info = Doc::ProjectInfo.new
 
-    compiler = Compiler.new
+    compiler = new_compiler
 
     OptionParser.parse(options) do |opts|
       opts.banner = <<-'BANNER'
@@ -33,6 +33,14 @@ class Crystal::Command
         project_info.version = value
       end
 
+      opts.on("--source-refname=REFNAME", "Set source refname (e.g. git tag, commit hash)") do |value|
+        project_info.refname = value
+      end
+
+      opts.on("--source-url-pattern=REFNAME", "Set URL pattern for source code links") do |value|
+        project_info.source_url_pattern = value
+      end
+
       opts.on("--output=DIR", "-o DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
       end
@@ -44,12 +52,12 @@ class Crystal::Command
         output_format = value
       end
 
-      opts.on("--json_config_url=URL", "Set the URL pointing to a config file (used for discovering versions)") do |value|
+      opts.on("--json-config-url=URL", "Set the URL pointing to a config file (used for discovering versions)") do |value|
         project_info.json_config_url = value
       end
 
-      opts.on("--canonical-base-url=URL", "Deprecated option. Use --sitemap-base-url instead.") do |value|
-        abort "Option --canonical-base-url is no longer supported.  Use --sitemap-base-url instead."
+      opts.on("--canonical-base-url=URL", %(Indicate the preferred URL with rel="canonical" link element)) do |value|
+        project_info.canonical_base_url = value
       end
 
       opts.on("--sitemap-base-url=URL", "-b URL", "Set the sitemap base URL and generates sitemap") do |value|
@@ -132,7 +140,7 @@ class Crystal::Command
 
     Doc::Generator.new(result.program, included_dirs, output_directory, output_format, sitemap_base_url, sitemap_priority, sitemap_changefreq, project_info).run
 
-    report_warnings result
-    exit 1 if warnings_fail_on_exit?(result)
+    report_warnings
+    exit 1 if warnings_fail_on_exit?
   end
 end

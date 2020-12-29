@@ -92,6 +92,20 @@ describe "Regex::MatchData" do
       expect_raises(IndexError, "Capture group 1 was not matched") { $1 }
       expect_raises(IndexError, "Invalid capture group index: 3") { $3 }
     end
+
+    it "can use range" do
+      "ab" =~ /(a)(b)/
+      $~[1..2].should eq(["a", "b"])
+      $~[1..].should eq(["a", "b"])
+      $~[..].should eq(["ab", "a", "b"])
+      expect_raises(IndexError) { $~[4..] }
+    end
+
+    it "can use start and count" do
+      "ab" =~ /(a)(b)/
+      $~[1, 2].should eq(["a", "b"])
+      expect_raises(IndexError) { $~[4, 1] }
+    end
   end
 
   describe "#[]?" do
@@ -145,6 +159,20 @@ describe "Regex::MatchData" do
     it "returns nil if outside match range with []" do
       "foo" =~ /foo/
       $~[1]?.should be_nil
+    end
+
+    it "can use range" do
+      "ab" =~ /(a)(b)/
+      $~[1..2]?.should eq(["a", "b"])
+      $~[1..]?.should eq(["a", "b"])
+      $~[..]?.should eq(["ab", "a", "b"])
+      $~[4..]?.should be_nil
+    end
+
+    it "can use start and count" do
+      "ab" =~ /(a)(b)/
+      $~[1, 2]?.should eq(["a", "b"])
+      $~[4, 1]?.should be_nil
     end
   end
 

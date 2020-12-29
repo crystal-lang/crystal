@@ -362,9 +362,15 @@ describe "BigInt" do
 
     (a_17).gcd(17).should eq(17)
     (-a_17).gcd(17).should eq(17)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
+
+    (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
+    (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (a_17).lcm(17).should eq(a_17)
   end
 
   it "can use Number::[]" do
@@ -433,6 +439,34 @@ describe "BigInt" do
 
   it "has unsafe_shr (#8691)" do
     BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.to_big_i.digits.should eq([0])
+      1.to_big_i.digits.should eq([1])
+      10.to_big_i.digits.should eq([0, 1])
+      123.to_big_i.digits.should eq([3, 2, 1])
+      123456789.to_big_i.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.to_big_i.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.to_big_i.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.to_big_i.digits
+      end
+    end
   end
 end
 

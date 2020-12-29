@@ -266,7 +266,13 @@ struct NamedTuple
     {% end %}
   end
 
-  protected def sorted_keys
+  # Returns a `Tuple` of symbols with the keys in this named tuple, sorted by name.
+  #
+  # ```
+  # tuple = {foo: 1, bar: 2, baz: 3}
+  # tuple.sorted_keys # => {:bar, :baz, :foo}
+  # ```
+  def sorted_keys
     {% begin %}
       Tuple.new(
         {% for key in T.keys.sort %}

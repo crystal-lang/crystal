@@ -431,8 +431,8 @@ struct Int
     end
   end
 
-  # Returns the greatest common divisor of `self` and `other`. Signed
-  # integers may raise overflow if either has value equal to `MIN` of
+  # Returns the greatest common divisor of `self` and *other*. Signed
+  # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
   #
   # ```
@@ -475,8 +475,11 @@ struct Int
     u.unsafe_shl shift
   end
 
+  # Returns the least common multiple of `self` and *other*.
+  #
+  # Raises `OverflowError` in case of overflow.
   def lcm(other : Int)
-    (self * other).abs // gcd(other)
+    (self // gcd(other) * other).abs
   end
 
   def divisible_by?(num)
@@ -508,7 +511,7 @@ struct Int
     i = self ^ self
     while i < self
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -562,19 +565,52 @@ struct Int
     self % other
   end
 
+  # Returns the digits of a number in a given base.
+  # The digits are returned as an array with the least significant digit as the first array element.
+  #
+  # ```
+  # 12345.digits      # => [5, 4, 3, 2, 1]
+  # 12345.digits(7)   # => [4, 6, 6, 0, 5]
+  # 12345.digits(100) # => [45, 23, 1]
+  #
+  # -12345.digits(7) # => ArgumentError
+  # ```
+  def digits(base = 10) : Array(Int32)
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
+    if self == 0
+      return [0]
+    end
+
+    num = self
+
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
+      num = num.tdiv(base)
+    end
+    ary
+  end
+
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private DIGITS2         =
+    "0001020304050607080910111213141516171819" \
+    "2021222324252627282930313233343536373839" \
+    "4041424344454647484950515253545556575859" \
+    "6061626364656667686970717273747576777879" \
+    "8081828384858687888990919293949596979899"
 
-  def to_s : String
-    to_s(10)
-  end
-
-  def to_s(io : IO) : Nil
-    to_s(10, io)
-  end
-
-  def to_s(base : Int, upcase : Bool = false) : String
+  def to_s(base : Int = 10, *, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -590,7 +626,12 @@ struct Int
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+  @[Deprecated("Use `#to_s(base : Int, *, upcase : Bool = false)` instead")]
+  def to_s(base : Int, _upcase : Bool) : String
+    to_s(base, upcase: _upcase)
+  end
+
+  def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -606,6 +647,11 @@ struct Int
     end
   end
 
+  @[Deprecated("Use `#to_s(io : IO, base : Int, *, upcase : Bool = false)` instead")]
+  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+    to_s(io, base, upcase: upcase)
+  end
+
   private def internal_to_s(base, upcase = false)
     # Given sizeof(self) <= 128 bits, we need at most 128 bytes for a base 2
     # representation, plus one byte for the trailing 0.
@@ -616,12 +662,32 @@ struct Int
 
     neg = num < 0
 
-    digits = (base == 62 ? DIGITS_BASE62 : (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE)).to_unsafe
+    if base == 10
+      # Optimization for `base == 10`.
+      # The base idea is explained by "Three Optimization Tips for C++".
+      # See https://www.slideshare.net/andreialexandrescu1/three-optimization-tips-for-c.
+      digits = DIGITS2.to_unsafe
 
-    while num != 0
-      ptr -= 1
-      ptr.value = digits[num.remainder(base).abs]
-      num = num.tdiv(base)
+      while num >= 100 || num <= -100
+        ptr -= 2
+        ptr.copy_from(digits + num.remainder(100).abs &* 2, 2)
+        num = num.tdiv(100)
+      end
+      if num >= 10 || num <= -10
+        ptr -= 2
+        ptr.copy_from(digits + num.abs &* 2, 2)
+      elsif num != 0
+        ptr -= 1
+        ptr.value = 0x30u8 &+ num.abs
+      end
+    else
+      digits = (base == 62 ? DIGITS_BASE62 : (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE)).to_unsafe
+
+      while num != 0
+        ptr -= 1
+        ptr.value = digits[num.remainder(base).abs]
+        num = num.tdiv(base)
+      end
     end
 
     if neg
@@ -670,7 +736,7 @@ struct Int
     def next
       if @index < @n
         value = @index
-        @index += 1
+        @index &+= 1
         value
       else
         stop

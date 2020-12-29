@@ -65,13 +65,27 @@ module Crystal::System::Env
     begin
       while !pointer.value.zero?
         string, pointer = String.from_utf16(pointer)
-        key_value = string.split('=', 2)
-        key = key_value[0]
-        value = key_value[1]? || ""
+        key, _, value = string.partition('=')
+        # The actual env variables are preceded by these weird lines in the output:
+        # "=::=::\", "=C:=c:\foo\bar", "=ExitCode=00000000" -- skip them.
+        next if key.empty?
         yield key, value
       end
     ensure
       LibC.FreeEnvironmentStringsW(orig_pointer)
     end
+  end
+
+  # Used internally to create an input for `CreateProcess` `lpEnvironment`.
+  def self.make_env_block(env : Enumerable({String, String}))
+    String.build do |io|
+      env.each do |(key, value)|
+        if key.includes?('=') || key.empty?
+          raise ArgumentError.new("Invalid env key #{key.inspect}")
+        end
+        io << key.check_no_null_byte("key") << '=' << value.check_no_null_byte("value") << '\0'
+      end
+      io << '\0'
+    end.to_utf16.to_unsafe
   end
 end

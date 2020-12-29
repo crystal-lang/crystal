@@ -30,7 +30,7 @@ CrystalDocs.loadConfig = function (config) {
   var currentVersion = document.querySelector("html > head > meta[name=\"crystal_docs.project_version\"]").getAttribute("content")
 
   var currentVersionInList = projectVersions.find(function (element) {
-    element.version == currentVersion
+    return element.name == currentVersion
   })
 
   if (!currentVersionInList) {

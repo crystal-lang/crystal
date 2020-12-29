@@ -160,7 +160,8 @@ class UDPSocket < IPSocket
   # Raises `Socket::Error` unless the socket is IPv4 and an IPv4 address is provided.
   def multicast_interface(address : IPAddress)
     if @family == Family::INET
-      if addr = address.@addr4
+      addr = address.@addr
+      if addr.is_a?(LibC::InAddr)
         setsockopt LibC::IP_MULTICAST_IF, addr, LibC::IPPROTO_IP
       else
         raise Socket::Error.new "Expecting an IPv4 interface address. Address provided: #{address.address}"
@@ -211,9 +212,11 @@ class UDPSocket < IPSocket
   end
 
   private def group_modify(ip, operation)
+    ip_addr = ip.@addr
+
     case @family
     when Family::INET
-      if ip_addr = ip.@addr4
+      if ip_addr.is_a?(LibC::InAddr)
         req = LibC::IpMreq.new
         req.imr_multiaddr = ip_addr
 
@@ -222,7 +225,7 @@ class UDPSocket < IPSocket
         raise Socket::Error.new "Expecting an IPv4 multicast address. Address provided: #{ip.address}"
       end
     when Family::INET6
-      if ip_addr = ip.@addr6
+      if ip_addr.is_a?(LibC::In6Addr)
         req = LibC::Ipv6Mreq.new
         req.ipv6mr_multiaddr = ip_addr
 

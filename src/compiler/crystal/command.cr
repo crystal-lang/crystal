@@ -50,6 +50,7 @@ class Crystal::Command
   end
 
   private getter options
+  @compiler : Compiler?
 
   def initialize(@options : Array(String))
     @color = ENV["TERM"]? != "dumb"
@@ -69,14 +70,14 @@ class Crystal::Command
     when "build".starts_with?(command)
       options.shift
       use_crystal_opts
-      result = build
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
-      result
+      build
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
     when "play".starts_with?(command)
       options.shift
       {% if flag?(:without_playground) %}
         puts "Crystal was compiled without playground support"
+        puts "Try the online code evaluation and sharing tool at https://play.crystal-lang.org"
         exit 1
       {% else %}
         playground
@@ -122,8 +123,12 @@ class Crystal::Command
       end
     end
   rescue ex : Crystal::LocationlessException
+    report_warnings
+
     error ex.message
   rescue ex : Crystal::Exception
+    report_warnings
+
     ex.color = @color
     ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
@@ -135,6 +140,8 @@ class Crystal::Command
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
+    report_warnings
+
     ex.inspect_with_backtrace STDERR
     error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
@@ -190,9 +197,9 @@ class Crystal::Command
   private def run_command(single_file = false)
     config = create_compiler "run", run: true, single_file: single_file
     if config.specified_output
-      result = config.compile
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
+      config.compile
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
       return
     end
 
@@ -201,8 +208,8 @@ class Crystal::Command
     result = config.compile output_filename
 
     unless config.compiler.no_codegen?
-      report_warnings result
-      exit 1 if warnings_fail_on_exit?(result)
+      report_warnings
+      exit 1 if warnings_fail_on_exit?
 
       execute output_filename, config.arguments, config.compiler
     end
@@ -297,7 +304,7 @@ class Crystal::Command
   private def create_compiler(command, no_codegen = false, run = false,
                               hierarchy = false, cursor_command = false,
                               single_file = false)
-    compiler = Compiler.new
+    compiler = new_compiler
     compiler.progress_tracker = @progress_tracker
     link_flags = [] of String
     filenames = [] of String
@@ -462,6 +469,13 @@ class Crystal::Command
         filenames << stdin_filename
       end
 
+      if single_file
+        opts.before_each do |arg|
+          opts.stop if !arg.starts_with?('-') && arg.ends_with?(".cr")
+          opts.stop if File.file?(arg)
+        end
+      end
+
       opts.unknown_args do |before, after|
         opt_filenames = before
         opt_arguments = after
@@ -607,6 +621,12 @@ class Crystal::Command
   end
 
   private def use_crystal_opts
-    @options = ENV.fetch("CRYSTAL_OPTS", "").split.concat(options)
+    @options = Process.parse_arguments(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
+  rescue ex
+    raise LocationlessException.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
+  end
+
+  private def new_compiler
+    @compiler = Compiler.new
   end
 end

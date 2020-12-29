@@ -144,7 +144,6 @@ abstract class OpenSSL::SSL::Socket < IO
     unless bytes > 0
       raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
     end
-    nil
   end
 
   def unbuffered_flush

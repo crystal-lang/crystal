@@ -409,8 +409,6 @@ class Crystal::Doc::Markdown::Parser
           cursor = pos + 1
           in_link = false
         end
-      else
-        # Nothing
       end
       last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
@@ -448,8 +446,6 @@ class Crystal::Doc::Markdown::Parser
         if bracket_count == 0
           break
         end
-      else
-        # nothing to do
       end
       pos += 1
     end

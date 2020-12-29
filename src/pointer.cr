@@ -326,7 +326,7 @@ struct Pointer(T)
       io << ".null"
     else
       io << "@0x"
-      address.to_s(16, io)
+      address.to_s(io, 16)
     end
   end
 
@@ -413,7 +413,7 @@ struct Pointer(T)
   # ptr.address # => 5678
   # ```
   def self.new(address : Int)
-    new address.to_u64
+    new address.to_u64!
   end
 
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized

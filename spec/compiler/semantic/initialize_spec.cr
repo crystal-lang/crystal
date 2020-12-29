@@ -154,7 +154,7 @@ describe "Semantic: initialize" do
       "Instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "types instance var as not-nilable if assigned in block but previosly assigned" do
+  it "types instance var as not-nilable if assigned in block but previously assigned" do
     assert_type(%(
       def bar
         yield if 1 == 2

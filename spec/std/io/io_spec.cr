@@ -2,6 +2,7 @@ require "../spec_helper"
 require "../../support/channel"
 
 {% unless flag?(:win32) %}
+  require "socket"
   require "big"
 {% end %}
 require "base64"
@@ -55,8 +56,6 @@ private class SimpleIOMemory < IO
 
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
-
-    nil
   end
 
   def to_slice
@@ -79,6 +78,27 @@ private class SimpleIOMemory < IO
   private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
+  end
+end
+
+private class OneByOneIO < IO
+  @bytes : Bytes
+
+  def initialize(string)
+    @bytes = string.to_slice
+    @pos = 0
+  end
+
+  def read(slice : Bytes)
+    return 0 if slice.empty?
+    return 0 if @pos >= @bytes.size
+
+    slice[0] = @bytes[@pos]
+    @pos += 1
+    1
+  end
+
+  def write(slice : Bytes) : Nil
   end
 end
 
@@ -396,6 +416,32 @@ describe IO do
         expect_raises(IO::Error, "File not open for reading") do
           w.gets
         end
+      end
+    end
+
+    describe ".same_content?" do
+      it "compares two ios, one way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_true
+      end
+
+      it "compares two ios, second way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io2, io1).should be_true
+      end
+
+      it "compares two ios, one way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "compares two ios, second way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io2, io1).should be_false
       end
     end
   end
@@ -721,6 +767,24 @@ describe IO do
         io.set_encoding("UCS-2LE")
         io.read_string(11).should eq("Hello world")
         io.gets_to_end.should eq("\r\nFoo\nBar")
+      end
+
+      pending_win32 "gets ascii from socket (#9056)" do
+        server = TCPServer.new "localhost", 0
+        sock = TCPSocket.new "localhost", server.local_address.port
+        begin
+          sock.set_encoding("ascii")
+          spawn do
+            client = server.accept
+            message = client.gets
+            client << "#{message}\n"
+          end
+          sock << "K\n"
+          sock.gets.should eq("K")
+        ensure
+          server.close
+          sock.close
+        end
       end
     end
 
