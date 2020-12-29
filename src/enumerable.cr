@@ -1351,7 +1351,7 @@ module Enumerable(T)
     {% if T == String %}
       # optimize for string
       join
-    {% elsif T < Array || T < Iterator %}
+    {% elsif T < Array %}
       # optimize for array
       flat_map &.itself
     {% else %}
