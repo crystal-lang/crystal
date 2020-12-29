@@ -966,6 +966,7 @@ describe "Enumerable" do
 
     it "array of arrays" do
       [[1, 2, 3], [3, 4, 5]].sum.should eq [1, 2, 3, 3, 4, 5]
+      [[[1, 2], [3]], [[1, 2], [3, 4, 5]]].sum.should eq [[1, 2], [3], [1, 2], [3, 4, 5]]
       Deque{[1, 2, 3], [3, 4, 5]}.sum.should eq [1, 2, 3, 3, 4, 5]
     end
 

@@ -1352,6 +1352,9 @@ module Enumerable(T)
     {% if T == String %}
       # optimize for string
       join
+    {% elsif T < Array || T < Iterator %}
+      # optimize for array
+      flat_map &.itself
     {% else %}
       sum additive_identity(Reflect(T))
     {% end %}
