@@ -2,8 +2,8 @@ struct Crystal::System::FileInfo < ::File::Info
   def initialize(@stat : LibC::Stat)
   end
 
-  def size : UInt64
-    @stat.st_size.to_u64
+  def size : Int64
+    @stat.st_size.to_i64
   end
 
   def permissions : ::File::Permissions
@@ -47,12 +47,12 @@ struct Crystal::System::FileInfo < ::File::Info
     {% end %}
   end
 
-  def owner : UInt32
-    @stat.st_uid.to_u32
+  def owner_id : String
+    @stat.st_uid.to_s
   end
 
-  def group : UInt32
-    @stat.st_gid.to_u32
+  def group_id : String
+    @stat.st_gid.to_s
   end
 
   def same_file?(other : ::File::Info) : Bool

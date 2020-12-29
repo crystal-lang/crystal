@@ -222,6 +222,8 @@ describe "Lexer" do
   it_lexes_i64 ["2147483648", "-2147483649"]
   it_lexes_i64 [["2147483648.foo", "2147483648"]]
   it_lexes_u64 ["18446744073709551615", "14146167139683460000", "9223372036854775808"]
+  it_lexes_number :u64, ["10000000000000000000_u64", "10000000000000000000"]
+
   it_lexes_i64 [["0x3fffffffffffffff", "4611686018427387903"]]
   it_lexes_i64 ["-9223372036854775808", "9223372036854775807"]
   it_lexes_u64 [["0xffffffffffffffff", "18446744073709551615"]]
@@ -294,8 +296,12 @@ describe "Lexer" do
   assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
   assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
+  assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
+  assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
+
   assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
   assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64"
   assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
   assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
@@ -306,6 +312,14 @@ describe "Lexer" do
   assert_syntax_error "0123", "octal constants should be prefixed with 0o"
   assert_syntax_error "00", "octal constants should be prefixed with 0o"
   assert_syntax_error "01_i64", "octal constants should be prefixed with 0o"
+
+  assert_syntax_error "4f33", "invalid float suffix"
+  assert_syntax_error "4f65", "invalid float suffix"
+  assert_syntax_error "4f22", "invalid float suffix"
+  # Tests for #8782
+  assert_syntax_error "4F32", "unexpected token: F32"
+  assert_syntax_error "4F64", "unexpected token: F64"
+  assert_syntax_error "0F32", "unexpected token: F32"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -529,4 +543,6 @@ describe "Lexer" do
   it_lexes_string %("\\xFF"), String.new(Bytes[0xFF])
   assert_syntax_error %("\\xz"), "invalid hex escape"
   assert_syntax_error %("\\x1z"), "invalid hex escape"
+
+  assert_syntax_error %("hi\\)
 end

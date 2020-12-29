@@ -6,7 +6,7 @@ struct OAuth::Params
 
   def add(key, value)
     if value
-      @params << {URI.escape(key), URI.escape(value)}
+      @params << {URI.encode_www_form(key, space_to_plus: false), URI.encode_www_form(value, space_to_plus: false)}
     end
   end
 
@@ -20,9 +20,9 @@ struct OAuth::Params
     @params.sort_by! &.[0]
     @params.each_with_index do |(key, value), i|
       io << "%26" if i > 0
-      URI.escape key, io
+      URI.encode_www_form key, io, space_to_plus: false
       io << "%3D"
-      URI.escape value, io
+      URI.encode_www_form value, io, space_to_plus: false
     end
   end
 end

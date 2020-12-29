@@ -68,9 +68,30 @@ class String
   end
 end
 
+struct Path
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    @name.to_yaml(yaml)
+  end
+end
+
 struct Number
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.scalar self.to_s
+  end
+end
+
+struct Float
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    infinite = self.infinite?
+    if infinite == 1
+      yaml.scalar(".inf")
+    elsif infinite == -1
+      yaml.scalar("-.inf")
+    elsif nan?
+      yaml.scalar(".nan")
+    else
+      yaml.scalar self.to_s
+    end
   end
 end
 
@@ -127,6 +148,33 @@ end
 module Time::EpochMillisConverter
   def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder)
     yaml.scalar value.to_unix_ms
+  end
+end
+
+# Converter to be used with `YAML::Serializable`
+# to serialize the `Array(T)` elements with the custom converter.
+#
+# ```
+# require "yaml"
+#
+# class Timestamp
+#   include YAML::Serializable
+#
+#   @[YAML::Field(converter: YAML::ArrayConverter(Time::EpochConverter))]
+#   property values : Array(Time)
+# end
+#
+# timestamp = Timestamp.from_yaml(%({"values":[1459859781,1567628762]}))
+# timestamp.values  # => [2016-04-05 12:36:21 UTC, 2019-09-04 20:26:02 UTC]
+# timestamp.to_yaml # => ---\nvalues:\n- 1459859781\n- 1567628762\n
+# ```
+module YAML::ArrayConverter(Converter)
+  def self.to_yaml(values : Array, yaml : YAML::Nodes::Builder)
+    yaml.sequence(reference: self) do
+      values.each do |value|
+        Converter.to_yaml(value, yaml)
+      end
+    end
   end
 end
 

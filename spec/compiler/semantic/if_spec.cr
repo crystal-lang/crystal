@@ -337,4 +337,18 @@ describe "Semantic: if" do
       foo
       )) { nilable int32 }
   end
+
+  it "doesn't consider nil type in else branch with if with && (#7434)" do
+    assert_type(%(
+      def foo
+        if true && (y = 1 || nil)
+        else
+          return 1
+        end
+        y
+      end
+
+      foo
+      ), inject_primitives: false) { int32 }
+  end
 end

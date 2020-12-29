@@ -114,7 +114,7 @@ class Crystal::Call
       if call_arg.is_a?(Out)
         arg_type = arg.type
         if arg_type.is_a?(PointerInstanceType)
-          if arg_type.element_type.remove_indirection.void?
+          if arg_type.element_type.remove_typedef.void?
             call_arg.raise "can't use out with Void* (argument #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
           end
 

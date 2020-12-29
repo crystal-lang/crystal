@@ -37,6 +37,9 @@ struct Set(T)
     @hash = Hash(T, Nil).new(initial_capacity: initial_capacity)
   end
 
+  protected def initialize(*, using_hash @hash : Hash(T, Nil))
+  end
+
   # Optimized version of `new` used when *other* is also an `Indexable`
   def self.new(other : Indexable(T))
     Set(T).new(other.size).concat(other)
@@ -53,6 +56,30 @@ struct Set(T)
     Set(T).new.concat(enumerable)
   end
 
+  # Makes this set compare objects using their object identity (`object_id)`
+  # for types that define such method (`Reference` types, but also structs that
+  # might wrap other `Reference` types and delegate the `object_id` method to them).
+  #
+  # ```
+  # s = Set{"foo", "bar"}
+  # s.includes?("fo" + "o") # => true
+  #
+  # s.compare_by_identity
+  # s.compare_by_identity?  # => true
+  # s.includes?("fo" + "o") # => false # not the same String instance
+  # ```
+  def compare_by_identity
+    @hash.compare_by_identity
+    self
+  end
+
+  # Returns `true` of this Set is comparing objects by `object_id`.
+  #
+  # See `compare_by_identity`.
+  def compare_by_identity?
+    @hash.compare_by_identity?
+  end
+
   # Alias for `add`
   def <<(object : T)
     add object
@@ -63,7 +90,7 @@ struct Set(T)
   # ```
   # s = Set{1, 5}
   # s.includes? 8 # => false
-  # s << 8
+  # s.add(8)
   # s.includes? 8 # => true
   # ```
   def add(object : T)
@@ -80,8 +107,8 @@ struct Set(T)
   # s.add? 8 # => false
   # ```
   def add?(object : T)
-    # TODO: optimize the hash lookup call
-    !!(add(object) unless includes?(object))
+    @hash.put(object, nil) { return true }
+    false
   end
 
   # Adds `#each` element of *elems* to the set and returns `self`.
@@ -109,17 +136,18 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the *object* from the set and returns `self`.
+  # Removes the *object* from the set and returns `true` if it was present, otherwise returns `false`.
   #
   # ```
   # s = Set{1, 5}
   # s.includes? 5 # => true
-  # s.delete 5
+  # s.delete 5    # => true
   # s.includes? 5 # => false
+  # s.delete 5    # => false
   # ```
-  def delete(object)
-    @hash.delete(object)
-    self
+  def delete(object) : Bool
+    @hash.delete(object) { return false }
+    true
   end
 
   # Returns the number of elements in the set.
@@ -201,6 +229,15 @@ struct Set(T)
     each { |value| set.add value }
     other.each { |value| set.add value }
     set
+  end
+
+  # Addition: returns a new set containing the unique elements from both sets.
+  #
+  # ```
+  # Set{1, 1, 2, 3} + Set{3, 4, 5} # => Set{1, 2, 3, 4, 5}
+  # ```
+  def +(other : Set(U)) forall U
+    self | other
   end
 
   # Difference: returns a new set containing elements in this set that are not
@@ -314,12 +351,15 @@ struct Set(T)
 
   # Returns a new `Set` with all of the same elements.
   def dup
-    Set.new(self)
+    set = Set(T).new(using_hash: @hash.dup)
+    set.compare_by_identity if compare_by_identity?
+    set
   end
 
   # Returns a new `Set` with all of the elements cloned.
   def clone
     clone = Set(T).new(self.size)
+    clone.compare_by_identity if compare_by_identity?
     each do |element|
       clone << element.clone
     end
@@ -365,7 +405,7 @@ struct Set(T)
   # Writes a string representation of the set to *io*.
   def to_s(io : IO) : Nil
     io << "Set{"
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 

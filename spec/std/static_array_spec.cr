@@ -79,6 +79,20 @@ describe "StaticArray" do
     a.to_s.should eq("StaticArray[1, 2, 3]")
   end
 
+  it "does #fill, without block" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.fill(0).should eq(StaticArray[0, 0, 0])
+    a.should eq(StaticArray[0, 0, 0])
+    a.fill(2).should eq(StaticArray[2, 2, 2])
+    a.should eq(StaticArray[2, 2, 2])
+  end
+
+  it "does #fill, with block" do
+    a = StaticArray(Int32, 4).new { |i| i + 1 }
+    a.fill { |i| i * i }.should eq(StaticArray[0, 1, 4, 9])
+    a.should eq(StaticArray[0, 1, 4, 9])
+  end
+
   it "shuffles" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.shuffle!
@@ -129,12 +143,27 @@ describe "StaticArray" do
     b.should eq(StaticArray[1, 2, 4, 5])
   end
 
+  it "does map_with_index, with offset" do
+    a = StaticArray[1, 1, 2, 2]
+    b = a.map_with_index(10) { |e, i| e + i }
+    b.should eq(StaticArray[11, 12, 14, 15])
+  end
+
   it "does map_with_index!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map_with_index! { |e, i| i * 2 }
     a[0].should eq(0)
     a[1].should eq(2)
     a[2].should eq(4)
+    a.should be_a(StaticArray(Int32, 3))
+  end
+
+  it "does map_with_index!, with offset" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.map_with_index!(10) { |e, i| i * 2 }
+    a[0].should eq(20)
+    a[1].should eq(22)
+    a[2].should eq(24)
     a.should be_a(StaticArray(Int32, 3))
   end
 

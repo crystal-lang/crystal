@@ -85,7 +85,7 @@ struct Tuple
   #
   # ```
   # Tuple(String, Int64).from(["world", 2_i64])       # => {"world", 2_i64}
-  # Tuple(String, Int64).from(["world", 2_i64]).class # => {String, Int64}
+  # Tuple(String, Int64).from(["world", 2_i64]).class # => Tuple(String, Int64)
   # ```
   #
   # See also: `#from`.
@@ -224,7 +224,7 @@ struct Tuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Tuple)
     return false unless size == other.size
 
@@ -297,7 +297,7 @@ struct Tuple
     0
   end
 
-  # ditto
+  # :ditto:
   def <=>(other : Tuple)
     min_size = Math.min(size, other.size)
     min_size.times do |i|
@@ -376,6 +376,15 @@ struct Tuple
     to_s
   end
 
+  def to_a
+    Array(Union(*T)).build(size) do |buffer|
+      {% for i in 0...T.size %}
+        buffer[{{i}}] = self[{{i}}]
+      {% end %}
+      size
+    end
+  end
+
   # Appends a string representation of this tuple to the given `IO`.
   #
   # ```
@@ -384,7 +393,7 @@ struct Tuple
   # ```
   def to_s(io : IO) : Nil
     io << '{'
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 
@@ -414,11 +423,14 @@ struct Tuple
   # tuple = {1, 2.5, "a"}
   # tuple.map_with_index { |e, i| "tuple[#{i}]: #{e}" } # => {"tuple[0]: 1", "tuple[1]: 2.5", "tuple[2]: a"}
   # ```
-  def map_with_index
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0)
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], {{i}}),
+          (yield self[{{i}}], offset + {{i}}),
         {% end %}
       )
     {% end %}

@@ -73,7 +73,7 @@ struct Range(B, E)
   #
   # If the block returns `false`, the finding value exists
   # behind. If the block returns `true`, the finding value
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # ```
   # (0..10).bsearch { |x| x >= 5 }                       # => 5
@@ -81,7 +81,7 @@ struct Range(B, E)
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any value.
-  def bsearch
+  def bsearch(&block : B | E -> Bool)
     from = self.begin
     to = self.end
 

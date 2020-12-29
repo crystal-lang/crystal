@@ -46,7 +46,7 @@ describe "Spec matchers" do
   end
 
   describe "should_not be_falsey" do
-    it "passses for true" do
+    it "passes for true" do
       true.should_not be_falsey
     end
 
@@ -125,6 +125,12 @@ describe "Spec matchers" do
     ex = expect_raises(Spec::NestingSpecError) { pending }
     ex.message.should eq "can't nest `it` or `pending`"
     ex.file.should eq __FILE__
+  end
+
+  describe "pending block is not compiled" do
+    pending "pending has block with valid syntax, but invalid semantics" do
+      UndefinedConstant.undefined_method
+    end
   end
 end
 

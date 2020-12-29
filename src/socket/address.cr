@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter size : Int32
 
-    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)
@@ -50,10 +50,6 @@ class Socket
     end
 
     abstract def to_unsafe : LibC::Sockaddr*
-
-    def ==(other)
-      false
-    end
   end
 
   # IP address representation.
@@ -71,7 +67,7 @@ class Socket
   # ```
   #
   # `IPAddress` won't resolve domains, including `localhost`. If you must
-  # resolve an IP, or don't know whether a `String` constains an IP or a domain
+  # resolve an IP, or don't know whether a `String` contains an IP or a domain
   # name, you should use `Addrinfo.resolve` instead.
   struct IPAddress < Address
     UNSPECIFIED  = "0.0.0.0"
@@ -83,15 +79,15 @@ class Socket
 
     getter port : Int32
 
-    @address : String?
-    @addr6 : LibC::In6Addr?
-    @addr4 : LibC::InAddr?
+    @addr : LibC::In6Addr | LibC::InAddr
 
     def initialize(@address : String, @port : Int32)
-      if @addr6 = ip6?(address)
+      if addr = ip6?(address)
+        @addr = addr
         @family = Family::INET6
         @size = sizeof(LibC::SockaddrIn6)
-      elsif @addr4 = ip4?(address)
+      elsif addr = ip4?(address)
+        @addr = addr
         @family = Family::INET
         @size = sizeof(LibC::SockaddrIn)
       else
@@ -127,10 +123,11 @@ class Socket
     # Socket::IPAddress.parse("udp://[::1]:8080")     # => Socket::IPAddress.new("::1", 8080)
     # ```
     def self.parse(uri : URI) : IPAddress
-      host = uri.host
-      raise Socket::Error.new("Invalid IP address: missing host") if !host || host.empty?
+      host = uri.host.presence
+      raise Socket::Error.new("Invalid IP address: missing host") unless host
 
-      port = uri.port || raise Socket::Error.new("Invalid IP address: missing port")
+      port = uri.port
+      raise Socket::Error.new("Invalid IP address: missing port") unless port
 
       # remove ipv6 brackets
       if host.starts_with?('[') && host.ends_with?(']')
@@ -147,14 +144,24 @@ class Socket
 
     protected def initialize(sockaddr : LibC::SockaddrIn6*, @size)
       @family = Family::INET6
-      @addr6 = sockaddr.value.sin6_addr
-      @port = LibC.ntohs(sockaddr.value.sin6_port).to_i
+      @addr = sockaddr.value.sin6_addr
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin6_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin6_port).to_i
+        {% end %}
     end
 
     protected def initialize(sockaddr : LibC::SockaddrIn*, @size)
       @family = Family::INET
-      @addr4 = sockaddr.value.sin_addr
-      @port = LibC.ntohs(sockaddr.value.sin_port).to_i
+      @addr = sockaddr.value.sin_addr
+      @port =
+        {% if flag?(:dragonfly) %}
+          Intrinsics.bswap16(sockaddr.value.sin_port).to_i
+        {% else %}
+          LibC.ntohs(sockaddr.value.sin_port).to_i
+        {% end %}
     end
 
     private def ip6?(address)
@@ -174,20 +181,12 @@ class Socket
     # ip_address = socket.remote_address
     # ip_address.address # => "127.0.0.1"
     # ```
-    def address
-      @address ||= begin
-        case family
-        when Family::INET6 then address(@addr6.not_nil!)
-        when Family::INET  then address(@addr4.not_nil!)
-        else                    raise "Unsupported IP address family: #{family}"
-        end
-      end
-    end
+    getter(address : String) { address(@addr) }
 
     private def address(addr : LibC::In6Addr)
       String.new(46) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 46)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -196,7 +195,7 @@ class Socket
     private def address(addr : LibC::InAddr)
       String.new(16) do |buffer|
         unless LibC.inet_ntop(family, pointerof(addr).as(Void*), buffer, 16)
-          raise Errno.new("Failed to convert IP address")
+          raise Socket::Error.from_errno("Failed to convert IP address")
         end
         {LibC.strlen(buffer), 0}
       end
@@ -207,28 +206,26 @@ class Socket
     # In the IPv4 family, loopback addresses are all addresses in the subnet
     # `127.0.0.0/24`. In IPv6 `::1` is the loopback address.
     def loopback? : Bool
-      if addr = @addr4
+      case addr = @addr
+      in LibC::InAddr
         addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
-      elsif addr = @addr6
+      in LibC::In6Addr
         ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
-      else
-        raise "unreachable!"
       end
     end
 
     # Returns `true` if this IP is an unspecified address, either the IPv4 address `0.0.0.0` or the IPv6 address `::`.
     def unspecified? : Bool
-      if addr = @addr4
+      case addr = @addr
+      in LibC::InAddr
         addr.s_addr == 0_u32
-      elsif addr = @addr6
+      in LibC::In6Addr
         ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
-      else
-        raise "unreachable!"
       end
     end
 
     private def ipv6_addr8(addr : LibC::In6Addr)
-      {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
+      {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8
       {% elsif flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
@@ -264,30 +261,43 @@ class Socket
     end
 
     def to_unsafe : LibC::Sockaddr*
-      case family
-      when Family::INET6
-        to_sockaddr_in6
-      when Family::INET
-        to_sockaddr_in
-      else
-        raise "Unsupported IP address family: #{family}"
+      case addr = @addr
+      in LibC::InAddr
+        to_sockaddr_in(addr)
+      in LibC::In6Addr
+        to_sockaddr_in6(addr)
       end
     end
 
-    private def to_sockaddr_in6
+    private def to_sockaddr_in6(addr)
       sockaddr = Pointer(LibC::SockaddrIn6).malloc
       sockaddr.value.sin6_family = family
-      sockaddr.value.sin6_port = LibC.htons(port)
-      sockaddr.value.sin6_addr = @addr6.not_nil!
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin6_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin6_port = LibC.htons(port)
+      {% end %}
+      sockaddr.value.sin6_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
 
-    private def to_sockaddr_in
+    private def to_sockaddr_in(addr)
       sockaddr = Pointer(LibC::SockaddrIn).malloc
       sockaddr.value.sin_family = family
-      sockaddr.value.sin_port = LibC.htons(port)
-      sockaddr.value.sin_addr = @addr4.not_nil!
+      {% if flag?(:dragonfly) %}
+        sockaddr.value.sin_port = Intrinsics.bswap16(port)
+      {% else %}
+        sockaddr.value.sin_port = LibC.htons(port)
+      {% end %}
+      sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    # Returns `true` if *port* is a valid port number.
+    #
+    # Valid port numbers are in the range `0..65_535`.
+    def self.valid_port?(port : Int) : Bool
+      port.in?(0..UInt16::MAX)
     end
   end
 
@@ -341,7 +351,7 @@ class Socket
         if port = uri.port
           io << ':' << port
         end
-        if (path = uri.path) && !path.empty?
+        if path = uri.path.presence
           io << path
         end
       end

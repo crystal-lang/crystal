@@ -73,6 +73,21 @@ describe "BitArray" do
       (a == b).should be_true
       (b == c).should be_false
       (a == d).should be_false
+
+      e = from_int(16, 0b01001101_00011111)
+      f = from_int(16, 0b00000000_00011111)
+      (e == f).should be_false
+    end
+
+    it "compares other initialized with true (#8543)" do
+      a = BitArray.new(26, true)
+      b = BitArray.new(26, true)
+      b[23] = false
+      (a == b).should be_false
+    end
+
+    it "compares other type" do
+      from_int(3, 0b101).should_not eq("other type")
     end
   end
 
@@ -196,7 +211,7 @@ describe "BitArray" do
       ba[34] = true
       ba[37] = true
 
-      ba[28..-1].should eq(from_int(12, 0b001110100100))
+      ba[28..-1].should eq(from_int(12, 0b0011_10100100))
     end
 
     it "gets on large bitarrays" do
@@ -207,7 +222,7 @@ describe "BitArray" do
       ba[34] = true
       ba[37] = true
 
-      ba[28..40].should eq(from_int(13, 0b0011101001000))
+      ba[28..40].should eq(from_int(13, 0b00111_01001000))
 
       ba[62] = true
       ba[63] = true
@@ -215,15 +230,15 @@ describe "BitArray" do
       ba[66] = true
       ba[69] = true
 
-      ba[60..72].should eq(from_int(13, 0b0011101001000))
-      ba[28..72].should eq(from_int(45, 0b001110100100000000000000000000000011101001000_u64))
+      ba[60..72].should eq(from_int(13, 0b00111_01001000))
+      ba[28..72].should eq(from_int(45, 0b00111_01001000_00000000_00000000_00000111_01001000_u64))
     end
 
     it "preserves equality" do
       ba = BitArray.new(100)
       25.upto(42) { |i| ba[i] = true }
 
-      ba[28..40].should eq(from_int(13, 0b1111111111111))
+      ba[28..40].should eq(from_int(13, 0b11111_11111111))
     end
   end
 
@@ -244,6 +259,7 @@ describe "BitArray" do
 
     ary.invert
     ary.all?.should be_true
+    (100..127).each { |i| ary.unsafe_fetch(i).should be_false }
 
     ary[50] = false
     ary[33] = false
@@ -274,6 +290,11 @@ describe "BitArray" do
     ary.size.times { |i| ary[i].should be_true }
   end
 
+  it "initializes with unused bits cleared" do
+    ary = BitArray.new(3, true)
+    (0...32).each { |i| ary.unsafe_fetch(i).should eq(i < ary.size) }
+  end
+
   it "reads bits from slice" do
     ary = BitArray.new(43) # 5 bytes 3 bits
     # 11010000_00000000_00001011_00000000_00000000_101xxxxx
@@ -301,9 +322,9 @@ describe "BitArray" do
     slice = ary.to_slice
     slice[0] = 0b10101010_u8
     slice[1] = 0b01010101_u8
-    slice[5] = 0b11111101_u8
+    slice[5] = 0b00000101_u8
     ary.each_with_index do |e, i|
-      e.should eq({1, 3, 5, 7, 8, 10, 12, 14, 40, 42}.includes?(i))
+      e.should eq(i.in?(1, 3, 5, 7, 8, 10, 12, 14, 40, 42))
     end
   end
 
@@ -336,5 +357,14 @@ describe "BitArray" do
     iter.next.should be_false
     iter.next.should be_true
     iter.next.should be_a(Iterator::Stop)
+  end
+
+  it "provides dup" do
+    a = BitArray.new(2)
+    b = a.dup
+
+    b[0] = true
+    a[0].should be_false
+    b[0].should be_true
   end
 end

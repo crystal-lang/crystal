@@ -94,7 +94,7 @@ class Time::Location
     # Raises `InvalidTimezoneOffsetError` if *seconds* is outside the supported
     # value range `-86_400..86_400` seconds (`-24:00` to `+24:00`).
     def initialize(@name : String?, @offset : Int32, @dst : Bool)
-      # Maximium offsets of IANA time zone database are -12:00 and +14:00.
+      # Maximum offsets of IANA time zone database are -12:00 and +14:00.
       # +/-24 hours allows a generous padding for unexpected offsets.
       # TODO: Maybe reduce to Int16 (+/- 18 hours).
       raise InvalidTimezoneOffsetError.new(offset) if offset >= SECONDS_PER_DAY || offset <= -SECONDS_PER_DAY
@@ -239,7 +239,7 @@ class Time::Location
   # `"UTC"` and empty string (`""`) return `Location::UTC`, and
   # `"Local"` returns `Location.local`.
   #
-  # The implementation uses a list of system-specifc paths to look for a time
+  # The implementation uses a list of system-specific paths to look for a time
   # zone database.
   # The first time zone database entry matching the given name that is
   # successfully loaded and parsed is returned.

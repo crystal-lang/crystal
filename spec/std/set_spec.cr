@@ -18,11 +18,11 @@ describe "Set" do
       set_from_array.size.should eq(3)
       set_from_array.to_a.sort.should eq([2, 4, 6])
 
-      set_from_tulpe = Set.new({1, "hello", 'x'})
-      set_from_tulpe.size.should eq(3)
-      set_from_tulpe.to_a.includes?(1).should be_true
-      set_from_tulpe.to_a.includes?("hello").should be_true
-      set_from_tulpe.to_a.includes?('x').should be_true
+      set_from_tuple = Set.new({1, "hello", 'x'})
+      set_from_tuple.size.should eq(3)
+      set_from_tuple.to_a.includes?(1).should be_true
+      set_from_tuple.to_a.includes?("hello").should be_true
+      set_from_tuple.to_a.includes?('x').should be_true
     end
   end
 
@@ -63,9 +63,14 @@ describe "Set" do
       set.includes?(3).should be_true
     end
 
-    it "returns self" do
+    it "returns true when the object was present" do
       set = Set{1, 2, 3}
-      set.delete(2).should eq(set)
+      set.delete(2).should be_true
+    end
+
+    it "returns false when the object was absent" do
+      set = Set{1, 2, 3}
+      set.delete(0).should be_false
     end
   end
 
@@ -140,6 +145,14 @@ describe "Set" do
     set2 = Set{4, 2, 5, "3"}
     set3 = set1 | set2
     set3.should eq(Set{1, 2, 3, 4, 5, "3"})
+  end
+
+  it "aliases + to |" do
+    set1 = Set{1, 1, 2, 3}
+    set2 = Set{3, 4, 5}
+    set3 = set1 + set2
+    set4 = set1 | set2
+    set3.should eq(set4)
   end
 
   it "does -" do
@@ -388,4 +401,29 @@ describe "Set" do
   end
 
   typeof(Set(Int32).new(initial_capacity: 1234))
+
+  describe "compare_by_identity" do
+    it "compares by identity" do
+      string = "foo"
+      set = Set{string, "bar", "baz"}
+      set.compare_by_identity?.should be_false
+      set.includes?(string).should be_true
+
+      set.compare_by_identity
+      set.compare_by_identity?.should be_true
+
+      set.includes?("fo" + "o").should be_false
+      set.includes?(string).should be_true
+    end
+
+    it "retains compare_by_identity on dup" do
+      set = Set(String).new.compare_by_identity
+      set.dup.compare_by_identity?.should be_true
+    end
+
+    it "retains compare_by_identity on clone" do
+      set = Set(String).new.compare_by_identity
+      set.clone.compare_by_identity?.should be_true
+    end
+  end
 end

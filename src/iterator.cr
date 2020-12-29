@@ -29,6 +29,16 @@ require "./enumerable"
 # (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3).to_a # => [6, 12, 18]
 # ```
 #
+# Because iterators only go forward, when using methods that consume it entirely or partially –
+# `to_a`, `any?`, `count`, `none?`, `one?` and `size` – subsequent calls will give a different
+# result as there will be less elements to consume.
+#
+# ```
+# iter = (0...100).each
+# iter.size # => 100
+# iter.size # => 0
+# ```
+#
 # To implement an `Iterator` you need to define a `next` method that must return the next
 # element in the sequence or `Iterator::Stop::INSTANCE`, which signals the end of the sequence
 # (you can invoke `stop` inside an iterator as a shortcut).
@@ -89,7 +99,7 @@ module Iterator(T)
     Iterator.stop
   end
 
-  # ditto
+  # :ditto:
   def self.stop
     Stop::INSTANCE
   end
@@ -263,6 +273,10 @@ module Iterator(T)
   #
   # This can be used to prevent many memory allocations when each slice of
   # interest is to be used in a read-only fashion.
+  #
+  # Chunks of two items can be iterated using `#cons_pair`, an optimized
+  # implementation for the special case of `size == 2` which avoids heap
+  # allocations.
   def cons(n : Int, reuse = false)
     raise ArgumentError.new "Invalid cons size: #{n}" if n <= 0
     if reuse.nil? || reuse.is_a?(Bool)
@@ -293,6 +307,48 @@ module Iterator(T)
         @values
       else
         @values.dup
+      end
+    end
+  end
+
+  # Returns an iterator that returns consecutive pairs of adjacent items.
+  #
+  # ```
+  # iter = (1..5).each.cons_pair
+  # iter.next # => {1, 2}
+  # iter.next # => {2, 3}
+  # iter.next # => {3, 4}
+  # iter.next # => {4, 5}
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  #
+  # Chunks of more than two items can be iterated using `#cons`.
+  # This method is just an optimized implementation for the special case of
+  # `size == 2` to avoid heap allocations.
+  def cons_pair : Iterator({T, T})
+    ConsTuple(typeof(self), T).new(self)
+  end
+
+  private struct ConsTuple(I, T)
+    include Iterator({T, T})
+    include IteratorWrapper
+
+    @last_elem : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I)
+    end
+
+    def next : {T, T} | Iterator::Stop
+      elem = wrapped_next
+      last_elem = @last_elem
+
+      if last_elem.is_a?(Iterator::Stop)
+        @last_elem = elem
+        self.next
+      else
+        value = {last_elem, elem}
+        @last_elem, elem = elem, @last_elem
+        value
       end
     end
   end
@@ -1182,36 +1238,54 @@ module Iterator(T)
     end
   end
 
-  # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as `Tuple`s.
+  # Returns an iterator that returns the elements of this iterator and *others*
+  # traversed in tandem as `Tuple`s.
+  #
+  # Iteration stops when any of the iterators runs out of elements.
   #
   # ```
   # iter1 = [4, 5, 6].each
   # iter2 = [7, 8, 9].each
-  # iter = iter1.zip(iter2)
-  # iter.next # => {4, 7}
-  # iter.next # => {5, 8}
-  # iter.next # => {6, 9}
+  # iter3 = ['a', 'b', 'c', 'd'].each
+  # iter = iter1.zip(iter2, iter3)
+  # iter.next # => {4, 7, 'a'}
+  # iter.next # => {5, 8, 'b'}
+  # iter.next # => {6, 9, 'c'}
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def zip(other : Iterator(U)) forall U
-    Zip(typeof(self), typeof(other), T, U).new(self, other)
+  def zip(*others : Iterator) : Iterator
+    Iterator.zip_impl(self, *others)
   end
 
-  private struct Zip(I1, I2, T1, T2)
-    include Iterator({T1, T2})
+  protected def self.zip_impl(*iterators : *U) forall U
+    {% begin %}
+      Zip(U, Tuple(
+        {% for i in 0...U.size %}
+          typeof(iterators[{{ i }}].first),
+        {% end %}
+      )).new(iterators)
+    {% end %}
+  end
 
-    def initialize(@iterator1 : I1, @iterator2 : I2)
+  private struct Zip(Is, Ts)
+    include Iterator(Ts)
+
+    def initialize(@iterators : Is)
     end
 
     def next
-      v1 = @iterator1.next
-      return stop if v1.is_a?(Stop)
+      {% begin %}
+        {% for i in 0...Is.size %}
+          %v{i} = @iterators[{{ i }}].next
+          return stop if %v{i}.is_a?(Stop)
+        {% end %}
 
-      v2 = @iterator2.next
-      return stop if v2.is_a?(Stop)
-
-      {v1, v2}
+        Tuple.new(
+          {% for i in 0...Is.size %}
+            %v{i},
+          {% end %}
+        )
+      {% end %}
     end
   end
 

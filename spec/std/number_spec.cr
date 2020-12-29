@@ -1,47 +1,15 @@
 require "spec"
-
-private macro it_initializes_from_value_to(number_type)
-  it "initialize from value to {{number_type}}" do
-    {{number_type}}.new(1).should be_a({{number_type}})
-    {{number_type}}.new(1).should eq(1)
-
-    {{number_type}}.new(1u32).should be_a({{number_type}})
-    {{number_type}}.new(1u32).should eq(1)
-
-    {{number_type}}.new(1.0).should be_a({{number_type}})
-    {{number_type}}.new(1.0).should eq(1)
-  end
-
-  it "unchecked initialize from value to {{number_type}}" do
-    {{number_type}}.new!(1).should be_a({{number_type}})
-    {{number_type}}.new!(1).should eq(1)
-
-    {{number_type}}.new!(1u32).should be_a({{number_type}})
-    {{number_type}}.new!(1u32).should eq(1)
-
-    {{number_type}}.new!(1.0).should be_a({{number_type}})
-    {{number_type}}.new!(1.0).should eq(1)
-  end
-end
+require "big"
+require "complex"
+require "../support/number"
 
 describe "Number" do
-  it_initializes_from_value_to Int8
-  it_initializes_from_value_to Int16
-  it_initializes_from_value_to Int32
-  it_initializes_from_value_to Int64
-
-  it_initializes_from_value_to UInt8
-  it_initializes_from_value_to UInt16
-  it_initializes_from_value_to UInt32
-  it_initializes_from_value_to UInt64
-
-  {% if flag?(:bits64) %}
-    it_initializes_from_value_to Int128
-    it_initializes_from_value_to UInt128
+  {% for number_type in BUILTIN_NUMBER_TYPES %}
+    it_unchecked_initializes_from_value_to {{number_type}}
+    it_initializes_from_value_to {{number_type}}
   {% end %}
 
-  it_initializes_from_value_to Float32
-  it_initializes_from_value_to Float64
+  it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}})
 
   describe "significant" do
     it "10 base" do
@@ -111,42 +79,17 @@ describe "Number" do
       123_456.123456.round(-5).should eq(100_000)
       753.155.round(-5, base: 2).should eq(768)
     end
-  end
 
-  describe "clamp" do
-    it "clamps integers" do
-      -5.clamp(-10, 100).should eq(-5)
-      -5.clamp(10, 100).should eq(10)
-      5.clamp(10, 100).should eq(10)
-      50.clamp(10, 100).should eq(50)
-      500.clamp(10, 100).should eq(100)
-
-      50.clamp(10..100).should eq(50)
-
-      50.clamp(10..nil).should eq(50)
-      50.clamp(10...nil).should eq(50)
-      5.clamp(10..nil).should eq(10)
-      5.clamp(10...nil).should eq(10)
-
-      5.clamp(nil..10).should eq(5)
-      50.clamp(nil..10).should eq(10)
+    it "accepts unsigned precision" do
+      123.round(UInt8.new(3)).should eq(123)
+      11.308.round(UInt8.new(3)).should eq(11.308)
+      11.308.round(UInt8.new(2)).should eq(11.31)
     end
 
-    it "clamps floats" do
-      -5.5.clamp(-10.1, 100.1).should eq(-5.5)
-      -5.5.clamp(10.1, 100.1).should eq(10.1)
-      5.5.clamp(10.1, 100.1).should eq(10.1)
-      50.5.clamp(10.1, 100.1).should eq(50.5)
-      500.5.clamp(10.1, 100.1).should eq(100.1)
-
-      50.5.clamp(10.1..100.1).should eq(50.5)
-    end
-
-    it "fails with an exclusive range" do
-      expect_raises(ArgumentError) do
-        range = Range.new(1, 2, exclusive: true)
-        5.clamp(range)
-      end
+    it "handle medium amount of digits" do
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
+      6543210987654321.0.round(-15).should eq(7000000000000000.0)
     end
   end
 
@@ -240,6 +183,7 @@ describe "Number" do
         when 0 then x.should eq(0.0)
         when 1 then x.should eq(0.1)
         when 2 then x.should eq(0.2)
+        else        fail "shouldn't happen"
         end
         count += 1
       end
@@ -263,4 +207,16 @@ describe "Number" do
       iter.next.should eq(1000)
     end
   end
+
+  floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
+
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float32], Float32
+  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES}}, Float32
+  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float64], Float64
+  division_between_returns [Float64], {{BUILTIN_INTEGER_TYPES}}, Float64
+
+  division_between_returns [Float32], [Float32], Float32
+  division_between_returns {{BUILTIN_FLOAT_TYPES}}, [Float64], Float64
+  division_between_returns [Float64], {{BUILTIN_FLOAT_TYPES}}, Float64
 end

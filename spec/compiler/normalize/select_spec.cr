@@ -30,7 +30,7 @@ describe "Normalize: case" do
 
   it "normalizes select with else" do
     assert_expand "select; when foo; body; else; baz; end", <<-CODE
-      __temp_1, __temp_2 = ::Channel.select({foo_select_action}, true)
+      __temp_1, __temp_2 = ::Channel.non_blocking_select({foo_select_action})
       case __temp_1
       when 0
         body

@@ -36,7 +36,7 @@ class TCPServer < TCPSocket
       self.reuse_address = true
       self.reuse_port = true if reuse_port
 
-      if errno = bind(addrinfo) { |errno| errno }
+      if errno = bind(addrinfo, "#{host}:#{port}") { |errno| errno }
         close
         next errno
       end
@@ -103,7 +103,7 @@ class TCPServer < TCPSocket
   #   end
   # end
   # ```
-  def accept?
+  def accept? : TCPSocket?
     if client_fd = accept_impl
       sock = TCPSocket.new(fd: client_fd, family: family, type: type, protocol: protocol)
       sock.sync = sync?

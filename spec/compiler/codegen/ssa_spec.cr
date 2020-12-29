@@ -35,7 +35,7 @@ describe "Code gen: ssa" do
   it "codegens declaration of var inside then when false" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -43,14 +43,14 @@ describe "Code gen: ssa" do
       if 1 == 2
         b = 2
       end
-      b.to_i
+      b.to_i!
       ").to_i.should eq(0)
   end
 
   it "codegens declaration of var inside then when true" do
     run("
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -58,14 +58,14 @@ describe "Code gen: ssa" do
       if 1 == 1
         b = 2
       end
-      b.to_i
+      b.to_i!
       ").to_i.should eq(2)
   end
 
   it "codegens a var that is re-assigned in a block" do
     run(%(
       struct Char
-        def to_i
+        def to_i!
           10
         end
       end
@@ -78,30 +78,30 @@ describe "Code gen: ssa" do
       foo do
         a = 'a'
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(10)
   end
 
   it "codegens a var that is re-assigned in a block (1)" do
     run(%(
       struct Char
-        def to_i
+        def to_i!
           10
         end
       end
 
       a = 1
-      while a.to_i == 1
+      while a.to_i! == 1
         a = 'a'
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(10)
   end
 
   it "codegens a var that is re-assigned in a block (2)" do
     run(%(
       struct Char
-        def to_i
+        def to_i!
           10
         end
       end
@@ -110,14 +110,14 @@ describe "Code gen: ssa" do
       while 1 == 2
         a = 'a'
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(1)
   end
 
   it "codegens a var that is declared in a block (1)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -125,14 +125,14 @@ describe "Code gen: ssa" do
       while 1 == 2
         a = 1
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(0)
   end
 
   it "codegens a var that is declared in a block (2)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -142,7 +142,7 @@ describe "Code gen: ssa" do
         a = 1
         b = 2
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(1)
   end
 
@@ -163,7 +163,7 @@ describe "Code gen: ssa" do
   it "codegens ssa bug (1)" do
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -181,7 +181,7 @@ describe "Code gen: ssa" do
         a = index
         1
       end
-      a.to_i
+      a.to_i!
       )).to_i.should eq(1)
   end
 
@@ -190,7 +190,7 @@ describe "Code gen: ssa" do
     # wasn't reset to nil before each block iteration.
     run(%(
       struct Nil
-        def to_i
+        def to_i!
           0
         end
       end
@@ -206,7 +206,7 @@ describe "Code gen: ssa" do
       a = 0
       foo do |x|
         coconio = x if x == 1
-        a &+= coconio.to_i
+        a &+= coconio.to_i!
       end
       a
       )).to_i.should eq(1)

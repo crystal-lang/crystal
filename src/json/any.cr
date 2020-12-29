@@ -22,23 +22,23 @@ struct JSON::Any
   # Reads a `JSON::Any` value from the given pull parser.
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when :null
+    when .null?
       new pull.read_null
-    when :bool
+    when .bool?
       new pull.read_bool
-    when :int
+    when .int?
       new pull.read_int
-    when :float
+    when .float?
       new pull.read_float
-    when :string
+    when .string?
       new pull.read_string
-    when :begin_array
+    when .begin_array?
       ary = [] of JSON::Any
       pull.read_array do
         ary << new(pull)
       end
       new ary
-    when :begin_object
+    when .begin_object?
       hash = {} of String => JSON::Any
       pull.read_object do |key|
         hash[key] = new(pull)
@@ -119,28 +119,28 @@ struct JSON::Any
 
   # Traverses the depth of a structure and returns the value.
   # Returns `nil` if not found.
-  def dig?(key : String | Int, *subkeys)
-    if (value = self[key]?) && value.responds_to?(:dig?)
-      value.dig?(*subkeys)
-    end
+  def dig?(index_or_key : String | Int, *subkeys) : JSON::Any?
+    self[index_or_key]?.try &.dig?(*subkeys)
   end
 
   # :nodoc:
-  def dig?(key : String | Int)
-    self[key]?
+  def dig?(index_or_key : String | Int) : JSON::Any?
+    case @raw
+    when Hash, Array
+      self[index_or_key]?
+    else
+      nil
+    end
   end
 
   # Traverses the depth of a structure and returns the value, otherwise raises.
-  def dig(key : String | Int, *subkeys)
-    if (value = self[key]) && value.responds_to?(:dig)
-      return value.dig(*subkeys)
-    end
-    raise "JSON::Any value not diggable for key: #{key.inspect}"
+  def dig(index_or_key : String | Int, *subkeys) : JSON::Any
+    self[index_or_key].dig(*subkeys)
   end
 
   # :nodoc:
-  def dig(key : String | Int)
-    self[key]
+  def dig(index_or_key : String | Int) : JSON::Any
+    self[index_or_key]
   end
 
   # Checks that the underlying value is `Nil`, and returns `nil`.

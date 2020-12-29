@@ -66,7 +66,7 @@ module Random
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
-  abstract def next_u : UInt
+  abstract def next_u
 
   # Generates a random `Bool`.
   #
@@ -287,6 +287,41 @@ module Random
       end
       range.begin + rand * span
     end
+  end
+
+  {% for type, values in {
+                           "Int8".id   => %w(20 -66 89 19),
+                           "UInt8".id  => %w(186 221 127 245),
+                           "Int16".id  => %w(-32554 32169 -20152 -7686),
+                           "UInt16".id => %w(39546 44091 2874 17348),
+                           "Int32".id  => %w(1870830079 -1043532158 -867180637 -1216773590),
+                           "UInt32".id => %w(3147957137 4245108745 2207809043 3184391838),
+                           "Int64".id  => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
+                           "UInt64".id => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                         } %}
+    # Returns a random {{type}}
+    #
+    # ```
+    # rand({{type}}) # => {{values[0].id}}
+    # ```
+    def rand(type : {{type}}.class) : {{type}}
+      rand_type_from_bytes(type)
+    end
+
+    # Returns a StaticArray filled with random {{type}} values.
+    #
+    # ```
+    # rand(StaticArray({{type}}, 4)) # => StaticArray[{{values.join(", ").id}}]
+    # ```
+    def rand(type : StaticArray({{type}}, _).class)
+      rand_type_from_bytes(type)
+    end
+  {% end %}
+
+  private def rand_type_from_bytes(t : T.class) forall T
+    buffer = uninitialized UInt8[sizeof(T)]
+    random_bytes(buffer.to_slice)
+    buffer.unsafe_as(T)
   end
 
   # Fills a given slice with random bytes.

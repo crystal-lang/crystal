@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "mime/media_type"
 
 private def parse(string)
@@ -62,10 +62,6 @@ describe MIME::MediaType do
       expect_raises(MIME::Error, "Duplicate key 'key' at 15") { parse(%(foo; key=val1; key=the-key-appears-again-which-is-bogus)) }
 
       parse(%(FORM-DATA;NAMe="foo")).should eq({"form-data", {"name" => "foo"}})
-
-      # From RFC 2231:
-
-      parse(%(application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A)).should eq({"application/x-stuff", {"title" => "This is ***fun***"}})
 
       parse(%(message/external-body; access-type=URL; URL*0="ftp://";URL*1="cs.utk.edu/pub/moore/bulk-mailer/bulk-mailer.tar")).should eq({
         "message/external-body",
@@ -205,8 +201,6 @@ describe MIME::MediaType do
       parse(%(attachment; filename="foo-ae.html"; filename*=UTF-8''foo-%c3%a4.html)).should eq({"attachment", {"filename" => "foo-ä.html"}})
       # attfnboth2
       parse(%(attachment; filename*=UTF-8''foo-%c3%a4.html; filename="foo-ae.html")).should eq({"attachment", {"filename" => "foo-ä.html"}})
-      # attfnboth3
-      parse(%(attachment; filename*0*=ISO-8859-15''euro-sign%3d%a4; filename*=ISO-8859-1''currency-sign%3d%a4)).should eq({"attachment", {"filename" => "currency-sign=¤"}})
       # attnewandfn
       parse(%(attachment; foobar=x; filename="foo.html")).should eq({"attachment", {"foobar" => "x", "filename" => "foo.html"}})
 
@@ -223,6 +217,13 @@ describe MIME::MediaType do
       # Skip whitespace after =
       parse(%(form-data; foo= foo)).should eq({"form-data", {"foo" => "foo"}})
       parse(%(form-data; foo= " foo ")).should eq({"form-data", {"foo" => " foo "}})
+    end
+
+    pending_win32 "parses params with encoding" do
+      # From RFC 2231:
+      parse(%(application/x-stuff; title*=us-ascii'en-us'This%20is%20%2A%2A%2Afun%2A%2A%2A)).should eq({"application/x-stuff", {"title" => "This is ***fun***"}})
+      # attfnboth3
+      parse(%(attachment; filename*0*=ISO-8859-15''euro-sign%3d%a4; filename*=ISO-8859-1''currency-sign%3d%a4)).should eq({"attachment", {"filename" => "currency-sign=¤"}})
     end
 
     it "sets default charset to utf-8 for text media types" do

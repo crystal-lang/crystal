@@ -38,8 +38,8 @@ def matgen(n)
 end
 
 n = (ARGV[0]? || 500).to_i
-n = n / 2 * 2
+n = n // 2 * 2
 a = matgen(n)
 b = matgen(n)
 c = matmul(a, b)
-puts c[n / 2][n / 2]
+puts c[n // 2][n // 2]

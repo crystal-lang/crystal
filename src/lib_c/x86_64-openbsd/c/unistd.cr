@@ -38,6 +38,7 @@ lib LibC
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun rmdir(x0 : Char*) : Int
   fun symlink(x0 : Char*, x1 : Char*) : Int
+  fun readlink(path : Char*, buf : Char*, size : SizeT) : SSizeT
   fun syscall(x0 : Int, ...) : Int
   fun sysconf(x0 : Int) : Long
   fun unlink(x0 : Char*) : Int

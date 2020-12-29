@@ -1,5 +1,10 @@
 require "../spec_helper"
-require "big"
+require "../../support/channel"
+
+{% unless flag?(:win32) %}
+  require "socket"
+  require "big"
+{% end %}
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
@@ -42,7 +47,7 @@ private class SimpleIOMemory < IO
     count
   end
 
-  def write(slice : Bytes)
+  def write(slice : Bytes) : Nil
     count = slice.size
     new_bytesize = bytesize + count
     if new_bytesize > @capacity
@@ -51,8 +56,6 @@ private class SimpleIOMemory < IO
 
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
-
-    nil
   end
 
   def to_slice
@@ -78,9 +81,30 @@ private class SimpleIOMemory < IO
   end
 end
 
+private class OneByOneIO < IO
+  @bytes : Bytes
+
+  def initialize(string)
+    @bytes = string.to_slice
+    @pos = 0
+  end
+
+  def read(slice : Bytes)
+    return 0 if slice.empty?
+    return 0 if @pos >= @bytes.size
+
+    slice[0] = @bytes[@pos]
+    @pos += 1
+    1
+  end
+
+  def write(slice : Bytes) : Nil
+  end
+end
+
 describe IO do
   describe "partial read" do
-    it "doesn't block on first read.  blocks on 2nd read" do
+    pending_win32 "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
         slice = Bytes.new 1024
@@ -88,7 +112,7 @@ describe IO do
         read.read_timeout = 1
         read.read(slice).should eq(6)
 
-        expect_raises(IO::Timeout) do
+        expect_raises(IO::TimeoutError) do
           read.read_timeout = 0.0000001
           read.read(slice)
         end
@@ -386,6 +410,40 @@ describe IO do
 
       str.read_fully?(slice).should be_nil
     end
+
+    it "raises if trying to read to an IO not opened for reading" do
+      IO.pipe do |r, w|
+        expect_raises(IO::Error, "File not open for reading") do
+          w.gets
+        end
+      end
+    end
+
+    describe ".same_content?" do
+      it "compares two ios, one way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io1, io2).should be_true
+      end
+
+      it "compares two ios, second way (true)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hello")
+        IO.same_content?(io2, io1).should be_true
+      end
+
+      it "compares two ios, one way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io1, io2).should be_false
+      end
+
+      it "compares two ios, second way (false)" do
+        io1 = OneByOneIO.new("hello")
+        io2 = IO::Memory.new("hella")
+        IO.same_content?(io2, io1).should be_false
+      end
+    end
   end
 
   describe "write operations" do
@@ -473,9 +531,20 @@ describe IO do
       io.skip_to_end
       io.read_byte.should be_nil
     end
+
+    it "raises if trying to write to an IO not opened for writing" do
+      IO.pipe do |r, w|
+        # unless sync is used the flush on close triggers the exception again
+        r.sync = true
+
+        expect_raises(IO::Error, "File not open for writing") do
+          r << "hello"
+        end
+      end
+    end
   end
 
-  describe "encoding" do
+  pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200
@@ -514,13 +583,13 @@ describe IO do
         end
       end
 
-      it "gets big GB2312 string" do
+      it "gets big EUC-JP string" do
         2.times do
-          str = ("你好我是人\n" * 1000).encode("GB2312")
+          str = ("好我是人\n" * 1000).encode("EUC-JP")
           io = SimpleIOMemory.new(str)
-          io.set_encoding("GB2312")
+          io.set_encoding("EUC-JP")
           1000.times do
-            io.gets.should eq("你好我是人")
+            io.gets.should eq("好我是人")
           end
         end
       end
@@ -600,39 +669,39 @@ describe IO do
       end
 
       it "reads utf8" do
-        io = IO::Memory.new("你".encode("GB2312"))
-        io.set_encoding("GB2312")
+        io = IO::Memory.new("好".encode("EUC-JP"))
+        io.set_encoding("EUC-JP")
 
         buffer = uninitialized UInt8[1024]
         bytes_read = io.read_utf8(buffer.to_slice) # => 3
         bytes_read.should eq(3)
-        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
+        buffer.to_slice[0, bytes_read].to_a.should eq("好".bytes)
       end
 
       it "raises on incomplete byte sequence" do
         io = SimpleIOMemory.new("好".byte_slice(0, 1))
-        io.set_encoding("GB2312")
+        io.set_encoding("EUC-JP")
         expect_raises ArgumentError, "Incomplete multibyte sequence" do
           io.read_char
         end
       end
 
       it "says invalid byte sequence" do
-        io = SimpleIOMemory.new(Slice.new(1, 140_u8))
-        io.set_encoding("GB2312")
-        expect_raises ArgumentError, "Invalid multibyte sequence" do
+        io = SimpleIOMemory.new(Slice.new(1, 255_u8))
+        io.set_encoding("EUC-JP")
+        expect_raises ArgumentError, {% if flag?(:musl) %}"Incomplete multibyte sequence"{% else %}"Invalid multibyte sequence"{% end %} do
           io.read_char
         end
       end
 
       it "skips invalid byte sequences" do
         string = String.build do |str|
-          str.write "好".encode("GB2312")
-          str.write_byte 140_u8
-          str.write "是".encode("GB2312")
+          str.write "好".encode("EUC-JP")
+          str.write_byte 255_u8
+          str.write "是".encode("EUC-JP")
         end
         io = SimpleIOMemory.new(string)
-        io.set_encoding("GB2312", invalid: :skip)
+        io.set_encoding("EUC-JP", invalid: :skip)
         io.read_char.should eq('好')
         io.read_char.should eq('是')
         io.read_char.should be_nil
@@ -641,7 +710,7 @@ describe IO do
       it "says invalid 'invalid' option" do
         io = SimpleIOMemory.new
         expect_raises ArgumentError, "Valid values for `invalid` option are `nil` and `:skip`, not :foo" do
-          io.set_encoding("GB2312", invalid: :foo)
+          io.set_encoding("EUC-JP", invalid: :foo)
         end
       end
 
@@ -698,6 +767,24 @@ describe IO do
         io.set_encoding("UCS-2LE")
         io.read_string(11).should eq("Hello world")
         io.gets_to_end.should eq("\r\nFoo\nBar")
+      end
+
+      pending_win32 "gets ascii from socket (#9056)" do
+        server = TCPServer.new "localhost", 0
+        sock = TCPSocket.new "localhost", server.local_address.port
+        begin
+          sock.set_encoding("ascii")
+          spawn do
+            client = server.accept
+            message = client.gets
+            client << "#{message}\n"
+          end
+          sock << "K\n"
+          sock.gets.should eq("K")
+        ensure
+          server.close
+          sock.close
+        end
       end
     end
 
@@ -781,22 +868,22 @@ describe IO do
 
       it "raises on invalid byte sequence" do
         io = SimpleIOMemory.new
-        io.set_encoding("GB2312")
+        io.set_encoding("EUC-JP")
         expect_raises ArgumentError, "Invalid multibyte sequence" do
-          io.print "ñ"
+          io.print "\xff"
         end
       end
 
       it "skips on invalid byte sequence" do
         io = SimpleIOMemory.new
-        io.set_encoding("GB2312", invalid: :skip)
+        io.set_encoding("EUC-JP", invalid: :skip)
         io.print "ñ"
         io.print "foo"
       end
 
       it "raises on incomplete byte sequence" do
         io = SimpleIOMemory.new
-        io.set_encoding("GB2312")
+        io.set_encoding("EUC-JP")
         expect_raises ArgumentError, "Incomplete multibyte sequence" do
           io.print "好".byte_slice(0, 1)
         end
@@ -824,6 +911,54 @@ describe IO do
     end
   end
 
-  typeof(STDIN.cooked { })
-  typeof(STDIN.cooked!)
+  pending_win32 describe: "#close" do
+    it "aborts 'read' in a different thread" do
+      ch = Channel(Symbol).new(1)
+
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :start
+          read.gets
+        rescue
+          ch.send :end
+        end
+
+        schedule_timeout ch
+
+        ch.receive.should eq(:start)
+        wait_until_blocked f
+
+        read.close
+        ch.receive.should eq(:end)
+      end
+    end
+
+    it "aborts 'write' in a different thread" do
+      ch = Channel(Symbol).new(1)
+
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :start
+          loop do
+            write.puts "some line"
+          end
+        rescue
+          ch.send :end
+        end
+
+        schedule_timeout ch
+
+        ch.receive.should eq(:start)
+        wait_until_blocked f
+
+        write.close
+        ch.receive.should eq(:end)
+      end
+    end
+  end
+
+  {% unless flag?(:win32) %}
+    typeof(STDIN.cooked { })
+    typeof(STDIN.cooked!)
+  {% end %}
 end

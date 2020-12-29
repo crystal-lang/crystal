@@ -137,7 +137,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #
@@ -147,7 +147,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch
+  def bsearch(&block : T -> Bool)
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
@@ -156,7 +156,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #
@@ -166,7 +166,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index
+  def bsearch_index(&block : T, Int32 -> Bool)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -434,34 +434,9 @@ module Indexable(T)
     true
   end
 
-  # Returns the first element of `self` if it's not empty, or raises `IndexError`.
-  #
-  # ```
-  # ([1, 2, 3]).first   # => 1
-  # ([] of Int32).first # raises IndexError
-  # ```
-  def first
-    first { raise IndexError.new }
-  end
-
-  # Returns the first element of `self` if it's not empty, or the given block's value.
-  #
-  # ```
-  # ([1, 2, 3]).first { 4 }   # => 1
-  # ([] of Int32).first { 4 } # => 4
-  # ```
+  # :inherited:
   def first
     size == 0 ? yield : unsafe_fetch(0)
-  end
-
-  # Returns the first element of `self` if it's not empty, or `nil`.
-  #
-  # ```
-  # ([1, 2, 3]).first?   # => 1
-  # ([] of Int32).first? # => nil
-  # ```
-  def first?
-    first { nil }
   end
 
   # See `Object#hash(hasher)`

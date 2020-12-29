@@ -1,5 +1,7 @@
-require "spec"
-require "big"
+require "./spec_helper"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
 
 struct RangeSpecIntWrapper
   include Comparable(self)
@@ -23,6 +25,18 @@ struct RangeSpecIntWrapper
 
   def +(other : RangeSpecIntWrapper)
     RangeSpecIntWrapper.new(value + other.value)
+  end
+end
+
+private def range_endless_each
+  (2..).each do |x|
+    return x
+  end
+end
+
+private def range_beginless_reverse_each
+  (..2).reverse_each do |x|
+    return x
   end
 end
 
@@ -85,11 +99,14 @@ describe "Range" do
     it "called with no block is specialized for performance" do
       (1..3).sum.should eq 6
       (1...3).sum.should eq 3
-      (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (1..3).sum(4).should eq 10
       (3..1).sum(4).should eq 4
       (1..11).step(2).sum.should eq 36
       (1...11).step(2).sum.should eq 25
+    end
+
+    pending_win32 "called with no block is specialized for performance (BigInt)" do
+      (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
     end
 
@@ -124,7 +141,9 @@ describe "Range" do
       (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
       (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+    end
 
+    pending_win32 "BigInt" do
       (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
     end
 
@@ -207,6 +226,14 @@ describe "Range" do
       expect_raises(ArgumentError, "Can't each beginless range") do
         range.each { }
       end
+    end
+
+    it "doesn't have Nil as a type for endless each" do
+      typeof(range_endless_each).should eq(Int32)
+    end
+
+    it "doesn't have Nil as a type for beginless each" do
+      typeof(range_beginless_reverse_each).should eq(Int32)
     end
   end
 
@@ -473,6 +500,18 @@ describe "Range" do
 
     it "works for other types" do
       ('a'..'c').size.should eq(3)
+    end
+
+    it "raises on beginless range" do
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        ((true ? nil : 1)..3).size
+      end
+    end
+
+    it "raises on endless range" do
+      expect_raises(ArgumentError, "Can't calculate size of an open range") do
+        (3..(true ? nil : 1)).size
+      end
     end
   end
 

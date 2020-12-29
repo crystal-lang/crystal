@@ -35,6 +35,9 @@ class OpenSSL::SSL::Server
   # Returns `true` if this SSL server has been closed.
   getter? closed : Bool = false
 
+  # When `true` a call to `#accept` will also initiate the SSL handshake.
+  property start_immediately : Bool = true
+
   # Creates a new SSL server wrapping *wrapped*.
   #
   # *context* configures the SSL options, see `OpenSSL::SSL::Context::Server` for details
@@ -60,7 +63,7 @@ class OpenSSL::SSL::Server
   #
   # This method calls `@wrapped.accept` and wraps the resulting IO in a SSL socket (`OpenSSL::SSL::Socket::Server`) with `context` configuration.
   def accept : OpenSSL::SSL::Socket::Server
-    OpenSSL::SSL::Socket::Server.new(@wrapped.accept, @context, sync_close: @sync_close)
+    new_ssl_socket(@wrapped.accept)
   end
 
   # Implements `::Socket::Server#accept?`.
@@ -68,8 +71,12 @@ class OpenSSL::SSL::Server
   # This method calls `@wrapped.accept?` and wraps the resulting IO in a SSL socket (`OpenSSL::SSL::Socket::Server`) with `context` configuration.
   def accept? : OpenSSL::SSL::Socket::Server?
     if socket = @wrapped.accept?
-      OpenSSL::SSL::Socket::Server.new(socket, @context, sync_close: @sync_close)
+      new_ssl_socket(socket)
     end
+  end
+
+  private def new_ssl_socket(io)
+    OpenSSL::SSL::Socket::Server.new(io, @context, sync_close: @sync_close, accept: @start_immediately)
   end
 
   # Closes this SSL server.

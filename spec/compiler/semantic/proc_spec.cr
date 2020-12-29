@@ -54,7 +54,7 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it "allows passing proc type if it is typedef'd" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
@@ -881,15 +881,35 @@ describe "Semantic: proc" do
       )) { proc_of(int32) }
   end
 
-  it "merges Proc that returns Nil with another one that returns something else (#3655)" do
+  it "*doesn't* merge Proc that returns Nil with another one that returns something else (#3655) (this was reverted)" do
     assert_type(%(
       a = ->(x : Int32) { 1 }
       b = ->(x : Int32) { nil }
       a || b
-      )) { proc_of(int32, nil_type) }
+      )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
   end
 
-  it "can assign proc that returns anything to proc that returns nil (#3655)" do
+  it "*doesn't* merge Proc that returns NoReturn with another one that returns something else (#9971)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { LibC.exit }
+      a || b
+      )) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
+  end
+
+  it "merges return type" do
+    assert_type(%(
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { nil }
+      (a || b).call(1)
+      )) { nilable int32 }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with instance var (#3655)" do
     assert_type(%(
       class Foo
         @block : -> Nil
@@ -907,6 +927,36 @@ describe "Semantic: proc" do
       )) { proc_of(nil_type) }
   end
 
+  it "can assign proc that returns anything to proc that returns nil, with class var (#3655)" do
+    assert_type(%(
+      module Moo
+        @@block : -> Nil = ->{ nil }
+
+        def self.block=(@@block)
+        end
+
+        def self.block
+          @@block
+        end
+      end
+
+      Moo.block = ->{ 1 }
+      Moo.block
+      )) { proc_of(nil_type) }
+  end
+
+  it "can assign proc that returns anything to proc that returns nil, with local var (#3655)" do
+    assert_type(%(
+      proc : -> Nil
+
+      a = ->{ 1 }
+      b = ->{ nil }
+      proc = a || b
+
+      proc
+      )) { proc_of(nil_type) }
+  end
+
   it "can pass proc that returns T as Void with named args (#7523)" do
     assert_type(%(
       def foo(proc : ->)
@@ -915,5 +965,158 @@ describe "Semantic: proc" do
 
       foo(proc: ->{ 1 })
       )) { proc_of(nil_type) }
+  end
+
+  it "errors when using macro as proc value (top-level) (#7465)" do
+    ex = assert_error %(
+      macro bar
+      end
+
+      ->bar
+      ),
+      "undefined method 'bar'"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
+
+  it "errors when using macro as proc value (top-level with obj) (#7465)" do
+    ex = assert_error %(
+      class Foo
+        macro bar
+        end
+      end
+
+      ->Foo.bar
+      ),
+      "undefined method 'bar' for Foo.class"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
+
+  it "errors when using macro as proc value (inside method) (#7465)" do
+    ex = assert_error %(
+      macro bar
+      end
+
+      def foo
+        ->bar
+      end
+
+      foo
+      ),
+      "undefined method 'bar'\n\n"
+
+    ex.to_s.should contain "'bar' exists as a macro, but macros can't be used in proc pointers"
+  end
+
+  it "virtualizes proc type (#6789)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Capture(T)
+        def initialize(@block : Foo -> T)
+        end
+
+        def block
+          @block
+        end
+      end
+
+      def capture(&block : Foo -> T) forall T
+        Capture.new(block)
+      end
+
+      capture do |foo|
+        Foo.new
+      end.block
+      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+  end
+
+  it "virtualizes proc type with -> (#8730)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x)
+        Foo.new
+      end
+
+      ->foo(Foo)
+      )) { proc_of(types["Foo"].virtual_type!, types["Foo"].virtual_type!) }
+  end
+
+  it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(Nil))
+        x
+      end
+
+      foo(->{ 1 })
+      )) { proc_of nil_type }
+  end
+
+  it "can pass Proc(X, T) to Proc(X, Nil) in type restriction (#8964)" do
+    assert_type(%(
+      def foo(x : Proc(String, Nil))
+        x
+      end
+
+      foo(->(x : String) { 1 })
+      )) { proc_of string, nil_type }
+  end
+
+  it "casts to Proc(Nil) when specified in return type" do
+    assert_type(%(
+      def foo : Proc(Nil)
+        ->{ 1 }
+      end
+
+      foo
+      )) { proc_of nil_type }
+  end
+
+  it "can use @ivar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        @foo = Foo.new
+
+        def foo
+          ->@foo.foo
+        end
+      end
+
+      Bar.new.foo
+    )) { proc_of int32 }
+  end
+
+  it "can use @@cvar as pointer syntax receiver (#9239)" do
+    assert_type(%(
+      class Foo
+        @@foo = new
+
+        def self.foo
+          ->@@foo.foo
+        end
+
+        def foo
+          1
+        end
+      end
+
+      Foo.foo
+    )) { proc_of int32 }
   end
 end

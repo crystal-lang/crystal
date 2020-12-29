@@ -71,7 +71,7 @@ class Random::PCG32
   end
 
   def jump(delta)
-    deltau64 = UInt64.new(delta)
+    deltau64 = UInt64.new!(delta)
     acc_mult = 1u64
     acc_plus = 0u64
     cur_plus = @inc

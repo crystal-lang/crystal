@@ -2,42 +2,42 @@ require "spec"
 require "json"
 
 class JSON::PullParser
-  def assert(event_kind : Symbol)
+  def assert(event_kind : Kind)
     kind.should eq(event_kind)
     read_next
   end
 
   def assert(value : Nil)
-    kind.should eq(:null)
+    kind.should eq(JSON::PullParser::Kind::Null)
     read_next
   end
 
   def assert(value : Int)
-    kind.should eq(:int)
+    kind.should eq(JSON::PullParser::Kind::Int)
     int_value.should eq(value)
     read_next
   end
 
   def assert(value : Float)
-    kind.should eq(:float)
+    kind.should eq(JSON::PullParser::Kind::Float)
     float_value.should eq(value)
     read_next
   end
 
   def assert(value : Bool)
-    kind.should eq(:bool)
+    kind.should eq(JSON::PullParser::Kind::Bool)
     bool_value.should eq(value)
     read_next
   end
 
   def assert(value : String)
-    kind.should eq(:string)
+    kind.should eq(JSON::PullParser::Kind::String)
     string_value.should eq(value)
     read_next
   end
 
   def assert(value : String)
-    kind.should eq(:string)
+    kind.should eq(JSON::PullParser::Kind::String)
     string_value.should eq(value)
     read_next
     yield
@@ -62,10 +62,10 @@ class JSON::PullParser
   end
 
   def assert_array
-    kind.should eq(:begin_array)
+    kind.should eq(JSON::PullParser::Kind::BeginArray)
     read_next
     yield
-    kind.should eq(:end_array)
+    kind.should eq(JSON::PullParser::Kind::EndArray)
     read_next
   end
 
@@ -74,10 +74,10 @@ class JSON::PullParser
   end
 
   def assert_object
-    kind.should eq(:begin_object)
+    kind.should eq(JSON::PullParser::Kind::BeginObject)
     read_next
     yield
-    kind.should eq(:end_object)
+    kind.should eq(JSON::PullParser::Kind::EndObject)
     read_next
   end
 
@@ -96,7 +96,7 @@ private def assert_pull_parse(string)
   it "parses #{string}" do
     parser = JSON::PullParser.new string
     parser.assert JSON.parse(string).raw
-    parser.kind.should eq(:EOF)
+    parser.kind.should eq(JSON::PullParser::Kind::EOF)
   end
 end
 
@@ -104,7 +104,7 @@ private def assert_pull_parse_error(string)
   it "errors on #{string}" do
     expect_raises JSON::ParseException do
       parser = JSON::PullParser.new string
-      while parser.kind != :EOF
+      until parser.kind.eof?
         parser.read_next
       end
     end
@@ -166,7 +166,7 @@ describe JSON::PullParser do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
       while true
-        break if parser.kind == :EOF
+        break if parser.kind.eof?
         parser.read_next
       end
     end
@@ -176,7 +176,7 @@ describe JSON::PullParser do
     parser = JSON::PullParser.new((%({"x": ) * 513) + ("}" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
       while true
-        break if parser.kind == :EOF
+        break if parser.kind.eof?
         parser.read_next
       end
     end
@@ -258,15 +258,10 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "finds key" do
+    it "yields parser" do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
-      bar = nil
-      pull.on_key("bar") do
-        bar = pull.read_int
-      end
-
-      bar.should eq(2)
+      pull.on_key("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key" do
@@ -289,6 +284,12 @@ describe JSON::PullParser do
       end
 
       bar.should eq(2)
+    end
+
+    it "yields parser with bang" do
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      pull.on_key!("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key with bang" do
@@ -328,5 +329,50 @@ describe JSON::PullParser do
     assert_raw %([1,"hello",true,false,null,[1,2,3]])
     assert_raw %({"foo":[1,2,{"bar":[1,"hello",true,false,1.5]}]})
     assert_raw %({"foo":"bar"})
+  end
+
+  describe "read?" do
+    {% for pair in [[Int8, 1_i8],
+                    [Int16, 1_i16],
+                    [Int32, 1_i32],
+                    [Int64, 1_i64],
+                    [UInt8, 1_u8],
+                    [UInt16, 1_u16],
+                    [UInt32, 1_u32],
+                    [UInt64, 1_u64],
+                    [Float32, 1.0_f32],
+                    [Float64, 1.0],
+                    [String, "foo"],
+                    [Bool, true]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "reads {{type}} when the token is a compatible kind" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should eq({{value}})
+      end
+
+      it "returns nil instead of {{type}} when the token is not compatible" do
+        pull = JSON::PullParser.new(%({"foo": "bar"}))
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
+
+    {% for pair in [[Int8, Int64::MAX],
+                    [Int16, Int64::MAX],
+                    [Int32, Int64::MAX],
+                    [UInt8, -1],
+                    [UInt16, -1],
+                    [UInt32, -1],
+                    [UInt64, -1],
+                    [Float32, Float64::MAX]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "returns nil in place of {{type}} when an overflow occurs" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
   end
 end

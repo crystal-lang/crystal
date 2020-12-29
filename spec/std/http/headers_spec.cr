@@ -160,6 +160,21 @@ describe HTTP::Headers do
     headers.includes_word?("foo", "baz").should be_true
   end
 
+  it "doesn't match word with comma separated value, partial match" do
+    headers = HTTP::Headers{"foo" => "bar, bazo"}
+    headers.includes_word?("foo", "baz").should be_false
+  end
+
+  it "matches word with comma separated value, partial match (array)" do
+    headers = HTTP::Headers{"foo" => ["foo", "baz, bazo"]}
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
+  it "doesn't match word with comma separated value, partial match (array)" do
+    headers = HTTP::Headers{"foo" => ["foo", "bar, bazo"]}
+    headers.includes_word?("foo", "baz").should be_false
+  end
+
   it "matches word among headers" do
     headers = HTTP::Headers.new
     headers.add("foo", "bar")

@@ -160,6 +160,39 @@ struct StaticArray(T, N)
     N
   end
 
+  # Replaces every element in `self` with the given *value*. Returns `self`.
+  #
+  # ```
+  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
+  # array.fill(2)                       # => StaticArray[2, 2, 2]
+  # array                               # => StaticArray[2, 2, 2]
+  # ```
+  def fill(value : T) : self
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        to_unsafe.clear(size)
+        return self
+      end
+    {% end %}
+
+    fill { value }
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # ```
+  # array = StaticArray[2, 1, 1, 1]
+  # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
+  # array                    # => StaticArray[0, 1, 4, 9]
+  # ```
+  def fill(& : Int32 -> T) : self
+    size.times do |i|
+      to_unsafe[i] = yield i
+    end
+    self
+  end
+
   # Fills the array by substituting all elements with the given value.
   #
   # ```
@@ -167,6 +200,7 @@ struct StaticArray(T, N)
   # array.[]= 2 # => nil
   # array       # => StaticArray[2, 2, 2]
   # ```
+  @[Deprecated("Use `#fill(value : T)` instead")]
   def []=(value : T)
     size.times do |i|
       to_unsafe[i] = value
@@ -209,14 +243,20 @@ struct StaticArray(T, N)
   end
 
   # Like `map!`, but the block gets passed both the element and its index.
-  def map_with_index!(&block : (T, Int32) -> T)
-    to_unsafe.map_with_index!(size) { |e, i| yield e, i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+    to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
 
   # Like `map`, but the block gets passed both the element and its index.
-  def map_with_index(&block : (T, Int32) -> U) forall U
-    StaticArray(U, N).new { |i| yield to_unsafe[i], i }
+  #
+  # Accepts an optional *offset* parameter, which tells it to start counting
+  # from there.
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+    StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 
   # Reverses the elements of this array in-place, then returns `self`.
@@ -261,7 +301,7 @@ struct StaticArray(T, N)
   # ```
   def to_s(io : IO) : Nil
     io << "StaticArray["
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

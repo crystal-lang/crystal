@@ -14,6 +14,7 @@ module Crystal
     property doc_buffer : IO::Memory?
     property raw : String
     property start : Int32
+    property invalid_escape : Bool
 
     record MacroState,
       whitespace : Bool,
@@ -22,9 +23,10 @@ module Crystal
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
       yields : Bool,
-      comment : Bool do
+      comment : Bool,
+      heredocs : Array(DelimiterState)? do
       def self.default
-        MacroState.new(true, 0, 0, nil, true, false, false)
+        MacroState.new(true, 0, 0, nil, true, false, false, nil)
       end
 
       setter whitespace
@@ -76,6 +78,7 @@ module Crystal
       @passed_backslash_newline = false
       @raw = ""
       @start = 0
+      @invalid_escape = false
     end
 
     def doc

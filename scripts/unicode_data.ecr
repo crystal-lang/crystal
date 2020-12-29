@@ -4,7 +4,6 @@
 #
 # DO NOT EDIT
 
-# :nodoc:
 module Unicode
   # Most case conversions map a range to another range.
   # Here we store: {from, to, delta}

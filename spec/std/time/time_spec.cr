@@ -173,6 +173,26 @@ describe Time do
         end
       end
     end
+
+    it "accepts midnight 24:00" do
+      Time.utc(2020, 5, 21, 24, 0, 0).should eq Time.utc(2020, 5, 22, 0, 0, 0)
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 0, nanosecond: 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 0, 1)
+      end
+
+      expect_raises ArgumentError, "Invalid time" do
+        Time.utc(2020, 5, 21, 24, 1, 0)
+      end
+    end
+  end
+
+  it "UNIX_EPOCH" do
+    Time::UNIX_EPOCH.should eq(Time.utc(1970, 1, 1))
   end
 
   it ".unix" do
@@ -223,7 +243,7 @@ describe Time do
   describe "#shift" do
     it "adds hours, minutes, seconds" do
       t1 = Time.utc(2002, 2, 25, 15, 25, 13)
-      t2 = t1 + Time::Span.new 3, 54, 1
+      t2 = t1 + Time::Span.new(hours: 3, minutes: 54, seconds: 1)
 
       t2.should eq Time.utc(2002, 2, 25, 19, 19, 14)
     end
@@ -275,7 +295,7 @@ describe Time do
       time.shift(0, 0).should eq time
     end
 
-    describe "irregular calendrical unit ratios" do
+    describe "irregular calendaric unit ratios" do
       it "shifts by a week if one day is left out" do
         # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
         # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
@@ -333,10 +353,9 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range max (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -348,10 +367,9 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range min (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
@@ -363,8 +381,8 @@ describe Time do
       t2 = t.shift months: 1
       t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
 
-      t2 = t.shift months: 1
-      t2.should eq Time.utc(2014, 11, 30, 21, 18, 13)
+      t2 = t.shift months: -1
+      t2.should eq Time.utc(2014, 9, 30, 21, 18, 13)
 
       t = Time.utc 2014, 10, 31, 21, 18, 13
       t2 = t.shift months: 1
@@ -425,11 +443,17 @@ describe Time do
       time = Time.local(location)
       (time + 5.minutes).location.should eq location
     end
+
+    it "covers date boundaries with zone offset (#8741)" do
+      zone = Time::Location.fixed(7 * 3600)
+
+      Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
+    end
   end
 
   it "#time_of_day" do
     t = Time.utc 2014, 10, 30, 21, 18, 13
-    t.time_of_day.should eq(Time::Span.new(21, 18, 13))
+    t.time_of_day.should eq(Time::Span.new(hours: 21, minutes: 18, seconds: 13))
   end
 
   describe "#day_of_week" do
@@ -760,7 +784,7 @@ describe Time do
       end
     end
 
-    it "knows that typical non-century leap years are divisibly by 4" do
+    it "knows that typical non-century leap years are divisible by 4" do
       {1968, 1972, 2004, 2020}.each do |year|
         Time.leap_year?(year).should be_true
       end

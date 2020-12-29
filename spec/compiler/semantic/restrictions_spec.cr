@@ -680,16 +680,6 @@ describe "Restrictions" do
       )) { types["Parent"].metaclass.virtual_type! }
   end
 
-  it "doesn't crash on invalid splat restriction (#3698)" do
-    assert_error %(
-      def foo(arg : *String)
-      end
-
-      foo(1)
-      ),
-      "no overload matches"
-  end
-
   it "errors if using free var without forall" do
     assert_error %(
       def foo(x : T)
@@ -711,5 +701,19 @@ describe "Restrictions" do
       foo(x, y)
       ),
       "no overload matches"
+  end
+
+  it "gives precedence to T.class over Class (#7392)" do
+    assert_type(%(
+      def foo(x : Class)
+        'a'
+      end
+
+      def foo(x : Int32.class)
+        1
+      end
+
+      foo(Int32)
+      )) { int32 }
   end
 end

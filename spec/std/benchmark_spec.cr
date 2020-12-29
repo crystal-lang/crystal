@@ -22,7 +22,7 @@ describe Benchmark::IPS::Job do
     a.mean.should be > 10
 
     # one of the reports should be normalized to the fastest but do to the
-    # timer precisison sleep 0.001 may not always be faster than 0.002 so we
+    # timer precision sleep 0.001 may not always be faster than 0.002 so we
     # don't care which
     first, second = [a.slower, b.slower].sort
     first.should eq(1)

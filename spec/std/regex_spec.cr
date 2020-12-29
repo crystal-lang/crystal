@@ -95,6 +95,17 @@ describe "Regex" do
     $2.should eq("ba")
   end
 
+  describe "matches?" do
+    it "matches but create no MatchData" do
+      /f(o+)(bar?)/.matches?("fooba").should eq(true)
+      /f(o+)(bar?)/.matches?("barfo").should eq(false)
+    end
+
+    it "can specify initial position of matching" do
+      /f(o+)(bar?)/.matches?("fooba", 1).should eq(false)
+    end
+  end
+
   describe "name_table" do
     it "is a map of capture group number to name" do
       table = (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).name_table
@@ -103,6 +114,15 @@ describe "Regex" do
       table[3]?.should be_nil
       table[4].should eq("month")
       table[5].should eq("day")
+    end
+  end
+
+  describe "capture_count" do
+    it "returns the number of (named & non-named) capture groups" do
+      /(?:.)/x.capture_count.should eq(0)
+      /(?<foo>.+)/.capture_count.should eq(1)
+      /(.)?/x.capture_count.should eq(1)
+      /(.)|(.)/x.capture_count.should eq(2)
     end
   end
 
@@ -161,5 +181,21 @@ describe "Regex" do
   it "clones" do
     regex = /foo/
     regex.clone.should be(regex)
+  end
+
+  it "checks equality by ==" do
+    regex = Regex.new("foo", Regex::Options::IGNORE_CASE)
+    (regex == Regex.new("foo", Regex::Options::IGNORE_CASE)).should be_true
+    (regex == Regex.new("foo")).should be_false
+    (regex == Regex.new("bar", Regex::Options::IGNORE_CASE)).should be_false
+    (regex == Regex.new("bar")).should be_false
+  end
+
+  it "hashes" do
+    hash = Regex.new("foo", Regex::Options::IGNORE_CASE).hash
+    hash.should eq(Regex.new("foo", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("foo").hash)
+    hash.should_not eq(Regex.new("bar", Regex::Options::IGNORE_CASE).hash)
+    hash.should_not eq(Regex.new("bar").hash)
   end
 end
