@@ -487,11 +487,9 @@ class Crystal::CodeGenVisitor
 
   def inline_call_return_value(node, target_def, body, self_type, call_args)
     if node.setter?
-      # For a setter value (`foo.x = y`) the last value is `y`, which, depending
-      # on whether `foo` is passed as self or not, is the first or second codegen argument
-      assigned_arg_index = self_type.try(&.passed_as_self?) ? 1 : 0
-      assigned_arg_index += 1 if node.name == "[]="
-      @last = call_args[assigned_arg_index]
+      # For a setter value (`foo.x = y`) the last value is `y`, which is also
+      # the last codegen argument
+      @last = call_args.last
 
       assigned_arg_type = node.args.last.type
       @last = box_value(@last, assigned_arg_type) if assigned_arg_type.passed_by_value?
@@ -557,12 +555,10 @@ class Crystal::CodeGenVisitor
         end
       end
     else
-      # For a setter value (`foo.x = y`) the last value is `y`, which, depending
-      # on whether `foo` is passed as self or not, is the first or second codegen argument
+      # For a setter value (`foo.x = y`) the last value is `y`, which is also
+      # the last codegen argument
       if node.is_a?(Call) && node.setter?
-        assigned_arg_index = self_type.try(&.passed_as_self?) ? 1 : 0
-        assigned_arg_index += 1 if node.name == "[]="
-        @last = call_args[assigned_arg_index]
+        @last = call_args.last
         type = node.args.last.type
       end
 
