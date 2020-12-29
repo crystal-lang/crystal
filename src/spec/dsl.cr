@@ -325,3 +325,4 @@ module Spec
 end
 
 require "./*"
+require "./helpers/*"
