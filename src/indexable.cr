@@ -340,13 +340,6 @@ module Indexable(T)
     {% end %}
   end
 
-  # :nodoc:
-  #
-  # Avoid shadowing by previous overload.
-  def join(io : IO)
-    super
-  end
-
   private def join_strings(separator)
     separator = separator.to_s
 
