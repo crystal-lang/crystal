@@ -6,7 +6,7 @@ struct Number
 
   # Returns the value zero in the respective type.
   #
-  # ```cr
+  # ```
   # Int32.zero   # => 0
   # Float64.zero # => 0.0
   # ```
@@ -18,7 +18,7 @@ struct Number
   #
   # For numerical types, it is the value `0` expressed in the respective type.
   #
-  # ```cr
+  # ```
   # Int32.additive_identity   # => 0
   # Float64.additive_identity # => 0.0
   # ```
@@ -30,7 +30,7 @@ struct Number
   #
   # For numerical types, it is the value `1` expressed in the respective type.
   #
-  # ```cr
+  # ```
   # Int32.multiplicative_identity   # => 1
   # Float64.multiplicative_identity # => 1.0
   # ```
