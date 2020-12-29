@@ -1333,21 +1333,20 @@ module Enumerable(T)
 
   # Adds all the elements in the collection together.
   #
-  # Only collections of numbers (objects that can be added via an `+` method)
-  # are supported.
+  # Expects all element types to respond to `#+` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].sum # => 21
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `additive_identity`.
   #
   # ```
   # ([] of Int32).sum # => 0
   # ```
-  #
-  # This method calls `.additive_identity` on the yielded type to determine the
-  # type of the sum value.
   def sum
     {% if T == String %}
       # optimize for string
@@ -1374,8 +1373,7 @@ module Enumerable(T)
   # (for instance) you need to specify a large enough type to avoid
   # overflow.
   #
-  # Only collections of numbers (objects that can be added via an `+` method)
-  # are supported.
+  # Expects all element types to respond to `#+` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].sum(7) # => 28
@@ -1386,9 +1384,6 @@ module Enumerable(T)
   # ```
   # ([] of Int32).sum(7) # => 7
   # ```
-  #
-  # This method calls `.additive_identity` on the element type to determine the
-  # type of the sum value.
   def sum(initial)
     sum initial, &.itself
   end
@@ -1399,14 +1394,16 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum { |name| name.size } # => 8 (5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # Expects all types returned from the block to respond to `#+` method.
+  #
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `additive_identity`.
   #
   # ```
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
-  #
-  # This method calls `.additive_identity` on the yielded type to determine the
-  # type of the sum value.
   def sum(&block)
     sum(additive_identity(Reflect(typeof(yield first)))) do |value|
       yield value
@@ -1419,6 +1416,8 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum(1) { |name| name.size } # => 9 (1 + 5 + 3)
   # ```
   #
+  # Expects all types returned from the block to respond to `#+` method.
+  #
   # If the collection is empty, returns *initial*.
   #
   # ```
@@ -1430,21 +1429,20 @@ module Enumerable(T)
 
   # Multiplies all the elements in the collection together.
   #
-  # Only collections of numbers (objects that can be multiplied via a `*` method)
-  # are supported.
+  # Expects all element types to respond to `#*` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].product # => 720
   # ```
   #
-  # If the collection is empty, returns `1`.
+  # This method calls `.multiplicative_identity` on the element type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `multiplicative_identity`.
   #
   # ```
   # ([] of Int32).product # => 1
   # ```
-  #
-  # This method calls `.multiplicative_identity` on the element type to determine the
-  # type of the sum value.
   def product
     product Reflect(T).first.multiplicative_identity
   end
@@ -1454,8 +1452,7 @@ module Enumerable(T)
   # so use this if (for instance) you need to specify a large enough
   # type to avoid overflow.
   #
-  # Only collections of numbers (objects that can be multiplied via a `*` method)
-  # are supported.
+  # Expects all element types to respond to `#*` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].product(7) # => 5040
@@ -1476,14 +1473,16 @@ module Enumerable(T)
   # ["Alice", "Bob"].product { |name| name.size } # => 15 (5 * 3)
   # ```
   #
-  # If the collection is empty, returns `1`.
+  # Expects all types returned from the block to respond to `#*` method.
+  #
+  # This method calls `.multiplicative_identity` on the element type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `multiplicative_identity`.
   #
   # ```
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
-  #
-  # This method calls `.multiplicative_identity` on the yielded type to determine the
-  # type of the sum value.
   def product(&block)
     product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
       yield value
@@ -1496,6 +1495,8 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].product(2) { |name| name.size } # => 30 (2 * 5 * 3)
   # ```
+  #
+  # Expects all types returned from the block to respond to `#*` method.
   #
   # If the collection is empty, returns `1`.
   #
