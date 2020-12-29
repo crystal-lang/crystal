@@ -324,7 +324,7 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator : String | Number = "")
+  def join(separator : String | Char | Number = "")
     return "" if empty?
 
     {% if T == String %}
