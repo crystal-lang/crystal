@@ -22,7 +22,7 @@ struct Number
   # Int32.additive_identity   # => 0
   # Float64.additive_identity # => 0.0
   # ```
-  def self.additive_identity
+  def self.additive_identity : self
     zero
   end
 
@@ -34,7 +34,7 @@ struct Number
   # Int32.multiplicative_identity   # => 1
   # Float64.multiplicative_identity # => 1.0
   # ```
-  def self.multiplicative_identity
+  def self.multiplicative_identity : self
     new(1)
   end
 

@@ -243,7 +243,7 @@ struct Set(T)
   # Returns the additive identity of this type.
   #
   # This is an empty set.
-  def self.additive_identity
+  def self.additive_identity : self
     new
   end
 

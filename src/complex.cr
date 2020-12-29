@@ -255,11 +255,11 @@ struct Complex
     @real == 0 && @imag == 0
   end
 
-  def self.additive_identity
+  def self.additive_identity : self
     zero
   end
 
-  def multiplicative_identity
+  def multiplicative_identity : self
     new 1, 0
   end
 

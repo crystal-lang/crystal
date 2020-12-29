@@ -337,7 +337,7 @@ class Array(T)
   # Returns the additive identity of this type.
   #
   # This is an empty array.
-  def self.additive_identity
+  def self.additive_identity : self
     self.new
   end
 
