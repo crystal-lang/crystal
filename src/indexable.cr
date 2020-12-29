@@ -181,14 +181,14 @@ module Indexable(T)
   def cartesian_product(*others : Indexable)
     capacity = others.product(size, &.size)
     result = Array(typeof(cartesian_product_type(*others))).new(capacity)
-    product_each(*others) do |product|
+    each_cartesian(*others) do |product|
       result << product
     end
     result
   end
 
   private def cartesian_product_type(*others)
-    v = product_each(*others).next
+    v = each_cartesian(*others).next
     raise "" if v.is_a?(Iterator::Stop)
     v
   end
@@ -207,7 +207,7 @@ module Indexable(T)
   def self.cartesian_product(indexables : Indexable(Indexable))
     capacity = indexables.product(&.size)
     result = Array(typeof(indexables.to_a.map &.first)).new(capacity)
-    product_each(indexables) do |product|
+    each_cartesian(indexables) do |product|
       result << product
     end
     result
@@ -218,7 +218,7 @@ module Indexable(T)
   # Traversal of elements starts from the last `Indexable` argument.
   #
   # ```
-  # ["Alice", "Bob"].product_each({1, 2, 3}) do |name, n|
+  # ["Alice", "Bob"].each_cartesian({1, 2, 3}) do |name, n|
   #   puts "#{n}. #{name}"
   # end
   # ```
@@ -233,11 +233,11 @@ module Indexable(T)
   # 2. Bob
   # 3. Bob
   # ```
-  def product_each(*others : Indexable, &block)
-    Indexable.product_each_impl(self, *others) { |v| yield v }
+  def each_cartesian(*others : Indexable, &block)
+    Indexable.each_cartesian_impl(self, *others) { |v| yield v }
   end
 
-  protected def self.product_each_impl(*indexables : *U, &block) forall U
+  protected def self.each_cartesian_impl(*indexables : *U, &block) forall U
     lens = indexables.map &.size
     return if lens.any? &.zero?
 
@@ -271,11 +271,11 @@ module Indexable(T)
   # Traversal of elements starts from the last `Indexable`. If *indexables* is
   # empty, yields an empty `Array` exactly once.
   #
-  # `#product_each` is preferred over this class method when the quantity of
+  # `#each_cartesian` is preferred over this class method when the quantity of
   # *indexables* is known in advance.
   #
   # ```
-  # Indexable.product_each([%w[Alice Bob Carol], [1, 2]]) do |name, n|
+  # Indexable.each_cartesian([%w[Alice Bob Carol], [1, 2]]) do |name, n|
   #   puts "#{n}. #{name}"
   # end
   # ```
@@ -299,9 +299,9 @@ module Indexable(T)
   #
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
-  def self.product_each(indexables : Indexable(Indexable), reuse = false, &block)
+  def self.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)
     lens = indexables.map &.size
-    return if lens.any? &.==(0)
+    return if lens.any? &.zero?
 
     n = indexables.size
     pool = Array.new(n) { |i| indexables.unsafe_fetch(i).first }
@@ -352,7 +352,7 @@ module Indexable(T)
   # Traversal of elements starts from the last `Indexable` argument.
   #
   # ```
-  # iter = {1, 2, 3}.product_each({'a', 'b'})
+  # iter = {1, 2, 3}.each_cartesian({'a', 'b'})
   # iter.next # => {1, 'a'}
   # iter.next # => {1, 'b'}
   # iter.next # => {2, 'a'}
@@ -361,11 +361,11 @@ module Indexable(T)
   # iter.next # => {3, 'b'}
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def product_each(*others : Indexable)
-    Indexable.product_each_impl(self, *others)
+  def each_cartesian(*others : Indexable)
+    Indexable.each_cartesian_impl(self, *others)
   end
 
-  protected def self.product_each_impl(*indexables : *U) forall U
+  protected def self.each_cartesian_impl(*indexables : *U) forall U
     return Iterator.of(Iterator.stop) if indexables.any? &.empty?
 
     {% begin %}
@@ -382,11 +382,11 @@ module Indexable(T)
   # Traversal of elements starts from the last `Indexable`. If *indexables* is
   # empty, the returned iterator produces one empty `Array`, then stops.
   #
-  # `#product_each` is preferred over this class method when the quantity of
+  # `#each_cartesian` is preferred over this class method when the quantity of
   # *indexables* is known in advance.
   #
   # ```
-  # iter = Indexable.product_each([%w[N S], %w[E W]])
+  # iter = Indexable.each_cartesian([%w[N S], %w[E W]])
   # iter.next # => ["N", "E"]
   # iter.next # => ["N", "W"]
   # iter.next # => ["S", "E"]
@@ -402,7 +402,7 @@ module Indexable(T)
   #
   # This can be used to prevent many memory allocations when each combination of
   # interest is to be used in a read-only fashion.
-  def self.product_each(indexables : Indexable(Indexable), reuse = false)
+  def self.each_cartesian(indexables : Indexable(Indexable), reuse = false)
     if indexables.any? &.empty?
       Iterator.of(Iterator.stop)
     else
