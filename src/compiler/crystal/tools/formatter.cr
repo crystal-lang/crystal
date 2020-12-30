@@ -4586,7 +4586,7 @@ module Crystal
               @current_doc_comment = nil
             else
               # Normalize crystal language tag
-              if chopped = value.rchop?("cr") || value.rchop?("crystal")
+              if chopped = (value.rchop?("cr") || value.rchop?("crystal"))
                 value = chopped
                 language = ""
               end
