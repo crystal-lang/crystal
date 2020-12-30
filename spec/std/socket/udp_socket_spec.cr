@@ -83,7 +83,7 @@ describe UDPSocket do
                    udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
                  rescue e : Socket::Error
                    if e.os_error == Errno::ENOPROTOOPT
-                     pending!("Multicast device selection not available on this host")
+                     skip!("Multicast device selection not available on this host")
                    else
                      raise e
                    end
@@ -99,7 +99,7 @@ describe UDPSocket do
                    udp.multicast_interface(0)
                  rescue e : Socket::Error
                    if e.os_error == Errno::ENOPROTOOPT
-                     pending!("Multicast device selection not available on this host")
+                     skip!("Multicast device selection not available on this host")
                    else
                      raise e
                    end

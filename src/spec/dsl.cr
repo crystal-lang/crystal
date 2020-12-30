@@ -54,7 +54,7 @@ module Spec
   end
 
   # :nodoc:
-  class ExamplePending < SpecError
+  class ExampleSkipped < SpecError
   end
 
   # :nodoc:
