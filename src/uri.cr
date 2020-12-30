@@ -190,9 +190,9 @@ class URI
   #
   # Everything that is not wrapped in square brackets is returned unchanged.
   #
-  # ```cr
-  # URI.unwrap_ipv6("[::1]") # => "::1"
-  # URI.unwrap_ipv6("127.0.0.1") # => "127.0.0.1"
+  # ```
+  # URI.unwrap_ipv6("[::1]")       # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
   def self.unwrap_ipv6(host)
