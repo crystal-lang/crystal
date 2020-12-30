@@ -20,7 +20,7 @@
 # A CSV instance holds a cursor to the current row in the CSV. The cursor
 # is advanced by invoking `#next`, which returns `true` if a next row was found,
 # and `false` otherwise. A first call to `#next` is required to position the
-# csv parser in the first row.
+# CSV parser in the first row.
 #
 # Once positioned in a row, values can be obtained with the several `#[]` methods,
 # which can accept a header name, column position, or header name pattern as a `Regex`.

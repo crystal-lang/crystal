@@ -249,8 +249,14 @@ class Dir
   end
 
   # Removes the directory at the given path.
-  def self.rmdir(path : Path | String) : Nil
-    Crystal::System::Dir.delete(path)
+  @[Deprecated("Use `Dir.delete` instead")]
+  def self.rmdir(path : Path | String)
+    delete(path)
+  end
+
+  # Removes the directory at the given path.
+  def self.delete(path : Path | String)
+    Crystal::System::Dir.delete(path.to_s)
   end
 
   def to_s(io : IO) : Nil

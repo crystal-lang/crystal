@@ -49,8 +49,6 @@ class String::Builder < IO
 
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
-
-    nil
   end
 
   def write_byte(byte : UInt8)

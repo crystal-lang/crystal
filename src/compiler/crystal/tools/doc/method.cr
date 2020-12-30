@@ -38,7 +38,7 @@ class Crystal::Doc::Method
   end
 
   # Returns this method's docs ready to be shown (before formatting)
-  # in the UI. This includes copiying docs from previous def or
+  # in the UI. This includes copying docs from previous def or
   # ancestors and replacing `:inherit:` with the ancestor docs.
   # This docs not include the "Description copied from ..." banner
   # in case it's needed.
@@ -119,8 +119,8 @@ class Crystal::Doc::Method
     nil
   end
 
-  def source_link
-    @generator.source_link(@def)
+  def location
+    @generator.relative_location(@def)
   end
 
   def prefix
@@ -194,7 +194,7 @@ class Crystal::Doc::Method
   end
 
   def html_id
-    HTML.escape(id)
+    id
   end
 
   def anchor
@@ -262,7 +262,7 @@ class Crystal::Doc::Method
 
     if free_vars = @def.free_vars
       io << " forall "
-      free_vars.join(", ", io)
+      free_vars.join(io, ", ")
     end
 
     io
@@ -317,7 +317,7 @@ class Crystal::Doc::Method
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
-      builder.field "source_link", source_link
+      builder.field "location", location
       builder.field "def", self.def
     end
   end

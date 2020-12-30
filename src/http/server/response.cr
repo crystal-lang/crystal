@@ -14,7 +14,6 @@ class HTTP::Server
   #
   # A response can be upgraded with the `upgrade` method. Once invoked, headers
   # are written and the connection `IO` (a socket) is yielded to the given block.
-  # The block must invoke `close` afterwards, the server won't do it in this case.
   # This is useful to implement protocol upgrades, such as websockets.
   class Response < IO
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
@@ -34,6 +33,9 @@ class HTTP::Server
     # body. If not set, the default value is 200 (OK).
     property status : HTTP::Status
 
+    # :nodoc:
+    property upgrade_handler : (IO ->)?
+
     @cookies : HTTP::Cookies?
 
     # :nodoc:
@@ -41,7 +43,6 @@ class HTTP::Server
       @headers = Headers.new
       @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = output = @original_output = Output.new(@io)
       output.response = self
     end
@@ -53,7 +54,6 @@ class HTTP::Server
       @cookies = nil
       @status = :ok
       @wrote_headers = false
-      @upgraded = false
       @output = @original_output
       @original_output.reset
     end
@@ -96,19 +96,11 @@ class HTTP::Server
       raise "Can't read from HTTP::Server::Response"
     end
 
-    # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
-    # The block must invoke `close` afterwards, the server won't do it in this case.
+    # Upgrades this response, writing headers and yielding the connection `IO` (a socket) to the given block.
     # This is useful to implement protocol upgrades, such as websockets.
-    def upgrade
-      @upgraded = true
+    def upgrade(&block : IO ->)
       write_headers
-      flush
-      yield @io
-    end
-
-    # :nodoc:
-    def upgraded?
-      @upgraded
+      @upgrade_handler = block
     end
 
     # Flushes the output. This method must be implemented if wrapping the response output.
@@ -183,6 +175,7 @@ class HTTP::Server
 
       def initialize(@io)
         @chunked = false
+        @closed = false
       end
 
       def reset
@@ -211,7 +204,7 @@ class HTTP::Server
         ensure_headers_written
 
         if @chunked
-          slice.size.to_s(16, @io)
+          slice.size.to_s(@io, 16)
           @io << "\r\n"
           @io.write(slice)
           @io << "\r\n"
@@ -223,14 +216,14 @@ class HTTP::Server
         raise ClientError.new("Error while writing data to the client", ex)
       end
 
-      def closed?
+      def closed? : Bool
         @closed
       end
 
       def close
         return if closed?
 
-        unless response.wrote_headers?
+        if !response.wrote_headers? && !response.headers.has_key?("Content-Length")
           response.content_length = @out_count
         end
 

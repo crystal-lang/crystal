@@ -1,25 +1,28 @@
 require "spec"
+require "log/spec"
 require "http/server/handler"
-require "../../../../support/log"
 require "../../../../support/io"
+require "../../../../support/retry"
 
 describe HTTP::LogHandler do
-  it "logs" do
-    io = IO::Memory.new
-    request = HTTP::Request.new("GET", "/")
-    request.remote_address = "192.168.0.1"
-    response = HTTP::Server::Response.new(io)
-    context = HTTP::Server::Context.new(request, response)
+  {% unless flag?(:win32) %}
+    # TODO: Remove this once `Socket` is working on Windows
 
-    called = false
-    handler = HTTP::LogHandler.new
-    handler.next = ->(ctx : HTTP::Server::Context) { called = true }
-    logs = capture_logs("http.server") { handler.call(context) }
-    match_logs(logs,
-      {:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
-    called.should be_true
-  end
+    it "logs" do
+      io = IO::Memory.new
+      request = HTTP::Request.new("GET", "/")
+      request.remote_address = Socket::IPAddress.new("192.168.0.1", 1234)
+      response = HTTP::Server::Response.new(io)
+      context = HTTP::Server::Context.new(request, response)
+
+      called = false
+      handler = HTTP::LogHandler.new
+      handler.next = ->(ctx : HTTP::Server::Context) { called = true }
+      logs = Log.capture("http.server") { handler.call(context) }
+      logs.check(:info, %r(^192.168.0.1 - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+      called.should be_true
+    end
+  {% end %}
 
   it "logs to custom logger" do
     request = HTTP::Request.new("GET", "/")
@@ -32,9 +35,8 @@ describe HTTP::LogHandler do
     handler.next = ->(ctx : HTTP::Server::Context) {}
     handler.call(context)
 
-    match_logs(backend.entries,
-      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
+    logs = Log::EntriesChecker.new(backend.entries)
+    logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 
   it "logs to io" do
@@ -48,7 +50,9 @@ describe HTTP::LogHandler do
     handler.next = ->(ctx : HTTP::Server::Context) {}
     handler.call(context)
 
-    io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+    retry do
+      io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
+    end
   end
 
   it "log failed request" do
@@ -59,13 +63,11 @@ describe HTTP::LogHandler do
 
     handler = HTTP::LogHandler.new
     handler.next = ->(ctx : HTTP::Server::Context) { raise "foo" }
-    logs = capture_logs("http.server") do
+    logs = Log.capture("http.server") do
       expect_raises(Exception, "foo") do
         handler.call(context)
       end
     end
-    match_logs(logs,
-      {:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$)}
-    )
+    logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 end

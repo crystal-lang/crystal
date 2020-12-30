@@ -242,7 +242,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       {% end %}
     {% end %}
 
-    node.raise("Error deserailizing alias")
+    node.raise("Error deserializing alias")
   end
 
   {% begin %}

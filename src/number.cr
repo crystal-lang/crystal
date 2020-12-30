@@ -193,7 +193,7 @@ struct Number
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
-  # Keeps *digits* significants digits of this number in the given *base*.
+  # Keeps *digits* significant digits of this number in the given *base*.
   #
   # ```
   # 1234.567.significant(1) # => 1000

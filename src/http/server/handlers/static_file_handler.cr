@@ -3,7 +3,11 @@ require "html"
 require "uri"
 require "mime"
 
-# A simple handler that lists directories and serves files under a given public directory.
+# A handler that lists directories and serves files under a given public directory.
+#
+# This handler can send precompressed content, if the client accepts it, and a file
+# with the same name and `.gz` extension appended is found in the same directory.
+# Precompressed files are only served if they are newer than the original file.
 class HTTP::StaticFileHandler
   include HTTP::Handler
 
@@ -76,6 +80,21 @@ class HTTP::StaticFileHandler
       end
 
       context.response.content_type = MIME.from_filename(file_path.to_s, "application/octet-stream")
+
+      # Checks if pre-gzipped file can be served
+      if context.request.headers.includes_word?("Accept-Encoding", "gzip")
+        gz_file_path = "#{file_path}.gz"
+
+        if File.exists?(gz_file_path) &&
+           # Allow small time drift. In some file systems, using `gz --keep` to
+           # compress the file will keep the modification time of the original file
+           # but truncating some decimals
+           last_modified - modification_time(gz_file_path) < 1.millisecond
+          file_path = gz_file_path
+          context.response.headers["Content-Encoding"] = "gzip"
+        end
+      end
+
       context.response.content_length = File.size(file_path)
       File.open(file_path) do |file|
         IO.copy(file, context.response)

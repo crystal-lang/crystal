@@ -103,7 +103,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -195,6 +195,7 @@ end
     ret = LibUnwind.raise_exception(unwind_ex)
     Crystal::System.print_error "Failed to raise an exception: %s\n", ret.to_s
     Exception::CallStack.print_backtrace
+    Crystal::System.print_exception("\nTried to raise:", unwind_ex.value.exception_object.as(Exception))
     LibC.exit(ret)
   end
 
@@ -206,7 +207,7 @@ end
   # Raises the *exception*.
   #
   # This will set the exception's callstack if it hasn't been already.
-  # Re-raising a previously catched exception won't replace the callstack.
+  # Re-raising a previously caught exception won't replace the callstack.
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts

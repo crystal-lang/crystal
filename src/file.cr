@@ -168,6 +168,24 @@ class File < IO::FileDescriptor
     info(path1.to_s, follow_symlinks).same_file? info(path2.to_s, follow_symlinks)
   end
 
+  # Compares two files *filename1* to *filename2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("file.cr", "1")
+  # File.write("bar.cr", "1")
+  # File.same_content?("file.cr", "bar.cr") # => true
+  # ```
+  def self.same_content?(path1 : Path | String, path2 : Path | String) : Bool
+    open(path1, "rb") do |file1|
+      open(path2, "rb") do |file2|
+        return false unless file1.size == file2.size
+
+        same_content?(file1, file2)
+      end
+    end
+  end
+
   # Returns the size of the file at *filename* in bytes.
   # Raises `File::NotFoundError` if the file at *filename* does not exist.
   #
@@ -176,7 +194,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.size("foo") # => 3
   # ```
-  def self.size(filename : Path | String) : UInt64
+  def self.size(filename : Path | String) : Int64
     info(filename).size
   end
 
@@ -701,6 +719,27 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Copies the file *src* to the file *dst*.
+  # Permission bits are copied too.
+  #
+  # ```
+  # File.touch("afile")
+  # File.chmod("afile", 0o600)
+  # File.copy("afile", "afile_copy")
+  # File.info("afile_copy").permissions.value # => 0o600
+  # ```
+  def self.copy(src : String | Path, dst : String | Path)
+    open(src) do |s|
+      open(dst, "wb") do |d|
+        # TODO use sendfile or copy_file_range syscall. See #8926, #8919
+        IO.copy(s, d)
+      end
+
+      # Set the permissions after the content is written in case src permissions is read-only
+      chmod(dst, s.info.permissions)
+    end
+  end
+
   # Returns a new string formed by joining the strings using `File::SEPARATOR`.
   #
   # ```
@@ -763,19 +802,6 @@ class File < IO::FileDescriptor
     system_truncate(size)
   end
 
-  # Flushes all data written to this File to the disk device so that
-  # all changed information can be retrieved even if the system
-  # crashes or is rebooted. The call blocks until the device reports that
-  # the transfer has completed.
-  # To reduce disk activity the *flush_metadata* parameter can be set to false,
-  # then the syscall *fdatasync* will be used and only data required for
-  # subsequent data retrieval is flushed. Metadata such as modified time and
-  # access time is not written.
-  def fsync(flush_metadata = true) : Nil
-    flush
-    system_fsync(flush_metadata)
-  end
-
   # Yields an `IO` to read a section inside this file.
   # Multiple sections can be read concurrently.
   def read_at(offset, bytesize, &block)
@@ -801,44 +827,6 @@ class File < IO::FileDescriptor
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << '>'
-  end
-
-  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
-
-  def flock_shared(blocking = true)
-    flock_shared blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared(blocking = true)
-    system_flock_shared(blocking)
-  end
-
-  def flock_exclusive(blocking = true)
-    flock_exclusive blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive(blocking = true)
-    system_flock_exclusive(blocking)
-  end
-
-  # Removes an existing advisory lock held by this process.
-  def flock_unlock
-    system_flock_unlock
   end
 
   # Deletes this file.

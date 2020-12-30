@@ -382,19 +382,23 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
+  # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
+  # :ditto:
   def gcd(other : Int) : Int
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
+  # :ditto:
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
@@ -433,14 +437,20 @@ struct BigInt < Int
   # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
   # ```
   def to_s(base : Int) : String
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
     String.new(cstr)
   end
 
-  def digits : Array(Int32)
+  # :nodoc:
+  def digits(base = 10) : Array(Int32)
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
     ary = [] of Int32
-    self.to_s.each_char { |c| ary << c - '0' }
+    self.to_s(base).each_char { |c| ary << c.to_i(base) }
+    ary.reverse!
     ary
   end
 
@@ -656,10 +666,12 @@ struct Int
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
-    other.gcm(self)
+  # Returns the greatest common divisor of `self` and *other*.
+  def gcd(other : BigInt) : Int
+    other.gcd(self)
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     other.lcm(self)
   end
@@ -708,12 +720,12 @@ class String
 end
 
 module Math
-  # Returns the sqrt of a `BigInt`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)

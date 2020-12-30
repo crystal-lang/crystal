@@ -325,8 +325,9 @@ struct BigDecimal < Number
         io << '0'
       end
       io << s[1..-1]
+    elsif (offset = s.size - @scale) == 1 && @value < 0
+      io << "-0." << s[offset..-1]
     else
-      offset = s.size - @scale
       io << s[0...offset] << '.' << s[offset..-1]
     end
   end

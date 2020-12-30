@@ -4,7 +4,7 @@
 # require "compiler/crystal/formatter"
 # ```
 #
-# and use Crystal's formatter programatically, without
+# and use Crystal's formatter programmatically, without
 # requiring all the semantic and codegen code.
 
 require "./tools/formatter"

@@ -2,7 +2,7 @@ require "spec"
 require "../spec_helper"
 
 describe "select" do
-  it "select many receviers" do
+  it "select many receivers" do
     ch1 = Channel(Int32).new
     ch2 = Channel(Int32).new
     res = [] of Int32
@@ -171,7 +171,7 @@ describe "select" do
     x.should eq 123
   end
 
-  it "priorize by order when entering in a select" do
+  it "prioritize by order when entering in a select" do
     ch1 = Channel(Int32).new(5)
     ch2 = Channel(Int32).new(5)
 

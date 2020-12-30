@@ -32,27 +32,7 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   def self.from_stdio(fd)
-    {% if flag?(:win32) %}
-      new(fd)
-    {% else %}
-      # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
-      # We need to reopen it to use O_NONBLOCK without causing other programs to break
-
-      # Figure out the terminal TTY name. If ttyname fails we have a non-tty, or something strange.
-      # For non-tty we set flush_on_newline to true for reasons described in STDOUT and STDERR docs.
-      path = uninitialized UInt8[256]
-      ret = LibC.ttyname_r(fd, path, 256)
-      return new(fd).tap(&.flush_on_newline=(true)) unless ret == 0
-
-      clone_fd = LibC.open(path, LibC::O_RDWR)
-      return new(fd).tap(&.flush_on_newline=(true)) if clone_fd == -1
-
-      # We don't buffer output for TTY devices to see their output right away
-      io = new(clone_fd)
-      io.close_on_exec = true
-      io.sync = true
-      io
-    {% end %}
+    Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
   def blocking
@@ -151,6 +131,60 @@ class IO::FileDescriptor < IO
   def pos=(value)
     seek value
     value
+  end
+
+  # Flushes all data written to this File Descriptor to the disk device so that
+  # all changed information can be retrieved even if the system
+  # crashes or is rebooted. The call blocks until the device reports that
+  # the transfer has completed.
+  # To reduce disk activity the *flush_metadata* parameter can be set to false,
+  # then the syscall *fdatasync* will be used and only data required for
+  # subsequent data retrieval is flushed. Metadata such as modified time and
+  # access time is not written.
+  #
+  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
+  # and DragonFly BSD.
+  def fsync(flush_metadata = true) : Nil
+    flush
+    system_fsync(flush_metadata)
+  end
+
+  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+  # TODO: always use non-blocking locks, yield fiber until resource becomes available
+
+  def flock_shared(blocking = true)
+    flock_shared blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
+  def flock_shared(blocking = true)
+    system_flock_shared(blocking)
+  end
+
+  def flock_exclusive(blocking = true)
+    flock_exclusive blocking
+    begin
+      yield
+    ensure
+      flock_unlock
+    end
+  end
+
+  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
+  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
+  def flock_exclusive(blocking = true)
+    system_flock_exclusive(blocking)
+  end
+
+  # Removes an existing advisory lock held by this process.
+  def flock_unlock
+    system_flock_unlock
   end
 
   def finalize

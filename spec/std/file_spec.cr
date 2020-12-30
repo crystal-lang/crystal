@@ -359,7 +359,7 @@ describe "File" do
         File.chmod(path, 0o664)
         File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
       ensure
-        Dir.rmdir(path) if Dir.exists?(path)
+        Dir.delete(path) if Dir.exists?(path)
       end
     end
 
@@ -499,7 +499,7 @@ describe "File" do
     end
 
     it "raises when file doesn't exist" do
-      with_tempfile("nonexistant_file.txt") do |path|
+      with_tempfile("nonexistent_file.txt") do |path|
         expect_raises(File::NotFoundError, "Error deleting file: '#{path.inspect_unquoted}'") do
           File.delete(path)
         end
@@ -1209,17 +1209,71 @@ describe "File" do
     end
 
     it "raises if path contains non-existent directory" do
-      with_tempfile(File.join("nonexistant-dir", "touch.txt")) do |path|
+      with_tempfile(File.join("nonexistent-dir", "touch.txt")) do |path|
         expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
         end
       end
     end
 
-    # TODO: there is no file which is reliably unwritable on windows
+    # TODO: there is no file which is reliably nonwriteable on windows
     pending_win32 "raises if file cannot be accessed" do
       expect_raises(File::Error, "Error setting time on file: '/bin/ls'") do
         File.touch("/bin/ls")
+      end
+    end
+  end
+
+  describe ".same_content?" do
+    it "compares two equal files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.txt")
+      ).should be_true
+    end
+
+    it "compares two different files" do
+      File.same_content?(
+        datapath("test_file.txt"),
+        datapath("test_file.ini")
+      ).should be_false
+    end
+  end
+
+  describe ".copy" do
+    it "copies a file" do
+      src_path = datapath("test_file.txt")
+      with_tempfile("cp.txt") do |out_path|
+        File.copy(src_path, out_path)
+        File.exists?(out_path).should be_true
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    pending_win32 "copies permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
+      end
+    end
+
+    pending_win32 "overwrites existing destination and permissions" do
+      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+        File.write(src_path, "foo")
+        File.chmod(src_path, 0o700)
+
+        File.write(out_path, "bar")
+        File.chmod(out_path, 0o777)
+
+        File.copy(src_path, out_path)
+
+        File.info(out_path).permissions.should eq(File::Permissions.new(0o700))
+        File.same_content?(src_path, out_path).should be_true
       end
     end
   end

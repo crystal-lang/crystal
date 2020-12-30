@@ -31,7 +31,7 @@ require "./http/params"
 # For hierarchical URIs, the path of the original is resolved against the path of the base
 # and then normalized. See `#resolve` for examples.
 #
-# *Relativization* is the inverse of resolution as that it procudes an URI that
+# *Relativization* is the inverse of resolution as that it procures an URI that
 # resolves to the original when resolved against the base.
 #
 # For normalized URIs, the following is true:
@@ -183,7 +183,24 @@ class URI
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
   def hostname
-    host.try { |host| host.starts_with?('[') && host.ends_with?(']') ? host[1..-2] : host }
+    host.try { |host| self.class.unwrap_ipv6(host) }
+  end
+
+  # Unwraps IPv6 address wrapped in square brackets.
+  #
+  # Everything that is not wrapped in square brackets is returned unchanged.
+  #
+  # ```
+  # URI.unwrap_ipv6("[::1]")       # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
+  # URI.unwrap_ipv6("example.com") # => "example.com"
+  # ```
+  def self.unwrap_ipv6(host)
+    if host.starts_with?('[') && host.ends_with?(']')
+      host.byte_slice(1, host.bytesize - 2)
+    else
+      host
+    end
   end
 
   # Returns the full path of this URI.
@@ -285,7 +302,7 @@ class URI
   # * `scheme` is lowercased.
   # * `host` is lowercased.
   # * `port` is removed if it is the `.default_port?` of the scheme.
-  # * `path` is resolved to a minimal, semantical equivalent representation removing
+  # * `path` is resolved to a minimal, semantic equivalent representation removing
   #    dot segments `/.` and `/..`.
   #
   # ```
@@ -446,7 +463,7 @@ class URI
       elsif dst_path.first.includes?(':') # (see RFC2396 Section 5)
         String.build do |io|
           io << "./"
-          dst_path.join('/', io)
+          dst_path.join(io, '/')
         end
       else
         string = dst_path.join('/')
@@ -459,7 +476,7 @@ class URI
     else
       String.build do |io|
         base_path.size.times { io << "../" }
-        dst_path.join('/', io)
+        dst_path.join(io, '/')
       end
     end
   end

@@ -73,7 +73,7 @@ require "log"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see `#bind`)
+# The server can be bound to one or more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -511,6 +511,8 @@ class HTTP::Server
     {% end %}
 
     @processor.process(io, io)
+  ensure
+    io.close rescue IO::Error
   end
 
   # This method handles exceptions raised at `Socket#accept?`.

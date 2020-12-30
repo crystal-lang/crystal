@@ -9,8 +9,8 @@
 # A `Path` can represent a root, a root and a sequence of names, or simply one or
 # more name elements.
 # A `Path` is considered to be an empty path if it consists solely of one name
-# element that is empty. Accessing a file using an empty path is equivalent
-# to accessing the default directory of the process.
+# element that is empty or equal to `"."`. Accessing a file using an empty path
+# is equivalent to accessing the default directory of the process.
 #
 # # Examples
 #
@@ -230,7 +230,7 @@ struct Path
 
   # Returns the parent path of this path.
   #
-  # If the path is empty or `"."`, it returns `"."`. If the path is rooted
+  # If the path is empty, it returns `"."`. If the path is rooted
   # and in the top-most hierarchy, the root path is returned.
   #
   # ```
@@ -267,7 +267,7 @@ struct Path
   # # Path["foo/bar"]
   # ```
   def each_parent(&block : Path ->)
-    return if @name.empty? || @name == "."
+    return if empty?
 
     first_char = @name.char_at(0)
     unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_chr)) || (windows? && (windows_drive? || unc_share?))
@@ -398,7 +398,7 @@ struct Path
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
-    return new_instance "." if @name.empty?
+    return new_instance "." if empty?
 
     drive, root = drive_and_root
     reader = Char::Reader.new(@name)
@@ -488,7 +488,7 @@ struct Path
   # Returns the components of this path as an `Array(String)`.
   #
   # ```
-  # Path.new("foo/bar/").parts                   # => ["foo", "bar]
+  # Path.new("foo/bar/").parts                   # => ["foo", "bar"]
   # Path.new("/Users/foo/bar.cr").parts          # => ["/", "Users", "foo", "bar.cr"]
   # Path.windows("C:\\Users\\foo\\bar.cr").parts # => ["C:\\", "Users", "foo", "bar.cr"]
   # Path.posix("C:\\Users\\foo\\bar.cr").parts   # => ["C:\\Users\\foo\\bar.cr"]
@@ -828,7 +828,7 @@ struct Path
       # Copy the part
       buffer.copy_from(part_ptr, part_bytesize)
 
-      {bytesize, @name.ascii_only? && part.ascii_only? ? bytesize : 0}
+      {bytesize, @name.single_byte_optimizable? && part.single_byte_optimizable? ? bytesize : 0}
     end
 
     new_instance new_name
@@ -944,6 +944,99 @@ struct Path
     else
       raise Error.new("Can't resolve sibling for a path without parent directory")
     end
+  end
+
+  private def empty?
+    @name.empty? || @name == "."
+  end
+
+  # Returns a relative path that is lexically equivalent to `self` when joined
+  # to *base* with an intervening separator.
+  #
+  # The returned path is in normalized form.
+  #
+  # That means with normalized paths `base.join(target.relative_to(base))` is
+  # equivalent to `target`.
+  #
+  # Returns `nil` if `self` cannot be expressed as relative to *base* or if
+  # knowing the current working directory would be necessary to resolve it. The
+  # latter can be avoided by expanding the paths first.
+  def relative_to?(base : Path) : Path?
+    base_anchor = base.anchor
+    target_anchor = self.anchor
+
+    # if paths have a different anchors, there can't be a relative path between
+    # them.
+    if base_anchor != target_anchor
+      return nil
+    end
+
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
+    # check for trivial case of equal paths
+    if base == target
+      return new_instance(".")
+    end
+
+    base_iterator = base.each_part
+    target_iterator = target.each_part
+
+    if target_anchor
+      # process anchors, we have already established they're equal
+      base_iterator.next
+      target_iterator.next
+    end
+
+    # consume both paths simultaneously as long as they have identical components
+    base_part = base_iterator.next
+    target_part = target_iterator.next
+    while base_part.is_a?(String) && target_part.is_a?(String)
+      if base_part.compare(target_part, case_insensitive: windows?) != 0
+        break
+      end
+
+      base_part = base_iterator.next
+      target_part = target_iterator.next
+    end
+
+    path = new_instance("")
+
+    # base_path is not consumed, so we go up before descending into target_path
+    if base_part.is_a?(String)
+      # Can't relativize upwards from current working directory without knowing
+      # its path
+      if base_part == ".."
+        return nil
+      end
+
+      path /= ".." unless base_part == "."
+      base_iterator.each do
+        path /= ".."
+      end
+    end
+
+    # target_path is not consumed, so we append what's left to the relative path
+    if target_part.is_a?(String)
+      path /= target_part
+      target_iterator.each do |part|
+        path /= part
+      end
+    end
+
+    return path
+  end
+
+  # :ditto:
+  def relative_to?(base : String) : Path?
+    relative_to?(new_instance(base))
+  end
+
+  # Same as `#relative_to` but returns `self` if `self` can't be expressed as
+  # relative path to *base*.
+  def relative_to(base : Path | String) : Path
+    relative_to?(base) || self
   end
 
   # Compares this path to *other*.
