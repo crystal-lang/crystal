@@ -4586,7 +4586,7 @@ module Crystal
               @current_doc_comment = nil
             else
               # We only format crystal code (empty by default means crystal)
-              needs_format = language.empty? || language == "crystal"
+              needs_format = language.in?("", "cr", "crystal")
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end
