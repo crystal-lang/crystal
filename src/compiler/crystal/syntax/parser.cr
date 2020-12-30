@@ -73,7 +73,7 @@ module Crystal
 
       # This flag tells the parser to stop on comma while parsing call
       # when there is an ambiguous suffix `+` or `-`
-      # ```
+      # ```plain
       # def m(x, y)
       #   ...
       # end
