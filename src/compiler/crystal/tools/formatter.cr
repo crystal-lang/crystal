@@ -4585,8 +4585,14 @@ module Crystal
               @doc_comments << current_doc_comment if current_doc_comment.needs_format
               @current_doc_comment = nil
             else
+              # Normalize crystal language tag
+              if chopped = value.rchop?("cr") || value.rchop?("crystal")
+                value = chopped
+                language = ""
+              end
+
               # We only format crystal code (empty by default means crystal)
-              needs_format = language.in?("", "cr", "crystal")
+              needs_format = language.empty?
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end
