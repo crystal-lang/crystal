@@ -201,12 +201,12 @@ struct BigInt < Int
   Number.expand_div [BigRational], BigRational
 
   def //(other : Int::Unsigned) : BigInt
-    check_division_by_zero other
+    check_division_by_zero(other)
     unsafe_floored_div(other)
   end
 
   def //(other : Int) : BigInt
-    check_division_by_zero other
+    check_division_by_zero(other)
 
     if other < 0
       (-self).unsafe_floored_div(-other)
@@ -216,8 +216,7 @@ struct BigInt < Int
   end
 
   def tdiv(other : Int) : BigInt
-    check_division_by_zero other
-
+    check_division_by_zero(other)
     unsafe_truncated_div(other)
   end
 
@@ -250,7 +249,7 @@ struct BigInt < Int
   end
 
   def %(other : Int) : BigInt
-    check_division_by_zero other
+    check_division_by_zero(other)
 
     if other < 0
       -(-self).unsafe_floored_mod(-other)
@@ -260,7 +259,7 @@ struct BigInt < Int
   end
 
   def remainder(other : Int) : BigInt
-    check_division_by_zero other
+    check_division_by_zero(other)
 
     unsafe_truncated_mod(other)
   end
@@ -405,6 +404,284 @@ struct BigInt < Int
 
   def bit_length : Int32
     LibGMP.sizeinbase(self, 2).to_i
+  end
+
+  # Mutating `#+`
+  def add!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      mul!(2)
+    else
+      LibGMP.add(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#+`
+  def add!(other : Int) : BigInt
+    if other < 0
+      sub!(other.abs)
+    elsif other <= LibGMP::ULong::MAX
+      LibGMP.add_ui(mpz, self, other)
+      self
+    else
+      add!(other.to_big_i)
+    end
+  end
+
+  # Mutating `#-(other)`
+  def sub!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.sub(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#-`
+  def sub!(other : Int) : BigInt
+    if other < 0
+      add!(other.abs)
+    elsif other <= LibGMP::ULong::MAX
+      LibGMP.sub_ui(mpz, self, other)
+      self
+    else
+      sub!(other.to_big_i)
+    end
+  end
+
+  # Mutating `#abs`
+  def abs! : BigInt
+    LibGMP.abs(mpz, self)
+    self
+  end
+
+  # Mutating unary `#-`
+  def neg! : BigInt
+    LibGMP.neg(mpz, self)
+    self
+  end
+
+  # Mutating `#factorial`
+  def factorial! : BigInt
+    if self < 0
+      raise ArgumentError.new("Factorial not defined for negative values")
+    elsif self > LibGMP::ULong::MAX
+      raise ArgumentError.new("Factorial not supported for numbers bigger than 2^64")
+    end
+    LibGMP.fac_ui(mpz, self)
+    self
+  end
+
+  # Mutating `#*`
+  def mul!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      if self > 0
+        LibGMP.pow_ui(mpz, self, 2)
+      else
+        LibGMP.pow_ui(mpz, self, 2)
+        neg!
+      end
+    else
+      LibGMP.mul(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#*`
+  def mul!(other : LibGMP::IntPrimitiveSigned) : BigInt
+    LibGMP.mul_si(mpz, self, other)
+    self
+  end
+
+  # Mutating `#*`
+  def mul!(other : LibGMP::IntPrimitiveUnsigned) : BigInt
+    LibGMP.mul_ui(mpz, self, other)
+    self
+  end
+
+  # Mutating `#*`
+  def mul!(other : Int) : BigInt
+    mul!(other.to_big_i)
+  end
+
+  # Mutating `#fdiv`
+  def fdiv!(other : Int::Unsigned) : BigInt
+    check_division_by_zero(other)
+    unsafe_floored_div!(other)
+  end
+
+  # Mutating `#fdiv`
+  def fdiv!(other : Int) : BigInt
+    check_division_by_zero(other)
+
+    if other < 0
+      neg!.unsafe_floored_div!(-other)
+    else
+      unsafe_floored_div!(other)
+    end
+  end
+
+  # Mutating `#tdiv`
+  def tdiv!(other : Int) : BigInt
+    check_division_by_zero(other)
+    unsafe_truncated_div!(other)
+  end
+
+  # Mutating `#unsafe_floored_div`
+  def unsafe_floored_div!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 1)
+    else
+      LibGMP.fdiv_q(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#unsafe_floored_div`
+  def unsafe_floored_div!(other : Int) : BigInt
+    if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
+      unsafe_floored_div!(other.to_big_i)
+    elsif other < 0
+      LibGMP.fdiv_q_ui(mpz, neg!, other.abs)
+    else
+      LibGMP.fdiv_q_ui(mpz, self, other)
+    end
+
+    self
+  end
+
+  # Mutating `#unsafe_truncated_div`
+  def unsafe_truncated_div!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 1)
+    else
+      LibGMP.tdiv_q(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#unsafe_truncated_div`
+  def unsafe_truncated_div!(other : Int) : BigInt
+    if LibGMP::ULong == UInt32 && (other < Int32::MIN || other > UInt32::MAX)
+      unsafe_truncated_div!(other.to_big_i)
+    elsif other < 0
+      LibGMP.tdiv_q_ui(mpz, neg!, other.abs)
+    else
+      LibGMP.tdiv_q_ui(mpz, self, other)
+    end
+
+    self
+  end
+
+  # Mutating `#%`
+  def mod!(other : Int) : BigInt
+    check_division_by_zero(other)
+
+    if other < 0
+      neg!
+      unsafe_floored_mod!(-other)
+      neg!
+    else
+      unsafe_floored_mod!(other)
+    end
+  end
+
+  # Mutating `#remainder`
+  def remainder!(other : Int) : BigInt
+    check_division_by_zero(other)
+    unsafe_truncated_mod!(other)
+  end
+
+  # Mutating `#unsafe_floored_mod`
+  def unsafe_floored_mod!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.fdiv_r(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#unsafe_floored_mod`
+  def unsafe_floored_mod!(other : Int) : BigInt
+    if other < LibGMP::Long::MIN || other > LibGMP::ULong::MAX
+      unsafe_floored_mod!(other.to_big_i)
+    elsif other < 0
+      LibGMP.fdiv_r_ui(mpz, self, other.abs)
+      neg!
+    else
+      LibGMP.fdiv_r_ui(mpz, self, other)
+    end
+
+    self
+  end
+
+  # Mutating `#unsafe_truncated_mod`
+  def unsafe_truncated_mod!(other : BigInt) : BigInt
+    if @mpz == other.@mpz
+      LibGMP.set_ui(mpz, 0)
+    else
+      LibGMP.tdiv_r(mpz, self, other)
+    end
+    self
+  end
+
+  # Mutating `#unsafe_truncated_mod`
+  def unsafe_truncated_mod!(other : LibGMP::IntPrimitive) : BigInt
+    LibGMP.tdiv_r_ui(mpz, self, other.abs)
+    self
+  end
+
+  # Mutating `#unsafe_truncated_mod`
+  def unsafe_truncated_mod!(other : Int) : BigInt
+    LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i)
+    self
+  end
+
+  # Mutating `#~`
+  def complement! : BigInt
+    LibGMP.com(mpz, self)
+    self
+  end
+
+  # Mutating `#&`
+  def and!(other : Int) : BigInt
+    LibGMP.and(mpz, self, other.to_big_i)
+    self
+  end
+
+  # Mutating `#|`
+  def or!(other : Int) : BigInt
+    LibGMP.ior(mpz, self, other.to_big_i)
+    self
+  end
+
+  # Mutating `#^`
+  def xor!(other : Int) : BigInt
+    LibGMP.xor(mpz, self, other.to_big_i)
+    self
+  end
+
+  # Mutating `#>>`
+  def rshift!(other : Int) : BigInt
+    LibGMP.fdiv_q_2exp(mpz, self, other)
+    self
+  end
+
+  # Mutating `#<<`
+  def lshift!(other : Int) : BigInt
+    LibGMP.mul_2exp(mpz, self, other)
+    self
+  end
+
+  # Mutating `#**`
+  def pow!(other : Int) : BigInt
+    if other < 0
+      raise ArgumentError.new("Negative exponent isn't supported")
+    end
+    LibGMP.pow_ui(mpz, self, other)
+    self
   end
 
   # TODO: improve this

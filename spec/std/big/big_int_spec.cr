@@ -328,6 +328,144 @@ describe "BigInt" do
     result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
   end
 
+  it "adds (mutating)" do
+    (n = 1.to_big_i; n.add! 2.to_big_i; n).should eq(3.to_big_i)
+    (n = 1.to_big_i; n.add! 2; n).should eq(3.to_big_i)
+    (n = 1.to_big_i; n.add! 2_u8; n).should eq(3.to_big_i)
+    (n = 5.to_big_i; n.add! (-2_i64); n).should eq(3.to_big_i)
+    (n = 5.to_big_i; n.add! Int64::MAX; n).should be > Int64::MAX.to_big_i
+    (n = 5.to_big_i; n.add! Int64::MAX; n).should eq(Int64::MAX.to_big_i + 5)
+  end
+
+  it "subs (mutating)" do
+    (n = 5.to_big_i; n.sub! 2.to_big_i; n).should eq(3.to_big_i)
+    (n = 5.to_big_i; n.sub! 2; n).should eq(3.to_big_i)
+    (n = 5.to_big_i; n.sub! 2_u8; n).should eq(3.to_big_i)
+    (n = 5.to_big_i; n.sub! (-2_i64); n).should eq(7.to_big_i)
+    (n = -5.to_big_i; n.sub! Int64::MAX; n).should be < -Int64::MAX.to_big_i
+    (n = -5.to_big_i; n.sub! Int64::MAX; n).should eq(-Int64::MAX.to_big_i - 5)
+  end
+
+  it "negates (mutating)" do
+    (n = -123.to_big_i; n.neg!; n).should eq(123.to_big_i)
+  end
+
+  it "multiplies (mutating)" do
+    (n = 2.to_big_i; n.mul! 3.to_big_i; n).should eq(6.to_big_i)
+    (n = 2.to_big_i; n.mul! 3; n).should eq(6.to_big_i)
+    (n = 2.to_big_i; n.mul! 3_u8; n).should eq(6.to_big_i)
+    (n = 2.to_big_i; n.mul! Int64::MAX; n).should eq(2.to_big_i * Int64::MAX.to_big_i)
+  end
+
+  it "gets absolute value (mutating)" do
+    (n = -10.to_big_i; n.abs!; n).should eq(10.to_big_i)
+  end
+
+  it "gets factorial value (mutating)" do
+    (n = 0.to_big_i; n.factorial!; n).should eq(1.to_big_i)
+    (n = 5.to_big_i; n.factorial!; n).should eq(120.to_big_i)
+    (n = 100.to_big_i; n.factorial!; n).should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative (mutating)" do
+    expect_raises ArgumentError do
+      n = -1.to_big_i
+      n.factorial!
+    end
+
+    expect_raises ArgumentError do
+      n = "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i
+      n.factorial!
+    end
+  end
+
+  it "raises if factorial of 2^64 (mutating)" do
+    expect_raises ArgumentError do
+      n = LibGMP::ULong::MAX.to_big_i + 1
+      n.factorial!
+    end
+  end
+
+  it "tdivs (mutating)" do
+    (n = 5.to_big_i; n.tdiv!(3); n).should eq(1)
+    (n = -5.to_big_i; n.tdiv!(3); n).should eq(-1)
+    (n = 5.to_big_i; n.tdiv!(-3); n).should eq(-1)
+    (n = -5.to_big_i; n.tdiv!(-3); n).should eq(1)
+  end
+
+  it "does modulo (mutating)" do
+    (n = 10.to_big_i; n.mod! 3.to_big_i; n).should eq(1.to_big_i)
+    (n = 10.to_big_i; n.mod! 3; n).should eq(1.to_big_i)
+  end
+
+  it "does modulo with negative numbers (mutating)" do
+    (n = 7.to_big_i; n.mod! 2; n).should eq(1.to_big_i)
+    (n = 7.to_big_i; n.mod! 2.to_big_i; n).should eq(1.to_big_i)
+    (n = 7.to_big_i; n.mod! -2; n).should eq(-1.to_big_i)
+    (n = 7.to_big_i; n.mod! -2.to_big_i; n).should eq(-1.to_big_i)
+    (n = -7.to_big_i; n.mod! 2; n).should eq(1.to_big_i)
+    (n = -7.to_big_i; n.mod! 2.to_big_i; n).should eq(1.to_big_i)
+    (n = -7.to_big_i; n.mod! -2; n).should eq(-1.to_big_i)
+    (n = -7.to_big_i; n.mod! -2.to_big_i; n).should eq(-1.to_big_i)
+
+    (n = 6.to_big_i; n.mod! 2; n).should eq(0.to_big_i)
+    (n = 6.to_big_i; n.mod! -2; n).should eq(0.to_big_i)
+    (n = -6.to_big_i; n.mod! 2; n).should eq(0.to_big_i)
+    (n = -6.to_big_i; n.mod! -2; n).should eq(0.to_big_i)
+  end
+
+  it "does remainder with negative numbers (mutating)" do
+    (n = 5.to_big_i; n.remainder!(3); n).should eq(2)
+    (n = -5.to_big_i; n.remainder!(3); n).should eq(-2)
+    (n = 5.to_big_i; n.remainder!(-3); n).should eq(2)
+    (n = -5.to_big_i; n.remainder!(-3); n).should eq(-2)
+  end
+
+  it "does bitwise and (mutating)" do
+    (n = 123.to_big_i; n.and! 321; n).should eq(65)
+
+    n = BigInt.new("96238761238973286532")
+    n.and! 86325735648
+    n.should eq(69124358272)
+  end
+
+  it "does bitwise or (mutating)" do
+    (n = 123.to_big_i; n.or! 4; n).should eq(127)
+    n = BigInt.new("96238761238986532")
+    n.or! 8632573
+    n.should eq(96238761247506429)
+  end
+
+  it "does bitwise xor (mutating)" do
+    (n = 123.to_big_i; n.xor! 50; n).should eq(73)
+    n = BigInt.new("96238761238986532")
+    n.xor! 8632573
+    n.should eq(96238761247393753)
+  end
+
+  it "does bitwise not (mutating)" do
+    a = BigInt.new("192623876123689865327")
+    b = BigInt.new("-192623876123689865328")
+    a.complement!
+    a.should eq(b)
+  end
+
+  it "does bitwise right shift (mutating)" do
+    (n = 123.to_big_i; n.rshift! 4; n).should eq(7)
+    (n = 123456.to_big_i; n.rshift! 8; n).should eq(482)
+  end
+
+  it "does bitwise left shift (mutating)" do
+    (n = 123.to_big_i; n.lshift! 4; n).should eq(1968)
+    (n = 123456.to_big_i; n.lshift! 8; n).should eq(31604736)
+  end
+
+  it "exponentiates (mutating)" do
+    n = 2.to_big_i
+    n.pow!(1000)
+    n.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
+  end
+
   it "does to_s in the given base" do
     a = BigInt.new("1234567890123456789")
     b = "1000100100010000100001111010001111101111010011000000100010101"
