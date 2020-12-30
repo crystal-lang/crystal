@@ -882,7 +882,7 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
-  it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
+  pending "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
     run(%(
       abstract struct Parent
         abstract def work(a : Int32, b : Int32)
