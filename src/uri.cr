@@ -255,7 +255,7 @@ class URI
   #
   # If the URI does not have any authority information, the result is `nil`.
   #
-  # ```cr
+  # ```
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
   # uri.authority # => "user:pass@example.com"
   #
