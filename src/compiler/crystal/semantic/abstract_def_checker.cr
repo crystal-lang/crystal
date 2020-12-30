@@ -130,6 +130,9 @@ class Crystal::AbstractDefChecker
       m2 = replace_method_arg_paths_with_type_vars(t2, m2, generic_base)
     end
 
+    # All free variables in `m1` and `m2` respectively
+    all_free_vars = [] of {String, String}
+
     # First check positional arguments
     # The following algorithm walk through the arguments in the abstract
     # method and the implementation at the same time, until a splat argument is found
@@ -164,7 +167,9 @@ class Crystal::AbstractDefChecker
       end
 
       if a1 && a2
-        return false unless check_arg(t1, a1, t2, a2)
+        if !add_free_vars(a1.restriction, a2.restriction, m1, m2, all_free_vars)
+          return false unless check_arg(t1, a1, m1, t2, a2, m2)
+        end
       end
 
       # Move next, unless we're on the splat already or at the end of the arguments
@@ -190,7 +195,9 @@ class Crystal::AbstractDefChecker
     # Check double splat
     if m2_double_splat = m2.double_splat
       if m1_double_splat = m1.double_splat
-        return false unless check_arg(t1, m1_double_splat, t2, m2_double_splat)
+        if !add_free_vars(m1_double_splat.restriction, m2_double_splat.restriction, m1, m2, all_free_vars)
+          return false unless check_arg(t1, m1_double_splat, m1, t2, m2_double_splat, m2)
+        end
       else
         return false
       end
@@ -201,7 +208,9 @@ class Crystal::AbstractDefChecker
     m2_kargs.each do |i|
       a2 = m2.args[i]
       if a1 = kargs.delete(a2.name) || m1.double_splat
-        return false unless check_arg(t1, a1, t2, a2)
+        if !add_free_vars(a1.restriction, a2.restriction, m1, m2, all_free_vars)
+          return false unless check_arg(t1, a1, m1, t2, a2, m2)
+        end
       else
         return false
       end
@@ -212,8 +221,25 @@ class Crystal::AbstractDefChecker
     kargs.each_value do |a1|
       return false unless a1.default_value
       if m2_double_splat = m2.double_splat
-        return false unless check_arg(t1, a1, t2, m2_double_splat)
+        if !add_free_vars(a1.restriction, m2_double_splat.restriction, m1, m2, all_free_vars)
+          return false unless check_arg(t1, a1, m1, t2, m2_double_splat, m2)
+        end
       end
+    end
+
+    # Check free vars (using `index` to generate unique vars for each underscore)
+    free_vars1 = all_free_vars.map_with_index do |(free_var, _), index|
+      free_var == "_" ? index : free_var
+    end
+    free_vars2 = all_free_vars.map_with_index do |(_, free_var), index|
+      free_var == "_" ? index : free_var
+    end
+
+    # If `m1` uses the same free var for different free vars in `m2`,
+    # then `m1` never implements `m2` (e.g. m1 = `T, T`, m2 = `T, _`)
+    (0...all_free_vars.size).group_by { |index| free_vars1[index] }.each_value do |indices|
+      opposite_free_vars = indices.map { |i| free_vars2[i] }
+      return false if opposite_free_vars.any? { |var| var != opposite_free_vars.first }
     end
 
     true
@@ -231,27 +257,91 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def check_arg(t1 : Type, a1 : Arg, t2 : Type, a2 : Arg)
+  def check_arg(t1 : Type, a1 : Arg, m1 : Def, t2 : Type, a2 : Arg, m2 : Def)
     if a2.default_value
       return false unless a1.default_value == a2.default_value
     end
 
+    # Unrestricted argument implements anything
     r1 = a1.restriction
+    return true if r1.nil?
+
+    # Type restriction never implement unrestricted arguments
     r2 = a2.restriction
-    return false if r1 && !r2
-    if r2 && r1 && r1 != r2
-      # Check if a1.restriction is contravariant with a2.restriction
-      begin
-        rt1 = t1.lookup_type(r1)
-        rt2 = t2.lookup_type(r2)
-        return false unless rt2.covariant?(rt1)
-      rescue Crystal::TypeException
-        # Ignore if we can't find a type (assume the method is implemented)
-        return true
+    return false if r2.nil?
+
+    return false unless check_free_vars(r1, m1, r2, m2)
+
+    # Check if a1.restriction is contravariant with a2.restriction
+    begin
+      rt1 = t1.lookup_type(r1)
+      rt2 = t2.lookup_type(r2)
+      rt2.covariant?(rt1)
+    rescue Crystal::TypeException
+      # Ignore if we can't find a type (assume the method is implemented)
+      true
+    end
+  end
+
+  private def check_free_vars(r1, m1, r2, m2)
+    # If `r1` is a free var, assume `a1` always matches `a2`
+    return true if !free_var_name?(r1, m1).nil?
+
+    # If `r2` is a free var but `r1` isn't, assume `a1` never matches
+    return false if !free_var_name?(r2, m2).nil?
+
+    # If `r1` and `r2` are generics with compatible arg lists, their free vars
+    # must match too
+    if r1.is_a?(Generic) && r2.is_a?(Generic)
+      if r1.name == r2.name && r1.type_vars.size == r2.type_vars.size
+        r1.type_vars.zip(r2.type_vars) do |r1_var, r2_var|
+          return false unless check_free_vars(r1_var, m1, r2_var, m2)
+        end
       end
     end
 
     true
+  end
+
+  # Adds all corresponding free type variables of *self_def* used in
+  # *self_type* and free type variables of *other_def* used in *other_type*
+  # into *all_free_vars*. Returns `true` if at least one pair was added.
+  #
+  # If both types use free vars in the same way, we check their usage after
+  # all other factors are considered. In this case
+  # `check_arg(self_type, ..., other_type, ...)` will be ignored.
+  private def add_free_vars(self_type, other_type, self_def, other_def, all_free_vars)
+    # `T` vs `U`, where `T` and `U` are free type vars of the respective defs (including `_`)
+    self_free_var = free_var_name?(self_type, self_def)
+    if self_free_var
+      other_free_var = free_var_name?(other_type, other_def)
+      if other_free_var
+        all_free_vars << {self_free_var, other_free_var}
+        return true
+      end
+    end
+
+    # `A(..., T, ...)` vs `A(..., U, ...)`: consider corresponding types in the type lists
+    if self_type.is_a?(Generic) && other_type.is_a?(Generic)
+      return false unless self_type.name == other_type.name && self_type.type_vars.size == other_type.type_vars.size
+
+      added = false
+      self_type.type_vars.zip(other_type.type_vars) do |type_var, other_type_var|
+        added = add_free_vars(type_var, other_type_var, self_def, other_def, all_free_vars) || added
+      end
+      return added
+    end
+
+    false
+  end
+
+  # Returns *type*'s name if it represents a free variable of the given *owner_def*.
+  private def free_var_name?(type, owner_def)
+    return "_" if type.is_a?(Underscore)
+
+    return nil unless type.is_a?(Path) && type.names.size == 1
+    first_name = type.names.first
+    first_name if owner_def.free_vars.try &.includes?(first_name)
   end
 
   # Checks that the return type of `type#method` matches that of `base_type#base_method`

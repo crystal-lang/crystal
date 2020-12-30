@@ -584,6 +584,358 @@ describe "Semantic: abstract def" do
       "can't resolve return type Unknown"
   end
 
+  it "matches underscore with itself" do
+    semantic(%(
+      module Foo
+        abstract def foo(x : _)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : _)
+        end
+      end
+      ))
+  end
+
+  it "matches underscore with itself, inside generics" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(_))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(_))
+        end
+      end
+      ))
+  end
+
+  it "matches underscore with free var" do
+    semantic(%(
+      module Foo
+        abstract def foo(x : _)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T) forall T
+        end
+      end
+      ))
+  end
+
+  it "matches underscore with free var, inside generics" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(_))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(T)) forall T
+        end
+      end
+      ))
+  end
+
+  it "matches free var with underscore" do
+    semantic(%(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : _)
+        end
+      end
+      ))
+  end
+
+  it "matches free var with underscore, inside generics" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(_))
+        end
+      end
+      ))
+  end
+
+  it "matches free var with itself" do
+    semantic(%(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T) forall T
+        end
+      end
+      ))
+  end
+
+  it "matches free var with itself, inside generics" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(T)) forall T
+        end
+      end
+      ))
+  end
+
+  it "matches free var with renamed free var" do
+    semantic(%(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : U) forall U
+        end
+      end
+      ))
+  end
+
+  it "matches free var with renamed free var, inside generics" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(U)) forall U
+        end
+      end
+      ))
+  end
+
+  it "errors if underscore is not matched" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : _)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Int32)
+        end
+      end
+      ), "abstract `def Foo#foo(x : _)` must be implemented by Bar"
+  end
+
+  it "errors if free var is not matched" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Int32)
+        end
+      end
+      ), "abstract `def Foo#foo(x : T)` must be implemented by Bar"
+  end
+
+  it "errors if generic free var is not matched" do
+    assert_error %(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(Int32))
+        end
+      end
+      ), "abstract `def Foo#foo(x : Val(T))` must be implemented by Bar"
+  end
+
+  it "matches more constrained free var with a less constrained one" do
+    semantic(%(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T), y : Val(Val(_))) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T, y : Val(_)) forall T
+        end
+      end
+      ))
+  end
+
+  it "errors if free var is more constrained than abstract def" do
+    assert_error %(
+      module Val(T); end
+
+      module Foo
+        abstract def foo(x : Val(T)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(Val(T))) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : Val(T))` must be implemented by Bar"
+  end
+
+  it "errors if free var is bound in including type" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar(T)
+        include Foo
+
+        def foo(x : T)
+        end
+      end
+      ), "abstract `def Foo#foo(x : T)` must be implemented by Bar(T)"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def (1)" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : T, y : U) forall T, U
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T, y : T) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : T, y : U)` must be implemented by Bar"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def (2)" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : T, y : _) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T, y : T) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : T, y : _)` must be implemented by Bar"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def (3)" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : _, y : _)
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : T, y : T) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : _, y : _)` must be implemented by Bar"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def, inside generics (1)" do
+    assert_error %(
+      module Val(T, U); end
+
+      module Foo
+        abstract def foo(x : Val(T, U)) forall T, U
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(T, T)) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : Val(T, U))` must be implemented by Bar"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def, inside generics (2)" do
+    assert_error %(
+      module Val(T, U); end
+
+      module Foo
+        abstract def foo(x : Val(T, _)) forall T
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(T, T)) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : Val(T, _))` must be implemented by Bar"
+  end
+
+  it "errors if free vars in implementation are less constrained than abstract def, inside generics (3)" do
+    assert_error %(
+      module Val(T, U); end
+
+      module Foo
+        abstract def foo(x : Val(_, _))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Val(T, T)) forall T
+        end
+      end
+      ), "abstract `def Foo#foo(x : Val(_, _))` must be implemented by Bar"
+  end
+
   it "doesn't crash when abstract method is implemented by supertype (#8031)" do
     semantic(%(
       module Base(T)
