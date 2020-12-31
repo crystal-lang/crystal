@@ -808,7 +808,22 @@ describe "Semantic: abstract def" do
       ))
   end
 
-  it "errors if free var is more constrained than abstract def" do
+  it "errors if free var is bound in including type" do
+    assert_error %(
+      module Foo
+        abstract def foo(x : T) forall T
+      end
+
+      class Bar(T)
+        include Foo
+
+        def foo(x : T)
+        end
+      end
+      ), "abstract `def Foo#foo(x : T)` must be implemented by Bar(T)"
+  end
+
+  it "errors if free var is more constrained than abstract def, inside generic" do
     assert_error %(
       module Val(T); end
 
@@ -825,22 +840,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : Val(T))` must be implemented by Bar"
   end
 
-  it "errors if free var is bound in including type" do
-    assert_error %(
-      module Foo
-        abstract def foo(x : T) forall T
-      end
-
-      class Bar(T)
-        include Foo
-
-        def foo(x : T)
-        end
-      end
-      ), "abstract `def Foo#foo(x : T)` must be implemented by Bar(T)"
-  end
-
-  it "errors if free vars in implementation are less constrained than abstract def (1)" do
+  it "errors if free vars are more constrained than abstract def (1)" do
     assert_error %(
       module Foo
         abstract def foo(x : T, y : U) forall T, U
@@ -855,7 +855,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : T, y : U)` must be implemented by Bar"
   end
 
-  it "errors if free vars in implementation are less constrained than abstract def (2)" do
+  it "errors if free vars are more constrained than abstract def (2)" do
     assert_error %(
       module Foo
         abstract def foo(x : T, y : _) forall T
@@ -870,7 +870,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : T, y : _)` must be implemented by Bar"
   end
 
-  it "errors if free vars in implementation are less constrained than abstract def (3)" do
+  it "errors if free vars are more constrained than abstract def (3)" do
     assert_error %(
       module Foo
         abstract def foo(x : _, y : _)
@@ -885,7 +885,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : _, y : _)` must be implemented by Bar"
   end
 
-  it "errors if free vars in implementation are less constrained than abstract def, inside generics (1)" do
+  it "errors if free vars are more constrained than abstract def, inside generics (1)" do
     assert_error %(
       module Val(T, U); end
 
@@ -902,7 +902,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : Val(T, U))` must be implemented by Bar"
   end
 
-  it "errors if free vars in implementation are less constrained than abstract def, inside generics (2)" do
+  it "errors if free vars are more constrained than abstract def, inside generics (2)" do
     assert_error %(
       module Val(T, U); end
 
@@ -919,7 +919,7 @@ describe "Semantic: abstract def" do
       ), "abstract `def Foo#foo(x : Val(T, _))` must be implemented by Bar"
   end
 
-  it "errors if free vars in implementation are less constrained than abstract def, inside generics (3)" do
+  it "errors if free vars are more constrained than abstract def, inside generics (3)" do
     assert_error %(
       module Val(T, U); end
 
