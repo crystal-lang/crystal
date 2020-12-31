@@ -644,6 +644,34 @@ describe "Slice" do
         Slice[1, 2].sort! { nil }
       end
     end
+
+    it "stable sort! without block" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+      expected = Slice.new(n * 2) { |i| slice[i % 2 * n + i // 2] }
+
+      slice.sort!(stable: true)
+      slice.size.should eq(expected.size)
+      expected.zip(slice) do |exp, res|
+        res.should be(exp)
+      end
+    end
+
+    it "stable sort! with a block" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(n - 1), Spaceship.new(n - 1), ..., Spaceship.new(0), Spaceship.new(0)]
+      expected = Slice.new(n * 2) { |i| slice[i % 2 * n + (n - i // 2 - 1)] }
+
+      slice.sort!(stable: true) { |a, b| b <=> a }
+      slice.size.should eq(expected.size)
+      expected.zip(slice) do |exp, res|
+        res.should be(exp)
+      end
+    end
   end
 
   describe "sort_by" do
@@ -652,6 +680,21 @@ describe "Slice" do
       b = a.sort_by &.size
       b.to_a.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
+    end
+
+    it "stable sort by" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+      expected = Slice.new(n * 2) { |i| slice[i % 2 * n + i // 2] }
+
+      result = slice.sort_by(stable: true) { |ship| ship.value }
+      result.should_not eq(slice)
+      result.size.should eq(expected.size)
+      expected.zip(result) do |exp, res|
+        res.should be(exp)
+      end
     end
   end
 
@@ -667,6 +710,20 @@ describe "Slice" do
       a = Slice["foo", "a", "hello"]
       a.sort_by! { |e| calls[e] += 1; e.size }
       calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    end
+
+    it "stable sort by!" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+      expected = Slice.new(n * 2) { |i| slice[i % 2 * n + i // 2] }
+
+      slice.sort_by!(stable: true) { |ship| ship.value }
+      slice.size.should eq(expected.size)
+      expected.zip(slice) do |exp, res|
+        res.should be(exp)
+      end
     end
   end
 

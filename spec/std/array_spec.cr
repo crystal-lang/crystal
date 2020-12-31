@@ -1279,6 +1279,21 @@ describe "Array" do
       b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
       a.should_not eq(b)
     end
+
+    it "stable sort by" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      arr = Array.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+      expected = Array.new(n * 2) { |i| arr[i % 2 * n + i // 2] }
+
+      result = arr.sort_by(stable: true) { |ship| ship.value }
+      result.should_not eq(arr)
+      result.size.should eq(expected.size)
+      expected.zip(result) do |exp, res|
+        res.should be(exp)
+      end
+    end
   end
 
   describe "sort_by!" do
@@ -1293,6 +1308,20 @@ describe "Array" do
       a = ["foo", "a", "hello"]
       a.sort_by! { |e| calls[e] += 1; e.size }
       calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    end
+
+    it "stable sort by!" do
+      n = 42
+      # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+      arr = Array.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+      # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+      expected = Array.new(n * 2) { |i| arr[i % 2 * n + i // 2] }
+
+      arr.sort_by!(stable: true) { |ship| ship.value }
+      arr.size.should eq(expected.size)
+      expected.zip(arr) do |exp, res|
+        res.should be(exp)
+      end
     end
   end
 

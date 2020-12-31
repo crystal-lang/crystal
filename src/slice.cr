@@ -681,8 +681,8 @@ struct Slice(T)
   # a.sort # => Slice[1, 2, 3]
   # a      # => Slice[3, 1, 2]
   # ```
-  def sort : Slice(T)
-    dup.sort!
+  def sort(*, stable = false) : Slice(T)
+    dup.sort!(stable: stable)
   end
 
   # Returns a new slice with all elements sorted based on the comparator in the
@@ -699,12 +699,12 @@ struct Slice(T)
   # b # => Slice[3, 2, 1]
   # a # => Slice[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Slice(T) forall U
+  def sort(*, stable = false, &block : T, T -> U) : Slice(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    dup.sort! &block
+    dup.sort!(stable: stable, &block)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
@@ -715,8 +715,12 @@ struct Slice(T)
   # a.sort!
   # a # => Slice[1, 2, 3]
   # ```
-  def sort! : Slice(T)
-    Slice.intro_sort!(to_unsafe, size)
+  def sort!(*, stable = false) : Slice(T)
+    if stable
+      Slice.merge_sort!(self)
+    else
+      Slice.intro_sort!(to_unsafe, size)
+    end
     self
   end
 
@@ -733,12 +737,16 @@ struct Slice(T)
   # a.sort! { |a, b| b <=> a }
   # a # => Slice[3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : Slice(T) forall U
+  def sort!(*, stable = false, &block : T, T -> U) : Slice(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    Slice.intro_sort!(to_unsafe, size, block)
+    if stable
+      Slice.merge_sort!(self, block)
+    else
+      Slice.intro_sort!(to_unsafe, size, block)
+    end
     self
   end
 
@@ -752,8 +760,8 @@ struct Slice(T)
   # b # => Slice["fig", "pear", "apple"]
   # a # => Slice["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Slice(T)
-    dup.sort_by! { |e| yield(e) }
+  def sort_by(*, stable = false, &block : T -> _) : Slice(T)
+    dup.sort_by!(stable: stable) { |e| yield(e) }
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
@@ -765,8 +773,8 @@ struct Slice(T)
   # a.sort_by! { |word| word.size }
   # a # => Slice["fig", "pear", "apple"]
   # ```
-  def sort_by!(&block : T -> _) : Slice(T)
-    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+  def sort_by!(*, stable = false, &block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.sort!(stable: stable) { |x, y| x[1] <=> y[1] }
     size.times do |i|
       to_unsafe[i] = sorted.to_unsafe[i][0]
     end
