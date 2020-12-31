@@ -1281,6 +1281,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].size # => 4
   # ```
+  @[Deprecated("Use `#count` instead.")]
   def size
     count { true }
   end
