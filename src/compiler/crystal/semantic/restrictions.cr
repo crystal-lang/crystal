@@ -668,7 +668,7 @@ module Crystal
 
       # Consider the case of a splat in the type vars
       splat_index = self.splat_index
-      splat_given = other.type_vars.any? &.is_a?(Splat)
+      splat_given = other.type_vars.any?(Splat)
       if splat_index || splat_given
         types = Array(Type).new(type_vars.size)
         i = 0
@@ -815,7 +815,7 @@ module Crystal
       generic_type = generic_type.as(TupleType)
 
       # Consider the case of a splat in the type vars
-      splat_given = other.type_vars.any? &.is_a?(Splat)
+      splat_given = other.type_vars.any?(Splat)
       if splat_given
         found_splat = false
         i = 0
@@ -1101,7 +1101,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_given = inputs.any? &.is_a?(Splat))
+      if inputs && (splat_given = inputs.any?(Splat))
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)
@@ -1158,7 +1158,7 @@ module Crystal
       return super unless generic_type.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
-      splat_given = other.type_vars.any? &.is_a?(Splat)
+      splat_given = other.type_vars.any?(Splat)
       if splat_given
         proc_types = arg_types + [return_type]
 
