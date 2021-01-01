@@ -648,6 +648,28 @@ describe "Semantic: class" do
       "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
   end
 
+  it "can't reopen as struct" do
+    assert_error %(
+      class Foo
+      end
+
+      struct Foo
+      end
+      ),
+      "Foo is not a struct, it's a class"
+  end
+
+  it "can't reopen as module" do
+    assert_error %(
+      class Foo
+      end
+
+      module Foo
+      end
+      ),
+      "Foo is not a module, it's a class"
+  end
+
   it "errors if reopening non-generic class as generic" do
     assert_error %(
       class Foo
@@ -679,6 +701,39 @@ describe "Semantic: class" do
       end
       ),
       "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic class with different splat index" do
+    assert_error %(
+      class Foo(A)
+      end
+
+      class Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic class with different splat index (2)" do
+    assert_error %(
+      class Foo(*A)
+      end
+
+      class Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic class with different splat index (3)" do
+    assert_error %(
+      class Foo(*A, B)
+      end
+
+      class Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
   end
 
   it "allows declaring a variable in an initialize and using it" do

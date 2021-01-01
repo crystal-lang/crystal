@@ -407,7 +407,7 @@ describe "Semantic: splat" do
 
   it "uses splat restriction with concrete type" do
     assert_error %(
-      struct Tuple(T)
+      struct Tuple(*T)
         def self.foo(*args : *T)
         end
       end
