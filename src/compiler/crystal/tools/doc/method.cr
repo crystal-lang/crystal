@@ -184,7 +184,7 @@ class Crystal::Doc::Method
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").delete(' ')
+      io << to_s.delete(' ')
       if @class_method
         io << "-class-method"
       else
