@@ -3,7 +3,8 @@ require "./libm"
 module Math
   extend self
 
-  PI    = 3.14159265358979323846
+  PI    =  3.14159265358979323846
+  TAU   = 6.283185307179586476925
   E     = LibM.exp_f64(1.0)
   LOG2  = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
