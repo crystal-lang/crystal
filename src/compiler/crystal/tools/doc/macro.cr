@@ -143,8 +143,7 @@ class Crystal::Doc::Macro
 
   def to_json(builder : JSON::Builder)
     builder.object do
-      builder.field "id", id
-      builder.field "html_id", html_id
+      builder.field "html_id", id
       builder.field "name", name
       builder.field "doc", doc
       builder.field "summary", formatted_summary
