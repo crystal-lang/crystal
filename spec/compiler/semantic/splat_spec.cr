@@ -488,15 +488,48 @@ describe "Semantic: splat" do
 
   it "matches with splat" do
     assert_type(%(
-    def foo(&block : *{Int32, Int32} -> U) forall U
-      tup = {1, 2}
-      yield *tup
-    end
+      def foo(&block : *{Int32, Int32} -> U) forall U
+        tup = {1, 2}
+        yield *tup
+      end
 
-    foo do |x, y|
-      {x, y}
-    end
-    )) { tuple_of([int32, int32]) }
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, int32]) }
+  end
+
+  it "matches with tuple splat inside explicit Union" do
+    assert_type(%(
+      def foo(x : Union(*{Int32, String}))
+        x
+      end
+
+      foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var splat inside explicit Union" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "doesn't match free var type splats inside explicit Union" do
+    assert_error %(
+      def foo(x : Union(*T)) forall T
+        x
+      end
+
+      foo(1)
+      ),
+      "no overload matches"
   end
 
   it "matches typed before non-typed (1) (#3134)" do
