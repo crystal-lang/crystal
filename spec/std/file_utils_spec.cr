@@ -130,6 +130,8 @@ describe "FileUtils" do
       with_tempfile("cp_r-test", "cp_r-test-copied") do |src_path, dest_path|
         Dir.mkdir_p(dest_path)
         File.write(File.join(dest_path, "d"), "")
+        Dir.mkdir(File.join(dest_path, "cp_r-test"))
+        Dir.mkdir(File.join(dest_path, "cp_r-test", "b"))
 
         Dir.mkdir_p(src_path)
         File.write(File.join(src_path, "a"), "")
@@ -137,8 +139,8 @@ describe "FileUtils" do
         File.write(File.join(src_path, "b/c"), "")
 
         FileUtils.cp_r(src_path, dest_path)
-        File.exists?(File.join(dest_path, "a")).should be_true
-        File.exists?(File.join(dest_path, "b/c")).should be_true
+        File.exists?(File.join(dest_path, "cp_r-test", "a")).should be_true
+        File.exists?(File.join(dest_path, "cp_r-test", "b/c")).should be_true
         File.exists?(File.join(dest_path, "d")).should be_true
       end
     end
