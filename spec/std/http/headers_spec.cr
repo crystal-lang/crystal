@@ -206,4 +206,28 @@ describe HTTP::Headers do
     headers.add?("foobar", invalid_value).should be_false
     headers.add?("foobar", [invalid_value]).should be_false
   end
+
+  describe "after serialization" do
+    it "raises on modification (#8712)" do
+      headers = HTTP::Headers.new
+      io = IO::Memory.new
+      headers.serialize(io)
+
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers["Foo"] = "Bar" }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers["Foo"] = ["Bar", "Baz"] }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.add "Foo", "Bar" }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.add "Foo", ["Bar", "Baz"] }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.add? "Foo", "Bar" }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.add? "Foo", ["Bar", "Baz"] }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.delete "Foo" }
+      expect_raises(IO::Error, "Cannot modify headers after sending") { headers.merge!({"Foo" => "Bar"}) }
+    end
+
+    it "can still read them" do
+      headers = HTTP::Headers{"Foo" => "Bar"}
+      io = IO::Memory.new
+      headers.serialize(io)
+      headers["Foo"].should eq("Bar")
+    end
+  end
 end

@@ -147,12 +147,7 @@ class HTTP::Server
 
     protected def write_headers
       @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
-      headers.each do |name, values|
-        values.each do |value|
-          @io << name << ": " << value << "\r\n"
-        end
-      end
-      @io << "\r\n"
+      headers.serialize(@io)
       @wrote_headers = true
     end
 

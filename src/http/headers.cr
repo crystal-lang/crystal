@@ -2,6 +2,7 @@
 #
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
+
 struct HTTP::Headers
   include Enumerable({String, Array(String)})
 
@@ -53,15 +54,18 @@ struct HTTP::Headers
     # the most common case is a single value and so we avoid allocating
     # memory for arrays.
     @hash = Hash(Key, String | Array(String)).new
+    @serialized = false
   end
 
   def []=(key, value : String)
+    check_already_serialized
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
   def []=(key, value : Array(String))
+    check_already_serialized
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
@@ -159,7 +163,13 @@ struct HTTP::Headers
     @hash.empty?
   end
 
+  def clear
+    @serialized = false
+    @hash.clear
+  end
+
   def delete(key)
+    check_already_serialized
     values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
@@ -275,7 +285,18 @@ struct HTTP::Headers
 
   forward_missing_to @hash
 
+  def serialize(io)
+    @serialized = true
+    each do |name, values|
+      values.each do |value|
+        io << name << ": " << value << "\r\n"
+      end
+    end
+    io << "\r\n"
+  end
+
   private def unsafe_add(key, value : String)
+    check_already_serialized
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -290,6 +311,7 @@ struct HTTP::Headers
   end
 
   private def unsafe_add(key, value : Array(String))
+    check_already_serialized
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -336,6 +358,10 @@ struct HTTP::Headers
     if char = invalid_value_char(value)
       raise ArgumentError.new("Header content contains invalid character #{char.inspect}")
     end
+  end
+
+  private def check_already_serialized
+    raise IO::Error.new("Cannot modify headers after sending") if @serialized
   end
 
   private def valid_char?(char)
