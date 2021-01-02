@@ -359,6 +359,8 @@ struct HTTP::Headers
     end
   end
 
+  getter? serialized
+
   private def check_already_serialized
     raise IO::Error.new("Cannot modify headers after sending") if @serialized
   end
