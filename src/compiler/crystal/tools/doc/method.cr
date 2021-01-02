@@ -211,14 +211,14 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io : IO) : Nil
-    args_to_html(io, html: false)
+    args_to_html(io, html: :none)
   end
 
-  def args_to_html
-    String.build { |io| args_to_html io }
+  def args_to_html(html : HTMLOption = :all)
+    String.build { |io| args_to_html io, html }
   end
 
-  def args_to_html(io : IO, html : Bool = true) : Nil
+  def args_to_html(io : IO, html : HTMLOption = :all) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
@@ -268,14 +268,14 @@ class Crystal::Doc::Method
     io
   end
 
-  def arg_to_html(arg : Arg, io, html = true)
+  def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       name = arg.external_name.presence || "_"
       if Symbol.needs_quotes? name
-        if html
-          HTML.escape name.inspect, io
-        else
+        if html.none?
           name.inspect io
+        else
+          HTML.escape name.inspect, io
         end
       else
         io << name
@@ -295,7 +295,7 @@ class Crystal::Doc::Method
 
     if default_value = arg.default_value
       io << " = "
-      if html
+      if html.highlight?
         io << Highlighter.highlight(default_value.to_s)
       else
         io << default_value
@@ -303,7 +303,7 @@ class Crystal::Doc::Method
     end
   end
 
-  def node_to_html(node, io, html = true)
+  def node_to_html(node, io, html : HTMLOption = :all)
     @type.node_to_html node, io, html: html
   end
 
