@@ -504,7 +504,7 @@ class Array(T)
   # a # => [1, 2, 6]
   # ```
   def []=(range : Range, value : T)
-    self[*Indexable.range_to_index_and_count(range, size)] = value
+    self[*Indexable.range_to_index_and_count(range, size)  { raise IndexError.new }] = value
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -576,7 +576,7 @@ class Array(T)
   # a # => [1, 2, 6, 7, 8, 9, 10]
   # ```
   def []=(range : Range, values : Array(T))
-    self[*Indexable.range_to_index_and_count(range, size)] = values
+    self[*Indexable.range_to_index_and_count(range, size)  { raise IndexError.new }] = values
   end
 
   # Returns all elements that are within the given range.
@@ -597,7 +597,7 @@ class Array(T)
   # a[2..]     # => ["c", "d", "e"]
   # ```
   def [](range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]
+    self[*Indexable.range_to_index_and_count(range, size) { raise IndexError.new }]
   end
 
   # Like `#[Range]`, but returns `nil` if the range's start is out of range.
@@ -608,7 +608,7 @@ class Array(T)
   # a[6..]?   # => nil
   # ```
   def []?(range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]?
+    self[*Indexable.range_to_index_and_count(range, size) { return nil }]?
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -813,7 +813,7 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range)
-    index, count = Indexable.range_to_index_and_count(range, self.size)
+    index, count = Indexable.range_to_index_and_count(range, self.size)  { raise IndexError.new }
     delete_at(index, count)
   end
 
@@ -932,7 +932,7 @@ class Array(T)
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(range : Range)
-    fill(*Indexable.range_to_index_and_count(range, size)) do |i|
+    fill(*Indexable.range_to_index_and_count(range, size) { raise IndexError.new }) do |i|
       yield i
     end
   end
@@ -1020,7 +1020,7 @@ class Array(T)
   def fill(value : T, range : Range)
     {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
       if value == 0
-        fill(value, *Indexable.range_to_index_and_count(range, size))
+        fill(value, *Indexable.range_to_index_and_count(range, size) { raise IndexError.new })
 
         self
       else
