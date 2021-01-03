@@ -1757,6 +1757,14 @@ module Crystal
 
       exps = [] of ASTNode
 
+      # do...end in parenthesis should not stop because there's no call further
+      # left to bind to:
+      #
+      # ```
+      # (foo do end)
+      # ```
+      @stop_on_do = false
+
       while true
         exps << parse_expression
         case @token.type
