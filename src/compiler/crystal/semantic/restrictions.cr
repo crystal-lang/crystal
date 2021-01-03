@@ -81,6 +81,16 @@ module Crystal
       self_splat_index = self.def.splat_index
       other_splat_index = other.def.splat_index
 
+      # If I double-splat but the other doesn't, I come later
+      if self.def.double_splat && !other.def.double_splat
+        return false
+      end
+
+      # If the other double-splats but I don't, I come first
+      if other.def.double_splat && !self.def.double_splat
+        return true
+      end
+
       # If I splat but the other doesn't, I come later
       if self_splat_index && !other_splat_index
         return false
