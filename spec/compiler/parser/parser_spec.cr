@@ -1371,6 +1371,8 @@ module Crystal
 
     it_parses "Set {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: "Set".path)
     it_parses "Set(Int32) {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: Generic.new("Set".path, ["Int32".path] of ASTNode))
+    it_parses "Set {}", ArrayLiteral.new([] of ASTNode, name: "Set".path)
+    it_parses "Set(Int32) {}", ArrayLiteral.new([] of ASTNode, name: Generic.new("Set".path, ["Int32".path] of ASTNode))
 
     it_parses "foo(Bar) { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
     it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
@@ -1637,7 +1639,9 @@ module Crystal
     assert_syntax_error "def foo(x, **x); end", "duplicated argument name: x"
 
     assert_syntax_error "Set {1, 2, 3} of Int32"
-    assert_syntax_error "Hash {foo: 1} of Int32 => Int32"
+    assert_syntax_error "Hash {foo => 1} of Int32 => Int32"
+    assert_syntax_error "Set {} of Int32"
+    assert_syntax_error "Hash {} of Int32 => Int32"
     assert_syntax_error "enum Foo < UInt16; end"
     assert_syntax_error "foo(1 2)"
     assert_syntax_error %(foo("bar" "baz"))
