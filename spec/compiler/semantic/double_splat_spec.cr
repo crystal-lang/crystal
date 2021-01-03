@@ -236,9 +236,11 @@ describe "Semantic: double splat" do
       def foo(*, x : Nil)
         1
       end
+
       def foo(**options)
         :symbol
       end
+
       foo(x: nil)
       ), inject_primitives: false) { int32 }
   end
@@ -248,9 +250,11 @@ describe "Semantic: double splat" do
       def foo(**options)
         :symbol
       end
+
       def foo(*, x : Nil)
         1
       end
+
       foo(x: nil)
       ), inject_primitives: false) { int32 }
   end
