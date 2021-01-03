@@ -2994,7 +2994,12 @@ module Crystal
         case type
         when GenericClassType
           generic_type = TypeNode.new(type).at(node.location)
-          type_of = TypeOf.new(node.elements).at(node.location)
+
+          if node.elements.empty?
+            type_of = [] of ASTNode
+          else
+            type_of = TypeOf.new(node.elements).at(node.location)
+          end
 
           generic = Generic.new(generic_type, type_of).at(node.location)
 
