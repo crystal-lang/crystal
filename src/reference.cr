@@ -38,7 +38,7 @@ class Reference
   #
   # This allocates a new object and copies the contents of
   # `self` into it.
-  def dup
+  def dup : self
     {% if @type.abstract? %}
       # This shouldn't happen, as the type is abstract,
       # but we need to avoid the allocate invocation below

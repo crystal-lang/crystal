@@ -171,7 +171,7 @@ class Array(T)
   #   LibSome.fill_buffer_and_return_number_of_elements_filled(buffer)
   # end
   # ```
-  def self.build(capacity : Int) : self
+  def self.build(capacity : Int, & : Pointer(T) -> Int) : self
     ary = Array(T).new(capacity)
     ary.size = (yield ary.to_unsafe).to_i
     ary
@@ -202,7 +202,7 @@ class Array(T)
   # ary == [1, 2, 3] # => true
   # ary == [2, 3]    # => false
   # ```
-  def ==(other : Array)
+  def ==(other : Array) : Bool
     equals?(other) { |x, y| x == y }
   end
 
