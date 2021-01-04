@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "hash literal" do
   it "empty literal" do
-    assert_type("Hash(Int32, Int32){}") { hash_of int32, int32 }
+    assert_type("class Hash(K, V); def []=(k : K, v : V); end; end; Hash(Int32, Int32){}") { hash_of int32, int32 }
   end
 
   it "empty literal missing generic arguments" do

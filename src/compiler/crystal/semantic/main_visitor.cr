@@ -3003,10 +3003,19 @@ module Crystal
 
           generic = Generic.new(generic_type, type_of).at(node.location)
 
+          concrete_type = nil
           node.name = generic
         when GenericClassInstanceType
+          if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
+            node.raise "Type #{type} does not support array-like or hash-like literal"
+          end
+
           # Nothing
         else
+          if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
+            node.raise "Type #{type} does not support array-like or hash-like literal"
+          end
+
           node.name = TypeNode.new(name.type).at(node.location)
         end
 
