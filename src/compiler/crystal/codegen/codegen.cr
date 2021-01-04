@@ -476,10 +476,23 @@ module Crystal
     def visit(node : TupleLiteral)
       request_value do
         type = node.type.as(TupleInstanceType)
-        @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.elements[i]
+
+        exp_values = Array({Type, LLVM::Value}).new(type.tuple_types.size)
+        node.elements.each_with_index do |exp|
           accept exp
-          {exp.type, @last}
+
+          if exp.is_a?(Splat)
+            tuple_type = exp.type.as(TupleInstanceType)
+            tuple_type.tuple_types.each_with_index do |subtype, j|
+              exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+            end
+          else
+            exp_values << {exp.type, @last}
+          end
+        end
+
+        @last = allocate_tuple(type) do |_, i|
+          exp_values[i]
         end
       end
       false
@@ -1452,7 +1465,7 @@ module Crystal
           block.args.each_with_index do |arg, i|
             block_var = block_context.vars[arg.name]
             if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
                 exp_value2, exp_type = exp_values[j]
                 j += 1
                 {exp_type, exp_value2}
