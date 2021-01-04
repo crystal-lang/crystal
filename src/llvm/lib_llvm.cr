@@ -65,6 +65,13 @@ lib LibLLVM
     enable_fast_isel : Int32
   end
 
+  {% unless LibLLVM::IS_LT_70 %}
+    enum InlineAsmDialect
+      ATT
+      Intel
+    end
+  {% end %}
+
   fun add_case = LLVMAddCase(switch : ValueRef, onval : ValueRef, dest : BasicBlockRef)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
@@ -290,6 +297,9 @@ lib LibLLVM
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
+  {% unless LibLLVM::IS_LT_70 %}
+    fun get_inline_asm = LLVMGetInlineAsm(t : TypeRef, asm_string : UInt8*, asm_string_len : LibC::SizeT, constraints : UInt8*, constraints_len : LibC::SizeT, has_side_effects : Int32, is_align_stack : Int32, dialect : InlineAsmDialect) : ValueRef
+  {% end %}
   fun create_context = LLVMContextCreate : ContextRef
   fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
   fun dispose_target_machine = LLVMDisposeTargetMachine(TargetMachineRef)
