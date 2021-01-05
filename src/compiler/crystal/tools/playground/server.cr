@@ -445,7 +445,7 @@ module Crystal::Playground
     end
   end
 
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   class Server
