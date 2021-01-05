@@ -33,7 +33,7 @@ end
 
     IS_LT_70 = IS_38 || IS_39 || IS_40 || IS_50 || IS_60
     IS_LT_80 = IS_LT_70 || IS_70 || IS_71
-    IS_LT_110 = IS_LT_80 || IS_90 || IS_100 || IS_110
+    IS_LT_110 = IS_LT_80 || IS_90 || IS_100
   end
 {% end %}
 
