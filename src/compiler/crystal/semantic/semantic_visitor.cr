@@ -86,7 +86,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     node.raise "#{message}\n\n#{notes.join("\n")}"
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
     raise Error.new("while requiring \"#{node.string}\"", ex)
@@ -439,7 +439,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     yield
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end
 

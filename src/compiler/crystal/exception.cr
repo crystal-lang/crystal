@@ -3,7 +3,8 @@ require "./error"
 require "colorize"
 
 module Crystal
-  abstract class Exception < Error
+  # Base class for all errors related to specific user code.
+  abstract class CodeError < Error
     property? color = false
     property? error_trace = false
 

@@ -122,7 +122,7 @@ class Crystal::Command
         error "unknown command: #{command}"
       end
     end
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     report_warnings
 
     ex.color = @color
