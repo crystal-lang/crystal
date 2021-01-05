@@ -442,18 +442,6 @@ struct BigInt < Int
     String.new(cstr)
   end
 
-  # :nodoc:
-  def digits(base = 10) : Array(Int32)
-    if self < 0
-      raise ArgumentError.new("Can't request digits of negative number")
-    end
-
-    ary = [] of Int32
-    self.to_s(base).each_char { |c| ary << c.to_i(base) }
-    ary.reverse!
-    ary
-  end
-
   def popcount
     LibGMP.popcount(self)
   end

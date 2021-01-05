@@ -454,6 +454,11 @@ describe "BigInt" do
       123.to_big_i.digits(16).should eq([11, 7])
     end
 
+    it "works with bases greater than 36" do
+      12345.to_big_i.digits(100).should eq([45, 23, 1])
+      12345.to_big_i.digits(1000).should eq([345, 12])
+    end
+
     it "raises for invalid base" do
       [1, 0, -1].each do |base|
         expect_raises(ArgumentError, "Invalid base #{base}") do
