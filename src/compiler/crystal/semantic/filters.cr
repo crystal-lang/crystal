@@ -330,7 +330,7 @@ module Crystal
     # provides a stricter filter.
     def self.assign_var(filters, target)
       if filters.nil?
-        return new target, TruthyFilter.instance
+        return truthy(target)
       end
 
       name = target.name
