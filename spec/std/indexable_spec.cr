@@ -185,28 +185,37 @@ describe Indexable do
     return_value.should eq(indexable)
   end
 
-  it "joins strings (empty case)" do
-    indexable = SafeStringIndexable.new(0)
-    indexable.join.should eq("")
-    indexable.join(", ").should eq("")
-  end
+  describe "#join" do
+    it "joins strings (empty case)" do
+      indexable = SafeStringIndexable.new(0)
+      indexable.join.should eq("")
+      indexable.join(", ").should eq("")
+    end
 
-  it "joins strings (non-empty case)" do
-    indexable = SafeStringIndexable.new(12)
-    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
-    indexable.join(98).should eq("098198298398498598698798898998109811")
-  end
+    it "joins strings (non-empty case)" do
+      indexable = SafeStringIndexable.new(12)
+      indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+      indexable.join(98).should eq("098198298398498598698798898998109811")
+    end
 
-  it "joins non-strings" do
-    indexable = SafeIndexable.new(12)
-    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
-    indexable.join(98).should eq("098198298398498598698798898998109811")
-  end
+    it "joins non-strings" do
+      indexable = SafeIndexable.new(12)
+      indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+      indexable.join(98).should eq("098198298398498598698798898998109811")
+    end
 
-  it "joins when T has String" do
-    indexable = SafeMixedIndexable.new(12)
-    indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
-    indexable.join(98).should eq("098198298398498598698798898998109811")
+    it "joins when T has String" do
+      indexable = SafeMixedIndexable.new(12)
+      indexable.join(", ").should eq("0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11")
+      indexable.join(98).should eq("098198298398498598698798898998109811")
+    end
+
+    it "with IO" do
+      String.build do |io|
+        indexable = SafeStringIndexable.new(12)
+        indexable.join(io)
+      end.should eq "01234567891011"
+    end
   end
 
   describe "dig?" do
