@@ -3,7 +3,11 @@ require "./libm"
 module Math
   extend self
 
-  PI    = 3.14159265358979323846
+  # Archimedes' constant (π).
+  PI = 3.14159265358979323846
+  # The full circle constant (τ), equal to 2π.
+  TAU = 6.283185307179586476925
+  # Euler's number (e).
   E     = LibM.exp_f64(1.0)
   LOG2  = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
