@@ -93,7 +93,7 @@ module Crystal
     @in_type_args = 0
 
     @while_stack : Array(While)
-    @type_filters : TypeFilters = TypeFilters.new
+    @type_filters : TypeFilters?
     @needs_type_filters : Int32
     @typeof_nest : Int32
     @found_self_in_initialize_call : Array(ASTNode)?
@@ -782,7 +782,7 @@ module Crystal
       node.bind_to value
 
       value_type_filters = @type_filters
-      @type_filters = TypeFilters.new
+      @type_filters = nil
 
       # Save variable assignment location for debugging output
       meta_var.location ||= target.location
@@ -813,7 +813,7 @@ module Crystal
       check_exception_handler_vars var_name, value
 
       if needs_type_filters?
-        @type_filters = value_type_filters.assign_var(target)
+        @type_filters = TypeFilters.assign_var(value_type_filters, target)
       end
 
       if target.special_var?
@@ -1060,7 +1060,7 @@ module Crystal
 
       node.bind_to block
 
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       false
     end
 
@@ -1379,7 +1379,7 @@ module Crystal
 
       check_call_in_initialize node
 
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       @unreachable = true if node.no_returns?
 
       false
@@ -1932,7 +1932,7 @@ module Crystal
 
       # then branch
       @vars = cond_vars.dup
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       @unreachable = false
 
       filter_vars cond_type_filters
@@ -1946,10 +1946,10 @@ module Crystal
 
       # else branch
       @vars = cond_vars.dup
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       @unreachable = false
 
-      filter_vars cond_type_filters.not
+      filter_vars TypeFilters.not(cond_type_filters)
       before_else_vars = @vars.dup
 
       node.else.accept self
@@ -1960,7 +1960,7 @@ module Crystal
 
       merge_if_vars node, cond_vars, then_vars, else_vars, before_then_vars, before_else_vars, then_unreachable, else_unreachable
 
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       if needs_type_filters?
         case node
         when .and?
@@ -2100,7 +2100,7 @@ module Crystal
 
       filter_vars cond_type_filters
 
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       @block, old_block = nil, @block
 
       @while_stack.push node
@@ -2140,7 +2140,7 @@ module Crystal
           return
         end
 
-        filter_vars cond_type_filters.not
+        filter_vars TypeFilters.not(cond_type_filters)
       end
 
       node.type = @program.nil
@@ -2278,7 +2278,7 @@ module Crystal
     end
 
     def filter_vars(filters)
-      filters.each do |name, filter|
+      filters.try &.each do |name, filter|
         existing_var = @vars[name]
         filtered_var = MetaVar.new(name)
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
@@ -3070,7 +3070,7 @@ module Crystal
       node.update
 
       if needs_type_filters?
-        @type_filters = @type_filters.not
+        @type_filters = TypeFilters.not(@type_filters)
       end
 
       false
@@ -3272,7 +3272,7 @@ module Crystal
     end
 
     def request_type_filters
-      @type_filters = TypeFilters.new
+      @type_filters = nil
       @needs_type_filters += 1
       begin
         yield

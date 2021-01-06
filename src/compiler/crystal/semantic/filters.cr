@@ -266,7 +266,7 @@ module Crystal
     protected getter pos = {} of String => TypeFilter
     protected getter neg = {} of String => TypeFilter
 
-    def initialize
+    protected def initialize
     end
 
     protected def initialize(*, @pos, @neg)
@@ -284,15 +284,14 @@ module Crystal
     end
 
     def self.and(filters1, filters2)
-      return new if filters1.empty? && filters2.empty?
+      return nil if filters1.nil? && filters2.nil?
 
       new_filters = new
-      all_keys = (filters1.pos.keys + filters1.neg.keys + filters2.pos.keys + filters2.neg.keys).uniq!
-      all_keys.each do |name|
-        if filter = TypeFilter.and(filters1.pos[name]?, filters2.pos[name]?)
+      common_keys(filters1, filters2).each do |name|
+        if filter = TypeFilter.and(filters1.try(&.pos[name]?), filters2.try(&.pos[name]?))
           new_filters.pos[name] = filter
         end
-        if filter = TypeFilter.or(filters1.neg[name]?, filters2.neg[name]?)
+        if filter = TypeFilter.or(filters1.try(&.neg[name]?), filters2.try(&.neg[name]?))
           new_filters.neg[name] = filter
         end
       end
@@ -300,23 +299,24 @@ module Crystal
     end
 
     def self.or(filters1, filters2)
-      return new if filters1.empty? && filters2.empty?
+      return nil if filters1.nil? && filters2.nil?
 
       new_filters = new
-      all_keys = (filters1.pos.keys + filters1.neg.keys + filters2.pos.keys + filters2.neg.keys).uniq!
-      all_keys.each do |name|
-        if filter = TypeFilter.or(filters1.pos[name]?, filters2.pos[name]?)
+      common_keys(filters1, filters2).each do |name|
+        if filter = TypeFilter.or(filters1.try(&.pos[name]?), filters2.try(&.pos[name]?))
           new_filters.pos[name] = filter
         end
-        if filter = TypeFilter.and(filters1.neg[name]?, filters2.neg[name]?)
+        if filter = TypeFilter.and(filters1.try(&.neg[name]?), filters2.try(&.neg[name]?))
           new_filters.neg[name] = filter
         end
       end
       new_filters
     end
 
-    def not
-      TypeFilters.new pos: neg.dup, neg: pos.dup
+    def self.not(filters)
+      return nil if filters.nil?
+
+      TypeFilters.new pos: filters.neg.dup, neg: filters.pos.dup
     end
 
     # If we have
@@ -328,11 +328,15 @@ module Crystal
     # then `a` and `b` must have the same truthiness. Thus we can strengthen the
     # negation of the condition from `!a || !b` to `!a && !b`, which usually
     # provides a stricter filter.
-    def assign_var(target)
+    def self.assign_var(filters, target)
+      if filters.nil?
+        return new target, TruthyFilter.instance
+      end
+
       name = target.name
       filter = TruthyFilter.instance
 
-      new_filters = dup
+      new_filters = filters.dup
       new_filters.pos[name] = TypeFilter.and(new_filters.pos[name]?, filter).not_nil!
       new_filters.neg[name] = TypeFilter.and(new_filters.neg[name]?, filter.not).not_nil!
       new_filters
@@ -344,12 +348,21 @@ module Crystal
       end
     end
 
-    def empty?
-      pos.empty? && neg.empty?
-    end
-
     def dup
       TypeFilters.new pos: pos.dup, neg: neg.dup
+    end
+
+    private def self.common_keys(filters1, filters2)
+      keys = [] of String
+      if filters1
+        keys.concat(filters1.pos.keys)
+        keys.concat(filters1.neg.keys)
+      end
+      if filters2
+        keys.concat(filters2.pos.keys)
+        keys.concat(filters2.neg.keys)
+      end
+      keys.uniq!
     end
   end
 end
