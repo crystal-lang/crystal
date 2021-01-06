@@ -992,6 +992,7 @@ class Crystal::CodeGenVisitor
       else
         null_fun_ptr, null_args = real_fun_ptr, closure_args
       end
+      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
@@ -1002,6 +1003,7 @@ class Crystal::CodeGenVisitor
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
+      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
