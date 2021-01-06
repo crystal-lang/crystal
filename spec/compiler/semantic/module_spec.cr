@@ -898,6 +898,92 @@ describe "Semantic: module" do
       "can't declare module dynamically"
   end
 
+  it "can't reopen as class" do
+    assert_error "
+      module Foo
+      end
+
+      class Foo
+      end
+      ", "Foo is not a class, it's a module"
+  end
+
+  it "can't reopen as struct" do
+    assert_error "
+      module Foo
+      end
+
+      struct Foo
+      end
+      ", "Foo is not a struct, it's a module"
+  end
+
+  it "errors if reopening non-generic module as generic" do
+    assert_error %(
+      module Foo
+      end
+
+      module Foo(T)
+      end
+      ),
+      "Foo is not a generic module"
+  end
+
+  it "errors if reopening generic module with different type vars" do
+    assert_error %(
+      module Foo(T)
+      end
+
+      module Foo(U)
+      end
+      ),
+      "type var must be T, not U"
+  end
+
+  it "errors if reopening generic module with different type vars (2)" do
+    assert_error %(
+      module Foo(A, B)
+      end
+
+      module Foo(C)
+      end
+      ),
+      "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic module with different splat index" do
+    assert_error %(
+      module Foo(A)
+      end
+
+      module Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic module with different splat index (2)" do
+    assert_error %(
+      module Foo(*A)
+      end
+
+      module Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic module with different splat index (3)" do
+    assert_error %(
+      module Foo(*A, B)
+      end
+
+      module Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
+  end
+
   it "uses :Module name for modules in errors" do
     assert_error %(
       module Moo; end
