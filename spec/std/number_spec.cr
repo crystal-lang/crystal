@@ -2,7 +2,6 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
-require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
