@@ -521,6 +521,90 @@ describe "Semantic: splat" do
       )) { int32 }
   end
 
+  it "matches with type var splat inside explicit Union (2)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo("")
+      )) { string }
+  end
+
+  it "matches with type var splat inside explicit Union, when all splat elements match" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32 | Bool, Int32 | String, Int32 | Char).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var splat inside explicit Union, when one splat fails entirely" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T, Bool))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(true)
+      )) { bool }
+  end
+
+  it "matches with type var splat inside explicit Union, when non-splat vars fail" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T, Char, Bool))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo({1, ""})
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union (2)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union (3)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo("")
+      )) { string }
+  end
+
   it "doesn't match free var type splats inside explicit Union" do
     assert_error %(
       def foo(x : Union(*T)) forall T
