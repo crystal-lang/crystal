@@ -405,6 +405,16 @@ describe "Semantic: splat" do
       )) { tuple_of([] of Type).metaclass }
   end
 
+  it "uses splat restriction after non-splat arguments (#5037)" do
+    assert_type(%(
+      def foo(x, *y : *T) forall T
+        T
+      end
+
+      foo 1, 'a', ""
+      )) { tuple_of([char, string]).metaclass }
+  end
+
   it "uses splat restriction with concrete type" do
     assert_error %(
       struct Tuple(T)
