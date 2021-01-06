@@ -1761,7 +1761,8 @@ module Crystal
       # left to bind to:
       #
       # ```
-      # (foo do end)
+      # (foo do
+      # end)
       # ```
       @stop_on_do = false
 
