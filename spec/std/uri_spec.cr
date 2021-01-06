@@ -182,6 +182,22 @@ describe "URI" do
     it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
+  describe "#authority" do
+    it { URI.new.authority.should be_nil }
+    it { URI.new(scheme: "scheme").authority.should be_nil }
+    it { URI.new(scheme: "scheme", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", host: "example.com", port: 123).authority.should eq "example.com:123" }
+    it { URI.new(scheme: "scheme", user: "user", host: "example.com").authority.should eq "user@example.com" }
+    it { URI.new(scheme: "scheme", user: "user").authority.should eq "user@" }
+    it { URI.new(scheme: "scheme", port: 123).authority.should eq ":123" }
+    it { URI.new(scheme: "scheme", user: "user", port: 123).authority.should eq "user@:123" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com").authority.should eq "user:pass@example.com" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com", port: 123).authority.should eq "user:pass@example.com:123" }
+    it { URI.new(scheme: "scheme", password: "pass", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", path: "opaque").authority.should be_nil }
+    it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
+  end
+
   describe "#full_path" do
     it { URI.new(path: "/foo").full_path.should eq("/foo") }
     it { URI.new.full_path.should eq("/") }

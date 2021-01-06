@@ -262,6 +262,9 @@ module Crystal
         unless match_arg_type
           return nil
         end
+
+        matched_arg_types ||= [] of Type
+        matched_arg_types.concat(splat_arg_types)
       end
 
       found_unmatched_named_arg = false

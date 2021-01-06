@@ -235,7 +235,16 @@ struct Range(B, E)
     end_value = @end
     while end_value.nil? || current < end_value
       yield current
-      by.times { current = current.succ }
+      by.times do
+        current = current.succ
+        return if end_value && current > end_value
+      rescue exc : OverflowError
+        if current == end_value
+          return
+        else
+          raise exc
+        end
+      end
     end
     yield current if !@exclusive && current == @end
     self
@@ -445,6 +454,7 @@ struct Range(B, E)
     @step : N
     @current : B
     @reached_end : Bool
+    @at_start = true
 
     def initialize(@range, @step, @current = range.begin, @reached_end = false)
     end
@@ -454,18 +464,38 @@ struct Range(B, E)
 
       end_value = @range.end
 
+      if @at_start
+        @at_start = false
+
+        if end_value
+          if @current > end_value || (@current == end_value && @range.exclusive?)
+            @reached_end = true
+            return stop
+          end
+        end
+
+        return @current
+      end
+
       if end_value.nil? || @current < end_value
-        value = @current
-        @step.times { @current = @current.succ }
-        value
+        @step.times do
+          if end_value && @current >= end_value
+            @reached_end = true
+            return stop
+          end
+
+          @current = @current.succ
+        end
+
+        if @current == end_value && @range.exclusive?
+          @reached_end = true
+          stop
+        else
+          @current
+        end
       else
         @reached_end = true
-
-        if !@range.excludes_end? && @current == @range.end
-          @current
-        else
-          stop
-        end
+        stop
       end
     end
 

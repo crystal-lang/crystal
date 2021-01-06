@@ -190,9 +190,9 @@ class URI
   #
   # Everything that is not wrapped in square brackets is returned unchanged.
   #
-  # ```cr
-  # URI.unwrap_ipv6("[::1]") # => "::1"
-  # URI.unwrap_ipv6("127.0.0.1") # => "127.0.0.1"
+  # ```
+  # URI.unwrap_ipv6("[::1]")       # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
   def self.unwrap_ipv6(host)
@@ -250,26 +250,53 @@ class URI
     HTTP::Params.parse(@query || "")
   end
 
+  # Returns the authority component of this URI.
+  # It is formatted as `user:pass@host:port` with missing parts being omitted.
+  #
+  # If the URI does not have any authority information, the result is `nil`.
+  #
+  # ```
+  # uri = URI.parse "http://user:pass@example.com:80/path?query"
+  # uri.authority # => "user:pass@example.com"
+  #
+  # uri = URI.parse(path: "/relative")
+  # uri.authority # => nil
+  # ```
+  def authority : String?
+    return unless @host || @user || @port
+
+    String.build do |io|
+      authority(io)
+    end
+  end
+
+  # :ditto:
+  def authority(io : IO) : Nil
+    if user = @user
+      userinfo(user, io)
+      io << '@'
+    end
+
+    if host = @host
+      URI.encode(host, io)
+    end
+
+    if port = @port
+      io << ':' << port
+    end
+  end
+
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'
     end
 
-    authority = @user || @host || @port
-    io << "//" if authority
-    if user = @user
-      userinfo(user, io)
-      io << '@'
-    end
-    if host = @host
-      URI.encode(host, io)
-    end
-    if port = @port
-      io << ':' << port
-    end
+    has_authority = @host || @user || @port
+    io << "//" if has_authority
+    authority(io)
 
-    if authority
+    if has_authority
       if !@path.empty? && !@path.starts_with?('/')
         io << '/'
       end

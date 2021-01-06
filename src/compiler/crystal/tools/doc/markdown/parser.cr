@@ -165,11 +165,7 @@ class Crystal::Doc::Markdown::Parser
   def render_fenced_code(language : String)
     line = @lines[@line]
 
-    if language.empty?
-      @renderer.begin_code nil
-    else
-      @renderer.begin_code language
-    end
+    @renderer.begin_code language.presence
 
     @line += 1
 

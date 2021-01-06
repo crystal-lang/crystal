@@ -88,9 +88,13 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   end
 
   def begin_code(language = nil)
+    if language.nil? || language == "cr"
+      language = "crystal"
+    end
+
     super
 
-    if !language || language == "crystal"
+    if language == "crystal"
       @inside_code = true
       @code_buffer.clear
     end

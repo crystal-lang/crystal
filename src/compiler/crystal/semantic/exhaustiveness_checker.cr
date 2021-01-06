@@ -403,8 +403,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_bool.each do |bool, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{bool}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{bool}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases
@@ -533,8 +534,9 @@ struct Crystal::ExhaustivenessChecker
         end
 
         missing_cases_per_member.each do |member, missing_cases|
-          next if missing_cases.empty?
-          gathered_missing_cases << "#{member}, #{missing_cases.join(", ")}"
+          missing_cases.each do |missing_case|
+            gathered_missing_cases << "#{member}, #{missing_case}"
+          end
         end
 
         gathered_missing_cases
