@@ -1,4 +1,5 @@
 require "c/grp"
+require "../unix"
 
 module Crystal::System::Group
   private GETGR_R_SIZE_MAX = 1024 * 16
@@ -12,20 +13,10 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    while (ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))) != 0
-      case ret
-      when LibC::ENOENT, LibC::ESRCH, LibC::EBADF, LibC::EPERM
-        return nil
-      when LibC::ERANGE
-        raise RuntimeError.from_errno("getgrnam_r") if buf.size >= GETGR_R_SIZE_MAX
-        buf = Bytes.new(buf.size * 2)
-      else
-        raise RuntimeError.from_errno("getgrnam_r")
-      end
+    System.retry_with_buffer("getgrnam_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
+
     from_struct(grp) if grp_pointer
   end
 
@@ -35,19 +26,8 @@ module Crystal::System::Group
 
     grp = uninitialized LibC::Group
     grp_pointer = pointerof(grp)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    while (ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))) != 0
-      case ret
-      when LibC::ENOENT, LibC::ESRCH, LibC::EBADF, LibC::EPERM
-        return nil
-      when LibC::ERANGE
-        raise RuntimeError.from_errno("getgrgid_r") if buf.size >= GETGR_R_SIZE_MAX
-        buf = Bytes.new(buf.size * 2)
-      else
-        raise RuntimeError.from_errno("getgrgid_r")
-      end
+    System.retry_with_buffer("getgrgid_r", GETGR_R_SIZE_MAX) do |buf|
+      LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
     from_struct(grp) if grp_pointer
   end

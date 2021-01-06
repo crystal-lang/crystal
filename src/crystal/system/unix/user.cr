@@ -1,4 +1,5 @@
 require "c/pwd"
+require "../unix"
 
 module Crystal::System::User
   private GETPW_R_SIZE_MAX = 1024 * 16
@@ -13,20 +14,10 @@ module Crystal::System::User
 
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    while (ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))) != 0
-      case ret
-      when LibC::ENOENT, LibC::ESRCH, LibC::EBADF, LibC::EPERM
-        return nil
-      when LibC::ERANGE
-        raise RuntimeError.from_errno("getpwnam_r") if buf.size >= GETPW_R_SIZE_MAX
-        buf = Bytes.new(buf.size * 2)
-      else
-        raise RuntimeError.from_errno("getpwnam_r")
-      end
+    System.retry_with_buffer("getpwnam_r", GETPW_R_SIZE_MAX) do |buf|
+      LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
+
     from_struct(pwd) if pwd_pointer
   end
 
@@ -36,20 +27,10 @@ module Crystal::System::User
 
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    while (ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))) != 0
-      case ret
-      when LibC::ENOENT, LibC::ESRCH, LibC::EBADF, LibC::EPERM
-        return nil
-      when LibC::ERANGE
-        raise RuntimeError.from_errno("getpwuid_r") if buf.size >= GETPW_R_SIZE_MAX
-        buf = Bytes.new(buf.size * 2)
-      else
-        raise RuntimeError.from_errno("getpwuid_r")
-      end
+    System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
+      LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
+
     from_struct(pwd) if pwd_pointer
   end
 end
