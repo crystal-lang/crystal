@@ -313,7 +313,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     target = current_type.metaclass.as(ModuleType)
     begin
       target.add_macro node
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       node.raise ex.message
     end
 

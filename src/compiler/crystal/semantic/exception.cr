@@ -2,11 +2,11 @@ require "../exception"
 require "../types"
 
 module Crystal
-  class TypeException < Exception
+  class TypeException < CodeError
     include ErrorFormat
 
     getter node
-    property inner : Exception?
+    property inner : CodeError?
     getter line_number : Int32?
     getter column_number : Int32
     getter size : Int32
@@ -171,7 +171,7 @@ module Crystal
     end
   end
 
-  class MethodTraceException < Exception
+  class MethodTraceException < CodeError
     def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
     end
