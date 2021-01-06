@@ -124,22 +124,6 @@ describe Time::Span do
     t2.nanoseconds.should eq(-5_000_000)
   end
 
-  it "test add" do
-    t1 = Time::Span.new days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
-    t2 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
-    t3 = t1 + t2
-
-    t3.days.should eq(3)
-    t3.hours.should eq(5)
-    t3.minutes.should eq(7)
-    t3.seconds.should eq(9)
-    t3.milliseconds.should eq(11)
-    t3.nanoseconds.should eq(11_000_000)
-    t3.to_s.should eq("3.05:07:09.011000000")
-
-    # TODO check overflow
-  end
-
   it "test compare" do
     t1 = Time::Span.new nanoseconds: -1
     t2 = Time::Span.new nanoseconds: 1
@@ -203,44 +187,92 @@ describe Time::Span do
     t1.hash.should eq(t2.hash)
   end
 
-  it "test subtract" do
-    t1 = Time::Span.new days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
-    t2 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
-    t3 = t1 - t2
+  describe "arithmetic" do
+    it "#+" do
+      t1 = Time::Span.new days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+      t2 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
+      t3 = t1 + t2
 
-    t3.to_s.should eq("1.01:01:01.001000000")
+      t3.days.should eq(3)
+      t3.hours.should eq(5)
+      t3.minutes.should eq(7)
+      t3.seconds.should eq(9)
+      t3.milliseconds.should eq(11)
+      t3.nanoseconds.should eq(11_000_000)
+      t3.to_s.should eq("3.05:07:09.011000000")
 
-    # TODO check overflow
-  end
+      expect_raises(OverflowError) do
+        Time::Span::MAX + Time::Span.new(seconds: 1)
+      end
+      expect_raises(OverflowError) do
+        Time::Span.new(seconds: Int64::MAX) + Time::Span.new(seconds: 1)
+      end
+      (Time::Span.new(nanoseconds: Int64::MAX) + Time::Span.new(nanoseconds: 1)).should eq Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775808
+    end
 
-  it "test multiply" do
-    t1 = Time::Span.new days: 5, hours: 4, minutes: 3, seconds: 2, nanoseconds: 1_000_000
-    t2 = t1 * 61
-    t3 = t1 * 0.5
+    it "#-" do
+      t1 = Time::Span.new days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+      t2 = Time::Span.new days: 1, hours: 2, minutes: 3, seconds: 4, nanoseconds: 5_000_000
+      t3 = t1 - t2
 
-    t2.should eq(Time::Span.new days: 315, hours: 7, minutes: 5, seconds: 2, nanoseconds: 61_000_000)
-    t3.should eq(Time::Span.new days: 2, hours: 14, minutes: 1, seconds: 31, nanoseconds: 500_000)
+      t3.to_s.should eq("1.01:01:01.001000000")
 
-    # TODO check overflow
-  end
+      expect_raises(OverflowError) do
+        Time::Span::MIN - Time::Span.new(seconds: 1)
+      end
+      expect_raises(OverflowError) do
+        Time::Span.new(seconds: Int64::MIN) - Time::Span.new(seconds: 1)
+      end
+      (Time::Span.new(nanoseconds: Int64::MIN) - Time::Span.new(nanoseconds: 1)).should eq -Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775809
+    end
 
-  it "test divide" do
-    t1 = Time::Span.new days: 3, hours: 3, minutes: 3, seconds: 3, nanoseconds: 3_000_000
-    t2 = t1 / 2
-    t3 = t1 / 1.5
+    it "#*" do
+      t1 = Time::Span.new days: 5, hours: 4, minutes: 3, seconds: 2, nanoseconds: 1_000_000
+      t2 = t1 * 61
+      t3 = t1 * 0.5
 
-    t2.should eq(Time::Span.new(days: 1, hours: 13, minutes: 31, seconds: 31, nanoseconds: 501_000_000) + Time::Span.new(nanoseconds: 500_000))
-    t3.should eq(Time::Span.new days: 2, hours: 2, minutes: 2, seconds: 2, nanoseconds: 2_000_000)
+      t2.should eq(Time::Span.new days: 315, hours: 7, minutes: 5, seconds: 2, nanoseconds: 61_000_000)
+      t3.should eq(Time::Span.new days: 2, hours: 14, minutes: 1, seconds: 31, nanoseconds: 500_000)
 
-    # TODO check overflow
-  end
+      expect_raises(OverflowError) do
+        Time::Span::MAX * 2
+      end
+      t = Time::Span.new(seconds: Int64::MAX // 2 + 1)
+      expect_raises(OverflowError) do
+        t * 2
+      end
+      t = Time::Span.new(nanoseconds: Int64::MAX // 2 + 1)
+      (t * 2).should eq Time::Span.new days: 106751, hours: 23, minutes: 47, seconds: 16, nanoseconds: 854775808
+    end
 
-  it "divides by another Time::Span" do
-    ratio = 20.minutes / 15.seconds
-    ratio.should eq(80.0)
+    it "#/(Number)" do
+      t1 = Time::Span.new days: 3, hours: 3, minutes: 3, seconds: 3, nanoseconds: 3_000_000
+      t2 = t1 / 2
+      t3 = t1 / 1.5
 
-    ratio2 = 45.seconds / 1.minute
-    ratio2.should eq(0.75)
+      t2.should eq(Time::Span.new(days: 1, hours: 13, minutes: 31, seconds: 31, nanoseconds: 501_000_000) + Time::Span.new(nanoseconds: 500_000))
+      t3.should eq(Time::Span.new days: 2, hours: 2, minutes: 2, seconds: 2, nanoseconds: 2_000_000)
+
+      expect_raises(DivisionByZeroError) do
+        Time::Span::MAX / 0
+      end
+    end
+
+    it "#/(self)" do
+      ratio = 20.minutes / 15.seconds
+      ratio.should eq(80.0)
+
+      ratio2 = 45.seconds / 1.minute
+      ratio2.should eq(0.75)
+    end
+
+    it "#sign" do
+      Time::Span.new(days: 2).sign.should eq 1
+      Time::Span.new(days: -2).sign.should eq -1
+      Time::Span.new.sign.should eq 0
+      Time::Span.new(nanoseconds: -2).sign.should eq -1
+      Time::Span.new(nanoseconds: 2).sign.should eq 1
+    end
   end
 
   it "test to_s" do
