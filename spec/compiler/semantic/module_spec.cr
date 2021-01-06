@@ -101,7 +101,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it "errors if including generic module and not specifying type vars" do
     assert_error "
       module Foo(T)
       end
@@ -110,7 +110,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when including Foo(T)"
   end
 
   it "includes generic module explicitly" do
