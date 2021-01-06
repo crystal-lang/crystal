@@ -159,7 +159,7 @@ module Crystal
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
-    # Raises `Crystal::Exception` if there's an error in the
+    # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
@@ -183,7 +183,7 @@ module Crystal
     # contain all types and methods. This can be useful to generate
     # API docs, analyze type relationships, etc.
     #
-    # Raises `Crystal::Exception` if there's an error in the
+    # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not

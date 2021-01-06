@@ -909,7 +909,7 @@ class Crystal::Call
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
           else
@@ -923,7 +923,7 @@ class Crystal::Call
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
-              rescue ex : Crystal::Exception
+              rescue ex : Crystal::CodeError
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
                 else
@@ -992,7 +992,7 @@ class Crystal::Call
   def bubbling_exception
     begin
       yield
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if obj = @obj
         if name == "initialize"
           # Avoid putting 'initialize' in the error trace
