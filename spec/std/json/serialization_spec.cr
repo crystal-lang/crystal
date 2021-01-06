@@ -13,6 +13,12 @@ enum JSONSpecEnum
   Two
 end
 
+@[Flags]
+enum JSONSpecFlagEnum
+  One
+  Two
+end
+
 describe "JSON serialization" do
   describe "from_json" do
     it "does String.from_json" do
@@ -188,6 +194,17 @@ describe "JSON serialization" do
 
       expect_raises(ArgumentError, "Unknown enum JSONSpecEnum value: Three") do
         JSONSpecEnum.from_json(%("Three"))
+      end
+    end
+
+    it "does for flag Enum with number" do
+      JSONSpecFlagEnum.from_json("0").should eq(JSONSpecFlagEnum::None)
+      JSONSpecFlagEnum.from_json("1").should eq(JSONSpecFlagEnum::One)
+      JSONSpecFlagEnum.from_json("2").should eq(JSONSpecFlagEnum::Two)
+      JSONSpecFlagEnum.from_json("3").should eq(JSONSpecFlagEnum::All)
+
+      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: 4") do
+        JSONSpecFlagEnum.from_json("4")
       end
     end
 
