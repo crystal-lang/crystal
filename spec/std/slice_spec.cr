@@ -542,42 +542,6 @@ describe "Slice" do
       b.to_a.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
-
-    it "doesn't crash on special situations" do
-      Slice[1, 2, 3].sort { 1 }
-      Slice.[BadSortingClass.new].sort
-    end
-
-    it "can sort just by using <=> (#6608)" do
-      spaceships = [
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      sorted = spaceships.sort
-      4.times do |i|
-        sorted[i].value.should eq(i)
-      end
-    end
-
-    it "raises if <=> returns nil" do
-      spaceships = [
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort
-      end
-    end
-
-    it "raises if sort block returns nil" do
-      expect_raises(ArgumentError) do
-        [1, 2].sort { nil }
-      end
-    end
   end
 
   describe "sort!" do
