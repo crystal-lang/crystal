@@ -185,4 +185,15 @@ describe "Semantic: pointer" do
       x = pointerof(u)
     ))
   end
+
+  it "errors when assigning non-covariant type with value= (#10211)" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      ptr = Pointer(Gen(Char | Int32)).malloc(1_u64)
+      ptr.value = Gen(Int32).new
+      ),
+      "type must be Gen(Char | Int32), not Gen(Int32)"
+  end
 end
