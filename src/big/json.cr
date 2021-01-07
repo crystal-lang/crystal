@@ -2,20 +2,6 @@ require "json"
 require "big"
 
 class JSON::Builder
-  # Writes a big integer.
-  def number(number : BigInt)
-    scalar do
-      @io << number
-    end
-  end
-
-  # Writes a big float.
-  def number(number : BigFloat)
-    scalar do
-      @io << number
-    end
-  end
-
   # Writes a big decimal.
   def number(number : BigDecimal)
     scalar do
@@ -51,9 +37,11 @@ struct BigFloat
     when .int?
       pull.read_int
       value = pull.raw_value
-    else
+    when .float?
       pull.read_float
       value = pull.raw_value
+    else
+      value = pull.read_string
     end
     new(value)
   end
