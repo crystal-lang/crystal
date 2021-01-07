@@ -637,7 +637,7 @@ module Crystal
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
-          restricted = type_var.type.implements?(other_type_var.type)
+          restricted = type_var.type == other_type_var.type
           return nil unless restricted
         else
           return nil unless type_var == other_type_var
@@ -732,14 +732,14 @@ module Crystal
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
-        restricted = restrict_type_var(type_var, other_type_var, context)
+        restricted = restrict_type_var(type_var, other_type_var, context, strict: true)
         return super unless restricted
       end
 
       self
     end
 
-    def restrict_type_var(type_var, other_type_var, context)
+    def restrict_type_var(type_var, other_type_var, context, strict = false)
       if type_var.is_a?(NumberLiteral)
         case other_type_var
         when NumberLiteral
@@ -773,7 +773,7 @@ module Crystal
 
       if type_var.is_a?(ASTNode)
         type_var.restriction_of?(other_type_var, context.instantiated_type)
-      elsif context.strict?
+      elsif context.strict? || strict
         type_var == other_type_var
       else
         # To prevent infinite recursion, it checks equality between
