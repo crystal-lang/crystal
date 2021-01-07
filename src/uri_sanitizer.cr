@@ -33,7 +33,7 @@ class Sanitize::URISanitizer
 
   # Configures whether fragment-only URIs are resolved on `base_url`.
   #
-  # ```cr
+  # ```
   # sanitizer = Sanitize::URISanitizer.new
   # sanitizer.base_url = URI.parse("https://example.com/base/")
   # sanitizer.sanitize(URI.parse("#foo")) # => "#foo"
