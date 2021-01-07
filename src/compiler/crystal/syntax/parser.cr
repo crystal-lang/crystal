@@ -5662,10 +5662,16 @@ module Crystal
       check :","
 
       next_token_skip_space_or_newline
-      check :INSTANCE_VAR
-
-      ivar_location = @token.location
-      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
+      offset = case @token.type
+               when :INSTANCE_VAR
+                 InstanceVar.new(@token.value.to_s)
+               when :NUMBER
+                 raise "expecting an integer offset, not '#{@token}'", @token if @token.number_kind != :i32
+                 NumberLiteral.new(@token.value.to_s, @token.number_kind)
+               else
+                 raise "expecting an instance variable or a integer offset, not '#{@token}'", @token
+               end
+      offset.at(@token.location)
 
       next_token_skip_space_or_newline
 
@@ -5673,7 +5679,7 @@ module Crystal
       check :")"
       next_token_skip_space
 
-      OffsetOf.new(type, instance_var).at_end(end_location)
+      OffsetOf.new(type, offset).at_end(end_location)
     end
 
     def parse_type_def
