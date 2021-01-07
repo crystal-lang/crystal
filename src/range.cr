@@ -502,7 +502,7 @@ struct Range(B, E)
     end
 
     def sum(initial)
-      super if @reached_end
+      return super if @reached_end
 
       b = @current
       e = @range.end

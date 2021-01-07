@@ -243,7 +243,7 @@ struct Number
     # Overrides `Enumerable#sum` to use more performant implementation on integer
     # ranges.
     def sum(initial)
-      super if @reached_end
+      return super if @reached_end
 
       current = @current
       limit = @limit
