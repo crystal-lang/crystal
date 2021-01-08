@@ -1058,7 +1058,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
+    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1068,10 +1068,19 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        owner = owner.as(ProcInstanceType)
-        proc_arg_type = owner.arg_types[index]
-        unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+        case body.as(Primitive).name
+        when "proc_call"
+          owner = owner.as(ProcInstanceType)
+          proc_arg_type = owner.arg_types[index]
+          unless type.covariant?(proc_arg_type)
+            self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          end
+        when "pointer_set"
+          owner = owner.remove_typedef.as(PointerInstanceType)
+          pointer_type = owner.var.type
+          unless type.filter_by(pointer_type)
+            self.args[index].raise "type must be #{pointer_type}, not #{type}"
+          end
         end
       end
 
