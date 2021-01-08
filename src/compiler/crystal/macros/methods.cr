@@ -929,10 +929,6 @@ module Crystal
         interpret_argless_method(method, args) { @name || Nop.new }
       when "delete"
         interpret_one_arg_method(method, args) do |key|
-          unless key.is_a? Crystal::NumberLiteral | Crystal::SymbolLiteral | Crystal::StringLiteral | Crystal::BoolLiteral
-            key.raise "argument to HashLiteral#delete must be a number, bool, symbol, or string, not #{key.class_desc}:\n\n#{key}"
-          end
-
           entries.reject! { |e| e.key == key }
 
           self
@@ -959,8 +955,8 @@ module Crystal
       case method
       when "delete"
         interpret_one_arg_method(method, args) do |key|
-          unless key.is_a? Crystal::StringLiteral
-            key.raise "argument to NamedTupleLiteral#delete must be a string, not #{key.class_desc}:\n\n#{key}"
+          unless key.is_a? Crystal::SymbolLiteral | Crystal::StringLiteral
+            key.raise "argument to NamedTupleLiteral#delete must be a string or symbol, not #{key.class_desc}:\n\n#{key}"
           end
 
           entries.reject! { |e| e.key == key.value }

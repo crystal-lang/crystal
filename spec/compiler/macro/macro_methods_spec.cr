@@ -971,19 +971,11 @@ module Crystal
           )
         end
 
-        it "with Number key" do
+        it "with Array key" do
           assert_macro("",
-            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete 1}}),
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true [1, 2] => "arr"}.delete [1, 2]}}),
             [] of ASTNode,
-            %({"1" => "1", :"1" => :"1", true => true})
-          )
-        end
-
-        it "with Bool key" do
-          assert_macro("",
-            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete true}}),
-            [] of ASTNode,
-            %({"1" => "1", 1 => 1, :"1" => :"1"})
+            %({"1" => "1", 1 => 1, :"1" => :"1", true => true})
           )
         end
       end
@@ -1110,6 +1102,14 @@ module Crystal
         it "unquoted key" do
           assert_macro("",
             %({{{foo: "bar", "key-hyphen": "value"}.delete "foo"}}),
+            [] of ASTNode,
+            %({"key-hyphen": "value"})
+          )
+        end
+
+        it "symbol key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete :foo}}),
             [] of ASTNode,
             %({"key-hyphen": "value"})
           )
