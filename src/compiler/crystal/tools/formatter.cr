@@ -2680,11 +2680,11 @@ module Crystal
           if wrote_newline || @token.type == :NEWLINE
             unless wrote_newline
               next_token_skip_space_or_newline
-              write "," if @token.type != :")"
+              write ","
               write_line
             end
             needs_space = false
-            block_indent += 2
+            block_indent += 2 if @token.type != :")" # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
             write "," if @token.type != :")" # foo(1, &.foo) case

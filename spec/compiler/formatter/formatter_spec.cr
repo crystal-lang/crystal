@@ -1772,4 +1772,21 @@ describe Crystal::Formatter do
       do
       end
     CODE
+
+  # #10190
+  assert_format <<-CODE
+    foo(
+      1,
+    ) do
+      2
+    end
+    CODE
+
+  assert_format <<-CODE
+    foo(
+      1,
+    ) {
+      2
+    }
+    CODE
 end
