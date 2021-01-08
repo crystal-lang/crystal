@@ -728,7 +728,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#delete`
-    def delete(key : StringLiteral | SymbolLiteral | NumberLiteral | BoolLiteral) : HashLiteral
+    def delete(key : ASTNode) : HashLiteral
     end
 
     # Similar to `Hash#each`
@@ -799,7 +799,7 @@ module Crystal::Macros
   # A named tuple literal.
   class NamedTupleLiteral < ASTNode
     # Similar to `Hash#delete`.
-    def delete(key : StringLiteral) : NamedTupleLiteral
+    def delete(key : StringLiteral | SymbolLiteral) : NamedTupleLiteral
     end
 
     # Similar to `NamedTuple#each`
