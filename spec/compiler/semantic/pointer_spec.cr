@@ -194,7 +194,7 @@ describe "Semantic: pointer" do
       ptr = Pointer(Gen(Char | Int32)).malloc(1_u64)
       ptr.value = Gen(Int32).new
       ),
-      "no overload matches 'Pointer(Gen(Char | Int32))#value=' with type Gen(Int32)"
+      "type must be Gen(Char | Int32), not Gen(Int32)"
   end
 
   it "errors with non-matching generic value with value=, generic type (#10211)" do
@@ -209,6 +209,6 @@ describe "Semantic: pointer" do
       ptr = Pointer(Moo(Char | Int32)).malloc(1_u64)
       ptr.value = Foo(Int32).new
       ),
-      "no overload matches 'Pointer(Moo(Char | Int32))#value=' with type Foo(Int32)"
+      "type must be Moo(Char | Int32), not Foo(Int32)"
   end
 end
