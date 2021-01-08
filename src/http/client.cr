@@ -855,7 +855,7 @@ class HTTP::Client
     host = validate_host(uri)
 
     port = uri.port
-    path = uri.full_path
+    path = uri.request_target
     user = uri.user
     password = uri.password
 

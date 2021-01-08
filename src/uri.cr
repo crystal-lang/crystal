@@ -203,21 +203,38 @@ class URI
     end
   end
 
-  # Returns the full path of this URI.
+  # Returns the concatenation of `path` and `query` as it would be used as a
+  # request target in an HTTP request.
+  #
+  # If `path` is empty in an hierarchical URI, `"/"` is used.
   #
   # ```
   # require "uri"
   #
-  # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-  # uri.full_path # => "/posts?id=30&limit=5"
+  # uri = URI.parse "http://example.com/posts?id=30&limit=5#time=1305298413"
+  # uri.request_target # => "/posts?id=30&limit=5"
+  #
+  # uri = URI.new(path: "", query: "foo=bar")
+  # uri.request_target # => "/?foo=bar"
   # ```
-  def full_path : String
+  def request_target : String
     String.build do |str|
-      str << (@path.empty? ? '/' : @path)
+      if @path.empty?
+        str << "/" unless opaque?
+      else
+        str << @path
+      end
+
       if (query = @query) && !query.empty?
         str << '?' << query
       end
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#request_target` instead.")]
+  def full_path : String
+    request_target
   end
 
   # Returns `true` if URI has a *scheme* specified.
