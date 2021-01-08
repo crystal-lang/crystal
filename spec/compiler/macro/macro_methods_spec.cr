@@ -973,7 +973,7 @@ module Crystal
 
         it "with Array key" do
           assert_macro("",
-            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true [1, 2] => "arr"}.delete [1, 2]}}),
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true, [1, 2] => "arr"}.delete [1, 2]}}),
             [] of ASTNode,
             %({"1" => "1", 1 => 1, :"1" => :"1", true => true})
           )

@@ -955,11 +955,12 @@ module Crystal
       case method
       when "delete"
         interpret_one_arg_method(method, args) do |key|
-          unless key.is_a? Crystal::SymbolLiteral | Crystal::StringLiteral
+          case key
+          when SymbolLiteral, StringLiteral
+            entries.reject! { |e| e.key == key.value }
+          else
             key.raise "argument to NamedTupleLiteral#delete must be a string or symbol, not #{key.class_desc}:\n\n#{key}"
           end
-
-          entries.reject! { |e| e.key == key.value }
 
           self
         end
