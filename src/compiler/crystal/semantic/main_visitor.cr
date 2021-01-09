@@ -1024,7 +1024,7 @@ module Crystal
           Make sure to read the whole docs section about blocks and procs,
           including "Capturing blocks" and "Block forwarding":
 
-          https://crystal-lang.org/docs/syntax_and_semantics/blocks_and_procs.html
+          https://crystal-lang.org/reference/syntax_and_semantics/blocks_and_procs.html
           MSG
       end
 
