@@ -31,7 +31,6 @@ stretch_depth = max_depth + 1
 stretch_tree = bottom_up_tree(0, stretch_depth)
 
 puts "stretch tree of depth #{stretch_depth}\t check: #{item_check(stretch_tree)}"
-stretch_tree = nil
 
 long_lived_tree = bottom_up_tree(0, max_depth)
 
