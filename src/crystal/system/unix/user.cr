@@ -17,7 +17,7 @@ module Crystal::System::User
     buf = initial_buf.to_slice
 
     ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
+    while ret == LibC::Errno::ERANGE && buf.size < GETPW_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
@@ -37,7 +37,7 @@ module Crystal::System::User
     buf = initial_buf.to_slice
 
     ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
+    while ret == LibC::Errno::ERANGE && buf.size < GETPW_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end

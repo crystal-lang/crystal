@@ -16,7 +16,7 @@ module Crystal::System::Group
     buf = initial_buf.to_slice
 
     ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
+    while ret == LibC::Errno::ERANGE && buf.size < GETGR_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getgrnam_r(groupname, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
@@ -36,7 +36,7 @@ module Crystal::System::Group
     buf = initial_buf.to_slice
 
     ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
-    while ret == LibC::ERANGE && buf.size < GETGR_R_SIZE_MAX
+    while ret == LibC::Errno::ERANGE && buf.size < GETGR_R_SIZE_MAX
       buf = Bytes.new(buf.size * 2)
       ret = LibC.getgrgid_r(groupid, grp_pointer, buf, buf.size, pointerof(grp_pointer))
     end
