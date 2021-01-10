@@ -68,6 +68,7 @@ class TCPSocket < IPSocket
   # Disables the Nagle algorithm when set to `true`, otherwise enables it.
   def tcp_nodelay=(val : Bool)
     setsockopt_bool LibC::TCP_NODELAY, val, level: Protocol::TCP
+    val
   end
 
   {% unless flag?(:openbsd) %}

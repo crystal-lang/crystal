@@ -261,6 +261,7 @@ struct XML::Builder
       call SetIndent, 1
       call SetIndentString, string_to_unsafe(str)
     end
+    str
   end
 
   # Sets the indent *level* (number of spaces).
@@ -271,6 +272,7 @@ struct XML::Builder
       call SetIndent, 1
       call SetIndentString, " " * level
     end
+    level
   end
 
   # Sets the quote char to use, either `'` or `"`.
@@ -280,6 +282,7 @@ struct XML::Builder
     end
 
     call SetQuoteChar, char.ord
+    char
   end
 
   private macro call(name, *args)

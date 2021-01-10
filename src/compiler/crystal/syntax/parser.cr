@@ -76,6 +76,7 @@ module Crystal
     def wants_doc=(wants_doc)
       @wants_doc = !!wants_doc
       @doc_enabled = !!wants_doc
+      wants_doc
     end
 
     def parse

@@ -25,6 +25,7 @@ class SDL::Surface
 
   def []=(offset, color)
     (@surface.value.pixels.as(UInt32*))[offset] = color.to_u32
+    color
   end
 
   def []=(x, y, color)

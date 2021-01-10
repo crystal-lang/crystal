@@ -27,11 +27,13 @@ class LLVM::Module
 
     def name=(name : String)
       LibLLVM.set_module_identifier(self, name, name.bytesize)
+      name
     end
   {% end %}
 
   def target=(target)
     LibLLVM.set_target(self, target)
+    target
   end
 
   def data_layout=(data : TargetData)
@@ -41,6 +43,7 @@ class LLVM::Module
       # LLVM >= 3.9
       LibLLVM.set_module_data_layout(self, data)
     {% end %}
+    data
   end
 
   def dump

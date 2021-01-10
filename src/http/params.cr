@@ -205,6 +205,7 @@ module HTTP
         in String        then [value]
         in Array(String) then value
         end
+      value
     end
 
     # Returns all values for specified param *name*.

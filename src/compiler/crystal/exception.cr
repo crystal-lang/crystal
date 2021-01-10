@@ -16,6 +16,7 @@ module Crystal
 
     def warning=(warning)
       @warning = !!warning
+      warning
     end
 
     abstract def to_s_with_source(io : IO, source)

@@ -66,6 +66,7 @@ class HTTP::Server
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
       headers["Content-Length"] = content_length.to_s
+      content_length
     end
 
     # Convenience method to retrieve the HTTP status code.

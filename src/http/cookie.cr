@@ -197,6 +197,7 @@ module HTTP
     # ```
     def []=(key, value : String)
       self[key] = Cookie.new(key, value)
+      value
     end
 
     # Sets a new cookie in the collection to the given `HTTP::Cookie`

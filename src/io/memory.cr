@@ -332,6 +332,7 @@ class IO::Memory < IO
     raise ArgumentError.new("Negative pos") if value < 0
 
     @pos = value.to_i
+    value
   end
 
   # Yields an `IO::Memory` to read a section of this `IO`'s buffer.

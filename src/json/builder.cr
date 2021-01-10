@@ -272,6 +272,7 @@ class JSON::Builder
     else
       @indent = string
     end
+    string
   end
 
   # Sets the indent *level* (number of spaces).
@@ -281,6 +282,7 @@ class JSON::Builder
     else
       @indent = " " * level
     end
+    level
   end
 
   # Returns `true` if the next thing that must pushed into this

@@ -69,6 +69,7 @@ class Log
     # because `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
     # but if the metadata is built manually the construct `Log.context = metadata` will be used.
     Log.context = value.metadata
+    value
   end
 
   # Returns the current fiber logging context.

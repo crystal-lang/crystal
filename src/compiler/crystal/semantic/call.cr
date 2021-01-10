@@ -1146,6 +1146,7 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+    value
   end
 
   def super?

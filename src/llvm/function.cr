@@ -17,6 +17,7 @@ struct LLVM::Function
 
   def call_convention=(cc)
     LibLLVM.set_function_call_convention(self, cc)
+    cc
   end
 
   def add_attribute(attribute : Attribute, index = AttributeIndex::FunctionIndex)
@@ -82,6 +83,7 @@ struct LLVM::Function
 
   def personality_function=(fn)
     LibLLVM.set_personality_fn(self, fn)
+    fn
   end
 
   def delete

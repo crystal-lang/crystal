@@ -230,6 +230,7 @@ abstract class OpenSSL::SSL::Context
   def ca_certificates=(file_path : String)
     ret = LibSSL.ssl_ctx_load_verify_locations(@handle, file_path, nil)
     raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
+    file_path
   end
 
   # Sets the path to a directory containing all CA certificates used to
@@ -238,6 +239,7 @@ abstract class OpenSSL::SSL::Context
   def ca_certificates_path=(dir_path : String)
     ret = LibSSL.ssl_ctx_load_verify_locations(@handle, nil, dir_path)
     raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
+    dir_path
   end
 
   # Specify the path to the certificate chain file to use. In server mode this
@@ -245,6 +247,7 @@ abstract class OpenSSL::SSL::Context
   def certificate_chain=(file_path : String)
     ret = LibSSL.ssl_ctx_use_certificate_chain_file(@handle, file_path)
     raise OpenSSL::Error.new("SSL_CTX_use_certificate_chain_file") unless ret == 1
+    file_path
   end
 
   # Specify the path to the private key to use. The key must in PEM format.
@@ -252,6 +255,7 @@ abstract class OpenSSL::SSL::Context
   def private_key=(file_path : String)
     ret = LibSSL.ssl_ctx_use_privatekey_file(@handle, file_path, LibSSL::SSLFileType::PEM)
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
+    file_path
   end
 
   # Specify a list of TLS ciphers to use or discard.
@@ -410,6 +414,7 @@ abstract class OpenSSL::SSL::Context
   # Sets the verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
   def verify_mode=(mode : OpenSSL::SSL::VerifyMode)
     LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
+    mode
   end
 
   {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
@@ -428,6 +433,7 @@ abstract class OpenSSL::SSL::Context
       proto[0] = protocol.bytesize.to_u8
       protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
       self.alpn_protocol = proto
+      protocol
     end
 
     private def alpn_protocol=(protocol : Bytes)
@@ -442,6 +448,7 @@ abstract class OpenSSL::SSL::Context
       }
       @alpn_protocol = alpn_protocol = Box.box(protocol)
       LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
+      protocol
     end
 
     # Sets this context verify param to the default one of the given name.
@@ -453,6 +460,7 @@ abstract class OpenSSL::SSL::Context
       raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
       ret = LibSSL.ssl_ctx_set1_param(@handle, param)
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
+      name
     end
 
     # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to

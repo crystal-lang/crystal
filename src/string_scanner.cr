@@ -69,6 +69,7 @@ class StringScanner
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
     @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
+    position
   end
 
   # Returns the current position of the scan offset.
