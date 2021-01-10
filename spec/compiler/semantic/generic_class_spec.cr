@@ -714,6 +714,36 @@ describe "Semantic: generic class" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
+  it "instantiates generic variadic class, accesses T from class method through superclass" do
+    assert_type(%(
+      class Foo(*T)
+        def self.t
+          T
+        end
+      end
+
+      class Bar(*T) < Foo(*T)
+      end
+
+      Bar(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method through superclass" do
+    assert_type(%(
+      class Foo(*T)
+        def t
+          T
+        end
+      end
+
+      class Bar(*T) < Foo(*T)
+      end
+
+      Bar(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
   it "splats generic type var" do
     assert_type(%(
       class Foo(X, Y)
@@ -748,6 +778,21 @@ describe "Semantic: generic class" do
 
       Foo(Int32, Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method through superclass, more args" do
+    assert_type(%(
+      class Foo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Bar(*T) < Foo(String, *T, Float64)
+      end
+
+      Bar(Int32, Char).new.t
+      )) { tuple_of([string.metaclass, tuple_of([int32, char]).metaclass, float64.metaclass]) }
   end
 
   it "virtual metaclass type implements super virtual metaclass type (#3007)" do
