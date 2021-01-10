@@ -104,7 +104,11 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
-        __arg{{i}} : typeof({{arg}}),
+        {% if arg.is_a?(Splat) %}
+          __arg{{i}} : typeof({{arg.exp}}),
+        {% else %}
+          __arg{{i}} : typeof({{arg}}),
+        {% end %}
       {% end %}
       {% if call.named_args %}
         {% for narg, i in call.named_args %}
@@ -115,7 +119,7 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
       spawn(name: {{name}}, same_thread: {{same_thread}}) do
         {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
-            __arg{{i}},
+            {% if arg.is_a?(Splat) %}*{% end %}__arg{{i}},
           {% end %}
           {% if call.named_args %}
             {% for narg, i in call.named_args %}
@@ -124,11 +128,18 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
           {% end %}
         )
       end
-    {% if call.named_args %}
-      }.call({{*call.args}}, {{*call.named_args.map(&.value)}})
-    {% else %}
-      }.call({{*call.args}})
-    {% end %}
+      }.call(
+        {% for arg, i in call.args %}
+          {% if arg.is_a?(Splat) %}
+            {{arg.exp}},
+          {% else %}
+            {{arg}},
+          {% end %}
+        {% end %}
+        {% if call.named_args %}
+          {{call.named_args.map(&.value).splat}}
+        {% end %}
+      )
   {% else %}
     spawn do
       {{call}}
