@@ -138,7 +138,7 @@ class OAuth::Consumer
     # If the target uri is absolute, we use that instead of the default values
     if uri.host
       client = HTTP::Client.new(uri)
-      target_uri = "#{uri.path}?#{uri.query}"
+      target_uri = uri.request_target
     else
       client = HTTP::Client.new @host, @port, tls: @tls
     end

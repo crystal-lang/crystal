@@ -72,6 +72,8 @@ describe Crystal::Doc::Markdown do
   assert_render "    Hello\n\n\nWorld", "<pre><code>Hello</code></pre>\n\n<p>World</p>"
 
   assert_render "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal">Hello\nWorld</code></pre>)
+  assert_render "```cr\nHello\nWorld\n```", %(<pre><code class="language-cr">Hello\nWorld</code></pre>)
+  assert_render "```\nHello\nWorld\n```", %(<pre><code>Hello\nWorld</code></pre>)
   assert_render "Hello\n```\nWorld\n```", "<p>Hello</p>\n\n<pre><code>World</code></pre>"
   assert_render "```\n---\n```", "<pre><code>---</code></pre>"
   assert_render "````\n---\n````", "<pre><code>---</code></pre>"

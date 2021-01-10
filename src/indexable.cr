@@ -245,7 +245,7 @@ module Indexable(T)
   # b -- c -- d --
   # ```
   def each(*, within range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     each(start: start, count: count) { |element| yield element }
   end
 
@@ -324,7 +324,7 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator = "")
+  def join(separator : String | Char | Number = "")
     return "" if empty?
 
     {% if T == String %}
@@ -610,7 +610,9 @@ module Indexable(T)
       start_index = 0
     else
       start_index += collection_size if start_index < 0
-      raise IndexError.new if start_index < 0
+      if start_index < 0
+        return nil
+      end
     end
 
     end_index = range.end

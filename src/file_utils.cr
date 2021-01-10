@@ -111,6 +111,7 @@ module FileUtils
 
   # Copies a file or directory *src_path* to *dest_path*.
   # If *src_path* is a directory, this method copies all its contents recursively.
+  # If *dest* is a directory, copies src to dest/src.
   #
   # ```
   # require "file_utils"
@@ -118,12 +119,17 @@ module FileUtils
   # FileUtils.cp_r("files", "dir")
   # ```
   def cp_r(src_path : String, dest_path : String)
+    dest_path = File.join(dest_path, File.basename(src_path)) if File.directory?(dest_path)
+    cp_recursive(src_path, dest_path)
+  end
+
+  private def cp_recursive(src_path : String, dest_path : String)
     if Dir.exists?(src_path)
       Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
         src = File.join(src_path, entry)
         dest = File.join(dest_path, entry)
-        cp_r(src, dest)
+        cp_recursive(src, dest)
       end
     else
       cp(src_path, dest_path)

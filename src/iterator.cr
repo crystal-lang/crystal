@@ -537,23 +537,26 @@ module Iterator(T)
     @generators : Array(I)
 
     def initialize(@iterator)
-      @generators = [@iterator]
+      @generators = [] of I
       @stopped = [] of I
     end
 
     def next
-      case value = @generators.last.next
+      case value = @iterator.next
       when Iterator
-        @generators.push value
+        @generators.push @iterator
+        @iterator = value
         self.next
       when Array
-        @generators.push value.each
+        @generators.push @iterator
+        @iterator = value.each
         self.next
       when Stop
-        if @generators.size == 1
+        @stopped << @iterator
+        if @generators.empty?
           stop
         else
-          @stopped << @generators.pop
+          @iterator = @generators.pop
           self.next
         end
       else

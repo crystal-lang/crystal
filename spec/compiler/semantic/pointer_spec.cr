@@ -185,4 +185,30 @@ describe "Semantic: pointer" do
       x = pointerof(u)
     ))
   end
+
+  it "errors with non-matching generic value with value= (#10211)" do
+    assert_error %(
+      class Gen(T)
+      end
+
+      ptr = Pointer(Gen(Char | Int32)).malloc(1_u64)
+      ptr.value = Gen(Int32).new
+      ),
+      "type must be Gen(Char | Int32), not Gen(Int32)"
+  end
+
+  it "errors with non-matching generic value with value=, generic type (#10211)" do
+    assert_error %(
+      module Moo(T)
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      ptr = Pointer(Moo(Char | Int32)).malloc(1_u64)
+      ptr.value = Foo(Int32).new
+      ),
+      "type must be Moo(Char | Int32), not Foo(Int32)"
+  end
 end

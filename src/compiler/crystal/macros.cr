@@ -1645,7 +1645,7 @@ module Crystal::Macros
   # end
   # ```
   #
-  # If we hand't use `id`, the generated code would have been this:
+  # If we hadn't used `id`, the generated code would have been this:
   #
   # ```text
   # def unicorns

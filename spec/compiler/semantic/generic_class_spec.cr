@@ -1161,4 +1161,19 @@ describe "Semantic: generic class" do
       T(*{Int32, Bool})
       )) { generic_class("T", int32, bool).metaclass }
   end
+
+  it "restricts generic type argument through alias in a non-strict way" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      alias G = Gen(String | Int32)
+
+      def foo(x : G)
+        x
+      end
+
+      foo(Gen(Int32).new)
+      )) { generic_class "Gen", int32 }
+  end
 end

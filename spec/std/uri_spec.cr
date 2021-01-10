@@ -182,6 +182,22 @@ describe "URI" do
     it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
+  describe "#authority" do
+    it { URI.new.authority.should be_nil }
+    it { URI.new(scheme: "scheme").authority.should be_nil }
+    it { URI.new(scheme: "scheme", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", host: "example.com", port: 123).authority.should eq "example.com:123" }
+    it { URI.new(scheme: "scheme", user: "user", host: "example.com").authority.should eq "user@example.com" }
+    it { URI.new(scheme: "scheme", user: "user").authority.should eq "user@" }
+    it { URI.new(scheme: "scheme", port: 123).authority.should eq ":123" }
+    it { URI.new(scheme: "scheme", user: "user", port: 123).authority.should eq "user@:123" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com").authority.should eq "user:pass@example.com" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com", port: 123).authority.should eq "user:pass@example.com:123" }
+    it { URI.new(scheme: "scheme", password: "pass", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", path: "opaque").authority.should be_nil }
+    it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
+  end
+
   describe "#full_path" do
     it { URI.new(path: "/foo").full_path.should eq("/foo") }
     it { URI.new.full_path.should eq("/") }
@@ -194,6 +210,28 @@ describe "URI" do
       uri = URI.parse("http://www.example.com/foo")
       uri.query = ""
       uri.full_path.should eq("/foo")
+    end
+  end
+
+  describe "#request_target" do
+    it { URI.new(path: "/foo").request_target.should eq("/foo") }
+    it { URI.new.request_target.should eq("/") }
+    it { URI.new(scheme: "https", host: "example.com").request_target.should eq("/") }
+    it { URI.new(scheme: "https", host: "example.com", path: "/%2F/%2F/").request_target.should eq("/%2F/%2F/") }
+    it { URI.new(scheme: "scheme", path: "opaque").request_target.should eq "opaque" }
+    it { URI.new(scheme: "scheme", query: "foo=bar&foo=baz").request_target.should eq "?foo=bar&foo=baz" }
+
+    it { URI.new(path: "//foo").request_target.should eq("//foo") }
+    it { URI.new(path: "/foo", query: "q=1").request_target.should eq("/foo?q=1") }
+    it { URI.new(path: "/", query: "q=1").request_target.should eq("/?q=1") }
+    it { URI.new(query: "q=1").request_target.should eq("/?q=1") }
+    it { URI.new(path: "/a%3Ab").request_target.should eq("/a%3Ab") }
+    it { URI.new("scheme").request_target.should eq "" }
+
+    it "does not add '?' to the end if the query params are empty" do
+      uri = URI.parse("http://www.example.com/foo")
+      uri.query = ""
+      uri.request_target.should eq("/foo")
     end
   end
 
