@@ -1020,6 +1020,12 @@ module Crystal
       super
     end
 
+    def restrict(other : AliasType, context)
+      other = other.remove_alias
+      return self if self == other
+      restrict(other, context)
+    end
+
     def restrict(other : Type, context)
       return self if self == other
 
