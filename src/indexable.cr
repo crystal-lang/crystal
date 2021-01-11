@@ -1048,6 +1048,5 @@ private def pool_slice(pool, size, reuse)
 end
 
 private def dup_as_array(a)
-  pool = a.to_a
-  pool.object_id == a.object_id ? pool.dup : pool
+  a.is_a?(Array) ? a.dup : a.to_a
 end
