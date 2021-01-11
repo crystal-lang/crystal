@@ -176,6 +176,12 @@ describe "URI" do
     end
   end
 
+  describe ".new" do
+    it "with query params" do
+      URI.new(query: URI::Params.parse("foo=bar&foo=baz")).should eq URI.parse("?foo=bar&foo=baz")
+    end
+  end
+
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
@@ -358,21 +364,39 @@ describe "URI" do
 
   describe "#query_params" do
     context "when there is no query parameters" do
-      it "returns an empty instance of HTTP::Params" do
+      it "returns an empty instance of URI::Params" do
         uri = URI.parse("http://foo.com")
-        uri.query_params.should be_a(HTTP::Params)
-        uri.query_params.should eq(HTTP::Params.new)
+        uri.query_params.should be_a(URI::Params)
+        uri.query_params.should eq(URI::Params.new)
       end
     end
 
-    it "returns a HTTP::Params instance based on the query parameters" do
-      expected_params = HTTP::Params{"id" => "30", "limit" => "5"}
+    it "returns a URI::Params instance based on the query parameters" do
+      expected_params = URI::Params{"id" => "30", "limit" => "5"}
 
       uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
 
       uri = URI.parse("?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
+    end
+  end
+
+  describe "#query_params=" do
+    it "empty" do
+      uri = URI.new
+      params = URI::Params.new
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq ""
+    end
+
+    it "params with values" do
+      uri = URI.new
+      params = URI::Params.parse("foo=bar&foo=baz")
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq "foo=bar&foo=baz"
     end
   end
 

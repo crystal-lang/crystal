@@ -387,7 +387,7 @@ module HTTP
     end
 
     describe "#query_params" do
-      it "returns parsed HTTP::Params" do
+      it "returns parsed URI::Params" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 
