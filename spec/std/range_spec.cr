@@ -398,18 +398,23 @@ describe "Range" do
     end
 
     it "samples a float range as a distribution" do
-      (1.2..3.4).should contain((1.2..3.4).sample)
-      (1.2..3.4).sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
+      r = (1.2..3.4)
+      x = r.sample
+      r.includes?(x).should be_true
+
+      r.sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
     end
 
     it "samples a range with nilable types" do
       r = ((true ? 1 : nil)..(true ? 4 : nil))
-      r.should contain(r.sample)
+      x = r.sample
+      r.includes?(x).should be_true
 
       ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
 
       r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
-      r.should contain(r.sample)
+      x = r.sample
+      r.includes?(x).should be_true
     end
   end
 
