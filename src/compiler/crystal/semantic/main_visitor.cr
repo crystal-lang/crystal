@@ -1294,7 +1294,7 @@ module Crystal
 
       begin
         call.recalculate
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise "error instantiating #{node}", ex
       end
 
@@ -1916,7 +1916,7 @@ module Crystal
 
       begin
         body.accept visitor
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         node.raise ex.message, ex
       end
 

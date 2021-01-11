@@ -190,9 +190,9 @@ class URI
   #
   # Everything that is not wrapped in square brackets is returned unchanged.
   #
-  # ```cr
-  # URI.unwrap_ipv6("[::1]") # => "::1"
-  # URI.unwrap_ipv6("127.0.0.1") # => "127.0.0.1"
+  # ```
+  # URI.unwrap_ipv6("[::1]")       # => "::1"
+  # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
   def self.unwrap_ipv6(host)
@@ -203,21 +203,38 @@ class URI
     end
   end
 
-  # Returns the full path of this URI.
+  # Returns the concatenation of `path` and `query` as it would be used as a
+  # request target in an HTTP request.
+  #
+  # If `path` is empty in an hierarchical URI, `"/"` is used.
   #
   # ```
   # require "uri"
   #
-  # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-  # uri.full_path # => "/posts?id=30&limit=5"
+  # uri = URI.parse "http://example.com/posts?id=30&limit=5#time=1305298413"
+  # uri.request_target # => "/posts?id=30&limit=5"
+  #
+  # uri = URI.new(path: "", query: "foo=bar")
+  # uri.request_target # => "/?foo=bar"
   # ```
-  def full_path : String
+  def request_target : String
     String.build do |str|
-      str << (@path.empty? ? '/' : @path)
+      if @path.empty?
+        str << "/" unless opaque?
+      else
+        str << @path
+      end
+
       if (query = @query) && !query.empty?
         str << '?' << query
       end
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#request_target` instead.")]
+  def full_path : String
+    request_target
   end
 
   # Returns `true` if URI has a *scheme* specified.
@@ -250,26 +267,53 @@ class URI
     HTTP::Params.parse(@query || "")
   end
 
+  # Returns the authority component of this URI.
+  # It is formatted as `user:pass@host:port` with missing parts being omitted.
+  #
+  # If the URI does not have any authority information, the result is `nil`.
+  #
+  # ```
+  # uri = URI.parse "http://user:pass@example.com:80/path?query"
+  # uri.authority # => "user:pass@example.com"
+  #
+  # uri = URI.parse(path: "/relative")
+  # uri.authority # => nil
+  # ```
+  def authority : String?
+    return unless @host || @user || @port
+
+    String.build do |io|
+      authority(io)
+    end
+  end
+
+  # :ditto:
+  def authority(io : IO) : Nil
+    if user = @user
+      userinfo(user, io)
+      io << '@'
+    end
+
+    if host = @host
+      URI.encode(host, io)
+    end
+
+    if port = @port
+      io << ':' << port
+    end
+  end
+
   def to_s(io : IO) : Nil
     if scheme
       io << scheme
       io << ':'
     end
 
-    authority = @user || @host || @port
-    io << "//" if authority
-    if user = @user
-      userinfo(user, io)
-      io << '@'
-    end
-    if host = @host
-      URI.encode(host, io)
-    end
-    if port = @port
-      io << ':' << port
-    end
+    has_authority = @host || @user || @port
+    io << "//" if has_authority
+    authority(io)
 
-    if authority
+    if has_authority
       if !@path.empty? && !@path.starts_with?('/')
         io << '/'
       end

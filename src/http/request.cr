@@ -59,7 +59,7 @@ class HTTP::Request
 
   def resource
     update_uri
-    @uri.try(&.full_path) || @resource
+    @uri.try(&.request_target) || @resource
   end
 
   def keep_alive?

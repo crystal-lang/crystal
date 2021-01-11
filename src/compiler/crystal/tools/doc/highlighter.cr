@@ -69,7 +69,7 @@ module Crystal::Doc::Highlighter
                :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-               :undef, :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+               :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
                :annotation, :verbatim
             highlight token, "k", io
           when :true, :false, :nil

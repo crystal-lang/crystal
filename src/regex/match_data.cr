@@ -204,12 +204,12 @@ class Regex
 
     # Returns all matches that are within the given range.
     def [](range : Range)
-      self[*Indexable.range_to_index_and_count(range, size)]
+      self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
     end
 
     # Like `#[Range]`, but returns `nil` if the range's start is out of range.
     def []?(range : Range)
-      self[*Indexable.range_to_index_and_count(range, size)]?
+      self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
     end
 
     # Returns count or less (if there aren't enough) matches starting at the

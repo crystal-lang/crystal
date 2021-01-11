@@ -13,6 +13,12 @@ enum JSONSpecEnum
   Two
 end
 
+@[Flags]
+enum JSONSpecFlagEnum
+  One
+  Two
+end
+
 describe "JSON serialization" do
   describe "from_json" do
     it "does String.from_json" do
@@ -133,6 +139,13 @@ describe "JSON serialization" do
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
+    pending_win32 "raises for BigInt from unsupported types" do
+      expect_raises(JSON::ParseException) { BigInt.from_json("true") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("1.23") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("{}") }
+    end
+
     pending_win32 "does for BigFloat" do
       big = BigFloat.from_json("1234.567891011121314")
       big.should be_a(BigFloat)
@@ -143,6 +156,18 @@ describe "JSON serialization" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
+    end
+
+    pending_win32 "does for BigFloat from string" do
+      big = BigFloat.from_json(%("1234"))
+      big.should be_a(BigFloat)
+      big.should eq(BigFloat.new("1234"))
+    end
+
+    pending_win32 "raises for BigFloat from unsupported types" do
+      expect_raises(JSON::ParseException) { BigFloat.from_json("true") }
+      expect_raises(JSON::ParseException) { BigFloat.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigFloat.from_json("{}") }
     end
 
     it "does for UUID (hyphenated)" do
@@ -175,6 +200,18 @@ describe "JSON serialization" do
       big.should eq(BigDecimal.new("1234.05"))
     end
 
+    pending_win32 "does for BigDecimal from string" do
+      big = BigDecimal.from_json(%("1234.05"))
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.05"))
+    end
+
+    pending_win32 "raises for BigDecimal from unsupported types" do
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("true") }
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("{}") }
+    end
+
     it "does for Enum with number" do
       JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
@@ -188,6 +225,17 @@ describe "JSON serialization" do
 
       expect_raises(ArgumentError, "Unknown enum JSONSpecEnum value: Three") do
         JSONSpecEnum.from_json(%("Three"))
+      end
+    end
+
+    it "does for flag Enum with number" do
+      JSONSpecFlagEnum.from_json("0").should eq(JSONSpecFlagEnum::None)
+      JSONSpecFlagEnum.from_json("1").should eq(JSONSpecFlagEnum::One)
+      JSONSpecFlagEnum.from_json("2").should eq(JSONSpecFlagEnum::Two)
+      JSONSpecFlagEnum.from_json("3").should eq(JSONSpecFlagEnum::All)
+
+      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: 4") do
+        JSONSpecFlagEnum.from_json("4")
       end
     end
 
