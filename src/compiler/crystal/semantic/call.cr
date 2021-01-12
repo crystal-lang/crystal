@@ -744,8 +744,7 @@ class Crystal::Call
     if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = Array(Var).new(inputs.size + 1)
-        i = 0
+        yield_types = Array(Type).new(inputs.size + 1)
         inputs.each do |input|
           if input.is_a?(Splat)
             tuple_type = lookup_node_type(match.context, input.exp)
@@ -754,17 +753,24 @@ class Crystal::Call
             end
             tuple_type.tuple_types.each do |arg_type|
               MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-              i += 1
+              yield_types << arg_type.virtual_type
             end
           else
             arg_type = lookup_node_type(match.context, input)
             MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-
-            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-            i += 1
+            yield_types << arg_type.virtual_type
           end
         end
+
+        if splat_index = block.splat_index
+          if yield_types.size < block.args.size - 1
+            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+          end
+          splat_range = (splat_index..splat_index - block.args.size)
+          yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
+        end
+
+        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
