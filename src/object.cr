@@ -236,7 +236,7 @@ class Object
 
   # Returns a shallow copy (“duplicate”) of this object.
   #
-  # In order to create a new object with the same value as an existing on, there
+  # In order to create a new object with the same value as an existing one, there
   # are two possible routes:
   #
   # * create a *shallow copy* (`#dup`): Constructs a new object with all its
