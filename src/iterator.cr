@@ -1228,6 +1228,14 @@ module Iterator(T)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
   end
 
+  # Yields each element in this iterator together with *obj*. Returns that object.
+  def with_object(obj, &)
+    each do |value|
+      yield value, obj
+    end
+    obj
+  end
+
   private struct WithObject(I, T, O)
     include Iterator({T, O})
     include IteratorWrapper
