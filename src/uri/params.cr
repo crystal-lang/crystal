@@ -183,7 +183,6 @@ class URI
       self.class.new(raw_params.clone)
     end
 
-
     # Returns first value for specified param name.
     #
     # ```
