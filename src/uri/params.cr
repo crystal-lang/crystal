@@ -146,12 +146,12 @@ class URI
       self.raw_params == other.raw_params
     end
 
-    # Returns a copy of this `HTTP::Params` instance.
+    # Returns a copy of this `URI::Params` instance.
     #
     # ```
-    # require "http/params"
+    # require "uri/params"
     #
-    # original = HTTP::Params{"name" => "Jamie"}
+    # original = URI::Params{"name" => "Jamie"}
     # updated = original.dup
     # updated["name"] = "Ary"
     #
@@ -166,12 +166,12 @@ class URI
       clone
     end
 
-    # Returns a copy of this `HTTP::Params` instance.
+    # Returns a copy of this `URI::Params` instance.
     #
     # ```
-    # require "http/params"
+    # require "uri/params"
     #
-    # original = HTTP::Params{"name" => "Jamie"}
+    # original = URI::Params{"name" => "Jamie"}
     # updated = original.clone
     # updated["name"] = "Ary"
     #
