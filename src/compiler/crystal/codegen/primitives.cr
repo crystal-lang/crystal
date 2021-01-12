@@ -135,7 +135,7 @@ class Crystal::CodeGenVisitor
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
     end
 
-    tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+    _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
     when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))
@@ -723,7 +723,7 @@ class Crystal::CodeGenVisitor
 
     old_debug_location = @current_debug_location
     if @debug.line_numbers? && (location = node.location)
-      set_current_debug_location(node.location)
+      set_current_debug_location(location)
     end
 
     if type.element_type.has_inner_pointers?
@@ -971,10 +971,9 @@ class Crystal::CodeGenVisitor
     ctx_is_null = equal? ctx_ptr, llvm_context.void_pointer.null
     cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
 
-    old_needs_value = @needs_value
     @needs_value = true
 
-    phi_value = Phi.open(self, node, @needs_value) do |phi|
+    Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
 
@@ -1011,9 +1010,6 @@ class Crystal::CodeGenVisitor
       target_def.abi_info = old_abi_info
       target_def.c_calling_convention = old_c_calling_convention
     end
-
-    old_needs_value = @needs_value
-    phi_value
   end
 
   def codegen_extern_primitive_proc_call(target_def, args, fun_ptr)

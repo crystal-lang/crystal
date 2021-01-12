@@ -196,7 +196,6 @@ module Crystal
       end
 
       old_indent = @indent
-      base_indent = old_indent
       next_needs_indent = false
 
       has_newline = false
@@ -212,7 +211,6 @@ module Crystal
           @indent += 2
           write_line unless wrote_newline
           next_token_skip_space_or_newline
-          base_indent = @indent
           next_needs_indent = true
           has_newline = true
         end
@@ -230,7 +228,6 @@ module Crystal
           end
         end
         has_begin = true
-        base_indent = @indent
         next_needs_indent = true
         has_newline = true
       end
@@ -547,7 +544,6 @@ module Crystal
       @last_is_heredoc = is_heredoc
 
       heredoc_line = @line
-      heredoc_end = @line
 
       # To detect the first content of interpolation of string literal correctly,
       # we should consume the first string token if this token contains only removed indentation of heredoc.
@@ -835,11 +831,6 @@ module Crystal
       end
 
       elements.each_with_index do |element, i|
-        current_element = element
-        if current_element.is_a?(HashLiteral::Entry)
-          current_element = current_element.key
-        end
-
         # This is to prevent writing `{{` and `{%`
         if prefix == :"{" && i == 0 && !wrote_newline &&
            (@token.type == :"{" || @token.type == :"{{" || @token.type == :"{%" ||
@@ -1245,7 +1236,6 @@ module Crystal
         return false
       end
 
-      paren_count = @paren_count
       column = @column
 
       node.types.each_with_index do |type, i|
@@ -1466,7 +1456,7 @@ module Crystal
         skip_space
         write_token " ", :":", " "
         skip_space_or_newline
-        accept node.return_type.not_nil!
+        accept return_type
       end
 
       if free_vars = node.free_vars
@@ -1975,7 +1965,6 @@ module Crystal
       write_macro_slashes
       write "{% "
 
-      macro_state = @macro_state
       next_token_skip_space_or_newline
 
       write_keyword :for, " "
@@ -2430,7 +2419,6 @@ module Crystal
         end
 
         accept obj
-        obj_width = @column - @indent
 
         passed_backslash_newline = @token.passed_backslash_newline
 
@@ -2615,7 +2603,6 @@ module Crystal
         next_token
         if @token.type == :"("
           write "=("
-          has_parentheses = true
           slash_is_regex!
           next_token
           format_call_args(node, true, base_indent)
@@ -2634,7 +2621,6 @@ module Crystal
       ends_with_newline = false
       has_args = !node.args.empty? || node.named_args
 
-      column = @indent
       has_newlines = false
       found_comment = false
 
@@ -3111,9 +3097,7 @@ module Crystal
             end
 
             next_token_skip_space_or_newline
-            has_comma = false
             if @token.type == :","
-              has_comma = true
               next_token_skip_space_or_newline
             end
 

@@ -28,7 +28,6 @@ module Crystal
     end
 
     def define_method_from_method_missing(method_missing, signature, original_call)
-      name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       named_args_nodes = nil
       args_nodes_names = Set(String).new
@@ -65,7 +64,8 @@ module Crystal
         block: block_node.is_a?(Block) ? block_node : nil)
       fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
 
-      expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self
+      expanded_macro, macro_expansion_pragmas =
+        program.expand_macro method_missing, fake_call, self, self
 
       # Check if the expanded macro is a def. We do this
       # by just lexing the result and seeing if the first

@@ -423,8 +423,6 @@ module Crystal
       end
 
       if target_defs = node.target_defs
-        changed = false
-
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
             check_args_are_not_closure node, "can't send closure to C function"
@@ -884,7 +882,7 @@ module Crystal
 
       unless node.type?
         if dependencies = node.dependencies?
-          node.unbind_from node.dependencies
+          node.unbind_from dependencies
         end
 
         node.bind_to node.expressions

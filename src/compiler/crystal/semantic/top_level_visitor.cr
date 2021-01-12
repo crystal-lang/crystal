@@ -606,12 +606,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
       counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
-      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value,
-        overflow: false,
-        existed: existed,
-        enum_type: enum_type,
-        enum_base_type: enum_base_type,
-        is_flags: enum_type.flags?)
+      _, all_value, _ =
+        visit_enum_members(node, node.members, counter, all_value,
+          overflow: false,
+          existed: existed,
+          enum_type: enum_type,
+          enum_base_type: enum_base_type,
+          is_flags: enum_type.flags?
+        )
     end
 
     num_members = enum_type.types.size
@@ -674,7 +676,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       base_type = options[:enum_base_type]
       is_flags = options[:is_flags]
 
-      if options[:existed]
+      if existed
         node.raise "can't reopen enum and add more constants to it"
       end
 
@@ -828,7 +830,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "can only use 'private' for types"
       end
     when Assign
-      if (target = exp.target).is_a?(Path)
+      if exp.target.is_a?(Path)
         if node.modifier.private?
           return false
         else

@@ -1442,8 +1442,6 @@ class Array(T)
   # a.push("b", "c") # => ["a", "b", "c"]
   # ```
   def push(*values : T)
-    new_size = @size + values.size
-
     resize_if_cant_insert(values.size)
 
     values.each_with_index do |value, i|

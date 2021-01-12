@@ -103,9 +103,6 @@ struct SemanticVersion
     r = patch <=> other.patch
     return r unless r.zero?
 
-    pre1 = prerelease
-    pre2 = other.prerelease
-
     prerelease <=> other.prerelease
   end
 

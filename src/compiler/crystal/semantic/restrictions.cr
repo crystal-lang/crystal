@@ -799,8 +799,6 @@ module Crystal
       generic_type = get_generic_type(other, context)
       return super unless generic_type == self.generic_type
 
-      generic_type = generic_type.as(TupleType)
-
       # Consider the case of a splat in the type vars
       splat_index = other.type_vars.index &.is_a?(Splat)
       if splat_index
@@ -1094,7 +1092,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_index = inputs.index &.is_a?(Splat))
+      if inputs && inputs.index(&.is_a?(Splat))
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)

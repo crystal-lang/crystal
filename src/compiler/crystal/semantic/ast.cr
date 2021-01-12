@@ -4,7 +4,6 @@ module Crystal
   def self.check_type_can_be_stored(node, type, msg)
     return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 
@@ -462,7 +461,6 @@ module Crystal
       # bind all previously related local vars to it so that
       # they get all types assigned to it.
       local_vars.each &.bind_to self
-      local_vars = nil
     end
 
     # True if this variable belongs to the given context

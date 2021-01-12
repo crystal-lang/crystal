@@ -1075,7 +1075,7 @@ module Crystal
       thread_local_fun = check_main_fun(fun_name, thread_local_fun)
       indirection_ptr = alloca llvm_type(type).pointer
       call thread_local_fun, indirection_ptr
-      ptr = load indirection_ptr
+      load indirection_ptr
     end
 
     def visit(node : TypeDeclaration)
@@ -1424,7 +1424,6 @@ module Crystal
       end
 
       # First accept all yield expressions and assign them to block vars
-      i = 0
       unless node.exps.empty?
         exp_values = Array({LLVM::Value, Type}).new(node.exps.size)
 

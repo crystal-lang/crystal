@@ -38,7 +38,7 @@ module Crystal::System::File
       raise "Invalid file open mode: '#{mode}'"
     end
 
-    oflag = m | o
+    m | o
   end
 
   # Closes the internal file descriptor without notifying libevent.

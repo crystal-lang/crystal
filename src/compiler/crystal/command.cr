@@ -205,7 +205,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable(config.output_filename)
 
-    result = config.compile output_filename
+    config.compile output_filename
 
     unless config.compiler.no_codegen?
       report_warnings
@@ -216,7 +216,7 @@ class Crystal::Command
   end
 
   private def types
-    config, result = compile_no_codegen "tool types"
+    _, result = compile_no_codegen "tool types"
     @progress_tracker.stage("Tool (types)") do
       Crystal.print_types result.node
     end

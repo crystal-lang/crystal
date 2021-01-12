@@ -80,7 +80,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable "spec"
 
-    result = compiler.compile sources, output_filename
+    compiler.compile sources, output_filename
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

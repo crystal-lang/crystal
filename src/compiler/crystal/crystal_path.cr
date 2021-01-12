@@ -88,7 +88,7 @@ module Crystal
 
       filename_is_relative = filename.starts_with?('.')
 
-      if !filename_is_relative && (slash_index = filename.index('/'))
+      if !filename_is_relative && filename.index('/')
         # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
         before_slash, after_slash = filename.split('/', 2)
 

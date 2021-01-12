@@ -599,7 +599,7 @@ module Crystal
               raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
             end
 
-            from, to = from.to_number.to_i, to = to.to_number.to_i
+            from, to = from.to_number.to_i, to.to_number.to_i
             range = Range.new(from, to, arg.exclusive?)
             StringLiteral.new(@value[range])
           else

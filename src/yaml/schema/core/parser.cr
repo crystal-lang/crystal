@@ -61,7 +61,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       key = parse_node
       raw_key = key.raw
 
-      location = @pull_parser.location
       value = parse_node
 
       if raw_key == "<<" && tag != "tag:yaml.org,2002:str"

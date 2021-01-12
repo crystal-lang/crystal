@@ -324,7 +324,7 @@ struct Time::Format
     end
 
     def time_zone(with_seconds = false)
-      case char = current_char
+      case current_char
       when 'Z'
         time_zone_z
       when 'U'
@@ -342,7 +342,7 @@ struct Time::Format
     end
 
     def time_zone_z_or_offset(**options)
-      case char = current_char
+      case current_char
       when 'Z', 'z'
         time_zone_z
       when '-', '+'
@@ -446,7 +446,7 @@ struct Time::Format
     end
 
     def time_zone_rfc2822
-      case char = current_char
+      case current_char
       when '-', '+'
         time_zone_offset(allow_colon: false)
       else
@@ -461,7 +461,7 @@ struct Time::Format
     end
 
     def time_zone_name(zone = false)
-      case char = current_char
+      case current_char
       when '-', '+'
         time_zone_offset
       else
