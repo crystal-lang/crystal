@@ -3360,7 +3360,6 @@ module Crystal
         check_end
         write "; end"
         next_token
-        return false
       else
         skip_space_or_newline
         check_end
@@ -3368,7 +3367,6 @@ module Crystal
         write_indent
         write "end"
         next_token
-        return false
       end
 
       false

@@ -98,7 +98,6 @@ abstract class CSV::Lexer
       case char = next_char
       when '\0'
         raise "Unclosed quote"
-        break
       when @quote_char
         case next_char
         when @separator
