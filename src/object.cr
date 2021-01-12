@@ -103,12 +103,12 @@ class Object
   # typically intended for users, to *io*.
   #
   # This method is called when an object is interpolated in a string literal:
-  # ```cr
+  # ```
   # "foo #{bar} baz" # calls bar.to_io(io)
   # ```
   #
   # `IO#<<` calls this method to append an object to itself:
-  # ```cr
+  # ```
   # io << bar # calls bar.to_s(io)
   # ```
   #
