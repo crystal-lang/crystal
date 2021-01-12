@@ -246,6 +246,14 @@ describe "Number" do
     it_iterates "empty if `self` can't be compared", [] of Float64, Float64::NAN.step(to: 1.0)
     it_iterates "empty if `self` can't be compared by", [] of Float64, Float64::NAN.step(to: 1.0, by: 1.0)
 
+    describe "exclusive" do
+      it_iterates "basic Int", [1, 2, 3, 4], 1.step(to: 5, exclusive: true)
+      it_iterates "basic Float", [1.0, 2.0, 3.0, 4.0], 1.0.step(to: 5.0, exclusive: true)
+
+      it_iterates "single value Int", [] of Int32, 1.step(to: 1, exclusive: true)
+      it_iterates "single value Float", [] of Float64, 1.0.step(to: 1.0, exclusive: true)
+    end
+
     describe "without limit" do
       describe "iterator" do
         it "basic" do

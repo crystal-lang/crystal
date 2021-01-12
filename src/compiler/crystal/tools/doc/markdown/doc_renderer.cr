@@ -114,7 +114,8 @@ class Crystal::Doc::Markdown::DocRenderer < Crystal::Doc::Markdown::HTMLRenderer
   def begin_link(url)
     @io << %(<a href=")
     @io << url
-    @io << %(" target="_blank">)
+    @io << %(">)
+
     @inside_link = true
   end
 

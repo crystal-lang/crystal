@@ -1,6 +1,6 @@
 require "./uri/uri_parser"
 require "./uri/encoding"
-require "./http/params"
+require "./uri/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -66,7 +66,7 @@ require "./http/params"
 # (see `.reserved?`), while `.encode` does not. The decode methods are
 # identical except for the handling of `+` characters.
 #
-# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# NOTE: `URI::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.
 class URI
   class Error < Exception
@@ -171,7 +171,8 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    @query = query.try(&.to_s)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -203,21 +204,38 @@ class URI
     end
   end
 
-  # Returns the full path of this URI.
+  # Returns the concatenation of `path` and `query` as it would be used as a
+  # request target in an HTTP request.
+  #
+  # If `path` is empty in an hierarchical URI, `"/"` is used.
   #
   # ```
   # require "uri"
   #
-  # uri = URI.parse "http://foo.com/posts?id=30&limit=5#time=1305298413"
-  # uri.full_path # => "/posts?id=30&limit=5"
+  # uri = URI.parse "http://example.com/posts?id=30&limit=5#time=1305298413"
+  # uri.request_target # => "/posts?id=30&limit=5"
+  #
+  # uri = URI.new(path: "", query: "foo=bar")
+  # uri.request_target # => "/?foo=bar"
   # ```
-  def full_path : String
+  def request_target : String
     String.build do |str|
-      str << (@path.empty? ? '/' : @path)
+      if @path.empty?
+        str << "/" unless opaque?
+      else
+        str << @path
+      end
+
       if (query = @query) && !query.empty?
         str << '?' << query
       end
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#request_target` instead.")]
+  def full_path : String
+    request_target
   end
 
   # Returns `true` if URI has a *scheme* specified.
@@ -238,16 +256,29 @@ class URI
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
-  # Returns a `HTTP::Params` of the URI#query.
+  # Returns a `URI::Params` of the URI#query.
   #
   # ```
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
   # ```
-  def query_params : HTTP::Params
-    HTTP::Params.parse(@query || "")
+  def query_params : URI::Params
+    URI::Params.parse(@query || "")
+  end
+
+  # Sets `query` to stringified *params*.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.new
+  # uri.query_params = URI::Params.parse("foo=bar&foo=baz")
+  # uri.to_s # => "?foo=bar&foo=baz"
+  # ```
+  def query_params=(params : URI::Params)
+    self.query = params.to_s
   end
 
   # Returns the authority component of this URI.

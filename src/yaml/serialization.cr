@@ -401,6 +401,9 @@ module YAML
           discriminator_value = value.value
           case discriminator_value
           {% for key, value in mapping %}
+            {% if key.is_a?(Path) %}
+              {% key = key.resolve %}
+            {% end %}
             when {{key.id.stringify}}
               return {{value.id}}.new(ctx, node)
           {% end %}

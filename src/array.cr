@@ -504,7 +504,7 @@ class Array(T)
   # a # => [1, 2, 6]
   # ```
   def []=(range : Range, value : T)
-    self[*Indexable.range_to_index_and_count(range, size)] = value
+    self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new] = value
   end
 
   # Replaces a subrange with the elements of the given array.
@@ -576,7 +576,7 @@ class Array(T)
   # a # => [1, 2, 6, 7, 8, 9, 10]
   # ```
   def []=(range : Range, values : Array(T))
-    self[*Indexable.range_to_index_and_count(range, size)] = values
+    self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new] = values
   end
 
   # Returns all elements that are within the given range.
@@ -597,7 +597,7 @@ class Array(T)
   # a[2..]     # => ["c", "d", "e"]
   # ```
   def [](range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]
+    self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
   # Like `#[Range]`, but returns `nil` if the range's start is out of range.
@@ -608,7 +608,7 @@ class Array(T)
   # a[6..]?   # => nil
   # ```
   def []?(range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]?
+    self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
@@ -813,7 +813,7 @@ class Array(T)
   # a.delete_at(99..100) # raises IndexError
   # ```
   def delete_at(range : Range)
-    index, count = Indexable.range_to_index_and_count(range, self.size)
+    index, count = Indexable.range_to_index_and_count(range, self.size) || raise IndexError.new
     delete_at(index, count)
   end
 
@@ -932,7 +932,7 @@ class Array(T)
   # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
   # ```
   def fill(range : Range)
-    fill(*Indexable.range_to_index_and_count(range, size)) do |i|
+    fill(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new) do |i|
       yield i
     end
   end
@@ -1020,7 +1020,7 @@ class Array(T)
   def fill(value : T, range : Range)
     {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
       if value == 0
-        fill(value, *Indexable.range_to_index_and_count(range, size))
+        fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
 
         self
       else
@@ -1240,172 +1240,6 @@ class Array(T)
     end
   end
 
-  # Returns an `Array` with all possible permutations of *size*.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # a.permutations    # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  # a.permutations(1) # => [[1],[2],[3]]
-  # a.permutations(2) # => [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
-  # a.permutations(3) # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
-  # a.permutations(0) # => [[]]
-  # a.permutations(4) # => []
-  # ```
-  def permutations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_permutation(size) do |a|
-      ary << a
-    end
-    ary
-  end
-
-  # Yields each possible permutation of *size* of `self`.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # sums = [] of Int32
-  # a.each_permutation(2) { |p| sums << p.sum } # => nil
-  # sums                                        # => [3, 4, 3, 5, 4, 5]
-  # ```
-  #
-  # By default, a new array is created and yielded for each permutation.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
-  # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false) : Nil
-    n = self.size
-    return if size > n
-
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    reuse = check_reuse(reuse, size)
-    pool = self.dup
-    cycles = (n - size + 1..n).to_a.reverse!
-    yield pool_slice(pool, size, reuse)
-
-    while true
-      stop = true
-      i = size - 1
-      while i >= 0
-        ci = (cycles[i] -= 1)
-        if ci == 0
-          e = pool[i]
-          (i + 1).upto(n - 1) { |j| pool[j - 1] = pool[j] }
-          pool[n - 1] = e
-          cycles[i] = n - i
-        else
-          pool.swap i, -ci
-          yield pool_slice(pool, size, reuse)
-          stop = false
-          break
-        end
-        i -= 1
-      end
-
-      return if stop
-    end
-  end
-
-  # Returns an `Iterator` over each possible permutation of *size* of `self`.
-  #
-  # ```
-  # iter = [1, 2, 3].each_permutation
-  # iter.next # => [1, 2, 3]
-  # iter.next # => [1, 3, 2]
-  # iter.next # => [2, 1, 3]
-  # iter.next # => [2, 3, 1]
-  # iter.next # => [3, 1, 2]
-  # iter.next # => [3, 2, 1]
-  # iter.next # => #<Iterator::Stop>
-  # ```
-  #
-  # By default, a new array is created and returned for each permutation.
-  # If *reuse* is given, the array can be reused: if *reuse* is
-  # an `Array`, this array will be reused; if *reuse* if truthy,
-  # the method will create a new array and reuse it. This can be
-  # used to prevent many memory allocations when each slice of
-  # interest is to be used in a read-only fashion.
-  def each_permutation(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    PermutationIterator.new(self, size.to_i, reuse)
-  end
-
-  def combinations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_combination(size) do |a|
-      ary << a
-    end
-    ary
-  end
-
-  def each_combination(size : Int = self.size, reuse = false) : Nil
-    n = self.size
-    return if size > n
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    reuse = check_reuse(reuse, size)
-    copy = self.dup
-    pool = self.dup
-
-    indices = (0...size).to_a
-
-    yield pool_slice(pool, size, reuse)
-
-    while true
-      stop = true
-      i = size - 1
-      while i >= 0
-        if indices[i] != i + n - size
-          stop = false
-          break
-        end
-        i -= 1
-      end
-
-      return if stop
-
-      indices[i] += 1
-      pool[i] = copy[indices[i]]
-
-      (i + 1).upto(size - 1) do |j|
-        indices[j] = indices[j - 1] + 1
-        pool[j] = copy[indices[j]]
-      end
-
-      yield pool_slice(pool, size, reuse)
-    end
-  end
-
-  private def each_combination_piece(pool, size, reuse)
-    if reuse
-      reuse.clear
-      size.times { |i| reuse << pool[i] }
-      reuse
-    else
-      pool[0, size]
-    end
-  end
-
-  def each_combination(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    CombinationIterator.new(self, size.to_i, reuse)
-  end
-
-  private def check_reuse(reuse, size)
-    if reuse
-      unless reuse.is_a?(Array)
-        reuse = typeof(self).new(size)
-      end
-    else
-      reuse = nil
-    end
-    reuse
-  end
-
   # Returns a new `Array` that is a one-dimensional flattening of `self` (recursively).
   #
   # That is, for every element that is an array or an iterator, extract its elements into the new array.
@@ -1419,54 +1253,6 @@ class Array(T)
   # ```
   def flatten
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
-  end
-
-  def repeated_combinations(size : Int = self.size)
-    ary = [] of Array(T)
-    each_repeated_combination(size) do |a|
-      ary << a
-    end
-    ary
-  end
-
-  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
-    n = self.size
-    return if size > n && n == 0
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    reuse = check_reuse(reuse, size)
-    copy = self.dup
-    indices = Array.new(size, 0)
-    pool = indices.map { |i| copy[i] }
-
-    yield pool_slice(pool, size, reuse)
-
-    while true
-      stop = true
-
-      i = size - 1
-      while i >= 0
-        if indices[i] != n - 1
-          stop = false
-          break
-        end
-        i -= 1
-      end
-      return if stop
-
-      ii = indices[i] + 1
-      tmp = copy[ii]
-      indices.fill(i, size - i) { ii }
-      pool.fill(i, size - i) { tmp }
-
-      yield pool_slice(pool, size, reuse)
-    end
-  end
-
-  def each_repeated_combination(size : Int = self.size, reuse = false)
-    raise ArgumentError.new("Size must be positive") if size < 0
-
-    RepeatedCombinationIterator.new(self, size.to_i, reuse)
   end
 
   def self.product(arrays)
@@ -2395,184 +2181,6 @@ class Array(T)
     end
 
     super
-  end
-
-  private class PermutationIterator(T)
-    include Iterator(Array(T))
-
-    @array : Array(T)
-    @size : Int32
-    @n : Int32
-    @cycles : Array(Int32)
-    @pool : Array(T)
-    @stop : Bool
-    @i : Int32
-    @first : Bool
-    @reuse : Array(T)?
-
-    def initialize(@array : Array(T), @size, reuse)
-      @n = @array.size
-      @cycles = (@n - @size + 1..@n).to_a.reverse!
-      @pool = @array.dup
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-
-      if reuse
-        if reuse.is_a?(Array)
-          @reuse = reuse
-        else
-          @reuse = Array(T).new(@size)
-        end
-      end
-    end
-
-    def next
-      return stop if @stop
-
-      if @first
-        @first = false
-        return pool_slice(@pool, @size, @reuse)
-      end
-
-      while @i >= 0
-        ci = (@cycles[@i] -= 1)
-        if ci == 0
-          e = @pool[@i]
-          (@i + 1).upto(@n - 1) { |j| @pool[j - 1] = @pool[j] }
-          @pool[@n - 1] = e
-          @cycles[@i] = @n - @i
-        else
-          @pool.swap @i, -ci
-          value = pool_slice(@pool, @size, @reuse)
-          @i = @size - 1
-          return value
-        end
-        @i -= 1
-      end
-
-      @stop = true
-      stop
-    end
-  end
-
-  private class CombinationIterator(T)
-    include Iterator(Array(T))
-
-    @size : Int32
-    @n : Int32
-    @copy : Array(T)
-    @pool : Array(T)
-    @indices : Array(Int32)
-    @stop : Bool
-    @i : Int32
-    @first : Bool
-    @reuse : Array(T)?
-
-    def initialize(array : Array(T), @size, reuse)
-      @n = array.size
-      @copy = array.dup
-      @pool = array.dup
-      @indices = (0...@size).to_a
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-
-      if reuse
-        if reuse.is_a?(Array)
-          @reuse = reuse
-        else
-          @reuse = Array(T).new(@size)
-        end
-      end
-    end
-
-    def next
-      return stop if @stop
-
-      if @first
-        @first = false
-        return pool_slice(@pool, @size, @reuse)
-      end
-
-      while @i >= 0
-        if @indices[@i] != @i + @n - @size
-          @indices[@i] += 1
-          @pool[@i] = @copy[@indices[@i]]
-
-          (@i + 1).upto(@size - 1) do |j|
-            @indices[j] = @indices[j - 1] + 1
-            @pool[j] = @copy[@indices[j]]
-          end
-
-          value = pool_slice(@pool, @size, @reuse)
-          @i = @size - 1
-          return value
-        end
-        @i -= 1
-      end
-
-      @stop = true
-      stop
-    end
-  end
-
-  private class RepeatedCombinationIterator(T)
-    include Iterator(Array(T))
-
-    @size : Int32
-    @n : Int32
-    @copy : Array(T)
-    @indices : Array(Int32)
-    @pool : Array(T)
-    @stop : Bool
-    @i : Int32
-    @first : Bool
-    @reuse : Array(T)?
-
-    def initialize(array : Array(T), @size, reuse)
-      @n = array.size
-      @copy = array.dup
-      @indices = Array.new(@size, 0)
-      @pool = @indices.map { |i| @copy[i] }
-      @stop = @size > @n
-      @i = @size - 1
-      @first = true
-
-      if reuse
-        if reuse.is_a?(Array)
-          @reuse = reuse
-        else
-          @reuse = Array(T).new(@size)
-        end
-      end
-    end
-
-    def next
-      return stop if @stop
-
-      if @first
-        @first = false
-        return pool_slice(@pool, @size, @reuse)
-      end
-
-      while @i >= 0
-        if @indices[@i] != @n - 1
-          ii = @indices[@i] + 1
-          tmp = @copy[ii]
-          @indices.fill(@i, @size - @i) { ii }
-          @pool.fill(@i, @size - @i) { tmp }
-
-          value = pool_slice(@pool, @size, @reuse)
-          @i = @size - 1
-          return value
-        end
-        @i -= 1
-      end
-
-      @stop = true
-      stop
-    end
   end
 
   private struct FlattenHelper(T)

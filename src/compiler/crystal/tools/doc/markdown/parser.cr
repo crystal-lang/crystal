@@ -387,8 +387,7 @@ class Crystal::Doc::Markdown::Parser
         end
       when '['
         unless in_link
-          link = check_link str, (pos + 1), bytesize
-          if link
+          if link = check_link str, (pos + 1), bytesize
             @renderer.text line.byte_slice(cursor, pos - cursor)
             cursor = pos + 1
             @renderer.begin_link link

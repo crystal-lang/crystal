@@ -109,7 +109,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
-        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+        node_superclass.raise "generic type arguments must be specified when inheriting #{superclass}"
       when NonGenericClassType, GenericClassInstanceType
         if superclass == @program.enum
           node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
@@ -1004,7 +1004,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type = lookup_type(node_name)
     case type
     when GenericModuleType
-      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+      node.raise "generic type arguments must be specified when including #{type}"
     when .module?
       # OK
     else

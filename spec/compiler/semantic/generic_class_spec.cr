@@ -324,7 +324,7 @@ describe "Semantic: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when inheriting Foo(T)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -1160,5 +1160,20 @@ describe "Semantic: generic class" do
 
       T(*{Int32, Bool})
       )) { generic_class("T", int32, bool).metaclass }
+  end
+
+  it "restricts generic type argument through alias in a non-strict way" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      alias G = Gen(String | Int32)
+
+      def foo(x : G)
+        x
+      end
+
+      foo(Gen(Int32).new)
+      )) { generic_class "Gen", int32 }
   end
 end
