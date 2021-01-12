@@ -120,11 +120,9 @@ module Crystal::Playground
     end
 
     def send(message)
-      begin
-        @ws.send(message)
-      rescue ex : IO::Error
-        Log.warn { "Unable to send message (session=#{@session_key})." }
-      end
+      @ws.send(message)
+    rescue ex : IO::Error
+      Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 
     def send_with_json_builder
@@ -238,21 +236,19 @@ module Crystal::Playground
     end
 
     def content
-      begin
-        extname = File.extname(@filename)
-        content = if extname == ".cr"
-                    crystal_source_to_markdown(@filename)
-                  else
-                    File.read(@filename)
-                  end
+      extname = File.extname(@filename)
+      content = if extname == ".cr"
+                  crystal_source_to_markdown(@filename)
+                else
+                  File.read(@filename)
+                end
 
-        if extname == ".md" || extname == ".cr"
-          content = Crystal::Doc::Markdown.to_html(content)
-        end
-        content
-      rescue e
-        e.message || "Error: generating content for #{@filename}"
+      if extname == ".md" || extname == ".cr"
+        content = Crystal::Doc::Markdown.to_html(content)
       end
+      content
+    rescue e
+      e.message || "Error: generating content for #{@filename}"
     end
 
     def to_s(io : IO) : Nil
