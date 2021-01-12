@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%= HeadTemplate.new(project_info, type.path_to "") %>
+  <%= HeadTemplate.new(project_info, type) %>
   <meta name="repository-name" content="<%= project_info.name %>">
   <title><%= type.full_name %> - <%= project_info.name %> <%= project_info.version %></title>
   <script type="text/javascript">

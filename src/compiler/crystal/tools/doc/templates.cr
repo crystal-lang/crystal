@@ -49,7 +49,15 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
-  record HeadTemplate, project_info : ProjectInfo, base_path : String do
+  record HeadTemplate, project_info : ProjectInfo, current_type : Type? do
+    def base_path
+      if current_type = self.current_type
+        current_type.path_to ""
+      else
+        ""
+      end
+    end
+
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 

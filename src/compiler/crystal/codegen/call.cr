@@ -16,7 +16,7 @@ class Crystal::CodeGenVisitor
       return false
     end
 
-    owner = node.name == "super" ? node.scope : node.target_def.owner
+    owner = node.super? ? node.scope : node.target_def.owner
 
     call_args, has_out = prepare_call_args node, owner
 
@@ -292,11 +292,17 @@ class Crystal::CodeGenVisitor
         set_ensure_exception_handler(target_def)
 
         args_base_index = create_local_copy_of_block_self(self_type, call_args)
-        alloca_vars target_def.vars, target_def
+
+        # Don't reset nilable vars here because we do it right before inlining the method body
+        alloca_vars target_def.vars, target_def, reset_nilable_vars: false
+
         create_local_copy_of_block_args(target_def, self_type, call_args, args_base_index)
 
         Phi.open(self, node) do |phi|
           context.return_phi = phi
+
+          # Reset vars that are declared inside the def and are nilable
+          reset_nilable_vars(target_def)
 
           request_value do
             accept target_def.body
@@ -357,7 +363,7 @@ class Crystal::CodeGenVisitor
     call.uses_with_scope = node.uses_with_scope?
     call.name_location = node.name_location
 
-    is_super = node.name == "super"
+    is_super = node.super?
 
     with_cloned_context do
       context.vars = new_vars

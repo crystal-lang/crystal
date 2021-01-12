@@ -716,4 +716,21 @@ describe "Restrictions" do
       foo(Int32)
       )) { int32 }
   end
+
+  it "restricts aliased typedef type (#9474)" do
+    assert_type(%(
+      lib A
+        alias B = Int32
+      end
+
+      alias C = A::B
+
+      def foo(x : C)
+        1
+      end
+
+      x = uninitialized C
+      foo x
+      )) { int32 }
+  end
 end

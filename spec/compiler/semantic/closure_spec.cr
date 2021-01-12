@@ -262,6 +262,26 @@ describe "Semantic: closure" do
       "can't send closure to C function (closured vars: self)"
   end
 
+  it "errors if sending closured proc pointer to C (1.2)" do
+    assert_error %(
+      lib LibC
+        fun foo(callback : ->)
+      end
+
+      class Foo
+        def foo
+          LibC.foo(->{ bar })
+        end
+
+        def bar
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "can't send closure to C function (closured vars: self)"
+  end
+
   it "errors if sending closured proc pointer to C (2)" do
     assert_error %(
       lib LibC
@@ -548,5 +568,201 @@ describe "Semantic: closure" do
     node = result.node.as(Expressions)
     call = node.expressions[-2].as(Call)
     call.target_def.self_closured?.should be_false
+  end
+
+  it "correctly detects previous var as closured (#5609)" do
+    assert_error %(
+      def block(&block)
+        block.call
+      end
+      def times
+        yield
+        yield
+      end
+      x = 1
+      times do
+        if x.is_a?(Int32)
+          x &+ 2
+        end
+        block do
+          x = "hello"
+        end
+      end
+      ),
+      "undefined method '&+' for String"
+  end
+
+  it "doesn't assign all types to metavar if closured but only assigned to once" do
+    semantic(%(
+      def capture(&block)
+        block
+      end
+      x = 1 == 2 ? 1 : nil
+      if x
+        capture do
+          x &+ 1
+        end
+      end
+      ))
+  end
+
+  it "does assign all types to metavar if closured but only assigned to once in a loop" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+      while 1 == 1
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
+  it "does assign all types to metavar if closured but only assigned to once in a loop through block" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+
+      def loop
+        while 1 == 1
+          yield
+        end
+      end
+
+      x = 1
+      loop do
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
+  it "does assign all types to metavar if closured but only assigned to once in a loop through captured block" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+
+      def loop(&block)
+        while 1 == 1
+          block.call
+        end
+      end
+
+      x = 1
+      loop do
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      ),
+      "undefined method '&+'"
+  end
+
+  it "doesn't assign all types to metavar if closured but declared inside block and never re-assigned" do
+    assert_no_errors %(
+      def capture(&block)
+        block
+      end
+
+      def loop(&block)
+        yield
+      end
+
+      loop do
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      )
+  end
+
+  it "doesn't assign all types to metavar if closured but declared inside block and re-assigned inside the same context before the closure" do
+    assert_no_errors %(
+      def capture(&block)
+        block
+      end
+
+      def loop(&block)
+        yield
+      end
+
+      loop do
+        x = 1 == 2 ? 1 : nil
+        x = 1 == 2 ? 1 : nil
+        if x
+          capture do
+            x &+ 1
+          end
+        end
+      end
+      )
+  end
+
+  it "is considered as closure if assigned once but comes from a method arg" do
+    assert_error %(
+      def capture(&block)
+        block
+      end
+      def foo(x)
+        capture do
+          x &+ 1
+        end
+        x = 1 == 2 ? 1 : nil
+      end
+      foo(1)
+      ),
+      "undefined method '&+'"
+  end
+
+  it "considers var as closure-readonly if it was assigned multiple times before it was closured" do
+    assert_no_errors(%(
+      def capture(&block)
+        block
+      end
+
+      x = "hello"
+      x = 1
+
+      capture do
+        x &+ 1
+      end
+      ))
+  end
+
+  it "correctly captures type of closured block arg" do
+    assert_type(%(
+      def capture(&block)
+        block.call
+      end
+      def foo
+        yield nil
+      end
+      z = nil
+      foo do |x|
+        capture do
+          x = 1
+        end
+        z = x
+      end
+      z
+      )) { nilable int32 }
   end
 end

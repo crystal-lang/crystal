@@ -13,16 +13,31 @@ describe "Backtrace" do
     _, output, _ = compile_and_run_file(source_file)
 
     # resolved file line:column
-    output.should match(/#{source_file}:3:10 in 'callee1'/)
-
-    unless output =~ /#{source_file}:13:5 in 'callee3'/
-      fail "didn't find callee3 in the backtrace"
-    end
+    output.should match(/^#{source_file}:3:10 in 'callee1'/m)
+    output.should match(/^#{source_file}:13:5 in 'callee3'/m)
 
     # skipped internal details
-    output.should_not match(/src\/callstack\.cr/)
-    output.should_not match(/src\/exception\.cr/)
-    output.should_not match(/src\/raise\.cr/)
+    output.should_not contain("src/callstack.cr")
+    output.should_not contain("src/exception.cr")
+    output.should_not contain("src/raise.cr")
+  end
+
+  pending_win32 "doesn't relativize paths outside of current dir (#10169)" do
+    with_tempfile("source_file") do |source_file|
+      source_path = Path.new(source_file)
+      source_path.absolute?.should be_true
+
+      File.write source_file, <<-EOF
+        def callee1
+          puts caller.join('\n')
+        end
+
+        callee1
+        EOF
+      _, output, _ = compile_and_run_file(source_file)
+
+      output.should match /\A(#{source_path}):/
+    end
   end
 
   it "prints exception backtrace to stderr" do

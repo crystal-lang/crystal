@@ -881,4 +881,86 @@ describe "Code gen: proc" do
       proc_a.call
       )).to_i.should eq(1)
   end
+
+  it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
+    run(%(
+      abstract struct Parent
+        abstract def work(a : Int32, b : Int32)
+
+        def get
+          ->work(Int32, Int32)
+        end
+      end
+
+      struct Child1 < Parent
+        def work(a : Int32, b : Int32)
+          a &+ b
+        end
+      end
+
+      struct Child2 < Parent
+        def work(a : Int32, b : Int32)
+          a &- b
+        end
+      end
+
+      Child1.new.as(Parent).get
+    ))
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      def test(bar : Bar)
+        if bar.is_a? Baz
+          test bar
+        end
+      end
+
+      def test(baz : Baz)
+      end
+
+      Foo.new(->test(Bar))
+    ))
+  end
+
+  it "doesn't crash when taking a proc pointer that multidispatches on a module (#3822)" do
+    run(%(
+      class Foo
+        def initialize(@proc : Proc(Bar, Nil))
+        end
+      end
+
+      module Bar
+      end
+
+      class Baz
+        include Bar
+      end
+
+      module Moo
+        def self.test(bar : Bar)
+          if bar.is_a? Baz
+            test bar
+          end
+        end
+
+        def self.test(baz : Baz)
+        end
+      end
+
+      Foo.new(->Moo.test(Bar))
+    ))
+  end
 end

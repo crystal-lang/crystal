@@ -425,6 +425,24 @@ describe "semantic: case" do
       "case is not exhaustive.\n\nMissing cases:\n - {false, Char}"
   end
 
+  it "checks exhaustiveness for tuple literal of 3 elements, all bool" do
+    assert_error %(
+        #{bool_case_eq}
+
+        case {true, true, true}
+        in {true, true, true}
+        end
+      ),
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - {true, true, false}
+       - {true, false, Bool}
+       - {false, Bool, Bool}
+      ERROR
+  end
+
   it "checks exhaustiveness for tuple literal of 2 elements, first is enum" do
     assert_error %(
         #{enum_eq}
@@ -441,6 +459,33 @@ describe "semantic: case" do
         end
       ),
       "case is not exhaustive.\n\nMissing cases:\n - {Color::Green, Char}"
+  end
+
+  it "checks exhaustiveness for tuple literal of 3 elements, all enums" do
+    assert_error %(
+        #{enum_eq}
+
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        case {Color::Red, Color::Red, Color::Red}
+        in {.red?, .green?, .blue?}
+        end
+      ),
+      <<-ERROR
+      case is not exhaustive.
+
+      Missing cases:
+       - {Color::Red, Color::Red, Color}
+       - {Color::Red, Color::Green, Color::Red}
+       - {Color::Red, Color::Green, Color::Green}
+       - {Color::Red, Color::Blue, Color}
+       - {Color::Green, Color, Color}
+       - {Color::Blue, Color, Color}
+      ERROR
   end
 
   it "checks exhaustiveness for tuple literal with types and underscore at first position" do

@@ -607,7 +607,7 @@ module Crystal
         if index
           index
         else
-          index = instance_vars.key_index(name)
+          index = instance_vars.index { |k, v| k == name }
           if index
             superclass.all_instance_vars_count + index
           else
@@ -615,7 +615,7 @@ module Crystal
           end
         end
       else
-        instance_vars.key_index(name)
+        instance_vars.index { |k, v| k == name }
       end
     end
 
@@ -730,6 +730,13 @@ module Crystal
     # SymbolLiteralType) when they produce an ambiguous call.
     def check_restriction_exception
       nil
+    end
+
+    # Yields self and returns true if the block returns a truthy value.
+    # UnionType overrides it and yields all types in turn and returns
+    # true if for each of them the block returns true.
+    def all?
+      (yield self) ? true : false
     end
 
     def to_s(*, generic_args : Bool = true)
@@ -1654,7 +1661,7 @@ module Crystal
   end
 
   # An un-bound type parameter of a generic type.
-  #
+
   # For example, given:
   #
   # ```
@@ -3049,6 +3056,10 @@ module Crystal
         end
       end
       program.type_merge(new_union_types) || program.no_return
+    end
+
+    def all?
+      union_types.all? { |union_type| yield union_type }
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil

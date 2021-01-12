@@ -270,7 +270,7 @@ class Crystal::Call
       matches = program_matches unless program_matches.empty?
     end
 
-    if matches.empty? && owner.class? && owner.abstract? && name != "super"
+    if matches.empty? && owner.class? && owner.abstract? && !super?
       matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
@@ -909,7 +909,7 @@ class Crystal::Call
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
           else
@@ -923,7 +923,7 @@ class Crystal::Call
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
-              rescue ex : Crystal::Exception
+              rescue ex : Crystal::CodeError
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
                 else
@@ -992,7 +992,7 @@ class Crystal::Call
   def bubbling_exception
     begin
       yield
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if obj = @obj
         if name == "initialize"
           # Avoid putting 'initialize' in the error trace
@@ -1058,7 +1058,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
+    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1068,10 +1068,19 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        owner = owner.as(ProcInstanceType)
-        proc_arg_type = owner.arg_types[index]
-        unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+        case body.as(Primitive).name
+        when "proc_call"
+          owner = owner.as(ProcInstanceType)
+          proc_arg_type = owner.arg_types[index]
+          unless type.covariant?(proc_arg_type)
+            self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          end
+        when "pointer_set"
+          owner = owner.remove_typedef.as(PointerInstanceType)
+          pointer_type = owner.var.type
+          unless type.filter_by(pointer_type)
+            self.args[index].raise "type must be #{pointer_type}, not #{type}"
+          end
         end
       end
 
@@ -1137,5 +1146,13 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+  end
+
+  def super?
+    !obj && name == "super"
+  end
+
+  def previous_def?
+    !obj && name == "previous_def"
   end
 end

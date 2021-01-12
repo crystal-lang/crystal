@@ -52,7 +52,11 @@ class LLVM::Builder
   def call(func, name : String = "")
     # check_func(func)
 
-    Value.new LibLLVM.build_call(self, func, nil, 0, name)
+    {% if LibLLVM::IS_LT_80 %}
+      Value.new LibLLVM.build_call(self, func, nil, 0, name)
+    {% else %}
+      Value.new LibLLVM.build_call2(self, func.function_type, func, nil, 0, name)
+    {% end %}
   end
 
   def call(func, arg : LLVM::Value, name : String = "")
@@ -60,14 +64,18 @@ class LLVM::Builder
     # check_value(arg)
 
     value = arg.to_unsafe
-    Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
+    {% if LibLLVM::IS_LT_80 %}
+      Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
+    {% else %}
+      Value.new LibLLVM.build_call2(self, func.function_type, func, pointerof(value), 1, name)
+    {% end %}
   end
 
   def call(func, args : Array(LLVM::Value), name : String = "", bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null)
     # check_func(func)
     # check_values(args)
 
-    Value.new LibLLVMExt.build_call(self, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
+    Value.new LibLLVMExt.build_call2(self, func.function_type, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, bundle, name)
   end
 
   def alloca(type, name = "")
@@ -207,10 +215,10 @@ class LLVM::Builder
     LibLLVMExt.build_catch_ret(self, pad, basic_block)
   end
 
-  def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
+  def invoke(fn : LLVM::Function, args : Array(LLVM::Value), a_then, a_catch, bundle : LLVM::OperandBundleDef = LLVM::OperandBundleDef.null, name = "")
     # check_func(fn)
 
-    Value.new LibLLVMExt.build_invoke self, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
+    Value.new LibLLVMExt.build_invoke2 self, fn.function_type, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, bundle, name
   end
 
   def switch(value, otherwise, cases)

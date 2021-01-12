@@ -11,6 +11,12 @@ enum YAMLSpecEnum
   Two
 end
 
+@[Flags]
+enum YAMLSpecFlagEnum
+  One
+  Two
+end
+
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
 # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
@@ -196,6 +202,17 @@ describe "YAML serialization" do
       end
     end
 
+    it "does for flag Enum" do
+      YAMLSpecFlagEnum.from_json("0").should eq(YAMLSpecFlagEnum::None)
+      YAMLSpecFlagEnum.from_json("1").should eq(YAMLSpecFlagEnum::One)
+      YAMLSpecFlagEnum.from_json("2").should eq(YAMLSpecFlagEnum::Two)
+      YAMLSpecFlagEnum.from_json("3").should eq(YAMLSpecFlagEnum::All)
+
+      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: 4") do
+        YAMLSpecFlagEnum.from_json("4")
+      end
+    end
+
     it "does Time::Format#from_yaml" do
       ctx = YAML::ParseContext.new
       nodes = YAML::Nodes.parse("--- 2014-01-02\n...\n").nodes.first
@@ -375,6 +392,11 @@ describe "YAML serialization" do
     pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
+    end
+
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
+      BigDecimal.from_yaml(big.to_yaml).should eq(big)
     end
 
     it "does for Enum" do
