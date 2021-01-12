@@ -64,10 +64,10 @@ module Spec
   class_property option_parser : OptionParser = begin
     OptionParser.new do |opts|
       opts.banner = "crystal spec runner"
-      opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
+      opts.on("-e", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
         Spec.pattern = Regex.new(Regex.escape(pattern))
       end
-      opts.on("-l ", "--line LINE", "run examples whose line matches LINE") do |line|
+      opts.on("-l", "--line LINE", "run examples whose line matches LINE") do |line|
         Spec.line = line.to_i
       end
       opts.on("-p", "--profile", "Print the 10 slowest specs") do
