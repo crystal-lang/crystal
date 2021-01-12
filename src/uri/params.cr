@@ -146,7 +146,7 @@ class URI
       self.raw_params == other.raw_params
     end
 
-    # Returns a copy of this `HTTP::Params` instance
+    # Returns a copy of this `HTTP::Params` instance.
     #
     # ```
     # require "http/params"
@@ -157,9 +157,32 @@ class URI
     #
     # original["name"] # => "Jamie"
     # ```
+    #
+    # Identical to `#clone`.
     def dup : self
-      self.class.new(raw_params.dup)
+      # Since the component types (keys and values) are immutable, there's no
+      # difference between deep and shallow copy, so we can just use `clone`
+      # here.
+      clone
     end
+
+    # Returns a copy of this `HTTP::Params` instance.
+    #
+    # ```
+    # require "http/params"
+    #
+    # original = HTTP::Params{"name" => "Jamie"}
+    # updated = original.clone
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    #
+    # Identical to `#dup`.
+    def clone : self
+      self.class.new(raw_params.clone)
+    end
+
 
     # Returns first value for specified param name.
     #

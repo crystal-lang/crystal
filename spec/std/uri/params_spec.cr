@@ -206,12 +206,27 @@ class URI
 
     describe "#dup" do
       it "gives a whole new set of params" do
-        params = Params{"foo" => "bar"}
+        ary = ["bar"]
+        params = Params{"foo" => ary}
         duped = params.dup
 
-        duped["foo"] = "baz"
+        ary << "baz"
 
-        params["foo"].should eq "bar"
+        duped.fetch_all("foo").should eq ["bar"]
+        params.fetch_all("foo").should eq ["bar", "baz"]
+      end
+    end
+
+    describe "#clone" do
+      it "gives a whole new set of params" do
+        ary = ["bar"]
+        params = Params{"foo" => ary}
+        duped = params.clone
+
+        ary << "baz"
+
+        duped.fetch_all("foo").should eq ["bar"]
+        params.fetch_all("foo").should eq ["bar", "baz"]
       end
     end
 
