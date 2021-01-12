@@ -6,7 +6,7 @@ require "./git"
 
 module Crystal
   module Init
-    class Error < ::Exception
+    class Error < Crystal::Error
       def self.new(message, opts : OptionParser)
         new("#{message}\n#{opts}\n")
       end

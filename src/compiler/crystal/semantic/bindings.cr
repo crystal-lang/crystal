@@ -586,7 +586,7 @@ module Crystal
 
         begin
           generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           raise ex.message, ex
         end
       end

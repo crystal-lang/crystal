@@ -5,6 +5,20 @@ private def assert_code_link(obj, before, after = before)
   renderer.expand_code_links(before).should eq(after)
 end
 
+private def it_renders(context, input, output, file = __FILE__, line = __LINE__)
+  it "renders #{input.inspect}", file, line do
+    String.build do |io|
+      c = context
+      c ||= begin
+        program = Program.new
+        generator = Doc::Generator.new(program, [""])
+        generator.type(program)
+      end
+      Doc::Markdown.parse input, Doc::Markdown::DocRenderer.new(c, io)
+    end.should eq(output), file, line
+  end
+end
+
 describe Doc::Markdown::DocRenderer do
   describe "expand_code_links" do
     program = semantic("
@@ -284,5 +298,11 @@ describe Doc::Markdown::DocRenderer do
       # because LibFoo is undocumented
       assert_code_link(generator.type(program), "LibFoo::BAR", %(<a href="LibFoo.html#BAR">LibFoo::BAR</a>))
     end
+  end
+
+  describe "renders" do
+    it_renders nil, "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
+    it_renders nil, "```cr\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
+    it_renders nil, "```\nHello\nWorld\n```", %(<pre><code class="language-crystal"><span class="t">Hello</span>\n<span class="t">World</span></code></pre>)
   end
 end

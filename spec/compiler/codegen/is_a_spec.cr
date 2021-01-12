@@ -455,7 +455,7 @@ describe "Codegen: is_a?" do
       )).to_b.should be_true
   end
 
-  it "works with inherited generic class against an instantiation (2)" do
+  it "doesn't work with inherited generic class against an instantiation (2)" do
     run(%(
       class Class1
       end
@@ -471,7 +471,7 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Class1))
-      )).to_b.should be_true
+      )).to_b.should be_false
   end
 
   it "works with inherited generic class against an instantiation (3)" do

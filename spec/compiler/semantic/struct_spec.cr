@@ -87,7 +87,7 @@ describe "Semantic: struct" do
       ", "can't make class 'Bar' inherit struct 'Foo'"
   end
 
-  it "can't reopen as different type" do
+  it "can't reopen as class" do
     assert_error "
       struct Foo
       end
@@ -95,6 +95,16 @@ describe "Semantic: struct" do
       class Foo
       end
       ", "Foo is not a class, it's a struct"
+  end
+
+  it "can't reopen as module" do
+    assert_error "
+      struct Foo
+      end
+
+      module Foo
+      end
+      ", "Foo is not a module, it's a struct"
   end
 
   it "can't extend struct from non-abstract struct" do

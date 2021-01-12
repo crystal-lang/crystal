@@ -228,6 +228,7 @@ struct Time::Span
   end
 
   # Alias of `abs`.
+  @[Deprecated("Use `#abs` instead.")]
   def duration : Time::Span
     abs
   end
@@ -236,6 +237,17 @@ struct Time::Span
   # represents by removing the sign.
   def abs : Time::Span
     Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
+  end
+
+  # Returns the sign of this time span.
+  #
+  # Values are `-1`, `0`, `1` if `self` is smaller, equal, bigger compared to `ZERO`.
+  def sign : Int32
+    if @seconds == 0
+      @nanoseconds.sign
+    else
+      @seconds.sign
+    end
   end
 
   # Returns a `Time` that happens later by `self` than the current time.

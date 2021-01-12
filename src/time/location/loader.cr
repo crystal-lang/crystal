@@ -63,11 +63,12 @@ class Time::Location
   def self.find_zoneinfo_file(name : String, sources : Enumerable(String))
     sources.each do |source|
       if source.ends_with?(".zip")
-        return source if File.exists?(source)
+        path = source
       else
         path = File.join(source, name)
-        return source if File.exists?(path)
       end
+
+      return source if File.exists?(path) && File.file?(path) && File.readable?(path)
     end
   end
 
@@ -145,6 +146,8 @@ class Time::Location
     end
 
     new(location_name, zones, transitions)
+  rescue exc : IO::Error
+    raise InvalidTZDataError.new(cause: exc)
   end
 
   private def self.read_int32(io : IO)

@@ -20,10 +20,10 @@ class Log::Metadata
   # When the metadata is defragmented max_total_size will be updated with size
   protected getter max_total_size : Int32
   @max_total_size = uninitialized Int32
-  # How many entries are potentially overriden from parent (ie: initial entries.size)
-  @overriden_size = uninitialized Int32
+  # How many entries are potentially overridden from parent (ie: initial entries.size)
+  @overridden_size = uninitialized Int32
   # How many entries are stored from @first.
-  # Initially are @overriden_size, the one explicitly overriden in entries argument.
+  # Initially are @overridden_size, the one explicitly overridden in entries argument.
   # When the metadata is defragmented @size will be increased up to
   # the actual number of entries resulting from merging the parent
   @size = uninitialized Int32
@@ -38,7 +38,7 @@ class Log::Metadata
   end
 
   protected def setup(@parent : Metadata?, entries : NamedTuple | Hash)
-    @size = @overriden_size = entries.size
+    @size = @overridden_size = entries.size
     @max_total_size = @size + (@parent.try(&.max_total_size) || 0)
     ptr_entries = pointerof(@first)
 
@@ -87,26 +87,26 @@ class Log::Metadata
   # will be recomputed, but the result should be the same.
   #
   # * @parent.nil? signals if the defrag is needed/done
-  # * The values of @overriden_size, pointerof(@first) are never changed
+  # * The values of @overridden_size, pointerof(@first) are never changed
   # * @parent is set at the very end of the method
   protected def defrag
     parent = @parent
     return if parent.nil?
 
-    total_size = @overriden_size
+    total_size = @overridden_size
     ptr_entries = pointerof(@first)
-    next_free_entry = ptr_entries + @overriden_size
+    next_free_entry = ptr_entries + @overridden_size
 
     parent.each do |(key, value)|
-      overriden = false
-      @overriden_size.times do |i|
+      overridden = false
+      @overridden_size.times do |i|
         if ptr_entries[i][:key] == key
-          overriden = true
+          overridden = true
           break
         end
       end
 
-      unless overriden
+      unless overridden
         next_free_entry.value = {key: key, value: value}
         next_free_entry += 1
         total_size += 1
