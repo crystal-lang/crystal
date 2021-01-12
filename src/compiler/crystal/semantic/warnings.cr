@@ -14,6 +14,8 @@ module Crystal
 
     @deprecated_methods_detected = Set(String).new
     @deprecated_macros_detected = Set(String).new
+    @deprecated_aliases_detected = Set(String).new
+    @deprecated_annotations_detected = Set(String).new
 
     def report_warning(node : ASTNode, message : String)
       return unless self.warnings.all?
@@ -45,6 +47,50 @@ module Crystal
 
       @program.warnings_exclude.any? do |path|
         filename.starts_with?(path)
+      end
+    end
+
+    def check_call_to_deprecated_alias(node : Alias) : Nil
+      return unless @warnings.all?
+
+      if (ann = node.annotation(deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
+        return if ignore_warning_due_to_location?(node.location)
+        short_reference = node.short_reference
+        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
+
+        # skip warning if the call site was already informed
+        # if there is no location information just inform it.
+        return if !warning_key || @deprecated_aliases_detected.includes?(warning_key)
+        @deprecated_aliases_detected.add(warning_key) if warning_key
+
+        message = deprecated_annotation.message
+        message = message ? " #{message}" : ""
+
+        full_message = node.warning "Deprecated #{short_reference}.#{message}"
+
+        self.warning_failures << full_message
+      end
+    end
+
+    def check_call_to_deprecated_annotation(node : AnnotationDef) : Nil
+      return unless @warnings.all?
+
+      if (ann = node.annotation(deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
+        return if ignore_warning_due_to_location?(node.location)
+        short_reference = node.short_reference
+        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
+
+        # skip warning if the call site was already informed
+        # if there is no location information just inform it.
+        return if !warning_key || @deprecated_annotations_detected.includes?(warning_key)
+        @deprecated_annotations_detected.add(warning_key) if warning_key
+
+        message = deprecated_annotation.message
+        message = message ? " #{message}" : ""
+
+        full_message = node.warning "Deprecated #{short_reference}.#{message}"
+
+        self.warning_failures << full_message
       end
     end
 
@@ -102,6 +148,20 @@ module Crystal
     private def compiler_expanded_call(node : Call)
       # Compiler generates a `_.initialize` call in `new`
       node.obj.as?(Var).try { |v| v.name == "_" } && node.name == "initialize"
+    end
+  end
+
+  class Alias
+    def short_reference
+      # TODO: Define `#owner` on `self`.
+      "alias #{name}"
+    end
+  end
+
+  class AnnotationDef
+    def short_reference
+      # TODO: Define `#owner` on `self`.
+      "annotation #{name}"
     end
   end
 

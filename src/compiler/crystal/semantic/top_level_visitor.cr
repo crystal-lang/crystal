@@ -275,6 +275,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : AnnotationDef)
     check_outside_exp node, "declare annotation"
 
+    annotations = read_annotations
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
+
     scope, name, type = lookup_type_def(node)
 
     if type
@@ -286,7 +291,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
-    attach_doc type, node, annotations: nil
+    attach_doc type, node, annotations
 
     false
   end
@@ -295,6 +300,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     check_outside_exp node, "declare alias"
 
     annotations = read_annotations
+
+    process_annotations(annotations) do |annotation_type, ann|
+      node.add_annotation(annotation_type, ann)
+    end
 
     scope, name, existing_type = lookup_type_def(node)
 
