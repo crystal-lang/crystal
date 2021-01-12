@@ -225,7 +225,7 @@ module Enumerable(T)
     ary = [] of typeof((yield first).not_nil!)
     each do |e|
       v = yield e
-      unless v.is_a?(Nil)
+      unless v.nil?
         ary << v
       end
     end
