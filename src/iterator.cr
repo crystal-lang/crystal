@@ -943,7 +943,7 @@ module Iterator(T)
     def next
       while true
         value = wrapped_next
-        return value if @returned_false == true
+        return value if @returned_false
         unless @func.call(value)
           @returned_false = true
           return value
@@ -1087,7 +1087,7 @@ module Iterator(T)
     end
 
     def next
-      return stop if @returned_false == true
+      return stop if @returned_false
       value = wrapped_next
       if @func.call(value)
         value
