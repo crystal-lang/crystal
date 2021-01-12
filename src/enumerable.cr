@@ -1254,6 +1254,11 @@ module Enumerable(T)
   def sample(n : Int, random = Random::DEFAULT)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
+    # Unweighted reservoir sampling:
+    # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
+    # "Algorithm L" does not provide any performance improvements on Enumerable,
+    # because it is not possible to discard multiple elements at once
+
     ary = Array(T).new(n)
     return ary if n == 0
 
