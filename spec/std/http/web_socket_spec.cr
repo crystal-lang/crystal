@@ -461,6 +461,30 @@ describe HTTP::WebSocket do
     end
   end
 
+  it "doesn't compress upgrade response body" do
+    compress_handler = HTTP::CompressHandler.new
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.on_message do |str|
+        ws.send(str)
+      end
+    end
+    http_server = HTTP::Server.new([compress_handler, ws_handler])
+
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://#{address}", headers: HTTP::Headers{"Accept-Encoding" => "gzip"})
+      message = nil
+      client.on_message do |msg|
+        message = msg
+        client.close
+      end
+      client.send "hello"
+      client.run
+      message.should eq("hello")
+    end
+  end
+
   describe "handshake fails if server does not verify Sec-WebSocket-Key" do
     it "Sec-WebSocket-Accept missing" do
       http_server = HTTP::Server.new do |context|

@@ -102,7 +102,7 @@ describe "Code gen: named tuple" do
     run(%(
       ptr = Pointer({x: Int32, y: String}).malloc(1_u64)
 
-      # Here the compiler should reoder the values to match
+      # Here the compiler should reorder the values to match
       # the type inside the pointer
       ptr.value = {y: "hello", x: 42}
 

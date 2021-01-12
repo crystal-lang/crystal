@@ -220,9 +220,14 @@ module Crystal
         write "begin"
         @indent += 2
         write_line
-        next_token_skip_space_or_newline
-        if @token.type == :";"
-          next_token_skip_space_or_newline
+        next_token
+        # Corner case: an empty `begin ... end`.
+        # In this case, we should not skip space because it will do in the below loop.
+        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+          skip_space_or_newline
+          if @token.type == :";"
+            next_token_skip_space_or_newline
+          end
         end
         has_begin = true
         base_indent = @indent
@@ -231,6 +236,7 @@ module Crystal
       end
 
       last_aligned_assign = nil
+      last_found_comment = false
       max_length = nil
       skip_space
 
@@ -283,12 +289,18 @@ module Crystal
         end
 
         if last?(i, node.expressions)
-          skip_space_or_newline last: true
+          last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
             unless found_comment
-              skip_space_write_line
-              found_comment = skip_space_or_newline last: true, at_least_one: true
+              if @wrote_newline
+                write_line unless @wrote_double_newlines
+              elsif !@wrote_double_newlines
+                write_line
+                write_line
+              end
+              @wrote_double_newlines = true
+              found_comment = skip_space_or_newline
               write_line unless found_comment || @wrote_double_newlines
             end
           else
@@ -301,7 +313,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline
+      if has_newline && !last_found_comment
         write_line
         write_indent
       end
@@ -979,7 +991,9 @@ module Crystal
         StringLiteral.new(name).accept self
       else
         write @token
+        @lexer.wants_symbol = false
         next_token
+        @lexer.wants_symbol = true
       end
     end
 
@@ -1374,7 +1388,7 @@ module Crystal
     def format_nested(node, indent = @indent, write_end_line = true, write_indent = true)
       slash_is_regex!
       if node.is_a?(Nop)
-        skip_nop(indent + 2)
+        skip_space_write_line
       else
         if write_indent
           indent(indent + 2) do
@@ -2044,7 +2058,7 @@ module Crystal
 
     # If we are formatting macro contents, if there are nested macro
     # control structures they are definitely escaped with `\`,
-    # because otherwise we wouln't be able to format the contents.
+    # because otherwise we wouldn't be able to format the contents.
     # So here we append those slashes. In theory the nesting can be
     # very deep but it's usually just one level.
     private def write_macro_slashes
@@ -2666,11 +2680,11 @@ module Crystal
           if wrote_newline || @token.type == :NEWLINE
             unless wrote_newline
               next_token_skip_space_or_newline
-              write "," if @token.type != :")"
+              write ","
               write_line
             end
             needs_space = false
-            block_indent += 2
+            block_indent += 2 if @token.type != :")" # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
             write "," if @token.type != :")" # foo(1, &.foo) case
@@ -2898,18 +2912,37 @@ module Crystal
       old_inside_call_or_assign = @inside_call_or_assign
       @inside_call_or_assign = 0
 
+      comma_before_comment = false
+
       if @token.type == :","
-        needs_comma = true
-        next_token_skip_space_or_newline
+        next_token
+        next_token if @token.type == :SPACE
+        if @token.type == :COMMENT
+          write ","
+          needs_comma = false
+          comma_before_comment = true
+          @indent += 2
+        else
+          needs_comma = true
+        end
+        skip_space_or_newline
+        @indent -= 2 if comma_before_comment
       end
 
       if @token.keyword?(:do)
-        write " do"
+        if comma_before_comment
+          @indent += 2
+          write_indent
+        else
+          write " "
+        end
+        write "do"
         next_token_skip_space
         body = format_block_args node.args, node
         old_implicit_exception_handler_indent, @implicit_exception_handler_indent = @implicit_exception_handler_indent, @indent
         format_nested_with_end body
         @implicit_exception_handler_indent = old_implicit_exception_handler_indent
+        @indent -= 2
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
@@ -3042,8 +3075,6 @@ module Crystal
         else
           clear_object(node.exp)
         end
-      else
-        # nothing to do
       end
     end
 
@@ -3685,33 +3716,25 @@ module Crystal
         needs_indent = false
         write_indent
         write_keyword :when
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
         write " "
         a_when.condition.accept self
-        skip_space
-        if @token.type == :";"
-          next_token_skip_space
+        found_comment = skip_space(@indent + 2)
+        if @token.type == :";" || @token.keyword?(:then)
+          sep = @token.type == :";" ? "; " : " then "
+          next_token
+          skip_space(@indent + 2)
           if @token.type == :NEWLINE
             write_line
-            skip_space_or_newline
+            skip_space_or_newline(@indent + 2)
             needs_indent = true
           else
-            write "; "
-            skip_space_or_newline
-          end
-        elsif @token.keyword?(:then)
-          next_token_skip_space
-          if @token.type == :NEWLINE
-            write_line
-            skip_space_or_newline
-            needs_indent = true
-          else
-            write " then "
-            skip_space_or_newline
+            write sep
+            skip_space_or_newline(@indent + 2)
           end
         else
-          write_line
-          skip_space_or_newline
+          write_line unless found_comment
+          skip_space_or_newline(@indent + 2)
           needs_indent = true
         end
         if needs_indent
@@ -3720,15 +3743,17 @@ module Crystal
           a_when.body.accept self
           write_line
         end
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       if node_else = node.else
         write_indent
         write_keyword :else
-        skip_space_or_newline
+        found_comment = skip_space(@indent + 2)
+        write_line unless found_comment
+        skip_space_or_newline(@indent + 2)
         format_nested(node_else)
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       write_indent
@@ -4420,7 +4445,7 @@ module Crystal
       indent(indent) { skip_space(write_comma) }
     end
 
-    def skip_space_or_newline(last : Bool = false, at_least_one : Bool = false)
+    def skip_space_or_newline(last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
       just_wrote_line = @wrote_newline
       base_column = @column
       has_space = false
@@ -4453,15 +4478,15 @@ module Crystal
             write_line
           end
         end
-        write_comment(needs_indent: !needs_space)
+        write_comment(needs_indent: !needs_space, next_comes_end: last)
         true
       else
         false
       end
     end
 
-    def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false)
-      indent(indent) { skip_space_or_newline(last, at_least_one) }
+    def skip_space_or_newline(indent : Int32, last : Bool = false, at_least_one : Bool = false, next_comes_end : Bool = false)
+      indent(indent) { skip_space_or_newline(last, at_least_one, next_comes_end) }
     end
 
     def slash_is_regex!
@@ -4476,11 +4501,6 @@ module Crystal
       found_comment = skip_space
       write_line unless found_comment || @wrote_newline
       found_comment
-    end
-
-    def skip_nop(indent)
-      skip_space_write_line
-      skip_space_or_newline(indent)
     end
 
     def skip_semicolon
@@ -4523,7 +4543,7 @@ module Crystal
       skip_space_or_newline
     end
 
-    def write_comment(needs_indent = true, consume_newline = true)
+    def write_comment(needs_indent = true, consume_newline = true, next_comes_end = false)
       while @token.type == :COMMENT
         empty_line = @line_output.to_s.strip.empty?
         if empty_line
@@ -4565,8 +4585,14 @@ module Crystal
               @doc_comments << current_doc_comment if current_doc_comment.needs_format
               @current_doc_comment = nil
             else
+              # Normalize crystal language tag
+              if language == "cr" || language == "crystal"
+                value = value.rchop(language)
+                language = ""
+              end
+
               # We only format crystal code (empty by default means crystal)
-              needs_format = language.empty? || language == "crystal"
+              needs_format = language.empty?
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end
@@ -4576,18 +4602,18 @@ module Crystal
         write value
         next_token_skip_space
         if consume_newline
-          consume_newlines
+          consume_newlines(next_comes_end: next_comes_end)
           skip_space_or_newline
         end
       end
     end
 
-    def consume_newlines
+    def consume_newlines(next_comes_end = false)
       if @token.type == :NEWLINE
         write_line unless @wrote_newline
         next_token_skip_space
 
-        if @token.type == :NEWLINE
+        if @token.type == :NEWLINE && !next_comes_end
           write_line
           @wrote_double_newlines = true
         end
@@ -4640,7 +4666,7 @@ module Crystal
     end
 
     def write_indent(indent, node)
-      write_indent(indent)
+      write_indent(indent) unless node.is_a?(Nop)
       indent(indent, node)
     end
 
@@ -4660,6 +4686,7 @@ module Crystal
       end
 
       @wrote_newline = false
+      @wrote_double_newlines = false
       @last_write = string
     end
 

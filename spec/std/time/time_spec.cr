@@ -295,7 +295,7 @@ describe Time do
       time.shift(0, 0).should eq time
     end
 
-    describe "irregular calendrical unit ratios" do
+    describe "irregular calendaric unit ratios" do
       it "shifts by a week if one day is left out" do
         # The week from 2011-12-25 to 2012-01-01 for example lasted only 6 days in Samoa,
         # because it skipped 2011-12-28 due to changing time zone from -11:00 to +13:00.
@@ -353,10 +353,9 @@ describe Time do
         end
       end
 
-      pending "out of range max (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range max (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: 10000000
         end
       end
@@ -368,10 +367,9 @@ describe Time do
         end
       end
 
-      pending "out of range min (shift days)" do
-        # this will be fixed with raise on overflow
+      it "out of range min (shift days)" do
         time = Time.utc(2002, 2, 25, 15, 25, 13)
-        expect_raises ArgumentError do
+        expect_raises OverflowError do
           time.shift days: -10000000
         end
       end
@@ -786,7 +784,7 @@ describe Time do
       end
     end
 
-    it "knows that typical non-century leap years are divisibly by 4" do
+    it "knows that typical non-century leap years are divisible by 4" do
       {1968, 1972, 2004, 2020}.each do |year|
         Time.leap_year?(year).should be_true
       end

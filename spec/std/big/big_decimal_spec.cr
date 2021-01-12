@@ -310,6 +310,8 @@ describe BigDecimal do
     BigDecimal.new(0).to_s.should eq "0"
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new("-0.35").to_s.should eq "-0.35"
+    BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"
     BigDecimal.new("-0.01").to_s.should eq "-0.01"
     BigDecimal.new("0.00123").to_s.should eq "0.00123"
@@ -387,7 +389,7 @@ describe BigDecimal do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
     bd3 = BigDecimal.new("1.23456")
-    bd4 = BigDecimal.new("123456")
+    bd4 = BigDecimal.new("-123456")
     bd5 = BigDecimal.new("0")
 
     hash = {} of BigDecimal => String
@@ -401,7 +403,7 @@ describe BigDecimal do
     hash[BigDecimal.new("123.456")].should eq "bd1"
     hash[BigDecimal.new("0.12345")].should eq "bd2"
     hash[BigDecimal.new("1.23456")].should eq "bd3"
-    hash[BigDecimal.new("123456")].should eq "bd4"
+    hash[BigDecimal.new("-123456")].should eq "bd4"
     hash[BigDecimal.new("0")].should eq "bd5"
 
     # not found

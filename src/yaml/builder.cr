@@ -72,6 +72,7 @@ class YAML::Builder
   # Ends a YAML stream.
   def end_stream
     emit stream_end
+    @io.flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
@@ -143,7 +144,7 @@ class YAML::Builder
 
   # Emits an alias to the given *anchor*.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|
@@ -164,7 +165,7 @@ class YAML::Builder
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|

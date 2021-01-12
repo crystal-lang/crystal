@@ -43,8 +43,6 @@ class Crystal::Call
     when LibType
       # `LibFoo.call` has a separate logic
       return recalculate_lib_call obj_type
-    else
-      # Nothing
     end
 
     # Check if its call is inside LibFoo
@@ -272,7 +270,7 @@ class Crystal::Call
       matches = program_matches unless program_matches.empty?
     end
 
-    if matches.empty? && owner.class? && owner.abstract? && name != "super"
+    if matches.empty? && owner.class? && owner.abstract? && !super?
       matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
@@ -316,7 +314,7 @@ class Crystal::Call
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
-    # triggering a virtual lookup. But the context of lookup must be preseved.
+    # triggering a virtual lookup. But the context of lookup must be preserved.
     if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
@@ -771,7 +769,7 @@ class Crystal::Call
       output = block_arg_restriction.output
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
-      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
+      # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
@@ -787,7 +785,7 @@ class Crystal::Call
     end
 
     if yield_vars
-      # Check if tuple unpkacing is needed
+      # Check if tuple unpacking is needed
       if yield_vars.size == 1 &&
          (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
          block.args.size > 1
@@ -911,7 +909,7 @@ class Crystal::Call
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
           else
@@ -925,7 +923,7 @@ class Crystal::Call
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
-              rescue ex : Crystal::Exception
+              rescue ex : Crystal::CodeError
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
                 else
@@ -994,7 +992,7 @@ class Crystal::Call
   def bubbling_exception
     begin
       yield
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if obj = @obj
         if name == "initialize"
           # Avoid putting 'initialize' in the error trace
@@ -1060,7 +1058,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
+    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1070,10 +1068,19 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        owner = owner.as(ProcInstanceType)
-        proc_arg_type = owner.arg_types[index]
-        unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+        case body.as(Primitive).name
+        when "proc_call"
+          owner = owner.as(ProcInstanceType)
+          proc_arg_type = owner.arg_types[index]
+          unless type.covariant?(proc_arg_type)
+            self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          end
+        when "pointer_set"
+          owner = owner.remove_typedef.as(PointerInstanceType)
+          pointer_type = owner.var.type
+          unless type.filter_by(pointer_type)
+            self.args[index].raise "type must be #{pointer_type}, not #{type}"
+          end
         end
       end
 
@@ -1139,5 +1146,13 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+  end
+
+  def super?
+    !obj && name == "super"
+  end
+
+  def previous_def?
+    !obj && name == "previous_def"
   end
 end

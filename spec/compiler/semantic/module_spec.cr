@@ -101,7 +101,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it "errors if including generic module and not specifying type vars" do
     assert_error "
       module Foo(T)
       end
@@ -110,7 +110,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when including Foo(T)"
   end
 
   it "includes generic module explicitly" do
@@ -383,7 +383,7 @@ describe "Semantic: module" do
       end
 
       Baz.new.foo
-      ", "method must return Bar(Float64) but it is returning Bar(Int32)"
+      ", "method Baz#foo must return Bar(Float64) but it is returning Bar(Int32)"
   end
 
   it "includes generic module with self (check return subclass type, error)" do
@@ -405,7 +405,7 @@ describe "Semantic: module" do
       end
 
       Baz1.new.foo
-      ", "method must return Bar(Int32) but it is returning Baz2"
+      ", "method Baz1#foo must return Bar(Int32) but it is returning Baz2"
   end
 
   it "includes module but can't access metaclass methods" do
@@ -792,7 +792,7 @@ describe "Semantic: module" do
       )) { union_of(types["Bar"].metaclass, types["Moo"].metaclass) }
   end
 
-  it "works ok in a case where a typed-def type has un underlying type that has an included generic module (bug)" do
+  it "works ok in a case where a typed-def type has an underlying type that has an included generic module (bug)" do
     assert_type(%(
       lib LibC
         type X = Void*
@@ -896,6 +896,92 @@ describe "Semantic: module" do
       end
       ),
       "can't declare module dynamically"
+  end
+
+  it "can't reopen as class" do
+    assert_error "
+      module Foo
+      end
+
+      class Foo
+      end
+      ", "Foo is not a class, it's a module"
+  end
+
+  it "can't reopen as struct" do
+    assert_error "
+      module Foo
+      end
+
+      struct Foo
+      end
+      ", "Foo is not a struct, it's a module"
+  end
+
+  it "errors if reopening non-generic module as generic" do
+    assert_error %(
+      module Foo
+      end
+
+      module Foo(T)
+      end
+      ),
+      "Foo is not a generic module"
+  end
+
+  it "errors if reopening generic module with different type vars" do
+    assert_error %(
+      module Foo(T)
+      end
+
+      module Foo(U)
+      end
+      ),
+      "type var must be T, not U"
+  end
+
+  it "errors if reopening generic module with different type vars (2)" do
+    assert_error %(
+      module Foo(A, B)
+      end
+
+      module Foo(C)
+      end
+      ),
+      "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic module with different splat index" do
+    assert_error %(
+      module Foo(A)
+      end
+
+      module Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic module with different splat index (2)" do
+    assert_error %(
+      module Foo(*A)
+      end
+
+      module Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic module with different splat index (3)" do
+    assert_error %(
+      module Foo(*A, B)
+      end
+
+      module Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
   end
 
   it "uses :Module name for modules in errors" do

@@ -19,14 +19,14 @@
 #
 # ### Parameters
 #
-# Parameters can be added to any request with the `HTTP::Params#encode` method, which
+# Parameters can be added to any request with the `URI::Params.encode` method, which
 # converts a `Hash` or `NamedTuple` to a URL encoded HTTP query.
 #
 # ```
 # require "http/client"
 #
-# params = HTTP::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
-# response = HTTP::Client.get "http://www.example.com?" + params
+# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
+# response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
 #
@@ -509,7 +509,7 @@ class HTTP::Client
     # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}} path, form: body, headers: headers
     end
 
@@ -526,7 +526,7 @@ class HTTP::Client
     # end
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}}(path, form: body, headers: headers) do |response|
         yield response
       end
@@ -577,7 +577,9 @@ class HTTP::Client
   # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Client::Response
-    exec_internal(request)
+    around_exec(request) do
+      exec_internal(request)
+    end
   end
 
   private def exec_internal(request)
@@ -615,8 +617,10 @@ class HTTP::Client
   # end
   # ```
   def exec(request : HTTP::Request, &block)
-    exec_internal(request) do |response|
-      yield response
+    around_exec(request) do
+      exec_internal(request) do |response|
+        yield response
+      end
     end
   end
 
@@ -851,7 +855,7 @@ class HTTP::Client
     host = validate_host(uri)
 
     port = uri.port
-    path = uri.full_path
+    path = uri.request_target
     user = uri.user
     password = uri.password
 
@@ -860,6 +864,40 @@ class HTTP::Client
         client.basic_auth(user, password)
       end
       yield client, path
+    end
+  end
+
+  # This method is called when executing the request. Although it can be
+  # redefined, it is recommended to use the `def_around_exec` macro to be
+  # able to add new behaviors without loosing prior existing ones.
+  protected def around_exec(request)
+    yield
+  end
+
+  # This macro allows injecting code to be run before and after the execution
+  # of the request. It should return the yielded value. It must be called with 1
+  # block argument that will be used to pass the `HTTP::Request`.
+  #
+  # ```
+  # class HTTP::Client
+  #   def_around_exec do |request|
+  #     # do something before exec
+  #     res = yield
+  #     # do something after exec
+  #     res
+  #   end
+  # end
+  # ```
+  macro def_around_exec(&block)
+    protected def around_exec(%request)
+      previous_def do
+        {% if block.args.size != 1 %}
+          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+        {% end %}
+
+        {{ block.args.first.id }} = %request
+        {{ block.body }}
+      end
     end
   end
 end

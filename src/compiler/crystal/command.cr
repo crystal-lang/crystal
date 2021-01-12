@@ -77,6 +77,7 @@ class Crystal::Command
       options.shift
       {% if flag?(:without_playground) %}
         puts "Crystal was compiled without playground support"
+        puts "Try the online code evaluation and sharing tool at https://play.crystal-lang.org"
         exit 1
       {% else %}
         playground
@@ -121,11 +122,7 @@ class Crystal::Command
         error "unknown command: #{command}"
       end
     end
-  rescue ex : Crystal::LocationlessException
-    report_warnings
-
-    error ex.message
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     report_warnings
 
     ex.color = @color
@@ -136,6 +133,10 @@ class Crystal::Command
       STDERR.puts ex
     end
     exit 1
+  rescue ex : Crystal::Error
+    report_warnings
+
+    error ex.message
   rescue ex : OptionParser::Exception
     error ex.message
   rescue ex
@@ -622,7 +623,7 @@ class Crystal::Command
   private def use_crystal_opts
     @options = Process.parse_arguments(ENV.fetch("CRYSTAL_OPTS", "")).concat(options)
   rescue ex
-    raise LocationlessException.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
+    raise Error.new("Failed to parse CRYSTAL_OPTS: #{ex.message}")
   end
 
   private def new_compiler

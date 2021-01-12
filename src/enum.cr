@@ -47,7 +47,7 @@
 # Color.new(1).to_s # => "Green"
 # ```
 #
-# Values that don't correspond to an enum's constants are allowed: the value
+# Values that don't correspond to enum's constants are allowed: the value
 # will still be of type Color, but when printed you will get the underlying value:
 #
 # ```
@@ -357,7 +357,7 @@ struct Enum
     {% if @type.has_attribute?("Flags") %}
       all_mask = {{@type}}::All.value
       return if all_mask & value != value
-      return new(value)
+      return new(value.to_i)
     {% else %}
       {% for member in @type.constants %}
         return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value

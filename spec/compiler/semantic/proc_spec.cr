@@ -54,7 +54,7 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedefed" do
+  it "allows passing proc type if it is typedef'd" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
@@ -887,6 +887,18 @@ describe "Semantic: proc" do
       b = ->(x : Int32) { nil }
       a || b
       )) { union_of proc_of(int32, int32), proc_of(int32, nil_type) }
+  end
+
+  it "*doesn't* merge Proc that returns NoReturn with another one that returns something else (#9971)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      a = ->(x : Int32) { 1 }
+      b = ->(x : Int32) { LibC.exit }
+      a || b
+      )) { union_of proc_of(int32, int32), proc_of(int32, no_return) }
   end
 
   it "merges return type" do

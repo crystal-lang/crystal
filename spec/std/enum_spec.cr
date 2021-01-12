@@ -155,6 +155,7 @@ describe Enum do
     it "for simple enum" do
       SpecEnum.from_value?(0).should eq(SpecEnum::One)
       SpecEnum.from_value?(1).should eq(SpecEnum::Two)
+      SpecEnum.from_value?(1_i8).should eq(SpecEnum::Two)
       SpecEnum.from_value?(2).should eq(SpecEnum::Three)
       SpecEnum.from_value?(3).should be_nil
     end
@@ -162,6 +163,7 @@ describe Enum do
     it "for flags enum" do
       SpecEnumFlags.from_value?(0).should eq(SpecEnumFlags::None)
       SpecEnumFlags.from_value?(1).should eq(SpecEnumFlags::One)
+      SpecEnumFlags.from_value?(1_i8).should eq(SpecEnumFlags::One)
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(8).should be_nil

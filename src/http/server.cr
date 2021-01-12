@@ -73,7 +73,7 @@ require "log"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see `#bind`)
+# The server can be bound to one or more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -389,7 +389,7 @@ class HTTP::Server
     when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
-        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+        context = OpenSSL::SSL::Context::Server.from_hash(uri.query_params)
 
         bind_tls(address, context)
       {% else %}

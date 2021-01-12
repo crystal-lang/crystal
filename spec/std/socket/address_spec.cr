@@ -118,6 +118,15 @@ describe Socket::IPAddress do
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED, 0).unspecified?.should be_true
     Socket::IPAddress.new(Socket::IPAddress::UNSPECIFIED6, 0).unspecified?.should be_true
   end
+
+  it ".valid_port?" do
+    Socket::IPAddress.valid_port?(0).should be_true
+    Socket::IPAddress.valid_port?(80).should be_true
+    Socket::IPAddress.valid_port?(65_535).should be_true
+
+    Socket::IPAddress.valid_port?(-1).should be_false
+    Socket::IPAddress.valid_port?(65_536).should be_false
+  end
 end
 
 describe Socket::UNIXAddress do
@@ -248,7 +257,7 @@ describe Socket do
   it "==" do
     a = Socket::IPAddress.new("127.0.0.1", 8080)
     b = Socket::UNIXAddress.new("some_path")
-    c = "sonme_path"
+    c = "some_path"
     (a == a).should be_true
     (b == b).should be_true
     (a == b).should be_false

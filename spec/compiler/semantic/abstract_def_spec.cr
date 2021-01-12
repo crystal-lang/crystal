@@ -116,15 +116,17 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass" do
-    assert_error %(
+    exc = assert_error <<-CR,
       abstract class Foo
         abstract def foo
       end
 
       class Bar < Foo
       end
-      ),
+      CR
       "abstract `def Foo#foo()` must be implemented by Bar"
+    exc.line_number.should eq 5
+    exc.column_number.should eq 1
   end
 
   it "errors if abstract method with arguments is not implemented by subclass" do
@@ -395,8 +397,8 @@ describe "Semantic: abstract def" do
       )
   end
 
-  it "warning if missing return type" do
-    assert_warning <<-CR,
+  it "errors if missing return type" do
+    assert_error <<-CR,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -407,11 +409,11 @@ describe "Semantic: abstract def" do
         end
       end
       CR
-      "warning in line 6\nWarning: this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+      "this method overrides Foo#foo() which has an explicit return type of Int32.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
-  it "warning if different return type" do
-    assert_warning <<-CR,
+  it "errors if different return type" do
+    assert_error <<-CR,
       abstract class Foo
         abstract def foo : Int32
       end
@@ -425,7 +427,7 @@ describe "Semantic: abstract def" do
         end
       end
       CR
-      "warning in line 9\nWarning: this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
+      "this method must return Int32, which is the return type of the overridden method Foo#foo(), or a subtype of it, not Bar::Int32"
   end
 
   it "can return a more specific type" do
@@ -542,8 +544,8 @@ describe "Semantic: abstract def" do
     ))
   end
 
-  it "is missing a return type in subclass of generic subclass" do
-    assert_warning <<-CR,
+  it "errors if missing a return type in subclass of generic subclass" do
+    assert_error <<-CR,
         abstract class Foo(T)
           abstract def foo : T
         end
@@ -553,11 +555,11 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 6\nWarning: this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
+      "this method overrides Foo(T)#foo() which has an explicit return type of T.\n\nPlease add an explicit return type (Int32 or a subtype of it) to this method as well."
   end
 
-  it "can't find parent return type" do
-    assert_warning <<-CR,
+  it "errors if can't find parent return type" do
+    assert_error <<-CR,
         abstract class Foo
           abstract def foo : Unknown
         end
@@ -567,11 +569,11 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 2\nWarning: can't resolve return type Unknown"
+      "can't resolve return type Unknown"
   end
 
-  it "can't find child return type" do
-    assert_warning <<-CR,
+  it "errors if can't find child return type" do
+    assert_error <<-CR,
         abstract class Foo
           abstract def foo : Int32
         end
@@ -581,7 +583,7 @@ describe "Semantic: abstract def" do
           end
         end
       CR
-      "warning in line 6\nWarning: can't resolve return type Unknown"
+      "can't resolve return type Unknown"
   end
 
   it "doesn't crash when abstract method is implemented by supertype (#8031)" do
@@ -714,6 +716,19 @@ describe "Semantic: abstract def" do
       end
       ),
       "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
+  end
+
+  it "errors if implementation adds type restriction" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+        end
+      end
+    ), "abstract `def Foo#foo(x)` must be implemented by Bar"
   end
 
   it "errors if implementation doesn't have keyword arguments" do
@@ -876,5 +891,109 @@ describe "Semantic: abstract def" do
         end
       end
     )
+  end
+
+  it "errors if keyword argument doesn't have the same default value" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, foo = 1)
+      end
+
+      class Bar < Foo
+        def foo(*, foo = 2)
+        end
+      end
+    ), "abstract `def Foo#foo(*, foo = 1)` must be implemented by Bar"
+  end
+
+  it "allow double splat argument" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(**kargs)
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "allow double splat when abstract doesn't have it" do
+    semantic %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "errors if implementation misses the double splat" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs)
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs)` must be implemented by Bar"
+  end
+
+  it "errors if double splat type doesn't match" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs : Int32)
+      end
+
+      class Bar < Foo
+        def foo(**kargs : String)
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs : Int32)` must be implemented by Bar"
+  end
+
+  it "allow splat instead of keyword argument" do
+    semantic %(
+      abstract class Foo
+        abstract def foo(*, foo)
+      end
+
+      class Bar < Foo
+        def foo(**kargs)
+        end
+      end
+    )
+  end
+
+  it "extra keyword arguments must have compatible type to double splat" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(**kargs : String)
+      end
+
+      class Bar < Foo
+        def foo(*, foo : Int32 = 0, **kargs)
+        end
+      end
+    ), "abstract `def Foo#foo(**kargs : String)` must be implemented by Bar"
+  end
+
+  it "double splat must match keyword argument type" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(*, foo : Int32)
+      end
+
+      class Bar < Foo
+        def foo(**kargs : String)
+        end
+      end
+    ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
   end
 end

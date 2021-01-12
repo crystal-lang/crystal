@@ -78,7 +78,12 @@ class Crystal::AbstractDefChecker
       if subtype.abstract? || subtype.module?
         check_implemented_in_subtypes(base, subtype, method)
       else
-        method.raise "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
+        msg = "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
+        if location = subtype.locations.try &.first?
+          raise TypeException.new(msg, location)
+        else
+          raise TypeException.new(msg)
+        end
       end
     end
   end
@@ -187,17 +192,33 @@ class Crystal::AbstractDefChecker
         {a1.name, a1}
       end
 
-    # Check keyword arguments
-    m2_kargs.each do |i|
-      a2 = m2.args[i]
-      a1 = kargs.delete(a2.name)
-      return false unless a1
-      return false unless check_arg(t1, a1, t2, a2)
+    # Check double splat
+    if m2_double_splat = m2.double_splat
+      if m1_double_splat = m1.double_splat
+        return false unless check_arg(t1, m1_double_splat, t2, m2_double_splat)
+      else
+        return false
+      end
     end
 
-    # Remaining keyword arguments must have a default value
+    # Check keyword arguments
+    # They must either exist in the implementation or match with the double splat
+    m2_kargs.each do |i|
+      a2 = m2.args[i]
+      if a1 = kargs.delete(a2.name) || m1.double_splat
+        return false unless check_arg(t1, a1, t2, a2)
+      else
+        return false
+      end
+    end
+
+    # Check remaining keyword arguments
+    # They must have a default value and match the double splat in the abstract (if it exists)
     kargs.each_value do |a1|
       return false unless a1.default_value
+      if m2_double_splat = m2.double_splat
+        return false unless check_arg(t1, a1, t2, m2_double_splat)
+      end
     end
 
     true
@@ -222,6 +243,7 @@ class Crystal::AbstractDefChecker
 
     r1 = a1.restriction
     r2 = a2.restriction
+    return false if r1 && !r2
     if r2 && r1 && r1 != r2
       # Check if a1.restriction is contravariant with a2.restriction
       begin
@@ -245,7 +267,7 @@ class Crystal::AbstractDefChecker
 
     original_base_return_type = base_type.lookup_type?(base_return_type_node)
     unless original_base_return_type
-      report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
+      report_error(base_return_type_node, "can't resolve return type #{base_return_type_node}")
       return
     end
 
@@ -263,24 +285,24 @@ class Crystal::AbstractDefChecker
 
     base_return_type = base_type.lookup_type?(base_return_type_node)
     unless base_return_type
-      report_warning(base_return_type_node, "can't resolve return type #{base_return_type_node}\n#{this_warning_will_become_an_error}")
+      report_error(base_return_type_node, "can't resolve return type #{base_return_type_node}")
       return
     end
 
     return_type_node = method.return_type
     unless return_type_node
-      report_warning(method, "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n\n#{this_warning_will_become_an_error}")
+      report_error(method, "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n")
       return
     end
 
     return_type = type.lookup_type?(return_type_node)
     unless return_type
-      report_warning(return_type_node, "can't resolve return type #{return_type_node}\n#{this_warning_will_become_an_error}")
+      report_error(return_type_node, "can't resolve return type #{return_type_node}")
       return
     end
 
     unless return_type.implements?(base_return_type)
-      report_warning(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}\n#{this_warning_will_become_an_error}")
+      report_error(return_type_node, "this method must return #{base_return_type}, which is the return type of the overridden method #{Call.def_full_name(base_type, base_method)}, or a subtype of it, not #{return_type}")
       return
     end
   end
@@ -305,8 +327,8 @@ class Crystal::AbstractDefChecker
     @program.colorize("The above warning will become an error in a future Crystal version.").yellow.bold
   end
 
-  private def report_warning(node, message)
-    @program.report_warning(node, message)
+  private def report_error(node, message)
+    node.raise(message, nil)
   end
 
   class ReplacePathWithTypeVar < Visitor

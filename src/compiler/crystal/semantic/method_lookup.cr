@@ -262,6 +262,9 @@ module Crystal
         unless match_arg_type
           return nil
         end
+
+        matched_arg_types ||= [] of Type
+        matched_arg_types.concat(splat_arg_types)
       end
 
       found_unmatched_named_arg = false
@@ -301,7 +304,7 @@ module Crystal
             matched_named_arg_types ||= [] of NamedArgumentType
             matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
           else
-            # If there's a double splat it's ok, the named arg will be put there
+            # If there's a double splat it's OK, the named arg will be put there
             if a_def.double_splat
               match_arg_type = named_arg.type
 

@@ -405,9 +405,19 @@ describe "Semantic: splat" do
       )) { tuple_of([] of Type).metaclass }
   end
 
+  it "uses splat restriction after non-splat arguments (#5037)" do
+    assert_type(%(
+      def foo(x, *y : *T) forall T
+        T
+      end
+
+      foo 1, 'a', ""
+      )) { tuple_of([char, string]).metaclass }
+  end
+
   it "uses splat restriction with concrete type" do
     assert_error %(
-      struct Tuple(T)
+      struct Tuple(*T)
         def self.foo(*args : *T)
         end
       end
@@ -457,7 +467,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in geneic type" do
+  it "matches splat in generic type" do
     assert_type(%(
       class Foo(*T)
       end

@@ -89,9 +89,9 @@ class OAuth::Consumer
   # to obtain an access token, as specified by
   # [RFC 5849, Section 2.2](https://tools.ietf.org/html/rfc5849#section-2.2).
   #
-  # Yields an `HTTP::Params::Builder` to add extra parameters other than those
+  # Yields an `URI::Params::Builder` to add extra parameters other than those
   # defined by the standard.
-  def get_authorize_uri(request_token, oauth_callback = nil, &block : HTTP::Params::Builder ->) : String
+  def get_authorize_uri(request_token, oauth_callback = nil, &block : URI::Params::Builder ->) : String
     uri = URI.parse(@authorize_uri)
 
     # Use the default URI if it's not an absolute one
@@ -99,13 +99,11 @@ class OAuth::Consumer
       uri = URI.new(@scheme, @host, @port, @authorize_uri)
     end
 
-    uri.query = HTTP::Params.build do |form|
+    uri.query = URI::Params.build do |form|
       form.add "oauth_token", request_token.token
       form.add "oauth_callback", oauth_callback if oauth_callback
-      if query = uri.query
-        HTTP::Params.parse(query).each do |key, value|
-          form.add key, value
-        end
+      uri.query_params.each do |key, value|
+        form.add key, value
       end
       yield form
     end
@@ -138,7 +136,7 @@ class OAuth::Consumer
     # If the target uri is absolute, we use that instead of the default values
     if uri.host
       client = HTTP::Client.new(uri)
-      target_uri = "#{uri.path}?#{uri.query}"
+      target_uri = uri.request_target
     else
       client = HTTP::Client.new @host, @port, tls: @tls
     end

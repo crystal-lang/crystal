@@ -163,7 +163,18 @@ class Deque(T)
   #
   # Use `#dup` if you want a shallow copy.
   def clone
-    Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Deque(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -182,21 +193,83 @@ class Deque(T)
   # a             # => Deque{"a", "c"}
   # ```
   def delete(obj)
-    delete_if { |i| i == obj }
+    match = internal_delete { |i| i == obj }
+    !match.nil?
   end
 
-  def delete_if
-    found = false
+  # Modifies `self`, keeping only the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.select! { |x| x > 3 }
+  # a # => Deque{6, 4, 8}
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!
+    reject! { |elem| !yield(elem) }
+  end
+
+  # Modifies `self`, keeping only the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select!(3..7)
+  # ary # => [6, 4]
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!(pattern)
+    self.select! { |elem| pattern === elem }
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject! { |x| x > 3 }
+  # a # => Deque{1, 2}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!
+    internal_delete { |e| yield e }
+    self
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject!(3..7)
+  # a # => Deque{1, 2, 8}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!(pattern)
+    reject! { |elem| pattern === elem }
+    self
+  end
+
+  # `reject!` and `delete` implementation:
+  # returns the last matching element, or nil
+  private def internal_delete
+    match = nil
     i = 0
     while i < @size
-      if yield self[i]
+      e = self[i]
+      if yield e
+        match = e
         delete_at(i)
-        found = true
       else
         i += 1
       end
     end
-    found
+    match
   end
 
   # Deletes the item that is present at the *index*. Items to the right

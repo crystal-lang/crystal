@@ -402,27 +402,6 @@ describe Process do
     end
   end
 
-  describe "find_executable" do
-    pwd = Process::INITIAL_PWD
-    crystal_path = Path.new(pwd, "bin", "crystal").to_s
-
-    pending_win32 "resolves absolute executable" do
-      Process.find_executable(Path.new(pwd, "bin", "crystal")).should eq(crystal_path)
-    end
-
-    pending_win32 "resolves relative executable" do
-      Process.find_executable(Path.new("bin", "crystal")).should eq(crystal_path)
-      Process.find_executable(Path.new("..", File.basename(pwd), "bin", "crystal")).should eq(crystal_path)
-    end
-
-    pending_win32 "searches within PATH" do
-      (path = Process.find_executable("ls")).should_not be_nil
-      path.not_nil!.should match(/#{File::SEPARATOR}ls$/)
-
-      Process.find_executable("some_very_unlikely_file_to_exist").should be_nil
-    end
-  end
-
   describe "quote_posix" do
     it { Process.quote_posix("").should eq "''" }
     it { Process.quote_posix(" ").should eq "' '" }

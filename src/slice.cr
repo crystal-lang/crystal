@@ -245,7 +245,7 @@ struct Slice(T)
   # slice[1..33]? # => nil
   # ```
   def []?(range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]?
   end
 
@@ -265,7 +265,7 @@ struct Slice(T)
   # slice[1..33] # raises IndexError
   # ```
   def [](range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]
   end
 

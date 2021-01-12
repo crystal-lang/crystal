@@ -2,8 +2,10 @@ require "socket"
 require "http/client"
 require "http/headers"
 require "base64"
-{% if !flag?(:without_openssl) %}
-  require "openssl"
+{% if flag?(:without_openssl) %}
+  require "crystal/digest/sha1"
+{% else %}
+  require "openssl/sha1"
 {% end %}
 require "uri"
 
@@ -316,7 +318,7 @@ class HTTP::WebSocket::Protocol
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if (host = uri.hostname) && (path = uri.full_path)
+    if (host = uri.hostname) && (path = uri.request_target)
       tls = uri.scheme.in?("https", "wss")
       return new(host, path, uri.port, tls, headers)
     end
@@ -326,7 +328,7 @@ class HTTP::WebSocket::Protocol
 
   def self.key_challenge(key)
     {% if flag?(:without_openssl) %}
-      Digest::SHA1.base64digest(key + GUID)
+      ::Crystal::Digest::SHA1.base64digest(key + GUID)
     {% else %}
       Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
     {% end %}

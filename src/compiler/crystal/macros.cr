@@ -689,7 +689,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#[]=`.
-    def []=(index : NumberLiteral, value : ASTNode)
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
 
     # Similar to `Array#unshift`.
@@ -760,7 +760,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#[]=`
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -835,7 +835,7 @@ module Crystal::Macros
     end
 
     # Adds or replaces a key.
-    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
   end
 
@@ -1645,7 +1645,7 @@ module Crystal::Macros
   # end
   # ```
   #
-  # If we hand't use `id`, the generated code would have been this:
+  # If we hadn't used `id`, the generated code would have been this:
   #
   # ```text
   # def unicorns

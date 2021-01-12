@@ -382,19 +382,23 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
+  # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
+  # :ditto:
   def gcd(other : Int) : Int
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
+  # :ditto:
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
@@ -403,8 +407,8 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: improve this
-  def_hash to_u64
+  # TODO: check hash equality for numbers >= 2**63
+  def_hash to_i64!
 
   # Returns a string representation of self.
   #
@@ -475,10 +479,10 @@ struct BigInt < Int
   end
 
   def to_i64
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
+    if LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
       LibGMP.get_si(self).to_i64
     else
-      to_s.to_i64
+      to_s.to_i64 { raise OverflowError.new }
     end
   end
 
@@ -499,11 +503,7 @@ struct BigInt < Int
   end
 
   def to_i64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_si(self).to_i64!
-    else
-      to_s.to_i64
-    end
+    (self % BITS64).to_u64.to_i64!
   end
 
   def to_u
@@ -523,11 +523,10 @@ struct BigInt < Int
   end
 
   def to_u64
-    raise OverflowError.new if self < 0
-    if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
+    if LibGMP::ULong::MIN <= self <= LibGMP::ULong::MAX
       LibGMP.get_ui(self).to_u64
     else
-      to_s.to_u64
+      to_s.to_u64 { raise OverflowError.new }
     end
   end
 
@@ -548,12 +547,10 @@ struct BigInt < Int
   end
 
   def to_u64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_ui(self).to_u64!
-    else
-      to_s.to_u64
-    end
+    (self % BITS64).to_u64
   end
+
+  private BITS64 = BigInt.new(1) << 64
 
   def to_f
     to_f64
@@ -662,10 +659,12 @@ struct Int
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
-    other.gcm(self)
+  # Returns the greatest common divisor of `self` and *other*.
+  def gcd(other : BigInt) : Int
+    other.gcd(self)
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     other.lcm(self)
   end
@@ -714,12 +713,12 @@ class String
 end
 
 module Math
-  # Returns the sqrt of a `BigInt`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)

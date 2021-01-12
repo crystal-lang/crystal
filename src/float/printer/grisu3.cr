@@ -349,7 +349,7 @@ module Float::Printer::Grisu3
     # v == (scaled_w * 10^-mk).to_f
     # Set decimal_exponent == -mk and pass it to DigitGen. If scaled_w is not an
     # integer than it will be updated. For instance if scaled_w == 1.23 then
-    # the buffer will be filled with "123" und the decimal_exponent will be
+    # the buffer will be filled with "123" and the decimal_exponent will be
     # decreased by 2.
     result, kappa, length = digit_gen(scaled_boundary_minus, scaled_w, scaled_boundary_plus, buffer_p)
 

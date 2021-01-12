@@ -6,7 +6,7 @@ class Socket
     getter family : Family
     getter size : Int32
 
-    # Returns either an `IPAddress` or `UNIXAddres` from the internal OS
+    # Returns either an `IPAddress` or `UNIXAddress` from the internal OS
     # representation. Only INET, INET6 and UNIX families are supported.
     def self.from(sockaddr : LibC::Sockaddr*, addrlen) : Address
       case family = Family.new(sockaddr.value.sa_family)
@@ -291,6 +291,13 @@ class Socket
       {% end %}
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
+    end
+
+    # Returns `true` if *port* is a valid port number.
+    #
+    # Valid port numbers are in the range `0..65_535`.
+    def self.valid_port?(port : Int) : Bool
+      port.in?(0..UInt16::MAX)
     end
   end
 

@@ -323,6 +323,11 @@ module Crystal
       false
     end
 
+    def visit(node : MultiAssign)
+      @program.literal_expander.expand(node).accept(self)
+      false
+    end
+
     def visit(node : And)
       node.left.accept self
       if @last.truthy?
@@ -374,7 +379,7 @@ module Crystal
           @last = receiver.interpret(node.name, args, named_args, node.block, self)
         rescue ex : MacroRaiseException
           raise ex
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
         rescue ex
           node.raise ex.message
@@ -468,8 +473,6 @@ module Crystal
               return NamedTupleLiteral.new(entries)
             when UnionType
               return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
-            else
-              # go on
             end
           end
         end
@@ -489,7 +492,7 @@ module Crystal
 
     def resolve?(node : Generic)
       resolve(node)
-    rescue Crystal::Exception
+    rescue Crystal::CodeError
       nil
     end
 

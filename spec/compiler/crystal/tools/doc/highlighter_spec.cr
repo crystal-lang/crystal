@@ -11,6 +11,13 @@ private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   end
 end
 
+private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
+  it "does not highlight #{code.inspect} due to error", file, line do
+    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted.should eq(code), file, line
+  end
+end
+
 describe "Crystal::Doc::Highlighter#highlight" do
   it_highlights "foo", "foo"
   it_highlights "foo bar", "foo bar"
@@ -91,21 +98,18 @@ describe "Crystal::Doc::Highlighter#highlight" do
       BAR</span>
     HTML
 
-  it_highlights <<-CR, <<-HTML
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
       FOO
     CR
-    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
-    <span class="s">  foo
-      FOO</span>
-    HTML
 
-  it_highlights <<-CR, <<-HTML
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
     CR
-    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
-    <span class="s">  foo</span>
-    HTML
+
+  it_does_not_highlight "\"foo"
+  it_does_not_highlight "%w[foo"
+  it_does_not_highlight "%i[foo"
 end

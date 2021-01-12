@@ -666,6 +666,72 @@ module Crystal
       end
     end
 
+    # Expand this:
+    #
+    # ```
+    # ->foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # tmp = foo
+    # ->(x : X, y : Y) { tmp.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->Foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { Foo.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { bar(x, y) }
+    # ```
+    #
+    # in case the implicit `self` is a class or a virtual class.
+    def expand(node : ProcPointer)
+      obj = node.obj
+
+      if obj && !obj.is_a?(Path)
+        temp_var = new_temp_var.at(obj)
+        assign = Assign.new(temp_var, obj)
+        obj = temp_var
+      end
+
+      def_args = node.args.map do |arg|
+        Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
+      end
+
+      call_args = def_args.map do |def_arg|
+        Var.new(def_arg.name).at(def_arg).as(ASTNode)
+      end
+
+      body = Call.new(obj, node.name, call_args).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal.proc_pointer = node
+
+      if assign
+        Expressions.new([assign, proc_literal])
+      else
+        proc_literal
+      end
+    end
+
     private def regex_new_call(node, value)
       Call.new(Path.global("Regex").at(node), "new", value, regex_options(node)).at(node)
     end

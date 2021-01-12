@@ -460,6 +460,25 @@ struct Time::Format
       time_zone_rfc2822
     end
 
+    def time_zone_name(zone = false)
+      case char = current_char
+      when '-', '+'
+        time_zone_offset
+      else
+        start_pos = @reader.pos
+        while @reader.has_next? && (!current_char.whitespace? || current_char == Char::ZERO)
+          next_char
+        end
+        zone_name = @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
+
+        if zone_name.in?("Z", "UTC")
+          @location = Time::Location::UTC
+        else
+          @location = Time::Location.load(zone_name)
+        end
+      end
+    end
+
     def char?(char, *alternatives)
       if current_char == char || alternatives.includes?(current_char)
         next_char

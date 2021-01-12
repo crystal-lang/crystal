@@ -33,7 +33,17 @@ describe Crystal::Doc::ProjectInfo do
         File.write("shard.yml", "name: foo\nversion: 1.0")
       end
 
-      it "no git" do
+      pending_win32 "git missing" do
+        Crystal::Git.executable = "git-missing-executable"
+
+        assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
+        assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
+        assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
+      ensure
+        Crystal::Git.executable = "git"
+      end
+
+      it "not in a git folder" do
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: nil))
         assert_with_defaults(ProjectInfo.new(nil, "2.0"), ProjectInfo.new("foo", "2.0", refname: nil))
