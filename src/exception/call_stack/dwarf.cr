@@ -12,8 +12,16 @@ struct Exception::CallStack
 
   # :nodoc:
   def self.load_dwarf
-    load_dwarf_impl unless @@dwarf_loaded
-    @@dwarf_loaded = true
+    unless @@dwarf_loaded
+      @@dwarf_loaded = true
+      begin
+        load_dwarf_impl
+      rescue ex
+        @@dwarf_line_numbers = nil
+        @@dwarf_function_names = nil
+        Crystal::System.print_exception "Unable to load dwarf information", ex
+      end
+    end
   end
 
   protected def self.decode_line_number(pc)

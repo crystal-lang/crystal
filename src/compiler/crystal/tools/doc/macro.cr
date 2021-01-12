@@ -27,8 +27,8 @@ class Crystal::Doc::Macro
     nil
   end
 
-  def source_link
-    @generator.source_link(@macro)
+  def location
+    @generator.relative_location(@macro)
   end
 
   def id
@@ -139,7 +139,7 @@ class Crystal::Doc::Macro
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
-      builder.field "source_link", source_link
+      builder.field "location", location
       builder.field "def", self.macro
     end
   end

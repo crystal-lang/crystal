@@ -160,6 +160,39 @@ struct StaticArray(T, N)
     N
   end
 
+  # Replaces every element in `self` with the given *value*. Returns `self`.
+  #
+  # ```
+  # array = StaticArray(Int32, 3).new 0 # => StaticArray[0, 0, 0]
+  # array.fill(2)                       # => StaticArray[2, 2, 2]
+  # array                               # => StaticArray[2, 2, 2]
+  # ```
+  def fill(value : T) : self
+    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      if value == 0
+        to_unsafe.clear(size)
+        return self
+      end
+    {% end %}
+
+    fill { value }
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # ```
+  # array = StaticArray[2, 1, 1, 1]
+  # array.fill { |i| i * i } # => StaticArray[0, 1, 4, 9]
+  # array                    # => StaticArray[0, 1, 4, 9]
+  # ```
+  def fill(& : Int32 -> T) : self
+    size.times do |i|
+      to_unsafe[i] = yield i
+    end
+    self
+  end
+
   # Fills the array by substituting all elements with the given value.
   #
   # ```
@@ -167,6 +200,7 @@ struct StaticArray(T, N)
   # array.[]= 2 # => nil
   # array       # => StaticArray[2, 2, 2]
   # ```
+  @[Deprecated("Use `#fill(value : T)` instead")]
   def []=(value : T)
     size.times do |i|
       to_unsafe[i] = value

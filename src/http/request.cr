@@ -17,7 +17,7 @@ class HTTP::Request
   getter body : IO?
   property version : String
   @cookies : Cookies?
-  @query_params : Params?
+  @query_params : URI::Params?
   @uri : URI?
 
   {% unless flag?(:win32) %}
@@ -52,14 +52,14 @@ class HTTP::Request
   end
 
   # Returns a convenience wrapper around querying and setting query params,
-  # see `HTTP::Params`.
+  # see `URI::Params`.
   def query_params
-    @query_params ||= parse_query_params
+    @query_params ||= uri.query_params
   end
 
   def resource
     update_uri
-    @uri.try(&.full_path) || @resource
+    @uri.try(&.request_target) || @resource
   end
 
   def keep_alive?
@@ -246,6 +246,7 @@ class HTTP::Request
   end
 
   # Returns request host from headers.
+  @[Deprecated("Use `#hostname` instead.")]
   def host
     host = @headers["Host"]?
     return unless host
@@ -253,7 +254,34 @@ class HTTP::Request
     index ? host[0...index] : host
   end
 
+  # Extracts the hostname from `Host` header.
+  #
+  # Returns `nil` if the `Host` header is missing.
+  #
+  # If the `Host` header contains a port number, it is stripped off.
+  def hostname : String?
+    header = @headers["Host"]?
+    return unless header
+
+    host, _, port = header.rpartition(":")
+    if host.empty?
+      # no colon in header
+      host = header
+    else
+      port = port.to_i?(whitespace: false)
+      # TODO: Remove temporal fix when Socket::IPAddress has been ported to
+      # win32
+      unless port && {% if flag?(:win32) %}port.in?(0..UInt16::MAX){% else %}Socket::IPAddress.valid_port?(port){% end %}
+        # what we identified as port is not valid, so use the entire header
+        host = header
+      end
+    end
+
+    URI.unwrap_ipv6(host)
+  end
+
   # Returns request host with port from headers.
+  @[Deprecated(%q(Use `headers["Host"]?` instead.))]
   def host_with_port
     @headers["Host"]?
   end
@@ -262,13 +290,9 @@ class HTTP::Request
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
-  private def parse_query_params
-    HTTP::Params.parse(uri.query || "")
-  end
-
   private def update_query_params
     return unless @query_params
-    @query_params = parse_query_params
+    @query_params = uri.query_params
   end
 
   private def update_uri

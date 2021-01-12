@@ -367,13 +367,12 @@ class Crystal::Doc::Generator
     end
   end
 
-  def source_link(node)
+  def relative_location(node)
     location = RelativeLocation.from(node, @base_dir)
     return unless location
-    project_info.source_url(location)
+    location.url = project_info.source_url(location)
+    location
   end
-
-  SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
     locations = [] of RelativeLocation

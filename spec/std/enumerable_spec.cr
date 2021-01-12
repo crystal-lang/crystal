@@ -422,7 +422,7 @@ describe "Enumerable" do
       object = "a"
       (1..3).each_with_object(object) do |e, o|
         collection << {e, o}
-      end
+      end.should be(object)
       collection.should eq [{1, object}, {2, object}, {3, object}]
     end
 

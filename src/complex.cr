@@ -296,52 +296,52 @@ struct Number
 end
 
 module Math
-  # Calculates the exponential of the complex number `z`.
+  # Calculates the exponential of *value*.
   #
   # ```
   # require "complex"
   #
   # Math.exp(4 + 2.i) # => -22.720847417619233 + 49.645957334580565i
   # ```
-  def exp(z : Complex)
-    r = exp(z.real)
-    Complex.new(r * cos(z.imag), r * sin(z.imag))
+  def exp(value : Complex)
+    r = exp(value.real)
+    Complex.new(r * cos(value.imag), r * sin(value.imag))
   end
 
-  # Calculates the natural logarithm of the complex number `z`.
+  # Calculates the natural logarithm of *value*.
   #
   # ```
   # require "complex"
   #
   # Math.log(4 + 2.i) # => 1.4978661367769956 + 0.4636476090008061i
   # ```
-  def log(z : Complex)
-    Complex.new(Math.log(z.abs), z.phase)
+  def log(value : Complex)
+    Complex.new(Math.log(value.abs), value.phase)
   end
 
-  # Calculates the base-2 logarithm of the complex number `z`.
+  # Calculates the logarithm of *value* to base 2.
   #
   # ```
   # require "complex"
   #
   # Math.log2(4 + 2.i) # => 2.1609640474436813 + 0.6689021062254881i
   # ```
-  def log2(z : Complex)
-    log(z) / LOG2
+  def log2(value : Complex)
+    log(value) / LOG2
   end
 
-  # Calculates the base-10 logarithm of the complex number `z`.
+  # Calculates the logarithm of *value* to base 10.
   #
   # ```
   # require "complex"
   #
   # Math.log10(4 + 2.i) # => 0.6505149978319906 + 0.20135959813668655i
   # ```
-  def log10(z : Complex)
-    log(z) / LOG10
+  def log10(value : Complex)
+    log(value) / LOG10
   end
 
-  # Calculates the square root of the complex number `z`.
+  # Calculates the square root of *value*.
   # Inspired by the [following blog post](https://pavpanchekha.com/blog/casio-mathjs.html) of Pavel Panchekha on floating point precision.
   #
   # ```
@@ -359,21 +359,21 @@ module Math
   # Math.sqrt(-1.0)         # => -NaN
   # Math.sqrt(-1.0 + 0.0.i) # => 0.0 + 1.0i
   # ```
-  def sqrt(z : Complex)
-    r = z.abs
+  def sqrt(value : Complex)
+    r = value.abs
 
-    re = if z.real >= 0
-           0.5 * sqrt(2.0 * (r + z.real))
+    re = if value.real >= 0
+           0.5 * sqrt(2.0 * (r + value.real))
          else
-           z.imag.abs / sqrt(2.0 * (r - z.real))
+           value.imag.abs / sqrt(2.0 * (r - value.real))
          end
 
-    im = if z.real <= 0
-           0.5 * sqrt(2.0 * (r - z.real))
+    im = if value.real <= 0
+           0.5 * sqrt(2.0 * (r - value.real))
          else
-           z.imag.abs / sqrt(2.0 * (r + z.real))
+           value.imag.abs / sqrt(2.0 * (r + value.real))
          end
 
-    Complex.new(re, z.imag >= 0 ? im : -im)
+    Complex.new(re, value.imag >= 0 ? im : -im)
   end
 end

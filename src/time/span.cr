@@ -53,19 +53,6 @@ struct Time::Span
   # @nanoseconds can either be negative or positive).
   @nanoseconds : Int32
 
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_hours : Int, _minutes : Int, _seconds : Int)
-    new(0, _hours, _minutes, _seconds)
-  end
-
-  @[Deprecated("Use `new` with named arguments instead.")]
-  def self.new(_days : Int, _hours : Int, _minutes : Int, _seconds : Int, nanoseconds : Int = 0)
-    new(
-      seconds: compute_seconds(_days, _hours, _minutes, _seconds),
-      nanoseconds: nanoseconds.to_i64,
-    )
-  end
-
   # Creates a new `Time::Span` from *seconds* and *nanoseconds*.
   #
   # Nanoseconds get normalized in the range of `0...1_000_000_000`,
@@ -241,6 +228,7 @@ struct Time::Span
   end
 
   # Alias of `abs`.
+  @[Deprecated("Use `#abs` instead.")]
   def duration : Time::Span
     abs
   end
@@ -249,6 +237,17 @@ struct Time::Span
   # represents by removing the sign.
   def abs : Time::Span
     Span.new(seconds: to_i.abs, nanoseconds: nanoseconds.abs)
+  end
+
+  # Returns the sign of this time span.
+  #
+  # Values are `-1`, `0`, `1` if `self` is smaller, equal, bigger compared to `ZERO`.
+  def sign : Int32
+    if @seconds == 0
+      @nanoseconds.sign
+    else
+      @seconds.sign
+    end
   end
 
   # Returns a `Time` that happens later by `self` than the current time.

@@ -607,7 +607,7 @@ module Crystal
         if index
           index
         else
-          index = instance_vars.key_index(name)
+          index = instance_vars.index { |k, v| k == name }
           if index
             superclass.all_instance_vars_count + index
           else
@@ -615,7 +615,7 @@ module Crystal
           end
         end
       else
-        instance_vars.key_index(name)
+        instance_vars.index { |k, v| k == name }
       end
     end
 

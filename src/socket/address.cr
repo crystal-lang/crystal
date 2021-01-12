@@ -292,6 +292,13 @@ class Socket
       sockaddr.value.sin_addr = addr
       sockaddr.as(LibC::Sockaddr*)
     end
+
+    # Returns `true` if *port* is a valid port number.
+    #
+    # Valid port numbers are in the range `0..65_535`.
+    def self.valid_port?(port : Int) : Bool
+      port.in?(0..UInt16::MAX)
+    end
   end
 
   # UNIX address representation.
