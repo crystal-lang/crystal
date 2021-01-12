@@ -357,7 +357,7 @@ struct Enum
     {% if @type.has_attribute?("Flags") %}
       all_mask = {{@type}}::All.value
       return if all_mask & value != value
-      return new(value)
+      return new(value.to_i)
     {% else %}
       {% for member in @type.constants %}
         return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value

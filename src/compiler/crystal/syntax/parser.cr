@@ -1757,6 +1757,15 @@ module Crystal
 
       exps = [] of ASTNode
 
+      # do...end in parenthesis should not stop because there's no call further
+      # left to bind to:
+      #
+      # ```
+      # (foo do
+      # end)
+      # ```
+      @stop_on_do = false
+
       while true
         exps << parse_expression
         case @token.type
@@ -2962,12 +2971,21 @@ module Crystal
 
       name_location = @token.location
 
-      if @token.type == :IDENT
+      case @token.type
+      when :CONST
+        raise "macro can't have a receiver"
+      when :IDENT
         check_valid_def_name
+        next_token
+        if @token.type == :"="
+          raise "macro can't be a setter"
+        end
+        skip_space
+      when :"[]"
+        next_token_skip_space
       else
-        check_valid_def_op_name
+        raise "invalid macro name"
       end
-      next_token_skip_space
 
       args = [] of Arg
 
@@ -3024,8 +3042,12 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
+      when :";", :"NEWLINE"
+        # Skip
+      when :"."
+        raise "macro can't have a receiver"
       else
-        # keep going
+        unexpected_token
       end
 
       end_location = nil

@@ -379,7 +379,7 @@ module Crystal
           @last = receiver.interpret(node.name, args, named_args, node.block, self)
         rescue ex : MacroRaiseException
           raise ex
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           node.raise ex.message, inner: ex
         rescue ex
           node.raise ex.message
@@ -492,7 +492,7 @@ module Crystal
 
     def resolve?(node : Generic)
       resolve(node)
-    rescue Crystal::Exception
+    rescue Crystal::CodeError
       nil
     end
 

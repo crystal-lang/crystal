@@ -1,8 +1,8 @@
 require "llvm"
-require "../exception"
+require "../error"
 
 class Crystal::Codegen::Target
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   getter architecture : String

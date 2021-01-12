@@ -11,6 +11,12 @@ enum YAMLSpecEnum
   Two
 end
 
+@[Flags]
+enum YAMLSpecFlagEnum
+  One
+  Two
+end
+
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
 
 # libyaml 0.2.1 removed the erroneously written document end marker (`...`) after some scalars in root context (see https://github.com/yaml/libyaml/pull/18).
@@ -193,6 +199,17 @@ describe "YAML serialization" do
 
       expect_raises(ArgumentError, "Unknown enum YAMLSpecEnum value: Three") do
         YAMLSpecEnum.from_yaml(%("Three"))
+      end
+    end
+
+    it "does for flag Enum" do
+      YAMLSpecFlagEnum.from_json("0").should eq(YAMLSpecFlagEnum::None)
+      YAMLSpecFlagEnum.from_json("1").should eq(YAMLSpecFlagEnum::One)
+      YAMLSpecFlagEnum.from_json("2").should eq(YAMLSpecFlagEnum::Two)
+      YAMLSpecFlagEnum.from_json("3").should eq(YAMLSpecFlagEnum::All)
+
+      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: 4") do
+        YAMLSpecFlagEnum.from_json("4")
       end
     end
 

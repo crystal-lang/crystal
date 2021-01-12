@@ -116,15 +116,17 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass" do
-    assert_error %(
+    exc = assert_error <<-CR,
       abstract class Foo
         abstract def foo
       end
 
       class Bar < Foo
       end
-      ),
+      CR
       "abstract `def Foo#foo()` must be implemented by Bar"
+    exc.line_number.should eq 5
+    exc.column_number.should eq 1
   end
 
   it "errors if abstract method with arguments is not implemented by subclass" do
