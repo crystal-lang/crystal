@@ -186,7 +186,7 @@ class Fiber
   # example using `#enqueue`) the current fiber won't ever reach any instructions
   # after the call to this method.
   #
-  # ```cr
+  # ```
   # fiber = Fiber.new do
   #   puts "in fiber"
   # end
@@ -250,7 +250,7 @@ class Fiber
   # computation intensive and don't offer natural opportunities for swapping
   # fibers as with IO operations.
   #
-  # ```cr
+  # ```
   # counter = 0
   # spawn name: "status" do
   #   loop do

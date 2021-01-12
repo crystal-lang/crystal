@@ -118,7 +118,7 @@ build() {
       with_build_env 'make docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json"'
+      with_build_env 'make crystal std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 

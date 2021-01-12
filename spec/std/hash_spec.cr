@@ -835,12 +835,6 @@ describe "Hash" do
     h.shift?.should be_nil
   end
 
-  it "gets key index" do
-    h = {1 => 2, 3 => 4}
-    h.key_index(3).should eq(1)
-    h.key_index(2).should be_nil
-  end
-
   it "inserts many" do
     times = 1000
     h = {} of Int32 => Int32
@@ -1010,15 +1004,15 @@ describe "Hash" do
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
-      end
+      end.should eq(:memo)
     end
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
-      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+      result = {} of Char => Symbol
+      hash.each_with_object(result) do |(k, v), memo|
         memo[v] = k
-      end
+      end.should be(result)
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end

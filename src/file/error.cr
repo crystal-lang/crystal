@@ -26,7 +26,8 @@ class File::Error < IO::Error
     "#{message}: '#{file.inspect_unquoted}' -> '#{other.inspect_unquoted}'"
   end
 
-  def initialize(message, *, @file : String, @other : String? = nil)
+  def initialize(message, *, file : String | Path, @other : String? = nil)
+    @file = file.to_s
     super message
   end
 end
