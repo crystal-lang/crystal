@@ -56,7 +56,7 @@ struct Crystal::ExhaustivenessChecker
         case is not exhaustive.
 
         Missing types:
-         - #{targets.map(&.type).join("\n - ")}
+         - #{targets.join("\n - ", &.type)}
         MSG
     end
 
@@ -75,7 +75,7 @@ struct Crystal::ExhaustivenessChecker
       case is not exhaustive for enum #{single_target.type}.
 
       Missing members:
-       - #{single_target.members.map(&.name).join("\n - ")}
+       - #{single_target.members.join("\n - ", &.name)}
       MSG
     else
       # No specific error messages for non-single types

@@ -89,7 +89,7 @@ module LLVM
 
     # Fix LLVM not replacing empty triple parts with "unknown"
     # This was fixed in LLVM 8
-    normalized = normalized.split('-').map { |c| c.presence || "unknown" }.join('-')
+    normalized = normalized.split('-').join('-') { |c| c.presence || "unknown" }
 
     normalized
   end

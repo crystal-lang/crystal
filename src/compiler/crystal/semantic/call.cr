@@ -999,10 +999,10 @@ class Crystal::Call
         # inside a generated 'new' method
         ::raise ex
       else
-        raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        raise "instantiating '#{obj.type}##{name}(#{args.join(", ", &.type)})'", ex
       end
     else
-      raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+      raise "instantiating '#{name}(#{args.join(", ", &.type)})'", ex
     end
   end
 

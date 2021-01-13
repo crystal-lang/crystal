@@ -2299,7 +2299,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
     end
   when "join"
     object.interpret_one_arg_method(method, args) do |arg|
-      Crystal::StringLiteral.new(object.elements.map(&.to_macro_id).join arg.to_macro_id)
+      Crystal::StringLiteral.new(object.elements.join(arg.to_macro_id, &.to_macro_id))
     end
   when "last"
     object.interpret_argless_method(method, args) { object.elements.last? || Crystal::NilLiteral.new }

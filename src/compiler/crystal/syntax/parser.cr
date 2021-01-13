@@ -2038,7 +2038,7 @@ module Crystal
         pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
         pieces.join { |piece| piece.as(StringLiteral).value }
       else
-        pieces.map(&.value).join
+        pieces.join(&.value)
       end
     end
 
