@@ -99,6 +99,12 @@ module Random
     next_float
   end
 
+  # :nodoc:
+  def rand_exclusive : Float64
+    max_prec = (1u64 << 53) - 1 # Float64, excluding mantissa, has 2^53 values
+    (rand(max_prec) + 1) / max_prec.to_f64
+  end
+
   # Generates a random integer which is greater than or equal to `0`
   # and less than *max*.
   #

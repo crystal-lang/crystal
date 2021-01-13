@@ -1258,6 +1258,7 @@ module Enumerable(T)
     # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
     # "Algorithm L" does not provide any performance improvements on Enumerable,
     # because it is not possible to discard multiple elements at once
+    # (this is done in Indexable)
 
     ary = Array(T).new(n)
     return ary if n == 0

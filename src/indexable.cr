@@ -571,13 +571,25 @@ module Indexable(T)
 
   # :nodoc:
   def sample(n : Int, random = Random::DEFAULT)
-    return super unless n == 1
+    # Unweighted reservoir sampling (Algorithm L):
+    # https://en.wikipedia.org/wiki/Reservoir_sampling#An_optimal_algorithm
 
-    if empty?
-      [] of T
-    else
-      [sample(random)]
+    ary = first(n)
+
+    if 0 < n < size
+      w = Math.exp(Math.log(random.rand_exclusive) / n)
+
+      i = n - 1
+      while i < size
+        i += Math.log(random.rand_exclusive, 1 - w).to_i + 1
+        if i < size
+          ary.to_unsafe[random.rand(n)] = unsafe_fetch(i)
+          w *= Math.exp(Math.log(random.rand_exclusive) / n)
+        end
+      end
     end
+
+    ary.shuffle!(random)
   end
 
   # Returns a `Tuple` populated with the elements at the given indexes.

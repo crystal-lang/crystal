@@ -968,9 +968,8 @@ describe "Enumerable" do
       end
 
       it "samples k elements out of n, with random" do
-        a = (1..5)
-        b = a.sample(3, Random.new(1))
-        b.should eq([4, 3, 1])
+        (1..7).sample(3, Random.new(1)).should eq([3, 7, 4])
+        [1, 2, 3, 4, 5, 6, 7].sample(3, Random.new(1)).should eq([4, 6, 1])
       end
     end
   end
