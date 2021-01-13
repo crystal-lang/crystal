@@ -500,6 +500,8 @@ module Crystal
         end
       when "kind"
         SymbolLiteral.new(kind.to_s)
+      when "zero?"
+        BoolLiteral.new(zero?)
       else
         super
       end
