@@ -1546,44 +1546,6 @@ class Array(T)
     res
   end
 
-  # Returns *n* number of random elements from `self`, using the given *random* number generator.
-  # Raises IndexError if `self` is empty.
-  #
-  # ```
-  # a = [1, 2, 3]
-  # a.sample(2)                # => [2, 1]
-  # a.sample(2, Random.new(1)) # => [1, 3]
-  # ```
-  def sample(n : Int, random = Random::DEFAULT)
-    if n < 0
-      raise ArgumentError.new("Can't get negative count sample")
-    end
-
-    case n
-    when 0
-      return [] of T
-    when 1
-      return [sample(random)] of T
-    else
-      if n >= size
-        return dup.shuffle!(random)
-      end
-
-      ary = Array(T).new(n) { |i| @buffer[i] }
-      buffer = ary.to_unsafe
-
-      n.upto(size - 1) do |i|
-        j = random.rand(i + 1)
-        if j <= n
-          buffer[j] = @buffer[i]
-        end
-      end
-      ary.shuffle!(random)
-
-      ary
-    end
-  end
-
   # Removes the first value of `self`, at index 0. This method returns the removed value.
   # If the array is empty, it raises `IndexError`.
   #
