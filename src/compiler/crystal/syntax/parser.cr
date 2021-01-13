@@ -2141,7 +2141,7 @@ module Crystal
       pieces = [] of Piece
       has_interpolation = false
 
-      delimiter_state, has_interpolation, _, token_end_location =
+      delimiter_state, has_interpolation, _options, token_end_location =
         consume_delimiter pieces, delimiter_state, has_interpolation
 
       if has_interpolation
@@ -3243,7 +3243,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, _ = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3260,7 +3260,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, _ = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3279,7 +3279,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, _ = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3320,7 +3320,7 @@ module Crystal
       check :"%}"
 
       macro_state.control_nest += 1
-      a_then, _ = parse_macro_body(start_location, macro_state)
+      a_then, _end_location = parse_macro_body(start_location, macro_state)
       macro_state.control_nest -= 1
 
       if @token.type == :IDENT
@@ -3330,7 +3330,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          a_else, _ = parse_macro_body(start_location, macro_state)
+          a_else, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           if check_end
@@ -3699,7 +3699,7 @@ module Crystal
         allow_restrictions = false
       else
         arg_location = @token.location
-        arg_name, external_name, found_space, _ =
+        arg_name, external_name, found_space, _uses_arg =
           parse_arg_name(arg_location, extra_assigns, allow_external_name: allow_external_name)
 
         args.each do |arg|
@@ -3795,7 +3795,7 @@ module Crystal
       when :")", :NEWLINE, :":"
         arg_name = ""
       else
-        arg_name, _, _, uses_arg =
+        arg_name, _external_name, _found_space, uses_arg =
           parse_arg_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_arg
       end

@@ -135,7 +135,7 @@ class Crystal::CodeGenVisitor
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
     end
 
-    _, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+    _tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     case op
     when "&+"              then codegen_trunc_binary_op_result(t1, t2, builder.add(p1, p2))

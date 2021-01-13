@@ -448,7 +448,7 @@ module MIME
 
     private def self.decode_rfc2231(encoded : String)
       encoding, _, rest = encoded.partition('\'')
-      _, _, value = rest.partition('\'')
+      _lang, _, value = rest.partition('\'')
 
       return if encoding.empty? || value.empty?
 

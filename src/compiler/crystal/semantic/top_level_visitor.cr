@@ -606,7 +606,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
       counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
-      _, all_value, _ =
+      counter, all_value, _overflow =
         visit_enum_members(node, node.members, counter, all_value,
           overflow: false,
           existed: existed,

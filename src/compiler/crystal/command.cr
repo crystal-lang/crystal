@@ -216,7 +216,7 @@ class Crystal::Command
   end
 
   private def types
-    _, result = compile_no_codegen "tool types"
+    _config, result = compile_no_codegen "tool types"
     @progress_tracker.stage("Tool (types)") do
       Crystal.print_types result.node
     end
