@@ -234,15 +234,54 @@ class Object
     self
   end
 
-  # Returns a shallow copy of this object.
+  # Returns a shallow copy (“duplicate”) of this object.
   #
-  # As a convention, `clone` is the method used to create a deep copy of
-  # an object, but this logic isn't defined generically for every type
-  # because cycles could be involved, and the clone logic might not need
-  # to clone everything.
+  # In order to create a new object with the same value as an existing one, there
+  # are two possible routes:
+  #
+  # * create a *shallow copy* (`#dup`): Constructs a new object with all its
+  #   properties' values identical to the original object's properties. They
+  #   are shared references. That means for mutable values that changes to
+  #   either object's values will be present in both's.
+  # * create a *deep copy* (`#clone`): Constructs a new object with all its
+  #   properties' values being recursive deep copies of the original object's
+  #   properties.
+  #   There is no shared state and the new object is a completely independent
+  #   copy, including everything inside it. This may not be available for every
+  #   type.
+  #
+  # A shallow copy is only one level deep whereas a deep copy copies everything
+  # below.
+  #
+  # This distinction is only relevant for compound values. Primitive types
+  # do not have any properties that could be shared or cloned.
+  # In that case, `dup` and `clone` are exactly the same.
+  #
+  # The `#clone` method can't be defined on `Object`. It's not
+  # generically available for every type because cycles could be involved, and
+  # the clone logic might not need to clone everything.
   #
   # Many types in the standard library, like `Array`, `Hash`, `Set` and
   # `Deque`, and all primitive types, define `dup` and `clone`.
+  #
+  # Example:
+  #
+  # ```
+  # original = {"foo" => [1, 2, 3]}
+  # shallow_copy = original.dup
+  # deep_copy = original.clone
+  #
+  # # "foo" references the same array object for both original and shallow copy,
+  # # but not for a deep copy:
+  # original["foo"] << 4
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  #
+  # # Assigning new value does not share it to either copy:
+  # original["foo"] = [1]
+  # shallow_copy["foo"] # => [1, 2, 3, 4]
+  # deep_copy["foo"]    # => [1, 2, 3]
+  # ```
   abstract def dup
 
   # Unsafely reinterprets the bytes of an object as being of another `type`.
