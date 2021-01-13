@@ -258,15 +258,10 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "finds key" do
+    it "yields parser" do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
-      bar = nil
-      pull.on_key("bar") do
-        bar = pull.read_int
-      end
-
-      bar.should eq(2)
+      pull.on_key("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key" do
@@ -289,6 +284,12 @@ describe JSON::PullParser do
       end
 
       bar.should eq(2)
+    end
+
+    it "yields parser with bang" do
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      pull.on_key!("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key with bang" do

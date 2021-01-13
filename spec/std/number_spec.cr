@@ -2,6 +2,7 @@ require "spec"
 require "big"
 require "complex"
 require "../support/number"
+require "../support/iterate"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
@@ -174,37 +175,129 @@ describe "Number" do
     1f32.zero?.should eq false
   end
 
-  describe "step" do
-    it "from int to float" do
-      count = 0
-      0.step(by: 0.1, to: 0.3) do |x|
-        typeof(x).should eq(typeof(0.1))
-        case count
-        when 0 then x.should eq(0.0)
-        when 1 then x.should eq(0.1)
-        when 2 then x.should eq(0.2)
-        else        fail "shouldn't happen"
+  describe "#step" do
+    it_iterates "basic Int", [1, 2, 3, 4, 5], 1.step(to: 5)
+    it_iterates "basic Float", [1.0, 2.0, 3.0, 4.0, 5.0], 1.0.step(to: 5.0)
+
+    it_iterates "single value Int", [1], 1.step(to: 1)
+    it_iterates "single value Float", [1.0], 1.0.step(to: 1.0)
+
+    it_iterates "single value by Int", [1], 1.step(to: 1, by: 2)
+    it_iterates "single value by Float", [1.0], 1.0.step(to: 1.0, by: 2.0)
+    it_iterates "single value Int by Float", [1.0], 1.step(to: 1, by: 2.0)
+    it_iterates "single value Float by Int", [1.0], 1.0.step(to: 1.0, by: 2)
+
+    it_iterates "negative Int", [-1, -2, -3, -4, -5], -1.step(to: -5)
+    it_iterates "negative Float", [-1.0, -2.0, -3.0, -4.0, -5.0], -1.0.step(to: -5.0)
+
+    it_iterates "downto Int", [3, 2, 1, 0], 3.step(to: 0)
+    it_iterates "downto Int by", [3, 2, 1, 0], 3.step(to: 0, by: -1)
+    it_iterates "downto UInt", [3, 2, 1, 0] of UInt8, 3u8.step(to: 0)
+    it_iterates "downto UInt by", [3, 2, 1, 0] of UInt8, 3u8.step(to: 0, by: -1)
+    it_iterates "downto Float", [3.0, 2.0, 1.0, 0.0], 3.0.step(to: 0)
+    it_iterates "downto Float by", [3.0, 2.0, 1.0, 0.0], 3.0.step(to: 0, by: -1)
+
+    it_iterates "by Int", [1, 3, 5], 1.step(to: 5, by: 2)
+    it_iterates "by Float", [1.0, 3.0, 5.0], 1.0.step(to: 5.0, by: 2.0)
+    it_iterates "by Float half", [1.0, 2.5, 4.0], 1.0.step(to: 5.0, by: 1.5)
+
+    it_iterates "negative by Int", [-1, -3, -5], -1.step(to: -5, by: -2)
+    it_iterates "negative by Float", [-1.0, -3.0, -5.0], -1.0.step(to: -5.0, by: -2.0)
+    it_iterates "negative by Float half", [-1.0, -2.5, -4.0], -1.0.step(to: -5.0, by: -1.5)
+
+    it_iterates "missing end Int", [1, 3], 1.step(to: 4, by: 2)
+    it_iterates "missing end Float", [1.0, 3.0], 1.0.step(to: 4.0, by: 2.0)
+    it_iterates "missing end UInt", [3, 1] of UInt8, 3u8.step(to: 0, by: -2)
+
+    it_iterates "Int to Float", [1, 2, 3, 4, 5], 1.step(to: 5.0)
+    it_iterates "Int to Float by", [1, 2, 3, 4, 5], 1.step(to: 5.0, by: 1)
+    it_iterates "Float to Int", [1.0, 2.0, 3.0, 4.0, 5.0], 1.0.step(to: 5)
+    it_iterates "Float to Int by", [1.0, 2.0, 3.0, 4.0, 5.0], 1.0.step(to: 5, by: 1)
+
+    it_iterates "Int by Float", [1.0, 3.0, 5.0], 1.step(to: 5, by: 2.0)
+    it_iterates "Float by Int", [1.0, 3.0, 5.0], 1.0.step(to: 5.0, by: 2)
+
+    it_iterates "over zero Int", [-1, 0, 1], -1.step(to: 1)
+    it_iterates "over zero Float", [-1.0, 0.0, 1.0], -1.0.step(to: 1.0)
+
+    it_iterates "at max Int", [Int8::MAX - 2, Int8::MAX - 1, Int8::MAX], (Int8::MAX - 2).step(to: Int8::MAX)
+    it_iterates "over max Int", [Int8::MAX - 1], (Int8::MAX - 1).step(to: Int8::MAX, by: 2)
+
+    it_iterates "at min Int", [Int8::MIN + 2, Int8::MIN + 1, Int8::MIN], (Int8::MIN + 2).step(to: Int8::MIN)
+    it_iterates "over min Int", [Int8::MIN + 1], (Int8::MIN + 1).step(to: Int8::MIN, by: -2)
+
+    it "by zero yielding" do
+      yielded = false
+      expect_raises(ArgumentError, "Zero step size") do
+        0.step(to: 1, by: 0) { yielded = true }
+      end
+      yielded.should be_false
+    end
+
+    it "by zero iterator" do
+      expect_raises(ArgumentError, "Zero step size") do
+        0.step(to: 1, by: 0)
+      end
+    end
+
+    it_iterates "empty if `by` and `to` are opposed", [] of Int32, 1.step(to: 2, by: -1)
+
+    it_iterates "empty if `to` can't be compared", [] of Float64, 1.0.step(to: Float64::NAN)
+    it_iterates "empty if `to` can't be compared by", [] of Float64, 1.0.step(to: Float64::NAN, by: 1.0)
+    it_iterates "empty if `self` can't be compared", [] of Float64, Float64::NAN.step(to: 1.0)
+    it_iterates "empty if `self` can't be compared by", [] of Float64, Float64::NAN.step(to: 1.0, by: 1.0)
+
+    describe "exclusive" do
+      it_iterates "basic Int", [1, 2, 3, 4], 1.step(to: 5, exclusive: true)
+      it_iterates "basic Float", [1.0, 2.0, 3.0, 4.0], 1.0.step(to: 5.0, exclusive: true)
+
+      it_iterates "single value Int", [] of Int32, 1.step(to: 1, exclusive: true)
+      it_iterates "single value Float", [] of Float64, 1.0.step(to: 1.0, exclusive: true)
+    end
+
+    describe "without limit" do
+      describe "iterator" do
+        it "basic" do
+          iter = 0.step
+
+          5.times do
+            iter.next
+          end
+
+          iter.next.should eq(5)
         end
-        count += 1
-      end
-    end
 
-    it "iterator" do
-      iter = 0.step(by: 0.1, to: 0.3)
-      iter.next.should eq(0.0)
-      iter.next.should eq(0.1)
-      iter.next.should eq(0.2)
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "iterator without limit" do
-      iter = 0.step
-
-      1000.times do
-        iter.next
+        it "raises overflow error" do
+          iter = (Int8::MAX - 1).step
+          iter.next.should eq Int8::MAX - 1
+          iter.next.should eq Int8::MAX
+          expect_raises(OverflowError) do
+            iter.next
+          end
+        end
       end
 
-      iter.next.should eq(1000)
+      describe "yielding" do
+        it "basic" do
+          i = 1
+          1.step do |x|
+            x.should eq(i)
+            break if x >= 10
+            i += 1
+          end
+          i.should eq 10
+        end
+
+        it "raises overflow error" do
+          ary = [] of Int8
+          expect_raises(OverflowError) do
+            (Int8::MAX - 1).step do |x|
+              ary << x
+            end
+          end
+          ary.should eq [Int8::MAX - 1, Int8::MAX]
+        end
+      end
     end
   end
 

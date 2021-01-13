@@ -144,7 +144,7 @@ class YAML::Builder
 
   # Emits an alias to the given *anchor*.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|
@@ -165,7 +165,7 @@ class YAML::Builder
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|

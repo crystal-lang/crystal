@@ -563,6 +563,19 @@ class Regex
     lookup
   end
 
+  # Returns the number of (named & non-named) capture groups.
+  #
+  # ```
+  # /(?:.+)/.capture_count     # => 0
+  # /(?<foo>.+)/.capture_count # => 1
+  # /(.)/.capture_count        # => 1
+  # /(.)|(.)/.capture_count    # => 2
+  # ```
+  def capture_count : Int32
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_CAPTURECOUNT, out capture_count)
+    capture_count
+  end
+
   # Convert to `String` in subpattern format. Produces a `String` which can be
   # embedded in another `Regex` via interpolation, where it will be interpreted
   # as a non-capturing subexpression in another regular expression.

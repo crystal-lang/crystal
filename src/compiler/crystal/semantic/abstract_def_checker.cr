@@ -78,7 +78,12 @@ class Crystal::AbstractDefChecker
       if subtype.abstract? || subtype.module?
         check_implemented_in_subtypes(base, subtype, method)
       else
-        method.raise "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
+        msg = "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
+        if location = subtype.locations.try &.first?
+          raise TypeException.new(msg, location)
+        else
+          raise TypeException.new(msg)
+        end
       end
     end
   end

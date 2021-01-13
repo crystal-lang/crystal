@@ -1757,6 +1757,15 @@ module Crystal
 
       exps = [] of ASTNode
 
+      # do...end in parenthesis should not stop because there's no call further
+      # left to bind to:
+      #
+      # ```
+      # (foo do
+      # end)
+      # ```
+      @stop_on_do = false
+
       while true
         exps << parse_expression
         case @token.type
@@ -2962,12 +2971,21 @@ module Crystal
 
       name_location = @token.location
 
-      if @token.type == :IDENT
+      case @token.type
+      when :CONST
+        raise "macro can't have a receiver"
+      when :IDENT
         check_valid_def_name
+        next_token
+        if @token.type == :"="
+          raise "macro can't be a setter"
+        end
+        skip_space
+      when :"[]"
+        next_token_skip_space
       else
-        check_valid_def_op_name
+        raise "invalid macro name"
       end
-      next_token_skip_space
 
       args = [] of Arg
 
@@ -3024,8 +3042,12 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
+      when :";", :"NEWLINE"
+        # Skip
+      when :"."
+        raise "macro can't have a receiver"
       else
-        # keep going
+        unexpected_token
       end
 
       end_location = nil
@@ -4126,6 +4148,10 @@ module Crystal
         block = parse_block(block)
       end
 
+      if block && block_arg
+        raise "can't use captured and non-captured blocks together", location
+      end
+
       node =
         if block || block_arg || global
           call = Call.new(nil, name, (args || [] of ASTNode), block, block_arg, named_args, global)
@@ -4138,7 +4164,7 @@ module Crystal
             if maybe_var && args.size == 0
               Var.new(name)
             else
-              call = Call.new(nil, name, args, nil, block_arg, named_args, global)
+              call = Call.new(nil, name, args, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call
@@ -4154,11 +4180,11 @@ module Crystal
               end
               Var.new(name)
             else
-              if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+              if !force_call && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
-              call = Call.new(nil, name, [] of ASTNode, nil, block_arg, named_args, global)
+              call = Call.new(nil, name, [] of ASTNode, nil, nil, named_args, global)
               call.name_location = name_location
               call.has_parentheses = has_parentheses
               call

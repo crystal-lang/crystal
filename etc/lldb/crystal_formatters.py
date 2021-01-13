@@ -11,7 +11,7 @@ class CrystalArraySyntheticProvider:
             self.valobj = self.valobj.Dereference()
         self.size = int(self.valobj.child[0].value)
         self.type = self.valobj.type
-        self.buffer = self.valobj.child[2]
+        self.buffer = self.valobj.child[3]
 
     def num_children(self):
         size = 0 if self.size is None else self.size

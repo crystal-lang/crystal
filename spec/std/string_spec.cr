@@ -182,6 +182,8 @@ describe "String" do
     it "gets with range" do
       "hello"[1..2]?.should eq "el"
       "hello"[6..-1]?.should be_nil
+      "hello"[-6..-1]?.should be_nil
+      "hello"[-6..]?.should be_nil
     end
 
     it "gets with start and count" do

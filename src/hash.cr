@@ -1136,14 +1136,14 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Returns a tuple populated with the elements at the given *indexes*.
-  # Raises if any index is invalid.
+  # Returns a tuple populated with the values of the given *keys*, with the same order.
+  # Raises if a key is not found.
   #
   # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.values_at("a", "c") # => {1, 3}
   # ```
-  def values_at(*indexes : K)
-    indexes.map { |index| self[index] }
+  def values_at(*keys : K)
+    keys.map { |index| self[index] }
   end
 
   # Returns a key with the given *value*, else raises `KeyError`.
@@ -1366,21 +1366,6 @@ class Hash(K, V)
   # ```
   def values : Array(V)
     to_a_impl &.value
-  end
-
-  # Returns the index of the given key, or `nil` when not found.
-  # The keys are ordered based on when they were inserted.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.key_index("foo") # => 0
-  # h.key_index("qux") # => nil
-  # ```
-  def key_index(key)
-    each_with_index do |(my_key, my_value), index|
-      return index if key == my_key
-    end
-    nil
   end
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
