@@ -127,6 +127,7 @@ describe Socket::IPAddress do
     Socket::IPAddress.valid_port?(-1).should be_false
     Socket::IPAddress.valid_port?(65_536).should be_false
   end
+
   it "#==" do
     Socket::IPAddress.new("127.0.0.1", 8080).should eq Socket::IPAddress.new("127.0.0.1", 8080)
     Socket::IPAddress.new("127.0.0.1", 8080).hash.should eq Socket::IPAddress.new("127.0.0.1", 8080).hash

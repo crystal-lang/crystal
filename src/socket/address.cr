@@ -236,13 +236,7 @@ class Socket
       {% end %}
     end
 
-    def_hash family, port, address
-
-    def ==(other : IPAddress)
-      family == other.family &&
-        port == other.port &&
-        address == other.address
-    end
+    def_equals_and_hash family, port, address
 
     def to_s(io : IO) : Nil
       if family == Family::INET6
@@ -378,11 +372,7 @@ class Socket
       @size = size || sizeof(LibC::SockaddrUn)
     end
 
-    def ==(other : UNIXAddress)
-      path == other.path
-    end
-
-    def_hash path
+    def_equals_and_hash path
 
     def to_s(io : IO) : Nil
       io << path
