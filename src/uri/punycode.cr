@@ -119,10 +119,7 @@ class URI
         i += digit * w
         t = k <= bias ? TMIN : k >= bias + TMAX ? TMAX : k - bias
 
-        unless digit < t
-          w *= BASE - t
-          k += BASE
-        else
+        if digit < t
           outsize = output.size + 1
           bias = adapt i - oldi, outsize, oldi == 0
           n += i // outsize
@@ -130,6 +127,9 @@ class URI
           output.insert i, n.chr
           i += 1
           init = true
+        else
+          w *= BASE - t
+          k += BASE
         end
       end
 

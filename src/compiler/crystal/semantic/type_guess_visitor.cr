@@ -394,12 +394,12 @@ module Crystal
 
     def add_type_info(vars, name, type, node)
       info = vars[name]?
-      unless info
-        info = TypeInfo.new(type, node.location.not_nil!)
+      if info
+        info.type = Type.merge!(type, info.type)
         info.outside_def = true if @outside_def
         vars[name] = info
       else
-        info.type = Type.merge!(type, info.type)
+        info = TypeInfo.new(type, node.location.not_nil!)
         info.outside_def = true if @outside_def
         vars[name] = info
       end
@@ -413,17 +413,14 @@ module Crystal
       end
 
       info = vars[name]?
-      unless info
-        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
-      else
+      if info
         info.type = Type.merge!([info.type, type])
-        info.outside_def = true if @outside_def
-        info.add_annotations(annotations) if annotations
-        vars[name] = info
+      else
+        info = InstanceVarTypeInfo.new(node.location.not_nil!, type)
       end
+      info.outside_def = true if @outside_def
+      info.add_annotations(annotations) if annotations
+      vars[name] = info
     end
 
     def guess_type(node : NumberLiteral)
