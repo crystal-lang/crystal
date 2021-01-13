@@ -326,6 +326,13 @@ module Crystal
       return true if self == other
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
+      # Special case: NamedTuple against NamedTuple
+      if (self_type = owner.lookup_type?(self)).is_a?(NamedTupleInstanceType)
+        if (other_type = owner.lookup_type?(other)).is_a?(NamedTupleInstanceType)
+          return self_type.restriction_of?(other_type, owner, strict)
+        end
+      end
+
       type_vars.zip(other.type_vars) do |type_var, other_type_var|
         return false unless type_var.restriction_of?(other_type_var, owner, strict)
       end
