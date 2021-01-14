@@ -148,9 +148,10 @@ module Iterator(T)
   # Advancing the copy doesn't advance the original iterator.
   #
   # This method is implemented by creating a copy of this iterator with
-  # all fields copied over, dupping any field that is an `Iterator`.
+  # all fields `dup`ped.
+  #
   # This method should be overwritten if a different dup behavior is needed,
-  # for example if an `Iterator` holds an array of iterators.
+  # for example if an `Iterator` holds an array of iterators that each must be `dup`ped.
   def dup
     {% begin %}
       {% if @type < ::Reference %}
@@ -163,9 +164,7 @@ module Iterator(T)
       {% end %}
 
       {% for name in @type.instance_vars %}
-        if (var = @{{name.id}}).is_a?(Iterator)
-          (dup_ptr + offsetof(self, @{{name.id}})).as(typeof(@{{name.id}})*).value = var.dup
-        end
+        (dup_ptr + offsetof(self, @{{name.id}})).as(typeof(@{{name.id}})*).value = @{{name.id}}.dup
       {% end %}
 
       {% if @type < ::Reference %}
