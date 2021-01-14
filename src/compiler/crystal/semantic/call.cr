@@ -795,10 +795,11 @@ class Crystal::Call
     if yield_vars
       # Check if tuple unpacking is needed
       if auto_unpack_needed = (
-         yield_vars.size == 1 &&
-         (yield_var_type = yield_vars.first.type.as?(TupleInstanceType)) &&
-         block.args.size > 1 &&
-         !block.splat_index)
+           yield_vars.size == 1 &&
+           (yield_var_type = yield_vars.first.type.as?(TupleInstanceType)) &&
+           block.args.size > 1 &&
+           !block.splat_index
+         )
         yield_var_type.tuple_types.each_with_index do |tuple_type, i|
           arg = block.args[i]?
           arg.type = tuple_type if arg
