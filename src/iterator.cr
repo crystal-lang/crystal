@@ -582,27 +582,30 @@ module Iterator(T)
     @stopped : Array(I)
     @generators : Array(I)
 
-    def initialize(iterator : I)
-      @generators = [iterator] of I
+    def initialize(@iterator : I)
+      @generators = [] of I
       @stopped = [] of I
     end
 
-    def initialize(@stopped : Array(I), @generators : Array(I))
+    def initialize(@iterator : I, @stopped : Array(I), @generators : Array(I))
     end
 
     def next
-      case value = @generators.last.next
+      case value = @iterator.next
       when Iterator
-        @generators.push value
+        @generators.push @iterator
+        @iterator = value
         self.next
       when Array
-        @generators.push value.each
+        @generators.push @iterator
+        @iterator = value.each
         self.next
       when Stop
-        if @generators.size == 1
+        @stopped << @iterator
+        if @generators.empty?
           stop
         else
-          @stopped << @generators.pop
+          @iterator = @generators.pop
           self.next
         end
       else
@@ -635,7 +638,7 @@ module Iterator(T)
     end
 
     def dup
-      Flatten(I, T).new(@stopped.map(&.dup), @generators.map(&.dup))
+      Flatten(I, T).new(@iterator.dup, @stopped.map(&.dup), @generators.map(&.dup))
     end
   end
 
@@ -1276,6 +1279,14 @@ module Iterator(T)
   # ```
   def with_object(obj)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
+  end
+
+  # Yields each element in this iterator together with *obj*. Returns that object.
+  def with_object(obj, &)
+    each do |value|
+      yield value, obj
+    end
+    obj
   end
 
   private struct WithObject(I, T, O)

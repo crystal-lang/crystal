@@ -318,7 +318,7 @@ class HTTP::WebSocket::Protocol
   def self.new(uri : URI | String, headers = HTTP::Headers.new)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if (host = uri.hostname) && (path = uri.full_path)
+    if (host = uri.hostname) && (path = uri.request_target)
       tls = uri.scheme.in?("https", "wss")
       return new(host, path, uri.port, tls, headers)
     end

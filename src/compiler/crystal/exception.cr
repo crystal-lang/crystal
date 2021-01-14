@@ -1,8 +1,10 @@
 require "./util"
+require "./error"
 require "colorize"
 
 module Crystal
-  abstract class Exception < ::Exception
+  # Base class for all errors related to specific user code.
+  abstract class CodeError < Error
     property? color = false
     property? error_trace = false
 
@@ -72,30 +74,6 @@ module Crystal
           found_non_space = true
           char
         end
-      end
-    end
-  end
-
-  class LocationlessException < Exception
-    def to_s_with_source(io : IO, source)
-      io << @message
-    end
-
-    def append_to_s(io : IO, source)
-      io << @message
-    end
-
-    def has_location?
-      false
-    end
-
-    def deepest_error_message
-      @message
-    end
-
-    def to_json_single(json)
-      json.object do
-        json.field "message", @message
       end
     end
   end

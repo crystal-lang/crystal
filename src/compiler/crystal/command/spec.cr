@@ -11,10 +11,17 @@
 class Crystal::Command
   private def spec
     compiler = new_compiler
+    link_flags = [] of String
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal spec [options] [files]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
+
+      opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
+        link_flags << some_link_flags
+      end
     end
+
+    compiler.link_flags = link_flags.join(' ') unless link_flags.empty?
 
     # Assume spec files end with ".cr" and optionally with a colon and a number
     # (for the target line number), or is a directory. Everything else is an option we forward.

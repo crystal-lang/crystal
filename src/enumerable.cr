@@ -1239,6 +1239,70 @@ module Enumerable(T)
     reject { |e| pattern === e }
   end
 
+  # Returns an `Array` of *n* random elements from `self`, using the given
+  # *random* number generator. All elements have equal probability of being
+  # drawn. Sampling is done without replacement; if *n* is larger than the size
+  # of this collection, the returned `Array` has the same size as `self`.
+  #
+  # Raises `ArgumentError` if *n* is negative.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].sample(2)                # => [3, 5]
+  # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
+  # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
+  # ```
+  def sample(n : Int, random = Random::DEFAULT)
+    raise ArgumentError.new("Can't sample negative number of elements") if n < 0
+
+    # Unweighted reservoir sampling:
+    # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
+    # "Algorithm L" does not provide any performance improvements on Enumerable,
+    # because it is not possible to discard multiple elements at once
+
+    ary = Array(T).new(n)
+    return ary if n == 0
+
+    each_with_index do |elem, i|
+      if i < n
+        ary << elem
+      else
+        j = random.rand(i + 1)
+        if j < n
+          ary.to_unsafe[j] = elem
+        end
+      end
+    end
+
+    ary.shuffle!(random)
+  end
+
+  # Returns a random element from `self`, using the given *random* number
+  # generator. All elements have equal probability of being drawn.
+  #
+  # Raises `IndexError` if `self` is empty.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample                # => 2
+  # a.sample                # => 1
+  # a.sample(Random.new(1)) # => 3
+  # ```
+  def sample(random = Random::DEFAULT)
+    value = uninitialized T
+    found = false
+
+    each_with_index do |elem, i|
+      if !found
+        value = elem
+        found = true
+      elsif random.rand(i + 1) == 0
+        value = elem
+      end
+    end
+
+    found ? value : raise IndexError.new("Can't sample empty collection")
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block returns `true`.
   #

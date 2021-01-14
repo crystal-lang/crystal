@@ -176,10 +176,32 @@ describe "URI" do
     end
   end
 
+  describe ".new" do
+    it "with query params" do
+      URI.new(query: URI::Params.parse("foo=bar&foo=baz")).should eq URI.parse("?foo=bar&foo=baz")
+    end
+  end
+
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
     it { URI.new(path: "/foo").hostname.should be_nil }
+  end
+
+  describe "#authority" do
+    it { URI.new.authority.should be_nil }
+    it { URI.new(scheme: "scheme").authority.should be_nil }
+    it { URI.new(scheme: "scheme", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", host: "example.com", port: 123).authority.should eq "example.com:123" }
+    it { URI.new(scheme: "scheme", user: "user", host: "example.com").authority.should eq "user@example.com" }
+    it { URI.new(scheme: "scheme", user: "user").authority.should eq "user@" }
+    it { URI.new(scheme: "scheme", port: 123).authority.should eq ":123" }
+    it { URI.new(scheme: "scheme", user: "user", port: 123).authority.should eq "user@:123" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com").authority.should eq "user:pass@example.com" }
+    it { URI.new(scheme: "scheme", user: "user", password: "pass", host: "example.com", port: 123).authority.should eq "user:pass@example.com:123" }
+    it { URI.new(scheme: "scheme", password: "pass", host: "example.com").authority.should eq "example.com" }
+    it { URI.new(scheme: "scheme", path: "opaque").authority.should be_nil }
+    it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
   end
 
   describe "#full_path" do
@@ -194,6 +216,28 @@ describe "URI" do
       uri = URI.parse("http://www.example.com/foo")
       uri.query = ""
       uri.full_path.should eq("/foo")
+    end
+  end
+
+  describe "#request_target" do
+    it { URI.new(path: "/foo").request_target.should eq("/foo") }
+    it { URI.new.request_target.should eq("/") }
+    it { URI.new(scheme: "https", host: "example.com").request_target.should eq("/") }
+    it { URI.new(scheme: "https", host: "example.com", path: "/%2F/%2F/").request_target.should eq("/%2F/%2F/") }
+    it { URI.new(scheme: "scheme", path: "opaque").request_target.should eq "opaque" }
+    it { URI.new(scheme: "scheme", query: "foo=bar&foo=baz").request_target.should eq "?foo=bar&foo=baz" }
+
+    it { URI.new(path: "//foo").request_target.should eq("//foo") }
+    it { URI.new(path: "/foo", query: "q=1").request_target.should eq("/foo?q=1") }
+    it { URI.new(path: "/", query: "q=1").request_target.should eq("/?q=1") }
+    it { URI.new(query: "q=1").request_target.should eq("/?q=1") }
+    it { URI.new(path: "/a%3Ab").request_target.should eq("/a%3Ab") }
+    it { URI.new("scheme").request_target.should eq "" }
+
+    it "does not add '?' to the end if the query params are empty" do
+      uri = URI.parse("http://www.example.com/foo")
+      uri.query = ""
+      uri.request_target.should eq("/foo")
     end
   end
 
@@ -320,21 +364,39 @@ describe "URI" do
 
   describe "#query_params" do
     context "when there is no query parameters" do
-      it "returns an empty instance of HTTP::Params" do
+      it "returns an empty instance of URI::Params" do
         uri = URI.parse("http://foo.com")
-        uri.query_params.should be_a(HTTP::Params)
-        uri.query_params.should eq(HTTP::Params.new)
+        uri.query_params.should be_a(URI::Params)
+        uri.query_params.should eq(URI::Params.new)
       end
     end
 
-    it "returns a HTTP::Params instance based on the query parameters" do
-      expected_params = HTTP::Params{"id" => "30", "limit" => "5"}
+    it "returns a URI::Params instance based on the query parameters" do
+      expected_params = URI::Params{"id" => "30", "limit" => "5"}
 
       uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
 
       uri = URI.parse("?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
+    end
+  end
+
+  describe "#query_params=" do
+    it "empty" do
+      uri = URI.new
+      params = URI::Params.new
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq ""
+    end
+
+    it "params with values" do
+      uri = URI.new
+      params = URI::Params.parse("foo=bar&foo=baz")
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq "foo=bar&foo=baz"
     end
   end
 

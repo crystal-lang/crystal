@@ -136,34 +136,6 @@ jobs:
       - store_artifacts:
           path: ~/test-results/spec
 
-  check_format:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci format
-
-  sync_docs_s3:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          echo $CIRCLE_SHA1 > /tmp/workspace/docs/revision.txt
-      - run: |
-          docker run -v /tmp/workspace/docs:/docs \
-            -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-            -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-            mesosphere/aws-cli \
-            s3 sync /docs/ s3://crystal-api/api/master --delete
-
   prepare_common:
     docker:
       - image: docker:stable-git
@@ -538,33 +510,6 @@ jobs:
 
 workflows:
   version: 2
-  test_all_platforms:
-    jobs:
-      - test_linux:
-          filters: &unless_maintenance
-            branches:
-              ignore:
-                - /release\/.+/
-                - /package\/.+/
-                - /.*\bci\b.*/
-      - test_linux32_std:
-          filters: *unless_maintenance
-      - test_alpine:
-          filters: *unless_maintenance
-      # - test_darwin:
-      #     filters: *unless_maintenance
-      - test_preview_mt:
-          filters: *unless_maintenance
-      - check_format:
-          filters: *unless_maintenance
-      - sync_docs_s3:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - test_linux
-
   tagged_release:
     jobs:
       - test_linux:
@@ -577,7 +522,7 @@ workflows:
           filters: *per_tag
       - test_alpine:
           filters: *per_tag
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *per_tag
       - test_preview_mt:
           filters: *per_tag
@@ -652,9 +597,8 @@ workflows:
       - test_linux
       - test_linux32_std
       - test_alpine
-      # - test_darwin
+      # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
       - test_preview_mt
-      - check_format
       - prepare_common
       - prepare_nightly:
           requires:
@@ -716,7 +660,7 @@ workflows:
           filters: *maintenance
       - test_alpine:
           filters: *maintenance
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *maintenance
       - test_preview_mt:
           filters: *maintenance

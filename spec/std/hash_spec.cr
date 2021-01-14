@@ -1004,15 +1004,15 @@ describe "Hash" do
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
-      end
+      end.should eq(:memo)
     end
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
-      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+      result = {} of Char => Symbol
+      hash.each_with_object(result) do |(k, v), memo|
         memo[v] = k
-      end
+      end.should be(result)
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end

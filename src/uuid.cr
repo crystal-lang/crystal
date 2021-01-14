@@ -171,10 +171,7 @@ struct UUID
     @bytes.to_unsafe
   end
 
-  # Returns `true` if `other` UUID represents the same UUID, `false` otherwise.
-  def ==(other : UUID)
-    @bytes == other.@bytes
-  end
+  def_equals_and_hash @bytes
 
   # Convert to `String` in literal format.
   def inspect(io : IO) : Nil

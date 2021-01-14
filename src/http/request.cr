@@ -17,7 +17,7 @@ class HTTP::Request
   getter body : IO?
   property version : String
   @cookies : Cookies?
-  @query_params : Params?
+  @query_params : URI::Params?
   @uri : URI?
 
   {% unless flag?(:win32) %}
@@ -52,14 +52,14 @@ class HTTP::Request
   end
 
   # Returns a convenience wrapper around querying and setting query params,
-  # see `HTTP::Params`.
+  # see `URI::Params`.
   def query_params
-    @query_params ||= parse_query_params
+    @query_params ||= uri.query_params
   end
 
   def resource
     update_uri
-    @uri.try(&.full_path) || @resource
+    @uri.try(&.request_target) || @resource
   end
 
   def keep_alive?
@@ -290,13 +290,9 @@ class HTTP::Request
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
-  private def parse_query_params
-    HTTP::Params.parse(uri.query || "")
-  end
-
   private def update_query_params
     return unless @query_params
-    @query_params = parse_query_params
+    @query_params = uri.query_params
   end
 
   private def update_uri

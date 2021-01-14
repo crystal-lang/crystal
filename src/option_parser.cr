@@ -278,8 +278,10 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
+    indent = " " * 37
+    description = description.gsub("\n", "\n#{indent}")
     if flag.size >= 33
-      @flags << "    #{flag}\n#{" " * 37}#{description}"
+      @flags << "    #{flag}\n#{indent}#{description}"
     else
       @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
     end

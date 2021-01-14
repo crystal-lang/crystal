@@ -19,14 +19,14 @@
 #
 # ### Parameters
 #
-# Parameters can be added to any request with the `HTTP::Params#encode` method, which
+# Parameters can be added to any request with the `URI::Params.encode` method, which
 # converts a `Hash` or `NamedTuple` to a URL encoded HTTP query.
 #
 # ```
 # require "http/client"
 #
-# params = HTTP::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
-# response = HTTP::Client.get "http://www.example.com?" + params
+# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
+# response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
 #
@@ -509,7 +509,7 @@ class HTTP::Client
     # response = client.{{method.id}} "/", form: {"foo" => "bar"}
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}} path, form: body, headers: headers
     end
 
@@ -526,7 +526,7 @@ class HTTP::Client
     # end
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
-      body = HTTP::Params.encode(form)
+      body = URI::Params.encode(form)
       {{method.id}}(path, form: body, headers: headers) do |response|
         yield response
       end
@@ -855,7 +855,7 @@ class HTTP::Client
     host = validate_host(uri)
 
     port = uri.port
-    path = uri.full_path
+    path = uri.request_target
     user = uri.user
     password = uri.password
 

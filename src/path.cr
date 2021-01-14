@@ -1059,10 +1059,25 @@ struct Path
   # Path.windows("foo") <=> Path.windows("FOO") # => 0
   # ```
   def <=>(other : Path)
-    ord = @name.compare(other.@name, case_insensitive: windows?)
+    ord = @name.compare(other.@name, case_insensitive: windows? || other.windows?)
     return ord if ord != 0
 
     @kind <=> other.@kind
+  end
+
+  def ==(other : self)
+    return false if @kind != other.@kind
+
+    @name.compare(other.@name, case_insensitive: windows? || other.windows?) == 0
+  end
+
+  def hash(hasher)
+    name = @name
+    if windows?
+      name = name.downcase
+    end
+    hasher = name.hash(hasher)
+    @kind.hash(hasher)
   end
 
   # Returns a path representing the drive component or `nil` if this path does not contain a drive.
