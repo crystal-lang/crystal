@@ -74,7 +74,7 @@ Status labels attempt to capture the lifecycle of an issue:
 
 ### The documentation
 
-We use [GitBook](https://www.gitbook.com/) for the [language documentation](https://crystal-lang.org/docs/).
+We use [MkDocs](https://www.mkdocs.org/) for [the language reference](https://crystal-lang.org/reference/).
 See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for how to contribute to it.
 
 The [standard library documentation](https://crystal-lang.org/api/) is on the code itself, in this repository.
@@ -82,7 +82,9 @@ There is a version updated with every push to the master branch [here](https://c
 It uses a subset of [Markdown](http://daringfireball.net/projects/markdown/). You can [use Ruby as a source
 of inspiration](https://twitter.com/yukihiro_matz/status/549317901002342400) whenever applicable. To generate
 the docs execute `make docs`. Please follow the guidelines described in our
-[language documentation](https://crystal-lang.org/docs/conventions/documenting_code.html), like the use of the third person.
+[language documentation](https://crystal-lang.org/reference/conventions/documenting_code.html), like the use of the third person.
+
+Additionally, all official documentation can be found on [the Crystal website](https://crystal-lang.org/docs/).
 
 ### The standard library
 
@@ -103,7 +105,7 @@ You can use `make help` for a list of available make targets.
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
 
-Make sure that your changes follow the recommended [Coding Style](https://crystal-lang.org/docs/conventions/coding_style.html).
+Make sure that your changes follow the recommended [Coding Style](https://crystal-lang.org/reference/conventions/coding_style.html).
 You can run `crystal tool format` to automate this.
 
 Then push your changes and create a pull request.
