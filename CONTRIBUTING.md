@@ -74,8 +74,8 @@ Status labels attempt to capture the lifecycle of an issue:
 
 ### The documentation
 
-There's [a language reference](https://crystal-lang.org/reference/) available.
-See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for how to contribute to it.
+The language reference is available at https://crystal-lang.org/reference/.
+See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for contributing to it.
 
 The [standard library documentation](https://crystal-lang.org/api/) is on the code itself, in this repository.
 There is a version updated with every push to the master branch [here](https://crystal-lang.org/api/master/).
