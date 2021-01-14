@@ -1756,15 +1756,6 @@ describe "Array" do
       iter.next.should be_a(Iterator::Stop)
     end
 
-    it "does rewind" do
-      a = [1, 2, 3]
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.rewind
-      iter.next.should eq(1)
-    end
-
     it "is idempotent" do
       a = [1, 2, 3]
       iter = a.each

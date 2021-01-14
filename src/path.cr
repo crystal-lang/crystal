@@ -574,9 +574,6 @@ struct Path
       @anchor_processed = false
     end
 
-    def initialize(@path : Path, @reader : Char::Reader, @last_was_separator : Bool, @anchor_processed : Bool)
-    end
-
     def next
       start_pos = next_pos
 
@@ -616,13 +613,6 @@ struct Path
 
       @reader = reader
       return 0
-    end
-
-    def rewind
-      @reader.pos = 0
-      @last_was_separator = false
-      @anchor_processed = false
-      self
     end
   end
 
@@ -1022,7 +1012,7 @@ struct Path
       end
 
       path /= ".." unless base_part == "."
-      until base_iterator.next.is_a?(Iterator::Stop)
+      base_iterator.each do
         path /= ".."
       end
     end
@@ -1030,7 +1020,7 @@ struct Path
     # target_path is not consumed, so we append what's left to the relative path
     if target_part.is_a?(String)
       path /= target_part
-      while !(part = target_iterator.next).is_a?(Iterator::Stop)
+      target_iterator.each do |part|
         path /= part
       end
     end

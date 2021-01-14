@@ -144,14 +144,6 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
-  # Rewinds this iterator.
-  #
-  # By default raises `NotImplementedError` but includers typically
-  # override this method.
-  def rewind
-    raise NotImplementedError.new("#{self.class}#rewind")
-  end
-
   # Returns a copy of this iterator.
   # Advancing the copy doesn't advance the original iterator.
   #
@@ -520,27 +512,27 @@ module Iterator(T)
   # Calls the given block once for each element, passing that element
   # as a parameter.
   #
-  # Note that all elements in the iterator are yielded starting from the
-  # beginning, regardless of whether `next` was previously called or not.
+  # Note that calling this method doesn't affect the value returned by
+  # subsequent calls to `next`. The way this is implemented is by `dup`ing
+  # this iterator and calling `next` on that copy. However, calls to `next`
+  # that happened **before** calling `each` do affect the values yielded
+  # by `each`.
   #
   # ```
   # iter = ["a", "b", "c"].each
-  # iter.each { |x| print x, " " } # Prints "a b c"
+  # iter.each { |x| print x, " " } # Prints "a b c "
+  #
+  # iter.next                      # => "a"
+  # iter.each { |x| print x, " " } # Prints "b c "
+  #
+  # iter.next                      # => "b"
+  # iter.each { |x| print x, " " } # Prints "c "
   # ```
   def each : Nil
-    it = dup
-
-    begin
-      it = it.rewind
-    rescue NotImplementedError
-      # It's fine: we couldn't rewind the copy, but in most cases
-      # this will still give the correct result if we assume `next`
-      # wasn't called on any iterator (if the iterators are only
-      # used as internal iterators).
-    end
+    iterator = dup
 
     while true
-      value = it.next
+      value = iterator.next
       break if value.is_a?(Iterator::Stop)
       yield value
     end
@@ -587,13 +579,15 @@ module Iterator(T)
   private struct Flatten(I, T)
     include Iterator(T)
 
-    @iterator : I
     @stopped : Array(I)
     @generators : Array(I)
 
-    def initialize(@iterator)
-      @generators = [@iterator]
+    def initialize(iterator : I)
+      @generators = [iterator] of I
       @stopped = [] of I
+    end
+
+    def initialize(@stopped : Array(I), @generators : Array(I))
     end
 
     def next
@@ -638,6 +632,10 @@ module Iterator(T)
       else
         raise ""
       end
+    end
+
+    def dup
+      Flatten(I, T).new(@stopped.map(&.dup), @generators.map(&.dup))
     end
   end
 
@@ -805,11 +803,6 @@ module Iterator(T)
       value = wrapped_next
       @func.call(value)
     end
-
-    def rewind
-      @iterator.rewind
-      self
-    end
   end
 
   # Returns an iterator that only returns elements for which the passed in
@@ -926,11 +919,6 @@ module Iterator(T)
         end
       end
     end
-
-    def rewind
-      @iterator.rewind
-      self
-    end
   end
 
   private struct SelectType(I, T)
@@ -947,11 +935,6 @@ module Iterator(T)
           return value
         end
       end
-    end
-
-    def rewind
-      @iterator.rewind
-      self
     end
   end
 
@@ -1279,12 +1262,6 @@ module Iterator(T)
       value = {v, @index}
       @index += 1
       value
-    end
-
-    def rewind
-      @iterator.rewind
-      @index = @offset
-      self
     end
   end
 
