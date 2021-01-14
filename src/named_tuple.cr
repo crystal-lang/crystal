@@ -46,7 +46,10 @@ struct NamedTuple
       {% begin %}
         {
           {% for key in T %}
-            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(0.unsafe_as(self)[{{ key.symbolize }}])),
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ key.symbolize }}]
+            end)),
           {% end %}
         }
       {% end %}

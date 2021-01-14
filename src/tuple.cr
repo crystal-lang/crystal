@@ -89,7 +89,10 @@ struct Tuple
       {% begin %}
         {
           {% for i in 0...@type.size %}
-            args[{{ i }}].as(typeof(0.unsafe_as(self)[{{ i }}])),
+            args[{{ i }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ i }}]
+            end)),
           {% end %}
         }
       {% end %}
