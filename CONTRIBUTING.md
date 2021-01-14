@@ -74,7 +74,7 @@ Status labels attempt to capture the lifecycle of an issue:
 
 ### The documentation
 
-We use [MkDocs](https://www.mkdocs.org/) for [the language reference](https://crystal-lang.org/reference/).
+There's [a language reference](https://crystal-lang.org/reference/) available.
 See the repository at [crystal-lang/crystal-book](https://github.com/crystal-lang/crystal-book) for how to contribute to it.
 
 The [standard library documentation](https://crystal-lang.org/api/) is on the code itself, in this repository.
