@@ -790,18 +790,21 @@ class Crystal::Call
       output_type = program.nil if output_type.void?
     end
 
+    auto_unpack_needed = false
+
     if yield_vars
       # Check if tuple unpacking is needed
-      if yield_vars.size == 1 &&
-         (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
-         block.args.size > 1
+      if auto_unpack_needed = (
+         yield_vars.size == 1 &&
+         (yield_var_type = yield_vars.first.type.as?(TupleInstanceType)) &&
+         block.args.size > 1 &&
+         !block.splat_index)
         yield_var_type.tuple_types.each_with_index do |tuple_type, i|
           arg = block.args[i]?
           arg.type = tuple_type if arg
         end
       else
         yield_vars.each_with_index do |yield_var, i|
-          yield_var_type = yield_var.type
           arg = block.args[i]?
           arg.bind_to(yield_var || program.nil_var) if arg
         end
@@ -812,9 +815,13 @@ class Crystal::Call
     if match.def.uses_block_arg?
       # Create the arguments of the function literal
       if yield_vars
-        fun_args = yield_vars.map_with_index do |var, i|
-          arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
-          Arg.new(arg_name, type: var.type)
+        if auto_unpack_needed
+          fun_args = [Arg.new(program.new_temp_var_name, type: yield_vars.first.type)]
+        else
+          fun_args = yield_vars.map_with_index do |var, i|
+            arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
+            Arg.new(arg_name, type: var.type)
+          end
         end
       else
         fun_args = [] of Arg
@@ -841,12 +848,45 @@ class Crystal::Call
           fun_literal = call_block_arg
         else
           # Otherwise, we create a ProcLiteral and type it
-          if block.args.size > fun_args.size
-            wrong_number_of "block arguments", block.args.size, fun_args.size
-          end
+          if auto_unpack_needed
+            yield_var_type = yield_var_type.not_nil!
+            if block.args.size > yield_var_type.tuple_types.size
+              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
+            end
 
-          a_def = Def.new("->", fun_args, block.body).at(block)
-          a_def.captured_block = true
+            unpack_exps = [] of ASTNode
+            tuple_name = fun_args.first.name
+            yield_var_type.tuple_types.each_with_index do |tuple_type, i|
+              if arg = block.args[i]?
+                call = Call.new(Var.new(tuple_name), "[]", NumberLiteral.new(i))
+                unpack_exps << Assign.new(Var.new(arg.name), call)
+              end
+            end
+
+            case old_body = block.body
+            when Nop
+              # do nothing
+              new_body = old_body
+            when Expressions
+              # multiple statements
+              new_body = old_body
+              new_body.expressions[0...0] = unpack_exps
+            else
+              # single statement
+              unpack_exps << old_body
+              new_body = Expressions.new(unpack_exps)
+            end
+
+            a_def = Def.new("->", fun_args, new_body).at(block)
+            a_def.captured_block = true
+          else
+            if block.args.size > fun_args.size
+              wrong_number_of "block arguments", block.args.size, fun_args.size
+            end
+
+            a_def = Def.new("->", fun_args, block.body).at(block)
+            a_def.captured_block = true
+          end
 
           fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
