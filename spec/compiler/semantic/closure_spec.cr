@@ -517,6 +517,12 @@ describe "Semantic: closure" do
 
   it "says can't send closure to C with new notation" do
     assert_error %(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       lib LibC
         fun foo(x : ->)
       end

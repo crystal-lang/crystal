@@ -510,6 +510,14 @@ module Crystal
         arg.expressions.each do |exp|
           check_arg_is_not_closure(node, message, exp)
         end
+      when Call
+        # detect closured vars in a call to Proc.new(&block)
+        if arg.name == "new" && (block = arg.block) && (obj_type = arg.obj.try &.type?)
+          instance_type = obj_type.instance_type.remove_typedef
+          if instance_type.is_a?(ProcInstanceType)
+            check_arg_is_not_closure(node, message, block.fun_literal)
+          end
+        end
       when ProcLiteral
         if proc_pointer = arg.proc_pointer
           case proc_pointer.obj
