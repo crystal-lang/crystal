@@ -54,15 +54,27 @@ describe "Semantic: proc" do
     assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing proc type if it is typedef'd" do
+  it "allows passing proc type if it is a lib alias" do
     assert_type("
       lib LibC
-        type Callback = Int32 -> Int32
+        alias Callback = Int32 -> Int32
         fun foo(x : Callback) : Float64
       end
 
       f = ->(x : Int32) { x + 1 }
       LibC.foo f
+      ") { float64 }
+  end
+
+  it "allows passing proc type if it is typedef'd" do
+    assert_type("
+      lib LibC
+        type Callback = Int32 -> Int32
+        fun foo : Callback
+        fun bar(x : Callback) : Float64
+      end
+
+      LibC.bar LibC.foo
       ") { float64 }
   end
 
@@ -165,11 +177,11 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows passing nil as proc callback" do
+  it "allows passing nil as proc callback if it is a lib alias" do
     assert_type("
       lib LibC
-        type Cb = Int32 ->
-        fun bla(Cb) : Int32
+        alias Cb = Int32 ->
+        fun bla(x : Cb) : Int32
       end
 
       LibC.bla(nil)
@@ -309,10 +321,10 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
-  it "allows new on proc type that is a typedef" do
+  it "allows new on proc type that is a lib alias" do
     assert_type("
       lib LibC
-        type F = Int32 -> Int32
+        alias F = Int32 -> Int32
       end
 
       LibC::F.new { |x| x + 1 }
