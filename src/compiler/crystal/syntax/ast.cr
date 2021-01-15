@@ -1378,8 +1378,6 @@ module Crystal
   #     'end'
   #
   class AnnotationDef < ASTNode
-    include Annotatable
-
     property name : Path
     property doc : String?
     property name_location : Location?
@@ -1901,8 +1899,6 @@ module Crystal
   end
 
   class Alias < ASTNode
-    include Annotatable
-
     property name : Path
     property value : ASTNode
     property doc : String?
