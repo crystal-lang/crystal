@@ -54,21 +54,9 @@ module Crystal
       return unless @warnings.all?
 
       if (ann = node.annotation(deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        return if ignore_warning_due_to_location?(node.location)
-        short_reference = node.short_reference
-        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_aliases_detected.includes?(warning_key)
-        @deprecated_aliases_detected.add(warning_key) if warning_key
-
-        message = deprecated_annotation.message
-        message = message ? " #{message}" : ""
-
-        full_message = node.warning "Deprecated #{short_reference}.#{message}"
-
-        self.warning_failures << full_message
+        self.validate_call_to_deprecated_node node, node.location, node.short_reference, deprecated_annotation do |warning_key|
+          @deprecated_aliases_detected.add? warning_key
+        end
       end
     end
 
@@ -76,46 +64,21 @@ module Crystal
       return unless @warnings.all?
 
       if (ann = node.annotation(deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
-        return if ignore_warning_due_to_location?(node.location)
-        short_reference = node.short_reference
-        warning_key = node.location.try { |l| "#{short_reference} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_annotations_detected.includes?(warning_key)
-        @deprecated_annotations_detected.add(warning_key) if warning_key
-
-        message = deprecated_annotation.message
-        message = message ? " #{message}" : ""
-
-        full_message = node.warning "Deprecated #{short_reference}.#{message}"
-
-        self.warning_failures << full_message
+        self.validate_call_to_deprecated_node node, node.location, node.short_reference, deprecated_annotation do |warning_key|
+          @deprecated_annotations_detected.add? warning_key
+        end
       end
     end
 
-    def check_call_to_deprecated_macro(a_macro : Macro, call : Call)
-      return unless self.warnings.all?
+    def check_call_to_deprecated_macro(node : Macro, call : Call)
+      return unless @warnings.all?
 
-      if (ann = a_macro.annotation(self.deprecated_annotation)) &&
-         (deprecated_annotation = DeprecatedAnnotation.from(ann))
+      if (ann = node.annotation(self.deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
         call_location = call.location.try(&.macro_location) || call.location
 
-        return if self.ignore_warning_due_to_location?(call_location)
-        short_reference = a_macro.short_reference
-        warning_key = call_location.try { |l| "#{short_reference} #{l}" }
-
-        # skip warning if the call site was already informed
-        # if there is no location information just inform it.
-        return if !warning_key || @deprecated_macros_detected.includes?(warning_key)
-        @deprecated_macros_detected.add(warning_key) if warning_key
-
-        message = deprecated_annotation.message
-        message = message ? " #{message}" : ""
-
-        full_message = call.warning "Deprecated #{short_reference}.#{message}"
-
-        self.warning_failures << full_message
+        self.validate_call_to_deprecated_node call, call_location, node.short_reference, deprecated_annotation do |warning_key|
+          @deprecated_macros_detected.add? warning_key
+        end
       end
     end
 
@@ -123,26 +86,28 @@ module Crystal
       return unless @warnings.all?
 
       node.target_defs.try &.each do |target_def|
-        if (ann = target_def.annotation(deprecated_annotation)) &&
-           (deprecated_annotation = DeprecatedAnnotation.from(ann))
-          return if compiler_expanded_call(node)
-          return if ignore_warning_due_to_location?(node.location)
-          short_reference = target_def.short_reference
-          warning_key = node.location.try { |l| "#{short_reference} #{l}" }
+        if (ann = target_def.annotation(deprecated_annotation)) && (deprecated_annotation = DeprecatedAnnotation.from(ann))
+          return if self.compiler_expanded_call(node)
 
-          # skip warning if the call site was already informed
-          # if there is no location information just inform it.
-          return if !warning_key || @deprecated_methods_detected.includes?(warning_key)
-          @deprecated_methods_detected.add(warning_key) if warning_key
-
-          message = deprecated_annotation.message
-          message = message ? " #{message}" : ""
-
-          full_message = node.warning "Deprecated #{short_reference}.#{message}"
-
-          self.warning_failures << full_message
+          self.validate_call_to_deprecated_node node, node.location, target_def.short_reference, deprecated_annotation do |warning_key|
+            @deprecated_methods_detected.add? warning_key
+          end
         end
       end
+    end
+
+    private def validate_call_to_deprecated_node(node : ASTNode, location : Location?, short_reference : String, deprecated_annotation : DeprecatedAnnotation, & : String -> Bool) : Nil
+      return if self.ignore_warning_due_to_location? location
+      warning_key = location.try { |l| "#{short_reference} #{l}" }
+
+      # skip warning if the call site was already informed
+      # if there is no location information just inform it.
+      return if !warning_key || !yield(warning_key)
+
+      message = deprecated_annotation.message
+      message = message ? " #{message}" : ""
+
+      self.warning_failures << node.warning "Deprecated #{short_reference}.#{message}"
     end
 
     private def compiler_expanded_call(node : Call)

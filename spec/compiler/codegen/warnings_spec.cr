@@ -125,6 +125,60 @@ describe "Code gen: warnings" do
       "warning in line 7\nWarning: Deprecated Foo.new:a."
   end
 
+  it "detects deprecated aliases" do
+    assert_warning <<-CR,
+      struct SomeType; end
+
+      @[Deprecated]
+      alias OtherType = SomeType
+
+      OtherType.new
+      CR
+      "warning in line 4\nWarning: Deprecated alias OtherType."
+  end
+
+  pending "detects deprecated namespaced aliases" do
+    assert_warning <<-CR,
+      struct SomeType; end
+
+      module MyNamespace
+        @[Deprecated]
+        alias OtherType = SomeType
+      end
+
+      MyNamespace::OtherType.new
+      CR
+      "warning in line 4\nWarning: Deprecated alias MyNamespace::OtherType."
+  end
+
+  it "detects deprecated annotations" do
+    assert_warning <<-CR,
+      @[Deprecated]
+      annotation Foo; end
+
+      @[Foo]
+      def bar ;end
+
+      bar
+      CR
+      "warning in line 2\nWarning: Deprecated annotation Foo."
+  end
+
+  pending "detects deprecated namespaced annotations" do
+    assert_warning <<-CR,
+      module MyNamespace
+        @[Deprecated]
+        annotation Foo; end
+      end
+
+      @[MyNamespace::Foo]
+      def bar ;end
+
+      bar
+      CR
+      "warning in line 2\nWarning: Deprecated annotation MyNamespace::Foo."
+  end
+
   it "informs warnings once per call site location (a)" do
     warning_failures = warnings_result <<-CR
       class Foo
