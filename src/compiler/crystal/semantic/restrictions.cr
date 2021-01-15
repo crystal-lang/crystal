@@ -81,6 +81,16 @@ module Crystal
       self_splat_index = self.def.splat_index
       other_splat_index = other.def.splat_index
 
+      # If I double-splat but the other doesn't, I come later
+      if self.def.double_splat && !other.def.double_splat
+        return false
+      end
+
+      # If the other double-splats but I don't, I come first
+      if other.def.double_splat && !self.def.double_splat
+        return true
+      end
+
       # If I splat but the other doesn't, I come later
       if self_splat_index && !other_splat_index
         return false
@@ -326,6 +336,13 @@ module Crystal
       return true if self == other
       return false unless name == other.name && type_vars.size == other.type_vars.size
 
+      # Special case: NamedTuple against NamedTuple
+      if (self_type = owner.lookup_type?(self)).is_a?(NamedTupleInstanceType)
+        if (other_type = owner.lookup_type?(other)).is_a?(NamedTupleInstanceType)
+          return self_type.restriction_of?(other_type, owner, strict)
+        end
+      end
+
       type_vars.zip(other.type_vars) do |type_var, other_type_var|
         return false unless type_var.restriction_of?(other_type_var, owner, strict)
       end
@@ -504,7 +521,29 @@ module Crystal
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
       generic_type = get_generic_type(other, context)
       if generic_type.is_a?(GenericUnionType)
-        return restrict(Union.new(other.type_vars), context)
+        types = [] of Type
+
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            splat_type = context.defining_type.lookup_type?(type_var.exp)
+            return nil unless splat_type
+            unless splat_type.is_a?(TupleInstanceType)
+              type_var.raise "argument to splat must be a tuple type, not #{splat_type}"
+            end
+
+            splat_type.tuple_types.each do |tuple_type|
+              if type = restrict(tuple_type, context)
+                types << type
+              end
+            end
+          else
+            if type = restrict(type_var, context)
+              types << type
+            end
+          end
+        end
+
+        return types.size > 0 ? program.type_merge_union_of(types) : nil
       end
 
       parents.try &.each do |parent|

@@ -142,9 +142,7 @@ class URI
     def initialize(@raw_params : Hash(String, Array(String)))
     end
 
-    def ==(other : self)
-      self.raw_params == other.raw_params
-    end
+    def_equals_and_hash @raw_params
 
     # Returns first value for specified param name.
     #

@@ -102,6 +102,13 @@ describe "Semantic: if" do
       )) { union_of bool, int32 }
   end
 
+  it "restricts type with !var.is_a?(...) and &&" do
+    assert_type(%(
+      a = 1 == 1 ? 1 : ""
+      !a.is_a?(String) && a + 2
+      )) { union_of bool, int32 }
+  end
+
   it "restricts with || (#2464)" do
     assert_type(%(
       struct Int32
@@ -256,22 +263,22 @@ describe "Semantic: if" do
     assert_type(%(
       a = 1 || nil
       if !a || 1
-        1
+        'c'
       else
         a
       end
-      ), inject_primitives: false) { int32 }
+      ), inject_primitives: false) { union_of char, int32 }
   end
 
   it "restricts || else (3) (#3266)" do
     assert_type(%(
       a = 1 || nil
       if 1 || !a
-        1
+        'c'
       else
         a
       end
-      ), inject_primitives: false) { int32 }
+      ), inject_primitives: false) { union_of char, int32 }
   end
 
   it "doesn't restrict || else in sub && (right)" do
@@ -306,7 +313,7 @@ describe "Semantic: if" do
       )) { nilable int32 }
   end
 
-  it "doesn't restrict || else in sub || (right)" do
+  it "restricts || else in sub || (right)" do
     assert_type(%(
       def foo
         a = 1 || nil
@@ -319,10 +326,10 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable int32 }
+      )) { int32 }
   end
 
-  it "doesn't restrict || else in sub || (left)" do
+  it "restricts || else in sub || (left)" do
     assert_type(%(
       def foo
         a = 1 || nil
@@ -335,7 +342,71 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable int32 }
+      )) { int32 }
+  end
+
+  it "restricts && else in sub && (right)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if !a && (!a && !a)
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "restricts && else in sub && (left)" do
+    assert_type(%(
+      def foo
+        a = 1 || nil
+
+        if (!a && !a) && !a
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "restricts || of more than 2 clauses (#8864)" do
+    assert_type(%(
+      def foo
+        a = 1 || 2.0 || 'c' || ""
+
+        if a.is_a?(Float64) || a.is_a?(Char) || a.is_a?(String)
+          return 1
+        end
+
+        a
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "restricts && of !var.is_a(...)" do
+    assert_type(%(
+      def foo
+        a = 1 || 2.0 || 'c'
+
+        if !a.is_a?(Int32) && !a.is_a?(Float64)
+          return true
+        end
+
+        a
+      end
+
+      foo
+      )) { union_of int32, float64, bool }
   end
 
   it "doesn't consider nil type in else branch with if with && (#7434)" do

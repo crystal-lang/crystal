@@ -143,20 +143,31 @@ end
 #
 # Within the format string, any characters other than format specifiers
 # (specifiers beginning with `%`) are copied to the result.
+# The formatter supports positional format specifiers (`%.1f`),
+# formatted substitution (`%<name>.1f`) and plain substitution (`%{name}`).
 #
-# The syntax for a format specifier is:
+# Substitutions expect the first argument to be a `Hash` or `NamedTuple` to
+# resolve substitution names.
+# Positional specifiers correspond to the positional values in the method
+# arguments, or the array supplied as first argument.
+#
+# A simple format specifier consists of a percent sign, followed by optional flags,
+# width, and precision indicators, then terminated with a field type
+# character.
 #
 # ```text
 # %[flags][width][.precision]type
 # ```
 #
-# A format specifier consists of a percent sign, followed by optional flags,
-# width, and precision indicators, then terminated with a field type
-# character.
+# A formatted substitution is similar but after the percent sign follows the
+# mandatory name of the substitution wrapped in angle brackets.
 #
-# The field type controls how the corresponding
-# `sprintf` argument is to be interpreted, while the flags
-# modify that interpretation.
+# ```text
+# %<name>[flags][width][.precision]type
+# ```
+#
+# The field type controls how the corresponding argument value is to be
+# interpreted, while the flags modify that interpretation.
 #
 # The field type characters are:
 #

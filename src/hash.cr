@@ -16,7 +16,7 @@ require "crystal/hasher"
 # hash["one"] # => 1
 # ```
 #
-# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# [Hash literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
 # can also be used to create a `Hash`:
 #
 # ```

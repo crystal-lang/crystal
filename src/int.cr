@@ -1009,6 +1009,10 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u8 &- self
+  end
+
   def abs
     self
   end
@@ -1048,6 +1052,10 @@ struct UInt16
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u16 &- self
+  end
 
   def abs
     self
@@ -1089,6 +1097,10 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u32 &- self
+  end
+
   def abs
     self
   end
@@ -1128,6 +1140,10 @@ struct UInt64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u64 &- self
+  end
 
   def abs
     self
@@ -1169,6 +1185,11 @@ struct UInt128
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    # TODO: use 0_u128 &- self
+    UInt128.new(0) &- self
+  end
 
   def abs
     self

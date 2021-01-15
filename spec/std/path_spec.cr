@@ -730,8 +730,26 @@ describe Path do
 
   describe "#<=>" do
     it "case sensitivity" do
+      (Path.posix("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.windows("foo") <=> Path.windows("FOO")).should eq 0
+      (Path.windows("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.posix("foo") <=> Path.windows("FOO")).should eq -1
+    end
+  end
+
+  describe "#==" do
+    it "simple" do
+      Path.posix("foo").should eq Path.posix("foo")
+      Path.windows("foo").should eq Path.windows("foo")
+      Path.windows("foo").should_not eq Path.posix("foo")
+      Path.posix("foo").should_not eq Path.windows("foo")
+    end
+
+    it "case sensitivity" do
       Path.posix("foo").should_not eq Path.posix("FOO")
       Path.windows("foo").should eq Path.windows("FOO")
+      Path.windows("foo").should_not eq Path.posix("FOO")
+      Path.posix("foo").should_not eq Path.windows("FOO")
     end
   end
 
