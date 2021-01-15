@@ -208,7 +208,7 @@ class Socket
     def loopback? : Bool
       case addr = @addr
       in LibC::InAddr
-        addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+        addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
         ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
       end
@@ -221,6 +221,21 @@ class Socket
         addr.s_addr == 0_u32
       in LibC::In6Addr
         ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8]
+      end
+    end
+
+    # Returns `true` if this IP is a private address.
+    #
+    # IPv4 addresses in `10.0.0.0/8`, `172.16.0.0/12` and `192.168.0.0/16` as defined in [RFC 1918](https://tools.ietf.org/html/rfc1918)
+    # and IPv6 Unique Local Addresses in `fc00::/7` as defined in [RFC 4193](https://tools.ietf.org/html/rfc4193) are considered private.
+    def private? : Bool
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr & 0x000000ff_u32 == 0x00000000a_u32 ||     # 10.0.0.0/8
+          addr.s_addr & 0x000000f0ff_u32 == 0x0000010ac_u32 || # 172.16.0.0/12
+          addr.s_addr & 0x000000ffff_u32 == 0x0000a8c0_u32     # 192.168.0.0/16
+      in LibC::In6Addr
+        ipv6_addr8(addr)[0] & 0xfe_u8 == 0xfc_u8
       end
     end
 
