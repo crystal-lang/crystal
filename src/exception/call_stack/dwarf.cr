@@ -15,7 +15,7 @@ struct Exception::CallStack
     unless @@dwarf_loaded
       @@dwarf_loaded = true
       begin
-        return if ENV["CRYSTAL_DWARF"]? == "0"
+        return if ENV["CRYSTAL_LOAD_DWARF"]? == "0"
         load_dwarf_impl
       rescue ex
         @@dwarf_line_numbers = nil
