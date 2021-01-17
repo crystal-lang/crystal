@@ -183,6 +183,7 @@ lib LibLLVM
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : UInt8*) : ValueRef
   fun get_count_params = LLVMCountParams(fn : ValueRef) : UInt
+  fun get_host_cpu_name = LLVMGetHostCPUName() : UInt8*
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
   fun get_params = LLVMGetParams(fn : ValueRef, params : ValueRef*)
