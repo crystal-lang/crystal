@@ -401,6 +401,18 @@ module Crystal
         end
       end
 
+      # Check that Proc.new(&block) is not redefined.
+      # This affects all calls to Proc.new that have a block; the (Void*, Void*)
+      # overload is unaffected.
+      if node.name == "new" && block && obj_type
+        instance_type = obj_type.instance_type.remove_typedef
+        if instance_type.is_a?(ProcInstanceType)
+          unless target_def_matches_proc_new?(node, instance_type)
+            node.raise "cannot redefine #{instance_type}.new(&block)"
+          end
+        end
+      end
+
       # If any expression is no-return, replace the call with its expressions up to
       # the one that no returns.
       if (obj.try &.type?.try &.no_return?) || (node.args.any? &.type?.try &.no_return?) ||
@@ -552,6 +564,30 @@ module Crystal
           arg.raise "#{message} (closured vars: self)"
         end
       end
+    end
+
+    # Checks whether *arg*'s target def has the following definition:
+    #
+    # ```
+    # def new(&block : *proc_type*)
+    #   block
+    # end
+    # ```
+    def target_def_matches_proc_new?(arg : Call, proc_type)
+      a_def = arg.target_defs.try &.first
+      return false unless a_def
+      return false unless a_def.args.empty? && a_def.free_vars.nil?
+
+      block_arg = a_def.block_arg
+      return false unless block_arg
+
+      block_type = block_arg.type?
+      return false unless block_type && block_type.implements?(proc_type)
+
+      body_var = a_def.body.as?(Var)
+      return false unless body_var && body_var.name == block_arg.name
+
+      true
     end
 
     def transform(node : ProcPointer)

@@ -344,6 +344,18 @@ describe "Semantic: proc" do
       ") { proc_of(int32, int32) }
   end
 
+  it "says cannot redefine new on proc type" do
+    assert_error "
+      struct Proc
+        def self.new(&block : self)
+        end
+      end
+
+      Proc(Int32, Int32).new { |x| x + 1 }
+      ",
+      "cannot redefine Proc(Int32, Int32).new(&block)"
+  end
+
   it "says wrong number of block args in new on proc type" do
     assert_error "
       #{proc_new}
