@@ -80,10 +80,10 @@ end
 # e.g., ratios(1, 2, 3) = "1/6 (16.7%), 2/6 (33.3%), 3/6 (50.0%)"
 def ratio_string(vals)
   total = vals.sum
-  vals.map do |val|
+  vals.join ", " do |val|
     pct = ((100 * val.to_f / total.to_f) * 10).to_i / 10.0
     "#{val}/#{total} %#{pct}"
-  end.join ", "
+  end
 end
 
 strategies = Array.new(Win) { |k| stay_at_k(k + 1) }

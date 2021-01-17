@@ -147,8 +147,7 @@ struct Crystal::ExhaustivenessChecker
 
     missing_cases = targets
       .flat_map(&.missing_cases)
-      .map { |cases| "{#{cases}}" }
-      .join("\n - ")
+      .join("\n - ") { |cases| "{#{cases}}" }
 
     msg = <<-MSG
       case is not exhaustive.
