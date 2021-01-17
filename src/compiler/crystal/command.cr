@@ -388,7 +388,7 @@ class Crystal::Command
         end
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
           if cpu == "native"
-            compiler.mcpu = LLVM.host_cpu_name()
+            compiler.mcpu = LLVM.host_cpu_name
           else
             compiler.mcpu = cpu
           end
