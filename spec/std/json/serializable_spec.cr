@@ -332,6 +332,40 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+class JSONAttrPersonWithYAMLInitializeHookWithParams
+  include JSON::Serializable
+  include YAML::Serializable
+
+  property name : String
+  property age : Int32
+  property trusted : Bool?
+
+  def after_initialize(trusted : Bool)
+    @trusted = trusted
+  end
+
+  def self.from_trusted_json(string_or_io : String | IO) : self
+    new(pull: ::JSON::PullParser.new(string_or_io), trusted: true)
+  end
+
+  def self.from_trusted_yaml(string_or_io : String | IO) : self
+    ctx = YAML::ParseContext.new
+    node = begin
+      document = YAML::Nodes.parse(string_or_io)
+
+      # If the document is empty we simulate an empty scalar with
+      # plain style, that parses to Nil
+      document.nodes.first? || begin
+        scalar = YAML::Nodes::Scalar.new("")
+        scalar.style = YAML::ScalarStyle::PLAIN
+        scalar
+      end
+    end
+
+    new(ctx: ctx, node: node, trusted: true)
+  end
+end
+
 struct JSONAttrPersonWithSelectiveSerialization
   include JSON::Serializable
 
@@ -896,6 +930,18 @@ describe "JSON mapping" do
 
     JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+  end
+
+  it "yaml and json with after_initialize hook with args" do
+    u = JSONAttrPersonWithYAMLInitializeHookWithParams.new(name: "Marvin", age: 30)
+    u_j = u.to_json
+    u_y = u.to_yaml
+
+    JSONAttrPersonWithYAMLInitializeHookWithParams.from_json(u_j).trusted.should eq(nil)
+    JSONAttrPersonWithYAMLInitializeHookWithParams.from_yaml(u_y).trusted.should eq(nil)
+
+    JSONAttrPersonWithYAMLInitializeHookWithParams.from_trusted_json(u_j).trusted.should eq(true)
+    JSONAttrPersonWithYAMLInitializeHookWithParams.from_trusted_yaml(u_y).trusted.should eq(true)
   end
 
   it "json with selective serialization" do

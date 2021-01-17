@@ -134,13 +134,13 @@ module JSON
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
 
-      def self.new(pull : ::JSON::PullParser)
-        new_from_json_pull_parser(pull)
+      def self.new(pull : ::JSON::PullParser, **args)
+        new_from_json_pull_parser(pull, **args)
       end
 
-      private def self.new_from_json_pull_parser(pull : ::JSON::PullParser)
+      private def self.new_from_json_pull_parser(pull : ::JSON::PullParser, **args)
         instance = allocate
-        instance.initialize(__pull_for_json_serializable: pull)
+        instance.initialize(**args, __pull_for_json_serializable: pull)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -149,13 +149,13 @@ module JSON
       # so it can compete with other possible initializes
 
       macro inherited
-        def self.new(pull : ::JSON::PullParser)
-          new_from_json_pull_parser(pull)
+        def self.new(pull : ::JSON::PullParser, **args)
+          new_from_json_pull_parser(pull, **args)
         end
       end
     end
 
-    def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser)
+    def initialize(*, __pull_for_json_serializable pull : ::JSON::PullParser, **args)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
@@ -249,10 +249,10 @@ module JSON
           {% end %}
         {% end %}
       {% end %}
-      after_initialize
+      after_initialize(**args)
     end
 
-    protected def after_initialize
+    protected def after_initialize(**args)
     end
 
     protected def on_unknown_json_attribute(pull, key, key_location)
