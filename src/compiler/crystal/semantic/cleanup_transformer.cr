@@ -401,18 +401,6 @@ module Crystal
         end
       end
 
-      # Check that Proc.new(&block) is not redefined.
-      # This affects all calls to Proc.new that have a block; the (Void*, Void*)
-      # overload is unaffected.
-      if node.name == "new" && block && obj_type
-        instance_type = obj_type.instance_type.remove_typedef
-        if instance_type.is_a?(ProcInstanceType)
-          unless target_def_matches_proc_new?(node, instance_type)
-            node.raise "cannot redefine #{instance_type}.new(&block)"
-          end
-        end
-      end
-
       # If any expression is no-return, replace the call with its expressions up to
       # the one that no returns.
       if (obj.try &.type?.try &.no_return?) || (node.args.any? &.type?.try &.no_return?) ||
@@ -523,12 +511,10 @@ module Crystal
           check_arg_is_not_closure(node, message, exp)
         end
       when Call
-        # detect closured vars in a call to Proc.new(&block)
-        if arg.name == "new" && (block = arg.block) && (obj_type = arg.obj.try &.type?)
-          instance_type = obj_type.instance_type.remove_typedef
-          if instance_type.is_a?(ProcInstanceType)
-            check_arg_is_not_closure(node, message, block.fun_literal)
-          end
+        # If the call simply returns its captured block unchanged, we can detect
+        # closured vars inside the block during compile-time
+        if target_def_is_captured_block?(arg)
+          check_arg_is_not_closure(node, message, arg.block.not_nil!.fun_literal)
         end
       when ProcLiteral
         if proc_pointer = arg.proc_pointer
@@ -569,20 +555,19 @@ module Crystal
     # Checks whether *arg*'s target def has the following definition:
     #
     # ```
-    # def new(&block : *proc_type*)
+    # def f(&block)
     #   block
     # end
     # ```
-    def target_def_matches_proc_new?(arg : Call, proc_type)
+    #
+    # That is, the def returns its captured block and does nothing else. An
+    # example is Proc.new(&block).
+    def target_def_is_captured_block?(arg : Call)
       a_def = arg.target_defs.try &.first
       return false unless a_def
-      return false unless a_def.args.empty? && a_def.free_vars.nil?
 
       block_arg = a_def.block_arg
       return false unless block_arg
-
-      block_type = block_arg.type?
-      return false unless block_type && block_type.implements?(proc_type)
 
       body_var = a_def.body.as?(Var)
       return false unless body_var && body_var.name == block_arg.name
