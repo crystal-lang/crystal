@@ -935,7 +935,7 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
   end
 
-  it "yaml and json with after_initialize hook with args" do
+  it "yaml and json with after_initialize hook with opts" do
     u = JSONAttrPersonWithYAMLInitializeHookWithParams.new(name: "Marvin", age: 30)
     u_j = u.to_json
     u_y = u.to_yaml

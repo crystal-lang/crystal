@@ -133,11 +133,11 @@ module YAML
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
 
-      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **args)
-        new_from_yaml_node(ctx, node, **args)
+      def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **opts)
+        new_from_yaml_node(ctx, node, **opts)
       end
 
-      private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **args)
+      private def self.new_from_yaml_node(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **opts)
         ctx.read_alias(node, \{{@type}}) do |obj|
           return obj
         end
@@ -146,7 +146,7 @@ module YAML
 
         ctx.record_anchor(node, instance)
 
-        instance.initialize(**args, __context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
+        instance.initialize(**opts, __context_for_yaml_serializable: ctx, __node_for_yaml_serializable: node)
         GC.add_finalizer(instance) if instance.responds_to?(:finalize)
         instance
       end
@@ -155,13 +155,13 @@ module YAML
       # so it can compete with other possible initializes
 
       macro inherited
-        def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **args)
-          new_from_yaml_node(ctx, node, **args)
+        def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node, **opts)
+          new_from_yaml_node(ctx, node, **opts)
         end
       end
     end
 
-    def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node, **args)
+    def initialize(*, __context_for_yaml_serializable ctx : YAML::ParseContext, __node_for_yaml_serializable node : ::YAML::Nodes::Node, **opts)
       {% begin %}
         {% properties = {} of Nil => Nil %}
         {% for ivar in @type.instance_vars %}
@@ -254,10 +254,10 @@ module YAML
           {% end %}
         {% end %}
       {% end %}
-      after_initialize(**args)
+      after_initialize(**opts)
     end
 
-    protected def after_initialize(**args)
+    protected def after_initialize(**opts)
     end
 
     protected def on_unknown_yaml_attribute(ctx, key, key_node, value_node)
