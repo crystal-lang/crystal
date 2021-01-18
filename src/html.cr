@@ -81,9 +81,9 @@ module HTML
   }
 
   # Returns a string where named and numeric character references
-  # (e.g. &gt;, &#62;, &x3e;) in *string* are replaced with the corresponding
+  # (e.g. &amp;gt;, &amp;#62;, &amp;#x3e;) in *string* are replaced with the corresponding
   # unicode characters. This method decodes all HTML5 entities including those
-  # without a trailing semicolon (such as `&copy`).
+  # without a trailing semicolon (such as "&amp;copy").
   #
   # ```
   # require "html"
