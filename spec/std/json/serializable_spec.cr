@@ -340,6 +340,9 @@ class JSONAttrPersonWithYAMLInitializeHookWithParams
   property age : Int32
   property trusted : Bool?
 
+  def initialize(@name : String, @age : Int32)
+  end
+
   def after_initialize(trusted : Bool)
     @trusted = trusted
   end
