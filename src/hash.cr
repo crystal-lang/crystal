@@ -1750,13 +1750,19 @@ class Hash(K, V)
   # Returns `true` if `self` is a subset of *other*.
   def proper_subset_of?(other : Hash)
     return false if other.size <= size
-    all? { |key, value| other[key]? == value }
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
   end
 
   # Returns `true` if `self` is a subset of *other* or equals to *other*.
   def subset_of?(other : Hash)
     return false if other.size < size
-    all? { |key, value| other[key]? == value }
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
   end
 
   # Returns `true` if *other* is a subset of `self`.
