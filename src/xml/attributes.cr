@@ -14,7 +14,6 @@ struct XML::Attributes
   end
 
   def [](index : Int)
-    # TODO: Optimize to avoid double iteration
     size = self.size
 
     index += size if index < 0
@@ -28,10 +27,6 @@ struct XML::Attributes
     end
 
     raise IndexError.new
-  end
-
-  def size
-    count { true }
   end
 
   def [](name : String)
