@@ -113,6 +113,10 @@ describe "Hash" do
         h1.proper_subset_of?(h3).should be_false
         h1.proper_subset_of?(h4).should be_false
       end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
+      end
     end
 
     describe "#subset_of?" do
@@ -122,6 +126,10 @@ describe "Hash" do
         h1.subset_of?(h1).should be_true
         h1.subset_of?(h3).should be_false
         h1.subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.subset_of?({"b" => nil}).should be_false
       end
     end
 
