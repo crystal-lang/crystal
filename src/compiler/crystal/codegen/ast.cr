@@ -23,7 +23,7 @@ module Crystal
 
   class NumberLiteral
     def zero?
-      case kind
+      case :kind
       when :f32, :f64
         value == "0.0"
       else

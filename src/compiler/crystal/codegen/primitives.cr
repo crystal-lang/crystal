@@ -1012,7 +1012,7 @@ class Crystal::CodeGenVisitor
       target_def.c_calling_convention = old_c_calling_convention
     end
 
-    @needs_value = old_needs_value
+    old_needs_value = @needs_value
     phi_value
   end
 

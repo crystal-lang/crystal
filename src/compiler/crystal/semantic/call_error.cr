@@ -438,7 +438,7 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def, arg_types = nil)
-    Call.def_full_name(owner, a_def, arg_types)
+    Call.def_full_name(owner, a_def, arg_types = nil)
   end
 
   def self.def_full_name(owner, a_def, arg_types = nil)
