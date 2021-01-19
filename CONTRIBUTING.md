@@ -132,44 +132,14 @@ If this guide is not clear and it needs improvements, please send pull requests 
 
 The commit history should consist of commits that transform the codebase from one state into another one, motivated by something that
 should change, be it a bugfix, a new feature or some ground work to support a new feature, like changing an existing API or introducing
-a new isolated class that is later used in the same pull request. It should not show development history ("Start work on X",
-"More work on X", "Finish X") nor review history ("Fix comment A", "Fix comment B"). Review fixes should be squashed into the commits
-that introduced them. If your change fits well into a single commit, simply keep editing it with `git commit --amend`. Partial staging and
-committing with `git add -p` and `git commit -p` respectively are also very useful. Another good tool is `git stash` to put changes aside while
-switching to another commit. But Git's most useful tool towards this goal is the interactive rebase.
+a new isolated class that is later used in the same pull request.
 
-### Doing an interactive rebase
+Review history should be preserved in a pull request. If you need to push a change to an open pull request (for example
+because specs broke and required a fix, or for applying a review suggestion) these changes should be added as individual
+fixup commits. Please do not amend previous commits and force push to the PR branch. This makes reviews much harder
+because reference to previous state is hidden.
 
-First let's make sure we have a clean reference to rebase upon:
-
-```sh
-git remote add upstream https://github.com/crystal-lang/crystal.git
-```
-
-That only needs to be done once per clone. Next, let's fetch the latest state and start the rebase
-
-```sh
-git fetch upstream
-git checkout my_feature_branch
-git rebase -i upstream/master
-```
-
-Now you should be presented with a list of commits in your editor, with the first commit you made on your branch at the top. Always keep the first
-entry at `pick`; however you can reorder the entries. `squash` and `fix` will combine a commit into the one above it, `edit` will pause the
-rebase so you can edit the commit with `git commit --amend`. In case of conflicts `git mergetool` can be useful to resolve them. To resume a
-paused rebase, either because of a conflict or `edit`, use `git rebase --continue`. Don't worry, you can at any point use `git rebase --abort`
-to return to where you were before the rebase and start from scratch.
-
-Other useful flags to `git commit` are `--fixup` and `--squash`, combined with `git rebase -i --autosquash upstream/master`. Those will create commits that
-are then automatically reordered and marked with `fix` or `squash` respectively.
-
-Once you have a clean history, you can update an existing pull request simply by force pushing to the branch you opened it from. Force pushing is necessary
-since a rebase rewrites history, effectively creating new commits with the same changes. However, never do that in the main integration branches (`master`) of
-your own projects; a not so clean history is to prefer once a commit landed there. Assuming `origin` is your fork on Github, simply:
-
-```sh
-git push -f origin my_feature_branch
-```
+If changes introduced to `master` branch result in conflicts, it should be merged with a merge commit (`git fetch upstream/master; git merge upstream/master`).
 
 ## Git pre-commit hook
 
