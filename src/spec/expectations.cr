@@ -502,6 +502,16 @@ module Spec
         fail(failure_message, file, line)
       end
     end
+
+    @[Deprecated("Use named arguments .should expectation, file: file, line: line")]
+    def should(expectation, file, line)
+      should(expectation, nil, file: file, line: line)
+    end
+
+    @[Deprecated("Use named arguments .should_not expectation, file: file, line: line")]
+    def should_not(expectation, file, line)
+      should_not(expectation, nil, file: file, line: line)
+    end
   end
 end
 
