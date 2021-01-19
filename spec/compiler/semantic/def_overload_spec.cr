@@ -960,4 +960,32 @@ describe "Semantic: def overload" do
 			do_something value: 7.as(Int32 | Char)
 			)) { union_of float64, bool }
   end
+
+  it "resets free vars after a partial match is rejected (#10270)" do
+    assert_type(%(
+      def foo(x : T, y : String) forall T
+        1
+      end
+
+      def foo(x : Char, y : T) forall T
+        true
+      end
+
+      foo('a', 1)
+      )) { bool }
+  end
+
+  it "resets free vars after a partial match is rejected (2) (#10185)" do
+    assert_type(%(
+      def foo(*x : *T) forall T
+        T
+      end
+
+      def foo(**x : **T) forall T
+        T
+      end
+
+      foo(**{a: 1, b: ""})
+      )) { named_tuple_of({a: int32, b: string}).metaclass }
+  end
 end
