@@ -1294,7 +1294,7 @@ module Crystal
       named_args = nil
 
       if @token.type == :"("
-        open("attribute") do
+        open("annotation") do
           next_token_skip_space_or_newline
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'

@@ -1581,9 +1581,6 @@ module Crystal::Macros
   # class TypeOf < ASTNode
   # end
 
-  # class Attribute < ASTNode
-  # end
-
   # A macro expression,
   # surrounded by {{ ... }} (output = true)
   # or by {% ... %} (output = false)
@@ -1925,6 +1922,7 @@ module Crystal::Macros
     # Returns `true` if this type has an attribute. For example `@[Flags]`
     # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
     # in these cases).
+    @[Deprecated("Use #annotation instead")]
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
