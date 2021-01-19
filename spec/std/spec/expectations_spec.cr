@@ -1,6 +1,15 @@
 require "spec"
 
 describe "expectations" do
+  describe "accept a custom failure message" do
+    it { 1.should be < 3, "custom message!" }
+    it do
+      expect_raises(Spec::AssertionFailed, "custom message!") do
+        1.should_not be < 3, "custom message!"
+      end
+    end
+  end
+
   describe "be" do
     it { 1.should be < 3 }
     it { 2.should be <= 3 }

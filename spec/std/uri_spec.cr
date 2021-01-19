@@ -10,41 +10,41 @@ end
 
 private def it_encodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode(string, **options).should eq(expected_result), file, line
+    URI.encode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode(string, **options).should eq(expected_result), file, line
+    URI.decode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_encodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode_www_form(string, **options).should eq(expected_result), file, line
+    URI.encode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode_www_form(string, **options).should eq(expected_result), file, line
+    URI.decode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
