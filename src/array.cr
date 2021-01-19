@@ -589,17 +589,17 @@ class Array(T)
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
-  # a[1..3]    # => ["b", "c", "d"]
+  # a[1..3] # => ["b", "c", "d"]
   # # range.end > array.size
-  # a[3..7]    # => ["d", "e"]
+  # a[3..7] # => ["d", "e"]
   # ```
   #
   # Open ended ranges are clamped at the start and end of the array, respectively.
   #
   # ```
   # # open ended ranges
-  # a[2..]     # => ["c", "d", "e"]
-  # a[..2]     # => ["a", "b", "c"]
+  # a[2..] # => ["c", "d", "e"]
+  # a[..2] # => ["a", "b", "c"]
   # ```
   #
   # Negative range values are added to `self.size`, thus they are treated as
@@ -607,11 +607,11 @@ class Array(T)
   #
   # ```
   # # negative indices, both ranges are equivalent for `a`
-  # a[1..3]     # => ["b", "c", "d"]
-  # a[-4..-2]   # => ["b", "c", "d"]
+  # a[1..3]   # => ["b", "c", "d"]
+  # a[-4..-2] # => ["b", "c", "d"]
   # # Mixing negative and positive indices, both ranges are equivalent for `a`
-  # a[1..-2]    # => ["b", "c", "d"]
-  # a[-4..3]    # => ["b", "c", "d"]
+  # a[1..-2] # => ["b", "c", "d"]
+  # a[-4..3] # => ["b", "c", "d"]
   # ```
   #
   # Raises `IndexError` if the start index it out of range (`range.begin >
@@ -621,14 +621,14 @@ class Array(T)
   #
   # ```
   # # range.begin > array.size
-  # a[6..10]   # raise IndexError
+  # a[6..10] # raise IndexError
   # # range.begin == array.size
-  # a[5..10]   # => []
+  # a[5..10] # => []
   # # range.begin > range.end
-  # a[3..1]    # => []
-  # a[-2..-4]  # => []
-  # a[-2..1]   # => []
-  # a[3..-4]   # => []
+  # a[3..1]   # => []
+  # a[-2..-4] # => []
+  # a[-2..1]  # => []
+  # a[3..-4]  # => []
   # ```
   def [](range : Range) : self
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
