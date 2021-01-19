@@ -627,6 +627,8 @@ class Array(T)
   # # range.begin > range.end
   # a[3..1]    # => []
   # a[-2..-4]  # => []
+  # a[-2..1]   # => []
+  # a[3..-4]   # => []
   # ```
   def [](range : Range) : self
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
