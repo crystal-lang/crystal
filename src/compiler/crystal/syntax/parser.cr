@@ -2770,11 +2770,11 @@ module Crystal
     end
 
     def when_expression_end
+      slash_is_regex!
       if @token.keyword?(:then)
         next_token_skip_space_or_newline
         return true
       else
-        slash_is_regex!
         case @token.type
         when :","
           next_token_skip_space_or_newline
