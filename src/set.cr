@@ -240,6 +240,13 @@ struct Set(T)
     self | other
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty set.
+  def self.additive_identity : self
+    new
+  end
+
   # Difference: returns a new set containing elements in this set that are not
   # present in the other.
   #

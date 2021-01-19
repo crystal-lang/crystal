@@ -284,6 +284,13 @@ struct Time::Span
     )
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is `zero`.
+  def self.additive_identity : self
+    zero
+  end
+
   def + : self
     self
   end

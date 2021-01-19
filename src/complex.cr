@@ -255,6 +255,14 @@ struct Complex
     @real == 0 && @imag == 0
   end
 
+  def self.additive_identity : self
+    zero
+  end
+
+  def multiplicative_identity : self
+    new 1, 0
+  end
+
   # Rounds to the nearest *digits*.
   def round(digits = 0)
     Complex.new(@real.round(digits), @imag.round(digits))

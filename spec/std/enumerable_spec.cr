@@ -1039,10 +1039,26 @@ describe "Enumerable" do
     it { (1..3).sum { |x| x * 2 }.should eq(12) }
     it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
 
-    it "uses zero from type" do
+    it "uses additive_identity from type" do
       typeof([1, 2, 3].sum).should eq(Int32)
       typeof([1.5, 2.5, 3.5].sum).should eq(Float64)
       typeof([1, 2, 3].sum(&.to_f)).should eq(Float64)
+      typeof(([1, 2, 3] of Float32).sum).should eq(Float32)
+    end
+
+    it "array of arrays" do
+      [[1, 2, 3], [3, 4, 5]].sum.should eq [1, 2, 3, 3, 4, 5]
+      [[[1, 2], [3]], [[1, 2], [3, 4, 5]]].sum.should eq [[1, 2], [3], [1, 2], [3, 4, 5]]
+      Deque{[1, 2, 3], [3, 4, 5]}.sum.should eq [1, 2, 3, 3, 4, 5]
+    end
+
+    it "strings" do
+      ["foo", "bar"].sum.should eq "foobar"
+    end
+
+    it "float" do
+      [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
+      ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
     end
   end
 
