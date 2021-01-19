@@ -44,7 +44,7 @@ module Crystal
     property defining_type : Type
 
     # Any instance variables associated with the method instantiation
-    property free_vars : Hash(String, TypeVar)?
+    getter free_vars : Hash(String, TypeVar)?
 
     getter? strict : Bool
 
