@@ -340,20 +340,28 @@ struct Path
   # Returns the extension of this path, or an empty string if it has no extension.
   #
   # ```
-  # Path["foo.cr"].extension # => ".cr"
-  # Path["foo"].extension    # => ""
+  # Path["foo.cr"].extension     # => ".cr"
+  # Path["foo"].extension        # => ""
+  # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
     bytes = @name.to_slice
 
     return "" if bytes.empty?
 
-    current = bytes.size - 1
+    slice_end = bytes.size
+    current = slice_end - 1
+
+    separators = self.separators.map &.ord
+
+    # ignore trailing separators
+    while separators.includes?(bytes[current]) && current > 0
+      current -= 1
+      slice_end -= 1
+    end
 
     # if the pattern is `foo.`, it has no extension
     return "" if bytes[current] == '.'.ord
-
-    separators = self.separators.map &.ord
 
     # position the reader at the last `.` or SEPARATOR
     # that is not the first char
@@ -379,7 +387,20 @@ struct Path
     # we are not at the beginning,
     # the previous char is not a '/',
     # and we have an extension
-    String.new(bytes[current, bytes.size - current])
+    String.new(bytes[current, slice_end - current])
+  end
+
+  # Returns the last component of this path without the extension.
+  #
+  # This is equivalent to `self.basename(self.extension)`.
+  #
+  # ```
+  # Path["file.cr"].stem     # => "file"
+  # Path["file.tar.gz"].stem # => "file.tar"
+  # Path["foo/file.cr"].stem # => "file"
+  # ```
+  def stem
+    basename(extension)
   end
 
   # Removes redundant elements from this path and returns the shortest equivalent path by purely lexical processing.
