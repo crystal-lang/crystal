@@ -22,7 +22,8 @@
 # `Array`, etc., use the `as_` methods, such as `#as_s`, `#as_a`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a `String` will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`.  For dynamic structures you can use
+# `#as_i?`, `as_h?` etc. to check structure at runtime.
 struct YAML::Any
   # All valid YAML core schema types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
