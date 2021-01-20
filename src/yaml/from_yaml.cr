@@ -220,15 +220,30 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.class}"
-  end
-
-  string = node.value
-  if value = string.to_i64?
-    from_value(value)
+  if node.is_a?(YAML::Nodes::Scalar)
+    string = node.value
+    if value = string.to_i64?
+      from_value(value)
+    else
+      parse(string)
+    end
   else
-    parse(string)
+    {% if @type.annotation(Flags) %}
+      values = [] of self
+      node.each do |value|
+        values << new(ctx, value)
+      end
+
+      if values.empty?
+        {{@type.id}}::None
+      else
+        values.reduce do |set, value|
+          set | value
+        end
+      end
+    {% else %}
+      node.raise "Expected scalar, not #{node.class}"
+    {% end %}
   end
 end
 

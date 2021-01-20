@@ -16,6 +16,7 @@ end
 enum YAMLSpecFlagEnum
   One
   Two
+  OneHundred
 end
 
 alias YamlRec = Int32 | Array(YamlRec) | Hash(YamlRec, YamlRec)
@@ -209,10 +210,29 @@ describe "YAML serialization" do
       YAMLSpecFlagEnum.from_json("0").should eq(YAMLSpecFlagEnum::None)
       YAMLSpecFlagEnum.from_json("1").should eq(YAMLSpecFlagEnum::One)
       YAMLSpecFlagEnum.from_json("2").should eq(YAMLSpecFlagEnum::Two)
-      YAMLSpecFlagEnum.from_json("3").should eq(YAMLSpecFlagEnum::All)
+      YAMLSpecFlagEnum.from_json("4").should eq(YAMLSpecFlagEnum::OneHundred)
+      YAMLSpecFlagEnum.from_json("7").should eq(YAMLSpecFlagEnum::All)
 
-      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: 4") do
-        YAMLSpecFlagEnum.from_json("4")
+      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: 8") do
+        YAMLSpecFlagEnum.from_json("8")
+      end
+    end
+
+    it "does for flag Enum with string" do
+      YAMLSpecFlagEnum.from_json(%("one")).should eq(YAMLSpecFlagEnum::One)
+      YAMLSpecFlagEnum.from_json(%("two")).should eq(YAMLSpecFlagEnum::Two)
+
+      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: three") do
+        YAMLSpecFlagEnum.from_json(%("three"))
+      end
+    end
+
+    it "does for flag Enum with array" do
+      YAMLSpecFlagEnum.from_json(%(["one", "two", "one_hundred"])).should eq(YAMLSpecFlagEnum::All)
+      YAMLSpecFlagEnum.from_json(%(["one"])).should eq(YAMLSpecFlagEnum::One)
+
+      expect_raises(Exception, "Unknown enum YAMLSpecFlagEnum value: three") do
+        YAMLSpecFlagEnum.from_json(%(["one", "three"]))
       end
     end
 

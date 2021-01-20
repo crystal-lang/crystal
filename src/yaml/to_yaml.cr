@@ -123,7 +123,19 @@ end
 
 struct Enum
   def to_yaml(yaml : YAML::Nodes::Builder)
-    string = to_s.underscore
+    {% if @type.annotation(Flags) %}
+      yaml.sequence do
+        each do |member, _value|
+          build_safe_yaml_string(yaml, member)
+        end
+      end
+    {% else %}
+      build_safe_yaml_string(yaml, self)
+    {% end %}
+  end
+
+  private def build_safe_yaml_string(yaml : YAML::Nodes::Builder, member)
+    string = member.to_s.underscore
     if YAML::Schema::Core.reserved_string?(string)
       yaml.scalar string, style: YAML::ScalarStyle::DOUBLE_QUOTED
     else
