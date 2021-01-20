@@ -161,7 +161,15 @@ end
 
 struct Enum
   def to_json(json : JSON::Builder)
-    json.string(to_s.underscore)
+    {% if @type.annotation(Flags) %}
+      json.array do
+        each do |member, _value|
+          json.string(member.to_s.underscore)
+        end
+      end
+    {% else %}
+      json.string(to_s.underscore)
+    {% end %}
   end
 end
 

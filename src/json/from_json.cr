@@ -244,13 +244,39 @@ def NamedTuple.new(pull : JSON::PullParser)
 end
 
 def Enum.new(pull : JSON::PullParser)
+  {% if @type.annotation(Flags) %}
+    # NOTE: This would be better placed in the case statement below,
+    #       but there's a bug in `crystal tool format` with
+    #       macros and case statements
+    if pull.kind.begin_array?
+      values = [] of self
+      pull.read_array do
+        values << new(pull)
+      end
+
+      flags = if values.empty?
+                {{@type.id}}::None
+              else
+                values.reduce do |set, value|
+                  set | value
+                end
+              end
+
+      return flags
+    end
+  {% end %}
+
   case pull.kind
   when .int?
     from_value(pull.read_int)
   when .string?
     parse(pull.read_string)
   else
-    raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
+    {% if @type.annotation(Flags) %}
+      raise "Expecting int, string or array in JSON for #{self.class}, not #{pull.kind}"
+    {% else %}
+      raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
+    {% end %}
   end
 end
 

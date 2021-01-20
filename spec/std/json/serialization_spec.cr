@@ -18,6 +18,7 @@ end
 enum JSONSpecFlagEnum
   One
   Two
+  OneHundred
 end
 
 describe "JSON serialization" do
@@ -235,10 +236,29 @@ describe "JSON serialization" do
       JSONSpecFlagEnum.from_json("0").should eq(JSONSpecFlagEnum::None)
       JSONSpecFlagEnum.from_json("1").should eq(JSONSpecFlagEnum::One)
       JSONSpecFlagEnum.from_json("2").should eq(JSONSpecFlagEnum::Two)
-      JSONSpecFlagEnum.from_json("3").should eq(JSONSpecFlagEnum::All)
+      JSONSpecFlagEnum.from_json("4").should eq(JSONSpecFlagEnum::OneHundred)
+      JSONSpecFlagEnum.from_json("7").should eq(JSONSpecFlagEnum::All)
 
-      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: 4") do
-        JSONSpecFlagEnum.from_json("4")
+      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: 8") do
+        JSONSpecFlagEnum.from_json("8")
+      end
+    end
+
+    it "does for flag Enum with string" do
+      JSONSpecFlagEnum.from_json(%("one")).should eq(JSONSpecFlagEnum::One)
+      JSONSpecFlagEnum.from_json(%("two")).should eq(JSONSpecFlagEnum::Two)
+
+      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: three") do
+        JSONSpecFlagEnum.from_json(%("three"))
+      end
+    end
+
+    it "does for flag Enum with array" do
+      JSONSpecFlagEnum.from_json(%(["one", "two", "one_hundred"])).should eq(JSONSpecFlagEnum::All)
+      JSONSpecFlagEnum.from_json(%(["one"])).should eq(JSONSpecFlagEnum::One)
+
+      expect_raises(Exception, "Unknown enum JSONSpecFlagEnum value: three") do
+        JSONSpecFlagEnum.from_json(%(["one", "three"]))
       end
     end
 
@@ -448,6 +468,12 @@ describe "JSON serialization" do
     it "does for Enum" do
       JSONSpecEnum::One.to_json.should eq(%("one"))
       JSONSpecEnum::OneHundred.to_json.should eq(%("one_hundred"))
+    end
+
+    it "does for flag Enum" do
+      JSONSpecFlagEnum::One.to_json.should eq(%(["one"]))
+      JSONSpecFlagEnum::OneHundred.to_json.should eq(%(["one_hundred"]))
+      JSONSpecFlagEnum::All.to_json.should eq(%(["one","two","one_hundred"]))
     end
 
     pending_win32 "does for BigInt" do
