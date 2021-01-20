@@ -249,20 +249,11 @@ def Enum.new(pull : JSON::PullParser)
     #       but there's a bug in `crystal tool format` with
     #       macros and case statements
     if pull.kind.begin_array?
-      values = [] of self
+      value = 0
       pull.read_array do
-        values << new(pull)
+        value += new(pull).value
       end
-
-      flags = if values.empty?
-                {{@type.id}}::None
-              else
-                values.reduce do |set, value|
-                  set | value
-                end
-              end
-
-      return flags
+      return from_value(value)
     end
   {% end %}
 

@@ -229,18 +229,12 @@ def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     end
   else
     {% if @type.annotation(Flags) %}
-      values = [] of self
-      node.each do |value|
-        values << new(ctx, value)
+      value = 0
+      node.each do |element|
+        value += new(ctx, element).value
       end
 
-      if values.empty?
-        {{@type.id}}::None
-      else
-        values.reduce do |set, value|
-          set | value
-        end
-      end
+      from_value(value)
     {% else %}
       node.raise "Expected scalar, not #{node.class}"
     {% end %}
