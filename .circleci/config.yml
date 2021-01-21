@@ -526,8 +526,6 @@ workflows:
       #     filters: *per_tag
       - test_preview_mt:
           filters: *per_tag
-      - check_format:
-          filters: *per_tag
       - prepare_common:
           filters: *per_tag
       - prepare_tagged:
@@ -663,8 +661,6 @@ workflows:
       # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *maintenance
       - test_preview_mt:
-          filters: *maintenance
-      - check_format:
           filters: *maintenance
       - prepare_common:
           filters: *maintenance
