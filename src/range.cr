@@ -215,8 +215,7 @@ struct Range(B, E)
   # (1..4).step(by: 1, exclusive: true).to_a # => [1, 2, 3]
   # ```
   #
-  # The implementation is based on `B#step` method if available. The interface
-  # is defined at `Number#step`.
+  # If `B` is a `Steppable`, implementation is delegated to `Steppable#step`.
   # Otherwise `#succ` method is expected to be defined on `begin` and its
   # successors and iteration is based on calling `#succ` sequentially
   # (*step* times per iteration).
@@ -228,7 +227,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if current.responds_to?(:step)
+    if current.is_a?(Steppable)
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
@@ -258,7 +257,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if start.responds_to?(:step)
+    if start.is_a?(Steppable)
       start.step(to: @end, by: by, exclusive: @exclusive)
     else
       StepIterator(self, B, typeof(by)).new(self, by)
