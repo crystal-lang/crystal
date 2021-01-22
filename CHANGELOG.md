@@ -271,8 +271,7 @@
 - **(breaking-change)** Check abstract def implementations with splats, default values and keyword arguments. ([#9585](https://github.com/crystal-lang/crystal/pull/9585), thanks @waj)
 - **(breaking-change)** Make abstract def return type warning an error. ([#9810](https://github.com/crystal-lang/crystal/pull/9810), thanks @bcardiff)
 - **(breaking-change)** Error when abstract def implementation adds a type restriction. ([#9634](https://github.com/crystal-lang/crystal/pull/9634), thanks @waj)
-- **(breaking-change)** Don't interpret Proc typedefs as aliases. ([#10254](https://github.com/crystal-lang/
-crystal/pull/10254), thanks @HertzDevil)
+- **(breaking-change)** Don't interpret Proc typedefs as aliases. ([#10254](https://github.com/crystal-lang/crystal/pull/10254), thanks @HertzDevil)
 - **(breaking-change)** Remove the special logic of union of pointer and `nil`. ([#9872](https://github.com/crystal-lang/crystal/pull/9872), thanks @asterite)
 - Check abstract def implementations with double splats. ([#9633](https://github.com/crystal-lang/crystal/pull/9633), thanks @waj)
 - Make inherited hook work through generic instances. ([#9701](https://github.com/crystal-lang/crystal/pull/9701), thanks @asterite)
