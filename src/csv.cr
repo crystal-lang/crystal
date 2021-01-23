@@ -56,6 +56,8 @@
 #
 # To create CSV data, check `CSV#build` and the `CSV::Builder` class.
 class CSV
+  include Iterator(CSV)
+
   DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
 
@@ -208,7 +210,7 @@ class CSV
     @headers || raise(Error.new("Headers not requested"))
   end
 
-  # Invokes the block once for each row in this CSV, yielding `self`.
+  # Invokes the block once for each row in this CSV, yielding `nil`.
   def each : Nil
     while self.next
       yield self
