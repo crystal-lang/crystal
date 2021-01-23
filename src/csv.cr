@@ -224,7 +224,7 @@ class CSV
   # CSV.new("zero\none\ntwo").each.with_index do |row, index|
   #   tuples << {row[0], index}
   # end
-  # tuples.to_a #=> [{"zero", 0}, {"one", 1}, {"two", 2}]
+  # tuples.to_a # => [{"zero", 0}, {"one", 1}, {"two", 2}]
   # ```
   def each
     RowIterator.new(self)

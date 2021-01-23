@@ -115,7 +115,7 @@ describe CSV do
 
   it "each returns an iterator" do
     tuples = [] of {String, Int32}
-    new_csv(headers: true).each.with_index{ |v, i| tuples << {v[0], i} }
+    new_csv(headers: true).each.with_index { |v, i| tuples << {v[0], i} }
     tuples.should eq([{"1", 0}, {"3", 1}, {"5", 2}])
   end
 
