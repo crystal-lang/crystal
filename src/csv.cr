@@ -56,8 +56,6 @@
 #
 # To create CSV data, check `CSV#build` and the `CSV::Builder` class.
 class CSV
-  include Iterator(self)
-
   DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
 
@@ -215,6 +213,21 @@ class CSV
     while self.next
       yield self
     end
+  end
+
+  # Returns an Iterator that yields each Row of the CSV
+  #
+  # ```
+  # require "csv"
+  #
+  # tuples = [] of {String, Int32}
+  # CSV.new("zero\none\ntwo").each.with_index do |row, index|
+  #   tuples << {row[0], index}
+  # end
+  # tuples.to_a #=> [{"zero", 0}, {"one", 1}, {"two", 2}]
+  # ```
+  def each
+    RowIterator.new(self)
   end
 
   # Advanced the cursor to the next row. Must be called once to position
@@ -444,6 +457,18 @@ class CSV
 
     private def maybe_strip(value)
       csv.strip? ? value.strip : value
+    end
+  end
+
+  private struct RowIterator
+    include Iterator(Row)
+
+    def initialize(@csv : CSV)
+      @csv.rewind
+    end
+
+    def next
+      @csv.next ? @csv.row : stop
     end
   end
 end
