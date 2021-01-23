@@ -56,7 +56,7 @@
 #
 # To create CSV data, check `CSV#build` and the `CSV::Builder` class.
 class CSV
-  include Iterator(CSV)
+  include Iterator(self)
 
   DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
