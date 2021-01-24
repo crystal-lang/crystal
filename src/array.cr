@@ -582,8 +582,8 @@ class Array(T)
   # Returns all elements that are within the given range.
   #
   # The first element in the returned array is `self[range.begin]` followed
-  # by the next elements up to index `range.end` (or `range.end - 1` if the range
-  # is exclusive).
+  # by the next elements up to index `range.end` (or `self[range.end - 1]` if
+  # the range is exclusive).
   # If there are fewer elements in `self`, the returned array is shorter than
   # `range.size`.
   #
@@ -651,8 +651,8 @@ class Array(T)
   # Negative *start* is added to `self.size`, thus it's treated as
   # index counting from the end of the array, `-1` designating the last element.
   #
-  # If `start >= self.size` or `start < -self.size`, an empty array is returned.
-  # Raises `ArgumentError` if *start* is negative.
+  # Raises `IndexError` if *start* index is out of bounds.
+  # Raises `ArgumentError` if *count* is negative.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
