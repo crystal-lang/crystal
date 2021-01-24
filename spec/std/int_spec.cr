@@ -194,6 +194,12 @@ describe "Int" do
     it { 97.to_s(62).should eq("1z") }
     it { 3843.to_s(62).should eq("ZZ") }
 
+
+    it "Int8#to_s" do
+      (60..105).map(&.to_i8.to_s).should eq (60..105).map(&.to_s)
+      (60..105).map(&.to_u8.to_s).should eq (60..105).map(&.to_s)
+    end
+
     it "raises on base 1" do
       expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
     end

@@ -662,10 +662,12 @@ struct Int
 
     neg = num < 0
 
-    if base == 10
+    if base == 10 && !self.is_a?(Int8)
       # Optimization for `base == 10`.
       # The base idea is explained by "Three Optimization Tips for C++".
       # See https://www.slideshare.net/andreialexandrescu1/three-optimization-tips-for-c.
+      # FIXME: The optimization is broken for Int8, so use the unoptimized algorithm (https://github.com/crystal-lang/crystal/issues/10286)
+
       digits = DIGITS2.to_unsafe
 
       while num >= 100 || num <= -100
