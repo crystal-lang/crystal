@@ -3009,7 +3009,6 @@ module Crystal
           if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
             node.raise "Type #{type} does not support array-like or hash-like literal"
           end
-
           # Nothing
         else
           if node.elements.empty? && !(type.has_def?("<<") || type.has_def?("[]="))
