@@ -1,3 +1,5 @@
+require "iterator"
+
 # Implements a `#step` method for iterating from a value.
 module Steppable
   # Iterates from `self` to *limit* incrementing by the amount of *step* on each
