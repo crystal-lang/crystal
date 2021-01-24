@@ -513,7 +513,7 @@ describe Time do
   end
 
   describe "#step" do
-    days = (1..24).map{ |d| Time.utc(2020, 12, d) }.to_a
+    days = (1..24).map { |d| Time.utc(2020, 12, d) }.to_a
     it_iterates "advent", days, Time.utc(2020, 12, 1).step(to: Time.utc(2020, 12, 24), by: 1.day)
   end
 

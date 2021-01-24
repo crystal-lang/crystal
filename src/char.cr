@@ -1,4 +1,5 @@
 require "comparable"
+require "steppable"
 
 # A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
