@@ -1257,8 +1257,8 @@ module Crystal::Macros
     def type : ASTNode
     end
 
-    # Returns the instance variable used in this `offsetof` expression.
-    def instance_var : ASTNode
+    # Returns the offset argument used in this `offsetof` expression.
+    def offset : ASTNode
     end
   end
 

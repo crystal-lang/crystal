@@ -971,6 +971,9 @@ module Crystal
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
     it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
+    it_parses "offsetof(X, 1)", OffsetOf.new("X".path, 1.int32)
+    assert_syntax_error "offsetof(X, 1.0)", "expecting an integer offset, not '1.0'"
+    assert_syntax_error "offsetof(X, 'c')", "expecting an instance variable or a integer offset, not 'c'"
 
     it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
     it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode))
@@ -1891,6 +1894,7 @@ module Crystal
       assert_end_location "pointerof(@foo)"
       assert_end_location "sizeof(Foo)"
       assert_end_location "offsetof(Foo, @a)"
+      assert_end_location "offsetof({X, Y}, 1)"
       assert_end_location "typeof(1)"
       assert_end_location "1 if 2"
       assert_end_location "while 1; end"

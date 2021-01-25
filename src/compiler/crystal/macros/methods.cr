@@ -1444,8 +1444,8 @@ module Crystal
       case method
       when "type"
         interpret_argless_method(method, args) { @offsetof_type }
-      when "instance_var"
-        interpret_argless_method(method, args) { @instance_var }
+      when "offset"
+        interpret_argless_method(method, args) { @offset }
       else
         super
       end

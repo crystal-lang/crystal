@@ -2151,8 +2151,8 @@ module Crystal
         assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
       end
 
-      it "executes instance_var" do
-        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      it "executes offset" do
+        assert_macro "x", %({{x.offset}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 
