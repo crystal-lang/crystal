@@ -503,14 +503,14 @@ module Spec
       end
     end
 
-    @[Deprecated("Use named arguments .should expectation, file: file, line: line")]
-    def should(expectation, file, line)
-      should(expectation, nil, file: file, line: line)
+    @[Deprecated("Use named arguments `.should(expectation, file: file, line: line)`")]
+    def should(expectation, _file, _line)
+      should(expectation, file: _file, line: _line)
     end
 
-    @[Deprecated("Use named arguments .should_not expectation, file: file, line: line")]
-    def should_not(expectation, file, line)
-      should_not(expectation, nil, file: file, line: line)
+    @[Deprecated("Use named arguments `.should_not(expectation, file: file, line: line)`")]
+    def should_not(expectation, _file, _line)
+      should_not(expectation, file: _file, line: _line)
     end
   end
 end
