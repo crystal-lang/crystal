@@ -246,11 +246,14 @@ struct Number
         @current
       elsif limit
         # compare distance to current with step size
-        case (limit - @current <=> @step).try(&.sign)
-        when @step.sign
-          # distance is more than step size, so iteration proceeds
+        direction = @step.sign
+        current = @current
+
+        if (current < limit && direction == 1 && current < limit - @step) ||
+           (limit < current && direction == -1 && limit - @step < current)
           @current += @step
-        when 0
+        elsif (current < limit && direction == 1 && current == limit - @step) ||
+              (limit < current && direction == -1 && limit - @step == current)
           # distance is exactly step size, so we're at the end
           @reached_end = true
           if @exclusive
@@ -262,7 +265,6 @@ struct Number
           # we've either overshot the limit or the comparison failed, so we can't
           # continue
           @reached_end = true
-
           stop
         end
       else

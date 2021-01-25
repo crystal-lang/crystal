@@ -299,6 +299,39 @@ describe "Number" do
         end
       end
     end
+
+    describe "whole range" do
+      it "iterates UInt8 upwards" do
+        (UInt8::MIN..UInt8::MAX).each.count { true }.should eq(256)
+        (UInt8::MIN..UInt8::MAX).step(by: 1).each.count { true }.should eq(256)
+      end
+
+      it "iterates UInt8 downwards" do
+        (UInt8::MAX..UInt8::MIN).step(by: -1).each.count { true }.should eq(256)
+      end
+
+      it "iterates Int8 upwards" do
+        (Int8::MIN..Int8::MAX).each.count { true }.should eq(256)
+        (Int8::MIN..Int8::MAX).step(by: 1).each.count { true }.should eq(256)
+      end
+
+      it "iterates Int8 downwards" do
+        (Int8::MAX..Int8::MIN).step(by: -1).each.count { true }.should eq(256)
+      end
+
+      it "iterates Int16 upwards" do
+        (Int16::MIN..Int16::MAX).each.count { true }.should eq(65536)
+        (Int16::MIN..Int16::MAX).step(by: 1).each.count { true }.should eq(65536)
+      end
+
+      it "iterates Int16 downwards" do
+        (Int16::MAX..Int16::MIN).step(by: -1).each.count { true }.should eq(65536)
+      end
+    end
+
+    it_iterates "towards limit [max-4, max-2, max]", [Int32::MAX - 4, Int32::MAX - 2, Int32::MAX], (Int32::MAX - 4).step(to: Int32::MAX, by: 2)
+    it_iterates "towards limit [max-4, max-2, max)", [Int32::MAX - 4, Int32::MAX - 2], (Int32::MAX - 4).step(to: Int32::MAX, by: 2, exclusive: true)
+    it_iterates "towards limit [max-3, max-1, max)", [Int32::MAX - 3, Int32::MAX - 1], (Int32::MAX - 3).step(to: Int32::MAX, by: 2)
   end
 
   floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
