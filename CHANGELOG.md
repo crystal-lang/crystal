@@ -1,4 +1,4 @@
-# 0.36.0 (2021-01-??)
+# 0.36.0 (2021-01-26)
 
 ## Language changes
 
@@ -39,12 +39,11 @@
 
 - **(breaking-change)** Move `Complex#exp`, `Complex#log`, etc. to `Math.exp`, `Math.log` overloads. ([#9739](https://github.com/crystal-lang/crystal/pull/9739), thanks @cristian-lsdb)
 - **(performance)** Use unchecked arithmetics in `Int#times`. ([#9511](https://github.com/crystal-lang/crystal/pull/9511), thanks @waj)
-- **(performance)** Improve `Int#to_s(base: 10)` performance (~10%). ([#9832](https://github.com/crystal-lang/crystal/pull/9832), thanks @MakeNowJust)
 - Check for overflow when extending signed integers to unsigned integers. ([#10000](https://github.com/crystal-lang/crystal/pull/10000), thanks @HertzDevil)
 - Fix `sprintf` for zero left padding a negative number. ([#9725](https://github.com/crystal-lang/crystal/pull/9725), thanks @asterite)
 - Fix `BigInt#to_64` and `BigInt#hash`. ([#10121](https://github.com/crystal-lang/crystal/pull/10121), thanks @oprypin)
 - Fix `BigDecimal#to_s` for numbers between `-1` and `0`. ([#9897](https://github.com/crystal-lang/crystal/pull/9897), thanks @dukeraphaelng)
-- Fix `Number#step`. ([#10130](https://github.com/crystal-lang/crystal/pull/10130), thanks @straight-shoota)
+- Fix `Number#step`. ([#10130](https://github.com/crystal-lang/crystal/pull/10130), [#10295](https://github.com/crystal-lang/crystal/pull/10295), thanks @straight-shoota, @bcardiff)
 - Make `Complex` unary plus returns `self`. ([#9719](https://github.com/crystal-lang/crystal/pull/9719), thanks @asterite)
 - Improve `Int#lcm` and `Int#gcd`. ([#9999](https://github.com/crystal-lang/crystal/pull/9999), thanks @HertzDevil)
 - Add `Math::TAU`. ([#10179](https://github.com/crystal-lang/crystal/pull/10179), thanks @j8r)
@@ -131,6 +130,7 @@
 - Enable large-file support on i386-linux-gnu. ([#9478](https://github.com/crystal-lang/crystal/pull/9478), thanks @kubo)
 - Fix glob not following symdir directories. ([#9910](https://github.com/crystal-lang/crystal/pull/9910), thanks @straight-shoota)
 - Windows: allow creating symlinks without admin rights. ([#9767](https://github.com/crystal-lang/crystal/pull/9767), thanks @oprypin)
+- Windows: allow touching directories. ([#10284](https://github.com/crystal-lang/crystal/pull/10284), thanks @straight-shoota)
 - Fix `Dir.glob` when `readdir` doesn't report file type. ([#9877](https://github.com/crystal-lang/crystal/pull/9877), thanks @straight-shoota)
 - Add `Path#stem`. ([#10037](https://github.com/crystal-lang/crystal/pull/10037), thanks @straight-shoota)
 - Move `File#fsync`, `File#flock_exclusive`, `File#flock_shared`, and `File#flock_unlock` methods to `IO::FileDescriptor`. ([#9794](https://github.com/crystal-lang/crystal/pull/9794), thanks @naqvis)
@@ -180,7 +180,7 @@
 - **(security)** Force secure renegotiation on server to prevent Secure Client-Initiated Renegotiation vulnerability attack. ([#9815](https://github.com/crystal-lang/crystal/pull/9815), thanks @bcardiff)
 - **(breaking-change)** Refactor `Digest` and introduce `Digest::MD5`, `Digest::SHA1`, `Digest::SHA256`, `Digest::SHA512` backed by openssl. ([#9864](https://github.com/crystal-lang/crystal/pull/9864), thanks @bcardiff)
 - Fix overflows in MD5 and SHA1. ([#9781](https://github.com/crystal-lang/crystal/pull/9781), thanks @bcardiff)
-- Add `OpenSSL::SSL::Context#set_modern_ciphers` and related methods to set ciphers and cipher suites in a more portable fashion. ([#9814](https://github.com/crystal-lang/crystal/pull/9814), thanks @bcardiff)
+- Add `OpenSSL::SSL::Context#set_modern_ciphers` and related methods to set ciphers and cipher suites in a more portable fashion. ([#9814](https://github.com/crystal-lang/crystal/pull/9814), [#10298](https://github.com/crystal-lang/crystal/pull/10298), thanks @bcardiff)
 - Add `OpenSSL::SSL::Context#security_level`. ([#9831](https://github.com/crystal-lang/crystal/pull/9831), thanks @bcardiff)
 - `OpenSSL::digest` add require for `OpenSSL::Error`. ([#10173](https://github.com/crystal-lang/crystal/pull/10173), thanks @wonderix)
 
@@ -218,7 +218,7 @@
 
 ### Spec
 
-- **(breaking-change)** Add support for custom failure messages in expectations. ([#10127](https://github.com/crystal-lang/crystal/pull/10127), thanks @Fryguy)
+- **(breaking-change)** Add support for custom failure messages in expectations. ([#10127](https://github.com/crystal-lang/crystal/pull/10127), [#10289](https://github.com/crystal-lang/crystal/pull/10289), thanks @Fryguy, @straight-shoota)
 - Allow absolute file paths in `crystal spec` CLI. ([#9951](https://github.com/crystal-lang/crystal/pull/9951), thanks @KevinSjoberg)
 - Allow `--link-flags` to be used. ([#6243](https://github.com/crystal-lang/crystal/pull/6243), thanks @bcardiff)
 - Improve duration display in `spec --profile`. ([#10044](https://github.com/crystal-lang/crystal/pull/10044), thanks @straight-shoota)
@@ -249,7 +249,7 @@
 - Reword error message when including/inheriting generic type without type vars. ([#10206](https://github.com/crystal-lang/crystal/pull/10206), thanks @HertzDevil)
 - Print a message pointing to the online playground if compiled without it. ([#9622](https://github.com/crystal-lang/crystal/pull/9622), thanks @deiv)
 - Handle typedef type restriction against alias type correctly. ([#9490](https://github.com/crystal-lang/crystal/pull/9490), thanks @MakeNowJust)
-- Initial support LLVM 11.0 with known issue regarding optimizations [#10220](https://github.com/crystal-lang/crystal/issues/10220). ([#9829](https://github.com/crystal-lang/crystal/pull/9829), thanks @bcardiff)
+- Initial support LLVM 11.0 with known issue regarding optimizations [#10220](https://github.com/crystal-lang/crystal/issues/10220). ([#9829](https://github.com/crystal-lang/crystal/pull/9829), [#10293](https://github.com/crystal-lang/crystal/pull/10293), thanks @bcardiff)
 - Add support for `--mcpu native`. ([#10264](https://github.com/crystal-lang/crystal/pull/10264), [#10276](https://github.com/crystal-lang/crystal/pull/10276), thanks @BlobCodes, @bcardiff)
 - Fix `Process.run` uses in compiler to handle exec failure. ([#9893](https://github.com/crystal-lang/crystal/pull/9893), [#9911](https://github.com/crystal-lang/crystal/pull/9911), [#9913](https://github.com/crystal-lang/crystal/pull/9913), thanks @straight-shoota, @bcardiff, @oprypin)
 - Fix `Command#report_warnings` to gracefully handle missing `Compiler#program`. ([#9866](https://github.com/crystal-lang/crystal/pull/9866), thanks @straight-shoota)
@@ -301,6 +301,7 @@
 - Don't merge proc types but allow assigning them if they are compatible. ([#9971](https://github.com/crystal-lang/crystal/pull/9971), thanks @asterite)
 - Reset nilable vars inside block method. ([#10091](https://github.com/crystal-lang/crystal/pull/10091), thanks @asterite)
 - Reset free vars before attempting each overload match. ([#10271](https://github.com/crystal-lang/crystal/pull/10271), thanks @HertzDevil)
+- Let `offsetof` support `Tuples`. ([#10218](https://github.com/crystal-lang/crystal/pull/10218), thanks @hugopl)
 
 ## Tools
 
