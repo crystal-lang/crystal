@@ -301,32 +301,17 @@ describe "Number" do
     end
 
     describe "whole range" do
-      it "iterates UInt8 upwards" do
-        (UInt8::MIN..UInt8::MAX).each.count { true }.should eq(256)
-        (UInt8::MIN..UInt8::MAX).step(by: 1).each.count { true }.should eq(256)
-      end
+        it { (UInt8::MIN..UInt8::MAX).each.count { true }.should eq(256) }
+        it_iterates "UInt8 upwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8), (UInt8::MIN..UInt8::MAX).step(by: 1)
+        it_iterates "UInt8 downwards", (UInt8::MIN.to_i..UInt8::MAX.to_i).map(&.to_u8).reverse, (UInt8::MAX..UInt8::MIN).step(by: -1)
 
-      it "iterates UInt8 downwards" do
-        (UInt8::MAX..UInt8::MIN).step(by: -1).each.count { true }.should eq(256)
-      end
+        it { (Int8::MIN..Int8::MAX).each.count { true }.should eq(256) }
+        it_iterates "Int8 upwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8), (Int8::MIN..Int8::MAX).step(by: 1)
+        it_iterates "Int8 downwards", (Int8::MIN.to_i..Int8::MAX.to_i).map(&.to_i8).reverse, (Int8::MAX..Int8::MIN).step(by: -1)
 
-      it "iterates Int8 upwards" do
-        (Int8::MIN..Int8::MAX).each.count { true }.should eq(256)
-        (Int8::MIN..Int8::MAX).step(by: 1).each.count { true }.should eq(256)
-      end
-
-      it "iterates Int8 downwards" do
-        (Int8::MAX..Int8::MIN).step(by: -1).each.count { true }.should eq(256)
-      end
-
-      it "iterates Int16 upwards" do
-        (Int16::MIN..Int16::MAX).each.count { true }.should eq(65536)
-        (Int16::MIN..Int16::MAX).step(by: 1).each.count { true }.should eq(65536)
-      end
-
-      it "iterates Int16 downwards" do
-        (Int16::MAX..Int16::MIN).step(by: -1).each.count { true }.should eq(65536)
-      end
+        it { (Int16::MIN..Int16::MAX).each.count { true }.should eq(65536) }
+        it_iterates "Int16 upwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16), (Int16::MIN..Int16::MAX).step(by: 1)
+        it_iterates "Int16 downwards", (Int16::MIN.to_i..Int16::MAX.to_i).map(&.to_i16).reverse, (Int16::MAX..Int16::MIN).step(by: -1)
     end
 
     it_iterates "towards limit [max-4, max-2, max]", [Int32::MAX - 4, Int32::MAX - 2, Int32::MAX], (Int32::MAX - 4).step(to: Int32::MAX, by: 2)
