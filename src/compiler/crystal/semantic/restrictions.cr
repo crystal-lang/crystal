@@ -714,7 +714,7 @@ module Crystal
         other_type_var = other.type_vars[name]
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
           restricted = if strict
-                         type_var.type == other_type_var.type
+                         type_var.type.devirtualize == other_type_var.type.devirtualize
                        else
                          type_var.type.implements?(other_type_var.type)
                        end
