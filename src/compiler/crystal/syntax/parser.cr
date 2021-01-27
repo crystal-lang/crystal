@@ -2981,7 +2981,7 @@ module Crystal
           raise "macro can't be a setter"
         end
         skip_space
-      when :"[]"
+      when :"[]", :"[]?"
         next_token_skip_space
       else
         raise "invalid macro name"
