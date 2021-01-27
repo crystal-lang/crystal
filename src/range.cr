@@ -403,59 +403,104 @@ struct Range(B, E)
       raise ArgumentError.new "Can't sample negative number of elements"
     end
 
+    # For a range of integers we can do much better
+    {% if B < Int && E < Int %}
+      min = self.begin
+      max = self.end
+
+      if (exclusive? && max <= min) || (!exclusive? && max < min)
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      max -= 1 if self.exclusive?
+
+      available = max - min + 1
+
+      # When a big chunk of elements is going to be needed, it's
+      # faster to just traverse the entire range than hitting
+      # a lot of duplicates because or random.
+      if n >= available // 4
+        return super
+      end
+
+      possible = Math.min(n, available)
+
+      # If we must return all values in the range...
+      if possible == available
+        result = Array(B).new(possible)
+        each { |value| result << value }
+        result.shuffle!
+        return result
+      end
+
+      range_sample(n, random)
+    {% elsif B < Float && E < Float %}
+      min = self.begin
+      max = self.end
+
+      if (exclusive? ? max <= min : max < min)
+        raise ArgumentError.new "Invalid range for rand: #{self}"
+      end
+
+      if min == max
+        return [min]
+      end
+
+      range_sample(n, random)
+    {% else %}
+      case n
+      when 0
+        [] of B
+      when 1
+        [sample(random)]
+      else
+        super
+      end
+    {% end %}
+  end
+
+  # :nodoc:
+  def sample_old(n : Int, random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    if self.begin.nil? || self.end.nil?
+      raise ArgumentError.new("Can't sample an open range")
+    end
+
+    if n < 0
+      raise ArgumentError.new "Can't sample negative number of elements"
+    end
+
     case n
     when 0
       [] of B
     when 1
       [sample(random)]
     else
-      # For a range of integers we can do much better
-      {% if B < Int && E < Int %}
-        min = self.begin
-        max = self.end
+      raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
-        if (exclusive? && max <= min) || (!exclusive? && max < min)
-          raise ArgumentError.new "Invalid range for rand: #{self}"
+      # Unweighted reservoir sampling:
+      # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
+      # "Algorithm L" does not provide any performance improvements on Enumerable,
+      # because it is not possible to discard multiple elements at once
+
+      ary = Array(B).new(n)
+      return ary if n == 0
+
+      each_with_index do |elem, i|
+        if i < n
+          ary << elem
+        else
+          j = random.rand(i + 1)
+          if j < n
+            ary.to_unsafe[j] = elem
+          end
         end
+      end
 
-        max -= 1 if self.exclusive?
-
-        available = max - min + 1
-
-        # When a big chunk of elements is going to be needed, it's
-        # faster to just traverse the entire range than hitting
-        # a lot of duplicates because or random.
-        if n >= available // 4
-          return super
-        end
-
-        possible = Math.min(n, available)
-
-        # If we must return all values in the range...
-        if possible == available
-          result = Array(B).new(possible)
-          each { |value| result << value }
-          result.shuffle!
-          return result
-        end
-
-        range_sample(n, random)
-      {% elsif B < Float && E < Float %}
-        min = self.begin
-        max = self.end
-
-        if (exclusive? ? max <= min : max < min)
-          raise ArgumentError.new "Invalid range for rand: #{self}"
-        end
-
-        if min == max
-          return [min]
-        end
-
-        range_sample(n, random)
-      {% else %}
-        super
-      {% end %}
+      ary.shuffle!(random)
     end
   end
 

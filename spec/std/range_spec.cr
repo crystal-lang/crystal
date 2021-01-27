@@ -492,6 +492,12 @@ describe "Range" do
         end
       end
 
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1..0).sample(0)
+        end
+      end
+
       it "raises on invalid range with n = 1" do
         expect_raises ArgumentError do
           (1..0).sample(1)
@@ -556,6 +562,24 @@ describe "Range" do
         values = (1.0..2.0).sample(100)
         values.size.should eq(100)
         values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "raises on invalid range with n = 0" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(0)
+        end
+      end
+
+      it "raises on invalid range with n = 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(1)
+        end
+      end
+
+      it "raises on invalid range with n > 1" do
+        expect_raises ArgumentError do
+          (1.0..0.0).sample(10)
+        end
       end
     end
   end
