@@ -510,6 +510,54 @@ describe "Range" do
         end
       end
     end
+
+    context "for a float range" do
+      it "samples an inclusive range without n" do
+        value = (1.0..2.0).sample
+        (1.0 <= value <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range without n" do
+        value = (1.0...2.0).sample
+        (1.0 <= value < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first <= 2.0).should be_true
+      end
+
+      it "samples an exclusive range with n = 1" do
+        values = (1.0..2.0).sample(1)
+        values.size.should eq(1)
+        (1.0 <= values.first < 2.0).should be_true
+      end
+
+      it "samples an inclusive range with n > 1" do
+        values = (1.0..2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+
+      it "samples an exclusive range with n > 1" do
+        values = (1.0...2.0).sample(10)
+        values.size.should eq(10)
+        values.all? { |value| 1.0 <= value < 2.0 }.should be_true
+      end
+
+      it "samples an inclusive range with n >= 1 and begin == end" do
+        values = (1.0..1.0).sample(3)
+        values.size.should eq(1)
+        values.first.should eq(1.0)
+      end
+
+      it "samples an inclusive range with n > 16" do
+        values = (1.0..2.0).sample(100)
+        values.size.should eq(100)
+        values.all? { |value| 1.0 <= value <= 2.0 }.should be_true
+      end
+    end
   end
 
   describe "#step" do

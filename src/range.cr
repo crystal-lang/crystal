@@ -440,6 +440,27 @@ struct Range(B, E)
           add_n_samples(result, possible, random)
           result.to_a
         end
+      {% elsif B < Float && E < Float %}
+        min = self.begin
+        max = self.end
+
+        if (exclusive? && max <= min) || (!exclusive? && max < min)
+          raise ArgumentError.new "Invalid range for rand: #{self}"
+        end
+
+        if min == max
+          [min]
+        elsif n <= 16
+          # For a small requested amount doing a linear lookup is faster
+          result = Array(B).new
+          add_n_samples(result, n, random)
+          result
+        else
+          # Otherwise using a Set is faster
+          result = Set(B).new
+          add_n_samples(result, n, random)
+          result.to_a
+        end
       {% else %}
         super
       {% end %}
