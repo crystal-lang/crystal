@@ -421,6 +421,14 @@ struct Range(B, E)
         max -= 1 if self.exclusive?
 
         available = max - min + 1
+
+        # When a big chunk of elements is going to be needed, it's
+        # faster to just traverse the entire range than hitting
+        # a lot of duplicates because or random.
+        if n >= available // 4
+          return super
+        end
+
         possible = Math.min(n, available)
 
         # If we must return all values in the range...
