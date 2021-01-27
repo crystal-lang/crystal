@@ -428,18 +428,10 @@ struct Range(B, E)
           result = Array(B).new(possible)
           each { |value| result << value }
           result.shuffle!
-          result
-        elsif n <= 16
-          # For a small requested amount doing a linear lookup is faster
-          result = Array(B).new(possible)
-          add_n_samples(result, possible, random)
-          result
-        else
-          # Otherwise using a Set is faster
-          result = Set(B).new(possible)
-          add_n_samples(result, possible, random)
-          result.to_a
+          return result
         end
+
+        range_sample(n, random)
       {% elsif B < Float && E < Float %}
         min = self.begin
         max = self.end
@@ -449,28 +441,32 @@ struct Range(B, E)
         end
 
         if min == max
-          [min]
-        elsif n <= 16
-          # For a small requested amount doing a linear lookup is faster
-          result = Array(B).new
-          add_n_samples(result, n, random)
-          result
-        else
-          # Otherwise using a Set is faster
-          result = Set(B).new
-          add_n_samples(result, n, random)
-          result.to_a
+          return [min]
         end
+
+        range_sample(n, random)
       {% else %}
         super
       {% end %}
     end
   end
 
-  private def add_n_samples(result, n, random)
-    until result.size == n
-      value = sample(random)
-      result << value unless result.includes?(value)
+  private def range_sample(n, random)
+    if n <= 16
+      # For a small requested amount doing a linear lookup is faster
+      result = Array(B).new(n)
+      until result.size == n
+        value = sample(random)
+        result << value unless result.includes?(value)
+      end
+      result
+    else
+      # Otherwise using a Set is faster
+      result = Set(B).new(n)
+      until result.size == n
+        result << sample(random)
+      end
+      result.to_a
     end
   end
 
