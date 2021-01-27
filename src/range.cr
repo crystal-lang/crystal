@@ -444,7 +444,7 @@ struct Range(B, E)
         min = self.begin
         max = self.end
 
-        if (exclusive? && max <= min) || (!exclusive? && max < min)
+        if max < min || (exclusive? && max == min)
           raise ArgumentError.new "Invalid range for rand: #{self}"
         end
 
