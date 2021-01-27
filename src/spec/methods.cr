@@ -65,6 +65,7 @@ module Spec::Methods
   #
   # If `focus` is `true`, only this test, and others marked with `focus: true`, will run.
   def pending(description = "assert", file = __FILE__, line = __LINE__, end_line = __END_LINE__, focus : Bool = false, tags : String | Enumerable(String) | Nil = nil, &block)
+    typeof(yield)
     pending(description, file, line, end_line, focus, tags)
   end
 
