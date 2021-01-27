@@ -399,12 +399,57 @@ struct Range(B, E)
       raise ArgumentError.new("Can't sample an open range")
     end
 
-    return super unless n == 1
+    if n < 0
+      raise ArgumentError.new "Can't sample negative number of elements"
+    end
 
-    if empty?
+    case n
+    when 0
       [] of B
-    else
+    when 1
       [sample(random)]
+    else
+      # For a range of integers we can do much better
+      {% if B < Int && E < Int %}
+        min = self.begin
+        max = self.end
+
+        if (exclusive? && max <= min) || (!exclusive? && max < min)
+          raise ArgumentError.new "Invalid range for rand: #{self}"
+        end
+
+        max -= 1 if self.exclusive?
+
+        available = max - min + 1
+        possible = Math.min(n, available)
+
+        # If we must return all values in the range...
+        if possible == available
+          result = Array(B).new(possible)
+          each { |value| result << value }
+          result.shuffle!
+          result
+        elsif n <= 16
+          # For a small requested amount doing a linear lookup is faster
+          result = Array(B).new(possible)
+          add_n_samples(result, possible, random)
+          result
+        else
+          # Otherwise using a Set is faster
+          result = Set(B).new(possible)
+          add_n_samples(result, possible, random)
+          result.to_a
+        end
+      {% else %}
+        super
+      {% end %}
+    end
+  end
+
+  private def add_n_samples(result, n, random)
+    until result.size == n
+      value = sample
+      result << value unless result.includes?(value)
     end
   end
 
