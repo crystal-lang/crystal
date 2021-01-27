@@ -422,7 +422,7 @@ struct Range(B, E)
       if possible == available
         result = Array(B).new(possible)
         each { |value| result << value }
-        result.shuffle!
+        result.shuffle!(random)
         return result
       end
 
