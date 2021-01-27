@@ -337,6 +337,8 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        # TODO: if the block isn't used in any of the target defs we could
+        # avoid transforming it, because it probably isn't typed **at all**
         node.block = node_block.transform(self)
       end
 
