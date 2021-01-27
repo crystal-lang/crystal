@@ -87,6 +87,10 @@ struct Range(B, E)
   def initialize(@begin : B, @end : E, @exclusive : Bool = false)
   end
 
+  def ==(other : Range)
+    @begin == other.@begin && @end == other.@end && @exclusive == other.@exclusive
+  end
+
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
