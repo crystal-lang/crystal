@@ -469,7 +469,7 @@ struct Range(B, E)
 
   private def add_n_samples(result, n, random)
     until result.size == n
-      value = sample
+      value = sample(random)
       result << value unless result.includes?(value)
     end
   end
