@@ -727,4 +727,20 @@ describe "Codegen: is_a?" do
       Class.is_a?(Class.class.class)
     ").to_b.should be_true
   end
+
+  it "passes is_a? with generic module type on virtual type (#10302)" do
+    run(%(
+      module Mod(T)
+      end
+
+      abstract struct Sup
+        include Mod(Sup)
+      end
+
+      struct Sub < Sup
+      end
+
+      Sub.new.is_a?(Mod(Sup))
+      )).to_b.should be_true
+  end
 end
