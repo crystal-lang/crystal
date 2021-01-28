@@ -596,4 +596,24 @@ describe "Semantic: automatic cast" do
       ),
       "ambiguous call, implicit cast of 255 matches all of UInt64, Int64"
   end
+
+  it "autocasts nested type from non-nested type (#10315)" do
+    assert_no_errors(%(
+      module Moo
+        enum Color
+          Red
+        end
+
+        abstract class Foo
+          def initialize(color : Color = :red)
+          end
+        end
+      end
+
+      class Bar < Moo::Foo
+      end
+
+      Bar.new
+      ))
+  end
 end
