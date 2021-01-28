@@ -208,10 +208,12 @@ class String
   # String.new(ptr, 2) # => "ab"
   # ```
   def self.new(chars : UInt8*, bytesize, size = 0)
-    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
-
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
+
+    if chars.null?
+      raise ArgumentError.new("Cannot create a string with a null pointer and a non-zero (#{bytesize}) bytesize")
+    end
 
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
