@@ -41,29 +41,17 @@ describe "Number" do
     end
   end
 
-  describe "round" do
-    it "rounds to 0 digits with base 10 from default" do
+  describe "#round" do
+    it "rounds to 0 digits" do
       -1763.116.round.should eq(-1763)
       753.155.round.should eq(753)
       15.151.round.should eq(15)
     end
 
-    it "10 base" do
+    it "positive digits" do
       -1763.116.round(2).should eq(-1763.12)
       753.155.round(2).should eq(753.16)
       15.151.round(2).should eq(15.15)
-    end
-
-    it "2 base" do
-      -1763.116.round(2, base: 2).should eq(-1763.0)
-      753.155.round(2, base: 2).should eq(753.25)
-      15.159.round(2, base: 2).should eq(15.25)
-    end
-
-    it "8 base" do
-      -1763.116.round(2, base: 8).should eq(-1763.109375)
-      753.155.round(1, base: 8).should eq(753.125)
-      15.159.round(0, base: 8).should eq(15.0)
     end
 
     it "preserves type" do
@@ -71,14 +59,13 @@ describe "Number" do
       123.round(2).should be_a(Int32)
     end
 
-    it "accepts negative precision" do
+    it "negative digits" do
       123.round(-2).should eq(100)
       123.round(-3).should eq(0)
       523.round(-3).should eq(1000)
 
       123.456.round(-2).should eq(100)
       123_456.123456.round(-5).should eq(100_000)
-      753.155.round(-5, base: 2).should eq(768)
     end
 
     it "accepts unsigned precision" do
@@ -91,6 +78,21 @@ describe "Number" do
       1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
+    end
+
+    describe "base" do
+      it "2" do
+        -1763.116.round(2, base: 2).should eq(-1763.0)
+        753.155.round(2, base: 2).should eq(753.25)
+        15.159.round(2, base: 2).should eq(15.25)
+        753.155.round(-5, base: 2).should eq(768)
+      end
+
+      it "8" do
+        -1763.116.round(2, base: 8).should eq(-1763.109375)
+        753.155.round(1, base: 8).should eq(753.125)
+        15.159.round(0, base: 8).should eq(15.0)
+      end
     end
   end
 
