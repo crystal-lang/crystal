@@ -606,12 +606,7 @@ module Iterator(T)
   # iter.to_a # => [1, 1, 2, 2, 3, 3]
   # ```
   def flat_map(&func : T -> _)
-    FlatMap(
-      typeof(self),
-      typeof(FlatMap.element_type(self, func)),
-      typeof(FlatMap.iterator_type(self, func)),
-      typeof(func)
-    ).new self, func
+    FlatMap(typeof(self), typeof(FlatMap.element_type(self, func)), typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
   end
 
   private class FlatMap(I0, T, I, F)
