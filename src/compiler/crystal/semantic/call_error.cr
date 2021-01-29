@@ -189,6 +189,7 @@ class Crystal::Call
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
     if message = single_def_error_message(defs, named_args_types)
       io << message
+      io << '\n'
       return
     end
 
@@ -301,6 +302,7 @@ class Crystal::Call
     raise(String.build do |str|
       if single_message = single_def_error_message(defs, named_args_types)
         str << single_message
+        str << '\n'
       else
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
