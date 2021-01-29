@@ -538,10 +538,14 @@ end
   LibExt.setup_sigfault_handler
 {% end %}
 
-{% if flag?(:debug) && !flag?(:win32) %}
-  # load dwarf on start up of the program when compiled with --debug
+{% if !flag?(:win32) %}
+  # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
   # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
-  Exception::CallStack.load_dwarf
+  #
+  # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
+  # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup
+  # - Other values will load dwarf on demand: when the backtrace of the first exception is generated
+  Exception::CallStack.load_dwarf if ENV["CRYSTAL_LOAD_DWARF"]? == "1"
 {% end %}
 
 {% if flag?(:preview_mt) %}
