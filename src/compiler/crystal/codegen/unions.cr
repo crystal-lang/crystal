@@ -104,7 +104,7 @@ module Crystal
 
     def assign_distinct_union_types(target_pointer, target_type, value_type, value)
       # If we have:
-      # - target_pointer: Pointer(A | B |C)
+      # - target_pointer: Pointer(A | B | C)
       # - target_type: A | B | C
       # - value_type: A | B
       # - value: Pointer(A | B)
