@@ -1772,7 +1772,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = self.class.new
+    hash = Hash(K, V).new
     hash.initialize_dup(self)
     hash
   end
@@ -1787,12 +1787,12 @@ class Hash(K, V)
   # ```
   def clone
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
-      clone = self.class.new
+      clone = Hash(K, V).new
       clone.initialize_clone(self)
       clone
     {% else %}
       exec_recursive_clone do |hash|
-        clone = self.class.new
+        clone = Hash(K, V).new
         hash[object_id] = clone.object_id
         clone.initialize_clone(self)
         clone
