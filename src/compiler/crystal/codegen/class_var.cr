@@ -86,9 +86,7 @@ class Crystal::CodeGenVisitor
 
     # For unsafe class var we just initialize them without
     # using a flag to know if they were initialized
-    if class_var.uninitialized? || !init_func || !class_var.read?
-      class_var.no_init_flag = true
-
+    if class_var.uninitialized? || !init_func
       global = declare_class_var(class_var)
       global = ensure_class_var_in_this_module(global, class_var)
       if init_func
@@ -99,7 +97,7 @@ class Crystal::CodeGenVisitor
 
     global, initialized_flag = declare_class_var_and_initialized_flag_in_this_module(class_var)
 
-    lazy_initialize_class_var(initializer.node, init_func.not_nil!, global, initialized_flag)
+    lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
   end
 
   def lazy_initialize_class_var(node, init_func, global, initialized_flag)
@@ -177,8 +175,6 @@ class Crystal::CodeGenVisitor
   end
 
   def read_class_var_ptr(class_var : MetaTypeVar)
-    class_var.read = true
-
     owner = class_var.owner
     case owner
     when VirtualType
@@ -188,7 +184,7 @@ class Crystal::CodeGenVisitor
     end
 
     initializer = class_var.initializer
-    if !initializer || class_var.uninitialized? || class_var.no_init_flag?
+    if !initializer || class_var.uninitialized?
       # Read directly without init flag, but make sure to declare the global in this module too
       return get_class_var_global(class_var)
     end

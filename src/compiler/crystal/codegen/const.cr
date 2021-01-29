@@ -119,13 +119,6 @@ class Crystal::CodeGenVisitor
   end
 
   def initialize_const(const)
-    # If the constant wasn't read yet, we can initialize it right now and
-    # avoid checking an "initialized" flag every time we read it.
-    unless const.read?
-      const.no_init_flag = true
-      return initialize_no_init_flag_const(const)
-    end
-
     # Maybe the constant was simple and doesn't need a real initialization
     global, initialized_flag = declare_const_and_initialized_flag(const)
     return global if const.initializer
@@ -201,8 +194,6 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const_pointer(const)
-    const.read = true
-
     if !const.needs_init_flag?
       global_name = const.llvm_name
       global = declare_const(const)
