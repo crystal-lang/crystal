@@ -46,7 +46,7 @@ struct XML::NodeSet
   end
 
   def to_s(io : IO) : Nil
-    join '\n', io
+    join io, '\n'
   end
 
   def to_unsafe
