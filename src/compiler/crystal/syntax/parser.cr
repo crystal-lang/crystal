@@ -2978,13 +2978,13 @@ module Crystal
         check_valid_def_name
         next_token
         if @token.type == :"="
-          raise "macro can't be a setter"
+          name += '='
+          next_token
         end
         skip_space
-      when :"[]"
-        next_token_skip_space
       else
-        raise "invalid macro name"
+        check_valid_def_op_name
+        next_token_skip_space
       end
 
       args = [] of Arg

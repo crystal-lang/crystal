@@ -617,6 +617,8 @@ describe Crystal::Formatter do
   assert_format "def foo(@x)\n\nrescue\nend"
 
   assert_format "macro foo\nend"
+  assert_format "macro foo=(x)\nend"
+  assert_format "macro []=(x, y)\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"
