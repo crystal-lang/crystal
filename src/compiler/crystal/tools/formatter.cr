@@ -1673,6 +1673,11 @@ module Crystal
 
       write node.name
       next_token
+
+      if @token.type == :"=" && node.name.ends_with?('=')
+        next_token
+      end
+
       skip_space(consume_newline: false)
 
       format_def_args node

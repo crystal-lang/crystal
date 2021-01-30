@@ -925,16 +925,18 @@ module Crystal
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
-    assert_syntax_error "macro foo=;end", "macro can't be a setter"
+    it_parses "macro foo=;end", Macro.new("foo=", body: Expressions.new)
     assert_syntax_error "macro Foo;end", "macro can't have a receiver"
     assert_syntax_error "macro foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro Foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro foo&&;end"
     assert_syntax_error "macro foo"
 
-    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "!", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
-      assert_syntax_error "macro #{op};end", "invalid macro name"
+    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
+      it_parses "macro #{op};end", Macro.new(op, body: Expressions.new)
     end
+
+    assert_syntax_error "macro !;end", "'!' is a pseudo-method and can't be redefined"
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
