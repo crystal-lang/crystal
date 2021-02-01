@@ -637,23 +637,18 @@ module Crystal
 
           @wants_regex = false
 
-          if current_char == '%'
-            next_char
-            @token.type = :"%"
-            @token.column_number += 1
-            skip_space_or_newline
-          else
-            next_token_skip_space_or_newline
+          @wants_def_or_macro_name = true
+          next_token_skip_space_or_newline
+          @wants_def_or_macro_name = false
 
-            if @token.type == :INSTANCE_VAR
-              ivar_name = @token.value.to_s
-              end_location = token_end_location
-              next_token_skip_space
+          if @token.type == :INSTANCE_VAR
+            ivar_name = @token.value.to_s
+            end_location = token_end_location
+            next_token_skip_space
 
-              atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-              atomic.end_location = end_location
-              next
-            end
+            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
+            atomic.end_location = end_location
+            next
           end
 
           check AtomicWithMethodCheck
