@@ -25,6 +25,7 @@
 - **(performance)** Initialize right-away constants in a separate function. ([#10334](https://github.com/crystal-lang/crystal/pull/10334), thanks @asterite)
 - Fix incorrect casting between different union types. ([#10333](https://github.com/crystal-lang/crystal/pull/10333), thanks @asterite)
 - Fix a formatting error in the "missing argument" error. ([#10325](https://github.com/crystal-lang/crystal/pull/10325), thanks @BlobCodes)
+- Fix while condition assignment check for Not. ([#10347](https://github.com/crystal-lang/crystal/pull/10347), thanks @asterite)
 - Allow operators and setters-like macros names back. ([#10338](https://github.com/crystal-lang/crystal/pull/10338), thanks @asterite)
 
 ### Language semantics
