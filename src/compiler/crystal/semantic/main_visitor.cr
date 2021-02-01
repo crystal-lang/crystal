@@ -2245,6 +2245,8 @@ module Crystal
         end
       when And
         return get_while_cond_assign_target(node.left)
+      when Not
+        return get_while_cond_assign_target(node.exp)
       when If
         if node.and?
           return get_while_cond_assign_target(node.cond)
