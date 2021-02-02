@@ -1,3 +1,38 @@
+# 0.36.1 (2021-02-02)
+
+## Standard library
+
+- Fix `Enum.from_value?` for flag enum with non `Int32` base type. ([#10303](https://github.com/crystal-lang/crystal/pull/10303), thanks @straight-shoota)
+
+### Text
+
+- Don't raise on `String.new` with `null` pointer and bytesize 0. ([#10308](https://github.com/crystal-lang/crystal/pull/10308), thanks @asterite)
+
+### Collections
+
+- Explicitly return a `Hash` in `Hash#dup` and `Hash#clone` (reverts [#9871](https://github.com/crystal-lang/crystal/pull/9871)). ([#10331](https://github.com/crystal-lang/crystal/pull/10331), thanks @straight-shoota)
+
+### Serialization
+
+- XML: fix deprecation warning. ([#10335](https://github.com/crystal-lang/crystal/pull/10335), thanks @bcardiff)
+
+### Runtime
+
+- Eager load DWARF only if `CRYSTAL_LOAD_DWARF=1`. ([#10326](https://github.com/crystal-lang/crystal/pull/10326), thanks @bcardiff)
+
+## Compiler
+
+- **(performance)** Initialize right-away constants in a separate function. ([#10334](https://github.com/crystal-lang/crystal/pull/10334), thanks @asterite)
+- Fix incorrect casting between different union types. ([#10333](https://github.com/crystal-lang/crystal/pull/10333), thanks @asterite)
+- Fix a formatting error in the "missing argument" error. ([#10325](https://github.com/crystal-lang/crystal/pull/10325), thanks @BlobCodes)
+- Fix while condition assignment check for Not. ([#10347](https://github.com/crystal-lang/crystal/pull/10347), thanks @asterite)
+- Allow operators and setters-like macros names back. ([#10338](https://github.com/crystal-lang/crystal/pull/10338), thanks @asterite)
+
+### Language semantics
+
+- Fix type check not considering virtual types. ([#10304](https://github.com/crystal-lang/crystal/pull/10304), thanks @asterite)
+- Use path lookup when looking up type for auto-cast match. ([#10318](https://github.com/crystal-lang/crystal/pull/10318), thanks @asterite)
+
 # 0.36.0 (2021-01-26)
 
 ## Language changes
@@ -73,7 +108,7 @@
 - **(breaking-change)** Rename `Set#{sub,super}set?` to `{sub,super}set_of?`. ([#10187](https://github.com/crystal-lang/crystal/pull/10187), thanks @straight-shoota)
 - **(performance)** Optimize `Array#shift` and `Array#unshift`. ([#10081](https://github.com/crystal-lang/crystal/pull/10081), thanks @asterite)
 - **(performance)** `Array#rotate` optimization for small arrays. ([#8516](https://github.com/crystal-lang/crystal/pull/8516), thanks @wontruefree)
-- Fix `Hash#dup` and `Hash#clone` to return correct type for subclasses. ([#9871](https://github.com/crystal-lang/crystal/pull/9871), thanks @vlazar)
+- ~~Fix `Hash#dup` and `Hash#clone` to return correct type for subclasses. ([#9871](https://github.com/crystal-lang/crystal/pull/9871), thanks @vlazar)~~ (Reverted by [#10331](https://github.com/crystal-lang/crystal/pull/10331) in 0.36.1)
 - Fix `Iterator#cons_pair` return type. ([#9788](https://github.com/crystal-lang/crystal/pull/9788), thanks @asterite)
 - Fix key type restriction of `Hash#merge` block. ([#9495](https://github.com/crystal-lang/crystal/pull/9495), thanks @MakeNowJust)
 - Fix `Range#step`. ([#10203](https://github.com/crystal-lang/crystal/pull/10203), thanks @straight-shoota)
