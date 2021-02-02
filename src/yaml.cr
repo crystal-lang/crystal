@@ -1,9 +1,4 @@
-require "./yaml/*"
-require "./yaml/schema/*"
-require "./yaml/schema/core/*"
-require "./yaml/nodes/*"
 require "semantic_version"
-
 require "base64"
 
 # The YAML module provides serialization and deserialization of YAML
@@ -83,14 +78,14 @@ module YAML
     getter line_number : Int32
     getter column_number : Int32
 
-    def initialize(message, line_number, column_number, context_info = nil)
+    def initialize(message, line_number, column_number, context_info = nil, cause : Exception? = nil)
       @line_number = line_number.to_i
       @column_number = column_number.to_i
       if context_info
         context_msg, context_line, context_column = context_info
-        super("#{message} at line #{line_number}, column #{column_number}, #{context_msg} at line #{context_line}, column #{context_column}")
+        super("#{message} at #{line_number}:#{column_number}, #{context_msg} at #{context_line}:#{context_column}", cause: cause)
       else
-        super("#{message} at line #{line_number}, column #{column_number}")
+        super("#{message} at #{line_number}:#{column_number}", cause: cause)
       end
     end
 
@@ -166,3 +161,8 @@ module YAML
     SemanticVersion.new(major, minor, patch)
   end
 end
+
+require "./yaml/*"
+require "./yaml/schema/*"
+require "./yaml/schema/core/*"
+require "./yaml/nodes/*"

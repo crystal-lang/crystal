@@ -463,7 +463,7 @@ describe "YAML::Serializable" do
   end
 
   it "parses strict person with unknown attributes" do
-    ex = expect_raises YAML::ParseException, "Unknown yaml attribute: foo" do
+    ex = expect_raises YAML::MappingError, "Unknown attribute: foo\n  parsing StrictYAMLAttrPerson" do
       StrictYAMLAttrPerson.from_yaml <<-YAML
         ---
         name: John
@@ -496,8 +496,8 @@ describe "YAML::Serializable" do
   end
 
   it "raises if non-nilable attribute is nil" do
-    error_message = "Missing YAML attribute: name at line 2, column 1"
-    ex = expect_raises YAML::ParseException, error_message do
+    error_message = "Missing attribute: name\n  parsing YAMLAttrPerson#name at 2:1"
+    ex = expect_raises YAML::MappingError, error_message do
       YAMLAttrPerson.from_yaml <<-YAML
         ---
         age: 30
@@ -547,8 +547,8 @@ describe "YAML::Serializable" do
   end
 
   it "raises if not an object" do
-    error_message = "Expected mapping, not YAML::Nodes::Scalar at line 1, column 1"
-    ex = expect_raises YAML::ParseException, error_message do
+    error_message = "Expected mapping, not YAML::Nodes::Scalar\n  parsing StrictYAMLAttrPerson at 1:1"
+    ex = expect_raises YAML::MappingError, error_message do
       StrictYAMLAttrPerson.from_yaml <<-YAML
         "foo"
         YAML
@@ -557,8 +557,11 @@ describe "YAML::Serializable" do
   end
 
   it "raises if data type does not match" do
-    error_message = "Couldn't parse (Int32 | Nil) at line 3, column 10"
-    ex = expect_raises YAML::ParseException, error_message do
+    error_message = <<-MSG
+      Couldn't parse (Int32 | Nil) at 3:10
+        parsing StrictYAMLAttrPerson#age at 3:10
+      MSG
+    ex = expect_raises YAML::MappingError, error_message do
       StrictYAMLAttrPerson.from_yaml <<-YAML
         {
           "name": "John",
@@ -869,8 +872,8 @@ describe "YAML::Serializable" do
     end
 
     it "raises if non-nilable attribute is nil" do
-      error_message = "Missing YAML attribute: foo at line 1, column 1"
-      ex = expect_raises YAML::ParseException, error_message do
+      error_message = "Missing attribute: foo\n  parsing YAMLAttrWithQueryAttributes#foo at 1:1"
+      ex = expect_raises YAML::MappingError, error_message do
         YAMLAttrWithQueryAttributes.from_yaml(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
@@ -901,13 +904,13 @@ describe "YAML::Serializable" do
     end
 
     it "raises if missing discriminator" do
-      expect_raises(YAML::ParseException, "Missing YAML discriminator field 'type'") do
+      expect_raises(YAML::MappingError, "Missing discriminator field 'type'\n  parsing YAMLShape at 1:1") do
         YAMLShape.from_yaml("{}")
       end
     end
 
     it "raises if unknown discriminator value" do
-      expect_raises(YAML::ParseException, %(Unknown 'type' discriminator value: "unknown")) do
+      expect_raises(YAML::MappingError, %(Unknown discriminator value: "unknown"\n  parsing YAMLShape#type at 1:10)) do
         YAMLShape.from_yaml(%({"type": "unknown"}))
       end
     end
