@@ -42,21 +42,57 @@ describe "Number" do
   end
 
   describe "#round" do
-    it "rounds to 0 digits" do
+    it "rounds to nearest integer" do
+      5.5.round.should eq(6)
+      0.4.round.should eq(0)
+      -2.8.round.should eq(-3)
+      0.0.round.should eq(0)
+      0.49999999999999994.round.should eq(0)
       -1763.116.round.should eq(-1763)
       753.155.round.should eq(753)
       15.151.round.should eq(15)
     end
 
-    it "positive digits" do
+    it "infinity" do
+      Float64::INFINITY.round.infinite?.should eq(1)
+      Float32::INFINITY.round.infinite?.should eq(1)
+      (-Float64::INFINITY).round.infinite?.should eq(-1)
+      (-Float32::INFINITY).round.infinite?.should eq(-1)
+    end
+
+    it "nan" do
+      Float64::NAN.round.nan?.should be_true
+      Float32::NAN.round.nan?.should be_true
+    end
+
+    it "rounds to digits" do
+      5.5.round(0).should eq(6)
+      5.7.round(1).should eq(5.7)
+      1.2345678.round(2).should eq(1.23)
+      123456.78.round(-2).should eq(123500) # rounded up
+      -123456.78.round(-2).should eq(-123500)
+
       -1763.116.round(2).should eq(-1763.12)
       753.155.round(2).should eq(753.16)
       15.151.round(2).should eq(15.15)
+
+      0.8346268.round(-1).should eq(0)
+    end
+
+    it { 42.0.round(300).should eq(42.0) }
+
+    pending "edge cases" do
+      42.0.round(308).should eq(42.0)
+      42.0.round(309).should eq(42.0)
+
+      1.0e307.round(2).should eq(1.0e307)
+      0.42.round(2**30).should eq(0.42)
     end
 
     it "preserves type" do
-      123.round(2).should eq(123)
-      123.round(2).should be_a(Int32)
+      1.round.should be_a(Int32)
+      1_u8.round.should be_a(UInt8)
+      1.0_f32.round.should be_a(Float32)
     end
 
     it "negative digits" do
