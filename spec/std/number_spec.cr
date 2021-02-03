@@ -116,6 +116,98 @@ describe "Number" do
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
     end
 
+    describe "rounding modes" do
+      it "to_zero" do
+        -1.5.round(:to_zero).should eq -1.0
+        -1.0.round(:to_zero).should eq -1.0
+        -0.9.round(:to_zero).should eq 0.0
+        -0.5.round(:to_zero).should eq 0.0
+        -0.1.round(:to_zero).should eq 0.0
+        0.0.round(:to_zero).should eq 0.0
+        0.1.round(:to_zero).should eq 0.0
+        0.5.round(:to_zero).should eq 0.0
+        0.9.round(:to_zero).should eq 0.0
+        1.0.round(:to_zero).should eq 1.0
+        1.5.round(:to_zero).should eq 1.0
+      end
+
+      it "to_positive" do
+        -1.5.round(:to_positive).should eq -1.0
+        -1.0.round(:to_positive).should eq -1.0
+        -0.9.round(:to_positive).should eq 0.0
+        -0.5.round(:to_positive).should eq 0.0
+        -0.1.round(:to_positive).should eq 0.0
+        0.0.round(:to_positive).should eq 0.0
+        0.1.round(:to_positive).should eq 1.0
+        0.5.round(:to_positive).should eq 1.0
+        0.9.round(:to_positive).should eq 1.0
+        1.0.round(:to_positive).should eq 1.0
+        1.5.round(:to_positive).should eq 2.0
+      end
+
+      it "to_negative" do
+        -1.5.round(:to_negative).should eq -2.0
+        -1.0.round(:to_negative).should eq -1.0
+        -0.9.round(:to_negative).should eq -1.0
+        -0.5.round(:to_negative).should eq -1.0
+        -0.1.round(:to_negative).should eq -1.0
+        0.0.round(:to_negative).should eq 0.0
+        0.1.round(:to_negative).should eq 0.0
+        0.5.round(:to_negative).should eq 0.0
+        0.9.round(:to_negative).should eq 0.0
+        1.0.round(:to_negative).should eq 1.0
+        1.5.round(:to_negative).should eq 1.0
+      end
+
+      it "ties_even" do
+        -2.5.round(:ties_even).should eq -2.0
+        -1.5.round(:ties_even).should eq -2.0
+        -1.0.round(:ties_even).should eq -1.0
+        -0.9.round(:ties_even).should eq -1.0
+        -0.5.round(:ties_even).should eq 0.0
+        -0.1.round(:ties_even).should eq 0.0
+        0.0.round(:ties_even).should eq 0.0
+        0.1.round(:ties_even).should eq 0.0
+        0.5.round(:ties_even).should eq 0.0
+        0.9.round(:ties_even).should eq 1.0
+        1.0.round(:ties_even).should eq 1.0
+        1.5.round(:ties_even).should eq 2.0
+        2.5.round(:ties_even).should eq 2.0
+      end
+
+      it "ties_away" do
+        -2.5.round(:ties_away).should eq -3.0
+        -1.5.round(:ties_away).should eq -2.0
+        -1.0.round(:ties_away).should eq -1.0
+        -0.9.round(:ties_away).should eq -1.0
+        -0.5.round(:ties_away).should eq -1.0
+        -0.1.round(:ties_away).should eq 0.0
+        0.0.round(:ties_away).should eq 0.0
+        0.1.round(:ties_away).should eq 0.0
+        0.5.round(:ties_away).should eq 1.0
+        0.9.round(:ties_away).should eq 1.0
+        1.0.round(:ties_away).should eq 1.0
+        1.5.round(:ties_away).should eq 2.0
+        2.5.round(:ties_away).should eq 3.0
+      end
+
+      it "default (=ties_away)" do
+        -2.5.round.should eq -3.0
+        -1.5.round.should eq -2.0
+        -1.0.round.should eq -1.0
+        -0.9.round.should eq -1.0
+        -0.5.round.should eq -1.0
+        -0.1.round.should eq 0.0
+        0.0.round.should eq 0.0
+        0.1.round.should eq 0.0
+        0.5.round.should eq 1.0
+        0.9.round.should eq 1.0
+        1.0.round.should eq 1.0
+        1.5.round.should eq 2.0
+        2.5.round.should eq 3.0
+      end
+    end
+
     describe "base" do
       it "2" do
         -1763.116.round(2, base: 2).should eq(-1763.0)

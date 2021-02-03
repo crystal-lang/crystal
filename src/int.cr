@@ -241,6 +241,10 @@ struct Int
     self >= 0 ? self : -self
   end
 
+  def round(mode : RoundingMode) : self
+    self
+  end
+
   def ceil
     self
   end
