@@ -208,6 +208,63 @@ describe "Number" do
       end
     end
 
+    describe "with digits" do
+      it "to_zero" do
+        12.345.round(-1, mode: :to_zero).should eq 10
+        12.345.round(0, mode: :to_zero).should eq 12
+        12.345.round(1, mode: :to_zero).should eq 12.3
+        12.345.round(2, mode: :to_zero).should eq 12.34
+        -12.345.round(-1, mode: :to_zero).should eq -10
+        -12.345.round(0, mode: :to_zero).should eq -12
+        -12.345.round(1, mode: :to_zero).should eq -12.3
+        -12.345.round(2, mode: :to_zero).should eq -12.34
+      end
+
+      it "to_positive" do
+        12.345.round(-1, mode: :to_positive).should eq 20
+        12.345.round(0, mode: :to_positive).should eq 13
+        12.345.round(1, mode: :to_positive).should eq 12.4
+        12.345.round(2, mode: :to_positive).should eq 12.35
+        -12.345.round(-1, mode: :to_positive).should eq -10
+        -12.345.round(0, mode: :to_positive).should eq -12
+        -12.345.round(1, mode: :to_positive).should eq -12.3
+        -12.345.round(2, mode: :to_positive).should eq -12.34
+      end
+
+      it "to_negative" do
+        12.345.round(-1, mode: :to_negative).should eq 10
+        12.345.round(0, mode: :to_negative).should eq 12
+        12.345.round(1, mode: :to_negative).should eq 12.3
+        12.345.round(2, mode: :to_negative).should eq 12.34
+        -12.345.round(-1, mode: :to_negative).should eq -20
+        -12.345.round(0, mode: :to_negative).should eq -13
+        -12.345.round(1, mode: :to_negative).should eq -12.4
+        -12.345.round(2, mode: :to_negative).should eq -12.35
+      end
+
+      it "ties_away" do
+        13.825.round(-1, mode: :ties_away).should eq 10
+        13.825.round(0, mode: :ties_away).should eq 14
+        13.825.round(1, mode: :ties_away).should eq 13.8
+        13.825.round(2, mode: :ties_away).should eq 13.83
+        -13.825.round(-1, mode: :ties_away).should eq -10
+        -13.825.round(0, mode: :ties_away).should eq -14
+        -13.825.round(1, mode: :ties_away).should eq -13.8
+        -13.825.round(2, mode: :ties_away).should eq -13.83
+      end
+
+      it "ties_even" do
+        15.255.round(-1, mode: :ties_even).should eq 20
+        15.255.round(0, mode: :ties_even).should eq 15
+        15.255.round(1, mode: :ties_even).should eq 15.3
+        15.255.round(2, mode: :ties_even).should eq 15.26
+        -15.255.round(-1, mode: :ties_even).should eq -20
+        -15.255.round(0, mode: :ties_even).should eq -15
+        -15.255.round(1, mode: :ties_even).should eq -15.3
+        -15.255.round(2, mode: :ties_even).should eq -15.26
+      end
+    end
+
     describe "base" do
       it "2" do
         -1763.116.round(2, base: 2).should eq(-1763.0)

@@ -389,20 +389,36 @@ struct Number
     self.class.new((x / y).round * y)
   end
 
-  # Rounds this number to a given precision in decimal *digits*.
+  # Rounds this number to a given precision.
+  #
+  # Rounds to the specified number of *digits* after the decimal place,
+  # (or before if negative), in base *base*.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_AWAY` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded away from zero.
   #
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits : Number = 0, base = 10)
-    x = self.to_f
+  def round(digits : Number = 0, base = 10, mode : RoundingMode = :ties_away)
     if digits < 0
-      y = base.to_f ** digits.abs
-      self.class.new((x / y).round * y)
+      multiplier = base.to_f ** digits.abs
+      shifted = self / multiplier
     else
-      y = base.to_f ** digits
-      self.class.new((x * y).round / y)
+      multiplier = base.to_f ** digits
+      shifted = self * multiplier
     end
+
+    rounded = shifted.round(mode)
+
+    if digits < 0
+      result = rounded * multiplier
+    else
+      result = rounded / multiplier
+    end
+
+    self.class.new result
   end
 
   # Specifies rounding behaviour for numerical operations capable of discarding
