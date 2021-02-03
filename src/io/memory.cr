@@ -338,7 +338,7 @@ class IO::Memory < IO
   #
   # During the block duration `self` becomes read-only,
   # so multiple concurrent open are allowed.
-  def read_at(offset, bytesize)
+  def read_at(offset : Int64, bytesize : Int64, & : IO ->)
     unless 0 <= offset <= @bytesize
       raise ArgumentError.new("Offset out of bounds")
     end
