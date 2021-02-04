@@ -88,11 +88,6 @@ class HTTP::Request
     self.content_length = body.size
   end
 
-  def body=(body : IO::Memory)
-    @body = body
-    self.content_length = body.bytesize
-  end
-
   def body=(@body : IO)
   end
 
@@ -103,6 +98,9 @@ class HTTP::Request
   def to_io(io)
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
+    if body = @body.as?(IO::Memory) && !self.content_length
+      self.content_length = body.size - body.pos
+    end
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
     HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
   end
