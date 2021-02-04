@@ -88,6 +88,11 @@ class HTTP::Request
     self.content_length = body.size
   end
 
+  def body=(body : IO::Memory)
+    @body = body
+    self.content_length = body.bytesize
+  end
+
   def body=(@body : IO)
   end
 
