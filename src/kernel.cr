@@ -535,7 +535,7 @@ end
   end
 
   Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
+  Signal.setup_sigfault_handler
 {% end %}
 
 {% if !flag?(:win32) %}
