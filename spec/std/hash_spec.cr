@@ -22,9 +22,6 @@ private class HashWrapper(K, V)
   delegate each, to: @hash
 end
 
-private class HashSubclass(K, V) < Hash(K, V)
-end
-
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -442,20 +439,6 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
-
-    it "clones subclass" do
-      h1 = HashSubclass(Int32, Array(Int32)).new
-      h1[0] = [0]
-      h2 = h1.clone
-      h1.should_not be(h2)
-      h1.should eq(h2)
-      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
-
-      h1[0].should_not be(h2[0])
-
-      h1.delete(0)
-      h2[0].should eq([0])
-    end
   end
 
   describe "dup" do
@@ -494,20 +477,6 @@ describe "Hash" do
       1_000.times do |i|
         h1[i].should be(h2[i])
       end
-
-      h1.delete(0)
-      h2[0].should eq([0])
-    end
-
-    it "dups subclass" do
-      h1 = HashSubclass(Int32, Array(Int32)).new
-      h1[0] = [0]
-      h2 = h1.dup
-      h1.should_not be(h2)
-      h1.should eq(h2)
-      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
-
-      h1[0].should be(h2[0])
 
       h1.delete(0)
       h2[0].should eq([0])
@@ -1004,15 +973,15 @@ describe "Hash" do
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
-      end
+      end.should eq(:memo)
     end
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
-      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+      result = {} of Char => Symbol
+      hash.each_with_object(result) do |(k, v), memo|
         memo[v] = k
-      end
+      end.should be(result)
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end

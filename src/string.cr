@@ -208,10 +208,12 @@ class String
   # String.new(ptr, 2) # => "ab"
   # ```
   def self.new(chars : UInt8*, bytesize, size = 0)
-    raise ArgumentError.new("Cannot create a string with a null pointer") if chars.null?
-
     # Avoid allocating memory for the empty string
     return "" if bytesize == 0
+
+    if chars.null?
+      raise ArgumentError.new("Cannot create a string with a null pointer and a non-zero (#{bytesize}) bytesize")
+    end
 
     new(bytesize) do |buffer|
       buffer.copy_from(chars, bytesize)
@@ -760,7 +762,7 @@ class String
   # "hello"[6..7]   # raises IndexError
   # ```
   def [](range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]
+    self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
   # Like `#[Range]`, but returns `nil` if the range's start is out of bounds.
@@ -770,7 +772,7 @@ class String
   # "hello"[6..]?  # => nil
   # ```
   def []?(range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]?
+    self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns a substring starting from the *start* character of size *count*.
@@ -902,7 +904,7 @@ class String
   #
   # Raises `IndexError` if any index is outside the bounds of this string.
   def delete_at(range : Range)
-    delete_at(*Indexable.range_to_index_and_count(range, size))
+    delete_at(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
   # Returns a new string that results from deleting the character
@@ -2303,7 +2305,7 @@ class String
   end
 
   private def sub_range(range, replacement)
-    from, size = Indexable.range_to_index_and_count(range, self.size)
+    from, size = Indexable.range_to_index_and_count(range, self.size) || raise IndexError.new
 
     from_index = char_index_to_byte_index(from)
     raise IndexError.new unless from_index

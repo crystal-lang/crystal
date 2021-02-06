@@ -1180,7 +1180,7 @@ describe "File" do
     end
   end
 
-  describe "touch" do
+  describe ".touch" do
     it "creates file if it doesn't exist" do
       with_tempfile("touch-create.txt") do |path|
         File.exists?(path).should be_false
@@ -1212,6 +1212,36 @@ describe "File" do
       with_tempfile(File.join("nonexistent-dir", "touch.txt")) do |path|
         expect_raises(File::NotFoundError, "Error opening file with mode 'a': '#{path.inspect_unquoted}'") do
           File.touch(path)
+        end
+      end
+    end
+
+    describe "touches existing" do
+      it "file" do
+        with_tempfile("touch-file") do |path|
+          File.write(path, "")
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
+        end
+      end
+
+      it "directory" do
+        with_tempfile("touch-directory") do |path|
+          Dir.mkdir(path)
+
+          File.touch(path, Time.utc(2021, 1, 23))
+          info = File.info(path)
+          info.modification_time.should eq Time.utc(2021, 1, 23)
+
+          File.touch(path)
+          info = File.info(path)
+          info.modification_time.should be_close(Time.utc, 1.second)
         end
       end
     end

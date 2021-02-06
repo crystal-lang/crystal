@@ -317,6 +317,7 @@ class Crystal::Doc::Method
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
+      builder.field "args_html", args_to_html
       builder.field "location", location
       builder.field "def", self.def
     end

@@ -744,8 +744,7 @@ class Crystal::Call
     if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = Array(Var).new(inputs.size + 1)
-        i = 0
+        yield_types = Array(Type).new(inputs.size + 1)
         inputs.each do |input|
           if input.is_a?(Splat)
             tuple_type = lookup_node_type(match.context, input.exp)
@@ -754,17 +753,24 @@ class Crystal::Call
             end
             tuple_type.tuple_types.each do |arg_type|
               MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-              i += 1
+              yield_types << arg_type.virtual_type
             end
           else
             arg_type = lookup_node_type(match.context, input)
             MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-
-            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-            i += 1
+            yield_types << arg_type.virtual_type
           end
         end
+
+        if splat_index = block.splat_index
+          if yield_types.size < block.args.size - 1
+            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+          end
+          splat_range = (splat_index..splat_index - block.args.size)
+          yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
+        end
+
+        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
@@ -909,7 +915,7 @@ class Crystal::Call
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
           else
@@ -923,7 +929,7 @@ class Crystal::Call
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
-              rescue ex : Crystal::Exception
+              rescue ex : Crystal::CodeError
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
                 else
@@ -992,7 +998,7 @@ class Crystal::Call
   def bubbling_exception
     begin
       yield
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if obj = @obj
         if name == "initialize"
           # Avoid putting 'initialize' in the error trace
@@ -1058,7 +1064,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
+    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1068,10 +1074,19 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        owner = owner.as(ProcInstanceType)
-        proc_arg_type = owner.arg_types[index]
-        unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+        case body.as(Primitive).name
+        when "proc_call"
+          owner = owner.as(ProcInstanceType)
+          proc_arg_type = owner.arg_types[index]
+          unless type.covariant?(proc_arg_type)
+            self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          end
+        when "pointer_set"
+          owner = owner.remove_typedef.as(PointerInstanceType)
+          pointer_type = owner.var.type
+          unless type.filter_by(pointer_type)
+            self.args[index].raise "type must be #{pointer_type}, not #{type}"
+          end
         end
       end
 

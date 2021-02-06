@@ -201,57 +201,68 @@ struct Range(B, E)
     ReverseIterator.new(self)
   end
 
-  # Iterates over this range, passing each nth element to the block.
+  # Iterates from `begin` to `end` incrementing by the amount of *step* on each
+  # iteration.
   #
   # ```
-  # range = Xs.new(1)..Xs.new(10)
-  # range.step(2) { |x| puts x }
-  # puts
-  # range.step(3) { |x| puts x }
+  # ary = [] of Int32
+  # (1..4).step(by: 2) do |x|
+  #   ary << x
+  # end
+  # ary                                      # => [1, 3]
+  # (1..4).step(by: 2).to_a                  # => [1, 3]
+  # (1..4).step(by: 1).to_a                  # => [1, 2, 3, 4]
+  # (1..4).step(by: 1, exclusive: true).to_a # => [1, 2, 3]
   # ```
   #
-  # Produces:
+  # The implementation is based on `B#step` method if available. The interface
+  # is defined at `Number#step`.
+  # Otherwise `#succ` method is expected to be defined on `begin` and its
+  # successors and iteration is based on calling `#succ` sequentially
+  # (*step* times per iteration).
   #
-  # ```text
-  # 1 x
-  # 3 xxx
-  # 5 xxxxx
-  # 7 xxxxxxx
-  # 9 xxxxxxxxx
-  #
-  # 1 x
-  # 4 xxxx
-  # 7 xxxxxxx
-  # 10 xxxxxxxxxx
-  # ```
-  #
-  # See `Range`'s overview for the definition of `Xs`.
-  def step(by = 1)
+  # Raises `ArgumentError` if `begin` is `nil`.
+  def step(by = 1, &) : Nil
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    end_value = @end
-    while end_value.nil? || current < end_value
-      yield current
-      by.times { current = current.succ }
+    if current.responds_to?(:step)
+      current.step(to: @end, by: by, exclusive: @exclusive) do |x|
+        yield x
+      end
+    else
+      end_value = @end
+      while end_value.nil? || current < end_value
+        yield current
+        by.times do
+          current = current.succ
+          return if end_value && current > end_value
+        rescue exc : OverflowError
+          if current == end_value
+            return
+          else
+            raise exc
+          end
+        end
+      end
+      yield current if !@exclusive && current == @end
     end
-    yield current if !@exclusive && current == @end
-    self
   end
 
-  # Returns an `Iterator` that returns each nth element in this range.
-  #
-  # ```
-  # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
-  # ```
-  def step(by = 1)
-    if @begin.nil?
+  # :ditto:
+  def step(by = 1) : Iterator
+    start = @begin
+    if start.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    StepIterator(self, B, typeof(by)).new(self, by)
+    if start.responds_to?(:step)
+      start.step(to: @end, by: by, exclusive: @exclusive)
+    else
+      StepIterator(self, B, typeof(by)).new(self, by)
+    end
   end
 
   # Returns `true` if this range excludes the *end* element.
@@ -323,8 +334,8 @@ struct Range(B, E)
     to_s(io)
   end
 
-  # If `self` is a `Int` range, it provides O(1) implementation,
-  # otherwise it is same as `Enumerable#sum`.
+  # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
+  # an `Int` range.
   def sum(initial)
     b = self.begin
     e = self.end
@@ -339,6 +350,54 @@ struct Range(B, E)
       end
     else
       super
+    end
+  end
+
+  # Optimized version of `Enumerable#sample` that runs in O(1) time when `self`
+  # is an `Int` or `Float` range. In these cases, this range is considered to be
+  # a distribution of numeric values rather than a collection of elements, and
+  # the method simply calls `random.rand(self)`.
+  #
+  # Raises `ArgumentError` if `self` is an open range.
+  def sample(random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    {% if B < Int && E < Int %}
+      random.rand(self)
+    {% elsif B < Float && E < Float %}
+      random.rand(self)
+    {% elsif B.nilable? || E.nilable? %}
+      b = self.begin
+      e = self.end
+
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't sample an open range")
+      end
+
+      Range.new(b, e, @exclusive).sample(random)
+    {% else %}
+      super
+    {% end %}
+  end
+
+  # :nodoc:
+  def sample(n : Int, random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    if self.begin.nil? || self.end.nil?
+      raise ArgumentError.new("Can't sample an open range")
+    end
+
+    return super unless n == 1
+
+    if empty?
+      [] of B
+    else
+      [sample(random)]
     end
   end
 
@@ -445,6 +504,7 @@ struct Range(B, E)
     @step : N
     @current : B
     @reached_end : Bool
+    @at_start = true
 
     def initialize(@range, @step, @current = range.begin, @reached_end = false)
     end
@@ -454,23 +514,43 @@ struct Range(B, E)
 
       end_value = @range.end
 
+      if @at_start
+        @at_start = false
+
+        if end_value
+          if @current > end_value || (@current == end_value && @range.exclusive?)
+            @reached_end = true
+            return stop
+          end
+        end
+
+        return @current
+      end
+
       if end_value.nil? || @current < end_value
-        value = @current
-        @step.times { @current = @current.succ }
-        value
+        @step.times do
+          if end_value && @current >= end_value
+            @reached_end = true
+            return stop
+          end
+
+          @current = @current.succ
+        end
+
+        if @current == end_value && @range.exclusive?
+          @reached_end = true
+          stop
+        else
+          @current
+        end
       else
         @reached_end = true
-
-        if !@range.excludes_end? && @current == @range.end
-          @current
-        else
-          stop
-        end
+        stop
       end
     end
 
     def sum(initial)
-      super if @reached_end
+      return super if @reached_end
 
       b = @current
       e = @range.end

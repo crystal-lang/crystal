@@ -17,8 +17,8 @@
 # s1 == s3 # => true
 # s1.add(2)
 # s1.concat([6, 8])
-# s1.subset? s2 # => false
-# s2.subset? s1 # => true
+# s1.subset_of? s2 # => false
+# s2.subset_of? s1 # => true
 # ```
 struct Set(T)
   include Enumerable(T)
@@ -240,6 +240,13 @@ struct Set(T)
     self | other
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty set.
+  def self.additive_identity : self
+    new
+  end
+
   # Difference: returns a new set containing elements in this set that are not
   # present in the other.
   #
@@ -418,9 +425,14 @@ struct Set(T)
   # Set{1, 5}.subset? Set{1, 3, 5}    # => true
   # Set{1, 3, 5}.subset? Set{1, 3, 5} # => true
   # ```
-  def subset?(other : Set)
+  def subset_of?(other : Set)
     return false if other.size < size
     all? { |value| other.includes?(value) }
+  end
+
+  @[Deprecated("Use #subset_of? instead.")]
+  def subset?(other : Set)
+    subset_of?(other)
   end
 
   # Returns `true` if the set is a proper subset of the *other* set.
@@ -432,9 +444,14 @@ struct Set(T)
   # Set{1, 5}.proper_subset? Set{1, 3, 5}    # => true
   # Set{1, 3, 5}.proper_subset? Set{1, 3, 5} # => false
   # ```
-  def proper_subset?(other : Set)
+  def proper_subset_of?(other : Set)
     return false if other.size <= size
     all? { |value| other.includes?(value) }
+  end
+
+  @[Deprecated("Use #proper_subset_of? instead.")]
+  def proper_subset?(other : Set)
+    proper_subset_of?(other)
   end
 
   # Returns `true` if the set is a superset of the *other* set.
@@ -446,8 +463,13 @@ struct Set(T)
   # Set{1, 3, 5}.superset? Set{1, 5}    # => true
   # Set{1, 3, 5}.superset? Set{1, 3, 5} # => true
   # ```
+  def superset_of?(other : Set)
+    other.subset_of?(self)
+  end
+
+  @[Deprecated("Use #superset_of? instead.")]
   def superset?(other : Set)
-    other.subset?(self)
+    superset_of?(other)
   end
 
   # Returns `true` if the set is a superset of the *other* set.
@@ -459,8 +481,13 @@ struct Set(T)
   # Set{1, 3, 5}.proper_superset? Set{1, 5}    # => true
   # Set{1, 3, 5}.proper_superset? Set{1, 3, 5} # => false
   # ```
+  def proper_superset_of?(other : Set)
+    other.proper_subset_of?(self)
+  end
+
+  @[Deprecated("Use #proper_superset_of? instead.")]
   def proper_superset?(other : Set)
-    other.proper_subset?(self)
+    proper_superset_of?(other)
   end
 
   # :nodoc:

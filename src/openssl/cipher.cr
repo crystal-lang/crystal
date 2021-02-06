@@ -101,7 +101,7 @@ class OpenSSL::Cipher
 
   def finalize
     LibCrypto.evp_cipher_ctx_free(@ctx) if @ctx
-    @ctx = nil
+    @ctx = typeof(@ctx).null
   end
 
   def authenticated?

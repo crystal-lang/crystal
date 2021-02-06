@@ -1294,7 +1294,7 @@ module Crystal
       named_args = nil
 
       if @token.type == :"("
-        open("attribute") do
+        open("annotation") do
           next_token_skip_space_or_newline
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
@@ -1756,6 +1756,15 @@ module Crystal
       end
 
       exps = [] of ASTNode
+
+      # do...end in parenthesis should not stop because there's no call further
+      # left to bind to:
+      #
+      # ```
+      # (foo do
+      # end)
+      # ```
+      @stop_on_do = false
 
       while true
         exps << parse_expression
@@ -2761,11 +2770,11 @@ module Crystal
     end
 
     def when_expression_end
+      slash_is_regex!
       if @token.keyword?(:then)
         next_token_skip_space_or_newline
         return true
       else
-        slash_is_regex!
         case @token.type
         when :","
           next_token_skip_space_or_newline
@@ -2962,12 +2971,21 @@ module Crystal
 
       name_location = @token.location
 
-      if @token.type == :IDENT
+      case @token.type
+      when :CONST
+        raise "macro can't have a receiver"
+      when :IDENT
         check_valid_def_name
+        next_token
+        if @token.type == :"="
+          name += '='
+          next_token
+        end
+        skip_space
       else
         check_valid_def_op_name
+        next_token_skip_space
       end
-      next_token_skip_space
 
       args = [] of Arg
 
@@ -3024,8 +3042,12 @@ module Crystal
         else
           unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
+      when :";", :"NEWLINE"
+        # Skip
+      when :"."
+        raise "macro can't have a receiver"
       else
-        # keep going
+        unexpected_token
       end
 
       end_location = nil
@@ -5640,10 +5662,16 @@ module Crystal
       check :","
 
       next_token_skip_space_or_newline
-      check :INSTANCE_VAR
-
-      ivar_location = @token.location
-      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
+      offset = case @token.type
+               when :INSTANCE_VAR
+                 InstanceVar.new(@token.value.to_s)
+               when :NUMBER
+                 raise "expecting an integer offset, not '#{@token}'", @token if @token.number_kind != :i32
+                 NumberLiteral.new(@token.value.to_s, @token.number_kind)
+               else
+                 raise "expecting an instance variable or a integer offset, not '#{@token}'", @token
+               end
+      offset.at(@token.location)
 
       next_token_skip_space_or_newline
 
@@ -5651,7 +5679,7 @@ module Crystal
       check :")"
       next_token_skip_space
 
-      OffsetOf.new(type, instance_var).at_end(end_location)
+      OffsetOf.new(type, offset).at_end(end_location)
     end
 
     def parse_type_def

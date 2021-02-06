@@ -455,7 +455,7 @@ describe "Codegen: is_a?" do
       )).to_b.should be_true
   end
 
-  it "works with inherited generic class against an instantiation (2)" do
+  it "doesn't work with inherited generic class against an instantiation (2)" do
     run(%(
       class Class1
       end
@@ -471,7 +471,7 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Class1))
-      )).to_b.should be_true
+      )).to_b.should be_false
   end
 
   it "works with inherited generic class against an instantiation (3)" do
@@ -726,5 +726,21 @@ describe "Codegen: is_a?" do
     run("
       Class.is_a?(Class.class.class)
     ").to_b.should be_true
+  end
+
+  it "passes is_a? with generic module type on virtual type (#10302)" do
+    run(%(
+      module Mod(T)
+      end
+
+      abstract struct Sup
+        include Mod(Sup)
+      end
+
+      struct Sub < Sup
+      end
+
+      Sub.new.is_a?(Mod(Sup))
+      )).to_b.should be_true
   end
 end

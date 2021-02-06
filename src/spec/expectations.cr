@@ -431,20 +431,22 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) : T forall T
+    def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
     # Validates an expectation and fails the example if it does not match.
     #
     # See `Spec::Expectations` for available expectations.
-    def should(expectation, file = __FILE__, line = __LINE__)
+    def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       unless expectation.match self
-        fail(expectation.failure_message(self), file, line)
+        failure_message ||= expectation.failure_message(self)
+        fail(failure_message, file, line)
       end
     end
 
@@ -461,9 +463,10 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeAExpectation(T), file = __FILE__, line = __LINE__) forall T
+    def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.is_a?(T) ? (raise "Bug: expected #{self} not to be a #{T}") : self
       end
@@ -481,9 +484,10 @@ module Spec
     # ```
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation : BeNilExpectation, file = __FILE__, line = __LINE__)
+    def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       else
         self.not_nil!
       end
@@ -492,10 +496,21 @@ module Spec
     # Validates an expectation and fails the example if it matches.
     #
     # See `Spec::Expectations` for available expectations.
-    def should_not(expectation, file = __FILE__, line = __LINE__)
+    def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message(self), file, line)
+        failure_message ||= expectation.negative_failure_message(self)
+        fail(failure_message, file, line)
       end
+    end
+
+    @[Deprecated("Use named arguments `.should(expectation, file: file, line: line)`")]
+    def should(expectation, _file, _line)
+      should(expectation, file: _file, line: _line)
+    end
+
+    @[Deprecated("Use named arguments `.should_not(expectation, file: file, line: line)`")]
+    def should_not(expectation, _file, _line)
+      should_not(expectation, file: _file, line: _line)
     end
   end
 end

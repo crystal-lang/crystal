@@ -63,14 +63,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
       if type_vars = node.type_vars
         if type.is_a?(GenericType)
-          type_type_vars = type.type_vars
-          if type_vars != type_type_vars
-            if type_type_vars.size == 1
-              node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
-            else
-              node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
-            end
-          end
+          check_reopened_generic(type, node, type_vars)
         else
           node.raise "#{name} is not a generic #{type.type_desc}"
         end
@@ -116,7 +109,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
-        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+        node_superclass.raise "generic type arguments must be specified when inheriting #{superclass}"
       when NonGenericClassType, GenericClassInstanceType
         if superclass == @program.enum
           node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
@@ -220,6 +213,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.raise "#{type} is not a module, it's a #{type.type_desc}"
       end
 
+      if type_vars = node.type_vars
+        if type.is_a?(GenericType)
+          check_reopened_generic(type, node, type_vars)
+        else
+          node.raise "#{name} is not a generic module"
+        end
+      end
+
       type = type.as(ModuleType)
     else
       if type_vars = node.type_vars
@@ -246,6 +247,29 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     false
+  end
+
+  private def check_reopened_generic(generic, node, new_type_vars)
+    generic_type_vars = generic.type_vars
+    if new_type_vars != generic_type_vars || node.splat_index != generic.splat_index
+      msg = String.build do |io|
+        io << "type var"
+        io << 's' if generic_type_vars.size > 1
+        io << " must be "
+        generic_type_vars.each_with_index do |var, i|
+          io << ", " if i > 0
+          io << '*' if i == generic.splat_index
+          var.to_s(io)
+        end
+        io << ", not "
+        new_type_vars.each_with_index do |var, i|
+          io << ", " if i > 0
+          io << '*' if i == node.splat_index
+          var.to_s(io)
+        end
+      end
+      node.raise msg
+    end
   end
 
   def visit(node : AnnotationDef)
@@ -313,7 +337,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     target = current_type.metaclass.as(ModuleType)
     begin
       target.add_macro node
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       node.raise ex.message
     end
 
@@ -980,7 +1004,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type = lookup_type(node_name)
     case type
     when GenericModuleType
-      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+      node.raise "generic type arguments must be specified when including #{type}"
     when .module?
       # OK
     else

@@ -86,10 +86,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     node.raise "#{message}\n\n#{notes.join("\n")}"
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     node.raise "while requiring \"#{node.string}\"", ex
   rescue ex
-    raise ::Exception.new("while requiring \"#{node.string}\"", ex)
+    raise Error.new("while requiring \"#{node.string}\"", ex)
   end
 
   def visit(node : ClassDef)
@@ -439,7 +439,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     yield
   rescue ex : MacroRaiseException
     node.raise ex.message, exception_type: MacroRaiseException
-  rescue ex : Crystal::Exception
+  rescue ex : Crystal::CodeError
     node.raise "expanding macro", ex
   end
 
@@ -507,10 +507,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
         msg << " (did you mean LibC::Float?)" if type == @program.float
       end
       node.raise msg
-    end
-
-    if type.is_a?(TypeDefType) && type.typedef.proc?
-      type = type.typedef
     end
 
     type

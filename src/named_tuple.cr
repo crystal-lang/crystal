@@ -35,7 +35,25 @@ struct NamedTuple
   # {}             # syntax error
   # ```
   def self.new(**options : **T)
-    options
+    {% if @type.name(generic_args: false) == "NamedTuple" %}
+      # deduced type vars
+      options
+    {% elsif @type.name(generic_args: false) == "NamedTuple()" %}
+      # special case: empty named tuple
+      options
+    {% else %}
+      # explicitly provided type vars
+      {% begin %}
+        {
+          {% for key in T %}
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ key.symbolize }}]
+            end)),
+          {% end %}
+        }
+      {% end %}
+    {% end %}
   end
 
   # Creates a named tuple from the given hash, with elements casted to the given types.

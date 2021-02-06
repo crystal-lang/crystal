@@ -19,6 +19,14 @@ end
 
 # :nodoc:
 struct Exception::CallStack
+  # Compute current directory at the beginning so filenames
+  # are always shown relative to the *starting* working directory.
+  CURRENT_DIR = begin
+    dir = Process::INITIAL_PWD
+    dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
+    dir
+  end
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -167,7 +175,7 @@ struct Exception::CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = Path.new(file).relative_to(Process::INITIAL_PWD)
+        file = file.lchop(CURRENT_DIR)
 
         file_line_column = "#{file}:#{line}:#{column}"
       end

@@ -182,6 +182,8 @@ describe "String" do
     it "gets with range" do
       "hello"[1..2]?.should eq "el"
       "hello"[6..-1]?.should be_nil
+      "hello"[-6..-1]?.should be_nil
+      "hello"[-6..]?.should be_nil
     end
 
     it "gets with start and count" do
@@ -1896,15 +1898,19 @@ describe "String" do
     end
 
     it "raises when creating from a null pointer with a nonzero size" do
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, "Cannot create a string with a null pointer and a non-zero (3) bytesize" do
         String.new(Pointer(UInt8).null, 3)
       end
     end
 
-    it "raises when creating from a null pointer with size 0" do
-      expect_raises ArgumentError do
-        String.new(Pointer(UInt8).null, 0).should eq ""
-      end
+    it "doesn't raise creating from a null pointer with size 0" do
+      String.new(Pointer(UInt8).null, 0).should eq ""
+    end
+  end
+
+  describe "creating from a slice" do
+    it "allows creating from an empty slice" do
+      String.new(Bytes.empty).should eq("")
     end
   end
 
