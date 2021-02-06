@@ -45,12 +45,14 @@ module Crystal
         ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
         buffer = Call.new(ary_var, "to_unsafe")
+        buffer_var = new_temp_var.at(node)
 
-        exps = Array(ASTNode).new(node.elements.size + 2)
+        exps = Array(ASTNode).new(node.elements.size + 3)
         exps << Assign.new(ary_var, ary_instance).at(node)
+        exps << Assign.new(buffer_var, buffer).at(node)
 
         node.elements.each_with_index do |elem, i|
-          exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
         end
 
         exps << ary_var.clone
