@@ -204,7 +204,7 @@ struct Tuple
   # tuple[i..2] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
   #
   # i = 0..2
-  # tuple[i]    # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  # tuple[i] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
   # ```
   def [](range : Range)
     {% raise "Tuple#[](Range) can only be called with range literals known at compile-time" %}
