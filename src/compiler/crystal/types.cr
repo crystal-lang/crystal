@@ -2332,12 +2332,12 @@ module Crystal
     end
 
     def tuple_indexer(index)
-      indexers = @tuple_indexers ||= {} of Int32 => Def
+      indexers = @tuple_indexers ||= {} of (Int32 | Range(Int32, Int32)) => Def
       tuple_indexer(indexers, index)
     end
 
     def tuple_metaclass_indexer(index)
-      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      indexers = @tuple_metaclass_indexers ||= {} of (Int32 | Range(Int32, Int32)) => Def
       tuple_indexer(indexers, index)
     end
 
