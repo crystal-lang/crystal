@@ -112,7 +112,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       arg_type = lookup_type(restriction)
       arg_type = check_allowed_in_lib(restriction, arg_type)
       if arg_type.remove_typedef.void?
-        restriction.raise "can't use Void as argument type"
+        restriction.raise "can't use Void as parameter type"
       end
       external.args << Arg.new(arg.name, type: arg_type).at(arg.location)
     end

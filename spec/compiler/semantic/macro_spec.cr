@@ -359,7 +359,7 @@ describe "Semantic: macro" do
 
       foo y: 2
       ),
-      "no argument named 'y'"
+      "no parameter named 'y'"
   end
 
   it "errors if named arg already specified" do
@@ -370,7 +370,7 @@ describe "Semantic: macro" do
 
       foo 2, x: 2
       ),
-      "argument 'x' already specified"
+      "argument for parameter 'x' already specified"
   end
 
   it "finds macro in included module" do
@@ -770,17 +770,17 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
-  it "errors if named arg matches single splat argument" do
+  it "errors if named arg matches single splat parameter" do
     assert_error %(
       macro foo(*y)
       end
 
       foo x: 1, y: 2
       ),
-      "no argument named 'x'"
+      "no parameter named 'x'"
   end
 
-  it "errors if named arg matches splat argument" do
+  it "errors if named arg matches splat parameter" do
     assert_error %(
       macro foo(x, *y)
       end
@@ -830,7 +830,7 @@ describe "Semantic: macro" do
       "missing arguments: x, z"
   end
 
-  it "doesn't include arguments with default values in missing arguments error" do
+  it "doesn't include parameters with default values in missing arguments error" do
     assert_error %(
 
       macro foo(x, z, y = 1)

@@ -729,7 +729,7 @@ describe "Semantic: initialize" do
 
       Foo.new(x: 1)
       ),
-      "no argument named 'x'"
+      "no parameter named 'x'"
   end
 
   it "doesn't type ivar as nilable if super call present and parent has already typed ivar (#4764)" do

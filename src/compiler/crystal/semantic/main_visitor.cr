@@ -1191,7 +1191,7 @@ module Crystal
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
-          arg.raise "function argument '#{arg.name}' must have a type"
+          arg.raise "parameter '#{arg.name}' of Proc literal must have a type"
         end
 
         fun_var = MetaVar.new(arg.name, arg.type)
@@ -1594,7 +1594,7 @@ module Crystal
       end
 
       if block.args.size > proc_type.arg_types.size
-        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
+        node.wrong_number_of "block parameters", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
       end
 
       # We create a ->(...) { } from the block
