@@ -790,17 +790,16 @@ class Crystal::Call
       output_type = program.nil if output_type.void?
     end
 
-    auto_unpack_needed = false
-
     if yield_vars
       # Check if tuple unpacking is needed
-      if auto_unpack_needed = (
-           yield_vars.size == 1 &&
-           (yield_var_type = yield_vars.first.type.as?(TupleInstanceType)) &&
-           block.args.size > 1 &&
-           !block.splat_index
-         )
-        yield_var_type.tuple_types.each_with_index do |tuple_type, i|
+      yield_var_type = yield_vars.first.type.as?(TupleInstanceType)
+      auto_unpack_needed = yield_vars.size == 1 &&
+                           yield_var_type &&
+                           block.args.size > 1 &&
+                           !block.splat_index
+
+      if auto_unpack_needed
+        yield_var_type.not_nil!.tuple_types.each_with_index do |tuple_type, i|
           arg = block.args[i]?
           arg.type = tuple_type if arg
         end
@@ -852,7 +851,7 @@ class Crystal::Call
           if auto_unpack_needed
             yield_var_type = yield_var_type.not_nil!
             if block.args.size > yield_var_type.tuple_types.size
-              block.raise "too many block arguments (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
+              block.raise "too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
             end
 
             unpack_exps = [] of ASTNode
@@ -882,7 +881,7 @@ class Crystal::Call
             a_def.captured_block = true
           else
             if block.args.size > fun_args.size
-              wrong_number_of "block arguments", block.args.size, fun_args.size
+              wrong_number_of "block parameters", block.args.size, fun_args.size
             end
 
             a_def = Def.new("->", fun_args, block.body).at(block)
