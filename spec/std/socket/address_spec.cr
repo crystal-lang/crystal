@@ -128,6 +128,18 @@ describe Socket::IPAddress do
     Socket::IPAddress.valid_port?(65_536).should be_false
   end
 
+  it "#private?" do
+    Socket::IPAddress.new("192.168.0.1", 0).private?.should be_true
+    Socket::IPAddress.new("192.100.0.1", 0).private?.should be_false
+    Socket::IPAddress.new("172.16.0.1", 0).private?.should be_true
+    Socket::IPAddress.new("172.10.0.1", 0).private?.should be_false
+    Socket::IPAddress.new("10.0.0.1", 0).private?.should be_true
+    Socket::IPAddress.new("1.1.1.1", 0).private?.should be_false
+    Socket::IPAddress.new("fd00::1", 0).private?.should be_true
+    Socket::IPAddress.new("fb00::1", 0).private?.should be_false
+    Socket::IPAddress.new("2001:4860:4860::8888", 0).private?.should be_false
+  end
+
   it "#==" do
     Socket::IPAddress.new("127.0.0.1", 8080).should eq Socket::IPAddress.new("127.0.0.1", 8080)
     Socket::IPAddress.new("127.0.0.1", 8080).hash.should eq Socket::IPAddress.new("127.0.0.1", 8080).hash

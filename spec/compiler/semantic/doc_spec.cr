@@ -107,7 +107,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       class Foo
         # Hello
@@ -122,7 +122,7 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
-  it "stores doc for def with attribute" do
+  it "stores doc for def with annotation" do
     result = semantic %(
       # Hello
       @[AlwaysInline]
@@ -238,8 +238,9 @@ describe "Semantic: doc" do
       end
     ), wants_doc: true
     program = result.program
+    ann = program.types["Flags"]
     foo = program.types["Foo"]
-    foo.has_attribute?("Flags").should be_true
+    foo.annotation(ann).should_not be_nil
     foo.doc.should eq("Hello")
     foo.locations.not_nil!.size.should eq(1)
   end

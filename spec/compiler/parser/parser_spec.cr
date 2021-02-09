@@ -925,16 +925,18 @@ module Crystal
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
 
-    assert_syntax_error "macro foo=;end", "macro can't be a setter"
+    it_parses "macro foo=;end", Macro.new("foo=", body: Expressions.new)
     assert_syntax_error "macro Foo;end", "macro can't have a receiver"
     assert_syntax_error "macro foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro Foo.bar;end", "macro can't have a receiver"
     assert_syntax_error "macro foo&&;end"
     assert_syntax_error "macro foo"
 
-    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "!", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
-      assert_syntax_error "macro #{op};end", "invalid macro name"
+    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
+      it_parses "macro #{op};end", Macro.new(op, body: Expressions.new)
     end
+
+    assert_syntax_error "macro !;end", "'!' is a pseudo-method and can't be redefined"
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
@@ -971,6 +973,9 @@ module Crystal
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
     it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
+    it_parses "offsetof(X, 1)", OffsetOf.new("X".path, 1.int32)
+    assert_syntax_error "offsetof(X, 1.0)", "expecting an integer offset, not '1.0'"
+    assert_syntax_error "offsetof(X, 'c')", "expecting an instance variable or a integer offset, not 'c'"
 
     it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
     it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode))
@@ -1167,6 +1172,8 @@ module Crystal
     assert_syntax_error "case 1\nin Int32; 2; else", "exhaustive case (case ... in) doesn't allow an 'else'"
     assert_syntax_error "case 1\nin 1; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
     assert_syntax_error "case 1\nin _;", "'when _' is not supported"
+
+    it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
     it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
     it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
@@ -1889,6 +1896,7 @@ module Crystal
       assert_end_location "pointerof(@foo)"
       assert_end_location "sizeof(Foo)"
       assert_end_location "offsetof(Foo, @a)"
+      assert_end_location "offsetof({X, Y}, 1)"
       assert_end_location "typeof(1)"
       assert_end_location "1 if 2"
       assert_end_location "while 1; end"

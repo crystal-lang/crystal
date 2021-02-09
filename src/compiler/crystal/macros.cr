@@ -1257,8 +1257,8 @@ module Crystal::Macros
     def type : ASTNode
     end
 
-    # Returns the instance variable used in this `offsetof` expression.
-    def instance_var : ASTNode
+    # Returns the offset argument used in this `offsetof` expression.
+    def offset : ASTNode
     end
   end
 
@@ -1579,9 +1579,6 @@ module Crystal::Macros
   end
 
   # class TypeOf < ASTNode
-  # end
-
-  # class Attribute < ASTNode
   # end
 
   # A macro expression,
@@ -1925,6 +1922,7 @@ module Crystal::Macros
     # Returns `true` if this type has an attribute. For example `@[Flags]`
     # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
     # in these cases).
+    @[Deprecated("Use #annotation instead")]
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 

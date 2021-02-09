@@ -334,6 +334,13 @@ class Array(T)
     end
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty array.
+  def self.additive_identity : self
+    self.new
+  end
+
   # Difference. Returns a new `Array` that is a copy of `self`, removing any items
   # that appear in *other*. The order of `self` is preserved.
   #

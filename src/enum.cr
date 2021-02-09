@@ -26,7 +26,7 @@
 #
 # ### Flags enum
 #
-# An enum can be marked with the `@[Flags]` attribute. This changes the default values:
+# An enum can be marked with the `@[Flags]` annotation. This changes the default values:
 #
 # ```
 # @[Flags]
@@ -98,7 +98,7 @@ struct Enum
   #
   # See also: `to_s`.
   def to_s(io : IO) : Nil
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
       else
@@ -136,7 +136,7 @@ struct Enum
   # Color.new(10).to_s # => "10"
   # ```
   def to_s : String
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
       # Can't use `case` here because case with duplicate values do
@@ -304,7 +304,7 @@ struct Enum
   # end
   # ```
   def each
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" %}
@@ -324,7 +324,7 @@ struct Enum
   # Color.names # => ["Red", "Green", "Blue"]
   # ```
   def self.names : Array(String)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
       {{ @type.constants.map &.stringify }}
@@ -337,7 +337,7 @@ struct Enum
   # Color.values # => [Color::Red, Color::Green, Color::Blue]
   # ```
   def self.values : Array(self)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
       {{ @type.constants.map { |e| "#{@type}::#{e.id}".id } }}
@@ -354,10 +354,10 @@ struct Enum
   # Color.from_value?(3) # => nil
   # ```
   def self.from_value?(value : Int) : self?
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       all_mask = {{@type}}::All.value
       return if all_mask & value != value
-      return new(value.to_i)
+      return new(all_mask.class.new(value))
     {% else %}
       {% for member in @type.constants %}
         return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value
@@ -470,7 +470,7 @@ struct Enum
   # ```
   def self.each
     {% for member in @type.constants %}
-      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
+      {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
         yield new({{@type.constant(member)}}), {{@type.constant(member)}}
       {% end %}
     {% end %}

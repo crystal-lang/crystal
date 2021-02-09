@@ -129,6 +129,7 @@ Dump LLVM assembly file to output directory.
 Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
 .It Fl -mcpu Ar CPU
 Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation. For a list of available CPUs, invoke "llvm-as < /dev/null | llc -march=xyz -mcpu=help".
+Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
 .It Fl -mcmodel default|kernel|small|medium|large

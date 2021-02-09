@@ -144,6 +144,43 @@ class URI
 
     def_equals_and_hash @raw_params
 
+    # Returns a copy of this `URI::Params` instance.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # original = URI::Params{"name" => "Jamie"}
+    # updated = original.dup
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    #
+    # Identical to `#clone`.
+    def dup : self
+      # Since the component types (keys and values) are immutable, there's no
+      # difference between deep and shallow copy, so we can just use `clone`
+      # here.
+      clone
+    end
+
+    # Returns a copy of this `URI::Params` instance.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # original = URI::Params{"name" => "Jamie"}
+    # updated = original.clone
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    #
+    # Identical to `#dup`.
+    def clone : self
+      self.class.new(raw_params.clone)
+    end
+
     # Returns first value for specified param name.
     #
     # ```

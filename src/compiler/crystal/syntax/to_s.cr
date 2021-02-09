@@ -1284,7 +1284,7 @@ module Crystal
       @str << '('
       node.offsetof_type.accept(self)
       @str << ", "
-      node.instance_var.accept(self)
+      node.offset.accept(self)
       @str << ')'
       false
     end

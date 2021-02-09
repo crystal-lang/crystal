@@ -31,45 +31,47 @@ module OpenSSL::SSL::HostnameValidation
     san_names = LibCrypto.x509_get_ext_d2i(server_cert, LibCrypto::NID_subject_alt_name, nil, nil)
     return Result::NoSANPresent if san_names.null?
 
-    LibCrypto.sk_num(san_names).times do |i|
-      current_name = LibCrypto.sk_value(san_names, i).as(LibCrypto::GENERAL_NAME*).value
+    begin
+      LibCrypto.sk_num(san_names).times do |i|
+        current_name = LibCrypto.sk_value(san_names, i).as(LibCrypto::GENERAL_NAME*).value
 
-      case current_name.type
-      when LibCrypto::GEN_DNS
-        dns_name = LibCrypto.asn1_string_data(current_name.value)
-        dns_name_len = LibCrypto.asn1_string_length(current_name.value)
-        return Result::MalformedCertificate if dns_name_len != LibC.strlen(dns_name)
+        case current_name.type
+        when LibCrypto::GEN_DNS
+          dns_name = LibCrypto.asn1_string_data(current_name.value)
+          dns_name_len = LibCrypto.asn1_string_length(current_name.value)
+          return Result::MalformedCertificate if dns_name_len != LibC.strlen(dns_name)
 
-        pattern = String.new(dns_name, dns_name_len)
-        return Result::MatchFound if matches_hostname?(pattern, hostname)
-      when LibCrypto::GEN_IPADD
-        data = LibCrypto.asn1_string_data(current_name.value)
-        len = LibCrypto.asn1_string_length(current_name.value)
+          pattern = String.new(dns_name, dns_name_len)
+          return Result::MatchFound if matches_hostname?(pattern, hostname)
+        when LibCrypto::GEN_IPADD
+          data = LibCrypto.asn1_string_data(current_name.value)
+          len = LibCrypto.asn1_string_length(current_name.value)
 
-        case len
-        when 4
-          addr = uninitialized LibC::InAddr
-          if LibC.inet_pton(LibC::AF_INET, hostname, pointerof(addr).as(Void*)) > 0
-            return Result::MatchFound if addr == data.as(LibC::InAddr*).value
-          end
-        when 16
-          addr6 = uninitialized LibC::In6Addr
-          if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
-            return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
+          case len
+          when 4
+            addr = uninitialized LibC::InAddr
+            if LibC.inet_pton(LibC::AF_INET, hostname, pointerof(addr).as(Void*)) > 0
+              return Result::MatchFound if addr == data.as(LibC::InAddr*).value
+            end
+          when 16
+            addr6 = uninitialized LibC::In6Addr
+            if LibC.inet_pton(LibC::AF_INET6, hostname, pointerof(addr6).as(Void*)) > 0
+              return Result::MatchFound if addr6.unsafe_as(StaticArray(UInt32, 4)) == data.as(StaticArray(UInt32, 4)*).value
+            end
+          else
+            # not a length we expect
           end
         else
-          # not a length we expect
+          # not a type we expect
         end
-      else
-        # not a type we expect
       end
-    end
 
-    Result::MatchNotFound
-  ensure
-    LibCrypto.sk_pop_free(san_names, ->(ptr : Void*) {
-      LibCrypto.sk_free(ptr)
-    })
+      Result::MatchNotFound
+    ensure
+      LibCrypto.sk_pop_free(san_names, ->(ptr : Void*) {
+        LibCrypto.sk_free(ptr)
+      })
+    end
   end
 
   # Matches hostname from Common Name (CN) entry of certificate. Should only be

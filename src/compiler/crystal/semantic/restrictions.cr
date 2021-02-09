@@ -461,6 +461,16 @@ module Crystal
     end
 
     def restrict(other : Union, context)
+      # Match all concrete types first
+      free_var_count = other.types.count do |other_type|
+        other_type.is_a?(Path) &&
+          other_type.names.size == 1 &&
+          context.has_def_free_var?(other_type.names.first)
+      end
+      if free_var_count > 1
+        other.raise "can't specify more than one free var in union restriction"
+      end
+
       types = other.types.compact_map do |ident|
         restrict(ident, context).as(Type?)
       end
@@ -623,9 +633,19 @@ module Crystal
     end
 
     def restrict(other : Union, context)
+      # Match all concrete types first
+      free_vars, other_types = other.types.partition do |other_type|
+        other_type.is_a?(Path) &&
+          other_type.names.size == 1 &&
+          context.has_def_free_var?(other_type.names.first)
+      end
+      if free_vars.size > 1
+        other.raise "can't specify more than one free var in union restriction"
+      end
+
       types = [] of Type
       discarded = [] of Type
-      other.types.each do |other_type|
+      other_types.each do |other_type|
         self.union_types.each do |type|
           next if discarded.includes?(type)
 
@@ -633,6 +653,23 @@ module Crystal
           if restricted
             types << restricted
             discarded << type
+          end
+        end
+      end
+
+      # If there is a free var, we match it last and it'll be the union of the
+      # remaining types in self
+      if free_var = free_vars.first?
+        # If we restrict `T` against `T | U forall U`, then `U` can be any type;
+        # the smallest type satisfying the restriction is Union() or NoReturn,
+        # but we don't want that, so we make this a substitution failure.
+        if discarded.size == self.union_types
+          return nil
+        end
+
+        if remaining_type = program.type_merge_union_of(self.union_types - discarded)
+          if restricted = remaining_type.restrict(free_var, context)
+            types << restricted
           end
         end
       end
@@ -677,7 +714,7 @@ module Crystal
         other_type_var = other.type_vars[name]
         if type_var.is_a?(Var) && other_type_var.is_a?(Var)
           restricted = if strict
-                         type_var.type == other_type_var.type
+                         type_var.type.devirtualize == other_type_var.type.devirtualize
                        else
                          type_var.type.implements?(other_type_var.type)
                        end

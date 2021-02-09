@@ -14,6 +14,7 @@ struct XML::Attributes
   end
 
   def [](index : Int)
+    # TODO: Optimize to avoid double iteration
     size = self.size
 
     index += size if index < 0

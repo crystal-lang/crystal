@@ -769,7 +769,7 @@ module Crystal
           # OK
         else
           # Check autocast too
-          restriction_type = scope.lookup_type(restriction, free_vars: free_vars)
+          restriction_type = (path_lookup || scope).lookup_type(restriction, free_vars: free_vars)
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
@@ -2245,6 +2245,8 @@ module Crystal
         end
       when And
         return get_while_cond_assign_target(node.left)
+      when Not
+        return get_while_cond_assign_target(node.exp)
       when If
         if node.and?
           return get_while_cond_assign_target(node.cond)
@@ -2626,22 +2628,37 @@ module Crystal
       @in_type_args -= 1
 
       type = node.offsetof_type.type?
-
-      node.offsetof_type.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
       node.offsetof_type.raise "can't use typeof inside offsetof expression" if node.offsetof_type.is_a?(TypeOf)
 
-      ivar_name = node.instance_var.as(InstanceVar).name
-      ivar_index = type.index_of_instance_var(ivar_name)
+      case type
+      when TupleInstanceType
+        number = node.offset.as?(NumberLiteral)
+        node.offset.raise "can't take offset of a tuple element using an instance variable, use an index" if number.nil?
 
-      node.instance_var.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
-      node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+        ivar_index = number.integer_value
+        node.offset.raise "can't take a negative offset of a tuple" if ivar_index < 0
+        if ivar_index >= type.size
+          node.offset.raise "can't take offset element at index #{ivar_index} from a tuple with #{type.size} elements"
+        end
+      when InstanceVarContainer
+        ivar = node.offset.as?(InstanceVar)
+        node.offset.raise "can't take offset element of #{type} using an index, use an instance variable" if ivar.nil?
 
-      if type && type.struct?
+        ivar_name = ivar.name
+        ivar_index = type.index_of_instance_var(ivar_name)
+
+        node.offset.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
+        node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+      else
+        node.offsetof_type.raise "type #{type} can't have instance variables neither is a Tuple"
+      end
+
+      if type && (type.struct? || type.is_a?(TupleInstanceType))
         offset = @program.offset_of(type.sizeof_type, ivar_index)
       elsif type && type.instance_type.devirtualize.class?
         offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
       else
-        node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
+        node.offsetof_type.raise "#{type} is neither a class, a struct nor a Tuple, it's a #{type.type_desc}"
       end
 
       expanded = NumberLiteral.new(offset.to_s, :i32)

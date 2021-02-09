@@ -121,10 +121,7 @@ class Crystal::CodeGenVisitor
   def initialize_const(const)
     # If the constant wasn't read yet, we can initialize it right now and
     # avoid checking an "initialized" flag every time we read it.
-    unless const.read?
-      const.no_init_flag = true
-      return initialize_no_init_flag_const(const)
-    end
+    const.no_init_flag = true unless const.read?
 
     # Maybe the constant was simple and doesn't need a real initialization
     global, initialized_flag = declare_const_and_initialized_flag(const)
@@ -135,7 +132,12 @@ class Crystal::CodeGenVisitor
     func = check_main_fun init_function_name, func
 
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
-    run_once(initialized_flag, func)
+
+    if const.no_init_flag?
+      call func
+    else
+      run_once(initialized_flag, func)
+    end
     global
   end
 

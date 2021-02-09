@@ -1392,7 +1392,7 @@ describe "Block inference" do
       foo do |x, y, z|
       end
       ),
-      "too many block arguments (given 3, expected maximum 2)"
+      "too many block parameters (given 3, expected maximum 2)"
   end
 
   it "doesn't crash on #2531" do

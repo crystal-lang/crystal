@@ -4,8 +4,38 @@ struct Number
 
   alias Primitive = Int::Primitive | Float::Primitive
 
+  # Returns the value zero in the respective type.
+  #
+  # ```
+  # Int32.zero   # => 0
+  # Float64.zero # => 0.0
+  # ```
   def self.zero : self
     new(0)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # For numerical types, it is the value `0` expressed in the respective type.
+  #
+  # ```
+  # Int32.additive_identity   # => 0
+  # Float64.additive_identity # => 0.0
+  # ```
+  def self.additive_identity : self
+    zero
+  end
+
+  # Returns the multiplicative identity of this type.
+  #
+  # For numerical types, it is the value `1` expressed in the respective type.
+  #
+  # ```
+  # Int32.multiplicative_identity   # => 1
+  # Float64.multiplicative_identity # => 1.0
+  # ```
+  def self.multiplicative_identity : self
+    new(1)
   end
 
   # Returns self.
@@ -138,7 +168,7 @@ struct Number
       while true
         # only proceed if difference to limit is at least as big as step size to
         # avoid potential overflow errors.
-        sign = ((limit - current) <=> step).try(&.sign)
+        sign = ((limit - step) <=> current).try(&.sign)
         break unless sign == direction || (sign == 0 && !exclusive)
 
         current += step
@@ -216,7 +246,7 @@ struct Number
         @current
       elsif limit
         # compare distance to current with step size
-        case (limit - @current <=> @step).try(&.sign)
+        case ((limit - @step) <=> @current).try(&.sign)
         when @step.sign
           # distance is more than step size, so iteration proceeds
           @current += @step
@@ -232,7 +262,6 @@ struct Number
           # we've either overshot the limit or the comparison failed, so we can't
           # continue
           @reached_end = true
-
           stop
         end
       else

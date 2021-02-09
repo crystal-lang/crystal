@@ -792,7 +792,7 @@ class Crystal::Call
 
     if yield_vars
       # Check if tuple unpacking is needed
-      yield_var_type = yield_vars.first.type.as?(TupleInstanceType)
+      yield_var_type = yield_vars.first?.try &.type.as?(TupleInstanceType)
       auto_unpack_needed = yield_vars.size == 1 &&
                            yield_var_type &&
                            block.args.size > 1 &&
