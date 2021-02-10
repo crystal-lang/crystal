@@ -2321,6 +2321,8 @@ module Crystal
 
   # An instantiated tuple type, like Tuple(Char, Int32).
   class TupleInstanceType < GenericClassInstanceType
+    alias Index = Int32 | Range(Int32, Int32)
+
     getter tuple_types : Array(Type)
 
     def initialize(program, @tuple_types)
@@ -2332,12 +2334,12 @@ module Crystal
     end
 
     def tuple_indexer(index)
-      indexers = @tuple_indexers ||= {} of (Int32 | Range(Int32, Int32)) => Def
+      indexers = @tuple_indexers ||= {} of Index => Def
       tuple_indexer(indexers, index)
     end
 
     def tuple_metaclass_indexer(index)
-      indexers = @tuple_metaclass_indexers ||= {} of (Int32 | Range(Int32, Int32)) => Def
+      indexers = @tuple_metaclass_indexers ||= {} of Index => Def
       tuple_indexer(indexers, index)
     end
 
