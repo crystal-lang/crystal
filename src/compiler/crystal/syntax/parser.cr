@@ -2732,7 +2732,7 @@ module Crystal
         end
       end
 
-      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
+      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
     end
 
     # Adds an expression to all when expressions and error on duplicates
@@ -2793,8 +2793,9 @@ module Crystal
 
     def parse_when_expression(cond, single, exhaustive)
       if cond && @token.type == :"."
+        location = @token.location
         next_token
-        call = parse_var_or_call(force_call: true)
+        call = parse_var_or_call(force_call: true).at(location)
         case call
         when Call        then call.obj = ImplicitObj.new
         when RespondsTo  then call.obj = ImplicitObj.new
