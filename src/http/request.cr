@@ -29,10 +29,20 @@ class HTTP::Request
     #
     # This property is not used by `HTTP::Client`.
     property remote_address : Socket::Address?
+
+    # The network address of the HTTP server.
+    #
+    # `HTTP::Server` will try to fill this property, and its value
+    # will have a format like "IP:port", but this format is not guaranteed.
+    # Middlewares can overwrite this value.
+    #
+    # This property is not used by `HTTP::Client`.
+    property local_address : Socket::Address?
   {% else %}
     # TODO: Remove this once `Socket` is working on Windows
 
     property remote_address : Nil
+    property local_address : Nil
   {% end %}
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
@@ -117,6 +127,10 @@ class HTTP::Request
 
       if io.responds_to?(:remote_address)
         request.remote_address = io.remote_address
+      end
+
+      if io.responds_to?(:local_address)
+        request.local_address = io.local_address
       end
 
       return request
