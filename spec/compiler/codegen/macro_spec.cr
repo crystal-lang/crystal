@@ -770,7 +770,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Green")
   end
 
-  it "says that enum has Flags attribute" do
+  it "says that enum has Flags annotation" do
     run(%(
       @[Flags]
       enum Color
@@ -779,11 +779,11 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_true
   end
 
-  it "says that enum doesn't have Flags attribute" do
+  it "says that enum doesn't have Flags annotation" do
     run(%(
       enum Color
         Red
@@ -791,7 +791,7 @@ describe "Code gen: macro" do
         Blue
       end
 
-      {{Color.has_attribute?("Flags")}}
+      {{Color.annotation(Flags) ? true : false}}
       )).to_b.should be_false
   end
 

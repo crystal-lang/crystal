@@ -1624,19 +1624,6 @@ module Crystal
           value = arg.to_string("argument to 'TypeNode#has_method?'")
           TypeNode.has_method?(type, value)
         end
-      when "has_attribute?"
-        interpreter.report_warning_at(name_loc, "Deprecated TypeNode#has_attribute?. Use #annotation instead")
-        interpret_one_arg_method(method, args) do |arg|
-          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
-          case value
-          when "Flags"
-            BoolLiteral.new(!!type.as?(EnumType).try &.flags?)
-          when "Packed"
-            BoolLiteral.new(!!type.as?(ClassType).try &.packed?)
-          else
-            BoolLiteral.new(false)
-          end
-        end
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
