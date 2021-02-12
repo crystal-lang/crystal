@@ -130,7 +130,7 @@ class Process
             reader.next_char
           end
 
-          until (char = reader.current_char) == quote || (!quote && char.ascii_whitespace?)
+          until (char = reader.current_char) == quote || (!quote && (char.ascii_whitespace? || char.in?('\'', '"')))
             break unless reader.has_next?
             reader.next_char
             if char == '\\' && quote != '\''
