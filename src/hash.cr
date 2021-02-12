@@ -1208,25 +1208,6 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Deletes each key-value pair for which the given block returns `true`.
-  #
-  # ```
-  # h = {"foo" => "bar", "fob" => "baz", "bar" => "qux"}
-  # h.delete_if { |key, value| key.starts_with?("fo") }
-  # h # => { "bar" => "qux" }
-  # ```
-  @[Deprecated("Use `#reject!` instead")]
-  def delete_if
-    keys_to_delete = [] of K
-    each do |key, value|
-      keys_to_delete << key if yield(key, value)
-    end
-    keys_to_delete.each do |key|
-      delete(key)
-    end
-    self
-  end
-
   # Returns `true` when hash contains no key-value pairs.
   #
   # ```
