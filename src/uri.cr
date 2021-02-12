@@ -232,12 +232,6 @@ class URI
     end
   end
 
-  # :ditto:
-  @[Deprecated("Use `#request_target` instead.")]
-  def full_path : String
-    request_target
-  end
-
   # Returns `true` if URI has a *scheme* specified.
   def absolute? : Bool
     @scheme ? true : false
