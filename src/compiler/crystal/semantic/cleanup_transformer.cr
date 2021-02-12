@@ -337,6 +337,8 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        # TODO: if the block isn't used in any of the target defs we could
+        # avoid transforming it, because it probably isn't typed **at all**
         node.block = node_block.transform(self)
       end
 
@@ -687,10 +689,13 @@ module Crystal
       super
       reset_last_status
       if replacement = node.syntax_replacement
-        replacement.transform(self)
-      else
-        transform_is_a_or_responds_to node, &.filter_by(node.const.type)
+        return replacement.transform(self)
       end
+
+      const_type = node.const.type?
+      return untyped_expression(node) unless const_type
+
+      transform_is_a_or_responds_to node, &.filter_by(const_type)
     end
 
     def transform(node : RespondsTo)
