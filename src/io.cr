@@ -1099,7 +1099,7 @@ abstract class IO
   # `File` and `IO::Memory` implement it.
   #
   # Multiple sections can be read concurrently.
-  def read_at(offset, bytesize, &block)
+  def read_at(offset, bytesize, & : IO ->)
     raise Error.new "Unable to read_at"
   end
 
