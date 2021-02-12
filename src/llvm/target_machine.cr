@@ -53,7 +53,7 @@ class LLVM::TargetMachine
       ABI::X86_64.new(self)
     when /i386|i486|i586|i686/
       ABI::X86.new(self)
-    when /aarch64/
+    when /aarch64|arm64/
       ABI::AArch64.new(self)
     when /arm/
       ABI::ARM.new(self)
