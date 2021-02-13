@@ -48,7 +48,7 @@ module Crystal
         buffer_var = new_temp_var.at(node)
 
         exps = Array(ASTNode).new(node.elements.size + 3)
-        exps << Assign.new(ary_var, ary_instance).at(node)
+        exps << Assign.new(ary_var.clone, ary_instance).at(node)
         exps << Assign.new(buffer_var, buffer).at(node)
 
         node.elements.each_with_index do |elem, i|
