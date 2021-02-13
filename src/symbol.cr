@@ -63,11 +63,21 @@ struct Symbol
   def self.needs_quotes?(string) : Bool
     case string
     when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
-      # Nothing
+      false
     when "&", "|", "^", "~", "**", "&**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
-      # Nothing
-    when ""
-      return true
+      false
+    when "_"
+      false
+    else
+      needs_quotes_for_names?(string)
+    end
+  end
+
+  # :nodoc:
+  def self.needs_quotes_for_names?(string)
+    case string
+    when "", "_"
+      true
     else
       string.each_char_with_index do |char, i|
         if i == 0 && char.ascii_number?
@@ -81,8 +91,8 @@ struct Symbol
           return true
         end
       end
+      false
     end
-    false
   end
 
   def clone
