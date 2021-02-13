@@ -64,8 +64,10 @@ struct Symbol
     case string
     when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
       # Nothing
-    when "&", "|", "^", "~", "**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
+    when "&", "|", "^", "~", "**", "&**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
       # Nothing
+    when ""
+      return true
     else
       string.each_char_with_index do |char, i|
         if i == 0 && char.ascii_number?
