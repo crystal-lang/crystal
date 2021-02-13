@@ -51,7 +51,7 @@ class IO::Memory < IO
     @pos = 0
     @closed = false
     @resizeable = false
-    @writeable = writeable
+    @writeable = !slice.read_only? && writeable
   end
 
   # Creates an `IO::Memory` whose contents are the exact contents of *string*.
