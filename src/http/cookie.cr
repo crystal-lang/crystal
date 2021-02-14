@@ -59,7 +59,7 @@ module HTTP
     end
 
     def to_cookie_header(io)
-      URI.encode_www_form(@name, io)
+      io << @name
       io << '='
       URI.encode_www_form(value, io)
     end
@@ -109,7 +109,7 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(URI.decode_www_form(pair["name"]), URI.decode_www_form(pair["value"]))
+          yield Cookie.new(pair["name"], URI.decode_www_form(pair["value"]))
         end
       end
 
