@@ -333,4 +333,18 @@ describe "Code gen: named tuple" do
       f.x
       ").to_i.should eq(2)
   end
+
+  it "doesn't error if NamedTuple includes a non-generic module (#10380)" do
+    codegen(%(
+      module Foo
+      end
+
+      struct NamedTuple
+        include Foo
+      end
+
+      x = uninitialized Foo
+      x = {a: 1}
+      ))
+  end
 end
