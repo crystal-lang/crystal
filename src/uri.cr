@@ -559,8 +559,8 @@ class URI
   # require "json"
   #
   # uri = URI.from_json(%("http://crystal-lang.org")) # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme                                 # => "http"
-  # uri.host                                   # => "crystal-lang.org"
+  # uri.scheme                                        # => "http"
+  # uri.host                                          # => "crystal-lang.org"
   # ```
   def self.new(parser : JSON::PullParser)
     parse parser.read_string
@@ -573,8 +573,8 @@ class URI
   # require "yaml"
   #
   # uri = URI.from_yaml(%("http://crystal-lang.org")) # => #<URI:0x1068a7e40 @scheme="http", @host="crystal-lang.org", ... >
-  # uri.scheme                                 # => "http"
-  # uri.host                                   # => "crystal-lang.org"
+  # uri.scheme                                        # => "http"
+  # uri.host                                          # => "crystal-lang.org"
   # ```
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     parse String.new(ctx, node)
