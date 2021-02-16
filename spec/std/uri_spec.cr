@@ -808,6 +808,6 @@ describe "URI" do
   end
 
   it "#to_yaml" do
-    URI.new(scheme: "https", host: "example.com").to_yaml.should eq %(--- https://example.com\n)
+    URI.new(scheme: "https", host: "example.com").to_yaml.rchop("...\n").should eq %(--- https://example.com\n)
   end
 end
