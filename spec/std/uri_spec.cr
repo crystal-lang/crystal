@@ -1,5 +1,7 @@
 require "spec"
 require "uri"
+require "json"
+require "yaml"
 
 private def assert_uri(string, file = __FILE__, line = __LINE__, **args)
   it "`#{string}`", file, line do
@@ -791,5 +793,21 @@ describe "URI" do
     URI.unwrap_ipv6("127.0.0.1").should eq("127.0.0.1")
     URI.unwrap_ipv6("example.com").should eq("example.com")
     URI.unwrap_ipv6("[1234:5678::1]").should eq "1234:5678::1"
+  end
+
+  it ".from_json" do
+    URI.from_json(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_json" do
+    URI.new(scheme: "https", host: "example.com").to_json.should eq %("https://example.com")
+  end
+
+  it ".from_yaml" do
+    URI.from_yaml(%("https://example.com")).should eq URI.new(scheme: "https", host: "example.com")
+  end
+
+  it "#to_yaml" do
+    URI.new(scheme: "https", host: "example.com").to_yaml.should eq %(--- https://example.com\n)
   end
 end
