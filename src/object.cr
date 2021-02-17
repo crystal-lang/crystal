@@ -445,7 +445,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -676,7 +676,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -958,7 +958,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}?
+          def {{method_prefix}}\{{name.var.id}} : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
@@ -1204,7 +1204,7 @@ class Object
         \{% if name.is_a?(TypeDeclaration) %}
           {{var_prefix}}\{{name.var.id}} : \{{name.type}}?
 
-          def {{method_prefix}}\{{name.var.id}}?
+          def {{method_prefix}}\{{name.var.id}}? : \{{name.type}}
             if (value = {{var_prefix}}\{{name.var.id}}).nil?
               {{var_prefix}}\{{name.var.id}} = \{{yield}}
             else
