@@ -57,9 +57,9 @@ module Crystal
 
   # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
-    getter index : Int32
+    getter index : TupleInstanceType::Index
 
-    def initialize(@index : Int32)
+    def initialize(@index)
       super("tuple_indexer_known_index")
     end
 

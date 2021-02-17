@@ -500,17 +500,56 @@ class Crystal::Call
       index = arg.value.to_i
       index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
-      if nilable || in_bounds
-        indexer_def = yield instance_type, (in_bounds ? index : -1)
-        indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
-      elsif instance_type.size == 0
-        raise "index '#{arg}' out of bounds for empty tuple"
-      else
-        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+      unless in_bounds
+        unless nilable
+          raise "index '#{arg}' out of bounds for empty tuple" if instance_type.size == 0
+          raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+        end
+        index = -1
       end
+    elsif arg.is_a?(RangeLiteral)
+      from = arg.from
+      if from.is_a?(NumberLiteral) && from.kind == :i32
+        from_index = from.value.to_i
+        from_index += instance_type.size if from_index < 0
+        in_bounds = (0 <= from_index <= instance_type.size)
+        if !in_bounds && !nilable
+          raise "begin index out of bounds for #{owner} (#{from} not in #{-instance_type.size}..#{instance_type.size})"
+        end
+      elsif from.is_a?(Nop)
+        from_index = 0
+        in_bounds = true
+      else
+        return nil
+      end
+
+      to = arg.to
+      if to.is_a?(NumberLiteral) && to.kind == :i32
+        to_index = to.value.to_i
+        to_index += instance_type.size if to_index < 0
+        to_index = (to_index - (arg.exclusive? ? 1 : 0)).clamp(-1, instance_type.size - 1)
+      elsif to.is_a?(Nop)
+        to_index = instance_type.size - 1
+      else
+        return nil
+      end
+
+      if in_bounds
+        if from_index <= to_index
+          index = (from_index..to_index)
+        else
+          index = (0...0)
+        end
+      else
+        index = -1
+      end
+    else
+      return nil
     end
-    nil
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)

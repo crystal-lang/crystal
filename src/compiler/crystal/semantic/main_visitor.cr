@@ -2895,13 +2895,23 @@ module Crystal
     def visit(node : TupleIndexer)
       scope = @scope
       if scope.is_a?(TupleInstanceType)
-        node.type = scope.tuple_types[node.index].as(Type)
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(scope.tuple_types[index].map &.as(Type))
+        in Int32
+          node.type = scope.tuple_types[index].as(Type)
+        end
       elsif scope.is_a?(NamedTupleInstanceType)
-        node.type = scope.entries[node.index].type
+        node.type = scope.entries[node.index.as(Int32)].type
       elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
-        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(instance_type.tuple_types[index].map &.as(Type)).metaclass
+        in Int32
+          node.type = instance_type.tuple_types[index].as(Type).metaclass
+        end
       elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
-        node.type = instance_type.entries[node.index].type.metaclass
+        node.type = instance_type.entries[node.index.as(Int32)].type.metaclass
       else
         node.raise "unsupported TupleIndexer scope"
       end
