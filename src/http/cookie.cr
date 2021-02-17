@@ -24,20 +24,41 @@ module HTTP
     property http_only : Bool
     property samesite : SameSite?
     property extension : String?
+    property max_age : Time::Span?
+    getter creation_time : Time
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name : String, value : String, @path : String = "/",
+    @[Deprecated("Use named arguments instead.")]
+    def self.new(_name : String, _value : String, _path : String = "/",
+                 _expires : Time? = nil, _domain : String? = nil,
+                 _secure : Bool = false, _http_only : Bool = false,
+                 _samesite : SameSite? = nil, _extension : String? = nil) : self
+      new(
+        _name, _value,
+        path: _path, expires: _expires, domain: _domain, secure: _secure,
+        http_only: _http_only, samesite: _samesite, extension: _extension
+      )
+    end
+
+    def self.new(_name : String, _value : String) : self
+      new(name: _name, value: _value)
+    end
+
+    def initialize(@name : String, @value : String,
+                   *,
+                   @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
-                   @samesite : SameSite? = nil, @extension : String? = nil)
-      @name = name
-      @value = value
+                   @samesite : SameSite? = nil, @extension : String? = nil,
+                   @max_age : Time::Span? = nil, @creation_time = Time.utc)
+      raise "Invalid max_age" if @max_age.try { |max_age| max_age < Time::Span.zero }
     end
 
     def to_set_cookie_header
       path = @path
       expires = @expires
+      max_age = @max_age
       domain = @domain
       samesite = @samesite
       String.build do |header|
@@ -45,6 +66,7 @@ module HTTP
         header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.format_time(expires)}" if expires
+        header << "; max-age=#{max_age.to_i}" if max_age
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; SameSite=#{samesite}" if samesite
@@ -64,9 +86,24 @@ module HTTP
       URI.encode_www_form(value, io)
     end
 
-    def expired?
-      if e = expires
-        e <= Time.utc
+    # Returns the expiration time of this cookie.
+    def expiration_time : Time?
+      if max_age = @max_age
+        @creation_time + max_age
+      else
+        @expires
+      end
+    end
+
+    # Returns the expiration status of this cookie as a `Bool`.
+    #
+    # *time_reference* can be passed to use a different reference time for
+    # comparison. Default is the current time (`Time.utc`).
+    def expired?(time_reference = Time.utc) : Bool
+      if @max_age.try &.zero?
+        true
+      elsif expiration_time = self.expiration_time
+        expiration_time <= time_reference
       else
         false
       end
@@ -123,11 +160,8 @@ module HTTP
         match = header.match(SetCookieString)
         return unless match
 
-        expires = if max_age = match["max_age"]?
-                    Time.utc + max_age.to_i64.seconds
-                  else
-                    parse_time(match["expires"]?)
-                  end
+        expires = parse_time(match["expires"]?)
+        max_age = match["max_age"]?.try(&.to_i64.seconds)
 
         Cookie.new(
           URI.decode_www_form(match["name"]), URI.decode_www_form(match["value"]),
@@ -137,7 +171,8 @@ module HTTP
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
-          extension: match["extension"]?
+          extension: match["extension"]?,
+          max_age: max_age,
         )
       end
 
