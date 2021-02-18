@@ -151,10 +151,6 @@ struct Float32
     LibM.floor_f32(self)
   end
 
-  def round
-    LibM.round_f32(self)
-  end
-
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
   def round_even : self
@@ -165,6 +161,12 @@ struct Float32
     {% else %}
       LibM.rint_f32(self)
     {% end %}
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away
+    LibM.round_f32(self)
   end
 
   def trunc
@@ -250,10 +252,6 @@ struct Float64
     LibM.floor_f64(self)
   end
 
-  def round
-    LibM.round_f64(self)
-  end
-
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
   def round_even : self
@@ -264,6 +262,12 @@ struct Float64
     {% else %}
       LibM.rint_f64(self)
     {% end %}
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away
+    LibM.round_f64(self)
   end
 
   def trunc

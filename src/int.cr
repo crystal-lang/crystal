@@ -249,16 +249,17 @@ struct Int
     self
   end
 
-  def round
-    self
-  end
-
   def trunc
     self
   end
 
   # Returns `self`.
   def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
     self
   end
 

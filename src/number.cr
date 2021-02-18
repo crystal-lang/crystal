@@ -394,7 +394,7 @@ struct Number
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits = 0, base = 10)
+  def round(digits, base = 10)
     x = self.to_f
     if digits < 0
       y = base.to_f ** digits.abs
@@ -403,6 +403,13 @@ struct Number
       y = base.to_f ** digits
       self.class.new((x * y).round / y)
     end
+  end
+
+  # Rounds `self` to an integer.
+  #
+  # Delegates to `#round_away`.
+  def round
+    round_away
   end
 
   # Returns `true` if value is equal to zero.
