@@ -257,6 +257,11 @@ struct Int
     self
   end
 
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
   # Returns the value of raising `self` to the power of *exponent*.
   #
   # Raises `ArgumentError` if *exponent* is negative: if this is needed,

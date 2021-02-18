@@ -132,6 +132,27 @@ describe "Number" do
     end
   end
 
+  describe "#round_even" do
+    -2.5.round_even.should eq -2.0
+    -1.5.round_even.should eq -2.0
+    -1.0.round_even.should eq -1.0
+    -0.9.round_even.should eq -1.0
+    -0.5.round_even.should eq -0.0
+    -0.1.round_even.should eq 0.0
+    0.0.round_even.should eq 0.0
+    0.1.round_even.should eq 0.0
+    0.5.round_even.should eq 0.0
+    0.9.round_even.should eq 1.0
+    1.0.round_even.should eq 1.0
+    1.5.round_even.should eq 2.0
+    2.5.round_even.should eq 2.0
+
+    1.round_even.should eq 1
+    1.round_even.should be_a(Int32)
+    1_u8.round_even.should be_a(UInt8)
+    1_f32.round_even.should be_a(Float32)
+  end
+
   it "gives the absolute value" do
     123.abs.should eq(123)
     -123.abs.should eq(123)
