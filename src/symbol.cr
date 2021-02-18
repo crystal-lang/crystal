@@ -54,7 +54,7 @@ struct Symbol
     io << to_s
   end
 
-  # Determines if a string needs to be quoted to be used for a symbol.
+  # Determines if a string needs to be quoted to be used for a symbol literal.
   #
   # ```
   # Symbol.needs_quotes? "string"      # => false
@@ -69,12 +69,14 @@ struct Symbol
     when "_"
       false
     else
-      needs_quotes_for_names?(string)
+      needs_quotes_for_named_argument?(string)
     end
   end
 
   # :nodoc:
-  def self.needs_quotes_for_names?(string)
+  # Determines if a string needs to be quoted to be used for an external
+  # parameter name or a named argument's key.
+  def self.needs_quotes_for_named_argument?(string)
     case string
     when "", "_"
       true

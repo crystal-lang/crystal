@@ -2507,7 +2507,7 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
       @entries.join(io, ", ") do |entry|
-        if Symbol.needs_quotes_for_names?(entry.name)
+        if Symbol.needs_quotes_for_named_argument?(entry.name)
           entry.name.inspect(io)
         else
           io << entry.name
