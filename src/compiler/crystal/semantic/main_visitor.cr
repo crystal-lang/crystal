@@ -773,6 +773,10 @@ module Crystal
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
+            if value.is_a?(SymbolLiteral) && restriction_type.is_a?(EnumType)
+              node.raise "can't autocast #{value} to #{restriction_type}: no matching enum member"
+            end
+
             node.raise "can't restrict #{value.type} to #{restriction}"
           end
         end
