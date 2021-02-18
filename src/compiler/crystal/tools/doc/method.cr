@@ -271,7 +271,7 @@ class Crystal::Doc::Method
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument?? name
+        if Symbol.needs_quotes_for_named_argument? name
           HTML.escape name.inspect, io
         else
           io << name
