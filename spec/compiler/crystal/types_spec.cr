@@ -39,6 +39,10 @@ describe "types to_s of" do
     assert_type_to_s "(Int32 | String)" { union_of(string, int32) }
   end
 
+  it "named tuple" do
+    assert_type_to_s %(NamedTuple(a: Int32, "b c": String, "+": Char)) { named_tuple_of({"a" => int32, "b c" => string, "+" => char}) }
+  end
+
   it "nilable reference type" do
     assert_type_to_s "(String | Nil)" { nilable string }
   end
