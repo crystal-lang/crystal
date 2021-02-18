@@ -28,7 +28,7 @@ module Crystal
       when GenericClassInstanceType
         cleanup_single_type(type, transformer)
       when GenericClassType
-        type.generic_types.each_value do |instance|
+        type.each_instantiated_type do |instance|
           cleanup_type instance, transformer
         end
       when ClassType
