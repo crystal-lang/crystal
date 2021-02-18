@@ -1799,7 +1799,11 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(io, ", ", &.to_s(io))
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          io << '*' if i == splat_index
+          type_var.to_s(io)
+        end
         io << ')'
       end
     end
@@ -1859,7 +1863,11 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(io, ", ", &.to_s(io))
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          io << '*' if i == splat_index
+          type_var.to_s(io)
+        end
         io << ')'
       end
     end
