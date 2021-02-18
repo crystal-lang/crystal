@@ -26,7 +26,7 @@ class Crystal::Command
 
     output_filename = Crystal.temp_executable "eval"
 
-    result = compiler.compile sources, output_filename
+    compiler.compile sources, output_filename
     execute output_filename, program_args, compiler
   end
 end

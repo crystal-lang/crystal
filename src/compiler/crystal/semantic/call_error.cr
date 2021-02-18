@@ -135,7 +135,7 @@ class Crystal::Call
 
     # If we made a lookup without the special rule for literals,
     # and we have literals in the call, try again with that special rule.
-    if with_literals == false && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
+    if !with_literals && (args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SymbolLiteral) } ||
        named_args.try &.any? { |arg| arg.value.is_a?(NumberLiteral) || arg.value.is_a?(SymbolLiteral) })
       ::raise RetryLookupWithLiterals.new
     end
@@ -485,14 +485,14 @@ class Crystal::Call
       end
       if arg_default = arg.default_value
         str << " = "
-        str << arg.default_value
+        str << arg_default
       end
       printed = true
     end
 
-    if a_def.double_splat
+    if double_splat = a_def.double_splat
       str << ", " if printed
-      str << "**" << a_def.double_splat
+      str << "**" << double_splat
       printed = true
     end
 
@@ -507,8 +507,6 @@ class Crystal::Call
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
-    arg_types = args.map &.type
-
     owner.each_concrete_type do |concrete_type|
       defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
       defs = defs.select { |a_def| a_def.args.size != args.size }

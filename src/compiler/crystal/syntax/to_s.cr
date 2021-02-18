@@ -1523,7 +1523,6 @@ module Crystal
         if node.intel?
           @str << ", " if comma
           @str << %("intel")
-          comma = true
         end
       end
       @str << ')'

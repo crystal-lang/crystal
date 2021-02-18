@@ -51,12 +51,12 @@ struct Crystal::ExhaustivenessChecker
     # If we covered all types, we are done.
     return if targets.empty?
 
-    if targets.all?(&.is_a?(TypeTarget)) && all_patterns_are_types
+    if targets.all?(TypeTarget) && all_patterns_are_types
       node.raise <<-MSG
         case is not exhaustive.
 
         Missing types:
-         - #{targets.map(&.type).join("\n - ")}
+         - #{targets.join("\n - ", &.type)}
         MSG
     end
 
@@ -75,7 +75,7 @@ struct Crystal::ExhaustivenessChecker
       case is not exhaustive for enum #{single_target.type}.
 
       Missing members:
-       - #{single_target.members.map(&.name).join("\n - ")}
+       - #{single_target.members.join("\n - ", &.name)}
       MSG
     else
       # No specific error messages for non-single types
@@ -147,8 +147,7 @@ struct Crystal::ExhaustivenessChecker
 
     missing_cases = targets
       .flat_map(&.missing_cases)
-      .map { |cases| "{#{cases}}" }
-      .join("\n - ")
+      .join("\n - ") { |cases| "{#{cases}}" }
 
     msg = <<-MSG
       case is not exhaustive.

@@ -601,7 +601,7 @@ module Crystal
               raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
             end
 
-            from, to = from.to_number.to_i, to = to.to_number.to_i
+            from, to = from.to_number.to_i, to.to_number.to_i
             range = Range.new(from, to, arg.exclusive?)
             StringLiteral.new(@value[range])
           else
@@ -2309,7 +2309,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
     end
   when "join"
     object.interpret_one_arg_method(method, args) do |arg|
-      Crystal::StringLiteral.new(object.elements.map(&.to_macro_id).join arg.to_macro_id)
+      Crystal::StringLiteral.new(object.elements.join(arg.to_macro_id, &.to_macro_id))
     end
   when "last"
     object.interpret_argless_method(method, args) { object.elements.last? || Crystal::NilLiteral.new }

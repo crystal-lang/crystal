@@ -159,7 +159,7 @@ class Crystal::AbstractDefChecker
       case
       when !a1
         # No more arguments in the implementation
-        return false unless !a2
+        return false if a2
       when i1 == m1.splat_index
         # The argument in the implementation is a splat
         return false if a2 && a2.default_value

@@ -110,7 +110,7 @@ class Context
     @threads_state.set(State::Wait)
 
     # spin wait for threads to finish the round
-    while (c = @threads_reached.get) < @threads
+    while @threads_reached.get < @threads
     end
     log "All threads_reached!"
   end

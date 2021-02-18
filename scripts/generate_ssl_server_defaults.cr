@@ -20,7 +20,7 @@ File.open(DEFAULTS_FILE, "w") do |file|
   abstract class OpenSSL::SSL::Context
   CR
 
-  configuration = json["configurations"].as_h.each do |level, configuration|
+  json["configurations"].as_h.each do |level, configuration|
     clients = configuration["oldest_clients"].as_a
     ciphersuites = configuration["ciphersuites"].as_a
     ciphers = configuration["ciphers"]["openssl"].as_a

@@ -164,7 +164,7 @@ module Crystal
     end
 
     private def subclasses_of(type)
-      type.subclasses.reject(&.is_a?(GenericInstanceType))
+      type.subclasses.reject(GenericInstanceType)
     end
   end
 end

@@ -328,10 +328,10 @@ class RedBlackTreeRunner
     @n = n
 
     random = Random.new(1234) # repeatable random seq
-    @a1 = Array(Int32).new(n) { rand(99_999) }
+    @a1 = Array(Int32).new(n) { random.rand(99_999) }
 
     random = Random.new(4321) # repeatable random seq
-    @a2 = Array(Int32).new(n) { rand(99_999) }
+    @a2 = Array(Int32).new(n) { random.rand(99_999) }
 
     @tree = RedBlackTree.new
   end

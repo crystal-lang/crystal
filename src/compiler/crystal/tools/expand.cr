@@ -87,14 +87,14 @@ module Crystal
         return source unless node.is_a?(MacroIf) || node.is_a?(MacroFor)
 
         indent = node.location.not_nil!.column_number - 1
-        source.lines(chomp: false).map do |line|
+        source.lines(chomp: false).join do |line|
           i = 0
           line.each_char do |c|
             break unless c.ascii_whitespace? && i < indent
             i += 1
           end
           line[{i, indent}.min..-1]
-        end.join
+        end
       end
     end
   end

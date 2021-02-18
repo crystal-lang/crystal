@@ -475,7 +475,6 @@ class URI
 
     query = uri.query
     query = nil if query == @query
-    fragment = uri.fragment
 
     path = relativize_path(@path, uri.path)
 
@@ -513,7 +512,6 @@ class URI
       end
     end
 
-    tmp = dst_path.join('/')
     # calculate
     if base_path.empty?
       if dst_path.empty?

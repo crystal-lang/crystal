@@ -679,7 +679,6 @@ module Crystal
             end_location = token_end_location
 
             @wants_regex = false
-            has_parentheses = false
             next_token
 
             space_consumed = false
@@ -2034,7 +2033,7 @@ module Crystal
         pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
         pieces.join { |piece| piece.as(StringLiteral).value }
       else
-        pieces.map(&.value).join
+        pieces.join(&.value)
       end
     end
 
@@ -2137,7 +2136,8 @@ module Crystal
       pieces = [] of Piece
       has_interpolation = false
 
-      delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
+      delimiter_state, has_interpolation, _options, token_end_location =
+        consume_delimiter pieces, delimiter_state, has_interpolation
 
       if has_interpolation
         pieces = combine_interpolation_pieces(pieces, delimiter_state)
@@ -2523,8 +2523,6 @@ module Crystal
 
       first_value = parse_op_assign
       skip_space_or_newline
-
-      end_location = nil
 
       entries = [] of NamedTupleLiteral::Entry
       entries << NamedTupleLiteral::Entry.new(first_key, first_value)
@@ -3241,7 +3239,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, end_location = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3258,7 +3256,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, end_location = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3277,7 +3275,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          body, end_location = parse_macro_body(start_location, macro_state)
+          body, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           check_ident :end
@@ -3318,7 +3316,7 @@ module Crystal
       check :"%}"
 
       macro_state.control_nest += 1
-      a_then, end_location = parse_macro_body(start_location, macro_state)
+      a_then, _end_location = parse_macro_body(start_location, macro_state)
       macro_state.control_nest -= 1
 
       if @token.type == :IDENT
@@ -3328,7 +3326,7 @@ module Crystal
           check :"%}"
 
           macro_state.control_nest += 1
-          a_else, end_location = parse_macro_body(start_location, macro_state)
+          a_else, _end_location = parse_macro_body(start_location, macro_state)
           macro_state.control_nest -= 1
 
           if check_end
@@ -3400,7 +3398,6 @@ module Crystal
 
       receiver = nil
       @yields = nil
-      name_line_number = @token.line_number
       name_location = @token.location
       receiver_location = @token.location
       end_location = token_end_location
@@ -3695,11 +3692,11 @@ module Crystal
 
       if splat && (@token.type == :"," || @token.type == :")")
         arg_name = ""
-        uses_arg = false
         allow_restrictions = false
       else
         arg_location = @token.location
-        arg_name, external_name, found_space, uses_arg = parse_arg_name(arg_location, extra_assigns, allow_external_name: allow_external_name)
+        arg_name, external_name, found_space, _uses_arg =
+          parse_arg_name(arg_location, extra_assigns, allow_external_name: allow_external_name)
 
         args.each do |arg|
           if arg.name == arg_name
@@ -3790,15 +3787,14 @@ module Crystal
     def parse_block_arg(extra_assigns)
       name_location = @token.location
 
-      if @token.type == :")" || @token.type == :NEWLINE || @token.type == :":"
+      case @token.type
+      when :")", :NEWLINE, :":"
         arg_name = ""
       else
-        arg_name, external_name, found_space, uses_arg = parse_arg_name(name_location, extra_assigns, allow_external_name: false)
+        arg_name, _external_name, _found_space, uses_arg =
+          parse_arg_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_arg
       end
-
-      inputs = nil
-      output = nil
 
       if @token.type == :":"
         next_token_skip_space_or_newline
@@ -4245,7 +4241,6 @@ module Crystal
       block_args = [] of Var
       all_names = [] of String
       extra_assigns = nil
-      block_body = nil
       arg_index = 0
       splat_index = nil
 

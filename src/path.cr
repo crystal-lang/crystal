@@ -567,7 +567,7 @@ struct Path
   def self.next_part_separator_index(reader : Char::Reader, last_was_separator, separators)
     start_pos = reader.pos
 
-    found = reader.each do |char|
+    reader.each do |char|
       if separators.includes?(char)
         if last_was_separator
           next
@@ -725,7 +725,9 @@ struct Path
       end
     end
 
-    unless new_instance(name).absolute?
+    if new_instance(name).absolute?
+      expanded = name
+    else
       unless base.absolute? || !expand_base
         base = base.expand
       end
@@ -768,8 +770,6 @@ struct Path
       else
         expanded = base.join(name)
       end
-    else
-      expanded = name
     end
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)

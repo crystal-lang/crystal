@@ -3,16 +3,16 @@ require "../abi"
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
-    arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
       x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
     end
 
-    if ret_def
-      ret_ty = x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
-    else
-      ret_ty = ArgType.direct(context.void)
-    end
+    ret_ty =
+      if ret_def
+        x86_64_type(rty, Attribute::StructRet, context) { |cls| sret?(cls) }
+      else
+        ArgType.direct(context.void)
+      end
 
     FunctionType.new arg_tys, ret_ty
   end

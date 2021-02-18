@@ -30,11 +30,11 @@ class LLVM::ABI::X86 < LLVM::ABI
 
       if osx? || windows?
         case target_data.abi_size(rty)
-        when 1 then ret_ty = ret_value(rty, context.int8)
-        when 2 then ret_ty = ret_value(rty, context.int16)
-        when 4 then ret_ty = ret_value(rty, context.int32)
-        when 8 then ret_ty = ret_value(rty, context.int64)
-        else        ret_ty = ret_pointer(rty)
+        when 1 then ret_value(rty, context.int8)
+        when 2 then ret_value(rty, context.int16)
+        when 4 then ret_value(rty, context.int32)
+        when 8 then ret_value(rty, context.int64)
+        else        ret_pointer(rty)
         end
       else
         ret_pointer(rty)
