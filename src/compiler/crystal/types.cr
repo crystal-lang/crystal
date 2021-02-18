@@ -55,8 +55,8 @@ module Crystal
 
       case type
       when GenericType
-        (type.abstract? && type.generic_types.empty?) ||
-          (type.generic_types.all? { |name, type| type.abstract_leaf? })
+        instances = type.instantiated_types
+        (type.abstract? && instances.empty?) || instances.all?(&.abstract_leaf?)
       when GenericClassInstanceType
         type.abstract? && type.subclasses.all?(&.abstract_leaf?)
       when ClassType
@@ -1494,7 +1494,20 @@ module Crystal
 
     # All generic type instantiations of this generic type, indexed
     # by the type variables.
-    getter(generic_types) { {} of Array(TypeVar) => Type }
+    protected getter(generic_types) { {} of Array(TypeVar) => Type }
+
+    # Returns an array of all instantiations of this generic type.
+    # NamedTupleType overrides this because it doesn't use positional type
+    # arguments.
+    def instantiated_types
+      generic_types.values
+    end
+
+    def each_instantiated_type
+      if types = @generic_types
+        types.each_value { |type| yield type }
+      end
+    end
 
     # Returns a TypeParameter relative to this type
     def type_parameter(name) : TypeParameter
@@ -1585,7 +1598,7 @@ module Crystal
       initializer = super
 
       # Make sure to type the initializer for existing instantiations
-      generic_types.each_value do |instance|
+      each_instantiated_type do |instance|
         run_instance_var_initializer(initializer, instance)
       end
 
@@ -1822,7 +1835,7 @@ module Crystal
     end
 
     def including_types
-      instances = generic_types.values
+      instances = instantiated_types
       subclasses.each do |subclass|
         if subclass.is_a?(GenericClassType)
           subtypes = subclass.including_types
@@ -2321,6 +2334,8 @@ module Crystal
 
   # An instantiated tuple type, like Tuple(Char, Int32).
   class TupleInstanceType < GenericClassInstanceType
+    alias Index = Int32 | Range(Int32, Int32)
+
     getter tuple_types : Array(Type)
 
     def initialize(program, @tuple_types)
@@ -2332,12 +2347,12 @@ module Crystal
     end
 
     def tuple_indexer(index)
-      indexers = @tuple_indexers ||= {} of Int32 => Def
+      indexers = @tuple_indexers ||= {} of Index => Def
       tuple_indexer(indexers, index)
     end
 
     def tuple_metaclass_indexer(index)
-      indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
+      indexers = @tuple_metaclass_indexers ||= {} of Index => Def
       tuple_indexer(indexers, index)
     end
 
@@ -2406,6 +2421,14 @@ module Crystal
     @struct = true
     @double_variadic = true
     @instantiations = {} of Array(NamedArgumentType) => Type
+
+    def instantiated_types
+      @instantiations.values
+    end
+
+    def each_instantiated_type
+      @instantiations.each_value { |type| yield type }
+    end
 
     def instantiate(type_vars)
       raise "can't instantiate NamedTuple type yet"
@@ -3351,14 +3374,14 @@ module Crystal
 end
 
 private def add_to_including_types(type : Crystal::GenericType, all_types)
-  type.generic_types.each_value do |generic_type|
+  type.each_instantiated_type do |instance|
     # Unbound generic types are not concrete types
-    next if generic_type.unbound?
+    next if instance.unbound?
 
     # Abstract types also shouldn't form the union of including types
-    next if generic_type.abstract?
+    next if instance.abstract?
 
-    all_types << generic_type unless all_types.includes?(generic_type)
+    all_types << instance unless all_types.includes?(instance)
   end
   type.subclasses.each do |subclass|
     add_to_including_types subclass, all_types

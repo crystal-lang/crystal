@@ -223,7 +223,12 @@ class HTTP::Server
       def close
         return if closed?
 
-        if !response.wrote_headers? && !response.headers.has_key?("Content-Length")
+        # Conditionally determine based on status if the `content-length` header should be added automatically.
+        # See https://tools.ietf.org/html/rfc7230#section-3.3.2.
+        status = response.status
+        set_content_length = !(status.not_modified? || status.no_content? || status.informational?)
+
+        if !response.wrote_headers? && !response.headers.has_key?("Content-Length") && set_content_length
           response.content_length = @out_count
         end
 

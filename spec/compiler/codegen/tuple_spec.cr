@@ -25,6 +25,169 @@ describe "Code gen: tuple" do
     run("{'a', 42}[2]? || 84").to_i.should eq(84)
   end
 
+  it "codegens tuple metaclass [0]" do
+    run("Tuple(Int32, Char)[0].is_a?(Int32.class)").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [1]" do
+    run("Tuple(Int32, Char)[1].is_a?(Char.class)").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [2]?" do
+    run("Tuple(Int32, Char)[2]?.nil?").to_b.should be_true
+  end
+
+  it "codegens tuple [0..0]" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..0]
+      val.is_a?(Tuple(Int32)) && val[0] == 1
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [0..1]" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..1]
+      val.is_a?(Tuple(Int32, Bool)) && val[0] == 1 && val[1] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [0..2]" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..2]
+      val.is_a?(Tuple(Int32, Bool)) && val[0] == 1&& val[1] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [1..1]" do
+    run("
+      #{range_new}
+
+      val = {1, true}[1..1]
+      val.is_a?(Tuple(Bool)) && val[0] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [1..0]" do
+    run("
+      #{range_new}
+
+      def empty(*args)
+        args
+      end
+
+      {1, true}[1..0].is_a?(typeof(empty))
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [2..2]" do
+    run("
+      #{range_new}
+
+      def empty(*args)
+        args
+      end
+
+      {1, true}[2..2].is_a?(typeof(empty))
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [0..0]?" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..0]?
+      val.is_a?(Tuple(Int32)) && val[0] == 1
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [0..1]?" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..1]?
+      val.is_a?(Tuple(Int32, Bool)) && val[0] == 1 && val[1] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [0..2]?" do
+    run("
+      #{range_new}
+
+      val = {1, true}[0..2]?
+      val.is_a?(Tuple(Int32, Bool)) && val[0] == 1&& val[1] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [1..1]?" do
+    run("
+      #{range_new}
+
+      val = {1, true}[1..1]?
+      val.is_a?(Tuple(Bool)) && val[0] == true
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [1..0]?" do
+    run("
+      #{range_new}
+
+      def empty(*args)
+        args
+      end
+
+      {1, true}[1..0]?.is_a?(typeof(empty))
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [2..2]?" do
+    run("
+      #{range_new}
+
+      def empty(*args)
+        args
+      end
+
+      {1, true}[2..2]?.is_a?(typeof(empty))
+      ").to_b.should be_true
+  end
+
+  it "codegens tuple [3..2]?" do
+    run("#{range_new}; {1, true}[3..2]?.nil?").to_b.should be_true
+  end
+
+  it "codegens tuple [-3..2]?" do
+    run("#{range_new}; {1, true}[-3..2]?.nil?").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [0..0]" do
+    run("#{range_new}; Tuple(Int32, Char)[0..0].is_a?(Tuple(Int32).class)").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [0..1]" do
+    run("#{range_new}; Tuple(Int32, Char)[0..1].is_a?(Tuple(Int32, Char).class)").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [1..0]" do
+    run("
+      #{range_new}
+
+      def empty(*args)
+        args.class
+      end
+
+      Tuple(Int32, Char)[1..0].is_a?(typeof(empty))").to_b.should be_true
+  end
+
+  it "codegens tuple metaclass [3..2]?" do
+    run("#{range_new}; Tuple(Int32, Char)[3..2]?.nil?").to_b.should be_true
+  end
+
   it "passed tuple to def" do
     run("
       def foo(t)
@@ -364,4 +527,13 @@ describe "Code gen: tuple" do
       x = {0, z}
       ))
   end
+end
+
+private def range_new
+  %(
+    struct Range(B, E)
+      def initialize(@begin : B, @end : E, @exclusive : Bool = false)
+      end
+    end
+  )
 end
