@@ -157,6 +157,7 @@ describe HTTP::Server::Response do
     return_value = response.status_code = 201
     return_value.should eq 201
     response.status.should eq HTTP::Status::CREATED
+    response.status_message.should eq "Created"
   end
 
   it "retrieves status code" do
@@ -164,6 +165,16 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.status = :created
     response.status_code.should eq 201
+  end
+
+  it "changes status message" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :not_found
+    response.status_message = "Custom status"
+    response.close
+    io.to_s.should eq("HTTP/1.1 404 Custom status\r\nContent-Length: 0\r\n\r\n")
+    response.status_message.should eq "Custom status"
   end
 
   it "changes status and others" do
@@ -234,6 +245,7 @@ describe HTTP::Server::Response do
       response.content_type = "text/html"
       response.respond_with_status(500)
       io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 26\r\n\r\n500 Internal Server Error\n")
+      response.status_message.should eq "Internal Server Error"
     end
 
     it "sends custom code and message" do
@@ -241,6 +253,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(400, "Request Error")
       io.to_s.should eq("HTTP/1.1 400 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n400 Request Error\n")
+      response.status_message.should eq "Request Error"
     end
 
     it "sends HTTP::Status" do
@@ -248,6 +261,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(HTTP::Status::URI_TOO_LONG)
       io.to_s.should eq("HTTP/1.1 414 URI Too Long\r\nContent-Type: text/plain\r\nContent-Length: 17\r\n\r\n414 URI Too Long\n")
+      response.status_message.should eq "URI Too Long"
     end
 
     it "sends HTTP::Status and custom message" do
@@ -255,6 +269,7 @@ describe HTTP::Server::Response do
       response = Response.new(io)
       response.respond_with_status(HTTP::Status::URI_TOO_LONG, "Request Error")
       io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
+      response.status_message.should eq "Request Error"
     end
 
     it "closes when it fails to write" do
