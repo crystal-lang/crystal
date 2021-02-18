@@ -350,11 +350,13 @@ describe HTTP::Server::Response do
   end
 
   describe "#redirect" do
-    it "redirects" do
-      io = IO::Memory.new
-      response = Response.new(io)
-      response.redirect("/path")
-      io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+    ["/path", URI.parse("/path"), Path.posix("/path")].each do |location|
+      it "#{location.class} location" do
+        io = IO::Memory.new
+        response = Response.new(io)
+        response.redirect("/path")
+        io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
+      end
     end
 
     it "encodes special characters" do
