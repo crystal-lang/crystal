@@ -714,7 +714,7 @@ class String
     unless v.finite?
       startptr = to_unsafe
       if whitespace
-        while(startptr.value.chr.ascii_whitespace?)
+        while startptr.value.chr.ascii_whitespace?
           startptr += 1
         end
       end
