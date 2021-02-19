@@ -34,7 +34,7 @@ class HTTP::Request
     #   include HTTP::Handler
     #
     #   def call(context)
-    #     if (ip = context.request.headers["X-Real-IP"]?) # When using a reverse proxy that guarantees this field.
+    #     if ip = context.request.headers["X-Real-IP"]? # When using a reverse proxy that guarantees this field.
     #       context.request.remote_address = Socket::IPAddress.new(ip, 0)
     #     end
     #     call_next(context)
