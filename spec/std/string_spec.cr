@@ -249,6 +249,7 @@ describe "String" do
     it { "   -1234   ".to_i.should eq(-1234) }
     it { "   +1234   ".to_i.should eq(1234) }
     it { "   -00001234".to_i.should eq(-1234) }
+    it { "\u00A01234\u00A0".to_i.should eq(1234) }
     it { "1_234".to_i(underscore: true).should eq(1234) }
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
@@ -729,6 +730,7 @@ describe "String" do
     it { "".strip.should eq("") }
     it { "\n".strip.should eq("") }
     it { "\n\t  ".strip.should eq("") }
+    it { "\u00A0".strip.should eq("") }
 
     # TODO: add spec tags so this can be run with tag:slow
     # it { (" " * 167772160).strip.should eq("") }
@@ -1033,6 +1035,8 @@ describe "String" do
       it { "   foo   bar\n\t  baz   ".split(1).should eq(["   foo   bar\n\t  baz   "]) }
       it { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
       it { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+
+      it { " foo\u00A0bar baz".split.should eq(["foo", "bar", "baz"]) }
     end
 
     describe "by char" do
