@@ -767,6 +767,16 @@ struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
+  # Returns an `Int8` by invoking `to_i8` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # Int8.new "20"                        # => 20
+  # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_i8 **kargs
+  end
+
   # Returns an `Int8` by invoking `to_i8` on *value*.
   def self.new(value)
     value.to_i8
@@ -806,6 +816,16 @@ end
 struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
+
+  # Returns an `Int16` by invoking `to_i16` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # Int16.new "20"                        # => 20
+  # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_i16 **kargs
+  end
 
   # Returns an `Int16` by invoking `to_i16` on *value*.
   def self.new(value)
@@ -847,6 +867,16 @@ struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
+  # Returns an `Int32` by invoking `to_i32` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # Int32.new "20"                        # => 20
+  # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_i32 **kargs
+  end
+
   # Returns an `Int32` by invoking `to_i32` on *value*.
   def self.new(value)
     value.to_i32
@@ -886,6 +916,16 @@ end
 struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
+
+  # Returns an `Int64` by invoking `to_i64` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # Int64.new "20"                        # => 20
+  # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_i64 **kargs
+  end
 
   # Returns an `Int64` by invoking `to_i64` on *value*.
   def self.new(value)
@@ -928,6 +968,16 @@ struct Int128
   MIN = new(1) << 127
   MAX = ~MIN
 
+  # Returns an `Int128` by invoking `to_i128` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # Int128.new "20"                        # => 20
+  # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_i128 **kargs
+  end
+
   # Returns an `Int128` by invoking `to_i128` on *value*.
   def self.new(value)
     value.to_i128
@@ -968,6 +1018,16 @@ end
 struct UInt8
   MIN =   0_u8
   MAX = 255_u8
+
+  # Returns an `UInt8` by invoking `to_u8` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # UInt8.new "20"                        # => 20
+  # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_u8 **kargs
+  end
 
   # Returns an `UInt8` by invoking `to_u8` on *value*.
   def self.new(value)
@@ -1013,6 +1073,16 @@ struct UInt16
   MIN =     0_u16
   MAX = 65535_u16
 
+  # Returns an `UInt16` by invoking `to_u16` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # UInt16.new "20"                        # => 20
+  # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_u16 **kargs
+  end
+
   # Returns an `UInt16` by invoking `to_u16` on *value*.
   def self.new(value)
     value.to_u16
@@ -1056,6 +1126,16 @@ end
 struct UInt32
   MIN =          0_u32
   MAX = 4294967295_u32
+
+  # Returns an `UInt32` by invoking `to_u32` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # UInt32.new "20"                        # => 20
+  # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_u32 **kargs
+  end
 
   # Returns an `UInt32` by invoking `to_u32` on *value*.
   def self.new(value)
@@ -1101,6 +1181,16 @@ struct UInt64
   MIN =                    0_u64
   MAX = 18446744073709551615_u64
 
+  # Returns an `UInt64` by invoking `to_u64` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # UInt64.new "20"                        # => 20
+  # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_u64 **kargs
+  end
+
   # Returns an `UInt64` by invoking `to_u64` on *value*.
   def self.new(value)
     value.to_u64
@@ -1145,6 +1235,16 @@ struct UInt128
   # TODO: eventually update to literals once UInt128 bit support is finished
   MIN = new 0
   MAX = ~MIN
+
+  # Returns an `UInt128` by invoking `to_u128` on *value*, including any provided *kwargs*.
+  #
+  # ```
+  # UInt128.new "20"                        # => 20
+  # UInt128.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt128:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, **kargs) : self
+    value.to_u128 **kargs
+  end
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
   def self.new(value)
