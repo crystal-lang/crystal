@@ -391,7 +391,7 @@ describe "Semantic: closure" do
         x.to_f
       end
       ",
-      "wrong number of block arguments (given 1, expected 0)"
+      "wrong number of block parameters (given 1, expected 0)"
   end
 
   it "allows giving less block args when transforming block to proc literal" do
