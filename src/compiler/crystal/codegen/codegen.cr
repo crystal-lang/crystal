@@ -477,22 +477,34 @@ module Crystal
       request_value do
         type = node.type.as(TupleInstanceType)
 
-        exp_values = Array({Type, LLVM::Value}).new(type.tuple_types.size)
-        node.elements.each_with_index do |exp|
-          accept exp
-
-          if exp.is_a?(Splat)
-            tuple_type = exp.type.as(TupleInstanceType)
-            tuple_type.tuple_types.each_with_index do |subtype, j|
-              exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
-            end
-          else
-            exp_values << {exp.type, @last}
+        if node.elements.any?(Splat)
+          tuple_size = node.elements.sum do |exp|
+            exp.is_a?(Splat) ? exp.type.as(TupleInstanceType).tuple_types.size : 1
           end
-        end
+          exp_values = Array({Type, LLVM::Value}).new(tuple_size)
 
-        @last = allocate_tuple(type) do |_, i|
-          exp_values[i]
+          node.elements.each_with_index do |exp|
+            accept exp
+
+            if exp.is_a?(Splat)
+              tuple_type = exp.type.as(TupleInstanceType)
+              tuple_type.tuple_types.each_with_index do |subtype, j|
+                exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+              end
+            else
+              exp_values << {exp.type, @last}
+            end
+          end
+
+          @last = allocate_tuple(type) do |_, i|
+            exp_values[i]
+          end
+        else
+          @last = allocate_tuple(type) do |tuple_type, i|
+            exp = node.elements[i]
+            accept exp
+            {exp.type, @last}
+          end
         end
       end
       false
