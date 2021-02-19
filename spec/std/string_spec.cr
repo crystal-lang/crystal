@@ -435,6 +435,7 @@ describe "String" do
     "-1#{Float64::MAX}".to_f?.should be_nil
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
+    "-NaN".to_f?.try(&.nan?).should be_true
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
     "-INF".to_f?.should eq -Float64::INFINITY
@@ -471,6 +472,7 @@ describe "String" do
     "-1#{Float32::MAX}".to_f32?.should be_nil
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
+    "-NaN".to_f32?.try(&.nan?).should be_true
     " INF".to_f32?.should eq Float32::INFINITY
     "INF".to_f32?.should eq Float32::INFINITY
     "-INF".to_f32?.should eq -Float32::INFINITY
@@ -507,6 +509,7 @@ describe "String" do
     "-1#{Float64::MAX}".to_f64?.should be_nil
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
+    "-NaN".to_f64?.try(&.nan?).should be_true
     " INF".to_f64?.should eq Float64::INFINITY
     "INF".to_f64?.should eq Float64::INFINITY
     "-INF".to_f64?.should eq -Float64::INFINITY

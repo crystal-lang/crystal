@@ -718,13 +718,13 @@ class String
           startptr += 1
         end
       end
+      if startptr.value.chr.in?('+', '-')
+        startptr += 1
+      end
 
       if v.nan?
         return unless startptr.value.chr.in?('n', 'N')
       else
-        if startptr.value.chr.in?('+', '-')
-          startptr += 1
-        end
         return unless startptr.value.chr.in?('i', 'I')
       end
     end
