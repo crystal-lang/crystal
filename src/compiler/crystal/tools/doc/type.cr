@@ -499,6 +499,18 @@ class Crystal::Doc::Type
     node.type_vars.join(io, ", ") do |type_var|
       node_to_html type_var, io, links: links
     end
+    if (named_args = node.named_args) && !named_args.empty?
+      io << ", " unless node.type_vars.empty?
+      named_args.join(io, ", ") do |entry|
+        if Symbol.needs_quotes_for_named_argument?(entry.name)
+          entry.name.inspect(io)
+        else
+          io << entry.name
+        end
+        io << ": "
+        node_to_html entry.value, io, links: links
+      end
+    end
     io << ')'
   end
 
