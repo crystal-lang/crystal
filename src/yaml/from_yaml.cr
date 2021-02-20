@@ -220,24 +220,50 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  if node.is_a?(YAML::Nodes::Scalar)
-    string = node.value
-    if value = string.to_i64?
-      from_value(value)
-    else
-      parse(string)
-    end
-  else
-    {% if @type.annotation(Flags) %}
-      value = 0
+  {% if @type.annotation(Flags) %}
+    if node.is_a?(YAML::Nodes::Sequence)
+      value = {{ @type }}::None
       node.each do |element|
-        value += new(ctx, element).value
+        unless element.is_a?(YAML::Nodes::Scalar)
+          element.raise "Expected scalar, not #{element.type}"
+        end
+
+        value |= parse?(element.value) || element.raise "Unknown enum #{self} value: #{element.value.inspect}"
       end
 
-      from_value(value)
-    {% else %}
-      node.raise "Expected scalar, not #{node.class}"
-    {% end %}
+      value
+    else
+      node.raise "Expected sequence, not #{node.type}"
+    end
+  {% else %}
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.type}"
+    end
+
+    if value = parse?(node.value)
+      value
+    else
+      node.raise "Unknown enum #{self} value: #{node.value.inspect}"
+    end
+  {% end %}
+end
+
+module Enum::NumberOrStringConverter(T)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    from_yaml(ctx, node)
+  end
+
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    unless node.is_a?(YAML::Nodes::Scalar)
+      node.raise "Expected scalar, not #{node.type}"
+    end
+
+    string = node.value
+    if value = string.to_i64?
+      T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
+    else
+      T.parse?(string) || node.raise "Unknown enum #{T} value: #{string.inspect}"
+    end
   end
 end
 

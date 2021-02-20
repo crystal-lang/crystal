@@ -245,29 +245,47 @@ end
 
 def Enum.new(pull : JSON::PullParser)
   {% if @type.annotation(Flags) %}
-    # NOTE: This would be better placed in the case statement below,
-    #       but there's a bug in `crystal tool format` with
-    #       macros and case statements
     if pull.kind.begin_array?
-      value = 0
+      value = {{ @type }}::None
       pull.read_array do
-        value += new(pull).value
+        unless pull.kind.string?
+          pull.raise "Expected String, not #{pull.kind}"
+        end
+        string = pull.read_string
+        value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
       end
-      return from_value(value)
+      value
+    else
+      pull.raise "Expected BeginArray, not #{pull.kind}"
+    end
+  {% else %}
+    unless pull.kind.string?
+      pull.raise "Expected String, not #{pull.kind}"
+    end
+
+    string = pull.read_string
+    if value = parse?(string)
+      value
+    else
+      pull.raise "Unknown enum #{self} value: #{string.inspect}"
     end
   {% end %}
+end
 
-  case pull.kind
-  when .int?
-    from_value(pull.read_int)
-  when .string?
-    parse(pull.read_string)
-  else
-    {% if @type.annotation(Flags) %}
-      raise "Expecting int, string or array in JSON for #{self.class}, not #{pull.kind}"
-    {% else %}
-      raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
-    {% end %}
+module Enum::NumberOrStringConverter(T)
+  def self.new(pull : JSON::PullParser) : T
+    from_json(pull)
+  end
+
+  def self.from_json(pull : JSON::PullParser) : T
+    case pull.kind
+    when .int?
+      T.from_value?(pull.read_int) || pull.raise "Unknown enum #{T} value: #{pull.int_value}"
+    when .string?
+      T.parse?(pull.read_string) || pull.raise "Unknown enum #{T} value: #{pull.string_value.inspect}"
+    else
+      pull.raise "Expected Int or String, not #{pull.kind}"
+    end
   end
 end
 

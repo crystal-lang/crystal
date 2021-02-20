@@ -173,6 +173,24 @@ struct Enum
   end
 end
 
+module Enum::NumberOrStringConverter(T)
+  def self.to_json(value : T)
+    String.build do |io|
+      to_json(value, io)
+    end
+  end
+
+  def self.to_json(value : T, io : IO)
+    JSON.build(io) do |json|
+      to_json(value, json)
+    end
+  end
+
+  def self.to_json(value : T, json : JSON::Builder)
+    json.scalar(value.value)
+  end
+end
+
 struct Time
   # Emits a string formatted according to [RFC 3339](https://tools.ietf.org/html/rfc3339)
   # ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).

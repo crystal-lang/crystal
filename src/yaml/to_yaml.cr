@@ -124,23 +124,36 @@ end
 struct Enum
   def to_yaml(yaml : YAML::Nodes::Builder)
     {% if @type.annotation(Flags) %}
-      yaml.sequence do
+      yaml.sequence(style: :flow) do
         each do |member, _value|
-          build_safe_yaml_string(yaml, member)
+          member.to_s.underscore.to_yaml(yaml)
         end
       end
     {% else %}
-      build_safe_yaml_string(yaml, self)
+      to_s.underscore.to_yaml(yaml)
     {% end %}
   end
+end
 
-  private def build_safe_yaml_string(yaml : YAML::Nodes::Builder, member)
-    string = member.to_s.underscore
-    if YAML::Schema::Core.reserved_string?(string)
-      yaml.scalar string, style: YAML::ScalarStyle::DOUBLE_QUOTED
-    else
-      yaml.scalar string
+module Enum::NumberOrStringConverter(T)
+  def self.to_yaml(value : T)
+    String.build do |io|
+      to_yaml(value, io)
     end
+  end
+
+  def self.to_yaml(value : T, io : IO, )
+    nodes_builder = YAML::Nodes::Builder.new
+    to_yaml(value, nodes_builder)
+
+    # Then we convert the tree to YAML.
+    YAML.build(io) do |builder|
+      nodes_builder.document.to_yaml(builder)
+    end
+  end
+
+  def self.to_yaml(value : T, yaml : YAML::Nodes::Builder)
+    yaml.scalar(value.value)
   end
 end
 
