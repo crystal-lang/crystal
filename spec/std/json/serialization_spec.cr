@@ -275,63 +275,63 @@ describe "JSON serialization" do
       end
     end
 
-    describe "Enum::NumberConverter.from_json" do
+    describe "Enum::ValueConverter.from_json" do
       it "normal enum" do
-        Enum::NumberConverter(JSONSpecEnum).from_json("0").should eq(JSONSpecEnum::Zero)
-        Enum::NumberConverter(JSONSpecEnum).from_json("1").should eq(JSONSpecEnum::One)
-        Enum::NumberConverter(JSONSpecEnum).from_json("2").should eq(JSONSpecEnum::Two)
-        Enum::NumberConverter(JSONSpecEnum).from_json("3").should eq(JSONSpecEnum::OneHundred)
+        Enum::ValueConverter(JSONSpecEnum).from_json("0").should eq(JSONSpecEnum::Zero)
+        Enum::ValueConverter(JSONSpecEnum).from_json("1").should eq(JSONSpecEnum::One)
+        Enum::ValueConverter(JSONSpecEnum).from_json("2").should eq(JSONSpecEnum::Two)
+        Enum::ValueConverter(JSONSpecEnum).from_json("3").should eq(JSONSpecEnum::OneHundred)
 
         expect_raises(JSON::ParseException, %(Expected Int but was String)) do
-          Enum::NumberConverter(JSONSpecEnum).from_json(%("3"))
+          Enum::ValueConverter(JSONSpecEnum).from_json(%("3"))
         end
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: 4)) do
-          Enum::NumberConverter(JSONSpecEnum).from_json("4")
+          Enum::ValueConverter(JSONSpecEnum).from_json("4")
         end
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: -1)) do
-          Enum::NumberConverter(JSONSpecEnum).from_json("-1")
+          Enum::ValueConverter(JSONSpecEnum).from_json("-1")
         end
         expect_raises(JSON::ParseException, %(Expected Int but was String)) do
-          Enum::NumberConverter(JSONSpecEnum).from_json(%(""))
+          Enum::ValueConverter(JSONSpecEnum).from_json(%(""))
         end
 
         expect_raises(JSON::ParseException, "Expected Int but was String") do
-          Enum::NumberConverter(JSONSpecEnum).from_json(%("one"))
+          Enum::ValueConverter(JSONSpecEnum).from_json(%("one"))
         end
 
         expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
-          Enum::NumberConverter(JSONSpecEnum).from_json(%({}))
+          Enum::ValueConverter(JSONSpecEnum).from_json(%({}))
         end
         expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
-          Enum::NumberConverter(JSONSpecEnum).from_json(%([]))
+          Enum::ValueConverter(JSONSpecEnum).from_json(%([]))
         end
       end
 
       it "flag enum" do
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("0").should eq(JSONSpecFlagEnum::None)
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("1").should eq(JSONSpecFlagEnum::One)
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("2").should eq(JSONSpecFlagEnum::Two)
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("4").should eq(JSONSpecFlagEnum::OneHundred)
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("5").should eq(JSONSpecFlagEnum::OneHundred | JSONSpecFlagEnum::One)
-        Enum::NumberConverter(JSONSpecFlagEnum).from_json("7").should eq(JSONSpecFlagEnum::All)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("0").should eq(JSONSpecFlagEnum::None)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("1").should eq(JSONSpecFlagEnum::One)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("2").should eq(JSONSpecFlagEnum::Two)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("4").should eq(JSONSpecFlagEnum::OneHundred)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("5").should eq(JSONSpecFlagEnum::OneHundred | JSONSpecFlagEnum::One)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("7").should eq(JSONSpecFlagEnum::All)
 
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: 8)) do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json("8")
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json("8")
         end
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: -1)) do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json("-1")
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json("-1")
         end
         expect_raises(JSON::ParseException, %(Expected Int but was String)) do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json(%(""))
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%(""))
         end
         expect_raises(JSON::ParseException, "Expected Int but was String") do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json(%("one"))
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%("one"))
         end
         expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json(%({}))
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%({}))
         end
         expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
-          Enum::NumberConverter(JSONSpecFlagEnum).from_json(%([]))
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%([]))
         end
       end
     end
@@ -573,9 +573,9 @@ describe "JSON serialization" do
       end
     end
 
-    describe "Enum::NumberConverter" do
+    describe "Enum::ValueConverter" do
       it "normal enum" do
-        converter = Enum::NumberConverter(JSONSpecEnum)
+        converter = Enum::ValueConverter(JSONSpecEnum)
         converter.to_json(JSONSpecEnum::One).should eq %(1)
         converter.from_json(converter.to_json(JSONSpecEnum::One)).should eq(JSONSpecEnum::One)
 
@@ -588,7 +588,7 @@ describe "JSON serialization" do
       end
 
       it "flag enum" do
-        converter = Enum::NumberConverter(JSONSpecFlagEnum)
+        converter = Enum::ValueConverter(JSONSpecFlagEnum)
         converter.to_json(JSONSpecFlagEnum::One).should eq %(1)
         converter.from_json(converter.to_json(JSONSpecFlagEnum::One)).should eq(JSONSpecFlagEnum::One)
 

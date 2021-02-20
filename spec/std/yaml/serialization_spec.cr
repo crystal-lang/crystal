@@ -249,66 +249,66 @@ describe "YAML serialization" do
       end
     end
 
-    describe "Enum::NumberConverter.from_yaml" do
+    describe "Enum::ValueConverter.from_yaml" do
       it "normal enum" do
-        Enum::NumberConverter(YAMLSpecEnum).from_yaml("0").should eq(YAMLSpecEnum::Zero)
-        Enum::NumberConverter(YAMLSpecEnum).from_yaml("1").should eq(YAMLSpecEnum::One)
-        Enum::NumberConverter(YAMLSpecEnum).from_yaml("2").should eq(YAMLSpecEnum::Two)
-        Enum::NumberConverter(YAMLSpecEnum).from_yaml("3").should eq(YAMLSpecEnum::OneHundred)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("0").should eq(YAMLSpecEnum::Zero)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("1").should eq(YAMLSpecEnum::One)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("2").should eq(YAMLSpecEnum::Two)
+        Enum::ValueConverter(YAMLSpecEnum).from_yaml("3").should eq(YAMLSpecEnum::OneHundred)
 
         expect_raises(YAML::ParseException, "Expected Int64, not 3") do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%("3"))
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%("3"))
         end
 
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: 4)) do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml("4")
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("4")
         end
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: -1)) do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml("-1")
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("-1")
         end
         expect_raises(YAML::ParseException, %(Expected Int64, not )) do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml("")
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml("")
         end
 
         expect_raises(YAML::ParseException, %(Expected Int64, not one)) do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%("one"))
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%("one"))
         end
 
         expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Mapping") do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%({}))
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%({}))
         end
         expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Sequence") do
-          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%([]))
+          Enum::ValueConverter(YAMLSpecEnum).from_yaml(%([]))
         end
       end
 
       it "flag enum" do
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("0").should eq(YAMLSpecFlagEnum::None)
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("1").should eq(YAMLSpecFlagEnum::One)
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("2").should eq(YAMLSpecFlagEnum::Two)
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("4").should eq(YAMLSpecFlagEnum::OneHundred)
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("5").should eq(YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One)
-        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("7").should eq(YAMLSpecFlagEnum::All)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("0").should eq(YAMLSpecFlagEnum::None)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("1").should eq(YAMLSpecFlagEnum::One)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("2").should eq(YAMLSpecFlagEnum::Two)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("4").should eq(YAMLSpecFlagEnum::OneHundred)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("5").should eq(YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One)
+        Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("7").should eq(YAMLSpecFlagEnum::All)
 
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: 8)) do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("8")
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("8")
         end
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: -1)) do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("-1")
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("-1")
         end
         expect_raises(YAML::ParseException, %(Expected Int64, not )) do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("")
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml("")
         end
 
         expect_raises(YAML::ParseException, %(Expected Int64, not one)) do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%("one"))
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%("one"))
         end
 
         expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Mapping") do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%({}))
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%({}))
         end
         expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Sequence") do
-          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%([]))
+          Enum::ValueConverter(YAMLSpecFlagEnum).from_yaml(%([]))
         end
       end
     end
@@ -533,9 +533,9 @@ describe "YAML serialization" do
       end
     end
 
-    describe "Enum::NumberConverter" do
+    describe "Enum::ValueConverter" do
       it "normal enum" do
-        converter = Enum::NumberConverter(YAMLSpecEnum)
+        converter = Enum::ValueConverter(YAMLSpecEnum)
         assert_yaml_document_end(converter.to_yaml(YAMLSpecEnum::One), "--- 1\n")
         converter.from_yaml(converter.to_yaml(YAMLSpecEnum::One)).should eq(YAMLSpecEnum::One)
 
@@ -548,7 +548,7 @@ describe "YAML serialization" do
       end
 
       it "flag enum" do
-        converter = Enum::NumberConverter(YAMLSpecFlagEnum)
+        converter = Enum::ValueConverter(YAMLSpecFlagEnum)
         assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::One), %(--- 1\n))
         converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::One)).should eq(YAMLSpecFlagEnum::One)
 

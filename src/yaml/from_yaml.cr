@@ -219,6 +219,11 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 end
 
+# Reads a serialized enum member by name from *ctx* and *node*.
+#
+# See `#to_yaml` for reference.
+#
+# Raises `YAML::ParseException` if the deserialization fails.
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% if @type.annotation(Flags) %}
     if node.is_a?(YAML::Nodes::Sequence)
@@ -239,11 +244,16 @@ def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 end
 
-module Enum::NumberConverter(T)
+module Enum::ValueConverter(T)
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
     from_yaml(ctx, node)
   end
 
+  # Reads a serialized enum member by value from *ctx* and *node*.
+  #
+  # See `.to_yaml` for reference.
+  #
+  # Raises `YAML::ParseException` if the deserialization fails.
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
     value = parse_scalar ctx, node, Int64
 
