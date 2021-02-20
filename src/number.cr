@@ -401,7 +401,7 @@ struct Number
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits : Number = 0, base = 10, mode : RoundingMode = :ties_away)
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_away)
     if digits < 0
       multiplier = base.to_f ** digits.abs
       shifted = self / multiplier

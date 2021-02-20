@@ -53,12 +53,31 @@ describe "Number" do
       15.151.round.should eq(15)
     end
 
-    it "infinity" do
-      Float64::INFINITY.round.infinite?.should eq(1)
-      Float32::INFINITY.round.infinite?.should eq(1)
-      (-Float64::INFINITY).round.infinite?.should eq(-1)
-      (-Float32::INFINITY).round.infinite?.should eq(-1)
+    it "infinity Float64" do
+      Float64::INFINITY.round.should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: 0).should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: 3).should eq Float64::INFINITY
+      Float64::INFINITY.round(digits: -3).should eq Float64::INFINITY
+      (-Float64::INFINITY).round.should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: 0).should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: 3).should eq -Float64::INFINITY
+      (-Float64::INFINITY).round(digits: -3).should eq -Float64::INFINITY
     end
+
+    {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+      it "infinity Float32" do
+        Float32::INFINITY.round.should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: 0).should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: 3).should eq Float32::INFINITY
+        Float32::INFINITY.round(digits: -3).should eq Float32::INFINITY
+        (-Float32::INFINITY).round.should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: 0).should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: 3).should eq -Float32::INFINITY
+        (-Float32::INFINITY).round(digits: -3).should eq -Float32::INFINITY
+      end
+    {% else %}
+      pending "infinity Float32"
+    {% end %}
 
     it "nan" do
       Float64::NAN.round.nan?.should be_true
