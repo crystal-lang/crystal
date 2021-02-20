@@ -2945,7 +2945,10 @@ module Crystal
         case type
         when GenericClassType
           generic_type = TypeNode.new(type).at(node.location)
-          type_of = TypeOf.new(node.elements).at(node.location)
+          type_exps = node.elements.map do |elem|
+            elem.is_a?(Splat) ? Call.new(elem.exp.clone, "first") : elem
+          end
+          type_of = TypeOf.new(type_exps).at(node.location)
 
           generic = Generic.new(generic_type, type_of).at(node.location)
 

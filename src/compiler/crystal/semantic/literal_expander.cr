@@ -4,7 +4,7 @@ module Crystal
       @regexes = [] of {String, Regex::Options}
     end
 
-    # Convert an array literal to creating an Array and storing the values:
+    # Converts an array literal to creating an Array and storing the values:
     #
     # From:
     #
@@ -20,17 +20,35 @@ module Crystal
     #
     # To:
     #
-    #     Array(typeof(1, 2, 3)).new(3) do |buffer|
-    #       buffer[0] = 1
-    #       buffer[1] = 2
-    #       buffer[2] = 3
-    #       3
-    #     end
+    #     ary = ::Array(typeof(1, 2, 3)).unsafe_build(3)
+    #     buf = ary.to_unsafe
+    #     buf[0] = 1
+    #     buf[1] = 2
+    #     buf[2] = 3
+    #     ary
+    #
+    # From:
+    #
+    #     [1, *exp2, *exp3, 4]
+    #
+    # To:
+    #
+    #     ary = ::Array(typeof(1, exp2.first, exp3.first, 4)).new
+    #     ary << 1
+    #     ary.concat(exp2)
+    #     ary.concat(exp3)
+    #     ary << 4
+    #     ary
     def expand(node : ArrayLiteral)
+      has_splats = node.elements.any?(Splat)
+
       if node_of = node.of
         type_var = node_of
       else
-        type_var = TypeOf.new(node.elements.clone)
+        type_exps = node.elements.map do |elem|
+          elem.is_a?(Splat) ? Call.new(elem.exp.clone, "first") : elem
+        end
+        type_var = TypeOf.new(type_exps)
       end
 
       capacity = node.elements.size
@@ -39,6 +57,25 @@ module Crystal
 
       if capacity.zero?
         Call.new(generic, "new").at(node)
+      elsif node.elements.any?(Splat)
+        ary_var = new_temp_var.at(node)
+
+        ary_instance = Call.new(generic, "new").at(node)
+
+        exps = Array(ASTNode).new(node.elements.size + 2)
+        exps << Assign.new(ary_var.clone, ary_instance).at(node)
+
+        node.elements.each do |elem|
+          if elem.is_a?(Splat)
+            exps << Call.new(ary_var.clone, "concat", elem.exp.clone).at(node)
+          else
+            exps << Call.new(ary_var.clone, "<<", elem.clone).at(node)
+          end
+        end
+
+        exps << ary_var.clone
+
+        Expressions.new(exps).at(node)
       else
         ary_var = new_temp_var.at(node)
 
@@ -61,6 +98,35 @@ module Crystal
       end
     end
 
+    # Converts an array-like literal to creating a container and storing the values:
+    #
+    # From:
+    #
+    #     T{1, 2, 3}
+    #
+    # To:
+    #
+    #     ary = T.new
+    #     ary << 1
+    #     ary << 2
+    #     ary << 3
+    #     ary
+    #
+    # From:
+    #
+    #     T{1, *exp2, *exp3, 4}
+    #
+    # To:
+    #
+    #     ary = T.new
+    #     ary << 1
+    #     exp2.each { |v| ary << v }
+    #     exp3.each { |v| ary << v }
+    #     ary << 4
+    #     ary
+    #
+    # If `T` is an uninstantiated generic type, its type argument is injected by
+    # `MainVisitor` with a `typeof`.
     def expand_named(node : ArrayLiteral)
       temp_var = new_temp_var
 
@@ -73,33 +139,21 @@ module Crystal
       exps = Array(ASTNode).new(node.elements.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.elements.each do |elem|
-        exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+        if elem.is_a?(Splat)
+          yield_var = new_temp_var
+          each_body = Call.new(temp_var.clone, "<<", yield_var.clone)
+          each_block = Block.new(args: [yield_var], body: each_body)
+          exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
+        else
+          exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+        end
       end
       exps << temp_var.clone
 
       Expressions.new(exps).at(node)
     end
 
-    def expand_named(node : HashLiteral)
-      constructor = Call.new(node.name, "new").at(node)
-
-      if node.entries.empty?
-        return constructor
-      end
-
-      temp_var = new_temp_var
-
-      exps = Array(ASTNode).new(node.entries.size + 2)
-      exps << Assign.new(temp_var.clone, constructor).at(node)
-      node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
-      end
-      exps << temp_var.clone
-
-      Expressions.new(exps).at(node)
-    end
-
-    # Convert a HashLiteral into creating a Hash and assigning keys and values:
+    # Converts a hash literal into creating a Hash and assigning keys and values:
     #
     # From:
     #
@@ -115,7 +169,7 @@ module Crystal
     #
     # To:
     #
-    #     hash = Hash(typeof(a, c), typeof(b, d)).new
+    #     hash = ::Hash(typeof(a, c), typeof(b, d)).new
     #     hash[a] = b
     #     hash[c] = d
     #     hash
@@ -144,6 +198,49 @@ module Crystal
         exps << temp_var.clone
         Expressions.new(exps).at(node)
       end
+    end
+
+
+    # Converts a hash-like literal into creating a Hash and assigning keys and values:
+    #
+    # From:
+    #
+    #     T{}
+    #
+    # To:
+    #
+    #     T.new
+    #
+    # From:
+    #
+    #     T{a => b, c => d}
+    #
+    # To:
+    #
+    #     hash = T.new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
+    #
+    # If `T` is an uninstantiated generic type, its type arguments are injected
+    # by `MainVisitor` with `typeof`s.
+    def expand_named(node : HashLiteral)
+      constructor = Call.new(node.name, "new").at(node)
+
+      if node.entries.empty?
+        return constructor
+      end
+
+      temp_var = new_temp_var
+
+      exps = Array(ASTNode).new(node.entries.size + 2)
+      exps << Assign.new(temp_var.clone, constructor).at(node)
+      node.entries.each do |entry|
+        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
+      end
+      exps << temp_var.clone
+
+      Expressions.new(exps).at(node)
     end
 
     # From:
