@@ -245,24 +245,13 @@ end
 
 def Enum.new(pull : JSON::PullParser)
   {% if @type.annotation(Flags) %}
-    if pull.kind.begin_array?
-      value = {{ @type }}::None
-      pull.read_array do
-        unless pull.kind.string?
-          pull.raise "Expected String, not #{pull.kind}"
-        end
-        string = pull.read_string
-        value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
-      end
-      value
-    else
-      pull.raise "Expected BeginArray, not #{pull.kind}"
+    value = {{ @type }}::None
+    pull.read_array do
+      string = pull.read_string
+      value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
     end
+    value
   {% else %}
-    unless pull.kind.string?
-      pull.raise "Expected String, not #{pull.kind}"
-    end
-
     string = pull.read_string
     if value = parse?(string)
       value
@@ -284,7 +273,7 @@ module Enum::NumberOrStringConverter(T)
     when .string?
       T.parse?(pull.read_string) || pull.raise "Unknown enum #{T} value: #{pull.string_value.inspect}"
     else
-      pull.raise "Expected Int or String, not #{pull.kind}"
+      pull.raise "Expected Int or String but was #{pull.kind}"
     end
   end
 end

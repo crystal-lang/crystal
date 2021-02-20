@@ -230,17 +230,17 @@ describe "JSON serialization" do
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
           JSONSpecEnum.from_json(%("three"))
         end
-        expect_raises(JSON::ParseException, %(Expected String, not Int)) do
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
           JSONSpecEnum.from_json(%(1))
         end
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "1")) do
           JSONSpecEnum.from_json(%("1"))
         end
 
-        expect_raises(JSON::ParseException, "Expected String, not BeginObject") do
+        expect_raises(JSON::ParseException, "Expected String but was BeginObject") do
           JSONSpecEnum.from_json(%({}))
         end
-        expect_raises(JSON::ParseException, "Expected String, not BeginArray") do
+        expect_raises(JSON::ParseException, "Expected String but was BeginArray") do
           JSONSpecEnum.from_json(%([]))
         end
       end
@@ -253,23 +253,23 @@ describe "JSON serialization" do
         JSONSpecFlagEnum.from_json(%(["one", "two", "one_hundred"])).should eq(JSONSpecFlagEnum::All)
         JSONSpecFlagEnum.from_json(%([])).should eq(JSONSpecFlagEnum::None)
 
-        expect_raises(JSON::ParseException, "Expected String, not BeginArray") do
+        expect_raises(JSON::ParseException, "Expected String but was BeginArray") do
           JSONSpecFlagEnum.from_json(%(["one", ["two"]]))
         end
 
         expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: "three")) do
           JSONSpecFlagEnum.from_json(%(["one", "three"]))
         end
-        expect_raises(JSON::ParseException, %(Expected String, not Int)) do
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
           JSONSpecFlagEnum.from_json(%([1, 2]))
         end
-        expect_raises(JSON::ParseException, %(Expected String, not Int)) do
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
           JSONSpecFlagEnum.from_json(%(["one", 2]))
         end
-        expect_raises(JSON::ParseException, "Expected BeginArray, not BeginObject") do
+        expect_raises(JSON::ParseException, "Expected BeginArray but was BeginObject") do
           JSONSpecFlagEnum.from_json(%({}))
         end
-        expect_raises(JSON::ParseException, "Expected BeginArray, not String") do
+        expect_raises(JSON::ParseException, "Expected BeginArray but was String") do
           JSONSpecFlagEnum.from_json(%("one"))
         end
       end
@@ -315,10 +315,10 @@ describe "JSON serialization" do
         end
 
         it "other nodes" do
-          expect_raises(JSON::ParseException, "Expected Int or String, not BeginObject") do
+          expect_raises(JSON::ParseException, "Expected Int or String but was BeginObject") do
             Enum::NumberOrStringConverter(JSONSpecEnum).from_json(%({}))
           end
-          expect_raises(JSON::ParseException, "Expected Int or String, not BeginArray") do
+          expect_raises(JSON::ParseException, "Expected Int or String but was BeginArray") do
             Enum::NumberOrStringConverter(JSONSpecEnum).from_json(%([]))
           end
         end
@@ -362,10 +362,10 @@ describe "JSON serialization" do
         end
 
         it "other nodes" do
-          expect_raises(JSON::ParseException, "Expected Int or String, not BeginObject") do
+          expect_raises(JSON::ParseException, "Expected Int or String but was BeginObject") do
             Enum::NumberOrStringConverter(JSONSpecFlagEnum).from_json(%({}))
           end
-          expect_raises(JSON::ParseException, "Expected Int or String, not BeginArray") do
+          expect_raises(JSON::ParseException, "Expected Int or String but was BeginArray") do
             Enum::NumberOrStringConverter(JSONSpecFlagEnum).from_json(%([]))
           end
         end
