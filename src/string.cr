@@ -637,7 +637,9 @@ class String
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method raises an exception if the string is not a valid float representation.
+  # This method raises an exception if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -654,8 +656,15 @@ class String
     to_f64(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64(whitespace : Bool = true, strict : Bool = true)
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+  end
+
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method returns `nil` if the string is not a valid float representation.
+  # This method returns `nil` if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -672,6 +681,14 @@ class String
     to_f64?(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64?(whitespace : Bool = true, strict : Bool = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtod self, out endptr
+      {v, endptr}
+    end
+  end
+
   # Same as `#to_f` but returns a Float32.
   def to_f32(whitespace : Bool = true, strict : Bool = true)
     to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
@@ -685,23 +702,29 @@ class String
     end
   end
 
-  # Same as `#to_f`.
-  def to_f64(whitespace : Bool = true, strict : Bool = true)
-    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
-  end
-
-  # Same as `#to_f?`.
-  def to_f64?(whitespace : Bool = true, strict : Bool = true)
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
-  end
-
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
     return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
 
     v, endptr = yield
+
+    unless v.finite?
+      startptr = to_unsafe
+      if whitespace
+        while startptr.value.chr.ascii_whitespace?
+          startptr += 1
+        end
+      end
+      if startptr.value.chr.in?('+', '-')
+        startptr += 1
+      end
+
+      if v.nan?
+        return unless startptr.value.chr.in?('n', 'N')
+      else
+        return unless startptr.value.chr.in?('i', 'I')
+      end
+    end
+
     string_end = to_unsafe + bytesize
 
     # blank string
