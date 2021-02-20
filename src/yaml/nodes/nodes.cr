@@ -29,6 +29,9 @@ module YAML::Nodes
     def raise(message)
       ::raise YAML::ParseException.new(message, *location)
     end
+
+    # Returns the type of this node, which is equivalent to the class name.
+    abstract def type : String
   end
 
   # A YAML document.
@@ -51,6 +54,10 @@ module YAML::Nodes
     def to_yaml(builder : YAML::Builder)
       nodes.each &.to_yaml(builder)
     end
+
+    def type : String
+      "document"
+    end
   end
 
   # A scalar value.
@@ -67,6 +74,10 @@ module YAML::Nodes
 
     def to_yaml(builder : YAML::Builder)
       builder.scalar(value, anchor, tag, style)
+    end
+
+    def type : String
+      "scalar"
     end
   end
 
@@ -95,6 +106,10 @@ module YAML::Nodes
       builder.sequence(anchor, tag, style) do
         each &.to_yaml(builder)
       end
+    end
+
+    def type : String
+      "sequence"
     end
   end
 
@@ -131,6 +146,10 @@ module YAML::Nodes
         end
       end
     end
+
+    def type : String
+      "mapping"
+    end
   end
 
   # An alias.
@@ -145,6 +164,10 @@ module YAML::Nodes
 
     def to_yaml(builder : YAML::Builder)
       builder.alias(anchor.not_nil!)
+    end
+
+    def type : String
+      "alias"
     end
   end
 end
