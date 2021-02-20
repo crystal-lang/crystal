@@ -604,9 +604,19 @@ module Crystal
     property! program : Program
 
     def update(from = nil)
-      return unless elements.all? &.type?
+      types = [] of TypeVar
+      elements.each do |node|
+        if node.is_a?(Splat)
+          type = node.type?
+          return unless type.is_a?(TupleInstanceType)
+          types.concat(type.tuple_types)
+        else
+          type = node.type?
+          return unless type
+          types << type
+        end
+      end
 
-      types = elements.map &.type.as(TypeVar)
       tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)

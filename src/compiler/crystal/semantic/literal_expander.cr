@@ -200,7 +200,6 @@ module Crystal
       end
     end
 
-
     # Converts a hash-like literal into creating a Hash and assigning keys and values:
     #
     # From:

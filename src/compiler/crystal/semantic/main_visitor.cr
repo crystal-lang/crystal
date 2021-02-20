@@ -2849,6 +2849,15 @@ module Crystal
       node.elements.each &.add_observer(node)
       node.program = @program
       node.update
+
+      node.elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            node.raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+
       false
     end
 
