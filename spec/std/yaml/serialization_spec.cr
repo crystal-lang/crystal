@@ -204,17 +204,17 @@ describe "YAML serialization" do
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "three")) do
           YAMLSpecEnum.from_yaml(%("three"))
         end
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "1")) do
+        expect_raises(YAML::ParseException, %(Expected String, not 1)) do
           YAMLSpecEnum.from_yaml(%(1))
         end
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "1")) do
           YAMLSpecEnum.from_yaml(%("1"))
         end
 
-        expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
+        expect_raises(YAML::ParseException, "Expected String, not YAML::Nodes::Mapping") do
           YAMLSpecEnum.from_yaml(%({}))
         end
-        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+        expect_raises(YAML::ParseException, "Expected String, not YAML::Nodes::Sequence") do
           YAMLSpecEnum.from_yaml(%([]))
         end
       end
@@ -229,17 +229,17 @@ describe "YAML serialization" do
         YAMLSpecFlagEnum.from_yaml(%(["one", "two", "one_hundred"])).should eq(YAMLSpecFlagEnum::All)
         YAMLSpecFlagEnum.from_yaml(%([])).should eq(YAMLSpecFlagEnum::None)
 
-        expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
+        expect_raises(YAML::ParseException, "Expected String, not YAML::Nodes::Sequence") do
           YAMLSpecFlagEnum.from_yaml(%(["one", ["two"]]))
         end
 
         expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "three")) do
           YAMLSpecFlagEnum.from_yaml(%(["one", "three"]))
         end
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "1")) do
+        expect_raises(YAML::ParseException, %(Expected String, not 1)) do
           YAMLSpecFlagEnum.from_yaml(%([1, 2]))
         end
-        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "2")) do
+        expect_raises(YAML::ParseException, %(Expected String, not 2)) do
           YAMLSpecFlagEnum.from_yaml(%(["one", 2]))
         end
         expect_raises(YAML::ParseException, "Expected sequence, not mapping") do
@@ -251,97 +251,66 @@ describe "YAML serialization" do
       end
     end
 
-    describe "Enum::NumberOrStringConverter.from_yaml" do
-      describe "normal enum" do
-        it "numbers" do
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("0").should eq(YAMLSpecEnum::Zero)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("1").should eq(YAMLSpecEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("2").should eq(YAMLSpecEnum::Two)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("3").should eq(YAMLSpecEnum::OneHundred)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("3")).should eq(YAMLSpecEnum::OneHundred)
+    describe "Enum::NumberConverter.from_yaml" do
+      it "normal enum" do
+        Enum::NumberConverter(YAMLSpecEnum).from_yaml("0").should eq(YAMLSpecEnum::Zero)
+        Enum::NumberConverter(YAMLSpecEnum).from_yaml("1").should eq(YAMLSpecEnum::One)
+        Enum::NumberConverter(YAMLSpecEnum).from_yaml("2").should eq(YAMLSpecEnum::Two)
+        Enum::NumberConverter(YAMLSpecEnum).from_yaml("3").should eq(YAMLSpecEnum::OneHundred)
 
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: 4)) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("4")
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: -1)) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("-1")
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "")) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml("")
-          end
+        expect_raises(YAML::ParseException, "Expected Int64, not 3") do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%("3"))
         end
 
-        it "names" do
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("one")).should eq(YAMLSpecEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("One")).should eq(YAMLSpecEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("two")).should eq(YAMLSpecEnum::Two)
-          Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecEnum::OneHundred)
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "ONE-HUNDRED")) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("ONE-HUNDRED"))
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: " one ")) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%(" one "))
-          end
-
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: "three")) do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%("three"))
-          end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: 4)) do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml("4")
+        end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecEnum value: -1)) do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml("-1")
+        end
+        expect_raises(YAML::ParseException, %(Expected Int64, not )) do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml("")
         end
 
-        it "other nodes" do
-          expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%({}))
-          end
-          expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
-            Enum::NumberOrStringConverter(YAMLSpecEnum).from_yaml(%([]))
-          end
+        expect_raises(YAML::ParseException, %(Expected Int64, not one)) do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%("one"))
+        end
+
+        expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Mapping") do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Sequence") do
+          Enum::NumberConverter(YAMLSpecEnum).from_yaml(%([]))
         end
       end
 
-      describe "flag enum" do
-        it "numbers" do
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("0").should eq(YAMLSpecFlagEnum::None)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("1").should eq(YAMLSpecFlagEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("2").should eq(YAMLSpecFlagEnum::Two)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("4").should eq(YAMLSpecFlagEnum::OneHundred)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("5").should eq(YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("7").should eq(YAMLSpecFlagEnum::All)
+      it "flag enum" do
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("0").should eq(YAMLSpecFlagEnum::None)
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("1").should eq(YAMLSpecFlagEnum::One)
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("2").should eq(YAMLSpecFlagEnum::Two)
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("4").should eq(YAMLSpecFlagEnum::OneHundred)
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("5").should eq(YAMLSpecFlagEnum::OneHundred | YAMLSpecFlagEnum::One)
+        Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("7").should eq(YAMLSpecFlagEnum::All)
 
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: 8)) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("8")
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: -1)) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("-1")
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: ")) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml("")
-          end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: 8)) do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("8")
+        end
+        expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: -1)) do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("-1")
+        end
+        expect_raises(YAML::ParseException, %(Expected Int64, not )) do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml("")
         end
 
-        it "names" do
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("one")).should eq(YAMLSpecFlagEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("One")).should eq(YAMLSpecFlagEnum::One)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("two")).should eq(YAMLSpecFlagEnum::Two)
-          Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("ONE_HUNDRED")).should eq(YAMLSpecFlagEnum::OneHundred)
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "ONE-HUNDRED")) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("ONE-HUNDRED"))
-          end
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: " one ")) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%(" one "))
-          end
-
-          expect_raises(YAML::ParseException, %(Unknown enum YAMLSpecFlagEnum value: "three")) do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%("three"))
-          end
+        expect_raises(YAML::ParseException, %(Expected Int64, not one)) do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%("one"))
         end
 
-        it "other nodes" do
-          expect_raises(YAML::ParseException, "Expected scalar, not mapping") do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%({}))
-          end
-          expect_raises(YAML::ParseException, "Expected scalar, not sequence") do
-            Enum::NumberOrStringConverter(YAMLSpecFlagEnum).from_yaml(%([]))
-          end
+        expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Mapping") do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%({}))
+        end
+        expect_raises(YAML::ParseException, "Expected Int64, not YAML::Nodes::Sequence") do
+          Enum::NumberConverter(YAMLSpecFlagEnum).from_yaml(%([]))
         end
       end
     end
@@ -566,9 +535,9 @@ describe "YAML serialization" do
       end
     end
 
-    describe "Enum::NumberOrStringConverter" do
+    describe "Enum::NumberConverter" do
       it "normal enum" do
-        converter = Enum::NumberOrStringConverter(YAMLSpecEnum)
+        converter = Enum::NumberConverter(YAMLSpecEnum)
         assert_yaml_document_end(converter.to_yaml(YAMLSpecEnum::One), "--- 1\n")
         converter.from_yaml(converter.to_yaml(YAMLSpecEnum::One)).should eq(YAMLSpecEnum::One)
 
@@ -581,7 +550,7 @@ describe "YAML serialization" do
       end
 
       it "flag enum" do
-        converter = Enum::NumberOrStringConverter(YAMLSpecFlagEnum)
+        converter = Enum::NumberConverter(YAMLSpecFlagEnum)
         assert_yaml_document_end(converter.to_yaml(YAMLSpecFlagEnum::One), %(--- 1\n))
         converter.from_yaml(converter.to_yaml(YAMLSpecFlagEnum::One)).should eq(YAMLSpecFlagEnum::One)
 

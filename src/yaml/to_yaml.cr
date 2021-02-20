@@ -135,7 +135,7 @@ struct Enum
   end
 end
 
-module Enum::NumberOrStringConverter(T)
+module Enum::NumberConverter(T)
   def self.to_yaml(value : T)
     String.build do |io|
       to_yaml(value, io)

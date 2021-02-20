@@ -173,7 +173,7 @@ struct Enum
   end
 end
 
-module Enum::NumberOrStringConverter(T)
+module Enum::NumberConverter(T)
   def self.to_json(value : T)
     String.build do |io|
       to_json(value, io)

@@ -247,34 +247,21 @@ def Enum.new(pull : JSON::PullParser)
   {% if @type.annotation(Flags) %}
     value = {{ @type }}::None
     pull.read_array do
-      string = pull.read_string
-      value |= parse?(string) || pull.raise "Unknown enum #{self} value: #{string.inspect}"
+      value |= parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
     end
     value
   {% else %}
-    string = pull.read_string
-    if value = parse?(string)
-      value
-    else
-      pull.raise "Unknown enum #{self} value: #{string.inspect}"
-    end
+    parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
   {% end %}
 end
 
-module Enum::NumberOrStringConverter(T)
+module Enum::NumberConverter(T)
   def self.new(pull : JSON::PullParser) : T
     from_json(pull)
   end
 
   def self.from_json(pull : JSON::PullParser) : T
-    case pull.kind
-    when .int?
-      T.from_value?(pull.read_int) || pull.raise "Unknown enum #{T} value: #{pull.int_value}"
-    when .string?
-      T.parse?(pull.read_string) || pull.raise "Unknown enum #{T} value: #{pull.string_value.inspect}"
-    else
-      pull.raise "Expected Int or String but was #{pull.kind}"
-    end
+    T.from_value?(pull.read_int) || pull.raise "Unknown enum #{T} value: #{pull.int_value}"
   end
 end
 

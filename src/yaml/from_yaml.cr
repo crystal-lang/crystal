@@ -224,11 +224,9 @@ def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     if node.is_a?(YAML::Nodes::Sequence)
       value = {{ @type }}::None
       node.each do |element|
-        unless element.is_a?(YAML::Nodes::Scalar)
-          element.raise "Expected scalar, not #{element.type}"
-        end
+        string = parse_scalar(ctx, element, String)
 
-        value |= parse?(element.value) || element.raise "Unknown enum #{self} value: #{element.value.inspect}"
+        value |= parse?(string) || element.raise "Unknown enum #{self} value: #{string.inspect}"
       end
 
       value
@@ -236,34 +234,20 @@ def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       node.raise "Expected sequence, not #{node.type}"
     end
   {% else %}
-    unless node.is_a?(YAML::Nodes::Scalar)
-      node.raise "Expected scalar, not #{node.type}"
-    end
-
-    if value = parse?(node.value)
-      value
-    else
-      node.raise "Unknown enum #{self} value: #{node.value.inspect}"
-    end
+    string = parse_scalar(ctx, node, String)
+    parse?(string) || node.raise "Unknown enum #{self} value: #{string.inspect}"
   {% end %}
 end
 
-module Enum::NumberOrStringConverter(T)
+module Enum::NumberConverter(T)
   def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
     from_yaml(ctx, node)
   end
 
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
-    unless node.is_a?(YAML::Nodes::Scalar)
-      node.raise "Expected scalar, not #{node.type}"
-    end
+    value = parse_scalar ctx, node, Int64
 
-    string = node.value
-    if value = string.to_i64?
-      T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
-    else
-      T.parse?(string) || node.raise "Unknown enum #{T} value: #{string.inspect}"
-    end
+    T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
   end
 end
 
