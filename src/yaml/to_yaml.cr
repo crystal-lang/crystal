@@ -142,7 +142,7 @@ module Enum::NumberOrStringConverter(T)
     end
   end
 
-  def self.to_yaml(value : T, io : IO, )
+  def self.to_yaml(value : T, io : IO)
     nodes_builder = YAML::Nodes::Builder.new
     to_yaml(value, nodes_builder)
 
