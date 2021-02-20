@@ -530,9 +530,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.unsafe_chr.ascii_whitespace?
-        ptr += 1
-      end
+      ptr += calc_excess_left
     end
 
     negative = false
@@ -624,9 +622,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.unsafe_chr.ascii_whitespace?
-            ptr += 1
-          end
+          ptr += calc_excess_right
         end
 
         if strict && ptr.value != 0
@@ -1883,11 +1879,15 @@ class String
   end
 
   private def calc_excess_right
-    i = bytesize - 1
-    while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
-      i -= 1
+    if single_byte_optimizable?
+      i = bytesize - 1
+      while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
+        i -= 1
+      end
+      bytesize - 1 - i
+    else
+      calc_excess_right &.whitespace?
     end
-    bytesize - 1 - i
   end
 
   private def calc_excess_right(char : Char)
@@ -1917,13 +1917,17 @@ class String
   end
 
   private def calc_excess_left
-    excess_left = 0
-    # All strings end with '\0', and it's not a whitespace
-    # so it's safe to access past 1 byte beyond the string data
-    while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
-      excess_left += 1
+    if single_byte_optimizable?
+      excess_left = 0
+      # All strings end with '\0', and it's not a whitespace
+      # so it's safe to access past 1 byte beyond the string data
+      while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
+        excess_left += 1
+      end
+      excess_left
+    else
+      calc_excess_left &.whitespace?
     end
-    excess_left
   end
 
   private def calc_excess_left(char : Char)
@@ -3466,8 +3470,48 @@ class String
       return
     end
 
+    if single_byte_optimizable?
+      split_single_byte(limit) do |piece|
+        yield piece
+      end
+      return
+    end
+
     yielded = 0
-    single_byte_optimizable = single_byte_optimizable?
+    start_pos = 0
+    piece_size = 0
+    looking_for_space = false
+
+    reader = Char::Reader.new(self)
+    reader.each do |char|
+      if char.whitespace?
+        if looking_for_space
+          piece_bytesize = reader.pos - start_pos
+          yield String.new(to_unsafe + start_pos, piece_bytesize, piece_size)
+          yielded += 1
+          looking_for_space = false
+        end
+      else
+        if looking_for_space
+          piece_size += 1
+        else
+          start_pos = reader.pos
+          piece_size = 1
+          looking_for_space = true
+
+          break if limit && yielded + 1 == limit
+        end
+      end
+    end
+
+    if looking_for_space
+      piece_bytesize = bytesize - start_pos
+      yield String.new(to_unsafe + start_pos, piece_bytesize, piece_size)
+    end
+  end
+
+  private def split_single_byte(limit, &)
+    yielded = 0
     index = 0
     i = 0
     looking_for_space = false
@@ -3479,8 +3523,7 @@ class String
           i += 1
           if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
-            piece_size = single_byte_optimizable ? piece_bytesize : 0
-            yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yield String.new(to_unsafe + index, piece_bytesize, piece_bytesize)
             yielded += 1
             looking_for_space = false
 
@@ -3507,8 +3550,7 @@ class String
     end
     if looking_for_space
       piece_bytesize = bytesize - index
-      piece_size = single_byte_optimizable ? piece_bytesize : 0
-      yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+      yield String.new(to_unsafe + index, piece_bytesize, piece_bytesize)
     end
   end
 

@@ -747,20 +747,37 @@ module Crystal
       end
 
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_index = self.splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_index || splat_given
         types = Array(Type).new(type_vars.size)
         i = 0
         type_vars.each_value do |var|
           return nil unless var.is_a?(Var)
 
           var_type = var.type
-          if i == self.splat_index
+          if i == splat_index
             types.concat(var_type.as(TupleInstanceType).tuple_types)
           else
             types << var_type
           end
           i += 1
+        end
+
+        # We are `(A, B, *C)`, they are `(T)`; matching would always fail
+        if splat_index && !splat_given
+          min_needed = generic_type.type_vars.size - 1
+          if other.type_vars.size < min_needed
+            other.wrong_number_of "type vars", generic_type, other.type_vars.size, "#{min_needed}+"
+          end
+        end
+
+        # We are `(A)`, they are `(T, U, *V)`; matching would always fail
+        if !splat_index && splat_given
+          non_splat_count = other.type_vars.count { |type_var| !type_var.is_a?(Splat) }
+          if non_splat_count > generic_type.type_vars.size
+            other.wrong_number_of "type vars", generic_type, "#{non_splat_count}+", generic_type.type_vars.size
+          end
         end
 
         i = 0
@@ -792,7 +809,7 @@ module Crystal
         return self
       end
 
-      if generic_type.type_vars.size != other.type_vars.size
+      if other.type_vars.size != generic_type.type_vars.size
         other.wrong_number_of "type vars", generic_type, other.type_vars.size, generic_type.type_vars.size
       end
 
@@ -878,8 +895,8 @@ module Crystal
       generic_type = generic_type.as(TupleType)
 
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_given
         found_splat = false
         i = 0
         other.type_vars.each do |type_var|
@@ -999,7 +1016,7 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.generic_types.each_value do |instance|
+        other.each_instantiated_type do |instance|
           next if instance.unbound? || instance.abstract?
 
           if instance.implements?(base_type)
@@ -1170,7 +1187,7 @@ module Crystal
       output = other.output
 
       # Consider the case of a splat in the type vars
-      if inputs && (splat_index = inputs.index &.is_a?(Splat))
+      if inputs && (splat_given = inputs.any?(Splat))
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)
@@ -1227,8 +1244,8 @@ module Crystal
       return super unless generic_type.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
-      splat_index = other.type_vars.index &.is_a?(Splat)
-      if splat_index
+      splat_given = other.type_vars.any?(Splat)
+      if splat_given
         proc_types = arg_types + [return_type]
 
         i = 0

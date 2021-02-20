@@ -773,6 +773,10 @@ module Crystal
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
+            if value.is_a?(SymbolLiteral) && restriction_type.is_a?(EnumType)
+              node.raise "can't autocast #{value} to #{restriction_type}: no matching enum member"
+            end
+
             node.raise "can't restrict #{value.type} to #{restriction}"
           end
         end
@@ -1571,8 +1575,6 @@ module Crystal
 
       if node.name == "new"
         case instance_type
-        when ProcInstanceType
-          return special_proc_type_new_call(node, instance_type)
         when .extern?
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
@@ -1581,41 +1583,6 @@ module Crystal
       end
 
       false
-    end
-
-    def special_proc_type_new_call(node, proc_type)
-      if node.args.size != 0
-        return false
-      end
-
-      block = node.block
-      unless block
-        return false
-      end
-
-      if block.args.size > proc_type.arg_types.size
-        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
-      end
-
-      # We create a ->(...) { } from the block
-      proc_args = proc_type.arg_types.map_with_index do |arg_type, index|
-        block_arg = block.args[index]?
-        Arg.new(block_arg.try(&.name) || @program.new_temp_var_name, type: arg_type)
-      end
-
-      expected_return_type = proc_type.return_type
-      expected_return_type = @program.nil if expected_return_type.void?
-
-      proc_def = Def.new("->", proc_args, block.body).at(node)
-      proc_literal = ProcLiteral.new(proc_def).at(node)
-      proc_literal.expected_return_type = expected_return_type
-      proc_literal.force_nil = true if expected_return_type.nil_type?
-      proc_literal.accept self
-
-      node.bind_to proc_literal
-      node.expanded = proc_literal
-
-      true
     end
 
     # Rewrite:
@@ -2895,13 +2862,23 @@ module Crystal
     def visit(node : TupleIndexer)
       scope = @scope
       if scope.is_a?(TupleInstanceType)
-        node.type = scope.tuple_types[node.index].as(Type)
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(scope.tuple_types[index].map &.as(Type))
+        in Int32
+          node.type = scope.tuple_types[index].as(Type)
+        end
       elsif scope.is_a?(NamedTupleInstanceType)
-        node.type = scope.entries[node.index].type
+        node.type = scope.entries[node.index.as(Int32)].type
       elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
-        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(instance_type.tuple_types[index].map &.as(Type)).metaclass
+        in Int32
+          node.type = instance_type.tuple_types[index].as(Type).metaclass
+        end
       elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
-        node.type = instance_type.entries[node.index].type.metaclass
+        node.type = instance_type.entries[node.index.as(Int32)].type.metaclass
       else
         node.raise "unsupported TupleIndexer scope"
       end

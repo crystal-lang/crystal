@@ -859,7 +859,7 @@ class HTTP::Client
     user = uri.user
     password = uri.password
 
-    HTTP::Client.new(host, port, tls) do |client|
+    new(host, port, tls) do |client|
       if user && password
         client.basic_auth(user, password)
       end

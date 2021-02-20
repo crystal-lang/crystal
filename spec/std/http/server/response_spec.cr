@@ -42,6 +42,40 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
   end
 
+  it "does not automatically add the `content-length` header if the response is a 304" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :not_modified
+    response.close
+    io.to_s.should eq("HTTP/1.1 304 Not Modified\r\n\r\n")
+  end
+
+  it "does not automatically add the `content-length` header if the response is a 204" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :no_content
+    response.close
+    io.to_s.should eq("HTTP/1.1 204 No Content\r\n\r\n")
+  end
+
+  it "does not automatically add the `content-length` header if the response is informational" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :processing
+    response.close
+    io.to_s.should eq("HTTP/1.1 102 Processing\r\n\r\n")
+  end
+
+  # Case where the content-length represents the size of the data that would have been returned.
+  it "allows specifying the content-length header explicitly" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.status = :not_modified
+    response.headers["Content-Length"] = "5"
+    response.close
+    io.to_s.should eq("HTTP/1.1 304 Not Modified\r\nContent-Length: 5\r\n\r\n")
+  end
+
   it "prints less then buffer's size" do
     io = IO::Memory.new
     response = Response.new(io)

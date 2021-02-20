@@ -517,12 +517,36 @@ describe "Semantic: closure" do
 
   it "says can't send closure to C with new notation" do
     assert_error %(
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       lib LibC
         fun foo(x : ->)
       end
 
       a = 1
       LibC.foo(Proc(Void).new do
+        a
+      end)
+      ),
+      "can't send closure to C function (closured vars: a)"
+  end
+
+  it "says can't send closure to C with captured block" do
+    assert_error %(
+      def capture(&block : -> Int32)
+        block
+      end
+
+      lib LibC
+        fun foo(x : ->)
+      end
+
+      a = 1
+      LibC.foo(capture do
         a
       end)
       ),

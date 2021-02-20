@@ -637,23 +637,18 @@ module Crystal
 
           @wants_regex = false
 
-          if current_char == '%'
-            next_char
-            @token.type = :"%"
-            @token.column_number += 1
-            skip_space_or_newline
-          else
-            next_token_skip_space_or_newline
+          @wants_def_or_macro_name = true
+          next_token_skip_space_or_newline
+          @wants_def_or_macro_name = false
 
-            if @token.type == :INSTANCE_VAR
-              ivar_name = @token.value.to_s
-              end_location = token_end_location
-              next_token_skip_space
+          if @token.type == :INSTANCE_VAR
+            ivar_name = @token.value.to_s
+            end_location = token_end_location
+            next_token_skip_space
 
-              atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-              atomic.end_location = end_location
-              next
-            end
+            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
+            atomic.end_location = end_location
+            next
           end
 
           check AtomicWithMethodCheck
@@ -2732,7 +2727,7 @@ module Crystal
         end
       end
 
-      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
+      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
     end
 
     # Adds an expression to all when expressions and error on duplicates
@@ -2793,8 +2788,9 @@ module Crystal
 
     def parse_when_expression(cond, single, exhaustive)
       if cond && @token.type == :"."
+        location = @token.location
         next_token
-        call = parse_var_or_call(force_call: true)
+        call = parse_var_or_call(force_call: true).at(location)
         case call
         when Call        then call.obj = ImplicitObj.new
         when RespondsTo  then call.obj = ImplicitObj.new

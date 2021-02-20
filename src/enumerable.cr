@@ -514,7 +514,9 @@ module Enumerable(T)
   end
 
   # Returns a new array with the concatenated results of running the block
-  # (which is expected to return arrays) once for every element in the collection.
+  # once for every element in the collection.
+  # Only `Array` and `Iterator` results are concatenated; every other value is
+  # directly appended to the new array.
   #
   # ```
   # array = ["Alice", "Bob"].flat_map do |user|
@@ -522,8 +524,8 @@ module Enumerable(T)
   # end
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
-  def flat_map(&block : T -> Array(U) | Iterator(U) | U) forall U
-    ary = [] of U
+  def flat_map(&block : T -> _)
+    ary = [] of typeof(flat_map_type(yield first))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -533,6 +535,15 @@ module Enumerable(T)
       end
     end
     ary
+  end
+
+  private def flat_map_type(elem)
+    case elem
+    when Array, Iterator
+      elem.first
+    else
+      elem
+    end
   end
 
   # Returns a `Hash` whose keys are each different value that the passed block

@@ -51,7 +51,7 @@ class IO::Memory < IO
     @pos = 0
     @closed = false
     @resizeable = false
-    @writeable = writeable
+    @writeable = !slice.read_only? && writeable
   end
 
   # Creates an `IO::Memory` whose contents are the exact contents of *string*.
@@ -338,7 +338,7 @@ class IO::Memory < IO
   #
   # During the block duration `self` becomes read-only,
   # so multiple concurrent open are allowed.
-  def read_at(offset, bytesize)
+  def read_at(offset, bytesize, & : IO ->)
     unless 0 <= offset <= @bytesize
       raise ArgumentError.new("Offset out of bounds")
     end

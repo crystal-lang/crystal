@@ -339,5 +339,18 @@ module HTTP
         end
       end
     end
+
+    it "can be subclassed" do
+      expect_raises(Exception, "from subclass") do
+        SubClient.get("http://localhost")
+      end
+    end
+  end
+
+  class SubClient < HTTP::Client
+    def around_exec(request)
+      raise "from subclass"
+      yield
+    end
   end
 end
