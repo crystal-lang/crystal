@@ -88,6 +88,9 @@ describe Crystal::Formatter do
   assert_format "{ {foo: 2} }"
   assert_format "{ # foo\n  1,\n}"
 
+  assert_format "{ * 1 * 2,\n*\n3, 4 }", "{*1 * 2,\n *3, 4}"
+  assert_format "[ * [ * [ 1 ] ], *    \n[ 2] ]", "[*[*[1]], *[2]]"
+
   assert_format "{  } of  A   =>   B", "{} of A => B"
   assert_format "{ 1   =>   2 }", "{1 => 2}"
   assert_format "{ 1   =>   2 ,   3  =>  4 }", "{1 => 2, 3 => 4}"
