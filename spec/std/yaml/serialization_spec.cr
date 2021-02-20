@@ -27,11 +27,7 @@ puts YAML.libyaml_version
 # Earlier libyaml releases still write the document end marker and this is hard to fix on Crystal's side.
 # So we just ignore it and adopt the specs accordingly to coincide with the used libyaml version.
 private def assert_yaml_document_end(actual, expected, file = __FILE__, line = __LINE__)
-  if YAML.libyaml_version < SemanticVersion.new(0, 2, 1)
-    expected += "...\n"
-  end
-
-  actual.should eq(expected), file: file, line: line
+  actual.rchop("...\n").should eq(expected), file: file, line: line
 end
 
 describe "YAML serialization" do
