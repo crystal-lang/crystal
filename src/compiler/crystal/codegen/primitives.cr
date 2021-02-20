@@ -291,10 +291,14 @@ class Crystal::CodeGenVisitor
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
-    # arg < min_value || arg > max_value
-    or(
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
-      builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+    # checks for arg being outside of range and not infinity
+    # (arg < min_value || arg > max_value) && arg != 2 * arg
+    and(
+      or(
+        builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+      ),
+      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg))
     )
   end
 
