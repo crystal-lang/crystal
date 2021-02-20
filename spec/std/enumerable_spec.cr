@@ -501,6 +501,10 @@ describe "Enumerable" do
     it "flattens iterators" do
       [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
     end
+
+    it "accepts mixed element types" do
+      [[1, 2, 3], ['a', 'b'].each, "cde"].flat_map { |e| e }.should eq([1, 2, 3, 'a', 'b', "cde"])
+    end
   end
 
   describe "group_by" do

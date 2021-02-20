@@ -351,7 +351,7 @@ struct NamedTuple
         io << ", "
       {% end %}
       key = {{key.stringify}}
-      if Symbol.needs_quotes?(key)
+      if Symbol.needs_quotes_for_named_argument?(key)
         key.inspect(io)
       else
         io << key
@@ -370,7 +370,7 @@ struct NamedTuple
         {% end %}
         pp.group do
           key = {{key.stringify}}
-          if Symbol.needs_quotes?(key)
+          if Symbol.needs_quotes_for_named_argument?(key)
             pp.text key.inspect
           else
             pp.text key
