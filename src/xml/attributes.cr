@@ -30,10 +30,6 @@ struct XML::Attributes
     raise IndexError.new
   end
 
-  def size
-    count { true }
-  end
-
   def [](name : String)
     self[name]? || raise KeyError.new("Missing attribute: #{name}")
   end

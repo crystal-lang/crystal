@@ -168,7 +168,7 @@ struct Number
       while true
         # only proceed if difference to limit is at least as big as step size to
         # avoid potential overflow errors.
-        sign = ((limit - current) <=> step).try(&.sign)
+        sign = ((limit - step) <=> current).try(&.sign)
         break unless sign == direction || (sign == 0 && !exclusive)
 
         current += step
@@ -246,7 +246,7 @@ struct Number
         @current
       elsif limit
         # compare distance to current with step size
-        case (limit - @current <=> @step).try(&.sign)
+        case ((limit - @step) <=> @current).try(&.sign)
         when @step.sign
           # distance is more than step size, so iteration proceeds
           @current += @step
@@ -262,7 +262,6 @@ struct Number
           # we've either overshot the limit or the comparison failed, so we can't
           # continue
           @reached_end = true
-
           stop
         end
       else

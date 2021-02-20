@@ -28,12 +28,6 @@ module Crystal
     #     end
     def expand(node : ArrayLiteral)
       if node_of = node.of
-        if node.elements.size == 0
-          generic = Generic.new(Path.global("Array"), node_of).at(node)
-          call = Call.new(generic, "new").at(node)
-          return call
-        end
-
         type_var = node_of
       else
         type_var = TypeOf.new(node.elements.clone)
@@ -41,19 +35,30 @@ module Crystal
 
       capacity = node.elements.size
 
-      buffer = new_temp_var.at(node)
-
-      exps = Array(ASTNode).new(node.elements.size + 1)
-      node.elements.each_with_index do |elem, i|
-        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
-      end
-      exps << NumberLiteral.new(capacity).at(node)
-      block_body = Expressions.new(exps).at(node)
-
-      block = Block.new([buffer.clone], block_body).at(node)
-
       generic = Generic.new(Path.global("Array"), type_var).at(node)
-      Call.new(generic, "build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode, block: block).at(node)
+
+      if capacity.zero?
+        Call.new(generic, "new").at(node)
+      else
+        ary_var = new_temp_var.at(node)
+
+        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+
+        buffer = Call.new(ary_var, "to_unsafe")
+        buffer_var = new_temp_var.at(node)
+
+        exps = Array(ASTNode).new(node.elements.size + 3)
+        exps << Assign.new(ary_var.clone, ary_instance).at(node)
+        exps << Assign.new(buffer_var, buffer).at(node)
+
+        node.elements.each_with_index do |elem, i|
+          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+        end
+
+        exps << ary_var.clone
+
+        Expressions.new(exps).at(node)
+      end
     end
 
     def expand_named(node : ArrayLiteral)

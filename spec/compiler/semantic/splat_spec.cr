@@ -467,7 +467,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in generic type" do
+  it "matches type splat with splat in generic type (1)" do
     assert_type(%(
       class Foo(*T)
       end
@@ -479,6 +479,108 @@ describe "Semantic: splat" do
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches type splat with splat in generic type (2)" do
+    assert_type(%(
+      class Foo(T, *U, V)
+        def t
+          {T, U, V}
+        end
+      end
+
+      def method(x : Foo(*A)) forall A
+        x.t
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, String))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { char }
+  end
+
+  it "doesn't match splat in generic type with unsplatted tuple (#10164)" do
+    assert_error %(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Tuple(Int32, String)))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "no overload matches"
+  end
+
+  it "matches partially instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, T)) forall T
+        T
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { string.metaclass }
+  end
+
+  it "errors with too few non-splat type arguments (1)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(Int32))
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too few non-splat type arguments (2)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(A)) forall A
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too many non-splat type arguments" do
+    assert_error %(
+      class Foo(A)
+      end
+
+      def method(x : Foo(T, U, *V)) forall T, U, V
+      end
+
+      foo = Foo(Int32).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(A) (given 2+, expected 1)"
   end
 
   it "errors if using two splat indices on restriction" do

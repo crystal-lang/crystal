@@ -71,6 +71,10 @@ class Log
         @done.receive
       end
     end
+
+    def finalize
+      close
+    end
   end
 
   # Deliver log entries directly. It uses a mutex to guarantee

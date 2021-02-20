@@ -1257,8 +1257,8 @@ module Crystal::Macros
     def type : ASTNode
     end
 
-    # Returns the instance variable used in this `offsetof` expression.
-    def instance_var : ASTNode
+    # Returns the offset argument used in this `offsetof` expression.
+    def offset : ASTNode
     end
   end
 
@@ -1614,10 +1614,10 @@ module Crystal::Macros
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
-  # The parser doesn't create this nodes. Instead, you create them by invoking `id`
+  # The parser doesn't create these nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
-  # return MacroIds for the node's content.
+  # returns a MacroId for the node's content.
   #
   # This allows you to treat strings, symbols, variables and calls uniformly. For example:
   #

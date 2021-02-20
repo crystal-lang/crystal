@@ -1062,7 +1062,7 @@ module Crystal
 
     private def to_double_splat(trailing_string = "")
       MacroId.new(entries.join(", ") do |entry|
-        if Symbol.needs_quotes?(entry.key)
+        if Symbol.needs_quotes_for_named_argument?(entry.key)
           "#{entry.key.inspect}: #{entry.value}"
         else
           "#{entry.key}: #{entry.value}"
@@ -1444,8 +1444,8 @@ module Crystal
       case method
       when "type"
         interpret_argless_method(method, args) { @offsetof_type }
-      when "instance_var"
-        interpret_argless_method(method, args) { @instance_var }
+      when "offset"
+        interpret_argless_method(method, args) { @offset }
       else
         super
       end

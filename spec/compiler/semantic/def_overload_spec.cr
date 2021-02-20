@@ -1060,6 +1060,31 @@ describe "Semantic: def overload" do
       foo(**{a: 1, b: ""})
       )) { named_tuple_of({a: int32, b: string}).metaclass }
   end
+
+  it "considers NamedTuple in a module's including types (#10380)" do
+    assert_error %(
+      module Foo
+      end
+
+      struct NamedTuple
+        include Foo
+      end
+
+      class Bar
+        include Foo
+      end
+
+      def foo(x : Bar)
+      end
+
+      # force a name tuple instantiation
+      {a: 1}
+
+      x = uninitialized Foo
+      foo(x)
+      ),
+      "no overload matches"
+  end
 end
 
 private def each_union_variant(t1, t2)

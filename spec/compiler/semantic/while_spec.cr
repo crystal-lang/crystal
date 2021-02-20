@@ -226,4 +226,12 @@ describe "Semantic: while" do
       foo
       )) { nilable int32 }
   end
+
+  it "finds while cond assign target in Not (#10345)" do
+    assert_type(%(
+      while !(x = 1 || nil)
+      end
+      x
+      )) { int32 }
+  end
 end

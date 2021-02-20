@@ -922,7 +922,7 @@ module Crystal
     end
 
     def visit_named_arg_name(name)
-      if Symbol.needs_quotes?(name)
+      if Symbol.needs_quotes_for_named_argument?(name)
         name.inspect(@str)
       else
         @str << name
@@ -1159,7 +1159,7 @@ module Crystal
       else
         @str << node.name
         @str << " = "
-        if Symbol.needs_quotes?(node.real_name)
+        if Symbol.needs_quotes_for_named_argument?(node.real_name)
           node.real_name.inspect(@str)
         else
           @str << node.real_name
@@ -1284,7 +1284,7 @@ module Crystal
       @str << '('
       node.offsetof_type.accept(self)
       @str << ", "
-      node.instance_var.accept(self)
+      node.offset.accept(self)
       @str << ')'
       false
     end
