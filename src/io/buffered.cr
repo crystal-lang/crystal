@@ -48,20 +48,69 @@ module IO::Buffered
   def read_byte : UInt8?
     check_open
 
-    fill_buffer if read_buffering? && @in_buffer_rem.empty?
-    if @in_buffer_rem.empty?
-      return nil if read_buffering?
+    # First read from buffer if there's content
+    unless @in_buffer_rem.empty?
+      return read_byte_from_in_buffer
+    end
 
-      byte = uninitialized UInt8
-      if read(Slice.new(pointerof(byte), 1)) == 1
-        byte
-      else
-        nil
-      end
+    # If we don't buffer, read unbuffered
+    unless read_buffering?
+      return read_byte_unbuffered
+    end
+
+    # Otherwise fill buffer and read from it
+    fill_buffer if @in_buffer_rem.empty?
+    if @in_buffer_rem.empty?
+      return nil
     else
-      b = @in_buffer_rem[0]
-      @in_buffer_rem += 1
-      b
+      read_byte_from_in_buffer
+    end
+  end
+
+  def each_byte
+    check_open
+
+    # First read from buffer if there's content
+    until @in_buffer_rem.empty?
+      yield read_byte_from_in_buffer
+    end
+
+    # If we don't buffer, read unbuffered
+    unless read_buffering?
+      while byte = read_byte_unbuffered
+        yield byte
+      end
+      return
+    end
+
+    # Otherwise read from buffer until we can't read anymore
+    fill_buffer if @in_buffer_rem.empty?
+
+    loop do
+      if @in_buffer_rem.empty?
+        return nil
+      end
+
+      until @in_buffer_rem.empty?
+        yield read_byte_from_in_buffer
+      end
+
+      fill_buffer
+    end
+  end
+
+  private def read_byte_from_in_buffer
+    b = @in_buffer_rem[0]
+    @in_buffer_rem += 1
+    b
+  end
+
+  private def read_byte_unbuffered
+    byte = uninitialized UInt8
+    if unbuffered_read(Slice.new(pointerof(byte), 1)) == 1
+      byte
+    else
+      nil
     end
   end
 

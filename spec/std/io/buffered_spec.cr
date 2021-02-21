@@ -204,6 +204,29 @@ describe "IO::Buffered" do
     io.read_char.should be_nil
   end
 
+  it "#each_byte (optimized)" do
+    string = "hello" * 100
+    io = BufferedWrapper.new(IO::Memory.new(string))
+    io.buffer_size = 100
+    bytes = [] of UInt8
+    io.each_byte do |byte|
+      bytes << byte
+    end
+    String.new(Slice.new(bytes.to_unsafe, bytes.size)).should eq(string)
+  end
+
+  it "#each_byte with read buffering off (optimized)" do
+    string = "hello" * 100
+    io = BufferedWrapper.new(IO::Memory.new(string))
+    io.buffer_size = 100
+    io.read_buffering = false
+    bytes = [] of UInt8
+    io.each_byte do |byte|
+      bytes << byte
+    end
+    String.new(Slice.new(bytes.to_unsafe, bytes.size)).should eq(string)
+  end
+
   it "does new with block" do
     str = IO::Memory.new
     res = BufferedWrapper.new str, &.print "Hello"
