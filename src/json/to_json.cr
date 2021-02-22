@@ -114,6 +114,16 @@ struct Set
   end
 end
 
+module Iterator(T)
+  # Converts the content of an iterator into a JSON array in lazy way.
+  # See `Iterator#from_json` for an example.
+  def to_json(json : JSON::Builder)
+    json.array do
+      each &.to_json(json)
+    end
+  end
+end
+
 class Hash
   # Serializes this Hash into JSON.
   #
