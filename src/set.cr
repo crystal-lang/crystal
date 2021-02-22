@@ -422,8 +422,8 @@ struct Set(T)
   # of elements in this set must be present in the *other* set.
   #
   # ```
-  # Set{1, 5}.subset? Set{1, 3, 5}    # => true
-  # Set{1, 3, 5}.subset? Set{1, 3, 5} # => true
+  # Set{1, 5}.subset_of? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.subset_of? Set{1, 3, 5} # => true
   # ```
   def subset_of?(other : Set)
     return false if other.size < size
@@ -441,8 +441,8 @@ struct Set(T)
   # of elements in this set must be present in the *other* set.
   #
   # ```
-  # Set{1, 5}.proper_subset? Set{1, 3, 5}    # => true
-  # Set{1, 3, 5}.proper_subset? Set{1, 3, 5} # => false
+  # Set{1, 5}.proper_subset_of? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.proper_subset_of? Set{1, 3, 5} # => false
   # ```
   def proper_subset_of?(other : Set)
     return false if other.size <= size
@@ -460,8 +460,8 @@ struct Set(T)
   # elements in the *other* set must be present in this set.
   #
   # ```
-  # Set{1, 3, 5}.superset? Set{1, 5}    # => true
-  # Set{1, 3, 5}.superset? Set{1, 3, 5} # => true
+  # Set{1, 3, 5}.superset_of? Set{1, 5}    # => true
+  # Set{1, 3, 5}.superset_of? Set{1, 3, 5} # => true
   # ```
   def superset_of?(other : Set)
     other.subset_of?(self)
@@ -478,8 +478,8 @@ struct Set(T)
   # elements in the *other* set must be present in this set.
   #
   # ```
-  # Set{1, 3, 5}.proper_superset? Set{1, 5}    # => true
-  # Set{1, 3, 5}.proper_superset? Set{1, 3, 5} # => false
+  # Set{1, 3, 5}.proper_superset_of? Set{1, 5}    # => true
+  # Set{1, 3, 5}.proper_superset_of? Set{1, 3, 5} # => false
   # ```
   def proper_superset_of?(other : Set)
     other.proper_subset_of?(self)

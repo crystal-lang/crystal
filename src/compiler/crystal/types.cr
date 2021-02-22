@@ -1799,7 +1799,11 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(io, ", ", &.to_s(io))
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          io << '*' if i == splat_index
+          type_var.to_s(io)
+        end
         io << ')'
       end
     end
@@ -1859,7 +1863,11 @@ module Crystal
       super
       if generic_args
         io << '('
-        type_vars.join(io, ", ", &.to_s(io))
+        type_vars.each_with_index do |type_var, i|
+          io << ", " if i > 0
+          io << '*' if i == splat_index
+          type_var.to_s(io)
+        end
         io << ')'
       end
     end
@@ -2530,7 +2538,7 @@ module Crystal
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
       io << "NamedTuple("
       @entries.join(io, ", ") do |entry|
-        if Symbol.needs_quotes?(entry.name)
+        if Symbol.needs_quotes_for_named_argument?(entry.name)
           entry.name.inspect(io)
         else
           io << entry.name

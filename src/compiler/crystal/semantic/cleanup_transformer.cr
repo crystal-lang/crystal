@@ -512,6 +512,12 @@ module Crystal
         arg.expressions.each do |exp|
           check_arg_is_not_closure(node, message, exp)
         end
+      when Call
+        # If the call simply returns its captured block unchanged, we can detect
+        # closured vars inside the block during compile-time
+        if target_def_is_captured_block?(arg)
+          check_arg_is_not_closure(node, message, arg.block.not_nil!.fun_literal)
+        end
       when ProcLiteral
         if proc_pointer = arg.proc_pointer
           case proc_pointer.obj
@@ -546,6 +552,29 @@ module Crystal
           arg.raise "#{message} (closured vars: self)"
         end
       end
+    end
+
+    # Checks whether *arg*'s target def has the following definition:
+    #
+    # ```
+    # def f(&block)
+    #   block
+    # end
+    # ```
+    #
+    # That is, the def returns its captured block and does nothing else. An
+    # example is Proc.new(&block).
+    def target_def_is_captured_block?(arg : Call)
+      a_def = arg.target_defs.try &.first
+      return false unless a_def
+
+      block_arg = a_def.block_arg
+      return false unless block_arg
+
+      body_var = a_def.body.as?(Var)
+      return false unless body_var && body_var.name == block_arg.name
+
+      true
     end
 
     def transform(node : ProcPointer)

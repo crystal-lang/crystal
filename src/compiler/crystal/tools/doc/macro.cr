@@ -98,11 +98,14 @@ class Crystal::Doc::Macro
 
   def arg_to_s(arg : Arg, io : IO) : Nil
     if arg.external_name != arg.name
-      name = arg.external_name.presence || "_"
-      if Symbol.needs_quotes? name
-        HTML.escape name.inspect, io
+      if name = arg.external_name.presence
+        if Symbol.needs_quotes_for_named_argument? name
+          HTML.escape name.inspect, io
+        else
+          io << name
+        end
       else
-        io << name
+        io << "_"
       end
       io << ' '
     end

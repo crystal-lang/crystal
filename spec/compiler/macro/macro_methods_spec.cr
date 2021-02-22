@@ -1011,15 +1011,15 @@ module Crystal
       end
 
       it "executes double splat" do
-        assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{**{a: 1, "foo bar": 2, "+": 3}}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat with arg" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3, )
       end
 
       describe "#each" do
