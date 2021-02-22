@@ -1,4 +1,4 @@
-struct XML::Namespace
+class XML::Namespace
   getter document : Node
 
   def initialize(@document : Node, @ns : LibXML::NS*)
