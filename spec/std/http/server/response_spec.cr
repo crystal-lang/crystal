@@ -227,6 +227,17 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
   end
 
+  it "closes when it fails to write" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    response.flush
+    io.close
+    response.print("Hello")
+    expect_raises(HTTP::Server::ClientError) { response.flush }
+    response.closed?.should be_true
+  end
+
   describe "#respond_with_status" do
     it "uses default values" do
       io = IO::Memory.new
@@ -257,15 +268,23 @@ describe HTTP::Server::Response do
       io.to_s.should eq("HTTP/1.1 414 Request Error\r\nContent-Type: text/plain\r\nContent-Length: 18\r\n\r\n414 Request Error\n")
     end
 
-    it "closes when it fails to write" do
+    it "raises when response is closed" do
+      io = IO::Memory.new
+      response = Response.new(io)
+      response.close
+      expect_raises(IO::Error, "Closed stream") do
+        response.respond_with_status(400)
+      end
+    end
+
+    it "raises when headers written" do
       io = IO::Memory.new
       response = Response.new(io)
       response.print("Hello")
       response.flush
-      io.close
-      response.print("Hello")
-      expect_raises(HTTP::Server::ClientError) { response.flush }
-      response.closed?.should be_true
+      expect_raises(IO::Error, "Headers already sent") do
+        response.respond_with_status(400)
+      end
     end
   end
 end
