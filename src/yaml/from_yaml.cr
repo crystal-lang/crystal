@@ -219,16 +219,45 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 end
 
+# Reads a serialized enum member by name from *ctx* and *node*.
+#
+# See `#to_yaml` for reference.
+#
+# Raises `YAML::ParseException` if the deserialization fails.
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.kind}"
+  {% if @type.annotation(Flags) %}
+    if node.is_a?(YAML::Nodes::Sequence)
+      value = {{ @type }}::None
+      node.each do |element|
+        string = parse_scalar(ctx, element, String)
+
+        value |= parse?(string) || element.raise "Unknown enum #{self} value: #{string.inspect}"
+      end
+
+      value
+    else
+      node.raise "Expected sequence, not #{node.kind}"
+    end
+  {% else %}
+    string = parse_scalar(ctx, node, String)
+    parse?(string) || node.raise "Unknown enum #{self} value: #{string.inspect}"
+  {% end %}
+end
+
+module Enum::ValueConverter(T)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    from_yaml(ctx, node)
   end
 
-  string = node.value
-  if value = string.to_i64?
-    from_value(value)
-  else
-    parse(string)
+  # Reads a serialized enum member by value from *ctx* and *node*.
+  #
+  # See `.to_yaml` for reference.
+  #
+  # Raises `YAML::ParseException` if the deserialization fails.
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    value = parse_scalar ctx, node, Int64
+
+    T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
   end
 end
 

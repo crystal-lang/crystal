@@ -243,14 +243,72 @@ def NamedTuple.new(pull : JSON::PullParser)
   {% end %}
 end
 
+# Reads a serialized enum member by name from *pull*.
+#
+# See `#to_json` for reference.
+#
+# Raises `JSON::ParseException` if the deserialization fails.
 def Enum.new(pull : JSON::PullParser)
-  case pull.kind
-  when .int?
-    from_value(pull.read_int)
-  when .string?
-    parse(pull.read_string)
-  else
-    raise "Expecting int or string in JSON for #{self.class}, not #{pull.kind}"
+  {% if @type.annotation(Flags) %}
+    value = {{ @type }}::None
+    pull.read_array do
+      value |= parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+    end
+    value
+  {% else %}
+    parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
+  {% end %}
+end
+
+# Converter for value-based serialization and deserialization of enum type `T`.
+#
+# The serialization format of `Enum#to_json` and `Enum.from_json` is based on
+# the member name. This converter offers an alternative based on the member value.
+#
+# This converter can be used for its standalone serialization methods as a
+# replacement of the default strategy of `Enum`. It also works as a serialization
+# converter with `JSON::Field` and `YAML::Field`
+#
+# ```
+# require "json"
+# require "yaml"
+#
+# enum MyEnum
+#   ONE = 1
+#   TWO = 2
+# end
+#
+# class Foo
+#   include JSON::Serializable
+#   include YAML::Serializable
+#
+#   @[JSON::Field(converter: Enum::ValueConverter(MyEnum))]
+#   @[YAML::Field(converter: Enum::ValueConverter(MyEnum))]
+#   property foo : MyEnum = MyEnum::ONE
+# end
+#
+# foo = Foo.new
+# foo.to_json # => %({"my_enum":1})
+# foo.to_yaml # => %(---\nmy_enum: 1\n)
+# ```
+#
+# NOTE: Automatically assigned enum values are subject to change when the order
+# of members by adding, removing or reordering them. This can affect the integrity
+# of serialized data between two instances of a program based on different code
+# versions. A way to avoid this is to explicitly assign fixed values to enum
+# members.
+module Enum::ValueConverter(T)
+  def self.new(pull : JSON::PullParser) : T
+    from_json(pull)
+  end
+
+  # Reads a serialized enum member by value from *pull*.
+  #
+  # See `.to_json` for reference.
+  #
+  # Raises `JSON::ParseException` if the deserialization fails.
+  def self.from_json(pull : JSON::PullParser) : T
+    T.from_value?(pull.read_int) || pull.raise "Unknown enum #{T} value: #{pull.int_value}"
   end
 end
 

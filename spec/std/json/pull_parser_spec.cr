@@ -379,4 +379,15 @@ describe JSON::PullParser do
       pull.read?(Float32).should be_nil
     end
   end
+
+  it "#raise" do
+    pull = JSON::PullParser.new("[1, 2, 3]")
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 2") do
+      pull.raise "foo bar"
+    end
+    pull.read_begin_array
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 3") do
+      pull.raise "foo bar"
+    end
+  end
 end
