@@ -104,6 +104,23 @@ struct Proc
     ptr.value
   end
 
+  # Creates a `Proc` by capturing the given *block*.
+  #
+  # The block argument types are inferred from the `Proc`'s type arguments. The
+  # return type of the block must match the return type specified in the `Proc`
+  # type.
+  #
+  # ```
+  # gt = Proc(Int32, Int32, Bool).new do |x, y|
+  #   x > y
+  # end
+  # gt.call(3, 1) # => true
+  # gt.call(1, 2) # => false
+  # ```
+  def self.new(&block : self)
+    block
+  end
+
   # Returns a new `Proc` that has its first arguments fixed to
   # the values given by *args*.
   #

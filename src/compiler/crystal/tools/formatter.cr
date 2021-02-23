@@ -1673,6 +1673,11 @@ module Crystal
 
       write node.name
       next_token
+
+      if @token.type == :"=" && node.name.ends_with?('=')
+        next_token
+      end
+
       skip_space(consume_newline: false)
 
       format_def_args node
@@ -2550,7 +2555,9 @@ module Crystal
           return false
         end
 
+        @lexer.wants_def_or_macro_name = true
         next_token
+        @lexer.wants_def_or_macro_name = false
         skip_space
         if (@token.type == :NEWLINE) || @wrote_newline
           base_indent = @indent + 2
@@ -2680,11 +2687,11 @@ module Crystal
           if wrote_newline || @token.type == :NEWLINE
             unless wrote_newline
               next_token_skip_space_or_newline
-              write "," if @token.type != :")"
+              write ","
               write_line
             end
             needs_space = false
-            block_indent += 2
+            block_indent += 2 if @token.type != :")" # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
             write "," if @token.type != :")" # foo(1, &.foo) case
@@ -2968,8 +2975,10 @@ module Crystal
         write " " if needs_space
         write_token :"&"
         skip_space_or_newline
-        write_token :"."
-        skip_space_or_newline
+        write :"."
+        @lexer.wants_def_or_macro_name = true
+        next_token_skip_space_or_newline
+        @lexer.wants_def_or_macro_name = false
 
         body = node.body
         case body
@@ -3807,7 +3816,7 @@ module Crystal
     end
 
     def visit(node : OffsetOf)
-      visit Call.new(nil, "offsetof", [node.offsetof_type, node.instance_var])
+      visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
     end
 
     def visit(node : PointerOf)
@@ -4585,8 +4594,14 @@ module Crystal
               @doc_comments << current_doc_comment if current_doc_comment.needs_format
               @current_doc_comment = nil
             else
+              # Normalize crystal language tag
+              if language == "cr" || language == "crystal"
+                value = value.rchop(language)
+                language = ""
+              end
+
               # We only format crystal code (empty by default means crystal)
-              needs_format = language.empty? || language == "crystal"
+              needs_format = language.empty?
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end

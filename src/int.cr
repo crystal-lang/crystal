@@ -603,12 +603,6 @@ struct Int
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  private DIGITS2         =
-    "0001020304050607080910111213141516171819" \
-    "2021222324252627282930313233343536373839" \
-    "4041424344454647484950515253545556575859" \
-    "6061626364656667686970717273747576777879" \
-    "8081828384858687888990919293949596979899"
 
   def to_s(base : Int = 10, *, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
@@ -662,32 +656,12 @@ struct Int
 
     neg = num < 0
 
-    if base == 10
-      # Optimization for `base == 10`.
-      # The base idea is explained by "Three Optimization Tips for C++".
-      # See https://www.slideshare.net/andreialexandrescu1/three-optimization-tips-for-c.
-      digits = DIGITS2.to_unsafe
+    digits = (base == 62 ? DIGITS_BASE62 : (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE)).to_unsafe
 
-      while num >= 100 || num <= -100
-        ptr -= 2
-        ptr.copy_from(digits + num.remainder(100).abs &* 2, 2)
-        num = num.tdiv(100)
-      end
-      if num >= 10 || num <= -10
-        ptr -= 2
-        ptr.copy_from(digits + num.abs &* 2, 2)
-      elsif num != 0
-        ptr -= 1
-        ptr.value = 0x30u8 &+ num.abs
-      end
-    else
-      digits = (base == 62 ? DIGITS_BASE62 : (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE)).to_unsafe
-
-      while num != 0
-        ptr -= 1
-        ptr.value = digits[num.remainder(base).abs]
-        num = num.tdiv(base)
-      end
+    while num != 0
+      ptr -= 1
+      ptr.value = digits[num.remainder(base).abs]
+      num = num.tdiv(base)
     end
 
     if neg
@@ -1009,6 +983,10 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u8 &- self
+  end
+
   def abs
     self
   end
@@ -1048,6 +1026,10 @@ struct UInt16
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u16 &- self
+  end
 
   def abs
     self
@@ -1089,6 +1071,10 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u32 &- self
+  end
+
   def abs
     self
   end
@@ -1128,6 +1114,10 @@ struct UInt64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u64 &- self
+  end
 
   def abs
     self
@@ -1169,6 +1159,11 @@ struct UInt128
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    # TODO: use 0_u128 &- self
+    UInt128.new(0) &- self
+  end
 
   def abs
     self

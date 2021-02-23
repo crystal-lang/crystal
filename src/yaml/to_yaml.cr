@@ -122,8 +122,101 @@ struct Symbol
 end
 
 struct Enum
+  # Serializes this enum member by name.
+  #
+  # For non-flags enums, the serialization is a YAML string. The value is the
+  # member name (see `#to_s`) transformed with `String#underscore`.
+  #
+  # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
+  # Stages::INITIAL.to_yaml      # => %(--- initial\n)
+  # Stages::SECOND_STAGE.to_yaml # => %(--- second_stage\n)
+  # ```
+  #
+  # For flags enums, the serialization is a YAML sequence including every flagged
+  # member individually serialized in the same way as a member of a non-flags enum.
+  # `None` is serialized as an empty sequence, `All` as a sequence containing
+  # all members.
+  #
+  # ```
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
+  #
+  # Sides::LEFT.to_yaml                  # => %(--- ["left"]\n)
+  # (Sides::LEFT | Sides::RIGHT).to_yaml # => %(--- ["left", "right"]\n)
+  # Sides::All.to_yaml                   # => %(--- ["left", "right"]\n)
+  # Sides::None.to_yaml                  # => %(--- []\n)
+  # ```
+  #
+  # `ValueConverter.to_yaml` offers a different serialization strategy based on the
+  # member value.
   def to_yaml(yaml : YAML::Nodes::Builder)
-    yaml.scalar value
+    {% if @type.annotation(Flags) %}
+      yaml.sequence(style: :flow) do
+        each do |member, _value|
+          member.to_s.underscore.to_yaml(yaml)
+        end
+      end
+    {% else %}
+      to_s.underscore.to_yaml(yaml)
+    {% end %}
+  end
+end
+
+module Enum::ValueConverter(T)
+  def self.to_yaml(value : T)
+    String.build do |io|
+      to_yaml(value, io)
+    end
+  end
+
+  def self.to_yaml(value : T, io : IO)
+    nodes_builder = YAML::Nodes::Builder.new
+    to_yaml(value, nodes_builder)
+
+    # Then we convert the tree to YAML.
+    YAML.build(io) do |builder|
+      nodes_builder.document.to_yaml(builder)
+    end
+  end
+
+  # Serializes enum member *member* by value.
+  #
+  # For both flags enums and non-flags enums, the value of the enum member is
+  # used for serialization.
+  #
+  # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
+  # Enum::ValueConverter.to_yaml(Stages::INITIAL)      # => %(0)
+  # Enum::ValueConverter.to_yaml(Stages::SECOND_STAGE) # => %(1)
+  #
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
+  #
+  # Enum::ValueConverter.to_yaml(Sides::LEFT)                # => %(1)
+  # Enum::ValueConverter.to_yaml(Sides::LEFT | Sides::RIGHT) # => %(3)
+  # Enum::ValueConverter.to_yaml(Sides::All)                 # => %(3)
+  # Enum::ValueConverter.to_yaml(Sides::None)                # => %(0)
+  # ```
+  #
+  # `Enum#to_yaml` offers a different serialization strategy based on the member
+  # name.
+  def self.to_yaml(member : T, yaml : YAML::Nodes::Builder)
+    yaml.scalar(member.value)
   end
 end
 

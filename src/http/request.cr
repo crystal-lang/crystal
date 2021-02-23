@@ -17,7 +17,7 @@ class HTTP::Request
   getter body : IO?
   property version : String
   @cookies : Cookies?
-  @query_params : Params?
+  @query_params : URI::Params?
   @uri : URI?
 
   {% unless flag?(:win32) %}
@@ -29,10 +29,20 @@ class HTTP::Request
     #
     # This property is not used by `HTTP::Client`.
     property remote_address : Socket::Address?
+
+    # The network address of the HTTP server.
+    #
+    # `HTTP::Server` will try to fill this property, and its value
+    # will have a format like "IP:port", but this format is not guaranteed.
+    # Middlewares can overwrite this value.
+    #
+    # This property is not used by `HTTP::Client`.
+    property local_address : Socket::Address?
   {% else %}
     # TODO: Remove this once `Socket` is working on Windows
 
     property remote_address : Nil
+    property local_address : Nil
   {% end %}
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version = "HTTP/1.1")
@@ -52,14 +62,14 @@ class HTTP::Request
   end
 
   # Returns a convenience wrapper around querying and setting query params,
-  # see `HTTP::Params`.
+  # see `URI::Params`.
   def query_params
-    @query_params ||= parse_query_params
+    @query_params ||= uri.query_params
   end
 
   def resource
     update_uri
-    @uri.try(&.full_path) || @resource
+    @uri.try(&.request_target) || @resource
   end
 
   def keep_alive?
@@ -117,6 +127,10 @@ class HTTP::Request
 
       if io.responds_to?(:remote_address)
         request.remote_address = io.remote_address
+      end
+
+      if io.responds_to?(:local_address)
+        request.local_address = io.local_address
       end
 
       return request
@@ -290,13 +304,9 @@ class HTTP::Request
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
-  private def parse_query_params
-    HTTP::Params.parse(uri.query || "")
-  end
-
   private def update_query_params
     return unless @query_params
-    @query_params = parse_query_params
+    @query_params = uri.query_params
   end
 
   private def update_uri

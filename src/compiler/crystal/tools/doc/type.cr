@@ -609,7 +609,7 @@ class Crystal::Doc::Type
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, html : HTMLOption = :all)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes?(entry.name)
+      if Symbol.needs_quotes_for_named_argument?(entry.name)
         entry.name.inspect(io)
       else
         io << entry.name
@@ -775,7 +775,8 @@ class Crystal::Doc::Type
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
-      builder.field "aliased", alias_definition.to_s
+      builder.field "aliased", alias? ? alias_definition.to_s : nil
+      builder.field "aliased_html", alias? ? formatted_alias_definition : nil
       builder.field "const", const?
       builder.field "constants", constants
       builder.field "included_modules" do

@@ -537,23 +537,26 @@ module Iterator(T)
     @generators : Array(I)
 
     def initialize(@iterator)
-      @generators = [@iterator]
+      @generators = [] of I
       @stopped = [] of I
     end
 
     def next
-      case value = @generators.last.next
+      case value = @iterator.next
       when Iterator
-        @generators.push value
+        @generators.push @iterator
+        @iterator = value
         self.next
       when Array
-        @generators.push value.each
+        @generators.push @iterator
+        @iterator = value.each
         self.next
       when Stop
-        if @generators.size == 1
+        @stopped << @iterator
+        if @generators.empty?
           stop
         else
-          @stopped << @generators.pop
+          @iterator = @generators.pop
           self.next
         end
       else
@@ -587,8 +590,9 @@ module Iterator(T)
   end
 
   # Returns a new iterator with the concatenated results of running the block
-  # (which is expected to return arrays or iterators)
   # once for every element in the collection.
+  # Only `Array` and `Iterator` results are concatenated; every other value is
+  # returned once in the new iterator.
   #
   # ```
   # iter = [1, 2, 3].each.flat_map { |x| [x, x] }
@@ -601,8 +605,8 @@ module Iterator(T)
   #
   # iter.to_a # => [1, 1, 2, 2, 3, 3]
   # ```
-  def flat_map(&func : T -> Array(U) | Iterator(U) | U) forall U
-    FlatMap(typeof(self), U, typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
+  def flat_map(&func : T -> _)
+    FlatMap(typeof(self), typeof(FlatMap.element_type(self, func)), typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
   end
 
   private class FlatMap(I0, T, I, F)
@@ -640,6 +644,18 @@ module Iterator(T)
         else
           value
         end
+      end
+    end
+
+    def self.element_type(iter, func)
+      value = iter.next
+      raise "" if value.is_a?(Stop)
+
+      case value = func.call value
+      when Array, Iterator
+        value.first
+      else
+        value
       end
     end
 
@@ -1223,6 +1239,14 @@ module Iterator(T)
   # ```
   def with_object(obj)
     WithObject(typeof(self), T, typeof(obj)).new(self, obj)
+  end
+
+  # Yields each element in this iterator together with *obj*. Returns that object.
+  def with_object(obj, &)
+    each do |value|
+      yield value, obj
+    end
+    obj
   end
 
   private struct WithObject(I, T, O)

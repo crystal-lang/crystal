@@ -1,4 +1,5 @@
 require "c/pwd"
+require "../unix"
 
 module Crystal::System::User
   private GETPW_R_SIZE_MAX = 1024 * 16
@@ -13,16 +14,9 @@ module Crystal::System::User
 
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
+    System.retry_with_buffer("getpwnam_r", GETPW_R_SIZE_MAX) do |buf|
+      LibC.getpwnam_r(username, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
-
-    raise RuntimeError.from_errno("getpwnam_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end
@@ -33,16 +27,9 @@ module Crystal::System::User
 
     pwd = uninitialized LibC::Passwd
     pwd_pointer = pointerof(pwd)
-    initial_buf = uninitialized UInt8[1024]
-    buf = initial_buf.to_slice
-
-    ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
-    while ret == LibC::ERANGE && buf.size < GETPW_R_SIZE_MAX
-      buf = Bytes.new(buf.size * 2)
-      ret = LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
+    System.retry_with_buffer("getpwuid_r", GETPW_R_SIZE_MAX) do |buf|
+      LibC.getpwuid_r(id, pwd_pointer, buf, buf.size, pointerof(pwd_pointer))
     end
-
-    raise RuntimeError.from_errno("getpwuid_r") if ret != 0
 
     from_struct(pwd) if pwd_pointer
   end

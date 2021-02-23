@@ -80,7 +80,11 @@ describe "Complex" do
   end
 
   it "cis" do
-    2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% if flag?(:aarch64) && flag?(:darwin) %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.6754631805511511))
+    {% else %}
+      2.4.cis.should eq(Complex.new(-0.7373937155412454, 0.675463180551151))
+    {% end %}
   end
 
   it "conj" do

@@ -131,28 +131,28 @@ module HTTP
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET (just \\n instead of \\r\\n)" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET with query params" do
         request = Request.from_io(IO::Memory.new("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/greet")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses GET without \\r" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\nHost: host.example.org\n\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses empty string (EOF), returns nil" do
@@ -167,14 +167,14 @@ module HTTP
         request = Request.from_io(IO::Memory.new("GET   /   HTTP/1.1  \r\nHost: host.example.org\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org"})
       end
 
       it "parses empty header" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\nReferer:\r\n\r\n")).as(Request)
         request.method.should eq("GET")
         request.path.should eq("/")
-        request.headers.should eq({"Host" => "host.example.org", "Referer" => ""})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org", "Referer" => ""})
       end
 
       it "parses GET with cookie" do
@@ -184,7 +184,7 @@ module HTTP
         request.cookies["a"].value.should eq("b")
 
         # Headers should not be modified (#2920)
-        request.headers.should eq({"Host" => "host.example.org", "Cookie" => "a=b"})
+        request.headers.should eq(HTTP::Headers{"Host" => "host.example.org", "Cookie" => "a=b"})
       end
 
       it "headers are case insensitive" do
@@ -199,7 +199,7 @@ module HTTP
         request = Request.from_io(IO::Memory.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")).as(Request)
         request.method.should eq("POST")
         request.path.should eq("/foo")
-        request.headers.should eq({"Content-Length" => "13"})
+        request.headers.should eq(HTTP::Headers{"Content-Length" => "13"})
         request.body.not_nil!.gets_to_end.should eq("thisisthebody")
       end
 
@@ -387,7 +387,7 @@ module HTTP
     end
 
     describe "#query_params" do
-      it "returns parsed HTTP::Params" do
+      it "returns parsed URI::Params" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?foo=bar&foo=baz&baz=qux HTTP/1.1\r\n\r\n")).as(Request)
         params = request.query_params
 

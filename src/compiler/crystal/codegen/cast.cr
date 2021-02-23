@@ -232,18 +232,6 @@ class Crystal::CodeGenVisitor
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
-    store llvm_type(target_type).null, target_pointer
-  end
-
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
-    store value, target_pointer
-  end
-
-  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : TypeDefType, value)
-    assign_distinct target_pointer, target_type, value_type.typedef, value
-  end
-
   def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value)
     index = 0
     target_type.tuple_types.zip(value_type.tuple_types) do |target_tuple_type, value_tuple_type|
@@ -351,17 +339,9 @@ class Crystal::CodeGenVisitor
     downcast_distinct value, to_type.typedef, from_type
   end
 
-  def downcast_distinct(value, to_type : PointerInstanceType, from_type : NilablePointerType)
-    value
-  end
-
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
     # cast of a pointer being cast to Void*
     bit_cast value, llvm_context.void_pointer
-  end
-
-  def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
-    downcast_distinct value, to_type.typedef, from_type
   end
 
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
@@ -582,18 +562,6 @@ class Crystal::CodeGenVisitor
   end
 
   def upcast_distinct(value, to_type : NilableProcType, from_type : TypeDefType)
-    upcast_distinct value, to_type, from_type.typedef
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : NilType)
-    llvm_type(to_type).null
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : PointerInstanceType)
-    value
-  end
-
-  def upcast_distinct(value, to_type : NilablePointerType, from_type : TypeDefType)
     upcast_distinct value, to_type, from_type.typedef
   end
 

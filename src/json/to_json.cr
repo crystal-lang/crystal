@@ -160,8 +160,97 @@ struct Time::Format
 end
 
 struct Enum
+  # Serializes this enum member by name.
+  #
+  # For non-flags enums, the serialization is a JSON string. The value is the
+  # member name (see `#to_s`) transformed with `String#underscore`.
+  #
+  # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
+  # Stages::INITIAL.to_json      # => %("initial")
+  # Stages::SECOND_STAGE.to_json # => %("second_stage")
+  # ```
+  #
+  # For flags enums, the serialization is a JSON array including every flagged
+  # member individually serialized in the same way as a member of a non-flags enum.
+  # `None` is serialized as an empty array, `All` as an array containing
+  # all members.
+  #
+  # ```
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
+  #
+  # Sides::LEFT.to_json                  # => %(["left"])
+  # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left", "right"])
+  # Sides::All.to_json                   # => %(["left", "right"])
+  # Sides::None.to_json                  # => %([])
+  # ```
+  #
+  # `ValueConverter.to_json` offers a different serialization strategy based on the
+  # member value.
   def to_json(json : JSON::Builder)
-    json.number(value)
+    {% if @type.annotation(Flags) %}
+      json.array do
+        each do |member, _value|
+          json.string(member.to_s.underscore)
+        end
+      end
+    {% else %}
+      json.string(to_s.underscore)
+    {% end %}
+  end
+end
+
+module Enum::ValueConverter(T)
+  def self.to_json(value : T)
+    String.build do |io|
+      to_json(value, io)
+    end
+  end
+
+  def self.to_json(value : T, io : IO)
+    JSON.build(io) do |json|
+      to_json(value, json)
+    end
+  end
+
+  # Serializes enum member *member* by value.
+  #
+  # For both flags enums and non-flags enums, the value of the enum member is
+  # used for serialization.
+  #
+  # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
+  # Enum::ValueConverter.to_json(Stages::INITIAL)      # => %(0)
+  # Enum::ValueConverter.to_json(Stages::SECOND_STAGE) # => %(1)
+  #
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
+  #
+  # Enum::ValueConverter.to_json(Sides::LEFT)                # => %(1)
+  # Enum::ValueConverter.to_json(Sides::LEFT | Sides::RIGHT) # => %(3)
+  # Enum::ValueConverter.to_json(Sides::All)                 # => %(3)
+  # Enum::ValueConverter.to_json(Sides::None)                # => %(0)
+  # ```
+  #
+  # `Enum#to_json` offers a different serialization strategy based on the member
+  # name.
+  def self.to_json(member : T, json : JSON::Builder)
+    json.scalar(member.value)
   end
 end
 
