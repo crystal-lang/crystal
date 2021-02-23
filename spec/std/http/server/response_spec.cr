@@ -354,7 +354,7 @@ describe HTTP::Server::Response do
       it "#{location.class} location" do
         io = IO::Memory.new
         response = Response.new(io)
-        response.redirect("/path")
+        response.redirect(location)
         io.to_s.should eq("HTTP/1.1 302 Found\r\nLocation: /path\r\nContent-Length: 0\r\n\r\n")
       end
     end
