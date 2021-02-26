@@ -79,8 +79,15 @@ class JSON::PullParser
 
   getter kind : Kind
   getter bool_value : Bool
-  getter int_value : Int64
-  getter float_value : Float64
+
+  def int_value : Int64
+    token.int_value
+  end
+
+  def float_value : Float64
+    token.float_value
+  end
+
   getter string_value : String
   getter raw_value : String
 
@@ -93,8 +100,6 @@ class JSON::PullParser
     @lexer = Lexer.new input
     @kind = :EOF
     @bool_value = false
-    @int_value = 0_i64
-    @float_value = 0.0
     @string_value = ""
     @raw_value = ""
     @object_stack = [] of ObjectStackKind
@@ -113,11 +118,9 @@ class JSON::PullParser
       @bool_value = true
     when .int?
       @kind = :int
-      @int_value = token.int_value
       @raw_value = token.raw_value
     when .float?
       @kind = :float
-      @float_value = token.float_value
       @raw_value = token.raw_value
     when .string?
       @kind = :string
@@ -206,7 +209,7 @@ class JSON::PullParser
   # Reads an integer value.
   def read_int
     expect_kind :int
-    @int_value.tap { read_next }
+    int_value.tap { read_next }
   end
 
   # Reads a float value.
@@ -215,9 +218,9 @@ class JSON::PullParser
   def read_float
     case @kind
     when .int?
-      @int_value.to_f.tap { read_next }
+      int_value.to_f.tap { read_next }
     when .float?
-      @float_value.tap { read_next }
+      float_value.tap { read_next }
     else
       raise "expecting int or float but was #{@kind}"
     end
@@ -410,7 +413,7 @@ class JSON::PullParser
     # If the value is not an integer or does not fit in a {{type}} variable, it returns `nil`.
     def read?(klass : {{type}}.class)
       {{type}}.new(int_value).tap { read_next } if kind.int?
-    rescue OverflowError
+    rescue JSON::ParseException | OverflowError
       nil
     end
   {% end %}
@@ -421,7 +424,7 @@ class JSON::PullParser
   def read?(klass : UInt64.class)
     # UInt64 is a special case due to exceeding bounds of @int_value
     UInt64.new(raw_value).tap { read_next } if kind.int?
-  rescue ArgumentError
+  rescue JSON::ParseException | ArgumentError
     nil
   end
 
@@ -431,8 +434,8 @@ class JSON::PullParser
   # If the value was actually an integer, it is converted to a float.
   def read?(klass : Float32.class)
     return read_int.to_f32 if kind.int?
-    return float_value.to_f32.tap { read_next } if kind.float?
-  rescue OverflowError
+    return raw_value.to_f32.tap { read_next } if kind.float?
+  rescue exc : JSON::ParseException | ArgumentError
     nil
   end
 
@@ -443,6 +446,8 @@ class JSON::PullParser
   def read?(klass : Float64.class)
     return read_int.to_f64 if kind.int?
     return read_float.to_f64 if kind.float?
+  rescue JSON::ParseException
+    nil
   end
 
   # Reads a `String` value and returns it.
@@ -473,13 +478,11 @@ class JSON::PullParser
         return
       when .int?
         @kind = :int
-        @int_value = token.int_value
         @raw_value = token.raw_value
         next_token_after_value
         return
       when .float?
         @kind = :float
-        @float_value = token.float_value
         @raw_value = token.raw_value
         next_token_after_value
         return
