@@ -316,23 +316,46 @@ abstract class IO
   private def read_char_with_bytesize_peek(peek)
     first = peek[0].to_u32
     skip(1)
+
     if first < 0x80
       return first.unsafe_chr, 1
     end
 
+    if first < 0xc2
+      raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
+    end
+
     second = peek_or_read_masked(peek, 1)
+
     if first < 0xe0
-      return ((first & 0x1f) << 6 | second).unsafe_chr, 2
+      return ((first << 6) &+ (second &- 0x3080)).unsafe_chr, 2
     end
 
     third = peek_or_read_masked(peek, 2)
+
     if first < 0xf0
-      return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3
+      if first == 0xe0 && second < 0xa0
+        raise InvalidByteSequenceError.new("Overlong UTF-8 encoding")
+      end
+
+      if first == 0xed && second >= 0xa0
+        raise InvalidByteSequenceError.new("Invalid UTF-8 codepoint")
+      end
+
+      return ((first << 12) &+ (second << 6) &+ (third &- 0xE2080)).unsafe_chr, 3
     end
 
-    fourth = peek_or_read_masked(peek, 3)
-    if first < 0xf8
-      return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4
+    if first < 0xf5
+      if first == 0xf0 && second < 0x90
+        raise InvalidByteSequenceError.new("Overlong UTF-8 encoding")
+      end
+
+      if first == 0xf4 && second >= 0x90
+        raise InvalidByteSequenceError.new("Invalid UTF-8 codepoint")
+      end
+
+      fourth = peek_or_read_masked(peek, 3)
+      return ((first << 18) &+ (second << 12) &+ (third << 6) &+ (fourth &- 0x3C82080)).unsafe_chr, 4
     end
 
     raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
@@ -341,31 +364,67 @@ abstract class IO
   private def read_char_with_bytesize_slow
     first = read_utf8_byte
     return nil unless first
-
     first = first.to_u32
-    return first.unsafe_chr, 1 if first < 0x80
+
+    if first < 0x80
+      return first.unsafe_chr, 1
+    end
+
+    if first < 0xc2
+      raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
+    end
 
     second = read_utf8_masked_byte
-    return ((first & 0x1f) << 6 | second).unsafe_chr, 2 if first < 0xe0
+
+    if first < 0xe0
+      return ((first << 6) &+ (second &- 0x3080)).unsafe_chr, 2
+    end
 
     third = read_utf8_masked_byte
-    return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3 if first < 0xf0
 
-    fourth = read_utf8_masked_byte
-    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4 if first < 0xf8
+    if first < 0xf0
+      if first == 0xe0 && second < 0xa0
+        raise InvalidByteSequenceError.new("Overlong UTF-8 encoding")
+      end
+
+      if first == 0xed && second >= 0xa0
+        raise InvalidByteSequenceError.new("Invalid UTF-8 codepoint")
+      end
+
+      return ((first << 12) &+ (second << 6) &+ (third &- 0xE2080)).unsafe_chr, 3
+    end
+
+    if first < 0xf5
+      if first == 0xf0 && second < 0x90
+        raise InvalidByteSequenceError.new("Overlong UTF-8 encoding")
+      end
+
+      if first == 0xf4 && second >= 0x90
+        raise InvalidByteSequenceError.new("Invalid UTF-8 codepoint")
+      end
+
+      fourth = read_utf8_masked_byte
+      return ((first << 18) &+ (second << 12) &+ (third << 6) &+ (fourth &- 0x3C82080)).unsafe_chr, 4
+    end
 
     raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   private def read_utf8_masked_byte
     byte = read_utf8_byte || raise InvalidByteSequenceError.new("Incomplete UTF-8 byte sequence")
-    (byte & 0x3f).to_u32
+    if (byte & 0xc0) != 0x80
+      raise InvalidByteSequenceError.new("Unexpected continuation byte 0x#{byte.to_s(16)} in UTF-8 byte sequence")
+    end
+    byte.to_u32
   end
 
   private def peek_or_read_masked(peek, index)
     if byte = peek[index]?
       skip(1)
-      (byte & 0x3f).to_u32
+      if (byte & 0xc0) != 0x80
+        raise InvalidByteSequenceError.new("Unexpected continuation byte 0x#{byte.to_s(16)} in UTF-8 byte sequence")
+      end
+      byte.to_u32
     else
       read_utf8_masked_byte
     end
