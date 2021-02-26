@@ -222,7 +222,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
-    ary = [] of typeof((yield first).not_nil!)
+    ary = [] of typeof((yield first_internal).not_nil!)
     each do |e|
       v = yield e
       unless v.is_a?(Nil)
@@ -525,7 +525,7 @@ module Enumerable(T)
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
   def flat_map(&block : T -> _)
-    ary = [] of typeof(flat_map_type(yield first))
+    ary = [] of typeof(flat_map_type(yield first_internal))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -1480,7 +1480,7 @@ module Enumerable(T)
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
   def sum(&block)
-    sum(additive_identity(Reflect(typeof(yield first)))) do |value|
+    sum(additive_identity(Reflect(typeof(yield first_internal)))) do |value|
       yield value
     end
   end
@@ -1559,7 +1559,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(&block)
-    product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield first_internal)).first.multiplicative_identity) do |value|
       yield value
     end
   end

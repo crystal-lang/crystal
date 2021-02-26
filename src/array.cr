@@ -1263,7 +1263,7 @@ class Array(T)
   end
 
   def self.product(arrays)
-    result = [] of Array(typeof(arrays.first.first))
+    result = [] of Array(typeof(arrays.first_internal.first_internal))
     each_product(arrays) do |product|
       result << product
     end
@@ -1829,7 +1829,7 @@ class Array(T)
   # a           # => [[:a, :b], [:c, :d], [:e, :f]]
   # ```
   def transpose
-    return Array(Array(typeof(first.first_internal))).new if empty?
+    return Array(Array(typeof(first_internal.first_internal))).new if empty?
 
     len = self[0].size
     (1...@size).each do |i|
@@ -1837,8 +1837,8 @@ class Array(T)
       raise IndexError.new if len != l
     end
 
-    Array(Array(typeof(first.first_internal))).new(len) do |i|
-      Array(typeof(first.first_internal)).new(@size) do |j|
+    Array(Array(typeof(first_internal.first_internal))).new(len) do |i|
+      Array(typeof(first_internal.first_internal)).new(@size) do |j|
         self[j][i]
       end
     end
