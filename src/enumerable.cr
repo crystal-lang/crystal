@@ -1233,7 +1233,7 @@ module Enumerable(T)
   # ```
   def reject(type : U.class) forall U
     ary = [] of typeof(begin
-      e = first
+      e = first_internal
       e.is_a?(U) ? raise("") : e
     end)
     each { |e| ary << e unless e.is_a?(U) }
@@ -1650,7 +1650,7 @@ module Enumerable(T)
   # Tuple.new({:a, 1}, {:c, 2}).to_h # => {:a => 1, :c => 2}
   # ```
   def to_h
-    each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|
+    each_with_object(Hash(typeof(first_internal[0]), typeof(first_internal[1])).new) do |item, hash|
       hash[item[0]] = item[1]
     end
   end
@@ -1910,5 +1910,11 @@ module Enumerable(T)
         X
       {% end %}
     end
+  end
+
+  # :nodoc:
+  def first_internal
+    # overridden in Tuple to disable literal index lookup
+    first
   end
 end

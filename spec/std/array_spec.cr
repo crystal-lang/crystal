@@ -1830,6 +1830,16 @@ describe "Array" do
       expect_raises(IndexError) { [[1], [1, 2]].transpose }
       expect_raises(IndexError) { [[1, 2], [1]].transpose }
     end
+
+    it "transposes array of tuples" do
+      [{1, 1.0}].transpose.should eq([[1], [1.0]])
+      [{1}, {1.0}].transpose.should eq([[1, 1.0]])
+      [{1, 1.0}, {'a', "aaa"}].transpose.should eq([[1, 'a'], [1.0, "aaa"]])
+
+      typeof([{1, 1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([{1}, {1.0}].transpose).should eq(Array(Array(Int32 | Float64)))
+      typeof([{1, 1.0}, {'a', "aaa"}].transpose).should eq(Array(Array(String | Int32 | Float64 | Char)))
+    end
   end
 
   describe "rotate" do

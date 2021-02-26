@@ -587,4 +587,10 @@ struct Tuple
       self[{{T.size - 1}}]
     {% end %}
   end
+
+  # :nodoc:
+  def first_internal
+    i = 0
+    self[i]
+  end
 end
