@@ -534,9 +534,19 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     scope.as(ClassVarContainer)
   end
 
-  def interpret_enum_value(node : ASTNode, target_type : IntegerType? = nil)
+  def interpret_enum_value(node : ASTNode)
+    interpret_enum_value(node, nil)
+  end
+
+  def interpret_enum_value(node : ASTNode, target_type : Nil)
     MathInterpreter
-      .new(current_type, self, target_type)
+      .new(current_type, self)
+      .interpret(node)
+  end
+
+  def interpret_enum_value(node : ASTNode, target_type : T.class) forall T
+    TypedMathInterpreter(T)
+      .new(current_type, self)
       .interpret(node)
   end
 

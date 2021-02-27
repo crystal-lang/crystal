@@ -589,7 +589,39 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       enum_base_type = @program.int32
     end
 
-    all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
+    # This is a workaround for https://github.com/crystal-lang/crystal/issues/10359
+    # It seems that when a union type of multiple integer types is involved there's
+    # something wrong. This code happened in the compiler and so it prevented subsequent
+    # compilers from working. With this workaround in place subsequent compilers can
+    # continue working and the bug can be taken care of later on (just like other bugs.)
+    case enum_base_type
+    when @program.int8
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, Int8)
+    when @program.uint8
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, UInt8)
+    when @program.int16
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, Int16)
+    when @program.uint16
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, UInt16)
+    when @program.int32
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, Int32)
+    when @program.uint32
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, UInt32)
+    when @program.int64
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, Int64)
+    when @program.uint64
+      visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, UInt64)
+    when @program.int128
+      node.raise "Unsupported enum base type: Int128"
+    when @program.uint128
+      node.raise "Unsupported enum base type: UInt128"
+    else
+      node.raise "BUG: unknown enum base type #{enum_base_type}"
+    end
+  end
+
+  private def visit_enum_def(node, scope, name, enum_type, enum_base_type, annotations, base_type_class : T.class) forall T
+    all_value = interpret_enum_value(NumberLiteral.new(0), base_type_class)
     existed = !!enum_type
     enum_type ||= EnumType.new(@program, scope, name, enum_base_type)
 
@@ -605,9 +637,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     pushing_type(enum_type) do
       counter = enum_type.flags? ? 1 : 0
-      counter = interpret_enum_value(NumberLiteral.new(counter), enum_base_type)
-      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value,
-        overflow: false,
+      counter = interpret_enum_value(NumberLiteral.new(counter), base_type_class)
+      counter, all_value, overflow = visit_enum_members(node, node.members, counter, all_value, false, base_type_class,
         existed: existed,
         enum_type: enum_type,
         enum_base_type: enum_base_type,
@@ -647,27 +678,27 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def visit_enum_members(node, members, counter, all_value, overflow, **options)
+  def visit_enum_members(node, members, counter, all_value, overflow, base_type_class, **options)
     members.each do |member|
       counter, all_value, overflow =
-        visit_enum_member(node, member, counter, all_value, overflow, **options)
+        visit_enum_member(node, member, counter, all_value, overflow, base_type_class, **options)
     end
     {counter, all_value, overflow}
   end
 
-  def visit_enum_member(node, member, counter, all_value, overflow, **options)
+  def visit_enum_member(node, member, counter, all_value, overflow, base_type_class, **options)
     case member
     when MacroIf
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, base_type_class, **options)
     when MacroExpression
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, base_type_class, **options)
     when MacroFor
       expanded = expand_inline_macro(member, mode: Parser::ParseMode::Enum, accept: false)
-      visit_enum_member(node, expanded, counter, all_value, overflow, **options)
+      visit_enum_member(node, expanded, counter, all_value, overflow, base_type_class, **options)
     when Expressions
-      visit_enum_members(node, member.expressions, counter, all_value, overflow, **options)
+      visit_enum_members(node, member.expressions, counter, all_value, overflow, base_type_class, **options)
     when Arg
       existed = options[:existed]
       enum_type = options[:enum_type]
@@ -679,7 +710,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       if default_value = member.default_value
-        counter = interpret_enum_value(default_value, base_type)
+        counter = interpret_enum_value(default_value, base_type_class)
       elsif overflow
         member.raise "value of enum member #{member} would overflow the base type #{base_type}"
       end
