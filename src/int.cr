@@ -70,7 +70,7 @@ struct Int
   # ```
   def chr
     unless 0 <= self <= 0xd7ff || 0xe000 <= self <= Char::MAX_CODEPOINT
-      raise ArgumentError.new("#{self} out of char range")
+      raise ArgumentError.new("0x#{self.to_s(16)} out of char range")
     end
     unsafe_chr
   end
