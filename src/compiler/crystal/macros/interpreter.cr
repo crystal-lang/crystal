@@ -110,9 +110,9 @@ module Crystal
           (macro_expansion_pragmas[@str.pos.to_i32] ||= [] of Lexer::LocPragma) << Lexer::LocPopPragma.new
         else
           last = @last
-          # Nop would be an empty string which can break code. See https://github.com/crystal-lang/crystal/issues/10406
+          # `{{ yield }}` expanding to an empty string (Nop) can break code. See https://github.com/crystal-lang/crystal/issues/10406
           # Default value of an empty block is `nil`
-          if last.is_a?(Nop)
+          if node.exp.is_a?(Yield) && last.is_a?(Nop)
             last = "begin; end"
           end
           last.to_s(@str)
