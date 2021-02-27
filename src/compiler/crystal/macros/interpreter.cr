@@ -113,7 +113,7 @@ module Crystal
           # Nop would be an empty string which can break code. See https://github.com/crystal-lang/crystal/issues/10406
           # Default value of an empty block is `nil`
           if last.is_a?(Nop)
-            last = NilLiteral.new
+            last = "begin; end"
           end
           last.to_s(@str)
         end
