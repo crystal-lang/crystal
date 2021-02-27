@@ -113,7 +113,7 @@ module Crystal
           # `{{ yield }}` expanding to an empty string (Nop) can break code. See https://github.com/crystal-lang/crystal/issues/10406
           # Default value of an empty block is `nil`
           if node.exp.is_a?(Yield) && last.is_a?(Nop)
-            last = "begin; end"
+            last = NilLiteral.new
           end
           last.to_s(@str)
         end
