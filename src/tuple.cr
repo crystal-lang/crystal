@@ -590,6 +590,7 @@ struct Tuple
 
   # :nodoc:
   def first_internal
+    # overrides Enumerable's definition to disable literal index lookup
     i = 0
     self[i]
   end
