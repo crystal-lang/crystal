@@ -2,6 +2,7 @@ require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
+require "spec/helpers/iterate"
 
 private def to_s_with_io(num)
   String.build { |io| num.to_s(io) }

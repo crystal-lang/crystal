@@ -1,5 +1,6 @@
 require "spec"
 require "bit_array"
+require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
   ba = BitArray.new(size)

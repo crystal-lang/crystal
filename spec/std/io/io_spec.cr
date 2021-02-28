@@ -1,5 +1,6 @@
 require "../spec_helper"
 require "../../support/channel"
+require "spec/helpers/iterate"
 
 {% unless flag?(:win32) %}
   require "socket"

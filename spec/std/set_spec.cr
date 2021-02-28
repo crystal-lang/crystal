@@ -1,5 +1,6 @@
 require "spec"
 require "set"
+require "spec/helpers/iterate"
 
 describe "Set" do
   describe "an empty set" do

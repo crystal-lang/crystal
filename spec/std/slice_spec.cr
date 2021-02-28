@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class BadSortingClass
   include Comparable(self)

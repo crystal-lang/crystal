@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/iterate"
 
 describe "String" do
   describe "[]" do

@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 

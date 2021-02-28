@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 describe "StaticArray" do
   it "creates with new" do

@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class TupleSpecObj
   getter x : Int32
