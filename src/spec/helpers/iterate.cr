@@ -17,6 +17,8 @@ module Spec::Methods
   # of an infinite iteration.
   #
   # ```cr
+  # require "spec/helpers/iterate"
+  #
   # it_iterates "Array#each", [1, 2, 3], (1..3).each
   # it_iterates "infinite #cycle", [1, 2, 3, 1, 2, 3, 1], (1..3).cycle, infinite: true
   # ```
@@ -27,6 +29,8 @@ module Spec::Methods
   # using a splat.
   #
   # ```cr
+  # require "spec/helpers/iterate"
+  #
   # it_iterates "Array#each_with_index", [{1, 0}, {2, 1}, {3, 2}], (1..3).each_with_index, tuple: true
   # ```
   macro it_iterates(description, expected, method, *, infinite = false, tuple = false)

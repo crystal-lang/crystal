@@ -1,4 +1,6 @@
 require "./spec_helper"
+require "spec/helper/iterate"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
