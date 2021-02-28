@@ -130,14 +130,14 @@ struct Float32
   # Smallest representable positive value
   MIN_POSITIVE = 1.17549435e-38_f32
 
-  # Returns a `Float32` by invoking `to_f32` on *value*, including any provided *kwargs*.
+  # Returns a `Float32` by invoking `String#to_f32` on *value*.
   #
   # ```
   # Float32.new "20"                        # => 20.0
   # Float32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float32:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_f32 **kargs
+  def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
+    value.to_f32 whitespace, strict
   end
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
@@ -237,14 +237,14 @@ struct Float64
   # Smallest representable positive value
   MIN_POSITIVE = 2.2250738585072014e-308_f64
 
-  # Returns a `Float64` by invoking `to_f64` on *value*, including any provided *kwargs*.
+  # Returns a `Float64` by invoking `String#to_f64` on *value*.
   #
   # ```
   # Float64.new "20"                        # => 20.0
   # Float64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float64:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_f64 **kargs
+  def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
+    value.to_f64 whitespace, strict
   end
 
   # Returns a `Float64` by invoking `to_f64` on *value*.

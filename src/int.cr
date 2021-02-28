@@ -767,14 +767,15 @@ struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
-  # Returns an `Int8` by invoking `to_i8` on *value*, including any provided *kwargs*.
+  # Returns an `Int8` by invoking `to_i8` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # Int8.new "20"                        # => 20
   # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_i8 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i8 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `Int8` by invoking `to_i8` on *value*.
@@ -817,14 +818,15 @@ struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
 
-  # Returns an `Int16` by invoking `to_i16` on *value*, including any provided *kwargs*.
+  # Returns an `Int16` by invoking `to_i16` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # Int16.new "20"                        # => 20
   # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_i16 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i16 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `Int16` by invoking `to_i16` on *value*.
@@ -867,14 +869,15 @@ struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
-  # Returns an `Int32` by invoking `to_i32` on *value*, including any provided *kwargs*.
+  # Returns an `Int32` by invoking `to_i32` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # Int32.new "20"                        # => 20
   # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_i32 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i32 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `Int32` by invoking `to_i32` on *value*.
@@ -917,14 +920,15 @@ struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
 
-  # Returns an `Int64` by invoking `to_i64` on *value*, including any provided *kwargs*.
+  # Returns an `Int64` by invoking `to_i64` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # Int64.new "20"                        # => 20
   # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_i64 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i64 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `Int64` by invoking `to_i64` on *value*.
@@ -968,14 +972,15 @@ struct Int128
   MIN = new(1) << 127
   MAX = ~MIN
 
-  # Returns an `Int128` by invoking `to_i128` on *value*, including any provided *kwargs*.
+  # Returns an `Int128` by invoking `to_i128` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # Int128.new "20"                        # => 20
   # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_i128 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i128 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `Int128` by invoking `to_i128` on *value*.
@@ -1019,14 +1024,15 @@ struct UInt8
   MIN =   0_u8
   MAX = 255_u8
 
-  # Returns an `UInt8` by invoking `to_u8` on *value*, including any provided *kwargs*.
+  # Returns an `UInt8` by invoking `to_u8` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # UInt8.new "20"                        # => 20
   # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_u8 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u8 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `UInt8` by invoking `to_u8` on *value*.
@@ -1073,14 +1079,15 @@ struct UInt16
   MIN =     0_u16
   MAX = 65535_u16
 
-  # Returns an `UInt16` by invoking `to_u16` on *value*, including any provided *kwargs*.
+  # Returns an `UInt16` by invoking `to_u16` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # UInt16.new "20"                        # => 20
   # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_u16 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u16 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `UInt16` by invoking `to_u16` on *value*.
@@ -1127,14 +1134,15 @@ struct UInt32
   MIN =          0_u32
   MAX = 4294967295_u32
 
-  # Returns an `UInt32` by invoking `to_u32` on *value*, including any provided *kwargs*.
+  # Returns an `UInt32` by invoking `to_u32` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # UInt32.new "20"                        # => 20
   # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_u32 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u32 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `UInt32` by invoking `to_u32` on *value*.
@@ -1181,14 +1189,15 @@ struct UInt64
   MIN =                    0_u64
   MAX = 18446744073709551615_u64
 
-  # Returns an `UInt64` by invoking `to_u64` on *value*, including any provided *kwargs*.
+  # Returns an `UInt64` by invoking `to_u64` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # UInt64.new "20"                        # => 20
   # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_u64 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u64 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `UInt64` by invoking `to_u64` on *value*.
@@ -1236,14 +1245,15 @@ struct UInt128
   MIN = new 0
   MAX = ~MIN
 
-  # Returns an `UInt128` by invoking `to_u128` on *value*, including any provided *kwargs*.
+  # Returns an `UInt128` by invoking `to_u128` on *value*.
+  # See `String#to_i` for more details.
   #
   # ```
   # UInt128.new "20"                        # => 20
   # UInt128.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt128:   20 (ArgumentError)
   # ```
-  def self.new(value : String, **kargs) : self
-    value.to_u128 **kargs
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u128 base, whitespace, underscore, prefix, strict, leading_zero_is_octal
   end
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
