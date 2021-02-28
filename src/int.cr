@@ -241,6 +241,10 @@ struct Int
     self >= 0 ? self : -self
   end
 
+  def round(mode : RoundingMode) : self
+    self
+  end
+
   def ceil
     self
   end
@@ -249,11 +253,17 @@ struct Int
     self
   end
 
-  def round
+  def trunc
     self
   end
 
-  def trunc
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
     self
   end
 
