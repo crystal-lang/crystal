@@ -51,9 +51,9 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
       end
 
-      it "parses key%3Dvalue=value" do
+      it "only decodes values" do
         cookie = parse_first_cookie("key%3Dvalue=value")
-        cookie.name.should eq("key=value")
+        cookie.name.should eq("key%3Dvalue")
         cookie.value.should eq("value")
         cookie.to_set_cookie_header.should eq("key%3Dvalue=value; path=/")
       end
@@ -304,9 +304,9 @@ module HTTP
       it "use encode_www_form to write the cookie's value" do
         headers = Headers.new
         cookies = Cookies.new
-        cookies << Cookie.new("a[0]", "b+c")
+        cookies << Cookie.new("a", "b+c")
         cookies.add_request_headers(headers)
-        headers["Cookie"].should eq "a%5B0%5D=b%2Bc"
+        headers["Cookie"].should eq "a=b%2Bc"
       end
 
       it "merges multiple cookies into one Cookie header" do
@@ -366,12 +366,12 @@ module HTTP
         headers.get("Set-Cookie").includes?("c=d; path=/").should be_true
       end
 
-      it "uses encode_www_form on Set-Cookie" do
+      it "uses encode_www_form on Set-Cookie value" do
         headers = Headers.new
         cookies = Cookies.new
-        cookies << Cookie.new("a[0]", "b+c")
+        cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a%5B0%5D=b%2Bc; path=/").should be_true
+        headers.get("Set-Cookie").includes?("a=b%2Bc; path=/").should be_true
       end
 
       describe "when no cookies are set" do

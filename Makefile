@@ -55,7 +55,7 @@ ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
 endif
 
 ifeq (${LLVM_CONFIG},)
-  $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
+  $(error Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt))
 else
   $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
 endif

@@ -312,6 +312,65 @@ describe "Restrictions" do
           )) { tuple_of([int32, bool]) }
       end
     end
+
+    describe "NamedTuple vs NamedTuple" do
+      it "inserts more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "keeps more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "doesn't mix incompatible NamedTuples (#10238)" do
+        assert_type(%(
+          def foo(a : NamedTuple(a: Int32))
+            1
+          end
+
+          def foo(a : NamedTuple(b: Int32))
+            true
+          end
+
+          {
+            foo({a: 1}),
+            foo({b: 1})
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
   end
 
   it "self always matches instance type in restriction" do

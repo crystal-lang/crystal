@@ -41,7 +41,7 @@ describe SemanticVersion do
     end
 
     versions.each_cons(2) do |pair|
-      pair[0].should eq(pair[1])
+      (pair[0] <=> pair[1]).should eq 0
     end
   end
 
