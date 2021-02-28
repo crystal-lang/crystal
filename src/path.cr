@@ -298,7 +298,7 @@ struct Path
   # ```
   # Path["/foo/bar/file.cr"].basename # => "file.cr"
   # Path["/foo/bar/"].basename        # => "bar"
-  # Path["/foo/bar/."].basename       # => "bar"
+  # Path["/foo/bar/."].basename       # => "."
   # Path["/"].basename                # => "/"
   # Path[""].basename                 # => ""
   # ```
