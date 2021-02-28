@@ -3,7 +3,7 @@ require "./spec_helper"
   require "big"
 {% end %}
 
-private module StructSpec
+module StructSpec
   struct TestClass
     @x : Int32
     @y : String
@@ -39,6 +39,11 @@ private module StructSpec
   end
 
   struct BarStruct < GeneralStruct
+  end
+
+  struct GenericStruct(T)
+    def initialize(@value : T)
+    end
   end
 end
 
@@ -90,5 +95,12 @@ describe "Struct" do
     set = Set{foo, bar}
     set.includes?(foo).should be_true
     set.includes?(bar).should be_true
+  end
+
+  describe "#==" do
+    it "equality for generic types" do
+      StructSpec::GenericStruct.new(1).should eq StructSpec::GenericStruct.new(1.0)
+      StructSpec::GenericStruct.new(1).should_not eq StructSpec::GenericStruct.new("1")
+    end
   end
 end
