@@ -3,13 +3,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void __crystal_sigfault_handler(int sig, void *addr);
+void __crystal_segfault_handler(int sig, void *addr);
 
-void sigfault_handler(int sig, siginfo_t *info, void *data) {
-  __crystal_sigfault_handler(sig, info->si_addr);
+void segfault_handler(int sig, siginfo_t *info, void *data) {
+  __crystal_segfault_handler(sig, info->si_addr);
 }
 
-void setup_sigfault_handler() {
+void setup_segfault_handler() {
   stack_t altstack;
   struct sigaction action;
 
@@ -20,7 +20,7 @@ void setup_sigfault_handler() {
 
   sigemptyset(&action.sa_mask);
   action.sa_flags = SA_ONSTACK | SA_SIGINFO;
-  action.sa_sigaction = &sigfault_handler;
+  action.sa_sigaction = &segfault_handler;
 
   sigaction(SIGSEGV, &action, NULL);
   sigaction(SIGBUS, &action, NULL);

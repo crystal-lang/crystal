@@ -322,7 +322,7 @@ module Crystal::SignalChildHandler
 end
 
 # :nodoc:
-fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
+fun __crystal_segfault_handler(sig : LibC::Int, addr : Void*)
   # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
 
   # Determine if the SEGV was inside or 'near' the top of the stack
