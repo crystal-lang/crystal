@@ -77,7 +77,12 @@ module Spec::Methods
     %iter = {{ method.id }}
     ({{ expected }}).size.times do
       %v = %iter.next
-      break if %v.is_a?(Iterator::Stop)
+      if %v.is_a?(Iterator::Stop)
+        # Compare the actual value directly. Since there are less
+        # then expected values, the expectation will fail and raise.
+        %ary.should eq({{ expected }})
+        raise "unreachable"
+      end
       %ary << %v
     end
     unless {{ infinite }}
