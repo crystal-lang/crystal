@@ -1219,7 +1219,7 @@ class Hash(K, V)
   def delete_if
     keys_to_delete = [] of K
     each do |key, value|
-      keys_to_delete << key if yield(key, value)
+      keys_to_delete << key if yield({key, value})
     end
     keys_to_delete.each do |key|
       delete(key)
@@ -1385,10 +1385,10 @@ class Hash(K, V)
     hash
   end
 
-  def merge(other : Hash(L, W), &block : L, V, W -> V | W) forall L, W
+  def merge(other : Hash(L, W), &block : {L, V, W} -> V | W) forall L, W
     hash = Hash(K | L, V | W).new
     hash.merge! self
-    hash.merge!(other) { |k, v1, v2| yield k, v1, v2 }
+    hash.merge!(other) { |k, v1, v2| yield({k, v1, v2}) }
     hash
   end
 
@@ -1419,7 +1419,7 @@ class Hash(K, V)
   def merge!(other : Hash, &block) : self
     other.each do |k, v|
       if self.has_key?(k)
-        self[k] = yield k, self[k], v
+        self[k] = yield({k, self[k], v})
       else
         self[k] = v
       end
@@ -1433,13 +1433,13 @@ class Hash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> _)
-    reject { |k, v| !yield(k, v) }
+  def select(&block : {K, V} -> _)
+    reject { |k, v| !yield({k, v}) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
-  def select!(&block : K, V -> _)
-    reject! { |k, v| !yield(k, v) }
+  def select!(&block : {K, V} -> _)
+    reject! { |k, v| !yield({k, v}) }
   end
 
   # Returns a new hash consisting of entries for which the block returns `false`.
@@ -1448,16 +1448,16 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> _)
+  def reject(&block : {K, V} -> _)
     each_with_object({} of K => V) do |(k, v), memo|
-      memo[k] = v unless yield k, v
+      memo[k] = v unless yield({k, v})
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(&block : K, V -> _)
+  def reject!(&block : {K, V} -> _)
     each do |key, value|
-      delete(key) if yield(key, value)
+      delete(key) if yield({key, value})
     end
     self
   end
