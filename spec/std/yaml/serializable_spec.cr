@@ -351,6 +351,10 @@ enum YAMLVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum YAMLVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class YAMLVariableDiscriminatorValueType
   include YAML::Serializable
 
@@ -359,6 +363,7 @@ class YAMLVariableDiscriminatorValueType
     "1"                                   => YAMLVariableDiscriminatorString,
     true                                  => YAMLVariableDiscriminatorBool,
     YAMLVariableDiscriminatorEnumFoo::Foo => YAMLVariableDiscriminatorEnum,
+    YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
   }
 end
 
@@ -372,6 +377,9 @@ class YAMLVariableDiscriminatorBool < YAMLVariableDiscriminatorValueType
 end
 
 class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
 describe "YAML::Serializable" do
@@ -931,6 +939,9 @@ describe "YAML::Serializable" do
 
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 4}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
   end
 
