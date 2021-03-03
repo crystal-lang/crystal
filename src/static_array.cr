@@ -62,7 +62,7 @@ struct StaticArray(T, N)
   # ```
   # StaticArray(Int32, 3).new { |i| i * 2 } # => StaticArray[0, 2, 4]
   # ```
-  def self.new(&block : Int32 -> T)
+  def self.new(& : Int32 -> T)
     array = uninitialized self
     N.times do |i|
       array.to_unsafe[i] = yield i
@@ -145,7 +145,7 @@ struct StaticArray(T, N)
   # array                                           # => StaticArray[1, 4, 3]
   # array.update(5) { |x| x * 2 }                   # raises IndexError
   # ```
-  def update(index : Int)
+  def update(index : Int, & : T -> T)
     index = check_index_out_of_bounds index
     to_unsafe[index] = yield to_unsafe[index]
   end
@@ -227,7 +227,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.map! { |x| x*x } # => StaticArray[1, 4, 9]
   # ```
-  def map!
+  def map!(& : T -> T) : self
     to_unsafe.map!(size) { |e| yield e }
     self
   end
@@ -238,7 +238,7 @@ struct StaticArray(T, N)
   # array = StaticArray[1, 2.5, "a"]
   # array.map &.to_s # => StaticArray["1", "2.5", "a"]
   # ```
-  def map(&block : T -> U) forall U
+  def map(&block : T -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i] }
   end
 
@@ -246,7 +246,7 @@ struct StaticArray(T, N)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+  def map_with_index!(offset = 0, &block : (T, Int32) -> T) : self
     to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
   end
@@ -255,7 +255,7 @@ struct StaticArray(T, N)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, &block : (T, Int32) -> U) : StaticArray(U, N) forall U
     StaticArray(U, N).new { |i| yield to_unsafe[i], offset + i }
   end
 

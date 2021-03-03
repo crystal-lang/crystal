@@ -376,7 +376,7 @@ struct Pointer(T)
   # ptr.map!(4) { |value| value * 2 }
   # ptr # [2, 4, 6, 8]
   # ```
-  def map!(count : Int)
+  def map!(count : Int, & : T -> T)
     count.times do |i|
       self[i] = yield self[i]
     end
@@ -473,7 +473,7 @@ struct Pointer(T)
   # ptr[2] # => 12
   # ptr[3] # => 13
   # ```
-  def self.malloc(size : Int, &block : Int32 -> T)
+  def self.malloc(size : Int, & : Int32 -> T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr

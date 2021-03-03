@@ -147,7 +147,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
-  def bsearch(&block : T -> Bool)
+  def bsearch(& : T -> Bool)
     bsearch_index { |value| yield value }.try { |index| unsafe_fetch(index) }
   end
 
@@ -166,7 +166,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(&block : T, Int32 -> Bool)
+  def bsearch_index(& : T, Int32 -> Bool)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 
@@ -183,7 +183,7 @@ module Indexable(T)
   # ```text
   # a -- b -- c --
   # ```
-  def each
+  def each(& : T ->)
     each_index do |i|
       yield unsafe_fetch(i)
     end
@@ -223,7 +223,7 @@ module Indexable(T)
   # ```text
   # b -- c -- d --
   # ```
-  def each(*, start : Int, count : Int)
+  def each(*, start : Int, count : Int, & : T ->)
     each_index(start: start, count: count) do |i|
       yield unsafe_fetch(i)
     end
@@ -244,7 +244,7 @@ module Indexable(T)
   # ```text
   # b -- c -- d --
   # ```
-  def each(*, within range : Range)
+  def each(*, within range : Range, & : T ->)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     each(start: start, count: count) { |element| yield element }
   end
@@ -262,7 +262,7 @@ module Indexable(T)
   # ```text
   # 0 -- 1 -- 2 --
   # ```
-  def each_index : Nil
+  def each_index(& : Int32 ->) : Nil
     i = 0
     while i < size
       yield i
@@ -405,7 +405,7 @@ module Indexable(T)
   end
 
   # Optimized version of `equals?` used when `other` is also an `Indexable`.
-  def equals?(other : Indexable)
+  def equals?(other : Indexable(U), & : T, U ->) : Bool forall U
     return false if size != other.size
     each_with_index do |item, i|
       return false unless yield(item, other.unsafe_fetch(i))
@@ -465,7 +465,7 @@ module Indexable(T)
   # ```
   # [1, 2, 3, 1, 2, 3].index(offset: 2) { |x| x < 2 } # => 3
   # ```
-  def index(offset : Int = 0)
+  def index(offset : Int = 0, & : T ->)
     offset += size if offset < 0
     return nil if offset < 0
 
@@ -508,7 +508,7 @@ module Indexable(T)
   end
 
   # Same as `#each`, but works in reverse.
-  def reverse_each(&block) : Nil
+  def reverse_each(& : T ->) : Nil
     (size - 1).downto(0) do |i|
       yield unsafe_fetch(i)
     end
@@ -544,7 +544,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex { |x| x < 3 }            # => 3
   # [1, 2, 3, 2, 3].rindex(offset: 2) { |x| x < 3 } # => 1
   # ```
-  def rindex(offset = size - 1)
+  def rindex(offset = size - 1, & : T ->)
     offset += size if offset < 0
     return nil if offset >= size
 
