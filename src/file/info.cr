@@ -3,6 +3,7 @@ class File
   # Not all flags will be supported on all platforms.
   @[Flags]
   enum Flags : UInt8
+    None     = 0
     SetUser
     SetGroup
     Sticky

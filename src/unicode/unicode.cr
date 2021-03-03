@@ -3,6 +3,8 @@ module Unicode
   # Case options to pass to various `Char` and `String` methods such as `upcase` or `downcase`.
   @[Flags]
   enum CaseOptions
+    None = 0
+
     # Only transform ASCII characters.
     ASCII
 
