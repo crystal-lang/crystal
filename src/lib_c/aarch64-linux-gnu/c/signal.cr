@@ -45,7 +45,7 @@ lib LibC
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
   struct SigsetT
-    val : ULong[32] # (1024 / (8 * sizeof(long)))
+    val : ULong[16] # (1024 / (8 * sizeof(ULong)))
   end
 
   SA_ONSTACK = 0x08000000
