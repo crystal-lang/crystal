@@ -35,8 +35,8 @@ lib LibC
   SIGWINCH  = 28
 
   MAX_PAGE_SHIFT = 12_u32
-  MINSIGSTKSZ    = 3_u64 << MAX_PAGE_SHIFT
-  SIGSTKSZ       = MINSIGSTKSZ + (1_u64 << MAX_PAGE_SHIFT) * 4
+  MINSIGSTKSZ    = 3_u64 << LibC::MAX_PAGE_SHIFT
+  SIGSTKSZ       = LibC::MINSIGSTKSZ + (1_u64 << LibC::MAX_PAGE_SHIFT) * 4
 
   SIG_SETMASK = 3
 
@@ -53,7 +53,7 @@ lib LibC
     si_signo : Int
     si_code : Int
     si_errno : Int
-    si_addr : Char*
+    si_addr : Void*
     _pad : StaticArray(UInt8, 108)
   end
 
