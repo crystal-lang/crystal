@@ -173,7 +173,9 @@ class Crystal::CodeGenVisitor
             end
           else
             global.initializer = llvm_type(const.value.type).null
-            store @last, global
+            unless const.value.type.nil_type? || const.value.type.void?
+              store @last, global
+            end
           end
 
           ret

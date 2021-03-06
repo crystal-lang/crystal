@@ -533,4 +533,16 @@ describe "Codegen: const" do
       a &+ Foo.x
       )).to_i.should eq(6)
   end
+
+  it "supports storing function returning nil" do
+    run(%(
+      def foo
+        "foo"
+        nil
+      end
+
+      CONST = foo
+      CONST
+      )).to_i.should eq(0)
+  end
 end
