@@ -566,6 +566,6 @@ describe "Codegen: const" do
 
       CONST = foo
       CONST
-      )).to_i.should eq(0)
+      ))
   end
 end
