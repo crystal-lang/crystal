@@ -565,7 +565,7 @@ describe "Codegen: const" do
       end
 
       CONST = foo
-      CONST
-      ))
+      CONST.nil?
+      )).to_b.should eq(true)
   end
 end
