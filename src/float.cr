@@ -156,7 +156,7 @@ struct Float32
   def round_even : self
     # LLVM 11 introduced llvm.roundeven.* intrinsics which may replace rint in
     # the future.
-    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 %}
+    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 && !flag?(:darwin) %}
       LibM.roundeven_f32(self)
     {% else %}
       LibM.rint_f32(self)
@@ -257,7 +257,7 @@ struct Float64
   def round_even : self
     # LLVM 11 introduced llvm.roundeven.* intrinsics which may replace rint in
     # the future.
-    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 %}
+    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 && !flag?(:darwin) %}
       LibM.roundeven_f64(self)
     {% else %}
       LibM.rint_f64(self)
