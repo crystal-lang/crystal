@@ -185,8 +185,8 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yields each element of the set, and returns `self`.
-  def each
+  # Yields each element of the set, and returns `nil`.
+  def each : Nil
     @hash.each_key do |key|
       yield key
     end
