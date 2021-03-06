@@ -124,9 +124,33 @@ enum Signal : Int32
   end
 
   @@setup_default_handlers = Atomic::Flag.new
-  @@setup_sigfault_handler = Atomic::Flag.new
-  @@sigfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
-    __crystal_sigfault_handler(sig, info.value.si_addr)
+  @@setup_segfault_handler = Atomic::Flag.new
+  @@segfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
+    # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
+
+    # Determine if the SEGV was inside or 'near' the top of the stack
+    # to check for potential stack overflow. 'Near' is a small
+    # amount larger than a typical stack frame, 4096 bytes here.
+    addr = info.value.si_addr
+
+    is_stack_overflow =
+      begin
+        stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
+        stack_bottom = Fiber.current.@stack_bottom
+        stack_top <= addr < stack_bottom
+      rescue e
+        Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+        false
+      end
+
+    if is_stack_overflow
+      Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
+    else
+      Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+    end
+
+    Exception::CallStack.print_backtrace
+    LibC._exit(sig)
   }
 
   # :nodoc:
@@ -139,25 +163,22 @@ enum Signal : Int32
   end
 
   # :nodoc:
-  def self.setup_sigfault_handler
-    return unless @@setup_sigfault_handler.test_and_set
+  def self.setup_segfault_handler
+    return unless @@setup_segfault_handler.test_and_set
 
     altstack = LibC::StackT.new
-    action = LibC::Sigaction.new
-
     altstack.ss_sp = LibC.malloc(STKSZ)
     altstack.ss_size = STKSZ
     altstack.ss_flags = 0
-    LibC.sigaltstack(pointerof(altstack), Pointer(LibC::StackT).null)
+    LibC.sigaltstack(pointerof(altstack), nil)
 
-    sa_mask = uninitialized LibC::SigsetT
-    LibC.sigemptyset(pointerof(sa_mask))
-    action.sa_mask = sa_mask
+    action = LibC::Sigaction.new
     action.sa_flags = LibC::SA_ONSTACK | LibC::SA_SIGINFO
-    action.sa_sigaction = @@sigfault_handler
+    action.sa_sigaction = @@segfault_handler
+    LibC.sigemptyset(pointerof(action.@sa_mask))
 
-    LibC.sigaction(SEGV, pointerof(action), Pointer(LibC::Sigaction).null)
-    LibC.sigaction(BUS, pointerof(action), Pointer(LibC::Sigaction).null)
+    LibC.sigaction(SEGV, pointerof(action), nil)
+    LibC.sigaction(BUS, pointerof(action), nil)
   end
 end
 
@@ -346,31 +367,4 @@ module Crystal::SignalChildHandler
     @@waiting.each_value(&.close)
     @@waiting.clear
   end
-end
-
-# :nodoc:
-fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
-  # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
-
-  # Determine if the SEGV was inside or 'near' the top of the stack
-  # to check for potential stack overflow. 'Near' is a small
-  # amount larger than a typical stack frame, 4096 bytes here.
-  is_stack_overflow =
-    begin
-      stack_top = Pointer(Void).new(Fiber.current.@stack.address - 4096)
-      stack_bottom = Fiber.current.@stack_bottom
-      stack_top <= addr < stack_bottom
-    rescue e
-      Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
-      false
-    end
-
-  if is_stack_overflow
-    Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
-  else
-    Crystal::System.print_error "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
-  end
-
-  Exception::CallStack.print_backtrace
-  LibC._exit(sig)
 end
