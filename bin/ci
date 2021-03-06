@@ -138,6 +138,9 @@ prepare_build() {
   on_osx brew update --preinstall
   on_osx brew bundle --no-lock
 
+  # initialize nix environment
+  on_nix_shell nix-shell
+
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm
   #
