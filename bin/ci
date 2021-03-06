@@ -138,6 +138,11 @@ prepare_build() {
   on_osx brew update --preinstall
   on_osx brew bundle --no-lock
 
+  # Install a recent bash version for nix-shell.
+  # macos ships with an ancient one.
+  if [ `uname` = "Darwin" ]; then
+    on_nix_shell "brew install bash"
+  fi
   # initialize nix environment
   on_nix_shell nix-shell
 
