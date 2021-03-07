@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Forum
+    url: https://forum.crystal-lang.org
+    about: Please ask and answer questions here.
+  - name: Gitter
+    url: https://gitter.im/crystal-lang/crystal
+    about: Please ask and answer questions here.
+  - name: IRC
+    url: http://webchat.freenode.net/?channels=#crystal-lang
+    about: Please ask and answer questions here.
+  - name: Stack Overflow
+    url: http://stackoverflow.com/questions/tagged/crystal-lang
+    about: Please ask and answer questions here.
