@@ -36,7 +36,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set(Int32).new
-      set.add(1).should eq(set)
+      set.add(1).should be(set)
     end
   end
 
@@ -129,7 +129,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set{1, 4, 8}
-      set.concat([1, 9, 10]).should eq(Set{1, 4, 8, 9, 10})
+      set.concat([1, 9, 10]).should be(set)
     end
   end
 
