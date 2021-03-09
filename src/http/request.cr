@@ -259,15 +259,6 @@ class HTTP::Request
     value
   end
 
-  # Returns request host from headers.
-  @[Deprecated("Use `#hostname` instead.")]
-  def host
-    host = @headers["Host"]?
-    return unless host
-    index = host.index(":")
-    index ? host[0...index] : host
-  end
-
   # Extracts the hostname from `Host` header.
   #
   # Returns `nil` if the `Host` header is missing.
