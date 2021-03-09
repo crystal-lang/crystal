@@ -74,12 +74,6 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo\\bar"
         end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo bar"
-        end
-        expect_raises IO::Error, "Invalid cookie value" do
-          cookie.value = "foo,bar"
-        end
       end
     end
 
@@ -99,6 +93,19 @@ module HTTP
       end
 
       it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=; path=/" }
+
+      # The "special" cookies have values containing commas or spaces which
+      # are disallowed by RFC 6265 but are common in the wild.
+      it "quotes value" do
+        HTTP::Cookie.new("x", "a z").to_set_cookie_header.should eq %(x="a z"; path=/)
+        HTTP::Cookie.new("x", " z").to_set_cookie_header.should eq %(x=" z"; path=/)
+        HTTP::Cookie.new("x", "a ").to_set_cookie_header.should eq %(x="a "; path=/)
+        HTTP::Cookie.new("x", " ").to_set_cookie_header.should eq %(x=" "; path=/)
+        HTTP::Cookie.new("x", "a,z").to_set_cookie_header.should eq %(x="a,z"; path=/)
+        HTTP::Cookie.new("x", ",z").to_set_cookie_header.should eq %(x=",z"; path=/)
+        HTTP::Cookie.new("x", "a,").to_set_cookie_header.should eq %(x="a,"; path=/)
+        HTTP::Cookie.new("x", ",").to_set_cookie_header.should eq %(x=","; path=/)
+      end
     end
   end
 
@@ -145,6 +152,25 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key%3Dvalue=value; path=/")
       end
 
+      it "parses quoted value" do
+        cookie = parse_first_cookie %(x="a z")
+        cookie.should eq HTTP::Cookie.new("x", "a z")
+        cookie = parse_first_cookie %(x=" z")
+        cookie.should eq HTTP::Cookie.new("x", " z")
+        cookie = parse_first_cookie %(x="a ")
+        cookie.should eq HTTP::Cookie.new("x", "a ")
+        cookie = parse_first_cookie %(x=" ")
+        cookie.should eq HTTP::Cookie.new("x", " ")
+        cookie = parse_first_cookie %(x="a,z")
+        cookie.should eq HTTP::Cookie.new("x", "a,z")
+        cookie = parse_first_cookie %(x=",z")
+        cookie.should eq HTTP::Cookie.new("x", ",z")
+        cookie = parse_first_cookie %(x="a,")
+        cookie.should eq HTTP::Cookie.new("x", "a,")
+        cookie = parse_first_cookie %(x=",")
+        cookie.should eq HTTP::Cookie.new("x", ",")
+      end
+
       it "parses multiple cookies" do
         cookies = Cookie::Parser.parse_cookies("foo=bar; foobar=baz")
         cookies.size.should eq(2)
@@ -179,6 +205,25 @@ module HTTP
         cookie.value.should eq("value")
         cookie.http_only.should be_true
         cookie.to_set_cookie_header.should eq("key=value; path=/; HttpOnly")
+      end
+
+      it "parses quoted value" do
+        cookie = parse_set_cookie %(x="a z")
+        cookie.should eq HTTP::Cookie.new("x", "a z")
+        cookie = parse_set_cookie %(x=" z")
+        cookie.should eq HTTP::Cookie.new("x", " z")
+        cookie = parse_set_cookie %(x="a ")
+        cookie.should eq HTTP::Cookie.new("x", "a ")
+        cookie = parse_set_cookie %(x=" ")
+        cookie.should eq HTTP::Cookie.new("x", " ")
+        cookie = parse_set_cookie %(x="a,z")
+        cookie.should eq HTTP::Cookie.new("x", "a,z")
+        cookie = parse_set_cookie %(x=",z")
+        cookie.should eq HTTP::Cookie.new("x", ",z")
+        cookie = parse_set_cookie %(x="a,")
+        cookie.should eq HTTP::Cookie.new("x", "a,")
+        cookie = parse_set_cookie %(x=",")
+        cookie.should eq HTTP::Cookie.new("x", ",")
       end
 
       describe "SameSite" do
