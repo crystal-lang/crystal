@@ -297,8 +297,15 @@ module HTTP
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
     def add_request_headers(headers)
-      headers.delete("Cookie")
-      headers.add("Cookie", map(&.to_cookie_header).join("; ")) unless empty?
+      if empty?
+        headers.delete("Cookie")
+      else
+        capacity = sum { |cookie| cookie.name.bytesize + cookie.value.bytesize + 1 }
+        capacity += (size - 1) * 2
+        headers["Cookie"] = String.build(capacity) do |io|
+          join(io, "; ", &.to_cookie_header(io))
+        end
+      end
 
       headers
     end
