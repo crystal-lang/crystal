@@ -25,7 +25,7 @@ module HTTP
     property samesite : SameSite?
     property extension : String?
 
-    def_equals_and_hash name, value, path, expires, domain, secure, http_only
+    def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
     def initialize(@name : String, value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,

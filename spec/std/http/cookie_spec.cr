@@ -15,6 +15,22 @@ private def parse_set_cookie(header)
 end
 
 module HTTP
+  describe Cookie do
+    it "#==" do
+      cookie = Cookie.new("a", "b", path: "/path", expires: Time.utc, domain: "domain", secure: true, http_only: true, samesite: :strict, extension: "foo=bar")
+      cookie.should eq(cookie.dup)
+      cookie.should_not eq(cookie.dup.tap { |c| c.name = "c" })
+      cookie.should_not eq(cookie.dup.tap { |c| c.value = "c" })
+      cookie.should_not eq(cookie.dup.tap { |c| c.path = "/c" })
+      cookie.should_not eq(cookie.dup.tap { |c| c.domain = "c" })
+      cookie.should_not eq(cookie.dup.tap { |c| c.expires = Time.utc(2021, 1, 1) })
+      cookie.should_not eq(cookie.dup.tap { |c| c.secure = false })
+      cookie.should_not eq(cookie.dup.tap { |c| c.http_only = false })
+      cookie.should_not eq(cookie.dup.tap { |c| c.samesite = :lax })
+      cookie.should_not eq(cookie.dup.tap { |c| c.extension = nil })
+    end
+  end
+
   describe Cookie::Parser do
     describe "parse_cookies" do
       it "parses key=value" do
