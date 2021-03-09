@@ -15,8 +15,8 @@ module HTTP
       Lax
     end
 
-    property name : String
-    property value : String
+    getter name : String
+    getter value : String
     property path : String
     property expires : Time?
     property domain : String?
@@ -27,12 +27,55 @@ module HTTP
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name : String, value : String, @path : String = "/",
+    # Creates a new `Cookie` instance.
+    #
+    # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def initialize(name : String, value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
+      validate_name(name)
       @name = name
+      validate_value(value)
       @value = value
+    end
+
+    # Sets the name of this cookie.
+    #
+    # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def name=(name : String)
+      validate_name(name)
+      @name = name
+    end
+
+    private def validate_name(name)
+      raise IO::Error.new("Invalid cookie name") if name.empty?
+      name.each_byte do |byte|
+        # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
+        # and https://tools.ietf.org/html/rfc2616#section-2.2
+        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUWVXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
+        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
+          raise IO::Error.new("Invalid cookie name")
+        end
+      end
+    end
+
+    # Sets the value of this cookie.
+    #
+    # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def value=(value : String)
+      validate_value(value)
+      @value = value
+    end
+
+    private def validate_value(value)
+      value.each_byte do |byte|
+        # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
+        # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
+        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x2c && byte != 0x3b && byte != 0x5c
+          raise IO::Error.new("Invalid cookie value")
+        end
+      end
     end
 
     def to_set_cookie_header
@@ -61,7 +104,7 @@ module HTTP
     def to_cookie_header(io)
       io << @name
       io << '='
-      URI.encode_www_form(value, io)
+      io << @value
     end
 
     def expired?
@@ -109,7 +152,7 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], URI.decode_www_form(pair["value"]))
+          yield Cookie.new(pair["name"], pair["value"])
         end
       end
 
@@ -130,7 +173,7 @@ module HTTP
                   end
 
         Cookie.new(
-          URI.decode_www_form(match["name"]), URI.decode_www_form(match["value"]),
+          match["name"], match["value"],
           path: match["path"]? || "/",
           expires: expires,
           domain: match["domain"]?,

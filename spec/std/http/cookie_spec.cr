@@ -15,6 +15,93 @@ private def parse_set_cookie(header)
 end
 
 module HTTP
+  describe Cookie do
+    describe ".new" do
+      it "raises on invalid name" do
+        expect_raises IO::Error, "Invalid cookie name" do
+          HTTP::Cookie.new("", "")
+        end
+        expect_raises IO::Error, "Invalid cookie name" do
+          HTTP::Cookie.new("\t", "")
+        end
+        # more extensive specs on #name=
+      end
+
+      it "raises on invalid value" do
+        expect_raises IO::Error, "Invalid cookie value" do
+          HTTP::Cookie.new("x", %(foo\rbar))
+        end
+        # more extensive specs on #value=
+      end
+    end
+
+    describe "#name=" do
+      it "raises on invalid name" do
+        cookie = HTTP::Cookie.new("x", "")
+        expect_raises IO::Error, "Invalid cookie name" do
+          cookie.name = ""
+        end
+        expect_raises IO::Error, "Invalid cookie name" do
+          cookie.name = "\t"
+        end
+        expect_raises IO::Error, "Invalid cookie name" do
+          cookie.name = "\r"
+        end
+        expect_raises IO::Error, "Invalid cookie name" do
+          cookie.name = "a\nb"
+        end
+        expect_raises IO::Error, "Invalid cookie name" do
+          cookie.name = "a\rb"
+        end
+      end
+    end
+
+    describe "#value=" do
+      it "raises on invalid value" do
+        cookie = HTTP::Cookie.new("x", "")
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = %(foo\rbar)
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = %(foo"bar)
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = "foo;bar"
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = "foo\\bar"
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = "foo\\bar"
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = "foo bar"
+        end
+        expect_raises IO::Error, "Invalid cookie value" do
+          cookie.value = "foo,bar"
+        end
+      end
+    end
+
+    describe "#to_set_cookie_header" do
+      it { HTTP::Cookie.new("x", "v$1").to_set_cookie_header.should eq "x=v$1; path=/" }
+
+      it { HTTP::Cookie.new("x", "seven", domain: "127.0.0.1").to_set_cookie_header.should eq "x=seven; domain=127.0.0.1; path=/" }
+
+      it { HTTP::Cookie.new("x", "expiring", expires: Time.unix(1257894000)).to_set_cookie_header.should eq "x=expiring; path=/; expires=Tue, 10 Nov 2009 23:00:00 GMT" }
+      it { HTTP::Cookie.new("x", "expiring-1601", expires: Time.utc(1601, 1, 1, 1, 1, 1, nanosecond: 1)).to_set_cookie_header.should eq "x=expiring-1601; path=/; expires=Mon, 01 Jan 1601 01:01:01 GMT" }
+
+      it "samesite" do
+        HTTP::Cookie.new("x", "samesite-default", samesite: nil).to_set_cookie_header.should eq "x=samesite-default; path=/"
+        HTTP::Cookie.new("x", "samesite-lax", samesite: :lax).to_set_cookie_header.should eq "x=samesite-lax; path=/; SameSite=Lax"
+        HTTP::Cookie.new("x", "samesite-strict", samesite: :strict).to_set_cookie_header.should eq "x=samesite-strict; path=/; SameSite=Strict"
+        HTTP::Cookie.new("x", "samesite-none", samesite: :none).to_set_cookie_header.should eq "x=samesite-none; path=/; SameSite=None"
+      end
+
+      it { HTTP::Cookie.new("empty-value", "").to_set_cookie_header.should eq "empty-value=; path=/" }
+    end
+  end
+
   describe Cookie::Parser do
     describe "parse_cookies" do
       it "parses key=value" do
@@ -41,17 +128,17 @@ module HTTP
         cookie = parse_first_cookie("key=key=value")
         cookie.name.should eq("key")
         cookie.value.should eq("key=value")
-        cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
+        cookie.to_set_cookie_header.should eq("key=key=value; path=/")
       end
 
       it "parses key=key%3Dvalue" do
         cookie = parse_first_cookie("key=key%3Dvalue")
         cookie.name.should eq("key")
-        cookie.value.should eq("key=value")
+        cookie.value.should eq("key%3Dvalue")
         cookie.to_set_cookie_header.should eq("key=key%3Dvalue; path=/")
       end
 
-      it "only decodes values" do
+      it "parses special character in name" do
         cookie = parse_first_cookie("key%3Dvalue=value")
         cookie.name.should eq("key%3Dvalue")
         cookie.value.should eq("value")
@@ -248,15 +335,6 @@ module HTTP
       cookies.has_key?("a").should be_true
     end
 
-    it "allows adding and retrieving cookies with reserved chars" do
-      cookies = Cookies.new
-      cookies << Cookie.new("a[0]", "b+c%20")
-      cookies["d"] = "e+f"
-
-      cookies["a[0]"].value.should eq "b+c%20"
-      cookies["d"].value.should eq "e+f"
-    end
-
     it "allows retrieving the size of the cookies collection" do
       cookies = Cookies.new
       cookies.size.should eq 0
@@ -306,7 +384,7 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_request_headers(headers)
-        headers["Cookie"].should eq "a=b%2Bc"
+        headers["Cookie"].should eq "a=b+c"
       end
 
       it "merges multiple cookies into one Cookie header" do
@@ -371,7 +449,7 @@ module HTTP
         cookies = Cookies.new
         cookies << Cookie.new("a", "b+c")
         cookies.add_response_headers(headers)
-        headers.get("Set-Cookie").includes?("a=b%2Bc; path=/").should be_true
+        headers.get("Set-Cookie").includes?("a=b+c; path=/").should be_true
       end
 
       describe "when no cookies are set" do
