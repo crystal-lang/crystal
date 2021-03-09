@@ -234,6 +234,28 @@ module HTTP
   end
 
   describe Cookies do
+    describe ".from_client_headers" do
+      it "parses Cookie header" do
+        cookies = Cookies.from_client_headers Headers{"Cookie" => "a=b"}
+        cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+      it "does not accept Set-Cookie header" do
+        cookies = Cookies.from_client_headers Headers{"Cookie" => "a=b", "Set-Cookie" => "x=y"}
+        cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+    end
+
+    describe ".from_server_headers" do
+      it "parses Set-Cookie header" do
+        cookies = Cookies.from_server_headers Headers{"Set-Cookie" => "a=b; path=/foo"}
+        cookies.to_h.should eq({"a" => Cookie.new("a", "b", path: "/foo")})
+      end
+      it "does not accept Cookie header" do
+        cookies = Cookies.from_server_headers Headers{"Set-Cookie" => "a=b", "Cookie" => "x=y"}
+        cookies.to_h.should eq({"a" => Cookie.new("a", "b")})
+      end
+    end
+
     it "allows adding cookies and retrieving" do
       cookies = Cookies.new
       cookies << Cookie.new("a", "b")
