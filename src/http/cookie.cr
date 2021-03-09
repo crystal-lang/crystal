@@ -272,8 +272,8 @@ module HTTP
     end
 
     # Yields each `HTTP::Cookie` in the collection.
-    def each(&block : Cookie ->)
-      @cookies.values.each do |cookie|
+    def each(& : Cookie ->)
+      @cookies.each_value do |cookie|
         yield cookie
       end
     end
