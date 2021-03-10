@@ -27,8 +27,6 @@ docs: $(SRC_SOURCES) lib
 
 lib: shard.lock
 	$(SHARDS) install
-	# Touch is necessary because `shards install` always touches shard.lock
-	touch lib
 
 shard.lock: shard.yml
 	$(SHARDS) update
