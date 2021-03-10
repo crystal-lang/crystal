@@ -851,9 +851,7 @@ module Crystal
       when "values"
         interpret_check_args { ArrayLiteral.map entries, &.value }
       when "each"
-        interpret_check_args do
-          raise "each expects a block" unless block
-
+        interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
@@ -866,8 +864,7 @@ module Crystal
           NilLiteral.new
         end
       when "map"
-        interpret_check_args do
-          raise "map expects a block" unless block
+        interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
@@ -950,9 +947,7 @@ module Crystal
       when "values"
         interpret_check_args { ArrayLiteral.map entries, &.value }
       when "each"
-        interpret_check_args do
-          raise "each expects a block" unless block
-
+        interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
@@ -965,9 +960,7 @@ module Crystal
           NilLiteral.new
         end
       when "map"
-        interpret_check_args do
-          raise "map expects a block" unless block
-
+        interpret_check_args(uses_block: true) do
           block_arg_key = block.args[0]?
           block_arg_value = block.args[1]?
 
@@ -1066,39 +1059,39 @@ module Crystal
       when "excludes_end?"
         interpret_check_args { BoolLiteral.new(self.exclusive?) }
       when "each"
-        raise "each expects a block" unless block
+        interpret_check_args(uses_block: true) do
+          block_arg = block.args.first?
 
-        block_arg = block.args.first?
+          interpret_to_range(interpreter).each do |num|
+            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.accept block.body
+          end
 
-        interpret_to_range(interpreter).each do |num|
-          interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
-          interpreter.accept block.body
+          NilLiteral.new
         end
-
-        NilLiteral.new
       when "map"
-        raise "map expects a block" unless block
+        interpret_check_args(uses_block: true) do
+          block_arg = block.args.first?
 
-        block_arg = block.args.first?
-
-        interpret_map(method, args, interpreter) do |num|
-          interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
-          interpreter.accept block.body
+          interpret_map(interpreter) do |num|
+            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.accept block.body
+          end
         end
       when "to_a"
-        interpret_map(method, args, interpreter) do |num|
-          NumberLiteral.new(num)
+        interpret_check_args do
+          interpret_map(interpreter) do |num|
+            NumberLiteral.new(num)
+          end
         end
       else
         super
       end
     end
 
-    def interpret_map(method, args, interpreter)
-      interpret_argless_method(method, args) do
-        ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
-          yield num
-        end
+    def interpret_map(interpreter)
+      ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
+        yield num
       end
     end
 
@@ -1169,11 +1162,11 @@ module Crystal
           BoolLiteral.new(!!default_value)
         end
       when "annotation"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           annotations = self.var.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1364,11 +1357,11 @@ module Crystal
           visibility_to_symbol(@visibility)
         end
       when "annotation"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           annotations = self.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1603,11 +1596,11 @@ module Crystal
           TypeNode.has_method?(type, value)
         end
       when "annotation"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args) do |type|
+        fetch_annotation(self, method, args, block) do |type|
           annotations = self.type.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -2213,9 +2206,7 @@ end
 private def interpret_array_or_tuple_method(object, klass, method, args, block, interpreter)
   case method
   when "any?"
-    interpret_check_args(node: object) do
-      raise "any? expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
       Crystal::BoolLiteral.new(object.elements.any? do |elem|
@@ -2224,9 +2215,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       end)
     end
   when "all?"
-    interpret_check_args(node: object) do
-      raise "all? expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
       Crystal::BoolLiteral.new(object.elements.all? do |elem|
@@ -2255,9 +2244,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   when "empty?"
     interpret_check_args(node: object) { Crystal::BoolLiteral.new(object.elements.empty?) }
   when "find"
-    interpret_check_args(node: object) do
-      raise "find expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
       found = object.elements.find do |elem|
@@ -2281,9 +2268,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   when "size"
     interpret_check_args(node: object) { Crystal::NumberLiteral.new(object.elements.size) }
   when "each"
-    interpret_check_args(node: object) do
-      raise "each expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
       object.elements.each do |elem|
@@ -2294,9 +2279,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       Crystal::NilLiteral.new
     end
   when "each_with_index"
-    interpret_check_args(node: object) do
-      raise "each_with_index expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
 
@@ -2309,9 +2292,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       Crystal::NilLiteral.new
     end
   when "map"
-    interpret_check_args(node: object) do
-      raise "map expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args.first?
 
       klass.map(object.elements) do |elem|
@@ -2320,9 +2301,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       end
     end
   when "map_with_index"
-    interpret_check_args(node: object) do
-      raise "map_with_index expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       block_arg = block.args[0]?
       index_arg = block.args[1]?
 
@@ -2333,13 +2312,11 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       end
     end
   when "select"
-    interpret_check_args(node: object) do
-      raise "select expects a block" unless block
+    interpret_check_args(node: object, uses_block: true) do
       filter(object, klass, block, interpreter)
     end
   when "reject"
-    interpret_check_args(node: object) do
-      raise "reject expects a block" unless block
+    interpret_check_args(node: object, uses_block: true) do
       filter(object, klass, block, interpreter, keep: false)
     end
   when "reduce"
@@ -2371,9 +2348,7 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   when "sort"
     klass.new(object.elements.sort { |x, y| x.interpret_compare(y) })
   when "sort_by"
-    interpret_check_args(node: object) do
-      raise "sort_by expects a block" unless block
-
+    interpret_check_args(node: object, uses_block: true) do
       sort_by(object, klass, block, interpreter)
     end
   when "uniq"
@@ -2464,7 +2439,13 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   end
 end
 
-private macro interpret_check_args(*, node = self, &block)
+private macro interpret_check_args(*, node = self, uses_block = false, &block)
+  {% if uses_block %}
+    {{ node }}.raise "'#{ {{ node }}.class_desc }##{method}' is expected to be invoked with a block, but no block was given" unless block
+  {% else %}
+    {{ node }}.raise "'#{ {{ node }}.class_desc }##{method}' is not expected to be invoked with a block, but a block was given" if block
+  {% end %}
+
   unless args.size == {{ block.args.size }}
     {{ node }}.wrong_number_of_arguments method, args.size, {{ block.args.size }}
   end
@@ -2513,7 +2494,7 @@ private def filter(object, klass, block, interpreter, keep = true)
   end)
 end
 
-private def fetch_annotation(node, method, args)
+private def fetch_annotation(node, method, args, block)
   interpret_check_args(node: node) do |arg|
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
