@@ -46,7 +46,7 @@ class Sanitize::Policy::Whitelist < Sanitize::Policy
   def transform_tag(name : String, attributes : Hash(String, String)) : String | CONTINUE | STOP
     acceptable_attributes = accepted_attributes.fetch(name) { return CONTINUE }
 
-    attributes.delete_if { |attr, _| !acceptable_attributes.includes?(attr) && !global_attributes.includes?(attr) }
+    attributes.reject! { |attr, _| !acceptable_attributes.includes?(attr) && !global_attributes.includes?(attr) }
 
     transform_attributes(name, attributes)
   end
