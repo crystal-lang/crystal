@@ -17,7 +17,7 @@ module HTTP
 
     getter name : String
     getter value : String
-    property path : String
+    property path : String?
     property expires : Time?
     property domain : String?
     property secure : Bool
@@ -30,7 +30,7 @@ module HTTP
     # Creates a new `Cookie` instance.
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    def initialize(name : String, value : String, @path : String = "/",
+    def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
@@ -174,7 +174,7 @@ module HTTP
 
         Cookie.new(
           match["name"], match["value"],
-          path: match["path"]? || "/",
+          path: match["path"]?,
           expires: expires,
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
