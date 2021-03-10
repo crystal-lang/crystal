@@ -58,7 +58,7 @@ class HTTP::Request
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
   def cookies
-    @cookies ||= Cookies.from_headers(headers)
+    @cookies ||= Cookies.from_client_headers(headers)
   end
 
   # Returns a convenience wrapper around querying and setting query params,

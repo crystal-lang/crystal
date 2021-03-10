@@ -202,19 +202,46 @@ module HTTP
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
+    @[Deprecated("Use `.from_client_headers` or `.from_server_headers` instead.")]
     def self.from_headers(headers) : self
       new.tap { |cookies| cookies.fill_from_headers(headers) }
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
+    @[Deprecated("Use `#fill_from_client_headers` or `#fill_from_server_headers` instead.")]
     def fill_from_headers(headers)
+      fill_from_client_headers(headers)
+      fill_from_server_headers(headers)
+      self
+    end
+
+    # Creates a new instance by parsing the `Cookie` headers in the given `HTTP::Headers`.
+    #
+    # See `HTTP::Client::Response#cookies`.
+    def self.from_client_headers(headers) : self
+      new.tap { |cookies| cookies.fill_from_client_headers(headers) }
+    end
+
+    # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
+    def fill_from_client_headers(headers)
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
         end
       end
+      self
+    end
 
+    # Creates a new instance by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
+    #
+    # See `HTTP::Request#cookies`.
+    def self.from_server_headers(headers) : self
+      new.tap { |cookies| cookies.fill_from_server_headers(headers) }
+    end
+
+    # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
+    def fill_from_server_headers(headers)
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
