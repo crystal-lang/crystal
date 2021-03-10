@@ -4079,19 +4079,6 @@ class String
     just len, char, -1
   end
 
-  # Adds spaces to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, io)
-  # io.to_s # => "Purple  "
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, io : IO) : Nil
-    ljust(io, len)
-  end
-
   # Adds instances of *char* to right of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
@@ -4105,19 +4092,6 @@ class String
     (len - size).times { io << char }
   end
 
-  # Adds instances of *char* to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, '-', io)
-  # io.to_s # => "Purple--"
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, char : Char, io : IO) : Nil
-    ljust(io, len, char)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
@@ -4127,19 +4101,6 @@ class String
   # ```
   def rjust(len : Int, char : Char = ' ')
     just len, char, 1
-  end
-
-  # Adds spaces to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, io)
-  # io.to_s # => "  Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, io : IO) : Nil
-    rjust(io, len)
   end
 
   # Adds instances of *char* to left of the string until it is at least size of *len*,
@@ -4155,19 +4116,6 @@ class String
     io << self
   end
 
-  # Adds instances of *char* to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
-  # io.to_s # => "--Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, char : Char, io : IO) : Nil
-    rjust(io, len, char)
-  end
-
   # Adds instances of *char* to left and right of the string until it is at least size of *len*.
   #
   # ```
@@ -4178,19 +4126,6 @@ class String
   # ```
   def center(len : Int, char : Char = ' ')
     just len, char, 0
-  end
-
-  # Adds spaces to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, io)
-  # io.to_s # => " Purple  "
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, io : IO) : Nil
-    center(io, len)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*,
@@ -4215,19 +4150,6 @@ class String
     left_padding.times { io << char }
     io << self
     right_padding.times { io << char }
-  end
-
-  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
-  # io.to_s # => "-Purple--"
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, char : Char, io : IO) : Nil
-    center(io, len, char)
   end
 
   private def just(len, char, justify)

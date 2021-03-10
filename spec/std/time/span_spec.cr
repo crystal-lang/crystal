@@ -173,9 +173,8 @@ describe Time::Span do
     1_000_000.5.days.to_s.should eq("1000000.12:00:00")
   end
 
-  it "test negate and duration" do
+  it "test negate and abs" do
     (-Time::Span.new(nanoseconds: 1234500)).to_s.should eq("-00:00:00.001234500")
-    Time::Span.new(nanoseconds: -1234500).duration.to_s.should eq("00:00:00.001234500")
     Time::Span.new(nanoseconds: -1234500).abs.to_s.should eq("00:00:00.001234500")
     (-Time::Span.new(nanoseconds: 7700)).to_s.should eq("-00:00:00.000007700")
     (+Time::Span.new(nanoseconds: 7700)).to_s.should eq("00:00:00.000007700")
