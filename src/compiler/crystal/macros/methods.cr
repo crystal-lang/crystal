@@ -53,6 +53,8 @@ module Crystal
         interpret_debug(node)
       when "env"
         interpret_env(node)
+      when "exists?"
+        interpret_exists(node)
       when "flag?", "host_flag?"
         interpret_flag?(node)
       when "puts"
@@ -225,6 +227,17 @@ module Crystal
 
     def interpret_raise(node)
       macro_raise(node, node.args, self)
+    end
+
+    def interpret_exists(node)
+      unless node.args.size == 1
+        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
+      end
+
+      node.args[0].accept self
+      filename = @last.to_macro_id
+
+      @last = BoolLiteral.new(File.exists?(filename))
     end
 
     def interpret_read_file(node, nilable = false)
