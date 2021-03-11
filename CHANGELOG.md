@@ -37,7 +37,7 @@
 
 ### Serialization
 
-- **(breaking-change)** Serialize `Enum` to underscored `String` by default. ([#10431](https://github.com/crystal-lang/crystal/pull/10431), thanks @straight-shoota)
+- **(breaking-change)** Serialize `Enum` to underscored `String` by default. ([#10431](https://github.com/crystal-lang/crystal/pull/10431), thanks @straight-shoota, @caspiano)
 - **(breaking-change)** Use class instead of struct for types in XML module. ([#10436](https://github.com/crystal-lang/crystal/pull/10436), thanks @hugopl)
 - Add `YAML::Nodes::Node#kind`. ([#10432](https://github.com/crystal-lang/crystal/pull/10432), thanks @straight-shoota)
 
