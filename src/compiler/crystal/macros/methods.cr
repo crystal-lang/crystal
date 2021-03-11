@@ -431,15 +431,15 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when ">"
-        bool_bin_op(method, args, block) { |me, other| me > other }
+        bool_bin_op(method, args, named_args, block) { |me, other| me > other }
       when ">="
-        bool_bin_op(method, args, block) { |me, other| me >= other }
+        bool_bin_op(method, args, named_args, block) { |me, other| me >= other }
       when "<"
-        bool_bin_op(method, args, block) { |me, other| me < other }
+        bool_bin_op(method, args, named_args, block) { |me, other| me < other }
       when "<="
-        bool_bin_op(method, args, block) { |me, other| me <= other }
+        bool_bin_op(method, args, named_args, block) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args, block) do |me, other|
+        num_bin_op(method, args, named_args, block) do |me, other|
           (me <=> other) || (return NilLiteral.new)
         end
       when "+"
@@ -463,25 +463,25 @@ module Crystal
           end
         end
       when "*"
-        num_bin_op(method, args, block) { |me, other| me * other }
+        num_bin_op(method, args, named_args, block) { |me, other| me * other }
       when "/"
-        num_bin_op(method, args, block) { |me, other| me / other }
+        num_bin_op(method, args, named_args, block) { |me, other| me / other }
       when "//"
-        num_bin_op(method, args, block) { |me, other| me // other }
+        num_bin_op(method, args, named_args, block) { |me, other| me // other }
       when "**"
-        num_bin_op(method, args, block) { |me, other| me ** other }
+        num_bin_op(method, args, named_args, block) { |me, other| me ** other }
       when "%"
-        int_bin_op(method, args, block) { |me, other| me % other }
+        int_bin_op(method, args, named_args, block) { |me, other| me % other }
       when "&"
-        int_bin_op(method, args, block) { |me, other| me & other }
+        int_bin_op(method, args, named_args, block) { |me, other| me & other }
       when "|"
-        int_bin_op(method, args, block) { |me, other| me | other }
+        int_bin_op(method, args, named_args, block) { |me, other| me | other }
       when "^"
-        int_bin_op(method, args, block) { |me, other| me ^ other }
+        int_bin_op(method, args, named_args, block) { |me, other| me ^ other }
       when "<<"
-        int_bin_op(method, args, block) { |me, other| me << other }
+        int_bin_op(method, args, named_args, block) { |me, other| me << other }
       when ">>"
-        int_bin_op(method, args, block) { |me, other| me >> other }
+        int_bin_op(method, args, named_args, block) { |me, other| me >> other }
       when "~"
         interpret_check_args do
           num = to_number
@@ -499,21 +499,21 @@ module Crystal
       to_number <=> other.to_number
     end
 
-    def bool_bin_op(method, args, block)
+    def bool_bin_op(method, args, named_args, block)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         BoolLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def num_bin_op(method, args, block)
+    def num_bin_op(method, args, named_args, block)
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
         NumberLiteral.new(yield to_number, other.to_number)
       end
     end
 
-    def int_bin_op(method, args, block)
+    def int_bin_op(method, args, named_args, block)
       if @kind == :f32 || @kind == :f64
         raise "undefined method '#{method}' for float literal: #{self}"
       end
@@ -635,7 +635,7 @@ module Crystal
           StringLiteral.new(@value + piece)
         end
       when "camelcase"
-        interpret_check_args do
+        interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)
                     lower_arg
                   else
@@ -807,7 +807,7 @@ module Crystal
           self
         end
       else
-        value = interpret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
+        value = interpret_array_or_tuple_method(self, ArrayLiteral, method, args, named_args, block, interpreter)
         value || super
       end
     end
@@ -1018,7 +1018,7 @@ module Crystal
 
   class TupleLiteral
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
-      value = interpret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
+      value = interpret_array_or_tuple_method(self, TupleLiteral, method, args, named_args, block, interpreter)
       value || super
     end
   end
@@ -1136,11 +1136,11 @@ module Crystal
           BoolLiteral.new(!!default_value)
         end
       when "annotation"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           self.var.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           annotations = self.var.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1331,11 +1331,11 @@ module Crystal
           visibility_to_symbol(@visibility)
         end
       when "annotation"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           self.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           annotations = self.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -1523,7 +1523,7 @@ module Crystal
       when "union_types"
         interpret_check_args { TypeNode.union_types(self) }
       when "name"
-        interpret_check_args do
+        interpret_check_args(named_params: ["generic_args"]) do
           generic_args = if named_args && (generic_arg = named_args["generic_args"]?)
                            generic_arg
                          else
@@ -1570,11 +1570,11 @@ module Crystal
           TypeNode.has_method?(type, value)
         end
       when "annotation"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           self.type.annotation(type)
         end
       when "annotations"
-        fetch_annotation(self, method, args, block) do |type|
+        fetch_annotation(self, method, args, named_args, block) do |type|
           annotations = self.type.annotations(type)
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
@@ -2177,7 +2177,7 @@ private def get_named_annotation_args(object)
   end
 end
 
-private def interpret_array_or_tuple_method(object, klass, method, args, block, interpreter)
+private def interpret_array_or_tuple_method(object, klass, method, args, named_args, block, interpreter)
   case method
   when "any?"
     interpret_check_args(node: object, uses_block: true) do
@@ -2402,7 +2402,23 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   end
 end
 
-private macro interpret_check_args(*, node = self, min_count = nil, uses_block = false, top_level = false, &block)
+# Checks the following in an invocation of a macro `foo`:
+#
+# * The number of macro arguments to `foo` matches the number of block
+#   parameters to this macro. If `min_count` is given then only that many macro
+#   parameters are required, others are optional and this macro's corresponding
+#   block parameter will receive `nil` instead.
+# * If `named_params` is true, any named arguments to `foo` are allowed. If it
+#   is falsey (the default), no named arguments are allowed. Otherwise, only
+#   named arguments included by `named_params` are allowed. The block parameters
+#   of this macro are unaffected by named arguments.
+# * There is a block supplied to `foo` if and only if `uses_block` is true.
+#
+# `top_level` affects how error messages are formatted.
+#
+# Accesses the `method`, `args`, `named_args`, and `block` variables in the
+# current scope.
+private macro interpret_check_args(*, node = self, min_count = nil, named_params = nil, uses_block = false, top_level = false, &block)
   {% if uses_block %}
     unless block
       %full_name = full_macro_name({{ node }}, method, {{ top_level }})
@@ -2412,6 +2428,20 @@ private macro interpret_check_args(*, node = self, min_count = nil, uses_block =
     if block
       %full_name = full_macro_name({{ node }}, method, {{ top_level }})
       {{ node }}.raise "#{%full_name} is not expected to be invoked with a block, but a block was given"
+    end
+  {% end %}
+
+  {% if !named_params %}
+    if named_args && !named_args.empty?
+      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
+      {{ node }}.raise "named arguments are not allowed here"
+    end
+  {% elsif named_params != true %}
+    if named_args
+      allowed_keys = {{ named_params }}
+      named_args.each_key do |name|
+        {{ node }}.raise "no named parameter '#{name}'" unless allowed_keys.includes?(name)
+      end
     end
   {% end %}
 
@@ -2441,6 +2471,7 @@ end
 private macro interpret_check_args_toplevel(*, min_count = nil, uses_block = false, &block)
   method = node.name
   args = node.args
+  named_args = node.named_args
   block = node.block
   interpret_check_args(node: node, min_count: {{ min_count }}, uses_block: {{ uses_block }}, top_level: true) {{ block }}
 end
@@ -2490,7 +2521,7 @@ private def filter(object, klass, block, interpreter, keep = true)
   end)
 end
 
-private def fetch_annotation(node, method, args, block)
+private def fetch_annotation(node, method, args, named_args, block)
   interpret_check_args(node: node) do |arg|
     unless arg.is_a?(Crystal::TypeNode)
       args[0].raise "argument to '#{node.class_desc}#annotation' must be a TypeNode, not #{arg.class_desc}"
