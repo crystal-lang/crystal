@@ -371,30 +371,9 @@ module Crystal
           BoolLiteral.new(self != arg)
         end
       when "!"
-        BoolLiteral.new(!truthy?)
+        interpret_check_args { BoolLiteral.new(!truthy?) }
       else
         raise "undefined macro method '#{class_desc}##{method}'", exception_type: Crystal::UndefinedMacroMethodError
-      end
-    end
-
-    def interpret_argless_method(method, args)
-      interpret_check_args_size method, args, 0
-      yield
-    end
-
-    def interpret_one_arg_method(method, args)
-      interpret_check_args_size method, args, 1
-      yield args.first
-    end
-
-    def interpret_two_args_method(method, args)
-      interpret_check_args_size method, args, 2
-      yield args[0], args[1]
-    end
-
-    def interpret_check_args_size(method, args, size)
-      unless args.size == size
-        wrong_number_of_arguments method, args.size, size
       end
     end
 
@@ -489,7 +468,7 @@ module Crystal
           NumberLiteral.new(~num)
         end
       when "kind"
-        SymbolLiteral.new(kind.to_s)
+        interpret_check_args { SymbolLiteral.new(kind.to_s) }
       else
         super
       end
@@ -556,15 +535,17 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "==", "!="
-        case arg = args.first?
-        when MacroId
-          if method == "=="
-            return BoolLiteral.new(@value == arg.value)
+        interpret_check_args do |arg|
+          case arg
+          when MacroId
+            if method == "=="
+              BoolLiteral.new(@value == arg.value)
+            else
+              BoolLiteral.new(@value != arg.value)
+            end
           else
-            return BoolLiteral.new(@value != arg.value)
+            super
           end
-        else
-          return super
         end
       when "[]"
         interpret_check_args do |arg|
@@ -1453,15 +1434,17 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "==", "!="
-        case arg = args.first?
-        when StringLiteral, SymbolLiteral
-          if method == "=="
-            BoolLiteral.new(@value == arg.value)
+        interpret_check_args do |arg|
+          case arg
+          when StringLiteral, SymbolLiteral
+            if method == "=="
+              BoolLiteral.new(@value == arg.value)
+            else
+              BoolLiteral.new(@value != arg.value)
+            end
           else
-            BoolLiteral.new(@value != arg.value)
+            super
           end
-        else
-          super
         end
       when "stringify", "class_name", "symbolize"
         super
@@ -1483,15 +1466,17 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when "==", "!="
-        case arg = args.first?
-        when MacroId
-          if method == "=="
-            BoolLiteral.new(@value == arg.value)
+        interpret_check_args do |arg|
+          case arg
+          when MacroId
+            if method == "=="
+              BoolLiteral.new(@value == arg.value)
+            else
+              BoolLiteral.new(@value != arg.value)
+            end
           else
-            BoolLiteral.new(@value != arg.value)
+            super
           end
-        else
-          super
         end
       when "stringify", "class_name", "symbolize"
         super
@@ -2311,15 +2296,15 @@ private def interpret_array_or_tuple_method(object, klass, method, args, named_a
       end
     end
   when "shuffle"
-    klass.new(object.elements.shuffle)
+    interpret_check_args(node: object) { klass.new(object.elements.shuffle) }
   when "sort"
-    klass.new(object.elements.sort { |x, y| x.interpret_compare(y) })
+    interpret_check_args(node: object) { klass.new(object.elements.sort { |x, y| x.interpret_compare(y) }) }
   when "sort_by"
     interpret_check_args(node: object, uses_block: true) do
       sort_by(object, klass, block, interpreter)
     end
   when "uniq"
-    klass.new(object.elements.uniq)
+    interpret_check_args(node: object) { klass.new(object.elements.uniq) }
   when "[]"
     interpret_check_args(node: object, min_count: 1) do |from, to|
       if to
