@@ -79,31 +79,27 @@ module Crystal
     end
 
     def interpret_compare_versions(node)
-      unless node.args.size == 2
-        node.wrong_number_of_arguments "macro call 'compare_versions'", node.args.size, 2
+      interpret_check_args_toplevel do |first_arg, second_arg|
+        first = accept first_arg
+        first_string = first.to_string("first argument to 'compare_versions'")
+
+        second = accept second_arg
+        second_string = second.to_string("second argument to 'compare_versions'")
+
+        first_version = begin
+          SemanticVersion.parse(first_string)
+        rescue ex
+          first_arg.raise ex.message
+        end
+
+        second_version = begin
+          SemanticVersion.parse(second_string)
+        rescue ex
+          second_arg.raise ex.message
+        end
+
+        @last = NumberLiteral.new(first_version <=> second_version)
       end
-
-      first_arg = node.args[0]
-      first = accept first_arg
-      first_string = first.to_string("first argument to 'compare_versions'")
-
-      second_arg = node.args[1]
-      second = accept second_arg
-      second_string = second.to_string("second argument to 'compare_versions'")
-
-      first_version = begin
-        SemanticVersion.parse(first_string)
-      rescue ex
-        first_arg.raise ex.message
-      end
-
-      second_version = begin
-        SemanticVersion.parse(second_string)
-      rescue ex
-        second_arg.raise ex.message
-      end
-
-      @last = NumberLiteral.new(first_version <=> second_version)
     end
 
     def interpret_debug(node)
@@ -134,19 +130,17 @@ module Crystal
     end
 
     def interpret_env(node)
-      if node.args.size == 1
-        node.args[0].accept self
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
         cmd = @last.to_macro_id
         env_value = ENV[cmd]?
         @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
-      else
-        node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
       end
     end
 
     def interpret_flag?(node)
-      if node.args.size == 1
-        node.args[0].accept self
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
         flag_name = @last.to_macro_id
         flags = case node.name
                 when "flag?"
@@ -157,8 +151,6 @@ module Crystal
                   raise "Bug: unexpected macro method #{node.name}"
                 end
         @last = BoolLiteral.new(flags.includes?(flag_name))
-      else
-        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end
     end
 
@@ -228,24 +220,22 @@ module Crystal
     end
 
     def interpret_read_file(node, nilable = false)
-      unless node.args.size == 1
-        node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
-      end
+      interpret_check_args_toplevel do |arg|
+        arg.accept self
+        filename = @last.to_macro_id
 
-      node.args[0].accept self
-      filename = @last.to_macro_id
-
-      begin
-        @last = StringLiteral.new(File.read(filename))
-      rescue ex
-        node.raise ex.to_s unless nilable
-        @last = NilLiteral.new
+        begin
+          @last = StringLiteral.new(File.read(filename))
+        rescue ex
+          node.raise ex.to_s unless nilable
+          @last = NilLiteral.new
+        end
       end
     end
 
     def interpret_run(node)
       if node.args.size == 0
-        node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
+        node.wrong_number_of_arguments "top-level macro 'run'", 0, "1+"
       end
 
       node.args.first.accept self
@@ -441,62 +431,62 @@ module Crystal
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
       when ">"
-        bool_bin_op(method, args) { |me, other| me > other }
+        bool_bin_op(method, args, block) { |me, other| me > other }
       when ">="
-        bool_bin_op(method, args) { |me, other| me >= other }
+        bool_bin_op(method, args, block) { |me, other| me >= other }
       when "<"
-        bool_bin_op(method, args) { |me, other| me < other }
+        bool_bin_op(method, args, block) { |me, other| me < other }
       when "<="
-        bool_bin_op(method, args) { |me, other| me <= other }
+        bool_bin_op(method, args, block) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args) do |me, other|
+        num_bin_op(method, args, block) do |me, other|
           (me <=> other) || (return NilLiteral.new)
         end
       when "+"
-        if args.empty?
-          self
-        else
-          num_bin_op(method, args) { |me, other| me + other }
+        interpret_check_args(min_count: 0) do |other|
+          if other
+            raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
+            NumberLiteral.new(to_number + other.to_number)
+          else
+            self
+          end
         end
       when "-"
-        if args.empty?
-          num = to_number
-          if num.is_a?(Int::Unsigned)
-            raise "undefined method '-' for unsigned integer literal: #{self}"
+        interpret_check_args(min_count: 0) do |other|
+          if other
+            raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
+            NumberLiteral.new(to_number - other.to_number)
           else
+            num = to_number
+            raise "undefined method '-' for unsigned integer literal: #{self}" if num.is_a?(Int::Unsigned)
             NumberLiteral.new(-num)
           end
-        else
-          num_bin_op(method, args) { |me, other| me - other }
         end
       when "*"
-        num_bin_op(method, args) { |me, other| me * other }
+        num_bin_op(method, args, block) { |me, other| me * other }
       when "/"
-        num_bin_op(method, args) { |me, other| me / other }
+        num_bin_op(method, args, block) { |me, other| me / other }
       when "//"
-        num_bin_op(method, args) { |me, other| me // other }
+        num_bin_op(method, args, block) { |me, other| me // other }
       when "**"
-        num_bin_op(method, args) { |me, other| me ** other }
+        num_bin_op(method, args, block) { |me, other| me ** other }
       when "%"
-        int_bin_op(method, args) { |me, other| me % other }
+        int_bin_op(method, args, block) { |me, other| me % other }
       when "&"
-        int_bin_op(method, args) { |me, other| me & other }
+        int_bin_op(method, args, block) { |me, other| me & other }
       when "|"
-        int_bin_op(method, args) { |me, other| me | other }
+        int_bin_op(method, args, block) { |me, other| me | other }
       when "^"
-        int_bin_op(method, args) { |me, other| me ^ other }
+        int_bin_op(method, args, block) { |me, other| me ^ other }
       when "<<"
-        int_bin_op(method, args) { |me, other| me << other }
+        int_bin_op(method, args, block) { |me, other| me << other }
       when ">>"
-        int_bin_op(method, args) { |me, other| me >> other }
+        int_bin_op(method, args, block) { |me, other| me >> other }
       when "~"
         interpret_check_args do
           num = to_number
-          if num.is_a?(Int)
-            NumberLiteral.new(~num)
-          else
-            raise "undefined method '~' for float literal: #{self}"
-          end
+          raise "undefined method '~' for float literal: #{self}" unless num.is_a?(Int)
+          NumberLiteral.new(~num)
         end
       when "kind"
         SymbolLiteral.new(kind.to_s)
@@ -509,40 +499,33 @@ module Crystal
       to_number <=> other.to_number
     end
 
-    def bool_bin_op(op, args)
-      BoolLiteral.new(bin_op(op, args) { |me, other| yield me, other })
+    def bool_bin_op(method, args, block)
+      interpret_check_args do |other|
+        raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
+        BoolLiteral.new(yield to_number, other.to_number)
+      end
     end
 
-    def num_bin_op(op, args)
-      NumberLiteral.new(bin_op(op, args) { |me, other| yield me, other })
+    def num_bin_op(method, args, block)
+      interpret_check_args do |other|
+        raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
+        NumberLiteral.new(yield to_number, other.to_number)
+      end
     end
 
-    def int_bin_op(op, args)
+    def int_bin_op(method, args, block)
       if @kind == :f32 || @kind == :f64
-        raise "undefined method '#{op}' for float literal: #{self}"
+        raise "undefined method '#{method}' for float literal: #{self}"
       end
 
-      NumberLiteral.new(bin_op(op, args) do |me, other|
-        other_kind = args.first.as(NumberLiteral).kind
-        if other_kind == :f32 || other_kind == :f64
-          raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
+      interpret_check_args do |other|
+        raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
+        if other.kind == :f32 || other.kind == :f64
+          raise "argument to NumberLiteral##{method} can't be float literal: #{self}"
         end
 
-        yield me.to_i, other.to_i
-      end)
-    end
-
-    def bin_op(op, args)
-      if args.size != 1
-        wrong_number_of_arguments "NumberLiteral##{op}", args.size, 1
+        NumberLiteral.new(yield to_number.to_i, other.to_number.to_i)
       end
-
-      other = args.first
-      unless other.is_a?(NumberLiteral)
-        raise "can't #{op} with #{other}"
-      end
-
-      yield(to_number, other.to_number)
     end
 
     def to_number
@@ -718,23 +701,21 @@ module Crystal
       when "lines"
         interpret_check_args { ArrayLiteral.map(@value.lines, Path.global("String")) { |value| StringLiteral.new(value) } }
       when "split"
-        case args.size
-        when 0
-          ArrayLiteral.map(@value.split, Path.global("String")) { |value| StringLiteral.new(value) }
-        when 1
-          first_arg = args.first
-          case first_arg
-          when CharLiteral
-            splitter = first_arg.value
-          when StringLiteral
-            splitter = first_arg.value
-          else
-            splitter = first_arg.to_s
-          end
+        interpret_check_args(min_count: 0) do |arg|
+          if arg
+            case arg
+            when CharLiteral
+              splitter = arg.value
+            when StringLiteral
+              splitter = arg.value
+            else
+              splitter = arg.to_s
+            end
 
-          ArrayLiteral.map(@value.split(splitter), Path.global("String")) { |value| StringLiteral.new(value) }
-        else
-          wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
+            ArrayLiteral.map(@value.split(splitter), Path.global("String")) { |value| StringLiteral.new(value) }
+          else
+            ArrayLiteral.map(@value.split, Path.global("String")) { |value| StringLiteral.new(value) }
+          end
         end
       when "count"
         interpret_check_args do |arg|
@@ -763,16 +744,13 @@ module Crystal
       when "titleize"
         interpret_check_args { StringLiteral.new(@value.titleize) }
       when "to_i"
-        case args.size
-        when 0
-          value = @value.to_i64?
-        when 1
-          arg = args.first
-          raise "argument to StringLiteral#to_i must be a number, not #{arg.class_desc}" unless arg.is_a?(NumberLiteral)
-
-          value = @value.to_i64?(arg.to_number.to_i)
-        else
-          wrong_number_of_arguments "StringLiteral#to_i", args.size, "0..1"
+        value = interpret_check_args(min_count: 0) do |base|
+          if base
+            raise "argument to StringLiteral#to_i must be a number, not #{base.class_desc}" unless base.is_a?(NumberLiteral)
+            @value.to_i64?(base.to_number.to_i)
+          else
+            @value.to_i64?
+          end
         end
 
         if value
@@ -875,22 +853,20 @@ module Crystal
           end
         end
       when "double_splat"
-        case args.size
-        when 0
-          to_double_splat
-        when 1
-          interpret_check_args do |arg|
+        interpret_check_args(min_count: 0) do |arg|
+          if arg
+            unless arg.is_a?(Crystal::StringLiteral)
+              arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+            end
+
             if entries.empty?
               to_double_splat
             else
-              unless arg.is_a?(Crystal::StringLiteral)
-                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
-              end
               to_double_splat(arg.value)
             end
+          else
+            to_double_splat
           end
-        else
-          wrong_number_of_arguments "double_splat", args.size, 0..1
         end
       when "[]"
         interpret_check_args do |key|
@@ -971,22 +947,20 @@ module Crystal
           end
         end
       when "double_splat"
-        case args.size
-        when 0
-          to_double_splat
-        when 1
-          interpret_one_arg_method(method, args) do |arg|
+        interpret_check_args(min_count: 0) do |arg|
+          if arg
+            unless arg.is_a?(Crystal::StringLiteral)
+              arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
+            end
+
             if entries.empty?
               to_double_splat
             else
-              unless arg.is_a?(Crystal::StringLiteral)
-                arg.raise "argument to double_splat must be a StringLiteral, not #{arg.class_desc}"
-              end
               to_double_splat(arg.value)
             end
+          else
+            to_double_splat
           end
-        else
-          wrong_number_of_arguments "double_splat", args.size, 0..1
         end
       when "[]"
         interpret_check_args do |key|
@@ -2224,22 +2198,20 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       end)
     end
   when "splat"
-    case args.size
-    when 0
-      Crystal::MacroId.new(object.elements.join ", ")
-    when 1
-      object.interpret_one_arg_method(method, args) do |arg|
+    interpret_check_args(node: object, min_count: 0) do |arg|
+      if arg
+        unless arg.is_a?(Crystal::StringLiteral)
+          arg.raise "argument to splat must be a StringLiteral, not #{arg.class_desc}"
+        end
+
         if object.elements.empty?
           Crystal::MacroId.new("")
         else
-          unless arg.is_a?(Crystal::StringLiteral)
-            arg.raise "argument to splat must be a StringLiteral, not #{arg.class_desc}"
-          end
           Crystal::MacroId.new((object.elements.join ", ") + arg.value)
         end
+      else
+        Crystal::MacroId.new(object.elements.join ", ")
       end
-    else
-      object.wrong_number_of_arguments "#{klass}#splat", args.size, "0..1"
     end
   when "empty?"
     interpret_check_args(node: object) { Crystal::BoolLiteral.new(object.elements.empty?) }
@@ -2320,28 +2292,23 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
       filter(object, klass, block, interpreter, keep: false)
     end
   when "reduce"
-    raise "reduce expects a block" unless block
-    accumulate_arg = block.args.first?
-    value_arg = block.args[1]?
-    case args.size
-    when 0
-      object.interpret_argless_method(method, args) do
+    interpret_check_args(node: object, min_count: 0, uses_block: true) do |memo|
+      accumulate_arg = block.args.first?
+      value_arg = block.args[1]?
+
+      if memo
+        object.elements.reduce(memo) do |accumulate, elem|
+          interpreter.define_var(accumulate_arg.name, accumulate) if accumulate_arg
+          interpreter.define_var(value_arg.name, elem) if value_arg
+          interpreter.accept block.body
+        end
+      else
         object.elements.reduce do |accumulate, elem|
           interpreter.define_var(accumulate_arg.name, accumulate) if accumulate_arg
           interpreter.define_var(value_arg.name, elem) if value_arg
           interpreter.accept block.body
         end
       end
-    when 1
-      object.interpret_one_arg_method(method, args) do |arg|
-        object.elements.reduce(arg) do |accumulate, elem|
-          interpreter.define_var(accumulate_arg.name, accumulate) if accumulate_arg
-          interpreter.define_var(value_arg.name, elem) if value_arg
-          interpreter.accept block.body
-        end
-      end
-    else
-      raise "only 0 or 1 args expected for reduce, got #{args.size}"
     end
   when "shuffle"
     klass.new(object.elements.shuffle)
@@ -2354,47 +2321,43 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   when "uniq"
     klass.new(object.elements.uniq)
   when "[]"
-    case args.size
-    when 1
-      arg = args.first
-      case arg
-      when Crystal::NumberLiteral
-        index = arg.to_number.to_i
-        value = object.elements[index]? || Crystal::NilLiteral.new
-      when Crystal::RangeLiteral
-        range = arg.interpret_to_range(interpreter)
+    interpret_check_args(node: object, min_count: 1) do |from, to|
+      if to
+        from = interpreter.accept(from)
+        to = interpreter.accept(to)
+
+        unless from.is_a?(Crystal::NumberLiteral)
+          from.raise "expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
+        end
+
+        unless to.is_a?(Crystal::NumberLiteral)
+          to.raise "expected second argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
+        end
+
+        from = from.to_number.to_i
+        to = to.to_number.to_i
+
         begin
-          klass.new(object.elements[range])
+          klass.new(object.elements[from, to])
         rescue ex
           object.raise ex.message
         end
       else
-        arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
+        case arg = from
+        when Crystal::NumberLiteral
+          index = arg.to_number.to_i
+          value = object.elements[index]? || Crystal::NilLiteral.new
+        when Crystal::RangeLiteral
+          range = arg.interpret_to_range(interpreter)
+          begin
+            klass.new(object.elements[range])
+          rescue ex
+            object.raise ex.message
+          end
+        else
+          arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
+        end
       end
-    when 2
-      from, to = args
-
-      from = interpreter.accept(from)
-      to = interpreter.accept(to)
-
-      unless from.is_a?(Crystal::NumberLiteral)
-        from.raise "expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
-      end
-
-      unless to.is_a?(Crystal::NumberLiteral)
-        to.raise "expected second argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
-      end
-
-      from = from.to_number.to_i
-      to = to.to_number.to_i
-
-      begin
-        klass.new(object.elements[from, to])
-      rescue ex
-        object.raise ex.message
-      end
-    else
-      object.wrong_number_of_arguments "#{klass}#[]", args.size, 1
     end
   when "[]="
     interpret_check_args(node: object) do |index_node, value|
@@ -2439,22 +2402,55 @@ private def interpret_array_or_tuple_method(object, klass, method, args, block, 
   end
 end
 
-private macro interpret_check_args(*, node = self, uses_block = false, &block)
+private macro interpret_check_args(*, node = self, min_count = nil, uses_block = false, top_level = false, &block)
   {% if uses_block %}
-    {{ node }}.raise "'#{ {{ node }}.class_desc }##{method}' is expected to be invoked with a block, but no block was given" unless block
+    unless block
+      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
+      {{ node }}.raise "#{%full_name} is expected to be invoked with a block, but no block was given"
+    end
   {% else %}
-    {{ node }}.raise "'#{ {{ node }}.class_desc }##{method}' is not expected to be invoked with a block, but a block was given" if block
+    if block
+      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
+      {{ node }}.raise "#{%full_name} is not expected to be invoked with a block, but a block was given"
+    end
   {% end %}
 
-  unless args.size == {{ block.args.size }}
-    {{ node }}.wrong_number_of_arguments method, args.size, {{ block.args.size }}
-  end
+  {% if min_count %}
+    unless {{ min_count }} <= args.size <= {{ block.args.size }}
+      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
+      {{ node }}.wrong_number_of_arguments %full_name, args.size, {{ min_count }}..{{ block.args.size }}
+    end
 
-  {% for var, i in block.args %}
-    {{ var }} = args[{{ i }}]
+    {% for var, i in block.args %}
+      {{ var }} = args[{{ i }}]{% if i >= min_count %}?{% end %}
+    {% end %}
+  {% else %}
+    unless args.size == {{ block.args.size }}
+      %full_name = full_macro_name({{ node }}, method, {{ top_level }})
+      {{ node }}.wrong_number_of_arguments %full_name, args.size, {{ block.args.size }}
+    end
+
+    {% for var, i in block.args %}
+      {{ var }} = args[{{ i }}]
+    {% end %}
   {% end %}
 
   {{ block.body }}
+end
+
+private macro interpret_check_args_toplevel(*, min_count = nil, uses_block = false, &block)
+  method = node.name
+  args = node.args
+  block = node.block
+  interpret_check_args(node: node, min_count: {{ min_count }}, uses_block: {{ uses_block }}, top_level: true) {{ block }}
+end
+
+private def full_macro_name(node, method, top_level)
+  if top_level
+    "top-level macro '#{method}'"
+  else
+    "macro '#{node.class_desc}##{method}'"
+  end
 end
 
 private def visibility_to_symbol(visibility)
