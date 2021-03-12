@@ -149,9 +149,9 @@ struct Enum
   #   RIGHT
   # end
   #
-  # Sides::LEFT.to_yaml                  # => %(--- ["left"]\n)
-  # (Sides::LEFT | Sides::RIGHT).to_yaml # => %(--- ["left", "right"]\n)
-  # Sides::All.to_yaml                   # => %(--- ["left", "right"]\n)
+  # Sides::LEFT.to_yaml                  # => %(--- [left]\n)
+  # (Sides::LEFT | Sides::RIGHT).to_yaml # => %(--- [left, right]\n)
+  # Sides::All.to_yaml                   # => %(--- [left, right]\n)
   # Sides::None.to_yaml                  # => %(--- []\n)
   # ```
   #
@@ -193,24 +193,13 @@ module Enum::ValueConverter(T)
   # used for serialization.
   #
   # ```
-  # enum Stages
-  #   INITIAL
-  #   SECOND_STAGE
-  # end
+  # Enum::ValueConverter.to_yaml(Stages::INITIAL)      # => %(--- 0\n)
+  # Enum::ValueConverter.to_yaml(Stages::SECOND_STAGE) # => %(--- 1\n)
   #
-  # Enum::ValueConverter.to_yaml(Stages::INITIAL)      # => %(0)
-  # Enum::ValueConverter.to_yaml(Stages::SECOND_STAGE) # => %(1)
-  #
-  # @[Flags]
-  # enum Sides
-  #   LEFT
-  #   RIGHT
-  # end
-  #
-  # Enum::ValueConverter.to_yaml(Sides::LEFT)                # => %(1)
-  # Enum::ValueConverter.to_yaml(Sides::LEFT | Sides::RIGHT) # => %(3)
-  # Enum::ValueConverter.to_yaml(Sides::All)                 # => %(3)
-  # Enum::ValueConverter.to_yaml(Sides::None)                # => %(0)
+  # Enum::ValueConverter.to_yaml(Sides::LEFT)                # => %(--- 1\n)
+  # Enum::ValueConverter.to_yaml(Sides::LEFT | Sides::RIGHT) # => %(--- 3\n)
+  # Enum::ValueConverter.to_yaml(Sides::All)                 # => %(--- 3\n)
+  # Enum::ValueConverter.to_yaml(Sides::None)                # => %(--- 0\n)
   # ```
   #
   # `Enum#to_yaml` offers a different serialization strategy based on the member

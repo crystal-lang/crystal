@@ -188,8 +188,8 @@ struct Enum
   # end
   #
   # Sides::LEFT.to_json                  # => %(["left"])
-  # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left", "right"])
-  # Sides::All.to_json                   # => %(["left", "right"])
+  # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left","right"])
+  # Sides::All.to_json                   # => %(["left","right"])
   # Sides::None.to_json                  # => %([])
   # ```
   #
@@ -227,19 +227,8 @@ module Enum::ValueConverter(T)
   # used for serialization.
   #
   # ```
-  # enum Stages
-  #   INITIAL
-  #   SECOND_STAGE
-  # end
-  #
   # Enum::ValueConverter.to_json(Stages::INITIAL)      # => %(0)
   # Enum::ValueConverter.to_json(Stages::SECOND_STAGE) # => %(1)
-  #
-  # @[Flags]
-  # enum Sides
-  #   LEFT
-  #   RIGHT
-  # end
   #
   # Enum::ValueConverter.to_json(Sides::LEFT)                # => %(1)
   # Enum::ValueConverter.to_json(Sides::LEFT | Sides::RIGHT) # => %(3)

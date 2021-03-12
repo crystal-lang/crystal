@@ -4108,7 +4108,7 @@ class String
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
+  # "Purple".rjust(io, 8, '-')
   # io.to_s # => "--Purple"
   # ```
   def rjust(io : IO, len : Int, char : Char = ' ') : Nil
@@ -4133,7 +4133,7 @@ class String
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
+  # "Purple".center(io, 9, '-')
   # io.to_s # => "-Purple--"
   # ```
   def center(io : IO, len : Int, char : Char = ' ') : Nil
