@@ -638,4 +638,27 @@ describe "Codegen: class var" do
       a &+ Foo.x
       )).to_i.should eq(6)
   end
+
+  it "correctly initializes a class variable of an ancestor if it has another ancestor (#8859)" do
+    run(%(
+      require "prelude"
+
+      class Base
+        @@x = "base"
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Foo < Base
+      end
+
+      class Bar < Foo
+        @@x = "bar"
+      end
+
+      Foo.x
+      )).to_string.should eq("base")
+  end
 end

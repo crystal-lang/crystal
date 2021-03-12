@@ -1000,7 +1000,7 @@ module Crystal
         next unless ancestor.is_a?(ClassVarContainer)
 
         class_var = ancestor.lookup_class_var?(name)
-        if class_var
+        if class_var && class_var.initializer
           var = MetaTypeVar.new(name, class_var.type)
           var.owner = self
           var.thread_local = class_var.thread_local?
