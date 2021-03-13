@@ -227,8 +227,19 @@ module Enum::ValueConverter(T)
   # used for serialization.
   #
   # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
   # Enum::ValueConverter.to_json(Stages::INITIAL)      # => %(0)
   # Enum::ValueConverter.to_json(Stages::SECOND_STAGE) # => %(1)
+  #
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
   #
   # Enum::ValueConverter.to_json(Sides::LEFT)                # => %(1)
   # Enum::ValueConverter.to_json(Sides::LEFT | Sides::RIGHT) # => %(3)
