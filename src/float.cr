@@ -154,13 +154,9 @@ struct Float32
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
   def round_even : self
-    # LLVM 11 introduced llvm.roundeven.* intrinsics which may replace rint in
-    # the future.
-    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 %}
-      LibM.roundeven_f32(self)
-    {% else %}
-      LibM.rint_f32(self)
-    {% end %}
+    # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
+    # rint in the future.
+    LibM.rint_f32(self)
   end
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
@@ -255,13 +251,9 @@ struct Float64
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
   def round_even : self
-    # LLVM 11 introduced llvm.roundeven.* intrinsics which may replace rint in
-    # the future.
-    {% if compare_versions(Crystal::LLVM_VERSION, "11.0.0") >= 0 %}
-      LibM.roundeven_f64(self)
-    {% else %}
-      LibM.rint_f64(self)
-    {% end %}
+    # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
+    # rint in the future.
+    LibM.rint_f64(self)
   end
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,

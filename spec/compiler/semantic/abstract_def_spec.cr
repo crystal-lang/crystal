@@ -94,7 +94,12 @@ describe "Semantic: abstract def" do
 
       Bar.new.foo(1 || 'a')
       ),
-      "no overload matches"
+      <<-MSG
+      Overloads are:
+       - Bar#foo(x : Int32)
+      Couldn't find overloads for these types:
+       - Bar#foo(x : Char)
+      MSG
   end
 
   it "errors if using abstract def on non-abstract class" do

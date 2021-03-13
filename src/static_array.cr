@@ -193,20 +193,6 @@ struct StaticArray(T, N)
     self
   end
 
-  # Fills the array by substituting all elements with the given value.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.[]= 2 # => nil
-  # array       # => StaticArray[2, 2, 2]
-  # ```
-  @[Deprecated("Use `#fill(value : T)` instead")]
-  def []=(value : T)
-    size.times do |i|
-      to_unsafe[i] = value
-    end
-  end
-
   # Modifies `self` by randomizing the order of elements in the array
   # using the given *random* number generator. Returns `self`.
   #
