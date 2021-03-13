@@ -193,8 +193,19 @@ module Enum::ValueConverter(T)
   # used for serialization.
   #
   # ```
+  # enum Stages
+  #   INITIAL
+  #   SECOND_STAGE
+  # end
+  #
   # Enum::ValueConverter.to_yaml(Stages::INITIAL)      # => %(--- 0\n)
   # Enum::ValueConverter.to_yaml(Stages::SECOND_STAGE) # => %(--- 1\n)
+  #
+  # @[Flags]
+  # enum Sides
+  #   LEFT
+  #   RIGHT
+  # end
   #
   # Enum::ValueConverter.to_yaml(Sides::LEFT)                # => %(--- 1\n)
   # Enum::ValueConverter.to_yaml(Sides::LEFT | Sides::RIGHT) # => %(--- 3\n)
