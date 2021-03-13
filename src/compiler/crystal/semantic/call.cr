@@ -1117,7 +1117,7 @@ class Crystal::Call
         when "proc_call"
           owner = owner.as(ProcInstanceType)
           proc_arg_type = owner.arg_types[index]
-          unless type.covariant?(proc_arg_type)
+          unless type.implements?(proc_arg_type)
             self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
           end
         when "pointer_set"
