@@ -284,7 +284,7 @@ class URI
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
   # uri.authority # => "user:pass@example.com:80"
   #
-  # uri = URI.parse(raw_url: "/relative")
+  # uri = URI.parse("/relative")
   # uri.authority # => nil
   # ```
   def authority : String?
