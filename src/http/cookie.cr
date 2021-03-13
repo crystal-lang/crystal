@@ -15,8 +15,8 @@ module HTTP
       Lax
     end
 
-    property name : String
-    property value : String
+    getter name : String
+    getter value : String
     property path : String
     property expires : Time?
     property domain : String?
@@ -25,14 +25,57 @@ module HTTP
     property samesite : SameSite?
     property extension : String?
 
-    def_equals_and_hash name, value, path, expires, domain, secure, http_only
+    def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
-    def initialize(@name : String, value : String, @path : String = "/",
+    # Creates a new `Cookie` instance.
+    #
+    # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def initialize(name : String, value : String, @path : String = "/",
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil)
+      validate_name(name)
       @name = name
+      validate_value(value)
       @value = value
+    end
+
+    # Sets the name of this cookie.
+    #
+    # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def name=(name : String)
+      validate_name(name)
+      @name = name
+    end
+
+    private def validate_name(name)
+      raise IO::Error.new("Invalid cookie name") if name.empty?
+      name.each_byte do |byte|
+        # valid characters for cookie-name per https://tools.ietf.org/html/rfc6265#section-4.1.1
+        # and https://tools.ietf.org/html/rfc2616#section-2.2
+        # "!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUWVXYZ^_`abcdefghijklmnopqrstuvwxyz|~"
+        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
+          raise IO::Error.new("Invalid cookie name")
+        end
+      end
+    end
+
+    # Sets the value of this cookie.
+    #
+    # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    def value=(value : String)
+      validate_value(value)
+      @value = value
+    end
+
+    private def validate_value(value)
+      value.each_byte do |byte|
+        # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
+        # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
+        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x2c && byte != 0x3b && byte != 0x5c
+          raise IO::Error.new("Invalid cookie value")
+        end
+      end
     end
 
     def to_set_cookie_header
@@ -61,7 +104,7 @@ module HTTP
     def to_cookie_header(io)
       io << @name
       io << '='
-      URI.encode_www_form(value, io)
+      io << @value
     end
 
     def expired?
@@ -109,7 +152,7 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], URI.decode_www_form(pair["value"]))
+          yield Cookie.new(pair["name"], pair["value"])
         end
       end
 
@@ -130,7 +173,7 @@ module HTTP
                   end
 
         Cookie.new(
-          URI.decode_www_form(match["name"]), URI.decode_www_form(match["value"]),
+          match["name"], match["value"],
           path: match["path"]? || "/",
           expires: expires,
           domain: match["domain"]?,
@@ -159,19 +202,46 @@ module HTTP
     # headers in the given `HTTP::Headers`.
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
+    @[Deprecated("Use `.from_client_headers` or `.from_server_headers` instead.")]
     def self.from_headers(headers) : self
       new.tap { |cookies| cookies.fill_from_headers(headers) }
     end
 
     # Filling cookies by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
+    @[Deprecated("Use `#fill_from_client_headers` or `#fill_from_server_headers` instead.")]
     def fill_from_headers(headers)
+      fill_from_client_headers(headers)
+      fill_from_server_headers(headers)
+      self
+    end
+
+    # Creates a new instance by parsing the `Cookie` headers in the given `HTTP::Headers`.
+    #
+    # See `HTTP::Client::Response#cookies`.
+    def self.from_client_headers(headers) : self
+      new.tap { |cookies| cookies.fill_from_client_headers(headers) }
+    end
+
+    # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
+    def fill_from_client_headers(headers)
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
         end
       end
+      self
+    end
 
+    # Creates a new instance by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
+    #
+    # See `HTTP::Request#cookies`.
+    def self.from_server_headers(headers) : self
+      new.tap { |cookies| cookies.fill_from_server_headers(headers) }
+    end
+
+    # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
+    def fill_from_server_headers(headers)
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
@@ -272,8 +342,8 @@ module HTTP
     end
 
     # Yields each `HTTP::Cookie` in the collection.
-    def each(&block : Cookie ->)
-      @cookies.values.each do |cookie|
+    def each(& : Cookie ->)
+      @cookies.each_value do |cookie|
         yield cookie
       end
     end
@@ -297,8 +367,15 @@ module HTTP
     # given `HTTP::Headers` instance and returns it. Removes any existing
     # `Cookie` headers in it.
     def add_request_headers(headers)
-      headers.delete("Cookie")
-      headers.add("Cookie", map(&.to_cookie_header).join("; ")) unless empty?
+      if empty?
+        headers.delete("Cookie")
+      else
+        capacity = sum { |cookie| cookie.name.bytesize + cookie.value.bytesize + 1 }
+        capacity += (size - 1) * 2
+        headers["Cookie"] = String.build(capacity) do |io|
+          join(io, "; ", &.to_cookie_header(io))
+        end
+      end
 
       headers
     end

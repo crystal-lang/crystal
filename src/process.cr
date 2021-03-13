@@ -41,14 +41,6 @@ class Process
     Crystal::System::Process.ppid.to_i64
   end
 
-  # Sends a *signal* to the processes identified by the given *pids*.
-  @[Deprecated("Use #signal instead")]
-  def self.kill(signal : Signal, *pids : Int)
-    pids.each do |pid|
-      signal(signal, pid)
-    end
-  end
-
   # Sends *signal* to the process identified by *pid*.
   def self.signal(signal : Signal, pid : Int) : Nil
     Crystal::System::Process.signal(pid, signal.value)
@@ -294,12 +286,6 @@ class Process
 
   private def initialize(pid)
     @process_info = Crystal::System::Process.new(pid)
-  end
-
-  # See also: `Process.kill`
-  @[Deprecated("Use #signal instead")]
-  def kill(sig = Signal::TERM)
-    signal sig
   end
 
   # Sends *signal* to this process.
