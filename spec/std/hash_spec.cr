@@ -571,6 +571,11 @@ describe "Hash" do
     h2.should_not be(h1)
   end
 
+  it "select with non-equality key" do
+    h = {Float64::NAN => true, 0.0 => true}
+    h.select { |k| !k.nan? }.should eq({0.0 => true})
+  end
+
   it "selects!" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
@@ -578,6 +583,12 @@ describe "Hash" do
     h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:b => 2})
     h2.should be(h1)
+  end
+
+  it "select! with non-equality key" do
+    h = {Float64::NAN => true, 0.0 => true}
+    h.select! { |k| !k.nan? }
+    h.should eq({0.0 => true})
   end
 
   it "rejects" do
@@ -588,6 +599,11 @@ describe "Hash" do
     h2.should_not be(h1)
   end
 
+  it "reject with non-equality key" do
+    h = {Float64::NAN => true, 0.0 => true}
+    h.reject(&.nan?).should eq({0.0 => true})
+  end
+
   it "rejects!" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
@@ -595,6 +611,12 @@ describe "Hash" do
     h2.should be_a(Hash(Symbol, Int32))
     h2.should eq({:a => 1, :c => 3})
     h2.should be(h1)
+  end
+
+  it "reject with non-equality key" do
+    h = {Float64::NAN => true, 0.0 => true}
+    h.reject!(&.nan?)
+    h.should eq({0.0 => true})
   end
 
   it "compacts" do
