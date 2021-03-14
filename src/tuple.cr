@@ -389,17 +389,17 @@ struct Tuple
   # typeof(t3) # => Tuple(Int32, Int32, String, String)
   # ```
   def +(other : Tuple)
-    plus_implementation(other)
+    other.prepend_impl(self)
   end
 
-  private def plus_implementation(other : U) forall U
+  protected def prepend_impl(other : U) forall U
     {% begin %}
       Tuple.new(
-        {% for i in 0...@type.size %}
-          self[{{i}}],
-        {% end %}
         {% for i in 0...U.size %}
-          other[{{i}}],
+          other[{{ i }}],
+        {% end %}
+        {% for i in 0...@type.size %}
+          self[{{ i }}],
         {% end %}
       )
     {% end %}
@@ -586,5 +586,12 @@ struct Tuple
     {% else %}
       self[{{T.size - 1}}]
     {% end %}
+  end
+
+  # :nodoc:
+  def first_internal
+    # overrides Enumerable's definition to disable literal index lookup
+    i = 0
+    self[i]
   end
 end

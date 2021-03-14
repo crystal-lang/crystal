@@ -1911,4 +1911,10 @@ module Enumerable(T)
       {% end %}
     end
   end
+
+  # :nodoc:
+  def first_internal
+    # overridden in Tuple to disable literal index lookup
+    first
+  end
 end
