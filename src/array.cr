@@ -1219,7 +1219,7 @@ class Array(T)
   #
   # ```
   # gems = ["crystal", "pearl", "diamond"]
-  # results = gems.map_with_index { |e, i| "#{i}: #{e}" }
+  # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
   def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
@@ -1233,7 +1233,7 @@ class Array(T)
   #
   # ```
   # gems = ["crystal", "pearl", "diamond"]
-  # gems.map_with_index! { |e, i| "#{i}: #{e}" }
+  # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
   # gems # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
   def map_with_index!(offset = 0, &block : (T, Int32) -> T)
