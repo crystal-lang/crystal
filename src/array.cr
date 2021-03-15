@@ -1218,7 +1218,7 @@ class Array(T)
   # from there.
   #
   # ```
-  # gems = [:crystal, :pearl, :diamond]
+  # gems = ["crystal", "pearl", "diamond"]
   # results = gems.map_with_index { |e, i| "#{i}: #{e}" }
   # results # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
