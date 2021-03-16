@@ -11,6 +11,7 @@
 ## Standard library
 
 - **(breaking-change)** Drop deprecated definitions. ([#10386](https://github.com/crystal-lang/crystal/pull/10386), thanks @bcardiff)
+- Fix example codes in multiple places. ([#10505](https://github.com/crystal-lang/crystal/pull/10505), thanks @maiha)
 
 ### Macros
 
@@ -18,6 +19,7 @@
 
 ### Numeric
 
+- **(breaking-change)** Change default rounding mode to `TIES_EVEN`. ([#10508](https://github.com/crystal-lang/crystal/pull/10508), thanks @straight-shoota)
 - Fix downcasting float infinity. ([#10420](https://github.com/crystal-lang/crystal/pull/10420), thanks @straight-shoota)
 - Fix `String#to_f` out of range behaviour. ([#10425](https://github.com/crystal-lang/crystal/pull/10425), thanks @straight-shoota)
 - Implement rounding mode for `Number#round`. ([#10413](https://github.com/crystal-lang/crystal/pull/10413), [#10360](https://github.com/crystal-lang/crystal/pull/10360), [#10479](https://github.com/crystal-lang/crystal/pull/10479), thanks @straight-shoota)
@@ -56,6 +58,7 @@
 - Make the `content-length` header more RFC compliant. ([#10353](https://github.com/crystal-lang/crystal/pull/10353), thanks @Blacksmoke16)
 - Fix `#respond_with_status` when headers written or closed. ([#10415](https://github.com/crystal-lang/crystal/pull/10415), thanks @straight-shoota)
 - Fix `Cookie#==` to take all ivars into account. ([#10487](https://github.com/crystal-lang/crystal/pull/10487), thanks @straight-shoota)
+- Remove implicit `path=/` from `HTTP::Cookie`. ([#10491](https://github.com/crystal-lang/crystal/pull/10491), thanks @straight-shoota)
 - Add `HTTP::Request#local_address`. ([#10385](https://github.com/crystal-lang/crystal/pull/10385), thanks @carlhoerberg)
 
 ### Logging
@@ -77,6 +80,7 @@
 - Fix ICE when exhaustive in-clause calls pseudo-method. ([#10382](https://github.com/crystal-lang/crystal/pull/10382), thanks @HertzDevil)
 - Fix ICE when parsing `foo.%` calls. ([#10351](https://github.com/crystal-lang/crystal/pull/10351), thanks @MakeNowJust)
 - Fix edge cases for symbol quoting rules. ([#10389](https://github.com/crystal-lang/crystal/pull/10389), thanks @HertzDevil)
+- Support closured vars inside `Const` initializer. ([#10478](https://github.com/crystal-lang/crystal/pull/10478), thanks @RX14)
 - Documentation grammar fix. ([#10369](https://github.com/crystal-lang/crystal/pull/10369), thanks @szTheory)
 
 ### Language semantics
@@ -86,7 +90,8 @@
 - Fix assignments in array literals. ([#10009](https://github.com/crystal-lang/crystal/pull/10009), thanks @straight-shoota)
 - Consider type var splats in generic type restrictions. ([#10168](https://github.com/crystal-lang/crystal/pull/10168), thanks @HertzDevil)
 - Align `Proc.new(&block)`'s behaviour with other captured blocks. ([#10263](https://github.com/crystal-lang/crystal/pull/10263), thanks @HertzDevil)
-- Access instantiations of NamedTuple and other generics uniformly. ([#10401](https://github.com/crystal-lang/crystal/pull/10401), thanks @HertzDevil)
+- Don't merge `NamedTuple` metaclasses through instance types. ([#10501](https://github.com/crystal-lang/crystal/pull/10501), thanks @HertzDevil)
+- Access instantiations of `NamedTuple` and other generics uniformly. ([#10401](https://github.com/crystal-lang/crystal/pull/10401), thanks @HertzDevil)
 - Improve error message for auto-cast error at Var assign. ([#10327](https://github.com/crystal-lang/crystal/pull/10327), thanks @straight-shoota)
 - Exclude abstract defs from "no overload matches" errors. ([#10483](https://github.com/crystal-lang/crystal/pull/10483), thanks @HertzDevil)
 
@@ -96,7 +101,7 @@
 
 ## Others
 
-- CI improvements and housekeeping. ([#10299](https://github.com/crystal-lang/crystal/pull/10299), [#10340](https://github.com/crystal-lang/crystal/pull/10340), thanks @bcardiff, @Sija)
+- CI improvements and housekeeping. ([#10299](https://github.com/crystal-lang/crystal/pull/10299), [#10340](https://github.com/crystal-lang/crystal/pull/10340), [#10476](https://github.com/crystal-lang/crystal/pull/10476), [#10480](https://github.com/crystal-lang/crystal/pull/10480), thanks @bcardiff, @Sija, @straight-shoota)
 - Update distribution-scripts to use Shards v0.14.1. ([#10494](https://github.com/crystal-lang/crystal/pull/10494), thanks @bcardiff)
 - Add GitHub issue templates. ([#8934](https://github.com/crystal-lang/crystal/pull/8934), thanks @j8r)
 - Fix SDL examples crashes. ([#10470](https://github.com/crystal-lang/crystal/pull/10470), thanks @megatux)
