@@ -1,7 +1,7 @@
 require "spec"
 require "uuid/json"
 
-describe "UUID", focus: true do
+describe "UUID" do
   describe "serializes" do
     it "#to_json" do
       UUID.new("50a11da6-377b-4bdf-b9f0-076f9db61c93").to_json.should eq "\"50a11da6-377b-4bdf-b9f0-076f9db61c93\""
