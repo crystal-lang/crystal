@@ -181,6 +181,16 @@ describe "Semantic: def" do
       "can't restrict Char to Int64"
   end
 
+  it "errors when default value is incompatible with non-type restriction" do
+    assert_error "
+      def foo(x : Tuple(_) = 'a')
+      end
+
+      foo
+      ",
+      "can't restrict Char to Tuple(_)"
+  end
+
   it "types call with global scope" do
     assert_type("
       def bar

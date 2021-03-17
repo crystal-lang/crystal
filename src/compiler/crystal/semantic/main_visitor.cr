@@ -769,7 +769,7 @@ module Crystal
           # OK
         else
           # Check autocast too
-          restriction_type = (path_lookup || scope).lookup_type(restriction, free_vars: free_vars)
+          restriction_type = (path_lookup || scope).lookup_type?(restriction, free_vars: free_vars)
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
