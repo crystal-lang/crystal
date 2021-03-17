@@ -36,7 +36,7 @@ struct UUID
     json.string(to_s)
   end
 
-  # Deserializes the given JSON in *string* into a UUID instance
+  # Deserializes the given JSON *key* into a `UUID`.
   #
   # NOTE: `require "uuid/json"` is required to opt-in to this feature.
   #
