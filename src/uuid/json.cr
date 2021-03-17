@@ -36,6 +36,11 @@ struct UUID
     json.string(to_s)
   end
 
+  # :nodoc:
+  def to_json_object_key
+    to_s
+  end
+
   # Deserializes the given JSON *key* into a `UUID`.
   #
   # NOTE: `require "uuid/json"` is required to opt-in to this feature.
