@@ -217,14 +217,14 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.cookies["Bar"] = "Foo"
     response.close
-    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\n")
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nSet-Cookie: Bar=Foo\r\n\r\n")
 
     io = IO::Memory.new
     response = Response.new(io)
     response.cookies["Bar"] = "Foo"
     response.print("Hello")
     response.close
-    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo\r\n\r\nHello")
   end
 
   it "closes when it fails to write" do

@@ -54,7 +54,8 @@ describe "Float" do
   end
 
   describe "round" do
-    it { 2.5.round.should eq(3) }
+    it { 2.5.round.should eq(2) }
+    it { 3.5.round.should eq(4) }
     it { 2.4.round.should eq(2) }
   end
 
