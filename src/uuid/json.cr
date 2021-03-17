@@ -44,7 +44,6 @@ struct UUID
   # Deserializes the given JSON *key* into a `UUID`.
   #
   # NOTE: `require "uuid/json"` is required to opt-in to this feature.
-  #
   def self.from_json_object_key?(key : String)
     UUID.new(key)
   end
