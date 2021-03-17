@@ -130,7 +130,7 @@ describe "Number" do
     end
 
     it "handle medium amount of digits" do
-      1.098765432109876543210987654321.round(15).should eq(1.098765432109877)
+      1.098765432109876543210987654321.round(15).should eq(1.098765432109876)
       1.098765432109876543210987654321.round(21).should eq(1.098765432109876543211)
       6543210987654321.0.round(-15).should eq(7000000000000000.0)
     end
@@ -210,20 +210,20 @@ describe "Number" do
         2.5.round(:ties_away).should eq 3.0
       end
 
-      it "default (=ties_away)" do
-        -2.5.round.should eq -3.0
+      it "default (=ties_even)" do
+        -2.5.round.should eq -2.0
         -1.5.round.should eq -2.0
         -1.0.round.should eq -1.0
         -0.9.round.should eq -1.0
-        -0.5.round.should eq -1.0
+        -0.5.round.should eq 0.0
         -0.1.round.should eq 0.0
         0.0.round.should eq 0.0
         0.1.round.should eq 0.0
-        0.5.round.should eq 1.0
+        0.5.round.should eq 0.0
         0.9.round.should eq 1.0
         1.0.round.should eq 1.0
         1.5.round.should eq 2.0
-        2.5.round.should eq 3.0
+        2.5.round.should eq 2.0
       end
     end
 

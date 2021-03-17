@@ -189,7 +189,7 @@ module Crystal
           type_visitor.inside_constant = true
           type.value.accept type_visitor
 
-          type.vars = const_def.vars
+          type.fake_def = const_def
           type.visitor = self
           type.used = true
 

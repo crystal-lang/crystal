@@ -395,13 +395,13 @@ struct Number
   # (or before if negative), in base *base*.
   #
   # The rounding *mode* controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_AWAY` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded away from zero.
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
   #
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_away)
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even)
     if digits < 0
       multiplier = base.to_f ** digits.abs
       shifted = self / multiplier
@@ -444,10 +444,10 @@ struct Number
 
   # Rounds `self` to an integer value using rounding *mode*.
   #
-  # The rounding mode controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_AWAY` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded away from zero.
-  def round(mode : RoundingMode = :ties_away) : self
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
+  def round(mode : RoundingMode = :ties_even) : self
     case mode
     in .to_zero?
       trunc

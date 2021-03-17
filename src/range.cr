@@ -213,10 +213,10 @@ struct Range(B, E)
   # (1..4).step(by: 2) do |x|
   #   ary << x
   # end
-  # ary                                      # => [1, 3]
-  # (1..4).step(by: 2).to_a                  # => [1, 3]
-  # (1..4).step(by: 1).to_a                  # => [1, 2, 3, 4]
-  # (1..4).step(by: 1, exclusive: true).to_a # => [1, 2, 3]
+  # ary                      # => [1, 3]
+  # (1..4).step(by: 2).to_a  # => [1, 3]
+  # (1..4).step(by: 1).to_a  # => [1, 2, 3, 4]
+  # (1...4).step(by: 1).to_a # => [1, 2, 3]
   # ```
   #
   # The implementation is based on `B#step` method if available. The interface
