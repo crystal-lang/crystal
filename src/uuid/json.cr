@@ -35,4 +35,12 @@ struct UUID
   def to_json(json : JSON::Builder)
     json.string(to_s)
   end
+  
+  # Deserializes the given JSON in *string* into a UUID instance
+  #
+  # NOTE: `require "uuid/json"` is required to opt-in to this feature.
+  #
+  def self.from_json_object_key?(key : String)
+    UUID.new(key)
+  end
 end
