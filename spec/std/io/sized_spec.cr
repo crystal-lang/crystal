@@ -60,6 +60,8 @@ describe "IO::Sized" do
       sized.read(slice).should eq(5)
       String.new(slice).should eq("12345\0\0\0\0\0")
 
+      sized.read_remaining = 5
+
       sized.read(slice).should eq(5)
       String.new(slice).should eq("67890\0\0\0\0\0")
     end
