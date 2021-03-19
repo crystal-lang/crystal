@@ -87,7 +87,7 @@
 
 ### Language semantics
 
-- Don't fail on untyped `is_a`. ([#10320](https://github.com/crystal-lang/crystal/pull/10320), thanks @asterite)
+- Don't fail on untyped `is_a?`. ([#10320](https://github.com/crystal-lang/crystal/pull/10320), thanks @asterite)
 - Fix named arguments in `super` and `previous_def` calls. ([#10400](https://github.com/crystal-lang/crystal/pull/10400), thanks @HertzDevil)
 - Fix assignments in array literals. ([#10009](https://github.com/crystal-lang/crystal/pull/10009), thanks @straight-shoota)
 - Consider type var splats in generic type restrictions. ([#10168](https://github.com/crystal-lang/crystal/pull/10168), thanks @HertzDevil)
