@@ -237,6 +237,46 @@ struct BigDecimal < Number
     end
   end
 
+  # Rounds to the nearest integer (by default), returning the result as a `BigDecimal`.
+  #
+  # ```
+  # BigDecimal.new("3.14159").round # => 3
+  # BigDecimal.new("8.7").round     # => 9
+  # BigDecimal.new("-9.9").round    # => -10
+  # ```
+  #
+  # If *digits* is specified and positive, the fractional part of the result
+  # has no more than that many digits.
+  #
+  # The value of the optional *mode* argument can be used to determine how
+  # rounding is performed.
+  def round(digits : Int = 0, *, mode : RoundingMode = :ties_even) : BigDecimal
+    return self if @scale <= digits
+
+    n_digits = @value.abs.digits.reverse
+    negative = @value < 0
+    scale = @scale.to_i - digits
+
+    value = n_digits[0...-scale].join.to_big_i
+    value = self.class.new(value, digits)
+    value *= -1 if negative
+
+    msd = n_digits[-scale]
+    return value if msd.zero?
+
+    round_up =
+      case mode
+      in .to_zero?     then false
+      in .ties_away?   then msd >= 5
+      in .ties_even?   then msd == 5 ? n_digits[-2].odd? : msd > 5
+      in .to_positive? then !negative
+      in .to_negative? then negative
+      end
+
+    value += (negative ? -1 : 1) if round_up
+    value
+  end
+
   def <=>(other : Int | Float | BigRational)
     self <=> BigDecimal.new(other)
   end

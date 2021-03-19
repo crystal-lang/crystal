@@ -193,6 +193,48 @@ describe BigDecimal do
     (-BigDecimal.new(3)).should eq(BigDecimal.new(-3))
   end
 
+  describe "#round" do
+    {% for sign in %w[+ -] %}
+      context "(with {{sign.id}} sign)" do
+        it "returns self if digits are equal or more than significant digits" do
+          BigDecimal.new("{{sign.id}}2.5").round(1)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}25), 1))
+          BigDecimal.new("{{sign.id}}000.5").round(1)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}5), 1))
+          BigDecimal.new("{{sign.id}}2.00").round(10)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}20), 1))
+        end
+
+        it "rounds :to_zero" do
+          BigDecimal.new("{{sign.id}}979797799999666.9").round(0, mode: :to_zero)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999666)))
+        end
+
+        it "rounds :ties_away" do
+          BigDecimal.new("{{sign.id}}979797799999666.5").round(0, mode: :ties_away)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999667)))
+        end
+
+        it "rounds :ties_even" do
+          BigDecimal.new("{{sign.id}}979797799999666.5").round(0, mode: :ties_even)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999666)))
+          BigDecimal.new("{{sign.id}}979797799999666.5").round(0, mode: :ties_even)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999666)))
+        end
+
+        it "rounds :to_positive" do
+          BigDecimal.new("{{sign.id}}2.5").round(0, mode: :to_positive)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}{{sign == "+" ? 3 : 2}})))
+        end
+
+        it "rounds :to_negative" do
+          BigDecimal.new("{{sign.id}}2.5").round(0, mode: :to_negative)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}{{sign == "-" ? 3 : 2}})))
+        end
+      end
+    {% end %}
+  end
+
   it "performs arithmetic with other number types" do
     (1.to_big_d + 2).should eq(BigDecimal.new("3.0"))
     (2 + 1.to_big_d).should eq(BigDecimal.new("3.0"))
