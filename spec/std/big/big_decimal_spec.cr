@@ -203,6 +203,8 @@ describe BigDecimal do
             .should eq(BigDecimal.new(BigInt.new({{sign.id}}5), 1))
           BigDecimal.new("{{sign.id}}2.00").round(10)
             .should eq(BigDecimal.new(BigInt.new({{sign.id}}20), 1))
+          BigDecimal.new("{{sign.id}}0.00").round(-10)
+            .should eq(BigDecimal.new(BigInt.zero))
         end
 
         it "rounds :to_zero" do
@@ -220,6 +222,8 @@ describe BigDecimal do
             .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999666)))
           BigDecimal.new("{{sign.id}}979797799999666.5").round(0, mode: :ties_even)
             .should eq(BigDecimal.new(BigInt.new({{sign.id}}979797799999666)))
+          BigDecimal.new("{{sign.id}}123456078.999").round(-3, mode: :ties_even)
+            .should eq(BigDecimal.new(BigInt.new({{sign.id}}123456000)))
         end
 
         it "rounds :to_positive" do

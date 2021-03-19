@@ -289,13 +289,17 @@ struct BigDecimal < Number
   # Rounds to the nearest integer (by default), returning the result as a `BigDecimal`.
   #
   # ```
-  # BigDecimal.new("3.14159").round(2) # => 3.14
-  # BigDecimal.new("8.7").round        # => 9
-  # BigDecimal.new("-9.9").round       # => -10
+  # BigDecimal.new("3.14159").round(2)    # => 3.14
+  # BigDecimal.new("8.7").round           # => 9
+  # BigDecimal.new("-9.9").round          # => -10
+  # BigDecimal.new("13345.234").round(-2) # => 13300
   # ```
   #
   # If *digits* is specified and positive, the fractional part of the result
   # has no more than that many digits.
+  #
+  # If *digits* is specified and negative, at least that many digits to the left of
+  # the decimal point will be `0` in the result.
   #
   # The value of the optional *mode* argument can be used to determine how
   # rounding is performed.
@@ -306,23 +310,38 @@ struct BigDecimal < Number
     negative = @value < 0
     scale = @scale.to_i - digits
 
-    value = n_digits[0...-scale].join.to_big_i
-    value = self.class.new(value, digits)
-    value *= -1 if negative
+    # 123.456.to_big_d.round(-10) # => 0.1e11
+    if digits < 0 && n_digits.size <= scale
+      value = self.class.new(n_digits.first, 1)
+      value *= -1 if negative
+      value = value.round(0, mode: mode)
+      value *= power_ten_to(digits.abs)
+      return value
+    end
 
+    value = n_digits[0...-scale].join.presence.try(&.to_big_i) || 0
+    value = self.class.new(value, digits < 0 ? 0 : digits)
+
+    # 10001.123.to_big_d.round(-3) # => 10000
     msd = n_digits[-scale]
-    return value if msd.zero?
+    if msd == 0
+      value *= -1 if negative
+      value *= power_ten_to(digits.abs) if digits < 0
+      return value
+    end
 
     round_up =
       case mode
       in .to_zero?     then false
       in .ties_away?   then msd >= 5
-      in .ties_even?   then msd == 5 ? n_digits[-2].odd? : msd > 5
+      in .ties_even?   then msd == 5 ? n_digits[-2]?.try(&.odd?) : msd > 5
       in .to_positive? then !negative
       in .to_negative? then negative
       end
 
-    value += (negative ? -1 : 1) if round_up
+    value += 1 if round_up
+    value *= -1 if negative
+    value *= power_ten_to(digits.abs) if digits < 0
     value
   end
 
