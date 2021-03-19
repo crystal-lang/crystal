@@ -289,9 +289,9 @@ struct BigDecimal < Number
   # Rounds to the nearest integer (by default), returning the result as a `BigDecimal`.
   #
   # ```
-  # BigDecimal.new("3.14159").round # => 3
-  # BigDecimal.new("8.7").round     # => 9
-  # BigDecimal.new("-9.9").round    # => -10
+  # BigDecimal.new("3.14159").round(2) # => 3.14
+  # BigDecimal.new("8.7").round        # => 9
+  # BigDecimal.new("-9.9").round       # => -10
   # ```
   #
   # If *digits* is specified and positive, the fractional part of the result
@@ -652,6 +652,7 @@ struct Int
   include Comparable(BigDecimal)
 
   # Converts `self` to `BigDecimal`.
+  #
   # ```
   # require "big"
   # 12123415151254124124.to_big_d
@@ -688,6 +689,7 @@ struct Float
   #
   # NOTE: Floats are fundamentally less precise than BigDecimals,
   # which makes conversion to them risky.
+  #
   # ```
   # require "big"
   # 1212341515125412412412421.0.to_big_d
@@ -712,6 +714,7 @@ end
 
 class String
   # Converts `self` to `BigDecimal`.
+  #
   # ```
   # require "big"
   # "1212341515125412412412421".to_big_d
