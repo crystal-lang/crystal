@@ -128,7 +128,7 @@ module Crystal
 
       types.each do |t2|
         not_found = all_types.all? do |t1|
-          ancestor = t1.common_ancestor(t2)
+          ancestor = Type.common_ancestor(t1, t2)
           if ancestor
             all_types.delete t1
             all_types << ancestor.virtual_type
@@ -167,132 +167,108 @@ module Crystal
       merge!([type1, type2])
     end
 
-    def common_ancestor(other)
+    def self.common_ancestor(type1 : Type, type2 : Type)
       nil
     end
-  end
 
-  class NonGenericModuleType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
+    def self.common_ancestor(type1 : NonGenericModuleType, type2 : Type)
+      if type2.implements?(type1)
+        type1
       else
         nil
       end
     end
-  end
 
-  class GenericModuleInstanceType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
+    def self.common_ancestor(type1 : GenericModuleInstanceType, type2 : Type)
+      if type2.implements?(type1)
+        type1
       else
         nil
       end
     end
-  end
 
-  class GenericClassType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
+    def self.common_ancestor(type1 : GenericClassType, type2 : Type)
+      if type2.implements?(type1)
+        type1
       else
         nil
       end
     end
-  end
 
-  class ClassType
-    def common_ancestor(other : ClassType | GenericClassInstanceType)
-      class_common_ancestor(self, other)
+    def self.common_ancestor(type1 : ClassType, type2 : ClassType | GenericClassInstanceType)
+      class_common_ancestor(type1, type2)
     end
 
-    def common_ancestor(other : VirtualType)
-      common_ancestor(other.base_type)
+    def self.common_ancestor(type1 : ClassType, type2 : VirtualType)
+      common_ancestor(type1, type2.base_type)
     end
 
-    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
-      other.common_ancestor(self)
-    end
-  end
-
-  class GenericClassInstanceType
-    def common_ancestor(other : ClassType | GenericClassInstanceType)
-      class_common_ancestor(self, other)
+    def self.common_ancestor(type1 : ClassType, type2 : NonGenericModuleType | GenericModuleInstanceType)
+      common_ancestor(type2, type1)
     end
 
-    def common_ancestor(other : VirtualType)
-      common_ancestor(other.base_type)
+    def self.common_ancestor(type1 : GenericClassInstanceType, type2 : ClassType | GenericClassInstanceType)
+      class_common_ancestor(type1, type2)
     end
 
-    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
-      other.common_ancestor(self)
+    def self.common_ancestor(type1 : GenericClassInstanceType, type2 : VirtualType)
+      common_ancestor(type1, type2.base_type)
     end
-  end
 
-  class MetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      if instance_type.module? || other.instance_type.module?
+    def self.common_ancestor(type1 : GenericClassInstanceType, type2 : NonGenericModuleType | GenericModuleInstanceType)
+      common_ancestor(type2, type1)
+    end
+
+    def self.common_ancestor(type1 : MetaclassType, type2 : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
+      if type1.instance_type.module? || type2.instance_type.module?
         nil
       else
-        common = instance_type.common_ancestor(other.instance_type)
+        common = common_ancestor(type1.instance_type, type2.instance_type)
         common.try &.metaclass
       end
     end
-  end
 
-  class GenericClassInstanceMetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
+    def self.common_ancestor(type1 : GenericClassInstanceMetaclassType, type2 : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
       # Modules are never unified
-      return nil if instance_type.module? || other.instance_type.module?
+      return nil if type1.instance_type.module? || type2.instance_type.module?
 
       # Tuple instances might be unified, but never tuple metaclasses
-      return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
+      return nil if type1.instance_type.is_a?(TupleInstanceType) || type2.instance_type.is_a?(TupleInstanceType)
 
       # NamedTuple instances might be unified, but never named tuple metaclasses
-      return nil if instance_type.is_a?(NamedTupleInstanceType) || other.instance_type.is_a?(NamedTupleInstanceType)
+      return nil if type1.instance_type.is_a?(NamedTupleInstanceType) || type2.instance_type.is_a?(NamedTupleInstanceType)
 
-      common = instance_type.common_ancestor(other.instance_type)
+      common = common_ancestor(type1.instance_type, type2.instance_type)
       common.try &.metaclass
     end
-  end
 
-  class PrimitiveType
-    def common_ancestor(other)
+    def self.common_ancestor(type1 : PrimitiveType, type2 : Type)
       nil
     end
-  end
 
-  class VirtualType
-    def common_ancestor(other)
-      base_type.common_ancestor(other)
+    def self.common_ancestor(type1 : VirtualType, type2 : Type)
+      common_ancestor(type1.base_type, type2)
     end
-  end
 
-  class VirtualMetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType)
-      common = instance_type.base_type.metaclass.common_ancestor(other)
+    def self.common_ancestor(type1 : VirtualMetaclassType, type2 : MetaclassType | VirtualMetaclassType)
+      common = common_ancestor(type1.instance_type.base_type.metaclass, type2)
       common.try &.virtual_type!
     end
-  end
 
-  class TupleInstanceType
-    def common_ancestor(other : TupleInstanceType)
-      return nil unless self.size == other.size
+    def self.common_ancestor(type1 : TupleInstanceType, type2 : TupleInstanceType)
+      return nil unless type1.size == type2.size
 
-      result_types = tuple_types.map_with_index do |self_tuple_type, index|
-        Type.merge!(self_tuple_type, other.tuple_types[index]).as(Type)
+      result_types = type1.tuple_types.map_with_index do |self_tuple_type, index|
+        Type.merge!(self_tuple_type, type2.tuple_types[index]).as(Type)
       end
-      program.tuple_of(result_types)
+      type1.program.tuple_of(result_types)
     end
-  end
 
-  class NamedTupleInstanceType
-    def common_ancestor(other : NamedTupleInstanceType)
-      return nil if self.size != other.size
+    def self.common_ancestor(type1 : NamedTupleInstanceType, type2 : NamedTupleInstanceType)
+      return nil if type1.size != type2.size
 
-      self_entries = self.entries.sort_by &.name
-      other_entries = other.entries.sort_by &.name
+      self_entries = type1.entries.sort_by &.name
+      other_entries = type2.entries.sort_by &.name
 
       # First check if the names are the same
       self_entries.zip(other_entries) do |self_entry, other_entry|
@@ -301,14 +277,14 @@ module Crystal
 
       # If the names are the same we now merge the types for each key
       # NOTE: we use self's order to preserve the order of the tuple on the left hand side
-      merged_entries = self.entries.map_with_index do |self_entry, i|
+      merged_entries = type1.entries.map_with_index do |self_entry, i|
         name = self_entry.name
-        other_type = other.name_type(name)
+        other_type = type2.name_type(name)
         merged_type = Type.merge!(self_entry.type, other_type).as(Type)
         NamedArgumentType.new(name, merged_type)
       end
 
-      program.named_tuple_of(merged_entries)
+      type1.program.named_tuple_of(merged_entries)
     end
   end
 end
@@ -330,17 +306,17 @@ private def class_common_ancestor(t1, t2)
       t2_superclass = t2.superclass
 
       if t1_superclass && t2_superclass
-        return t1_superclass.common_ancestor(t2_superclass)
+        return Crystal::Type.common_ancestor(t1_superclass, t2_superclass)
       end
     elsif t1.depth > t2.depth
       t1_superclass = t1.superclass
       if t1_superclass
-        return t1_superclass.common_ancestor(t2)
+        return Crystal::Type.common_ancestor(t1_superclass, t2)
       end
     elsif t1.depth < t2.depth
       t2_superclass = t2.superclass
       if t2_superclass
-        return t1.common_ancestor(t2_superclass)
+        return Crystal::Type.common_ancestor(t1, t2_superclass)
       end
     end
 
