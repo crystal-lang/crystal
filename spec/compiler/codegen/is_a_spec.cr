@@ -687,6 +687,36 @@ describe "Codegen: is_a?" do
       )).to_i.should eq(2)
   end
 
+  it "does is_a?(generic type) for nested generic inheritance (1) (#9660)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.is_a?(Foo)
+      )).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance (2) (#9660)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Int32).new.is_a?(Foo)
+      )).to_b.should be_true
+  end
+
   it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
     run(%(
       class Gen(T)

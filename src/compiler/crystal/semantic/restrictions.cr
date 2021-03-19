@@ -460,6 +460,17 @@ module Crystal
       implements?(other.base_type) ? self : nil
     end
 
+    def restrict(other : GenericClassType, context)
+      parents.try &.each do |parent|
+        next if parent.is_a?(NonGenericModuleType)
+
+        restricted = parent.restrict other, context
+        return self if restricted
+      end
+
+      nil
+    end
+
     def restrict(other : Union, context)
       # Match all concrete types first
       free_var_count = other.types.count do |other_type|
@@ -728,7 +739,16 @@ module Crystal
     end
 
     def restrict(other : GenericType, context)
-      generic_type == other ? self : super
+      return self if generic_type == other
+
+      parents.try &.each do |parent|
+        next if parent.is_a?(NonGenericModuleType)
+
+        restricted = parent.restrict other, context
+        return self if restricted
+      end
+
+      nil
     end
 
     def restrict(other : Generic, context)
