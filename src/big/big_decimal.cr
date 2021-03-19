@@ -237,6 +237,33 @@ struct BigDecimal < Number
     end
   end
 
+  # Determines what happens when a result must be rounded in order to fit
+  # in the appropriate number of significant digits.
+  #
+  # NOTE: Defaults to `RoundingMode::TIES_EVEN` if `nil`.
+  class_property rounding_mode : RoundingMode? { RoundingMode::TIES_EVEN }
+
+  # Executes the provided block, preserving the rounding mode:
+  #
+  # ```
+  # BigDecimal.rounding_mode = :to_zero
+  #
+  # BigDecimal.save_rounding_mode do
+  #   BigDecimal.rounding_mode = :ties_away
+  #   BigDecimal.rounding_mode # => Number::RoundingMode::TIES_AWAY
+  # end
+  #
+  # BigDecimal.rounding_mode # => Number::RoundingMode::TO_ZERO
+  # ```
+  def self.save_rounding_mode
+    prev_rounding_mode = @@rounding_mode
+    begin
+      yield
+    ensure
+      @@rounding_mode = prev_rounding_mode
+    end
+  end
+
   # Rounds to the nearest integer (by default), returning the result as a `BigDecimal`.
   #
   # ```
@@ -250,7 +277,7 @@ struct BigDecimal < Number
   #
   # The value of the optional *mode* argument can be used to determine how
   # rounding is performed.
-  def round(digits : Int = 0, *, mode : RoundingMode = :ties_even) : BigDecimal
+  def round(digits : Int = 0, *, mode : RoundingMode = BigDecimal.rounding_mode) : BigDecimal
     return self if @scale <= digits
 
     n_digits = @value.abs.digits.reverse

@@ -235,6 +235,42 @@ describe BigDecimal do
     {% end %}
   end
 
+  describe ".rounding_mode" do
+    it "defaults to :ties_even" do
+      BigDecimal.rounding_mode.should eq(Number::RoundingMode::TIES_EVEN)
+    end
+
+    it "allows to be set" do
+      begin
+        BigDecimal.rounding_mode = :to_zero
+        BigDecimal.rounding_mode.should eq(Number::RoundingMode::TO_ZERO)
+      ensure
+        BigDecimal.rounding_mode = nil
+      end
+    end
+
+    it "acts as default value for mode argument in #round" do
+      BigDecimal.rounding_mode = :to_positive
+      BigDecimal.new("2.5").round.should eq(BigDecimal.new(BigInt.new(3)))
+      BigDecimal.rounding_mode = nil
+      BigDecimal.new("2.5").round.should eq(BigDecimal.new(BigInt.new(2)))
+    end
+  end
+
+  describe ".save_rounding_mode" do
+    it "properly retains and resets rounding mode state" do
+      begin
+        BigDecimal.rounding_mode = :to_zero
+        BigDecimal.save_rounding_mode do
+          BigDecimal.rounding_mode = :ties_even
+        end
+        BigDecimal.rounding_mode.should eq(Number::RoundingMode::TO_ZERO)
+      ensure
+        BigDecimal.rounding_mode = nil
+      end
+    end
+  end
+
   it "performs arithmetic with other number types" do
     (1.to_big_d + 2).should eq(BigDecimal.new("3.0"))
     (2 + 1.to_big_d).should eq(BigDecimal.new("3.0"))
