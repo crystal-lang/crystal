@@ -84,6 +84,30 @@ describe "Restrictions" do
       result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
       result.should eq(mod.generic_class("Cxx", mod.int32))
     end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (1)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (2)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
   end
 
   describe "restriction_of?" do

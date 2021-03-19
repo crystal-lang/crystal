@@ -1036,14 +1036,11 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.each_instantiated_type do |instance|
+        types = other.instantiated_types.compact_map do |instance|
           next if instance.unbound? || instance.abstract?
-
-          if instance.implements?(base_type)
-            return instance
-          end
+          instance.virtual_type if instance.implements?(base_type)
         end
-        nil
+        program.type_merge_union_of types
       else
         nil
       end
