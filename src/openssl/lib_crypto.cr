@@ -130,7 +130,9 @@ lib LibCrypto
   fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
   fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
   fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
-  fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+    fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
+  {% end %}
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
   fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
@@ -276,7 +278,6 @@ lib LibCrypto
   fun x509_dup = X509_dup(a : X509) : X509
   fun x509_free = X509_free(a : X509)
   fun x509_get_subject_name = X509_get_subject_name(a : X509) : X509_NAME
-  fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
   fun x509_new = X509_new : X509
   fun x509_set_subject_name = X509_set_subject_name(x : X509, name : X509_NAME) : Int
   fun x509_store_ctx_get_current_cert = X509_STORE_CTX_get_current_cert(x : X509_STORE_CTX) : X509
@@ -285,6 +286,9 @@ lib LibCrypto
   fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
   fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
   fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
+  {% if compare_versions(OPENSSL_VERSION, "1.0.2") >= 0 %}
+    fun x509_get_signature_nid = X509_get_signature_nid(x509 : X509) : Int32
+  {% end %}
 
   MBSTRING_UTF8 = 0x1000
 

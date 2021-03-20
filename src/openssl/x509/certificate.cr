@@ -62,13 +62,17 @@ module OpenSSL::X509
 
     # Returns the name of the signature algorithm.
     def signature_algorithm : String
-      sigid = LibCrypto.x509_get_signature_nid(@cert)
-      result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
-      raise "Could not determine certificate signature algorithm" if result == 0
+      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+        sigid = LibCrypto.x509_get_signature_nid(@cert)
+        result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
+        raise "Could not determine certificate signature algorithm" if result == 0
 
-      sn = LibCrypto.obj_nid2sn(algo_nid)
-      raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
-      String.new sn
+        sn = LibCrypto.obj_nid2sn(algo_nid)
+        raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
+        String.new sn
+      {% else %}
+        raise "Could not determine certificate signature algorithm due to missing required OpenSSL functions"
+      {% end %}
     end
 
     # Returns the digest of the certificate using *algorithm_name*
