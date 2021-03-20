@@ -145,7 +145,7 @@ module Crystal
       all_types
     end
 
-    # Returns true if `type` can be used as a virtual root; that is, it must not
+    # Returns true if *type* can be used as a virtual root; that is, it must not
     # be one of Object, Reference, Value, Struct, Number, Int, Float, or their
     # corresponding metaclasses.
     def virtual_root?(type)
@@ -202,8 +202,14 @@ module Crystal
     # * LCA is associative up to equivalence.
     #
     # If such a type exists and this type can be used as a virtual root (see
-    # `#virtual_root?`), then T | U is precisely the virtual type of LCA(T, U).
-    # Otherwise, T | U is an irreducible union and this method returns `nil`.
+    # `Program#virtual_root?`), then T | U is precisely the virtual type of
+    # LCA(T, U). Otherwise, T | U is an irreducible union and this method should
+    # return `nil`.
+    #
+    # The above applies only if T and U are unequal; this is guaranteed by
+    # `Program#add_type`, so T | T produces a non-virtual type. However, this
+    # method should not break in case it recursively calls itself with two
+    # identical types.
     def self.least_common_ancestor(type1 : Type, type2 : Type)
       nil
     end
