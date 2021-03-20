@@ -135,8 +135,27 @@ prepare_build() {
 
   on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/0.36.1/crystal-0.36.1-1-darwin-x86_64.tar.gz -o ~/crystal.tar.gz
   on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-0.36.1-1 crystal;popd'
+
+  # These commands may take a few minutes to run due to the large size of the repositories.
+  # This restriction has been made on GitHub's request because updating shallow
+  # clones is an extremely expensive operation due to the tree layout and
+  # traffic of Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do
+  # this for you automatically to avoid repeatedly performing an expensive
+  # unshallow operation in CI systems (which should instead be fixed to not use
+  # shallow clones). Sorry for the inconvenience!
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
+  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
+
   on_osx brew update --preinstall
   on_osx brew bundle --no-lock
+
+  # Install a recent bash version for nix-shell.
+  # macos ships with an ancient one.
+  if [ `uname` = "Darwin" ]; then
+    on_nix_shell "brew install bash"
+  fi
+  # initialize nix environment
+  on_nix_shell nix-shell
 
   # Note: brew link --force might show:
   #   Warning: Refusing to link macOS-provided software: llvm

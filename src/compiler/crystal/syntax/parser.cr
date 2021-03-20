@@ -4788,7 +4788,7 @@ module Crystal
         if named_tuple_start? || @token.type == :DELIMITER_START
           type = make_named_tuple_type parse_named_type_args(:"}")
         else
-          type = make_tuple_type parse_union_types(:"}")
+          type = make_tuple_type parse_union_types(:"}", allow_splats: true)
         end
         check :"}"
         next_token_skip_space
@@ -4828,13 +4828,17 @@ module Crystal
       end
     end
 
-    def parse_union_types(end_token)
-      types = [parse_union_type]
+    def parse_union_types(end_token, *, allow_splats = false)
+      type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+      types = [type]
+
       while @token.type == :","
         next_token_skip_space_or_newline
         break if @token.type == end_token # allow trailing comma
-        types << parse_union_type
+        type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+        types << type
       end
+
       types
     end
 

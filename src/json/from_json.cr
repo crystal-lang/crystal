@@ -285,11 +285,14 @@ end
 #   @[JSON::Field(converter: Enum::ValueConverter(MyEnum))]
 #   @[YAML::Field(converter: Enum::ValueConverter(MyEnum))]
 #   property foo : MyEnum = MyEnum::ONE
+#
+#   def initialize(@foo)
+#   end
 # end
 #
-# foo = Foo.new
-# foo.to_json # => %({"my_enum":1})
-# foo.to_yaml # => %(---\nmy_enum: 1\n)
+# foo = Foo.new(MyEnum::ONE)
+# foo.to_json # => %({"foo":1})
+# foo.to_yaml # => %(---\nfoo: 1\n)
 # ```
 #
 # NOTE: Automatically assigned enum values are subject to change when the order

@@ -3155,7 +3155,7 @@ module Crystal
   # saved under a type types like any other type.
   class Const < NamedType
     property value : ASTNode
-    property vars : MetaVars?
+    property fake_def : Def?
     property? used = false
     property? visited = false
 
