@@ -78,11 +78,11 @@
 
 ## Compiler
 
+- **(breaking-change)** Disallow surrogate halves in escape sequences of string and character literals, use `\x` for arbitrary binary values. ([#10443](https://github.com/crystal-lang/crystal/pull/10443), thanks @HertzDevil)
 - Fix ICE when exhaustive in-clause calls pseudo-method. ([#10382](https://github.com/crystal-lang/crystal/pull/10382), thanks @HertzDevil)
 - Fix ICE when parsing `foo.%` calls. ([#10351](https://github.com/crystal-lang/crystal/pull/10351), thanks @MakeNowJust)
 - Fix edge cases for symbol quoting rules. ([#10389](https://github.com/crystal-lang/crystal/pull/10389), thanks @HertzDevil)
 - Support closured vars inside `Const` initializer. ([#10478](https://github.com/crystal-lang/crystal/pull/10478), thanks @RX14)
-- Disallow surrogate halves in escape sequences of string and character literals. ([#10443](https://github.com/crystal-lang/crystal/pull/10443), thanks @HertzDevil)
 - Documentation grammar fix. ([#10369](https://github.com/crystal-lang/crystal/pull/10369), thanks @szTheory)
 
 ### Language semantics
