@@ -1,4 +1,4 @@
-# 1.0.0 (2021-03-??)
+# 1.0.0 (2021-03-22)
 
 ## Language changes
 
@@ -98,6 +98,7 @@
 - Exclude abstract defs from "no overload matches" errors. ([#10483](https://github.com/crystal-lang/crystal/pull/10483), thanks @HertzDevil)
 - Support splats inside tuple literals in type names. ([#10430](https://github.com/crystal-lang/crystal/pull/10430), thanks @HertzDevil)
 - Accept pointer instance types on falsey conditional branches. ([#10464](https://github.com/crystal-lang/crystal/pull/10464), thanks @HertzDevil)
+- Match named arguments by external parameter names when checking overload cover. ([#10530](https://github.com/crystal-lang/crystal/pull/10530), thanks @HertzDevil)
 
 ### Doc generator
 
