@@ -2800,10 +2800,21 @@ class String
   end
 
   # Returns `true` if this string is equal to `*other*.
-  # Comparison is done byte-per-byte: if a byte is different from the corresponding
-  # byte, `false` is returned and so on.
   #
-  # See `#compare` for more comparison options.
+  # Equality is chacked byte-per-byte: if any byte is different from the corresponding
+  # byte, it returns `false`.
+  #
+  # Thus equality is case-sensitive, as it is with the comparison operator (`#<=>`).
+  # `#compare` offers a case-insensitive alternative.
+  #
+  # ```
+  # "abcdef" == "abcde"   # => false
+  # "abcdef" == "abcdef"  # => true
+  # "abcdef" == "abcdefg" # => false
+  # "abcdef" == "ABCDEF"  # => false
+  #
+  # "abcdef".compare("ABCDEF", case_sensitive: false) == 0  # => true
+  # ```
   def ==(other : self) : Bool
     return true if same?(other)
     return false unless bytesize == other.bytesize
@@ -2828,6 +2839,8 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
+  #
+  # The comparison is case-sensitive. `#compare` is a case-insensitive alternative.
   def <=>(other : self)
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
@@ -2851,6 +2864,8 @@ class String
   #
   # "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic) # => 0
   # ```
+  #
+  # Case-sensitive only comparison is provided by the comparison operator `#<=>`.
   def compare(other : String, case_insensitive = false, options = Unicode::CaseOptions::None)
     return self <=> other unless case_insensitive
 
