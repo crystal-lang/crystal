@@ -892,6 +892,17 @@ describe "Semantic: def overload" do
       "no overload matches"
   end
 
+  it "errors if no overload matches on union against named arg with external param name (#10516)" do
+    assert_error %(
+      def f(a b : Int32)
+      end
+
+      a = 1 || nil
+      f(a: a)
+      ),
+      "no overload matches"
+  end
+
   it "dispatches with named arg" do
     assert_type(%(
       def f(a : Int32, b : Int32)
