@@ -2801,7 +2801,7 @@ class String
 
   # Returns `true` if this string is equal to `*other*.
   #
-  # Equality is chacked byte-per-byte: if any byte is different from the corresponding
+  # Equality is checked byte-per-byte: if any byte is different from the corresponding
   # byte, it returns `false`.
   #
   # Thus equality is case-sensitive, as it is with the comparison operator (`#<=>`).
