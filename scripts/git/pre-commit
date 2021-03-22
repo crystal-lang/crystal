@@ -6,8 +6,11 @@
 # Only staged files (the ones to be committed) are being processed, but each file is checked
 # entirely as it is stored on disc, even parts that are not staged.
 #
-# To use this script, it needs to be installed in the local git repository. For example by running
-# `ln -s scripts/git/pre-commit .git/hooks` in the root folder.
+# To use this script, install it in the local git repository.
+#
+# `curl -sL https://github.com/crystal-lang/crystal/raw/master/scripts/git/pre-commit > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`.
+#
+# Alternatively, in the Crystal repo you can directly link it: `ln -s scripts/git/pre-commit .git/hooks`.
 #
 # Called by "git commit" with no arguments. The hook should
 # exit with non-zero status after issuing an appropriate message if
