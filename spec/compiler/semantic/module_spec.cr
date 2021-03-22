@@ -477,6 +477,67 @@ describe "Semantic: module" do
       ", "cyclic include detected"
   end
 
+  it "gives error when including self, generic module" do
+    assert_error "
+      module Foo(T)
+        include self
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error when including instantiation of self, generic module" do
+    assert_error "
+      module Foo(T)
+        include Foo(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include, generic module" do
+    assert_error "
+      module Foo(T)
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      module Foo(T)
+        include Bar(T)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module" do
+    assert_error "
+      module Foo
+      end
+
+      module Bar(T)
+        include Foo
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+      ", "cyclic include detected"
+  end
+
+  it "gives error with cyclic include between non-generic and generic module (2)" do
+    assert_error "
+      module Bar(T)
+      end
+
+      module Foo
+        include Bar(Int32)
+      end
+
+      module Bar(T)
+        include Foo
+      end
+      ", "cyclic include detected"
+  end
+
   it "finds types close to included module" do
     assert_type("
       module Foo
