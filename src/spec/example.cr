@@ -11,33 +11,36 @@ module Spec
     # :nodoc:
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool, tags,
+                   @focus : Bool, @concurrent : Bool, tags,
                    @block : (->) | Nil)
       initialize_tags(tags)
     end
 
     # :nodoc:
     def run
-      Spec.root_context.check_nesting_spec(file, line) do
-        Spec.formatters.each(&.before_example(description))
+      Spec.formatters.each(&.before_example(description))
 
-        unless block = @block
-          @parent.report(:pending, description, file, line)
-          return
-        end
-
-        non_nil_block = block
-        start = Time.monotonic
-
-        ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
-        ran || internal_run(start, non_nil_block)
-
-        # We do this to give a chance for signals (like CTRL+C) to be handled,
-        # which currently are only handled when there's a fiber switch
-        # (IO stuff, sleep, etc.). Without it the user might wait more than needed
-        # after pressing CTRL+C to quit the tests.
-        Fiber.yield
+      unless block = @block
+        @parent.report(:pending, description, file, line)
+        return
       end
+
+      non_nil_block = block
+      start = Time.monotonic
+
+      ran = @parent.run_around_each_hooks(Example::Procsy.new(self) { internal_run(start, non_nil_block) })
+      ran || internal_run(start, non_nil_block)
+
+      # We do this to give a chance for signals (like CTRL+C) to be handled,
+      # which currently are only handled when there's a fiber switch
+      # (IO stuff, sleep, etc.). Without it the user might wait more than needed
+      # after pressing CTRL+C to quit the tests.
+      Fiber.yield
+    end
+
+    def run
+      run
+      yield
     end
 
     private def internal_run(start, block)

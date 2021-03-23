@@ -5,6 +5,7 @@ module Spec
   abstract class Context
     # All the children, which can be `describe`/`context` or `it`
     getter children = [] of ExampleGroup | Example
+    getter concurrent_children = [] of ExampleGroup | Example
 
     def randomize(randomizer)
       children.each do |child|
@@ -15,7 +16,26 @@ module Spec
 
     protected def internal_run
       run_before_all_hooks
-      children.each &.run
+
+      @running = true
+
+      channel = Channel(Item).new(capacity: children.size)
+      done_channel = Channel(Nil).new(Spec.concurrency)
+
+      Spec.concurrency.times do
+        spawn do
+          loop do
+            channel.receive.run
+          ensure
+            done_channel.send nil
+          end
+        end
+      end
+
+      children.each { |example| channel.send example }
+      children.each { done_channel.receive }
+    ensure
+      @running = false
       run_after_all_hooks
     end
 
@@ -133,6 +153,8 @@ module Spec
   class RootContext < Context
     class_getter instance = RootContext.new
     class_getter current_context : Context = @@instance
+
+    getter? running = false
 
     def initialize
       @results = {
@@ -261,11 +283,12 @@ module Spec
       end
     end
 
-    def describe(description, file, line, end_line, focus, tags, &block)
+    def describe(description, file, line, end_line, focus, concurrent, tags, &block)
       Spec.focus = true if focus
 
-      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, tags)
-      @@current_context.children << context
+      concurrent = @@current_context.concurrent? || concurrent
+
+      context = Spec::ExampleGroup.new(@@current_context, description, file, line, end_line, focus, concurrent, tags)
 
       old_context = @@current_context
       @@current_context = context
@@ -276,19 +299,30 @@ module Spec
       end
     end
 
-    def it(description, file, line, end_line, focus, tags, &block)
-      add_example(description, file, line, end_line, focus, tags, block)
+    def it(description, file, line, end_line, focus, concurrent, tags, &block)
+      add_example(description, file, line, end_line, focus, concurrent, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus, tags)
-      add_example(description, file, line, end_line, focus, tags, nil)
+    def pending(description, file, line, end_line, focus, concurrent, tags)
+      add_example(description, file, line, end_line, focus, concurrent, tags, nil)
     end
 
-    private def add_example(description, file, line, end_line, focus, tags, block)
-      check_nesting_spec(file, line) do
-        Spec.focus = true if focus
-        @@current_context.children <<
-          Example.new(@@current_context, description, file, line, end_line, focus, tags, block)
+    private def add_example(description, file, line, end_line, focus, concurrent, tags, block)
+      if running?
+        raise NestingSpecError.new("can't nest `it` or `pending`", file, line)
+      end
+
+      Spec.focus = true if focus
+
+      concurrent = @@current_context.concurrent? || concurrent
+
+      example =
+        Example.new(@@current_context, description, file, line, end_line, focus, concurrent, tags, block)
+
+      if concurrent
+        concurrent_children << example
+      else
+        children << example
       end
     end
 
@@ -308,6 +342,10 @@ module Spec
     protected def around_all(&block : ExampleGroup::Procsy ->)
       raise "Can't call `around_all` outside of a describe/context"
     end
+
+    def concurrent?
+      false
+    end
   end
 
   # Represents a `describe` or `context`.
@@ -316,7 +354,7 @@ module Spec
 
     def initialize(@parent : Context, @description : String,
                    @file : String, @line : Int32, @end_line : Int32,
-                   @focus : Bool, tags)
+                   @focus : Bool, @concurrent : Bool, tags)
       initialize_tags(tags)
     end
 
@@ -328,6 +366,11 @@ module Spec
       ran || internal_run
 
       Spec.formatters.each(&.pop)
+    end
+
+    def run
+      run
+      yield
     end
 
     protected def report(kind, description, file, line, elapsed = nil, ex = nil)
