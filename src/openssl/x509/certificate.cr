@@ -71,7 +71,7 @@ module OpenSSL::X509
         raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
         String.new sn
       {% else %}
-        raise "Could not determine certificate signature algorithm due to missing required OpenSSL functions"
+        raise "Missing OpenSSL function for certificate signature algorithm (requires OpenSSL 1.0.2)"
       {% end %}
     end
 
