@@ -2139,8 +2139,14 @@ module Crystal
 
           # If the loop is endless
           if endless
-            after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read?
+            # If a variable was re-assigned before the first break expression,
+            # the type at the end of the while body is inaccessible upon exit
+            # because the assignment must have executed before the next chance
+            # to break
+            unless all_break_vars.try(&.first?.try &.[name]?.try { |var| !while_var.same?(var) })
+              after_while_var.bind_to(while_var)
+              after_while_var.nil_if_read = while_var.nil_if_read?
+            end
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
@@ -2159,7 +2165,10 @@ module Crystal
           # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
-          after_while_var.bind_to(while_var)
+          unless endless && all_break_vars.try(&.first?.try &.[name]?.try { |var| !while_var.same?(var) })
+            after_while_var.bind_to(while_var)
+          end
+
           nilable = false
           if endless
             # In an endless loop if not all variable with the given name end up
