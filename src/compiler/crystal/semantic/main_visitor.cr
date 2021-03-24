@@ -2143,7 +2143,8 @@ module Crystal
             # the type at the end of the while body is inaccessible upon exit
             # because the assignment must have executed before the next chance
             # to break
-            unless all_break_vars.try(&.first?.try &.[name]?.try { |var| !while_var.same?(var) })
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
               after_while_var.bind_to(while_var)
               after_while_var.nil_if_read = while_var.nil_if_read?
             end
@@ -2165,24 +2166,23 @@ module Crystal
           # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
-          unless endless && all_break_vars.try(&.first?.try &.[name]?.try { |var| !while_var.same?(var) })
-            after_while_var.bind_to(while_var)
-          end
 
-          nilable = false
           if endless
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+            end
+
             # In an endless loop if not all variable with the given name end up
             # in a break it means that they can be nilable.
             # Alternatively, if any var that ends in a break is nil-if-read then
             # the resulting variable will be nil-if-read too.
             if !all_break_vars.try(&.all? &.has_key?(name)) ||
                all_break_vars.try(&.any? &.[name]?.try &.nil_if_read?)
-              nilable = true
+              after_while_var.nil_if_read = true
             end
           else
-            nilable = true
-          end
-          if nilable
+            after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = true
           end
 
