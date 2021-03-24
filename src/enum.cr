@@ -10,7 +10,15 @@
 # end
 # ```
 #
-# Values start with the value `0` and are incremented by one, but can be overwritten.
+# Values start with the value `0` and are incremented by one, but can be overwritten:
+#
+# ```
+# enum Color
+#   Red   = 5
+#   Green = 10
+#   Blue  # 11
+# end
+# ```
 #
 # To get the underlying value you invoke value on it:
 #
