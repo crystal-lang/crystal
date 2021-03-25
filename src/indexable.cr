@@ -1138,16 +1138,6 @@ module Indexable(T)
     end
   end
 
-  private def each_combination_piece(pool, size, reuse)
-    if reuse
-      reuse.clear
-      size.times { |i| reuse << pool[i] }
-      reuse
-    else
-      pool[0, size]
-    end
-  end
-
   # Returns an `Iterator` over each possible combination of *size* of `self`.
   #
   # ```
