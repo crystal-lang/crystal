@@ -336,9 +336,9 @@ module Math
   def isqrt(value : Int)
     raise ArgumentError.new "Input must be non-negative integer" if value < 0
     return value if value < 2
-    res = num.class.zero
+    res = value.class.zero
     bit = 1 << (res.leading_zeros_count - 2)
-    bit >>= num.leading_zeros_count & ~0x3
+    bit >>= value.leading_zeros_count & ~0x3
     while (bit != 0)
       if value >= res + bit
         value -= res + bit
