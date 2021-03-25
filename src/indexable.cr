@@ -973,7 +973,7 @@ module Indexable(T)
     {start_index, count}
   end
 
-  # Returns an `Array` with all possible permutations of *size*.
+  # Returns an `Array` with all possible permutations of *size* of `self`.
   #
   # ```
   # a = [1, 2, 3]
@@ -1066,6 +1066,17 @@ module Indexable(T)
     PermutationIterator(self, T).new(self, size.to_i, Indexable(T).check_reuse(reuse, size))
   end
 
+  # Returns an `Array` with all possible combinations of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.combinations    # => [[1, 2, 3]]
+  # a.combinations(1) # => [[1], [2], [3]]
+  # a.combinations(2) # => [[1, 2], [1, 3], [2, 3]]
+  # a.combinations(3) # => [[1, 2, 3]]
+  # a.combinations(0) # => [[]]
+  # a.combinations(4) # => []
+  # ```
   def combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_combination(size) do |a|
@@ -1074,6 +1085,21 @@ module Indexable(T)
     ary
   end
 
+  # Yields each possible combination of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_combination(2) { |p| sums << p.sum } # => nil
+  # sums                                        # => [3, 4, 5]
+  # ```
+  #
+  # By default, a new array is created and yielded for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false) : Nil
     n = self.size
     return if size > n
@@ -1122,6 +1148,23 @@ module Indexable(T)
     end
   end
 
+  # Returns an `Iterator` over each possible combination of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3, 4].each_combination(3)
+  # iter.next # => [1, 2, 3]
+  # iter.next # => [1, 2, 4]
+  # iter.next # => [1, 3, 4]
+  # iter.next # => [2, 3, 4]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each combination.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
   def each_combination(size : Int = self.size, reuse = false)
     raise ArgumentError.new("Size must be positive") if size < 0
 
