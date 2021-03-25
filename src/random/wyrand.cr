@@ -6,7 +6,7 @@ require "random/secure"
 # Based on the original C implementation by 王一 (Wang Yi).
 # https://github.com/wangyi-fudan/wyhash
 #
-# Provides a 64 bit output based on mix and multply operation. This provides
+# Provides a 64 bit output based on mix and multiply operation. This provides
 # exceptionly fast performance on modern processors, but may yield slower
 # results on older architectures.
 struct Random::Wyrand
@@ -56,7 +56,7 @@ struct Random::Wyrand
   {% end %}
 end
 
-# TODO: BidEndian support. Crystal is currently pinned to LittleEndian so low
+# TODO: BigEndian support. Crystal is currently pinned to LittleEndian so low
 # priority. This is here as a guard rail for when this changes.
 {% if IO::ByteFormat::SystemEndian != IO::ByteFormat::LittleEndian %}
   {{ raise "Wyrand BigEndian support not implemented" }}
