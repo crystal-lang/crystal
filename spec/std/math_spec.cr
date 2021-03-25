@@ -41,6 +41,13 @@ describe "Math" do
       Math.sqrt(4_f32).should eq(2)
       Math.sqrt(4).should eq(2)
     end
+
+    it "isqrt" do
+      Math.isqrt(9).should eq(3)
+      Math.isqrt(8).should eq(2)
+      Math.isqrt(4).should eq(2)
+      Math.isqrt(1764).should eq(42)
+    end
   end
 
   describe "Exponents" do
