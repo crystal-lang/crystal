@@ -337,7 +337,7 @@ module Math
     raise ArgumentError.new "Input must be non-negative integer" if value < 0
     return value if value < 2
     res = value.class.zero
-    bit = 1 << (res.leading_zeros_count - 2)
+    bit = res.succ << (res.leading_zeros_count - 2)
     bit >>= value.leading_zeros_count & ~0x3
     while (bit != 0)
       if value >= res + bit
