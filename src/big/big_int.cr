@@ -176,6 +176,10 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
   end
 
+  def sqrt : BigInt
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, self) }
+  end
+
   def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end

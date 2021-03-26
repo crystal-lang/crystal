@@ -333,7 +333,7 @@ module Math
   end
 
   # Calculates the integer square root of *value*.
-  def isqrt(value : Int)
+  def isqrt(value : Int::Primitive)
     raise ArgumentError.new "Input must be non-negative integer" if value < 0
     return value if value < 2
     res = value.class.zero
