@@ -462,10 +462,12 @@ module Crystal
 
     def restrict(other : GenericClassType, context)
       parents.try &.each do |parent|
-        next if parent.is_a?(NonGenericModuleType)
-
-        restricted = parent.restrict other, context
-        return self if restricted
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type, context)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
       end
 
       nil
@@ -742,10 +744,12 @@ module Crystal
       return self if generic_type == other
 
       parents.try &.each do |parent|
-        next if parent.is_a?(NonGenericModuleType)
-
-        restricted = parent.restrict other, context
-        return self if restricted
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type, context)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
       end
 
       nil
