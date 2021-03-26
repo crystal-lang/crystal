@@ -2139,19 +2139,23 @@ module Crystal
 
           # If the loop is endless
           if endless
-            # If a variable was re-assigned before the first break expression,
-            # the type at the end of the while body is inaccessible upon exit
-            # because the assignment must have executed before the next chance
-            # to break
+            # Suppose we have
             #
-            # For example:
+            #     x = exp1
+            #     while true
+            #       x = exp2
+            #       break if ...
+            #       x = exp3
+            #       break if ...
+            #       x = exp4
+            #     end
             #
-            #    while true
-            #      x = exp1
-            #      break if true
-            #      x = exp2
-            #    end
-            #    # at this point x's type is never affected by exp2
+            # Here the type of x after the loop will never be affected by
+            # `x = exp4`, because `x = exp2` must have been executed before the
+            # loop may exit at the first break. Therefore, if the x right before
+            # the first break is different from the last x, we don't use the
+            # latter's type upon exit (but exp2 itself may depend on exp4 if it
+            # refers to x).
             break_var = all_break_vars.try &.dig?(0, name)
             unless break_var && !break_var.same?(while_var)
               after_while_var.bind_to(while_var)
