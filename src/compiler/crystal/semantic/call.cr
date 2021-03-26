@@ -1123,7 +1123,7 @@ class Crystal::Call
         when "pointer_set"
           owner = owner.remove_typedef.as(PointerInstanceType)
           pointer_type = owner.var.type
-          unless type.filter_by(pointer_type)
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
             self.args[index].raise "type must be #{pointer_type}, not #{type}"
           end
         end
