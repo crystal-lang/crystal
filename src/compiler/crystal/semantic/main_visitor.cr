@@ -2143,6 +2143,15 @@ module Crystal
             # the type at the end of the while body is inaccessible upon exit
             # because the assignment must have executed before the next chance
             # to break
+            #
+            # For example:
+            #
+            #    while true
+            #      x = exp1
+            #      break if true
+            #      x = exp2
+            #    end
+            #    # at this point x's type is never affected by exp2
             break_var = all_break_vars.try &.dig?(0, name)
             unless break_var && !break_var.same?(while_var)
               after_while_var.bind_to(while_var)
