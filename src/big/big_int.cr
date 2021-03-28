@@ -726,7 +726,7 @@ module Math
 
   # Calculates the integer square root of *value*.
   def isqrt(value : BigInt)
-    BigInt.new { |mpz| LibGMP.sqrt(mpz, value.to_unsafe) }
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
   end
 end
 
