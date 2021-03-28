@@ -176,10 +176,6 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.fac_ui(mpz, self) }
   end
 
-  def sqrt : BigInt
-    BigInt.new { |mpz| LibGMP.sqrt(mpz, self) }
-  end
-
   def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
@@ -726,6 +722,11 @@ module Math
   # ```
   def sqrt(value : BigInt)
     sqrt(value.to_big_f)
+  end
+
+  # Calculates the integer square root of *value*.
+  def isqrt(value : BigInt)
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, value.to_unsafe) }
   end
 end
 

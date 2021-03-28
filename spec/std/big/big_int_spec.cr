@@ -167,11 +167,6 @@ describe "BigInt" do
     end
   end
 
-  it "computes integer square roots" do
-    100.to_big_i.sqrt.should eq(10.to_big_i)
-    101.to_big_i.sqrt.should eq(10.to_big_i)
-  end
-
   it "divides" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
@@ -547,5 +542,9 @@ end
 describe "BigInt Math" do
   it "sqrt" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
+  end
+
+  it "isqrt" do
+    Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
   end
 end
