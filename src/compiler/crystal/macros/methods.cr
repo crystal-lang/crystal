@@ -53,8 +53,8 @@ module Crystal
         interpret_debug(node)
       when "env"
         interpret_env(node)
-      when "exists?"
-        interpret_exists(node)
+      when "file_exists?"
+        interpret_file_exists(node)
       when "flag?", "host_flag?"
         interpret_flag?(node)
       when "puts"
@@ -229,7 +229,7 @@ module Crystal
       macro_raise(node, node.args, self)
     end
 
-    def interpret_exists(node)
+    def interpret_file_exists(node)
       unless node.args.size == 1
         node.wrong_number_of_arguments "macro call '#{node.name}'", node.args.size, 1
       end

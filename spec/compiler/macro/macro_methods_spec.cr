@@ -2624,17 +2624,17 @@ module Crystal
     end
   end
 
-  describe "exists?" do
+  describe "file_exists?" do
     context "with absolute path" do
       it "is true if file exists" do
         run(%q<
-          {{exists?("#{__DIR__}/../data/build")}}
+          {{file_exists?("#{__DIR__}/../data/build")}}
           >, filename = __FILE__).to_b.should be_true
       end
 
       it "is false if file doesn't exist" do
         run(%q<
-          {{exists?("#{__DIR__}/../data/build_foo")}}
+          {{file_exists?("#{__DIR__}/../data/build_foo")}}
           >, filename = __FILE__).to_b.should be_false
       end
     end
@@ -2642,13 +2642,13 @@ module Crystal
     context "with relative path" do
       it "is true if file exists" do
         run(%q<
-          {{exists?("spec/compiler/data/build")}}
+          {{file_exists?("spec/compiler/data/build")}}
           >, filename = __FILE__).to_b.should be_true
       end
 
       it "is false if file doesn't exist" do
         run(%q<
-          {{exists?("spec/compiler/data/build_foo")}}
+          {{file_exists?("spec/compiler/data/build_foo")}}
           >, filename = __FILE__).to_b.should be_false
       end
     end

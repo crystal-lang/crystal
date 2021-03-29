@@ -33,9 +33,9 @@ module Crystal::Macros
   # Relative paths are resolved to the current working directory.
   #
   # ```
-  # exists?("etc/some_file.txt") # true or false
+  # file_exists?("etc/some_file.txt") # true or false
   # ```
-  def exists?(filename) : BoolLiteral
+  def file_exists?(filename) : BoolLiteral
   end
 
   # Returns whether a [compile-time flag](https://crystal-lang.org/docs/syntax_and_semantics/compile_time_flags.html) is set.
