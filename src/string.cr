@@ -2018,7 +2018,7 @@ class String
     return delete(from) if to.empty?
 
     if from.bytesize == 1
-      return gsub(from.to_unsafe.unsafe_chr, to[0])
+      return gsub(from.to_unsafe[0].unsafe_chr, to[0])
     end
 
     multi = nil
@@ -2436,7 +2436,7 @@ class String
   # ```
   def gsub(char : Char, replacement)
     if replacement.is_a?(String) && replacement.bytesize == 1
-      return gsub(char, replacement.to_unsafe.unsafe_chr)
+      return gsub(char, replacement.to_unsafe[0].unsafe_chr)
     end
 
     if includes?(char)
@@ -2546,7 +2546,7 @@ class String
   # ```
   def gsub(string : String, replacement)
     if string.bytesize == 1
-      gsub(string.to_unsafe.unsafe_chr, replacement)
+      gsub(string.to_unsafe[0].unsafe_chr, replacement)
     else
       gsub(string) { replacement }
     end
