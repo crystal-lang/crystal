@@ -192,7 +192,7 @@ class URI
     i = 0
     bytesize = string.bytesize
     while i < bytesize
-      byte = string.unsafe_byte_at(i)
+      byte = string.to_unsafe[i]
       char = byte.unsafe_chr
       i = decode_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
     end
@@ -244,7 +244,7 @@ class URI
 
     if char == '%' && i < bytesize - 2
       i += 1
-      first = string.unsafe_byte_at(i)
+      first = string.to_unsafe[i]
       first_num = first.unsafe_chr.to_i? 16
       unless first_num
         io.write_byte byte
@@ -252,7 +252,7 @@ class URI
       end
 
       i += 1
-      second = string.unsafe_byte_at(i)
+      second = string.to_unsafe[i]
       second_num = second.unsafe_chr.to_i? 16
       unless second_num
         io.write_byte byte

@@ -40,9 +40,9 @@ class URI
 
       i = 0
       first_equal = true
-      bytesize = query.bytesize
+      bytesize = query.bytes
       while i < bytesize
-        byte = query.unsafe_byte_at(i)
+        byte = query.to_unsafe[i]
         char = byte.unsafe_chr
 
         case char
