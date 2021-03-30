@@ -422,4 +422,20 @@ describe "Semantic: if" do
       foo
       ), inject_primitives: false) { int32 }
   end
+
+  it "includes pointer types in falsey branch" do
+    assert_type(%(
+      def foo
+        x = 1
+        y = false || pointerof(x) || nil
+
+        if !y
+          return y
+        end
+        1
+      end
+
+      foo
+      )) { nilable union_of bool, pointer_of(int32), int32 }
+  end
 end
