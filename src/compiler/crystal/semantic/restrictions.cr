@@ -460,6 +460,19 @@ module Crystal
       implements?(other.base_type) ? self : nil
     end
 
+    def restrict(other : GenericClassType, context)
+      parents.try &.each do |parent|
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type, context)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
+      end
+
+      nil
+    end
+
     def restrict(other : Union, context)
       # Match all concrete types first
       free_var_count = other.types.count do |other_type|
@@ -728,7 +741,18 @@ module Crystal
     end
 
     def restrict(other : GenericType, context)
-      generic_type == other ? self : super
+      return self if generic_type == other
+
+      parents.try &.each do |parent|
+        if parent.module?
+          return self if parent.restriction_of?(other, context.instantiated_type, context)
+        else
+          restricted = parent.restrict other, context
+          return self if restricted
+        end
+      end
+
+      nil
     end
 
     def restrict(other : Generic, context)
@@ -1016,14 +1040,11 @@ module Crystal
       elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        other.each_instantiated_type do |instance|
+        types = other.instantiated_types.compact_map do |instance|
           next if instance.unbound? || instance.abstract?
-
-          if instance.implements?(base_type)
-            return instance
-          end
+          instance.virtual_type if instance.implements?(base_type)
         end
-        nil
+        program.type_merge_union_of types
       else
         nil
       end
