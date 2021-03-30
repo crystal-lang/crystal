@@ -2139,8 +2139,28 @@ module Crystal
 
           # If the loop is endless
           if endless
-            after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read?
+            # Suppose we have
+            #
+            #     x = exp1
+            #     while true
+            #       x = exp2
+            #       break if ...
+            #       x = exp3
+            #       break if ...
+            #       x = exp4
+            #     end
+            #
+            # Here the type of x after the loop will never be affected by
+            # `x = exp4`, because `x = exp2` must have been executed before the
+            # loop may exit at the first break. Therefore, if the x right before
+            # the first break is different from the last x, we don't use the
+            # latter's type upon exit (but exp2 itself may depend on exp4 if it
+            # refers to x).
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+              after_while_var.nil_if_read = while_var.nil_if_read?
+            end
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
@@ -2159,21 +2179,23 @@ module Crystal
           # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
-          after_while_var.bind_to(while_var)
-          nilable = false
+
           if endless
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+            end
+
             # In an endless loop if not all variable with the given name end up
             # in a break it means that they can be nilable.
             # Alternatively, if any var that ends in a break is nil-if-read then
             # the resulting variable will be nil-if-read too.
             if !all_break_vars.try(&.all? &.has_key?(name)) ||
                all_break_vars.try(&.any? &.[name]?.try &.nil_if_read?)
-              nilable = true
+              after_while_var.nil_if_read = true
             end
           else
-            nilable = true
-          end
-          if nilable
+            after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = true
           end
 
