@@ -66,7 +66,7 @@ describe "Codegen: while" do
       )).to_i.should eq(4)
   end
 
-  it "conditional break with value" do
+  it "endless conditional break with value" do
     run(%(
       a = 0
       while true
