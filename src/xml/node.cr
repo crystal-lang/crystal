@@ -1,4 +1,4 @@
-struct XML::Node
+class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
   # Creates a new node.

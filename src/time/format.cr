@@ -55,9 +55,11 @@ require "./format/parser"
 # * **%X**: (same as %T) 24-hour time (13:04:05)
 # * **%y**: year modulo 100
 # * **%Y**: year, zero padded
-# * **%z**: time zone as hour and minute offset from UTC (+0900)
-# * **%:z**: time zone as hour and minute offset from UTC with a colon (+09:00)
-# * **%::z**: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)
+# * **%z**: time zone offset from UTC as hour and minute with no separator (+0900)
+# * **%:z**: time zone offset from UTC as hour and minute separated by colon (+09:00)
+# * **%::z**: time zone offset from UTC as hour, minute and second separated by colon (+09:00:00)
+# * **%Z**: location name or offset (e.g. `Europe/Berlin`)
+# * **%^Z**: abbreviated time zone identifier or offset (e.g. `CET`)
 struct Time::Format
   # :nodoc:
   MONTH_NAMES = %w(January February March April May June July August September October November December)

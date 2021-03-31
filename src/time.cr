@@ -20,7 +20,7 @@ require "crystal/system/time"
 # There are several methods to retrieve a `Time` instance representing the
 # current time:
 #
-# ```crystal
+# ```
 # Time.utc                                        # returns the current time in UTC
 # Time.local Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
 # Time.local                                      # returns the current time in current time zone
@@ -1089,14 +1089,6 @@ struct Time
   # See `Time::Format` for details.
   def to_s(io : IO, format : String) : Nil
     Format.new(format).format(self, io)
-  end
-
-  # Formats this `Time` according to the pattern in *format* to the given *io*.
-  #
-  # See `Time::Format` for details.
-  @[Deprecated("Use `#to_s(io : IO, format : String)` instead")]
-  def to_s(format : String, io : IO) : Nil
-    to_s(io, format)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).

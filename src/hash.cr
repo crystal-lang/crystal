@@ -16,7 +16,7 @@ require "crystal/hasher"
 # hash["one"] # => 1
 # ```
 #
-# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# [Hash literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
 # can also be used to create a `Hash`:
 #
 # ```
@@ -1208,25 +1208,6 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Deletes each key-value pair for which the given block returns `true`.
-  #
-  # ```
-  # h = {"foo" => "bar", "fob" => "baz", "bar" => "qux"}
-  # h.delete_if { |key, value| key.starts_with?("fo") }
-  # h # => { "bar" => "qux" }
-  # ```
-  @[Deprecated("Use `#reject!` instead")]
-  def delete_if
-    keys_to_delete = [] of K
-    each do |key, value|
-      keys_to_delete << key if yield(key, value)
-    end
-    keys_to_delete.each do |key|
-      delete(key)
-    end
-    self
-  end
-
   # Returns `true` when hash contains no key-value pairs.
   #
   # ```
@@ -1541,7 +1522,6 @@ class Hash(K, V)
   # ```
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact! # => {"hello" => "world"}
-  # hash.compact! # => nil
   # ```
   def compact!
     reject! { |key, value| value.nil? }
@@ -1772,7 +1752,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = self.class.new
+    hash = Hash(K, V).new
     hash.initialize_dup(self)
     hash
   end
@@ -1787,12 +1767,12 @@ class Hash(K, V)
   # ```
   def clone
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
-      clone = self.class.new
+      clone = Hash(K, V).new
       clone.initialize_clone(self)
       clone
     {% else %}
       exec_recursive_clone do |hash|
-        clone = self.class.new
+        clone = Hash(K, V).new
         hash[object_id] = clone.object_id
         clone.initialize_clone(self)
         clone

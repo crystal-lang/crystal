@@ -85,7 +85,7 @@ struct BitArray
   # ba[-2...-1] # => BitArray[0]
   # ```
   def [](range : Range)
-    self[*Indexable.range_to_index_and_count(range, size)]
+    self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
   # Returns count or less (if there aren't enough) elements starting at the

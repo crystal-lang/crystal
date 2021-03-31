@@ -136,34 +136,6 @@ jobs:
       - store_artifacts:
           path: ~/test-results/spec
 
-  check_format:
-    machine: true
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci format
-
-  sync_docs_s3:
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run: |
-          echo $CIRCLE_SHA1 > /tmp/workspace/docs/revision.txt
-      - run: |
-          docker run -v /tmp/workspace/docs:/docs \
-            -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-            -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-            mesosphere/aws-cli \
-            s3 sync /docs/ s3://crystal-api/api/master --delete
-
   prepare_common:
     docker:
       - image: docker:stable-git
@@ -172,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout e1704da2a215264ea8e101eb15d4ec1baae98222
+          git checkout 4caf7cd337087e2ae313b8c7e00be247d34482ad
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -183,7 +155,7 @@ jobs:
           echo "export CRYSTAL_SHA1=$CIRCLE_SHA1" >> build.env
 
           # Which previous version use
-          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/0.35.1/crystal-0.35.1-1"
+          export PREVIOUS_CRYSTAL_BASE_URL="https://github.com/crystal-lang/crystal/releases/download/1.0.0/crystal-1.0.0-1"
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX64_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-x86_64.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_LINUX32_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-linux-i686.tar.gz" >> build.env
           echo "export PREVIOUS_CRYSTAL_RELEASE_DARWIN_TARGZ=${PREVIOUS_CRYSTAL_BASE_URL}-darwin-x86_64.tar.gz" >> build.env
@@ -540,31 +512,7 @@ workflows:
   version: 2
   test_all_platforms:
     jobs:
-      - test_linux:
-          filters: &unless_maintenance
-            branches:
-              ignore:
-                - /release\/.+/
-                - /package\/.+/
-                - /.*\bci\b.*/
-      - test_linux32_std:
-          filters: *unless_maintenance
-      - test_alpine:
-          filters: *unless_maintenance
-      # - test_darwin:
-      #     filters: *unless_maintenance
-      - test_preview_mt:
-          filters: *unless_maintenance
-      - check_format:
-          filters: *unless_maintenance
-      - sync_docs_s3:
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - test_linux
-
+      - test_darwin
   tagged_release:
     jobs:
       - test_linux:
@@ -577,11 +525,9 @@ workflows:
           filters: *per_tag
       - test_alpine:
           filters: *per_tag
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *per_tag
       - test_preview_mt:
-          filters: *per_tag
-      - check_format:
           filters: *per_tag
       - prepare_common:
           filters: *per_tag
@@ -652,9 +598,8 @@ workflows:
       - test_linux
       - test_linux32_std
       - test_alpine
-      # - test_darwin
+      # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
       - test_preview_mt
-      - check_format
       - prepare_common
       - prepare_nightly:
           requires:
@@ -716,11 +661,9 @@ workflows:
           filters: *maintenance
       - test_alpine:
           filters: *maintenance
-      # - test_darwin:
+      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *maintenance
       - test_preview_mt:
-          filters: *maintenance
-      - check_format:
           filters: *maintenance
       - prepare_common:
           filters: *maintenance

@@ -733,9 +733,6 @@ end
 # ```
 #
 # NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
-#
-# NOTE: Using negative amounts will cause the timeout to not trigger.
-#
 def timeout_select_action(timeout : Time::Span)
   Channel::TimeoutAction.new(timeout)
 end

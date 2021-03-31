@@ -124,6 +124,13 @@ class Deque(T)
     dup.concat other
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty deque.
+  def self.additive_identity : self
+    self.new
+  end
+
   # Alias for `push`.
   def <<(value : T)
     push(value)
