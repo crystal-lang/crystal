@@ -6,11 +6,37 @@ describe "Semantic: while" do
   end
 
   it "types while with break without value" do
-    assert_type("while true; break; end") { nil_type }
+    assert_type("while 1; break; end") { nil_type }
   end
 
   it "types while with break with value" do
-    assert_type("while true; break 1; end") { nil_type }
+    assert_type("while 1; break 'a'; end") { nilable char }
+  end
+
+  it "types while with multiple breaks with value" do
+    assert_type(%(
+      while 1
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { nilable union_of(char, tuple_of([string, int32])) }
+  end
+
+  it "types endless while with break without value" do
+    assert_type("while true; break; end") { nil_type }
+  end
+
+  it "types endless while with break with value" do
+    assert_type("while true; break 1; end") { int32 }
+  end
+
+  it "types endless while with multiple breaks with value" do
+    assert_type(%(
+      while true
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { union_of(char, tuple_of([string, int32])) }
   end
 
   it "reports break cannot be used outside a while" do
