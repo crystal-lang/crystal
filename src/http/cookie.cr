@@ -29,28 +29,10 @@ module HTTP
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only, samesite, extension
 
-    @[Deprecated("Use named arguments instead.")]
-    def self.new(_name : String, _value : String, _path : String = "/",
-                 _expires : Time? = nil, _domain : String? = nil,
-                 _secure : Bool = false, _http_only : Bool = false,
-                 _samesite : SameSite? = nil, _extension : String? = nil) : self
-      new(
-        _name, _value,
-        path: _path, expires: _expires, domain: _domain, secure: _secure,
-        http_only: _http_only, samesite: _samesite, extension: _extension
-      )
-    end
-
-    def self.new(_name : String, _value : String) : self
-      new(name: _name, value: _value)
-    end
-
     # Creates a new `Cookie` instance.
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    def initialize(name : String, value : String,
-                  *,
-                   @path : String? = nil,
+    def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
                    @samesite : SameSite? = nil, @extension : String? = nil,
