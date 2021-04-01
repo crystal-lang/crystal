@@ -7,8 +7,10 @@ lib LibC
   end
 
   fun getrlimit(Int, Rlimit*) : Int
+  fun setrlimit(Int, Rlimit*) : Int
 
-  RLIMIT_STACK = 3
+  RLIMIT_STACK  = 3
+  RLIMIT_NOFILE = 7
 
   struct RUsage
     ru_utime : Timeval
