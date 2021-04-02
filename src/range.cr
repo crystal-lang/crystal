@@ -275,7 +275,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
-  def excludes_end?
+  def excludes_end? : Bool
     @exclusive
   end
 
@@ -289,7 +289,7 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
-  def includes?(value)
+  def includes?(value) : Bool
     begin_value = @begin
     end_value = @end
 

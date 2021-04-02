@@ -401,7 +401,7 @@ struct Int
   # 0b1101.bits_set?(0b0111) # => false
   # 0b1101.bits_set?(0b1100) # => true
   # ```
-  def bits_set?(mask)
+  def bits_set?(mask) : Bool
     (self & mask) == mask
   end
 
