@@ -425,6 +425,7 @@ class Crystal::Call
 
   def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
+      next if a_def.abstract?
       str << "\n - "
       append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)

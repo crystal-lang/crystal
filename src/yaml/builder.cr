@@ -56,14 +56,6 @@ class YAML::Builder
     io.flush
   end
 
-  # :ditto:
-  @[Deprecated("Use .build instead")]
-  def self.new(io : IO, & : self ->) : Nil
-    build(io) do |builder|
-      yield builder
-    end
-  end
-
   # Starts a YAML stream.
   def start_stream
     emit stream_start, LibYAML::Encoding::UTF8

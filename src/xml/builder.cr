@@ -4,7 +4,7 @@
 # an invalid XML (for example, if invoking `end_element`
 # without a matching `start_element`, or trying to use
 # a non-string value as an object's field name)
-struct XML::Builder
+class XML::Builder
   private CDATA_END    = "]]>"
   private CDATA_ESCAPE = "]]]]><![CDATA[>"
 

@@ -1,8 +1,8 @@
 require "../../../spec_helper"
 
-private def assert_args_to_s(item, to_s_output, to_html_output = to_s_output, file = __FILE__, line = __LINE__)
-  item.args_to_s.should eq(to_s_output), file, line
-  item.args_to_html.should eq(to_html_output), file, line
+private def assert_args_to_s(item, to_s_output, to_html_output = to_s_output, *, file = __FILE__, line = __LINE__)
+  item.args_to_s.should eq(to_s_output), file: file, line: line
+  item.args_to_html.should eq(to_html_output), file: file, line: line
 end
 
 describe Doc::Macro do
