@@ -82,7 +82,7 @@ struct Char
     # reader.has_next?      # => true
     # reader.peek_next_char # => '\0'
     # ```
-    def has_next?
+    def has_next? : Bool
       !@end
     end
 
@@ -94,7 +94,7 @@ struct Char
     # reader = Char::Reader.new("ab")
     # reader.next_char # => 'b'
     # ```
-    def next_char
+    def next_char : Char
       @pos += @current_char_width
       if @pos > @string.bytesize
         raise IndexError.new
@@ -113,7 +113,7 @@ struct Char
     # reader.peek_next_char # => 'b'
     # reader.current_char   # => 'a'
     # ```
-    def peek_next_char
+    def peek_next_char : Char
       next_pos = @pos + @current_char_width
 
       if next_pos > @string.bytesize
@@ -127,7 +127,7 @@ struct Char
 
     # Returns `true` if there are characters before
     # the current one.
-    def has_previous?
+    def has_previous? : Bool
       @pos > 0
     end
 

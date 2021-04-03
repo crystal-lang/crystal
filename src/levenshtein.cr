@@ -82,7 +82,7 @@ module Levenshtein
       end
     end
 
-    def best_match
+    def best_match : String?
       @best_entry.try &.value
     end
 

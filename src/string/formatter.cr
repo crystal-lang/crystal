@@ -386,15 +386,15 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def left_padding?
+    def left_padding? : Bool
       @minus ? @width < 0 : @width > 0
     end
 
-    def right_padding?
+    def right_padding? : Bool
       @minus ? @width > 0 : @width < 0
     end
 
-    def padding_char
+    def padding_char : Char
       @zero ? '0' : ' '
     end
   end
