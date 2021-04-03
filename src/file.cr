@@ -393,7 +393,7 @@ class File < IO::FileDescriptor
   # * `\\` escapes the next character.
   #
   # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
-  def self.match?(pattern : String, path : Path | String)
+  def self.match?(pattern : String, path : Path | String) : Bool
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
@@ -528,7 +528,7 @@ class File < IO::FileDescriptor
   end
 
   # :nodoc:
-  def self.expand_brace_pattern(pattern : String, expanded)
+  def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
     reader = Char::Reader.new(pattern)
 
     lbrace = nil
@@ -791,7 +791,7 @@ class File < IO::FileDescriptor
   end
 
   # Returns the size in bytes of the currently opened file.
-  def size
+  def size : Int64
     info.size
   end
 

@@ -310,12 +310,12 @@ class Process
 
   # Whether the process is still registered in the system.
   # Note that this returns `true` for processes in the zombie or similar state.
-  def exists?
+  def exists? : Bool
     @process_info.exists?
   end
 
   # Whether this process is already terminated.
-  def terminated?
+  def terminated? : Bool
     !exists?
   end
 
