@@ -1,5 +1,5 @@
 class Object
-  def to_yaml
+  def to_yaml : String
     String.build do |io|
       to_yaml(io)
     end
