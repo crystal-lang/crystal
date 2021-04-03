@@ -113,14 +113,6 @@ struct Number
   # delimiter (see `#format`).
   #
   # See `Int#humanize_bytes` to format a file size.
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Indexable = SI_PREFIXES) : Nil
-    humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, _|
-      magnitude = Number.prefix_index(magnitude)
-      {magnitude, Number.si_prefix(magnitude, prefixes)}
-    end
-  end
-
-  # :ditto:
   def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes = SI_PREFIXES) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
@@ -129,39 +121,16 @@ struct Number
 
   # Pretty prints this number as a `String` in a human-readable format.
   #
-  # This is particularly useful if a number can have a wide value range and
-  # the *exact* value is less relevant.
-  #
-  # It rounds the number to the nearest thousands magnitude with *precision*
-  # number of significant digits. The order of magnitude is expressed with an
-  # appended quantifier.
-  # By default, SI prefixes are used (see `SI_PREFIXES`).
-  #
-  # ```
-  # 1_200_000_000.humanize # => "1.2G"
-  # 0.000_000_012.humanize # => "12.0n"
-  # ```
-  #
-  # If *significant* is `false`, the number of *precision* digits is preserved
-  # after the decimal separator.
-  #
-  # ```
-  # 1_234.567_890.humanize(precision: 2)                     # => "1.2k"
-  # 1_234.567_890.humanize(precision: 2, significant: false) # => "1.23k"
-  # ```
-  #
-  # *separator* describes the decimal separator, *delimiter* the thousands
-  # delimiter (see `#format`).
-  #
-  # This methods yields the order of magnitude and `self` and expects the block
-  # to return a `Tuple(Int32, _)` containing the (adjusted) magnitude and unit.
-  # The magnitude is typically adjusted to a multiple of `3`.
+  # This overload yields the order of magnitude and `self` and expects the block
+  # to return a `Tuple` containing the (adjusted) magnitude, the unit, and
+  # optionally a `Bool` indicating whether decimal values are allowed. The
+  # magnitude is typically adjusted to a multiple of `3`.
   #
   # ```
   # def humanize_length(number)
   #   number.humanize do |magnitude, number|
   #     case magnitude
-  #     when -2, -1 then {-2, " cm"}
+  #     when -2, -1 then {-2, " cm", false}
   #     when .>=(4)
   #       {3, " km"}
   #     else
@@ -172,10 +141,41 @@ struct Number
   # end
   #
   # humanize_length(1_420) # => "1.42 km"
-  # humanize_length(0.23)  # => "23.0 cm"
+  # humanize_length(0.23)  # => "23 cm"
   # ```
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true) : String
+    String.build do |io|
+      humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
+        yield magnitude, number
+      end
+    end
+  end
+
+  # Pretty prints this number as a `String` in a human-readable format.
   #
-  # See `Int#humanize_bytes` to format a file size.
+  # This overload invokes the given *prefixes* with the order of magnitude and
+  # `self`, and expects similar return values as the overload that accepts a
+  # block.
+  #
+  # ```
+  # 123.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "123 "
+  # 0.4.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "400m"
+  # ```
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
+    String.build do |io|
+      humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
+    end
+  end
+
+  # Pretty prints this number to the given *io* in a human-readable format.
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Indexable = SI_PREFIXES) : Nil
+    humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, _|
+      magnitude = Number.prefix_index(magnitude)
+      {magnitude, Number.si_prefix(magnitude, prefixes)}
+    end
+  end
+
+  # :ditto:
   def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, &prefixes : (Int32, Float64) -> {Int32, _} | {Int32, _, Bool}) : Nil
     if zero?
       digits = 0
@@ -223,25 +223,9 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true) : String
-    String.build do |io|
-      humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
-        yield magnitude, number
-      end
-    end
-  end
-
-  # :ditto:
   def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
     humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
       prefixes.call(magnitude, number)
-    end
-  end
-
-  # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
-    String.build do |io|
-      humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
     end
   end
 end
