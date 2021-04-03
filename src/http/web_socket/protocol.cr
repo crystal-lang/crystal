@@ -70,7 +70,7 @@ class HTTP::WebSocket::Protocol
       end
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "This IO is write-only"
     end
 

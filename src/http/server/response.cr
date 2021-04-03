@@ -92,7 +92,7 @@ class HTTP::Server
     end
 
     # :nodoc:
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "Can't read from HTTP::Server::Response"
     end
 
@@ -117,7 +117,7 @@ class HTTP::Server
     end
 
     # Returns `true` if this response has been closed.
-    def closed?
+    def closed? : Bool
       @output.closed?
     end
 

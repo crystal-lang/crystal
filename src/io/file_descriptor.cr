@@ -7,7 +7,7 @@ class IO::FileDescriptor < IO
 
   # The raw file-descriptor. It is defined to be an `Int`, but its size is
   # platform-specific.
-  def fd
+  def fd : Int
     @volatile_fd.get
   end
 
@@ -31,7 +31,7 @@ class IO::FileDescriptor < IO
   end
 
   # :nodoc:
-  def self.from_stdio(fd)
+  def self.from_stdio(fd) : self
     Crystal::System::FileDescriptor.from_stdio(fd)
   end
 
@@ -43,7 +43,7 @@ class IO::FileDescriptor < IO
     self.system_blocking = value
   end
 
-  def close_on_exec?
+  def close_on_exec? : Bool
     system_close_on_exec?
   end
 
@@ -113,7 +113,7 @@ class IO::FileDescriptor < IO
   # file.gets(2) # => "he"
   # file.pos     # => 2
   # ```
-  def pos
+  def pos : Int64
     check_open
 
     system_pos - @in_buffer_rem.size
@@ -193,11 +193,11 @@ class IO::FileDescriptor < IO
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
-  def tty?
+  def tty? : Bool
     system_tty?
   end
 
