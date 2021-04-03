@@ -219,7 +219,7 @@ class JSON::PullParser
     when .float?
       @float_value.tap { read_next }
     else
-      parse_exception "expecting int or float but was #{@kind}"
+      raise "expecting int or float but was #{@kind}"
     end
   end
 
@@ -230,14 +230,14 @@ class JSON::PullParser
   # If the value in unknown, it raises a `ParseException`.
   #
   # ```
-  # pull = JSON::PullParser.new %([nil, true, 1, "foo", [1, "two"], {"foo": "bar"}])
+  # pull = JSON::PullParser.new %([null, true, 1, "foo", [1, "two"], {"foo": "bar"}])
   # pull.read_begin_array
-  # pull.read_raw # => "nil"
+  # pull.read_raw # => "null"
   # pull.read_raw # => "true"
   # pull.read_raw # => "1"
-  # pull.read_raw # => "foo"
-  # pull.read_raw # => "[1, \"two\"]"
-  # pull.read_raw # => "{\"foo\": \"bar\"}"
+  # pull.read_raw # => "\"foo\""
+  # pull.read_raw # => "[1,\"two\"]"
+  # pull.read_raw # => "{\"foo\":\"bar\"}"
   # pull.read_end_array
   # ```
   def read_raw
@@ -679,20 +679,21 @@ class JSON::PullParser
   end
 
   private def expect_kind(kind : Kind)
-    parse_exception "Expected #{kind} but was #{@kind}" unless @kind == kind
+    raise "Expected #{kind} but was #{@kind}" unless @kind == kind
   end
 
   private def unexpected_token
-    parse_exception "Unexpected token: #{token}"
+    raise "Unexpected token: #{token}"
   end
 
-  private def parse_exception(msg)
-    raise ParseException.new(msg, token.line_number, token.column_number)
+  # Raises `ParseException` with *message* at current location.
+  def raise(message : String)
+    ::raise ParseException.new(message, token.line_number, token.column_number)
   end
 
   private def push_in_object_stack(kind : ObjectStackKind)
     if @object_stack.size >= @max_nesting
-      parse_exception "Nesting of #{@object_stack.size + 1} is too deep"
+      raise "Nesting of #{@object_stack.size + 1} is too deep"
     end
 
     @object_stack.push(kind)

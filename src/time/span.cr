@@ -227,12 +227,6 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  @[Deprecated("Use `#abs` instead.")]
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
@@ -282,6 +276,13 @@ struct Time::Span
       seconds: to_i + other.to_i,
       nanoseconds: nanoseconds + other.nanoseconds,
     )
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is `zero`.
+  def self.additive_identity : self
+    zero
   end
 
   def + : self

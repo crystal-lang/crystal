@@ -2,27 +2,6 @@ require "spec"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
-private class BadSortingClass
-  include Comparable(self)
-
-  def <=>(other)
-    1
-  end
-end
-
-private class Spaceship
-  getter value : Float64
-
-  def initialize(@value : Float64, @return_nil = false)
-  end
-
-  def <=>(other : Spaceship)
-    return nil if @return_nil
-
-    value <=> other.value
-  end
-end
-
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -1096,68 +1075,6 @@ describe "Array" do
     end
   end
 
-  describe "sample" do
-    it "sample" do
-      [1].sample.should eq(1)
-
-      x = [1, 2, 3].sample
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "sample with random" do
-      x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(2)
-    end
-
-    it "gets sample of negative count elements raises" do
-      expect_raises ArgumentError do
-        [1].sample(-1)
-      end
-    end
-
-    it "gets sample of 0 elements" do
-      [1].sample(0).should eq([] of Int32)
-    end
-
-    it "gets sample of 1 elements" do
-      [1].sample(1).should eq([1])
-
-      x = [1, 2, 3].sample(1)
-      x.size.should eq(1)
-      x = x.first
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "gets sample of k elements out of n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3)
-      set = Set.new(b)
-      set.size.should eq(3)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, where k > n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(10)
-      b.size.should eq(5)
-      set = Set.new(b)
-      set.size.should eq(5)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, with random" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 1])
-    end
-  end
-
   describe "shift" do
     it "shifts when non empty" do
       a = [1, 2, 3]
@@ -1332,42 +1249,6 @@ describe "Array" do
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
-
-    it "doesn't crash on special situations" do
-      [1, 2, 3].sort { 1 }
-      Array.new(10) { BadSortingClass.new }.sort
-    end
-
-    it "can sort just by using <=> (#6608)" do
-      spaceships = [
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      sorted = spaceships.sort
-      4.times do |i|
-        sorted[i].value.should eq(i)
-      end
-    end
-
-    it "raises if <=> returns nil" do
-      spaceships = [
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort
-      end
-    end
-
-    it "raises if sort block returns nil" do
-      expect_raises(ArgumentError) do
-        [1, 2].sort { nil }
-      end
-    end
   end
 
   describe "sort!" do
@@ -1381,43 +1262,6 @@ describe "Array" do
       a = ["foo", "a", "hello"]
       a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
-    end
-
-    it "sorts with invalid block (#4379)" do
-      a = [1] * 17
-      b = a.sort { -1 }
-      a.should eq(b)
-    end
-
-    it "can sort! just by using <=> (#6608)" do
-      spaceships = [
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      spaceships.sort!
-      4.times do |i|
-        spaceships[i].value.should eq(i)
-      end
-    end
-
-    it "raises if <=> returns nil" do
-      spaceships = [
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort!
-      end
-    end
-
-    it "raises if sort! block returns nil" do
-      expect_raises(ArgumentError) do
-        [1, 2].sort! { nil }
-      end
     end
   end
 

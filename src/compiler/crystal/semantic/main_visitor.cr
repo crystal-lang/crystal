@@ -189,7 +189,7 @@ module Crystal
           type_visitor.inside_constant = true
           type.value.accept type_visitor
 
-          type.vars = const_def.vars
+          type.fake_def = const_def
           type.visitor = self
           type.used = true
 
@@ -769,10 +769,14 @@ module Crystal
           # OK
         else
           # Check autocast too
-          restriction_type = scope.lookup_type(restriction, free_vars: free_vars)
+          restriction_type = (path_lookup || scope).lookup_type(restriction, free_vars: free_vars)
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
+            if value.is_a?(SymbolLiteral) && restriction_type.is_a?(EnumType)
+              node.raise "can't autocast #{value} to #{restriction_type}: no matching enum member"
+            end
+
             node.raise "can't restrict #{value.type} to #{restriction}"
           end
         end
@@ -1015,7 +1019,7 @@ module Crystal
           Make sure to read the whole docs section about blocks and procs,
           including "Capturing blocks" and "Block forwarding":
 
-          http://crystal-lang.org/docs/syntax_and_semantics/blocks_and_procs.html
+          https://crystal-lang.org/reference/syntax_and_semantics/blocks_and_procs.html
           MSG
       end
 
@@ -1571,8 +1575,6 @@ module Crystal
 
       if node.name == "new"
         case instance_type
-        when ProcInstanceType
-          return special_proc_type_new_call(node, instance_type)
         when .extern?
           if instance_type.namespace.is_a?(LibType) && (named_args = node.named_args)
             return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
@@ -1581,41 +1583,6 @@ module Crystal
       end
 
       false
-    end
-
-    def special_proc_type_new_call(node, proc_type)
-      if node.args.size != 0
-        return false
-      end
-
-      block = node.block
-      unless block
-        return false
-      end
-
-      if block.args.size > proc_type.arg_types.size
-        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
-      end
-
-      # We create a ->(...) { } from the block
-      proc_args = proc_type.arg_types.map_with_index do |arg_type, index|
-        block_arg = block.args[index]?
-        Arg.new(block_arg.try(&.name) || @program.new_temp_var_name, type: arg_type)
-      end
-
-      expected_return_type = proc_type.return_type
-      expected_return_type = @program.nil if expected_return_type.void?
-
-      proc_def = Def.new("->", proc_args, block.body).at(node)
-      proc_literal = ProcLiteral.new(proc_def).at(node)
-      proc_literal.expected_return_type = expected_return_type
-      proc_literal.force_nil = true if expected_return_type.nil_type?
-      proc_literal.accept self
-
-      node.bind_to proc_literal
-      node.expanded = proc_literal
-
-      true
     end
 
     # Rewrite:
@@ -2172,8 +2139,28 @@ module Crystal
 
           # If the loop is endless
           if endless
-            after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read?
+            # Suppose we have
+            #
+            #     x = exp1
+            #     while true
+            #       x = exp2
+            #       break if ...
+            #       x = exp3
+            #       break if ...
+            #       x = exp4
+            #     end
+            #
+            # Here the type of x after the loop will never be affected by
+            # `x = exp4`, because `x = exp2` must have been executed before the
+            # loop may exit at the first break. Therefore, if the x right before
+            # the first break is different from the last x, we don't use the
+            # latter's type upon exit (but exp2 itself may depend on exp4 if it
+            # refers to x).
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+              after_while_var.nil_if_read = while_var.nil_if_read?
+            end
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
@@ -2192,21 +2179,23 @@ module Crystal
           # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
-          after_while_var.bind_to(while_var)
-          nilable = false
+
           if endless
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+            end
+
             # In an endless loop if not all variable with the given name end up
             # in a break it means that they can be nilable.
             # Alternatively, if any var that ends in a break is nil-if-read then
             # the resulting variable will be nil-if-read too.
             if !all_break_vars.try(&.all? &.has_key?(name)) ||
                all_break_vars.try(&.any? &.[name]?.try &.nil_if_read?)
-              nilable = true
+              after_while_var.nil_if_read = true
             end
           else
-            nilable = true
-          end
-          if nilable
+            after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = true
           end
 
@@ -2245,6 +2234,8 @@ module Crystal
         end
       when And
         return get_while_cond_assign_target(node.left)
+      when Not
+        return get_while_cond_assign_target(node.exp)
       when If
         if node.and?
           return get_while_cond_assign_target(node.cond)
@@ -2626,22 +2617,37 @@ module Crystal
       @in_type_args -= 1
 
       type = node.offsetof_type.type?
-
-      node.offsetof_type.raise "type #{type} can't have instance variables" unless type.is_a?(InstanceVarContainer)
       node.offsetof_type.raise "can't use typeof inside offsetof expression" if node.offsetof_type.is_a?(TypeOf)
 
-      ivar_name = node.instance_var.as(InstanceVar).name
-      ivar_index = type.index_of_instance_var(ivar_name)
+      case type
+      when TupleInstanceType
+        number = node.offset.as?(NumberLiteral)
+        node.offset.raise "can't take offset of a tuple element using an instance variable, use an index" if number.nil?
 
-      node.instance_var.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
-      node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+        ivar_index = number.integer_value
+        node.offset.raise "can't take a negative offset of a tuple" if ivar_index < 0
+        if ivar_index >= type.size
+          node.offset.raise "can't take offset element at index #{ivar_index} from a tuple with #{type.size} elements"
+        end
+      when InstanceVarContainer
+        ivar = node.offset.as?(InstanceVar)
+        node.offset.raise "can't take offset element of #{type} using an index, use an instance variable" if ivar.nil?
 
-      if type && type.struct?
+        ivar_name = ivar.name
+        ivar_index = type.index_of_instance_var(ivar_name)
+
+        node.offset.raise "type #{type} doesn't have an instance variable called #{ivar_name}" unless ivar_index
+        node.offsetof_type.raise "can't take offsetof element #{ivar_name} of uninstantiated generic type #{type}" if type.is_a?(GenericType)
+      else
+        node.offsetof_type.raise "type #{type} can't have instance variables neither is a Tuple"
+      end
+
+      if type && (type.struct? || type.is_a?(TupleInstanceType))
         offset = @program.offset_of(type.sizeof_type, ivar_index)
       elsif type && type.instance_type.devirtualize.class?
         offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
       else
-        node.offsetof_type.raise "#{type} is neither a class nor a struct, it's a #{type.type_desc}"
+        node.offsetof_type.raise "#{type} is neither a class, a struct nor a Tuple, it's a #{type.type_desc}"
       end
 
       expanded = NumberLiteral.new(offset.to_s, :i32)
@@ -2878,13 +2884,23 @@ module Crystal
     def visit(node : TupleIndexer)
       scope = @scope
       if scope.is_a?(TupleInstanceType)
-        node.type = scope.tuple_types[node.index].as(Type)
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(scope.tuple_types[index].map &.as(Type))
+        in Int32
+          node.type = scope.tuple_types[index].as(Type)
+        end
       elsif scope.is_a?(NamedTupleInstanceType)
-        node.type = scope.entries[node.index].type
+        node.type = scope.entries[node.index.as(Int32)].type
       elsif scope && (instance_type = scope.instance_type).is_a?(TupleInstanceType)
-        node.type = instance_type.tuple_types[node.index].as(Type).metaclass
+        case index = node.index
+        in Range
+          node.type = @program.tuple_of(instance_type.tuple_types[index].map &.as(Type)).metaclass
+        in Int32
+          node.type = instance_type.tuple_types[index].as(Type).metaclass
+        end
       elsif scope && (instance_type = scope.instance_type).is_a?(NamedTupleInstanceType)
-        node.type = instance_type.entries[node.index].type.metaclass
+        node.type = instance_type.entries[node.index.as(Int32)].type.metaclass
       else
         node.raise "unsupported TupleIndexer scope"
       end

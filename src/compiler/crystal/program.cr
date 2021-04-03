@@ -376,8 +376,6 @@ module Crystal
             untyped_type = other_type.remove_typedef
             if untyped_type.proc?
               return NilableProcType.new(self, other_type)
-            elsif untyped_type.is_a?(PointerInstanceType)
-              return NilablePointerType.new(self, other_type)
             end
           end
         end

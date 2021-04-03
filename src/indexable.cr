@@ -851,18 +851,28 @@ module Indexable(T)
     nil
   end
 
-  # Returns a random element from `self`, using the given *random* number generator.
-  # Raises `IndexError` if `self` is empty.
+  # Optimized version of `Enumerable#sample` that runs in O(1) time.
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 2
+  # a.sample                # => 3
   # a.sample                # => 1
-  # a.sample(Random.new(1)) # => 3
+  # a.sample(Random.new(1)) # => 2
   # ```
   def sample(random = Random::DEFAULT)
-    raise IndexError.new if size == 0
+    raise IndexError.new("Can't sample empty collection") if size == 0
     unsafe_fetch(random.rand(size))
+  end
+
+  # :nodoc:
+  def sample(n : Int, random = Random::DEFAULT)
+    return super unless n == 1
+
+    if empty?
+      [] of T
+    else
+      [sample(random)]
+    end
   end
 
   # Returns a `Tuple` populated with the elements at the given indexes.

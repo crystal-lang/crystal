@@ -605,7 +605,7 @@ class Crystal::Doc::Type
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes?(entry.name)
+      if Symbol.needs_quotes_for_named_argument?(entry.name)
         entry.name.inspect(io)
       else
         io << entry.name

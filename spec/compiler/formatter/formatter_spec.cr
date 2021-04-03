@@ -107,6 +107,7 @@ describe Crystal::Formatter do
   assert_format "Foo( A , 1 )", "Foo(A, 1)"
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
+  assert_format "Foo(  * T, { * A  ,*\n  B } )", "Foo(*T, {*A, *B})"
 
   assert_format "NamedTuple(a: Int32,)", "NamedTuple(a: Int32)"
   assert_format "NamedTuple(\n  a: Int32,\n)"
@@ -294,6 +295,10 @@ describe Crystal::Formatter do
   assert_format "foo(1, ) do\nend", "foo(1) do\nend"
   assert_format "foo {;1}", "foo { 1 }"
   assert_format "foo {;;1}", "foo { 1 }"
+  assert_format "foo.%(bar)"
+  assert_format "foo.% bar"
+  assert_format "foo.bar(&.%(baz))"
+  assert_format "foo.bar(&.% baz)"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
@@ -617,6 +622,8 @@ describe Crystal::Formatter do
   assert_format "def foo(@x)\n\nrescue\nend"
 
   assert_format "macro foo\nend"
+  assert_format "macro foo=(x)\nend"
+  assert_format "macro []=(x, y)\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"

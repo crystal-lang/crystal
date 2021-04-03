@@ -54,7 +54,8 @@ describe "Float" do
   end
 
   describe "round" do
-    it { 2.5.round.should eq(3) }
+    it { 2.5.round.should eq(2) }
+    it { 3.5.round.should eq(4) }
     it { 2.4.round.should eq(2) }
   end
 
@@ -264,6 +265,26 @@ describe "Float" do
     (-1.0/0.0).finite?.should be_false
     (-0.0/0.0).finite?.should be_false
   end
+
+  {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+    it "converts infinity" do
+      Float32::INFINITY.to_f64.infinite?.should eq 1
+      Float32::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float32::INFINITY.to_i }
+      (-Float32::INFINITY).to_f64.infinite?.should eq -1
+      (-Float32::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float32::INFINITY).to_i }
+
+      Float64::INFINITY.to_f64.infinite?.should eq 1
+      Float64::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float64::INFINITY.to_i }
+      (-Float64::INFINITY).to_f64.infinite?.should eq -1
+      (-Float64::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float64::INFINITY).to_i }
+    end
+  {% else %}
+    pending "converts infinity"
+  {% end %}
 
   it "does unary -" do
     f = -(1.5)

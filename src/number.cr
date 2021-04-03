@@ -4,8 +4,38 @@ struct Number
 
   alias Primitive = Int::Primitive | Float::Primitive
 
+  # Returns the value zero in the respective type.
+  #
+  # ```
+  # Int32.zero   # => 0
+  # Float64.zero # => 0.0
+  # ```
   def self.zero : self
     new(0)
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # For numerical types, it is the value `0` expressed in the respective type.
+  #
+  # ```
+  # Int32.additive_identity   # => 0
+  # Float64.additive_identity # => 0.0
+  # ```
+  def self.additive_identity : self
+    zero
+  end
+
+  # Returns the multiplicative identity of this type.
+  #
+  # For numerical types, it is the value `1` expressed in the respective type.
+  #
+  # ```
+  # Int32.multiplicative_identity   # => 1
+  # Float64.multiplicative_identity # => 1.0
+  # ```
+  def self.multiplicative_identity : self
+    new(1)
   end
 
   # Returns self.
@@ -138,7 +168,7 @@ struct Number
       while true
         # only proceed if difference to limit is at least as big as step size to
         # avoid potential overflow errors.
-        sign = ((limit - current) <=> step).try(&.sign)
+        sign = ((limit - step) <=> current).try(&.sign)
         break unless sign == direction || (sign == 0 && !exclusive)
 
         current += step
@@ -216,7 +246,7 @@ struct Number
         @current
       elsif limit
         # compare distance to current with step size
-        case (limit - @current <=> @step).try(&.sign)
+        case ((limit - @step) <=> @current).try(&.sign)
         when @step.sign
           # distance is more than step size, so iteration proceeds
           @current += @step
@@ -232,7 +262,6 @@ struct Number
           # we've either overshot the limit or the comparison failed, so we can't
           # continue
           @reached_end = true
-
           stop
         end
       else
@@ -360,19 +389,76 @@ struct Number
     self.class.new((x / y).round * y)
   end
 
-  # Rounds this number to a given precision in decimal *digits*.
+  # Rounds this number to a given precision.
+  #
+  # Rounds to the specified number of *digits* after the decimal place,
+  # (or before if negative), in base *base*.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
   #
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits = 0, base = 10)
-    x = self.to_f
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even)
     if digits < 0
-      y = base.to_f ** digits.abs
-      self.class.new((x / y).round * y)
+      multiplier = base.to_f ** digits.abs
+      shifted = self / multiplier
     else
-      y = base.to_f ** digits
-      self.class.new((x * y).round / y)
+      multiplier = base.to_f ** digits
+      shifted = self * multiplier
+    end
+
+    rounded = shifted.round(mode)
+
+    if digits < 0
+      result = rounded * multiplier
+    else
+      result = rounded / multiplier
+    end
+
+    self.class.new result
+  end
+
+  # Specifies rounding behaviour for numerical operations capable of discarding
+  # precision.
+  enum RoundingMode
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds towards the even neighbor (Banker's rounding).
+    TIES_EVEN
+
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds away from zero.
+    TIES_AWAY
+
+    # Rounds towards zero (truncate).
+    TO_ZERO
+
+    # Rounds towards positive infinity (ceil).
+    TO_POSITIVE
+
+    # Rounds towards negative infinity (floor).
+    TO_NEGATIVE
+  end
+
+  # Rounds `self` to an integer value using rounding *mode*.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
+  def round(mode : RoundingMode = :ties_even) : self
+    case mode
+    in .to_zero?
+      trunc
+    in .to_positive?
+      ceil
+    in .to_negative?
+      floor
+    in .ties_away?
+      round_away
+    in .ties_even?
+      round_even
     end
   end
 

@@ -590,8 +590,9 @@ module Iterator(T)
   end
 
   # Returns a new iterator with the concatenated results of running the block
-  # (which is expected to return arrays or iterators)
   # once for every element in the collection.
+  # Only `Array` and `Iterator` results are concatenated; every other value is
+  # returned once in the new iterator.
   #
   # ```
   # iter = [1, 2, 3].each.flat_map { |x| [x, x] }
@@ -604,8 +605,8 @@ module Iterator(T)
   #
   # iter.to_a # => [1, 1, 2, 2, 3, 3]
   # ```
-  def flat_map(&func : T -> Array(U) | Iterator(U) | U) forall U
-    FlatMap(typeof(self), U, typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
+  def flat_map(&func : T -> _)
+    FlatMap(typeof(self), typeof(FlatMap.element_type(self, func)), typeof(FlatMap.iterator_type(self, func)), typeof(func)).new self, func
   end
 
   private class FlatMap(I0, T, I, F)
@@ -643,6 +644,18 @@ module Iterator(T)
         else
           value
         end
+      end
+    end
+
+    def self.element_type(iter, func)
+      value = iter.next
+      raise "" if value.is_a?(Stop)
+
+      case value = func.call value
+      when Array, Iterator
+        value.first
+      else
+        value
       end
     end
 

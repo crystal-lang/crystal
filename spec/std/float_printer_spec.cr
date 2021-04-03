@@ -52,7 +52,7 @@ private def test_pair(v : UInt32, str, file = __FILE__, line = __LINE__)
 end
 
 private def test_pair(v : Float64 | Float32, str, file = __FILE__, line = __LINE__)
-  float_to_s(v).should eq(str), file, line
+  float_to_s(v).should eq(str), file: file, line: line
 end
 
 describe "#print Float64" do

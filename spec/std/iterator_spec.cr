@@ -748,6 +748,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned items" do
@@ -756,6 +757,7 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned iterators" do
@@ -767,6 +769,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned values" do
@@ -786,6 +789,21 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "flattens returned values of mixed element types in #to_a" do
+      iter = [1, 'a', ""].each.flat_map do |x|
+        case x
+        when Int32
+          x
+        when Char
+          [x, x]
+        else
+          [x, x].each
+        end
+      end
+      iter.to_a.should eq([1, 'a', 'a', "", ""])
     end
   end
 

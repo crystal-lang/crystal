@@ -25,7 +25,7 @@
 # ```
 # require "http/client"
 #
-# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => author=John+Doe&offset=20
+# params = URI::Params.encode({"author" => "John Doe", "offset" => "20"}) # => "author=John+Doe&offset=20"
 # response = HTTP::Client.get URI.new("http", "www.example.com", query: params)
 # response.status_code # => 200
 # ```
@@ -859,7 +859,7 @@ class HTTP::Client
     user = uri.user
     password = uri.password
 
-    HTTP::Client.new(host, port, tls) do |client|
+    new(host, port, tls) do |client|
       if user && password
         client.basic_auth(user, password)
       end

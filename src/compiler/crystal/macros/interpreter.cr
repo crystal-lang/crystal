@@ -376,7 +376,7 @@ module Crystal
         named_args = node.named_args.try &.to_h { |arg| {arg.name, accept arg.value} }
 
         begin
-          @last = receiver.interpret(node.name, args, named_args, node.block, self)
+          @last = receiver.interpret(node.name, args, named_args, node.block, self, node.name_location)
         rescue ex : MacroRaiseException
           raise ex
         rescue ex : Crystal::CodeError
@@ -523,13 +523,13 @@ module Crystal
 
     def visit(node : Splat)
       node.exp.accept self
-      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 
     def visit(node : DoubleSplat)
       node.exp.accept self
-      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self)
+      @last = @last.interpret("double_splat", [] of ASTNode, nil, nil, self, node.location)
       false
     end
 

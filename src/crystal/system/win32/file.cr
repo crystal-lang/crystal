@@ -217,7 +217,7 @@ module Crystal::System::File
       LibC::FILE_SHARE_READ | LibC::FILE_SHARE_WRITE | LibC::FILE_SHARE_DELETE,
       nil,
       LibC::OPEN_EXISTING,
-      LibC::FILE_ATTRIBUTE_NORMAL,
+      LibC::FILE_FLAG_BACKUP_SEMANTICS,
       LibC::HANDLE.null
     )
     if handle == LibC::INVALID_HANDLE_VALUE

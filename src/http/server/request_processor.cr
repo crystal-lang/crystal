@@ -36,13 +36,14 @@ class HTTP::Server::RequestProcessor
         # EOF
         break unless request
 
+        response.reset
+
         if request.is_a?(HTTP::Status)
           response.respond_with_status(request)
           return
         end
 
         response.version = request.version
-        response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 

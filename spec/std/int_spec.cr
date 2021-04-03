@@ -9,8 +9,6 @@ end
 
 private def to_s_with_io(num, base, upcase = false)
   String.build { |io| num.to_s(io, base, upcase: upcase) }
-  # Test deprecated overload:
-  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
@@ -176,7 +174,6 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
-    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }

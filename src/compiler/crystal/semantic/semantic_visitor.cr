@@ -509,10 +509,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node.raise msg
     end
 
-    if type.is_a?(TypeDefType) && type.typedef.proc?
-      type = type.typedef
-    end
-
     type
   end
 
