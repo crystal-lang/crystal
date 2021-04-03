@@ -1259,16 +1259,14 @@ class Array(T)
   # of the *arrays* as `Array`s.
   # Traversal of elements starts from the last given array.
   @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
-  def self.product(arrays)
+  def self.product(arrays : Array(Array))
     Indexable.cartesian_product(arrays)
   end
 
-  # Returns an `Array` of all ordered combinations of elements taken from each
-  # of the *arrays* as `Array`s.
-  # Traversal of elements starts from the last given array.
-  @[Deprecated("Use `Indexable#cartesian_product(*others : Indexable)` instead")]
+  # :ditto:
+  @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(*arrays : Array)
-    Indexable.cartesian_product(arrays.to_a)
+    Indexable.cartesian_product(*arrays)
   end
 
   # Yields each ordered combination of the elements taken from each of the
@@ -1279,12 +1277,10 @@ class Array(T)
     Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
-  # Yields each ordered combination of the elements taken from each of the
-  # *arrays* as `Array`s.
-  # Traversal of elements starts from the last given array.
-  @[Deprecated("Use `Indexable#each_cartesian(*others : Indexable, &block)` instead")]
+  # :ditto:
+  @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(*arrays : Array, reuse = false)
-    Indexable.each_cartesian(arrays.to_a, reuse: reuse) { |r| yield r }
+    Indexable.each_cartesian(*arrays, reuse: reuse) { |r| yield r }
   end
 
   def repeated_permutations(size : Int = self.size)
