@@ -1262,7 +1262,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def self.product(arrays)
+  def self.product(arrays : Array(Array))
     result = [] of Array(typeof(arrays.first.first))
     each_product(arrays) do |product|
       result << product
