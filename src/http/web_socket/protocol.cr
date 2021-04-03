@@ -106,7 +106,7 @@ class HTTP::WebSocket::Protocol
     @io.flush if flush
   end
 
-  def receive(buffer : Bytes)
+  def receive(buffer : Bytes) : HTTP::WebSocket::Protocol::PacketInfo
     if @remaining == 0
       opcode = read_header
     else

@@ -93,7 +93,7 @@ class UDPSocket < IPSocket
 
   # Reports whether transmitted multicast packets should be copied and sent
   # back to the originator.
-  def multicast_loopback?
+  def multicast_loopback? : Bool
     case @family
     when Family::INET
       getsockopt_bool LibC::IP_MULTICAST_LOOP, LibC::IPPROTO_IP
@@ -122,7 +122,7 @@ class UDPSocket < IPSocket
   # Multicast datagrams with a `hoplimit` of `0` will not be transmitted on any
   # network, but may be delivered locally if the sending host belongs to the
   # destination group and multicast loopback is enabled.
-  def multicast_hops
+  def multicast_hops : Int32
     case @family
     when Family::INET
       getsockopt LibC::IP_MULTICAST_TTL, 0, LibC::IPPROTO_IP

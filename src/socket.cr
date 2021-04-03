@@ -68,7 +68,7 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = false)
+  def self.tcp(family : Family, blocking = false) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -80,7 +80,7 @@ class Socket < IO
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false)
+  def self.unix(type : Type = Type::STREAM, blocking = false) : self
     new(Family::UNIX, type, blocking: blocking)
   end
 
@@ -256,7 +256,7 @@ class Socket < IO
   #   socket.close
   # end
   # ```
-  def accept?
+  def accept? : Socket?
     if client_fd = accept_impl
       sock = Socket.new(client_fd, family, type, protocol, blocking)
       sock.sync = sync?
@@ -397,7 +397,7 @@ class Socket < IO
     io << "#<#{self.class}:fd #{fd}>"
   end
 
-  def send_buffer_size
+  def send_buffer_size : Int32
     getsockopt LibC::SO_SNDBUF, 0
   end
 
@@ -406,7 +406,7 @@ class Socket < IO
     val
   end
 
-  def recv_buffer_size
+  def recv_buffer_size : Int32
     getsockopt LibC::SO_RCVBUF, 0
   end
 
@@ -415,7 +415,7 @@ class Socket < IO
     val
   end
 
-  def reuse_address?
+  def reuse_address? : Bool
     getsockopt_bool LibC::SO_REUSEADDR
   end
 
@@ -423,7 +423,7 @@ class Socket < IO
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
-  def reuse_port?
+  def reuse_port? : Bool
     getsockopt(LibC::SO_REUSEPORT, 0) do |value|
       return value != 0
     end
@@ -439,7 +439,7 @@ class Socket < IO
     setsockopt_bool LibC::SO_REUSEPORT, val
   end
 
-  def broadcast?
+  def broadcast? : Bool
     getsockopt_bool LibC::SO_BROADCAST
   end
 
@@ -517,13 +517,13 @@ class Socket < IO
   end
 
   # Returns `true` if the string represents a valid IPv4 or IPv6 address.
-  def self.ip?(string : String)
+  def self.ip?(string : String) : Bool
     addr = LibC::In6Addr.new
     ptr = pointerof(addr).as(Void*)
     LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
   end
 
-  def blocking
+  def blocking : Bool
     fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
   end
 

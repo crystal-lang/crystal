@@ -69,7 +69,7 @@ class HTTP::Server
     end
 
     # Convenience method to retrieve the HTTP status code.
-    def status_code
+    def status_code : Int32
       status.code
     end
 
@@ -87,7 +87,7 @@ class HTTP::Server
     end
 
     # Convenience method to set cookies, see `HTTP::Cookies`.
-    def cookies
+    def cookies : HTTP::Cookies
       @cookies ||= HTTP::Cookies.new
     end
 

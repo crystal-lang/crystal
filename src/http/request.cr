@@ -57,26 +57,26 @@ class HTTP::Request
 
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
-  def cookies
+  def cookies : HTTP::Cookies
     @cookies ||= Cookies.from_client_headers(headers)
   end
 
   # Returns a convenience wrapper around querying and setting query params,
   # see `URI::Params`.
-  def query_params
+  def query_params : URI::Params
     @query_params ||= uri.query_params
   end
 
-  def resource
+  def resource : String
     update_uri
     @uri.try(&.request_target) || @resource
   end
 
-  def keep_alive?
+  def keep_alive? : Bool
     HTTP.keep_alive?(self)
   end
 
-  def ignore_body?
+  def ignore_body? : Bool
     @method == "HEAD"
   end
 
@@ -237,7 +237,7 @@ class HTTP::Request
   end
 
   # Returns the request's path component.
-  def path
+  def path : String
     uri.path.presence || "/"
   end
 
@@ -247,7 +247,7 @@ class HTTP::Request
   end
 
   # Lazily parses and returns the request's query component.
-  def query
+  def query : String?
     update_uri
     uri.query
   end
@@ -287,7 +287,7 @@ class HTTP::Request
 
   # Returns request host with port from headers.
   @[Deprecated(%q(Use `headers["Host"]?` instead.))]
-  def host_with_port
+  def host_with_port : String?
     @headers["Host"]?
   end
 
