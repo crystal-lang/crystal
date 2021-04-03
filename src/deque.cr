@@ -465,7 +465,7 @@ class Deque(T)
   end
 
   # Removes the last *n* (at most) items in the deque.
-  def pop(n : Int)
+  def pop(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
     end
@@ -546,7 +546,7 @@ class Deque(T)
   end
 
   # Removes the first *n* (at most) items in the deque.
-  def shift(n : Int)
+  def shift(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
     end

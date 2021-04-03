@@ -15,7 +15,7 @@ class Crypto::Blowfish
     @s3 = @s.to_unsafe + 768
   end
 
-  def expand_key(key)
+  def expand_key(key) : Nil
     pos = 0
 
     0.upto(17) do |i|

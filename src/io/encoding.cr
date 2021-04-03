@@ -12,7 +12,7 @@ class IO
       EncodingOptions.check_invalid(invalid)
     end
 
-    def self.check_invalid(invalid)
+    def self.check_invalid(invalid) : Nil
       if invalid && invalid != :skip
         raise ArgumentError.new "Valid values for `invalid` option are `nil` and `:skip`, not #{invalid.inspect}"
       end

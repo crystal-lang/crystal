@@ -77,7 +77,7 @@ module IO::ByteFormat
   abstract def decode(int : Int128.class, bytes : Bytes)
   abstract def decode(int : UInt128.class, bytes : Bytes)
 
-  def encode(float : Float32, io : IO)
+  def encode(float : Float32, io : IO) : Nil
     encode(float.unsafe_as(Int32), io)
   end
 
@@ -93,7 +93,7 @@ module IO::ByteFormat
     decode(Int32, bytes).unsafe_as(Float32)
   end
 
-  def encode(float : Float64, io : IO)
+  def encode(float : Float64, io : IO) : Nil
     encode(float.unsafe_as(Int64), io)
   end
 

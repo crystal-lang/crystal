@@ -125,7 +125,7 @@ class Socket < IO
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.connect "crystal-lang.org", 80
   # ```
-  def connect(host : String, port : Int, connect_timeout = nil)
+  def connect(host : String, port : Int, connect_timeout = nil) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
       connect(addrinfo, timeout: connect_timeout) { |error| error }
     end
@@ -172,7 +172,7 @@ class Socket < IO
   # sock = Socket.tcp(Socket::Family::INET)
   # sock.bind "localhost", 1234
   # ```
-  def bind(host : String, port : Int)
+  def bind(host : String, port : Int) : Nil
     Addrinfo.resolve(host, port, @family, @type, @protocol) do |addrinfo|
       bind(addrinfo, "#{host}:#{port}") { |errno| errno }
     end
@@ -200,7 +200,7 @@ class Socket < IO
   # sock = Socket.udp(Socket::Family::INET)
   # sock.bind Socket::IPAddress.new("192.168.1.25", 80)
   # ```
-  def bind(addr : Socket::Address)
+  def bind(addr : Socket::Address) : Nil
     bind(addr, addr.to_s) { |errno| raise errno }
   end
 
@@ -213,7 +213,7 @@ class Socket < IO
   end
 
   # Tells the previously bound socket to listen for incoming connections.
-  def listen(backlog : Int = SOMAXCONN)
+  def listen(backlog : Int = SOMAXCONN) : Nil
     listen(backlog) { |errno| raise errno }
   end
 

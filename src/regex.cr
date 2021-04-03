@@ -433,7 +433,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other)
+  def =~(other) : Nil
     nil
   end
 

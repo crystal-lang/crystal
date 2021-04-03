@@ -327,7 +327,7 @@ class YAML::PullParser
   end
 
   # Raises if the current kind is not the expected one.
-  def expect_kind(kind : EventKind)
+  def expect_kind(kind : EventKind) : Nil
     raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 

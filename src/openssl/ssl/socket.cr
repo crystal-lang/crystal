@@ -65,7 +65,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def accept
+    def accept : Nil
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
         @bio.io.close if @sync_close

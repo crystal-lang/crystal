@@ -409,7 +409,7 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
     string.each_byte do |byte|

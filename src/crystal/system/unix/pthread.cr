@@ -51,7 +51,7 @@ class Thread
   end
 
   # Suspends the current thread until this thread terminates.
-  def join
+  def join : Nil
     detach { GC.pthread_join(@th) }
 
     if exception = @exception
@@ -103,7 +103,7 @@ class Thread
     end
   {% end %}
 
-  def self.yield
+  def self.yield : Nil
     ret = LibC.sched_yield
     raise RuntimeError.from_errno("sched_yield") unless ret == 0
   end

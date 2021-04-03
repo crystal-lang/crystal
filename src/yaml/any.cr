@@ -307,7 +307,7 @@ struct YAML::Any
   def_hash raw
 
   # :nodoc:
-  def to_yaml(io)
+  def to_yaml(io) : Nil
     raw.to_yaml(io)
   end
 

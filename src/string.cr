@@ -2919,7 +2919,7 @@ class String
   end
 
   # :ditto:
-  def =~(other)
+  def =~(other) : Nil
     nil
   end
 
@@ -5008,7 +5008,7 @@ class String
   end
 
   # :nodoc:
-  def self.check_capacity_in_bounds(capacity)
+  def self.check_capacity_in_bounds(capacity) : Nil
     if capacity < 0
       raise ArgumentError.new("Negative capacity")
     end

@@ -109,7 +109,7 @@ module ENV
     end
   end
 
-  def self.clear
+  def self.clear : Nil
     keys.each { |k| delete k }
   end
 

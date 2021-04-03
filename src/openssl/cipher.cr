@@ -17,11 +17,11 @@ class OpenSSL::Cipher
     cipherinit cipher: cipher, key: "\0" * LibCrypto::EVP_MAX_KEY_LENGTH
   end
 
-  def encrypt
+  def encrypt : Nil
     cipherinit enc: 1
   end
 
-  def decrypt
+  def decrypt : Nil
     cipherinit enc: 0
   end
 

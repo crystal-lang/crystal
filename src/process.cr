@@ -289,7 +289,7 @@ class Process
   end
 
   # Sends *signal* to this process.
-  def signal(signal : Signal)
+  def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
 
@@ -320,7 +320,7 @@ class Process
   end
 
   # Closes any system resources (e.g. pipes) held for the child process.
-  def close
+  def close : Nil
     close_io @input
     close_io @output
     close_io @error
@@ -328,7 +328,7 @@ class Process
   end
 
   # Asks this process to terminate gracefully
-  def terminate
+  def terminate : Nil
     @process_info.terminate
   end
 

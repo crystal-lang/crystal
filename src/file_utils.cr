@@ -56,7 +56,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.touch`
-  def touch(path : String, time : Time = Time.utc)
+  def touch(path : String, time : Time = Time.utc) : Nil
     File.touch(path, time)
   end
 
@@ -70,7 +70,7 @@ module FileUtils
   #
   # FileUtils.touch(["foo", "bar"])
   # ```
-  def touch(paths : Enumerable(String), time : Time = Time.utc)
+  def touch(paths : Enumerable(String), time : Time = Time.utc) : Nil
     paths.each do |path|
       touch(path, time)
     end
@@ -88,7 +88,7 @@ module FileUtils
   # FileUtils.cp("afile", "afile_copy")
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
-  def cp(src_path : String, dest : String)
+  def cp(src_path : String, dest : String) : Nil
     dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
     File.copy(src_path, dest)
   end
@@ -102,7 +102,7 @@ module FileUtils
   # Dir.mkdir("files")
   # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
-  def cp(srcs : Enumerable(String), dest : String)
+  def cp(srcs : Enumerable(String), dest : String) : Nil
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       cp(src, dest)
@@ -118,7 +118,7 @@ module FileUtils
   #
   # FileUtils.cp_r("files", "dir")
   # ```
-  def cp_r(src_path : String, dest_path : String)
+  def cp_r(src_path : String, dest_path : String) : Nil
     dest_path = File.join(dest_path, File.basename(src_path)) if File.directory?(dest_path)
     cp_recursive(src_path, dest_path)
   end
@@ -164,7 +164,7 @@ module FileUtils
   # # Create /usr/bin/vim, /usr/bin/emacs, and /usr/bin/nano as hard links
   # FileUtils.ln(["vim", "emacs", "nano"], "/usr/bin")
   # ```
-  def ln(src_paths : Enumerable(String), dest_dir : String)
+  def ln(src_paths : Enumerable(String), dest_dir : String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|
@@ -200,7 +200,7 @@ module FileUtils
   # # Create symbolic links in src/ pointing to every .c file in the current directory
   # FileUtils.ln_s(Dir["*.c"], "src")
   # ```
-  def ln_s(src_paths : Enumerable(String), dest_dir : String)
+  def ln_s(src_paths : Enumerable(String), dest_dir : String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|
@@ -238,7 +238,7 @@ module FileUtils
   # # even if it means overwriting files in src/
   # FileUtils.ln_sf(Dir["*.c"], "src")
   # ```
-  def ln_sf(src_paths : Enumerable(String), dest_dir : String)
+  def ln_sf(src_paths : Enumerable(String), dest_dir : String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|

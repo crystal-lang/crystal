@@ -76,7 +76,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Closes the socket, then deletes the filesystem pathname if it exists.
-  def close(delete = true)
+  def close(delete = true) : Nil
     super()
   ensure
     if delete && (path = @path)

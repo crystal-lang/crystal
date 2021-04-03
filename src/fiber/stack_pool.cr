@@ -12,7 +12,7 @@ class Fiber
 
     # Removes and frees at most *count* stacks from the top of the pool,
     # returning memory to the operating system.
-    def collect(count = lazy_size // 2)
+    def collect(count = lazy_size // 2) : Nil
       count.times do
         if stack = @mutex.synchronize { @deque.shift? }
           Crystal::System::Fiber.free_stack(stack, STACK_SIZE)

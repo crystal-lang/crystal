@@ -125,7 +125,7 @@ enum Signal : Int32
   @@setup_default_handlers = Atomic::Flag.new
 
   # :nodoc:
-  def self.setup_default_handlers
+  def self.setup_default_handlers : Nil
     return unless @@setup_default_handlers.test_and_set
     LibC.sigemptyset(pointerof(@@sigset))
     Crystal::Signal.start_loop
