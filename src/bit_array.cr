@@ -39,7 +39,7 @@ struct BitArray
     return LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : Bool
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
