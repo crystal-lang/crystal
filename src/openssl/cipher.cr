@@ -62,7 +62,7 @@ class OpenSSL::Cipher
     buffer[0, buffer_length]
   end
 
-  def final
+  def final : Bytes
     buffer_length = block_size
     buffer = Bytes.new(buffer_length)
 
@@ -81,21 +81,21 @@ class OpenSSL::Cipher
     pad
   end
 
-  def name
+  def name : String
     nid = LibCrypto.evp_cipher_nid cipher
     sn = LibCrypto.obj_nid2sn nid
     String.new sn
   end
 
-  def block_size
+  def block_size : Int32
     LibCrypto.evp_cipher_block_size cipher
   end
 
-  def key_len
+  def key_len : Int32
     LibCrypto.evp_cipher_key_length cipher
   end
 
-  def iv_len
+  def iv_len : Int32
     LibCrypto.evp_cipher_iv_length cipher
   end
 
@@ -104,7 +104,7 @@ class OpenSSL::Cipher
     @ctx = typeof(@ctx).null
   end
 
-  def authenticated?
+  def authenticated? : Bool
     LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
   end
 

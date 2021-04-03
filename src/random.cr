@@ -415,7 +415,7 @@ module Random
 end
 
 # See `Random#rand`.
-def rand
+def rand : Float64
   Random.rand
 end
 

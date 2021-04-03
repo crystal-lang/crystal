@@ -64,7 +64,7 @@ module OpenSSL::X509
     # name = OpenSSL::X509::Name.parse("CN=Nobody/DC=example")
     # name.to_a # => [{"CN", "Nobody"}, {"DC", "example"}]
     # ```
-    def to_a
+    def to_a : Array({String, String})
       count = LibCrypto.x509_name_entry_count(@name)
       raise Error.new("X509_NAME_entry_count") if count < 0
 
