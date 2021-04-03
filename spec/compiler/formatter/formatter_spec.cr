@@ -591,6 +591,12 @@ describe Crystal::Formatter do
   assert_format "(1 .. )", "(1..)"
   assert_format " .. 2", "..2"
 
+  assert_format "1..\n2"
+  assert_format "1\n.."
+  assert_format "1\n..2"
+  assert_format "...\n2"
+  assert_format "1\n..\n2"
+
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
   assert_format "instance_sizeof( Int32 )", "instance_sizeof(Int32)"
