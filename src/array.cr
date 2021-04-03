@@ -1273,7 +1273,7 @@ class Array(T)
   # :ditto:
   @[Deprecated("Use `Indexable.cartesian_product(indexables : Indexable(Indexable))` instead")]
   def self.product(*arrays : Array)
-    Indexable.cartesian_product(*arrays)
+    Indexable.cartesian_product(arrays)
   end
 
   # Yields each ordered combination of the elements taken from each of the
@@ -1287,7 +1287,7 @@ class Array(T)
   # :ditto:
   @[Deprecated("Use `Indexable.each_cartesian(indexables : Indexable(Indexable), reuse = false, &block)` instead")]
   def self.each_product(*arrays : Array, reuse = false)
-    Indexable.each_cartesian(*arrays, reuse: reuse) { |r| yield r }
+    Indexable.each_cartesian(arrays, reuse: reuse) { |r| yield r }
   end
 
   def repeated_permutations(size : Int = self.size)
