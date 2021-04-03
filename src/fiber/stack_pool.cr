@@ -23,7 +23,7 @@ class Fiber
     end
 
     # Removes a stack from the bottom of the pool, or allocates a new one.
-    def checkout
+    def checkout : {Void*, Void*}
       stack = @mutex.synchronize { @deque.pop? } || Crystal::System::Fiber.allocate_stack(STACK_SIZE)
       {stack, stack + STACK_SIZE}
     end
@@ -35,7 +35,7 @@ class Fiber
 
     # Returns the approximated size of the pool. It may be equal or slightly
     # bigger or smaller than the actual size.
-    def lazy_size
+    def lazy_size : Int32
       @mutex.synchronize { @deque.size }
     end
   end

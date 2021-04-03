@@ -109,12 +109,12 @@ class Thread
   end
 
   # Returns the Fiber representing the thread's main stack.
-  def main_fiber
+  def main_fiber : Fiber
     @main_fiber.not_nil!
   end
 
   # :nodoc:
-  def scheduler
+  def scheduler : Crystal::Scheduler
     @scheduler ||= Crystal::Scheduler.new(main_fiber)
   end
 

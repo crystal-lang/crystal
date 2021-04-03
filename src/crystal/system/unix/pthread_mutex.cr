@@ -20,7 +20,7 @@ class Thread
       raise RuntimeError.from_errno("pthread_mutex_lock", Errno.new(ret)) unless ret == 0
     end
 
-    def try_lock
+    def try_lock : Bool
       case ret = Errno.new(LibC.pthread_mutex_trylock(self))
       when .none?
         true

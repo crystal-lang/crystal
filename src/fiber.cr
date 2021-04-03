@@ -157,25 +157,25 @@ class Fiber
   end
 
   # Returns the current fiber.
-  def self.current
+  def self.current : Fiber
     Crystal::Scheduler.current_fiber
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
   # fiber can't be resumed.
-  def running?
+  def running? : Bool
     @context.resumable == 0
   end
 
   # The fiber's proc is currently not running and fully saved its context. The
   # fiber can be resumed safely.
-  def resumable?
+  def resumable? : Bool
     @context.resumable == 1
   end
 
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
-  def dead?
+  def dead? : Bool
     @alive == false
   end
 
@@ -207,12 +207,12 @@ class Fiber
   end
 
   # :nodoc:
-  def resume_event
+  def resume_event : Crystal::Event
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)
   end
 
   # :nodoc:
-  def timeout_event
+  def timeout_event : Crystal::Event
     @timeout_event ||= Crystal::EventLoop.create_timeout_event(self)
   end
 

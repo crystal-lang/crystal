@@ -68,15 +68,15 @@ module GC
     bytes_reclaimed_since_gc : LibC::ULong,
     reclaimed_bytes_before_gc : LibC::ULong
 
-  def self.malloc(size : Int)
+  def self.malloc(size : Int) : Void*
     malloc(LibC::SizeT.new(size))
   end
 
-  def self.malloc_atomic(size : Int)
+  def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
   end
 
-  def self.realloc(pointer : Void*, size : Int)
+  def self.realloc(pointer : Void*, size : Int) : Void*
     realloc(pointer, LibC::SizeT.new(size))
   end
 end
