@@ -132,13 +132,13 @@ class JSON::PullParser
   end
 
   # Reads the beginning of an array.
-  def read_begin_array : JSON::PullParser::Kind
+  def read_begin_array
     expect_kind :begin_array
     read_next
   end
 
   # Reads the end of an array.
-  def read_end_array : JSON::PullParser::Kind
+  def read_end_array
     expect_kind :end_array
     read_next
   end
@@ -158,13 +158,13 @@ class JSON::PullParser
   end
 
   # Reads the beginning of an object.
-  def read_begin_object : JSON::PullParser::Kind
+  def read_begin_object
     expect_kind :begin_object
     read_next
   end
 
   # Reads the end of an object.
-  def read_end_object : JSON::PullParser::Kind
+  def read_end_object
     expect_kind :end_object
     read_next
   end
@@ -392,7 +392,7 @@ class JSON::PullParser
   #
   # Contrary to `read_raw`, it does not read a full value.
   # For example if the next token is the beginning of an array, it will stop there, while `read_raw` would have read the whole array.
-  def read_next : JSON::PullParser::Kind
+  def read_next : Kind
     read_next_internal
     @kind
   end
