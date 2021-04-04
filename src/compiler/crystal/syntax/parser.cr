@@ -623,9 +623,8 @@ module Crystal
           end
 
           # Allow '.' after newline for chaining calls
-          break unless lookahead(preserve_token_on_fail: true) do
-            next_token_skip_space_or_newline
-            @token.type == :"."
+          unless lookahead(preserve_token_on_fail: true) { next_token_skip_space_or_newline; @token.type == :"." }
+            break
           end
         when :"."
           check_void_value atomic, location
