@@ -26,7 +26,6 @@ module Crystal
 
     def initialize(str, string_pool : StringPool? = nil, @def_vars = [Set(String).new])
       super(str, string_pool)
-      @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
       @calls_super = false
       @calls_initialize = false
@@ -624,13 +623,9 @@ module Crystal
           end
 
           # Allow '.' after newline for chaining calls
-          old_pos, old_line, old_column = current_pos, @line_number, @column_number
-          @temp_token.copy_from @token
-          next_token_skip_space_or_newline
-          unless @token.type == :"."
-            self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-            @token.copy_from @temp_token
-            break
+          break unless lookahead(preserve_token_on_fail: true) do
+            next_token_skip_space_or_newline
+            @token.type == :"."
           end
         when :"."
           check_void_value atomic, location
@@ -965,21 +960,10 @@ module Crystal
         location = @token.location
         var = Var.new(@token.to_s).at(location)
 
-        old_pos, old_line, old_column = current_pos, @line_number, @column_number
-        @temp_token.copy_from(@token)
-
-        next_token_skip_space
-
-        if @token.type == :"="
-          @token.copy_from(@temp_token)
-          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-
+        if peek_ahead { next_token_skip_space; @token.type == :"=" }
           push_var var
           node_and_next_token var
         else
-          @token.copy_from(@temp_token)
-          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-
           node_and_next_token Global.new(var.name).at(location)
         end
       when :GLOBAL_MATCH_DATA_INDEX
@@ -5080,20 +5064,18 @@ module Crystal
 
     # Looks ahead next tokens to check whether they indicate type.
     def type_start?(*, consume_newlines)
-      old_pos, old_line, old_column = current_pos, @line_number, @column_number
-      @temp_token.copy_from(@token)
+      peek_ahead do
+        begin
+          if consume_newlines
+            next_token_skip_space_or_newline
+          else
+            next_token_skip_space
+          end
 
-      begin
-        if consume_newlines
-          next_token_skip_space_or_newline
-        else
-          next_token_skip_space
+          type_start?
+        rescue
+          false
         end
-
-        type_start?
-      ensure
-        @token.copy_from(@temp_token)
-        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
       end
     end
 
