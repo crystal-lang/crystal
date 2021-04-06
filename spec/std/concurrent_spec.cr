@@ -82,6 +82,6 @@ describe "concurrent" do
       end
     end
 
-    Array(Int32).new(5, 0).map! { chan.receive }.should eq [1, 2, 10, 3, 20]
+    Array(Int32).new(5) { chan.receive }.should eq [1, 2, 10, 3, 20]
   end
 end
