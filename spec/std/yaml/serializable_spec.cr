@@ -374,6 +374,12 @@ end
 class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
 end
 
+class YAMLAttrWithNilableString
+  include YAML::Serializable
+
+  property value : String? = "default"
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -826,6 +832,21 @@ describe "YAML::Serializable" do
     obj = YAMLAttrWithNilableUnion2.from_yaml(%({}))
     obj.value.should be_nil
     obj.to_yaml.should eq("--- {}\n")
+  end
+
+  it "doesn't parse single quoted string as nil (#10606)" do
+    obj = YAMLAttrWithNilableString.from_yaml(%{"value": ''})
+    obj.value.should eq("")
+  end
+
+  it "doesn't parse double quoted string as nil (#10606)" do
+    obj = YAMLAttrWithNilableString.from_yaml(%{"value": ""})
+    obj.value.should eq("")
+  end
+
+  it "uses the default value for nilable string when the property is missing (#10606)" do
+    obj = YAMLAttrWithNilableString.from_yaml(%{})
+    obj.value.should eq("default")
   end
 
   describe "parses YAML with presence markers" do

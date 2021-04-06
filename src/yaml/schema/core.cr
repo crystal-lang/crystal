@@ -129,7 +129,10 @@ module YAML::Schema::Core
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
   def self.parse_null_or(node : YAML::Nodes::Node)
-    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node.value)
+    if node.is_a?(YAML::Nodes::Scalar) &&
+      !node.style.single_quoted? &&
+      !node.style.double_quoted? &&
+      parse_null?(node.value)
       nil
     else
       yield
