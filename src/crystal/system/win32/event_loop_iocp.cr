@@ -11,7 +11,7 @@ module Crystal::EventLoop
       sleep_time = next_event.wake_at - Time.monotonic
 
       if sleep_time > Time::Span.zero
-        LibC.Sleep(sleep_time.milliseconds)
+        LibC.Sleep(sleep_time.total_milliseconds)
       end
 
       dequeue next_event
