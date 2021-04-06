@@ -86,7 +86,8 @@ struct Number
     ((i - (i > 0 ? 1 : 0)) // group) * group
   end
 
-  # Pretty prints this number as a `String` in a human-readable format.
+  # Pretty prints this number in a human-readable format, then returns it as a
+  # `String` or writes it to the given *io*.
   #
   # This is particularly useful if a number can have a wide value range and
   # the *exact* value is less relevant.
@@ -119,7 +120,16 @@ struct Number
     end
   end
 
-  # Pretty prints this number as a `String` in a human-readable format.
+  # :ditto:
+  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Indexable = SI_PREFIXES) : Nil
+    humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, _|
+      magnitude = Number.prefix_index(magnitude)
+      {magnitude, Number.si_prefix(magnitude, prefixes)}
+    end
+  end
+
+  # Pretty prints this number in a human-readable format, then returns it as a
+  # `String` or writes it to the given *io*.
   #
   # This overload yields the order of magnitude and `self` and expects the block
   # to return a `Tuple` containing the (adjusted) magnitude, the unit, and
@@ -148,30 +158,6 @@ struct Number
       humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, number|
         yield magnitude, number
       end
-    end
-  end
-
-  # Pretty prints this number as a `String` in a human-readable format.
-  #
-  # This overload invokes the given *prefixes* with the order of magnitude and
-  # `self`, and expects similar return values as the overload that accepts a
-  # block.
-  #
-  # ```
-  # 123.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "123 "
-  # 0.4.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "400m"
-  # ```
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
-    String.build do |io|
-      humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
-    end
-  end
-
-  # Pretty prints this number to the given *io* in a human-readable format.
-  def humanize(io : IO, precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Indexable = SI_PREFIXES) : Nil
-    humanize(io, precision, separator, delimiter, base: base, significant: significant) do |magnitude, _|
-      magnitude = Number.prefix_index(magnitude)
-      {magnitude, Number.si_prefix(magnitude, prefixes)}
     end
   end
 
@@ -220,6 +206,23 @@ struct Number
     number.format(io, separator, delimiter, decimal_places: decimal_places, only_significant: significant)
 
     io << unit
+  end
+
+  # Pretty prints this number in a human-readable format, then returns it as a
+  # `String` or writes it to the given *io*.
+  #
+  # This overload invokes the given *prefixes* with the order of magnitude and
+  # `self`, and expects similar return values as the overload that accepts a
+  # block.
+  #
+  # ```
+  # 123.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "123 "
+  # 0.4.humanize(prefixes: Number::SI_PREFIXES_PADDED) # => "400m"
+  # ```
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
+    String.build do |io|
+      humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
+    end
   end
 
   # :ditto:
