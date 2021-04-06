@@ -1,6 +1,11 @@
-require "c/arpa/inet"
-require "c/sys/un"
-require "c/netinet/in"
+{% if flag?(:win32) %}
+  require "c/ws2tcpip"
+  require "c/afunix"
+{% else %}
+  require "c/arpa/inet"
+  require "c/sys/un"
+  require "c/netinet/in"
+{% end %}
 
 class Socket
   enum Protocol
@@ -11,7 +16,14 @@ class Socket
     ICMP = LibC::IPPROTO_ICMP
   end
 
-  enum Family : LibC::SaFamilyT
+  # :nodoc:
+  {% if flag?(:win32) %}
+    alias FamilyT = UInt8
+  {% else %}
+    alias FamilyT = LibC::SaFamilyT
+  {% end %}
+
+  enum Family : FamilyT
     UNSPEC = LibC::AF_UNSPEC
     UNIX   = LibC::AF_UNIX
     INET   = LibC::AF_INET

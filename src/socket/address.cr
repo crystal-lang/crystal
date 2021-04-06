@@ -246,6 +246,8 @@ class Socket
         addr.__in6_union.__s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
+      {% elsif flag?(:win32) %}
+        addr.u.byte
       {% else %}
         {% raise "Unsupported platform" %}
       {% end %}
