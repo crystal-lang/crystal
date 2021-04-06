@@ -71,13 +71,13 @@ describe "concurrent" do
     chan = Channel(Int32).new
     spawn do
       3.times do |i|
-        sleep 20.milliseconds
+        sleep 40.milliseconds
         chan.send (i + 1)
       end
     end
     spawn do
       2.times do |i|
-        sleep 50.milliseconds
+        sleep 100.milliseconds
         chan.send (i + 1) * 10
       end
     end
