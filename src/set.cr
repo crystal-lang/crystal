@@ -185,8 +185,8 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yields each element of the set, and returns `self`.
-  def each
+  # Yields each element of the set, and returns `nil`.
+  def each : Nil
     @hash.each_key do |key|
       yield key
     end
@@ -430,11 +430,6 @@ struct Set(T)
     all? { |value| other.includes?(value) }
   end
 
-  @[Deprecated("Use #subset_of? instead.")]
-  def subset?(other : Set)
-    subset_of?(other)
-  end
-
   # Returns `true` if the set is a proper subset of the *other* set.
   #
   # This set must have fewer elements than the *other* set, and all
@@ -447,11 +442,6 @@ struct Set(T)
   def proper_subset_of?(other : Set)
     return false if other.size <= size
     all? { |value| other.includes?(value) }
-  end
-
-  @[Deprecated("Use #proper_subset_of? instead.")]
-  def proper_subset?(other : Set)
-    proper_subset_of?(other)
   end
 
   # Returns `true` if the set is a superset of the *other* set.
@@ -467,11 +457,6 @@ struct Set(T)
     other.subset_of?(self)
   end
 
-  @[Deprecated("Use #superset_of? instead.")]
-  def superset?(other : Set)
-    superset_of?(other)
-  end
-
   # Returns `true` if the set is a superset of the *other* set.
   #
   # The *other* must have the same or fewer elements than this set, and all of
@@ -483,11 +468,6 @@ struct Set(T)
   # ```
   def proper_superset_of?(other : Set)
     other.proper_subset_of?(self)
-  end
-
-  @[Deprecated("Use #proper_superset_of? instead.")]
-  def proper_superset?(other : Set)
-    proper_superset_of?(other)
   end
 
   # :nodoc:

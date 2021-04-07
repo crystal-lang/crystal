@@ -1,6 +1,6 @@
 require "./node"
 
-struct XML::Attributes
+class XML::Attributes
   include Enumerable(Node)
 
   def initialize(@node : Node)

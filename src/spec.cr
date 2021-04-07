@@ -1,4 +1,5 @@
 require "./spec/dsl"
+require "./spec/cli"
 
 # Crystal's built-in testing library. It provides a structure for writing executable examples
 # of how your code should behave. A domain specific language allows you to write them in a way similar to natural language.
@@ -94,60 +95,22 @@ end
 
 Colorize.on_tty_only!
 
-OptionParser.parse do |opts|
-  opts.banner = "crystal spec runner"
-  opts.on("-e ", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
-    Spec.pattern = pattern
-  end
-  opts.on("-l ", "--line LINE", "run examples whose line matches LINE") do |line|
-    Spec.line = line.to_i
-  end
-  opts.on("-p", "--profile", "Print the 10 slowest specs") do
-    Spec.slowest = 10
-  end
-  opts.on("--fail-fast", "abort the run on first failure") do
-    Spec.fail_fast = true
-  end
-  opts.on("--location file:line", "run example at line 'line' in file 'file', multiple allowed") do |location|
-    if location =~ /\A(.+?)\:(\d+)\Z/
-      Spec.add_location $1, $2.to_i
-    else
-      STDERR.puts "location #{location} must be file:line"
-      exit 1
-    end
-  end
-  opts.on("--tag TAG", "run examples with the specified TAG, or exclude examples by adding ~ before the TAG.") do |tag|
-    Spec.add_tag tag
-  end
-  opts.on("--order MODE", "run examples in random order by passing MODE as 'random' or to a specific seed by passing MODE as the seed value") do |mode|
-    if mode == "default" || mode == "random"
-      Spec.order = mode
-    elsif seed = mode.to_u64?
-      Spec.order = seed
-    else
-      abort("order must be either 'default', 'random', or a numeric seed value")
-    end
-  end
-  opts.on("--junit_output OUTPUT_PATH", "generate JUnit XML output within the given OUTPUT_PATH") do |output_path|
-    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path))
+# :nodoc:
+#
+# Implement formatter configuration.
+def Spec.configure_formatter(formatter, output_path = nil)
+  case formatter
+  when "junit"
+    junit_formatter = Spec::JUnitFormatter.file(Path.new(output_path.not_nil!))
     Spec.add_formatter(junit_formatter)
-  end
-  opts.on("-h", "--help", "show this help") do |pattern|
-    puts opts
-    exit
-  end
-  opts.on("-v", "--verbose", "verbose output") do
+  when "verbose"
     Spec.override_default_formatter(Spec::VerboseFormatter.new)
-  end
-  opts.on("--tap", "Generate TAP output (Test Anything Protocol)") do
+  when "tap"
     Spec.override_default_formatter(Spec::TAPFormatter.new)
   end
-  opts.on("--no-color", "Disable colored output") do
-    Spec.use_colors = false
-  end
-  opts.unknown_args do |args|
-  end
 end
+
+Spec.option_parser.parse(ARGV)
 
 unless ARGV.empty?
   STDERR.puts "Error: unknown argument '#{ARGV.first}'"

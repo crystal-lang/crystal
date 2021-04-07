@@ -227,12 +227,6 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  @[Deprecated("Use `#abs` instead.")]
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
