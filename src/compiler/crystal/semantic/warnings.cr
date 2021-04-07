@@ -118,15 +118,13 @@ module Crystal
 
   class Alias
     def short_reference
-      # TODO: Define `#owner` on `self`.
-      "alias #{name}"
+      "alias #{resolved_type}"
     end
   end
 
   class AnnotationDef
     def short_reference
-      # TODO: Define `#owner` on `self`.
-      "annotation #{name}"
+      "annotation #{resolved_type}"
     end
   end
 

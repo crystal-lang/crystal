@@ -291,6 +291,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       scope.types[name] = type
     end
 
+    node.resolved_type = type
+
     attach_doc type, node, annotations
 
     false

@@ -664,6 +664,8 @@ module Crystal
 
   class AnnotationDef
     include Annotatable
+
+    property! resolved_type : AnnotationType
   end
 
   class External < Def
