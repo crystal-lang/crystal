@@ -1,6 +1,178 @@
 require "../../spec_helper"
 
+def assert_stricter(params1, params2, args, *, file = __FILE__, line = __LINE__)
+  assert_type(%(
+    def foo(#{params1}); 1; end
+    def foo(#{params2}); 'x'; end
+
+    def bar(#{params2}); 'x'; end
+    def bar(#{params1}); 1; end
+
+    a = foo(#{args})
+    b = bar(#{args})
+    {a, b}
+    ), inject_primitives: false, file: file, line: line) { tuple_of([int32, int32]) }
+end
+
 describe "Semantic: def overload" do
+  describe "compare_strictness" do
+    context "positional parameters" do
+      it "specificity" do
+        signatures = [
+          {2, 2, "x0, x1"},
+          {2, 3, "x0, x1, x2 = 0"},
+          {2, 4, "x0, x1, x2 = 0, x3 = 0"},
+          {2, 9, "x0, x1, x2 = 0, x3 = 0, *xs"},
+          {2, 9, "x0, x1, x2 = 0, *xs"},
+          {2, 9, "x0, x1, *xs"},
+          {1, 1, "x0"}, # incompatible with 6 defs above
+          {1, 2, "x0, x1 = 0"},
+          {1, 3, "x0, x1 = 0, x2 = 0"},
+          {1, 9, "x0, x1 = 0, x2 = 0, *xs"},
+          {1, 9, "x0, x1 = 0, *xs"},
+          {1, 9, "x0, *xs"},
+          {0, 0, ""},       # incompatible with 12 defs above
+          {0, 1, "x0 = 0"}, # incompatible with 6 defs above
+          {0, 2, "x0 = 0, x1 = 0"},
+          {0, 9, "x0 = 0, x1 = 0, *xs"},
+          {0, 9, "x0 = 0, *xs"},
+          {0, 9, "*xs"},
+        ]
+
+        signatures.each_combination(2, reuse: true) do |(x, y)|
+          min_count1, max_count1, params1 = x
+          min_count2, max_count2, params2 = y
+          next if min_count1 > max_count2 || min_count2 > max_count1
+          args = Array.new({min_count1, min_count2}.max) { "0" }.join(", ")
+
+          assert_stricter(params1, params2, args)
+        end
+      end
+
+      it "single splat vs single splat with restriction (#3134)" do
+        assert_stricter(
+          "*args : Int32",
+          "*args",
+          "1")
+      end
+
+      it "single splat restriction vs single splat with stricter restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "*args : Int",
+          "1")
+      end
+
+      it "positional parameter with restriction vs single splat" do
+        assert_stricter(
+          "x : Int32",
+          "*args",
+          "1")
+
+        assert_stricter(
+          "x : Int32 = 0",
+          "*args",
+          "")
+      end
+
+      it "positional parameter vs single splat with restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "x",
+          "1")
+      end
+
+      it "positional parameter with stricter restriction vs single splat with restriction" do
+        assert_stricter(
+          "x : Int32",
+          "*args : Int",
+          "1")
+      end
+
+      it "positional parameter with restriction vs single splat with stricter restriction" do
+        assert_stricter(
+          "*args : Int32",
+          "x : Int",
+          "1")
+      end
+    end
+
+    context "named parameters" do
+      it "specificity" do
+        signatures = [
+          {1, 1, "*, n"},
+          {1, 9, "*, n, **ns"},
+          {0, 0, ""},
+          {0, 1, "*, n = 0"},
+          {0, 9, "*, n = 0, **ns"},
+          {0, 9, "**ns"},
+        ]
+
+        signatures.each_combination(2, reuse: true) do |(x, y)|
+          min_count1, max_count1, params1 = x
+          min_count2, max_count2, params2 = y
+          next if min_count1 > max_count2 || min_count2 > max_count1
+          args = Array.new({min_count1, min_count2}.max) { "n: 0" }.join(", ")
+
+          assert_stricter(params1, params2, args)
+        end
+      end
+
+      it "double splat vs double splat with restriction" do
+        assert_stricter(
+          "**args : Int32",
+          "**args",
+          "x: 1")
+      end
+
+      it "double splat restriction vs double splat with stricter restriction" do
+        assert_stricter(
+          "**args : Int32",
+          "**args : Int",
+          "x: 1")
+      end
+
+      it "named parameter with restriction vs double splat (#5328)" do
+        assert_stricter(
+          "*, x : Int32",
+          "**options",
+          "x: 1")
+
+        assert_stricter(
+          "*, x : Int32 = 0",
+          "**options",
+          "")
+      end
+
+      it "named parameter vs double splat with restriction" do
+        assert_stricter(
+          "**options : Int32",
+          "*, x",
+          "x: 1")
+      end
+
+      it "named parameter with stricter restriction vs double splat with restriction" do
+        assert_stricter(
+          "*, x : Int32",
+          "**options : Int",
+          "x: 1")
+      end
+
+      it "named parameter with restriction vs double splat with stricter restriction" do
+        assert_stricter(
+          "**options : Int32",
+          "*, x : Int",
+          "x: 1")
+      end
+    end
+
+    context "subsumption / specificity conflicts" do
+    end
+
+    context "specificity conflicts" do
+    end
+  end
+
   it "types a call with overload" do
     assert_type("def foo; 1; end; def foo(x); 2.5; end; foo") { int32 }
   end
