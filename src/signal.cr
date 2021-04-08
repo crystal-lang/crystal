@@ -56,7 +56,6 @@ enum Signal : Int32
   USR1   = LibC::SIGUSR1
   USR2   = LibC::SIGUSR2
   WINCH  = LibC::SIGWINCH
-  STKSZ  = LibC::SIGSTKSZ
 
   {% if flag?(:linux) %}
     PWR    = LibC::SIGPWR
@@ -167,8 +166,8 @@ enum Signal : Int32
     return unless @@setup_segfault_handler.test_and_set
 
     altstack = LibC::StackT.new
-    altstack.ss_sp = LibC.malloc(STKSZ)
-    altstack.ss_size = STKSZ
+    altstack.ss_sp = LibC.malloc(LibC::SIGSTKSZ)
+    altstack.ss_size = LibC::SIGSTKSZ
     altstack.ss_flags = 0
     LibC.sigaltstack(pointerof(altstack), nil)
 
