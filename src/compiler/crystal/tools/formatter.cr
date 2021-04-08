@@ -1042,9 +1042,9 @@ module Crystal
 
     def visit(node : RangeLiteral)
       accept node.from
-      skip_space_or_newline
+      skip_space
       write_token(node.exclusive? ? :"..." : :"..")
-      skip_space_or_newline
+      skip_space
       accept node.to
       false
     end
