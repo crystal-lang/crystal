@@ -383,6 +383,19 @@ describe "Semantic: abstract def" do
       )
   end
 
+  it "doesn't error if implements a NoReturn param" do
+    assert_no_errors %(
+      abstract class Foo
+        abstract def foo(x : NoReturn)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+        end
+      end
+      )
+  end
+
   it "finds implements in included module in disorder (#4052)" do
     semantic %(
       module B
