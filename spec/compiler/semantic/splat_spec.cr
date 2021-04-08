@@ -146,7 +146,7 @@ describe "Semantic: splat" do
 
       foo
       ),
-      "no overload matches"
+      "wrong number of arguments for 'foo' (given 0, expected 1+)"
   end
 
   it "overloads with type restriction and splat (3)" do
