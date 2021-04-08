@@ -156,13 +156,13 @@ module HTTP
         end
       end
 
-      def parse_cookies(header) : Array(HTTP::Cookie)
+      def parse_cookies(header) : Array(Cookie)
         cookies = [] of Cookie
         parse_cookies(header) { |cookie| cookies << cookie }
         cookies
       end
 
-      def parse_set_cookie(header) : HTTP::Cookie?
+      def parse_set_cookie(header) : Cookie?
         match = header.match(SetCookieString)
         return unless match
 
@@ -292,7 +292,7 @@ module HTTP
     # ```
     # request.cookies["foo"].value # => "bar"
     # ```
-    def [](key) : HTTP::Cookie
+    def [](key) : Cookie
       @cookies[key]
     end
 
@@ -306,7 +306,7 @@ module HTTP
     # request.cookies["foo"] = "bar"
     # request.cookies["foo"]?.try &.value # > "bar"
     # ```
-    def []?(key) : HTTP::Cookie?
+    def []?(key) : Cookie?
       @cookies[key]?
     end
 
@@ -325,7 +325,7 @@ module HTTP
     # ```
     # response.cookies << HTTP::Cookie.new("foo", "bar", http_only: true)
     # ```
-    def <<(cookie : Cookie) : HTTP::Cookie
+    def <<(cookie : Cookie)
       self[cookie.name] = cookie
     end
 
@@ -337,7 +337,7 @@ module HTTP
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
     # *key* should match the name attribute of the desired `HTTP::Cookie`.
-    def delete(key) : HTTP::Cookie?
+    def delete(key) : Cookie?
       @cookies.delete(key)
     end
 
@@ -393,7 +393,7 @@ module HTTP
     end
 
     # Returns this collection as a plain `Hash`.
-    def to_h : Hash(String, HTTP::Cookie)
+    def to_h : Hash(String, Cookie)
       @cookies.dup
     end
   end
