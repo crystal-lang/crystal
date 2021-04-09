@@ -1065,6 +1065,7 @@ describe Crystal::Formatter do
 
   assert_format "foo : (A) | D"
   assert_format "foo : (F(A)) | D"
+  assert_format "foo : (   A  |  B   )", "foo : (A | B)"
 
   assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
   assert_format "foo : (String -> String?) | (String)"
@@ -1074,6 +1075,7 @@ describe Crystal::Formatter do
   assert_format "alias A = (B(C, (C | D)) | E)"
   assert_format "alias A = ((B(C | D) | E) | F)"
   assert_format "alias A = ({A, (B)})"
+  assert_format "alias A = (   A  |  B   )", "alias A = (A | B)"
 
   assert_format "foo : A(B)\nbar : C"
   assert_format "foo : (A -> B)\nbar : C"
@@ -1083,6 +1085,7 @@ describe Crystal::Formatter do
   assert_format "def foo : (A, B) ->\n  nil\nend"
   assert_format "def foo : (A | B(C))\n  nil\nend"
   assert_format "def foo : A | B(C)\n  nil\nend"
+  assert_format "def foo(x : (   A  |  B   )) : (   A  |  B   )\nend", "def foo(x : (A | B)) : (A | B)\nend"
 
   assert_format "foo &.bar.is_a?(Baz)"
   assert_format "foo &.bar.responds_to?(:baz)"
