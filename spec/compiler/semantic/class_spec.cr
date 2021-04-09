@@ -318,8 +318,6 @@ describe "Semantic: class" do
 
   it "types virtual method of generic class" do
     assert_type("
-      require \"char\"
-
       class Object
         def foo
           bar

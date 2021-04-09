@@ -1,4 +1,5 @@
 require "spec"
+require "../../support/iterate"
 
 private def expect_overflow
   expect_raises ArgumentError, "Time::Span too big or too small" do
@@ -148,6 +149,10 @@ describe Time::Span do
     (t1 == t1).should be_true
     (t1 == t2).should be_false
     (t1 == "hello").should be_false
+  end
+
+  describe "#step" do
+    it_iterates "basic", [1.day, 2.days, 3.days, 4.days, 5.days], 1.days.step(to: 5.days, by: 1.day)
   end
 
   it "test int extension methods" do
