@@ -662,7 +662,7 @@ module Crystal
             atomic = parse_as?(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
-          elsif @token.value == :nil?
+          elsif !@in_macro_expression && @token.value == :nil?
             atomic = parse_nil?(atomic).at(location)
           elsif @token.type == :"!"
             atomic = parse_negation_suffix(atomic).at(location)
@@ -1541,7 +1541,7 @@ module Crystal
       elsif @token.value == :responds_to?
         call = parse_responds_to(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif @token.value == :nil?
+      elsif !@in_macro_expression && @token.value == :nil?
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type == :"!"
@@ -4059,8 +4059,10 @@ module Crystal
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
       when :nil?
-        obj = Var.new("self").at(location)
-        return parse_nil?(obj)
+        unless @in_macro_expression
+          obj = Var.new("self").at(location)
+          return parse_nil?(obj)
+        end
       else
         # Not a special call, go on
       end

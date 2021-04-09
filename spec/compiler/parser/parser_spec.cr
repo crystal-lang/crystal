@@ -1001,6 +1001,11 @@ module Crystal
       )
     )
 
+    it_parses "{{ foo.nil? }}", MacroExpression.new(Call.new(Var.new("foo"), "nil?"))
+    it_parses "{{ foo &.nil? }}", MacroExpression.new(Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "nil?"))))
+    it_parses "{{ foo.nil?(foo) }}", MacroExpression.new(Call.new(Var.new("foo"), "nil?", [Var.new("foo")] of ASTNode))
+    it_parses "{{ nil?(foo) }}", MacroExpression.new(Call.new(nil, "nil?", [Var.new("foo")] of ASTNode))
+
     it_parses "foo.!", Not.new("foo".call)
     it_parses "foo.!.!", Not.new(Not.new("foo".call))
     it_parses "foo.!(  )", Not.new("foo".call)
