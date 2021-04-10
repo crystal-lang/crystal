@@ -227,6 +227,58 @@ describe "BigFloat" do
     it { "2.3".to_big_f.inspect.should eq("2.3") }
   end
 
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        -1.5.to_big_f.round(:to_zero).should eq -1.0.to_big_f
+        -1.0.to_big_f.round(:to_zero).should eq -1.0.to_big_f
+        -0.9.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        -0.5.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        -0.1.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        0.0.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        0.1.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        0.5.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        0.9.to_big_f.round(:to_zero).should eq 0.0.to_big_f
+        1.0.to_big_f.round(:to_zero).should eq 1.0.to_big_f
+        1.5.to_big_f.round(:to_zero).should eq 1.0.to_big_f
+      end
+
+      it "to_positive" do
+        -1.5.to_big_f.round(:to_positive).should eq -1.0.to_big_f
+        -1.0.to_big_f.round(:to_positive).should eq -1.0.to_big_f
+        -0.9.to_big_f.round(:to_positive).should eq 0.0.to_big_f
+        -0.5.to_big_f.round(:to_positive).should eq 0.0.to_big_f
+        -0.1.to_big_f.round(:to_positive).should eq 0.0.to_big_f
+        0.0.to_big_f.round(:to_positive).should eq 0.0.to_big_f
+        0.1.to_big_f.round(:to_positive).should eq 1.0.to_big_f
+        0.5.to_big_f.round(:to_positive).should eq 1.0.to_big_f
+        0.9.to_big_f.round(:to_positive).should eq 1.0.to_big_f
+        1.0.to_big_f.round(:to_positive).should eq 1.0.to_big_f
+        1.5.to_big_f.round(:to_positive).should eq 2.0.to_big_f
+      end
+
+      it "to_negative" do
+        -1.5.to_big_f.round(:to_negative).should eq -2.0.to_big_f
+        -1.0.to_big_f.round(:to_negative).should eq -1.0.to_big_f
+        -0.9.to_big_f.round(:to_negative).should eq -1.0.to_big_f
+        -0.5.to_big_f.round(:to_negative).should eq -1.0.to_big_f
+        -0.1.to_big_f.round(:to_negative).should eq -1.0.to_big_f
+        0.0.to_big_f.round(:to_negative).should eq 0.0.to_big_f
+        0.1.to_big_f.round(:to_negative).should eq 0.0.to_big_f
+        0.5.to_big_f.round(:to_negative).should eq 0.0.to_big_f
+        0.9.to_big_f.round(:to_negative).should eq 0.0.to_big_f
+        1.0.to_big_f.round(:to_negative).should eq 1.0.to_big_f
+        1.5.to_big_f.round(:to_negative).should eq 1.0.to_big_f
+      end
+
+      it "raises on unsupported modes" do
+        expect_raises(ArgumentError) { 0.0.to_big_f.round }
+        expect_raises(ArgumentError) { 0.0.to_big_f.round(:ties_away) }
+        expect_raises(ArgumentError) { 0.0.to_big_f.round(:ties_even) }
+      end
+    end
+  end
+
   it "#hash" do
     b = 123.to_big_f
     b.hash.should eq(b.to_f64.hash)

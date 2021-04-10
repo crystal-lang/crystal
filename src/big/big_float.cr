@@ -309,6 +309,23 @@ struct BigFloat < Float
     self
   end
 
+  # Rounds `self` to an integer value using rounding *mode*.
+  #
+  # Raises `ArgumentError` if *mode* is either `Number::RoundingMode::TIES_EVEN`
+  # or `Number::RoundingMode::TIES_AWAY`, which GMP does not support.
+  def round(mode : Number::RoundingMode = :ties_even) : self
+    case mode
+    in .to_zero?
+      trunc
+    in .to_positive?
+      ceil
+    in .to_negative?
+      floor
+    in .ties_away?, .ties_even?
+      raise ArgumentError.new("Rounding mode #{mode} is not supported")
+    end
+  end
+
   private def mpf
     pointerof(@mpf)
   end
