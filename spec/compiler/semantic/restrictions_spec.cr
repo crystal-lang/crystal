@@ -60,6 +60,54 @@ describe "Restrictions" do
 
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.t("Cxx").restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.t("Cxx"))
+    end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (2) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Cxx", mod.int32))
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (1)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (2)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
   end
 
   describe "restriction_of?" do

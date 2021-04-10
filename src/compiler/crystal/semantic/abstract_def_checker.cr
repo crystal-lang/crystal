@@ -251,7 +251,7 @@ class Crystal::AbstractDefChecker
       begin
         rt1 = t1.lookup_type(r1, free_vars: free_vars1)
         rt2 = t2.lookup_type(r2, free_vars: free_vars2)
-        return false unless rt2.covariant?(rt1)
+        return false unless rt2.implements?(rt1)
       rescue Crystal::TypeException
         # Ignore if we can't find a type (assume the method is implemented)
         return true
