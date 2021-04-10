@@ -604,7 +604,7 @@ module Indexable(T)
   end
 
   # :nodoc:
-  def self.range_to_index_and_count(range, collection_size) : {Int32, Int32}?
+  def self.range_to_index_and_count(range, collection_size)
     start_index = range.begin
     if start_index.nil?
       start_index = 0
