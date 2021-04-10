@@ -128,7 +128,7 @@ module Crystal
 
       types.each do |t2|
         not_found = all_types.all? do |t1|
-          ancestor = Type.least_common_ancestor(t1, t2)
+          ancestor = Type.least_common_ancestor(t1.devirtualize, t2.devirtualize)
           if ancestor && virtual_root?(ancestor)
             all_types.delete t1
             all_types << ancestor.virtual_type
@@ -214,14 +214,6 @@ module Crystal
       nil
     end
 
-    def self.least_common_ancestor(type1 : VirtualType, type2 : Type)
-      least_common_ancestor(type1.base_type, type2)
-    end
-
-    def self.least_common_ancestor(type1 : Type, type2 : VirtualType)
-      least_common_ancestor(type1, type2.base_type)
-    end
-
     def self.least_common_ancestor(type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType, type2 : Type)
       type1 if type2.implements?(type1)
     end
@@ -234,11 +226,18 @@ module Crystal
       type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
       type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType
     )
-      if type1.implements?(type2)
-        type2
-      elsif type2.implements?(type1)
-        type1
-      end
+      return type2 if type1.implements?(type2)
+      return type1 if type2.implements?(type1)
+    end
+
+    def self.least_common_ancestor(type1 : GenericClassType, type2 : ClassType | GenericClassInstanceType)
+      return type2 if type1.implements?(type2)
+      return type1 if type2.implements?(type1)
+    end
+
+    def self.least_common_ancestor(type1 : ClassType | GenericClassInstanceType, type2 : GenericClassType)
+      return type1 if type2.implements?(type1)
+      return type2 if type1.implements?(type2)
     end
 
     def self.least_common_ancestor(type1 : ClassType | GenericClassInstanceType, type2 : ClassType | GenericClassInstanceType)
@@ -306,14 +305,6 @@ module Crystal
 
       common = least_common_ancestor(type1.instance_type, type2.instance_type)
       common.try &.metaclass
-    end
-
-    def self.least_common_ancestor(type1 : VirtualMetaclassType, type2 : Type)
-      least_common_ancestor(type1.base_type.metaclass, type2)
-    end
-
-    def self.least_common_ancestor(type1 : Type, type2 : VirtualMetaclassType)
-      least_common_ancestor(type1, type2.base_type.metaclass)
     end
 
     private def self.unifiable_metaclass?(type)
