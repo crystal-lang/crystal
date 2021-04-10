@@ -1,4 +1,5 @@
 require "spec"
+require "../../support/iterate"
 
 private def expect_overflow
   expect_raises ArgumentError, "Time::Span too big or too small" do
@@ -150,6 +151,10 @@ describe Time::Span do
     (t1 == "hello").should be_false
   end
 
+  describe "#step" do
+    it_iterates "basic", [1.day, 2.days, 3.days, 4.days, 5.days], 1.days.step(to: 5.days, by: 1.day)
+  end
+
   it "test int extension methods" do
     1_000_000.days.to_s.should eq("1000000.00:00:00")
     12.microseconds.to_s.should eq("00:00:00.000012000")
@@ -173,9 +178,8 @@ describe Time::Span do
     1_000_000.5.days.to_s.should eq("1000000.12:00:00")
   end
 
-  it "test negate and duration" do
+  it "test negate and abs" do
     (-Time::Span.new(nanoseconds: 1234500)).to_s.should eq("-00:00:00.001234500")
-    Time::Span.new(nanoseconds: -1234500).duration.to_s.should eq("00:00:00.001234500")
     Time::Span.new(nanoseconds: -1234500).abs.to_s.should eq("00:00:00.001234500")
     (-Time::Span.new(nanoseconds: 7700)).to_s.should eq("-00:00:00.000007700")
     (+Time::Span.new(nanoseconds: 7700)).to_s.should eq("00:00:00.000007700")

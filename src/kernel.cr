@@ -535,12 +535,12 @@ end
   end
 
   Signal.setup_default_handlers
-  LibExt.setup_sigfault_handler
+  Signal.setup_segfault_handler
 {% end %}
 
 {% if !flag?(:win32) %}
   # load dwarf on start up of the program is executed with CRYSTAL_LOAD_DWARF=1
-  # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
+  # this will make dwarf available on print_frame that is used by Crystal's segfault handler
   #
   # - CRYSTAL_LOAD_DWARF=0 will never use dwarf information (See Exception::CallStack.load_dwarf)
   # - CRYSTAL_LOAD_DWARF=1 will load dwarf on startup

@@ -100,7 +100,7 @@ class Crystal::CodeGenVisitor
       # Start with fresh variables
       context.vars = LLVMVars.new
 
-      alloca_vars const.vars
+      alloca_vars const.fake_def.try(&.vars), const.fake_def
       request_value do
         accept const.value
       end
@@ -153,7 +153,7 @@ class Crystal::CodeGenVisitor
           # Start with fresh variables
           context.vars = LLVMVars.new
 
-          alloca_vars const.vars
+          alloca_vars const.fake_def.try(&.vars), const.fake_def
 
           request_value do
             accept const.value
@@ -173,7 +173,9 @@ class Crystal::CodeGenVisitor
             end
           else
             global.initializer = llvm_type(const.value.type).null
-            store @last, global
+            unless const.value.type.nil_type? || const.value.type.void?
+              store @last, global
+            end
           end
 
           ret

@@ -1919,13 +1919,6 @@ module Crystal::Macros
     def has_method?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns `true` if this type has an attribute. For example `@[Flags]`
-    # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
-    # in these cases).
-    @[Deprecated("Use #annotation instead")]
-    def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
-    end
-
     # Returns the last `Annotation` with the given `type`
     # attached to this variable or `NilLiteral` if there are none.
     def annotation(type : TypeNode) : Annotation | NilLiteral

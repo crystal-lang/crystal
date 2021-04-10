@@ -41,6 +41,7 @@ struct Time::Span
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
   include Comparable(self)
+  include Steppable
 
   MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
@@ -227,12 +228,6 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  @[Deprecated("Use `#abs` instead.")]
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
@@ -337,6 +332,10 @@ struct Time::Span
     cmp = to_i <=> other.to_i
     cmp = nanoseconds <=> other.nanoseconds if cmp == 0
     cmp
+  end
+
+  def sign : Int32
+    (self <=> ZERO).sign
   end
 
   def inspect(io : IO) : Nil
