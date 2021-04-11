@@ -185,7 +185,7 @@ class PrettyPrint
   end
 
   # Outputs any buffered data.
-  def flush
+  def flush : IO | Int32 | Nil
     @buffer.each do |data|
       @output_width = data.output(@output, @output_width)
     end
