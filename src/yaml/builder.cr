@@ -62,7 +62,7 @@ class YAML::Builder
   end
 
   # Ends a YAML stream.
-  def end_stream : IO | Int32 | Nil
+  def end_stream : Nil
     emit stream_end
     @io.flush
   end
@@ -104,7 +104,7 @@ class YAML::Builder
   end
 
   # Ends a sequence.
-  def end_sequence : Int32
+  def end_sequence : Nil
     emit sequence_end
     decrease_nesting
   end
@@ -123,7 +123,7 @@ class YAML::Builder
   end
 
   # Ends a mapping.
-  def end_mapping : Int32
+  def end_mapping : Nil
     emit mapping_end
     decrease_nesting
   end
@@ -186,7 +186,7 @@ class YAML::Builder
   end
 
   # Closes the builder, freeing up resources.
-  def close : Bool
+  def close : Nil
     finalize
     @closed = true
   end
