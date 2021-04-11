@@ -92,7 +92,7 @@ module Levenshtein
       sn.best_match
     end
 
-    def self.find(name, all_names, tolerance = nil)
+    def self.find(name, all_names, tolerance = nil) : String?
       find(name, tolerance) do |similar|
         all_names.each do |a_name|
           similar.test(a_name)
