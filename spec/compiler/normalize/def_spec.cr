@@ -237,16 +237,16 @@ module Crystal
        "default arg with restriction" => "def testing(foo : Int = 5)",
        "splat arg"                    => "def testing(*foo : Array)",
        "block instance var arg"       => "def testing(&@foo : ->)",
-      }.each do |(suf, definition)|
-        describe suf + "," do
-          {"with body" => "zzz = 7\n", "without body" => ""}.each do |(suf, body)|
-            it suf do
-              a_def = parse("#{definition}\n#{body}end").as(Def)
-              actual = a_def.expand_default_arguments(Program.new, 1)
+      }.each do |(suffix1, definition)|
+        {"with body"    => "zzz = 7\n",
+         "without body" => "",
+        }.each do |(suffix2, body)|
+          it "#{suffix1}, #{suffix2}" do
+            a_def = parse("#{definition}\n#{body}end").as(Def)
+            actual = a_def.expand_default_arguments(Program.new, 1)
 
-              actual.location.should eq Location.new("", line_number: 1, column_number: 1)
-              actual.body.location.should eq Location.new("", line_number: 2, column_number: 1)
-            end
+            actual.location.should eq Location.new("", line_number: 1, column_number: 1)
+            actual.body.location.should eq Location.new("", line_number: 2, column_number: 1)
           end
         end
       end
