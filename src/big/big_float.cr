@@ -119,19 +119,19 @@ struct BigFloat < Float
     BigFloat.new { |mpf| LibGMP.mpf_neg(mpf, self) }
   end
 
-  def +(other : Number)
+  def +(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_add(mpf, self, other.to_big_f) }
   end
 
-  def -(other : Number)
+  def -(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_sub(mpf, self, other.to_big_f) }
   end
 
-  def *(other : Number)
+  def *(other : Number) : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_mul(mpf, self, other.to_big_f) }
   end
 
-  def /(other : BigFloat)
+  def /(other : BigFloat) : BigFloat
     # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other) }
