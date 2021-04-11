@@ -819,7 +819,14 @@ describe "Semantic: splat" do
   end
 
   it "doesn't shift a call's location", focus: true do
-    result = semantic %(class Foo\ndef bar(x)\nbar(*{"test"})\nend\nend\nFoo.new.bar("test"))
+    result = semantic <<-CR
+      class Foo
+      def bar(x)
+      bar(*{"test"})
+      end
+      end
+      Foo.new.bar("test")
+      CR
     program = result.program
     a_typ = program.types["Foo"].as(NonGenericClassType)
     a_def = a_typ.def_instances.values[0]
