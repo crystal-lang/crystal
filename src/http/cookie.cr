@@ -101,7 +101,7 @@ module HTTP
       end
     end
 
-    def to_cookie_header(io)
+    def to_cookie_header(io) : String::Builder
       io << @name
       io << '='
       io << @value

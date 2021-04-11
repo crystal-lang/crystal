@@ -28,7 +28,7 @@ class HTTP::StaticFileHandler
     @directory_listing = !!directory_listing
   end
 
-  def call(context)
+  def call(context) : Array(Log::Entry) | Bool | Channel({Log::Entry, Log::Backend}) | HTTP::Server::Context | IO | Int32 | Int64 | IO -> Nil | Nil
     unless context.request.method.in?("GET", "HEAD")
       if @fallthrough
         call_next(context)

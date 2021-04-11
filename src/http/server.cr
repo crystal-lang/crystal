@@ -478,7 +478,7 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close : Array(Socket::Server)
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
