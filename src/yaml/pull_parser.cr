@@ -321,7 +321,7 @@ class YAML::PullParser
     LibYAML.yaml_event_delete(pointerof(@event))
   end
 
-  def close
+  def close : Bool
     finalize
     @closed = true
   end

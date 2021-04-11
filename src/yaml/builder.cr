@@ -62,7 +62,7 @@ class YAML::Builder
   end
 
   # Ends a YAML stream.
-  def end_stream
+  def end_stream : IO | Int32 | Nil
     emit stream_end
     @io.flush
   end
@@ -97,14 +97,14 @@ class YAML::Builder
   end
 
   # Starts a sequence.
-  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY)
+  def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a sequence.
-  def end_sequence
+  def end_sequence : Int32
     emit sequence_end
     decrease_nesting
   end
@@ -116,14 +116,14 @@ class YAML::Builder
   end
 
   # Starts a mapping.
-  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY)
+  def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
     increase_nesting
   end
 
   # Ends a mapping.
-  def end_mapping
+  def end_mapping : Int32
     emit mapping_end
     decrease_nesting
   end
@@ -186,7 +186,7 @@ class YAML::Builder
   end
 
   # Closes the builder, freeing up resources.
-  def close
+  def close : Bool
     finalize
     @closed = true
   end

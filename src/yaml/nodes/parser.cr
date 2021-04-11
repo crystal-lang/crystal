@@ -46,7 +46,7 @@ class YAML::Nodes::Parser < YAML::Parser
     node.start_column = @pull_parser.start_column.to_i
   end
 
-  def end_value(node)
+  def end_value(node) : Int32
     node.end_line = @pull_parser.end_line.to_i
     node.end_column = @pull_parser.end_column.to_i
   end
@@ -72,15 +72,15 @@ class YAML::Nodes::Parser < YAML::Parser
     documents << document
   end
 
-  def add_to_document(document, node)
+  def add_to_document(document, node) : Array(YAML::Nodes::Node)
     document << node
   end
 
-  def add_to_sequence(sequence, node)
+  def add_to_sequence(sequence, node) : Array(YAML::Nodes::Node)
     sequence << node
   end
 
-  def add_to_mapping(mapping, key, value)
+  def add_to_mapping(mapping, key, value) : Array(YAML::Nodes::Node)
     mapping[key] = value
   end
 end

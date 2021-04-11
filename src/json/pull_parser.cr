@@ -263,7 +263,7 @@ class JSON::PullParser
   # Reads the new value and fill the a JSON builder with it.
   #
   # Use this method with a `JSON::Builder` to read a JSON while building another one.
-  def read_raw(json)
+  def read_raw(json) : IO | JSON::PullParser::Kind
     case @kind
     when .null?
       read_next
@@ -556,7 +556,7 @@ class JSON::PullParser
   #
   # It skips the whole value, not only the next lexer's token.
   # For example if the next value is an array, the whole array will be skipped.
-  def skip
+  def skip : Bool
     @lexer.skip = true
     skip_internal
     @lexer.skip = false

@@ -36,15 +36,15 @@ class YAML::Schema::Core::Parser < YAML::Parser
     Any.new(Core.parse_scalar(@pull_parser))
   end
 
-  def add_to_documents(documents, document)
+  def add_to_documents(documents, document) : Array(YAML::Any)
     documents << document
   end
 
-  def add_to_document(document, node)
+  def add_to_document(document, node) : Array(YAML::Any)
     document.as_a << node
   end
 
-  def add_to_sequence(sequence, node)
+  def add_to_sequence(sequence, node) : Array(YAML::Any)
     sequence.as_a << node
   end
 
