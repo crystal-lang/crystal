@@ -63,7 +63,7 @@ class PrettyPrint
   end
 
   # Appends a text element.
-  def text(obj)
+  def text(obj) : Int32?
     obj = obj.to_s
     width = obj.size
     return if width == 0
@@ -84,7 +84,7 @@ class PrettyPrint
   end
 
   # Appends an element that can turn into a newline if necessary.
-  def breakable(sep = " ")
+  def breakable(sep = " ") : Int32?
     width = sep.size
     group = @group_stack.last
     if group.break?
@@ -102,7 +102,7 @@ class PrettyPrint
 
   # Similar to `#breakable` except
   # the decision to break or not is determined individually.
-  def fill_breakable(sep = " ")
+  def fill_breakable(sep = " ") : Int32?
     group { breakable sep }
   end
 
@@ -149,7 +149,7 @@ class PrettyPrint
   # text ","
   # breakable
   # ```
-  def comma
+  def comma : Int32?
     text ","
     breakable
   end
@@ -249,7 +249,7 @@ class PrettyPrint
       @break = false
     end
 
-    def break
+    def break : Bool
       @break = true
     end
   end

@@ -41,7 +41,7 @@ module MIME::Multipart
     # if `#body_part` is called before this method.
     #
     # Can be called multiple times to append to the preamble multiple times.
-    def preamble(string : String)
+    def preamble(string : String) : Symbol
       preamble { |io| string.to_s(io) }
     end
 
@@ -49,7 +49,7 @@ module MIME::Multipart
     # if `#body_part` is called before this method.
     #
     # Can be called multiple times to append to the preamble multiple times.
-    def preamble(data : Bytes)
+    def preamble(data : Bytes) : Symbol
       preamble { |io| io.write data }
     end
 
@@ -57,7 +57,7 @@ module MIME::Multipart
     # Throws if `#body_part` is called before this method.
     #
     # Can be called multiple times to append to the preamble multiple times.
-    def preamble(preamble_io : IO)
+    def preamble(preamble_io : IO) : Symbol
       preamble { |io| IO.copy(preamble_io, io) }
     end
 
@@ -74,21 +74,21 @@ module MIME::Multipart
     # Appends a body part to the multipart message with the given *headers*
     # and *string*. Throws if `#finish` or `#epilogue` is called before this
     # method.
-    def body_part(headers : HTTP::Headers, string : String)
+    def body_part(headers : HTTP::Headers, string : String) : Symbol
       body_part_impl(headers) { |io| string.to_s(io) }
     end
 
     # Appends a body part to the multipart message with the given *headers*
     # and *data*. Throws if `#finish` or `#epilogue` is called before this
     # method.
-    def body_part(headers : HTTP::Headers, data : Bytes)
+    def body_part(headers : HTTP::Headers, data : Bytes) : Symbol
       body_part_impl(headers) { |io| io.write data }
     end
 
     # Appends a body part to the multipart message with the given *headers*
     # and data from *body_io*. Throws if `#finish` or `#epilogue` is called
     # before this method.
-    def body_part(headers : HTTP::Headers, body_io : IO)
+    def body_part(headers : HTTP::Headers, body_io : IO) : Symbol
       body_part_impl(headers) { |io| IO.copy(body_io, io) }
     end
 
@@ -102,7 +102,7 @@ module MIME::Multipart
     # Appends a body part to the multipart message with the given *headers*
     # and no body data. Throws is `#finish` or `#epilogue` is called before
     # this method.
-    def body_part(headers : HTTP::Headers)
+    def body_part(headers : HTTP::Headers) : Symbol
       body_part_impl(headers, empty: true) { }
     end
 
@@ -131,7 +131,7 @@ module MIME::Multipart
     # appended.
     #
     # Can be called multiple times to append to the epilogue multiple times.
-    def epilogue(string : String)
+    def epilogue(string : String) : Symbol
       epilogue { |io| string.to_s(io) }
     end
 
@@ -140,7 +140,7 @@ module MIME::Multipart
     # appended.
     #
     # Can be called multiple times to append to the epilogue multiple times.
-    def epilogue(data : Bytes)
+    def epilogue(data : Bytes) : Symbol
       epilogue { |io| io.write data }
     end
 
@@ -149,7 +149,7 @@ module MIME::Multipart
     # been appended.
     #
     # Can be called multiple times to append to the epilogue multiple times.
-    def epilogue(epilogue_io : IO)
+    def epilogue(epilogue_io : IO) : Symbol
       epilogue { |io| IO.copy(epilogue_io, io) }
     end
 
