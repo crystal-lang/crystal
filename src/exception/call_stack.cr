@@ -29,7 +29,7 @@ struct Exception::CallStack
 
   @@skip = [] of String
 
-  def self.skip(filename)
+  def self.skip(filename) : Array(String)
     @@skip << filename
   end
 
@@ -106,7 +106,7 @@ struct Exception::CallStack
     end
   end
 
-  def self.print_backtrace
+  def self.print_backtrace : Int32?
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       last_frame = data.as(RepeatedFrame*)
 

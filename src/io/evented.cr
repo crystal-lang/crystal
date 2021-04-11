@@ -165,11 +165,11 @@ module IO::Evented
     event.add timeout
   end
 
-  def evented_reopen
+  def evented_reopen : Hash(Thread, Deque(Fiber))
     evented_close
   end
 
-  def evented_close
+  def evented_close : Hash(Thread, Deque(Fiber))
     @read_event.consume_each &.free
 
     @write_event.consume_each &.free

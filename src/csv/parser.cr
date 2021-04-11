@@ -54,7 +54,7 @@ class CSV::Parser
   end
 
   # Rewinds this parser to the beginning.
-  def rewind
+  def rewind : Bool | Char | Int32 | Nil
     @lexer.rewind
   end
 

@@ -151,14 +151,14 @@ class Compress::Zip::Writer
   end
 
   # Adds an entry that will have *string* as its contents.
-  def add(filename_or_entry : String | Entry, string : String)
+  def add(filename_or_entry : String | Entry, string : String) : Array(Compress::Zip::Writer::Entry)
     add(filename_or_entry) do |io|
       io << string
     end
   end
 
   # Adds an entry that will have *bytes* as its contents.
-  def add(filename_or_entry : String | Entry, bytes : Bytes)
+  def add(filename_or_entry : String | Entry, bytes : Bytes) : Array(Compress::Zip::Writer::Entry)
     add(filename_or_entry) do |io|
       io.write(bytes)
     end
@@ -167,7 +167,7 @@ class Compress::Zip::Writer
   # Adds an entry that will have its data copied from the given *data*.
   # If the given *data* is a `::File`, it is automatically closed
   # after data is copied from it.
-  def add(filename_or_entry : String | Entry, data : IO)
+  def add(filename_or_entry : String | Entry, data : IO) : Array(Compress::Zip::Writer::Entry)
     add(filename_or_entry) do |io|
       IO.copy(data, io)
       data.close if data.is_a?(::File)
@@ -175,7 +175,7 @@ class Compress::Zip::Writer
   end
 
   # Adds a directory entry that will have the given *name*.
-  def add_dir(name)
+  def add_dir(name) : Array(Compress::Zip::Writer::Entry)
     name = name + '/' unless name.ends_with?('/')
     add(Entry.new(name)) { }
   end
