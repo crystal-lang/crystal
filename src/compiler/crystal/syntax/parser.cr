@@ -3573,7 +3573,7 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns)
+          body = Expressions.from(extra_assigns).at(@token.location)
           next_token_skip_space
         else
           body = parse_expressions
@@ -3585,7 +3585,7 @@ module Crystal
             else
               exps.push body
             end
-            body = Expressions.from(exps)
+            body = Expressions.from(exps).at(body)
           end
           body, end_location = parse_exception_handler body, implicit: true
         end
@@ -3852,6 +3852,7 @@ module Crystal
         uses_arg = false
         do_next_token = true
       when :INSTANCE_VAR
+        # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         arg_name = @token.value.to_s[1..-1]
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
@@ -4367,7 +4368,7 @@ module Crystal
         else
           exps.push block_body
         end
-        block_body = Expressions.from exps
+        block_body = Expressions.from(exps).at(block_body)
       end
 
       block_body, end_location = yield block_body
