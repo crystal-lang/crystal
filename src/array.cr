@@ -614,7 +614,7 @@ class Array(T)
   # a[6..10]? # => nil
   # a[6..]?   # => nil
   # ```
-  def []?(range : Range)
+  def []?(range : Range) : Array(T)?
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 

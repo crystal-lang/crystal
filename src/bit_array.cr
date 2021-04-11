@@ -84,7 +84,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range)
+  def [](range : Range) : BitArray
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
@@ -109,7 +109,7 @@ struct BitArray
   # ba[1, 2]  # => BitArray[01]
   # ba[5, 1]  # => BitArray[]
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : BitArray
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     if start == size
