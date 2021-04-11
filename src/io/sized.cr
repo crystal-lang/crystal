@@ -76,7 +76,7 @@ class IO::Sized < IO
     raise IO::Error.new "Can't write to IO::Sized"
   end
 
-  def close : Bool | IO | Int32 | Nil
+  def close : Nil
     return if @closed
     @closed = true
 

@@ -34,11 +34,11 @@ class File::PReader < IO
     raise IO::Error.new("Can't flush read-only IO")
   end
 
-  def unbuffered_rewind : Int32
+  def unbuffered_rewind : Nil
     @pos = 0
   end
 
-  def unbuffered_close : Bool
+  def unbuffered_close : Nil
     @closed = true
   end
 end

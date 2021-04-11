@@ -247,7 +247,7 @@ class XML::Builder
 
   # Forces content written to this writer to be flushed to
   # this writer's `IO`.
-  def flush : IO | Int32 | Nil
+  def flush : Nil
     call Flush
 
     @io.flush

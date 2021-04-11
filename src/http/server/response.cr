@@ -104,13 +104,13 @@ class HTTP::Server
     end
 
     # Flushes the output. This method must be implemented if wrapping the response output.
-    def flush : IO | Int32 | Nil
+    def flush : Nil
       @output.flush
     end
 
     # Closes this response, writing headers and body if not done yet.
     # This method must be implemented if wrapping the response output.
-    def close : Bool | IO | Int32 | Nil
+    def close : Nil
       return if closed?
 
       @output.close
@@ -231,7 +231,7 @@ class HTTP::Server
         @closed
       end
 
-      def close : IO | Int32 | Nil
+      def close : Nil
         return if closed?
 
         # Conditionally determine based on status if the `content-length` header should be added automatically.

@@ -146,7 +146,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_flush : IO | Int32 | Nil
+  def unbuffered_flush : Nil
     @bio.io.flush
   end
 

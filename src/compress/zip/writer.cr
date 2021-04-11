@@ -181,7 +181,7 @@ class Compress::Zip::Writer
   end
 
   # Closes this zip writer.
-  def close : Bool | IO | Int32 | Nil
+  def close : Nil
     return if @closed
     @closed = true
 

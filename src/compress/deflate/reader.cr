@@ -130,7 +130,7 @@ class Compress::Deflate::Reader < IO
   end
 
   # Closes this reader.
-  def unbuffered_close : Bool | IO | Int32 | Nil
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -140,7 +140,7 @@ class Compress::Deflate::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind : Bool
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind

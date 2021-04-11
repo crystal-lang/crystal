@@ -138,7 +138,7 @@ class Compress::Gzip::Reader < IO
   end
 
   # Closes this reader.
-  def unbuffered_close : Bool | IO | Int32 | Nil
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -146,7 +146,7 @@ class Compress::Gzip::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind : Compress::Deflate::Reader?
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind

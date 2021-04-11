@@ -174,7 +174,7 @@ module MIME::Multipart
 
     # Finalizes the multipart message, this method must be called to properly
     # end the multipart message.
-    def finish : IO | Int32 | Nil
+    def finish : Nil
       fail "Cannot finish multipart: no body parts" if @state == :START || @state == :PREAMBLE
       fail "Cannot finish multipart: already finished" if @state == :FINISHED
 
