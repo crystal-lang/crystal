@@ -8,7 +8,7 @@ class HTTP::LogHandler
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context) : Array(Log::Entry) | Bool | Channel({Log::Entry, Log::Backend}) | HTTP::Server::Context | IO | Int32 | Int64 | IO -> Nil | Nil
+  def call(context) : Nil
     start = Time.monotonic
 
     begin

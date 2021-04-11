@@ -20,7 +20,7 @@ class HTTP::WebSocketHandler
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 
-  def call(context) : Array(Log::Entry) | Bool | Channel({Log::Entry, Log::Backend}) | HTTP::Server::Context | IO | Int32 | Int64 | IO -> Nil | Nil
+  def call(context) : Nil
     unless websocket_upgrade_request? context.request
       return call_next context
     end

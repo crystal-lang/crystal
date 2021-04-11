@@ -12,7 +12,7 @@ class HTTP::ErrorHandler
   def initialize(@verbose : Bool = false, @log = Log.for("http.server"))
   end
 
-  def call(context) : Array(Log::Entry) | Bool | Channel({Log::Entry, Log::Backend}) | HTTP::Server::Context | IO | Int32 | Int64 | IO -> Nil | Nil
+  def call(context) : Nil
     begin
       call_next(context)
     rescue ex : HTTP::Server::ClientError

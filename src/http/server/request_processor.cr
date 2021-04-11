@@ -18,7 +18,7 @@ class HTTP::Server::RequestProcessor
     @wants_close = false
   end
 
-  def close : Bool
+  def close : Nil
     @wants_close = true
   end
 

@@ -98,7 +98,7 @@ class HTTP::Server
 
     # Upgrades this response, writing headers and yielding the connection `IO` (a socket) to the given block.
     # This is useful to implement protocol upgrades, such as websockets.
-    def upgrade(&block : IO ->) : IO -> Nil
+    def upgrade(&block : IO ->) : Nil
       write_headers
       @upgrade_handler = block
     end
@@ -134,7 +134,7 @@ class HTTP::Server
     #
     # Raises `IO::Error` if the response is closed or headers were already
     # sent.
-    def respond_with_status(status : HTTP::Status, message : String? = nil) : Bool | IO | Int32 | Nil
+    def respond_with_status(status : HTTP::Status, message : String? = nil) : Nil
       check_headers
       reset
       @status = status
@@ -145,7 +145,7 @@ class HTTP::Server
     end
 
     # :ditto:
-    def respond_with_status(status : Int, message : String? = nil) : Bool | IO | Int32 | Nil
+    def respond_with_status(status : Int, message : String? = nil) : Nil
       respond_with_status(HTTP::Status.new(status), message)
     end
 
@@ -189,7 +189,7 @@ class HTTP::Server
         @closed = false
       end
 
-      def reset : Bool
+      def reset : Nil
         @in_buffer_rem = Bytes.empty
         @out_count = 0
         @sync = false
