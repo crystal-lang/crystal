@@ -96,7 +96,7 @@ module Float::Printer::IEEE
   # exponent as *m_plus*.
   #
   # Precondition: the value encoded by this `Float` must be greater than 0.
-  def normalized_boundaries(v : Float64)
+  def normalized_boundaries(v : Float64) : {minus: DiyFP, plus: DiyFP}
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
@@ -124,7 +124,7 @@ module Float::Printer::IEEE
     return {minus: m_minus, plus: m_plus}
   end
 
-  def normalized_boundaries(v : Float32)
+  def normalized_boundaries(v : Float32) : {minus: DiyFP, plus: DiyFP}
     w = DiyFP.from_f(v)
     m_plus = DiyFP.new((w.frac << 1) + 1, w.exp - 1).normalize
 
