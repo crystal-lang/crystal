@@ -587,12 +587,12 @@ class File < IO::FileDescriptor
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
-  def self.link(old_path : Path | String, new_path : Path | String) : Int32
+  def self.link(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.link(old_path.to_s, new_path.to_s)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
-  def self.symlink(old_path : Path | String, new_path : Path | String) : Int32
+  def self.symlink(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.symlink(old_path.to_s, new_path.to_s)
   end
 

@@ -60,7 +60,7 @@ class CSV::Builder
   end
 
   # Appends the given values as a single row, and then a newline.
-  def row(values : Enumerable) : Bool
+  def row(values : Enumerable) : Nil
     row do |row|
       values.each do |value|
         row << value
@@ -69,7 +69,7 @@ class CSV::Builder
   end
 
   # :ditto:
-  def row(*values) : Bool
+  def row(*values) : Nil
     row values
   end
 
@@ -111,7 +111,7 @@ class CSV::Builder
     end
 
     # Appends the given value to this row.
-    def <<(value : String) : Bool
+    def <<(value : String) : Nil
       if needs_quotes?(value)
         @builder.quote_cell value
       else
@@ -120,7 +120,7 @@ class CSV::Builder
     end
 
     # :ditto:
-    def <<(value : Nil | Bool | Number) : Bool
+    def <<(value : Nil | Bool | Number) : Nil
       case @quoting
       when .all?
         @builder.cell { |io|
@@ -134,7 +134,7 @@ class CSV::Builder
     end
 
     # :ditto:
-    def <<(value) : Bool
+    def <<(value) : Nil
       self << value.to_s
     end
 
@@ -151,7 +151,7 @@ class CSV::Builder
     end
 
     # Appends a comma, thus skipping a cell.
-    def skip_cell : Bool
+    def skip_cell : Nil
       self << nil
     end
 
