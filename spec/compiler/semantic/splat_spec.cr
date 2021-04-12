@@ -818,12 +818,12 @@ describe "Semantic: splat" do
     end
   end
 
-  it "doesn't shift a call's location", focus: true do
+  it "doesn't shift a call's location" do
     result = semantic <<-CR
       class Foo
-      def bar(x)
-      bar(*{"test"})
-      end
+        def bar(x)
+          bar(*{"test"})
+        end
       end
       Foo.new.bar("test")
       CR
@@ -831,7 +831,7 @@ describe "Semantic: splat" do
     a_typ = program.types["Foo"].as(NonGenericClassType)
     a_def = a_typ.def_instances.values[0]
 
-    a_def.location.should eq Location.new("", line_number: 2, column_number: 1)
-    a_def.body.location.should eq Location.new("", line_number: 3, column_number: 1)
+    a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
+    a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)
   end
 end
