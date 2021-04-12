@@ -414,13 +414,31 @@ describe "Number" do
     ary[2].should eq(300.to_u8!)
   end
 
-  it "test zero?" do
-    0.zero?.should eq true
-    0.0.zero?.should eq true
-    0f32.zero?.should eq true
-    1.zero?.should eq false
-    1.0.zero?.should eq false
-    1f32.zero?.should eq false
+  it "#zero?" do
+    0.zero?.should be_true
+    0.0.zero?.should be_true
+    0_f32.zero?.should be_true
+    1.zero?.should be_false
+    1.0.zero?.should be_false
+    1f32.zero?.should be_false
+  end
+
+  it "#positive?" do
+    1.positive?.should be_true
+    1.0.positive?.should be_true
+    0.positive?.should be_false
+    0.0.positive?.should be_false
+    -1.positive?.should be_false
+    -1.1.positive?.should be_false
+  end
+
+  it "#negative?" do
+    1.negative?.should be_false
+    1.0.negative?.should be_false
+    0.negative?.should be_false
+    0.0.negative?.should be_false
+    -1.negative?.should be_true
+    -1.1.negative?.should be_true
   end
 
   describe "#step" do

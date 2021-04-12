@@ -309,7 +309,7 @@ struct Number
     end
   end
 
-  # Returns `true` if value is equal to zero.
+  # Returns `true` if `self` is equal to zero.
   #
   # ```
   # 0.zero? # => true
@@ -317,5 +317,27 @@ struct Number
   # ```
   def zero? : Bool
     self == 0
+  end
+
+  # Returns `true` if `self` is greater than zero.
+  #
+  # ```
+  # -1.positive? # => false
+  # 0.positive?  # => false
+  # 1.positive?  # => true
+  # ```
+  def positive? : Bool
+    self > 0
+  end
+
+  # Returns `true` if `self` is less than zero.
+  #
+  # ```
+  # -1.negative? # => true
+  # 0.negative?  # => false
+  # 1.negative?  # => false
+  # ```
+  def negative? : Bool
+    self < 0
   end
 end
