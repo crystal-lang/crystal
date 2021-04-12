@@ -760,7 +760,7 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { superclass.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "superclass" { (s = superclass) ? s.to_json_simple(builder) : builder.null }
       builder.field "ancestors" do
         builder.array do
           ancestors.each &.to_json_simple(builder)
@@ -795,7 +795,7 @@ class Crystal::Doc::Type
           including_types.each &.to_json_simple(builder)
         end
       end
-      builder.field "namespace" { namespace.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
       builder.field "doc", doc
       builder.field "summary", formatted_summary
       builder.field "class_methods", class_methods
