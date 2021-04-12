@@ -64,7 +64,7 @@ class String::Builder < IO
     nil
   end
 
-  def buffer : UInt8*
+  def buffer : Pointer(UInt8)
     @buffer + String::HEADER_SIZE
   end
 
