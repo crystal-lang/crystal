@@ -241,6 +241,18 @@ describe "BigFloat" do
         0.9.to_big_f.round(:to_zero).should eq 0.0.to_big_f
         1.0.to_big_f.round(:to_zero).should eq 1.0.to_big_f
         1.5.to_big_f.round(:to_zero).should eq 1.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round(:to_zero).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round(:to_zero).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.5".to_big_f.round(:to_zero).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.9".to_big_f.round(:to_zero).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789124.0".to_big_f.round(:to_zero).should eq "123456789123456789124.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round(:to_zero).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round(:to_zero).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round(:to_zero).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round(:to_zero).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round(:to_zero).should eq "-123456789123456789124.0".to_big_f
       end
 
       it "to_positive" do
@@ -255,6 +267,18 @@ describe "BigFloat" do
         0.9.to_big_f.round(:to_positive).should eq 1.0.to_big_f
         1.0.to_big_f.round(:to_positive).should eq 1.0.to_big_f
         1.5.to_big_f.round(:to_positive).should eq 2.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round(:to_positive).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round(:to_positive).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789123.5".to_big_f.round(:to_positive).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789123.9".to_big_f.round(:to_positive).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.0".to_big_f.round(:to_positive).should eq "123456789123456789124.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round(:to_positive).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round(:to_positive).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round(:to_positive).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round(:to_positive).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round(:to_positive).should eq "-123456789123456789124.0".to_big_f
       end
 
       it "to_negative" do
@@ -269,12 +293,108 @@ describe "BigFloat" do
         0.9.to_big_f.round(:to_negative).should eq 0.0.to_big_f
         1.0.to_big_f.round(:to_negative).should eq 1.0.to_big_f
         1.5.to_big_f.round(:to_negative).should eq 1.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round(:to_negative).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round(:to_negative).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.5".to_big_f.round(:to_negative).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.9".to_big_f.round(:to_negative).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789124.0".to_big_f.round(:to_negative).should eq "123456789123456789124.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round(:to_negative).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round(:to_negative).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round(:to_negative).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round(:to_negative).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round(:to_negative).should eq "-123456789123456789124.0".to_big_f
       end
 
-      it "raises on unsupported modes" do
-        expect_raises(ArgumentError) { 0.0.to_big_f.round }
-        expect_raises(ArgumentError) { 0.0.to_big_f.round(:ties_away) }
-        expect_raises(ArgumentError) { 0.0.to_big_f.round(:ties_even) }
+      it "ties_even" do
+        -2.5.to_big_f.round(:ties_even).should eq -2.0.to_big_f
+        -1.5.to_big_f.round(:ties_even).should eq -2.0.to_big_f
+        -1.0.to_big_f.round(:ties_even).should eq -1.0.to_big_f
+        -0.9.to_big_f.round(:ties_even).should eq -1.0.to_big_f
+        -0.5.to_big_f.round(:ties_even).should eq 0.0.to_big_f
+        -0.1.to_big_f.round(:ties_even).should eq 0.0.to_big_f
+        0.0.to_big_f.round(:ties_even).should eq 0.0.to_big_f
+        0.1.to_big_f.round(:ties_even).should eq 0.0.to_big_f
+        0.5.to_big_f.round(:ties_even).should eq 0.0.to_big_f
+        0.9.to_big_f.round(:ties_even).should eq 1.0.to_big_f
+        1.0.to_big_f.round(:ties_even).should eq 1.0.to_big_f
+        1.5.to_big_f.round(:ties_even).should eq 2.0.to_big_f
+        2.5.to_big_f.round(:ties_even).should eq 2.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round(:ties_even).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round(:ties_even).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.5".to_big_f.round(:ties_even).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789123.9".to_big_f.round(:ties_even).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.0".to_big_f.round(:ties_even).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.5".to_big_f.round(:ties_even).should eq "123456789123456789124.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round(:ties_even).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round(:ties_even).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round(:ties_even).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round(:ties_even).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round(:ties_even).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.5".to_big_f.round(:ties_even).should eq "-123456789123456789124.0".to_big_f
+      end
+
+      it "ties_away" do
+        -2.5.to_big_f.round(:ties_away).should eq -3.0.to_big_f
+        -1.5.to_big_f.round(:ties_away).should eq -2.0.to_big_f
+        -1.0.to_big_f.round(:ties_away).should eq -1.0.to_big_f
+        -0.9.to_big_f.round(:ties_away).should eq -1.0.to_big_f
+        -0.5.to_big_f.round(:ties_away).should eq -1.0.to_big_f
+        -0.1.to_big_f.round(:ties_away).should eq 0.0.to_big_f
+        0.0.to_big_f.round(:ties_away).should eq 0.0.to_big_f
+        0.1.to_big_f.round(:ties_away).should eq 0.0.to_big_f
+        0.5.to_big_f.round(:ties_away).should eq 1.0.to_big_f
+        0.9.to_big_f.round(:ties_away).should eq 1.0.to_big_f
+        1.0.to_big_f.round(:ties_away).should eq 1.0.to_big_f
+        1.5.to_big_f.round(:ties_away).should eq 2.0.to_big_f
+        2.5.to_big_f.round(:ties_away).should eq 3.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round(:ties_away).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round(:ties_away).should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.5".to_big_f.round(:ties_away).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789123.9".to_big_f.round(:ties_away).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.0".to_big_f.round(:ties_away).should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.5".to_big_f.round(:ties_away).should eq "123456789123456789125.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round(:ties_away).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round(:ties_away).should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round(:ties_away).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round(:ties_away).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round(:ties_away).should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.5".to_big_f.round(:ties_away).should eq "-123456789123456789125.0".to_big_f
+      end
+
+      it "default (=ties_even)" do
+        -2.5.to_big_f.round.should eq -2.0.to_big_f
+        -1.5.to_big_f.round.should eq -2.0.to_big_f
+        -1.0.to_big_f.round.should eq -1.0.to_big_f
+        -0.9.to_big_f.round.should eq -1.0.to_big_f
+        -0.5.to_big_f.round.should eq 0.0.to_big_f
+        -0.1.to_big_f.round.should eq 0.0.to_big_f
+        0.0.to_big_f.round.should eq 0.0.to_big_f
+        0.1.to_big_f.round.should eq 0.0.to_big_f
+        0.5.to_big_f.round.should eq 0.0.to_big_f
+        0.9.to_big_f.round.should eq 1.0.to_big_f
+        1.0.to_big_f.round.should eq 1.0.to_big_f
+        1.5.to_big_f.round.should eq 2.0.to_big_f
+        2.5.to_big_f.round.should eq 2.0.to_big_f
+
+        BigFloat.default_precision = 256
+        "123456789123456789123.0".to_big_f.round.should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.1".to_big_f.round.should eq "123456789123456789123.0".to_big_f
+        "123456789123456789123.5".to_big_f.round.should eq "123456789123456789124.0".to_big_f
+        "123456789123456789123.9".to_big_f.round.should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.0".to_big_f.round.should eq "123456789123456789124.0".to_big_f
+        "123456789123456789124.5".to_big_f.round.should eq "123456789123456789124.0".to_big_f
+        "-123456789123456789123.0".to_big_f.round.should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.1".to_big_f.round.should eq "-123456789123456789123.0".to_big_f
+        "-123456789123456789123.5".to_big_f.round.should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789123.9".to_big_f.round.should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.0".to_big_f.round.should eq "-123456789123456789124.0".to_big_f
+        "-123456789123456789124.5".to_big_f.round.should eq "-123456789123456789124.0".to_big_f
       end
     end
   end

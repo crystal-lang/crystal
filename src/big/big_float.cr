@@ -309,21 +309,41 @@ struct BigFloat < Float
     self
   end
 
-  # Rounds `self` to an integer value using rounding *mode*.
-  #
-  # Raises `ArgumentError` if *mode* is either `Number::RoundingMode::TIES_EVEN`
-  # or `Number::RoundingMode::TIES_AWAY`, which GMP does not support.
-  def round(mode : Number::RoundingMode = :ties_even) : self
-    case mode
-    in .to_zero?
-      trunc
-    in .to_positive?
-      ceil
-    in .to_negative?
-      floor
-    in .ties_away?, .ties_even?
-      raise ArgumentError.new("Rounding mode #{mode} is not supported")
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : self
+    if self >= 0
+      halfway = self + 0.5
+    else
+      halfway = self - 0.5
     end
+    if halfway.integer?
+      if halfway.to_i!.even?
+        halfway
+      else
+        halfway - sign
+      end
+    else
+      if self >= 0
+        halfway.floor
+      else
+        halfway.ceil
+      end
+    end
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away : self
+    if self >= 0
+      (self + 0.5).floor
+    else
+      (self - 0.5).ceil
+    end
+  end
+
+  def integer?
+    !LibGMP.mpf_integer_p(mpf).zero?
   end
 
   private def mpf
