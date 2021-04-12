@@ -207,8 +207,9 @@ struct BigDecimal < Number
     check_division_by_zero other
     other.factor_powers_of_ten
 
-    scale = @scale - other.scale
+    scale = @scale >= other.scale ? @scale - other.scale : 0
     numerator, denominator = @value, other.@value
+    numerator *= TEN ** (other.scale - @scale) unless @scale >= other.scale
 
     quotient, remainder = numerator.divmod(denominator)
     if remainder == ZERO
