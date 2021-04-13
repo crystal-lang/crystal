@@ -2110,7 +2110,7 @@ module Crystal
         filter_vars TypeFilters.not(cond_type_filters)
       end
 
-      node.type = @program.nil
+      node.bind_to(@program.nil_var) unless endless_while
 
       false
     end
@@ -2293,6 +2293,7 @@ module Crystal
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
+        target_while.bind_to(node_exp_or_nil_literal(node))
       else
         if @typed_def.try &.captured_block?
           node.raise "can't break from captured block, try using `next`."
