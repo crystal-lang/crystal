@@ -132,17 +132,16 @@ describe "File" do
     end
   end
 
-  # TODO: implement this for win32
   describe "executable?" do
-    pending_win32 "gives false" do
+    it "gives false" do
       File.executable?(datapath("test_file.txt")).should be_false
     end
 
-    pending_win32 "gives false when the file doesn't exist" do
+    it "gives false when the file doesn't exist" do
       File.executable?(datapath("non_existing_file.txt")).should be_false
     end
 
-    pending_win32 "gives false when a component of the path is a file" do
+    it "gives false when a component of the path is a file" do
       File.executable?(datapath("dir", "test_file.txt", "")).should be_false
     end
   end
