@@ -44,13 +44,13 @@ describe XML::Builder do
     end
   end
 
-  it "writes element with namspace" do
+  it "writes element with namespace" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1) { }
     end
   end
 
-  it "writes element with namspace, without block" do
+  it "writes element with namespace, without block" do
     assert_built(%[<?xml version="1.0"?>\n<x:foo id="1" xmlns:x="http://foo.com"/>\n]) do
       element("x", "foo", "http://foo.com", id: 1)
     end

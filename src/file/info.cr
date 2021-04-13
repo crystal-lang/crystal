@@ -79,7 +79,7 @@ class File
   # It is returned by `File.info`, `File#info` and `File.info?`.
   abstract struct Info
     # Size of the file, in bytes.
-    abstract def size : UInt64
+    abstract def size : Int64
 
     # The permissions of the file.
     abstract def permissions : Permissions
@@ -96,20 +96,8 @@ class File
     # The user ID that the file belongs to.
     abstract def owner_id : String
 
-    # :ditto:
-    @[Deprecated("Use File#owner_id instead")]
-    def owner : UInt32
-      owner_id.to_u32
-    end
-
     # The group ID that the file belongs to.
     abstract def group_id : String
-
-    # :ditto:
-    @[Deprecated("Use File#group_id instead")]
-    def group : UInt32
-      group_id.to_u32
-    end
 
     # Returns true if this `Info` and *other* are of the same file.
     #

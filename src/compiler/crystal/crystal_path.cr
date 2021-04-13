@@ -1,9 +1,9 @@
 require "./config"
-require "./exception"
+require "./error"
 
 module Crystal
   struct CrystalPath
-    class NotFoundError < LocationlessException
+    class NotFoundError < Crystal::Error
       getter filename
       getter relative_to
 

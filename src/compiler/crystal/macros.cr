@@ -689,7 +689,7 @@ module Crystal::Macros
     end
 
     # Similar to `Array#[]=`.
-    def []=(index : NumberLiteral, value : ASTNode)
+    def []=(index : NumberLiteral, value : ASTNode) : ASTNode
     end
 
     # Similar to `Array#unshift`.
@@ -760,7 +760,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#[]=`
-    def []=(key : ASTNode) : ASTNode
+    def []=(key : ASTNode, value : ASTNode) : ASTNode
     end
 
     # Returns the type specified at the end of the Hash literal, if any.
@@ -835,7 +835,7 @@ module Crystal::Macros
     end
 
     # Adds or replaces a key.
-    def []=(key : SymbolLiteral | StringLiteral | MacroId) : ASTNode
+    def []=(key : SymbolLiteral | StringLiteral | MacroId, value : ASTNode) : ASTNode
     end
   end
 
@@ -1257,8 +1257,8 @@ module Crystal::Macros
     def type : ASTNode
     end
 
-    # Returns the instance variable used in this `offsetof` expression.
-    def instance_var : ASTNode
+    # Returns the offset argument used in this `offsetof` expression.
+    def offset : ASTNode
     end
   end
 
@@ -1581,9 +1581,6 @@ module Crystal::Macros
   # class TypeOf < ASTNode
   # end
 
-  # class Attribute < ASTNode
-  # end
-
   # A macro expression,
   # surrounded by {{ ... }} (output = true)
   # or by {% ... %} (output = false)
@@ -1617,10 +1614,10 @@ module Crystal::Macros
 
   # A fictitious node representing an identifier like, `foo`, `Bar` or `something_else`.
   #
-  # The parser doesn't create this nodes. Instead, you create them by invoking `id`
+  # The parser doesn't create these nodes. Instead, you create them by invoking `id`
   # on some nodes. For example, invoking `id` on a `StringLiteral` returns a `MacroId`
   # for the string's content. Similarly, invoking ID on a `SymbolLiteral`, `Call`, `Var` and `Path`
-  # return MacroIds for the node's content.
+  # returns a MacroId for the node's content.
   #
   # This allows you to treat strings, symbols, variables and calls uniformly. For example:
   #
@@ -1645,7 +1642,7 @@ module Crystal::Macros
   # end
   # ```
   #
-  # If we hand't use `id`, the generated code would have been this:
+  # If we hadn't used `id`, the generated code would have been this:
   #
   # ```text
   # def unicorns
@@ -1920,12 +1917,6 @@ module Crystal::Macros
     # (the name you pass to this method is `"default_options"` or `:default_options`
     # in this cases).
     def has_method?(name : StringLiteral | SymbolLiteral) : BoolLiteral
-    end
-
-    # Returns `true` if this type has an attribute. For example `@[Flags]`
-    # or `@[Packed]` (the name you pass to this method is `"Flags"` or `"Packed"`
-    # in these cases).
-    def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
     # Returns the last `Annotation` with the given `type`

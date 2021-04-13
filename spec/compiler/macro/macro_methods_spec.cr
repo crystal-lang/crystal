@@ -253,7 +253,7 @@ module Crystal
         assert_macro "", "{{~1}}", [] of ASTNode, "-2"
       end
 
-      it "exetutes kind" do
+      it "executes kind" do
         assert_macro "", "{{-128i8.kind}}", [] of ASTNode, ":i8"
         assert_macro "", "{{1e-123_f32.kind}}", [] of ASTNode, ":f32"
         assert_macro "", "{{1.0.kind}}", [] of ASTNode, ":f64"
@@ -1011,15 +1011,15 @@ module Crystal
       end
 
       it "executes double splat" do
-        assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{**{a: 1, "foo bar": 2, "+": 3}}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat with arg" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3, )
       end
 
       describe "#each" do
@@ -2151,8 +2151,8 @@ module Crystal
         assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
       end
 
-      it "executes instance_var" do
-        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      it "executes offset" do
+        assert_macro "x", %({{x.offset}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 
@@ -2633,11 +2633,10 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        expect_raises(Crystal::TypeException, "No such file or directory") do
-          run(%q<
-            {{read_file("#{__DIR__}/../data/build_foo")}}
-            >, filename = __FILE__)
-        end
+        assert_error <<-CR,
+          {{read_file("#{__DIR__}/../data/build_foo")}}
+          CR
+          "No such file or directory"
       end
     end
 
@@ -2649,11 +2648,10 @@ module Crystal
       end
 
       it "reads file (doesn't exist)" do
-        expect_raises(Crystal::TypeException, "No such file or directory") do
-          run(%q<
+        assert_error <<-CR,
           {{read_file("spec/compiler/data/build_foo")}}
-          >, filename = __FILE__)
-        end
+          CR
+          "No such file or directory"
       end
     end
   end

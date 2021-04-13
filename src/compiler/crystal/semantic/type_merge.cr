@@ -249,6 +249,9 @@ module Crystal
       # Tuple instances might be unified, but never tuple metaclasses
       return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
 
+      # NamedTuple instances might be unified, but never named tuple metaclasses
+      return nil if instance_type.is_a?(NamedTupleInstanceType) || other.instance_type.is_a?(NamedTupleInstanceType)
+
       common = instance_type.common_ancestor(other.instance_type)
       common.try &.metaclass
     end
@@ -270,22 +273,6 @@ module Crystal
     def common_ancestor(other : MetaclassType | VirtualMetaclassType)
       common = instance_type.base_type.metaclass.common_ancestor(other)
       common.try &.virtual_type!
-    end
-  end
-
-  class ProcInstanceType
-    def common_ancestor(other : ProcInstanceType)
-      # For Proc(..., NoReturn), Proc(..., T) we keep Proc(..., T)
-      if return_type.no_return? && arg_types == other.arg_types
-        return other
-      end
-
-      # Same but the other way around
-      if other.return_type.no_return? && arg_types == other.arg_types
-        return self
-      end
-
-      nil
     end
   end
 

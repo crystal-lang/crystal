@@ -27,8 +27,6 @@ class LLVM::ABI::AArch64 < LLVM::ABI
                   check_array(type)
                 when Type::Kind::Struct
                   check_struct(type)
-                else
-                  # go on
                 end
 
     # Ensure we have at most four uniquely addressable members
@@ -61,7 +59,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     elements.each do |element|
       opt_homog_agg = homogeneous_aggregate?(element)
 
-      # field isn't itself oan HFA, so we aren't either
+      # field isn't itself an HFA, so we aren't either
       return unless opt_homog_agg
       field_type, field_members = opt_homog_agg
 

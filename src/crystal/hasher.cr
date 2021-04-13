@@ -176,7 +176,7 @@ struct Crystal::Hasher
 
   def float(value : Float32)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float32 and Int32 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int32)
@@ -196,7 +196,7 @@ struct Crystal::Hasher
 
   def float(value : Float64)
     normalized_hash = float_normalize_wrap(value) do |value|
-      # This optimized version works on every architecture where endianess
+      # This optimized version works on every architecture where endianness
       # of Float64 and Int64 matches and float is IEEE754. All supported
       # architectures fall into this category.
       unsafe_int = value.unsafe_as(Int64)

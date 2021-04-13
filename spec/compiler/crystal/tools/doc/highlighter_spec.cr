@@ -5,9 +5,16 @@ require "../../../../spec_helper"
 private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   it "highlights #{code.inspect}", file, line do
     highlighted = Crystal::Doc::Highlighter.highlight code
-    highlighted.should eq(expected), file, line
+    highlighted.should eq(expected), file: file, line: line
     doc = XML.parse_html highlighted
-    doc.content.should eq(code), file, line
+    doc.content.should eq(code), file: file, line: line
+  end
+end
+
+private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
+  it "does not highlight #{code.inspect} due to error", file, line do
+    highlighted = Crystal::Doc::Highlighter.highlight code
+    highlighted.should eq(code), file: file, line: line
   end
 end
 
@@ -91,21 +98,18 @@ describe "Crystal::Doc::Highlighter#highlight" do
       BAR</span>
     HTML
 
-  it_highlights <<-CR, <<-HTML
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
       FOO
     CR
-    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
-    <span class="s">  foo
-      FOO</span>
-    HTML
 
-  it_highlights <<-CR, <<-HTML
+  it_does_not_highlight <<-CR
     foo, bar = <<-FOO, <<-BAR
       foo
     CR
-    foo, bar <span class="o">=</span> <span class="s">&lt;&lt;-FOO</span>, <span class="s">&lt;&lt;-BAR</span>
-    <span class="s">  foo</span>
-    HTML
+
+  it_does_not_highlight "\"foo"
+  it_does_not_highlight "%w[foo"
+  it_does_not_highlight "%i[foo"
 end

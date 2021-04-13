@@ -9,8 +9,6 @@ end
 
 private def to_s_with_io(num, base, upcase = false)
   String.build { |io| num.to_s(io, base, upcase: upcase) }
-  # Test deprecated overload:
-  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
@@ -163,6 +161,8 @@ describe "Int" do
     it { 4.lcm(6).should eq(12) }
     it { 0.lcm(2).should eq(0) }
     it { 2.lcm(0).should eq(0) }
+
+    it "doesn't silently overflow" { 2_000_000.lcm(3_000_000).should eq(6_000_000) }
   end
 
   describe "to_s in base" do
@@ -174,7 +174,6 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
-    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }
@@ -345,7 +344,7 @@ describe "Int" do
       a.should eq(6)
     end
 
-    it "does downards" do
+    it "does downwards" do
       a = 0
       4.to(2) { |i| a += i }.should be_nil
       a.should eq(9)
@@ -782,7 +781,7 @@ describe "Int" do
   end
 
   describe "#bit_length" do
-    it "for primitve integers" do
+    it "for primitive integers" do
       0.bit_length.should eq(0)
       0b1.bit_length.should eq(1)
       0b1001.bit_length.should eq(4)

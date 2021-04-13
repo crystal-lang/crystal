@@ -345,11 +345,12 @@ struct Float
 end
 
 module Math
-  # Returns the sqrt of a `BigRational`.
+  # Calculates the square root of *value*.
+  #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_r*1000_000_000_00000.to_big_r))
+  # Math.sqrt(1_000_000_000_000.to_big_r * 1_000_000_000_000.to_big_r) # => 1000000000000.0
   # ```
   def sqrt(value : BigRational)
     sqrt(value.to_big_f)

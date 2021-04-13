@@ -154,8 +154,14 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
-  def const_inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
-    Value.new LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+  def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false)
+    value =
+      {% unless LibLLVM::IS_LT_70 %}
+        LibLLVM.get_inline_asm(self, asm_string, asm_string.size, constraints, constraints.size, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0), LibLLVM::InlineAsmDialect::Intel)
+      {% else %}
+        LibLLVM.const_inline_asm(self, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
+      {% end %}
+    Value.new value
   end
 
   def context : Context

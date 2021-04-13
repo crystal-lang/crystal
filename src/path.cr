@@ -340,20 +340,28 @@ struct Path
   # Returns the extension of this path, or an empty string if it has no extension.
   #
   # ```
-  # Path["foo.cr"].extension # => ".cr"
-  # Path["foo"].extension    # => ""
+  # Path["foo.cr"].extension     # => ".cr"
+  # Path["foo"].extension        # => ""
+  # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
     bytes = @name.to_slice
 
     return "" if bytes.empty?
 
-    current = bytes.size - 1
+    slice_end = bytes.size
+    current = slice_end - 1
+
+    separators = self.separators.map &.ord
+
+    # ignore trailing separators
+    while separators.includes?(bytes[current]) && current > 0
+      current -= 1
+      slice_end -= 1
+    end
 
     # if the pattern is `foo.`, it has no extension
     return "" if bytes[current] == '.'.ord
-
-    separators = self.separators.map &.ord
 
     # position the reader at the last `.` or SEPARATOR
     # that is not the first char
@@ -379,7 +387,20 @@ struct Path
     # we are not at the beginning,
     # the previous char is not a '/',
     # and we have an extension
-    String.new(bytes[current, bytes.size - current])
+    String.new(bytes[current, slice_end - current])
+  end
+
+  # Returns the last component of this path without the extension.
+  #
+  # This is equivalent to `self.basename(self.extension)`.
+  #
+  # ```
+  # Path["file.cr"].stem     # => "file"
+  # Path["file.tar.gz"].stem # => "file.tar"
+  # Path["foo/file.cr"].stem # => "file"
+  # ```
+  def stem
+    basename(extension)
   end
 
   # Removes redundant elements from this path and returns the shortest equivalent path by purely lexical processing.
@@ -828,7 +849,7 @@ struct Path
       # Copy the part
       buffer.copy_from(part_ptr, part_bytesize)
 
-      {bytesize, @name.ascii_only? && part.ascii_only? ? bytesize : 0}
+      {bytesize, @name.single_byte_optimizable? && part.single_byte_optimizable? ? bytesize : 0}
     end
 
     new_instance new_name
@@ -1059,10 +1080,25 @@ struct Path
   # Path.windows("foo") <=> Path.windows("FOO") # => 0
   # ```
   def <=>(other : Path)
-    ord = @name.compare(other.@name, case_insensitive: windows?)
+    ord = @name.compare(other.@name, case_insensitive: windows? || other.windows?)
     return ord if ord != 0
 
     @kind <=> other.@kind
+  end
+
+  def ==(other : self)
+    return false if @kind != other.@kind
+
+    @name.compare(other.@name, case_insensitive: windows? || other.windows?) == 0
+  end
+
+  def hash(hasher)
+    name = @name
+    if windows?
+      name = name.downcase
+    end
+    hasher = name.hash(hasher)
+    @kind.hash(hasher)
   end
 
   # Returns a path representing the drive component or `nil` if this path does not contain a drive.

@@ -1,7 +1,7 @@
 require "option_parser"
 require "file_utils"
 require "colorize"
-require "digest/md5"
+require "crystal/digest/md5"
 
 module Crystal
   @[Flags]
@@ -69,7 +69,7 @@ module Crystal
     property? no_cleanup = false
 
     # If `true`, no executable will be generated after compilation
-    # (useful to type-check a prorgam)
+    # (useful to type-check a program)
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
@@ -159,7 +159,7 @@ module Crystal
     # Compiles the given *source*, with *output_filename* as the name
     # of the generated executable.
     #
-    # Raises `Crystal::Exception` if there's an error in the
+    # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
@@ -183,7 +183,7 @@ module Crystal
     # contain all types and methods. This can be useful to generate
     # API docs, analyze type relationships, etc.
     #
-    # Raises `Crystal::Exception` if there's an error in the
+    # Raises `Crystal::CodeError` if there's an error in the
     # source code.
     #
     # Raises `InvalidByteSequenceError` if the source code is not
@@ -202,6 +202,7 @@ module Crystal
 
     private def new_program(sources)
       @program = program = Program.new
+      program.compiler = self
       program.filename = sources.first.filename
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.codegen_target = codegen_target
@@ -283,7 +284,9 @@ module Crystal
       if @cross_compile
         cross_compile program, units, output_filename
       else
-        result = codegen program, units, output_filename, output_dir
+        result = with_file_lock(output_dir) do
+          codegen program, units, output_filename, output_dir
+        end
 
         {% if flag?(:darwin) %}
           run_dsymutil(output_filename) unless debug.none?
@@ -293,6 +296,19 @@ module Crystal
       CacheDir.instance.cleanup if @cleanup
 
       result
+    end
+
+    private def with_file_lock(output_dir)
+      {% if flag?(:win32) %}
+        # TODO: use flock when it's supported in Windows
+        yield
+      {% else %}
+        File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
+          file.flock_exclusive do
+            yield
+          end
+        end
+      {% end %}
     end
 
     private def run_dsymutil(filename)
@@ -625,7 +641,7 @@ module Crystal
 
         if @name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
-          @name = "#{@name[0..16]}-#{Digest::MD5.hexdigest(@name)}"
+          @name = "#{@name[0..16]}-#{::Crystal::Digest::MD5.hexdigest(@name)}"
         end
 
         @object_extension = program.object_extension

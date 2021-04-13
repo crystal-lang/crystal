@@ -5,7 +5,7 @@ module Crystal::Conversions
 
     begin
       convert_call.accept visitor
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if ex.message.try(&.includes?("undefined method '#{convert_call_name}'"))
         return nil
       end

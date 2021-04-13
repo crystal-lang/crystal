@@ -241,6 +241,10 @@ struct Int
     self >= 0 ? self : -self
   end
 
+  def round(mode : RoundingMode) : self
+    self
+  end
+
   def ceil
     self
   end
@@ -249,11 +253,17 @@ struct Int
     self
   end
 
-  def round
+  def trunc
     self
   end
 
-  def trunc
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
     self
   end
 
@@ -431,8 +441,8 @@ struct Int
     end
   end
 
-  # Returns the greatest common divisor of `self` and `other`. Signed
-  # integers may raise overflow if either has value equal to `MIN` of
+  # Returns the greatest common divisor of `self` and *other*. Signed
+  # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
   #
   # ```
@@ -475,8 +485,11 @@ struct Int
     u.unsafe_shl shift
   end
 
+  # Returns the least common multiple of `self` and *other*.
+  #
+  # Raises `OverflowError` in case of overflow.
   def lcm(other : Int)
-    (self * other).abs // gcd(other)
+    (self // gcd(other) * other).abs
   end
 
   def divisible_by?(num)
@@ -617,11 +630,6 @@ struct Int
     end
   end
 
-  @[Deprecated("Use `#to_s(base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, _upcase : Bool) : String
-    to_s(base, upcase: _upcase)
-  end
-
   def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
@@ -636,11 +644,6 @@ struct Int
         io.write_utf8 Slice.new(ptr, count)
       end
     end
-  end
-
-  @[Deprecated("Use `#to_s(io : IO, base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
-    to_s(io, base, upcase: upcase)
   end
 
   private def internal_to_s(base, upcase = false)
@@ -980,6 +983,10 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u8 &- self
+  end
+
   def abs
     self
   end
@@ -1019,6 +1026,10 @@ struct UInt16
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u16 &- self
+  end
 
   def abs
     self
@@ -1060,6 +1071,10 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u32 &- self
+  end
+
   def abs
     self
   end
@@ -1099,6 +1114,10 @@ struct UInt64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u64 &- self
+  end
 
   def abs
     self
@@ -1140,6 +1159,11 @@ struct UInt128
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    # TODO: use 0_u128 &- self
+    UInt128.new(0) &- self
+  end
 
   def abs
     self

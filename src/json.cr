@@ -118,7 +118,7 @@ module JSON
     getter column_number : Int32
 
     def initialize(message, @line_number, @column_number, cause = nil)
-      super "#{message} at #{@line_number}:#{@column_number}", cause
+      super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
     def location

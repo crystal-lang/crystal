@@ -14,7 +14,7 @@ private def assert_agent(source, expected)
 
   instrument(source).should contain(expected)
 
-  # whatever case should work beforeit should work with appended lines
+  # whatever case should work before it should work with appended lines
   instrument("#{source}\n1\n").should contain(expected)
 end
 
