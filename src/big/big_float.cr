@@ -342,7 +342,7 @@ struct BigFloat < Float
     end
   end
 
-  private def integer?
+  protected def integer?
     !LibGMP.mpf_integer_p(mpf).zero?
   end
 
