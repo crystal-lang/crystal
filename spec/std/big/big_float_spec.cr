@@ -184,6 +184,18 @@ describe "BigFloat" do
     it { -4321.to_big_f.to_i!.should eq(-4321) }
   end
 
+  describe "to_i64" do
+    it { expect_raises(OverflowError) { (2.0 ** 63).to_big_f.to_i64 } }
+    it { expect_raises(OverflowError) { (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64 } }
+    it { expect_raises(OverflowError) { (-9.223372036854778e+18).to_big_f.to_i64 } } # (-(2.0 ** 63)).prev_float
+  end
+
+  describe "to_i64!" do
+    it { (2.0 ** 63).to_big_f.to_i64! }
+    it { (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64! }
+    it { (-9.223372036854778e+18).to_big_f.to_i64! } # (-(2.0 ** 63)).prev_float
+  end
+
   describe "to_u" do
     it { 1.34.to_big_f.to_u.should eq(1) }
     it { 123.to_big_f.to_u.should eq(123) }
@@ -197,6 +209,18 @@ describe "BigFloat" do
     it { 1.34.to_big_f.to_u!.should eq(1) }
     it { 123.to_big_f.to_u!.should eq(123) }
     it { 4321.to_big_f.to_u!.should eq(4321) }
+  end
+
+  describe "to_u64" do
+    it { expect_raises(OverflowError) { (2.0 ** 64).to_big_f.to_u64 } }
+    it { expect_raises(OverflowError) { (-1).to_big_f.to_u64 } }
+    it { expect_raises(OverflowError) { (-0.0001).to_big_f.to_u64 } }
+  end
+
+  describe "to_u64!" do
+    it { (2.0 ** 64).to_big_f.to_u64! }
+    it { (-1).to_big_f.to_u64! }
+    it { (-0.0001).to_big_f.to_u64! }
   end
 
   describe "to_s" do
