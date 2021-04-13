@@ -1529,7 +1529,6 @@ class Hash(K, V)
   # ```
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact! # => {"hello" => "world"}
-  # hash.compact! # => nil
   # ```
   def compact!
     reject! { |key, value| value.nil? }

@@ -230,14 +230,14 @@ class JSON::PullParser
   # If the value in unknown, it raises a `ParseException`.
   #
   # ```
-  # pull = JSON::PullParser.new %([nil, true, 1, "foo", [1, "two"], {"foo": "bar"}])
+  # pull = JSON::PullParser.new %([null, true, 1, "foo", [1, "two"], {"foo": "bar"}])
   # pull.read_begin_array
-  # pull.read_raw # => "nil"
+  # pull.read_raw # => "null"
   # pull.read_raw # => "true"
   # pull.read_raw # => "1"
-  # pull.read_raw # => "foo"
-  # pull.read_raw # => "[1, \"two\"]"
-  # pull.read_raw # => "{\"foo\": \"bar\"}"
+  # pull.read_raw # => "\"foo\""
+  # pull.read_raw # => "[1,\"two\"]"
+  # pull.read_raw # => "{\"foo\":\"bar\"}"
   # pull.read_end_array
   # ```
   def read_raw

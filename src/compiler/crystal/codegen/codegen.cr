@@ -796,37 +796,57 @@ module Crystal
       set_ensure_exception_handler(node)
 
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks "while", "body", "exit"
+        cond = node.cond.single_expression
+        endless_while = cond.true_literal?
 
-        context.while_block = while_block
-        context.while_exit_block = exit_block
-        context.break_phi = nil
-        context.next_phi = nil
+        if endless_while
+          while_block = new_block "while"
 
-        br while_block
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
 
-        position_at_end while_block
+            br while_block
 
-        request_value do
-          set_current_debug_location node.cond if @debug.line_numbers?
-          codegen_cond_branch node.cond, body_block, exit_block
-        end
+            position_at_end while_block
 
-        position_at_end body_block
-
-        request_value(false) do
-          accept node.body
-        end
-        br while_block
-
-        position_at_end exit_block
-
-        if node.no_returns?
-          unreachable
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+          end
         else
-          @last = llvm_nil
+          while_block, body_block, fail_block = new_blocks "while", "body", "fail"
+
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
+
+            br while_block
+
+            position_at_end while_block
+
+            request_value do
+              set_current_debug_location node.cond if @debug.line_numbers?
+              codegen_cond_branch node.cond, body_block, fail_block
+            end
+
+            position_at_end body_block
+
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+
+            position_at_end fail_block
+
+            phi.add llvm_nil, @program.nil, last: true
+          end
         end
       end
+
       false
     end
 
@@ -854,20 +874,28 @@ module Crystal
       set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
-      if break_phi = context.break_phi
-        old_last = @last
-        execute_ensures_until(node.target.as(Call))
-        @last = old_last
+      case target = node.target
+      when Call
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
 
-        break_phi.add @last, node_type
-      elsif while_exit_block = context.while_exit_block
-        execute_ensures_until(node.target.as(While))
-        br while_exit_block
-      else
-        node.raise "BUG: unknown exit for break"
+          break_phi.add @last, node_type
+          return false
+        end
+      when While
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
+
+          break_phi.add @last, node_type
+          return false
+        end
       end
 
-      false
+      node.raise "BUG: unknown exit for break"
     end
 
     def visit(node : Next)
@@ -878,7 +906,7 @@ module Crystal
       when Block
         if next_phi = context.next_phi
           old_last = @last
-          execute_ensures_until(target.as(Block))
+          execute_ensures_until(target)
           @last = old_last
 
           next_phi.add @last, node_type
@@ -886,7 +914,7 @@ module Crystal
         end
       when While
         if while_block = context.while_block
-          execute_ensures_until(target.as(While))
+          execute_ensures_until(target)
           br while_block
           return false
         end
@@ -1497,7 +1525,6 @@ module Crystal
 
           context.break_phi = old.return_phi
           context.next_phi = phi
-          context.while_exit_block = nil
           context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true

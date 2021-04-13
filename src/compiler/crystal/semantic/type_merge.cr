@@ -249,6 +249,9 @@ module Crystal
       # Tuple instances might be unified, but never tuple metaclasses
       return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
 
+      # NamedTuple instances might be unified, but never named tuple metaclasses
+      return nil if instance_type.is_a?(NamedTupleInstanceType) || other.instance_type.is_a?(NamedTupleInstanceType)
+
       common = instance_type.common_ancestor(other.instance_type)
       common.try &.metaclass
     end
