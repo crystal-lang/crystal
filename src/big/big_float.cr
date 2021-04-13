@@ -318,7 +318,7 @@ struct BigFloat < Float
       halfway = self - 0.5
     end
     if halfway.integer?
-      if halfway.to_i!.even?
+      if halfway == (halfway / 2).floor * 2
         halfway
       else
         halfway - sign
