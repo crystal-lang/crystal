@@ -191,9 +191,11 @@ describe "BigFloat" do
   end
 
   describe "#to_i64!" do
-    it { (2.0 ** 63).to_big_f.to_i64! }
-    it { (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64! }
-    it { (-9.223372036854778e+18).to_big_f.to_i64! } # (-(2.0 ** 63)).prev_float
+    it "doesn't raise on overflow" do
+      (2.0 ** 63).to_big_f.to_i64!
+      (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64!
+      (-9.223372036854778e+18).to_big_f.to_i64! # (-(2.0 ** 63)).prev_float
+    end
   end
 
   describe "#to_u" do
@@ -218,9 +220,11 @@ describe "BigFloat" do
   end
 
   describe "#to_u64!" do
-    it { (2.0 ** 64).to_big_f.to_u64! }
-    it { (-1).to_big_f.to_u64! }
-    it { (-0.0001).to_big_f.to_u64! }
+    it "doesn't raise on overflow" do
+      (2.0 ** 64).to_big_f.to_u64!
+      (-1).to_big_f.to_u64!
+      (-0.0001).to_big_f.to_u64!
+    end
   end
 
   describe "#to_s" do
