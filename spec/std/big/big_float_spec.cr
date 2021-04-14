@@ -1,6 +1,15 @@
 require "spec"
 require "big"
 
+private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
+  it "converts to #{str}", file: file, line: line do
+    value.to_s.should eq(str), file: file, line: line
+    new_value = BigFloat.new(str: str, base: 10, precision: value.precision)
+    new_value.should eq(value), file: file, line: line
+    value
+  end
+end
+
 describe "BigFloat" do
   describe "new" do
     string_of_integer_value = "123456789012345678901"
@@ -200,27 +209,27 @@ describe "BigFloat" do
   end
 
   describe "to_s" do
-    it { "0".to_big_f.to_s.should eq("0.0") }
-    it { "0.000001".to_big_f.to_s.should eq("0.000001") }
-    it { "48600000".to_big_f.to_s.should eq("48600000.0") }
-    it { "12345678.87654321".to_big_f.to_s.should eq("12345678.87654321") }
-    it { "9.000000000000987".to_big_f.to_s.should eq("9.000000000000987") }
-    it { "12345678901234567".to_big_f.to_s.should eq("12345678901234567.0") }
-    it { "1234567890123456789".to_big_f.to_s.should eq("1234567890123456789.0") }
+    it_converts_to_s "0".to_big_f, "0.0"
+    it_converts_to_s "0.000001".to_big_f, "0.000001"
+    it_converts_to_s "48600000".to_big_f, "48600000.0"
+    it_converts_to_s "12345678.87654321".to_big_f, "12345678.87654321"
+    it_converts_to_s "9.000000000000987".to_big_f, "9.000000000000987"
+    it_converts_to_s "12345678901234567".to_big_f, "12345678901234567.0"
+    it_converts_to_s "1234567890123456789".to_big_f, "1234567890123456789.0"
 
-    it { ".01".to_big_f.to_s.should eq("0.01") }
-    it { "-.01".to_big_f.to_s.should eq("-0.01") }
-    it { ".1".to_big_f.to_s.should eq("0.1") }
-    it { "-.1".to_big_f.to_s.should eq("-0.1") }
-    it { "1".to_big_f.to_s.should eq("1.0") }
-    it { "-1".to_big_f.to_s.should eq("-1.0") }
-    it { "10".to_big_f.to_s.should eq("10.0") }
-    it { "100".to_big_f.to_s.should eq("100.0") }
-    it { "150".to_big_f.to_s.should eq("150.0") }
+    it_converts_to_s ".01".to_big_f, "0.01"
+    it_converts_to_s "-.01".to_big_f, "-0.01"
+    it_converts_to_s ".1".to_big_f, "0.1"
+    it_converts_to_s "-.1".to_big_f, "-0.1"
+    it_converts_to_s "1".to_big_f, "1.0"
+    it_converts_to_s "-1".to_big_f, "-1.0"
+    it_converts_to_s "10".to_big_f, "10.0"
+    it_converts_to_s "100".to_big_f, "100.0"
+    it_converts_to_s "150".to_big_f, "150.0"
 
-    it { (3.0).to_big_f.to_s.should eq("3.0") }
-    it { 3.to_big_f.to_s.should eq("3.0") }
-    it { -3.to_big_f.to_s.should eq("-3.0") }
+    it_converts_to_s (3.0).to_big_f, "3.0"
+    it_converts_to_s 3.to_big_f, "3.0"
+    it_converts_to_s -3.to_big_f, "-3.0"
   end
 
   describe "#inspect" do

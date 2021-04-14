@@ -169,6 +169,7 @@ lib LibGMP
   # # Precision
   fun mpf_set_default_prec = __gmpf_set_default_prec(prec : BitcntT)
   fun mpf_get_default_prec = __gmpf_get_default_prec : BitcntT
+  fun mpf_get_prec = __gmpf_get_prec(op : MPF*) : BitcntT
 
   # # Conversion
   fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
@@ -177,6 +178,7 @@ lib LibGMP
   fun mpf_set = __gmpf_set(op : MPF*, op : MPF*)
   fun mpf_set_z = __gmpf_set_z(rop : MPF*, op : MPZ*)
   fun mpf_set_q = __gmpf_set_q(rop : MPF*, op : MPQ*)
+  fun mpf_set_str = __gmpf_set_str(rop : MPF*, str : UInt8*, base : Int) : Int
   fun mpf_get_si = __gmpf_get_si(op : MPF*) : Long
   fun mpf_get_ui = __gmpf_get_ui(op : MPF*) : ULong
   fun mpf_get_d_2exp = __gmpf_get_d_2exp(exp : Long*, op : MPF*) : Double
