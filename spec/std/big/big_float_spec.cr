@@ -13,7 +13,7 @@ end
 describe "BigFloat" do
   describe "new" do
     string_of_integer_value = "123456789012345678901"
-    string_of_integer_value_as_float = "123456789012345678901.0"
+    string_of_integer_value_as_float = "1.23456789012345678901e+20"
     bigfloat_of_integer_value = BigFloat.new(string_of_integer_value)
     string_of_float_value = "1234567890.12345678901"
     bigfloat_of_float_value = BigFloat.new(string_of_float_value)
@@ -65,15 +65,15 @@ describe "BigFloat" do
       BigFloat.new(255_u8).to_s.should eq("255.0")
       BigFloat.new(65535_u16).to_s.should eq("65535.0")
       BigFloat.new(4294967295_u32).to_s.should eq("4294967295.0")
-      BigFloat.new(18446744073709551615_u64).to_s.should eq("18446744073709551615.0")
+      BigFloat.new(18446744073709551615_u64).to_s.should eq("1.8446744073709551615e+19")
       BigFloat.new(127_i8).to_s.should eq("127.0")
       BigFloat.new(32767_i16).to_s.should eq("32767.0")
       BigFloat.new(2147483647_i32).to_s.should eq("2147483647.0")
-      BigFloat.new(9223372036854775807_i64).to_s.should eq("9223372036854775807.0")
+      BigFloat.new(9223372036854775807_i64).to_s.should eq("9.223372036854775807e+18")
       BigFloat.new(-128_i8).to_s.should eq("-128.0")
       BigFloat.new(-32768_i16).to_s.should eq("-32768.0")
       BigFloat.new(-2147483648_i32).to_s.should eq("-2147483648.0")
-      BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9223372036854775808.0")
+      BigFloat.new(-9223372036854775808_i64).to_s.should eq("-9.223372036854775808e+18")
     end
   end
 
@@ -140,15 +140,15 @@ describe "BigFloat" do
   describe "**" do
     # TODO: investigate why in travis this gives ""1.79559999999999999991"
     # it { ("1.34".to_big_f ** 2).to_s.should eq("1.79559999999999999994") }
-    it { ("-0.05".to_big_f ** 10).to_s.should eq("0.00000000000009765625") }
+    it { ("-0.05".to_big_f ** 10).to_s.should eq("9.765625e-14") }
     it { (0.1234567890.to_big_f ** 3).to_s.should eq("0.00188167637178915473909") }
   end
 
   describe "abs" do
     it { -5.to_big_f.abs.should eq(5) }
     it { 5.to_big_f.abs.should eq(5) }
-    it { "-0.00001".to_big_f.abs.to_s.should eq("0.00001") }
-    it { "0.00000000001".to_big_f.abs.to_s.should eq("0.00000000001") }
+    it { "-0.00001".to_big_f.abs.to_s.should eq("1.0e-5") }
+    it { "0.00000000001".to_big_f.abs.to_s.should eq("1.0e-11") }
   end
 
   describe "ceil" do
@@ -210,12 +210,14 @@ describe "BigFloat" do
 
   describe "to_s" do
     it_converts_to_s "0".to_big_f, "0.0"
-    it_converts_to_s "0.000001".to_big_f, "0.000001"
+    it_converts_to_s "-0".to_big_f, "0.0"
+    it_converts_to_s "0.000001".to_big_f, "1.0e-6"
     it_converts_to_s "48600000".to_big_f, "48600000.0"
+    it_converts_to_s "12345678.87654".to_big_f, "12345678.87654"
     it_converts_to_s "12345678.87654321".to_big_f, "12345678.87654321"
     it_converts_to_s "9.000000000000987".to_big_f, "9.000000000000987"
-    it_converts_to_s "12345678901234567".to_big_f, "12345678901234567.0"
-    it_converts_to_s "1234567890123456789".to_big_f, "1234567890123456789.0"
+    it_converts_to_s "12345678901234567".to_big_f, "1.2345678901234567e+16"
+    it_converts_to_s "1234567890123456789".to_big_f, "1.234567890123456789e+18"
 
     it_converts_to_s ".01".to_big_f, "0.01"
     it_converts_to_s "-.01".to_big_f, "-0.01"
@@ -230,6 +232,20 @@ describe "BigFloat" do
     it_converts_to_s (3.0).to_big_f, "3.0"
     it_converts_to_s 3.to_big_f, "3.0"
     it_converts_to_s -3.to_big_f, "-3.0"
+
+    it_converts_to_s "1.23e45".to_big_f, "1.23e+45"
+    it_converts_to_s "1e-234".to_big_f, "1.0e-234"
+
+    it_converts_to_s Float64::MAX.to_s.to_big_f, "1.7976931348623157e+308"
+    it_converts_to_s Float64::MIN_POSITIVE.to_s.to_big_f, "2.2250738585072014e-308"
+
+    # since Float64-to-BigFloat conversion is always exact, but rounding isn't
+    # fully specified in GMP (both when converting to and from strings), we
+    # cannot assume the round-trip property for Float64 fractions that cannot be
+    # represented exactly
+    it { (0.1).to_big_f.to_s.should eq("0.100000000000000005551") }
+    it { Float64::MAX.to_big_f.to_s.should eq("1.79769313486231570815e+308") }
+    it { Float64::MIN_POSITIVE.to_big_f.to_s.should eq("2.22507385850720138309e-308") }
   end
 
   describe "#inspect" do
