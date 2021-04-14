@@ -82,14 +82,6 @@ struct BigFloat < Float
     new(mpf)
   end
 
-  # :nodoc:
-  def initialize(*, str : String, base : Int, precision : Int)
-    LibGMP.mpf_init2(out @mpf, precision.to_u64)
-    if LibGMP.mpf_set_str(self, str, base) == -1
-      raise ArgumentError.new("Invalid BigFloat: #{str.inspect}")
-    end
-  end
-
   # TODO: improve this
   def_hash to_f64
 
@@ -284,11 +276,6 @@ struct BigFloat < Float
 
   def to_unsafe
     mpf
-  end
-
-  # :nodoc:
-  def precision
-    LibGMP.mpf_get_prec(self)
   end
 
   def to_s(io : IO) : Nil

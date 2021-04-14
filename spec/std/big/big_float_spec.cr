@@ -4,9 +4,7 @@ require "big"
 private def it_converts_to_s(value : BigFloat, str, *, file = __FILE__, line = __LINE__)
   it "converts to #{str}", file: file, line: line do
     value.to_s.should eq(str), file: file, line: line
-    new_value = BigFloat.new(str: str, base: 10, precision: value.precision)
-    new_value.should eq(value), file: file, line: line
-    value
+    str.to_big_f.should eq(value), file: file, line: line
   end
 end
 
