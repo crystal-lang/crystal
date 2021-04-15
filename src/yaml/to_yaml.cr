@@ -262,8 +262,8 @@ end
 # timestamp.to_yaml # => "---\nvalues:\n- 1459859781\n- 1567628762\n"
 # ```
 #
-# An instance of `YAML::ArrayConverter` should be used if the nested converter
-# is also an instance instead of a type.
+# `YAML::ArrayConverter.new` should be used if the nested converter is also an
+# instance instead of a type.
 #
 # ```
 # require "yaml"
@@ -282,20 +282,26 @@ end
 #
 # This implies that `YAML::ArrayConverter(T)` and
 # `YAML::ArrayConverter(T.class).new(T)` perform the same serializations.
-struct YAML::ArrayConverter(Converter)
-  def initialize(@converter : Converter)
-  end
+module YAML::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
 
-  def to_yaml(values : Array, yaml : YAML::Nodes::Builder)
-    yaml.sequence(reference: self) do
-      values.each do |value|
-        @converter.to_yaml(value, yaml)
+    def to_yaml(values : Array, yaml : YAML::Nodes::Builder)
+      yaml.sequence(reference: self) do
+        values.each do |value|
+          @converter.to_yaml(value, yaml)
+        end
       end
     end
   end
 
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
   def self.to_yaml(values : Array, yaml : YAML::Nodes::Builder)
-    ArrayConverter.new(Converter).to_yaml(values, yaml)
+    WithInstance.new(Converter).to_yaml(values, yaml)
   end
 end
 

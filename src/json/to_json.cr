@@ -286,8 +286,8 @@ end
 # timestamp.to_json # => %({"dates":[1459859781,1567628762]})
 # ```
 #
-# An instance of `JSON::ArrayConverter` should be used if the nested converter
-# is also an instance instead of a type.
+# `JSON::ArrayConverter.new` should be used if the nested converter is also an
+# instance instead of a type.
 #
 # ```
 # require "json"
@@ -306,20 +306,26 @@ end
 #
 # This implies that `JSON::ArrayConverter(T)` and
 # `JSON::ArrayConverter(T.class).new(T)` perform the same serializations.
-struct JSON::ArrayConverter(Converter)
-  def initialize(@converter : Converter)
-  end
+module JSON::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
 
-  def to_json(values : Array, builder : JSON::Builder)
-    builder.array do
-      values.each do |value|
-        @converter.to_json(value, builder)
+    def to_json(values : Array, builder : JSON::Builder)
+      builder.array do
+        values.each do |value|
+          @converter.to_json(value, builder)
+        end
       end
     end
   end
 
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
   def self.to_json(values : Array, builder : JSON::Builder)
-    ArrayConverter.new(Converter).to_json(values, builder)
+    WithInstance.new(Converter).to_json(values, builder)
   end
 end
 
@@ -341,8 +347,8 @@ end
 # timestamp.to_json   # => {"birthdays":{"foo":1459859781,"bar":1567628762}}
 # ```
 #
-# An instance of `JSON::HashValueConverter` should be used if the nested
-# converter is also an instance instead of a type.
+# `JSON::HashValueConverter.new` should be used if the nested converter is also
+# an instance instead of a type.
 #
 # ```
 # require "json"
@@ -361,22 +367,28 @@ end
 #
 # This implies that `JSON::HashValueConverter(T)` and
 # `JSON::HashValueConverter(T.class).new(T)` perform the same serializations.
-struct JSON::HashValueConverter(Converter)
-  def initialize(@converter : Converter)
-  end
+module JSON::HashValueConverter(Converter)
+  private struct WithInstance(T)
+    def initialize(@converter : T)
+    end
 
-  def to_json(values : Hash, builder : JSON::Builder)
-    builder.object do
-      values.each do |key, value|
-        builder.field key.to_json_object_key do
-          @converter.to_json(value, builder)
+    def to_json(values : Hash, builder : JSON::Builder)
+      builder.object do
+        values.each do |key, value|
+          builder.field key.to_json_object_key do
+            @converter.to_json(value, builder)
+          end
         end
       end
     end
   end
 
+  def self.new(converter : Converter)
+    WithInstance.new(converter)
+  end
+
   def self.to_json(values : Hash, builder : JSON::Builder)
-    HashValueConverter.new(Converter).to_json(values, builder)
+    WithInstance.new(Converter).to_json(values, builder)
   end
 end
 

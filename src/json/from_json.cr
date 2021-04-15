@@ -390,35 +390,39 @@ struct Time::Format
   end
 end
 
-struct JSON::ArrayConverter(Converter)
-  def from_json(pull : JSON::PullParser)
-    ary = Array(typeof(@converter.from_json(pull))).new
-    pull.read_array do
-      ary << @converter.from_json(pull)
+module JSON::ArrayConverter(Converter)
+  private struct WithInstance(T)
+    def from_json(pull : JSON::PullParser)
+      ary = Array(typeof(@converter.from_json(pull))).new
+      pull.read_array do
+        ary << @converter.from_json(pull)
+      end
+      ary
     end
-    ary
   end
 
   def self.from_json(pull : JSON::PullParser)
-    ArrayConverter.new(Converter).from_json(pull)
+    WithInstance.new(Converter).from_json(pull)
   end
 end
 
-struct JSON::HashValueConverter(Converter)
-  def from_json(pull : JSON::PullParser)
-    hash = Hash(String, typeof(@converter.from_json(pull))).new
-    pull.read_object do |key, key_location|
-      parsed_key = String.from_json_object_key?(key)
-      unless parsed_key
-        raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+module JSON::HashValueConverter(Converter)
+  private struct WithInstance(T)
+    def from_json(pull : JSON::PullParser)
+      hash = Hash(String, typeof(@converter.from_json(pull))).new
+      pull.read_object do |key, key_location|
+        parsed_key = String.from_json_object_key?(key)
+        unless parsed_key
+          raise JSON::ParseException.new("Can't convert #{key.inspect} into String", *key_location)
+        end
+        hash[parsed_key] = @converter.from_json(pull)
       end
-      hash[parsed_key] = @converter.from_json(pull)
+      hash
     end
-    hash
   end
 
   def self.from_json(pull : JSON::PullParser)
-    HashValueConverter.new(Converter).from_json(pull)
+    WithInstance.new(Converter).from_json(pull)
   end
 end
 
