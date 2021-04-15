@@ -2321,14 +2321,14 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :"]"
           exp_location = @token.location
-          has_splat = false
+
           if @token.type == :"*"
-            has_splat = true
             next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
           end
 
-          exp = parse_op_assign_no_control
-          exp = Splat.new(exp).at(exp_location) if has_splat
           exps << exp
           end_location = token_end_location
           skip_space
@@ -2491,14 +2491,14 @@ module Crystal
         exps << first_exp
         while @token.type != :"}"
           exp_location = @token.location
-          has_splat = false
+
           if @token.type == :"*"
-            has_splat = true
             next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
           end
 
-          exp = parse_op_assign_no_control
-          exp = Splat.new(exp).at(exp_location) if has_splat
           exps << exp
           skip_space
 

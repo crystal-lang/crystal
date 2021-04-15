@@ -33,25 +33,23 @@ module Crystal
     #
     # To:
     #
-    #     ary = ::Array(typeof(1, exp2.first, exp3.first, 4)).new
+    #     ary = ::Array(typeof(1, exp2.first, exp3.first, 4)).new(2)
     #     ary << 1
     #     ary.concat(exp2)
     #     ary.concat(exp3)
     #     ary << 4
     #     ary
     def expand(node : ArrayLiteral)
-      has_splats = node.elements.any?(Splat)
-
       if node_of = node.of
         type_var = node_of
       else
         type_exps = node.elements.map do |elem|
-          elem.is_a?(Splat) ? Call.new(elem.exp.clone, "first") : elem
+          elem.is_a?(Splat) ? Call.new(elem.exp.clone, "first") : elem.clone
         end
         type_var = TypeOf.new(type_exps)
       end
 
-      capacity = node.elements.size
+      capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
 
       generic = Generic.new(Path.global("Array"), type_var).at(node)
 
@@ -60,7 +58,7 @@ module Crystal
       elsif node.elements.any?(Splat)
         ary_var = new_temp_var.at(node)
 
-        ary_instance = Call.new(generic, "new").at(node)
+        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
 
         exps = Array(ASTNode).new(node.elements.size + 2)
         exps << Assign.new(ary_var.clone, ary_instance).at(node)

@@ -26,23 +26,25 @@ describe "Normalize: array literal" do
   end
 
   it "normalizes non-empty with of, with splat" do
-    assert_expand "[1, *2, *3, 4] of Int8", <<-CR
-      __temp_1 = ::Array(Int8).new
+    assert_expand "[1, *2, *3, 4, 5] of Int8", <<-CR
+      __temp_1 = ::Array(Int8).new(3)
       __temp_1 << 1
       __temp_1.concat(2)
       __temp_1.concat(3)
       __temp_1 << 4
+      __temp_1 << 5
       __temp_1
       CR
   end
 
   it "normalizes non-empty without of, with splat" do
-    assert_expand "[1, *2, *3, 4]", <<-CR
-      __temp_1 = ::Array(typeof(1, 2.first, 3.first, 4)).new
+    assert_expand "[1, *2, *3, 4, 5]", <<-CR
+      __temp_1 = ::Array(typeof(1, 2.first, 3.first, 4, 5)).new(3)
       __temp_1 << 1
       __temp_1.concat(2)
       __temp_1.concat(3)
       __temp_1 << 4
+      __temp_1 << 5
       __temp_1
       CR
   end
