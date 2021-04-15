@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../../support/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },
@@ -509,6 +510,11 @@ describe Time do
       time = Time.local(Time::Location.fixed(1234))
       (time.to_utc <=> time).should eq(0)
     end
+  end
+
+  describe "#step" do
+    days = (1..24).map { |d| Time.utc(2020, 12, d) }.to_a
+    it_iterates "advent", days, Time.utc(2020, 12, 1).step(to: Time.utc(2020, 12, 24), by: 1.day)
   end
 
   describe "#to_unix" do

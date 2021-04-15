@@ -131,7 +131,11 @@ class HTTP::Server
     #
     # If *message* is `nil`, the default message for *status* is used provided
     # by `HTTP::Status#description`.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
     def respond_with_status(status : HTTP::Status, message : String? = nil)
+      check_headers
       reset
       @status = status
       @status_message = message ||= @status.description
@@ -143,6 +147,13 @@ class HTTP::Server
     # :ditto:
     def respond_with_status(status : Int, message : String? = nil)
       respond_with_status(HTTP::Status.new(status), message)
+    end
+
+    private def check_headers
+      check_open
+      if wrote_headers?
+        raise IO::Error.new("Headers already sent")
+      end
     end
 
     protected def write_headers

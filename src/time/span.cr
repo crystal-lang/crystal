@@ -41,6 +41,7 @@ struct Time::Span
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/Time::Span.cs
 
   include Comparable(self)
+  include Steppable
 
   MAX  = new seconds: Int64::MAX, nanoseconds: 999_999_999
   MIN  = new seconds: Int64::MIN, nanoseconds: -999_999_999
@@ -227,12 +228,6 @@ struct Time::Span
     @seconds
   end
 
-  # Alias of `abs`.
-  @[Deprecated("Use `#abs` instead.")]
-  def duration : Time::Span
-    abs
-  end
-
   # Returns the absolute (non-negative) amount of time this `Time::Span`
   # represents by removing the sign.
   def abs : Time::Span
@@ -339,6 +334,10 @@ struct Time::Span
     cmp
   end
 
+  def sign : Int32
+    (self <=> ZERO).sign
+  end
+
   def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'
@@ -384,12 +383,42 @@ struct Time::Span
     end
   end
 
+  # Creates a new `Time::Span` representing a span of zero time.
   def self.zero : Time::Span
     ZERO
   end
 
+  # Returns `true` if `self` represents a span of zero time.
+  #
+  # ```
+  # 2.hours.zero?  # => false
+  # 0.days.zero?   # => true
+  # 1.second.zero? # => false
+  # ```
   def zero? : Bool
-    to_i == 0 && nanoseconds == 0
+    self == ZERO
+  end
+
+  # Returns `true` if `self` represents a positive time span.
+  #
+  # ```
+  # 2.hours.positive? # => true
+  # 0.days.positive?  # => false
+  # -3.days.positive? # => false
+  # ```
+  def positive? : Bool
+    self > ZERO
+  end
+
+  # Returns `true` if `self` represents a negative time span.
+  #
+  # ```
+  # 2.hours.negative? # => false
+  # 0.days.negative?  # => false
+  # -3.days.negative? # => true
+  # ```
+  def negative? : Bool
+    self < ZERO
   end
 end
 

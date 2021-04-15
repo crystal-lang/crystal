@@ -637,7 +637,9 @@ class String
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method raises an exception if the string is not a valid float representation.
+  # This method raises an exception if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -654,8 +656,15 @@ class String
     to_f64(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64(whitespace : Bool = true, strict : Bool = true)
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+  end
+
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method returns `nil` if the string is not a valid float representation.
+  # This method returns `nil` if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -672,6 +681,14 @@ class String
     to_f64?(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64?(whitespace : Bool = true, strict : Bool = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtod self, out endptr
+      {v, endptr}
+    end
+  end
+
   # Same as `#to_f` but returns a Float32.
   def to_f32(whitespace : Bool = true, strict : Bool = true)
     to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
@@ -685,23 +702,29 @@ class String
     end
   end
 
-  # Same as `#to_f`.
-  def to_f64(whitespace : Bool = true, strict : Bool = true)
-    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
-  end
-
-  # Same as `#to_f?`.
-  def to_f64?(whitespace : Bool = true, strict : Bool = true)
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
-  end
-
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
     return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
 
     v, endptr = yield
+
+    unless v.finite?
+      startptr = to_unsafe
+      if whitespace
+        while startptr.value.chr.ascii_whitespace?
+          startptr += 1
+        end
+      end
+      if startptr.value.chr.in?('+', '-')
+        startptr += 1
+      end
+
+      if v.nan?
+        return unless startptr.value.chr.in?('n', 'N')
+      else
+        return unless startptr.value.chr.in?('i', 'I')
+      end
+    end
+
     string_end = to_unsafe + bytesize
 
     # blank string
@@ -4056,19 +4079,6 @@ class String
     just len, char, -1
   end
 
-  # Adds spaces to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, io)
-  # io.to_s # => "Purple  "
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, io : IO) : Nil
-    ljust(io, len)
-  end
-
   # Adds instances of *char* to right of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
@@ -4082,19 +4092,6 @@ class String
     (len - size).times { io << char }
   end
 
-  # Adds instances of *char* to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, '-', io)
-  # io.to_s # => "Purple--"
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, char : Char, io : IO) : Nil
-    ljust(io, len, char)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
@@ -4106,43 +4103,17 @@ class String
     just len, char, 1
   end
 
-  # Adds spaces to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, io)
-  # io.to_s # => "  Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, io : IO) : Nil
-    rjust(io, len)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
+  # "Purple".rjust(io, 8, '-')
   # io.to_s # => "--Purple"
   # ```
   def rjust(io : IO, len : Int, char : Char = ' ') : Nil
     (len - size).times { io << char }
     io << self
-  end
-
-  # Adds instances of *char* to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
-  # io.to_s # => "--Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, char : Char, io : IO) : Nil
-    rjust(io, len, char)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*.
@@ -4157,25 +4128,12 @@ class String
     just len, char, 0
   end
 
-  # Adds spaces to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, io)
-  # io.to_s # => " Purple  "
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, io : IO) : Nil
-    center(io, len)
-  end
-
   # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
+  # "Purple".center(io, 9, '-')
   # io.to_s # => "-Purple--"
   # ```
   def center(io : IO, len : Int, char : Char = ' ') : Nil
@@ -4192,19 +4150,6 @@ class String
     left_padding.times { io << char }
     io << self
     right_padding.times { io << char }
-  end
-
-  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
-  # io.to_s # => "-Purple--"
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, char : Char, io : IO) : Nil
-    center(io, len, char)
   end
 
   private def just(len, char, justify)
