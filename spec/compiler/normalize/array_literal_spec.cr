@@ -39,7 +39,7 @@ describe "Normalize: array literal" do
 
   it "normalizes non-empty without of, with splat" do
     assert_expand "[1, *2, *3, 4, 5]", <<-CR
-      __temp_1 = ::Array(typeof(1, 2.first, 3.first, 4, 5)).new(3)
+      __temp_1 = ::Array(typeof(1, ::Enumerable.element_type(2), ::Enumerable.element_type(3), 4, 5)).new(3)
       __temp_1 << 1
       __temp_1.concat(2)
       __temp_1.concat(3)

@@ -179,6 +179,8 @@ describe "Code gen: array literal spec" do
 
   it "creates custom non-generic array, with splats" do
     run(%(
+      #{enumerable_element_type}
+
       class Foo
         def initialize(@x : Int32)
         end
@@ -214,6 +216,8 @@ describe "Code gen: array literal spec" do
 
   it "creates custom generic array, with splats" do
     run(%(
+      #{enumerable_element_type}
+
       class Foo
         def initialize(@x : Int32)
         end
@@ -258,4 +262,16 @@ describe "Code gen: array literal spec" do
   it "assignment in array-like literal works" do
     run("require \"prelude\"; Array(Int32){a = 1}; a").to_i.should eq(1)
   end
+end
+
+private def enumerable_element_type
+  %(
+    struct Enumerable(T)
+      def self.element_type(x)
+        x.each { |elem| return elem }
+        ret = uninitialized NoReturn
+        ret
+      end
+    end
+  )
 end

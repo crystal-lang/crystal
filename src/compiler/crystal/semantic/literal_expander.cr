@@ -33,7 +33,7 @@ module Crystal
     #
     # To:
     #
-    #     ary = ::Array(typeof(1, exp2.first, exp3.first, 4)).new(2)
+    #     ary = ::Array(typeof(1, ::Enumerable.element_type(exp2), ::Enumerable.element_type(exp3), 4)).new(2)
     #     ary << 1
     #     ary.concat(exp2)
     #     ary.concat(exp3)
@@ -43,10 +43,7 @@ module Crystal
       if node_of = node.of
         type_var = node_of
       else
-        type_exps = node.elements.map do |elem|
-          elem.is_a?(Splat) ? Call.new(elem.exp.clone, "first") : elem.clone
-        end
-        type_var = TypeOf.new(type_exps)
+        type_var = typeof_exp(node)
       end
 
       capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
@@ -94,6 +91,18 @@ module Crystal
 
         Expressions.new(exps).at(node)
       end
+    end
+
+    def typeof_exp(node : ArrayLiteral)
+      type_exps = node.elements.map do |elem|
+        if elem.is_a?(Splat)
+          Call.new(Path.global("Enumerable").at(node), "element_type", elem.exp.clone).at(node)
+        else
+          elem.clone
+        end
+      end
+
+      TypeOf.new(type_exps).at(node.location)
     end
 
     # Converts an array-like literal to creating a container and storing the values:
