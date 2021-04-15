@@ -335,19 +335,23 @@ module Time::EpochMillisConverter
   end
 end
 
-module YAML::ArrayConverter(Converter)
-  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+struct YAML::ArrayConverter(Converter)
+  def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
     unless node.is_a?(YAML::Nodes::Sequence)
       node.raise "Expected sequence, not #{node.kind}"
     end
 
-    ary = Array(typeof(Converter.from_yaml(ctx, node))).new
+    ary = Array(typeof(@converter.from_yaml(ctx, node))).new
 
     node.each do |value|
-      ary << Converter.from_yaml(ctx, value)
+      ary << @converter.from_yaml(ctx, value)
     end
 
     ary
+  end
+
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
+    ArrayConverter.new(Converter).from_yaml(ctx, node)
   end
 end
 
