@@ -204,7 +204,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given string to this `IO` followed by a newline character
+  # Writes *string* to this `IO`, followed by a newline character
   # unless the string already ends with one.
   #
   # ```
@@ -219,7 +219,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given object to this `IO` followed by a newline character.
+  # Writes *obj* to this `IO`, followed by a newline character.
   #
   # ```
   # io = IO::Memory.new
@@ -244,7 +244,8 @@ abstract class IO
     nil
   end
 
-  # Writes the given objects, each followed by a newline character.
+  # Writes *objects* to this `IO`, each followed by a newline character unless
+  # the object is a `String` and already ends with a newline.
   #
   # ```
   # io = IO::Memory.new
