@@ -166,7 +166,7 @@ class Crystal::Def
       end
 
       new_body.push body
-      expansion.body = Expressions.new(new_body)
+      expansion.body = Expressions.new(new_body).at(body)
     else
       new_args = [] of ASTNode
       body = [] of ASTNode
@@ -203,7 +203,7 @@ class Crystal::Def
       call.expansion = true
       body << call
 
-      expansion.body = Expressions.new(body)
+      expansion.body = Expressions.new(body).at(self.body)
     end
 
     expansion
