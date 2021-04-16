@@ -225,15 +225,24 @@ struct Number
       return x
     end
 
-    y = if base == 10
-          10 ** ((Math.log10(self.abs) - digits + 1).floor)
-        elsif base == 2
-          2 ** ((Math.log2(self.abs) - digits + 1).floor)
-        else
-          base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
-        end
+    if base == 10
+      log = Math.log10(self.abs)
+    elsif base == 2
+      log = Math.log2(self.abs)
+    else
+      log = Math.log2(self.abs) / Math.log2(base)
+    end
 
-    self.class.new((x / y).round * y)
+    exponent = (log - digits + 1).floor
+    if exponent < 0
+      y = base ** -exponent
+      value = (x * y).round / y
+    else
+      y = base ** exponent
+      value = (x / y).round * y
+    end
+
+    self.class.new(value)
   end
 
   # Rounds this number to a given precision.
