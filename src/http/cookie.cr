@@ -58,6 +58,14 @@ module HTTP
           raise IO::Error.new("Invalid cookie name")
         end
       end
+
+      # Enforce cookie prefix requirements as per https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-05#section-4.1.3.
+      case name
+      when .starts_with? "__Secure-"
+        raise ArgumentError.new "Invalid cookie name.  Has '__Secure-' prefix, but is not secure." unless @secure
+      when .starts_with? "__Host-"
+        raise ArgumentError.new "Invalid cookie name.  Does not meet '__Host-' prefix requirements." if !@secure || @path != "/" || !@domain.nil?
+      end
     end
 
     # Sets the value of this cookie.

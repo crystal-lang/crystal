@@ -35,9 +35,19 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("", "")
         end
+
         expect_raises IO::Error, "Invalid cookie name" do
           HTTP::Cookie.new("\t", "")
         end
+
+        expect_raises ArgumentError, "Invalid cookie name.  Has '__Secure-' prefix, but is not secure." do
+          HTTP::Cookie.new("__Secure-foo", "bar")
+        end
+
+        expect_raises ArgumentError, "Invalid cookie name.  Does not meet '__Host-' prefix requirements." do
+          HTTP::Cookie.new("__Host-foo", "bar")
+        end
+
         # more extensive specs on #name=
       end
 
@@ -45,6 +55,7 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie value" do
           HTTP::Cookie.new("x", %(foo\rbar))
         end
+
         # more extensive specs on #value=
       end
     end
@@ -55,18 +66,63 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie name" do
           cookie.name = ""
         end
+
         expect_raises IO::Error, "Invalid cookie name" do
           cookie.name = "\t"
         end
+
         expect_raises IO::Error, "Invalid cookie name" do
           cookie.name = "\r"
         end
+
         expect_raises IO::Error, "Invalid cookie name" do
           cookie.name = "a\nb"
         end
+
         expect_raises IO::Error, "Invalid cookie name" do
           cookie.name = "a\rb"
         end
+      end
+
+      it "raises on invalid cookie with __Secure- prefix" do
+        cookie = HTTP::Cookie.new "x", ""
+
+        expect_raises ArgumentError, "Invalid cookie name.  Has '__Secure-' prefix, but is not secure." do
+          cookie.name = "__Secure-x"
+        end
+
+        cookie.secure = true
+
+        cookie.name = "__Secure-x"
+        cookie.name.should eq "__Secure-x"
+      end
+
+      it "raises on invalid cookie with __Host- prefix" do
+        cookie = HTTP::Cookie.new "x", "", domain: "example.com"
+
+        # Not secure
+        expect_raises ArgumentError, "Invalid cookie name.  Does not meet '__Host-' prefix requirements." do
+          cookie.name = "__Host-x"
+        end
+
+        cookie.secure = true
+
+        # Invalid path
+        expect_raises ArgumentError, "Invalid cookie name.  Does not meet '__Host-' prefix requirements." do
+          cookie.name = "__Host-x"
+        end
+
+        cookie.path = "/"
+
+        # Has domain
+        expect_raises ArgumentError, "Invalid cookie name.  Does not meet '__Host-' prefix requirements." do
+          cookie.name = "__Host-x"
+        end
+
+        cookie.domain = nil
+
+        cookie.name = "__Host-x"
+        cookie.name.should eq "__Host-x"
       end
     end
 
@@ -76,21 +132,27 @@ module HTTP
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = %(foo\rbar)
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = %(foo"bar)
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo;bar"
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo\\bar"
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo\\bar"
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo bar"
         end
+
         expect_raises IO::Error, "Invalid cookie value" do
           cookie.value = "foo,bar"
         end
