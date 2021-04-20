@@ -30,6 +30,7 @@ module HTTP
     # Creates a new `Cookie` instance.
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    # Raises an `ArgumentError` if *name* has a security prefix but is invalid as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
@@ -43,6 +44,7 @@ module HTTP
     # Sets the name of this cookie.
     #
     # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    # Raises an `ArgumentError` if *name* has a security prefix but is invalid as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
     def name=(name : String)
       validate_name(name)
       @name = name
