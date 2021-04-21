@@ -30,7 +30,7 @@ module HTTP
     # Creates a new `Cookie` instance.
     #
     # Raises `IO::Error` if *name* or *value* are invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    # Raises an `ArgumentError` if *name* has a security prefix but is invalid as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
+    # Raises `ArgumentError` if *name* has a security prefix but the requirements are not met as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
     def initialize(name : String, value : String, @path : String? = nil,
                    @expires : Time? = nil, @domain : String? = nil,
                    @secure : Bool = false, @http_only : Bool = false,
@@ -39,12 +39,12 @@ module HTTP
       @name = name
       validate_value(value)
       @value = value
+      self.validate!
     end
 
     # Sets the name of this cookie.
     #
     # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
-    # Raises an `ArgumentError` if *name* has a security prefix but is invalid as per [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3).
     def name=(name : String)
       validate_name(name)
       @name = name
@@ -59,14 +59,6 @@ module HTTP
         unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x28 && byte != 0x29 && byte != 0x2c && byte != 0x2f && !(0x3a..0x40).includes?(byte) && !(0x5b..0x5d).includes?(byte) && byte != 0x7b && byte != 0x7d
           raise IO::Error.new("Invalid cookie name")
         end
-      end
-
-      # Enforce cookie prefix requirements as per https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-05#section-4.1.3.
-      case name
-      when .starts_with? "__Secure-"
-        raise ArgumentError.new "Invalid cookie name.  Has '__Secure-' prefix, but is not secure." unless @secure
-      when .starts_with? "__Host-"
-        raise ArgumentError.new "Invalid cookie name.  Does not meet '__Host-' prefix requirements." if !@secure || @path != "/" || !@domain.nil?
       end
     end
 
@@ -123,6 +115,31 @@ module HTTP
       else
         false
       end
+    end
+
+    # Returns `false` if `#name` has a security prefix but the requirements are not met as per
+    # [RFC 6265 bis §4.1.3](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-07#section-4.1.3),
+    # otherwise returns `true`.
+    def valid? : Bool
+      self.valid_secure_prefix? && self.valid_host_prefix?
+    end
+
+    # Raises `ArgumentError` if `self` is not `#valid?`.
+    def validate!
+      raise ArgumentError.new "Invalid cookie name. Has '__Secure-' prefix, but is not secure." unless self.valid_secure_prefix?
+      raise ArgumentError.new "Invalid cookie name. Does not meet '__Host-' prefix requirements." unless self.valid_host_prefix?
+    end
+
+    private def valid_secure_prefix? : Bool
+      has_secure_prefix = @name.starts_with?("__Secure-")
+
+      !has_secure_prefix || (has_secure_prefix && @secure)
+    end
+
+    private def valid_host_prefix? : Bool
+      has_host_prefix = @name.starts_with?("__Host-")
+
+      !has_host_prefix || (has_host_prefix && @secure && "/" == @path && @domain.nil?)
     end
 
     # :nodoc:
