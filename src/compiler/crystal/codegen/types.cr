@@ -43,6 +43,8 @@ module Crystal
     # This is useful to know because if a type doesn't have
     # inner pointers we can use `malloc_atomic` instead of
     # `malloc` in `Pointer.malloc` for a tiny performance boost.
+    #
+    # This behaviour is documented in Pointer.malloc
     def has_inner_pointers?
       case self
       when .void?
