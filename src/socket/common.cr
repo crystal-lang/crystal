@@ -8,6 +8,21 @@
 {% end %}
 
 class Socket
+  {% if flag?(:win32) %}
+    begin
+      # Initialize Windows Socket API and expect version 2.2
+      wsa_version = 0x202
+      err = LibC.WSAStartup(wsa_version, out wsadata)
+      unless err.zero?
+        raise IO::Error.from_winerror("WSAStartup", WinError.new(err.to_u32))
+      end
+
+      if wsadata.wVersion != wsa_version
+        raise IO::Error.new("Unsuitable version of the Windows Socket API: 0x#{wsadata.wVersion.to_s(16)}")
+      end
+    end
+  {% end %}
+
   enum Protocol
     IP   = LibC::IPPROTO_IP
     TCP  = LibC::IPPROTO_TCP
@@ -28,6 +43,13 @@ class Socket
     UNIX   = LibC::AF_UNIX
     INET   = LibC::AF_INET
     INET6  = LibC::AF_INET6
+  end
+
+  enum Type
+    STREAM    = LibC::SOCK_STREAM
+    DGRAM     = LibC::SOCK_DGRAM
+    RAW       = LibC::SOCK_RAW
+    SEQPACKET = LibC::SOCK_SEQPACKET
   end
 
   class Error < IO::Error
