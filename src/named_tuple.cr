@@ -35,7 +35,25 @@ struct NamedTuple
   # {}             # syntax error
   # ```
   def self.new(**options : **T)
-    options
+    {% if @type.name(generic_args: false) == "NamedTuple" %}
+      # deduced type vars
+      options
+    {% elsif @type.name(generic_args: false) == "NamedTuple()" %}
+      # special case: empty named tuple
+      options
+    {% else %}
+      # explicitly provided type vars
+      {% begin %}
+        {
+          {% for key in T %}
+            {{ key.stringify }}: options[{{ key.symbolize }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ key.symbolize }}]
+            end)),
+          {% end %}
+        }
+      {% end %}
+    {% end %}
   end
 
   # Creates a named tuple from the given hash, with elements casted to the given types.
@@ -213,7 +231,7 @@ struct NamedTuple
     merge(**other)
   end
 
-  # ditto
+  # :ditto:
   def merge(**other : **U) forall U
     {% begin %}
     {
@@ -266,7 +284,13 @@ struct NamedTuple
     {% end %}
   end
 
-  protected def sorted_keys
+  # Returns a `Tuple` of symbols with the keys in this named tuple, sorted by name.
+  #
+  # ```
+  # tuple = {foo: 1, bar: 2, baz: 3}
+  # tuple.sorted_keys # => {:bar, :baz, :foo}
+  # ```
+  def sorted_keys
     {% begin %}
       Tuple.new(
         {% for key in T.keys.sort %}
@@ -306,7 +330,7 @@ struct NamedTuple
     false
   end
 
-  # ditto
+  # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
       return true if {{key.stringify}} == key
@@ -327,7 +351,7 @@ struct NamedTuple
         io << ", "
       {% end %}
       key = {{key.stringify}}
-      if Symbol.needs_quotes?(key)
+      if Symbol.needs_quotes_for_named_argument?(key)
         key.inspect(io)
       else
         io << key
@@ -346,7 +370,7 @@ struct NamedTuple
         {% end %}
         pp.group do
           key = {{key.stringify}}
-          if Symbol.needs_quotes?(key)
+          if Symbol.needs_quotes_for_named_argument?(key)
             pp.text key.inspect
           else
             pp.text key
@@ -534,7 +558,7 @@ struct NamedTuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : NamedTuple)
     return false unless sorted_keys == other.sorted_keys
 

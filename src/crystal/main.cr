@@ -42,13 +42,23 @@ module Crystal
         1
       end
 
-    AtExitHandlers.exception = ex if ex
+    status = Crystal::AtExitHandlers.run status, ex
 
-    status = AtExitHandlers.run status
-    STDOUT.flush
-    STDERR.flush
+    if ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+    end
+
+    ignore_stdio_errors { STDOUT.flush }
+    ignore_stdio_errors { STDERR.flush }
 
     status
+  end
+
+  # :nodoc:
+  def self.ignore_stdio_errors
+    yield
+  rescue IO::Error
   end
 
   # Main method run by all Crystal programs at startup.
@@ -74,7 +84,7 @@ module Crystal
   #
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
-  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main)
+  #   LibFoo.init_foo_and_invoke_main(argc, argv, ->Crystal.main(Int32, UInt8**))
   # end
   # ```
   #
@@ -85,6 +95,9 @@ module Crystal
     main do
       main_user_code(argc, argv)
     end
+  rescue ex
+    Crystal::System.print_exception "Unhandled exception", ex
+    1
   end
 
   # Executes the main user code. This normally is executed

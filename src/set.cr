@@ -17,8 +17,8 @@
 # s1 == s3 # => true
 # s1.add(2)
 # s1.concat([6, 8])
-# s1.subset? s2 # => false
-# s2.subset? s1 # => true
+# s1.subset_of? s2 # => false
+# s2.subset_of? s1 # => true
 # ```
 struct Set(T)
   include Enumerable(T)
@@ -90,7 +90,7 @@ struct Set(T)
   # ```
   # s = Set{1, 5}
   # s.includes? 8 # => false
-  # s << 8
+  # s.add(8)
   # s.includes? 8 # => true
   # ```
   def add(object : T)
@@ -136,17 +136,18 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the *object* from the set and returns `self`.
+  # Removes the *object* from the set and returns `true` if it was present, otherwise returns `false`.
   #
   # ```
   # s = Set{1, 5}
   # s.includes? 5 # => true
-  # s.delete 5
+  # s.delete 5    # => true
   # s.includes? 5 # => false
+  # s.delete 5    # => false
   # ```
-  def delete(object)
-    @hash.delete(object)
-    self
+  def delete(object) : Bool
+    @hash.delete(object) { return false }
+    true
   end
 
   # Returns the number of elements in the set.
@@ -184,8 +185,8 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yields each element of the set, and returns `self`.
-  def each
+  # Yields each element of the set, and returns `nil`.
+  def each : Nil
     @hash.each_key do |key|
       yield key
     end
@@ -237,6 +238,13 @@ struct Set(T)
   # ```
   def +(other : Set(U)) forall U
     self | other
+  end
+
+  # Returns the additive identity of this type.
+  #
+  # This is an empty set.
+  def self.additive_identity : self
+    new
   end
 
   # Difference: returns a new set containing elements in this set that are not
@@ -404,7 +412,7 @@ struct Set(T)
   # Writes a string representation of the set to *io*.
   def to_s(io : IO) : Nil
     io << "Set{"
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 
@@ -414,10 +422,10 @@ struct Set(T)
   # of elements in this set must be present in the *other* set.
   #
   # ```
-  # Set{1, 5}.subset? Set{1, 3, 5}    # => true
-  # Set{1, 3, 5}.subset? Set{1, 3, 5} # => true
+  # Set{1, 5}.subset_of? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.subset_of? Set{1, 3, 5} # => true
   # ```
-  def subset?(other : Set)
+  def subset_of?(other : Set)
     return false if other.size < size
     all? { |value| other.includes?(value) }
   end
@@ -428,10 +436,10 @@ struct Set(T)
   # of elements in this set must be present in the *other* set.
   #
   # ```
-  # Set{1, 5}.proper_subset? Set{1, 3, 5}    # => true
-  # Set{1, 3, 5}.proper_subset? Set{1, 3, 5} # => false
+  # Set{1, 5}.proper_subset_of? Set{1, 3, 5}    # => true
+  # Set{1, 3, 5}.proper_subset_of? Set{1, 3, 5} # => false
   # ```
-  def proper_subset?(other : Set)
+  def proper_subset_of?(other : Set)
     return false if other.size <= size
     all? { |value| other.includes?(value) }
   end
@@ -442,11 +450,11 @@ struct Set(T)
   # elements in the *other* set must be present in this set.
   #
   # ```
-  # Set{1, 3, 5}.superset? Set{1, 5}    # => true
-  # Set{1, 3, 5}.superset? Set{1, 3, 5} # => true
+  # Set{1, 3, 5}.superset_of? Set{1, 5}    # => true
+  # Set{1, 3, 5}.superset_of? Set{1, 3, 5} # => true
   # ```
-  def superset?(other : Set)
-    other.subset?(self)
+  def superset_of?(other : Set)
+    other.subset_of?(self)
   end
 
   # Returns `true` if the set is a superset of the *other* set.
@@ -455,11 +463,11 @@ struct Set(T)
   # elements in the *other* set must be present in this set.
   #
   # ```
-  # Set{1, 3, 5}.proper_superset? Set{1, 5}    # => true
-  # Set{1, 3, 5}.proper_superset? Set{1, 3, 5} # => false
+  # Set{1, 3, 5}.proper_superset_of? Set{1, 5}    # => true
+  # Set{1, 3, 5}.proper_superset_of? Set{1, 3, 5} # => false
   # ```
-  def proper_superset?(other : Set)
-    other.proper_subset?(self)
+  def proper_superset_of?(other : Set)
+    other.proper_subset_of?(self)
   end
 
   # :nodoc:

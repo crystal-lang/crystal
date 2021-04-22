@@ -1,4 +1,4 @@
-struct XML::Node
+class XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
   # Creates a new node.
@@ -6,12 +6,12 @@ struct XML::Node
     initialize(node.as(LibXML::Node*))
   end
 
-  # ditto
+  # :ditto:
   def initialize(node : LibXML::Doc*)
     initialize(node.as(LibXML::Node*))
   end
 
-  # ditto
+  # :ditto:
   def initialize(@node : LibXML::Node*)
   end
 
@@ -92,7 +92,7 @@ struct XML::Node
   # Sets the Node's content to a Text node containing string.
   # The string gets XML escaped, not interpreted as markup.
   def content=(content)
-    content = escape(content.to_s)
+    check_no_null_byte(content)
     LibXML.xmlNodeSetContent(self, content)
   end
 
@@ -167,6 +167,7 @@ struct XML::Node
   def inspect(io : IO) : Nil
     io << "#<XML::"
     case type
+    when XML::Node::Type::NONE               then io << "None"
     when XML::Node::Type::ELEMENT_NODE       then io << "Element"
     when XML::Node::Type::ATTRIBUTE_NODE     then io << "Attribute"
     when XML::Node::Type::TEXT_NODE          then io << "Text"
@@ -191,7 +192,7 @@ struct XML::Node
     end
 
     io << ":0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
 
     if text?
       io << ' '
@@ -203,7 +204,7 @@ struct XML::Node
       end
 
       if attribute?
-        io << " value="
+        io << " content="
         content.inspect(io)
       else
         attributes = self.attributes
@@ -229,7 +230,7 @@ struct XML::Node
     next_node ? Node.new(next_node) : nil
   end
 
-  # ditto
+  # :ditto:
   def next_sibling
     self.next
   end
@@ -283,14 +284,14 @@ struct XML::Node
   end
 
   # Returns the namespace for this node or `nil` if not found.
-  def namespace
+  def namespace : Namespace?
     case type
     when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      return nil
+      nil
+    else
+      ns = @node.value.ns
+      ns ? Namespace.new(document, ns) : nil
     end
-
-    ns = @node.value.ns
-    ns ? Namespace.new(document, ns) : nil
   end
 
   # Returns namespaces in scope for self – those defined on self element
@@ -300,7 +301,7 @@ struct XML::Node
   # Default namespaces for ancestors, however, are not.
   #
   # See also `#namespaces`
-  def namespace_scopes
+  def namespace_scopes : Array(Namespace)
     scopes = [] of Namespace
 
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
@@ -325,21 +326,24 @@ struct XML::Node
   #
   # NOTE: Note that the keys in this hash XML attributes that would be used to
   # define this namespace, such as `"xmlns:prefix"`, not just the prefix.
-  def namespaces
+  def namespaces : Hash(String, String?)
     namespaces = {} of String => String?
+    each_namespace do |namespace|
+      prefix = namespace.prefix ? "xmlns:#{namespace.prefix}" : "xmlns"
+      namespaces[prefix] = namespace.href
+    end
+    namespaces
+  end
 
+  protected def each_namespace(& : Namespace ->)
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
 
     if ns_list
       while ns_list.value
-        namespace = Namespace.new(document, ns_list.value)
-        prefix = namespace.prefix
-        namespaces[prefix ? "xmlns:#{prefix}" : "xmlns"] = namespace.href
+        yield Namespace.new(document, ns_list.value)
         ns_list += 1
       end
     end
-
-    namespaces
   end
 
   # Returns the address of underlying `LibXML::Node*` in memory.
@@ -420,7 +424,7 @@ struct XML::Node
   end
 
   # :nodoc:
-  SAVE_MUTEX = Thread::Mutex.new
+  SAVE_MUTEX = ::Mutex.new
 
   # Serialize this Node as XML to *io* using default options.
   #
@@ -482,7 +486,15 @@ struct XML::Node
   # Raises `XML::Error` on evaluation error.
   def xpath(path, namespaces = nil, variables = nil)
     ctx = XPathContext.new(self)
-    ctx.register_namespaces namespaces if namespaces
+
+    if namespaces
+      ctx.register_namespaces namespaces
+    else
+      root.try &.each_namespace do |namespace|
+        ctx.register_namespace namespace.prefix || "xmlns", namespace.href
+      end
+    end
+
     ctx.register_variables variables if variables
     ctx.evaluate(path)
   end
@@ -568,19 +580,9 @@ struct XML::Node
     ptr ? (ptr.as(Array(XML::Error))) : nil
   end
 
-  private SUBSTITUTIONS = {
-    '>'  => "&gt;",
-    '<'  => "&lt;",
-    '"'  => "&quot;",
-    '\'' => "&apos;",
-    '&'  => "&amp;",
-  }
-
-  private def escape(string)
-    if string.includes? '\0'
+  private def check_no_null_byte(string)
+    if string.includes? Char::ZERO
       raise XML::Error.new("Cannot escape string containing null character", 0)
     end
-
-    string.gsub(SUBSTITUTIONS)
   end
 end

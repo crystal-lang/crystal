@@ -23,6 +23,15 @@
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError`.
 #
+# Indexing with a range literal known at compile-time is also allowed, and the
+# returned value will have the correct sub-tuple type:
+#
+# ```
+# tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
+# sub = tuple[0..1]         # => {1, "hello"}
+# typeof(sub)               # => Tuple(Int32, String)
+# ```
+#
 # Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
 #
@@ -78,7 +87,25 @@ struct Tuple
   # {}                         # syntax error
   # ```
   def self.new(*args : *T)
-    args
+    {% if @type.name(generic_args: false) == "Tuple" %}
+      # deduced type vars
+      args
+    {% elsif @type.name(generic_args: false) == "Tuple()" %}
+      # special case: empty tuple
+      args
+    {% else %}
+      # explicitly provided type vars
+      {% begin %}
+        {
+          {% for i in 0...@type.size %}
+            args[{{ i }}].as(typeof(begin
+              x = uninitialized self
+              x[{{ i }}]
+            end)),
+          {% end %}
+        }
+      {% end %}
+    {% end %}
   end
 
   # Creates a tuple from the given array, with elements casted to the given types.
@@ -157,6 +184,32 @@ struct Tuple
     at(index) { nil }
   end
 
+  # Returns all elements that are within the given *range*. *range* must be a
+  # range literal whose value is known at compile-time.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element). Additionally, an empty array is returned when the starting index
+  # for an element range is at the end of the array.
+  #
+  # Raises a compile-time error if `range.begin` is out of range.
+  #
+  # ```
+  # tuple = {1, "hello", 'x'}
+  # tuple[0..1] # => {1, "hello"}
+  # tuple[-2..] # => {"hello", 'x'}
+  # tuple[...1] # => {1}
+  # tuple[4..]  # Error: begin index out of bounds for Tuple(Int32, Char, Array(Int32), String) (5 not in -4..4)
+  #
+  # i = 0
+  # tuple[i..2] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  #
+  # i = 0..2
+  # tuple[i] # Error: Tuple#[](Range) can only be called with range literals known at compile-time
+  # ```
+  def [](range : Range)
+    {% raise "Tuple#[](Range) can only be called with range literals known at compile-time" %}
+  end
+
   # Returns the element at the given *index* or raises IndexError if out of bounds.
   #
   # ```
@@ -224,7 +277,7 @@ struct Tuple
     true
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Tuple)
     return false unless size == other.size
 
@@ -297,7 +350,7 @@ struct Tuple
     0
   end
 
-  # ditto
+  # :ditto:
   def <=>(other : Tuple)
     min_size = Math.min(size, other.size)
     min_size.times do |i|
@@ -393,7 +446,7 @@ struct Tuple
   # ```
   def to_s(io : IO) : Nil
     io << '{'
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << '}'
   end
 

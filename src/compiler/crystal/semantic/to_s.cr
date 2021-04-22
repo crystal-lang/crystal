@@ -79,5 +79,10 @@ module Crystal
       @str << node.value
       false
     end
+
+    def visit(node : Unreachable)
+      @str << %(raise "unreachable")
+      false
+    end
   end
 end

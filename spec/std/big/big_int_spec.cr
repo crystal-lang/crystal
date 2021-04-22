@@ -145,6 +145,28 @@ describe "BigInt" do
     (-10.to_big_i.abs).should eq(10.to_big_i)
   end
 
+  it "gets factorial value" do
+    0.to_big_i.factorial.should eq(1.to_big_i)
+    5.to_big_i.factorial.should eq(120.to_big_i)
+    100.to_big_i.factorial.should eq("93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i)
+  end
+
+  it "raises if factorial of negative" do
+    expect_raises ArgumentError do
+      -1.to_big_i.factorial
+    end
+
+    expect_raises ArgumentError do
+      "-93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000".to_big_i.factorial
+    end
+  end
+
+  it "raises if factorial of 2^64" do
+    expect_raises ArgumentError do
+      (LibGMP::ULong::MAX.to_big_i + 1).factorial
+    end
+  end
+
   it "divides" do
     (10.to_big_i / 3.to_big_i).should be_close(3.3333.to_big_f, 0.0001)
     (10.to_big_i / 3).should be_close(3.3333.to_big_f, 0.0001)
@@ -340,9 +362,15 @@ describe "BigInt" do
 
     (a_17).gcd(17).should eq(17)
     (-a_17).gcd(17).should eq(17)
+    (17).gcd(a_17).should eq(17)
+    (17).gcd(-a_17).should eq(17)
+
+    (a_17).lcm(17).should eq(a_17)
+    (-a_17).lcm(17).should eq(a_17)
+    (17).lcm(a_17).should eq(a_17)
+    (17).lcm(-a_17).should eq(a_17)
 
     (a_17).gcd(17).should be_a(Int::Unsigned)
-    (a_17).lcm(17).should eq(a_17)
   end
 
   it "can use Number::[]" do
@@ -363,17 +391,86 @@ describe "BigInt" do
     big.to_u16!.should eq(722)
     big.to_u32.should eq(1234567890)
 
+    expect_raises(OverflowError) { BigInt.new(-1234567890).to_u }
+
     u64 = big.to_u64
     u64.should eq(1234567890)
     u64.should be_a(UInt64)
   end
 
-  {% if flag?(:x86_64) %}
-    # For 32 bits libgmp can't seem to be able to do it
-    it "can cast UInt64::MAX to UInt64 (#2264)" do
-      BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  context "conversion to 64-bit" do
+    it "above 64 bits" do
+      big = BigInt.new("9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(7766279631452241919) # 99999999999999999999 - 5*(2**64)
+      big.to_u64!.should eq(7766279631452241919)
+
+      big = BigInt.new("9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-8814407033341083649) # 99999999999999999999999999999999 - 5421010862428*(2**64)
+      big.to_u64!.should eq(9632337040368467967)  # 99999999999999999999999999999999 - 5421010862427*(2**64)
     end
-  {% end %}
+
+    it "between 63 and 64 bits" do
+      big = BigInt.new(i = 9999999999999999999)
+      expect_raises(OverflowError) { big.to_i64 }
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
+      big.to_u64!.should eq(i)
+    end
+
+    it "between 32 and 63 bits" do
+      big = BigInt.new(i = 9999999999999)
+      big.to_i64.should eq(i)
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(i)
+    end
+
+    it "negative under 32 bits" do
+      big = BigInt.new(i = -9999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446744073709541617) # -9999 + 2**64
+    end
+
+    it "negative between 32 and 63 bits" do
+      big = BigInt.new(i = -9999999999999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446734073709551617) # -9999999999999 + 2**64
+    end
+
+    it "negative between 63 and 64 bits" do
+      big = BigInt.new("-9999999999999999999")
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8446744073709551617) # -9999999999999999999 + 2**64
+      big.to_u64!.should eq(8446744073709551617)
+    end
+
+    it "negative above 64 bits" do
+      big = BigInt.new("-" + "9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-7766279631452241919) # -9999999999999999999 + 5*(2**64)
+      big.to_u64!.should eq(10680464442257309697) # -9999999999999999999 + 6*(2**64)
+
+      big = BigInt.new("-" + "9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8814407033341083649) # -99999999999999999999999999999999 + 5421010862428*(2**64)
+      big.to_u64!.should eq(8814407033341083649)
+    end
+  end
+
+  it "can cast UInt64::MAX to UInt64 (#2264)" do
+    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  end
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
@@ -391,10 +488,12 @@ describe "BigInt" do
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
-    b3 = 6.to_big_i
+    b3 = -6.to_big_i
 
     b1.hash.should eq(b2.hash)
     b1.hash.should_not eq(b3.hash)
+
+    b3.hash.should eq((-6).hash)
   end
 
   it "clones" do
@@ -405,6 +504,38 @@ describe "BigInt" do
   describe "#humanize_bytes" do
     it { BigInt.new("1180591620717411303424").humanize_bytes.should eq("1.0ZiB") }
     it { BigInt.new("1208925819614629174706176").humanize_bytes.should eq("1.0YiB") }
+  end
+
+  it "has unsafe_shr (#8691)" do
+    BigInt.new(8).unsafe_shr(1).should eq(4)
+  end
+
+  describe "#digits" do
+    it "works for positive numbers or zero" do
+      0.to_big_i.digits.should eq([0])
+      1.to_big_i.digits.should eq([1])
+      10.to_big_i.digits.should eq([0, 1])
+      123.to_big_i.digits.should eq([3, 2, 1])
+      123456789.to_big_i.digits.should eq([9, 8, 7, 6, 5, 4, 3, 2, 1])
+    end
+
+    it "works with a base" do
+      123.to_big_i.digits(16).should eq([11, 7])
+    end
+
+    it "raises for invalid base" do
+      [1, 0, -1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          123.to_big_i.digits(base)
+        end
+      end
+    end
+
+    it "raises for negative numbers" do
+      expect_raises(ArgumentError, "Can't request digits of negative number") do
+        -123.to_big_i.digits
+      end
+    end
   end
 end
 

@@ -20,7 +20,7 @@ require "crystal/system/time"
 # There are several methods to retrieve a `Time` instance representing the
 # current time:
 #
-# ```crystal
+# ```
 # Time.utc                                        # returns the current time in UTC
 # Time.local Time::Location.load("Europe/Berlin") # returns the current time in time zone Europe/Berlin
 # Time.local                                      # returns the current time in current time zone
@@ -189,7 +189,7 @@ require "crystal/system/time"
 # computer's wall clock has changed between both calls.
 #
 # As an alternative, the operating system also provides a monotonic clock.
-# Its time-line has no specfied starting point but is strictly linearly
+# Its time-line has no specified starting point but is strictly linearly
 # increasing.
 #
 # This monotonic clock should always be used for measuring elapsed time.
@@ -216,6 +216,7 @@ struct Time
   end
 
   include Comparable(Time)
+  include Steppable
 
   # :nodoc:
   DAYS_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
@@ -410,7 +411,10 @@ struct Time
     unless 1 <= year <= 9999 &&
            1 <= month <= 12 &&
            1 <= day <= Time.days_in_month(year, month) &&
-           0 <= hour <= 23 &&
+           (
+             0 <= hour <= 23 ||
+             (hour == 24 && minute == 0 && second == 0 && nanosecond == 0)
+           ) &&
            0 <= minute <= 59 &&
            0 <= second <= 59 &&
            0 <= nanosecond <= 999_999_999
@@ -429,16 +433,6 @@ struct Time
     seconds = seconds - zone_offset_at(seconds, location) if !location.utc?
 
     new(seconds: seconds, nanoseconds: nanosecond.to_i, location: location)
-  end
-
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  @[Deprecated("Use `Time.local` instead.")]
-  def self.new(year : Int32, month : Int32, day : Int32, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : Time
-    local(year, month, day, hour, minute, second, nanosecond: nanosecond, location: location)
   end
 
   # Creates a new `Time` instance representing the given date-time in UTC.
@@ -541,20 +535,6 @@ struct Time
     utc(seconds: seconds, nanoseconds: nanoseconds.to_i)
   end
 
-  # Creates a new `Time` instance representing the current time from the
-  # system clock observed in *location* (defaults to local time zone).
-  @[Deprecated("Use `Time.local` or `Time.utc` instead.")]
-  def self.now(location : Location = Location.local) : Time
-    local(location)
-  end
-
-  # Creates a new `Time` instance representing the current time from the
-  # system clock in UTC.
-  @[Deprecated("Use `Time.utc` instead.")]
-  def self.utc_now : Time
-    utc
-  end
-
   # Creates a new `Time` instance with the same local date-time representation
   # (wall clock) in a different *location*.
   #
@@ -599,13 +579,13 @@ struct Time
   #
   # It adds the number of months with overflow increasing the year.
   # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
+  # valid day of the month.
   #
   # For example, adding `1.month` to `2007-03-31` would result in the invalid
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are increased by the specified amount.
+  # representations of month and year are increased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
@@ -617,13 +597,13 @@ struct Time
   #
   # It adds the number of months with overflow decreasing the year.
   # If the resulting day-of-month would be invalid, it is adjusted to the last
-  # valid day of the moneth.
+  # valid day of the month.
   #
   # For example, subtracting `1.month` from `2007-05-31` would result in the invalid
   # date `2007-04-31` which will be adjusted to `2007-04-30`.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenations of month and year are decreased by the specified amount.
+  # representations of month and year are decreased by the specified amount.
   #
   # If the resulting date-time is ambiguous due to time zone transitions,
   # a correct time will be returned, but it does not guarantee which.
@@ -667,15 +647,15 @@ struct Time
     Time.new(seconds: seconds, nanoseconds: nanoseconds.to_i, location: location)
   end
 
-  # Returns a copy of this `Time` shifted by the amount of calendrical units
+  # Returns a copy of this `Time` shifted by the amount of calendaric units
   # provided as arguments.
   #
   # Positive values result in a later time, negative values in an earlier time.
   #
   # This operates on the local time-line, such that the local date-time
-  # represenation of the result will be apart by the specified amounts, but the
+  # representation of the result will be apart by the specified amounts, but the
   # elapsed time between both instances might not equal to the combined default
-  # durations
+  # duration.
   # This is the case for example when adding a day over a daylight-savings time
   # change:
   #
@@ -743,7 +723,8 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += offset_seconds % SECONDS_PER_DAY
+      seconds += @seconds % SECONDS_PER_DAY
+      seconds += offset
     end
 
     # FIXME: These operations currently don't have overflow checks applied.
@@ -853,7 +834,7 @@ struct Time
 
       # The week number depends on whether the previous year has 52 or 53 weeks
       # which can be determined by the day of week of January 1.
-      # The year has 53 weeks if Januar 1 is on a Friday or the year was a leap
+      # The year has 53 weeks if January 1 is on a Friday or the year was a leap
       # year and January 1 is on a Saturday.
       jan1_day_of_week = DayOfWeek.from_value((day_of_week.to_i - day_year + 1) % 7)
 
@@ -887,7 +868,7 @@ struct Time
   # * `week`: `1..53`
   # * `day_of_week`: `1..7`
   def self.week_date(year : Int32, week : Int32, day_of_week : Int32 | DayOfWeek, hour : Int32 = 0, minute : Int32 = 0, second : Int32 = 0, *, nanosecond : Int32 = 0, location : Location = Location.local) : self
-    # For this calculation we need to know the weekday of Januar 4.
+    # For this calculation we need to know the weekday of January 4.
     # The number of the day plus a fixed offset of 4 gives a correction value
     # for this year.
     jan4_day_of_week = Time.utc(year, 1, 4).day_of_week
@@ -931,7 +912,7 @@ struct Time
   # This is equivalent to creating a `Time::Span` from the time-of-day fields:
   #
   # ```
-  # time.time_of_day == Time::Span.new(time.hour, time.minute, time.second, time.nanosecond)
+  # time.time_of_day == Time::Span.new(hours: time.hour, minutes: time.minute, seconds: time.second, nanoseconds: time.nanosecond)
   # ```
   def time_of_day : Time::Span
     Span.new(nanoseconds: NANOSECONDS_PER_SECOND * (offset_seconds % SECONDS_PER_DAY) + nanosecond)
@@ -945,7 +926,7 @@ struct Time
 
   # Returns the day of the year.
   #
-  # The value range is `1..365` in normal yars and `1..366` in leap years.
+  # The value range is `1..365` in normal years and `1..366` in leap years.
   def day_of_year : Int32
     year_month_day_day_year[3]
   end
@@ -1057,13 +1038,13 @@ struct Time
   #
   # The name of the location is appended unless it is a fixed zone offset.
   def inspect(io : IO, with_nanoseconds = true) : Nil
-    to_s "%F %T", io
+    to_s io, "%F %T"
 
     if with_nanoseconds
       if @nanoseconds == 0
         io << ".0"
       else
-        to_s ".%N", io
+        to_s io, ".%N"
       end
     end
 
@@ -1083,7 +1064,7 @@ struct Time
   # When the location is `UTC`, the offset is replaced with the string `UTC`.
   # Offset seconds are omitted if `0`.
   def to_s(io : IO) : Nil
-    to_s("%F %T ", io)
+    to_s(io, "%F %T ")
 
     if utc?
       io << "UTC"
@@ -1107,7 +1088,7 @@ struct Time
   # Formats this `Time` according to the pattern in *format* to the given *io*.
   #
   # See `Time::Format` for details.
-  def to_s(format : String, io : IO) : Nil
+  def to_s(io : IO, format : String) : Nil
     Format.new(format).format(self, io)
   end
 
@@ -1120,14 +1101,21 @@ struct Time
   # ISO 8601 allows some freedom over the syntax and RFC 3339 exercises that
   # freedom to rigidly define a fixed format intended for use in internet
   # protocols and standards.
-  def to_rfc3339
-    Format::RFC_3339.format(to_utc)
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(*, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, fraction_digits)
   end
 
   # Format this time using the format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
   # into the given *io*.
-  def to_rfc3339(io : IO)
-    Format::RFC_3339.format(to_utc, io)
+  #
+  #
+  # Number of seconds decimals can be selected with *fraction_digits*.
+  # Values accepted are 0 (the default, no decimals), 3 (milliseconds), 6 (microseconds) or 9 (nanoseconds).
+  def to_rfc3339(io : IO, *, fraction_digits : Int = 0)
+    Format::RFC_3339.format(to_utc, io, fraction_digits)
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
@@ -1319,7 +1307,7 @@ struct Time
     if local?
       self
     else
-      in(Location.local)
+      self.in(Location.local)
     end
   end
 
@@ -1353,7 +1341,7 @@ struct Time
 
   # Returns a copy of this `Time` representing the beginning of the seconds.
   #
-  # This essentially scaps off `nanoseconds`.
+  # This essentially resets `nanoseconds` to 0.
   def at_beginning_of_second : Time
     Time.new(seconds: total_seconds, nanoseconds: 0, location: location)
   end
@@ -1459,7 +1447,7 @@ struct Time
     @seconds + offset
   end
 
-  # Returns the calendrical representation of this instance's date.
+  # Returns the calendaric representation of this instance's date.
   #
   # The return value is a tuple consisting of year (`1..9999`), month (`1..12`),
   # day (`1..31`) and ordinal day of the year (`1..366`).
@@ -1488,7 +1476,7 @@ struct Time
 
     ordinal_day_in_year = total_days + 1
 
-    if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leapyear
+    if (numyears == 3) && ((num100 == 3) || !(num4 == 24)) # 31 dec leap year
       days_per_month = DAYS_MONTH_LEAP
     else
       days_per_month = DAYS_MONTH
@@ -1518,6 +1506,8 @@ struct Time
         zone = location.lookup(range[0] - 1)
       when .>=(range[1])
         zone = location.lookup(range[1])
+      else
+        # in range
       end
     end
 

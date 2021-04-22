@@ -9,10 +9,12 @@ class OAuth::RequestToken
     token = nil
     secret = nil
 
-    HTTP::Params.parse(response) do |key, value|
+    URI::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value
+      else
+        # Not a key we are interested in
       end
     end
 

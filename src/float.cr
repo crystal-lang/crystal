@@ -65,13 +65,6 @@ struct Float
     !nan? && !infinite?
   end
 
-  # Float divivision that will obey the left hand side argument type.
-  def fdiv(other) : self
-    # TODO: replace with fdiv primitve after 0.31.0
-    # This is to implement efficiently the // operation
-    self.class.new(self / other)
-  end
-
   def modulo(other)
     if other == 0.0
       raise DivisionByZeroError.new
@@ -158,7 +151,17 @@ struct Float32
     LibM.floor_f32(self)
   end
 
-  def round
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : self
+    # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
+    # rint in the future.
+    LibM.rint_f32(self)
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away
     LibM.round_f32(self)
   end
 
@@ -245,7 +248,17 @@ struct Float64
     LibM.floor_f64(self)
   end
 
-  def round
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : self
+    # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
+    # rint in the future.
+    LibM.rint_f64(self)
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away
     LibM.round_f64(self)
   end
 

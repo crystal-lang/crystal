@@ -129,7 +129,7 @@ class Crystal::Call
       named_args_types = NamedArgumentType.from_args(named_args, with_literals)
       matches = lookup_matches_without_splat arg_types, named_args_types, with_literals
 
-      # If we checked for automatic casts, see if an ambigous call was produced
+      # If we checked for automatic casts, see if an ambiguous call was produced
       if with_literals
         arg_types.each &.check_restriction_exception
         named_args_types.try &.each &.type.check_restriction_exception
@@ -245,7 +245,7 @@ class Crystal::Call
     matches = lookup_matches_checking_expansion(owner, signature, with_literals: with_literals)
 
     if matches.empty? && owner.class? && owner.abstract?
-      matches = owner.virtual_type.lookup_matches(signature)
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
@@ -254,34 +254,34 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
-    instantiate matches, owner, self_type: nil, with_literals: with_literals
+    instantiate signature, matches, owner, self_type: nil, with_literals: with_literals
   end
 
   def lookup_matches_in_type(owner, arg_types, named_args_types, self_type, def_name, search_in_parents, search_in_toplevel = true, with_literals = false)
     signature = CallSignature.new(def_name, arg_types, block, named_args_types)
 
     matches = check_tuple_indexer(owner, def_name, args, arg_types)
-    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents)
+    matches ||= lookup_matches_checking_expansion(owner, signature, search_in_parents, with_literals: with_literals)
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
     if matches.empty? && !obj && owner != program && search_in_toplevel
-      program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
+      program_matches = lookup_matches_with_signature(program, signature, search_in_parents, with_literals)
       matches = program_matches unless program_matches.empty?
     end
 
-    if matches.empty? && owner.class? && owner.abstract? && name != "super"
-      matches = owner.virtual_type.lookup_matches(signature)
+    if matches.empty? && owner.class? && owner.abstract? && !super?
+      matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_literals)
     end
 
     if matches.empty?
       defined_method_missing = owner.check_method_missing(signature, self)
       if defined_method_missing
-        matches = owner.lookup_matches(signature)
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       elsif with_scope = @with_scope
         defined_method_missing = with_scope.check_method_missing(signature, self)
         if defined_method_missing
-          matches = with_scope.lookup_matches(signature)
+          matches = with_scope.lookup_matches(signature, analyze_all: with_literals)
           @uses_with_scope = true
         end
       end
@@ -293,7 +293,7 @@ class Crystal::Call
       # don't give error. This is to allow small code comments without giving
       # compile errors, which will anyway appear once you add concrete
       # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
         raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_literals: with_literals)
       end
     end
@@ -308,20 +308,20 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
-    instantiate matches, owner, self_type, with_literals
+    instantiate signature, matches, owner, self_type, with_literals
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true, with_literals = false)
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
-    # triggering a virtual lookup. But the context of lookup must be preseved.
+    # triggering a virtual lookup. But the context of lookup must be preserved.
     if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
         if search_in_parents
-          target.lookup_matches signature
+          target.lookup_matches(signature, analyze_all: with_literals)
         else
-          target.lookup_matches_without_parents signature
+          target.lookup_matches_without_parents(signature, analyze_all: with_literals)
         end
       end
       matches.each do |match|
@@ -330,36 +330,36 @@ class Crystal::Call
       end
       matches
     else
-      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents) }
+      bubbling_exception { lookup_matches_with_signature(owner, signature, search_in_parents, with_literals) }
     end
   end
 
-  def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
+  def lookup_matches_with_signature(owner : Program, signature, search_in_parents, with_literals)
     location = self.location
     if location && (filename = location.original_filename)
-      matches = owner.lookup_private_matches filename, signature
+      matches = owner.lookup_private_matches(filename, signature, analyze_all: with_literals)
     end
 
     if matches
       if matches.empty?
-        matches = owner.lookup_matches signature
+        matches = owner.lookup_matches(signature, analyze_all: with_literals)
       end
     else
-      matches = owner.lookup_matches signature
+      matches = owner.lookup_matches(signature, analyze_all: with_literals)
     end
 
     matches
   end
 
-  def lookup_matches_with_signature(owner, signature, search_in_parents)
+  def lookup_matches_with_signature(owner, signature, search_in_parents, with_literals)
     if search_in_parents
-      owner.lookup_matches signature
+      owner.lookup_matches(signature, analyze_all: with_literals)
     else
-      owner.lookup_matches_without_parents signature
+      owner.lookup_matches_without_parents(signature, analyze_all: with_literals)
     end
   end
 
-  def instantiate(matches, owner, self_type, with_literals)
+  def instantiate(signature, matches, owner, self_type, with_literals)
     matches.each &.remove_literals if with_literals
 
     block = @block
@@ -500,28 +500,62 @@ class Crystal::Call
       index = arg.value.to_i
       index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
-      if nilable || in_bounds
-        indexer_def = yield instance_type, (in_bounds ? index : -1)
-        indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
-      elsif instance_type.size == 0
-        raise "index '#{arg}' out of bounds for empty tuple"
-      else
-        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+      unless in_bounds
+        unless nilable
+          raise "index '#{arg}' out of bounds for empty tuple" if instance_type.size == 0
+          raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+        end
+        index = -1
       end
+    elsif arg.is_a?(RangeLiteral)
+      from = arg.from
+      if from.is_a?(NumberLiteral) && from.kind == :i32
+        from_index = from.value.to_i
+        from_index += instance_type.size if from_index < 0
+        in_bounds = (0 <= from_index <= instance_type.size)
+        if !in_bounds && !nilable
+          raise "begin index out of bounds for #{owner} (#{from} not in #{-instance_type.size}..#{instance_type.size})"
+        end
+      elsif from.is_a?(Nop)
+        from_index = 0
+        in_bounds = true
+      else
+        return nil
+      end
+
+      to = arg.to
+      if to.is_a?(NumberLiteral) && to.kind == :i32
+        to_index = to.value.to_i
+        to_index += instance_type.size if to_index < 0
+        to_index = (to_index - (arg.exclusive? ? 1 : 0)).clamp(-1, instance_type.size - 1)
+      elsif to.is_a?(Nop)
+        to_index = instance_type.size - 1
+      else
+        return nil
+      end
+
+      if in_bounds
+        if from_index <= to_index
+          index = (from_index..to_index)
+        else
+          index = (0...0)
+        end
+      else
+        index = -1
+      end
+    else
+      return nil
     end
-    nil
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    arg = args.first
-
-    case arg
+    case arg = args.first
     when SymbolLiteral, StringLiteral
       name = arg.value
-    end
-
-    if name
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
@@ -530,8 +564,9 @@ class Crystal::Call
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
+    else
+      nil
     end
-    nil
   end
 
   def replace_splats
@@ -666,7 +701,7 @@ class Crystal::Call
       parent_visitor.check_self_closured
     end
 
-    typed_defs = instantiate matches, scope, self_type: nil, with_literals: with_literals
+    typed_defs = instantiate signature, matches, scope, self_type: nil, with_literals: with_literals
     typed_defs.each do |typed_def|
       typed_def.next = parent_visitor.typed_def
     end
@@ -699,6 +734,8 @@ class Crystal::Call
         return result
       when Type::DefInMacroLookup
         return nil
+      else
+        # Check next target
       end
     end
   end
@@ -746,8 +783,7 @@ class Crystal::Call
     if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = Array(Var).new(inputs.size + 1)
-        i = 0
+        yield_types = Array(Type).new(inputs.size + 1)
         inputs.each do |input|
           if input.is_a?(Splat)
             tuple_type = lookup_node_type(match.context, input.exp)
@@ -756,22 +792,29 @@ class Crystal::Call
             end
             tuple_type.tuple_types.each do |arg_type|
               MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-              i += 1
+              yield_types << arg_type.virtual_type
             end
           else
             arg_type = lookup_node_type(match.context, input)
             MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-
-            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-            i += 1
+            yield_types << arg_type.virtual_type
           end
         end
+
+        if splat_index = block.splat_index
+          if yield_types.size < block.args.size - 1
+            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+          end
+          splat_range = (splat_index..splat_index - block.args.size)
+          yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
+        end
+
+        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
-      # is valid too only if Foo is an alias/typedef that referes to a FunctionType
+      # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
@@ -787,7 +830,7 @@ class Crystal::Call
     end
 
     if yield_vars
-      # Check if tuple unpkacing is needed
+      # Check if tuple unpacking is needed
       if yield_vars.size == 1 &&
          (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
          block.args.size > 1
@@ -911,7 +954,7 @@ class Crystal::Call
             begin
               block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
-            rescue ex : Crystal::Exception
+            rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
           else
@@ -925,7 +968,7 @@ class Crystal::Call
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               begin
                 block_type = lookup_node_type(match.context, output).virtual_type
-              rescue ex : Crystal::Exception
+              rescue ex : Crystal::CodeError
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
                 else
@@ -978,7 +1021,7 @@ class Crystal::Call
   end
 
   private def cant_infer_block_return_type
-    raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
+    raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
   end
 
   private def lookup_node_type(context, node)
@@ -994,7 +1037,7 @@ class Crystal::Call
   def bubbling_exception
     begin
       yield
-    rescue ex : Crystal::Exception
+    rescue ex : Crystal::CodeError
       if obj = @obj
         if name == "initialize"
           # Avoid putting 'initialize' in the error trace
@@ -1060,7 +1103,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
+    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1070,10 +1113,19 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        owner = owner.as(ProcInstanceType)
-        proc_arg_type = owner.arg_types[index]
-        unless type.covariant?(proc_arg_type)
-          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+        case body.as(Primitive).name
+        when "proc_call"
+          owner = owner.as(ProcInstanceType)
+          proc_arg_type = owner.arg_types[index]
+          unless type.implements?(proc_arg_type)
+            self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
+          end
+        when "pointer_set"
+          owner = owner.remove_typedef.as(PointerInstanceType)
+          pointer_type = owner.var.type
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
+            self.args[index].raise "type must be #{pointer_type}, not #{type}"
+          end
         end
       end
 
@@ -1139,5 +1191,13 @@ class Crystal::Call
         typed_def.raises = value
       end
     end
+  end
+
+  def super?
+    !obj && name == "super"
+  end
+
+  def previous_def?
+    !obj && name == "previous_def"
   end
 end

@@ -258,15 +258,10 @@ describe JSON::PullParser do
       bar.should eq(2)
     end
 
-    it "finds key" do
+    it "yields parser" do
       pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
 
-      bar = nil
-      pull.on_key("bar") do
-        bar = pull.read_int
-      end
-
-      bar.should eq(2)
+      pull.on_key("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key" do
@@ -289,6 +284,12 @@ describe JSON::PullParser do
       end
 
       bar.should eq(2)
+    end
+
+    it "yields parser with bang" do
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": 2}))
+
+      pull.on_key!("bar", &.read_int).should eq(2)
     end
 
     it "doesn't find key with bang" do
@@ -328,5 +329,65 @@ describe JSON::PullParser do
     assert_raw %([1,"hello",true,false,null,[1,2,3]])
     assert_raw %({"foo":[1,2,{"bar":[1,"hello",true,false,1.5]}]})
     assert_raw %({"foo":"bar"})
+  end
+
+  describe "read?" do
+    {% for pair in [[Int8, 1_i8],
+                    [Int16, 1_i16],
+                    [Int32, 1_i32],
+                    [Int64, 1_i64],
+                    [UInt8, 1_u8],
+                    [UInt16, 1_u16],
+                    [UInt32, 1_u32],
+                    [UInt64, 1_u64],
+                    [Float32, 1.0_f32],
+                    [Float64, 1.0],
+                    [String, "foo"],
+                    [Bool, true]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "reads {{type}} when the token is a compatible kind" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should eq({{value}})
+      end
+
+      it "returns nil instead of {{type}} when the token is not compatible" do
+        pull = JSON::PullParser.new(%({"foo": "bar"}))
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
+
+    {% for pair in [[Int8, Int64::MAX],
+                    [Int16, Int64::MAX],
+                    [Int32, Int64::MAX],
+                    [UInt8, -1],
+                    [UInt16, -1],
+                    [UInt32, -1],
+                    [UInt64, -1]] %}
+      {% type = pair[0] %}
+      {% value = pair[1] %}
+
+      it "returns nil in place of {{type}} when an overflow occurs" do
+        pull = JSON::PullParser.new({{value}}.to_json)
+        pull.read?({{type}}).should be_nil
+      end
+    {% end %}
+
+    pending "returns nil in place of Float32 when an overflow occurs" do
+      pull = JSON::PullParser.new(Float64::MAX.to_json)
+      pull.read?(Float32).should be_nil
+    end
+  end
+
+  it "#raise" do
+    pull = JSON::PullParser.new("[1, 2, 3]")
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 2") do
+      pull.raise "foo bar"
+    end
+    pull.read_begin_array
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 3") do
+      pull.raise "foo bar"
+    end
   end
 end

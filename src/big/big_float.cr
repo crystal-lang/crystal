@@ -132,7 +132,7 @@ struct BigFloat < Float
   end
 
   def /(other : BigFloat)
-    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinitiy
+    # Division by 0 in BigFloat is not allowed, there is no BigFloat::Infinity
     raise DivisionByZeroError.new if other == 0
     BigFloat.new { |mpf| LibGMP.mpf_div(mpf, self, other) }
   end
@@ -234,6 +234,7 @@ struct BigFloat < Float
   end
 
   def to_u64
+    raise OverflowError.new if self < 0
     LibGMP.mpf_get_ui(self)
   end
 
@@ -354,6 +355,7 @@ class String
 end
 
 module Math
+  # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : BigFloat)
     LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
     frac = BigFloat.new do |mpf|
@@ -366,11 +368,12 @@ module Math
     {frac, exp}
   end
 
-  # Returns the sqrt of a `BigFloat`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
-  # Math.sqrt((1000_000_000_0000.to_big_f*1000_000_000_00000.to_big_f))
+  #
+  # Math.sqrt(1_000_000_000_000.to_big_f * 1_000_000_000_000.to_big_f) # => 1000000000000.0
   # ```
   def sqrt(value : BigFloat)
     BigFloat.new { |mpf| LibGMP.mpf_sqrt(mpf, value) }

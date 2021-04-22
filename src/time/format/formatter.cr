@@ -147,10 +147,14 @@ struct Time::Format
       nanoseconds
     end
 
-    def second_fraction?(fraction_digits = nil)
-      unless time.nanosecond == 0 || fraction_digits == 0
-        char '.'
-        second_fraction
+    def second_fraction?(fraction_digits : Int = 9)
+      case fraction_digits
+      when 0
+      when 3 then char '.'; milliseconds
+      when 6 then char '.'; microseconds
+      when 9 then char '.'; nanoseconds
+      else
+        raise ArgumentError.new("Invalid fraction digits: #{fraction_digits}")
       end
     end
 
@@ -211,6 +215,14 @@ struct Time::Format
         time_zone_gmt
       else
         time_zone_rfc2822
+      end
+    end
+
+    def time_zone_name(zone = false)
+      if zone
+        io << time.zone.name
+      else
+        io << time.location
       end
     end
 

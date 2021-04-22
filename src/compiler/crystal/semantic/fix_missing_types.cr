@@ -42,7 +42,11 @@ class Crystal::FixMissingTypes < Crystal::Visitor
   end
 
   def visit(node : ProcPointer)
-    node.call?.try &.accept self
+    if expanded = node.expanded
+      expanded.accept(self)
+    else
+      node.call?.try &.accept self
+    end
     false
   end
 

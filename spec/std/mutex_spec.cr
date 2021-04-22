@@ -20,9 +20,7 @@ describe Mutex do
     end.to_a
 
     fibers.each do |f|
-      while !f.dead?
-        Fiber.yield
-      end
+      wait_until_finished f
     end
 
     x.should eq(1000)
@@ -46,13 +44,15 @@ describe Mutex do
 
     it "can't be unlocked by another fiber" do
       mutex = nil
+      done = false
 
       spawn do
         mutex = Mutex.new
         mutex.not_nil!.lock
+        done = true
       end
 
-      until mutex
+      until done
         Fiber.yield
       end
 
@@ -80,13 +80,15 @@ describe Mutex do
 
     it "can't be unlocked by another fiber" do
       mutex = nil
+      done = false
 
       spawn do
         mutex = Mutex.new(:reentrant)
         mutex.not_nil!.lock
+        done = true
       end
 
-      until mutex
+      until done
         Fiber.yield
       end
 

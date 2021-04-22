@@ -135,8 +135,9 @@ module Crystal
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
       getter already_loaded : Bool
+      getter debug_variable_created : Bool
 
-      def initialize(@pointer, @type, @already_loaded = false)
+      def initialize(@pointer, @type, @already_loaded = false, @debug_variable_created = false)
       end
     end
 
@@ -183,9 +184,7 @@ module Crystal
 
       if @program.has_flag? "windows"
         @personality_name = "__CxxFrameHandler3"
-
-        personality_function = @llvm_mod.functions.add(@personality_name, [] of LLVM::Type, llvm_context.int32, true)
-        @main.personality_function = personality_function
+        @main.personality_function = windows_personality_fun
       else
         @personality_name = "__crystal_personality"
       end
@@ -246,7 +245,7 @@ module Crystal
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
 
-      initialize_argv_and_argc
+      initialize_predefined_constants
 
       if @debug.line_numbers?
         set_current_debug_location Location.new(@program.filename || "(no name)", 1, 1)
@@ -311,6 +310,7 @@ module Crystal
              ONCE_INIT, ONCE
           @codegen.accept node
         end
+
         false
       end
 
@@ -561,7 +561,7 @@ module Crystal
     end
 
     def fun_literal_name(node : ProcLiteral)
-      location = node.location.try &.original_location
+      location = node.location.try &.expanded_location
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename.as(String)
@@ -590,14 +590,7 @@ module Crystal
 
       if obj = node.obj
         accept obj
-
-        # If obj is a primitive like an integer we need to pass
-        # the variable as is (without loading it)
-        if obj.is_a?(Var) && obj.type.is_a?(PrimitiveType)
-          call_self = context.vars[obj.name].pointer
-        else
-          call_self = @last
-        end
+        call_self = @last
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
@@ -803,37 +796,57 @@ module Crystal
       set_ensure_exception_handler(node)
 
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks "while", "body", "exit"
+        cond = node.cond.single_expression
+        endless_while = cond.true_literal?
 
-        context.while_block = while_block
-        context.while_exit_block = exit_block
-        context.break_phi = nil
-        context.next_phi = nil
+        if endless_while
+          while_block = new_block "while"
 
-        br while_block
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
 
-        position_at_end while_block
+            br while_block
 
-        request_value do
-          set_current_debug_location node.cond if @debug.line_numbers?
-          codegen_cond_branch node.cond, body_block, exit_block
-        end
+            position_at_end while_block
 
-        position_at_end body_block
-
-        request_value(false) do
-          accept node.body
-        end
-        br while_block
-
-        position_at_end exit_block
-
-        if node.no_returns?
-          unreachable
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+          end
         else
-          @last = llvm_nil
+          while_block, body_block, fail_block = new_blocks "while", "body", "fail"
+
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
+
+            br while_block
+
+            position_at_end while_block
+
+            request_value do
+              set_current_debug_location node.cond if @debug.line_numbers?
+              codegen_cond_branch node.cond, body_block, fail_block
+            end
+
+            position_at_end body_block
+
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+
+            position_at_end fail_block
+
+            phi.add llvm_nil, @program.nil, last: true
+          end
         end
       end
+
       false
     end
 
@@ -861,20 +874,28 @@ module Crystal
       set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
-      if break_phi = context.break_phi
-        old_last = @last
-        execute_ensures_until(node.target.as(Call))
-        @last = old_last
+      case target = node.target
+      when Call
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
 
-        break_phi.add @last, node_type
-      elsif while_exit_block = context.while_exit_block
-        execute_ensures_until(node.target.as(While))
-        br while_exit_block
-      else
-        node.raise "BUG: unknown exit for break"
+          break_phi.add @last, node_type
+          return false
+        end
+      when While
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
+
+          break_phi.add @last, node_type
+          return false
+        end
       end
 
-      false
+      node.raise "BUG: unknown exit for break"
     end
 
     def visit(node : Next)
@@ -885,7 +906,7 @@ module Crystal
       when Block
         if next_phi = context.next_phi
           old_last = @last
-          execute_ensures_until(target.as(Block))
+          execute_ensures_until(target)
           @last = old_last
 
           next_phi.add @last, node_type
@@ -893,7 +914,7 @@ module Crystal
         end
       when While
         if while_block = context.while_block
-          execute_ensures_until(target.as(While))
+          execute_ensures_until(target)
           br while_block
           return false
         end
@@ -1183,6 +1204,7 @@ module Crystal
     end
 
     def read_instance_var(node_type, type, name, value)
+      type = type.remove_typedef
       ivar = type.lookup_instance_var(name)
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
@@ -1301,7 +1323,7 @@ module Crystal
       ] of ASTNode
 
       if location = node.location
-        pieces << StringLiteral.new(", at #{location.original_location}:#{location.line_number}").at(node)
+        pieces << StringLiteral.new(", at #{location.expanded_location}:#{location.line_number}").at(node)
       end
 
       ex = Call.new(Path.global("TypeCastError").at(node), "new", StringInterpolation.new(pieces).at(node)).at(node)
@@ -1320,6 +1342,7 @@ module Crystal
         location = Location.new(@program.filename, 1, 1)
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(location)
         @program.visit_main call
+        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
         call
       end
     end
@@ -1345,7 +1368,17 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= LLVMVar.new(var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name), var.type)
+      context.vars[var.name] ||= begin
+        pointer = var.no_returns? ? llvm_nil : alloca(llvm_type(var.type), var.name)
+        debug_variable_created =
+          if context.fun.naked?
+            # Naked functions must not have debug info associated with them
+            false
+          else
+            declare_variable(var.name, var.type, pointer, var.location)
+          end
+        LLVMVar.new(pointer, var.type, debug_variable_created: debug_variable_created)
+      end
     end
 
     def declare_lib_var(name, type, thread_local)
@@ -1487,12 +1520,11 @@ module Crystal
 
       Phi.open(self, block, @needs_value) do |phi|
         with_cloned_context(block_context) do |old|
-          # Reset those vars that are declared inside the block and are nilable.
-          reset_block_vars block
+          # Reset vars that are declared inside the block and are nilable
+          reset_nilable_vars block
 
           context.break_phi = old.return_phi
           context.next_phi = phi
-          context.while_exit_block = nil
           context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true
@@ -1509,6 +1541,10 @@ module Crystal
       end
 
       false
+    end
+
+    def visit(node : Unreachable)
+      builder.unreachable
     end
 
     def check_proc_is_not_closure(value, type)
@@ -1684,14 +1720,14 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil)
+    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil, reset_nilable_vars = true)
       self_closured = obj.is_a?(Def) && obj.self_closured?
       closured_vars = closured_vars(vars, obj)
-      alloca_non_closured_vars(vars, obj, args)
+      alloca_non_closured_vars(vars, obj, args, reset_nilable_vars)
       malloc_closure closured_vars, context, parent_context, self_closured
     end
 
-    def alloca_non_closured_vars(vars, obj = nil, args = nil)
+    def alloca_non_closured_vars(vars, obj = nil, args = nil, reset_nilable_vars = true)
       return unless vars
 
       in_alloca_block do
@@ -1712,11 +1748,23 @@ module Crystal
             is_arg = args.try &.any? { |arg| arg.name == var.name }
             next if is_arg
 
-            ptr = builder.alloca llvm_type(var_type), name
-            context.vars[name] = LLVMVar.new(ptr, var_type)
+            ptr = alloca llvm_type(var_type), name
+
+            location = var.location
+            if location.nil? && obj.is_a?(ASTNode)
+              location = obj.location
+            end
+
+            debug_variable_created =
+              if location && !context.fun.naked?
+                declare_variable name, var_type, ptr, location, alloca_block
+              else
+                false
+              end
+            context.vars[name] = LLVMVar.new(ptr, var_type, debug_variable_created: debug_variable_created)
 
             # Assign default nil for variables that are bound to the nil variable
-            if bound_to_mod_nil?(var)
+            if reset_nilable_vars && bound_to_mod_nil?(var)
               assign ptr, var_type, @program.nil, llvm_nil
             end
           else
@@ -1796,12 +1844,13 @@ module Crystal
       end
     end
 
-    def reset_block_vars(block)
-      vars = block.vars
+    # Sets to nil any variable in node that is nilable.
+    def reset_nilable_vars(node)
+      vars = node.vars
       return unless vars
 
       vars.each do |name, var|
-        if var.context == block && bound_to_mod_nil?(var)
+        if var.context == node && bound_to_mod_nil?(var)
           context_var = context.vars[name]
           assign context_var.pointer, context_var.type, @program.nil, llvm_nil
         end
@@ -2005,7 +2054,7 @@ module Crystal
       if raise_overflow_fun = @raise_overflow_fun
         check_main_fun RAISE_OVERFLOW_NAME, raise_overflow_fun
       else
-        raise "BUG: __crystal_raise_overflow is not defined"
+        raise Error.new("Missing __crystal_raise_overflow function, either use std-lib's prelude or define it")
       end
     end
 
@@ -2042,12 +2091,14 @@ module Crystal
     end
 
     def memset(pointer, value, size)
+      len_arg = @program.bits64? ? size : trunc(size, llvm_context.int32)
+
       pointer = cast_to_void_pointer pointer
       res = call @program.memset(@llvm_mod, llvm_context),
         if LibLLVM::IS_LT_70
-          [pointer, value, trunc(size, llvm_context.int32), int32(4), int1(0)]
+          [pointer, value, len_arg, int32(4), int1(0)]
         else
-          [pointer, value, trunc(size, llvm_context.int32), int1(0)]
+          [pointer, value, len_arg, int1(0)]
         end
 
       unless LibLLVM::IS_LT_70
@@ -2177,7 +2228,7 @@ module Crystal
             str << char
           else
             str << '.'
-            char.ord.to_s(16, str, upcase: true)
+            char.ord.to_s(str, 16, upcase: true)
             str << '.'
           end
         end
@@ -2197,28 +2248,34 @@ module Crystal
     end
 
     def memset(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memset.p0i8.i64" : "llvm.memset.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.int8, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.int8, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memset.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
 
     def memcpy(llvm_mod, llvm_context)
-      llvm_mod.functions["llvm.memcpy.p0i8.p0i8.i32"]? || begin
+      name = bits64? ? "llvm.memcpy.p0i8.p0i8.i64" : "llvm.memcpy.p0i8.p0i8.i32"
+      len_type = bits64? ? llvm_context.int64 : llvm_context.int32
+
+      llvm_mod.functions[name]? || begin
         arg_types =
           if LibLLVM::IS_LT_70
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int32, llvm_context.int1]
           else
-            [llvm_context.void_pointer, llvm_context.void_pointer, llvm_context.int32, llvm_context.int1]
+            [llvm_context.void_pointer, llvm_context.void_pointer, len_type, llvm_context.int1]
           end
 
-        llvm_mod.functions.add("llvm.memcpy.p0i8.p0i8.i32", arg_types, llvm_context.void)
+        llvm_mod.functions.add(name, arg_types, llvm_context.void)
       end
     end
   end

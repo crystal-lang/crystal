@@ -60,6 +60,54 @@ describe "Restrictions" do
 
       mod.t("Axx+").restrict(mod.t("Mxx"), MatchContext.new(mod, mod)).should eq(mod.union_of(mod.t("Bxx+"), mod.t("Cxx+")))
     end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (1) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.t("Cxx").restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.t("Cxx"))
+    end
+
+    it "restricts class against uninstantiated generic base class through multiple inheritance (2) (#9660)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Cxx", mod.int32).restrict(mod.t("Axx"), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Cxx", mod.int32))
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (1)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx < Bxx(Int32); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
+
+    it "restricts virtual generic class against uninstantiated generic subclass (2)" do
+      mod = Program.new
+      mod.semantic parse("
+        class Axx(T); end
+        class Bxx(T) < Axx(T); end
+        class Cxx(T) < Bxx(T); end
+      ")
+
+      result = mod.generic_class("Axx", mod.int32).virtual_type.restrict(mod.generic_class("Bxx", mod.int32), MatchContext.new(mod, mod))
+      result.should eq(mod.generic_class("Bxx", mod.int32).virtual_type)
+    end
   end
 
   describe "restriction_of?" do
@@ -308,6 +356,65 @@ describe "Restrictions" do
           {
             bar(Foo(Int32).new),
             bar(Bar(Int32).new)
+          }
+          )) { tuple_of([int32, bool]) }
+      end
+    end
+
+    describe "NamedTuple vs NamedTuple" do
+      it "inserts more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "keeps more specialized NamedTuple before less specialized one" do
+        assert_type(%(
+          class Foo
+          end
+
+          class Bar < Foo
+          end
+
+          def foo(a : NamedTuple(x: Bar))
+            true
+          end
+
+          def foo(a : NamedTuple(x: Foo))
+            1
+          end
+
+          foo({x: Bar.new})
+          )) { bool }
+      end
+
+      it "doesn't mix incompatible NamedTuples (#10238)" do
+        assert_type(%(
+          def foo(a : NamedTuple(a: Int32))
+            1
+          end
+
+          def foo(a : NamedTuple(b: Int32))
+            true
+          end
+
+          {
+            foo({a: 1}),
+            foo({b: 1})
           }
           )) { tuple_of([int32, bool]) }
       end
@@ -680,16 +787,6 @@ describe "Restrictions" do
       )) { types["Parent"].metaclass.virtual_type! }
   end
 
-  it "doesn't crash on invalid splat restriction (#3698)" do
-    assert_error %(
-      def foo(arg : *String)
-      end
-
-      foo(1)
-      ),
-      "no overload matches"
-  end
-
   it "errors if using free var without forall" do
     assert_error %(
       def foo(x : T)
@@ -724,6 +821,23 @@ describe "Restrictions" do
       end
 
       foo(Int32)
+      )) { int32 }
+  end
+
+  it "restricts aliased typedef type (#9474)" do
+    assert_type(%(
+      lib A
+        alias B = Int32
+      end
+
+      alias C = A::B
+
+      def foo(x : C)
+        1
+      end
+
+      x = uninitialized C
+      foo x
       )) { int32 }
   end
 end

@@ -28,12 +28,6 @@ module Crystal
     #     end
     def expand(node : ArrayLiteral)
       if node_of = node.of
-        if node.elements.size == 0
-          generic = Generic.new(Path.global("Array"), node_of).at(node)
-          call = Call.new(generic, "new").at(node)
-          return call
-        end
-
         type_var = node_of
       else
         type_var = TypeOf.new(node.elements.clone)
@@ -41,19 +35,30 @@ module Crystal
 
       capacity = node.elements.size
 
-      buffer = new_temp_var.at(node)
-
-      exps = Array(ASTNode).new(node.elements.size + 1)
-      node.elements.each_with_index do |elem, i|
-        exps << Call.new(buffer.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
-      end
-      exps << NumberLiteral.new(capacity).at(node)
-      block_body = Expressions.new(exps).at(node)
-
-      block = Block.new([buffer.clone], block_body).at(node)
-
       generic = Generic.new(Path.global("Array"), type_var).at(node)
-      Call.new(generic, "build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode, block: block).at(node)
+
+      if capacity.zero?
+        Call.new(generic, "new").at(node)
+      else
+        ary_var = new_temp_var.at(node)
+
+        ary_instance = Call.new(generic, "unsafe_build", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+
+        buffer = Call.new(ary_var, "to_unsafe")
+        buffer_var = new_temp_var.at(node)
+
+        exps = Array(ASTNode).new(node.elements.size + 3)
+        exps << Assign.new(ary_var.clone, ary_instance).at(node)
+        exps << Assign.new(buffer_var, buffer).at(node)
+
+        node.elements.each_with_index do |elem, i|
+          exps << Call.new(buffer_var.clone, "[]=", NumberLiteral.new(i).at(node), elem.clone).at(node)
+        end
+
+        exps << ary_var.clone
+
+        Expressions.new(exps).at(node)
+      end
     end
 
     def expand_named(node : ArrayLiteral)
@@ -465,7 +470,9 @@ module Crystal
         a_if = wh_if
       end
 
-      if node_else = node.else
+      if node.exhaustive?
+        a_if.not_nil!.else = node.else || Unreachable.new
+      elsif node_else = node.else
         a_if.not_nil!.else = node_else
       end
 
@@ -526,7 +533,7 @@ module Crystal
       call = Call.new(channel, call_name, call_args).at(node)
       multi = MultiAssign.new(targets, [call] of ASTNode)
       case_cond = Var.new(index_name).at(node)
-      a_case = Case.new(case_cond, case_whens, case_else).at(node)
+      a_case = Case.new(case_cond, case_whens, case_else, exhaustive: false).at(node)
       Expressions.from([multi, a_case] of ASTNode).at(node)
     end
 
@@ -633,13 +640,17 @@ module Crystal
         case obj
         when Path
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
         when Generic
           if cond.name == "class"
-            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+            return IsA.new(right_side, Metaclass.new(obj).at(obj))
           end
+        else
+          # no special treatment
         end
+      else
+        # no special treatment
       end
 
       Call.new(cond, "===", right_side)
@@ -657,6 +668,72 @@ module Crystal
           end
           return implicit_call
         end
+      end
+    end
+
+    # Expand this:
+    #
+    # ```
+    # ->foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # tmp = foo
+    # ->(x : X, y : Y) { tmp.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->Foo.bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { Foo.bar(x, y) }
+    # ```
+    #
+    # Expand this:
+    #
+    # ```
+    # ->bar(X, Y)
+    # ```
+    #
+    # To this:
+    #
+    # ```
+    # ->(x : X, y : Y) { bar(x, y) }
+    # ```
+    #
+    # in case the implicit `self` is a class or a virtual class.
+    def expand(node : ProcPointer)
+      obj = node.obj
+
+      if obj && !obj.is_a?(Path)
+        temp_var = new_temp_var.at(obj)
+        assign = Assign.new(temp_var, obj)
+        obj = temp_var
+      end
+
+      def_args = node.args.map do |arg|
+        Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
+      end
+
+      call_args = def_args.map do |def_arg|
+        Var.new(def_arg.name).at(def_arg).as(ASTNode)
+      end
+
+      body = Call.new(obj, node.name, call_args).at(node)
+      proc_literal = ProcLiteral.new(Def.new("->", def_args, body)).at(node)
+      proc_literal.proc_pointer = node
+
+      if assign
+        Expressions.new([assign, proc_literal])
+      else
+        proc_literal
       end
     end
 

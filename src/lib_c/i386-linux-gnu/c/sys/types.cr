@@ -2,17 +2,17 @@ require "../stddef"
 require "../stdint"
 
 lib LibC
-  alias BlkcntT = Long
+  alias BlkcntT = LongLong
   alias BlksizeT = Long
   alias ClockT = Long
   alias ClockidT = Int
   alias DevT = ULongLong
   alias GidT = UInt
   alias IdT = UInt
-  alias InoT = ULong
+  alias InoT = ULongLong
   alias ModeT = UInt
   alias NlinkT = UInt
-  alias OffT = Long
+  alias OffT = LongLong
   alias PidT = Int
 
   union PthreadAttrT

@@ -23,7 +23,7 @@ class UNIXServer < UNIXSocket
 
   # Creates a named UNIX socket, listening on a filesystem pathname.
   #
-  # Always deletes any existing filesystam pathname first, in order to cleanup
+  # Always deletes any existing filesystem pathname first, in order to cleanup
   # any leftover socket file.
   #
   # The server is of stream type by default, but this can be changed for
@@ -34,7 +34,7 @@ class UNIXServer < UNIXSocket
   def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path)) do |error|
+    bind(UNIXAddress.new(path), path) do |error|
       close(delete: false)
       raise error
     end

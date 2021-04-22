@@ -43,6 +43,9 @@ module GC
   def self.add_finalizer(object)
   end
 
+  def self.register_disappearing_link(pointer : Void**)
+  end
+
   def self.stats
     zero = LibC::ULong.new(0)
     Stats.new(zero, zero, zero, zero, zero)
@@ -72,7 +75,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibC.pthread_join(thread, out value)
-      raise Errno.new("pthread_join") unless ret == 0
+      raise RuntimeError.from_errno("pthread_join") unless ret == 0
       value
     end
 

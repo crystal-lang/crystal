@@ -9,6 +9,8 @@ module Crystal
       HierarchyPrinter.new(program, exp).execute
     when "json"
       JSONHierarchyPrinter.new(program, exp).execute
+    else
+      raise "Unknown hierarchy format: #{format}"
     end
   end
 
@@ -71,7 +73,7 @@ module Crystal
       end
 
       compute_targets type.types, exp, false
-      compute_targets type.generic_types, exp, must_include
+      compute_targets type.instantiated_types, exp, must_include
 
       subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) }
       must_include |= compute_targets subtypes, exp, must_include
@@ -263,7 +265,7 @@ module Crystal
     end
 
     def with_color
-      ::with_color.toggle(@program.color?)
+      Colorize.with.toggle(@program.color?)
     end
   end
 

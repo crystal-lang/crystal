@@ -24,7 +24,7 @@ class YAML::Nodes::Builder
 
   # Emits an alias to the given *anchor*.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # nodes_builder = YAML::Nodes::Builder.new
@@ -48,7 +48,7 @@ class YAML::Nodes::Builder
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # nodes_builder = YAML::Nodes::Builder.new
@@ -125,6 +125,8 @@ class YAML::Nodes::Builder
       current << node
     when Mapping
       current << node
+    else
+      raise "Can't push into #{current.class}"
     end
   end
 

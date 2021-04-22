@@ -1,5 +1,6 @@
 require "spec"
 require "../spec_helper"
+require "../../support/fibers"
 
 private def wait_for(timeout = 5.seconds)
   now = Time.monotonic
@@ -25,7 +26,7 @@ end
 def run_server(server)
   server_done = Channel(Exception?).new
 
-  spawn do
+  f = spawn do
     server.listen
   rescue exc
     server_done.send exc
@@ -35,6 +36,7 @@ def run_server(server)
 
   begin
     wait_for { server.listening? }
+    wait_until_blocked f
 
     yield server_done
   ensure
@@ -42,6 +44,39 @@ def run_server(server)
 
     if exc = server_done.receive
       raise exc
+    end
+  end
+end
+
+# Helper method which runs a *handler*
+# Similar to `run_server` but doesn't go through the network stack.
+def run_handler(handler)
+  done = Channel(Exception?).new
+
+  begin
+    IO::Stapled.pipe do |server_io, client_io|
+      processor = HTTP::Server::RequestProcessor.new(handler)
+      f = spawn do
+        processor.process(server_io, server_io)
+      rescue exc
+        done.send exc
+      else
+        done.send nil
+      end
+
+      client = HTTP::Client.new(client_io)
+
+      begin
+        wait_until_blocked f
+
+        yield client
+      ensure
+        processor.close
+        server_io.close
+        if exc = done.receive
+          raise exc
+        end
+      end
     end
   end
 end

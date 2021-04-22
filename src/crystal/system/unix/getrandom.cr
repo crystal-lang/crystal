@@ -62,7 +62,7 @@ module Crystal::System::Random
       end
 
       read_bytes = sys_getrandom(buf[0, chunk_size])
-      raise Errno.new("getrandom") if read_bytes == -1
+      raise RuntimeError.from_errno("getrandom") if read_bytes == -1
 
       buf += read_bytes
     end

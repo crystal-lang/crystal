@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 
 describe IO::Memory do
   it "writes" do
@@ -281,6 +281,15 @@ describe IO::Memory do
     end
   end
 
+  it "creates from read-only slice" do
+    slice = Slice.new(6, read_only: true) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
   it "writes past end" do
     io = IO::Memory.new
     io.pos = 1000
@@ -373,7 +382,7 @@ describe IO::Memory do
     io.gets_to_end.should eq("")
   end
 
-  describe "encoding" do
+  pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
         str = "Hello world" * 200

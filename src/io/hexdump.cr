@@ -28,7 +28,7 @@ class IO::Hexdump < IO
 
   def read(buf : Bytes)
     @io.read(buf).tap do |read_bytes|
-      @output.puts buf[0, read_bytes].hexdump if @read && read_bytes
+      buf[0, read_bytes].hexdump(@output) if @read && read_bytes
     end
   end
 
@@ -36,27 +36,9 @@ class IO::Hexdump < IO
     return if buf.empty?
 
     @io.write(buf).tap do
-      @output.puts buf.hexdump if @write
+      buf.hexdump(@output) if @write
     end
   end
 
-  def peek
-    @io.peek
-  end
-
-  def closed?
-    @io.closed?
-  end
-
-  def close
-    @io.close
-  end
-
-  def flush
-    @io.flush
-  end
-
-  def tty?
-    @io.tty?
-  end
+  delegate :peek, :close, :closed?, :flush, :tty?, :pos, :pos=, :seek, to: @io
 end

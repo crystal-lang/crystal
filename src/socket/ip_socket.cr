@@ -6,7 +6,7 @@ class IPSocket < Socket
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
     if LibC.getsockname(fd, sockaddr, pointerof(addrlen)) != 0
-      raise Errno.new("getsockname")
+      raise Socket::Error.from_errno("getsockname")
     end
 
     IPAddress.from(sockaddr, addrlen)
@@ -19,7 +19,7 @@ class IPSocket < Socket
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
     if LibC.getpeername(fd, sockaddr, pointerof(addrlen)) != 0
-      raise Errno.new("getpeername")
+      raise Socket::Error.from_errno("getpeername")
     end
 
     IPAddress.from(sockaddr, addrlen)

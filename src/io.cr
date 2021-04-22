@@ -32,7 +32,6 @@ require "c/errno"
 #   def write(slice : Bytes) : Nil
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     nil
 #   end
 # end
 #
@@ -76,15 +75,6 @@ abstract class IO
   @encoding : EncodingOptions?
   @encoder : Encoder?
   @decoder : Decoder?
-
-  # Raised when an `IO` operation times out.
-  #
-  # ```
-  # STDIN.read_timeout = 1
-  # STDIN.gets # raises IO::Timeout (after 1 second)
-  # ```
-  class Timeout < Exception
-  end
 
   # Reads at most *slice.size* bytes from this `IO` into *slice*.
   # Returns the number of bytes read, which is 0 if and only if there is no
@@ -214,7 +204,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given string to this `IO` followed by a newline character
+  # Writes *string* to this `IO`, followed by a newline character
   # unless the string already ends with one.
   #
   # ```
@@ -229,7 +219,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given object to this `IO` followed by a newline character.
+  # Writes *obj* to this `IO`, followed by a newline character.
   #
   # ```
   # io = IO::Memory.new
@@ -254,7 +244,8 @@ abstract class IO
     nil
   end
 
-  # Writes the given objects, each followed by a newline character.
+  # Writes *objects* to this `IO`, each followed by a newline character unless
+  # the object is a `String` and already ends with a newline.
   #
   # ```
   # io = IO::Memory.new
@@ -269,15 +260,14 @@ abstract class IO
   end
 
   # Writes a formatted string to this IO.
-  # For details on the format string, see `Kernel::sprintf`.
+  # For details on the format string, see top-level `::printf`.
   def printf(format_string, *args) : Nil
     printf format_string, args
   end
 
-  # ditto
+  # :ditto:
   def printf(format_string, args : Array | Tuple) : Nil
     String::Formatter(typeof(args)).new(format_string, args, self).format
-    nil
   end
 
   # Reads a single byte from this `IO`. Returns `nil` if there is no more
@@ -480,6 +470,7 @@ abstract class IO
     else
       write(slice)
     end
+
     nil
   end
 
@@ -1109,7 +1100,7 @@ abstract class IO
   # `File` and `IO::Memory` implement it.
   #
   # Multiple sections can be read concurrently.
-  def read_at(offset, bytesize, &block)
+  def read_at(offset, bytesize, & : IO ->)
     raise Error.new "Unable to read_at"
   end
 
@@ -1123,12 +1114,12 @@ abstract class IO
   #
   # io2.to_s # => "hello"
   # ```
-  def self.copy(src, dst) : UInt64
+  def self.copy(src, dst) : Int64
     buffer = uninitialized UInt8[4096]
-    count = 0_u64
+    count = 0_i64
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]
-      count += len
+      count &+= len
     end
     count
   end
@@ -1143,18 +1134,41 @@ abstract class IO
   #
   # io2.to_s # => "hel"
   # ```
-  def self.copy(src, dst, limit : Int) : UInt64
+  def self.copy(src, dst, limit : Int) : Int64
     raise ArgumentError.new("Negative limit") if limit < 0
 
-    limit = limit.to_u64
+    limit = limit.to_i64
 
     buffer = uninitialized UInt8[4096]
     remaining = limit
     while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
       dst.write buffer.to_slice[0, len]
-      remaining -= len
+      remaining &-= len
     end
     limit - remaining
+  end
+
+  # Compares two streams *stream1* to *stream2* to determine if they are identical.
+  # Returns `true` if content are the same, `false` otherwise.
+  #
+  # ```
+  # File.write("afile", "123")
+  # stream1 = File.open("afile")
+  # stream2 = IO::Memory.new("123")
+  # IO.same_content?(stream1, stream2) # => true
+  # ```
+  def self.same_content?(stream1 : IO, stream2 : IO)
+    buf1 = uninitialized UInt8[1024]
+    buf2 = uninitialized UInt8[1024]
+
+    while true
+      read1 = stream1.read(buf1.to_slice)
+      read2 = stream2.read_fully?(buf2.to_slice[0, read1])
+      return false unless read2
+
+      return false if buf1.to_unsafe.memcmp(buf2.to_unsafe, read1) != 0
+      return true if read1 == 0
+    end
   end
 
   private struct LineIterator(I, A, N)

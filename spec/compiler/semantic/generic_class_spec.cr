@@ -23,7 +23,7 @@ describe "Semantic: generic class" do
       "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
-  it "inhertis from generic with instantiation" do
+  it "inherits from generic with instantiation" do
     assert_type(%(
       class Foo(T)
         def t
@@ -38,7 +38,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (1)" do
+  it "inherits from generic with forwarding (1)" do
     assert_type(%(
       class Foo(T)
         def t
@@ -53,7 +53,7 @@ describe "Semantic: generic class" do
       ), inject_primitives: false) { int32.metaclass }
   end
 
-  it "inhertis from generic with forwarding (2)" do
+  it "inherits from generic with forwarding (2)" do
     assert_type(%(
       class Foo(T)
       end
@@ -68,7 +68,7 @@ describe "Semantic: generic class" do
       )) { int32.metaclass }
   end
 
-  it "inhertis from generic with instantiation with instance var" do
+  it "inherits from generic with instantiation with instance var" do
     assert_type(%(
       class Foo(T)
         def initialize(@x : T)
@@ -324,7 +324,7 @@ describe "Semantic: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when inheriting Foo(T)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -479,7 +479,7 @@ describe "Semantic: generic class" do
       "use a more specific type"
   end
 
-  it "errors on too nested generic instance" do
+  pending_win32 "errors on too nested generic instance" do
     assert_error %(
       class Foo(T)
       end
@@ -493,7 +493,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested generic instance, with union type" do
+  pending_win32 "errors on too nested generic instance, with union type" do
     assert_error %(
       class Foo(T)
       end
@@ -507,7 +507,7 @@ describe "Semantic: generic class" do
       "generic type too nested"
   end
 
-  it "errors on too nested tuple instance" do
+  pending_win32 "errors on too nested tuple instance" do
     assert_error %(
       def foo
         {typeof(foo)}
@@ -625,20 +625,17 @@ describe "Semantic: generic class" do
   end
 
   it "doesn't duplicate overload on generic class class method (#2385)" do
-    nodes = parse(%(
+    error = assert_error <<-CR,
       class Foo(T)
         def self.foo(x : Int32)
         end
       end
 
       Foo(String).foo(35.7)
-      ))
-    begin
-      semantic(nodes)
-    rescue ex : TypeException
-      msg = ex.to_s.lines.map(&.strip)
-      msg.count("- Foo(T).foo(x : Int32)").should eq(1)
-    end
+      CR
+      inject_primitives: false
+
+    error.to_s.lines.count(" - Foo(T).foo(x : Int32)").should eq(1)
   end
 
   # Given:
@@ -1125,7 +1122,7 @@ describe "Semantic: generic class" do
 
       Gen(String).new
       ),
-      "method must return Bool but it is returning Nil"
+      "method Gen(String)#valid? must return Bool but it is returning Nil"
   end
 
   it "resolves T through metaclass inheritance (#7914)" do
@@ -1147,5 +1144,36 @@ describe "Semantic: generic class" do
 
       GeneralMatrix(Int32).foo
     )) { int32 }
+  end
+
+  it "errors if splatting a non-tuple (#9853)" do
+    assert_error %(
+      Array(*Int32)
+      ),
+      "argument to splat must be a tuple type, not Int32"
+  end
+
+  it "correctly checks argument count when target type has a splat (#9855)" do
+    assert_type(%(
+      class T(A, B, *C)
+      end
+
+      T(*{Int32, Bool})
+      )) { generic_class("T", int32, bool).metaclass }
+  end
+
+  it "restricts generic type argument through alias in a non-strict way" do
+    assert_type(%(
+      class Gen(T)
+      end
+
+      alias G = Gen(String | Int32)
+
+      def foo(x : G)
+        x
+      end
+
+      foo(Gen(Int32).new)
+      )) { generic_class "Gen", int32 }
   end
 end

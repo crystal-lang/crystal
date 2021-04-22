@@ -2,11 +2,11 @@ require "../exception"
 require "../types"
 
 module Crystal
-  class TypeException < Exception
+  class TypeException < CodeError
     include ErrorFormat
 
     getter node
-    property inner : Exception?
+    property inner : CodeError?
     getter line_number : Int32?
     getter column_number : Int32
     getter size : Int32
@@ -91,16 +91,16 @@ module Crystal
       io.flush
     end
 
-    def to_s_with_source(source, io)
-      append_to_s source, io
+    def to_s_with_source(io : IO, source)
+      append_to_s io, source
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       inner = @inner
 
       unless @error_trace || inner.is_a? MethodTraceException
         if inner && inner.has_location?
-          return inner.append_to_s(source, io)
+          return inner.append_to_s(io, source)
         end
       end
 
@@ -124,15 +124,17 @@ module Crystal
         io << '\n'
       end
 
-      io << error_headline(error_message_lines.shift)
-      io << remaining error_message_lines
+      unless error_message_lines.empty?
+        io << error_headline(error_message_lines.shift)
+        io << remaining error_message_lines
+      end
 
       if inner
         return if inner.is_a? MethodTraceException && !inner.has_message?
         return unless inner.has_location?
         io << "\n\n"
         io << '\n' unless inner.is_a? MethodTraceException
-        inner.append_to_s source, io
+        inner.append_to_s io, source
       end
     end
 
@@ -169,7 +171,7 @@ module Crystal
     end
   end
 
-  class MethodTraceException < Exception
+  class MethodTraceException < CodeError
     def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?, @show : Bool)
       super(nil)
     end
@@ -181,8 +183,8 @@ module Crystal
     def to_json_single(json)
     end
 
-    def to_s_with_source(source, io)
-      append_to_s(source, io)
+    def to_s_with_source(io : IO, source)
+      append_to_s(io, source)
     end
 
     def has_trace?
@@ -193,7 +195,7 @@ module Crystal
       @nil_reason || has_trace? && @show
     end
 
-    def append_to_s(source, io)
+    def append_to_s(io : IO, source)
       nil_reason = @nil_reason
 
       if !@show
@@ -238,6 +240,8 @@ module Crystal
         io << "'self' was used before initializing instance variable '#{nil_reason.name}', rendering it nilable"
       when :initialized_in_rescue
         io << "Instance variable '#{nil_reason.name}' is initialized inside a begin-rescue, so it can potentially be left uninitialized if an exception is raised and rescued"
+      else
+        # TODO: we should probably change nil_reason to be an enum so we don't need this else branch
       end
     end
 

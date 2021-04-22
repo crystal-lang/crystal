@@ -28,11 +28,13 @@ module Crystal
       when GenericClassInstanceType
         cleanup_single_type(type, transformer)
       when GenericClassType
-        type.generic_types.each_value do |instance|
+        type.each_instantiated_type do |instance|
           cleanup_type instance, transformer
         end
       when ClassType
         cleanup_single_type(type, transformer)
+      else
+        # no need to clean up
       end
     end
 
@@ -61,6 +63,7 @@ module Crystal
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
+      @exhaustiveness_checker = ExhaustivenessChecker.new(@program)
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
@@ -168,6 +171,72 @@ module Crystal
       false
     end
 
+    def transform(node : Case)
+      @exhaustiveness_checker.check(node) if node.exhaustive?
+
+      if expanded = node.expanded
+        if node.exhaustive?
+          replace_unreachable_if_needed(node, expanded)
+        end
+
+        return expanded.transform(self)
+      end
+
+      node
+    end
+
+    # If any of the types checked in `case` is an enum, it can happen that
+    # the unreachable can be reached by doing `SomeEnum.new(some_value)`.
+    # In that case we replace the Unreachable node with `raise "..."`.
+    # In the future we should disallow creating such values.
+    def replace_unreachable_if_needed(node, expanded)
+      cond = node.cond
+      return unless cond
+
+      if cond.is_a?(TupleLiteral)
+        return unless cond.elements.all?(&.type?) &&
+                      cond.elements.any? { |element| has_enum_type?(element.type) }
+      else
+        cond_type = cond.type?
+        return unless cond_type && has_enum_type?(cond_type)
+      end
+
+      an_if = find_unreachable_parent(expanded)
+      unless an_if
+        node.raise "BUG: expected to find Unreachable node"
+      end
+
+      an_if.else = build_raise("Unhandled case: enum value outside of defined enum members", node)
+    end
+
+    def has_enum_type?(type)
+      if type.is_a?(UnionType)
+        type.union_types.any? &.is_a?(EnumType)
+      else
+        type.is_a?(EnumType)
+      end
+    end
+
+    def find_unreachable_parent(expanded)
+      # An expanded case is either a series of if/else, or
+      # a bunch of assignments and then a series of if/else.
+      # The if/else chain always comes last.
+      if expanded.is_a?(Expressions)
+        expanded = expanded.expressions.last
+      end
+
+      while expanded.is_a?(If)
+        if an_else = expanded.else
+          if an_else.is_a?(Unreachable)
+            return expanded
+          else
+            expanded = an_else
+          end
+        end
+      end
+      nil
+    end
+
     def transform(node : ExpandableNode)
       if expanded = node.expanded
         return expanded.transform(self)
@@ -246,7 +315,7 @@ module Crystal
 
     def transform(node : Global)
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -257,6 +326,8 @@ module Crystal
         return expanded.transform self
       end
 
+      @program.check_call_to_deprecated_method(node)
+
       # Need to transform these manually because node.block doesn't
       # need to be transformed if it has a fun_literal
       # ~~~
@@ -266,6 +337,8 @@ module Crystal
       transform_many node.args
 
       if (node_block = node.block) && !node_block.fun_literal
+        # TODO: if the block isn't used in any of the target defs we could
+        # avoid transforming it, because it probably isn't typed **at all**
         node.block = node_block.transform(self)
       end
 
@@ -322,7 +395,7 @@ module Crystal
         end
       end
 
-      # Check if the block has its type freezed and it doesn't match the current type
+      # Check if the block has its type frozen and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
         unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
@@ -429,31 +502,87 @@ module Crystal
 
     def check_args_are_not_closure(node, message)
       node.args.each do |arg|
-        case arg
-        when ProcLiteral
-          if arg.def.closure?
-            vars = ClosuredVarsCollector.collect arg.def
-            unless vars.empty?
-              message += " (closured vars: #{vars.join ", "})"
-            end
+        check_arg_is_not_closure(node, message, arg)
+      end
+    end
 
-            arg.raise message
-          end
-        when ProcPointer
-          if arg.obj.try &.type?.try &.passed_as_self?
+    def check_arg_is_not_closure(node, message, arg)
+      case arg
+      when Expressions
+        arg.expressions.each do |exp|
+          check_arg_is_not_closure(node, message, exp)
+        end
+      when Call
+        # If the call simply returns its captured block unchanged, we can detect
+        # closured vars inside the block during compile-time
+        if target_def_is_captured_block?(arg)
+          check_arg_is_not_closure(node, message, arg.block.not_nil!.fun_literal)
+        end
+      when ProcLiteral
+        if proc_pointer = arg.proc_pointer
+          case proc_pointer.obj
+          when Var
+            arg.raise "#{message} (closured vars: #{proc_pointer.obj})"
+          when InstanceVar
             arg.raise "#{message} (closured vars: self)"
           end
+        end
 
-          owner = arg.call.target_def.owner
-          if owner.passed_as_self?
-            arg.raise "#{message} (closured vars: self)"
+        if arg.def.closure?
+          vars = ClosuredVarsCollector.collect arg.def
+          if vars.empty?
+            message += " (closured vars: self)"
+          else
+            message += " (closured vars: #{vars.join ", "})"
           end
+
+          arg.raise message
+        end
+      when ProcPointer
+        if expanded = arg.expanded
+          return check_arg_is_not_closure(node, message, expanded)
+        end
+
+        if arg.obj.try &.type?.try &.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
+        end
+
+        owner = arg.call.target_def.owner
+        if owner.passed_as_self?
+          arg.raise "#{message} (closured vars: self)"
         end
       end
     end
 
+    # Checks whether *arg*'s target def has the following definition:
+    #
+    # ```
+    # def f(&block)
+    #   block
+    # end
+    # ```
+    #
+    # That is, the def returns its captured block and does nothing else. An
+    # example is Proc.new(&block).
+    def target_def_is_captured_block?(arg : Call)
+      a_def = arg.target_defs.try &.first
+      return false unless a_def
+
+      block_arg = a_def.block_arg
+      return false unless block_arg
+
+      body_var = a_def.body.as?(Var)
+      return false unless body_var && body_var.name == block_arg.name
+
+      true
+    end
+
     def transform(node : ProcPointer)
       super
+
+      if expanded = node.expanded
+        return transform(expanded)
+      end
 
       if call = node.call?
         result = call.transform(self)
@@ -490,7 +619,7 @@ module Crystal
       build_raise ex_msg, node
     end
 
-    def build_raise(msg, node)
+    def build_raise(msg : String, node : ASTNode)
       call = Call.global("raise", StringLiteral.new(msg).at(node)).at(node)
       call.accept MainVisitor.new(@program)
       call
@@ -549,6 +678,8 @@ module Crystal
         node.truthy = true
       when cond_is_falsey
         node.falsey = true
+      else
+        # Not a special condition
       end
 
       if node.falsey?
@@ -587,10 +718,13 @@ module Crystal
       super
       reset_last_status
       if replacement = node.syntax_replacement
-        replacement.transform(self)
-      else
-        transform_is_a_or_responds_to node, &.filter_by(node.const.type)
+        return replacement.transform(self)
       end
+
+      const_type = node.const.type?
+      return untyped_expression(node) unless const_type
+
+      transform_is_a_or_responds_to node, &.filter_by(const_type)
     end
 
     def transform(node : RespondsTo)
@@ -717,7 +851,7 @@ module Crystal
       end
 
       if expanded = node.expanded
-        return expanded
+        return expanded.transform self
       end
 
       node
@@ -783,7 +917,10 @@ module Crystal
       node = super
 
       unless node.type?
-        node.unbind_from node.dependencies
+        if dependencies = node.dependencies?
+          node.unbind_from node.dependencies
+        end
+
         node.bind_to node.expressions
       end
 

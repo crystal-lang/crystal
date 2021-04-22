@@ -9,6 +9,11 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/ADT/Triple.h>
+#include <llvm-c/TargetMachine.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm-c/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
 
 using namespace llvm;
 
@@ -20,6 +25,12 @@ using namespace llvm;
 
 #define LLVM_VERSION_LE(major, minor) \
   (LLVM_VERSION_MAJOR < (major) || LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR <= (minor))
+
+#if LLVM_VERSION_GE(7, 0)
+#include <llvm/Target/CodeGenCWrappers.h>
+#else
+#include <llvm/Support/CodeGenCWrappers.h>
+#endif
 
 #if LLVM_VERSION_GE(6, 0)
 #include <llvm-c/DebugInfo.h>
@@ -237,6 +248,30 @@ LLVMMetadataRef LLVMExtDIBuilderCreateStructType(
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMExtDIBuilderCreateUnionType(
+    DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits,
+#if LLVM_VERSION_LE(3, 9)
+    unsigned Flags,
+#else
+    DINode::DIFlags Flags,
+#endif
+    LLVMMetadataRef Elements) {
+  DICompositeType *CT = Dref->createUnionType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, Flags,
+      DINodeArray(unwrapDI<MDTuple>(Elements)));
+  return wrap(CT);
+}
+
+LLVMMetadataRef LLVMExtDIBuilderCreateArrayType(
+    DIBuilderRef Dref, uint64_t Size, uint64_t AlignInBits,
+    LLVMMetadataRef Type, LLVMMetadataRef Subs) {
+      return wrap(Dref->createArrayType(Size, AlignInBits, unwrapDI<DIType>(Type), DINodeArray(unwrapDI<MDTuple>(Subs))));
+}
+
+
 LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
   DIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
   LLVMMetadataRef File, unsigned Line) {
@@ -246,6 +281,21 @@ LLVMMetadataRef LLVMExtDIBuilderCreateReplaceableCompositeType(
                                                              unwrapDI<DIFile>(File),
                                                              Line);
   return wrap(CT);
+}
+
+// LLVM 7.0 LLVMDIBuilderCreateUnspecifiedType
+LLVMMetadataRef LLVMExtDIBuilderCreateUnspecifiedType(
+  DIBuilderRef Dref, const char *Name, size_t NameLen) {
+  return wrap(Dref->createUnspecifiedType({Name, NameLen}));
+}
+
+// LLVM 7.0 LLVMDIBuilderCreateLexicalBlockFile
+LLVMMetadataRef LLVMExtDIBuilderCreateLexicalBlockFile(
+  DIBuilderRef Dref,
+  LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Discriminator) {
+  return wrap(Dref->createLexicalBlockFile(unwrapDI<DIScope>(Scope),
+                                           unwrapDI<DIFile>(File),
+                                           Discriminator));
 }
 
 void LLVMExtDIBuilderReplaceTemporary(
@@ -375,10 +425,15 @@ OperandBundleDef *LLVMExtBuildOperandBundleDef(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildCall(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildCall2(
+    LLVMBuilderRef B, LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     OperandBundleDef *Bundle, const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateCall(
+       (llvm::FunctionType*) unwrap(Ty), unwrap(Fn), makeArrayRef(unwrap(Args), NumArgs), Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateCall(
@@ -388,11 +443,17 @@ LLVMValueRef LLVMExtBuildCall(
 #endif
 }
 
-LLVMValueRef LLVMExtBuildInvoke(
-    LLVMBuilderRef B, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
+LLVMValueRef LLVMExtBuildInvoke2(
+    LLVMBuilderRef B,  LLVMTypeRef Ty, LLVMValueRef Fn, LLVMValueRef *Args, unsigned NumArgs,
     LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch, OperandBundleDef *Bundle,
     const char *Name) {
-#if LLVM_VERSION_GE(3, 8)
+#if LLVM_VERSION_GE(8, 0)
+  unsigned Len = Bundle ? 1 : 0;
+  ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
+  return wrap(unwrap(B)->CreateInvoke((llvm::FunctionType*) unwrap(Ty), unwrap(Fn), unwrap(Then), unwrap(Catch),
+                                      makeArrayRef(unwrap(Args), NumArgs),
+                                      Bundles, Name));
+#elif LLVM_VERSION_GE(3, 8)
   unsigned Len = Bundle ? 1 : 0;
   ArrayRef<OperandBundleDef> Bundles = makeArrayRef(Bundle, Len);
   return wrap(unwrap(B)->CreateInvoke(unwrap(Fn), unwrap(Then), unwrap(Catch),
@@ -435,4 +496,90 @@ char *LLVMExtBasicBlockName(LLVMBasicBlockRef BB) {
 #endif
 }
 
+static TargetMachine *unwrap(LLVMTargetMachineRef P) {
+  return reinterpret_cast<TargetMachine *>(P);
+}
+
+void LLVMExtTargetMachineEnableGlobalIsel(LLVMTargetMachineRef T, LLVMBool Enable) {
+#if LLVM_VERSION_GE(7, 0)
+  unwrap(T)->setGlobalISel(Enable);
+#endif
+}
+
+// Copy paste of https://github.com/llvm/llvm-project/blob/dace8224f38a31636a02fe9c2af742222831f70c/llvm/lib/ExecutionEngine/ExecutionEngineBindings.cpp#L160-L214
+// but with a parameter to set global isel state
+LLVMBool LLVMExtCreateMCJITCompilerForModule(
+    LLVMExecutionEngineRef *OutJIT, LLVMModuleRef M,
+    LLVMMCJITCompilerOptions *PassedOptions, size_t SizeOfPassedOptions,
+    LLVMBool EnableGlobalISel,
+    char **OutError) {
+  LLVMMCJITCompilerOptions options;
+  // If the user passed a larger sized options struct, then they were compiled
+  // against a newer LLVM. Tell them that something is wrong.
+  if (SizeOfPassedOptions > sizeof(options)) {
+    *OutError = strdup(
+      "Refusing to use options struct that is larger than my own; assuming "
+      "LLVM library mismatch.");
+    return 1;
+  }
+
+
+  // Defend against the user having an old version of the API by ensuring that
+  // any fields they didn't see are cleared. We must defend against fields being
+  // set to the bitwise equivalent of zero, and assume that this means "do the
+  // default" as if that option hadn't been available.
+  LLVMInitializeMCJITCompilerOptions(&options, sizeof(options));
+  memcpy(&options, PassedOptions, SizeOfPassedOptions);
+
+
+  TargetOptions targetOptions;
+  targetOptions.EnableFastISel = options.EnableFastISel;
+  #if LLVM_VERSION_GE(7, 0)
+    targetOptions.EnableGlobalISel = EnableGlobalISel;
+  #endif
+  std::unique_ptr<Module> Mod(unwrap(M));
+
+  if (Mod)
+    // Set function attribute "frame-pointer" based on
+    // NoFramePointerElim.
+    for (auto &F : *Mod) {
+      auto Attrs = F.getAttributes();
+      StringRef Value = options.NoFramePointerElim ? "all" : "none";
+      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                                 "frame-pointer", Value);
+      F.setAttributes(Attrs);
+    }
+
+
+  std::string Error;
+  EngineBuilder builder(std::move(Mod));
+  builder.setEngineKind(EngineKind::JIT)
+         .setErrorStr(&Error)
+         .setOptLevel((CodeGenOpt::Level)options.OptLevel)
+         .setTargetOptions(targetOptions);
+  bool JIT;
+  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+    builder.setCodeModel(*CM);
+  if (options.MCJMM)
+    builder.setMCJITMemoryManager(
+      std::unique_ptr<RTDyldMemoryManager>(unwrap(options.MCJMM)));
+
+  TargetMachine* tm = builder.selectTarget();
+  #if LLVM_VERSION_GE(7, 0)
+    tm->setGlobalISel(EnableGlobalISel);
+  #endif
+
+  if (ExecutionEngine *JIT = builder.create(tm)) {
+    *OutJIT = wrap(JIT);
+    return 0;
+  }
+  *OutError = strdup(Error.c_str());
+  return 1;
+}
+
+LLVMMetadataRef LLVMExtDIBuilderGetOrCreateArraySubrange(
+  DIBuilderRef Dref, uint64_t Lo,
+  uint64_t Count) {
+    return wrap(Dref->getOrCreateSubrange(Lo, Count));
+  }
 }

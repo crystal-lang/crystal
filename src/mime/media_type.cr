@@ -275,7 +275,7 @@ module MIME
             end
           end
 
-          # TODO: Using a different datastructure than `Hash` for storing
+          # TODO: Using a different data structure than `Hash` for storing
           # continuation sections could improve performance.
           normalized_key = "#{base_key}*#{section}"
           continuation_map = continuation[base_key]
@@ -500,6 +500,8 @@ module MIME
           io << '\\'
         when 0x00..0x1F, 0x7F
           raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+        else
+          # leave the byte as is
         end
         io.write_byte byte
       end

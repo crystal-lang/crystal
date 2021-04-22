@@ -3,7 +3,9 @@ require "uri"
 require "./server/context"
 require "./server/handler"
 require "./server/response"
+require "./server/request_processor"
 require "./common"
+require "log"
 {% unless flag?(:without_openssl) %}
   require "openssl"
 {% end %}
@@ -71,7 +73,7 @@ require "./common"
 #
 # ## Binding to sockets
 #
-# The server can be bound to one ore more server sockets (see `#bind`)
+# The server can be bound to one or more server sockets (see `#bind`)
 #
 # Supported types:
 #
@@ -127,6 +129,8 @@ require "./common"
 # Reusing the connection also requires that the request body (if present) is
 # entirely consumed in the handler chain. Otherwise the connection will be closed.
 class HTTP::Server
+  Log = ::Log.for("http.server")
+
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -313,6 +317,7 @@ class HTTP::Server
     def bind_tls(host : String, port : Int32, context : OpenSSL::SSL::Context::Server, reuse_port : Bool = false) : Socket::IPAddress
       tcp_server = TCPServer.new(host, port, reuse_port: reuse_port)
       server = OpenSSL::SSL::Server.new(tcp_server, context)
+      server.start_immediately = false
 
       begin
         bind(server)
@@ -384,7 +389,7 @@ class HTTP::Server
     when "tls", "ssl"
       address = Socket::IPAddress.parse(uri)
       {% unless flag?(:without_openssl) %}
-        context = OpenSSL::SSL::Context::Server.from_hash(HTTP::Params.parse(uri.query || ""))
+        context = OpenSSL::SSL::Context::Server.from_hash(uri.query_params)
 
         bind_tls(address, context)
       {% else %}
@@ -494,12 +499,28 @@ class HTTP::Server
       io.sync = false
     end
 
+    {% unless flag?(:without_openssl) %}
+      if io.is_a?(OpenSSL::SSL::Socket::Server)
+        begin
+          io.accept
+        rescue ex
+          Log.debug(exception: ex) { "Error during SSL handshake" }
+          return
+        end
+      end
+    {% end %}
+
     @processor.process(io, io)
+  ensure
+    io.close rescue IO::Error
   end
 
+  # This method handles exceptions raised at `Socket#accept?`.
   private def handle_exception(e : Exception)
-    e.inspect_with_backtrace STDERR
-    STDERR.flush
+    # TODO: This needs more refinement. Not every exception is an actual server
+    # error and should be logged as such. Client malfunction should only be informational.
+    # See https://github.com/crystal-lang/crystal/pull/9034#discussion_r407038999
+    Log.error(exception: e) { "Error while connecting a new socket" }
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.

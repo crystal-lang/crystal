@@ -1,10 +1,12 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "big"
-require "big/json"
+require "yaml"
+{% unless flag?(:win32) %}
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
-require "yaml"
 
 record JSONAttrPoint, x : Int32, y : Int32 do
   include JSON::Serializable
@@ -94,11 +96,13 @@ class JSONAttrWithUUID
   property value : UUID
 end
 
-class JSONAttrWithBigDecimal
-  include JSON::Serializable
+{% unless flag?(:win32) %}
+  class JSONAttrWithBigDecimal
+    include JSON::Serializable
 
-  property value : BigDecimal
-end
+    property value : BigDecimal
+  end
+{% end %}
 
 class JSONAttrWithTime
   include JSON::Serializable
@@ -328,6 +332,21 @@ struct JSONAttrPersonWithYAMLInitializeHook
   end
 end
 
+struct JSONAttrPersonWithSelectiveSerialization
+  include JSON::Serializable
+
+  property name : String
+
+  @[JSON::Field(ignore_serialize: true)]
+  property password : String
+
+  @[JSON::Field(ignore_deserialize: true)]
+  property generated : String = "generated-internally"
+
+  def initialize(@name : String, @password : String)
+  end
+end
+
 abstract class JSONShape
   include JSON::Serializable
 
@@ -345,6 +364,55 @@ class JSONCircle < JSONShape
   property x : Int32
   property y : Int32
   property radius : Int32
+end
+
+enum JSONVariableDiscriminatorEnumFoo
+  Foo = 4
+end
+
+class JSONVariableDiscriminatorValueType
+  include JSON::Serializable
+
+  use_json_discriminator "type", {
+                                        0 => JSONVariableDiscriminatorNumber,
+    "1"                                   => JSONVariableDiscriminatorString,
+    true                                  => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo => JSONVariableDiscriminatorEnum,
+  }
+end
+
+class JSONVariableDiscriminatorNumber < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
+end
+
+module JSONNamespace
+  struct FooRequest
+    include JSON::Serializable
+
+    getter foo : Foo
+    getter bar = Bar.new
+  end
+
+  struct Foo
+    include JSON::Serializable
+    getter id = "id:foo"
+  end
+
+  struct Bar
+    include JSON::Serializable
+    getter id = "id:bar"
+
+    def initialize # Allow for default value above
+    end
+  end
 end
 
 describe "JSON mapping" do
@@ -407,7 +475,7 @@ describe "JSON mapping" do
       Unknown JSON attribute: foo
         parsing StrictJSONAttrPerson
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         {
           "name": "John",
@@ -437,9 +505,9 @@ describe "JSON mapping" do
   it "raises if non-nilable attribute is nil" do
     error_message = <<-'MSG'
       Missing JSON attribute: name
-        parsing JSONAttrPerson at 1:1
+        parsing JSONAttrPerson at line 1, column 1
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       JSONAttrPerson.from_json(%({"age": 30}))
     end
     ex.location.should eq({1, 1})
@@ -447,10 +515,10 @@ describe "JSON mapping" do
 
   it "raises if not an object" do
     error_message = <<-'MSG'
-      Expected BeginObject but was String at 1:1
-        parsing StrictJSONAttrPerson at 0:0
+      Expected BeginObject but was String at line 1, column 1
+        parsing StrictJSONAttrPerson at line 0, column 0
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         "foo"
         JSON
@@ -460,9 +528,9 @@ describe "JSON mapping" do
 
   it "raises if data type does not match" do
     error_message = <<-MSG
-      Couldn't parse (Int32 | Nil) from "foo" at 3:10
+      Couldn't parse (Int32 | Nil) from "foo" at line 3, column 10
       MSG
-    ex = expect_raises JSON::MappingError, error_message do
+    ex = expect_raises ::JSON::SerializableError, error_message do
       StrictJSONAttrPerson.from_json <<-JSON
         {
           "name": "John",
@@ -772,16 +840,16 @@ describe "JSON mapping" do
     it "raises if non-nilable attribute is nil" do
       error_message = <<-'MSG'
         Missing JSON attribute: foo
-          parsing JSONAttrWithQueryAttributes at 1:1
+          parsing JSONAttrWithQueryAttributes at line 1, column 1
         MSG
-      ex = expect_raises JSON::MappingError, error_message do
+      ex = expect_raises ::JSON::SerializableError, error_message do
         JSONAttrWithQueryAttributes.from_json(%({"is_bar": true}))
       end
       ex.location.should eq({1, 1})
     end
   end
 
-  describe "BigDecimal" do
+  pending_win32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrWithBigDecimal.from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
@@ -830,6 +898,16 @@ describe "JSON mapping" do
     JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
   end
 
+  it "json with selective serialization" do
+    person = JSONAttrPersonWithSelectiveSerialization.new("Vasya", "P@ssw0rd")
+    person.to_json.should eq "{\"name\":\"Vasya\",\"generated\":\"generated-internally\"}"
+
+    person_json = "{\"name\":\"Vasya\",\"generated\":\"should not set\",\"password\":\"update\"}"
+    person = JSONAttrPersonWithSelectiveSerialization.from_json(person_json)
+    person.generated.should eq "generated-internally"
+    person.password.should eq "update"
+  end
+
   describe "use_json_discriminator" do
     it "deserializes with discriminator" do
       point = JSONShape.from_json(%({"type": "point", "x": 1, "y": 2})).as(JSONPoint)
@@ -843,15 +921,37 @@ describe "JSON mapping" do
     end
 
     it "raises if missing discriminator" do
-      expect_raises(JSON::MappingError, "Missing JSON discriminator field 'type'") do
+      expect_raises(::JSON::SerializableError, "Missing JSON discriminator field 'type'") do
         JSONShape.from_json("{}")
       end
     end
 
     it "raises if unknown discriminator value" do
-      expect_raises(JSON::MappingError, %(Unknown 'type' discriminator value: "unknown")) do
+      expect_raises(::JSON::SerializableError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
+    end
+
+    it "deserializes with variable discriminator value type" do
+      object_number = JSONVariableDiscriminatorValueType.from_json(%({"type": 0}))
+      object_number.should be_a(JSONVariableDiscriminatorNumber)
+
+      object_string = JSONVariableDiscriminatorValueType.from_json(%({"type": "1"}))
+      object_string.should be_a(JSONVariableDiscriminatorString)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
+      object_bool.should be_a(JSONVariableDiscriminatorBool)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum)
+    end
+  end
+
+  describe "namespaced classes" do
+    it "lets default values use the object's own namespace" do
+      request = JSONNamespace::FooRequest.from_json(%({"foo":{}}))
+      request.foo.id.should eq "id:foo"
+      request.bar.id.should eq "id:bar"
     end
   end
 end

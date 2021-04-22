@@ -1,4 +1,4 @@
-struct XML::Namespace
+class XML::Namespace
   getter document : Node
 
   def initialize(@document : Node, @ns : LibXML::NS*)
@@ -21,7 +21,7 @@ struct XML::Namespace
 
   def to_s(io : IO) : Nil
     io << "#<XML::Namespace:0x"
-    object_id.to_s(16, io)
+    object_id.to_s(io, 16)
 
     if prefix = self.prefix
       io << " prefix="

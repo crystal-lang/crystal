@@ -241,6 +241,10 @@ struct Int
     self >= 0 ? self : -self
   end
 
+  def round(mode : RoundingMode) : self
+    self
+  end
+
   def ceil
     self
   end
@@ -249,11 +253,17 @@ struct Int
     self
   end
 
-  def round
+  def trunc
     self
   end
 
-  def trunc
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
     self
   end
 
@@ -395,12 +405,48 @@ struct Int
     (self & mask) == mask
   end
 
-  # Returns the greatest common divisor of `self` and `other`. Signed
-  # integers may raise overflow if either has value equal to `MIN` of
+  # Returns the number of bits of this int value.
+  #
+  # “The number of bits” means that the bit position of the highest bit
+  # which is different to the sign bit.
+  # (The bit position of the bit 2**n is n+1.)
+  # If there is no such bit (zero or minus one), zero is returned.
+  #
+  # I.e. This method returns `ceil(log2(self < 0 ? -self : self + 1))`.
+  #
+  # ```
+  # 0.bit_length # => 0
+  # 1.bit_length # => 1
+  # 2.bit_length # => 2
+  # 3.bit_length # => 2
+  # 4.bit_length # => 3
+  # 5.bit_length # => 3
+  #
+  # # The above is the same as
+  # 0b0.bit_length   # => 0
+  # 0b1.bit_length   # => 1
+  # 0b10.bit_length  # => 2
+  # 0b11.bit_length  # => 2
+  # 0b100.bit_length # => 3
+  # 0b101.bit_length # => 3
+  # ```
+  def bit_length : Int32
+    x = self < 0 ? ~self : self
+
+    if x.is_a?(Int::Primitive)
+      Int32.new(sizeof(self) * 8 - x.leading_zeros_count)
+    else
+      # Safe fallback for any non-primitive Int type
+      to_s(2).size
+    end
+  end
+
+  # Returns the greatest common divisor of `self` and *other*. Signed
+  # integers may raise `OverflowError` if either has value equal to `MIN` of
   # its type.
   #
   # ```
-  # 5.gcd(10) # => 2
+  # 5.gcd(10) # => 5
   # 5.gcd(7)  # => 1
   # ```
   def gcd(other : self) : self
@@ -439,8 +485,11 @@ struct Int
     u.unsafe_shl shift
   end
 
+  # Returns the least common multiple of `self` and *other*.
+  #
+  # Raises `OverflowError` in case of overflow.
   def lcm(other : Int)
-    (self * other).abs // gcd(other)
+    (self // gcd(other) * other).abs
   end
 
   def divisible_by?(num)
@@ -472,7 +521,7 @@ struct Int
     i = self ^ self
     while i < self
       yield i
-      i += 1
+      i &+= 1
     end
   end
 
@@ -526,49 +575,74 @@ struct Int
     self % other
   end
 
+  # Returns the digits of a number in a given base.
+  # The digits are returned as an array with the least significant digit as the first array element.
+  #
+  # ```
+  # 12345.digits      # => [5, 4, 3, 2, 1]
+  # 12345.digits(7)   # => [4, 6, 6, 0, 5]
+  # 12345.digits(100) # => [45, 23, 1]
+  #
+  # -12345.digits(7) # => ArgumentError
+  # ```
+  def digits(base = 10) : Array(Int32)
+    if base < 2
+      raise ArgumentError.new("Invalid base #{base}")
+    end
+
+    if self < 0
+      raise ArgumentError.new("Can't request digits of negative number")
+    end
+
+    if self == 0
+      return [0]
+    end
+
+    num = self
+
+    digits_count = (Math.log(self.to_f + 1) / Math.log(base)).ceil.to_i
+
+    ary = Array(Int32).new(digits_count)
+    while num != 0
+      ary << num.remainder(base).to_i
+      num = num.tdiv(base)
+    end
+    ary
+  end
+
   private DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   private DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   private DIGITS_BASE62   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-  def to_s : String
-    to_s(10)
-  end
-
-  def to_s(io : IO) : Nil
-    to_s(10, io)
-  end
-
-  def to_s(base : Int, upcase : Bool = false) : String
+  def to_s(base : Int = 10, *, upcase : Bool = false) : String
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
-      return "0"
+      "0"
     when 1
-      return "1"
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      String.new(ptr, count, count)
+      "1"
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        String.new(ptr, count, count)
+      end
     end
   end
 
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
+  def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
       io << '0'
-      return
     when 1
       io << '1'
-      return
-    end
-
-    internal_to_s(base, upcase) do |ptr, count|
-      io.write_utf8 Slice.new(ptr, count)
+    else
+      internal_to_s(base, upcase) do |ptr, count|
+        io.write_utf8 Slice.new(ptr, count)
+      end
     end
   end
 
@@ -636,7 +710,7 @@ struct Int
     def next
       if @index < @n
         value = @index
-        @index += 1
+        @index &+= 1
         value
       else
         stop
@@ -909,6 +983,10 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u8 &- self
+  end
+
   def abs
     self
   end
@@ -948,6 +1026,10 @@ struct UInt16
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u16 &- self
+  end
 
   def abs
     self
@@ -989,6 +1071,10 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
+  def &-
+    0_u32 &- self
+  end
+
   def abs
     self
   end
@@ -1028,6 +1114,10 @@ struct UInt64
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    0_u64 &- self
+  end
 
   def abs
     self
@@ -1069,6 +1159,11 @@ struct UInt128
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
+
+  def &-
+    # TODO: use 0_u128 &- self
+    UInt128.new(0) &- self
+  end
 
   def abs
     self

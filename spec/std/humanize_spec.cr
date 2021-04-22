@@ -72,7 +72,7 @@ describe Number do
     it { 0.000_001_234_567.humanize(precision: 2, significant: false).should eq("1.23µ") }
 
     it { 0.000_000_123_456.humanize(precision: 2, significant: false).should eq("123.46n") }
-    it { 0.000_000_012_345.humanize(precision: 2, significant: false).should eq("12.35n") }
+    it { 0.000_000_012_345.humanize(precision: 2, significant: false).should eq("12.34n") }
     it { 0.000_000_001_234.humanize(precision: 2, significant: false).should eq("1.23n") }
     it { 0.000_000_000_123.humanize(precision: 2, significant: false).should eq("123.00p") }
 
@@ -102,7 +102,8 @@ describe Int do
     it { 1014.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "0.99KB" }
     it { 1015.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.0KB" }
     it { 1024.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.0KB" }
-    it { 1025.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.01KB" }
+    it { 1025.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.0KB" }
+    it { 1026.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "1.01KB" }
     it { 2048.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq "2.0KB" }
 
     it { 1536.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC).should eq("1.5KB") }

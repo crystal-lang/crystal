@@ -14,6 +14,7 @@ module Crystal
     getter token : Token
     property line_number : Int32
     property column_number : Int32
+    property wants_symbol : Bool
     @filename : String | VirtualFile | Nil
     @stacked_filename : String | VirtualFile | Nil
     @token_end_location : Location?
@@ -64,6 +65,7 @@ module Crystal
       @slash_is_regex = true
       @wants_raw = false
       @wants_def_or_macro_name = false
+      @wants_symbol = true
       @string_pool = string_pool || StringPool.new
 
       # When lexing macro tokens, when we encounter `#{` inside
@@ -201,7 +203,6 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = IO::Memory.new(20)
             has_single_quote = false
             found_closing_single_quote = false
 
@@ -452,172 +453,182 @@ module Crystal
         next_char :";"
       when ':'
         char = next_char
-        case char
-        when ':'
-          next_char :"::"
-        when '+'
-          next_char_and_symbol "+"
-        when '-'
-          next_char_and_symbol "-"
-        when '*'
-          if next_char == '*'
-            next_char_and_symbol "**"
-          else
-            symbol "*"
-          end
-        when '/'
-          case next_char
-          when '/'
-            next_char_and_symbol "//"
-          else
-            symbol "/"
-          end
-        when '='
-          case next_char
-          when '='
-            if next_char == '='
-              next_char_and_symbol "==="
-            else
-              symbol "=="
-            end
-          when '~'
-            next_char_and_symbol "=~"
-          else
-            unknown_token
-          end
-        when '!'
-          case next_char
-          when '='
-            next_char_and_symbol "!="
-          when '~'
-            next_char_and_symbol "!~"
-          else
-            symbol "!"
-          end
-        when '<'
-          case next_char
-          when '='
-            if next_char == '>'
-              next_char_and_symbol "<=>"
-            else
-              symbol "<="
-            end
-          when '<'
-            next_char_and_symbol "<<"
-          else
-            symbol "<"
-          end
-        when '>'
-          case next_char
-          when '='
-            next_char_and_symbol ">="
-          when '>'
-            next_char_and_symbol ">>"
-          else
-            symbol ">"
-          end
-        when '&'
-          case next_char
+
+        if @wants_symbol
+          case char
+          when ':'
+            next_char :"::"
           when '+'
-            next_char_and_symbol "&+"
+            next_char_and_symbol "+"
           when '-'
-            next_char_and_symbol "&-"
+            next_char_and_symbol "-"
           when '*'
-            case next_char
-            when '*'
-              next_char_and_symbol "&**"
+            if next_char == '*'
+              next_char_and_symbol "**"
             else
-              symbol "&*"
+              symbol "*"
             end
-          else
-            symbol "&"
-          end
-        when '|'
-          next_char_and_symbol "|"
-        when '^'
-          next_char_and_symbol "^"
-        when '~'
-          next_char_and_symbol "~"
-        when '%'
-          next_char_and_symbol "%"
-        when '['
-          if next_char == ']'
+          when '/'
+            case next_char
+            when '/'
+              next_char_and_symbol "//"
+            else
+              symbol "/"
+            end
+          when '='
             case next_char
             when '='
-              next_char_and_symbol "[]="
-            when '?'
-              next_char_and_symbol "[]?"
+              if next_char == '='
+                next_char_and_symbol "==="
+              else
+                symbol "=="
+              end
+            when '~'
+              next_char_and_symbol "=~"
             else
-              symbol "[]"
+              unknown_token
             end
-          else
-            unknown_token
-          end
-        when '"'
-          line = @line_number
-          column = @column_number
-          start = current_pos + 1
-          io = IO::Memory.new
-          while true
-            char = next_char
-            case char
-            when '\\'
-              case char = next_char
-              when 'a'
-                io << '\a'
-              when 'b'
-                io << '\b'
-              when 'n'
-                io << '\n'
-              when 'r'
-                io << '\r'
-              when 't'
-                io << '\t'
-              when 'v'
-                io << '\v'
-              when 'f'
-                io << '\f'
-              when 'e'
-                io << '\e'
-              when 'x'
-                io.write_byte consume_string_hex_escape
-              when 'u'
-                io << consume_string_unicode_escape
-              when '0', '1', '2', '3', '4', '5', '6', '7'
-                io.write_byte consume_octal_escape(char)
-              when '\n'
-                incr_line_number nil
-                io << '\n'
+          when '!'
+            case next_char
+            when '='
+              next_char_and_symbol "!="
+            when '~'
+              next_char_and_symbol "!~"
+            else
+              symbol "!"
+            end
+          when '<'
+            case next_char
+            when '='
+              if next_char == '>'
+                next_char_and_symbol "<=>"
+              else
+                symbol "<="
+              end
+            when '<'
+              next_char_and_symbol "<<"
+            else
+              symbol "<"
+            end
+          when '>'
+            case next_char
+            when '='
+              next_char_and_symbol ">="
+            when '>'
+              next_char_and_symbol ">>"
+            else
+              symbol ">"
+            end
+          when '&'
+            case next_char
+            when '+'
+              next_char_and_symbol "&+"
+            when '-'
+              next_char_and_symbol "&-"
+            when '*'
+              case next_char
+              when '*'
+                next_char_and_symbol "&**"
+              else
+                symbol "&*"
+              end
+            else
+              symbol "&"
+            end
+          when '|'
+            next_char_and_symbol "|"
+          when '^'
+            next_char_and_symbol "^"
+          when '~'
+            next_char_and_symbol "~"
+          when '%'
+            next_char_and_symbol "%"
+          when '['
+            if next_char == ']'
+              case next_char
+              when '='
+                next_char_and_symbol "[]="
+              when '?'
+                next_char_and_symbol "[]?"
+              else
+                symbol "[]"
+              end
+            else
+              unknown_token
+            end
+          when '"'
+            line = @line_number
+            column = @column_number
+            start = current_pos + 1
+            io = IO::Memory.new
+            while true
+              char = next_char
+              case char
+              when '\\'
+                case char = next_char
+                when 'a'
+                  io << '\a'
+                when 'b'
+                  io << '\b'
+                when 'n'
+                  io << '\n'
+                when 'r'
+                  io << '\r'
+                when 't'
+                  io << '\t'
+                when 'v'
+                  io << '\v'
+                when 'f'
+                  io << '\f'
+                when 'e'
+                  io << '\e'
+                when 'x'
+                  io.write_byte consume_string_hex_escape
+                when 'u'
+                  io << consume_string_unicode_escape
+                when '0', '1', '2', '3', '4', '5', '6', '7'
+                  io.write_byte consume_octal_escape(char)
+                when '\n'
+                  incr_line_number nil
+                  io << '\n'
+                when '\0'
+                  raise "unterminated quoted symbol", line, column
+                else
+                  io << char
+                end
+              when '"'
+                break
               when '\0'
                 raise "unterminated quoted symbol", line, column
               else
                 io << char
               end
-            when '"'
-              break
-            when '\0'
-              raise "unterminated quoted symbol", line, column
+            end
+
+            @token.type = :SYMBOL
+            @token.value = io.to_s
+            next_char
+            set_token_raw_from_start(start - 2)
+          else
+            if ident_start?(char)
+              start = current_pos
+              while ident_part?(next_char)
+                # Nothing to do
+              end
+              if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
+                next_char
+              end
+              @token.type = :SYMBOL
+              @token.value = string_range_from_pool(start)
+              set_token_raw_from_start(start - 1)
             else
-              io << char
+              @token.type = :":"
             end
           end
-
-          @token.type = :SYMBOL
-          @token.value = io.to_s
-          next_char
-          set_token_raw_from_start(start - 2)
         else
-          if ident_start?(char)
-            start = current_pos
-            while ident_part?(next_char)
-              # Nothing to do
-            end
-            if current_char == '?' || ((current_char == '!' || current_char == '=') && peek_next_char != '=')
-              next_char
-            end
-            @token.type = :SYMBOL
-            @token.value = string_range_from_pool(start)
-            set_token_raw_from_start(start - 1)
+          case char
+          when ':'
+            next_char :"::"
           else
             @token.type = :":"
           end
@@ -737,10 +748,10 @@ module Crystal
           when '\0'
             raise "unterminated char literal", line, column
           else
-            raise "invalid char escape sequence", line, column
+            raise "invalid char escape sequence '\\#{char2}'", line, column
           end
         when '\''
-          raise "invalid empty char literal (did you mean '\\\''?)", line, column
+          raise "invalid empty char literal (did you mean '\\''?)", line, column
         when '\0'
           raise "unterminated char literal", line, column
         else
@@ -849,6 +860,8 @@ module Crystal
           if next_char == 'n' && next_char == 'o' && next_char == 't' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'o' && next_char == 'n'
             return check_ident_or_keyword(:annotation, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'b'
@@ -861,6 +874,8 @@ module Crystal
           if next_char == 'e' && next_char == 'a' && next_char == 'k'
             return check_ident_or_keyword(:break, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'c'
@@ -873,6 +888,8 @@ module Crystal
           if next_char == 'a' && next_char == 's' && next_char == 's'
             return check_ident_or_keyword(:class, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'd'
@@ -882,6 +899,8 @@ module Crystal
             return check_ident_or_keyword(:def, start)
           end
         when 'o' then return check_ident_or_keyword(:do, start)
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'e'
@@ -895,7 +914,11 @@ module Crystal
               if next_char == 'f'
                 return check_ident_or_keyword(:elsif, start)
               end
+            else
+              # scan_ident
             end
+          else
+            # scan_ident
           end
         when 'n'
           case next_char
@@ -909,11 +932,15 @@ module Crystal
             if next_char == 'm'
               return check_ident_or_keyword(:enum, start)
             end
+          else
+            # scan_ident
           end
         when 'x'
           if next_char == 't' && next_char == 'e' && next_char == 'n' && next_char == 'd'
             return check_ident_or_keyword(:extend, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'f'
@@ -930,6 +957,8 @@ module Crystal
           if next_char == 'n'
             return check_ident_or_keyword(:fun, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'i'
@@ -947,6 +976,8 @@ module Crystal
               if next_char == 't' && next_char == 'a' && next_char == 'n' && next_char == 'c' && next_char == 'e' && next_char == '_' && next_char == 's' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
                 return check_ident_or_keyword(:instance_sizeof, start)
               end
+            else
+              # scan_ident
             end
           else
             next_char
@@ -958,6 +989,8 @@ module Crystal
           if next_char == '_' && next_char == 'a' && next_char == '?'
             return check_ident_or_keyword(:is_a?, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'l'
@@ -966,6 +999,8 @@ module Crystal
           if next_char == 'b'
             return check_ident_or_keyword(:lib, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'm'
@@ -980,7 +1015,11 @@ module Crystal
             if next_char == 'u' && next_char == 'l' && next_char == 'e'
               return check_ident_or_keyword(:module, start)
             end
+          else
+            # scan_ident
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'n'
@@ -998,7 +1037,11 @@ module Crystal
             else
               return check_ident_or_keyword(:nil, start)
             end
+          else
+            # scan_ident
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'o'
@@ -1016,6 +1059,8 @@ module Crystal
           if next_char == 't'
             return check_ident_or_keyword(:out, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'p'
@@ -1034,7 +1079,11 @@ module Crystal
             if next_char == 't' && next_char == 'e' && next_char == 'c' && next_char == 't' && next_char == 'e' && next_char == 'd'
               return check_ident_or_keyword(:protected, start)
             end
+          else
+            # scan_ident
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'r'
@@ -1051,6 +1100,8 @@ module Crystal
               if next_char == 'o' && next_char == 'n' && next_char == 'd' && next_char == 's' && next_char == '_' && next_char == 't' && next_char == 'o' && next_char == '?'
                 return check_ident_or_keyword(:responds_to?, start)
               end
+            else
+              # scan_ident
             end
           when 't'
             if next_char == 'u' && next_char == 'r' && next_char == 'n'
@@ -1060,7 +1111,11 @@ module Crystal
             if next_char == 'u' && next_char == 'i' && next_char == 'r' && next_char == 'e'
               return check_ident_or_keyword(:require, start)
             end
+          else
+            # scan_ident
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 's'
@@ -1074,6 +1129,8 @@ module Crystal
               end
             when 'f'
               return check_ident_or_keyword(:self, start)
+            else
+              # scan_ident
             end
           end
         when 'i'
@@ -1088,6 +1145,8 @@ module Crystal
           if next_char == 'p' && next_char == 'e' && next_char == 'r'
             return check_ident_or_keyword(:super, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 't'
@@ -1111,6 +1170,8 @@ module Crystal
               return check_ident_or_keyword(:type, start)
             end
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'u'
@@ -1126,6 +1187,8 @@ module Crystal
               if next_char == 'i' && next_char == 't' && next_char == 'i' && next_char == 'a' && next_char == 'l' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'd'
                 return check_ident_or_keyword(:uninitialized, start)
               end
+            else
+              # scan_ident
             end
           when 'l'
             if next_char == 'e' && next_char == 's' && next_char == 's'
@@ -1135,6 +1198,8 @@ module Crystal
             if next_char == 'i' && next_char == 'l'
               return check_ident_or_keyword(:until, start)
             end
+          else
+            # scan_ident
           end
         end
         scan_ident(start)
@@ -1155,11 +1220,15 @@ module Crystal
             if next_char == 'l' && next_char == 'e'
               return check_ident_or_keyword(:while, start)
             end
+          else
+            # scan_ident
           end
         when 'i'
           if next_char == 't' && next_char == 'h'
             return check_ident_or_keyword(:with, start)
           end
+        else
+          # scan_ident
         end
         scan_ident(start)
       when 'y'
@@ -1211,6 +1280,8 @@ module Crystal
                 return @token
               end
             end
+          else
+            # scan_ident
           end
         else
           unless ident_part?(current_char)
@@ -1434,7 +1505,7 @@ module Crystal
             end
           end
 
-          if current_char == 'f' || current_char == 'F'
+          if current_char == 'f'
             suffix_size = consume_float_suffix
           else
             @token.number_kind = :f64
@@ -1462,12 +1533,12 @@ module Crystal
           next_char
         end
 
-        if current_char == 'f' || current_char == 'F'
+        if current_char == 'f'
           suffix_size = consume_float_suffix
         else
           @token.number_kind = :f64
         end
-      when 'f', 'F'
+      when 'f'
         is_integer = false
         suffix_size = consume_float_suffix
       when 'i'
@@ -1556,6 +1627,8 @@ module Crystal
         end
 
         check_value_fits_in_uint64 string_value, num_size, start
+      else
+        # TODO: handle i128 and u128
       end
     end
 
@@ -1662,26 +1735,7 @@ module Crystal
         consume_uint_suffix
         set_token_raw_from_start(start)
       when '_'
-        case peek_next_char
-        when 'i'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_int_suffix
-          set_token_raw_from_start(start)
-        when 'f'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_float_suffix
-        when 'u'
-          @token.type = :NUMBER
-          @token.value = "0"
-          next_char
-          consume_uint_suffix
-        else
-          scan_number(start)
-        end
+        scan_number(start)
       else
         if next_char.ascii_number?
           raise "octal constants should be prefixed with 0o"
@@ -1895,6 +1949,8 @@ module Crystal
     end
 
     def next_string_token(delimiter_state)
+      reset_token
+
       @token.line_number = @line_number
       @token.delimiter_state = delimiter_state
 
@@ -1934,13 +1990,21 @@ module Crystal
             char = next_char
             next_char
             @token.type = :STRING
-            if string_end == '/' && char == '/'
-              @token.value = "/"
+            if char == '/' || char.ascii_whitespace?
+              @token.value = char.to_s
             else
               @token.value = "\\#{char}"
             end
           else
             case char = next_char
+            when '\\'
+              string_token_escape_value "\\"
+            when string_end
+              string_token_escape_value string_end.to_s
+            when string_nest
+              string_token_escape_value string_nest.to_s
+            when '#'
+              string_token_escape_value "#"
             when 'a'
               string_token_escape_value "\a"
             when 'b'
@@ -2003,6 +2067,7 @@ module Crystal
             else
               @token.type = :STRING
               @token.value = current_char.to_s
+              @token.invalid_escape = true
               next_char
             end
           end
@@ -2129,12 +2194,15 @@ module Crystal
     end
 
     def next_macro_token(macro_state, skip_whitespace)
+      reset_token
+
       nest = macro_state.nest
       control_nest = macro_state.control_nest
       whitespace = macro_state.whitespace
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
+      heredocs = macro_state.heredocs
       yields = false
 
       if skip_whitespace
@@ -2157,7 +2225,7 @@ module Crystal
         next_char
         start = current_pos
         if next_char == '%'
-          while (char = next_char).ascii_whitespace?
+          while (char = next_char_check_line).ascii_whitespace?
           end
 
           case char
@@ -2176,12 +2244,14 @@ module Crystal
               next_char
               nest += 1
             end
+          else
+            # no nesting
           end
         end
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -2192,7 +2262,7 @@ module Crystal
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         @token.raw = "%"
         return @token
       end
@@ -2203,13 +2273,13 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -2236,23 +2306,40 @@ module Crystal
             break
           when '\0'
             raise "unterminated macro"
+          else
+            char = next_char
           end
-          char = next_char
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
 
       if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+        if char == 'q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           next_char
-        elsif char == 'r' && (peek = peek_next_char) && {'(', '<', '[', '{', '|'}.includes?(peek)
+        elsif char == 'Q' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+          next_char
+        elsif char == 'i' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:symbol_array, char, closing_char, 1)
+          next_char
+        elsif char == 'w' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string_array, char, closing_char, 1)
+          next_char
+        elsif char == 'x' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
+          next_char
+          delimiter_state = Token::DelimiterState.new(:command, char, closing_char, 1)
+          next_char
+        elsif char == 'r' && (peek = peek_next_char) && peek.in?('(', '<', '[', '{', '|')
           next_char
           delimiter_state = Token::DelimiterState.new(:regex, char, closing_char, 1)
           next_char
@@ -2264,33 +2351,40 @@ module Crystal
           beginning_of_line = false
           @token.type = :MACRO_VAR
           @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         end
       end
 
-      if !delimiter_state && current_char == 'e' && next_char == 'n'
-        beginning_of_line = false
-        case next_char
-        when 'd'
-          if whitespace && !ident_part_or_end?(peek_next_char)
-            if nest == 0 && control_nest == 0
-              next_char
-              @token.type = :MACRO_END
-              @token.macro_state = Token::MacroState.default
-              return @token
-            else
-              nest -= 1
-              whitespace = current_char.ascii_whitespace?
-              next_char
+      if !delimiter_state && current_char == 'e'
+        if next_char == 'n'
+          beginning_of_line = false
+          case next_char
+          when 'd'
+            if whitespace && !ident_part_or_end?(peek_next_char)
+              if nest == 0 && control_nest == 0
+                next_char
+                @token.type = :MACRO_END
+                @token.macro_state = Token::MacroState.default
+                return @token
+              else
+                nest -= 1
+                whitespace = current_char.ascii_whitespace?
+                next_char
+              end
             end
+          when 'u'
+            if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
+              char = current_char
+              nest += 1
+              whitespace = true
+            end
+          else
+            # not a keyword
           end
-        when 'u'
-          if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
-            char = current_char
-            nest += 1
-            whitespace = true
-          end
+        else
+          whitespace = false
+          beginning_of_line = false
         end
       end
 
@@ -2302,6 +2396,18 @@ module Crystal
           incr_line_number 0
           whitespace = true
           beginning_of_line = true
+          char = next_char
+
+          if !delimiter_state && heredocs && !heredocs.empty?
+            delimiter_state = heredocs.shift
+          end
+
+          if delimiter_state && delimiter_state.kind == :heredoc && check_heredoc_end(delimiter_state)
+            char = current_char
+            delimiter_state = heredocs.try &.shift?
+          end
+
+          next
         when '\\'
           char = next_char
           if delimiter_state
@@ -2360,6 +2466,13 @@ module Crystal
             end
             @macro_curly_count -= 1
           end
+        when '<'
+          if !delimiter_state && @delimiter_state_stack.empty? && (heredoc_delimiter_state = lookahead { check_heredoc_start })
+            heredocs ||= [] of Token::DelimiterState
+            heredocs << heredoc_delimiter_state
+            char = current_char
+            next
+          end
         else
           if !delimiter_state && whitespace && lookahead { char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char) }
             yields = true
@@ -2405,7 +2518,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
       set_token_raw_from_start(start)
 
       @token
@@ -2459,6 +2572,8 @@ module Crystal
           end
         when 'n'
           next_char == 'n' && next_char == 'o' && next_char == 't' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :annotation
+        else
+          false
         end
       when 'b'
         next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :begin
@@ -2484,7 +2599,14 @@ module Crystal
             (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
         )
       when 's'
-        next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
+        case next_char
+        when 'e'
+          next_char == 'l' && next_char == 'e' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :select
+        when 't'
+          next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
+        else
+          false
+        end
       when 'u'
         next_char == 'n' && (char = next_char) && (
           (char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :union) ||
@@ -2496,6 +2618,64 @@ module Crystal
       else
         false
       end
+    end
+
+    def check_heredoc_start
+      return nil unless current_char == '<' && next_char == '<' && next_char == '-'
+
+      has_single_quote = false
+      found_closing_single_quote = false
+
+      char = next_char
+      start_here = current_pos
+
+      if char == '\''
+        has_single_quote = true
+        char = next_char
+        start_here = current_pos
+      end
+
+      return nil unless ident_part?(char)
+
+      end_here = 0
+
+      while true
+        char = next_char
+        case
+        when char == '\r'
+          if peek_next_char == '\n'
+            end_here = current_pos
+            next_char
+            break
+          else
+            return nil
+          end
+        when char == '\n'
+          end_here = current_pos
+          break
+        when ident_part?(char)
+          # ok
+        when char == '\0'
+          return nil
+        else
+          if char == '\'' && has_single_quote
+            found_closing_single_quote = true
+            end_here = current_pos
+            next_char
+            break
+          elsif has_single_quote
+            # wait until another quote
+          else
+            end_here = current_pos
+            break
+          end
+        end
+      end
+
+      return nil if has_single_quote && !found_closing_single_quote
+
+      here = string_range(start_here, end_here)
+      Token::DelimiterState.new(:heredoc, here, here, allow_escapes: !has_single_quote)
     end
 
     def consume_octal_escape(char)
@@ -2559,6 +2739,9 @@ module Crystal
         hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
         codepoint = 16 * codepoint + hex_value
       end
+      if 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
+      end
       codepoint
     end
 
@@ -2593,6 +2776,8 @@ module Crystal
         expected_hexacimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"
+      elsif 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
       end
 
       unless found_space
@@ -2626,6 +2811,8 @@ module Crystal
     end
 
     def next_string_array_token
+      reset_token
+
       while true
         if current_char == '\n'
           next_char
@@ -2861,7 +3048,7 @@ module Crystal
       if char == '\n'
         incr_line_number
       else
-        incr_column_number = 1
+        incr_column_number
       end
       char
     end
@@ -2879,6 +3066,7 @@ module Crystal
       @token.location = nil
       @token.passed_backslash_newline = false
       @token.doc_buffer = nil unless @token.type == :SPACE || @token.type == :NEWLINE
+      @token.invalid_escape = false
       @token_end_location = nil
     end
 
@@ -2895,6 +3083,11 @@ module Crystal
     def next_token_skip_statement_end
       next_token
       skip_statement_end
+    end
+
+    def next_token_never_a_symbol
+      @wants_symbol = false
+      next_token.tap { @wants_symbol = true }
     end
 
     def current_char

@@ -218,8 +218,8 @@ module Enumerable(T)
   # of the collection, removing `nil` values.
   #
   # ```
-  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [#<Regex::MatchData "Al">, nil]
-  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [#<Regex::MatchData "Al">]
+  # ["Alice", "Bob"].map { |name| name.match(/^A./) }         # => [Regex::MatchData("Al"), nil]
+  # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
     ary = [] of typeof((yield first).not_nil!)
@@ -479,22 +479,44 @@ module Enumerable(T)
     if_none
   end
 
-  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
-  # if the collection is empty.
+  # Returns the first element in the collection,
+  # If the collection is empty, calls the block and returns its value.
+  #
+  # ```
+  # ([1, 2, 3]).first { 4 }   # => 1
+  # ([] of Int32).first { 4 } # => 4
+  # ```
   def first
     each { |e| return e }
-    raise Enumerable::EmptyError.new
+    yield
+  end
+
+  # Returns the first element in the collection. Raises `Enumerable::EmptyError`
+  # if the collection is empty.
+  #
+  # ```
+  # ([1, 2, 3]).first   # => 1
+  # ([] of Int32).first # raises Enumerable::EmptyError
+  # ```
+  def first
+    first { raise Enumerable::EmptyError.new }
   end
 
   # Returns the first element in the collection.
   # When the collection is empty, returns `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).first?   # => 1
+  # ([] of Int32).first? # => nil
+  # ```
   def first?
-    each { |e| return e }
-    nil
+    first { nil }
   end
 
   # Returns a new array with the concatenated results of running the block
-  # (which is expected to return arrays) once for every element in the collection.
+  # once for every element in the collection.
+  # Only `Array` and `Iterator` results are concatenated; every other value is
+  # directly appended to the new array.
   #
   # ```
   # array = ["Alice", "Bob"].flat_map do |user|
@@ -502,8 +524,8 @@ module Enumerable(T)
   # end
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
-  def flat_map(&block : T -> Array(U) | Iterator(U) | U) forall U
-    ary = [] of U
+  def flat_map(&block : T -> _)
+    ary = [] of typeof(flat_map_type(yield first))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -515,15 +537,13 @@ module Enumerable(T)
     ary
   end
 
-  # Returns an `Array` with all the elements in the collection that
-  # match the `RegExp` *pattern*.
-  #
-  # ```
-  # ["Alice", "Bob"].grep(/^A/) # => ["Alice"]
-  # ```
-  @[Deprecated("Use `#select` instead")]
-  def grep(pattern)
-    self.select { |elem| pattern === elem }
+  private def flat_map_type(elem)
+    case elem
+    when Array, Iterator
+      elem.first
+    else
+      elem
+    end
   end
 
   # Returns a `Hash` whose keys are each different value that the passed block
@@ -703,7 +723,7 @@ module Enumerable(T)
   # ```
   def join(separator = "")
     String.build do |io|
-      join separator, io
+      join io, separator
     end
   end
 
@@ -713,9 +733,9 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5].join(", ") { |i| -i } # => "-1, -2, -3, -4, -5"
   # ```
-  def join(separator = "")
+  def join(separator = "", & : T ->)
     String.build do |io|
-      join(separator, io) do |elem|
+      join(io, separator) do |elem|
         io << yield elem
       end
     end
@@ -724,7 +744,7 @@ module Enumerable(T)
   # Prints to *io* all the elements in the collection, separated by *separator*.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT)
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
   # ```
   #
   # Prints:
@@ -732,17 +752,33 @@ module Enumerable(T)
   # ```text
   # 1, 2, 3, 4, 5
   # ```
-  def join(separator, io)
-    join(separator, io) do |elem|
+  def join(io : IO, separator = "")
+    join(io, separator) do |elem|
       elem.to_s(io)
     end
+  end
+
+  # Prints to *io* all the elements in the collection, separated by *separator*.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ")
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # 1, 2, 3, 4, 5
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "") instead`))]
+  def join(separator, io : IO)
+    join(io, separator)
   end
 
   # Prints to *io* the concatenation of the elements, with the possibility of
   # controlling how the printing is done via a block.
   #
   # ```
-  # [1, 2, 3, 4, 5].join(", ", STDOUT) { |i, io| io << "(#{i})" }
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
   # ```
   #
   # Prints:
@@ -750,9 +786,28 @@ module Enumerable(T)
   # ```text
   # (1), (2), (3), (4), (5)
   # ```
-  def join(separator, io)
+  def join(io : IO, separator = "", & : T, IO ->)
     each_with_index do |elem, i|
       io << separator if i > 0
+      yield elem, io
+    end
+  end
+
+  # Prints to *io* the concatenation of the elements, with the possibility of
+  # controlling how the printing is done via a block.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].join(STDOUT, ", ") { |i, io| io << "(#{i})" }
+  # ```
+  #
+  # Prints:
+  #
+  # ```text
+  # (1), (2), (3), (4), (5)
+  # ```
+  @[Deprecated(%(Use `#join(io : IO, separator = "", & : T, IO ->) instead`))]
+  def join(separator, io : IO)
+    join(io, separator) do |elem, io|
       yield elem, io
     end
   end
@@ -1195,6 +1250,70 @@ module Enumerable(T)
     reject { |e| pattern === e }
   end
 
+  # Returns an `Array` of *n* random elements from `self`, using the given
+  # *random* number generator. All elements have equal probability of being
+  # drawn. Sampling is done without replacement; if *n* is larger than the size
+  # of this collection, the returned `Array` has the same size as `self`.
+  #
+  # Raises `ArgumentError` if *n* is negative.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].sample(2)                # => [3, 5]
+  # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
+  # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
+  # ```
+  def sample(n : Int, random = Random::DEFAULT)
+    raise ArgumentError.new("Can't sample negative number of elements") if n < 0
+
+    # Unweighted reservoir sampling:
+    # https://en.wikipedia.org/wiki/Reservoir_sampling#Simple_algorithm
+    # "Algorithm L" does not provide any performance improvements on Enumerable,
+    # because it is not possible to discard multiple elements at once
+
+    ary = Array(T).new(n)
+    return ary if n == 0
+
+    each_with_index do |elem, i|
+      if i < n
+        ary << elem
+      else
+        j = random.rand(i + 1)
+        if j < n
+          ary.to_unsafe[j] = elem
+        end
+      end
+    end
+
+    ary.shuffle!(random)
+  end
+
+  # Returns a random element from `self`, using the given *random* number
+  # generator. All elements have equal probability of being drawn.
+  #
+  # Raises `IndexError` if `self` is empty.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample                # => 2
+  # a.sample                # => 1
+  # a.sample(Random.new(1)) # => 3
+  # ```
+  def sample(random = Random::DEFAULT)
+    value = uninitialized T
+    found = false
+
+    each_with_index do |elem, i|
+      if !found
+        value = elem
+        found = true
+      elsif random.rand(i + 1) == 0
+        value = elem
+      end
+    end
+
+    found ? value : raise IndexError.new("Can't sample empty collection")
+  end
+
   # Returns an `Array` with all the elements in the collection for which
   # the passed block returns `true`.
   #
@@ -1241,6 +1360,17 @@ module Enumerable(T)
     count { true }
   end
 
+  # Returns `true` if `self` is empty, `false` otherwise.
+  #
+  # ```
+  # ([] of Int32).empty? # => true
+  # ([1]).empty?         # => false
+  # ```
+  def empty?
+    each { return false }
+    true
+  end
+
   # Returns an `Array` with the first *count* elements removed
   # from the original collection.
   #
@@ -1278,20 +1408,39 @@ module Enumerable(T)
 
   # Adds all the elements in the collection together.
   #
-  # Only collections of numbers (objects that can be added via an `+` method)
-  # are supported.
+  # Expects all element types to respond to `#+` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].sum # => 21
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `additive_identity`.
   #
   # ```
   # ([] of Int32).sum # => 0
   # ```
   def sum
-    sum Reflect(T).first.zero
+    {% if T == String %}
+      # optimize for string
+      join
+    {% elsif T < Array %}
+      # optimize for array
+      flat_map &.itself
+    {% else %}
+      sum additive_identity(Reflect(T))
+    {% end %}
+  end
+
+  private def additive_identity(reflect)
+    type = reflect.first
+    if type.responds_to? :additive_identity
+      type.additive_identity
+    else
+      type.zero
+    end
   end
 
   # Adds *initial* and all the elements in the collection together.
@@ -1299,8 +1448,7 @@ module Enumerable(T)
   # (for instance) you need to specify a large enough type to avoid
   # overflow.
   #
-  # Only collections of numbers (objects that can be added via an `+` method)
-  # are supported.
+  # Expects all element types to respond to `#+` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].sum(7) # => 28
@@ -1321,13 +1469,18 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum { |name| name.size } # => 8 (5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # Expects all types returned from the block to respond to `#+` method.
+  #
+  # This method calls `.additive_identity` on the yielded type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `additive_identity`.
   #
   # ```
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
   def sum(&block)
-    sum(Reflect(typeof(yield first)).first.zero) do |value|
+    sum(additive_identity(Reflect(typeof(yield first)))) do |value|
       yield value
     end
   end
@@ -1338,7 +1491,9 @@ module Enumerable(T)
   # ["Alice", "Bob"].sum(1) { |name| name.size } # => 9 (1 + 5 + 3)
   # ```
   #
-  # If the collection is empty, returns `0`.
+  # Expects all types returned from the block to respond to `#+` method.
+  #
+  # If the collection is empty, returns *initial*.
   #
   # ```
   # ([] of String).sum(1) { |name| name.size } # => 1
@@ -1349,20 +1504,22 @@ module Enumerable(T)
 
   # Multiplies all the elements in the collection together.
   #
-  # Only collections of numbers (objects that can be multiplied via a `*` method)
-  # are supported.
+  # Expects all element types to respond to `#*` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].product # => 720
   # ```
   #
-  # If the collection is empty, returns `1`.
+  # This method calls `.multiplicative_identity` on the element type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `multiplicative_identity`.
   #
   # ```
   # ([] of Int32).product # => 1
   # ```
   def product
-    product Reflect(T).first.zero + 1
+    product Reflect(T).first.multiplicative_identity
   end
 
   # Multiplies *initial* and all the elements in the collection
@@ -1370,8 +1527,7 @@ module Enumerable(T)
   # so use this if (for instance) you need to specify a large enough
   # type to avoid overflow.
   #
-  # Only collections of numbers (objects that can be multiplied via a `*` method)
-  # are supported.
+  # Expects all element types to respond to `#*` method.
   #
   # ```
   # [1, 2, 3, 4, 5, 6].product(7) # => 5040
@@ -1392,13 +1548,18 @@ module Enumerable(T)
   # ["Alice", "Bob"].product { |name| name.size } # => 15 (5 * 3)
   # ```
   #
-  # If the collection is empty, returns `1`.
+  # Expects all types returned from the block to respond to `#*` method.
+  #
+  # This method calls `.multiplicative_identity` on the element type to determine the
+  # type of the sum value.
+  #
+  # If the collection is empty, returns `multiplicative_identity`.
   #
   # ```
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(&block)
-    product(Reflect(typeof(yield first)).first.zero + 1) do |value|
+    product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -1409,6 +1570,8 @@ module Enumerable(T)
   # ```
   # ["Alice", "Bob"].product(2) { |name| name.size } # => 30 (2 * 5 * 3)
   # ```
+  #
+  # Expects all types returned from the block to respond to `#*` method.
   #
   # If the collection is empty, returns `1`.
   #
@@ -1450,7 +1613,7 @@ module Enumerable(T)
     result
   end
 
-  # Tallys the collection.  Returns a hash where the keys are the
+  # Tallies the collection.  Returns a hash where the keys are the
   # elements and the values are numbers of elements in the collection
   # that correspond to the key.
   #
@@ -1568,6 +1731,7 @@ module Enumerable(T)
   # a.zip(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, 6, 6}]
   # ```
   def zip(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip(*others) { |e| break e }.not_nil!)).new(size)
     zip(*others) { |e| pairs << e }
     pairs
@@ -1638,6 +1802,7 @@ module Enumerable(T)
   # a.zip?(b, c) # => [{1, 4, 8}, {2, 5, 7}, {3, nil, nil}]
   # ```
   def zip?(*others : Indexable | Iterable | Iterator)
+    size = self.is_a?(Indexable) ? self.size : 0
     pairs = Array(typeof(zip?(*others) { |e| break e }.not_nil!)).new(size)
     zip?(*others) { |e| pairs << e }
     pairs
@@ -1646,30 +1811,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               raise IndexError.new
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
@@ -1686,30 +1856,35 @@ module Enumerable(T)
   # :nodoc:
   def self.zip?(main, others : U, &block) forall U
     {% begin %}
+      {% for type, type_index in U %}
+        other{{type_index}} = others[{{type_index}}]
+      {% end %}
+
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        {% if type < Indexable %}
+        case other{{type_index}}
+        when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
-        {% elsif type < Iterable %}
-          iter{{type_index}} = others[{{type_index}}].each
-        {% elsif type < Iterator %}
-          iter{{type_index}} = others[{{type_index}}]
-        {% end %}
+        when Iterable
+          iter{{type_index}} = other{{type_index}}.each
+        else
+          iter{{type_index}} = other{{type_index}}
+        end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          {% if type < Indexable %}
+          if other{{type_index}}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = others[{{type_index}}][i]?
-          {% else %}
+            other_elem{{type_index}} = other{{type_index}}[i]?
+          else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.next
+            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
             if other_elem{{type_index}}.is_a?(Iterator::Stop)
               other_elem{{type_index}} = nil
             end
-          {% end %}
+          end
         {% end %}
 
         # Yield all elements as a tuple
@@ -1721,5 +1896,19 @@ module Enumerable(T)
         })
       end
     {% end %}
+  end
+
+  # :nodoc:
+  private struct Reflect(X)
+    # For now it's just a way to implement `Enumerable#sum` in a way that the
+    # initial value given to it has the type of the first type in the union,
+    # if the type is a union.
+    def self.first
+      {% if X.union? %}
+        {{X.union_types.first}}
+      {% else %}
+        X
+      {% end %}
+    end
   end
 end

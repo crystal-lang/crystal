@@ -310,6 +310,8 @@ describe BigDecimal do
     BigDecimal.new(0).to_s.should eq "0"
     BigDecimal.new(1).to_s.should eq "1"
     BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new("-0.35").to_s.should eq "-0.35"
+    BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"
     BigDecimal.new("-0.01").to_s.should eq "-0.01"
     BigDecimal.new("0.00123").to_s.should eq "0.00123"
@@ -337,43 +339,57 @@ describe BigDecimal do
     bd2 = BigDecimal.new(-123, 5)
     bd3 = BigDecimal.new(123, 0)
     bd4 = BigDecimal.new(-123, 0)
+    bd5 = "-123.000".to_big_d
+    bd6 = "-1.1".to_big_d
 
     bd1.to_i.should eq 0
     bd2.to_i.should eq 0
     bd3.to_i.should eq 123
     bd4.to_i.should eq -123
+    bd5.to_i.should eq -123
+    bd6.to_i.should eq -1
 
     bd1.to_u.should eq 0
-    bd2.to_u.should eq 0
+    expect_raises(OverflowError) { bd2.to_u }
     bd3.to_u.should eq 123
-    bd4.to_u.should eq 123
+    expect_raises(OverflowError) { bd4.to_u }
+    expect_raises(OverflowError) { bd5.to_u }
+    expect_raises(OverflowError) { bd6.to_u }
 
     bd1.to_f.should eq 0.00123
     bd2.to_f.should eq -0.00123
     bd3.to_f.should eq 123.0
     bd4.to_f.should eq -123.0
+    bd5.to_f.should eq -123.0
+    bd6.to_f.should eq -1.1
 
     bd1.to_i!.should eq 0
     bd2.to_i!.should eq 0
     bd3.to_i!.should eq 123
     bd4.to_i!.should eq -123
+    bd5.to_i!.should eq -123
+    bd6.to_i!.should eq -1
 
     bd1.to_u!.should eq 0
     bd2.to_u!.should eq 0
     bd3.to_u!.should eq 123
     bd4.to_u!.should eq 123
+    bd5.to_u!.should eq 123
+    bd6.to_u!.should eq 1
 
     bd1.to_f!.should eq 0.00123
     bd2.to_f!.should eq -0.00123
     bd3.to_f!.should eq 123.0
     bd4.to_f!.should eq -123.0
+    bd5.to_f!.should eq -123.0
+    bd6.to_f!.should eq -1.1
   end
 
   it "hashes" do
     bd1 = BigDecimal.new("123.456")
     bd2 = BigDecimal.new("0.12345")
     bd3 = BigDecimal.new("1.23456")
-    bd4 = BigDecimal.new("123456")
+    bd4 = BigDecimal.new("-123456")
     bd5 = BigDecimal.new("0")
 
     hash = {} of BigDecimal => String
@@ -387,7 +403,7 @@ describe BigDecimal do
     hash[BigDecimal.new("123.456")].should eq "bd1"
     hash[BigDecimal.new("0.12345")].should eq "bd2"
     hash[BigDecimal.new("1.23456")].should eq "bd3"
-    hash[BigDecimal.new("123456")].should eq "bd4"
+    hash[BigDecimal.new("-123456")].should eq "bd4"
     hash[BigDecimal.new("0")].should eq "bd5"
 
     # not found
@@ -435,6 +451,9 @@ describe BigDecimal do
 
     it { -2.01.to_big_d.ceil.should eq(-2) }
     it { -2.91.to_big_d.ceil.should eq(-2) }
+
+    it { "-123.000".to_big_d.ceil.value.should eq(-123) }
+    it { "-1.1".to_big_d.ceil.value.should eq(-1) }
   end
 
   describe "#floor" do
@@ -445,6 +464,9 @@ describe BigDecimal do
     it { 2.11.to_big_d.floor.should eq(2) }
     it { 2.91.to_big_d.floor.should eq(2) }
     it { -2.91.to_big_d.floor.should eq(-3) }
+
+    it { "-123.000".to_big_d.floor.value.should eq(-123) }
+    it { "-1.1".to_big_d.floor.value.should eq(-2) }
   end
 
   describe "#trunc" do

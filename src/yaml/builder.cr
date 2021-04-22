@@ -26,7 +26,7 @@
 class YAML::Builder
   @box : Void*
 
-  # By default the maximum nesting of sequences/amppings is 99. Nesting more
+  # By default the maximum nesting of sequences/mappings is 99. Nesting more
   # than this will result in a YAML::Error. Changing the value of this property
   # allows more/less nesting.
   property max_nesting = 99
@@ -47,11 +47,13 @@ class YAML::Builder
     }, @box)
   end
 
-  # Creates a `YAML::Builder` that will write to the given `IO`,
-  # invokes the block and closes the builder.
-  def self.new(io : IO)
-    emitter = new(io)
-    yield emitter ensure emitter.close
+  # Creates a `YAML::Builder` that writes to *io* and yields it to the block.
+  #
+  # After returning from the block the builder is closed.
+  def self.build(io : IO, & : self ->) : Nil
+    builder = new(io)
+    yield builder ensure builder.close
+    io.flush
   end
 
   # Starts a YAML stream.
@@ -62,6 +64,7 @@ class YAML::Builder
   # Ends a YAML stream.
   def end_stream
     emit stream_end
+    @io.flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.
@@ -133,7 +136,7 @@ class YAML::Builder
 
   # Emits an alias to the given *anchor*.
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|
@@ -154,7 +157,7 @@ class YAML::Builder
   #
   # See [YAML Merge](https://yaml.org/type/merge.html).
   #
-  # ```crystal
+  # ```
   # require "yaml"
   #
   # yaml = YAML.build do |builder|
@@ -173,6 +176,8 @@ class YAML::Builder
   # Flushes any pending data to the underlying `IO`.
   def flush
     LibYAML.yaml_emitter_flush(@emitter)
+
+    @io.flush
   end
 
   def finalize
@@ -244,8 +249,8 @@ module YAML
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO)
-    YAML::Builder.new(io) do |yaml|
+  def self.build(io : IO) : Nil
+    YAML::Builder.build(io) do |yaml|
       yaml.stream do
         yaml.document do
           yield yaml

@@ -81,6 +81,7 @@ lib LibGMP
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
 
   fun pow_ui = __gmpz_pow_ui(rop : MPZ*, base : MPZ*, exp : ULong)
+  fun fac_ui = __gmpz_fac_ui(rop : MPZ*, n : ULong)
 
   # # Bitwise operations
 
@@ -97,6 +98,7 @@ lib LibGMP
   fun popcount = __gmpz_popcount(op : MPZ*) : BitcntT
   fun scan0 = __gmpz_scan0(op : MPZ*, starting_bit : BitcntT) : BitcntT
   fun scan1 = __gmpz_scan1(op : MPZ*, starting_bit : BitcntT) : BitcntT
+  fun sizeinbase = __gmpz_sizeinbase(op : MPZ*, base : Int) : SizeT
 
   # # Comparison
 

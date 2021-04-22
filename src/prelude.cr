@@ -7,12 +7,6 @@
 # to also add them to `docs_main.cr` if their content needs to
 # appear in the API docs.
 
-private macro no_win(stmt)
-  {% unless flag?(:win32) %}
-    {{stmt}}
-  {% end %}
-end
-
 # This list requires ordered statements
 require "crystal/once"
 require "lib_c"
@@ -25,6 +19,7 @@ require "comparable"
 require "exception"
 require "iterable"
 require "iterator"
+require "steppable"
 require "indexable"
 require "string"
 require "number"
@@ -47,18 +42,18 @@ require "enum"
 require "enumerable"
 require "env"
 require "errno"
-require "ext"
 require "file"
 require "float"
 require "gc"
 require "hash"
-no_win require "iconv"
 require "int"
 require "intrinsics"
 require "io"
 require "kernel"
 require "math/math"
-no_win require "mutex"
+{% unless flag?(:win32) %}
+  require "mutex"
+{% end %}
 require "named_tuple"
 require "nil"
 require "humanize"
@@ -67,20 +62,21 @@ require "pointer"
 require "pretty_print"
 require "primitives"
 require "proc"
-no_win require "process"
+require "process"
 require "raise"
 require "random"
 require "range"
 require "reference"
-require "reflect"
 require "regex"
 require "set"
-no_win require "signal"
+{% unless flag?(:win32) %}
+  require "signal"
+{% end %}
 require "slice"
 require "static_array"
 require "struct"
 require "symbol"
-no_win require "system"
+require "system"
 require "crystal/system/thread"
 require "time"
 require "tuple"

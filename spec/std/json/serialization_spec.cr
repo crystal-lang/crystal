@@ -1,7 +1,9 @@
-require "spec"
+require "../spec_helper"
 require "json"
-require "big"
-require "big/json"
+{% unless flag?(:win32) %}
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
 
@@ -9,10 +11,26 @@ enum JSONSpecEnum
   Zero
   One
   Two
+  OneHundred
+end
+
+@[Flags]
+enum JSONSpecFlagEnum
+  One
+  Two
+  OneHundred
 end
 
 describe "JSON serialization" do
   describe "from_json" do
+    it "does String.from_json" do
+      String.from_json(%("foo bar")).should eq "foo bar"
+    end
+
+    it "does Path.from_json" do
+      Path.from_json(%("foo/bar")).should eq(Path.new("foo/bar"))
+    end
+
     it "does Array(Nil)#from_json" do
       Array(Nil).from_json("[null, null]").should eq([nil, nil])
     end
@@ -37,6 +55,10 @@ describe "JSON serialization" do
       Array(Float64).from_json("[1.5, 2, 3.5]").should eq([1.5, 2, 3.5])
     end
 
+    it "does Deque(String)#from_json" do
+      Deque(String).from_json(%(["a", "b"])).should eq(Deque.new(["a", "b"]))
+    end
+
     it "does Hash(String, String)#from_json" do
       Hash(String, String).from_json(%({"foo": "x", "bar": "y"})).should eq({"foo" => "x", "bar" => "y"})
     end
@@ -57,15 +79,15 @@ describe "JSON serialization" do
       Hash(Float64, String).from_json(%({"1.23": "x", "4.56": "y"})).should eq({1.23 => "x", 4.56 => "y"})
     end
 
-    it "does Hash(BigInt, String)#from_json" do
+    pending_win32 "does Hash(BigInt, String)#from_json" do
       Hash(BigInt, String).from_json(%({"12345678901234567890": "x"})).should eq({"12345678901234567890".to_big_i => "x"})
     end
 
-    it "does Hash(BigFloat, String)#from_json" do
+    pending_win32 "does Hash(BigFloat, String)#from_json" do
       Hash(BigFloat, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_f => "x"})
     end
 
-    it "does Hash(BigDecimal, String)#from_json" do
+    pending_win32 "does Hash(BigDecimal, String)#from_json" do
       Hash(BigDecimal, String).from_json(%({"1234567890.123456789": "x"})).should eq({"1234567890.123456789".to_big_d => "x"})
     end
 
@@ -113,22 +135,41 @@ describe "JSON serialization" do
       tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
-    it "does for BigInt" do
+    pending_win32 "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_win32 "raises for BigInt from unsupported types" do
+      expect_raises(JSON::ParseException) { BigInt.from_json("true") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("1.23") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigInt.from_json("{}") }
+    end
+
+    pending_win32 "does for BigFloat" do
       big = BigFloat.from_json("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    it "does for BigFloat from int" do
+    pending_win32 "does for BigFloat from int" do
       big = BigFloat.from_json("1234")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234"))
+    end
+
+    pending_win32 "does for BigFloat from string" do
+      big = BigFloat.from_json(%("1234"))
+      big.should be_a(BigFloat)
+      big.should eq(BigFloat.new("1234"))
+    end
+
+    pending_win32 "raises for BigFloat from unsupported types" do
+      expect_raises(JSON::ParseException) { BigFloat.from_json("true") }
+      expect_raises(JSON::ParseException) { BigFloat.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigFloat.from_json("{}") }
     end
 
     it "does for UUID (hyphenated)" do
@@ -149,31 +190,149 @@ describe "JSON serialization" do
       uuid.should eq(UUID.new("ee843b26-56d8-472b-b343-0b94ed9077ff"))
     end
 
-    it "does for BigDecimal from int" do
+    pending_win32 "does for BigDecimal from int" do
       big = BigDecimal.from_json("1234")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234"))
     end
 
-    it "does for BigDecimal from float" do
+    pending_win32 "does for BigDecimal from float" do
       big = BigDecimal.from_json("1234.05")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.05"))
     end
 
-    it "does for Enum with number" do
-      JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
+    pending_win32 "does for BigDecimal from string" do
+      big = BigDecimal.from_json(%("1234.05"))
+      big.should be_a(BigDecimal)
+      big.should eq(BigDecimal.new("1234.05"))
+    end
 
-      expect_raises(Exception, "Unknown enum JSONSpecEnum value: 3") do
-        JSONSpecEnum.from_json("3")
+    pending_win32 "raises for BigDecimal from unsupported types" do
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("true") }
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("[]") }
+      expect_raises(JSON::ParseException) { BigDecimal.from_json("{}") }
+    end
+
+    describe "Enum" do
+      it "normal enum" do
+        JSONSpecEnum.from_json(%("one")).should eq(JSONSpecEnum::One)
+        JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+        JSONSpecEnum.from_json(%("two")).should eq(JSONSpecEnum::Two)
+        JSONSpecEnum.from_json(%("ONE_HUNDRED")).should eq(JSONSpecEnum::OneHundred)
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "ONE-HUNDRED")) do
+          JSONSpecEnum.from_json(%("ONE-HUNDRED"))
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: " one ")) do
+          JSONSpecEnum.from_json(%(" one "))
+        end
+
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "three")) do
+          JSONSpecEnum.from_json(%("three"))
+        end
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
+          JSONSpecEnum.from_json(%(1))
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: "1")) do
+          JSONSpecEnum.from_json(%("1"))
+        end
+
+        expect_raises(JSON::ParseException, "Expected String but was BeginObject") do
+          JSONSpecEnum.from_json(%({}))
+        end
+        expect_raises(JSON::ParseException, "Expected String but was BeginArray") do
+          JSONSpecEnum.from_json(%([]))
+        end
+      end
+
+      it "flag enum" do
+        JSONSpecFlagEnum.from_json(%(["one"])).should eq(JSONSpecFlagEnum::One)
+        JSONSpecFlagEnum.from_json(%(["One"])).should eq(JSONSpecFlagEnum::One)
+        JSONSpecFlagEnum.from_json(%(["one", "one"])).should eq(JSONSpecFlagEnum::One)
+        JSONSpecFlagEnum.from_json(%(["one", "two"])).should eq(JSONSpecFlagEnum::One | JSONSpecFlagEnum::Two)
+        JSONSpecFlagEnum.from_json(%(["one", "two", "one_hundred"])).should eq(JSONSpecFlagEnum::All)
+        JSONSpecFlagEnum.from_json(%([])).should eq(JSONSpecFlagEnum::None)
+
+        expect_raises(JSON::ParseException, "Expected String but was BeginArray") do
+          JSONSpecFlagEnum.from_json(%(["one", ["two"]]))
+        end
+
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: "three")) do
+          JSONSpecFlagEnum.from_json(%(["one", "three"]))
+        end
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
+          JSONSpecFlagEnum.from_json(%([1, 2]))
+        end
+        expect_raises(JSON::ParseException, %(Expected String but was Int)) do
+          JSONSpecFlagEnum.from_json(%(["one", 2]))
+        end
+        expect_raises(JSON::ParseException, "Expected BeginArray but was BeginObject") do
+          JSONSpecFlagEnum.from_json(%({}))
+        end
+        expect_raises(JSON::ParseException, "Expected BeginArray but was String") do
+          JSONSpecFlagEnum.from_json(%("one"))
+        end
       end
     end
 
-    it "does for Enum with string" do
-      JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+    describe "Enum::ValueConverter.from_json" do
+      it "normal enum" do
+        Enum::ValueConverter(JSONSpecEnum).from_json("0").should eq(JSONSpecEnum::Zero)
+        Enum::ValueConverter(JSONSpecEnum).from_json("1").should eq(JSONSpecEnum::One)
+        Enum::ValueConverter(JSONSpecEnum).from_json("2").should eq(JSONSpecEnum::Two)
+        Enum::ValueConverter(JSONSpecEnum).from_json("3").should eq(JSONSpecEnum::OneHundred)
 
-      expect_raises(ArgumentError, "Unknown enum JSONSpecEnum value: Three") do
-        JSONSpecEnum.from_json(%("Three"))
+        expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+          Enum::ValueConverter(JSONSpecEnum).from_json(%("3"))
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: 4)) do
+          Enum::ValueConverter(JSONSpecEnum).from_json("4")
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecEnum value: -1)) do
+          Enum::ValueConverter(JSONSpecEnum).from_json("-1")
+        end
+        expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+          Enum::ValueConverter(JSONSpecEnum).from_json(%(""))
+        end
+
+        expect_raises(JSON::ParseException, "Expected Int but was String") do
+          Enum::ValueConverter(JSONSpecEnum).from_json(%("one"))
+        end
+
+        expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+          Enum::ValueConverter(JSONSpecEnum).from_json(%({}))
+        end
+        expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+          Enum::ValueConverter(JSONSpecEnum).from_json(%([]))
+        end
+      end
+
+      it "flag enum" do
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("0").should eq(JSONSpecFlagEnum::None)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("1").should eq(JSONSpecFlagEnum::One)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("2").should eq(JSONSpecFlagEnum::Two)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("4").should eq(JSONSpecFlagEnum::OneHundred)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("5").should eq(JSONSpecFlagEnum::OneHundred | JSONSpecFlagEnum::One)
+        Enum::ValueConverter(JSONSpecFlagEnum).from_json("7").should eq(JSONSpecFlagEnum::All)
+
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: 8)) do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json("8")
+        end
+        expect_raises(JSON::ParseException, %(Unknown enum JSONSpecFlagEnum value: -1)) do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json("-1")
+        end
+        expect_raises(JSON::ParseException, %(Expected Int but was String)) do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%(""))
+        end
+        expect_raises(JSON::ParseException, "Expected Int but was String") do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%("one"))
+        end
+        expect_raises(JSON::ParseException, "Expected Int but was BeginObject") do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%({}))
+        end
+        expect_raises(JSON::ParseException, "Expected Int but was BeginArray") do
+          Enum::ValueConverter(JSONSpecFlagEnum).from_json(%([]))
+        end
       end
     end
 
@@ -206,6 +365,22 @@ describe "JSON serialization" do
       Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
     end
 
+    it "deserializes union of Int32 and Float64 (#7333)" do
+      value = Union(Int32, Float64).from_json("1")
+      value.should be_a(Int32)
+      value.should eq(1)
+
+      value = Union(Int32, Float64).from_json("1.0")
+      value.should be_a(Float64)
+      value.should eq(1.0)
+    end
+
+    it "deserializes unions of the same kind and remains stable" do
+      str = [Int32::MAX, Int64::MAX].to_json
+      value = Array(Int32 | Int64).from_json(str)
+      value.all? { |x| x.should be_a(Int64) }
+    end
+
     it "deserializes Time" do
       Time.from_json(%("2016-11-16T09:55:48-03:00")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
       Time.from_json(%("2016-11-16T09:55:48-0300")).to_utc.should eq(Time.utc(2016, 11, 16, 12, 55, 48))
@@ -229,6 +404,17 @@ describe "JSON serialization" do
           Array(Int32 | Bool).from_json <<-JSON
             [
               {"foo": "bar"}
+            ]
+            JSON
+        end
+        ex.location.should eq({2, 3})
+      end
+
+      it "captures overflows for integer types" do
+        ex = expect_raises(JSON::ParseException) do
+          Array(Int32).from_json <<-JSON
+            [
+              #{Int64::MAX.to_json}
             ]
             JSON
         end
@@ -300,8 +486,17 @@ describe "JSON serialization" do
       "ab\u{19}cd\u{19}e".to_json.should eq(%q("ab\u0019cd\u0019e"))
     end
 
+    it "does for Path" do
+      Path.posix("foo", "bar", "baz").to_json.should eq(%("foo/bar/baz"))
+      Path.windows("foo", "bar", "baz").to_json.should eq(%("foo\\\\bar\\\\baz"))
+    end
+
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
+    end
+
+    it "does for Deque" do
+      Deque.new([1, 2, 3]).to_json.should eq("[1,2,3]")
     end
 
     it "does for Set" do
@@ -328,7 +523,7 @@ describe "JSON serialization" do
       {1.2 => 2, 3.4 => 6}.to_json.should eq(%({"1.2":2,"3.4":6}))
     end
 
-    it "does for Hash with BigInt keys" do
+    pending_win32 "does for Hash with BigInt keys" do
       {123.to_big_i => 2}.to_json.should eq(%({"123":2}))
     end
 
@@ -344,17 +539,88 @@ describe "JSON serialization" do
       {x: 1, y: "hello"}.to_json.should eq(%({"x":1,"y":"hello"}))
     end
 
-    it "does for Enum" do
-      JSONSpecEnum::One.to_json.should eq("1")
+    describe "Enum" do
+      it "normal enum" do
+        JSONSpecEnum::One.to_json.should eq %("one")
+        JSONSpecEnum.from_json(JSONSpecEnum::One.to_json).should eq(JSONSpecEnum::One)
+
+        JSONSpecEnum::OneHundred.to_json.should eq %("one_hundred")
+        JSONSpecEnum.from_json(JSONSpecEnum::OneHundred.to_json).should eq(JSONSpecEnum::OneHundred)
+
+        # undefined members can't be parsed back because the standard converter only accepts named
+        # members
+        JSONSpecEnum.new(42).to_json.should eq %("42")
+      end
+
+      it "flag enum" do
+        JSONSpecFlagEnum::One.to_json.should eq %(["one"])
+        JSONSpecFlagEnum.from_json(JSONSpecFlagEnum::One.to_json).should eq(JSONSpecFlagEnum::One)
+
+        JSONSpecFlagEnum::OneHundred.to_json.should eq %(["one_hundred"])
+        JSONSpecFlagEnum.from_json(JSONSpecFlagEnum::OneHundred.to_json).should eq(JSONSpecFlagEnum::OneHundred)
+
+        combined = JSONSpecFlagEnum::OneHundred | JSONSpecFlagEnum::One
+        combined.to_json.should eq %(["one","one_hundred"])
+        JSONSpecFlagEnum.from_json(combined.to_json).should eq(combined)
+
+        JSONSpecFlagEnum::None.to_json.should eq %([])
+        JSONSpecFlagEnum.from_json(JSONSpecFlagEnum::None.to_json).should eq(JSONSpecFlagEnum::None)
+
+        JSONSpecFlagEnum::All.to_json.should eq %(["one","two","one_hundred"])
+        JSONSpecFlagEnum.from_json(JSONSpecFlagEnum::All.to_json).should eq(JSONSpecFlagEnum::All)
+
+        JSONSpecFlagEnum.new(42).to_json.should eq %(["two"])
+      end
     end
 
-    it "does for BigInt" do
+    describe "Enum::ValueConverter" do
+      it "normal enum" do
+        converter = Enum::ValueConverter(JSONSpecEnum)
+        converter.to_json(JSONSpecEnum::One).should eq %(1)
+        converter.from_json(converter.to_json(JSONSpecEnum::One)).should eq(JSONSpecEnum::One)
+
+        converter.to_json(JSONSpecEnum::OneHundred).should eq %(3)
+        converter.from_json(converter.to_json(JSONSpecEnum::OneHundred)).should eq(JSONSpecEnum::OneHundred)
+
+        # undefined members can't be parsed back because the standard converter only accepts named
+        # members
+        converter.to_json(JSONSpecEnum.new(42)).should eq %(42)
+      end
+
+      it "flag enum" do
+        converter = Enum::ValueConverter(JSONSpecFlagEnum)
+        converter.to_json(JSONSpecFlagEnum::One).should eq %(1)
+        converter.from_json(converter.to_json(JSONSpecFlagEnum::One)).should eq(JSONSpecFlagEnum::One)
+
+        converter.to_json(JSONSpecFlagEnum::OneHundred).should eq %(4)
+        converter.from_json(converter.to_json(JSONSpecFlagEnum::OneHundred)).should eq(JSONSpecFlagEnum::OneHundred)
+
+        combined = JSONSpecFlagEnum::OneHundred | JSONSpecFlagEnum::One
+        converter.to_json(combined).should eq %(5)
+        converter.from_json(converter.to_json(combined)).should eq(combined)
+
+        converter.to_json(JSONSpecFlagEnum::None).should eq %(0)
+        converter.from_json(converter.to_json(JSONSpecFlagEnum::None)).should eq(JSONSpecFlagEnum::None)
+
+        converter.to_json(JSONSpecFlagEnum::All).should eq %(7)
+        converter.from_json(converter.to_json(JSONSpecFlagEnum::All)).should eq(JSONSpecFlagEnum::All)
+
+        converter.to_json(JSONSpecFlagEnum.new(42)).should eq %(42)
+      end
+    end
+
+    pending_win32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       big.to_json.should eq("123456789123456789123456789123456789123456789")
     end
 
-    it "does for BigFloat" do
+    pending_win32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
+      big.to_json.should eq("1234.567891011121314")
+    end
+
+    pending_win32 "does for BigDecimal" do
+      big = BigDecimal.new("1234.567891011121314")
       big.to_json.should eq("1234.567891011121314")
     end
 
@@ -427,5 +693,17 @@ describe "JSON serialization" do
         Time.utc(2016, 11, 16, 12, 55, 48, nanosecond: 123456789).to_json.should eq(%("2016-11-16T12:55:48Z"))
       end
     end
+  end
+
+  it "provide symmetric encoding and decoding for Union types" do
+    a = 1.as(Float64 | Int32)
+    b = (Float64 | Int32).from_json(a.to_json)
+    a.class.should eq(Int32)
+    a.class.should eq(b.class)
+
+    c = 1.0.as(Float64 | Int32)
+    d = (Float64 | Int32).from_json(c.to_json)
+    c.class.should eq(Float64)
+    c.class.should eq(d.class)
   end
 end

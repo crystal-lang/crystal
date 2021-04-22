@@ -9,6 +9,8 @@ private class TupleSpecObj
   def clone
     TupleSpecObj.new(@x)
   end
+
+  def_equals @x
 end
 
 describe "Tuple" do
@@ -154,9 +156,20 @@ describe "Tuple" do
     u[1].should_not be(r2)
   end
 
-  it "does Tuple.new" do
+  it "does Tuple.new, without type vars" do
     Tuple.new(1, 2, 3).should eq({1, 2, 3})
     Tuple.new([1, 2, 3]).should eq({[1, 2, 3]})
+    Tuple.new(TupleSpecObj.new(10)).should eq({TupleSpecObj.new(10)})
+  end
+
+  it "does Tuple.new, with type vars" do
+    Tuple(Int32, String).new(1, "a").should eq({1, "a"})
+    Tuple(TupleSpecObj).new(TupleSpecObj.new(10)).should eq({TupleSpecObj.new(10)})
+    typeof(Tuple.new).new.should eq(Tuple.new)
+
+    t = Tuple(Int32 | String, Int32 | String).new(1, "a")
+    t.should eq({1, "a"})
+    t.class.should_not eq(Tuple(Int32, String))
   end
 
   it "does Tuple.from" do

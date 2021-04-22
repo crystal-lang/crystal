@@ -119,20 +119,19 @@ module Colorize
   def self.reset(io = STDOUT)
     io << "\e[0m" if enabled?
   end
-end
 
-# Returns an empty colorized string.
-#
-# This is useful for building colored strings. See `Colorize#surround`.
-def with_color
-  "".colorize
-end
-
-# Returns an empty string colorized with *color*.
-#
-# This is useful for building colored strings. See `Colorize#surround`.
-def with_color(color : Colorize::Color)
-  "".colorize(color)
+  # Helper method to use colorize with `IO`.
+  #
+  # ```
+  # io = IO::Memory.new
+  # io << "not-green"
+  # Colorize.with.green.bold.surround(io) do
+  #   io << "green and bold if Colorize.enabled"
+  # end
+  # ```
+  def self.with
+    "".colorize
+  end
 end
 
 module Colorize::ObjectExtensions
@@ -209,12 +208,16 @@ module Colorize
     blue : UInt8 do
     def fore(io : IO) : Nil
       io << "38;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
 
     def back(io : IO) : Nil
       io << "48;2;"
-      {red, green, blue}.join(';', io, &.to_s io)
+      io << red << ";"
+      io << green << ";"
+      io << blue
     end
   end
 

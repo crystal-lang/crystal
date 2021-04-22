@@ -6,10 +6,10 @@
   @[Link("pthread")]
 {% end %}
 
-{% if flag?(:freebsd) %}
+{% if flag?(:freebsd) || flag?(:dragonfly) %}
   @[Link("gc-threaded")]
 {% else %}
-  @[Link("gc", static: true)]
+  @[Link("gc")]
 {% end %}
 
 lib LibGC
@@ -54,7 +54,7 @@ lib LibGC
   fun is_heap_ptr = GC_is_heap_ptr(pointer : Void*) : Int
   fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
 
-  type Finalizer = Void*, Void* ->
+  alias Finalizer = Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int
@@ -221,7 +221,7 @@ module GC
     # :nodoc:
     def self.pthread_join(thread : LibC::PthreadT) : Void*
       ret = LibGC.pthread_join(thread, out value)
-      raise Errno.new("pthread_join", ret) unless ret == 0
+      raise RuntimeError.from_errno("pthread_join", Errno.new(ret)) unless ret == 0
       value
     end
 

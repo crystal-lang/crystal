@@ -1,4 +1,3 @@
-require "../client"
 require "../common"
 require "mime/media_type"
 
@@ -42,7 +41,7 @@ class HTTP::Client::Response
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
   def cookies
-    @cookies ||= Cookies.from_headers(headers)
+    @cookies ||= Cookies.from_server_headers(headers)
   end
 
   def keep_alive?

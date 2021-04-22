@@ -1,7 +1,7 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "flate"
-  require "gzip"
+  require "compress/deflate"
+  require "compress/gzip"
 {% end %}
 
 module HTTP
@@ -38,10 +38,7 @@ module HTTP
         if body_type.prohibited?
           body = nil
         elsif content_length = content_length(headers)
-          if content_length != 0
-            # Don't create IO for Content-Length == 0
-            body = FixedLengthContent.new(io, content_length)
-          end
+          body = FixedLengthContent.new(io, content_length)
         elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
@@ -53,15 +50,26 @@ module HTTP
         end
 
         if decompress && body
+          encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
-            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            case encoding
+            when "gzip", "deflate"
+              raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            else
+              # not a format we support
+            end
           {% else %}
-            encoding = headers["Content-Encoding"]?
             case encoding
             when "gzip"
-              body = Gzip::Reader.new(body, sync_close: true)
+              body = Compress::Gzip::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
             when "deflate"
-              body = Flate::Reader.new(body, sync_close: true)
+              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              headers.delete("Content-Encoding")
+              headers.delete("Content-Length")
+            else
+              # not a format we support
             end
           {% end %}
         end
@@ -133,7 +141,7 @@ module HTTP
     return unless mime_type
 
     charset = mime_type["charset"]?
-    return unless charset
+    return if !charset || charset == "utf-8"
 
     body.set_encoding(charset, invalid: :skip)
   end
@@ -211,6 +219,7 @@ module HTTP
     Host
     Last-Modified
     Last-modified
+    Location
     Referer
     User-Agent
     User-agent
@@ -228,6 +237,7 @@ module HTTP
     expires
     host
     last-modified
+    location
     referer
     user-agent
   )
@@ -287,7 +297,7 @@ module HTTP
   def self.serialize_chunked_body(io, body)
     buf = uninitialized UInt8[8192]
     while (buf_length = body.read(buf.to_slice)) > 0
-      buf_length.to_s(16, io)
+      buf_length.to_s(io, 16)
       io << "\r\n"
       io.write(buf.to_slice[0, buf_length])
       io << "\r\n"
@@ -310,16 +320,16 @@ module HTTP
   def self.keep_alive?(message)
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
-      return true
+      true
     when "close", "upgrade"
-      return false
-    end
-
-    case message.version
-    when "HTTP/1.0"
       false
     else
-      true
+      case message.version
+      when "HTTP/1.0"
+        false
+      else
+        true
+      end
     end
   end
 
@@ -408,6 +418,8 @@ module HTTP
         io << '\\'
       when 0x00..0x1F, 0x7F
         raise ArgumentError.new("String contained invalid character #{byte.chr.inspect}")
+      else
+        # output byte as is
       end
       io.write_byte byte
     end
@@ -435,3 +447,4 @@ require "./client/response"
 require "./headers"
 require "./content"
 require "./cookie"
+require "./formdata"

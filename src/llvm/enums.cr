@@ -378,6 +378,13 @@ module LLVM
     BitField            = 1 << 19
     NoReturn            = 1 << 20
     MainSubprogram      = 1 << 21
+    PassByValue         = 1 << 22
+    TypePassByReference = 1 << 23
+    EnumClass           = 1 << 24
+    Thunk               = 1 << 25
+    NonTrivial          = 1 << 26
+    BigEndian           = 1 << 27
+    LittleEndian        = 1 << 28
   end
 
   struct Value
@@ -416,5 +423,38 @@ module LLVM
 
   enum ModuleFlag : Int32
     Warning = 2
+  end
+
+  struct Metadata
+    enum Type : UInt32
+      Dbg                   =  0 # "dbg"
+      Tbaa                  =  1 # "tbaa"
+      Prof                  =  2 # "prof"
+      Fpmath                =  3 # "fpmath"
+      Range                 =  4 # "range"
+      TbaaStruct            =  5 # "tbaa.struct"
+      InvariantLoad         =  6 # "invariant.load"
+      AliasScope            =  7 # "alias.scope"
+      Noalias               =  8 # "noalias"
+      Nontemporal           =  9 # "nontemporal"
+      MemParallelLoopAccess = 10 # "llvm.mem.parallel_loop_access"
+      Nonnull               = 11 # "nonnull"
+      Dereferenceable       = 12 # "dereferenceable"
+      DereferenceableOrNull = 13 # "dereferenceable_or_null"
+      MakeImplicit          = 14 # "make.implicit"
+      Unpredictable         = 15 # "unpredictable"
+      InvariantGroup        = 16 # "invariant.group"
+      Align                 = 17 # "align"
+      Loop                  = 18 # "llvm.loop"
+      Type                  = 19 # "type"
+      SectionPrefix         = 20 # "section_prefix"
+      AbsoluteSymbol        = 21 # "absolute_symbol"
+      Associated            = 22 # "associated"
+      Callees               = 23 # "callees"
+      IrrLoop               = 24 # "irr_loop"
+      AccessGroup           = 25 # "llvm.access.group"
+      Callback              = 26 # "callback"
+      PreserveAccessIndex   = 27 # "llvm.preserve.*.access.index"
+    end
   end
 end

@@ -178,4 +178,16 @@ describe YAML::Builder do
       builder.start_mapping
     end
   end
+
+  it ".build (with block)" do
+    String.build do |io|
+      YAML::Builder.build(io) do |builder|
+        builder.stream do
+          builder.document do
+            builder.scalar(1)
+          end
+        end
+      end
+    end.should eq 1.to_yaml
+  end
 end

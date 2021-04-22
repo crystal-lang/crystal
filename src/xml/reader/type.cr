@@ -1,4 +1,4 @@
-struct XML::Reader
+class XML::Reader
   enum Type
     NONE                   =  0
     ELEMENT                =  1

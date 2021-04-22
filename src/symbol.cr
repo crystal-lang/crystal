@@ -54,7 +54,7 @@ struct Symbol
     io << to_s
   end
 
-  # Determines if a string needs to be quoted to be used for a symbol.
+  # Determines if a string needs to be quoted to be used for a symbol literal.
   #
   # ```
   # Symbol.needs_quotes? "string"      # => false
@@ -63,9 +63,23 @@ struct Symbol
   def self.needs_quotes?(string) : Bool
     case string
     when "+", "-", "*", "&+", "&-", "&*", "/", "//", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
-      # Nothing
-    when "&", "|", "^", "~", "**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
-      # Nothing
+      false
+    when "&", "|", "^", "~", "**", "&**", ">>", "<<", "%", "[]", "<=>", "===", "[]?", "[]="
+      false
+    when "_"
+      false
+    else
+      needs_quotes_for_named_argument?(string)
+    end
+  end
+
+  # :nodoc:
+  # Determines if a string needs to be quoted to be used for an external
+  # parameter name or a named argument's key.
+  def self.needs_quotes_for_named_argument?(string)
+    case string
+    when "", "_"
+      true
     else
       string.each_char_with_index do |char, i|
         if i == 0 && char.ascii_number?
@@ -79,8 +93,8 @@ struct Symbol
           return true
         end
       end
+      false
     end
-    false
   end
 
   def clone

@@ -1,5 +1,4 @@
 require "./spec_helper"
-require "../../support/errno"
 require "socket"
 
 describe UDPSocket do
@@ -79,14 +78,32 @@ describe UDPSocket do
                  expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
                    udp.multicast_interface 0
                  end
-                 udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
+
+                 begin
+                   udp.multicast_interface Socket::IPAddress.new(unspecified_address, 0)
+                 rescue e : Socket::Error
+                   if e.os_error == Errno::ENOPROTOOPT
+                     pending!("Multicast device selection not available on this host")
+                   else
+                     raise e
+                   end
+                 end
 
                  Socket::IPAddress.new("224.0.0.254", port)
                when Socket::Family::INET6
                  expect_raises(Socket::Error, "Unsupported IP address family: INET6. For use with IPv4 only") do
                    udp.multicast_interface(Socket::IPAddress.new(unspecified_address, 0))
                  end
-                 udp.multicast_interface(0)
+
+                 begin
+                   udp.multicast_interface(0)
+                 rescue e : Socket::Error
+                   if e.os_error == Errno::ENOPROTOOPT
+                     pending!("Multicast device selection not available on this host")
+                   else
+                     raise e
+                   end
+                 end
 
                  Socket::IPAddress.new("ff02::102", port)
                else
@@ -98,7 +115,13 @@ describe UDPSocket do
         udp.multicast_loopback?.should eq(true)
 
         udp.send("testing", addr)
-        udp.receive[0].should eq("testing")
+        udp.read_timeout = 1.second
+        begin
+          udp.receive[0].should eq("testing")
+        rescue IO::TimeoutError
+          # Since this test doesn't run over the loopback interface, this test
+          # fails when there is a firewall in use. Don't fail in that case.
+        end
 
         udp.leave_group(addr)
         udp.send("testing", addr)
@@ -108,7 +131,7 @@ describe UDPSocket do
           sleep 100.milliseconds
           udp.close
         end
-        expect_raises_errno(Errno::EBADF, "Error receiving datagram: Bad file descriptor") { udp.receive }
+        expect_raises(IO::Error, "Closed stream") { udp.receive }
       end
     end
   end

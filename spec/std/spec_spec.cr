@@ -46,7 +46,7 @@ describe "Spec matchers" do
   end
 
   describe "should_not be_falsey" do
-    it "passses for true" do
+    it "passes for true" do
       true.should_not be_falsey
     end
 

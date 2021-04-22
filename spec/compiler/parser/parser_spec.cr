@@ -71,7 +71,7 @@ module Crystal
     it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
     [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
-     ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
+     ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":&**", ":>>", ":<<", ":%", ":[]", ":[]?",
      ":[]=", ":<=>", ":==="].each do |symbol|
       value = symbol[1, symbol.size - 1]
       value = value[1, value.size - 2] if value.starts_with?('"')
@@ -81,10 +81,11 @@ module Crystal
     it_parses ":[]=", "[]=".symbol
     it_parses ":[]?", "[]?".symbol
     it_parses %(:"\\\\foo"), "\\foo".symbol
-    it_parses %(:"\\\"foo"), "\"foo".symbol
-    it_parses %(:"\\\"foo\\\""), "\"foo\"".symbol
+    it_parses %(:"\\"foo"), "\"foo".symbol
+    it_parses %(:"\\"foo\\""), "\"foo\"".symbol
     it_parses %(:"\\a\\b\\n\\r\\t\\v\\f\\e"), "\a\b\n\r\t\v\f\e".symbol
     it_parses %(:"\\u{61}"), "a".symbol
+    it_parses %(:""), "".symbol
 
     it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
     it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array
@@ -111,6 +112,18 @@ module Crystal
     it_parses "1 / -2", Call.new(1.int32, "/", -2.int32)
     it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", 3.int32), "+", Call.new(4.int32, "/", 5.int32))
     it_parses "2 * (3 + 4)", Call.new(2.int32, "*", Expressions.new([Call.new(3.int32, "+", 4.int32)] of ASTNode))
+    it_parses "a = 1; b = 2; c = 3; a-b-c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
+    it_parses "a = 1; b = 2; c = 3; a-b -c", Expressions.new([
+      Assign.new("a".var, 1.int32),
+      Assign.new("b".var, 2.int32),
+      Assign.new("c".var, 3.int32),
+      Call.new(Call.new("a".var, "-", "b".var), "-", "c".var),
+    ])
     it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
     it_parses "1 + /foo/", Call.new(1.int32, "+", regex("foo"))
     it_parses "1+0", Call.new(1.int32, "+", 0.int32)
@@ -124,6 +137,7 @@ module Crystal
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
+    it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
 
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
@@ -197,13 +211,16 @@ module Crystal
       extend class struct module enum while until return
       next break lib fun alias pointerof sizeof
       instance_sizeof offsetof typeof private protected asm out
-      end
+      end self in
     ).each do |kw|
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as an argument name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as an argument name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
       it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
       it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+
+      assert_syntax_error "foo { |#{kw})| }", "cannot use '#{kw}' as a block argument name", 1, 8
+      assert_syntax_error "foo { |(#{kw}))| }", "cannot use '#{kw}' as a block argument name", 1, 9
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
@@ -278,6 +295,7 @@ module Crystal
     it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
     it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
     assert_syntax_error "def foo(x, *); 1; end", "named arguments must follow bare *"
+    it_parses "def foo(x, *, y, &); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1, block_arg: Arg.new(""), yields: 0)
 
     assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
     assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
@@ -355,6 +373,10 @@ module Crystal
     it_parses "foo = 1; foo(+1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", 1.int32)]
     it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "-", 1.int32)]
     it_parses "foo = 1; foo(-1)", [Assign.new("foo".var, 1.int32), Call.new(nil, "foo", -1.int32)]
+    it_parses "foo = 1; b = 2; foo -b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "foo = 1; b = 2; foo +b", [Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo -b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "-", "b".var)]
+    it_parses "def foo(x)\n x\nend; foo = 1; b = 2; foo +b", [Def.new("foo", ["x".arg], "x".var), Assign.new("foo".var, 1.int32), Assign.new("b".var, 2.int32), Call.new("foo".var, "+", "b".var)]
 
     it_parses "foo(&block)", Call.new(nil, "foo", block_arg: "block".call)
     it_parses "foo &block", Call.new(nil, "foo", block_arg: "block".call)
@@ -407,6 +429,8 @@ module Crystal
     it_parses %(foo("foo bar": 1, "baz": 2)), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
     it_parses %(foo "foo bar": 1, "baz": 2), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
 
+    it_parses %(foo(Foo: 1, Bar: 2)), Call.new(nil, "foo", named_args: [NamedArgument.new("Foo", 1.int32), NamedArgument.new("Bar", 2.int32)])
+
     it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
     it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
 
@@ -426,6 +450,13 @@ module Crystal
     it_parses "x = 1; foo x {\n}", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
     it_parses "foo x do\nend", Call.new(nil, "foo", ["x".call] of ASTNode, Block.new)
     it_parses "foo x, y do\nend", Call.new(nil, "foo", ["x".call, "y".call] of ASTNode, Block.new)
+    it_parses "foo(bar do\nend)", Call.new(nil, "foo", [Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "foo(bar { })", Call.new(nil, "foo", [Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(bar do\nend)", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(bar do\nend)", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(foo bar do\nend)", Expressions.new([Call.new(nil, "foo", ["bar".call] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(baz; bar do\nend)", Expressions.new(["baz".call, Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
+    it_parses "(bar {})", Expressions.new([Call.new(nil, "bar", [] of ASTNode, Block.new)] of ASTNode)
     it_parses "1.x; foo do\nend", [Call.new(1.int32, "x"), Call.new(nil, "foo", block: Block.new)] of ASTNode
     it_parses "x = 1; foo.bar x do\nend", [Assign.new("x".var, 1.int32), Call.new("foo".call, "bar", ["x".var] of ASTNode, Block.new)]
 
@@ -447,10 +478,10 @@ module Crystal
 
     ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
       it_parses "def #{op}; end;", Def.new(op)
+      it_parses "def #{op}(); end;", Def.new(op)
+      it_parses "def self.#{op}; end;", Def.new(op, receiver: "self".var)
+      it_parses "def self.#{op}(); end;", Def.new(op, receiver: "self".var)
     end
-
-    it_parses "def %(); end;", Def.new("%")
-    it_parses "def /(); end;", Def.new("/")
 
     ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "//", "%", "|", "&", "^", "**", "===", "=~", "!~", "&+", "&-", "&*", "&**"].each do |op|
       it_parses "1 #{op} 2", Call.new(1.int32, op, 2.int32)
@@ -460,7 +491,6 @@ module Crystal
       it_parses "foo(a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "foo(z: 0, a: n #{op} 2)", Call.new(nil, "foo", [] of ASTNode, named_args: [NamedArgument.new("z", 0.int32), NamedArgument.new("a", Call.new("n".call, op, 2.int32))])
       it_parses "def #{op}(); end", Def.new(op)
-      it_parses "macro #{op};end", Macro.new(op, [] of Arg, Expressions.new)
 
       it_parses "foo = 1; ->foo.#{op}(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, op, ["Int32".path] of ASTNode)]
       it_parses "->Foo.#{op}(Int32)", ProcPointer.new("Foo".path, op, ["Int32".path] of ASTNode)
@@ -539,6 +569,7 @@ module Crystal
     it_parses "Foo(typeof(1), typeof(2))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode), TypeOf.new([2.int32] of ASTNode)] of ASTNode)
     it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
     it_parses "Foo({X, Y,})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+    it_parses "Foo({*X, *{Y}})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path.splat, Generic.new(Path.global("Tuple"), ["Y".path] of ASTNode).splat] of ASTNode)] of ASTNode)
     it_parses "Foo({->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), [ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "Foo({String, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new] of ASTNode)] of ASTNode)
     it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, ProcNotation.new, ProcNotation.new] of ASTNode)] of ASTNode)
@@ -547,6 +578,7 @@ module Crystal
 
     it_parses "Foo(x: U)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path)])
     it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
+    it_parses "Foo(X: U, Y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("X", "U".path), NamedArgument.new("Y", "V".path)])
     assert_syntax_error "Foo(T, x: U)"
     assert_syntax_error "Foo(x: T y: U)"
 
@@ -555,7 +587,9 @@ module Crystal
 
     it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
     it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
+    it_parses "Foo({X: X, Y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("X", "X".path), NamedArgument.new("Y", "Y".path)])] of ASTNode)
     it_parses "Foo(T, {x: X})", Generic.new("Foo".path, ["T".path, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
+    it_parses "Foo({x: X, typeof: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("typeof", "Y".path)])] of ASTNode)
     assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
 
     it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
@@ -593,6 +627,8 @@ module Crystal
     it_parses "foo { |a, b, | 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
     it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
     it_parses "a b() {}", Call.new(nil, "a", Call.new(nil, "b", block: Block.new))
+
+    assert_syntax_error "foo(&block) {}"
 
     it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
       block: Block.new(["a".var, "__arg0".var, "__arg1".var],
@@ -844,8 +880,12 @@ module Crystal
     it_parses "{% a = 1 if 2 %}", MacroExpression.new(If.new(2.int32, Assign.new("a".var, 1.int32)), output: false)
     it_parses "{% if 1; 2; end %}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
     it_parses "{%\nif 1; 2; end\n%}", MacroExpression.new(If.new(1.int32, 2.int32), output: false)
-    it_parses "{% unless 1; 2; end %}", MacroExpression.new(If.new(1.int32, Nop.new, 2.int32), output: false)
+    it_parses "{% unless 1; 2; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, Nop.new), output: false)
+    it_parses "{% unless 1; 2; else 3; end %}", MacroExpression.new(Unless.new(1.int32, 2.int32, 3.int32), output: false)
     it_parses "{%\n1\n2\n3\n%}", MacroExpression.new(Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode), output: false)
+
+    assert_syntax_error "{% unless 1; 2; elsif 3; 4; end %}"
+    assert_syntax_error "{% unless 1 %} 2 {% elsif 3 %} 3 {% end %}"
 
     it_parses "{{ 1 // 2 }}", MacroExpression.new(Expressions.from([Call.new(1.int32, "//", 2.int32)] of ASTNode))
     it_parses "{{ //.options }}", MacroExpression.new(Expressions.from([Call.new(RegexLiteral.new(StringLiteral.new("")), "options")] of ASTNode))
@@ -882,8 +922,23 @@ module Crystal
 
     it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
 
+    it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
+
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
+
+    it_parses "macro foo=;end", Macro.new("foo=", body: Expressions.new)
+    assert_syntax_error "macro Foo;end", "macro can't have a receiver"
+    assert_syntax_error "macro foo.bar;end", "macro can't have a receiver"
+    assert_syntax_error "macro Foo.bar;end", "macro can't have a receiver"
+    assert_syntax_error "macro foo&&;end"
+    assert_syntax_error "macro foo"
+
+    ["`", "<<", "<", "<=", "==", "===", "!=", "=~", "!~", ">>", ">", ">=", "+", "-", "*", "/", "//", "~", "%", "&", "|", "^", "**", "[]?", "[]=", "<=>", "&+", "&-", "&*", "&**"].each do |op|
+      it_parses "macro #{op};end", Macro.new(op, body: Expressions.new)
+    end
+
+    assert_syntax_error "macro !;end", "'!' is a pseudo-method and can't be redefined"
 
     it_parses "def foo;{{@type}};end", Def.new("foo", body: Expressions.from([MacroExpression.new("@type".instance_var)] of ASTNode), macro_def: true)
 
@@ -920,6 +975,9 @@ module Crystal
     it_parses "sizeof(X)", SizeOf.new("X".path)
     it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
     it_parses "offsetof(X, @a)", OffsetOf.new("X".path, "@a".instance_var)
+    it_parses "offsetof(X, 1)", OffsetOf.new("X".path, 1.int32)
+    assert_syntax_error "offsetof(X, 1.0)", "expecting an integer offset, not '1.0'"
+    assert_syntax_error "offsetof(X, 'c')", "expecting an instance variable or a integer offset, not 'c'"
 
     it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
     it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode))
@@ -942,6 +1000,11 @@ module Crystal
         Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
       )
     )
+
+    it_parses "{{ foo.nil? }}", MacroExpression.new(Call.new(Var.new("foo"), "nil?"))
+    it_parses "{{ foo &.nil? }}", MacroExpression.new(Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "nil?"))))
+    it_parses "{{ foo.nil?(foo) }}", MacroExpression.new(Call.new(Var.new("foo"), "nil?", [Var.new("foo")] of ASTNode))
+    it_parses "{{ nil?(foo) }}", MacroExpression.new(Call.new(nil, "nil?", [Var.new("foo")] of ASTNode))
 
     it_parses "foo.!", Not.new("foo".call)
     it_parses "foo.!.!", Not.new(Not.new("foo".call))
@@ -984,7 +1047,9 @@ module Crystal
     it_parses "a = /=/", Assign.new("a".var, regex("="))
     it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
     it_parses "a; if / /\n/ /\nelsif / /\n/ /\nend", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
-    it_parses "a; while / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
+    it_parses "a; unless / /; / /; else; / /; end", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nunless / /\n/ /\nelse\n/ /\nend", ["a".call, Unless.new(regex(" "), regex(" "), regex(" "))]
+    it_parses "a\nwhile / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "a\nwhile / /\n/ /\nend", ["a".call, While.new(regex(" "), regex(" "))]
     it_parses "[/ /, / /]", ArrayLiteral.new([regex(" "), regex(" ")] of ASTNode)
     it_parses "{/ / => / /, / / => / /}", HashLiteral.new([HashLiteral::Entry.new(regex(" "), regex(" ")), HashLiteral::Entry.new(regex(" "), regex(" "))])
@@ -992,7 +1057,10 @@ module Crystal
     it_parses "begin; / /; end", Expressions.new([regex(" ")] of ASTNode)
     it_parses "begin\n/ /\nend", Expressions.new([regex(" ")] of ASTNode)
     it_parses "/\\//", regex("/")
+    it_parses "/\\ /", regex(" ")
     it_parses "%r(/)", regex("/")
+    it_parses "%r(\\/)", regex("/")
+    it_parses "%r(\\ )", regex(" ")
     it_parses "a()/3", Call.new("a".call, "/", 3.int32)
     it_parses "a() /3", Call.new("a".call, "/", 3.int32)
     it_parses "a.b() /3", Call.new(Call.new("a".call, "b"), "/", 3.int32)
@@ -1044,47 +1112,76 @@ module Crystal
     it_parses %({"foo": 1, "bar": 2}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32), NamedTupleLiteral::Entry.new("bar", 2.int32)])
 
     assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
+    assert_syntax_error "{a[0]: 1}", "expecting token '=>', not ':'"
+    assert_syntax_error "{a[]: 1}", "expecting token '=>', not ':'"
 
     it_parses "{} of Int => Double", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new("Int".path, "Double".path))
+    it_parses "{} of Int32 -> Int32 => Int32", HashLiteral.new([] of HashLiteral::Entry, of: HashLiteral::Entry.new(ProcNotation.new(["Int32".path] of ASTNode, "Int32".path), "Int32".path))
 
     it_parses "require \"foo\"", Require.new("foo")
     it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
 
-    it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-    it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
-    it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-    it_parses "case 1\nwhen 1\n2\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)])
-    it_parses "case / /; when / /; / /; else; / /; end", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
-    it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
+    it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32, exhaustive: false)
+    it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32, exhaustive: false)
+    it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32, exhaustive: false)
+    it_parses "case 1\nwhen 1\n2\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case / /; when / /; / /; else; / /; end", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "), exhaustive: false)
+    it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "), exhaustive: false)
 
-    it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-    it_parses "case 1; when x then 2; else; 3; end", Case.new(1.int32, [When.new(["x".call] of ASTNode, 2.int32)], 3.int32)
-    it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
-    it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
+    it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32, exhaustive: false)
+    it_parses "case 1; when x then 2; else; 3; end", Case.new(1.int32, [When.new(["x".call] of ASTNode, 2.int32)], 3.int32, exhaustive: false)
+    it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false), If.new("a".call)]
+    it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false), If.new("a".call)]
 
-    it_parses "case 1\nwhen .foo\n2\nend", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)])
-    it_parses "case 1\nwhen .responds_to?(:foo)\n2\nend", Case.new(1.int32, [When.new([RespondsTo.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)])
-    it_parses "case 1\nwhen .is_a?(T)\n2\nend", Case.new(1.int32, [When.new([IsA.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
-    it_parses "case 1\nwhen .as(T)\n2\nend", Case.new(1.int32, [When.new([Cast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
-    it_parses "case 1\nwhen .as?(T)\n2\nend", Case.new(1.int32, [When.new([NilableCast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)])
-    it_parses "case 1\nwhen .!()\n2\nend", Case.new(1.int32, [When.new([Not.new(ImplicitObj.new)] of ASTNode, 2.int32)])
-    it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
-    it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
-    it_parses "case {1, 2}\nwhen {3, 4}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode)] of ASTNode, 5.int32)])
-    it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
-    it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
-    it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
-    it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32))
-    it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")))
+    it_parses "case 1\nwhen .foo\n2\nend", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .responds_to?(:foo)\n2\nend", Case.new(1.int32, [When.new([RespondsTo.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .is_a?(T)\n2\nend", Case.new(1.int32, [When.new([IsA.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .as(T)\n2\nend", Case.new(1.int32, [When.new([Cast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .as?(T)\n2\nend", Case.new(1.int32, [When.new([NilableCast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .!()\n2\nend", Case.new(1.int32, [When.new([Not.new(ImplicitObj.new)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case {1, 2}\nwhen {3, 4}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode)] of ASTNode, 5.int32)], else: nil, exhaustive: false)
+    it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)], else: nil, exhaustive: false)
+    it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)], else: nil, exhaustive: false)
+    it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)], else: nil, exhaustive: false)
+    it_parses "case a\nwhen b\n1 / 2\nelse\n1 / 2\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, Call.new(1.int32, "/", 2.int32))], Call.new(1.int32, "/", 2.int32), exhaustive: false)
+    it_parses "case a\nwhen b\n/ /\n\nelse\n/ /\nend", Case.new("a".call, [When.new(["b".call] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")), exhaustive: false)
     assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
-    it_parses "case 1; end", [Case.new(1.int32, [] of When)]
-    it_parses "case foo; end", [Case.new("foo".call, [] of When)]
-    it_parses "case\nend", [Case.new(nil, [] of When)]
-    it_parses "case;end", [Case.new(nil, [] of When)]
-    it_parses "case 1\nelse\n2\nend", [Case.new(1.int32, [] of When, 2.int32)]
-    it_parses "a = 1\ncase 1\nwhen a then 1\nend", [Assign.new("a".var, 1.int32), Case.new(1.int32, [When.new(["a".var] of ASTNode, 1.int32)])] of ASTNode
-    it_parses "case\nwhen true\n1\nend", [Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When)]
-    it_parses "case;when true;1;end", [Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When)]
+    it_parses "case 1; end", Case.new(1.int32, [] of When, else: nil, exhaustive: false)
+    it_parses "case foo; end", Case.new("foo".call, [] of When, else: nil, exhaustive: false)
+    it_parses "case\nend", Case.new(nil, [] of When, else: nil, exhaustive: false)
+    it_parses "case;end", Case.new(nil, [] of When, else: nil, exhaustive: false)
+    it_parses "case 1\nelse\n2\nend", Case.new(1.int32, [] of When, 2.int32, exhaustive: false)
+    it_parses "a = 1\ncase 1\nwhen a then 1\nend", [Assign.new("a".var, 1.int32), Case.new(1.int32, [When.new(["a".var] of ASTNode, 1.int32)], else: nil, exhaustive: false)] of ASTNode
+    it_parses "case\nwhen true\n1\nend", Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When, else: nil, exhaustive: false)
+    it_parses "case;when true;1;end", Case.new(nil, [When.new([true.bool] of ASTNode, 1.int32)] of When, else: nil, exhaustive: false)
+
+    it_parses "case 1\nin Int32; 2; end", Case.new(1.int32, [When.new(["Int32".path] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin Int32.class; 2; end", Case.new(1.int32, [When.new([Call.new("Int32".path, "class")] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin Foo(Int32); 2; end", Case.new(1.int32, [When.new([Generic.new("Foo".path, ["Int32".path] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin false; 2; end", Case.new(1.int32, [When.new([false.bool] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin true; 2; end", Case.new(1.int32, [When.new([true.bool] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin nil; 2; end", Case.new(1.int32, [When.new([NilLiteral.new] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case 1\nin .bar?; 2; end", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, "bar?")] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+
+    it_parses "case {1}\nin {Int32}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new(["Int32".path] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {Int32.class}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new("Int32".path, "class")] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {Foo(Int32)}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([Generic.new("Foo".path, ["Int32".path] of ASTNode)] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {false}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([false.bool] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {true}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([true.bool] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {nil}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([NilLiteral.new] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {.bar?}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "bar?")] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+    it_parses "case {1}\nin {_}; 2; end", Case.new(TupleLiteral.new([1.int32] of ASTNode), [When.new([TupleLiteral.new([Underscore.new] of ASTNode)] of ASTNode, 2.int32)], else: nil, exhaustive: true)
+
+    assert_syntax_error "case 1\nin Int32; 2; when 2", "expected 'in', not 'when'"
+    assert_syntax_error "case 1\nwhen Int32; 2; in 2", "expected 'when', not 'in'"
+    assert_syntax_error "case 1\nin Int32; 2; else", "exhaustive case (case ... in) doesn't allow an 'else'"
+    assert_syntax_error "case 1\nin 1; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
+    assert_syntax_error "case 1\nin .nil?; 2", "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)"
+    assert_syntax_error "case 1\nin _;", "'when _' is not supported"
+
+    it_parses "case 1; when 2 then /foo/; end", Case.new(1.int32, [When.new([2.int32] of ASTNode, RegexLiteral.new("foo".string))], else: nil, exhaustive: false)
 
     it_parses "select\nwhen foo\n2\nend", Select.new([Select::When.new("foo".call, 2.int32)])
     it_parses "select\nwhen foo\n2\nwhen bar\n4\nend", Select.new([Select::When.new("foo".call, 2.int32), Select::When.new("bar".call, 4.int32)])
@@ -1184,6 +1281,8 @@ module Crystal
     it_parses "[] of ->\n", ArrayLiteral.new(of: ProcNotation.new)
     it_parses "->foo=", ProcPointer.new(nil, "foo=")
     it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
+    it_parses "->@foo.foo", [ProcPointer.new("@foo".instance_var, "foo")]
+    it_parses "->@@foo.foo", [ProcPointer.new("@@foo".class_var, "foo")]
 
     it_parses "foo &->bar", Call.new(nil, "foo", block_arg: ProcPointer.new(nil, "bar"))
 
@@ -1395,6 +1494,7 @@ module Crystal
     it_parses "enum Foo; @[Bar]; end", EnumDef.new("Foo".path, [Annotation.new("Bar".path)] of ASTNode)
 
     assert_syntax_error "enum Foo; A B; end", "expecting ';', 'end' or newline after enum member"
+    assert_syntax_error "enum Foo\n  A,   B,   C\nend\n", "expecting ';', 'end' or newline after enum member"
 
     it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
     it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
@@ -1456,7 +1556,7 @@ module Crystal
     it_parses "call(foo : A, end : B)", Call.new(nil, "call", [TypeDeclaration.new("foo".var, "A".path), TypeDeclaration.new("end".var, "B".path)] of ASTNode)
     it_parses "call foo : A, end : B", Call.new(nil, "call", [TypeDeclaration.new("foo".var, "A".path), TypeDeclaration.new("end".var, "B".path)] of ASTNode)
 
-    it_parses "case :foo; when :bar; 2; end", Case.new("foo".symbol, [When.new(["bar".symbol] of ASTNode, 2.int32)])
+    it_parses "case :foo; when :bar; 2; end", Case.new("foo".symbol, [When.new(["bar".symbol] of ASTNode, 2.int32)], else: nil, exhaustive: false)
 
     it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
@@ -1500,10 +1600,20 @@ module Crystal
     it_parses "foo.Bar", Call.new("foo".call, "Bar")
 
     [{'(', ')'}, {'[', ']'}, {'<', '>'}, {'{', '}'}, {'|', '|'}].each do |open, close|
-      it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
       it_parses "{% begin %}%#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%#{open} %s #{close}"))
       it_parses "{% begin %}%q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%q#{open} %s #{close}"))
+      it_parses "{% begin %}%Q#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%Q#{open} %s #{close}"))
+      it_parses "{% begin %}%i#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%i#{open} %s #{close}"))
+      it_parses "{% begin %}%w#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%w#{open} %s #{close}"))
+      it_parses "{% begin %}%x#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%x#{open} %s #{close}"))
+      it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
     end
+
+    it_parses %(foo(bar:"a", baz:"b")), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".string), NamedArgument.new("baz", "b".string)])
+    it_parses %(foo(bar:a, baz:b)), Call.new(nil, "foo", named_args: [NamedArgument.new("bar", "a".call), NamedArgument.new("baz", "b".call)])
+    it_parses %({foo:"a", bar:"b"}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".string), NamedTupleLiteral::Entry.new("bar", "b".string)])
+    it_parses %({foo:'a', bar:'b'}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", CharLiteral.new('a')), NamedTupleLiteral::Entry.new("bar", CharLiteral.new('b'))])
+    it_parses %({foo:a, bar:b}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", "a".call), NamedTupleLiteral::Entry.new("bar", "b".call)])
 
     assert_syntax_error "return do\nend", "unexpected token: do"
 
@@ -1670,7 +1780,9 @@ module Crystal
     %w(! is_a? as as? responds_to? nil?).each do |name|
       assert_syntax_error "def #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
       assert_syntax_error "def self.#{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
-      assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+      if name != "!"
+        assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+      end
     end
 
     assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
@@ -1713,6 +1825,38 @@ module Crystal
     assert_syntax_error "1 ? : 2 : 3"
 
     assert_syntax_error %(def foo("bar");end), "expected argument internal name"
+
+    it_parses "{[] of Foo, Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "new")] of ASTNode)
+    it_parses "{[] of Foo, ::Bar::Baz.new}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz], global: true), "new")] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz + 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "+", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz * 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "*", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, Bar::Baz ** 2}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(Path.new(%w[Bar Baz]), "**", [2.int32] of ASTNode)] of ASTNode)
+    it_parses "{[] of Foo, ::foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new(nil, "foo", global: true)] of ASTNode)
+    it_parses "{[] of Foo, self.foo}", TupleLiteral.new([ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("self".var, "foo")] of ASTNode)
+
+    it_parses <<-'CR', Macro.new("foo", body: Expressions.new([MacroLiteral.new("  <<-FOO\n    \#{ "), MacroVar.new("var"), MacroLiteral.new(" }\n  FOO\n")] of ASTNode))
+      macro foo
+        <<-FOO
+          #{ %var }
+        FOO
+      end
+      CR
+
+    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO, <<-BAR + \"\"\n  FOO\n  BAR\n"))
+      macro foo
+        <<-FOO, <<-BAR + ""
+        FOO
+        BAR
+      end
+      CR
+
+    it_parses <<-'CR', Macro.new("foo", body: MacroLiteral.new("  <<-FOO\n    %foo\n  FOO\n"))
+      macro foo
+        <<-FOO
+          %foo
+        FOO
+      end
+      CR
 
     describe "end locations" do
       assert_end_location "nil"
@@ -1760,6 +1904,7 @@ module Crystal
       assert_end_location "pointerof(@foo)"
       assert_end_location "sizeof(Foo)"
       assert_end_location "offsetof(Foo, @a)"
+      assert_end_location "offsetof({X, Y}, 1)"
       assert_end_location "typeof(1)"
       assert_end_location "1 if 2"
       assert_end_location "while 1; end"
@@ -1835,6 +1980,17 @@ module Crystal
 
       it_parses %(annotation Foo\nend\nrequire "bar"), [AnnotationDef.new("Foo".path), Require.new("bar")]
 
+      assert_syntax_error "def foo(x : *Int32); end", "invalid type splat"
+      assert_syntax_error "def foo(x : (*Int32)); end", "invalid type splat"
+      assert_syntax_error "def foo(x : Int32, Int32); end"
+      assert_syntax_error "def foo(x : (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : (Int32, Int32) | Int32); end"
+      assert_syntax_error "def foo(x : Int32 | (Int32, Int32)); end"
+      assert_syntax_error "def foo(x : {Int32, (Int32, Int32)}); end"
+      assert_syntax_error "def foo(x : 1); end"
+      assert_syntax_error "def foo(x : {sizeof(Int32), 2}); end"
+      assert_syntax_error "def foo(x : Array({sizeof(Int32), 2})); end"
+
       it "gets corrects of ~" do
         node = Parser.parse("\n  ~1")
         loc = node.location.not_nil!
@@ -1845,6 +2001,14 @@ module Crystal
       it "gets corrects end location for var" do
         parser = Parser.new("foo = 1\nfoo; 1")
         node = parser.parse.as(Expressions).expressions[1]
+        end_loc = node.end_location.not_nil!
+        end_loc.line_number.should eq(2)
+        end_loc.column_number.should eq(3)
+      end
+
+      it "gets corrects end location for var + var" do
+        parser = Parser.new("foo = 1\nfoo + nfoo; 1")
+        node = parser.parse.as(Expressions).expressions[1].as(Call).obj.as(Var)
         end_loc = node.end_location.not_nil!
         end_loc.line_number.should eq(2)
         end_loc.column_number.should eq(3)
@@ -1933,6 +2097,27 @@ module Crystal
 
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(12)
+      end
+
+      it "doesn't override yield with macro yield" do
+        parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
+        a_def = parser.parse.as(Def)
+        a_def.yields.should eq(1)
+      end
+
+      it "correctly computes line number after `\\{%\n` (#9857)" do
+        code = <<-CODE
+        macro foo
+          \\{%
+            1
+          %}
+        end
+
+        1
+        CODE
+
+        exps = Parser.parse(code).as(Expressions)
+        exps.expressions[1].location.not_nil!.line_number.should eq(7)
       end
     end
   end

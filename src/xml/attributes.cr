@@ -1,6 +1,6 @@
 require "./node"
 
-struct XML::Attributes
+class XML::Attributes
   include Enumerable(Node)
 
   def initialize(@node : Node)
@@ -14,6 +14,7 @@ struct XML::Attributes
   end
 
   def [](index : Int)
+    # TODO: Optimize to avoid double iteration
     size = self.size
 
     index += size if index < 0
@@ -60,7 +61,7 @@ struct XML::Attributes
 
   def to_s(io : IO) : Nil
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 

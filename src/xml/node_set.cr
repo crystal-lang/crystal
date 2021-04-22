@@ -1,4 +1,4 @@
-struct XML::NodeSet
+class XML::NodeSet
   include Enumerable(Node)
 
   def initialize(@doc : Node, @set : LibXML::NodeSet*)
@@ -33,7 +33,7 @@ struct XML::NodeSet
 
   def inspect(io : IO) : Nil
     io << '['
-    join ", ", io, &.inspect(io)
+    join io, ", ", &.inspect(io)
     io << ']'
   end
 
@@ -46,7 +46,7 @@ struct XML::NodeSet
   end
 
   def to_s(io : IO) : Nil
-    join '\n', io
+    join io, '\n'
   end
 
   def to_unsafe

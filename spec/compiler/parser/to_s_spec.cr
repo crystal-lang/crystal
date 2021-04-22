@@ -10,15 +10,15 @@ private def expect_to_s(original, expected = original, emit_doc = false, file = 
       parser.wants_doc = emit_doc
       node = parser.parse
       node.to_s(str, emit_doc: emit_doc)
-      str.to_s.should eq(expected), file, line
+      str.to_s.should eq(expected), file: file, line: line
 
       # Check keeping information for `to_s` on clone
       cloned = node.clone
       str.clear
       cloned.to_s(str, emit_doc: emit_doc)
-      str.to_s.should eq(expected), file, line
+      str.to_s.should eq(expected), file: file, line: line
     else
-      source.to_s.should eq(expected), file, line
+      source.to_s.should eq(expected), file: file, line: line
     end
   end
 end
@@ -47,6 +47,8 @@ describe "ASTNode#to_s" do
   expect_to_s %(/\\//), "/\\//"
   expect_to_s %(/\#{1 / 2}/)
   expect_to_s %<%r(/)>, %(/\\//)
+  expect_to_s %(/ /), %(/\\ /)
+  expect_to_s %(%r( )), %(/\\ /)
   expect_to_s %(foo &.bar), %(foo(&.bar))
   expect_to_s %(foo &.bar(1, 2, 3)), %(foo(&.bar(1, 2, 3)))
   expect_to_s %(foo { |i| i.bar { i } }), "foo do |i|\n  i.bar do\n    i\n  end\nend"
@@ -69,7 +71,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x : T = 1)\nend"
   expect_to_s "def foo(x : X, y : Y) forall X, Y\nend"
   expect_to_s %(foo : A | (B -> C))
-  expect_to_s %[%("\#{foo}")], %["\\\"\#{foo}\\\""]
+  expect_to_s %[%("\#{foo}")], %["\\"\#{foo}\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
   expect_to_s "foo(&.==(2))"
   expect_to_s "foo.nil?"
@@ -130,6 +132,7 @@ describe "ASTNode#to_s" do
   expect_to_s %((1 <= 2) <= 3)
   expect_to_s %(1 <= (2 <= 3))
   expect_to_s %(case 1; when .foo?; 2; end), %(case 1\nwhen .foo?\n  2\nend)
+  expect_to_s %(case 1; in .foo?; 2; end), %(case 1\nin .foo?\n  2\nend)
   expect_to_s %({(1 + 2)})
   expect_to_s %({foo: (1 + 2)})
   expect_to_s %q("#{(1 + 2)}")
@@ -167,4 +170,6 @@ describe "ASTNode#to_s" do
   expect_to_s "offsetof(Foo, @bar)"
   expect_to_s "def foo(**options, &block)\nend"
   expect_to_s "macro foo\n  123\nend"
+  expect_to_s "if true\n(  1)\nend"
+  expect_to_s "begin\n(  1)\nrescue\nend"
 end

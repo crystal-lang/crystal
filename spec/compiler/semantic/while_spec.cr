@@ -6,11 +6,37 @@ describe "Semantic: while" do
   end
 
   it "types while with break without value" do
-    assert_type("while true; break; end") { nil_type }
+    assert_type("while 1; break; end") { nil_type }
   end
 
   it "types while with break with value" do
-    assert_type("while true; break 1; end") { nil_type }
+    assert_type("while 1; break 'a'; end") { nilable char }
+  end
+
+  it "types while with multiple breaks with value" do
+    assert_type(%(
+      while 1
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { nilable union_of(char, tuple_of([string, int32])) }
+  end
+
+  it "types endless while with break without value" do
+    assert_type("while true; break; end") { nil_type }
+  end
+
+  it "types endless while with break with value" do
+    assert_type("while true; break 1; end") { int32 }
+  end
+
+  it "types endless while with multiple breaks with value" do
+    assert_type(%(
+      while true
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { union_of(char, tuple_of([string, int32])) }
   end
 
   it "reports break cannot be used outside a while" do
@@ -170,6 +196,80 @@ describe "Semantic: while" do
       )) { nilable int32 }
   end
 
+  it "doesn't use type at end of endless while if variable is reassigned" do
+    assert_type(%(
+      while true
+        a = 1
+        if 1 == 1
+          break
+        end
+        a = 'x'
+      end
+      a
+      )) { int32 }
+  end
+
+  it "doesn't use type at end of endless while if variable is reassigned (2)" do
+    assert_type(%(
+      a = ""
+      while true
+        a = 1
+        if 1 == 1
+          break
+        end
+        a = 'x'
+      end
+      a
+      )) { int32 }
+  end
+
+  it "doesn't use type at end of endless while if variable is reassigned (3)" do
+    assert_type(%(
+      a = {1}
+      while true
+        a = a[0]
+        if 1 == 1
+          break
+        end
+        a = {'x'}
+      end
+      a
+      )) { union_of(int32, char) }
+  end
+
+  it "uses type at end of endless while if variable is reassigned, but not before first break" do
+    assert_type(%(
+      while true
+        if 1 == 1
+          break
+        end
+        a = 1
+        if 1 == 1
+          break
+        end
+        a = 'x'
+      end
+      a
+      )) { nilable union_of(int32, char) }
+  end
+
+  it "uses type at end of endless while if variable is reassigned, but not before first break (2)" do
+    assert_type(%(
+      a = ""
+      while true
+        if 1 == 1
+          break
+        end
+        a = 1
+        if 1 == 1
+          break
+        end
+        a = 'x'
+      end
+      a
+      )) { union_of(int32, char, string) }
+  end
+
   it "rebinds condition variable after while body (#6158)" do
     assert_type(%(
       class Foo
@@ -225,5 +325,13 @@ describe "Semantic: while" do
       end
       foo
       )) { nilable int32 }
+  end
+
+  it "finds while cond assign target in Not (#10345)" do
+    assert_type(%(
+      while !(x = 1 || nil)
+      end
+      x
+      )) { int32 }
   end
 end

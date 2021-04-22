@@ -506,4 +506,66 @@ describe "Codegen: const" do
       test(ch)
     )).to_b.should be_true
   end
+
+  it "runs const side effects (#8862)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x = 0
+
+        def self.set
+          @@x = 3
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      a = HELLO
+
+      HELLO = begin
+        Foo.set
+        1 &+ 2
+      end
+
+      a &+ Foo.x
+      )).to_i.should eq(6)
+  end
+
+  it "supports closured vars inside initializers (#10474)" do
+    run(%(
+      class Foo
+        def bar
+          3
+        end
+      end
+
+      def func(&block : -> Int32)
+        block.call
+      end
+
+      CONST = begin
+        foo = Foo.new
+        func do
+          foo.bar
+        end
+      end
+
+      CONST
+      )).to_i.should eq(3)
+  end
+
+  it "supports storing function returning nil" do
+    run(%(
+      def foo
+        "foo"
+        nil
+      end
+
+      CONST = foo
+      CONST.nil?
+      )).to_b.should eq(true)
+  end
 end

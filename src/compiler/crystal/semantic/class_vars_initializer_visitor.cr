@@ -73,7 +73,7 @@ module Crystal
              (class_var_type = class_var.type?)
             cloned_node = node.clone
             cloned_node.accept MainVisitor.new(self)
-            if casted_value = MainVisitor.check_automatic_cast(cloned_node, class_var_type)
+            if casted_value = MainVisitor.check_automatic_cast(@program, cloned_node, class_var_type)
               node = initializer.node = casted_value
             end
           end

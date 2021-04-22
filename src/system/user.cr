@@ -69,6 +69,6 @@ class System::User
   end
 
   def to_s(io)
-    io << username << " (" << id << ")"
+    io << username << " (" << id << ')'
   end
 end

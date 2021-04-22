@@ -1,4 +1,4 @@
-{% if flag?(:linux) || flag?(:freebsd) || flag?(:openbsd) %}
+{% if flag?(:linux) || flag?(:bsd) %}
   @[Link("m")]
 {% end %}
 
@@ -34,6 +34,8 @@ lib LibM
   {% end %}
   fun round_f32 = "llvm.round.f32"(value : Float32) : Float32
   fun round_f64 = "llvm.round.f64"(value : Float64) : Float64
+  fun rint_f32 = "llvm.rint.f32"(value : Float32) : Float32
+  fun rint_f64 = "llvm.rint.f64"(value : Float64) : Float64
   fun sin_f32 = "llvm.sin.f32"(value : Float32) : Float32
   fun sin_f64 = "llvm.sin.f64"(value : Float64) : Float64
   fun sqrt_f32 = "llvm.sqrt.f32"(value : Float32) : Float32

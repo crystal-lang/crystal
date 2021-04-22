@@ -12,11 +12,14 @@ struct UUID
   # require "uuid/json"
   #
   # class Example
-  #   JSON.mapping id: UUID
+  #   include JSON::Serializable
+  #
+  #   property id : UUID
   # end
   #
   # example = Example.from_json(%({"id": "ba714f86-cac6-42c7-8956-bcf5105e1b81"}))
   # example.id # => UUID(ba714f86-cac6-42c7-8956-bcf5105e1b81)
+  # ```
   def self.new(pull : JSON::PullParser)
     new(pull.read_string)
   end
@@ -31,5 +34,17 @@ struct UUID
   # ```
   def to_json(json : JSON::Builder)
     json.string(to_s)
+  end
+
+  # :nodoc:
+  def to_json_object_key
+    to_s
+  end
+
+  # Deserializes the given JSON *key* into a `UUID`.
+  #
+  # NOTE: `require "uuid/json"` is required to opt-in to this feature.
+  def self.from_json_object_key?(key : String)
+    UUID.new(key)
   end
 end

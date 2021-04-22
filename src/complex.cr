@@ -33,12 +33,12 @@ struct Complex
     @real == other.real && @imag == other.imag
   end
 
-  # ditto
+  # :ditto:
   def ==(other : Number)
     self == other.to_c
   end
 
-  # ditto
+  # :ditto:
   def ==(other)
     false
   end
@@ -177,57 +177,9 @@ struct Complex
     conj / abs2
   end
 
-  # `Complex#sqrt` was inspired by the [following blog post](https://pavpanchekha.com/casio/)
-  # of Pavel Panchekha on floating point precision.
-  #
-  def sqrt
-    r = abs
-
-    re = if @real >= 0
-           0.5 * Math.sqrt(2.0 * (r + @real))
-         else
-           @imag.abs / Math.sqrt(2 * (r - @real))
-         end
-
-    im = if @real <= 0
-           0.5 * Math.sqrt(2.0 * (r - @real))
-         else
-           @imag.abs / Math.sqrt(2 * (r + @real))
-         end
-
-    Complex.new(re, @imag >= 0 ? im : -im)
-  end
-
-  # Calculates the exp of `self`.
-  #
-  # ```
-  # require "complex"
-  #
-  # Complex.new(4, 2).exp # => -22.720847417619233 + 49.645957334580565i
-  # ```
-  def exp
-    r = Math.exp(@real)
-    Complex.new(r * Math.cos(@imag), r * Math.sin(@imag))
-  end
-
-  # Calculates the log of `self`.
-  def log
-    Complex.new(Math.log(abs), phase)
-  end
-
-  # Calculates the log2 of `self`.
-  def log2
-    log / Math::LOG2
-  end
-
-  # Calculates the log10 of `self`.
-  def log10
-    log / Math::LOG10
-  end
-
-  # Returns absolute value of `self`.
+  # Returns `self`.
   def +
-    Complex.new(@real.abs, @imag.abs)
+    self
   end
 
   # Adds the value of `self` to *other*.
@@ -235,7 +187,7 @@ struct Complex
     Complex.new(@real + other.real, @imag + other.imag)
   end
 
-  # ditto
+  # :ditto:
   def +(other : Number)
     Complex.new(@real + other, @imag)
   end
@@ -250,7 +202,7 @@ struct Complex
     Complex.new(@real - other.real, @imag - other.imag)
   end
 
-  # ditto
+  # :ditto:
   def -(other : Number)
     Complex.new(@real - other, @imag)
   end
@@ -260,7 +212,7 @@ struct Complex
     Complex.new(@real * other.real - @imag * other.imag, @real * other.imag + @imag * other.real)
   end
 
-  # ditto
+  # :ditto:
   def *(other : Number)
     Complex.new(@real * other, @imag * other)
   end
@@ -278,7 +230,7 @@ struct Complex
     end
   end
 
-  # ditto
+  # :ditto:
   def /(other : Number)
     Complex.new(@real / other, @imag / other)
   end
@@ -301,6 +253,19 @@ struct Complex
 
   def zero? : Bool
     @real == 0 && @imag == 0
+  end
+
+  def self.additive_identity : self
+    zero
+  end
+
+  def multiplicative_identity : self
+    new 1, 0
+  end
+
+  # Rounds to the nearest *digits*.
+  def round(digits = 0)
+    Complex.new(@real.round(digits), @imag.round(digits))
   end
 end
 
@@ -335,5 +300,88 @@ struct Number
 
   def /(other : Complex)
     self * other.inv
+  end
+end
+
+module Math
+  # Calculates the exponential of *value*.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.exp(4 + 2.i) # => -22.720847417619233 + 49.645957334580565i
+  # ```
+  def exp(value : Complex)
+    r = exp(value.real)
+    Complex.new(r * cos(value.imag), r * sin(value.imag))
+  end
+
+  # Calculates the natural logarithm of *value*.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log(4 + 2.i) # => 1.4978661367769956 + 0.4636476090008061i
+  # ```
+  def log(value : Complex)
+    Complex.new(Math.log(value.abs), value.phase)
+  end
+
+  # Calculates the logarithm of *value* to base 2.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log2(4 + 2.i) # => 2.1609640474436813 + 0.6689021062254881i
+  # ```
+  def log2(value : Complex)
+    log(value) / LOG2
+  end
+
+  # Calculates the logarithm of *value* to base 10.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.log10(4 + 2.i) # => 0.6505149978319906 + 0.20135959813668655i
+  # ```
+  def log10(value : Complex)
+    log(value) / LOG10
+  end
+
+  # Calculates the square root of *value*.
+  # Inspired by the [following blog post](https://pavpanchekha.com/blog/casio-mathjs.html) of Pavel Panchekha on floating point precision.
+  #
+  # ```
+  # require "complex"
+  #
+  # Math.sqrt(4 + 2.i) # => 2.0581710272714924 + 0.48586827175664565i
+  # ```
+  #
+  # Although the imaginary number is defined as i = sqrt(-1),
+  # calling `Math.sqrt` with a negative number will return `-NaN`.
+  # To obtain the result in the complex plane, `Math.sqrt` must
+  # be called with a complex number.
+  #
+  # ```
+  # Math.sqrt(-1.0)         # => -NaN
+  # Math.sqrt(-1.0 + 0.0.i) # => 0.0 + 1.0i
+  # ```
+  def sqrt(value : Complex)
+    r = value.abs
+
+    re = if value.real >= 0
+           0.5 * sqrt(2.0 * (r + value.real))
+         else
+           value.imag.abs / sqrt(2.0 * (r - value.real))
+         end
+
+    im = if value.real <= 0
+           0.5 * sqrt(2.0 * (r - value.real))
+         else
+           value.imag.abs / sqrt(2.0 * (r + value.real))
+         end
+
+    Complex.new(re, value.imag >= 0 ? im : -im)
   end
 end

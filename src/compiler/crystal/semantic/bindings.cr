@@ -23,13 +23,15 @@ module Crystal
       if with_literals
         case self
         when NumberLiteral
-          return NumberLiteralType.new(type.program, self)
+          NumberLiteralType.new(type.program, self)
         when SymbolLiteral
-          return SymbolLiteralType.new(type.program, self)
+          SymbolLiteralType.new(type.program, self)
+        else
+          type
         end
+      else
+        type
       end
-
-      type
     end
 
     def set_type(type : Type)
@@ -80,7 +82,9 @@ module Crystal
           from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
         end
       when Def
-        (self.return_type || self).raise "method must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
+        (self.return_type || self).raise "method #{self.short_reference} must return #{freeze_type} but it is returning #{invalid_type}", inner, Crystal::FrozenTypeException
+      when NamedType
+        from.raise "type #{self.full_name} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       else
         from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
@@ -130,6 +134,10 @@ module Crystal
         new_type = Type.merge dependencies
       end
       new_type = map_type(new_type) if new_type
+
+      if new_type && (freeze_type = @freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
 
       return if @type.same? new_type
       return unless new_type
@@ -189,6 +197,10 @@ module Crystal
       new_type = Type.merge dependencies
       new_type = map_type(new_type) if new_type
 
+      if new_type && (freeze_type = @freeze_type)
+        new_type = restrict_type_to_freeze_type(freeze_type, new_type)
+      end
+
       return if @type.same? new_type
 
       if new_type
@@ -210,6 +222,33 @@ module Crystal
     end
 
     def map_type(type)
+      type
+    end
+
+    # Computes the type resulting from assigning type to freeze_type,
+    # in the case where freeze_type is not nil.
+    #
+    # Special cases are listed inside the method body.
+    def restrict_type_to_freeze_type(freeze_type, type)
+      if freeze_type.is_a?(ProcInstanceType)
+        # We allow assigning Proc(*T, R) to Proc(*T, Nil)
+        if freeze_type.return_type.nil_type? &&
+           type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) && a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
+        end
+
+        # We also allow assining Proc(*T, NoReturn) to Proc(*T, U)
+        if type.all? { |a_type|
+             a_type.is_a?(ProcInstanceType) &&
+             (a_type.return_type.is_a?(NoReturnType) || a_type.return_type == freeze_type.return_type) &&
+             a_type.arg_types == freeze_type.arg_types
+           }
+          return freeze_type
+        end
+      end
+
       type
     end
 
@@ -444,10 +483,14 @@ module Crystal
     property! call : Call
 
     def map_type(type)
+      if self.expanded
+        return type
+      end
+
       return nil unless call.type?
 
-      arg_types = call.args.map &.type
-      arg_types.push call.type
+      arg_types = call.args.map &.type.virtual_type
+      arg_types.push call.type.virtual_type
 
       call.type.program.proc_of(arg_types)
     end
@@ -543,7 +586,7 @@ module Crystal
 
         begin
           generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           raise ex.message, ex
         end
       end
@@ -692,6 +735,15 @@ module Crystal
         end
       end
 
+      if splat_index
+        # Error if there are less expressions than the number of block arguments
+        if exps_types.size < (args_size - 1)
+          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size})"
+        end
+        splat_range = (splat_index..splat_index - args_size)
+        exps_types[splat_range] = @program.tuple_of(exps_types[splat_range])
+      end
+
       # Check if there are missing yield expressions to match
       # the (optional) block signature, and if they match the declared types
       if yield_vars
@@ -709,52 +761,24 @@ module Crystal
         end
       end
 
+      # Check if tuple unpacking is needed
+      if exps_types.size == 1 &&
+         (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
+         args_size > 1 &&
+         !splat_index
+        exps_types = exp_type.tuple_types
+      end
+
       # Now move exps_types to block_arg_types
-      if splat_index
-        # Error if there are less expressions than the number of block arguments
-        if exps_types.size < (args_size - 1)
-          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
-        end
+      if block.args.size > exps_types.size
+        block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+      end
 
-        j = 0
-        args_size.times do |i|
-          types = block_arg_types[i] ||= [] of Type
-          if i == splat_index
-            tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-            types << @program.tuple_of(tuple_types)
-            j += tuple_types.size
-          else
-            types << exps_types[j]
-            j += 1
-          end
-        end
-      else
-        # Check if tuple unpacking is needed
-        if exps_types.size == 1 &&
-           (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
-           args_size > 1
-          if block.args.size > exp_type.tuple_types.size
-            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
-          end
+      exps_types.each_with_index do |exp_type, i|
+        break if i >= block_arg_types.size
 
-          exp_type.tuple_types.each_with_index do |tuple_type, i|
-            break if i >= block_arg_types.size
-
-            types = block_arg_types[i] ||= [] of Type
-            types << tuple_type
-          end
-        else
-          if block.args.size > exps_types.size
-            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
-          end
-
-          exps_types.each_with_index do |exp_type, i|
-            break if i >= block_arg_types.size
-
-            types = block_arg_types[i] ||= [] of Type
-            types << exp_type
-          end
-        end
+        types = block_arg_types[i] ||= [] of Type
+        types << exp_type
       end
     end
 

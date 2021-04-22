@@ -79,7 +79,7 @@ class File
   # It is returned by `File.info`, `File#info` and `File.info?`.
   abstract struct Info
     # Size of the file, in bytes.
-    abstract def size : UInt64
+    abstract def size : Int64
 
     # The permissions of the file.
     abstract def permissions : Permissions
@@ -93,11 +93,11 @@ class File
     # The last time this file was modified.
     abstract def modification_time : Time
 
-    # The user ID of the file's owner.
-    abstract def owner : UInt32
+    # The user ID that the file belongs to.
+    abstract def owner_id : String
 
     # The group ID that the file belongs to.
-    abstract def group : UInt32
+    abstract def group_id : String
 
     # Returns true if this `Info` and *other* are of the same file.
     #

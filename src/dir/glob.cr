@@ -4,13 +4,13 @@ class Dir
   # The pattern syntax is similar to shell filename globbing, see `File.match?` for details.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.[](*patterns) : Array(String)
-    glob(patterns)
+  def self.[](*patterns : Path | String, match_hidden = false, follow_symlinks = false) : Array(String)
+    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
   end
 
-  # ditto
-  def self.[](patterns : Enumerable(String)) : Array(String)
-    glob(patterns)
+  # :ditto:
+  def self.[](patterns : Enumerable, match_hidden = false, follow_symlinks = false) : Array(String)
+    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
   end
 
   # Returns an array of all files that match against any of *patterns*.
@@ -20,14 +20,14 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false) : Array(String)
-    glob(patterns, match_hidden: match_hidden)
+  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false) : Array(String)
+    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks)
   end
 
-  # ditto
-  def self.glob(patterns : Enumerable(String), match_hidden = false) : Array(String)
+  # :ditto:
+  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false) : Array(String)
     paths = [] of String
-    glob(patterns, match_hidden: match_hidden) do |path|
+    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
       paths << path
     end
     paths
@@ -40,15 +40,15 @@ class Dir
   # If *match_hidden* is `true` the pattern will match hidden files and folders.
   #
   # NOTE: Path separator in patterns needs to be always `/`. The returned file names use system-specific path separators.
-  def self.glob(*patterns, match_hidden = false, &block : String -> _)
-    glob(patterns, match_hidden: match_hidden) do |path|
+  def self.glob(*patterns : Path | String, match_hidden = false, follow_symlinks = false, &block : String -> _)
+    glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
   end
 
-  # ditto
-  def self.glob(patterns : Enumerable(String), match_hidden = false, &block : String -> _)
-    Globber.glob(patterns, match_hidden: match_hidden) do |path|
+  # :ditto:
+  def self.glob(patterns : Enumerable, match_hidden = false, follow_symlinks = false, &block : String -> _)
+    Globber.glob(patterns, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |path|
       yield path
     end
   end
@@ -72,12 +72,15 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
-    def self.glob(patterns : Enumerable(String), **options, &block : String -> _)
+    def self.glob(patterns : Enumerable, *, match_hidden, follow_symlinks, &block : String -> _)
       patterns.each do |pattern|
+        if pattern.is_a?(Path)
+          pattern = pattern.to_posix.to_s
+        end
         sequences = compile(pattern)
 
         sequences.each do |sequence|
-          run(sequence, options) do |match|
+          run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
             yield match
           end
         end
@@ -144,7 +147,7 @@ class Dir
       true
     end
 
-    private def self.run(sequence, options, &block : String -> _)
+    private def self.run(sequence, match_hidden, follow_symlinks, &block : String -> _)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
@@ -156,43 +159,53 @@ class Dir
 
         next_pos = pos - 1
         case cmd
-        when RootDirectory
+        in RootDirectory
           raise "unreachable" if path
           path_stack << {next_pos, root, nil}
-        when DirectoriesOnly
+        in DirectoriesOnly
           raise "unreachable" unless path
-          fullpath = path == File::SEPARATOR_STRING ? path : path + File::SEPARATOR
-          if dir_entry
-            yield fullpath if dir_entry.dir?
+          # FIXME: [win32] File::SEPARATOR_STRING comparison is not sufficient for Windows paths.
+          if path == File::SEPARATOR_STRING
+            fullpath = path
           else
-            yield fullpath if dir?(fullpath)
+            fullpath = Path[path].join("").to_s
           end
-        when EntryMatch
+
+          if dir_entry && !dir_entry.dir?.nil?
+            yield fullpath
+          elsif dir?(fullpath, follow_symlinks)
+            yield fullpath
+          end
+        in EntryMatch
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
-            next if !options[:match_hidden] && entry.name.starts_with?('.')
+            next if !match_hidden && entry.name.starts_with?('.')
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
-        when DirectoryMatch
+        in DirectoryMatch
           next_cmd = sequence[next_pos]?
 
           each_child(path) do |entry|
             if cmd.matches?(entry.name)
-              if entry.dir?
-                fullpath = join(path, entry.name)
+              is_dir = entry.dir?
+              fullpath = join(path, entry.name)
+              if is_dir.nil?
+                is_dir = dir?(fullpath, follow_symlinks)
+              end
+              if is_dir
                 path_stack << {next_pos, fullpath, entry}
               end
             end
           end
-        when ConstantEntry
+        in ConstantEntry
           return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
-        when ConstantDirectory
+        in ConstantDirectory
           path_stack << {next_pos, join(path, cmd.path), nil}
           # Don't check if full exists. It just costs us time
           # and the downstream node will be able to check properly.
-        when RecursiveDirectories
+        in RecursiveDirectories
           path_stack << {next_pos, path, nil}
           next_cmd = sequence[next_pos]?
 
@@ -202,7 +215,7 @@ class Dir
           begin
             dir = Dir.new(path || ".")
             dir_stack << dir
-          rescue Errno
+          rescue File::Error
             return
           end
           recurse = false
@@ -211,7 +224,7 @@ class Dir
             if recurse
               begin
                 dir = Dir.new(dir_path)
-              rescue Errno
+              rescue File::Error
                 dir_path_stack.pop
                 break if dir_path_stack.empty?
                 dir_path = dir_path_stack.last
@@ -223,8 +236,8 @@ class Dir
             end
 
             if entry = read_entry(dir)
-              next if {".", ".."}.includes?(entry.name)
-              next if !options[:match_hidden] && entry.name.starts_with?('.')
+              next if entry.name.in?(".", "..")
+              next if !match_hidden && entry.name.starts_with?('.')
 
               if dir_path.bytesize == 0
                 fullpath = entry.name
@@ -239,7 +252,12 @@ class Dir
                 yield fullpath if next_cmd.matches?(entry.name)
               end
 
-              if entry.dir?
+              is_dir = entry.dir?
+              if is_dir.nil?
+                is_dir = dir?(fullpath, follow_symlinks)
+              end
+
+              if is_dir
                 path_stack << {next_pos, fullpath, entry}
 
                 dir_path_stack.push fullpath
@@ -256,8 +274,6 @@ class Dir
               dir = dir_stack.last
             end
           end
-        else
-          raise "unreachable"
         end
       end
     end
@@ -271,8 +287,8 @@ class Dir
       {% end %}
     end
 
-    private def self.dir?(path)
-      if info = File.info?(path, follow_symlinks: false)
+    private def self.dir?(path, follow_symlinks)
+      if info = File.info?(path, follow_symlinks: follow_symlinks)
         info.type.directory?
       else
         false
@@ -293,8 +309,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : Errno
-      raise exc unless exc.errno == Errno::ENOENT
+    rescue exc : File::NotFoundError
     end
 
     private def self.read_entry(dir)
@@ -303,7 +318,7 @@ class Dir
       # By doing this we get an Entry struct which already tells us
       # whether something is a directory or not, avoiding having to
       # call File.info? which is really expensive.
-      Crystal::System::Dir.next_entry(dir.@dir)
+      Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
   end
 end

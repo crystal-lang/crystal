@@ -1,23 +1,20 @@
 require "c/winbase"
 
-class WinError < Errno
-  # NOTE: `get_last_error` must be called BEFORE an instance of this class
-  # is malloced as it would change the "last error" to SUCCESS
-  def self.new(message)
-    new(message, LibC.GetLastError)
+enum WinError : UInt32
+  def self.value : self
+    WinError.new LibC.GetLastError
   end
 
-  def initialize(message, code)
+  def message : String
     buffer = uninitialized UInt16[256]
-    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, code, 0, buffer, buffer.size, nil)
-    details = String.from_utf16(buffer.to_slice[0, size]).strip
-    super("#{message}: [WinError #{code}, #{details}]", winerror_to_errno(code))
+    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
+    String.from_utf16(buffer.to_slice[0, size]).strip
   end
 
   # https://github.com/python/cpython/blob/master/PC/generrmap.c
   # https://github.com/python/cpython/blob/master/PC/errmap.h
-  def winerror_to_errno(winerror)
-    case winerror
+  def to_errno
+    case self
     when ERROR_FILE_NOT_FOUND            then Errno::ENOENT
     when ERROR_PATH_NOT_FOUND            then Errno::ENOENT
     when ERROR_TOO_MANY_OPEN_FILES       then Errno::EMFILE

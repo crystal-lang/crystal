@@ -86,7 +86,7 @@ struct Char
   # '\u007f'.ord # => 127
   # '☃'.ord      # => 9731
   # ```
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def ord : Int32
   end
 
@@ -117,7 +117,7 @@ struct Symbol
   end
 
   # Returns a unique number for this symbol.
-  @[Primitive(:cast)]
+  @[Primitive(:convert)]
   def to_i : Int32
   end
 
@@ -149,6 +149,17 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # The implementation uses `GC.malloc` if the compiler is aware that the
+  # allocated type contains inner address pointers. Otherwise it uses
+  # `GC.malloc_atomic`. Primitive types are expected to not contain pointers,
+  # except `Void`. `Proc` and `Pointer` are expected to contain pointers.
+  # For unions, structs and collection types (tuples, static array)
+  # it depends on the contained types. All other types, including classes are
+  # expected to contain inner address pointers.
+  #
+  # To override this implicit behaviour, `GC.malloc` and `GC.malloc_atomic`
+  # can be used directly instead.
   @[Primitive(:pointer_malloc)]
   def self.malloc(size : UInt64)
   end
@@ -280,20 +291,16 @@ end
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
                              to_f32: Float32, to_f64: Float64,
                            } %}
-        # TODO 0.28.0 replace with @[Primitive(:convert)]
-
         # Returns `self` converted to `{{type}}`.
         # Raises `OverflowError` in case of overflow.
-        @[Primitive(:cast)]
+        @[Primitive(:convert)]
         @[Raises]
         def {{name.id}} : {{type}}
         end
 
-        # TODO 0.28.0 replace with @[Primitive(:unchecked_convert)]
-
         # Returns `self` converted to `{{type}}`.
         # In case of overflow a wrapping is performed.
-        @[Primitive(:cast)]
+        @[Primitive(:unchecked_convert)]
         def {{name.id}}! : {{type}}
         end
       {% end %}
@@ -328,7 +335,7 @@ end
       # ```
       # 97.unsafe_chr # => 'a'
       # ```
-      @[Primitive(:cast)]
+      @[Primitive(:convert)]
       def unsafe_chr : Char
       end
 
@@ -404,6 +411,11 @@ end
           def {{op.id}}(other : {{num.id}}) : self
           end
         {% end %}
+
+        # Returns the float division of `self` and *other*.
+        @[Primitive(:binary)]
+        def fdiv(other : {{num.id}}) : self
+        end
       {% end %}
 
       # Returns the result of division `self` and *other*.

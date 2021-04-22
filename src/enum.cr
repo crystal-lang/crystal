@@ -26,7 +26,7 @@
 #
 # ### Flags enum
 #
-# An enum can be marked with the `@[Flags]` attribute. This changes the default values:
+# An enum can be marked with the `@[Flags]` annotation. This changes the default values:
 #
 # ```
 # @[Flags]
@@ -47,7 +47,7 @@
 # Color.new(1).to_s # => "Green"
 # ```
 #
-# Values that don't correspond to an enum's constants are allowed: the value
+# Values that don't correspond to enum's constants are allowed: the value
 # will still be of type Color, but when printed you will get the underlying value:
 #
 # ```
@@ -89,18 +89,23 @@
 struct Enum
   include Comparable(self)
 
+  # Returns *value*.
+  def self.new(value : self)
+    value
+  end
+
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.
   def to_s(io : IO) : Nil
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       if value == 0
         io << "None"
       else
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{@type}}::{{member}}.value != 0 && value.bits_set? {{@type}}::{{member}}.value
+            if {{@type.constant(member)}} != 0 && value.bits_set? {{@type.constant(member)}}
               io << " | " if found
               io << {{member.stringify}}
               found = true
@@ -131,17 +136,18 @@ struct Enum
   # Color.new(10).to_s # => "10"
   # ```
   def to_s : String
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       String.build { |io| to_s(io) }
     {% else %}
-      case value
-      {% for member in @type.constants %}
-      when {{@type}}::{{member}}.value
-        {{member.stringify}}
+      # Can't use `case` here because case with duplicate values do
+      # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
+      {% for member, i in @type.constants %}
+        if value == {{@type.constant(member)}}
+          return {{member.stringify}}
+        end
       {% end %}
-      else
-        value.to_s
-      end
+
+      value.to_s
     {% end %}
   end
 
@@ -298,12 +304,12 @@ struct Enum
   # end
   # ```
   def each
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" %}
-          if includes?({{@type}}::{{member}})
-            yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+          if includes?(self.class.new({{@type.constant(member)}}))
+            yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
           end
         {% end %}
       {% end %}
@@ -318,7 +324,7 @@ struct Enum
   # Color.names # => ["Red", "Green", "Blue"]
   # ```
   def self.names : Array(String)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
       {{ @type.constants.map &.stringify }}
@@ -331,7 +337,7 @@ struct Enum
   # Color.values # => [Color::Red, Color::Green, Color::Blue]
   # ```
   def self.values : Array(self)
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
       {{ @type.constants.map { |e| "#{@type}::#{e.id}".id } }}
@@ -348,13 +354,13 @@ struct Enum
   # Color.from_value?(3) # => nil
   # ```
   def self.from_value?(value : Int) : self?
-    {% if @type.has_attribute?("Flags") %}
+    {% if @type.annotation(Flags) %}
       all_mask = {{@type}}::All.value
       return if all_mask & value != value
-      return new(value)
+      return new(all_mask.class.new(value))
     {% else %}
       {% for member in @type.constants %}
-        return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
+        return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value
       {% end %}
     {% end %}
     nil
@@ -429,7 +435,7 @@ struct Enum
       case string.camelcase.downcase
       {% for member in @type.constants %}
         when {{member.stringify.camelcase.downcase}}
-          {{@type}}::{{member}}
+          new({{@type.constant(member)}})
       {% end %}
       else
         nil
@@ -464,8 +470,8 @@ struct Enum
   # ```
   def self.each
     {% for member in @type.constants %}
-      {% unless @type.has_attribute?("Flags") && %w(none all).includes?(member.stringify.downcase) %}
-        yield {{@type}}::{{member}}, {{@type}}::{{member}}.value
+      {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
+        yield new({{@type.constant(member)}}), {{@type.constant(member)}}
       {% end %}
     {% end %}
   end
