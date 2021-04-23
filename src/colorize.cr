@@ -107,6 +107,15 @@ module Colorize
   # This is also be disabled if the environment variable `TERM` is "dumb".
   class_property? enabled : Bool = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
 
+  # Makes `Colorize.enabled` `true` if and only if both of `STDOUT.tty?`
+  # and `STDERR.tty?` are `true` and the tty is not considered a dumb terminal.
+  # This is determined by the environment variable called `TERM`.
+  # If `TERM=dumb`, color won't be enabled.
+  @[Deprecated("This is now done by default and there is no longer any need to use this manually.")]
+  def self.on_tty_only!
+    self.enabled = STDOUT.tty? && STDERR.tty? && ENV["TERM"]? != "dumb"
+  end
+
   # Resets the color and text decoration of the *io*.
   #
   # ```
