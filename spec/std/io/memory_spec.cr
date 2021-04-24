@@ -226,6 +226,44 @@ describe IO::Memory do
     io.gets(1).should eq("d")
   end
 
+  it "can truncate to size" do
+    io = IO::Memory.new
+    io << "hello world"
+    io.truncate(5)
+    io.to_s.should eq("hello")
+  end
+
+  it "raises when truncate size is too large" do
+    io = IO::Memory.new
+    io << "hello world"
+
+    io.truncate(12)
+    io.truncate(13)
+
+    io.to_s.should eq("hello world\u0000\u0000")
+    io.truncate(0)
+    io.to_s.should eq("")
+  end
+
+  it "can truncate from end" do
+    io = IO::Memory.new
+    io << "hello world"
+    io.truncate(-6)
+    io.to_s.should eq("hello")
+  end
+
+  it "raises when truncate size is too large (negative)" do
+    io = IO::Memory.new
+    io << "hello world"
+
+    expect_raises(ArgumentError, "size out of bounds") { io.truncate(-12) }
+    expect_raises(ArgumentError, "size out of bounds") { io.truncate(-13) }
+    expect_raises(ArgumentError, "size out of bounds") { io.truncate(Int32::MIN - 1) }
+
+    io.truncate(-11)
+    io.to_s.should eq("")
+  end
+
   it "clears" do
     io = IO::Memory.new
     io << "abc"

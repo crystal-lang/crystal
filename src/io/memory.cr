@@ -93,7 +93,7 @@ class IO::Memory < IO
     new_bytesize = @pos + count
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     slice.copy_to(@buffer + @pos, count)
@@ -115,7 +115,7 @@ class IO::Memory < IO
     new_bytesize = @pos + 1
     if new_bytesize > @capacity
       check_resizeable
-      resize_to_capacity(Math.pw2ceil(new_bytesize))
+      resize_to_fit(new_bytesize)
     end
 
     (@buffer + @pos).value = byte
@@ -334,6 +334,27 @@ class IO::Memory < IO
     @pos = value.to_i
   end
 
+  # Truncates the memory to the specified *size*.
+  #
+  # NOTE: a negative value truncates from the end of the `IO::Memory`.
+  def truncate(size = 0) : Nil
+    check_open
+    check_resizeable
+
+    size = size.to_i
+    raise ArgumentError.new("size out of bounds") if (@bytesize + size) < 0
+
+    if size < 0
+      @bytesize += size
+    elsif size > @bytesize
+      resize_to_fit(size) if size > @capacity
+      (@buffer + @bytesize).clear(size - @bytesize)
+      @bytesize = size
+    else
+      @bytesize = size
+    end
+  end
+
   # Yields an `IO::Memory` to read a section of this `IO`'s buffer.
   #
   # During the block duration `self` becomes read-only,
@@ -430,6 +451,10 @@ class IO::Memory < IO
 
   private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @bytesize == @capacity
+  end
+
+  private def resize_to_fit(size)
+    resize_to_capacity(Math.pw2ceil(size))
   end
 
   private def resize_to_capacity(capacity)
