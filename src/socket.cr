@@ -1,54 +1,18 @@
-require "c/arpa/inet"
 require "c/netdb"
 require "c/netinet/in"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "c/sys/un"
 require "io/evented"
 
 class Socket < IO
   include IO::Buffered
   include IO::Evented
 
-  class Error < IO::Error
-    private def self.new_from_errno(message, errno, **opts)
-      case errno
-      when Errno::ECONNREFUSED
-        Socket::ConnectError.new(message, **opts)
-      when Errno::EADDRINUSE
-        Socket::BindError.new(message, **opts)
-      else
-        super message, errno, **opts
-      end
-    end
-  end
-
-  class ConnectError < Error
-  end
-
-  class BindError < Error
-  end
-
   enum Type
     STREAM    = LibC::SOCK_STREAM
     DGRAM     = LibC::SOCK_DGRAM
     RAW       = LibC::SOCK_RAW
     SEQPACKET = LibC::SOCK_SEQPACKET
-  end
-
-  enum Protocol
-    IP   = LibC::IPPROTO_IP
-    TCP  = LibC::IPPROTO_TCP
-    UDP  = LibC::IPPROTO_UDP
-    RAW  = LibC::IPPROTO_RAW
-    ICMP = LibC::IPPROTO_ICMP
-  end
-
-  enum Family : LibC::SaFamilyT
-    UNSPEC = LibC::AF_UNSPEC
-    UNIX   = LibC::AF_UNIX
-    INET   = LibC::AF_INET
-    INET6  = LibC::AF_INET6
   end
 
   # :nodoc:
@@ -514,13 +478,6 @@ class Socket < IO
     v = optval ? 1 : 0
     ret = setsockopt optname, v, level
     optval
-  end
-
-  # Returns `true` if the string represents a valid IPv4 or IPv6 address.
-  def self.ip?(string : String)
-    addr = LibC::In6Addr.new
-    ptr = pointerof(addr).as(Void*)
-    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
   end
 
   def blocking
