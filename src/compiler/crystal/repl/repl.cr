@@ -18,6 +18,8 @@ class Crystal::Repl
         string_pool: @program.string_pool,
         def_vars: [@interpreter.vars.keys.to_set]
       ).parse
+      @program.top_level_semantic(node)
+
       value = @interpreter.interpret(node)
       p value.value
     end

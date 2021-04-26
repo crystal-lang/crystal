@@ -150,6 +150,11 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     end
   end
 
+  def visit(node : Def)
+    @last = Value.new(nil, @program.nil_type)
+    false
+  end
+
   def visit(node : ASTNode)
     node.raise "BUG: missing interpret for #{node.class}"
   end
