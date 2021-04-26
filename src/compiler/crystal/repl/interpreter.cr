@@ -169,6 +169,46 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
         else
           node.raise "BUG: missing handling of #{self_value.class} + #{other_value.class}"
         end
+      when "-"
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value - other_value
+          result_type = @scope.lookup_type(a_def.return_type.not_nil!)
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} - #{other_value.class}"
+        end
+      when ">"
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value > other_value
+          result_type = @program.bool
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} > #{other_value.class}"
+        end
+      when ">="
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value >= other_value
+          result_type = @program.bool
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} > #{other_value.class}"
+        end
+      when "<"
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value < other_value
+          result_type = @program.bool
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} > #{other_value.class}"
+        end
+      when "<="
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value <= other_value
+          result_type = @program.bool
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} > #{other_value.class}"
+        end
       when "=="
         result = self_value == other_value
         result_type = @program.bool
