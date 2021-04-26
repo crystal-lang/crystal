@@ -12,7 +12,7 @@ class Crystal::Repl
 
       node = Parser.new(line).parse
       value = @interpreter.interpret(node)
-      puts value.value
+      p value.value
     end
   end
 end
