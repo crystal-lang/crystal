@@ -37,6 +37,10 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : StringLiteral)
+    @last = Value.new(node.value, @program.string)
+  end
+
   def visit(node : Assign)
     visit(node, node.target, node.value)
     false
