@@ -1,6 +1,6 @@
 struct Crystal::Repl::Value
   getter type : Type
-  getter value : Nil | Bool | Char | Int32 | String | Type
+  getter value : Nil | Bool | Char | Int32 | UInt64 | String | Pointer(Void) | Type
 
   def initialize(@value, @type : Type)
   end

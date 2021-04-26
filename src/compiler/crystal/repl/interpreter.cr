@@ -41,6 +41,8 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     case node.kind
     when :i32
       @last = Value.new(node.value.to_i, @program.int32)
+    when :u64
+      @last = Value.new(node.value.to_u64, @program.uint64)
     else
       node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
     end
@@ -160,11 +162,27 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : Generic)
+    # TODO: this is done like that so I can try out Pointer#malloc
+    node.name.accept self
+    generic_type = @last.value.as(GenericType)
+
+    type_var_types = Array(TypeVar).new(node.type_vars.size)
+    node.type_vars.each do |type_var|
+      type_var.accept self
+      type_var_types << @last.value.as(Type)
+    end
+
+    instantiated_type = generic_type.instantiate(type_var_types)
+    @last = Value.new(instantiated_type, instantiated_type.metaclass)
+    false
+  end
+
   def visit(node : Primitive)
+    a_def = @def.not_nil!
+
     case node.name
     when "binary"
-      a_def = @def.not_nil!
-
       self_value = @vars["self"].value
       other_value = @vars[a_def.args.first.name].value
       case a_def.name
@@ -227,6 +245,13 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       else
         node.raise "BUG: missing handling of binary op #{a_def.name}"
       end
+    when "pointer_malloc"
+      pointer_instance_type = @scope.instance_type.as(PointerInstanceType)
+      type_size = @program.size_of(pointer_instance_type.element_type.sizeof_type)
+      arg_size = @vars[a_def.args.first.name].value.as(UInt64)
+      bytes_to_malloc = (arg_size * type_size)
+      pointer = Pointer(Void).malloc(bytes_to_malloc)
+      @last = Value.new(pointer, pointer_instance_type)
     else
       node.raise "BUG: missing handling of primitive #{node.name}"
     end
