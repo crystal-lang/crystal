@@ -42,7 +42,7 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     when :i32
       @last = Value.new(node.value.to_i, @program.int32)
     when :i64
-      @last = Value.new(node.value.to_u64, @program.int64)
+      @last = Value.new(node.value.to_i64, @program.int64)
     when :u64
       @last = Value.new(node.value.to_u64, @program.uint64)
     else
@@ -180,6 +180,13 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : Expressions)
+    node.expressions.each do |expression|
+      expression.accept self
+    end
+    false
+  end
+
   def visit(node : Primitive)
     a_def = @def.not_nil!
 
@@ -290,6 +297,15 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       else
         node.raise "BUG: missing handling of pointer_set with element_type #{element_type}"
       end
+    when "pointer_add"
+      self_var = @vars["self"]
+      pointer = self_var.value.as(PointerWrapper).pointer
+      pointer_instance_type = @scope.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      type_size = @program.size_of(element_type.sizeof_type)
+      value_to_add = @vars[a_def.args.first.name].value.as(Int64)
+      bytes_to_add = (type_size * value_to_add)
+      @last = Value.new(PointerWrapper.new(pointer + bytes_to_add), pointer_instance_type)
     else
       node.raise "BUG: missing handling of primitive #{node.name}"
     end
