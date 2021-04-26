@@ -247,11 +247,47 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       end
     when "pointer_malloc"
       pointer_instance_type = @scope.instance_type.as(PointerInstanceType)
-      type_size = @program.size_of(pointer_instance_type.element_type.sizeof_type)
+      element_type = pointer_instance_type.element_type
+      type_size = @program.size_of(element_type.sizeof_type)
       arg_size = @vars[a_def.args.first.name].value.as(UInt64)
       bytes_to_malloc = (arg_size * type_size)
       pointer = Pointer(Void).malloc(bytes_to_malloc)
-      @last = Value.new(pointer, pointer_instance_type)
+      @last = Value.new(PointerWrapper.new(pointer), pointer_instance_type)
+    when "pointer_get"
+      self_var = @vars["self"]
+      pointer = self_var.value.as(PointerWrapper).pointer
+      pointer_instance_type = self_var.type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      case element_type
+      when IntegerType
+        case element_type.kind
+        when :i32
+          @last = Value.new(pointer.as(Int32*).value, @program.int32)
+        else
+          node.raise "BUG: missing handling of pointer_get with element_type #{element_type} and kind #{element_type.kind}"
+        end
+      else
+        node.raise "BUG: missing handling of pointer_get with element_type #{element_type}"
+      end
+    when "pointer_set"
+      self_var = @vars["self"]
+      value_to_set = @vars[a_def.args.first.name]
+      @last = value_to_set
+
+      pointer = self_var.value.as(PointerWrapper).pointer
+      pointer_instance_type = self_var.type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      case element_type
+      when IntegerType
+        case element_type.kind
+        when :i32
+          pointer.as(Int32*).value = value_to_set.value.as(Int32)
+        else
+          node.raise "BUG: missing handling of pointer_set with element_type #{element_type} and kind #{element_type.kind}"
+        end
+      else
+        node.raise "BUG: missing handling of pointer_set with element_type #{element_type}"
+      end
     else
       node.raise "BUG: missing handling of primitive #{node.name}"
     end
