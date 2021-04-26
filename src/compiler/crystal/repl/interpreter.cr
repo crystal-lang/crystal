@@ -41,6 +41,8 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     case node.kind
     when :i32
       @last = Value.new(node.value.to_i, @program.int32)
+    when :i64
+      @last = Value.new(node.value.to_u64, @program.int64)
     when :u64
       @last = Value.new(node.value.to_u64, @program.uint64)
     else
