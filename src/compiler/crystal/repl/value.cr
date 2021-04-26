@@ -1,6 +1,6 @@
 class Crystal::Repl::Value
   getter type : Type
-  getter value : Nil | Int32
+  getter value : Nil | Bool | Int32
 
   def initialize(@value, @type : Type)
   end

@@ -19,6 +19,10 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : BoolLiteral)
+    @last = Value.new(node.value, @program.bool)
+  end
+
   def visit(node : NumberLiteral)
     case node.kind
     when :i32
