@@ -153,6 +153,13 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : Path)
+    # TODO: do it well, handle constants too
+    path_type = @scope.lookup_type(node)
+    @last = Value.new(path_type, path_type.metaclass)
+    false
+  end
+
   def visit(node : Primitive)
     case node.name
     when "binary"
