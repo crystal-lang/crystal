@@ -1,4 +1,4 @@
-class Crystal::Repl::Value
+struct Crystal::Repl::Value
   getter type : Type
   getter value : Nil | Bool | Char | Int32 | String
 
