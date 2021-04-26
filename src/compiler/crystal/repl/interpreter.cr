@@ -99,8 +99,7 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       end
 
     if matches.empty?
-      # TODO: handle this case
-      return false
+      node.raise "BUG: handle case of call not found"
     end
 
     match = matches.first
