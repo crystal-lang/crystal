@@ -4,8 +4,13 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
   getter last : Value
   getter vars : Hash(String, Value)
 
+  @scope : Type
+  @def : Def?
+
   def initialize(@program : Program)
     @last = Value.new(nil, @program.nil_type)
+    @scope = @program
+    @def = nil
     @vars = {} of String => Value
   end
 
@@ -58,6 +63,91 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
 
   private def visit(node : Assign, target : ASTNode, value : ASTNode)
     node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
+  end
+
+  def visit(node : Call)
+    # TODO: named arguments, block
+    obj = node.obj
+
+    obj_value =
+      if obj
+        visit(obj)
+        @last
+      else
+        nil
+      end
+
+    arg_values = node.args.map do |arg|
+      visit(arg)
+      @last
+    end
+
+    arg_types = arg_values.map(&.type)
+
+    signature = CallSignature.new(
+      name: node.name,
+      arg_types: arg_types,
+      block: nil,
+      named_args: nil,
+    )
+
+    matches =
+      if obj_value
+        obj_value.type.lookup_matches(signature)
+      else
+        @program.lookup_matches(signature)
+      end
+
+    if matches.empty?
+      # TODO: handle this case
+      return false
+    end
+
+    match = matches.first
+    instantiated_type = match.context.instantiated_type
+    old_scope, @scope = @scope, instantiated_type
+    old_vars, @vars = @vars, {} of String => Value
+    @def = match.def
+
+    # Set up local vars for the def instatiation
+    if obj_value
+      @vars["self"] = obj_value
+    end
+    match.def.args.zip(arg_values) do |def_arg, arg_value|
+      @vars[def_arg.name] = arg_value
+    end
+
+    match.def.body.accept self
+
+    @scope = old_scope
+    @vars = old_vars
+    @def = nil
+
+    false
+  end
+
+  def visit(node : Primitive)
+    case node.name
+    when "binary"
+      a_def = @def.not_nil!
+
+      self_value = @vars["self"].value
+      other_value = @vars[a_def.args.first.name].value
+      case a_def.name
+      when "+"
+        if self_value.is_a?(Int32) && other_value.is_a?(Int32)
+          result = self_value + other_value
+          result_type = @scope.lookup_type(a_def.return_type.not_nil!)
+          @last = Value.new(result, result_type)
+        else
+          node.raise "BUG: missing handling of #{self_value.class} + #{other_value.class}"
+        end
+      else
+        node.raise "BUG: missing handling of binary op #{a_def.name}"
+      end
+    else
+      node.raise "BUG: missing handling of primitive #{node.name}"
+    end
   end
 
   def visit(node : ASTNode)
