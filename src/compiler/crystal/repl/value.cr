@@ -4,4 +4,16 @@ class Crystal::Repl::Value
 
   def initialize(@value, @type : Type)
   end
+
+  def truthy?
+    case value
+    when Nil
+      false
+    when Bool
+      value == true
+    else
+      # TODO: missing pointer
+      true
+    end
+  end
 end

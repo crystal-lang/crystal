@@ -19,6 +19,11 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     @last
   end
 
+  def visit(node : Nop)
+    @last = Value.new(nil, @program.nil_type)
+    false
+  end
+
   def visit(node : NilLiteral)
     @last = Value.new(nil, @program.nil_type)
     false
@@ -122,6 +127,18 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     @vars = old_vars
     @def = nil
 
+    false
+  end
+
+  def visit(node : If)
+    node.cond.accept self
+    if @last.truthy?
+      node.then.accept self
+    elsif node_else = node.else
+      node_else.accept self
+    else
+      @last = Value.new(nil, @program.nil_type)
+    end
     false
   end
 
