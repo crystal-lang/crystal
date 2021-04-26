@@ -142,6 +142,17 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     false
   end
 
+  def visit(node : While)
+    while true
+      node.cond.accept self
+      break unless @last.truthy?
+
+      node.body.accept self
+    end
+    @last = Value.new(nil, @program.nil_type)
+    false
+  end
+
   def visit(node : Primitive)
     case node.name
     when "binary"
