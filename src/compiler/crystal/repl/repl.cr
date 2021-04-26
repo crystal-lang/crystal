@@ -6,9 +6,8 @@ class Crystal::Repl
     while true
       print "> "
       line = gets.try(&.chomp)
-      if line.try(&.strip) == "exit"
-        break
-      end
+      break unless line
+      break if line.strip.in?("exit", "quit")
     end
   end
 end
