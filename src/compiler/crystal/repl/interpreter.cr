@@ -23,6 +23,10 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
     @last = Value.new(node.value, @program.bool)
   end
 
+  def visit(node : CharLiteral)
+    @last = Value.new(node.value, @program.char)
+  end
+
   def visit(node : NumberLiteral)
     case node.kind
     when :i32
