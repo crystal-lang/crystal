@@ -22,6 +22,7 @@ class Crystal::Command
         env                      print Crystal environment information
         eval                     eval code from args or standard input
         play                     starts Crystal playground server
+        repl                     launch a repl
         run (default)            build and run program
         spec                     build and run specs (in spec directory)
         tool                     run a tool
@@ -95,7 +96,10 @@ class Crystal::Command
       options.shift
       use_crystal_opts
       eval
-    when "run".starts_with?(command)
+    when command == "repl"
+      options.shift
+      repl
+    when command == "run"
       options.shift
       use_crystal_opts
       run_command(single_file: false)
