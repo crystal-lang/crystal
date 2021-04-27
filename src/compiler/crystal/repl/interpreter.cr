@@ -142,25 +142,12 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   end
 
   def visit(node : Path)
-    # TODO: do it well, handle constants too
-    path_type = scope.lookup_type(node)
-    @last = Value.new(path_type, path_type.metaclass)
+    @last = Value.new(node.type.instance_type, node.type)
     false
   end
 
   def visit(node : Generic)
-    # TODO: this is done like that so I can try out Pointer#malloc
-    node.name.accept self
-    generic_type = @last.value.as(GenericType)
-
-    type_var_types = Array(TypeVar).new(node.type_vars.size)
-    node.type_vars.each do |type_var|
-      type_var.accept self
-      type_var_types << @last.value.as(Type)
-    end
-
-    instantiated_type = generic_type.instantiate(type_var_types)
-    @last = Value.new(instantiated_type, instantiated_type.metaclass)
+    @last = Value.new(node.type.instance_type, node.type)
     false
   end
 
