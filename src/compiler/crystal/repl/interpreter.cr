@@ -1,17 +1,18 @@
 require "./repl"
 
-class Crystal::Repl::Interpreter < Crystal::Visitor
+class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   getter last : Value
-  getter vars : Hash(String, Value)
+  getter var_values : Hash(String, Value)
 
-  @scope : Type
   @def : Def?
 
-  def initialize(@program : Program)
+  def initialize(program : Program)
+    super(program)
+
     @last = Value.new(nil, @program.nil_type)
     @scope = @program
     @def = nil
-    @vars = {} of String => Value
+    @var_values = {} of String => Value
   end
 
   def interpret(node)
@@ -20,31 +21,33 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
   end
 
   def visit(node : Nop)
-    @last = Value.new(nil, @program.nil_type)
+    @last = Value.new(nil, node.type)
     false
   end
 
   def visit(node : NilLiteral)
-    @last = Value.new(nil, @program.nil_type)
+    @last = Value.new(nil, node.type)
     false
   end
 
   def visit(node : BoolLiteral)
-    @last = Value.new(node.value, @program.bool)
+    @last = Value.new(node.value, node.type)
+    false
   end
 
   def visit(node : CharLiteral)
-    @last = Value.new(node.value, @program.char)
+    @last = Value.new(node.value, node.type)
+    false
   end
 
   def visit(node : NumberLiteral)
     case node.kind
     when :i32
-      @last = Value.new(node.value.to_i, @program.int32)
+      @last = Value.new(node.value.to_i, node.type)
     when :i64
-      @last = Value.new(node.value.to_i64, @program.int64)
+      @last = Value.new(node.value.to_i64, node.type)
     when :u64
-      @last = Value.new(node.value.to_u64, @program.uint64)
+      @last = Value.new(node.value.to_u64, node.type)
     else
       node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
     end
@@ -52,30 +55,33 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
   end
 
   def visit(node : StringLiteral)
-    @last = Value.new(node.value, @program.string)
+    @last = Value.new(node.value, node.type)
+    false
   end
 
   def visit(node : Assign)
-    visit(node, node.target, node.value)
+    target = node.target
+    case target
+    when Var
+      node.value.accept self
+      @var_values[target.name] = @last
+    else
+      node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
+    end
     false
   end
 
   def visit(node : Var)
-    @last = @vars[node.name]
+    @last = @var_values[node.name]
     false
   end
 
-  private def visit(node : Assign, target : Var, value : ASTNode)
-    value.accept self
-    @vars[target.name] = @last
-  end
-
-  private def visit(node : Assign, target : ASTNode, value : ASTNode)
-    node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
-  end
-
   def visit(node : Call)
-    # TODO: named arguments, block
+    super
+
+    # TODO: handle case of multidispatch
+    target_def = node.target_def
+
     obj = node.obj
 
     obj_value =
@@ -91,44 +97,22 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       @last
     end
 
-    arg_types = arg_values.map(&.type)
-
-    signature = CallSignature.new(
-      name: node.name,
-      arg_types: arg_types,
-      block: nil,
-      named_args: nil,
-    )
-
-    matches =
-      if obj_value
-        obj_value.type.lookup_matches(signature)
-      else
-        @program.lookup_matches(signature)
-      end
-
-    if matches.empty?
-      node.raise "BUG: handle case of call not found"
-    end
-
-    match = matches.first
-    instantiated_type = match.context.instantiated_type
-    old_scope, @scope = @scope, instantiated_type
-    old_vars, @vars = @vars, {} of String => Value
-    @def = match.def
+    old_scope, @scope = scope, target_def.owner
+    old_var_values, @var_values = @var_values, {} of String => Value
+    @def = target_def
 
     # Set up local vars for the def instatiation
     if obj_value
-      @vars["self"] = obj_value
+      @var_values["self"] = obj_value
     end
-    match.def.args.zip(arg_values) do |def_arg, arg_value|
-      @vars[def_arg.name] = arg_value
+    target_def.args.zip(arg_values) do |def_arg, arg_value|
+      @var_values[def_arg.name] = arg_value
     end
 
-    match.def.body.accept self
+    target_def.body.accept self
 
     @scope = old_scope
-    @vars = old_vars
+    @var_values = old_var_values
     @def = nil
 
     false
@@ -159,7 +143,7 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
 
   def visit(node : Path)
     # TODO: do it well, handle constants too
-    path_type = @scope.lookup_type(node)
+    path_type = scope.lookup_type(node)
     @last = Value.new(path_type, path_type.metaclass)
     false
   end
@@ -192,13 +176,13 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
 
     case node.name
     when "binary"
-      self_value = @vars["self"].value
-      other_value = @vars[a_def.args.first.name].value
+      self_value = @var_values["self"].value
+      other_value = @var_values[a_def.args.first.name].value
       case a_def.name
       when "+"
         if self_value.is_a?(Int32) && other_value.is_a?(Int32)
           result = self_value + other_value
-          result_type = @scope.lookup_type(a_def.return_type.not_nil!)
+          result_type = scope.lookup_type(a_def.return_type.not_nil!)
           @last = Value.new(result, result_type)
         else
           node.raise "BUG: missing handling of #{self_value.class} + #{other_value.class}"
@@ -206,7 +190,7 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
       when "-"
         if self_value.is_a?(Int32) && other_value.is_a?(Int32)
           result = self_value - other_value
-          result_type = @scope.lookup_type(a_def.return_type.not_nil!)
+          result_type = scope.lookup_type(a_def.return_type.not_nil!)
           @last = Value.new(result, result_type)
         else
           node.raise "BUG: missing handling of #{self_value.class} - #{other_value.class}"
@@ -255,15 +239,15 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
         node.raise "BUG: missing handling of binary op #{a_def.name}"
       end
     when "pointer_malloc"
-      pointer_instance_type = @scope.instance_type.as(PointerInstanceType)
+      pointer_instance_type = scope.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       type_size = @program.size_of(element_type.sizeof_type)
-      arg_size = @vars[a_def.args.first.name].value.as(UInt64)
+      arg_size = @var_values[a_def.args.first.name].value.as(UInt64)
       bytes_to_malloc = (arg_size * type_size)
       pointer = Pointer(Void).malloc(bytes_to_malloc)
       @last = Value.new(PointerWrapper.new(pointer), pointer_instance_type)
     when "pointer_get"
-      self_var = @vars["self"]
+      self_var = @var_values["self"]
       pointer = self_var.value.as(PointerWrapper).pointer
       pointer_instance_type = self_var.type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -279,8 +263,8 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
         node.raise "BUG: missing handling of pointer_get with element_type #{element_type}"
       end
     when "pointer_set"
-      self_var = @vars["self"]
-      value_to_set = @vars[a_def.args.first.name]
+      self_var = @var_values["self"]
+      value_to_set = @var_values[a_def.args.first.name]
       @last = value_to_set
 
       pointer = self_var.value.as(PointerWrapper).pointer
@@ -298,12 +282,12 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
         node.raise "BUG: missing handling of pointer_set with element_type #{element_type}"
       end
     when "pointer_add"
-      self_var = @vars["self"]
+      self_var = @var_values["self"]
       pointer = self_var.value.as(PointerWrapper).pointer
-      pointer_instance_type = @scope.instance_type.as(PointerInstanceType)
+      pointer_instance_type = scope.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       type_size = @program.size_of(element_type.sizeof_type)
-      value_to_add = @vars[a_def.args.first.name].value.as(Int64)
+      value_to_add = @var_values[a_def.args.first.name].value.as(Int64)
       bytes_to_add = (type_size * value_to_add)
       @last = Value.new(PointerWrapper.new(pointer + bytes_to_add), pointer_instance_type)
     else
@@ -313,7 +297,7 @@ class Crystal::Repl::Interpreter < Crystal::Visitor
 
   def visit(node : Def)
     @last = Value.new(nil, @program.nil_type)
-    false
+    super
   end
 
   def visit(node : ASTNode)

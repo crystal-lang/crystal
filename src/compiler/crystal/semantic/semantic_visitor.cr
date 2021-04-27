@@ -25,6 +25,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @in_is_a = false
   end
 
+  def reset
+    @current_type = @program
+    @scope = nil
+    @exp_nest = 0
+    @in_lib = false
+    @in_c_struct_or_union = false
+    @in_is_a = false
+  end
+
   # Transform require to its source code.
   # The source code can be a Nop if the file was already required.
   def visit(node : Require)

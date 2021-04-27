@@ -5,6 +5,8 @@ class Crystal::Repl
     @incomplete = false
     @line_number = 1
     @interpreter = Interpreter.new(@program)
+    @main_visitor = MainVisitor.new(@program)
+    @top_level_visitor = TopLevelVisitor.new(@program)
     @buffer = ""
 
     load_prelude
@@ -31,7 +33,7 @@ class Crystal::Repl
       parser = Parser.new(
         new_buffer,
         string_pool: @program.string_pool,
-        def_vars: [@interpreter.vars.keys.to_set]
+        def_vars: [@interpreter.var_values.keys.to_set]
       )
 
       begin
@@ -61,7 +63,21 @@ class Crystal::Repl
         @line_number += 1
       end
 
-      @program.top_level_semantic(node)
+      @top_level_visitor.reset
+      @main_visitor.reset
+
+      begin
+        node.accept @top_level_visitor
+        node.accept @main_visitor
+      rescue ex : Exception
+        @nest = 0
+        @buffer = ""
+        @line_number += 1
+
+        ex.color = true if ex.is_a?(Crystal::CodeError)
+        puts ex
+        next
+      end
 
       value = @interpreter.interpret(node)
       p value.value
