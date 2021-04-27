@@ -79,7 +79,7 @@ class Crystal::Repl::Interpreter
     arg_size = @var_values[a_def.args.first.name].value.as(UInt64)
     bytes_to_malloc = (arg_size * type_size)
     pointer = Pointer(Void).malloc(bytes_to_malloc)
-    @last = Value.new(PointerWrapper.new(pointer), pointer_instance_type)
+    @last = Value.new(pointer, pointer_instance_type)
   end
 
   private def primitive_pointer_get(node)
@@ -131,6 +131,6 @@ class Crystal::Repl::Interpreter
     type_size = @program.size_of(element_type.sizeof_type)
     value_to_add = @var_values[a_def.args.first.name].value.as(Int64)
     bytes_to_add = (type_size * value_to_add)
-    @last = Value.new(PointerWrapper.new(pointer + bytes_to_add), pointer_instance_type)
+    @last = Value.new(pointer + bytes_to_add, pointer_instance_type)
   end
 end
