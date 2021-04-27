@@ -1,3 +1,5 @@
+require "./repl"
+
 struct Crystal::Repl::Value
   getter type : Type
   getter value : Nil |

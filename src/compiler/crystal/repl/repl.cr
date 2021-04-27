@@ -69,6 +69,9 @@ class Crystal::Repl
       begin
         node.accept @top_level_visitor
         node.accept @main_visitor
+
+        value = @interpreter.interpret(node)
+        p value.value
       rescue ex : Exception
         @nest = 0
         @buffer = ""
@@ -78,9 +81,6 @@ class Crystal::Repl
         puts ex
         next
       end
-
-      value = @interpreter.interpret(node)
-      p value.value
     end
   end
 

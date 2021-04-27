@@ -1,3 +1,4 @@
+require "./repl"
 require "./interpreter"
 
 class Crystal::Repl::Interpreter
