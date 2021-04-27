@@ -42,12 +42,26 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
 
   def visit(node : NumberLiteral)
     case node.kind
+    when :i8
+      @last = Value.new(node.value.to_i8, node.type)
+    when :u8
+      @last = Value.new(node.value.to_u8, node.type)
+    when :i16
+      @last = Value.new(node.value.to_i16, node.type)
+    when :u16
+      @last = Value.new(node.value.to_u16, node.type)
     when :i32
-      @last = Value.new(node.value.to_i, node.type)
+      @last = Value.new(node.value.to_i32, node.type)
+    when :u32
+      @last = Value.new(node.value.to_u32, node.type)
     when :i64
       @last = Value.new(node.value.to_i64, node.type)
     when :u64
       @last = Value.new(node.value.to_u64, node.type)
+    when :f32
+      @last = Value.new(node.value.to_f32, node.type)
+    when :f64
+      @last = Value.new(node.value.to_f64, node.type)
     else
       node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
     end
