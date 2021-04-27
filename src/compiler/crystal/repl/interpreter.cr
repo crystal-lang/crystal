@@ -1,4 +1,5 @@
 require "./repl"
+require "ffi"
 
 class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   getter last : Value
@@ -13,6 +14,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     @scope = @program
     @def = nil
     @var_values = {} of String => Value
+    @dl_libraries = {} of String? => Void*
   end
 
   def interpret(node)
@@ -125,22 +127,47 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     old_var_values, @var_values = @var_values, {} of String => Value
     @def = target_def
 
-    # Set up local vars for the def instatiation
-    if obj_value
-      @var_values["self"] = obj_value
-    end
-
-    arg_values.zip(target_def.args) do |arg_value, def_arg|
-      @var_values[def_arg.name] = arg_value
-    end
-
-    if named_arg_values
-      named_arg_values.each do |name, value|
-        @var_values[name] = value
+    if obj_value && obj_value.type.is_a?(LibType)
+      # Okay... we need to d a C call. libffi to the rescue!
+      handle = @dl_libraries[nil] ||= LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+      fn = LibC.dlsym(handle, node.name)
+      if fn.null?
+        node.raise "dlsym failed for #{node.name}"
       end
-    end
 
-    target_def.body.accept self
+      # TODO: missing named arguments here
+      cif = FFI.prepare(
+        abi: FFI::ABI::DEFAULT,
+        args: arg_values.map(&.type.ffi_type),
+        return_type: node.type.ffi_type,
+      )
+
+      pointers = [] of Void*
+      arg_values.each do |arg_value|
+        pointer = Pointer(Void).malloc(@program.size_of(arg_value.type.sizeof_type))
+        arg_value.ffi_value(pointer)
+        pointers << pointer
+      end
+
+      cif.call(fn, pointers)
+    else
+      # Set up local vars for the def instatiation
+      if obj_value
+        @var_values["self"] = obj_value
+      end
+
+      arg_values.zip(target_def.args) do |arg_value, def_arg|
+        @var_values[def_arg.name] = arg_value
+      end
+
+      if named_arg_values
+        named_arg_values.each do |name, value|
+          @var_values[name] = value
+        end
+      end
+
+      target_def.body.accept self
+    end
 
     @scope = old_scope
     @var_values = old_var_values

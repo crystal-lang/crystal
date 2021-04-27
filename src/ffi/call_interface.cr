@@ -3,7 +3,7 @@ module FFI
     def initialize(@cif : LibFFI::Cif)
     end
 
-    def call(fn : Void*, values : Pointer(Void*))
+    def call(fn : Void*, values : Array(Void*))
       rc = 0_u64
 
       LibFFI.call(
