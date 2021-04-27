@@ -97,6 +97,16 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
       @last
     end
 
+    named_arg_values =
+      if named_args = node.named_args
+        named_args.map do |named_arg|
+          named_arg.value.accept self
+          {named_arg.name, @last}
+        end
+      else
+        nil
+      end
+
     old_scope, @scope = scope, target_def.owner
     old_var_values, @var_values = @var_values, {} of String => Value
     @def = target_def
@@ -105,8 +115,15 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     if obj_value
       @var_values["self"] = obj_value
     end
-    target_def.args.zip(arg_values) do |def_arg, arg_value|
+
+    arg_values.zip(target_def.args) do |arg_value, def_arg|
       @var_values[def_arg.name] = arg_value
+    end
+
+    if named_arg_values
+      named_arg_values.each do |name, value|
+        @var_values[name] = value
+      end
     end
 
     target_def.body.accept self
