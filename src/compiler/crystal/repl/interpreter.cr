@@ -150,6 +150,8 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
       end
 
       cif.call(fn, pointers)
+
+      # TODO: missing return value
     else
       # Set up local vars for the def instatiation
       if obj_value
