@@ -46,10 +46,12 @@ module Benchmark
         max_bytes_per_op = ran_items.max_of &.bytes_per_op.humanize(base: 1024).size
 
         ran_items.each do |item|
-          printf "%s %s (%s) (±%5.2f%%)  %sB/op  %s\n",
+          printf "%s %s (%s real, %s user, %s sys) (±%5.2f%%)  %sB/op  %s\n",
             item.label.rjust(max_label),
             item.human_mean,
             item.human_iteration_time,
+            item.human_cpu_user_time,
+            item.human_cpu_system_time,
             item.relative_stddev,
             item.bytes_per_op.humanize(base: 1024).rjust(max_bytes_per_op),
             item.human_compare.rjust(max_compare)
@@ -83,13 +85,22 @@ module Benchmark
           measurements = [] of Time::Span
           bytes = 0_i64
           cycles = 0_i64
+          cpu_user_seconds = 0.0_f64
+          cpu_system_seconds = 0.0_f64
 
           target = Time.monotonic + @calculation_time
 
           loop do
             elapsed = nil
+            before_cpu_time = nil
+            after_cpu_time = nil
+
             bytes_taken = Benchmark.memory do
+              before_cpu_time = Process.times
               elapsed = Time.measure { item.call_for_100ms }
+              after_cpu_time = Process.times
+              cpu_user_seconds += (after_cpu_time.utime + after_cpu_time.cutime) - (before_cpu_time.utime + before_cpu_time.cutime)
+              cpu_system_seconds += (after_cpu_time.stime + after_cpu_time.cstime) - (before_cpu_time.stime + before_cpu_time.cstime)
             end
             bytes += bytes_taken
             cycles += item.cycles
@@ -101,6 +112,8 @@ module Benchmark
           item.calculate_stats(ips)
 
           item.bytes_per_op = (bytes.to_f / cycles.to_f).round.to_u64
+          item.cpu_user_seconds = cpu_user_seconds / cycles
+          item.cpu_system_seconds = cpu_system_seconds / cycles
 
           if @interactive
             run_comparison
@@ -154,6 +167,12 @@ module Benchmark
       # Number of bytes allocated per operation
       property! bytes_per_op : UInt64
 
+      # Number of seconds the CPU spent in executing userland code
+      property! cpu_user_seconds : Float64
+
+      # Number of seconds the CPU spent in system calls
+      property! cpu_system_seconds : Float64
+
       @ran : Bool
       @ran = false
 
@@ -197,6 +216,14 @@ module Benchmark
           magnitude = Number.prefix_index(magnitude).clamp(-9..0)
           {magnitude, magnitude == 0 ? "s " : "#{Number.si_prefix(magnitude)}s"}
         end.rjust(8)
+      end
+
+      def human_cpu_user_time
+        "#{cpu_user_seconds.humanize(precision: 2, significant: false)}s".rjust(8)
+      end
+
+      def human_cpu_system_time
+        "#{cpu_system_seconds.humanize(precision: 2, significant: false)}s".rjust(8)
       end
 
       def human_compare
