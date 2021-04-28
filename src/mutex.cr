@@ -128,6 +128,16 @@ class Mutex
     nil
   end
 
+  # Mutex is unlocked within the supplied block and relocked when the block exits.
+  def unlock
+    unlock
+    begin
+      yield
+    ensure
+      lock
+    end
+  end
+
   def synchronize
     lock
     begin
