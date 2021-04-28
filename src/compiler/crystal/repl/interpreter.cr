@@ -10,6 +10,9 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   def initialize(program : Program)
     super(program)
 
+    @main_visitor = MainVisitor.new(@program)
+    @top_level_visitor = TopLevelVisitor.new(@program)
+
     @last = Value.new(nil, @program.nil_type)
     @scope = @program
     @def = nil
@@ -18,6 +21,12 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   end
 
   def interpret(node)
+    @top_level_visitor.reset
+    node.accept @top_level_visitor
+
+    @main_visitor.reset
+    node.accept @main_visitor
+
     node.accept self
     @last
   end

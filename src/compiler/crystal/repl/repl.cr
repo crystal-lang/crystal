@@ -5,8 +5,6 @@ class Crystal::Repl
     @incomplete = false
     @line_number = 1
     @interpreter = Interpreter.new(@program)
-    @main_visitor = MainVisitor.new(@program)
-    @top_level_visitor = TopLevelVisitor.new(@program)
     @buffer = ""
 
     load_prelude
@@ -63,13 +61,7 @@ class Crystal::Repl
         @line_number += 1
       end
 
-      @top_level_visitor.reset
-      @main_visitor.reset
-
       begin
-        node.accept @top_level_visitor
-        node.accept @main_visitor
-
         value = @interpreter.interpret(node)
         p value.value
       rescue ex : Exception

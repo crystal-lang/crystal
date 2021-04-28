@@ -59,6 +59,8 @@ struct Crystal::Repl::Value
       nil
     when BoolType
       @pointer.unsafe_as(Bool)
+    when CharType
+      @pointer.unsafe_as(Char)
     when IntegerType
       case type.kind
       when :i8
