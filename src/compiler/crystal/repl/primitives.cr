@@ -23,8 +23,8 @@ class Crystal::Repl::Interpreter
 
   private def primitive_binary(node)
     a_def = @def.not_nil!
-    self_value = @var_values["self"].value
-    other_value = @var_values[a_def.args.first.name].value
+    self_value = @local_vars["self"].value
+    other_value = @local_vars[a_def.args.first.name].value
     case a_def.name
     when "+"
       binary_math_op("+", node, self_value, other_value) { |x, y| x + y }
@@ -76,14 +76,14 @@ class Crystal::Repl::Interpreter
     pointer_instance_type = scope.instance_type.as(PointerInstanceType)
     element_type = pointer_instance_type.element_type
     type_size = @program.size_of(element_type.sizeof_type)
-    arg_size = @var_values[a_def.args.first.name].value.as(UInt64)
+    arg_size = @local_vars[a_def.args.first.name].value.as(UInt64)
     bytes_to_malloc = (arg_size * type_size)
     pointer = Pointer(Void).malloc(bytes_to_malloc)
     @last = Value.new(pointer, pointer_instance_type)
   end
 
   private def primitive_pointer_get(node)
-    self_var = @var_values["self"]
+    self_var = @local_vars["self"]
     pointer = self_var.value.as(PointerWrapper).pointer
     pointer_instance_type = self_var.type.as(PointerInstanceType)
     element_type = pointer_instance_type.element_type
@@ -102,8 +102,8 @@ class Crystal::Repl::Interpreter
 
   private def primitive_pointer_set(node)
     a_def = @def.not_nil!
-    self_var = @var_values["self"]
-    value_to_set = @var_values[a_def.args.first.name]
+    self_var = @local_vars["self"]
+    value_to_set = @local_vars[a_def.args.first.name]
     @last = value_to_set
 
     pointer = self_var.value.as(PointerWrapper).pointer
@@ -124,12 +124,12 @@ class Crystal::Repl::Interpreter
 
   private def primitive_pointer_add(node)
     a_def = @def.not_nil!
-    self_var = @var_values["self"]
+    self_var = @local_vars["self"]
     pointer = self_var.value.as(PointerWrapper).pointer
     pointer_instance_type = scope.instance_type.as(PointerInstanceType)
     element_type = pointer_instance_type.element_type
     type_size = @program.size_of(element_type.sizeof_type)
-    value_to_add = @var_values[a_def.args.first.name].value.as(Int64)
+    value_to_add = @local_vars[a_def.args.first.name].value.as(Int64)
     bytes_to_add = (type_size * value_to_add)
     @last = Value.new(pointer + bytes_to_add, pointer_instance_type)
   end

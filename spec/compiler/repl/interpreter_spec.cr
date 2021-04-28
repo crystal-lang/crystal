@@ -131,6 +131,34 @@ describe Crystal::Repl::Interpreter do
       ptr.value
     CODE
   end
+
+  it "interprets pointerof, mutates pointer, read var" do
+    interpret(<<-CODE).should eq(2)
+      a = 1
+      ptr = pointerof(a)
+      ptr.value = 2
+      a
+    CODE
+  end
+
+  it "interprets pointerof, mutates var, read pointer" do
+    interpret(<<-CODE).should eq(2)
+      a = 1
+      ptr = pointerof(a)
+      a = 2
+      ptr.value
+    CODE
+  end
+
+  it "interprets pointerof and mutates memory (there are more variables)" do
+    interpret(<<-CODE).should eq(2)
+      x = 42
+      a = 1
+      ptr = pointerof(a)
+      ptr.value = 2
+      a
+    CODE
+  end
 end
 
 private def interpret(string, prelude = "primitives")

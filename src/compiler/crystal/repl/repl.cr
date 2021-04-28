@@ -31,7 +31,7 @@ class Crystal::Repl
       parser = Parser.new(
         new_buffer,
         string_pool: @program.string_pool,
-        def_vars: [@interpreter.var_values.keys.to_set]
+        def_vars: [@interpreter.local_var_keys.to_set]
       )
 
       begin

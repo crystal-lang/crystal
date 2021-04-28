@@ -3,7 +3,6 @@ require "ffi"
 
 class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   getter last : Value
-  getter var_values : Hash(String, Value)
 
   @def : Def?
 
@@ -16,7 +15,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     @last = Value.new(nil, @program.nil_type)
     @scope = @program
     @def = nil
-    @var_values = {} of String => Value
+    @local_vars = LocalVars.new
     @dl_libraries = {} of String? => Void*
   end
 
@@ -29,6 +28,10 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
 
     node.accept self
     @last
+  end
+
+  def local_var_keys
+    @local_vars.names
   end
 
   def visit(node : Nop)
@@ -89,7 +92,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     case target
     when Var
       node.value.accept self
-      @var_values[target.name] = @last
+      @local_vars[target.name] = @last
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -97,7 +100,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   end
 
   def visit(node : Var)
-    @last = @var_values[node.name]
+    @last = @local_vars[node.name]
     false
   end
 
@@ -133,7 +136,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
       end
 
     old_scope, @scope = scope, target_def.owner
-    old_var_values, @var_values = @var_values, {} of String => Value
+    old_local_vars, @local_vars = @local_vars, LocalVars.new
     @def = target_def
 
     if obj_value && obj_value.type.is_a?(LibType)
@@ -164,16 +167,16 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     else
       # Set up local vars for the def instatiation
       if obj_value
-        @var_values["self"] = obj_value
+        @local_vars["self"] = obj_value
       end
 
       arg_values.zip(target_def.args) do |arg_value, def_arg|
-        @var_values[def_arg.name] = arg_value
+        @local_vars[def_arg.name] = arg_value
       end
 
       if named_arg_values
         named_arg_values.each do |name, value|
-          @var_values[name] = value
+          @local_vars[name] = value
         end
       end
 
@@ -181,7 +184,7 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
     end
 
     @scope = old_scope
-    @var_values = old_var_values
+    @local_vars = old_local_vars
     @def = nil
 
     false
@@ -223,6 +226,17 @@ class Crystal::Repl::Interpreter < Crystal::SemanticVisitor
   def visit(node : Expressions)
     node.expressions.each do |expression|
       expression.accept self
+    end
+    false
+  end
+
+  def visit(node : PointerOf)
+    exp = node.exp
+    case exp
+    when Var
+      @last = @local_vars.pointerof(exp.name)
+    else
+      node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
     false
   end
