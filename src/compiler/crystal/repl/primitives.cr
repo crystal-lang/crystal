@@ -30,6 +30,8 @@ class Crystal::Repl::Interpreter
       binary_math_op("+", node, self_value, other_value) { |x, y| x + y }
     when "-"
       binary_math_op("-", node, self_value, other_value) { |x, y| x - y }
+    when "*"
+      binary_math_op("*", node, self_value, other_value) { |x, y| x * y }
     when ">"
       binary_cmp_op(">", node, self_value, other_value) { |x, y| x > y }
     when ">="
