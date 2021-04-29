@@ -124,10 +124,18 @@ describe Crystal::Repl::Interpreter do
       CODE
   end
 
-  it "interprets pointer set and get" do
+  it "interprets pointer set and get (int)" do
     interpret(<<-CODE).should eq(10)
       ptr = Pointer(Int32).malloc(1_u64)
       ptr.value = 10
+      ptr.value
+    CODE
+  end
+
+  it "interprets pointer set and get (bool)" do
+    interpret(<<-CODE).should eq(true)
+      ptr = Pointer(Bool).malloc(1_u64)
+      ptr.value = true
       ptr.value
     CODE
   end

@@ -87,17 +87,7 @@ class Crystal::Repl::Interpreter
     pointer = self_var.value.as(PointerWrapper).pointer
     pointer_instance_type = self_var.type.as(PointerInstanceType)
     element_type = pointer_instance_type.element_type
-    case element_type
-    when IntegerType
-      case element_type.kind
-      when :i32
-        @last = Value.new(pointer.as(Int32*).value, @program.int32)
-      else
-        node.raise "BUG: missing handling of pointer_get with element_type #{element_type} and kind #{element_type.kind}"
-      end
-    else
-      node.raise "BUG: missing handling of pointer_get with element_type #{element_type}"
-    end
+    @last = Value.new(pointer.as(Void**).value, element_type)
   end
 
   private def primitive_pointer_set(node)
@@ -107,19 +97,7 @@ class Crystal::Repl::Interpreter
     @last = value_to_set
 
     pointer = self_var.value.as(PointerWrapper).pointer
-    pointer_instance_type = self_var.type.as(PointerInstanceType)
-    element_type = pointer_instance_type.element_type
-    case element_type
-    when IntegerType
-      case element_type.kind
-      when :i32
-        pointer.as(Int32*).value = value_to_set.value.as(Int32)
-      else
-        node.raise "BUG: missing handling of pointer_set with element_type #{element_type} and kind #{element_type.kind}"
-      end
-    else
-      node.raise "BUG: missing handling of pointer_set with element_type #{element_type}"
-    end
+    pointer.as(Void**).value = value_to_set.pointer
   end
 
   private def primitive_pointer_add(node)
