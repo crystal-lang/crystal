@@ -167,15 +167,29 @@ describe Crystal::Repl::Interpreter do
       a
     CODE
   end
+
+  it "interprets typeof instance type" do
+    program, repl_value = interpret_full("typeof(1)")
+    repl_value.value.should eq(program.int32.metaclass)
+  end
+
+  it "interprets typeof metaclass type" do
+    program, repl_value = interpret_full("typeof(Int32)")
+    repl_value.value.should eq(program.class_type)
+  end
 end
 
 private def interpret(string, prelude = "primitives")
+  program, repl_value = interpret_full(string, prelude)
+  repl_value.value
+end
+
+private def interpret_full(string, prelude = "primitives")
   program = Crystal::Program.new
   load_prelude(program, prelude)
   interpreter = Crystal::Repl::Interpreter.new(program)
   node = Crystal::Parser.parse(string)
-  value = interpreter.interpret(node)
-  value.value
+  {program, interpreter.interpret(node)}
 end
 
 private def load_prelude(program, prelude = "primitives")
