@@ -52,17 +52,16 @@ class Crystal::Repl::Interpreter
   end
 
   private def binary_math_op(op, node, self_value, other_value)
-    if self_value.is_a?(Int) && other_value.is_a?(Int)
-      result = yield self_value, other_value
-      result_type = scope.lookup_type(@def.not_nil!.return_type.not_nil!)
-      @last = Value.new(result, result_type)
-    else
-      node.raise "BUG: missing handling of #{self_value.class} #{op} #{other_value.class}"
-    end
+    self_value = self_value.as(Int::Primitive | Float::Primitive)
+    other_value = other_value.as(Int::Primitive | Float::Primitive)
+
+    result = yield self_value, other_value
+    result_type = scope.lookup_type(@def.not_nil!.return_type.not_nil!)
+    @last = Value.new(result, result_type)
   end
 
   private def binary_cmp_op(op, node, self_value, other_value)
-    if self_value.is_a?(Int) && other_value.is_a?(Int)
+    if self_value.is_a?(Int::Primitive | Float::Primitive) && other_value.is_a?(Int::Primitive | Float::Primitive)
       result = yield self_value, other_value
       result_type = @program.bool
       @last = Value.new(result, result_type)
