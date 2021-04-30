@@ -40,6 +40,9 @@ struct Crystal::Repl::Value
     @pointer = Pointer(Void).new(value.object_id)
   end
 
+  def initialize(@pointer : Pointer(Void), @type : Type)
+  end
+
   def truthy?
     case value
     when Nil

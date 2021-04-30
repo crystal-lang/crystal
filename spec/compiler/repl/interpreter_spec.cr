@@ -83,161 +83,161 @@ describe Crystal::Repl::Interpreter do
     value.should eq("Hello world!")
   end
 
-  it "interprets Int32 + Int32" do
-    interpret("1 + 2").should eq(3)
-  end
+  # it "interprets variable set and get" do
+  #   interpret(<<-CODE).should eq(1)
+  #     a = 1
+  #     a
+  #     CODE
+  # end
 
-  it "interprets Int32 + Float64" do
-    interpret("1 + 2.5").should eq(3.5)
-  end
+  # it "interprets Int32 + Int32" do
+  #   interpret("1 + 2").should eq(3)
+  # end
 
-  it "interprets Float64 + Int32" do
-    interpret("2.5 + 1").should eq(3.5)
-  end
+  # it "interprets Int32 + Float64" do
+  #   interpret("1 + 2.5").should eq(3.5)
+  # end
 
-  it "interprets Float64 + Float64" do
-    interpret("2.5 + 2.3").should eq(4.8)
-  end
+  # it "interprets Float64 + Int32" do
+  #   interpret("2.5 + 1").should eq(3.5)
+  # end
 
-  it "interprets Int32 cmp Int32" do
-    interpret("1 < 2").should be_true
-  end
+  # it "interprets Float64 + Float64" do
+  #   interpret("2.5 + 2.3").should eq(4.8)
+  # end
 
-  it "interprets Int32 cmp Float64" do
-    interpret("1 < 2.5").should be_true
-  end
+  # it "interprets Int32 cmp Int32" do
+  #   interpret("1 < 2").should be_true
+  # end
 
-  it "interprets Float64 cmp Int32" do
-    interpret("1.2 < 2").should be_true
-  end
+  # it "interprets Int32 cmp Float64" do
+  #   interpret("1 < 2.5").should be_true
+  # end
 
-  it "interprets Float64 cmp Float64" do
-    interpret("1.2 < 2.3").should be_true
-  end
+  # it "interprets Float64 cmp Int32" do
+  #   interpret("1.2 < 2").should be_true
+  # end
 
-  it "interprets Int32 == Int32 (true)" do
-    interpret("1 == 1").should be_true
-  end
+  # it "interprets Float64 cmp Float64" do
+  #   interpret("1.2 < 2.3").should be_true
+  # end
 
-  it "interprets Int32 == Int32 (false)" do
-    interpret("1 == 2").should be_false
-  end
+  # it "interprets Int32 == Int32 (true)" do
+  #   interpret("1 == 1").should be_true
+  # end
 
-  it "interprets Int32 != Int32 (true)" do
-    interpret("1 != 2").should be_true
-  end
+  # it "interprets Int32 == Int32 (false)" do
+  #   interpret("1 == 2").should be_false
+  # end
 
-  it "interprets Int32 != Int32 (false)" do
-    interpret("1 != 1").should be_false
-  end
+  # it "interprets Int32 != Int32 (true)" do
+  #   interpret("1 != 2").should be_true
+  # end
 
-  it "interprets Int32 - Int32" do
-    interpret("1 - 2").should eq(-1)
-  end
+  # it "interprets Int32 != Int32 (false)" do
+  #   interpret("1 != 1").should be_false
+  # end
 
-  it "interprets Int32 * Int32" do
-    interpret("2 * 3").should eq(6)
-  end
+  # it "interprets Int32 - Int32" do
+  #   interpret("1 - 2").should eq(-1)
+  # end
 
-  it "interprets simple call" do
-    interpret(<<-CODE).should eq(3)
-      def foo(x, y)
-        x + y
-      end
+  # it "interprets Int32 * Int32" do
+  #   interpret("2 * 3").should eq(6)
+  # end
 
-      foo(1, 2)
-      CODE
-  end
+  # it "interprets simple call" do
+  #   interpret(<<-CODE).should eq(3)
+  #     def foo(x, y)
+  #       x + y
+  #     end
 
-  it "interprets call with default values" do
-    interpret(<<-CODE).should eq(3)
-      def foo(x = 1, y = 2)
-        x + y
-      end
+  #     foo(1, 2)
+  #     CODE
+  # end
 
-      foo
-      CODE
-  end
+  # it "interprets call with default values" do
+  #   interpret(<<-CODE).should eq(3)
+  #     def foo(x = 1, y = 2)
+  #       x + y
+  #     end
 
-  it "interprets call with named arguments" do
-    interpret(<<-CODE).should eq(15)
-      def foo(x, y)
-        x - y
-      end
+  #     foo
+  #     CODE
+  # end
 
-      foo(y: 10, x: 25)
-      CODE
-  end
+  # it "interprets call with named arguments" do
+  #   interpret(<<-CODE).should eq(15)
+  #     def foo(x, y)
+  #       x - y
+  #     end
 
-  it "interprets variable set and get" do
-    interpret(<<-CODE).should eq(1)
-      a = 1
-      a
-      CODE
-  end
+  #     foo(y: 10, x: 25)
+  #     CODE
+  # end
 
-  it "interprets pointer set and get (int)" do
-    interpret(<<-CODE).should eq(10)
-      ptr = Pointer(Int32).malloc(1_u64)
-      ptr.value = 10
-      ptr.value
-    CODE
-  end
+  # it "interprets pointer set and get (int)" do
+  #   interpret(<<-CODE).should eq(10)
+  #     ptr = Pointer(Int32).malloc(1_u64)
+  #     ptr.value = 10
+  #     ptr.value
+  #   CODE
+  # end
 
-  it "interprets pointer set and get (bool)" do
-    interpret(<<-CODE).should be_true
-      ptr = Pointer(Bool).malloc(1_u64)
-      ptr.value = true
-      ptr.value
-    CODE
-  end
+  # it "interprets pointer set and get (bool)" do
+  #   interpret(<<-CODE).should be_true
+  #     ptr = Pointer(Bool).malloc(1_u64)
+  #     ptr.value = true
+  #     ptr.value
+  #   CODE
+  # end
 
-  it "interprets pointerof, mutates pointer, read var" do
-    interpret(<<-CODE).should eq(2)
-      a = 1
-      ptr = pointerof(a)
-      ptr.value = 2
-      a
-    CODE
-  end
+  # it "interprets pointerof, mutates pointer, read var" do
+  #   interpret(<<-CODE).should eq(2)
+  #     a = 1
+  #     ptr = pointerof(a)
+  #     ptr.value = 2
+  #     a
+  #   CODE
+  # end
 
-  it "interprets pointerof, mutates var, read pointer" do
-    interpret(<<-CODE).should eq(2)
-      a = 1
-      ptr = pointerof(a)
-      a = 2
-      ptr.value
-    CODE
-  end
+  # it "interprets pointerof, mutates var, read pointer" do
+  #   interpret(<<-CODE).should eq(2)
+  #     a = 1
+  #     ptr = pointerof(a)
+  #     a = 2
+  #     ptr.value
+  #   CODE
+  # end
 
-  it "interprets pointerof and mutates memory (there are more variables)" do
-    interpret(<<-CODE).should eq(2)
-      x = 42
-      a = 1
-      ptr = pointerof(a)
-      ptr.value = 2
-      a
-    CODE
-  end
+  # it "interprets pointerof and mutates memory (there are more variables)" do
+  #   interpret(<<-CODE).should eq(2)
+  #     x = 42
+  #     a = 1
+  #     ptr = pointerof(a)
+  #     ptr.value = 2
+  #     a
+  #   CODE
+  # end
 
-  it "interprets pointer set and get (union type)" do
-    interpret(<<-CODE).should eq(true)
-      ptr = Pointer(Int32 | Bool).malloc(1_u64)
-      ptr.value = 10
-      ptr.value = true
-      ptr.value
-    CODE
-  end
+  # it "interprets pointer set and get (union type)" do
+  #   interpret(<<-CODE).should eq(true)
+  #     ptr = Pointer(Int32 | Bool).malloc(1_u64)
+  #     ptr.value = 10
+  #     ptr.value = true
+  #     ptr.value
+  #   CODE
+  # end
 
-  it "interprets typeof instance type" do
-    program, repl_value = interpret_full("typeof(1)")
-    repl_value.value.should eq(program.int32.metaclass)
-  end
+  # it "interprets typeof instance type" do
+  #   program, repl_value = interpret_full("typeof(1)")
+  #   repl_value.value.should eq(program.int32.metaclass)
+  # end
 
-  it "interprets typeof metaclass type" do
-    program, repl_value = interpret_full("typeof(Int32)")
-    repl_value.value.should eq(program.class_type)
-  end
+  # it "interprets typeof metaclass type" do
+  #   program, repl_value = interpret_full("typeof(Int32)")
+  #   repl_value.value.should eq(program.class_type)
+  # end
 end
 
 private def interpret(string, prelude = "primitives")
