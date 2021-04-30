@@ -10,20 +10,24 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys
   end
 
-  def [](name : String) : Value
-    index = @name_to_index[name]
+  def name_to_index(name : String) : Int32
+    index = @name_to_index[name]?
+    unless index
+      index = @name_to_index.size
+      @name_to_index[name] = index
+
+      value = uninitialized Value
+      @vars << value
+    end
+    index
+  end
+
+  def [](index : Int32) : Value
     @vars[index]
   end
 
-  def []=(name : String, value : Value) : Value
-    index = @name_to_index[name]?
-    if index
-      @vars[index] = value
-    else
-      index = @name_to_index.size
-      @name_to_index[name] = index
-      @vars << value
-    end
+  def []=(index : Int32, value : Value) : Value
+    @vars[index] = value
     value
   end
 

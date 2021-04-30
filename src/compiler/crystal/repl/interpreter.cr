@@ -7,15 +7,14 @@ class Crystal::Repl::Interpreter
   def initialize(program : Program)
     @program = program
     @scope = @program
-
-    @main_visitor = MainVisitor.new(@program)
-    @top_level_visitor = TopLevelVisitor.new(@program)
-    @instructions_compiler = InstructionsCompiler.new(@program)
-
     @def = nil
     @local_vars = LocalVars.new
     @dl_libraries = {} of String? => Void*
     @stack = [] of Value
+
+    @main_visitor = MainVisitor.new(@program)
+    @top_level_visitor = TopLevelVisitor.new(@program)
+    @instructions_compiler = InstructionsCompiler.new(@program, @local_vars)
   end
 
   def interpret(node)
@@ -56,28 +55,22 @@ class Crystal::Repl::Interpreter
         type = instructions[ip].unsafe_as(Type)
         ip += 1
         @stack.push Value.new(value, type)
+      in .set_local?
+        ip += 1
+        index = instructions[ip].unsafe_as(Int32)
+        ip += 1
+        value = @stack.pop
+        @local_vars[index] = value
+      in .get_local?
+        ip += 1
+        index = instructions[ip].unsafe_as(Int32)
+        ip += 1
+        @stack.push @local_vars[index]
       in .leave?
         return @stack.pop
       end
     end
   end
-
-  # def visit(node : Assign)
-  #   target = node.target
-  #   case target
-  #   when Var
-  #     node.value.accept self
-  #     @local_vars[target.name] = @last
-  #   else
-  #     node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
-  #   end
-  #   false
-  # end
-
-  # def visit(node : Var)
-  #   @last = @local_vars[node.name]
-  #   false
-  # end
 
   # def visit(node : Call)
   #   super
@@ -195,13 +188,6 @@ class Crystal::Repl::Interpreter
 
   # def visit(node : Generic)
   #   @last = Value.new(node.type.instance_type, node.type)
-  #   false
-  # end
-
-  # def visit(node : Expressions)
-  #   node.expressions.each do |expression|
-  #     expression.accept self
-  #   end
   #   false
   # end
 

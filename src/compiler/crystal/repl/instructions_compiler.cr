@@ -3,7 +3,7 @@ require "./repl"
 class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   alias Instruction = Int64
 
-  def initialize(@program : Program)
+  def initialize(@program : Program, @local_vars : LocalVars)
     @instructions = [] of Instruction
   end
 
@@ -67,6 +67,32 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Expressions)
+    node.expressions.each do |expression|
+      expression.accept self
+    end
+    false
+  end
+
+  def visit(node : Assign)
+    target = node.target
+    case target
+    when Var
+      node.value.accept self
+      index = @local_vars.name_to_index(target.name)
+      set_local index
+    else
+      node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
+    end
+    false
+  end
+
+  def visit(node : Var)
+    index = @local_vars.name_to_index(node.name)
+    get_local index
+    false
+  end
+
   def visit(node : ASTNode)
     node.raise "BUG: missing instruction compiler for #{node.class}"
   end
@@ -87,5 +113,15 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << OpCode::PUT_OBJECT.value
     @instructions << value.unsafe_as(Int64)
     @instructions << type.object_id.unsafe_as(Int64)
+  end
+
+  private def set_local(index : Int32) : Nil
+    @instructions << OpCode::SET_LOCAL.value
+    @instructions << index.unsafe_as(Int64)
+  end
+
+  private def get_local(index : Int32) : Nil
+    @instructions << OpCode::GET_LOCAL.value
+    @instructions << index.unsafe_as(Int64)
   end
 end

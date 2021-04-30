@@ -83,12 +83,12 @@ describe Crystal::Repl::Interpreter do
     value.should eq("Hello world!")
   end
 
-  # it "interprets variable set and get" do
-  #   interpret(<<-CODE).should eq(1)
-  #     a = 1
-  #     a
-  #     CODE
-  # end
+  it "interprets variable set and get" do
+    interpret(<<-CODE).should eq(1)
+      a = 1
+      a
+      CODE
+  end
 
   # it "interprets Int32 + Int32" do
   #   interpret("1 + 2").should eq(3)
