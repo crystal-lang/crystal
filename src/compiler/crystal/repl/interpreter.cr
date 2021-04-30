@@ -69,6 +69,10 @@ class Crystal::Repl::Interpreter
         binary_gt
       in .binary_ge?
         binary_ge
+      in .binary_eq?
+        binary_eq
+      in .binary_neq?
+        binary_neq
       in .leave?
         return @stack.pop
       end
@@ -172,6 +176,20 @@ class Crystal::Repl::Interpreter
     )
 
     @stack.push Value.new(result, @program.bool)
+  end
+
+  private def binary_eq
+    right = @stack.pop
+    left = @stack.pop
+
+    @stack.push Value.new(left.value == right.value, @program.bool)
+  end
+
+  private def binary_neq
+    right = @stack.pop
+    left = @stack.pop
+
+    @stack.push Value.new(left.value != right.value, @program.bool)
   end
 
   private def next_instruction(t : T.class) : T forall T

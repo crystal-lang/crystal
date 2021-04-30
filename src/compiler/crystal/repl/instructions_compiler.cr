@@ -196,20 +196,15 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     case body.name
     when "binary"
       case node.name
-      when "+"
-        binary_plus
-      when "-"
-        binary_minus
-      when "*"
-        binary_mult
-      when "<"
-        binary_lt
-      when "<="
-        binary_le
-      when ">"
-        binary_gt
-      when ">="
-        binary_ge
+      when "+"  then binary_plus
+      when "-"  then binary_minus
+      when "*"  then binary_mult
+      when "<"  then binary_lt
+      when "<=" then binary_le
+      when ">"  then binary_gt
+      when ">=" then binary_ge
+      when "==" then binary_eq
+      when "!=" then binary_neq
       else
         node.raise "BUG: missing handling of binary op #{node.name}"
       end
@@ -286,6 +281,14 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << OpCode::BINARY_GE.value
   end
 
+  private def binary_eq
+    @instructions << OpCode::BINARY_EQ.value
+  end
+
+  private def binary_neq
+    @instructions << OpCode::BINARY_NEQ.value
+  end
+
   private def disassemble(instructions : Array(Instruction)) : String
     String.build do |io|
       ip = 0
@@ -340,6 +343,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.puts "binary_gt"
         in .binary_ge?
           io.puts "binary_ge"
+        in .binary_eq?
+          io.puts "binary_eq"
+        in .binary_neq?
+          io.puts "binary_neq"
         in .leave?
           io.puts "leave"
         end
