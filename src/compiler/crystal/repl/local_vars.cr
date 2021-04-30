@@ -2,8 +2,7 @@ require "./repl"
 
 class Crystal::Repl::LocalVars
   def initialize
-    @values = [] of Pointer(Void)
-    @types = [] of Type
+    @vars = [] of Value
     @name_to_index = {} of String => Int32
   end
 
@@ -11,32 +10,30 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys
   end
 
-  def [](name : String)
+  def [](name : String) : Value
     index = @name_to_index[name]
-    Value.new(@values[index], @types[index])
+    @vars[index]
   end
 
-  def []=(name : String, value : Value)
+  def []=(name : String, value : Value) : Value
     index = @name_to_index[name]?
     if index
-      @values[index] = value.pointer
-      @types[index] = value.type
+      @vars[index] = value
     else
       index = @name_to_index.size
       @name_to_index[name] = index
-      @values << value.pointer
-      @types << value.type
+      @vars << value
     end
     value
   end
 
   def pointerof(name)
     index = @name_to_index[name]
-    value = @values.to_unsafe + index
 
-    type = @types[index]
+    type = @vars[index].type
     pointer_type = type.program.pointer_of(type)
 
+    value = @vars.to_unsafe + index
     Value.new(value.as(Pointer(Void)), pointer_type)
   end
 end

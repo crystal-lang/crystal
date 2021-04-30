@@ -1,8 +1,8 @@
 require "./repl"
 
 struct Crystal::Repl::Value
-  getter type : Type
   getter pointer : Pointer(Void)
+  getter type : Type
 
   def initialize(value : Nil, @type : Type)
     @pointer = Pointer(Void).new(0)
