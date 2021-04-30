@@ -8,7 +8,7 @@ class Crystal::Repl::Interpreter
     @program = program
     @scope = @program
     @def = nil
-    @local_vars = LocalVars.new
+    @local_vars = LocalVars.new(program)
     @dl_libraries = {} of String? => Void*
     @stack = [] of Value
 

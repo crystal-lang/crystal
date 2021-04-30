@@ -1,7 +1,7 @@
 require "./repl"
 
 class Crystal::Repl::LocalVars
-  def initialize
+  def initialize(@program : Program)
     @vars = [] of Value
     @name_to_index = {} of String => Int32
   end
@@ -15,9 +15,7 @@ class Crystal::Repl::LocalVars
     unless index
       index = @name_to_index.size
       @name_to_index[name] = index
-
-      value = uninitialized Value
-      @vars << value
+      @vars << Value.new(nil, @program.nil_type)
     end
     index
   end
