@@ -11,6 +11,8 @@ class Crystal::Repl::Interpreter
     @local_vars = LocalVars.new(program)
     @dl_libraries = {} of String? => Void*
     @stack = [] of Value
+    @instructions = [] of Instruction
+    @ip = 0
 
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
@@ -24,52 +26,48 @@ class Crystal::Repl::Interpreter
     @main_visitor.reset
     node.accept @main_visitor
 
-    instructions = @instructions_compiler.compile(node)
-    interpret(instructions)
+    @instructions = @instructions_compiler.compile(node)
+    interpret
   end
 
   def local_var_keys
     @local_vars.names
   end
 
-  def interpret(instructions : Array(Instruction))
+  def interpret
     @stack.clear
+    @ip = 0
 
-    ip = 0
     while true
-      op_code = OpCode.new(instructions[ip])
+      op_code = next_instruction OpCode
       case op_code
       in .put_nil?
-        ip += 1
         @stack.push Value.new(nil, @program.nil_type)
       in .put_false?
-        ip += 1
         @stack.push Value.new(false, @program.bool)
       in .put_true?
-        ip += 1
         @stack.push Value.new(true, @program.bool)
       in .put_object?
-        ip += 1
-        value = instructions[ip].unsafe_as(Pointer(Void))
-        ip += 1
-        type = instructions[ip].unsafe_as(Type)
-        ip += 1
+        value = next_instruction Pointer(Void)
+        type = next_instruction Type
         @stack.push Value.new(value, type)
       in .set_local?
-        ip += 1
-        index = instructions[ip].unsafe_as(Int32)
-        ip += 1
+        index = next_instruction Int32
         value = @stack.pop
         @local_vars[index] = value
       in .get_local?
-        ip += 1
-        index = instructions[ip].unsafe_as(Int32)
-        ip += 1
+        index = next_instruction Int32
         @stack.push @local_vars[index]
       in .leave?
         return @stack.pop
       end
     end
+  end
+
+  def next_instruction(t : T.class) forall T
+    value = @instructions[@ip].unsafe_as(T)
+    @ip += 1
+    value
   end
 
   # def visit(node : Call)
