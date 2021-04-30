@@ -55,6 +55,20 @@ class Crystal::Repl::Interpreter
         get_local
       in .dup?
         dup!
+      in .binary_plus?
+        binary_plus
+      in .binary_minus?
+        binary_minus
+      in .binary_mult?
+        binary_mult
+      in .binary_lt?
+        binary_lt
+      in .binary_le?
+        binary_le
+      in .binary_gt?
+        binary_gt
+      in .binary_ge?
+        binary_ge
       in .leave?
         return @stack.pop
       end
@@ -94,98 +108,77 @@ class Crystal::Repl::Interpreter
     @stack.push @stack.last
   end
 
+  private def binary_plus
+    binary_int_of_float_op { |x, y| x + y }
+  end
+
+  private def binary_minus
+    binary_int_of_float_op { |x, y| x - y }
+  end
+
+  private def binary_mult
+    binary_int_of_float_op { |x, y| x * y }
+  end
+
+  private def binary_int_of_float_op
+    right = @stack.pop
+    left = @stack.pop
+
+    result = yield(
+      left.value.as(Int::Primitive | Float::Primitive),
+      right.value.as(Int::Primitive | Float::Primitive),
+    )
+    type =
+      case result
+      when Int8    then @program.int8
+      when UInt8   then @program.uint8
+      when Int16   then @program.int16
+      when UInt16  then @program.uint16
+      when Int32   then @program.int32
+      when UInt32  then @program.uint32
+      when Int64   then @program.int64
+      when UInt64  then @program.uint64
+      when Float32 then @program.float32
+      when Float64 then @program.float64
+      else
+        raise "Unexpected result type from binary op: #{result.class}"
+      end
+    @stack.push Value.new(result, type)
+  end
+
+  private def binary_lt
+    binary_cmp { |x, y| x < y }
+  end
+
+  private def binary_le
+    binary_cmp { |x, y| x <= y }
+  end
+
+  private def binary_gt
+    binary_cmp { |x, y| x > y }
+  end
+
+  private def binary_ge
+    binary_cmp { |x, y| x >= y }
+  end
+
+  private def binary_cmp
+    right = @stack.pop
+    left = @stack.pop
+
+    result = yield(
+      left.value.as(Int::Primitive | Float::Primitive),
+      right.value.as(Int::Primitive | Float::Primitive),
+    )
+
+    @stack.push Value.new(result, @program.bool)
+  end
+
   private def next_instruction(t : T.class) : T forall T
     value = @instructions[@ip].unsafe_as(T)
     @ip += 1
     value
   end
-
-  # def visit(node : Call)
-  #   super
-
-  #   # TODO: handle case of multidispatch
-  #   target_def = node.target_def
-
-  #   obj = node.obj
-
-  #   obj_value =
-  #     if obj
-  #       visit(obj)
-  #       @last
-  #     else
-  #       nil
-  #     end
-
-  #   arg_values = node.args.map do |arg|
-  #     visit(arg)
-  #     @last
-  #   end
-
-  #   named_arg_values =
-  #     if named_args = node.named_args
-  #       named_args.map do |named_arg|
-  #         named_arg.value.accept self
-  #         {named_arg.name, @last}
-  #       end
-  #     else
-  #       nil
-  #     end
-
-  #   old_scope, @scope = scope, target_def.owner
-  #   old_local_vars, @local_vars = @local_vars, LocalVars.new
-  #   @def = target_def
-
-  #   if obj_value && obj_value.type.is_a?(LibType)
-  #     # Okay... we need to d a C call. libffi to the rescue!
-  #     handle = @dl_libraries[nil] ||= LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-  #     fn = LibC.dlsym(handle, node.name)
-  #     if fn.null?
-  #       node.raise "dlsym failed for #{node.name}"
-  #     end
-
-  #     # TODO: missing named arguments here
-  #     cif = FFI.prepare(
-  #       abi: FFI::ABI::DEFAULT,
-  #       args: arg_values.map(&.type.ffi_type),
-  #       return_type: node.type.ffi_type,
-  #     )
-
-  #     pointers = [] of Void*
-  #     arg_values.each do |arg_value|
-  #       pointer = Pointer(Void).malloc(@program.size_of(arg_value.type.sizeof_type))
-  #       arg_value.ffi_value(pointer)
-  #       pointers << pointer
-  #     end
-
-  #     cif.call(fn, pointers)
-
-  #     # TODO: missing return value
-  #   else
-  #     # Set up local vars for the def instatiation
-  #     if obj_value
-  #       @local_vars["self"] = obj_value
-  #     end
-
-  #     arg_values.zip(target_def.args) do |arg_value, def_arg|
-  #       @local_vars[def_arg.name] = arg_value
-  #     end
-
-  #     if named_arg_values
-  #       named_arg_values.each do |name, value|
-  #         @local_vars[name] = value
-  #       end
-  #     end
-
-  #     target_def.body.accept self
-  #   end
-
-  #   @scope = old_scope
-  #   @local_vars = old_local_vars
-  #   @def = nil
-
-  #   false
-  # end
-
   # def visit(node : If)
   #   node.cond.accept self
   #   if @last.truthy?

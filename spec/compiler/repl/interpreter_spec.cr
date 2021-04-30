@@ -104,37 +104,45 @@ describe Crystal::Repl::Interpreter do
       CODE
   end
 
-  # it "interprets Int32 + Int32" do
-  #   interpret("1 + 2").should eq(3)
-  # end
+  it "interprets Int32 + Int32" do
+    interpret("1 + 2").should eq(3)
+  end
 
-  # it "interprets Int32 + Float64" do
-  #   interpret("1 + 2.5").should eq(3.5)
-  # end
+  it "interprets Int32 + Float64" do
+    interpret("1 + 2.5").should eq(3.5)
+  end
 
-  # it "interprets Float64 + Int32" do
-  #   interpret("2.5 + 1").should eq(3.5)
-  # end
+  it "interprets Float64 + Int32" do
+    interpret("2.5 + 1").should eq(3.5)
+  end
 
-  # it "interprets Float64 + Float64" do
-  #   interpret("2.5 + 2.3").should eq(4.8)
-  # end
+  it "interprets Float64 + Float64" do
+    interpret("2.5 + 2.3").should eq(4.8)
+  end
 
-  # it "interprets Int32 cmp Int32" do
-  #   interpret("1 < 2").should be_true
-  # end
+  it "interprets Int32 - Int32" do
+    interpret("1 - 2").should eq(-1)
+  end
 
-  # it "interprets Int32 cmp Float64" do
-  #   interpret("1 < 2.5").should be_true
-  # end
+  it "interprets Int32 * Int32" do
+    interpret("2 * 3").should eq(6)
+  end
 
-  # it "interprets Float64 cmp Int32" do
-  #   interpret("1.2 < 2").should be_true
-  # end
+  it "interprets Int32 < Int32" do
+    interpret("1 < 2").should be_true
+  end
 
-  # it "interprets Float64 cmp Float64" do
-  #   interpret("1.2 < 2.3").should be_true
-  # end
+  it "interprets Int32 < Float64" do
+    interpret("1 < 2.5").should be_true
+  end
+
+  it "interprets Float64 < Int32" do
+    interpret("1.2 < 2").should be_true
+  end
+
+  it "interprets Float64 < Float64" do
+    interpret("1.2 < 2.3").should be_true
+  end
 
   # it "interprets Int32 == Int32 (true)" do
   #   interpret("1 == 1").should be_true
@@ -150,14 +158,6 @@ describe Crystal::Repl::Interpreter do
 
   # it "interprets Int32 != Int32 (false)" do
   #   interpret("1 != 1").should be_false
-  # end
-
-  # it "interprets Int32 - Int32" do
-  #   interpret("1 - 2").should eq(-1)
-  # end
-
-  # it "interprets Int32 * Int32" do
-  #   interpret("2 * 3").should eq(6)
   # end
 
   # it "interprets simple call" do

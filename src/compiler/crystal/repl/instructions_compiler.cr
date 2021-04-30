@@ -104,6 +104,120 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Call)
+    # TODO: handle case of multidispatch
+    target_def = node.target_def
+
+    node.obj.try &.accept(self)
+    node.args.each &.accept(self)
+
+    # TODO: named arguments
+
+    body = target_def.body
+    if body.is_a?(Primitive)
+      visit_primitive(node, body)
+    else
+      node.raise "BUG: missing handling of non-primitive call"
+    end
+
+    false
+
+    # arg_values = node.args.map do |arg|
+    #   visit(arg)
+    #   @last
+    # end
+
+    # named_arg_values =
+    #   if named_args = node.named_args
+    #     named_args.map do |named_arg|
+    #       named_arg.value.accept self
+    #       {named_arg.name, @last}
+    #     end
+    #   else
+    #     nil
+    #   end
+
+    # old_scope, @scope = scope, target_def.owner
+    # old_local_vars, @local_vars = @local_vars, LocalVars.new
+    # @def = target_def
+
+    # if obj_value && obj_value.type.is_a?(LibType)
+    #   # Okay... we need to d a C call. libffi to the rescue!
+    #   handle = @dl_libraries[nil] ||= LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+    #   fn = LibC.dlsym(handle, node.name)
+    #   if fn.null?
+    #     node.raise "dlsym failed for #{node.name}"
+    #   end
+
+    #   # TODO: missing named arguments here
+    #   cif = FFI.prepare(
+    #     abi: FFI::ABI::DEFAULT,
+    #     args: arg_values.map(&.type.ffi_type),
+    #     return_type: node.type.ffi_type,
+    #   )
+
+    #   pointers = [] of Void*
+    #   arg_values.each do |arg_value|
+    #     pointer = Pointer(Void).malloc(@program.size_of(arg_value.type.sizeof_type))
+    #     arg_value.ffi_value(pointer)
+    #     pointers << pointer
+    #   end
+
+    #   cif.call(fn, pointers)
+
+    #   # TODO: missing return value
+    # else
+    #   # Set up local vars for the def instatiation
+    #   if obj_value
+    #     @local_vars["self"] = obj_value
+    #   end
+
+    #   arg_values.zip(target_def.args) do |arg_value, def_arg|
+    #     @local_vars[def_arg.name] = arg_value
+    #   end
+
+    #   if named_arg_values
+    #     named_arg_values.each do |name, value|
+    #       @local_vars[name] = value
+    #     end
+    #   end
+
+    #   target_def.body.accept self
+    # end
+
+    # @scope = old_scope
+    # @local_vars = old_local_vars
+    # @def = nil
+
+    false
+  end
+
+  private def visit_primitive(node, body)
+    case body.name
+    when "binary"
+      case node.name
+      when "+"
+        binary_plus
+      when "-"
+        binary_minus
+      when "*"
+        binary_mult
+      when "<"
+        binary_lt
+      when "<="
+        binary_le
+      when ">"
+        binary_gt
+      when ">="
+        binary_ge
+      else
+        node.raise "BUG: missing handling of binary op #{node.name}"
+      end
+    else
+      node.raise "BUG: missing handling of primitive #{body.name}"
+    end
+  end
+
   def visit(node : ASTNode)
     node.raise "BUG: missing instruction compiler for #{node.class}"
   end
@@ -142,6 +256,34 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   private def leave
     @instructions << OpCode::LEAVE.value
+  end
+
+  private def binary_plus
+    @instructions << OpCode::BINARY_PLUS.value
+  end
+
+  private def binary_minus
+    @instructions << OpCode::BINARY_MINUS.value
+  end
+
+  private def binary_mult
+    @instructions << OpCode::BINARY_MULT.value
+  end
+
+  private def binary_lt
+    @instructions << OpCode::BINARY_LT.value
+  end
+
+  private def binary_le
+    @instructions << OpCode::BINARY_LE.value
+  end
+
+  private def binary_gt
+    @instructions << OpCode::BINARY_GT.value
+  end
+
+  private def binary_ge
+    @instructions << OpCode::BINARY_GE.value
   end
 
   private def disassemble(instructions : Array(Instruction)) : String
@@ -184,6 +326,20 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.puts index
         in .dup?
           io.puts "dup"
+        in .binary_plus?
+          io.puts "binary_plus"
+        in .binary_minus?
+          io.puts "binary_minus"
+        in .binary_mult?
+          io.puts "binary_mult"
+        in .binary_lt?
+          io.puts "binary_lt"
+        in .binary_le?
+          io.puts "binary_le"
+        in .binary_gt?
+          io.puts "binary_gt"
+        in .binary_ge?
+          io.puts "binary_ge"
         in .leave?
           io.puts "leave"
         end
