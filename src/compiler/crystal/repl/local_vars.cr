@@ -34,6 +34,6 @@ class Crystal::Repl::LocalVars
     pointer_type = type.program.pointer_of(type)
 
     value = @vars.to_unsafe + index
-    Value.new(value.as(Pointer(Void)), pointer_type)
+    Value.new(value.as(Pointer(Value)), pointer_type)
   end
 end

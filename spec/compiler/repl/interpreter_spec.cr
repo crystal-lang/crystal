@@ -220,6 +220,15 @@ describe Crystal::Repl::Interpreter do
     CODE
   end
 
+  it "interprets pointer set and get (union type)" do
+    interpret(<<-CODE).should eq(true)
+      ptr = Pointer(Int32 | Bool).malloc(1_u64)
+      ptr.value = 10
+      ptr.value = true
+      ptr.value
+    CODE
+  end
+
   it "interprets typeof instance type" do
     program, repl_value = interpret_full("typeof(1)")
     repl_value.value.should eq(program.int32.metaclass)

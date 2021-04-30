@@ -32,8 +32,8 @@ struct Crystal::Repl::Value
     @pointer = Pointer(Void).new(value.object_id)
   end
 
-  def initialize(value : Pointer(Void), @type : Type)
-    @pointer = value
+  def initialize(value : Pointer(Value), @type : Type)
+    @pointer = value.as(Void*)
   end
 
   def initialize(value : Type, @type : Type)
@@ -94,7 +94,7 @@ struct Crystal::Repl::Value
     when type.program.string
       @pointer.unsafe_as(String)
     when PointerInstanceType
-      PointerWrapper.new(@pointer)
+      PointerWrapper.new(@pointer.as(Value*))
     when MetaclassType
       @pointer.unsafe_as(Type)
     else

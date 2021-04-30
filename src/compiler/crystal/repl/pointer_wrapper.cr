@@ -1,3 +1,3 @@
 require "./repl"
 
-record Crystal::Repl::PointerWrapper, pointer : Pointer(Void)
+record Crystal::Repl::PointerWrapper, pointer : Pointer(Value)
