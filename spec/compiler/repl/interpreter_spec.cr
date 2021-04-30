@@ -90,6 +90,14 @@ describe Crystal::Repl::Interpreter do
       CODE
   end
 
+  it "interprets variable set and get, second local var" do
+    interpret(<<-CODE).should eq(1)
+      x = 10
+      a = 1
+      a
+      CODE
+  end
+
   # it "interprets Int32 + Int32" do
   #   interpret("1 + 2").should eq(3)
   # end
