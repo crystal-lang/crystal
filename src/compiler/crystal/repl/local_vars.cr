@@ -20,6 +20,10 @@ class Crystal::Repl::LocalVars
     index
   end
 
+  def index_to_name(index : Int32) : String
+    @name_to_index.keys[index]
+  end
+
   def [](index : Int32) : Value
     @vars[index]
   end

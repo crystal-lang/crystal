@@ -16,6 +16,8 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
     leave
 
+    # puts disassemble(@instructions)
+
     @instructions
   end
 
@@ -140,5 +142,58 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   private def leave
     @instructions << OpCode::LEAVE.value
+  end
+
+  private def disassemble(instructions : Array(Instruction)) : String
+    String.build do |io|
+      ip = 0
+      while ip < instructions.size
+        io.print ip.to_s.rjust(4, '0')
+        io.print ' '
+        op_code, ip = next_instruction instructions, ip, OpCode
+
+        case op_code
+        in .put_nil?
+          io.puts "put_nil"
+        in .put_false?
+          io.puts "put_false"
+        in .put_true?
+          io.puts "put_true"
+        in .put_object?
+          io.print "put_object "
+          value, ip = next_instruction instructions, ip, Pointer(Void)
+          type, ip = next_instruction instructions, ip, Type
+          repl_value = Value.new(value, type)
+          io.print repl_value.value.inspect
+          io.print " ("
+          io.print repl_value.type
+          io.puts ")"
+        in .set_local?
+          io.print "set_local "
+          index, ip = next_instruction instructions, ip, Int32
+          name = @local_vars.index_to_name(index)
+          io.print name
+          io.print '@'
+          io.puts index
+        in .get_local?
+          io.print "get_local "
+          index, ip = next_instruction instructions, ip, Int32
+          name = @local_vars.index_to_name(index)
+          io.print name
+          io.print '@'
+          io.puts index
+        in .dup?
+          io.puts "dup"
+        in .leave?
+          io.puts "leave"
+        end
+      end
+    end
+  end
+
+  private def next_instruction(instructions, ip, t : T.class) forall T
+    value = instructions[ip].unsafe_as(T)
+    ip += 1
+    {value, ip}
   end
 end
