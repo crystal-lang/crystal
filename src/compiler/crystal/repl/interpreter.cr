@@ -42,29 +42,53 @@ class Crystal::Repl::Interpreter
       op_code = next_instruction OpCode
       case op_code
       in .put_nil?
-        @stack.push Value.new(nil, @program.nil_type)
+        put_nil
       in .put_false?
-        @stack.push Value.new(false, @program.bool)
+        put_false
       in .put_true?
-        @stack.push Value.new(true, @program.bool)
+        put_true
       in .put_object?
-        value = next_instruction Pointer(Void)
-        type = next_instruction Type
-        @stack.push Value.new(value, type)
+        put_object
       in .set_local?
-        index = next_instruction Int32
-        value = @stack.pop
-        @local_vars[index] = value
+        set_local
       in .get_local?
-        index = next_instruction Int32
-        @stack.push @local_vars[index]
+        get_local
       in .leave?
         return @stack.pop
       end
     end
   end
 
-  def next_instruction(t : T.class) forall T
+  private def put_nil : Nil
+    @stack.push Value.new(nil, @program.nil_type)
+  end
+
+  private def put_false : Nil
+    @stack.push Value.new(false, @program.bool)
+  end
+
+  private def put_true : Nil
+    @stack.push Value.new(true, @program.bool)
+  end
+
+  private def put_object : Nil
+    value = next_instruction Pointer(Void)
+    type = next_instruction Type
+    @stack.push Value.new(value, type)
+  end
+
+  private def set_local : Nil
+    index = next_instruction Int32
+    value = @stack.pop
+    @local_vars[index] = value
+  end
+
+  private def get_local : Nil
+    index = next_instruction Int32
+    @stack.push @local_vars[index]
+  end
+
+  private def next_instruction(t : T.class) : T forall T
     value = @instructions[@ip].unsafe_as(T)
     @ip += 1
     value
