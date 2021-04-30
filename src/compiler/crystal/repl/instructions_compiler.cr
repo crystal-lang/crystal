@@ -5,12 +5,17 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   def initialize(@program : Program, @local_vars : LocalVars)
     @instructions = [] of Instruction
+    @last = true
   end
 
   def compile(node : ASTNode) : Array(Instruction)
     @instructions.clear
+    @last = true
+
     node.accept self
-    @instructions << OpCode::LEAVE.value
+
+    leave
+
     @instructions
   end
 
@@ -68,7 +73,8 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   def visit(node : Expressions)
-    node.expressions.each do |expression|
+    node.expressions.each_with_index do |expression, i|
+      @last = i == node.expressions.size - 1
       expression.accept self
     end
     false
@@ -79,6 +85,7 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     case target
     when Var
       node.value.accept self
+      dup! if @last
       index = @local_vars.name_to_index(target.name)
       set_local index
     else
@@ -123,5 +130,13 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   private def get_local(index : Int32) : Nil
     @instructions << OpCode::GET_LOCAL.value
     @instructions << index.unsafe_as(Int64)
+  end
+
+  private def dup!
+    @instructions << OpCode::DUP.value
+  end
+
+  private def leave
+    @instructions << OpCode::LEAVE.value
   end
 end

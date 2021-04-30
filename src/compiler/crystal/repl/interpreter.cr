@@ -53,6 +53,8 @@ class Crystal::Repl::Interpreter
         set_local
       in .get_local?
         get_local
+      in .dup?
+        dup!
       in .leave?
         return @stack.pop
       end
@@ -86,6 +88,10 @@ class Crystal::Repl::Interpreter
   private def get_local : Nil
     index = next_instruction Int32
     @stack.push @local_vars[index]
+  end
+
+  private def dup! : Nil
+    @stack.push @stack.last
   end
 
   private def next_instruction(t : T.class) : T forall T

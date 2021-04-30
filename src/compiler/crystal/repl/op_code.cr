@@ -5,5 +5,6 @@ enum Crystal::Repl::OpCode : Int64
   PUT_OBJECT
   SET_LOCAL
   GET_LOCAL
+  DUP
   LEAVE
 end
