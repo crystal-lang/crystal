@@ -89,7 +89,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass
+      superclass = type.superclass unless type.full_name == Crystal::Macros::ASTNode.name
     when GenericClassInstanceType
       superclass = type.superclass
     end
