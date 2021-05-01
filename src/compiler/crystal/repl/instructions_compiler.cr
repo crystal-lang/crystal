@@ -146,6 +146,11 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     false
   end
 
+  def visit(node : TypeOf)
+    put_object node.type.object_id, node.type.metaclass
+    false
+  end
+
   def visit(node : Call)
     # TODO: handle case of multidispatch
     target_def = node.target_def

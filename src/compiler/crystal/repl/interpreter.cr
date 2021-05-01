@@ -248,11 +248,6 @@ class Crystal::Repl::Interpreter
   #   false
   # end
 
-  # def visit(node : TypeOf)
-  #   @last = Value.new(node.type, node.type.metaclass)
-  #   false
-  # end
-
   # def visit(node : Def)
   #   @last = Value.new(nil, @program.nil_type)
   #   super
