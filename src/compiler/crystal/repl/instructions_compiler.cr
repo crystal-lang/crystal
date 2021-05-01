@@ -107,25 +107,41 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   def visit(node : If)
     node.cond.accept self
 
-    original_instructions = @instructions
+    then_instructions = with_new_instructions do
+      node.then.accept self
+      leave
+    end
 
-    @instructions = [] of Instruction
-    node.then.accept self
-    leave
-    then_instructions = @instructions
-
-    @instructions = [] of Instruction
-    node.else.accept self
-    leave
-    else_instructions = @instructions
-
-    @instructions = original_instructions
+    else_instructions = with_new_instructions do
+      node.else.accept self
+      leave
+    end
 
     # Add one because the "branch_unless" wasn't inserted yet
-    # Add another one to go past the `then_instructions` size
+    # Add another one to go past `then_instructions`
     branch_unless @instructions.size + then_instructions.size + 2
     @instructions.concat then_instructions
     @instructions.concat else_instructions
+
+    false
+  end
+
+  def visit(node : While)
+    # TODO: what aboud @wants_value ?
+
+    body_instructions = with_new_instructions do
+      node.body.accept self
+    end
+
+    # Add one because the "jump" wasn't inserted yet
+    # Add another one to go past `body_instructions`
+    jump @instructions.size + body_instructions.size + 2
+    body_index = @instructions.size
+
+    @instructions.concat body_instructions
+
+    node.cond.accept self
+    branch_if body_index
 
     false
   end
@@ -315,9 +331,29 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << OpCode::BINARY_NEQ.value
   end
 
+  private def branch_if(index)
+    @instructions << OpCode::BRANCH_IF.value
+    @instructions << index.to_i64!
+  end
+
   private def branch_unless(index)
     @instructions << OpCode::BRANCH_UNLESS.value
     @instructions << index.to_i64!
+  end
+
+  private def jump(index)
+    @instructions << OpCode::JUMP.value
+    @instructions << index.to_i64!
+  end
+
+  private def with_new_instructions
+    original_instructions = @instructions
+
+    new_instructions = @instructions = [] of Instruction
+    yield
+    @instructions = original_instructions
+
+    new_instructions
   end
 
   private def disassemble(instructions : Array(Instruction)) : String
@@ -378,9 +414,17 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.puts "binary_eq"
         in .binary_neq?
           io.puts "binary_neq"
+        in .branch_if?
+          index, ip = next_instruction instructions, ip, Int32
+          io.print "branch_if "
+          io.puts index
         in .branch_unless?
           index, ip = next_instruction instructions, ip, Int32
           io.print "branch_unless "
+          io.puts index
+        in .jump?
+          index, ip = next_instruction instructions, ip, Int32
+          io.print "jump "
           io.puts index
         in .leave?
           io.puts "leave"

@@ -15,6 +15,8 @@ enum Crystal::Repl::OpCode : Int64
   BINARY_GE
   BINARY_EQ
   BINARY_NEQ
+  BRANCH_IF
   BRANCH_UNLESS
+  JUMP
   LEAVE
 end

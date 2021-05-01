@@ -168,6 +168,16 @@ describe Crystal::Repl::Interpreter do
     interpret("1 == 2 ? 2 : 3").should eq(3)
   end
 
+  it "interprets while" do
+    interpret(<<-CODE).should eq(10)
+      a = 0
+      while a < 10
+        a = a + 1
+      end
+      a
+      CODE
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)

@@ -73,8 +73,12 @@ class Crystal::Repl::Interpreter
         binary_eq
       in .binary_neq?
         binary_neq
+      in .branch_if?
+        branch_if
       in .branch_unless?
         branch_unless
+      in .jump?
+        jump
       in .leave?
         return @stack.pop
       end
@@ -194,6 +198,15 @@ class Crystal::Repl::Interpreter
     @stack.push Value.new(left.value != right.value, @program.bool)
   end
 
+  private def branch_if : Nil
+    index = next_instruction Int32
+
+    cond = @stack.pop.value.as(Bool)
+    if cond
+      @ip = index
+    end
+  end
+
   private def branch_unless : Nil
     index = next_instruction Int32
 
@@ -203,22 +216,16 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private def jump : Nil
+    index = next_instruction Int32
+    @ip = index
+  end
+
   private def next_instruction(t : T.class) : T forall T
     value = @instructions[@ip].unsafe_as(T)
     @ip += 1
     value
   end
-
-  # def visit(node : While)
-  #   while true
-  #     node.cond.accept self
-  #     break unless @last.truthy?
-
-  #     node.body.accept self
-  #   end
-  #   @last = Value.new(nil, @program.nil_type)
-  #   false
-  # end
 
   # def visit(node : Path)
   #   @last = Value.new(node.type.instance_type, node.type)
