@@ -104,6 +104,32 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     false
   end
 
+  def visit(node : If)
+    node.cond.accept self
+
+    original_instructions = @instructions
+
+    @instructions = [] of Instruction
+    node.then.accept self
+    leave
+    then_instructions = @instructions
+
+    @instructions = [] of Instruction
+    node.else.accept self
+    leave
+    else_instructions = @instructions
+
+    @instructions = original_instructions
+
+    # Add one because the "branch_unless" wasn't inserted yet
+    # Add another one to go past the `then_instructions` size
+    branch_unless @instructions.size + then_instructions.size + 2
+    @instructions.concat then_instructions
+    @instructions.concat else_instructions
+
+    false
+  end
+
   def visit(node : Call)
     # TODO: handle case of multidispatch
     target_def = node.target_def
@@ -289,6 +315,11 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << OpCode::BINARY_NEQ.value
   end
 
+  private def branch_unless(index)
+    @instructions << OpCode::BRANCH_UNLESS.value
+    @instructions << index.to_i64!
+  end
+
   private def disassemble(instructions : Array(Instruction)) : String
     String.build do |io|
       ip = 0
@@ -347,6 +378,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.puts "binary_eq"
         in .binary_neq?
           io.puts "binary_neq"
+        in .branch_unless?
+          index, ip = next_instruction instructions, ip, Int32
+          io.print "branch_unless "
+          io.puts index
         in .leave?
           io.puts "leave"
         end

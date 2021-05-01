@@ -160,6 +160,14 @@ describe Crystal::Repl::Interpreter do
     interpret("1 != 1").should be_false
   end
 
+  it "interprets if (true)" do
+    interpret("1 == 1 ? 2 : 3").should eq(2)
+  end
+
+  it "interprets if (false)" do
+    interpret("1 == 2 ? 2 : 3").should eq(3)
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)

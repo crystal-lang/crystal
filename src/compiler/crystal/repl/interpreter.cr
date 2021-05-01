@@ -73,6 +73,8 @@ class Crystal::Repl::Interpreter
         binary_eq
       in .binary_neq?
         binary_neq
+      in .branch_unless?
+        branch_unless
       in .leave?
         return @stack.pop
       end
@@ -112,19 +114,19 @@ class Crystal::Repl::Interpreter
     @stack.push @stack.last
   end
 
-  private def binary_plus
+  private def binary_plus : Nil
     binary_int_of_float_op { |x, y| x + y }
   end
 
-  private def binary_minus
+  private def binary_minus : Nil
     binary_int_of_float_op { |x, y| x - y }
   end
 
-  private def binary_mult
+  private def binary_mult : Nil
     binary_int_of_float_op { |x, y| x * y }
   end
 
-  private def binary_int_of_float_op
+  private def binary_int_of_float_op : Nil
     right = @stack.pop
     left = @stack.pop
 
@@ -150,23 +152,23 @@ class Crystal::Repl::Interpreter
     @stack.push Value.new(result, type)
   end
 
-  private def binary_lt
+  private def binary_lt : Nil
     binary_cmp { |x, y| x < y }
   end
 
-  private def binary_le
+  private def binary_le : Nil
     binary_cmp { |x, y| x <= y }
   end
 
-  private def binary_gt
+  private def binary_gt : Nil
     binary_cmp { |x, y| x > y }
   end
 
-  private def binary_ge
+  private def binary_ge : Nil
     binary_cmp { |x, y| x >= y }
   end
 
-  private def binary_cmp
+  private def binary_cmp : Nil
     right = @stack.pop
     left = @stack.pop
 
@@ -178,18 +180,27 @@ class Crystal::Repl::Interpreter
     @stack.push Value.new(result, @program.bool)
   end
 
-  private def binary_eq
+  private def binary_eq : Nil
     right = @stack.pop
     left = @stack.pop
 
     @stack.push Value.new(left.value == right.value, @program.bool)
   end
 
-  private def binary_neq
+  private def binary_neq : Nil
     right = @stack.pop
     left = @stack.pop
 
     @stack.push Value.new(left.value != right.value, @program.bool)
+  end
+
+  private def branch_unless : Nil
+    index = next_instruction Int32
+
+    cond = @stack.pop.value.as(Bool)
+    unless cond
+      @ip = index
+    end
   end
 
   private def next_instruction(t : T.class) : T forall T
@@ -197,17 +208,6 @@ class Crystal::Repl::Interpreter
     @ip += 1
     value
   end
-  # def visit(node : If)
-  #   node.cond.accept self
-  #   if @last.truthy?
-  #     node.then.accept self
-  #   elsif node_else = node.else
-  #     node_else.accept self
-  #   else
-  #     @last = Value.new(nil, @program.nil_type)
-  #   end
-  #   false
-  # end
 
   # def visit(node : While)
   #   while true
