@@ -5,12 +5,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   def initialize(@program : Program, @local_vars : LocalVars)
     @instructions = [] of Instruction
-    @wants_value = true
   end
 
   def compile(node : ASTNode) : Array(Instruction)
     @instructions.clear
-    @wants_value = true
 
     node.accept self
 
@@ -75,12 +73,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   def visit(node : Expressions)
-    old_wants_value = @wants_value
     node.expressions.each_with_index do |expression, i|
-      @wants_value = old_wants_value && i == node.expressions.size - 1
       expression.accept self
+      pop if i < node.expressions.size - 1
     end
-    @wants_value = old_wants_value
     false
   end
 
@@ -89,7 +85,6 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     case target
     when Var
       node.value.accept self
-      dup! if @wants_value
       index = @local_vars.name_to_index(target.name)
       set_local index
     else
@@ -109,27 +104,25 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
     then_instructions = with_new_instructions do
       node.then.accept self
-      leave
     end
 
     else_instructions = with_new_instructions do
       node.else.accept self
-      leave
     end
 
     # 2 is the size of the branch_unless instruction
-    branch_unless @instructions.size + 2 + then_instructions.size
+    branch_unless @instructions.size + 4 + then_instructions.size
+
     @instructions.concat then_instructions
+    jump @instructions.size + 2 + else_instructions.size
+
     @instructions.concat else_instructions
 
     false
   end
 
   def visit(node : While)
-    old_wants_value = @wants_value
-
     body_instructions = with_new_instructions do
-      @wants_value = false
       node.body.accept self
     end
 
@@ -139,15 +132,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
     @instructions.concat body_instructions
 
-    @wants_value = true
     node.cond.accept self
     branch_if body_index
 
-    if old_wants_value
-      put_nil
-    end
-
-    @wants_value = old_wants_value
+    put_nil
 
     false
   end
@@ -298,10 +286,6 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << index.unsafe_as(Int64)
   end
 
-  private def dup!
-    @instructions << OpCode::DUP.value
-  end
-
   private def leave
     @instructions << OpCode::LEAVE.value
   end
@@ -357,6 +341,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     @instructions << index.to_i64!
   end
 
+  private def pop
+    @instructions << OpCode::POP.value
+  end
+
   private def with_new_instructions
     original_instructions = @instructions
 
@@ -405,8 +393,6 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.print name
           io.print '@'
           io.puts index
-        in .dup?
-          io.puts "dup"
         in .binary_plus?
           io.puts "binary_plus"
         in .binary_minus?
@@ -437,6 +423,8 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           index, ip = next_instruction instructions, ip, Int32
           io.print "jump "
           io.puts index
+        in .pop?
+          io.puts "pop"
         in .leave?
           io.puts "leave"
         end

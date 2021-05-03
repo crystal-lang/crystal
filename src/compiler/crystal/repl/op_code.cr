@@ -5,7 +5,7 @@ enum Crystal::Repl::OpCode : Int64
   PUT_OBJECT
   SET_LOCAL
   GET_LOCAL
-  DUP
+  POP
   BINARY_PLUS
   BINARY_MINUS
   BINARY_MULT

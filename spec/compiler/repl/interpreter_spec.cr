@@ -168,6 +168,10 @@ describe Crystal::Repl::Interpreter do
     interpret("1 == 2 ? 2 : 3").should eq(3)
   end
 
+  it "interprets if that declares variable in unexecuted branch" do
+    interpret("if true; false; else; a = 1; end; a").should eq(nil)
+  end
+
   it "interprets while" do
     interpret(<<-CODE).should eq(10)
       a = 0

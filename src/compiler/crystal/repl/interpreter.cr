@@ -53,8 +53,6 @@ class Crystal::Repl::Interpreter
         set_local
       in .get_local?
         get_local
-      in .dup?
-        dup!
       in .binary_plus?
         binary_plus
       in .binary_minus?
@@ -79,6 +77,8 @@ class Crystal::Repl::Interpreter
         branch_unless
       in .jump?
         jump
+      in .pop?
+        pop
       in .leave?
         return @stack.pop
       end
@@ -105,17 +105,13 @@ class Crystal::Repl::Interpreter
 
   private def set_local : Nil
     index = next_instruction Int32
-    value = @stack.pop
+    value = @stack.last
     @local_vars[index] = value
   end
 
   private def get_local : Nil
     index = next_instruction Int32
     @stack.push @local_vars[index]
-  end
-
-  private def dup! : Nil
-    @stack.push @stack.last
   end
 
   private def binary_plus : Nil
@@ -219,6 +215,10 @@ class Crystal::Repl::Interpreter
   private def jump : Nil
     index = next_instruction Int32
     @ip = index
+  end
+
+  private def pop : Nil
+    @stack.pop
   end
 
   private def next_instruction(t : T.class) : T forall T
