@@ -662,7 +662,7 @@ module Crystal
             atomic = parse_as?(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
-          elsif @token.value == :nil?
+          elsif !@in_macro_expression && @token.value == :nil?
             atomic = parse_nil?(atomic).at(location)
           elsif @token.type == :"!"
             atomic = parse_negation_suffix(atomic).at(location)
@@ -1541,7 +1541,7 @@ module Crystal
       elsif @token.value == :responds_to?
         call = parse_responds_to(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif @token.value == :nil?
+      elsif !@in_macro_expression && @token.value == :nil?
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type == :"!"
@@ -3573,7 +3573,7 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns)
+          body = Expressions.from(extra_assigns).at(@token.location)
           next_token_skip_space
         else
           body = parse_expressions
@@ -3585,7 +3585,7 @@ module Crystal
             else
               exps.push body
             end
-            body = Expressions.from(exps)
+            body = Expressions.from(exps).at(body)
           end
           body, end_location = parse_exception_handler body, implicit: true
         end
@@ -3852,6 +3852,7 @@ module Crystal
         uses_arg = false
         do_next_token = true
       when :INSTANCE_VAR
+        # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         arg_name = @token.value.to_s[1..-1]
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
@@ -4059,8 +4060,10 @@ module Crystal
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
       when :nil?
-        obj = Var.new("self").at(location)
-        return parse_nil?(obj)
+        unless @in_macro_expression
+          obj = Var.new("self").at(location)
+          return parse_nil?(obj)
+        end
       else
         # Not a special call, go on
       end
@@ -4367,7 +4370,7 @@ module Crystal
         else
           exps.push block_body
         end
-        block_body = Expressions.from exps
+        block_body = Expressions.from(exps).at(block_body)
       end
 
       block_body, end_location = yield block_body
