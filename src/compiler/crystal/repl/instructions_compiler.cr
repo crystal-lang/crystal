@@ -117,9 +117,8 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
       leave
     end
 
-    # Add one because the "branch_unless" wasn't inserted yet
-    # Add another one to go past `then_instructions`
-    branch_unless @instructions.size + then_instructions.size + 2
+    # 2 is the size of the branch_unless instruction
+    branch_unless @instructions.size + 2 + then_instructions.size
     @instructions.concat then_instructions
     @instructions.concat else_instructions
 
@@ -127,21 +126,28 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   def visit(node : While)
-    # TODO: what aboud @wants_value ?
+    old_wants_value = @wants_value
 
     body_instructions = with_new_instructions do
+      @wants_value = false
       node.body.accept self
     end
 
-    # Add one because the "jump" wasn't inserted yet
-    # Add another one to go past `body_instructions`
-    jump @instructions.size + body_instructions.size + 2
+    # 2 is the size of the jump instruction
+    jump @instructions.size + 2 + body_instructions.size
     body_index = @instructions.size
 
     @instructions.concat body_instructions
 
+    @wants_value = true
     node.cond.accept self
     branch_if body_index
+
+    if old_wants_value
+      put_nil
+    end
+
+    @wants_value = old_wants_value
 
     false
   end

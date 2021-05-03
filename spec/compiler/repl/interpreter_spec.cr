@@ -178,6 +178,15 @@ describe Crystal::Repl::Interpreter do
       CODE
   end
 
+  it "interprets while, returns nil" do
+    interpret(<<-CODE).should eq(nil)
+      a = 0
+      while a < 10
+        a = a + 1
+      end
+      CODE
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)
