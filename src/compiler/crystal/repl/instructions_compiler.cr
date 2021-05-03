@@ -101,36 +101,27 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   def visit(node : If)
     node.cond.accept self
+    cond_jump_location = branch_unless 0
 
-    then_instructions = with_new_instructions do
-      node.then.accept self
-    end
+    node.then.accept self
+    then_jump_location = jump 0
 
-    else_instructions = with_new_instructions do
-      node.else.accept self
-    end
+    patch_jump(cond_jump_location)
 
-    # 2 is the size of the branch_unless instruction
-    branch_unless @instructions.size + 4 + then_instructions.size
+    node.else.accept self
 
-    @instructions.concat then_instructions
-    jump @instructions.size + 2 + else_instructions.size
-
-    @instructions.concat else_instructions
+    patch_jump(then_jump_location)
 
     false
   end
 
   def visit(node : While)
-    body_instructions = with_new_instructions do
-      node.body.accept self
-    end
+    cond_jump_location = jump 0
 
-    # 2 is the size of the jump instruction
-    jump @instructions.size + 2 + body_instructions.size
     body_index = @instructions.size
+    node.body.accept self
 
-    @instructions.concat body_instructions
+    patch_jump(cond_jump_location)
 
     node.cond.accept self
     branch_if body_index
@@ -329,30 +320,27 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   private def branch_if(index)
     @instructions << OpCode::BRANCH_IF.value
     @instructions << index.to_i64!
+    @instructions.size - 1
   end
 
   private def branch_unless(index)
     @instructions << OpCode::BRANCH_UNLESS.value
     @instructions << index.to_i64!
+    @instructions.size - 1
   end
 
   private def jump(index)
     @instructions << OpCode::JUMP.value
     @instructions << index.to_i64!
+    @instructions.size - 1
   end
 
   private def pop
     @instructions << OpCode::POP.value
   end
 
-  private def with_new_instructions
-    original_instructions = @instructions
-
-    new_instructions = @instructions = [] of Instruction
-    yield
-    @instructions = original_instructions
-
-    new_instructions
+  private def patch_jump(offset)
+    @instructions[offset] = @instructions.size.to_i64!
   end
 
   private def disassemble(instructions : Array(Instruction)) : String
