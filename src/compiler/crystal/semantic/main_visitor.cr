@@ -769,7 +769,7 @@ module Crystal
           # OK
         else
           # Check autocast too
-          restriction_type = (path_lookup || scope).lookup_type(restriction, free_vars: free_vars)
+          restriction_type = (path_lookup || scope).lookup_type?(restriction, free_vars: free_vars)
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
@@ -2110,7 +2110,7 @@ module Crystal
         filter_vars TypeFilters.not(cond_type_filters)
       end
 
-      node.type = @program.nil
+      node.bind_to(@program.nil_var) unless endless_while
 
       false
     end
@@ -2293,6 +2293,7 @@ module Crystal
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
+        target_while.bind_to(node_exp_or_nil_literal(node))
       else
         if @typed_def.try &.captured_block?
           node.raise "can't break from captured block, try using `next`."

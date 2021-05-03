@@ -1,4 +1,4 @@
-require "socket"
+require "./common"
 require "uri"
 
 class Socket
@@ -246,6 +246,8 @@ class Socket
         addr.__in6_union.__s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
+      {% elsif flag?(:win32) %}
+        addr.u.byte
       {% else %}
         {% raise "Unsupported platform" %}
       {% end %}
@@ -399,5 +401,12 @@ class Socket
       sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
       sockaddr.as(LibC::Sockaddr*)
     end
+  end
+
+  # Returns `true` if the string represents a valid IPv4 or IPv6 address.
+  def self.ip?(string : String)
+    addr = LibC::In6Addr.new
+    ptr = pointerof(addr).as(Void*)
+    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
   end
 end

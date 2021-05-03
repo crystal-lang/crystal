@@ -367,7 +367,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     def initialize(@doc)
     end
 
-    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | AnnotationDef | Alias | Assign | Call)
+    def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Macro | AnnotationDef | Alias | Assign | Call)
       node.doc ||= @doc
       false
     end

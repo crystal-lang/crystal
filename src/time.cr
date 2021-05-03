@@ -216,6 +216,7 @@ struct Time
   end
 
   include Comparable(Time)
+  include Steppable
 
   # :nodoc:
   DAYS_MONTH = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}

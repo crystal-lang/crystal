@@ -1216,6 +1216,12 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
+  #
+  # ```
+  # gems = ["crystal", "pearl", "diamond"]
+  # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
+  # results # => ["0: crystal", "1: pearl", "2: diamond"]
+  # ```
   def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
@@ -1224,6 +1230,12 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
+  #
+  # ```
+  # gems = ["crystal", "pearl", "diamond"]
+  # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
+  # gems # => ["0: crystal", "1: pearl", "2: diamond"]
+  # ```
   def map_with_index!(offset = 0, &block : (T, Int32) -> T)
     to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self

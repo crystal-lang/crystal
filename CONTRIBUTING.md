@@ -91,8 +91,6 @@ Additionally, all official documentation can be found on [the Crystal website](h
 1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Clone it
 
-Be sure to execute `make libcrystal` inside the cloned repository.
-
 Once in the cloned directory, and once you [installed Crystal](https://crystal-lang.org/install/),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
