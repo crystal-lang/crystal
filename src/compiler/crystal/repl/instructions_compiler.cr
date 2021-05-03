@@ -14,7 +14,7 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
     leave
 
-    # puts disassemble(@instructions)
+    puts disassemble(@instructions)
 
     @instructions
   end
@@ -136,6 +136,16 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Path)
+    put_object node.type.object_id, node.type.metaclass
+    false
+  end
+
+  def visit(node : Generic)
+    put_object node.type.object_id, node.type.metaclass
+    false
+  end
+
   def visit(node : Call)
     # TODO: handle case of multidispatch
     target_def = node.target_def
@@ -148,11 +158,10 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
     body = target_def.body
     if body.is_a?(Primitive)
       visit_primitive(node, body)
+      return false
     else
       node.raise "BUG: missing handling of non-primitive call"
     end
-
-    false
 
     # arg_values = node.args.map do |arg|
     #   visit(arg)
@@ -240,9 +249,29 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
       else
         node.raise "BUG: missing handling of binary op #{node.name}"
       end
+    when "pointer_malloc"
+      pointer_malloc
+    when "pointer_set"
+      pointer_set
+    when "pointer_get"
+      pointer_get
     else
+      puts disassemble(@instructions)
+
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
+  end
+
+  private def pointer_malloc
+    @instructions << OpCode::POINTER_MALLOC.value
+  end
+
+  private def pointer_set
+    @instructions << OpCode::POINTER_SET.value
+  end
+
+  private def pointer_get
+    @instructions << OpCode::POINTER_GET.value
   end
 
   def visit(node : ASTNode)
@@ -413,6 +442,12 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
           io.puts index
         in .pop?
           io.puts "pop"
+        in .pointer_malloc?
+          io.puts "pointer_malloc"
+        in .pointer_set?
+          io.puts "pointer_set"
+        in .pointer_get?
+          io.puts "pointer_get"
         in .leave?
           io.puts "leave"
         end

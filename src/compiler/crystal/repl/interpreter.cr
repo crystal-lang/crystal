@@ -79,6 +79,12 @@ class Crystal::Repl::Interpreter
         jump
       in .pop?
         pop
+      in .pointer_malloc?
+        pointer_malloc
+      in .pointer_set?
+        pointer_set
+      in .pointer_get?
+        pointer_get
       in .leave?
         return @stack.pop
       end
@@ -219,6 +225,25 @@ class Crystal::Repl::Interpreter
 
   private def pop : Nil
     @stack.pop
+  end
+
+  private def pointer_malloc : Nil
+    size = @stack.pop.value.as(UInt64)
+    type = @stack.pop.value.as(Type).instance_type
+    pointer = Pointer(Value).malloc(size)
+    @stack.push Value.new(pointer, type)
+  end
+
+  private def pointer_set : Nil
+    value = @stack.pop
+    pointer = @stack.pop.value.as(PointerWrapper).pointer
+    pointer.value = value
+    @stack.push value
+  end
+
+  private def pointer_get : Nil
+    pointer = @stack.pop.value.as(PointerWrapper).pointer
+    @stack.push pointer.value
   end
 
   private def next_instruction(t : T.class) : T forall T

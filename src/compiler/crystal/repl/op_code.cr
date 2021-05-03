@@ -18,5 +18,8 @@ enum Crystal::Repl::OpCode : Int64
   BRANCH_IF
   BRANCH_UNLESS
   JUMP
+  POINTER_MALLOC
+  POINTER_SET
+  POINTER_GET
   LEAVE
 end
