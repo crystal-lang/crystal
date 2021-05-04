@@ -199,6 +199,51 @@ describe Crystal::Repl::Interpreter do
     CODE
   end
 
+  it "interprets pointer set and get (bool)" do
+    interpret(<<-CODE).should be_true
+      ptr = Pointer(Bool).malloc(1_u64)
+      ptr.value = true
+      ptr.value
+    CODE
+  end
+
+  it "interprets pointerof, mutates pointer, read var" do
+    interpret(<<-CODE).should eq(2)
+      a = 1
+      ptr = pointerof(a)
+      ptr.value = 2
+      a
+    CODE
+  end
+
+  it "interprets pointerof, mutates var, read pointer" do
+    interpret(<<-CODE).should eq(2)
+      a = 1
+      ptr = pointerof(a)
+      a = 2
+      ptr.value
+    CODE
+  end
+
+  it "interprets pointerof and mutates memory (there are more variables)" do
+    interpret(<<-CODE).should eq(2)
+      x = 42
+      a = 1
+      ptr = pointerof(a)
+      ptr.value = 2
+      a
+    CODE
+  end
+
+  it "interprets pointer set and get (union type)" do
+    interpret(<<-CODE).should eq(true)
+      ptr = Pointer(Int32 | Bool).malloc(1_u64)
+      ptr.value = 10
+      ptr.value = true
+      ptr.value
+    CODE
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)
@@ -227,51 +272,6 @@ describe Crystal::Repl::Interpreter do
 
   #     foo(y: 10, x: 25)
   #     CODE
-  # end
-
-  # it "interprets pointer set and get (bool)" do
-  #   interpret(<<-CODE).should be_true
-  #     ptr = Pointer(Bool).malloc(1_u64)
-  #     ptr.value = true
-  #     ptr.value
-  #   CODE
-  # end
-
-  # it "interprets pointerof, mutates pointer, read var" do
-  #   interpret(<<-CODE).should eq(2)
-  #     a = 1
-  #     ptr = pointerof(a)
-  #     ptr.value = 2
-  #     a
-  #   CODE
-  # end
-
-  # it "interprets pointerof, mutates var, read pointer" do
-  #   interpret(<<-CODE).should eq(2)
-  #     a = 1
-  #     ptr = pointerof(a)
-  #     a = 2
-  #     ptr.value
-  #   CODE
-  # end
-
-  # it "interprets pointerof and mutates memory (there are more variables)" do
-  #   interpret(<<-CODE).should eq(2)
-  #     x = 42
-  #     a = 1
-  #     ptr = pointerof(a)
-  #     ptr.value = 2
-  #     a
-  #   CODE
-  # end
-
-  # it "interprets pointer set and get (union type)" do
-  #   interpret(<<-CODE).should eq(true)
-  #     ptr = Pointer(Int32 | Bool).malloc(1_u64)
-  #     ptr.value = 10
-  #     ptr.value = true
-  #     ptr.value
-  #   CODE
   # end
 
   it "interprets typeof instance type" do

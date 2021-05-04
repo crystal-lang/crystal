@@ -33,9 +33,7 @@ class Crystal::Repl::LocalVars
     value
   end
 
-  def pointerof(name)
-    index = @name_to_index[name]
-
+  def pointerof(index : Int32)
     type = @vars[index].type
     pointer_type = type.program.pointer_of(type)
 

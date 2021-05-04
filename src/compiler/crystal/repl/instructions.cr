@@ -154,6 +154,12 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       (return value),
     },
+    pointerof_var: {
+      operands:   [index : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       get_local_var_pointer(index),
+    },
   }
 
 private macro binary_op!(op)

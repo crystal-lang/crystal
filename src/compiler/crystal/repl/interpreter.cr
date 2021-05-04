@@ -75,6 +75,10 @@ class Crystal::Repl::Interpreter
     @local_vars[index]
   end
 
+  private def get_local_var_pointer(index)
+    @local_vars.pointerof(index)
+  end
+
   private def next_instruction(t : Value.class)
     value = (@instructions.to_unsafe + @ip).as(Value*).value
     @ip += 2
@@ -98,15 +102,4 @@ class Crystal::Repl::Interpreter
   private def stack_last
     @stack.last
   end
-
-  # def visit(node : PointerOf)
-  #   exp = node.exp
-  #   case exp
-  #   when Var
-  #     @last = @local_vars.pointerof(exp.name)
-  #   else
-  #     node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
-  #   end
-  #   false
-  # end
 end
