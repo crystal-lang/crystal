@@ -67,6 +67,9 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private def set_ip(@ip : Int32)
+  end
+
   private def set_local_var(index, value)
     @local_vars[index] = value
   end
