@@ -251,6 +251,14 @@ describe Crystal::Repl::Interpreter do
     CODE
   end
 
+  it "interprets pointer diff" do
+    interpret(<<-CODE).should eq(2_i64)
+      ptr1 = Pointer(Int32).new(132_u64)
+      ptr2 = Pointer(Int32).new(100_u64)
+      ptr1 - ptr2
+    CODE
+  end
+
   it "interprets typeof instance type" do
     program, repl_value = interpret_full("typeof(1)")
     repl_value.value.should eq(program.int32.metaclass)

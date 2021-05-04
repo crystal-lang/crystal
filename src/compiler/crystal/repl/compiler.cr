@@ -274,6 +274,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_get
     when "pointer_address"
       pointer_address
+    when "pointer_diff"
+      pointer_diff
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

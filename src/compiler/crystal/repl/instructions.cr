@@ -116,6 +116,16 @@ Crystal::Repl::Instructions =
         @program.uint64,
       ),
     },
+    pointer_diff: {
+      operands:   [] of Nil,
+      pop_values: [pointer1, pointer2],
+      push:       true,
+      code:       Value.new(
+        pointer1.value.as(PointerWrapper).pointer -
+        pointer2.value.as(PointerWrapper).pointer,
+        @program.int64,
+      ),
+    },
     put_object: {
       operands:   [value : Value],
       pop_values: [] of Nil,
