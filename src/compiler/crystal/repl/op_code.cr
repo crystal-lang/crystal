@@ -1,25 +1,10 @@
-enum Crystal::Repl::OpCode : Int64
-  PUT_NIL
-  PUT_FALSE
-  PUT_TRUE
-  PUT_OBJECT
-  SET_LOCAL
-  GET_LOCAL
-  POP
-  BINARY_PLUS
-  BINARY_MINUS
-  BINARY_MULT
-  BINARY_LT
-  BINARY_LE
-  BINARY_GT
-  BINARY_GE
-  BINARY_EQ
-  BINARY_NEQ
-  BRANCH_IF
-  BRANCH_UNLESS
-  JUMP
-  POINTER_MALLOC
-  POINTER_SET
-  POINTER_GET
-  LEAVE
-end
+require "./repl"
+require "./instructions"
+
+{% begin %}
+  enum Crystal::Repl::OpCode : Int64
+    {% for name, instruction in Crystal::Repl::Instructions %}
+      {{ name.id.upcase }}
+    {% end %}
+  end
+{% end %}

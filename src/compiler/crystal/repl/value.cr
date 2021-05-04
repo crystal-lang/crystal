@@ -104,4 +104,10 @@ struct Crystal::Repl::Value
       raise "BUG: missing handling of Repl value for #{type}"
     end
   end
+
+  def to_s(io : IO)
+    value.inspect(io)
+    io << " : "
+    io << type
+  end
 end

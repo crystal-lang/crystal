@@ -1,4 +1,5 @@
 require "./repl"
+require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
   alias Instruction = Int64
@@ -263,107 +264,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def pointer_malloc
-    append OpCode::POINTER_MALLOC
-  end
-
-  private def pointer_set
-    append OpCode::POINTER_SET
-  end
-
-  private def pointer_get
-    append OpCode::POINTER_GET
-  end
-
   def visit(node : ASTNode)
     node.raise "BUG: missing instruction compiler for #{node.class}"
   end
 
-  private def put_nil : Nil
-    append OpCode::PUT_NIL
-  end
+  {% for name, instruction in Crystal::Repl::Instructions %}
+    {% operands = instruction[:operands] %}
 
-  private def put_false : Nil
-    append OpCode::PUT_FALSE
-  end
-
-  private def put_true : Nil
-    append OpCode::PUT_TRUE
-  end
+    private def {{name.id}}( {{*operands}} ) : Nil
+      append OpCode::{{ name.id.upcase }}
+      {% for operand in operands %}
+        append {{operand.var}}
+      {% end %}
+    end
+  {% end %}
 
   private def put_object(value, type : Type) : Nil
-    append OpCode::PUT_OBJECT
-    append value.unsafe_as(Int64)
-    append type
-  end
-
-  private def set_local(index : Int32) : Nil
-    append OpCode::SET_LOCAL
-    append index
-  end
-
-  private def get_local(index : Int32) : Nil
-    append OpCode::GET_LOCAL
-    append index
-  end
-
-  private def leave
-    append OpCode::LEAVE
-  end
-
-  private def binary_plus
-    append OpCode::BINARY_PLUS
-  end
-
-  private def binary_minus
-    append OpCode::BINARY_MINUS
-  end
-
-  private def binary_mult
-    append OpCode::BINARY_MULT
-  end
-
-  private def binary_lt
-    append OpCode::BINARY_LT
-  end
-
-  private def binary_le
-    append OpCode::BINARY_LE
-  end
-
-  private def binary_gt
-    append OpCode::BINARY_GT
-  end
-
-  private def binary_ge
-    append OpCode::BINARY_GE
-  end
-
-  private def binary_eq
-    append OpCode::BINARY_EQ
-  end
-
-  private def binary_neq
-    append OpCode::BINARY_NEQ
-  end
-
-  private def branch_if(index)
-    append OpCode::BRANCH_IF
-    append index
-  end
-
-  private def branch_unless(index)
-    append OpCode::BRANCH_UNLESS
-    append index
-  end
-
-  private def jump(index)
-    append OpCode::JUMP
-    append index
-  end
-
-  private def pop
-    append OpCode::POP
+    put_object Value.new(value, type)
   end
 
   private def append(op_code : OpCode)
@@ -376,6 +293,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : Int64)
     @instructions << value
+  end
+
+  private def append(value : Pointer(Void))
+    append value.unsafe_as(Int64)
+  end
+
+  private def append(value : Value)
+    append value.pointer
+    append value.type
   end
 
   private def append(type : Type)

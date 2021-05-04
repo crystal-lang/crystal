@@ -40,210 +40,45 @@ class Crystal::Repl::Interpreter
 
     while true
       op_code = next_instruction OpCode
-      case op_code
-      in .put_nil?
-        put_nil
-      in .put_false?
-        put_false
-      in .put_true?
-        put_true
-      in .put_object?
-        put_object
-      in .set_local?
-        set_local
-      in .get_local?
-        get_local
-      in .binary_plus?
-        binary_plus
-      in .binary_minus?
-        binary_minus
-      in .binary_mult?
-        binary_mult
-      in .binary_lt?
-        binary_lt
-      in .binary_le?
-        binary_le
-      in .binary_gt?
-        binary_gt
-      in .binary_ge?
-        binary_ge
-      in .binary_eq?
-        binary_eq
-      in .binary_neq?
-        binary_neq
-      in .branch_if?
-        branch_if
-      in .branch_unless?
-        branch_unless
-      in .jump?
-        jump
-      in .pop?
-        pop
-      in .pointer_malloc?
-        pointer_malloc
-      in .pointer_set?
-        pointer_set
-      in .pointer_get?
-        pointer_get
-      in .leave?
-        return stack_pop
-      end
+
+      {% begin %}
+        case op_code
+          {% for name, instruction in Crystal::Repl::Instructions %}
+            {% operands = instruction[:operands] %}
+            {% pop_values = instruction[:pop_values] %}
+
+            in .{{name.id}}?
+              {% for operand in operands %}
+                {{operand.var}} = next_instruction {{operand.type}}
+              {% end %}
+
+              {% for pop_value, i in pop_values %}
+                {{ pop_values[pop_values.size - i - 1] }} = stack_pop
+              {% end %}
+
+              {% if instruction[:push] %}
+                stack_push({{instruction[:code]}})
+              {% else %}
+                {{instruction[:code]}}
+              {% end %}
+          {% end %}
+        end
+      {% end %}
     end
   end
 
-  private def put_nil : Nil
-    stack_push Value.new(nil, @program.nil_type)
-  end
-
-  private def put_false : Nil
-    stack_push Value.new(false, @program.bool)
-  end
-
-  private def put_true : Nil
-    stack_push Value.new(true, @program.bool)
-  end
-
-  private def put_object : Nil
-    value = next_instruction Pointer(Void)
-    type = next_instruction Type
-    stack_push Value.new(value, type)
-  end
-
-  private def set_local : Nil
-    index = next_instruction Int32
-    value = @stack.last
+  private def set_local_var(index, value)
     @local_vars[index] = value
   end
 
-  private def get_local : Nil
-    index = next_instruction Int32
-    stack_push @local_vars[index]
+  private def get_local_var(index)
+    @local_vars[index]
   end
 
-  private def binary_plus : Nil
-    binary_int_of_float_op { |x, y| x + y }
-  end
-
-  private def binary_minus : Nil
-    binary_int_of_float_op { |x, y| x - y }
-  end
-
-  private def binary_mult : Nil
-    binary_int_of_float_op { |x, y| x * y }
-  end
-
-  private def binary_int_of_float_op : Nil
-    right = stack_pop
-    left = stack_pop
-
-    result = yield(
-      left.value.as(Int::Primitive | Float::Primitive),
-      right.value.as(Int::Primitive | Float::Primitive),
-    )
-    type =
-      case result
-      when Int8    then @program.int8
-      when UInt8   then @program.uint8
-      when Int16   then @program.int16
-      when UInt16  then @program.uint16
-      when Int32   then @program.int32
-      when UInt32  then @program.uint32
-      when Int64   then @program.int64
-      when UInt64  then @program.uint64
-      when Float32 then @program.float32
-      when Float64 then @program.float64
-      else
-        raise "Unexpected result type from binary op: #{result.class}"
-      end
-    stack_push Value.new(result, type)
-  end
-
-  private def binary_lt : Nil
-    binary_cmp { |x, y| x < y }
-  end
-
-  private def binary_le : Nil
-    binary_cmp { |x, y| x <= y }
-  end
-
-  private def binary_gt : Nil
-    binary_cmp { |x, y| x > y }
-  end
-
-  private def binary_ge : Nil
-    binary_cmp { |x, y| x >= y }
-  end
-
-  private def binary_cmp : Nil
-    right = stack_pop
-    left = stack_pop
-
-    result = yield(
-      left.value.as(Int::Primitive | Float::Primitive),
-      right.value.as(Int::Primitive | Float::Primitive),
-    )
-
-    stack_push Value.new(result, @program.bool)
-  end
-
-  private def binary_eq : Nil
-    right = stack_pop
-    left = stack_pop
-
-    stack_push Value.new(left.value == right.value, @program.bool)
-  end
-
-  private def binary_neq : Nil
-    right = stack_pop
-    left = stack_pop
-
-    stack_push Value.new(left.value != right.value, @program.bool)
-  end
-
-  private def branch_if : Nil
-    index = next_instruction Int32
-
-    cond = stack_pop.value.as(Bool)
-    if cond
-      @ip = index
-    end
-  end
-
-  private def branch_unless : Nil
-    index = next_instruction Int32
-
-    cond = stack_pop.value.as(Bool)
-    unless cond
-      @ip = index
-    end
-  end
-
-  private def jump : Nil
-    index = next_instruction Int32
-    @ip = index
-  end
-
-  private def pop : Nil
-    stack_pop
-  end
-
-  private def pointer_malloc : Nil
-    size = stack_pop.value.as(UInt64)
-    type = stack_pop.value.as(Type).instance_type
-    pointer = Pointer(Value).malloc(size)
-    stack_push Value.new(pointer, type)
-  end
-
-  private def pointer_set : Nil
-    value = stack_pop
-    pointer = stack_pop.value.as(PointerWrapper).pointer
-    pointer.value = value
-    stack_push value
-  end
-
-  private def pointer_get : Nil
-    pointer = stack_pop.value.as(PointerWrapper).pointer
-    stack_push pointer.value
+  private def next_instruction(t : Value.class)
+    value = (@instructions.to_unsafe + @ip).as(Value*).value
+    @ip += 2
+    value
   end
 
   private def next_instruction(t : T.class) : T forall T
@@ -260,15 +95,9 @@ class Crystal::Repl::Interpreter
     @stack.push value
   end
 
-  # def visit(node : Path)
-  #   @last = Value.new(node.type.instance_type, node.type)
-  #   false
-  # end
-
-  # def visit(node : Generic)
-  #   @last = Value.new(node.type.instance_type, node.type)
-  #   false
-  # end
+  private def stack_last
+    @stack.last
+  end
 
   # def visit(node : PointerOf)
   #   exp = node.exp
@@ -279,14 +108,5 @@ class Crystal::Repl::Interpreter
   #     node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
   #   end
   #   false
-  # end
-
-  # def visit(node : Def)
-  #   @last = Value.new(nil, @program.nil_type)
-  #   super
-  # end
-
-  # def visit(node : ASTNode)
-  #   node.raise "BUG: missing interpret for #{node.class}"
   # end
 end
