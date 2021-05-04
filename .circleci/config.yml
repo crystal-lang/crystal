@@ -144,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout e5f21df883d800e9e68f63b79cf796696f905cf1
+          git checkout c2518d8bbb8bf8f76c0b1600a19d9d9f50b5774d
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -335,7 +335,7 @@ jobs:
           paths:
             - build
 
-  dist_bintray_nightly:
+  dist_obs_nightly:
     machine: true
     steps:
       - attach_workspace:
@@ -345,13 +345,12 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
-            cd bintray
-            ./publish-nightly.sh $CRYSTAL_VERSION $(date '+%Y-%m-%d') \
-                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-*-linux-i686.tar.gz
-      - store_artifacts:
-          path: /tmp/workspace/distribution-scripts/bintray/build/unsigned
-          destination: unsigned
+
+            packages/obs-setup.sh
+            packages/obs-push.sh home:straight-shoota:Crystal:nightly $CRYSTAL_VERSION $(date '+%Y%m%d') $CRYSTAL_SHA \
+                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-linux-x86_64.tar.gz \
+                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-linux-i686.tar.gz \
+                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-docs.tar.gz
 
   dist_docker:
     machine: true
@@ -613,10 +612,11 @@ workflows:
       - dist_darwin:
           requires:
             - prepare_nightly
-      - dist_bintray_nightly:
+      - dist_obs_nightly:
           requires:
             - dist_linux
             - dist_linux32
+            - dist_docs
       - dist_docker:
           requires:
             - dist_linux
