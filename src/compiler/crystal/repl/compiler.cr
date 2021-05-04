@@ -2,8 +2,6 @@ require "./repl"
 require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
-  alias Instruction = Int64
-
   def initialize(@program : Program, @local_vars : LocalVars)
     @instructions = [] of Instruction
   end
