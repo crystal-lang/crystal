@@ -144,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout c2518d8bbb8bf8f76c0b1600a19d9d9f50b5774d
+          git checkout 8cb711986432b0d13ed0eb12229d5d4ef1cc0be3
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -336,7 +336,8 @@ jobs:
             - build
 
   dist_obs_nightly:
-    machine: true
+    docker:
+      - image: straightshoota/osc
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -347,10 +348,10 @@ jobs:
             source build.env
 
             packages/obs-setup.sh
-            packages/obs-push.sh home:straight-shoota:Crystal:nightly $CRYSTAL_VERSION $(date '+%Y%m%d') $CRYSTAL_SHA \
-                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-linux-i686.tar.gz \
-                /tmp/workspace/build/crystal-$CRYSTAL_VERSION-docs.tar.gz
+            packages/obs-push.sh home:straight-shoota:Crystal:nightly $CRYSTAL_VERSION $(date '+%Y%m%d') $CRYSTAL_SHA1 \
+                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
+                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
+                /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
     machine: true
@@ -586,13 +587,6 @@ workflows:
             - dist_docs
 
   nightly_release:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
     jobs:
       - test_linux
       - test_linux32_std
@@ -722,11 +716,6 @@ workflows:
             - dist_linux32
             - dist_darwin
             - dist_snap
-            - dist_docs
-      - dist_obs_nightly:
-          requires:
-            - dist_linux
-            - dist_linux32
             - dist_docs
 
   package_build:
