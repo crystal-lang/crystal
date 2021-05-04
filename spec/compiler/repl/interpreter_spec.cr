@@ -244,6 +244,23 @@ describe Crystal::Repl::Interpreter do
     CODE
   end
 
+  it "interprets pointer new and pointer address" do
+    interpret(<<-CODE).should eq(123_u64)
+      ptr = Pointer(Int32 | Bool).new(123_u64)
+      ptr.address
+    CODE
+  end
+
+  it "interprets typeof instance type" do
+    program, repl_value = interpret_full("typeof(1)")
+    repl_value.value.should eq(program.int32.metaclass)
+  end
+
+  it "interprets typeof metaclass type" do
+    program, repl_value = interpret_full("typeof(Int32)")
+    repl_value.value.should eq(program.class_type)
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)
@@ -273,16 +290,6 @@ describe Crystal::Repl::Interpreter do
   #     foo(y: 10, x: 25)
   #     CODE
   # end
-
-  it "interprets typeof instance type" do
-    program, repl_value = interpret_full("typeof(1)")
-    repl_value.value.should eq(program.int32.metaclass)
-  end
-
-  it "interprets typeof metaclass type" do
-    program, repl_value = interpret_full("typeof(Int32)")
-    repl_value.value.should eq(program.class_type)
-  end
 end
 
 private def interpret(string, prelude = "primitives")

@@ -264,12 +264,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       else
         node.raise "BUG: missing handling of binary op #{node.name}"
       end
+    when "pointer_new"
+      pointer_new
     when "pointer_malloc"
       pointer_malloc
     when "pointer_set"
       pointer_set
     when "pointer_get"
       pointer_get
+    when "pointer_address"
+      pointer_address
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

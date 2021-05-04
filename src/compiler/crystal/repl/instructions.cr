@@ -98,6 +98,24 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer.value.as(PointerWrapper).pointer.value,
     },
+    pointer_new: {
+      operands:   [] of Nil,
+      pop_values: [type, address],
+      push:       true,
+      code:       Value.new(
+        Pointer(Value).new(address.value.as(UInt64)),
+        type.value.as(Type).instance_type,
+      ),
+    },
+    pointer_address: {
+      operands:   [] of Nil,
+      pop_values: [pointer],
+      push:       true,
+      code:       Value.new(
+        pointer.value.as(PointerWrapper).pointer.address,
+        @program.uint64,
+      ),
+    },
     put_object: {
       operands:   [value : Value],
       pop_values: [] of Nil,
