@@ -78,10 +78,10 @@ Crystal::Repl::Instructions =
       operands:   [] of Nil,
       pop_values: [type, size],
       push:       true,
-      code:       begin
-        pointer = Pointer(Value).malloc(size.value.as(UInt64))
-        Value.new(pointer, type.value.as(Type).instance_type)
-      end,
+      code:       Value.new(
+        Pointer(Value).malloc(size.value.as(UInt64)),
+        type.value.as(Type).instance_type,
+      ),
     },
     pointer_set: {
       operands:   [] of Nil,
@@ -96,9 +96,7 @@ Crystal::Repl::Instructions =
       operands:   [] of Nil,
       pop_values: [pointer],
       push:       true,
-      code:       begin
-        pointer.value.as(PointerWrapper).pointer.value
-      end,
+      code:       pointer.value.as(PointerWrapper).pointer.value,
     },
     put_object: {
       operands:   [value : Value],
