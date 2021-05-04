@@ -342,7 +342,6 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - run:
-          no_output_timeout: 20m
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
