@@ -1,6 +1,6 @@
 require "./repl"
 
-class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
+class Crystal::Repl::Compiler < Crystal::Visitor
   alias Instruction = Int64
 
   def initialize(@program : Program, @local_vars : LocalVars)

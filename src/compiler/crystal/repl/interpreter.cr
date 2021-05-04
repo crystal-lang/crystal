@@ -16,7 +16,7 @@ class Crystal::Repl::Interpreter
 
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
-    @instructions_compiler = InstructionsCompiler.new(@program, @local_vars)
+    @instructions_compiler = Compiler.new(@program, @local_vars)
   end
 
   def interpret(node)
