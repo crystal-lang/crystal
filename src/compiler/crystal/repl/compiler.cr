@@ -43,10 +43,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_i16 node.value.to_i16
     when :u16
       put_u16 node.value.to_u16
-      # when :i32
-      #   put_object node.value.to_i32, node.type
-      # when :u32
-      #   put_object node.value.to_u32, node.type
+    when :i32
+      put_i32 node.value.to_i32
+    when :u32
+      put_u32 node.value.to_u32
       # when :i64
       #   put_object node.value.to_i64, node.type
       # when :u64
@@ -300,6 +300,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(op_code : OpCode)
     append op_code.value
+  end
+
+  private def append(value : UInt32)
+    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+      append byte
+    end
+  end
+
+  private def append(value : Int32)
+    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+      append byte
+    end
   end
 
   private def append(value : UInt16)

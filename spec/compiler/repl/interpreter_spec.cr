@@ -29,17 +29,13 @@ describe Crystal::Repl::Interpreter do
     interpret("12389_u16", UInt16).should eq(12389_u16)
   end
 
-  # it "interprets an Int32" do
-  #   value = interpret("123_i32")
-  #   value.should be_a(Int32)
-  #   value.should eq(123)
-  # end
+  it "interprets an Int32" do
+    interpret("123456789_i32", Int32).should eq(123456789)
+  end
 
-  # it "interprets an UInt32" do
-  #   value = interpret("123_u32")
-  #   value.should be_a(UInt32)
-  #   value.should eq(123)
-  # end
+  it "interprets an UInt32" do
+    interpret("323456789_u32", Int32).should eq(323456789_u32)
+  end
 
   # it "interprets an Int64" do
   #   value = interpret("123_i64")

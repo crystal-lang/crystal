@@ -107,6 +107,18 @@ class Crystal::Repl::Interpreter
     @stack.pop
   end
 
+  private def stack_push(value : UInt32) : Nil
+    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+      stack_push byte
+    end
+  end
+
+  private def stack_push(value : Int32) : Nil
+    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+      stack_push byte
+    end
+  end
+
   private def stack_push(value : UInt16) : Nil
     value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
       stack_push byte
