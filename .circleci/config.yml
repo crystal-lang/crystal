@@ -723,6 +723,11 @@ workflows:
             - dist_darwin
             - dist_snap
             - dist_docs
+      - dist_obs_nightly:
+          requires:
+            - dist_linux
+            - dist_linux32
+            - dist_docs
 
   package_build:
     jobs:
