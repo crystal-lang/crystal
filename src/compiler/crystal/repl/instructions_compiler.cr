@@ -101,10 +101,12 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
 
   def visit(node : If)
     node.cond.accept self
-    cond_jump_location = branch_unless 0
+    branch_unless 0
+    cond_jump_location = patch_location
 
     node.then.accept self
-    then_jump_location = jump 0
+    jump 0
+    then_jump_location = patch_location
 
     patch_jump(cond_jump_location)
 
@@ -116,7 +118,8 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   def visit(node : While)
-    cond_jump_location = jump 0
+    jump 0
+    cond_jump_location = patch_location
 
     body_index = @instructions.size
     node.body.accept self
@@ -263,15 +266,15 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   private def pointer_malloc
-    @instructions << OpCode::POINTER_MALLOC.value
+    append OpCode::POINTER_MALLOC
   end
 
   private def pointer_set
-    @instructions << OpCode::POINTER_SET.value
+    append OpCode::POINTER_SET
   end
 
   private def pointer_get
-    @instructions << OpCode::POINTER_GET.value
+    append OpCode::POINTER_GET
   end
 
   def visit(node : ASTNode)
@@ -279,93 +282,110 @@ class Crystal::Repl::InstructionsCompiler < Crystal::Visitor
   end
 
   private def put_nil : Nil
-    @instructions << OpCode::PUT_NIL.value
+    append OpCode::PUT_NIL
   end
 
   private def put_false : Nil
-    @instructions << OpCode::PUT_FALSE.value
+    append OpCode::PUT_FALSE
   end
 
   private def put_true : Nil
-    @instructions << OpCode::PUT_TRUE.value
+    append OpCode::PUT_TRUE
   end
 
-  private def put_object(value, type) : Nil
-    @instructions << OpCode::PUT_OBJECT.value
-    @instructions << value.unsafe_as(Int64)
-    @instructions << type.object_id.unsafe_as(Int64)
+  private def put_object(value, type : Type) : Nil
+    append OpCode::PUT_OBJECT
+    append value.unsafe_as(Int64)
+    append type
   end
 
   private def set_local(index : Int32) : Nil
-    @instructions << OpCode::SET_LOCAL.value
-    @instructions << index.unsafe_as(Int64)
+    append OpCode::SET_LOCAL
+    append index
   end
 
   private def get_local(index : Int32) : Nil
-    @instructions << OpCode::GET_LOCAL.value
-    @instructions << index.unsafe_as(Int64)
+    append OpCode::GET_LOCAL
+    append index
   end
 
   private def leave
-    @instructions << OpCode::LEAVE.value
+    append OpCode::LEAVE
   end
 
   private def binary_plus
-    @instructions << OpCode::BINARY_PLUS.value
+    append OpCode::BINARY_PLUS
   end
 
   private def binary_minus
-    @instructions << OpCode::BINARY_MINUS.value
+    append OpCode::BINARY_MINUS
   end
 
   private def binary_mult
-    @instructions << OpCode::BINARY_MULT.value
+    append OpCode::BINARY_MULT
   end
 
   private def binary_lt
-    @instructions << OpCode::BINARY_LT.value
+    append OpCode::BINARY_LT
   end
 
   private def binary_le
-    @instructions << OpCode::BINARY_LE.value
+    append OpCode::BINARY_LE
   end
 
   private def binary_gt
-    @instructions << OpCode::BINARY_GT.value
+    append OpCode::BINARY_GT
   end
 
   private def binary_ge
-    @instructions << OpCode::BINARY_GE.value
+    append OpCode::BINARY_GE
   end
 
   private def binary_eq
-    @instructions << OpCode::BINARY_EQ.value
+    append OpCode::BINARY_EQ
   end
 
   private def binary_neq
-    @instructions << OpCode::BINARY_NEQ.value
+    append OpCode::BINARY_NEQ
   end
 
   private def branch_if(index)
-    @instructions << OpCode::BRANCH_IF.value
-    @instructions << index.to_i64!
-    @instructions.size - 1
+    append OpCode::BRANCH_IF
+    append index
   end
 
   private def branch_unless(index)
-    @instructions << OpCode::BRANCH_UNLESS.value
-    @instructions << index.to_i64!
-    @instructions.size - 1
+    append OpCode::BRANCH_UNLESS
+    append index
   end
 
   private def jump(index)
-    @instructions << OpCode::JUMP.value
-    @instructions << index.to_i64!
-    @instructions.size - 1
+    append OpCode::JUMP
+    append index
   end
 
   private def pop
-    @instructions << OpCode::POP.value
+    append OpCode::POP
+  end
+
+  private def append(op_code : OpCode)
+    append op_code.value
+  end
+
+  private def append(value : Int32)
+    append value.to_i64!
+  end
+
+  private def append(value : Int64)
+    @instructions << value
+  end
+
+  private def append(type : Type)
+    append type.object_id.unsafe_as(Int64)
+  end
+
+  private def patch_location
+    @instructions.size - 1
   end
 
   private def patch_jump(offset)

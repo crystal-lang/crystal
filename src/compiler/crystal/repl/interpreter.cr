@@ -86,27 +86,27 @@ class Crystal::Repl::Interpreter
       in .pointer_get?
         pointer_get
       in .leave?
-        return @stack.pop
+        return stack_pop
       end
     end
   end
 
   private def put_nil : Nil
-    @stack.push Value.new(nil, @program.nil_type)
+    stack_push Value.new(nil, @program.nil_type)
   end
 
   private def put_false : Nil
-    @stack.push Value.new(false, @program.bool)
+    stack_push Value.new(false, @program.bool)
   end
 
   private def put_true : Nil
-    @stack.push Value.new(true, @program.bool)
+    stack_push Value.new(true, @program.bool)
   end
 
   private def put_object : Nil
     value = next_instruction Pointer(Void)
     type = next_instruction Type
-    @stack.push Value.new(value, type)
+    stack_push Value.new(value, type)
   end
 
   private def set_local : Nil
@@ -117,7 +117,7 @@ class Crystal::Repl::Interpreter
 
   private def get_local : Nil
     index = next_instruction Int32
-    @stack.push @local_vars[index]
+    stack_push @local_vars[index]
   end
 
   private def binary_plus : Nil
@@ -133,8 +133,8 @@ class Crystal::Repl::Interpreter
   end
 
   private def binary_int_of_float_op : Nil
-    right = @stack.pop
-    left = @stack.pop
+    right = stack_pop
+    left = stack_pop
 
     result = yield(
       left.value.as(Int::Primitive | Float::Primitive),
@@ -155,7 +155,7 @@ class Crystal::Repl::Interpreter
       else
         raise "Unexpected result type from binary op: #{result.class}"
       end
-    @stack.push Value.new(result, type)
+    stack_push Value.new(result, type)
   end
 
   private def binary_lt : Nil
@@ -175,35 +175,35 @@ class Crystal::Repl::Interpreter
   end
 
   private def binary_cmp : Nil
-    right = @stack.pop
-    left = @stack.pop
+    right = stack_pop
+    left = stack_pop
 
     result = yield(
       left.value.as(Int::Primitive | Float::Primitive),
       right.value.as(Int::Primitive | Float::Primitive),
     )
 
-    @stack.push Value.new(result, @program.bool)
+    stack_push Value.new(result, @program.bool)
   end
 
   private def binary_eq : Nil
-    right = @stack.pop
-    left = @stack.pop
+    right = stack_pop
+    left = stack_pop
 
-    @stack.push Value.new(left.value == right.value, @program.bool)
+    stack_push Value.new(left.value == right.value, @program.bool)
   end
 
   private def binary_neq : Nil
-    right = @stack.pop
-    left = @stack.pop
+    right = stack_pop
+    left = stack_pop
 
-    @stack.push Value.new(left.value != right.value, @program.bool)
+    stack_push Value.new(left.value != right.value, @program.bool)
   end
 
   private def branch_if : Nil
     index = next_instruction Int32
 
-    cond = @stack.pop.value.as(Bool)
+    cond = stack_pop.value.as(Bool)
     if cond
       @ip = index
     end
@@ -212,7 +212,7 @@ class Crystal::Repl::Interpreter
   private def branch_unless : Nil
     index = next_instruction Int32
 
-    cond = @stack.pop.value.as(Bool)
+    cond = stack_pop.value.as(Bool)
     unless cond
       @ip = index
     end
@@ -224,32 +224,40 @@ class Crystal::Repl::Interpreter
   end
 
   private def pop : Nil
-    @stack.pop
+    stack_pop
   end
 
   private def pointer_malloc : Nil
-    size = @stack.pop.value.as(UInt64)
-    type = @stack.pop.value.as(Type).instance_type
+    size = stack_pop.value.as(UInt64)
+    type = stack_pop.value.as(Type).instance_type
     pointer = Pointer(Value).malloc(size)
-    @stack.push Value.new(pointer, type)
+    stack_push Value.new(pointer, type)
   end
 
   private def pointer_set : Nil
-    value = @stack.pop
-    pointer = @stack.pop.value.as(PointerWrapper).pointer
+    value = stack_pop
+    pointer = stack_pop.value.as(PointerWrapper).pointer
     pointer.value = value
-    @stack.push value
+    stack_push value
   end
 
   private def pointer_get : Nil
-    pointer = @stack.pop.value.as(PointerWrapper).pointer
-    @stack.push pointer.value
+    pointer = stack_pop.value.as(PointerWrapper).pointer
+    stack_push pointer.value
   end
 
   private def next_instruction(t : T.class) : T forall T
     value = @instructions[@ip].unsafe_as(T)
     @ip += 1
     value
+  end
+
+  private def stack_pop
+    @stack.pop
+  end
+
+  private def stack_push(value)
+    @stack.push value
   end
 
   # def visit(node : Path)
