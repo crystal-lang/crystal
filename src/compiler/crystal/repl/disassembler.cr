@@ -34,17 +34,10 @@ module Crystal::Repl::Disassembler
     end
   end
 
-  private def self.next_instruction(instructions, ip, t : Value.class)
-    {
-      (instructions.to_unsafe + ip).as(Value*).value,
-      ip + 2,
-    }
-  end
-
   private def self.next_instruction(instructions, ip, t : T.class) forall T
     {
-      instructions[ip].unsafe_as(T),
-      ip + 1,
+      (instructions.to_unsafe + ip).as(T*).value,
+      ip + sizeof(T),
     }
   end
 end

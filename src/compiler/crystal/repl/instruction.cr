@@ -1,1 +1,1 @@
-alias Crystal::Repl::Instruction = Int64
+alias Crystal::Repl::Instruction = UInt8

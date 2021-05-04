@@ -10,7 +10,7 @@ class Crystal::Repl::Interpreter
     @def = nil
     @local_vars = LocalVars.new(program)
     @dl_libraries = {} of String? => Void*
-    @stack = [] of Value
+    @stack = [] of UInt8
     @instructions = [] of Instruction
     @ip = 0
 
@@ -28,6 +28,13 @@ class Crystal::Repl::Interpreter
 
     @instructions = @instructions_compiler.compile(node)
     interpret
+
+    return_value_size = @program.size_of(node.type.sizeof_type)
+    return_value = Pointer(UInt8).malloc(return_value_size)
+    return_value.copy_from(@stack.to_unsafe, return_value_size)
+    @stack.clear
+
+    return_value
   end
 
   def local_var_keys
@@ -82,23 +89,41 @@ class Crystal::Repl::Interpreter
     @local_vars.pointerof(index)
   end
 
-  private def next_instruction(t : Value.class)
-    value = (@instructions.to_unsafe + @ip).as(Value*).value
-    @ip += 2
+  private def next_instruction(t : T.class) forall T
+    value = (@instructions.to_unsafe + @ip).as(T*).value
+    @ip += sizeof(T)
     value
   end
 
-  private def next_instruction(t : T.class) : T forall T
-    value = @instructions[@ip].unsafe_as(T)
-    @ip += 1
-    value
+  private def literal_pointer(index)
+    @literals.pointer(index)
+  end
+
+  private def literal_size(index)
+    @literals.size(index)
   end
 
   private def stack_pop
     @stack.pop
   end
 
-  private def stack_push(value)
+  private def stack_push(value : UInt16) : Nil
+    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
+      stack_push byte
+    end
+  end
+
+  private def stack_push(value : Int16) : Nil
+    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
+      stack_push byte
+    end
+  end
+
+  private def stack_push(value : Int8) : Nil
+    stack_push(value.unsafe_as(UInt8))
+  end
+
+  private def stack_push(value : UInt8) : Nil
     @stack.push value
   end
 
