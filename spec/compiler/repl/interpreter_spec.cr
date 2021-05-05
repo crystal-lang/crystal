@@ -243,15 +243,15 @@ describe Crystal::Repl::Interpreter do
   #   CODE
   # end
 
-  # it "interprets typeof instance type" do
-  #   program, repl_value = interpret_full("typeof(1)")
-  #   repl_value.value.should eq(program.int32.metaclass)
-  # end
+  it "interprets typeof instance type" do
+    program, repl_value = interpret_full("typeof(1)")
+    repl_value.value.should eq(program.int32.metaclass)
+  end
 
-  # it "interprets typeof metaclass type" do
-  #   program, repl_value = interpret_full("typeof(Int32)")
-  #   repl_value.value.should eq(program.class_type)
-  # end
+  it "interprets typeof metaclass type" do
+    program, repl_value = interpret_full("typeof(Int32)")
+    repl_value.value.should eq(program.class_type)
+  end
 
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)

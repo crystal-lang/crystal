@@ -54,7 +54,7 @@ struct Crystal::Repl::Value
       PointerWrapper.new(@pointer.as(Value*))
     when MetaclassType
       # TODO
-      @pointer.unsafe_as(Type)
+      @pointer.as(Type*).value
     else
       raise "BUG: missing handling of Repl value for #{type}"
     end
