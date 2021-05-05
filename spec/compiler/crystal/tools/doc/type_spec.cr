@@ -117,6 +117,5 @@ describe Doc::Type do
       # Sanity check: subclasses of ASTNode has the right superclass
       generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
     end
-
   end
 end
