@@ -99,6 +99,13 @@ struct Nil
     self
   end
 
+  # Doesn't yield to the block, and returns `default`.
+  #
+  # See also: `Object#try`.
+  def try(default, &block)
+    default
+  end
+
   # Raises `NilAssertionError`.
   #
   # See also: `Object#not_nil!`.

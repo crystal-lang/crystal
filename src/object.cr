@@ -201,6 +201,19 @@ class Object
     yield self
   end
 
+  # Yields `self`. `Nil` overrides this method and doesn't yield, returning `default`.
+  #
+  # This method is useful for dealing with nilable types, to safely
+  # perform operations only when the value is not `nil`.
+  #
+  # ```
+  # # First program argument in downcase, or nil
+  # ARGV[0]?.try("default", &.downcase)
+  # ```
+  def try(default, & : self ->)
+    yield self
+  end
+
   # Returns `true` if `self` is included in the *collection* argument.
   #
   # ```
