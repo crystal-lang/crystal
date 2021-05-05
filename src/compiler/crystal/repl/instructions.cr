@@ -232,7 +232,7 @@ Crystal::Repl::Instructions =
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       (return),
+      code:       (break),
     },
   }
 

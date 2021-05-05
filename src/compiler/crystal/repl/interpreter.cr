@@ -10,16 +10,14 @@ class Crystal::Repl::Interpreter
     @def = nil
     @local_vars = LocalVars.new(program)
     @dl_libraries = {} of String? => Void*
-    @stack = [] of UInt8
     @instructions = [] of Instruction
-    @ip = 0
 
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
     @instructions_compiler = Compiler.new(@program, @local_vars)
   end
 
-  def interpret(node) : Value
+  def interpret(node : ASTNode) : Value
     @top_level_visitor.reset
     node.accept @top_level_visitor
 
@@ -31,24 +29,22 @@ class Crystal::Repl::Interpreter
     puts Disassembler.disassemble(@instructions, @local_vars)
 
     time = Time.monotonic
-    interpret
+    value = interpret(node.type)
     puts "Elapsed: #{Time.monotonic - time}"
 
-    return_value_size = @program.size_of(node.type.sizeof_type)
-    return_value = Pointer(UInt8).malloc(return_value_size)
-    return_value.copy_from(@stack.to_unsafe, return_value_size)
-    @stack.clear
-
-    Value.new(return_value, node.type)
+    value
   end
 
   def local_var_keys
     @local_vars.names
   end
 
-  def interpret
-    @stack.clear
-    @ip = 0
+  def interpret(node_type : Type) : Value
+    # TODO: what if the stack is exhausted?
+    stack_data = uninitialized UInt8[8096]
+    stack = stack_data.to_unsafe
+    instructions = @instructions
+    ip = instructions.to_unsafe
 
     while true
       # print @ip.to_s.rjust(4, '0')
@@ -69,8 +65,8 @@ class Crystal::Repl::Interpreter
               {% end %}
 
               {% for pop_value, i in pop_values %}
-                {% p = pop_values[pop_values.size - i - 1] %}
-                {{ p.var }} = stack_pop({{p.type}})
+                {% pop = pop_values[pop_values.size - i - 1] %}
+                {{ pop.var }} = stack_pop({{pop.type}})
               {% end %}
 
               {% if instruction[:push] %}
@@ -84,30 +80,35 @@ class Crystal::Repl::Interpreter
 
       # p! @stack
     end
+
+    return_value_size = @program.size_of(node_type.sizeof_type)
+    return_value = Pointer(UInt8).malloc(return_value_size)
+    return_value.copy_from(stack_data.to_unsafe, return_value_size)
+
+    Value.new(return_value, node_type)
   end
 
-  private def set_ip(@ip : Int32)
+  private macro set_ip(ip)
+    ip = @instructions.to_unsafe + {{ip}}
   end
 
-  private def set_local_var(index : Int32, size : Int32)
-    (@stack.to_unsafe + @stack.size - size).copy_to(@local_vars.pointerof(index), size)
+  private macro set_local_var(index, size)
+    (stack - {{size}}).copy_to(@local_vars.pointerof({{index}}), {{size}})
   end
 
-  private def get_local_var(index : Int32, size : Int32)
-    ptr = @local_vars.pointerof(index)
-    size.times do
-      stack_push(ptr.value)
-      ptr += 1
-    end
+  private macro get_local_var(index, size)
+    %ptr = @local_vars.pointerof({{index}})
+    stack.copy_from(%ptr, {{size}})
+    stack += {{size}}
   end
 
   private def get_local_var_pointer(index)
     @local_vars.pointerof(index)
   end
 
-  private def next_instruction(t : T.class) forall T
-    value = (@instructions.to_unsafe + @ip).as(T*).value
-    @ip += sizeof(T)
+  private macro next_instruction(t)
+    value = ip.as({{t}}*).value
+    ip += sizeof({{t}})
     value
   end
 
@@ -119,55 +120,18 @@ class Crystal::Repl::Interpreter
     @literals.size(index)
   end
 
-  private def stack_pop(t : T.class) : T forall T
-    value = (@stack.to_unsafe + @stack.size - sizeof(T)).as(T*).value
-    stack_pop_size(sizeof(T))
+  private macro stack_pop(t)
+    value = (stack - sizeof({{t}})).as({{t}}*).value
+    stack_pop_size(sizeof({{t}}))
     value
   end
 
-  private def stack_pop_size(size : Int32)
-    size.times do
-      @stack.pop
-    end
+  private macro stack_pop_size(size)
+    stack -= {{size}}
   end
 
-  private def stack_push(value : UInt32) : Nil
-    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
-      stack_push byte
-    end
-  end
-
-  private def stack_push(value : Int32) : Nil
-    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
-      stack_push byte
-    end
-  end
-
-  private def stack_push(value : UInt16) : Nil
-    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
-      stack_push byte
-    end
-  end
-
-  private def stack_push(value : Int16) : Nil
-    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
-      stack_push byte
-    end
-  end
-
-  private def stack_push(value : Int8) : Nil
-    stack_push(value.unsafe_as(UInt8))
-  end
-
-  private def stack_push(value : Bool) : Nil
-    stack_push(value ? 1_u8 : 0_u8)
-  end
-
-  private def stack_push(value : UInt8) : Nil
-    @stack.push value
-  end
-
-  private def stack_last
-    @stack.last
+  private macro stack_push(value)
+    stack.as(Pointer(typeof({{value}}))).value = {{value}}
+    stack += sizeof(typeof({{value}}))
   end
 end
