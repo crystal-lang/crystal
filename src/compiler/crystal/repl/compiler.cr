@@ -64,11 +64,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def visit(node : StringLiteral)
-    put_i64 node.value.object_id.unsafe_as(Int64)
-    false
-  end
-
   def visit(node : Expressions)
     node.expressions.each_with_index do |expression, i|
       expression.accept self
