@@ -2,39 +2,39 @@ require "../spec_helper"
 
 describe Crystal::Repl::Interpreter do
   it "interprets nil" do
-    interpret("nil", Nil).should be_nil
+    interpret("nil").should be_nil
   end
 
   it "interprets a bool (false)" do
-    interpret("false", Bool).should be_false
+    interpret("false").should be_false
   end
 
   it "interprets a bool (true)" do
-    interpret("true", Bool).should be_true
+    interpret("true").should be_true
   end
 
   it "interprets an Int8" do
-    interpret("123_i8", Int8).should eq(123_i8)
+    interpret("123_i8").should eq(123_i8)
   end
 
   it "interprets an UInt8" do
-    interpret("145_u8", UInt8).should eq(145_u8)
+    interpret("145_u8").should eq(145_u8)
   end
 
   it "interprets an Int16" do
-    interpret("12345_i16", Int16).should eq(12345_i16)
+    interpret("12345_i16").should eq(12345_i16)
   end
 
   it "interprets an UInt16" do
-    interpret("12389_u16", UInt16).should eq(12389_u16)
+    interpret("12389_u16").should eq(12389_u16)
   end
 
   it "interprets an Int32" do
-    interpret("123456789_i32", Int32).should eq(123456789)
+    interpret("123456789_i32").should eq(123456789)
   end
 
   it "interprets an UInt32" do
-    interpret("323456789_u32", Int32).should eq(323456789_u32)
+    interpret("323456789_u32").should eq(323456789_u32)
   end
 
   # it "interprets an Int64" do
@@ -78,7 +78,7 @@ describe Crystal::Repl::Interpreter do
   # end
 
   it "interprets variable set and get" do
-    interpret(<<-CODE, Int32).should eq(1)
+    interpret(<<-CODE).should eq(1)
       a = 1
       a
       CODE
@@ -93,7 +93,7 @@ describe Crystal::Repl::Interpreter do
   # end
 
   it "interprets Int32 + Int32" do
-    interpret("1 + 2", Int32).should eq(3)
+    interpret("1 + 2").should eq(3)
   end
 
   # it "interprets Int32 + Float64" do
@@ -117,7 +117,7 @@ describe Crystal::Repl::Interpreter do
   # end
 
   it "interprets Int32 < Int32" do
-    interpret("1 < 2", Bool).should be_true
+    interpret("1 < 2").should be_true
   end
 
   # it "interprets Int32 < Float64" do
@@ -161,9 +161,9 @@ describe Crystal::Repl::Interpreter do
   # end
 
   it "interprets while" do
-    interpret(<<-CODE, Int32).should eq(2)
+    interpret(<<-CODE).should eq(10)
       a = 0
-      while a < 2
+      while a < 10
         a = a + 1
       end
       a
@@ -171,7 +171,7 @@ describe Crystal::Repl::Interpreter do
   end
 
   it "interprets while, returns nil" do
-    interpret(<<-CODE, Nil).should eq(nil)
+    interpret(<<-CODE).should eq(nil)
       a = 0
       while a < 10
         a = a + 1
@@ -288,9 +288,9 @@ describe Crystal::Repl::Interpreter do
   # end
 end
 
-private def interpret(string, t : T.class, prelude = "primitives") forall T
+private def interpret(string, prelude = "primitives")
   program, return_value = interpret_full(string, prelude)
-  return_value.as(T*).value
+  return_value.value
 end
 
 private def interpret_full(string, prelude = "primitives")

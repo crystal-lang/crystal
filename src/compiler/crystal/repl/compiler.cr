@@ -13,8 +13,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     leave
 
-    puts Disassembler.disassemble(@instructions, @local_vars)
-
     @instructions
   end
 

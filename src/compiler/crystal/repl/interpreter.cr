@@ -19,7 +19,7 @@ class Crystal::Repl::Interpreter
     @instructions_compiler = Compiler.new(@program, @local_vars)
   end
 
-  def interpret(node)
+  def interpret(node) : Value
     @top_level_visitor.reset
     node.accept @top_level_visitor
 
@@ -27,14 +27,19 @@ class Crystal::Repl::Interpreter
     node.accept @main_visitor
 
     @instructions = @instructions_compiler.compile(node)
+
+    puts Disassembler.disassemble(@instructions, @local_vars)
+
+    time = Time.monotonic
     interpret
+    puts "Elapsed: #{Time.monotonic - time}"
 
     return_value_size = @program.size_of(node.type.sizeof_type)
     return_value = Pointer(UInt8).malloc(return_value_size)
     return_value.copy_from(@stack.to_unsafe, return_value_size)
     @stack.clear
 
-    return_value
+    Value.new(return_value, node.type)
   end
 
   def local_var_keys
