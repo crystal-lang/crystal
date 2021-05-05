@@ -223,12 +223,10 @@ struct NamedTuple
   #
   # ```
   # tuple = {foo: "bar", baz: "qux"}
-  # tuple.key_for("bar")    # => "foo"
-  # tuple.key_for("qux")    # => "baz"
-  # tuple.key_for("foobar") # raises KeyError (Missing named tuple key for value: foobar)
-  # tuple = {name: "Crystal", year: 2011}
-  # tuple.key_for("Crystal")          # => :name
-  # tuple.key_forfetch("other") { 0 } # => 0
+  # tuple.key_for("bar")          # => :foo
+  # tuple.key_for("qux")          # => :baz
+  # tuple.key_for("foobar")       # raises KeyError (Missing named tuple key for value: foobar)
+  # tuple.key_for("foobar") { 0 } # => 0
   # ```
   def key_for(value) : Symbol
     key_for(value) { raise KeyError.new "Missing named tuple key for value: #{value}" }
@@ -238,19 +236,19 @@ struct NamedTuple
   #
   # ```
   # tuple = {foo: "bar", baz: "qux"}
-  # tuple.key_for?("bar")    # => "foo"
-  # tuple.key_for?("qux")    # => "baz"
+  # tuple.key_for?("bar")    # => :foo
+  # tuple.key_for?("qux")    # => :baz
   # tuple.key_for?("foobar") # => nil
   # ```
-  def key_for?(value)
+  def key_for?(value) : Symbol?
     key_for(value) { nil }
   end
 
   # Returns a key with the given *value*, otherwise yields *value* to the given block.
   #
   # ```
-  # tuple = {"foo" => "bar"}
-  # tuple.key_for("bar") { |value| value.upcase } # => "foo"
+  # tuple = {foo: "bar"}
+  # tuple.key_for("bar") { |value| value.upcase } # => :foo
   # tuple.key_for("qux") { |value| value.upcase } # => "QUX"
   # ```
   def key_for(value)
