@@ -4,7 +4,7 @@ struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
 
-  def initialize(@pointer : Pointer(UInt8), @type : Type)
+  def initialize(@program : Program, @pointer : Pointer(UInt8), @type : Type)
   end
 
   def value
@@ -53,8 +53,8 @@ struct Crystal::Repl::Value
       # TODO
       PointerWrapper.new(@pointer.as(Value*))
     when MetaclassType
-      # TODO
-      @pointer.as(Type*).value
+      type_id = @pointer.as(Int32*).value
+      @program.llvm_id.type_from_id(type_id)
     else
       raise "BUG: missing handling of Repl value for #{type}"
     end

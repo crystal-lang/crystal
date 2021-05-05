@@ -118,9 +118,10 @@ Crystal::Repl::Instructions =
     # },
     pointer_malloc: {
       operands:   [] of Nil,
-      pop_values: [type : Type, size : UInt64],
+      pop_values: [type_id : Int32, size : UInt64],
       push:       true,
       code:       begin
+        type = type_from_type_id(type_id)
         pointer_instance_type = type.instance_type.as(PointerInstanceType)
         element_type = pointer_instance_type.element_type
         element_size = sizeof_type(element_type)
@@ -152,7 +153,7 @@ Crystal::Repl::Instructions =
     },
     pointer_new: {
       operands:   [] of Nil,
-      pop_values: [type : Type, address : UInt64],
+      pop_values: [type_id : Int32, address : UInt64],
       push:       true,
       code:       Pointer(UInt8).new(address),
     },

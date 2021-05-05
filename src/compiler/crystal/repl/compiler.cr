@@ -295,7 +295,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   {% end %}
 
   private def put_type(type : Type)
-    put_i64 type.object_id.unsafe_as(Int64)
+    put_i32 @program.llvm_id.type_id(type)
   end
 
   # private def put_object(value, type : Type) : Nil

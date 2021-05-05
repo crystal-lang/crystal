@@ -84,8 +84,12 @@ class Crystal::Repl::Interpreter
     return_value_size = @program.size_of(node_type.sizeof_type)
     return_value = Pointer(UInt8).malloc(return_value_size)
     return_value.copy_from(stack_data.to_unsafe, return_value_size)
+    stack -= return_value_size
+    if stack != stack_data.to_unsafe
+      raise "BUG: data left on stack (#{stack - stack_data.to_unsafe} bytes)"
+    end
 
-    Value.new(return_value, node_type)
+    Value.new(@program, return_value, node_type)
   end
 
   private macro set_ip(ip)
@@ -143,5 +147,9 @@ class Crystal::Repl::Interpreter
 
   private def sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
+  end
+
+  private def type_from_type_id(id : Int32) : Type
+    @program.llvm_id.type_from_id(id)
   end
 end
