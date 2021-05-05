@@ -77,12 +77,12 @@ describe Crystal::Repl::Interpreter do
   #     CODE
   # end
 
-  # it "interprets variable set and get" do
-  #   interpret(<<-CODE).should eq(1)
-  #     a = 1
-  #     a
-  #     CODE
-  # end
+  it "interprets variable set and get" do
+    interpret(<<-CODE, Int32).should eq(1)
+      a = 1
+      a
+      CODE
+  end
 
   # it "interprets variable set and get, second local var" do
   #   interpret(<<-CODE).should eq(1)
@@ -92,9 +92,9 @@ describe Crystal::Repl::Interpreter do
   #     CODE
   # end
 
-  # it "interprets Int32 + Int32" do
-  #   interpret("1 + 2").should eq(3)
-  # end
+  it "interprets Int32 + Int32" do
+    interpret("1 + 2", Int32).should eq(3)
+  end
 
   # it "interprets Int32 + Float64" do
   #   interpret("1 + 2.5").should eq(3.5)
@@ -116,9 +116,9 @@ describe Crystal::Repl::Interpreter do
   #   interpret("2 * 3").should eq(6)
   # end
 
-  # it "interprets Int32 < Int32" do
-  #   interpret("1 < 2").should be_true
-  # end
+  it "interprets Int32 < Int32" do
+    interpret("1 < 2", Bool).should be_true
+  end
 
   # it "interprets Int32 < Float64" do
   #   interpret("1 < 2.5").should be_true

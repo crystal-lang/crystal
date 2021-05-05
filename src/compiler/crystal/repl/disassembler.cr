@@ -16,13 +16,15 @@ module Crystal::Repl::Disassembler
                 io.print "{{name}}"
                 {% for operand in instruction[:operands] %}
                   {{operand.var}}, ip = next_instruction instructions, ip, {{operand.type}}
+                {% end %}
 
-                  {% if instruction[:disassemble] %}
-                    {% for name, disassemble in instruction[:disassemble] %}
-                      {{name.id}} = {{disassemble}}
-                    {% end %}
+                {% if instruction[:disassemble] %}
+                  {% for name, disassemble in instruction[:disassemble] %}
+                    {{name.id}} = {{disassemble}}
                   {% end %}
+                {% end %}
 
+                {% for operand in instruction[:operands] %}
                   io.print " "
                   io.print {{operand.var}}
                 {% end %}

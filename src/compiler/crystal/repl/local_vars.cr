@@ -2,7 +2,8 @@ require "./repl"
 
 class Crystal::Repl::LocalVars
   def initialize(@program : Program)
-    @vars = [] of Value
+    @values = [] of UInt8
+    @types = [] of Type
     @name_to_index = {} of String => Int32
   end
 
@@ -10,12 +11,15 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys
   end
 
-  def name_to_index(name : String) : Int32
+  def name_to_index(name : String, type : Type) : Int32
     index = @name_to_index[name]?
     unless index
-      index = @name_to_index.size
+      index = @values.size
       @name_to_index[name] = index
-      @vars << Value.new(nil, @program.nil_type)
+      @types << type
+      sizeof_type(type).times do
+        @values << 0_u8
+      end
     end
     index
   end
@@ -24,20 +28,12 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys[index]
   end
 
-  def [](index : Int32) : Value
-    @vars[index]
-  end
-
-  def []=(index : Int32, value : Value) : Value
-    @vars[index] = value
-    value
-  end
-
   def pointerof(index : Int32)
-    type = @vars[index].type
-    pointer_type = type.program.pointer_of(type)
+    value = @values.to_unsafe + index
+    value.as(Pointer(UInt8))
+  end
 
-    value = @vars.to_unsafe + index
-    Value.new(value.as(Pointer(Value)), pointer_type)
+  def sizeof_type(type) : Int32
+    @program.size_of(type.sizeof_type).to_i32
   end
 end

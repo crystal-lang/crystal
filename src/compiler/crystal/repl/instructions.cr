@@ -56,6 +56,18 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value,
     },
+    add_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a + b,
+    },
+    lt_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a < b,
+    },
     # binary_plus: {
     #   operands:   [] of Nil,
     #   pop_values: [left, right],
@@ -168,30 +180,30 @@ Crystal::Repl::Instructions =
     #   push:       true,
     #   code:       value,
     # },
-    # set_local: {
-    #   operands:    [index : Int32],
-    #   pop_values:  [] of Nil,
-    #   push:        false,
-    #   code:        set_local_var(index, stack_last),
-    #   disassemble: {
-    #     index: "#{local_vars.index_to_name(index)}@#{index}",
-    #   },
-    # },
-    # get_local: {
-    #   operands:    [index : Int32],
-    #   pop_values:  [] of Nil,
-    #   push:        true,
-    #   code:        get_local_var(index),
-    #   disassemble: {
-    #     index: "#{local_vars.index_to_name(index)}@#{index}",
-    #   },
-    # },
-    # pop: {
-    #   operands:   [] of Nil,
-    #   pop_values: [discard],
-    #   push:       false,
-    #   code:       nil,
-    # },
+    set_local: {
+      operands:    [index : Int32, size : Int32],
+      pop_values:  [] of Nil,
+      push:        false,
+      code:        set_local_var(index, size),
+      disassemble: {
+        index: "#{local_vars.index_to_name(index)}@#{index}",
+      },
+    },
+    get_local: {
+      operands:    [index : Int32, size : Int32],
+      pop_values:  [] of Nil,
+      push:        false,
+      code:        get_local_var(index, size),
+      disassemble: {
+        index: "#{local_vars.index_to_name(index)}@#{index}",
+      },
+    },
+    pop: {
+      operands:   [size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_pop_size(size),
+    },
     # branch_if: {
     #   operands:   [index : Int32],
     #   pop_values: [cond],

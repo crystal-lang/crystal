@@ -60,7 +60,8 @@ class Crystal::Repl::Interpreter
               {% end %}
 
               {% for pop_value, i in pop_values %}
-                {{ pop_values[pop_values.size - i - 1] }} = stack_pop
+                {% p = pop_values[pop_values.size - i - 1] %}
+                {{ p.var }} = stack_pop({{p.type}})
               {% end %}
 
               {% if instruction[:push] %}
@@ -77,12 +78,16 @@ class Crystal::Repl::Interpreter
   private def set_ip(@ip : Int32)
   end
 
-  private def set_local_var(index, value)
-    @local_vars[index] = value
+  private def set_local_var(index : Int32, size : Int32)
+    (@stack.to_unsafe + @stack.size - size).copy_to(@local_vars.pointerof(index), size)
   end
 
-  private def get_local_var(index)
-    @local_vars[index]
+  private def get_local_var(index : Int32, size : Int32)
+    ptr = @local_vars.pointerof(index)
+    size.times do
+      stack_push(ptr.value)
+      ptr += 1
+    end
   end
 
   private def get_local_var_pointer(index)
@@ -103,8 +108,16 @@ class Crystal::Repl::Interpreter
     @literals.size(index)
   end
 
-  private def stack_pop
-    @stack.pop
+  private def stack_pop(t : Int32.class) : Int32
+    value = (@stack.to_unsafe + @stack.size - 4).as(Int32*).value
+    stack_pop_size(4)
+    value
+  end
+
+  private def stack_pop_size(size : Int32)
+    size.times do
+      @stack.pop
+    end
   end
 
   private def stack_push(value : UInt32) : Nil
@@ -133,6 +146,10 @@ class Crystal::Repl::Interpreter
 
   private def stack_push(value : Int8) : Nil
     stack_push(value.unsafe_as(UInt8))
+  end
+
+  private def stack_push(value : Bool) : Nil
+    stack_push(value ? 1_u8 : 0_u8)
   end
 
   private def stack_push(value : UInt8) : Nil
