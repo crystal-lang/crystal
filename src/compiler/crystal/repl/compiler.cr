@@ -142,16 +142,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  # def visit(node : PointerOf)
-  #   exp = node.exp
-  #   case exp
-  #   when Var
-  #     pointerof_var(@local_vars.name_to_index(exp.name))
-  #   else
-  #     node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
-  #   end
-  #   false
-  # end
+  def visit(node : PointerOf)
+    exp = node.exp
+    case exp
+    when Var
+      pointerof_var(@local_vars.name_to_index(exp.name))
+    else
+      node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
+    end
+    false
+  end
 
   def visit(node : Call)
     # TODO: handle case of multidispatch

@@ -226,12 +226,12 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       set_ip(index),
     },
-    # pointerof_var: {
-    #   operands:   [index : Int32],
-    #   pop_values: [] of Nil,
-    #   push:       true,
-    #   code:       get_local_var_pointer(index),
-    # },
+    pointerof_var: {
+      operands:   [index : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       get_local_var_pointer(index),
+    },
     leave: {
       operands:   [] of Nil,
       pop_values: [] of Nil,

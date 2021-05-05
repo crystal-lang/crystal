@@ -24,6 +24,10 @@ class Crystal::Repl::LocalVars
     index
   end
 
+  def name_to_index(name : String) : Int32
+    @name_to_index[name]
+  end
+
   def index_to_name(index : Int32) : String
     @name_to_index.each do |name, i|
       return name if i == index
