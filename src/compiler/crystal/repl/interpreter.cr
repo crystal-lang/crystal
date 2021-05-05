@@ -46,7 +46,11 @@ class Crystal::Repl::Interpreter
     @ip = 0
 
     while true
+      # print @ip.to_s.rjust(4, '0')
+      # print ' '
+
       op_code = next_instruction OpCode
+      # puts op_code
 
       {% begin %}
         case op_code
@@ -72,6 +76,8 @@ class Crystal::Repl::Interpreter
           {% end %}
         end
       {% end %}
+
+      # p! @stack
     end
   end
 
@@ -108,9 +114,9 @@ class Crystal::Repl::Interpreter
     @literals.size(index)
   end
 
-  private def stack_pop(t : Int32.class) : Int32
-    value = (@stack.to_unsafe + @stack.size - 4).as(Int32*).value
-    stack_pop_size(4)
+  private def stack_pop(t : T.class) : T forall T
+    value = (@stack.to_unsafe + @stack.size - sizeof(T)).as(T*).value
+    stack_pop_size(sizeof(T))
     value
   end
 

@@ -160,24 +160,24 @@ describe Crystal::Repl::Interpreter do
   #   interpret("if true; false; else; a = 1; end; a").should eq(nil)
   # end
 
-  # it "interprets while" do
-  #   interpret(<<-CODE).should eq(10)
-  #     a = 0
-  #     while a < 10
-  #       a = a + 1
-  #     end
-  #     a
-  #     CODE
-  # end
+  it "interprets while" do
+    interpret(<<-CODE, Int32).should eq(2)
+      a = 0
+      while a < 2
+        a = a + 1
+      end
+      a
+      CODE
+  end
 
-  # it "interprets while, returns nil" do
-  #   interpret(<<-CODE).should eq(nil)
-  #     a = 0
-  #     while a < 10
-  #       a = a + 1
-  #     end
-  #     CODE
-  # end
+  it "interprets while, returns nil" do
+    interpret(<<-CODE, Nil).should eq(nil)
+      a = 0
+      while a < 10
+        a = a + 1
+      end
+      CODE
+  end
 
   # it "interprets pointer set and get (int)" do
   #   interpret(<<-CODE).should eq(10)

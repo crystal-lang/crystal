@@ -74,7 +74,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Expressions)
     node.expressions.each_with_index do |expression, i|
       expression.accept self
-      pop(sizeof_type(expression.type)) if i < node.expressions.size - 1
+      pop(sizeof_type(expression)) if i < node.expressions.size - 1
     end
     false
   end
@@ -85,7 +85,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when Var
       node.value.accept self
       index = @local_vars.name_to_index(target.name, target.type)
-      set_local index, sizeof_type(node.type)
+      set_local index, sizeof_type(node)
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -94,7 +94,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Var)
     index = @local_vars.name_to_index(node.name, node.type)
-    get_local index, sizeof_type(node.type)
+    get_local index, sizeof_type(node)
     false
   end
 
@@ -116,22 +116,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   #   false
   # end
 
-  # def visit(node : While)
-  #   jump 0
-  #   cond_jump_location = patch_location
+  def visit(node : While)
+    jump 0
+    cond_jump_location = patch_location
 
-  #   body_index = @instructions.size
-  #   node.body.accept self
+    body_index = @instructions.size
+    node.body.accept self
+    pop sizeof_type(node.body.type)
 
-  #   patch_jump(cond_jump_location)
+    patch_jump(cond_jump_location)
 
-  #   node.cond.accept self
-  #   branch_if body_index
+    node.cond.accept self
+    branch_if body_index
 
-  #   put_nil
+    put_nil
 
-  #   false
-  # end
+    false
+  end
 
   # def visit(node : TypeOf)
   #   put_object node.type.object_id, node.type.metaclass
@@ -339,14 +340,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def patch_location
-    @instructions.size - 1
+    @instructions.size - 4
   end
 
-  private def patch_jump(offset)
-    @instructions[offset] = @instructions.size.to_i64!
+  private def patch_jump(offset : Int32)
+    (@instructions.to_unsafe + offset).as(Int32*).value = @instructions.size
   end
 
-  private def sizeof_type(type) : Int32
+  private def sizeof_type(node : ASTNode) : Int32
+    sizeof_type(node.type)
+  end
+
+  private def sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
   end
 end

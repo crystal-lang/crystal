@@ -204,24 +204,24 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_pop_size(size),
     },
-    # branch_if: {
-    #   operands:   [index : Int32],
-    #   pop_values: [cond],
-    #   push:       false,
-    #   code:       (set_ip(index) if cond.value.as(Bool)),
-    # },
+    branch_if: {
+      operands:   [index : Int32],
+      pop_values: [cond : Bool],
+      push:       false,
+      code:       (set_ip(index) if cond),
+    },
     # branch_unless: {
     #   operands:   [index : Int32],
     #   pop_values: [cond],
     #   push:       false,
     #   code:       (set_ip(index) unless cond.value.as(Bool)),
     # },
-    # jump: {
-    #   operands:   [index : Int32],
-    #   pop_values: [] of Nil,
-    #   push:       false,
-    #   code:       set_ip(index),
-    # },
+    jump: {
+      operands:   [index : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       set_ip(index),
+    },
     # pointerof_var: {
     #   operands:   [index : Int32],
     #   pop_values: [] of Nil,
