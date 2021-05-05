@@ -128,27 +128,27 @@ Crystal::Repl::Instructions =
       end,
     },
     pointer_set: {
-      operands:   [value_size : Int32] of Nil,
+      operands:   [element_size : Int32] of Nil,
       pop_values: [] of Nil,
       push:       false,
       code:       begin
         # TODO: clean up stack
         # TODO: abstract this better?
-        stack_before_value = stack - value_size
+        stack_before_value = stack - element_size
         stack_before_pointer = stack_before_value - sizeof(Pointer(UInt8))
 
         pointer = stack_before_pointer.as(Pointer(Pointer(UInt8))).value
-        pointer.copy_from(stack_before_value, value_size)
+        pointer.copy_from(stack_before_value, element_size)
 
         stack = stack_before_pointer
-        stack_copy_from(stack_before_value, value_size)
+        stack_copy_from(stack_before_value, element_size)
       end,
     },
     pointer_get: {
-      operands:   [value_size : Int32] of Nil,
+      operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       false,
-      code:       stack_copy_from(pointer, value_size),
+      code:       stack_copy_from(pointer, element_size),
     },
     pointer_new: {
       operands:   [] of Nil,
@@ -162,22 +162,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer.address,
     },
-    # pointer_diff: {
-    #   operands:   [] of Nil,
-    #   pop_values: [pointer1, pointer2],
-    #   push:       true,
-    #   code:       Value.new(
-    #     pointer1.value.as(PointerWrapper).pointer -
-    #     pointer2.value.as(PointerWrapper).pointer,
-    #     @program.int64,
-    #   ),
-    # },
-    # put_object: {
-    #   operands:   [value : Value],
-    #   pop_values: [] of Nil,
-    #   push:       true,
-    #   code:       value,
-    # },
+    pointer_diff: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [pointer1 : Pointer(UInt8), pointer2 : Pointer(UInt8)],
+      push:       true,
+      code:       (pointer1.address - pointer2.address) // element_size,
+    },
     set_local: {
       operands:    [index : Int32, size : Int32],
       pop_values:  [] of Nil,

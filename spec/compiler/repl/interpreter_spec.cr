@@ -235,13 +235,13 @@ describe Crystal::Repl::Interpreter do
     CODE
   end
 
-  # it "interprets pointer diff" do
-  #   interpret(<<-CODE).should eq(2_i64)
-  #     ptr1 = Pointer(Int32).new(132_u64)
-  #     ptr2 = Pointer(Int32).new(100_u64)
-  #     ptr1 - ptr2
-  #   CODE
-  # end
+  it "interprets pointer diff" do
+    interpret(<<-CODE).should eq(8_i64)
+      ptr1 = Pointer(Int32).new(133_u64)
+      ptr2 = Pointer(Int32).new(100_u64)
+      ptr1 - ptr2
+    CODE
+  end
 
   it "interprets path to type" do
     program, repl_value = interpret_full("String")

@@ -272,8 +272,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "pointer_address"
       pointer_address
-      # when "pointer_diff"
-      #   pointer_diff
+    when "pointer_diff"
+      pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
