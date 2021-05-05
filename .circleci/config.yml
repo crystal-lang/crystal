@@ -589,6 +589,13 @@ workflows:
             - dist_docs
 
   nightly_release:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - test_linux
       - test_linux32_std
