@@ -228,12 +228,12 @@ describe Crystal::Repl::Interpreter do
   #   CODE
   # end
 
-  # it "interprets pointer new and pointer address" do
-  #   interpret(<<-CODE).should eq(123_u64)
-  #     ptr = Pointer(Int32 | Bool).new(123_u64)
-  #     ptr.address
-  #   CODE
-  # end
+  it "interprets pointer new and pointer address" do
+    interpret(<<-CODE).should eq(123_u64)
+      ptr = Pointer(Int32 | Bool).new(123_u64)
+      ptr.address
+    CODE
+  end
 
   # it "interprets pointer diff" do
   #   interpret(<<-CODE).should eq(2_i64)

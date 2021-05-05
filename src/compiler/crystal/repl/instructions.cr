@@ -150,24 +150,18 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_copy_from(pointer, value_size),
     },
-    # pointer_new: {
-    #   operands:   [] of Nil,
-    #   pop_values: [type, address],
-    #   push:       true,
-    #   code:       Value.new(
-    #     Pointer(Value).new(address.value.as(UInt64)),
-    #     type.value.as(Type).instance_type,
-    #   ),
-    # },
-    # pointer_address: {
-    #   operands:   [] of Nil,
-    #   pop_values: [pointer],
-    #   push:       true,
-    #   code:       Value.new(
-    #     pointer.value.as(PointerWrapper).pointer.address,
-    #     @program.uint64,
-    #   ),
-    # },
+    pointer_new: {
+      operands:   [] of Nil,
+      pop_values: [type : Type, address : UInt64],
+      push:       true,
+      code:       Pointer(UInt8).new(address),
+    },
+    pointer_address: {
+      operands:   [] of Nil,
+      pop_values: [pointer : Pointer(UInt8)],
+      push:       true,
+      code:       pointer.address,
+    },
     # pointer_diff: {
     #   operands:   [] of Nil,
     #   pop_values: [pointer1, pointer2],

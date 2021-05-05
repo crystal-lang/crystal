@@ -262,16 +262,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       else
         node.raise "BUG: missing handling of binary op #{node.name}"
       end
-      # when "pointer_new"
-      #   pointer_new
+    when "pointer_new"
+      pointer_new
     when "pointer_malloc"
       pointer_malloc
     when "pointer_set"
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"
       pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
-      # when "pointer_address"
-      #   pointer_address
+    when "pointer_address"
+      pointer_address
       # when "pointer_diff"
       #   pointer_diff
     else
