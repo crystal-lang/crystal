@@ -38,6 +38,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value,
     },
+    put_i64: {
+      operands:   [value : Int64],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       value,
+    },
     add_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],

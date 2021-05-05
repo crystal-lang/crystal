@@ -37,33 +37,33 @@ describe Crystal::Repl::Interpreter do
     interpret("323456789_u32").should eq(323456789_u32)
   end
 
-  # it "interprets an Int64" do
-  #   value = interpret("123_i64")
-  #   value.should be_a(Int64)
-  #   value.should eq(123)
-  # end
+  it "interprets an Int64" do
+    value = interpret("123_i64")
+    value.should be_a(Int64)
+    value.should eq(123)
+  end
 
-  # it "interprets an UInt64" do
-  #   value = interpret("123_u64")
-  #   value.should be_a(UInt64)
-  #   value.should eq(123)
-  # end
+  it "interprets an UInt64" do
+    value = interpret("123_u64")
+    value.should be_a(UInt64)
+    value.should eq(123)
+  end
 
-  # it "interprets a Float32" do
-  #   value = interpret("1.5_f32")
-  #   value.should be_a(Float32)
-  #   value.should eq(1.5_f32)
-  # end
+  it "interprets a Float32" do
+    value = interpret("1.5_f32")
+    value.should be_a(Float32)
+    value.should eq(1.5_f32)
+  end
 
-  # it "interprets a Float64" do
-  #   value = interpret("1.5")
-  #   value.should be_a(Float64)
-  #   value.should eq(1.5)
-  # end
+  it "interprets a Float64" do
+    value = interpret("1.5")
+    value.should be_a(Float64)
+    value.should eq(1.5)
+  end
 
-  # it "interprets a char" do
-  #   interpret("'a'").should eq('a')
-  # end
+  it "interprets a char" do
+    interpret("'a'").should eq('a')
+  end
 
   # it "interprets a String literal" do
   #   value = interpret(%("Hello world!"))
@@ -71,11 +71,11 @@ describe Crystal::Repl::Interpreter do
   #   value.should eq("Hello world!")
   # end
 
-  # it "interprets variable set" do
-  #   interpret(<<-CODE).should eq(1)
-  #     a = 1
-  #     CODE
-  # end
+  it "interprets variable set" do
+    interpret(<<-CODE).should eq(1)
+      a = 1
+      CODE
+  end
 
   it "interprets variable set and get" do
     interpret(<<-CODE).should eq(1)

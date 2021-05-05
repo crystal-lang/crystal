@@ -45,29 +45,29 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_i32 node.value.to_i32
     when :u32
       put_i32 node.value.to_u32.to_i32!
-      # when :i64
-      #   put_object node.value.to_i64, node.type
-      # when :u64
-      #   put_object node.value.to_u64, node.type
-      # when :f32
-      #   put_object node.value.to_f32, node.type
-      # when :f64
-      #   put_object node.value.to_f64, node.type
+    when :i64
+      put_i64 node.value.to_i64
+    when :u64
+      put_i64 node.value.to_u64.to_i64!
+    when :f32
+      put_i32 node.value.to_f32.unsafe_as(Int32)
+    when :f64
+      put_i64 node.value.to_f64.unsafe_as(Int64)
     else
       node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
     end
     false
   end
 
-  # def visit(node : CharLiteral)
-  #   put_object node.value.ord, node.type
-  #   false
-  # end
+  def visit(node : CharLiteral)
+    put_i32 node.value.ord
+    false
+  end
 
-  # def visit(node : StringLiteral)
-  #   put_object node.value.object_id, node.type
-  #   false
-  # end
+  def visit(node : StringLiteral)
+    put_i64 node.value.object_id.unsafe_as(Int64)
+    false
+  end
 
   def visit(node : Expressions)
     node.expressions.each_with_index do |expression, i|
@@ -305,20 +305,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     append op_code.value
   end
 
-  private def append(value : UInt32)
-    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+  private def append(value : Int64)
+    value.unsafe_as(StaticArray(UInt8, 8)).each do |byte|
       append byte
     end
   end
 
   private def append(value : Int32)
     value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
-      append byte
-    end
-  end
-
-  private def append(value : UInt16)
-    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
       append byte
     end
   end
