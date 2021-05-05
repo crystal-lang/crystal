@@ -165,6 +165,46 @@ describe "NamedTuple" do
     end
   end
 
+  describe "key_for" do
+    it "returns the first key with the given value" do
+      h = {foo: "bar", baz: "qux"}
+      h.key_for("bar").should eq(:foo)
+      h.key_for("qux").should eq(:baz)
+    end
+
+    it "raises when no key pairs with the given value" do
+      expect_raises KeyError do
+        {foo: "bar"}.key_for("qux")
+      end
+    end
+
+    describe "if block is given," do
+      it "returns the first key with the given value" do
+        h = {foo: "bar", baz: "bar"}
+        h.key_for("bar") { |value| value.upcase }.should eq(:foo)
+      end
+
+      it "yields the argument if no hash key pairs with the value" do
+        h = {foo: "bar"}
+        h.key_for("qux") { |value| value.upcase }.should eq("QUX")
+      end
+    end
+  end
+
+  describe "key_for?" do
+    it "returns the first key with the given value" do
+      h = {foo: "bar", baz: "qux"}
+      h.key_for?("bar").should eq(:foo)
+      h.key_for?("qux").should eq(:baz)
+    end
+
+    it "returns nil if no key pairs with the given value" do
+      h = {foo: "bar", baz: "qux"}
+      h.key_for?("foobar").should eq nil
+      h.key_for?("bazqux").should eq nil
+    end
+  end
+
   describe "dig" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}

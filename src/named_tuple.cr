@@ -219,6 +219,47 @@ struct NamedTuple
     yield
   end
 
+  # Returns a key with the given *value*, else raises `KeyError`.
+  #
+  # ```
+  # tuple = {foo: "bar", baz: "qux"}
+  # tuple.key_for("bar")    # => "foo"
+  # tuple.key_for("qux")    # => "baz"
+  # tuple.key_for("foobar") # raises KeyError (Missing named tuple key for value: foobar)
+  # tuple = {name: "Crystal", year: 2011}
+  # tuple.key_for("Crystal")          # => :name
+  # tuple.key_forfetch("other") { 0 } # => 0
+  # ```
+  def key_for(value) : Symbol
+    key_for(value) { raise KeyError.new "Missing named tuple key for value: #{value}" }
+  end
+
+  # Returns a key with the given *value*, else `nil`.
+  #
+  # ```
+  # tuple = {foo: "bar", baz: "qux"}
+  # tuple.key_for?("bar")    # => "foo"
+  # tuple.key_for?("qux")    # => "baz"
+  # tuple.key_for?("foobar") # => nil
+  # ```
+  def key_for?(value)
+    key_for(value) { nil }
+  end
+
+  # Returns a key with the given *value*, else yields *value* with the given block.
+  #
+  # ```
+  # tuple = {"foo" => "bar"}
+  # tuple.key_for("bar") { |value| value.upcase } # => "foo"
+  # tuple.key_for("qux") { |value| value.upcase } # => "QUX"
+  # ```
+  def key_for(value)
+    each do |k, v|
+      return k if v == value
+    end
+    yield value
+  end
+
   # Merges two named tuples into one, returning a new named tuple.
   # If a key is defined in both tuples, the value and its type is used from *other*.
   #
