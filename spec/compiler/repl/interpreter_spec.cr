@@ -243,6 +243,11 @@ describe Crystal::Repl::Interpreter do
   #   CODE
   # end
 
+  it "interprets path to type" do
+    program, repl_value = interpret_full("String")
+    repl_value.value.should eq(program.string.metaclass)
+  end
+
   it "interprets typeof instance type" do
     program, repl_value = interpret_full("typeof(1)")
     repl_value.value.should eq(program.int32.metaclass)

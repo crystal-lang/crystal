@@ -132,10 +132,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  # def visit(node : Path)
-  #   put_object node.type.object_id, node.type.metaclass
-  #   false
-  # end
+  def visit(node : Path)
+    put_type node.type
+    false
+  end
 
   def visit(node : Generic)
     put_type node.type
