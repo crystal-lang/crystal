@@ -137,10 +137,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   #   false
   # end
 
-  # def visit(node : Generic)
-  #   put_object node.type.object_id, node.type.metaclass
-  #   false
-  # end
+  def visit(node : Generic)
+    put_type node.type
+    false
+  end
 
   # def visit(node : PointerOf)
   #   exp = node.exp
@@ -264,12 +264,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
       # when "pointer_new"
       #   pointer_new
-      # when "pointer_malloc"
-      #   pointer_malloc
-      # when "pointer_set"
-      #   pointer_set
-      # when "pointer_get"
-      #   pointer_get
+    when "pointer_malloc"
+      pointer_malloc
+    when "pointer_set"
+      pointer_set(sizeof_type(node.args.first))
+    when "pointer_get"
+      pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
       # when "pointer_address"
       #   pointer_address
       # when "pointer_diff"
@@ -294,12 +294,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   {% end %}
 
+  private def put_type(type : Type)
+    put_i64 type.object_id.unsafe_as(Int64)
+  end
+
   # private def put_object(value, type : Type) : Nil
   #   put_object Value.new(value, type)
   # end
 
   private def append(op_code : OpCode)
     append op_code.value
+  end
+
+  private def append(type : Type)
+    append(type.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

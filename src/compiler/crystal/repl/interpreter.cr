@@ -127,11 +127,21 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_pop_size(size)
+    # TODO: clean up stack
     stack -= {{size}}
   end
 
   private macro stack_push(value)
     stack.as(Pointer(typeof({{value}}))).value = {{value}}
     stack += sizeof(typeof({{value}}))
+  end
+
+  private macro stack_copy_from(pointer, size)
+    stack.copy_from({{pointer}}, {{size}})
+    stack += {{size}}
+  end
+
+  private def sizeof_type(type : Type) : Int32
+    @program.size_of(type.sizeof_type).to_i32
   end
 end

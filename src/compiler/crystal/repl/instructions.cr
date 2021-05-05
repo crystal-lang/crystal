@@ -116,30 +116,40 @@ Crystal::Repl::Instructions =
     #   push:       true,
     #   code:       binary_eq!(:!=),
     # },
-    # pointer_malloc: {
-    #   operands:   [] of Nil,
-    #   pop_values: [type, size],
-    #   push:       true,
-    #   code:       Value.new(
-    #     Pointer(Value).malloc(size.value.as(UInt64)),
-    #     type.value.as(Type).instance_type,
-    #   ),
-    # },
-    # pointer_set: {
-    #   operands:   [] of Nil,
-    #   pop_values: [pointer, value],
-    #   push:       true,
-    #   code:       begin
-    #     pointer.value.as(PointerWrapper).pointer.value = value
-    #     value
-    #   end,
-    # },
-    # pointer_get: {
-    #   operands:   [] of Nil,
-    #   pop_values: [pointer],
-    #   push:       true,
-    #   code:       pointer.value.as(PointerWrapper).pointer.value,
-    # },
+    pointer_malloc: {
+      operands:   [] of Nil,
+      pop_values: [type : Type, size : UInt64],
+      push:       true,
+      code:       begin
+        pointer_instance_type = type.instance_type.as(PointerInstanceType)
+        element_type = pointer_instance_type.element_type
+        element_size = sizeof_type(element_type)
+        Pointer(UInt8).malloc(size * element_size)
+      end,
+    },
+    pointer_set: {
+      operands:   [value_size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: clean up stack
+        # TODO: abstract this better?
+        stack_before_value = stack - value_size
+        stack_before_pointer = stack_before_value - sizeof(Pointer(UInt8))
+
+        pointer = stack_before_pointer.as(Pointer(Pointer(UInt8))).value
+        pointer.copy_from(stack_before_value, value_size)
+
+        stack = stack_before_pointer
+        stack_copy_from(stack_before_value, value_size)
+      end,
+    },
+    pointer_get: {
+      operands:   [value_size : Int32] of Nil,
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
+      push:       false,
+      code:       stack_copy_from(pointer, value_size),
+    },
     # pointer_new: {
     #   operands:   [] of Nil,
     #   pop_values: [type, address],
