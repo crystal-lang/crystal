@@ -36,15 +36,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when :i8
       put_i8 node.value.to_i8
     when :u8
-      put_u8 node.value.to_u8
+      put_i8 node.value.to_u8.to_i8!
     when :i16
       put_i16 node.value.to_i16
     when :u16
-      put_u16 node.value.to_u16
+      put_i16 node.value.to_u16.to_i16!
     when :i32
       put_i32 node.value.to_i32
     when :u32
-      put_u32 node.value.to_u32
+      put_i32 node.value.to_u32.to_i32!
       # when :i64
       #   put_object node.value.to_i64, node.type
       # when :u64

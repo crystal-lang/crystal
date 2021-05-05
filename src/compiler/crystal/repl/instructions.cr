@@ -26,32 +26,14 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value,
     },
-    put_u8: {
-      operands:   [value : UInt8],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
     put_i16: {
       operands:   [value : Int16],
       pop_values: [] of Nil,
       push:       true,
       code:       value,
     },
-    put_u16: {
-      operands:   [value : UInt16],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
     put_i32: {
       operands:   [value : Int32],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
-    put_u32: {
-      operands:   [value : UInt32],
       pop_values: [] of Nil,
       push:       true,
       code:       value,
