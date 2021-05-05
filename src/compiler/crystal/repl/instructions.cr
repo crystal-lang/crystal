@@ -56,6 +56,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a < b,
     },
+    eq_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a == b,
+    },
     # binary_plus: {
     #   operands:   [] of Nil,
     #   pop_values: [left, right],
@@ -198,12 +204,12 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       (set_ip(index) if cond),
     },
-    # branch_unless: {
-    #   operands:   [index : Int32],
-    #   pop_values: [cond],
-    #   push:       false,
-    #   code:       (set_ip(index) unless cond.value.as(Bool)),
-    # },
+    branch_unless: {
+      operands:   [index : Int32],
+      pop_values: [cond : Bool],
+      push:       false,
+      code:       (set_ip(index) unless cond),
+    },
     jump: {
       operands:   [index : Int32],
       pop_values: [] of Nil,

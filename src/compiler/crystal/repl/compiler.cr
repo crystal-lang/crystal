@@ -91,23 +91,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  # def visit(node : If)
-  #   node.cond.accept self
-  #   branch_unless 0
-  #   cond_jump_location = patch_location
+  def visit(node : If)
+    node.cond.accept self
+    branch_unless 0
+    cond_jump_location = patch_location
 
-  #   node.then.accept self
-  #   jump 0
-  #   then_jump_location = patch_location
+    node.then.accept self
+    jump 0
+    then_jump_location = patch_location
 
-  #   patch_jump(cond_jump_location)
+    patch_jump(cond_jump_location)
 
-  #   node.else.accept self
+    node.else.accept self
 
-  #   patch_jump(then_jump_location)
+    patch_jump(then_jump_location)
 
-  #   false
-  # end
+    false
+  end
 
   def visit(node : While)
     jump 0
@@ -255,7 +255,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # when "<=" then binary_le
         # when ">"  then binary_gt
         # when ">=" then binary_ge
-        # when "==" then binary_eq
+      when "=="
+        # TODO: don't assume Int32 + Int32
+        eq_i32
         # when "!=" then binary_neq
       else
         node.raise "BUG: missing handling of binary op #{node.name}"

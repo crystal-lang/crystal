@@ -148,17 +148,13 @@ describe Crystal::Repl::Interpreter do
   #   interpret("1 != 1").should be_false
   # end
 
-  # it "interprets if (true)" do
-  #   interpret("1 == 1 ? 2 : 3").should eq(2)
-  # end
+  it "interprets if (true)" do
+    interpret("1 == 1 ? 2 : 3").should eq(2)
+  end
 
-  # it "interprets if (false)" do
-  #   interpret("1 == 2 ? 2 : 3").should eq(3)
-  # end
-
-  # it "interprets if that declares variable in unexecuted branch" do
-  #   interpret("if true; false; else; a = 1; end; a").should eq(nil)
-  # end
+  it "interprets if (false)" do
+    interpret("1 == 2 ? 2 : 3").should eq(3)
+  end
 
   it "interprets while" do
     interpret(<<-CODE).should eq(10)
