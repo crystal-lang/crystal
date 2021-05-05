@@ -219,7 +219,7 @@ struct NamedTuple
     yield
   end
 
-  # Returns a key with the given *value*, else raises `KeyError`.
+  # Returns a key with the given *value*, otherwise raises `KeyError`.
   #
   # ```
   # tuple = {foo: "bar", baz: "qux"}
@@ -234,7 +234,7 @@ struct NamedTuple
     key_for(value) { raise KeyError.new "Missing named tuple key for value: #{value}" }
   end
 
-  # Returns a key with the given *value*, else `nil`.
+  # Returns a key with the given *value*, otherwise `nil`.
   #
   # ```
   # tuple = {foo: "bar", baz: "qux"}
@@ -246,7 +246,7 @@ struct NamedTuple
     key_for(value) { nil }
   end
 
-  # Returns a key with the given *value*, else yields *value* with the given block.
+  # Returns a key with the given *value*, otherwise yields *value* to the given block.
   #
   # ```
   # tuple = {"foo" => "bar"}
