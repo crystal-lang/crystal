@@ -157,11 +157,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: handle case of multidispatch
     target_def = node.target_def
 
-    node.obj.try &.accept(self)
-    node.args.each &.accept(self)
-
-    # TODO: named arguments
-
     body = target_def.body
     if body.is_a?(Primitive)
       visit_primitive(node, body)
@@ -240,40 +235,58 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  private def accept_call_members(node : Call)
+    node.obj.try &.accept(self)
+    node.args.each &.accept(self)
+    # TODO: named arguments
+  end
+
   private def visit_primitive(node, body)
     case body.name
     when "binary"
       case node.name
       when "+"
         # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
         add_i32
         # when "-"  then binary_minus
         # when "*"  then binary_mult
       when "<"
         # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
         lt_i32
         # when "<=" then binary_le
         # when ">"  then binary_gt
         # when ">=" then binary_ge
       when "=="
         # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
         eq_i32
         # when "!=" then binary_neq
       else
         node.raise "BUG: missing handling of binary op #{node.name}"
       end
     when "pointer_new"
+      accept_call_members(node)
       pointer_new
     when "pointer_malloc"
+      accept_call_members(node)
       pointer_malloc
     when "pointer_set"
+      accept_call_members(node)
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"
+      accept_call_members(node)
       pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "pointer_address"
+      accept_call_members(node)
       pointer_address
     when "pointer_diff"
+      accept_call_members(node)
       pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
+    when "class"
+      # TODO: missing union type handling
+      put_type node.obj.not_nil!.type
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

@@ -258,6 +258,11 @@ describe Crystal::Repl::Interpreter do
     repl_value.value.should eq(program.class_type)
   end
 
+  it "interprets class for non-union type" do
+    program, repl_value = interpret_full("1.class")
+    repl_value.value.should eq(program.int32)
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)
