@@ -21,6 +21,7 @@ module Levenshtein
 
     if t_size > s_size
       string1, string2 = string2, string1
+      t_size, s_size = s_size, t_size
     end
     
     if string1.single_byte_optimizable? && string2.single_byte_optimizable?
@@ -51,17 +52,16 @@ module Levenshtein
 
       costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
-      last_cost = 1
-      reader.each do |char1|
-        chars.each_with_index do |char2, index|
+      last_cost = 0
+      reader.each_with_index do |char1, i|
+        last_cost = i + 1
+
+        chars.each_with_index do |char2, j|
           sub_cost = char1 == char2 ? 0 : 1
-          cost = Math.min(Math.min(last_cost, costs[index + 1]), costs[index] + sub_cost)
-          costs[index] = last_cost
+          cost = Math.min(Math.min(last_cost + 1, costs[j + 1] + 1), costs[j] + sub_cost)
+          costs[j] = last_cost
           last_cost = cost
         end
-
-        last_cost += 1
-
         costs[t_size] = last_cost
       end
 
