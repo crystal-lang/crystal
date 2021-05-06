@@ -140,7 +140,11 @@ class Crystal::Repl::Interpreter
     stack += sizeof(typeof({{value}}))
   end
 
-  private macro stack_copy_from(pointer, size)
+  private macro stack_copy_to(pointer, size)
+    (stack - {{size}}).copy_to({{pointer}}, {{size}})
+  end
+
+  private macro stack_move_from(pointer, size)
     stack.copy_from({{pointer}}, {{size}})
     stack += {{size}}
   end

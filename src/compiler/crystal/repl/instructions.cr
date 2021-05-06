@@ -130,26 +130,15 @@ Crystal::Repl::Instructions =
     },
     pointer_set: {
       operands:   [element_size : Int32] of Nil,
-      pop_values: [] of Nil,
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       false,
-      code:       begin
-        # TODO: clean up stack
-        # TODO: abstract this better?
-        stack_before_value = stack - element_size
-        stack_before_pointer = stack_before_value - sizeof(Pointer(UInt8))
-
-        pointer = stack_before_pointer.as(Pointer(Pointer(UInt8))).value
-        pointer.copy_from(stack_before_value, element_size)
-
-        stack = stack_before_pointer
-        stack_copy_from(stack_before_value, element_size)
-      end,
+      code:       stack_copy_to(pointer, element_size),
     },
     pointer_get: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       false,
-      code:       stack_copy_from(pointer, element_size),
+      code:       stack_move_from(pointer, element_size),
     },
     pointer_new: {
       operands:   [] of Nil,

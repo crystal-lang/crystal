@@ -273,7 +273,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       accept_call_members(node)
       pointer_malloc
     when "pointer_set"
-      accept_call_members(node)
+      # Accept in reverse order so that it's easier for the interpreter
+      node.args.first.accept self
+      node.obj.not_nil!.accept self
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"
       accept_call_members(node)
