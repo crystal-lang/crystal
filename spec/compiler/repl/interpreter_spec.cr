@@ -263,6 +263,15 @@ describe Crystal::Repl::Interpreter do
     repl_value.value.should eq(program.int32)
   end
 
+  it "interprets crystal_type_id for nil" do
+    interpret("nil.crystal_type_id").should eq(0)
+  end
+
+  it "interprets crystal_type_id for non-nil" do
+    program, repl_value = interpret_full("1.crystal_type_id")
+    repl_value.value.should eq(program.llvm_id.type_id(program.int32))
+  end
+
   # it "interprets simple call" do
   #   interpret(<<-CODE).should eq(3)
   #     def foo(x, y)

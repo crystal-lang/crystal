@@ -292,8 +292,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       accept_call_members(node)
       pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "class"
-      # TODO: missing union type handling
       put_type node.obj.not_nil!.type
+    when "object_crystal_type_id"
+      put_i32 type_id(node.obj.not_nil!.type)
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
@@ -315,7 +316,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   {% end %}
 
   private def put_type(type : Type)
-    put_i32 @program.llvm_id.type_id(type)
+    put_i32 type_id(type)
+  end
+
+  private def type_id(type : Type)
+    @program.llvm_id.type_id(type)
   end
 
   # private def put_object(value, type : Type) : Nil
