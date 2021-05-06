@@ -230,6 +230,10 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
+      - checkout
+      - run: |
+          # CRYSTAL_NEXT_VERSION uses src/VERSION to publish maintenance releases as prereleases
+          echo "export CRYSTAL_NEXT_VERSION=$(cat src/VERSION)" >> /tmp/workspace/distribution-scripts/build.env
       - run: |
           cd /tmp/workspace/distribution-scripts
 
@@ -351,6 +355,26 @@ jobs:
 
             packages/obs-setup.sh
             packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
+                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
+                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
+                /tmp/workspace/build/crystal-*-docs.tar.gz
+
+  dist_obs_maintenance:
+    docker:
+      - image: straightshoota/osc
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          command: |
+            cd /tmp/workspace/distribution-scripts
+            source build.env
+            # osc may try to use a pager, even if stdout is not a TTY,
+            # cat avoids stalling on that.
+            export PAGER=cat
+
+            packages/obs-setup.sh
+            packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_NEXT_VERSION%-*} ${CRYSTAL_VERSION} $CRYSTAL_SHA1 \
                 /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
                 /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
@@ -718,6 +742,11 @@ workflows:
           filters: *maintenance
           requires:
             - dist_docker
+      - dist_obs_maintenance:
+          requires:
+            - dist_linux
+            - dist_linux32
+            - dist_docs
       - dist_artifacts:
           filters: *maintenance
           requires:
