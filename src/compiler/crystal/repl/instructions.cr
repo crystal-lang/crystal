@@ -117,16 +117,10 @@ Crystal::Repl::Instructions =
     #   code:       binary_eq!(:!=),
     # },
     pointer_malloc: {
-      operands:   [] of Nil,
-      pop_values: [type_id : Int32, size : UInt64],
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [size : UInt64],
       push:       true,
-      code:       begin
-        type = type_from_type_id(type_id)
-        pointer_instance_type = type.instance_type.as(PointerInstanceType)
-        element_type = pointer_instance_type.element_type
-        element_size = sizeof_type(element_type)
-        Pointer(UInt8).malloc(size * element_size)
-      end,
+      code:       Pointer(UInt8).malloc(size * element_size),
     },
     pointer_set: {
       operands:   [element_size : Int32] of Nil,
