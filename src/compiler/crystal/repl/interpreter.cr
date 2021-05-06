@@ -2,12 +2,8 @@ require "./repl"
 require "ffi"
 
 class Crystal::Repl::Interpreter
-  @def : Def?
-
   def initialize(program : Program)
     @program = program
-    @scope = @program
-    @def = nil
     @local_vars = LocalVars.new(program)
     @dl_libraries = {} of String? => Void*
     @instructions = [] of Instruction
@@ -18,6 +14,8 @@ class Crystal::Repl::Interpreter
   end
 
   def interpret(node : ASTNode) : Value
+    node = @program.normalize(node)
+
     @top_level_visitor.reset
     node.accept @top_level_visitor
 
@@ -26,11 +24,11 @@ class Crystal::Repl::Interpreter
 
     @instructions = @instructions_compiler.compile(node)
 
-    # puts Disassembler.disassemble(@instructions, @local_vars)
+    puts Disassembler.disassemble(@instructions, @local_vars)
 
-    # time = Time.monotonic
+    time = Time.monotonic
     value = interpret(node.type)
-    # puts "Elapsed: #{Time.monotonic - time}"
+    puts "Elapsed: #{Time.monotonic - time}"
 
     value
   end

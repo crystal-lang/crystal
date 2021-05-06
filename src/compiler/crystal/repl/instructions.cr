@@ -430,6 +430,13 @@ Crystal::Repl::Instructions =
     #   push:       true,
     #   code:       binary_eq!(:!=),
     # },
+    logical_not: {
+      operands:   [] of Nil,
+      pop_values: [value : Bool],
+      push:       true,
+      code:       !value,
+    },
+
     pointer_malloc: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [size : UInt64],

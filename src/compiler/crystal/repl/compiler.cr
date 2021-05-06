@@ -153,6 +153,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Not)
+    exp = node.exp
+    case exp.type
+    when @program.nil_type
+      put_true
+    when @program.bool
+      exp.accept self
+      logical_not
+    else
+      node.raise "BUG: missing interpret Not for #{exp.type}"
+    end
+
+    false
+  end
+
   def visit(node : Call)
     # TODO: handle case of multidispatch
     target_def = node.target_def

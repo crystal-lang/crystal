@@ -220,6 +220,20 @@ describe Crystal::Repl::Interpreter do
     # end
   end
 
+  context "not" do
+    it "interprets not for nil" do
+      interpret("!nil").should eq(true)
+    end
+
+    it "interprets not for bool true" do
+      interpret("!true").should eq(false)
+    end
+
+    it "interprets not for bool false" do
+      interpret("!false").should eq(true)
+    end
+  end
+
   context "if and unless" do
     it "interprets if (true)" do
       interpret("1 == 1 ? 2 : 3").should eq(2)
@@ -228,25 +242,39 @@ describe Crystal::Repl::Interpreter do
     it "interprets if (false)" do
       interpret("1 == 2 ? 2 : 3").should eq(3)
     end
+
+    it "interprets unless" do
+      interpret("unless 1 == 1; 2; else; 3; end").should eq(3)
+    end
   end
 
   context "while and until" do
     it "interprets while" do
       interpret(<<-CODE).should eq(10)
-      a = 0
-      while a < 10
-        a = a + 1
-      end
-      a
-      CODE
+        a = 0
+        while a < 10
+          a = a + 1
+        end
+        a
+        CODE
     end
 
     it "interprets while, returns nil" do
       interpret(<<-CODE).should eq(nil)
-      a = 0
-      while a < 10
-        a = a + 1
-      end
+        a = 0
+        while a < 10
+          a = a + 1
+        end
+        CODE
+    end
+
+    it "interprets until" do
+      interpret(<<-CODE).should eq(10)
+        a = 0
+        until a == 10
+          a = a + 1
+        end
+        a
       CODE
     end
   end
@@ -254,46 +282,46 @@ describe Crystal::Repl::Interpreter do
   context "pointers" do
     it "interprets pointer set and get (int)" do
       interpret(<<-CODE).should eq(10)
-      ptr = Pointer(Int32).malloc(1_u64)
-      ptr.value = 10
-      ptr.value
-    CODE
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr.value = 10
+        ptr.value
+      CODE
     end
 
     it "interprets pointer set and get (bool)" do
       interpret(<<-CODE).should be_true
-      ptr = Pointer(Bool).malloc(1_u64)
-      ptr.value = true
-      ptr.value
-    CODE
+        ptr = Pointer(Bool).malloc(1_u64)
+        ptr.value = true
+        ptr.value
+      CODE
     end
 
     it "interprets pointerof, mutates pointer, read var" do
       interpret(<<-CODE).should eq(2)
-      a = 1
-      ptr = pointerof(a)
-      ptr.value = 2
-      a
-    CODE
+        a = 1
+        ptr = pointerof(a)
+        ptr.value = 2
+        a
+      CODE
     end
 
     it "interprets pointerof, mutates var, read pointer" do
       interpret(<<-CODE).should eq(2)
-      a = 1
-      ptr = pointerof(a)
-      a = 2
-      ptr.value
-    CODE
+        a = 1
+        ptr = pointerof(a)
+        a = 2
+        ptr.value
+      CODE
     end
 
     it "interprets pointerof and mutates memory (there are more variables)" do
       interpret(<<-CODE).should eq(2)
-      x = 42
-      a = 1
-      ptr = pointerof(a)
-      ptr.value = 2
-      a
-    CODE
+        x = 42
+        a = 1
+        ptr = pointerof(a)
+        ptr.value = 2
+        a
+      CODE
     end
 
     # it "interprets pointer set and get (union type)" do
@@ -307,17 +335,17 @@ describe Crystal::Repl::Interpreter do
 
     it "interprets pointer new and pointer address" do
       interpret(<<-CODE).should eq(123_u64)
-      ptr = Pointer(Int32 | Bool).new(123_u64)
-      ptr.address
-    CODE
+        ptr = Pointer(Int32 | Bool).new(123_u64)
+        ptr.address
+      CODE
     end
 
     it "interprets pointer diff" do
       interpret(<<-CODE).should eq(8_i64)
-      ptr1 = Pointer(Int32).new(133_u64)
-      ptr2 = Pointer(Int32).new(100_u64)
-      ptr1 - ptr2
-    CODE
+        ptr1 = Pointer(Int32).new(133_u64)
+        ptr2 = Pointer(Int32).new(100_u64)
+        ptr1 - ptr2
+      CODE
     end
   end
 
