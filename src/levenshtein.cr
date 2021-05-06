@@ -19,11 +19,12 @@ module Levenshtein
     return t_size if s_size == 0
     return s_size if t_size == 0
 
+    # This is to allocate less memory
     if t_size > s_size
       string1, string2 = string2, string1
       t_size, s_size = s_size, t_size
     end
-    
+
     if string1.single_byte_optimizable? && string2.single_byte_optimizable?
       s = string1.to_unsafe
       t = string2.to_unsafe
