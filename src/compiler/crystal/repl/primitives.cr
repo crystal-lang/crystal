@@ -8,136 +8,87 @@ class Crystal::Repl::Compiler
       obj.accept self
 
       obj_type = obj.type
-      case obj_type
-      when IntegerType
-        case obj_type.kind
-        when :i8
-          case node.name
-          when "to_u8!", "to_i8!"                     then nop
-          when "to_u16!", "to_i16!"                   then i8_to_i16
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then i8_to_i32
-          when "to_u64!", "to_i64!"                   then i8_to_i64
-          when "to_f32!"                              then i8_to_f32
-          when "to_f64!"                              then i8_to_f64
-          else                                             node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :u8
-          case node.name
-          when "to_u8!", "to_i8!"                     then nop
-          when "to_u16!", "to_i16!"                   then u8_to_i16
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then u8_to_i32
-          when "to_u64!", "to_i64!"                   then u8_to_i64
-          when "to_f32!"                              then u8_to_f32
-          when "to_f64!"                              then u8_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :i16
-          case node.name
-          when "to_u8!", "to_i8!"                     then i16_to_i8_bang
-          when "to_u16!", "to_i16!"                   then nop
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then i16_to_i32
-          when "to_u64!", "to_i64!"                   then i16_to_i64
-          when "to_f32!"                              then i16_to_f32
-          when "to_f64!"                              then i16_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :u16
-          case node.name
-          when "to_u8!", "to_i8!"                     then i16_to_i8_bang
-          when "to_u16!", "to_i16!"                   then nop
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then u16_to_i32
-          when "to_u64!", "to_i64!"                   then u16_to_i64
-          when "to_f32!"                              then u16_to_f32
-          when "to_f64!"                              then u16_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :i32
-          case node.name
-          when "to_u8!", "to_i8!"                     then i32_to_i8_bang
-          when "to_u16!", "to_i16!"                   then i32_to_i16_bang
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then nop
-          when "to_u64!", "to_i64!"                   then i32_to_i64
-          when "to_f32!"                              then i32_to_f32
-          when "to_f64!"                              then i32_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :u32
-          case node.name
-          when "to_u8!", "to_i8!"                     then i32_to_i8_bang
-          when "to_u16!", "to_i16!"                   then i32_to_i16_bang
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then nop
-          when "to_u64!", "to_i64!"                   then u32_to_i64
-          when "to_f32!"                              then u32_to_f32
-          when "to_f64!"                              then u32_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :i64
-          case node.name
-          when "to_u8!", "to_i8!"                     then i64_to_i8_bang
-          when "to_u16!", "to_i16!"                   then i64_to_i16_bang
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then i64_to_i32_bang
-          when "to_u64!", "to_i64!"                   then nop
-          when "to_f32!"                              then i64_to_f32
-          when "to_f64!"                              then i64_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :u64
-          case node.name
-          when "to_u8!", "to_i8!"                     then i64_to_i8_bang
-          when "to_u16!", "to_i16!"                   then i64_to_i16_bang
-          when "to_u32!", "to_i32!", "to_u!", "to_i!" then i64_to_i32_bang
-          when "to_u64!", "to_i64!"                   then nop
-          when "to_f32!"                              then u64_to_f32
-          when "to_f64!"                              then u64_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        else
-          node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-        end
-      when FloatType
-        case obj_type.kind
-        when :f32
-          case node.name
-          when "to_u8!"           then f32_to_u8_bang
-          when "to_i8!"           then f32_to_i8_bang
-          when "to_u16!"          then f32_to_u16_bang
-          when "to_i16!"          then f32_to_i16_bang
-          when "to_u32!", "to_u!" then f32_to_u32_bang
-          when "to_i32!", "to_i!" then f32_to_i32_bang
-          when "to_u64!"          then f32_to_u64_bang
-          when "to_i64!"          then f32_to_i64_bang
-          when "to_f32!"          then nop
-          when "to_f64!"          then f32_to_f64
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        when :f64
-          case node.name
-          when "to_u8!"           then f64_to_u8_bang
-          when "to_i8!"           then f64_to_i8_bang
-          when "to_u16!"          then f64_to_u16_bang
-          when "to_i16!"          then f64_to_i16_bang
-          when "to_u32!", "to_u!" then f64_to_u32_bang
-          when "to_i32!", "to_i!" then f64_to_i32_bang
-          when "to_u64!"          then f64_to_u64_bang
-          when "to_i64!"          then f64_to_i64_bang
-          when "to_f32!"          then f64_to_f32_bang
-          when "to_f64!"          then nop
-          else
-            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-          end
-        else
-          node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-        end
-      else
+      target_type = body.type
+
+      obj_kind = integer_or_float_kind(obj_type)
+      target_kind = integer_or_float_kind(target_type)
+
+      unless obj_kind && target_kind
         node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+      end
+
+      target_kind =
+        case target_kind
+        when :u8  then :i8
+        when :u16 then :i16
+        when :u32 then :i32
+        when :u64 then :i64
+        else           target_kind
+        end
+
+      case {obj_kind, target_kind}
+      when {:i8, :i8}   then nop
+      when {:i8, :i16}  then i8_to_i16
+      when {:i8, :i32}  then i8_to_i32
+      when {:i8, :i64}  then i8_to_i64
+      when {:i8, :f32}  then i8_to_f32
+      when {:i8, :f64}  then i8_to_f64
+      when {:u8, :i8}   then nop
+      when {:u8, :i16}  then u8_to_i16
+      when {:u8, :i32}  then u8_to_i32
+      when {:u8, :i64}  then u8_to_i64
+      when {:u8, :f32}  then u8_to_f32
+      when {:u8, :f64}  then u8_to_f64
+      when {:i16, :i8}  then i16_to_i8_bang
+      when {:i16, :i16} then nop
+      when {:i16, :i32} then i16_to_i32
+      when {:i16, :i64} then i16_to_i64
+      when {:i16, :f32} then i16_to_f32
+      when {:i16, :f64} then i16_to_f64
+      when {:u16, :i8}  then i16_to_i8_bang
+      when {:u16, :i16} then nop
+      when {:u16, :i32} then u16_to_i32
+      when {:u16, :i64} then u16_to_i64
+      when {:u16, :f32} then u16_to_f32
+      when {:u16, :f64} then u16_to_f64
+      when {:i32, :i8}  then i32_to_i8_bang
+      when {:i32, :i16} then i32_to_i16_bang
+      when {:i32, :i32} then nop
+      when {:i32, :i64} then i32_to_i64
+      when {:i32, :f32} then i32_to_f32
+      when {:i32, :f64} then i32_to_f64
+      when {:u32, :i8}  then i32_to_i8_bang
+      when {:u32, :i16} then i32_to_i16_bang
+      when {:u32, :i32} then nop
+      when {:u32, :u32} then nop
+      when {:u32, :i64} then u32_to_i64
+      when {:u32, :f32} then u32_to_f32
+      when {:u32, :f64} then u32_to_f64
+      when {:i64, :i8}  then i64_to_i8_bang
+      when {:i64, :i16} then i64_to_i16_bang
+      when {:i64, :i32} then i64_to_i32_bang
+      when {:i64, :i64} then nop
+      when {:i64, :f32} then i64_to_f32
+      when {:i64, :f64} then i64_to_f64
+      when {:u64, :i8}  then i64_to_i8_bang
+      when {:u64, :i16} then i64_to_i16_bang
+      when {:u64, :i32} then i64_to_i32_bang
+      when {:u64, :i64} then nop
+      when {:u64, :f32} then u64_to_f32
+      when {:u64, :f64} then u64_to_f64
+      when {:f32, :i8}  then f32_to_i8_bang
+      when {:f32, :i16} then f32_to_i16_bang
+      when {:f32, :i32} then f32_to_i32_bang
+      when {:f32, :i64} then f32_to_i64_bang
+      when {:f32, :f32} then nop
+      when {:f32, :f64} then f32_to_f64
+      when {:f64, :i8}  then f64_to_i8_bang
+      when {:f64, :i16} then f64_to_i16_bang
+      when {:f64, :i32} then f64_to_i32_bang
+      when {:f64, :i64} then f64_to_i64_bang
+      when {:f64, :f32} then f64_to_f32_bang
+      when {:f64, :f64} then nop
+      else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
       end
     when "binary"
       case node.name
@@ -193,6 +144,17 @@ class Crystal::Repl::Compiler
       put_i32 type_id(node.obj.not_nil!.type)
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
+    end
+  end
+
+  private def integer_or_float_kind(type)
+    case type
+    when IntegerType
+      type.kind
+    when FloatType
+      type.kind
+    else
+      nil
     end
   end
 end

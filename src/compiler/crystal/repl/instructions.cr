@@ -320,7 +320,6 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value.to_f64,
     },
-
     f64_to_u8_bang: {
       operands:   [] of Nil,
       pop_values: [value : Float64],
