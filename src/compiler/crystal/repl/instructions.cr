@@ -62,6 +62,37 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a == b,
     },
+    i32_to_i8_bang: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_u8!,
+    },
+    i32_to_i16_bang: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_u16!,
+    },
+    i32_to_i64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_i64,
+    },
+    i32_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_f32,
+    },
+    i32_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_f64,
+    },
+
     # binary_plus: {
     #   operands:   [] of Nil,
     #   pop_values: [left, right],

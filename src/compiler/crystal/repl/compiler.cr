@@ -243,6 +243,37 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def visit_primitive(node, body)
     case body.name
+    when "unchecked_convert"
+      obj = node.obj.not_nil!
+      obj.accept self
+
+      obj_type = obj.type
+      case obj_type
+      when IntegerType
+        case obj_type.kind
+        when :i32
+          case node.name
+          when "to_u8!", "to_i8!"
+            i32_to_i8_bang
+          when "to_u16!", "to_i16!"
+            i32_to_i16_bang
+          when "to_u32!", "to_i32!"
+            # Nothing to do :-)
+          when "to_u64!", "to_i64!"
+            i32_to_i64
+          when "to_f32!"
+            i32_to_f32
+          when "to_f64!"
+            i32_to_f64
+          else
+            node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+          end
+        else
+          node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+        end
+      else
+        node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+      end
     when "binary"
       case node.name
       when "+"

@@ -92,6 +92,50 @@ describe Crystal::Repl::Interpreter do
       CODE
   end
 
+  it "interprets Int32#to_u8!" do
+    interpret("123456789.to_u8!").should eq(123456789.to_u8!)
+  end
+
+  it "interprets Int32#to_i8!" do
+    interpret("123456789.to_i8!").should eq(123456789.to_i8!)
+  end
+
+  it "interprets Int32#to_u16!" do
+    interpret("123456789.to_u16!").should eq(123456789.to_u16!)
+  end
+
+  it "interprets Int32#to_i16!" do
+    interpret("123456789.to_i16!").should eq(123456789.to_i16!)
+  end
+
+  it "interprets Int32#to_u32!" do
+    interpret("123456789.to_u32!").should eq(123456789.to_u32!)
+  end
+
+  it "interprets Int32#to_i32!" do
+    interpret("123456789.to_i32!").should eq(123456789.to_i32!)
+  end
+
+  it "interprets Int32#to_u64!" do
+    interpret("123456789.to_u64!").should eq(123456789.to_u64!)
+  end
+
+  it "interprets Int32#to_i64!" do
+    interpret("123456789.to_i64!").should eq(123456789.to_i64!)
+  end
+
+  it "interprets Int32#to_u64! (negative value)" do
+    interpret("-123456789.to_u64!").should eq(-123456789.to_u64!)
+  end
+
+  it "interprets Int32#to_f32!" do
+    interpret("123456789.to_f32!").should eq(123456789.to_f32!)
+  end
+
+  it "interprets Int32#to_f64!" do
+    interpret("123456789.to_f64!").should eq(123456789.to_f64!)
+  end
+
   it "interprets Int32 + Int32" do
     interpret("1 + 2").should eq(3)
   end
