@@ -19,6 +19,29 @@ end
 
 # :nodoc:
 struct Exception::CallStack
+  private record Frame,
+    file : String,
+    function : String,
+    line_number : Int32,
+    column_number : Int32,
+    address : String? = nil do
+    def_equals_and_hash @function, @file, @line_number, @column_number, @address
+
+    def filename : String
+      File.basename @file_path
+    end
+
+    def file_path : Path
+      Path.new @file
+    end
+
+    def to_s(io : IO) : Nil
+      io << @file << ':' << @line_number << ':' << @column_number
+      io << " in " << '\'' << @function << '\''
+      io << " at " << "0x#{@address}" if @address
+    end
+  end
+
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
   CURRENT_DIR = begin
@@ -37,13 +60,14 @@ struct Exception::CallStack
 
   @callstack : Array(Void*)
   @backtrace : Array(String)?
+  getter frames : Array(Frame) { decode_backtrace }
 
   def initialize
     @callstack = CallStack.unwind
   end
 
   def printable_backtrace
-    @backtrace ||= decode_backtrace
+    self.frames.map &.to_s
   end
 
   {% if flag?(:gnu) && flag?(:i386) %}
@@ -163,21 +187,27 @@ struct Exception::CallStack
     end
   end
 
-  private def decode_backtrace
+  private def decode_backtrace : Array(Frame)
     show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
-      file, line, column = CallStack.decode_line_number(pc)
+      has_file_reference = false
+
+      file, line_number, column_number = CallStack.decode_line_number(pc)
 
       if file && file != "??"
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = file.lchop(CURRENT_DIR)
+        filename = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{file}:#{line}:#{column}"
+        has_file_reference = true
+      elsif file
+        filename = file
+      else
+        raise "?"
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -193,22 +223,16 @@ struct Exception::CallStack
         function = "???"
       end
 
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
-        end
-      else
-        line = function
+      if has_file_reference && show_full_info && (frame = CallStack.decode_frame(ip))
+        _, sname = frame
+        function = "#{String.new(sname)}"
       end
 
       if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
+        address = ip.address.to_s(16)
       end
 
-      line
+      Frame.new filename, function, line_number, column_number, address
     end
   end
 
