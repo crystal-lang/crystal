@@ -239,7 +239,7 @@ jobs:
 
           # How to brand it
           export VERSION=${CIRCLE_BRANCH/release\//}
-          export VERSION=${VERSION/\//-}-dev
+          export VERSION=${VERSION//\//-}-dev
           echo "export CRYSTAL_VERSION=$VERSION" >> build.env
           echo "export DOCKER_TAG=$VERSION" >> build.env
 
@@ -374,7 +374,7 @@ jobs:
             export PAGER=cat
 
             packages/obs-setup.sh
-            packages/obs-push.sh devel:languages:crystal:unstable ${CRYSTAL_NEXT_VERSION%-*} ${CRYSTAL_VERSION/-/} $CRYSTAL_SHA1 \
+            packages/obs-push.sh devel:languages:crystal:unstable ${CRYSTAL_NEXT_VERSION%-*} ${CRYSTAL_VERSION//-/} $CRYSTAL_SHA1 \
                 /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
                 /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
