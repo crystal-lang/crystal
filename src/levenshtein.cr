@@ -19,15 +19,13 @@ module Levenshtein
     return t_size if s_size == 0
     return s_size if t_size == 0
 
-    if string1.ascii_only? && string2.ascii_only?
+    if t_size > s_size
+      string1, string2 = string2, string1
+    end
+    
+    if string1.single_byte_optimizable? && string2.single_byte_optimizable?
       s = string1.to_unsafe
       t = string2.to_unsafe
-
-      # This is to allocate less memory
-      if t_size > s_size
-        t, s = s, t
-        t_size, s_size = s_size, t_size
-      end
 
       costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
@@ -50,12 +48,6 @@ module Levenshtein
 
       # Use an array instead of a reader to decode the second string only once
       chars = string2.chars
-
-      # This is to allocate less memory
-      if t_size > s_size
-        chars, reader = reader, chars
-        t_size = s_size
-      end
 
       costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
