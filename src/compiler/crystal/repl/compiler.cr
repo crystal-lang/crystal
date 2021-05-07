@@ -2,13 +2,15 @@ require "./repl"
 require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
-  def initialize(@program : Program, @local_vars : LocalVars)
-    @instructions = [] of Instruction
+  def initialize(
+    @program : Program,
+    @defs : Hash(Def, CompiledDef),
+    @local_vars : LocalVars,
+    @instructions : Array(Instruction) = [] of Instruction
+  )
   end
 
   def compile(node : ASTNode) : Array(Instruction)
-    @instructions.clear
-
     node.accept self
 
     leave
@@ -177,9 +179,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(Primitive)
       visit_primitive(node, body)
       return false
-    else
-      node.raise "BUG: missing handling of non-primitive call"
     end
+
+    compiled_def = @defs[target_def]?
+    unless compiled_def
+      compiled_def = CompiledDef.new(@program, target_def)
+      @defs[target_def] = compiled_def
+
+      compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)
+      compiler.compile(target_def.body)
+    end
+
+    call compiled_def
+    return false
 
     # arg_values = node.args.map do |arg|
     #   visit(arg)
@@ -257,6 +269,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: named arguments
   end
 
+  def visit(node : Def)
+    put_nil
+    false
+  end
+
   def visit(node : ASTNode)
     node.raise "BUG: missing instruction compiler for #{node.class}"
   end
@@ -276,6 +293,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     put_i32 type_id(type)
   end
 
+  private def put_def(a_def : Def)
+  end
+
   private def type_id(type : Type)
     @program.llvm_id.type_id(type)
   end
@@ -288,8 +308,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     append op_code.value
   end
 
-  private def append(type : Type)
-    append(type.object_id.unsafe_as(Int64))
+  private def append(a_def : CompiledDef)
+    append(a_def.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

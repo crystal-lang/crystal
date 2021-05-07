@@ -520,11 +520,20 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       get_local_var_pointer(index),
     },
+    call: {
+      operands:    [compiled_def : CompiledDef],
+      pop_values:  [] of Nil,
+      push:        false,
+      code:        call(compiled_def),
+      disassemble: {
+        compiled_def: "#{compiled_def.def.name}",
+      },
+    },
     leave: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       (break),
+      code:       leave,
     },
   }
 

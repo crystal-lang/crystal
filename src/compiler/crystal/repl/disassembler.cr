@@ -1,6 +1,10 @@
 require "./repl"
 
 module Crystal::Repl::Disassembler
+  def self.disassemble(compiled_def : CompiledDef) : String
+    disassemble(compiled_def.instructions, compiled_def.local_vars)
+  end
+
   def self.disassemble(instructions : Array(Instruction), local_vars : LocalVars) : String
     String.build do |io|
       ip = 0

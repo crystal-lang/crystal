@@ -2,18 +2,28 @@ require "./repl"
 require "ffi"
 
 class Crystal::Repl::Interpreter
+  record CallStack,
+    compiled_def : CompiledDef,
+    previous_instructions : Array(Instruction),
+    previous_ip : Pointer(UInt8)
+
   def initialize(program : Program)
     @program = program
     @local_vars = LocalVars.new(program)
+
+    @defs = {} of Def => CompiledDef
+    @defs.compare_by_identity
+
     @dl_libraries = {} of String? => Void*
     @instructions = [] of Instruction
 
     # TODO: what if the stack is exhausted?
     @stack = uninitialized UInt8[8096]
 
+    @call_stack = [] of CallStack
+
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
-    @instructions_compiler = Compiler.new(@program, @local_vars)
   end
 
   def interpret(node : ASTNode) : Value
@@ -31,13 +41,14 @@ class Crystal::Repl::Interpreter
       @local_vars.declare(name, meta_var.type)
     end
 
-    @instructions = @instructions_compiler.compile(node)
+    compiler = Compiler.new(@program, @defs, @local_vars)
+    @instructions = compiler.compile(node)
 
-    # puts Disassembler.disassemble(@instructions, @local_vars)
+    puts Disassembler.disassemble(@instructions, @local_vars)
 
-    # time = Time.monotonic
+    time = Time.monotonic
     value = interpret(node.type)
-    # puts "Elapsed: #{Time.monotonic - time}"
+    puts "Elapsed: #{Time.monotonic - time}"
 
     value
   end
@@ -59,7 +70,7 @@ class Crystal::Repl::Interpreter
     ip = instructions.to_unsafe
 
     while true
-      # print @ip.to_s.rjust(4, '0')
+      # print (ip - instructions.to_unsafe).to_s.rjust(4, '0')
       # print ' '
 
       op_code = next_instruction OpCode
@@ -102,6 +113,22 @@ class Crystal::Repl::Interpreter
     end
 
     Value.new(@program, return_value, node_type)
+  end
+
+  private macro call(compiled_def)
+    @call_stack << CallStack.new({{compiled_def}}, instructions, ip)
+    instructions = {{compiled_def}}.instructions
+    ip = instructions.to_unsafe
+  end
+
+  private macro leave
+    if @call_stack.empty?
+      break
+    else
+      call_stack = @call_stack.pop
+      instructions = call_stack.previous_instructions
+      ip = call_stack.previous_ip
+    end
   end
 
   private macro set_ip(ip)

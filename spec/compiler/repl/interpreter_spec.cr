@@ -389,35 +389,47 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
-  # it "interprets simple call" do
-  #   interpret(<<-CODE).should eq(3)
-  #     def foo(x, y)
-  #       x + y
-  #     end
+  context "calls" do
+    it "calls a top-level method without arguments" do
+      interpret(<<-CODE).should eq(3)
+        def foo
+          1 + 2
+        end
 
-  #     foo(1, 2)
-  #     CODE
-  # end
+        foo
+        CODE
+    end
 
-  # it "interprets call with default values" do
-  #   interpret(<<-CODE).should eq(3)
-  #     def foo(x = 1, y = 2)
-  #       x + y
-  #     end
+    # it "interprets simple call" do
+    #   interpret(<<-CODE).should eq(3)
+    #     def foo(x, y)
+    #       x + y
+    #     end
 
-  #     foo
-  #     CODE
-  # end
+    #     foo(1, 2)
+    #     CODE
+    # end
 
-  # it "interprets call with named arguments" do
-  #   interpret(<<-CODE).should eq(15)
-  #     def foo(x, y)
-  #       x - y
-  #     end
+    # it "interprets call with default values" do
+    #   interpret(<<-CODE).should eq(3)
+    #     def foo(x = 1, y = 2)
+    #       x + y
+    #     end
 
-  #     foo(y: 10, x: 25)
-  #     CODE
-  # end
+    #     foo
+    #     CODE
+    # end
+
+    # it "interprets call with named arguments" do
+    #   interpret(<<-CODE).should eq(15)
+    #     def foo(x, y)
+    #       x - y
+    #     end
+
+    #     foo(y: 10, x: 25)
+    #     CODE
+    # end
+  end
 end
 
 private def interpret(string, prelude = "primitives")
