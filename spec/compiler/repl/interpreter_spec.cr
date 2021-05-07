@@ -400,7 +400,7 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "calls a top-level method without arguments and local vars" do
+    it "calls a top-level method without arguments but with local vars" do
       interpret(<<-CODE).should eq(3)
         def foo
           x = 1
@@ -413,25 +413,26 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    # it "interprets simple call" do
-    #   interpret(<<-CODE).should eq(3)
-    #     def foo(x, y)
-    #       x + y
-    #     end
+    it "calls a top-level method with two arguments" do
+      interpret(<<-CODE).should eq(3)
+        def foo(x, y)
+          x + y
+        end
 
-    #     foo(1, 2)
-    #     CODE
-    # end
+        x = foo(1, 2)
+        x
+        CODE
+    end
 
-    # it "interprets call with default values" do
-    #   interpret(<<-CODE).should eq(3)
-    #     def foo(x = 1, y = 2)
-    #       x + y
-    #     end
+    it "interprets call with default values" do
+      interpret(<<-CODE).should eq(3)
+        def foo(x = 1, y = 2)
+          x + y
+        end
 
-    #     foo
-    #     CODE
-    # end
+        foo
+        CODE
+    end
 
     # it "interprets call with named arguments" do
     #   interpret(<<-CODE).should eq(15)

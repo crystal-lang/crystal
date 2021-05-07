@@ -2,7 +2,9 @@ require "./repl"
 require "ffi"
 
 class Crystal::Repl::Interpreter
-  record CallStack,
+  Trace = false
+
+  record CallFrame,
     compiled_def : CompiledDef,
     previous_instructions : Array(Instruction),
     previous_ip : Pointer(UInt8),
@@ -22,7 +24,7 @@ class Crystal::Repl::Interpreter
     # TODO: what if the stack is exhausted?
     @stack = uninitialized UInt8[8096]
 
-    @call_stack = [] of CallStack
+    @call_stack = [] of CallFrame
 
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
@@ -73,11 +75,16 @@ class Crystal::Repl::Interpreter
     return_value = Pointer(UInt8).null
 
     while true
-      # print (ip - instructions.to_unsafe).to_s.rjust(4, '0')
-      # print ' '
+      {% if Trace %}
+        print (ip - instructions.to_unsafe).to_s.rjust(4, '0')
+        print ' '
+      {% end %}
 
       op_code = next_instruction OpCode
-      # puts op_code.to_s.downcase
+
+      {% if Trace %}
+        puts op_code
+      {% end %}
 
       {% begin %}
         case op_code
@@ -104,29 +111,45 @@ class Crystal::Repl::Interpreter
         end
       {% end %}
 
-      # p! stack.address
-      # p Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)
+      {% if Trace %}
+        p Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)
+      {% end %}
     end
 
     if stack != stack_bottom_after_local_vars
-      raise "BUG: data left on stack (#{stack - @stack.to_unsafe} bytes)"
+      raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes)"
     end
 
     Value.new(@program, return_value, node_type)
   end
 
   private macro call(compiled_def)
-    @call_stack << CallStack.new(
+    # At the point of a call like:
+    #
+    #     foo(x, y)
+    #
+    # x and y will already be in the stack, ready to be used
+    # as the function arguments in the target def.
+    #
+    # After the call, we want the stack to be at the point
+    # where it doesn't have the call args, ready to push
+    # return call's return value.
+    stack_before_call_args = stack  - {{compiled_def}}.args_bytesize
+
+    @call_stack << CallFrame.new(
       compiled_def: {{compiled_def}},
       previous_instructions: instructions,
       previous_ip: ip,
-      previous_stack: stack,
+      previous_stack: stack_before_call_args,
       previous_stack_bottom: stack_bottom,
     )
     instructions = {{compiled_def}}.instructions
     ip = instructions.to_unsafe
-    stack_bottom = stack
-    stack += compiled_def.local_vars.total_size
+    stack_bottom = stack_before_call_args
+
+    # We need to adjust the call stack to start right
+    # after the target def's local variables.
+    stack = stack_bottom + {{compiled_def}}.local_vars.total_size
   end
 
   private macro leave(size)
@@ -136,14 +159,21 @@ class Crystal::Repl::Interpreter
       stack -= {{size}}
       break
     else
+      # Remember the point the stack reached
       old_stack = stack
-      call_stack = @call_stack.pop
-      instructions = call_stack.previous_instructions
-      ip = call_stack.previous_ip
-      # TODO: clean up stack
-      stack_bottom = call_stack.previous_stack_bottom
-      stack = call_stack.previous_stack
+      %call_frame = @call_stack.pop
+
+      # Restore ip, instructions and stack bottom
+      instructions = %call_frame.previous_instructions
+      ip = %call_frame.previous_ip
+      stack_bottom = %call_frame.previous_stack_bottom
+
+      stack = %call_frame.previous_stack
+
+      # Ccopy the return value
       stack_move_from(old_stack - {{size}}, {{size}})
+
+      # TODO: clean up stack
     end
   end
 

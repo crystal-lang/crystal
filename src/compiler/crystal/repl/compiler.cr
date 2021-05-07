@@ -183,13 +183,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = @defs[target_def]?
     unless compiled_def
-      compiled_def = CompiledDef.new(@program, target_def)
+      args_bytesize = node.args.sum { |arg| sizeof_type(arg) }
 
+      compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
       @defs[target_def] = compiled_def
+
+      # Declare local variables for the newly compiled function
+      target_def.vars.try &.each do |name, var|
+        # TODO don't always skip self
+        next if name == "self"
+        compiled_def.local_vars.declare(name, var.type)
+      end
 
       compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)
       compiler.compile(target_def.body)
     end
+
+    # TODO: accept obj
+    node.args.each &.accept self
 
     call compiled_def
     return false
@@ -282,7 +293,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   {% for name, instruction in Crystal::Repl::Instructions %}
     {% operands = instruction[:operands] %}
 
-    private def {{name.id}}( {{*operands}} ) : Nil
+    def {{name.id}}( {{*operands}} ) : Nil
       append OpCode::{{ name.id.upcase }}
       {% for operand in operands %}
         append {{operand.var}}
