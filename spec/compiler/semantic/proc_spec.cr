@@ -738,7 +738,7 @@ describe "Semantic: proc" do
       assert_error %(
         ->(x : #{type}) { }
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in captured block" do
@@ -748,7 +748,7 @@ describe "Semantic: proc" do
 
         foo {}
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
 
     it "disallows #{type} in proc pointer" do
@@ -758,7 +758,7 @@ describe "Semantic: proc" do
 
         ->foo(#{type})
         ),
-        "as a Proc argument type"
+        "can't use #{type} as a Proc argument type"
     end
   end
 
