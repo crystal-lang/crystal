@@ -19,7 +19,7 @@ end
 
 # :nodoc:
 struct Exception::CallStack
-  private record Frame,
+  record Frame,
     file : String,
     function : String,
     line_number : Int32,
@@ -207,7 +207,7 @@ struct Exception::CallStack
       elsif file
         filename = file
       else
-        raise "?"
+        filename = "???"
       end
 
       if name = CallStack.decode_function_name(pc)
