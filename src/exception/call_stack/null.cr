@@ -4,7 +4,7 @@ struct Exception::CallStack
   end
 
   def self.decode_line_number(pc)
-    {"??", 0, 0}
+    {nil, nil, nil}
   end
 
   def self.decode_function_name(pc)

@@ -33,7 +33,7 @@ struct Exception::CallStack
         return {path, row.line, row.column}
       end
     end
-    {"??", 0, 0}
+    {nil, nil, nil}
   end
 
   protected def self.decode_function_name(pc)
