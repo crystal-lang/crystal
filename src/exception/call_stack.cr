@@ -26,11 +26,15 @@ struct Exception::CallStack
     name : String?,
     sname : String?,
     ip_address : UInt64 do
-    def to_s(io : IO) : Nil
-      show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+    def to_s(*, full_info : Bool = false) : String
+      String.build do |io|
+        to_s io, full_info: full_info
+      end
+    end
 
+    def to_s(io : IO, *, full_info : Bool = false) : Nil
       function = name || "???"
-      function = sname if show_full_info && sname
+      function = sname if full_info && sname
 
       if file
         io << file
@@ -44,7 +48,7 @@ struct Exception::CallStack
         io << function
       end
 
-      if show_full_info
+      if full_info
         io << " at 0x" << ip_address.to_s(16)
       end
     end
@@ -74,7 +78,11 @@ struct Exception::CallStack
   end
 
   def printable_backtrace : Array(String)
-    frames.map(&.to_s)
+    full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+
+    frames.map do |frame|
+      frame.to_s(full_info: full_info)
+    end
   end
 
   {% if flag?(:gnu) && flag?(:i386) %}
