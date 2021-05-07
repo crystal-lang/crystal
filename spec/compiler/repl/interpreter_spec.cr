@@ -390,13 +390,26 @@ describe Crystal::Repl::Interpreter do
   end
 
   context "calls" do
-    it "calls a top-level method without arguments" do
+    it "calls a top-level method without arguments and no local vars" do
       interpret(<<-CODE).should eq(3)
         def foo
           1 + 2
         end
 
         foo
+        CODE
+    end
+
+    it "calls a top-level method without arguments and local vars" do
+      interpret(<<-CODE).should eq(3)
+        def foo
+          x = 1
+          y = 2
+          x + y
+        end
+
+        x = foo
+        x
         CODE
     end
 

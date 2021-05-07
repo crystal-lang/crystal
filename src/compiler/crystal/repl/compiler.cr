@@ -13,7 +13,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def compile(node : ASTNode) : Array(Instruction)
     node.accept self
 
-    leave
+    leave sizeof_type(node)
 
     @instructions
   end
@@ -184,6 +184,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = @defs[target_def]?
     unless compiled_def
       compiled_def = CompiledDef.new(@program, target_def)
+
       @defs[target_def] = compiled_def
 
       compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)

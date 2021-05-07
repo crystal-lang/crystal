@@ -530,10 +530,10 @@ Crystal::Repl::Instructions =
       },
     },
     leave: {
-      operands:   [] of Nil,
+      operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       leave,
+      code:       leave(size),
     },
   }
 

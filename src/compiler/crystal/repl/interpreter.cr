@@ -5,7 +5,9 @@ class Crystal::Repl::Interpreter
   record CallStack,
     compiled_def : CompiledDef,
     previous_instructions : Array(Instruction),
-    previous_ip : Pointer(UInt8)
+    previous_ip : Pointer(UInt8),
+    previous_stack : Pointer(UInt8),
+    previous_stack_bottom : Pointer(UInt8)
 
   def initialize(program : Program)
     @program = program
@@ -68,13 +70,14 @@ class Crystal::Repl::Interpreter
 
     instructions = @instructions
     ip = instructions.to_unsafe
+    return_value = Pointer(UInt8).null
 
     while true
       # print (ip - instructions.to_unsafe).to_s.rjust(4, '0')
       # print ' '
 
       op_code = next_instruction OpCode
-      # puts op_code
+      # puts op_code.to_s.downcase
 
       {% begin %}
         case op_code
@@ -101,13 +104,10 @@ class Crystal::Repl::Interpreter
         end
       {% end %}
 
-      # p! @stack
+      # p! stack.address
+      # p Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)
     end
 
-    return_value_size = @program.size_of(node_type.sizeof_type)
-    return_value = Pointer(UInt8).malloc(return_value_size)
-    return_value.copy_from(stack_bottom_after_local_vars, return_value_size)
-    stack -= return_value_size
     if stack != stack_bottom_after_local_vars
       raise "BUG: data left on stack (#{stack - @stack.to_unsafe} bytes)"
     end
@@ -116,18 +116,34 @@ class Crystal::Repl::Interpreter
   end
 
   private macro call(compiled_def)
-    @call_stack << CallStack.new({{compiled_def}}, instructions, ip)
+    @call_stack << CallStack.new(
+      compiled_def: {{compiled_def}},
+      previous_instructions: instructions,
+      previous_ip: ip,
+      previous_stack: stack,
+      previous_stack_bottom: stack_bottom,
+    )
     instructions = {{compiled_def}}.instructions
     ip = instructions.to_unsafe
+    stack_bottom = stack
+    stack += compiled_def.local_vars.total_size
   end
 
-  private macro leave
+  private macro leave(size)
     if @call_stack.empty?
+      return_value = Pointer(UInt8).malloc({{size}})
+      return_value.copy_from(stack_bottom_after_local_vars, {{size}})
+      stack -= {{size}}
       break
     else
+      old_stack = stack
       call_stack = @call_stack.pop
       instructions = call_stack.previous_instructions
       ip = call_stack.previous_ip
+      # TODO: clean up stack
+      stack_bottom = call_stack.previous_stack_bottom
+      stack = call_stack.previous_stack
+      stack_move_from(old_stack - {{size}}, {{size}})
     end
   end
 
