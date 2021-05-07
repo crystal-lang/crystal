@@ -2,25 +2,33 @@ require "./repl"
 
 class Crystal::Repl::LocalVars
   def initialize(@program : Program)
-    @values = [] of UInt8
-    @types = [] of Type
+    @types = {} of String => Type
     @name_to_index = {} of String => Int32
+    @total_size = 0
+  end
+
+  def total_size
+    @total_size
   end
 
   def names
     @name_to_index.keys
   end
 
-  def name_to_index(name : String, type : Type) : Int32
+  def declare(name : String, type : Type) : Int32
     index = @name_to_index[name]?
-    unless index
-      index = @values.size
-      @name_to_index[name] = index
-      @types << type
-      sizeof_type(type).times do
-        @values << 0_u8
+    if index
+      existing_type = @types[name]
+      if existing_type != type
+        raise "BUG: redeclaring local variable with a different type is not yet supported (#{name} from #{existing_type} to #{type})"
       end
+      return index
     end
+
+    index = @total_size
+    @name_to_index[name] = index
+    @types[name] = type
+    @total_size += sizeof_type(type)
     index
   end
 
@@ -35,9 +43,8 @@ class Crystal::Repl::LocalVars
     raise KeyError.new
   end
 
-  def pointerof(index : Int32)
-    value = @values.to_unsafe + index
-    value.as(Pointer(UInt8))
+  def type(name : String) : Type
+    @types[name]
   end
 
   def sizeof_type(type) : Int32

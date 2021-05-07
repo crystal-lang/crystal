@@ -86,6 +86,15 @@ describe Crystal::Repl::Interpreter do
       a
       CODE
     end
+
+    it "interprets variable set and get with operations" do
+      interpret(<<-CODE).should eq(6)
+      a = 1
+      b = 2
+      c = 3
+      a + b + c
+      CODE
+    end
   end
 
   context "conversion" do

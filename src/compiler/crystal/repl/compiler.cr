@@ -77,8 +77,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case target
     when Var
       node.value.accept self
-      index = @local_vars.name_to_index(target.name, target.type)
-      set_local index, sizeof_type(node)
+      index = @local_vars.name_to_index(target.name)
+      type = @local_vars.type(target.name)
+      set_local index, sizeof_type(type)
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -86,8 +87,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Var)
-    index = @local_vars.name_to_index(node.name, node.type)
-    get_local index, sizeof_type(node)
+    index = @local_vars.name_to_index(node.name)
+    get_local index, sizeof_type(@local_vars.type(node.name))
     false
   end
 
