@@ -67,7 +67,7 @@ class Crystal::Repl::Interpreter
     # Shift stack to leave ream for local vars
     # Previous runs that wrote to local vars would have those values
     # written to @stack alreay
-    stack_bottom_after_local_vars = stack_bottom + @local_vars.total_size
+    stack_bottom_after_local_vars = stack_bottom + @local_vars.bytesize
     stack = stack_bottom_after_local_vars
 
     instructions = @instructions
@@ -149,7 +149,7 @@ class Crystal::Repl::Interpreter
 
     # We need to adjust the call stack to start right
     # after the target def's local variables.
-    stack = stack_bottom + {{compiled_def}}.local_vars.total_size
+    stack = stack_bottom + {{compiled_def}}.local_vars.bytesize
   end
 
   private macro leave(size)

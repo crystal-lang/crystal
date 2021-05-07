@@ -183,7 +183,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = @defs[target_def]?
     unless compiled_def
-      args_bytesize = node.args.sum { |arg| sizeof_type(arg) }
+      args_bytesize =
+        node.args.sum { |arg| sizeof_type(arg) } +
+          (node.named_args.try &.sum { |arg| sizeof_type(arg.value) } || 0)
 
       compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
       @defs[target_def] = compiled_def
@@ -197,10 +199,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)
       compiler.compile(target_def.body)
+
+      # puts "=== #{target_def.name} ==="
+      # p! compiled_def
+      # puts Disassembler.disassemble(compiled_def)
+      # puts "=== #{target_def.name} ==="
     end
 
     # TODO: accept obj
+    p! node.args, node.named_args
+
     node.args.each &.accept self
+    node.named_args.try &.each &.value.accept self
 
     call compiled_def
     return false

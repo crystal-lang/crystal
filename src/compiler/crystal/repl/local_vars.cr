@@ -4,11 +4,11 @@ class Crystal::Repl::LocalVars
   def initialize(@program : Program)
     @types = {} of String => Type
     @name_to_index = {} of String => Int32
-    @total_size = 0
+    @bytesize = 0
   end
 
-  def total_size
-    @total_size
+  def bytesize
+    @bytesize
   end
 
   def names
@@ -25,10 +25,10 @@ class Crystal::Repl::LocalVars
       return index
     end
 
-    index = @total_size
+    index = @bytesize
     @name_to_index[name] = index
     @types[name] = type
-    @total_size += sizeof_type(type)
+    @bytesize += sizeof_type(type)
     index
   end
 

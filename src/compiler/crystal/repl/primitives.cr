@@ -96,8 +96,10 @@ class Crystal::Repl::Compiler
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
         add_i32
-        # when "-"  then binary_minus
-        # when "*"  then binary_mult
+      when "-"
+        # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
+        sub_i32
       when "<"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)

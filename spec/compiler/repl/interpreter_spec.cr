@@ -434,15 +434,15 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    # it "interprets call with named arguments" do
-    #   interpret(<<-CODE).should eq(15)
-    #     def foo(x, y)
-    #       x - y
-    #     end
+    it "interprets call with named arguments" do
+      interpret(<<-CODE).should eq(-15)
+        def foo(x, y)
+          x - y
+        end
 
-    #     foo(y: 10, x: 25)
-    #     CODE
-    # end
+        foo(x: 10, y: 25)
+        CODE
+    end
   end
 end
 

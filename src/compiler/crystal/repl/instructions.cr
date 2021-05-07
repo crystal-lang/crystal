@@ -50,6 +50,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a + b,
     },
+    sub_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a - b,
+    },
     lt_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
