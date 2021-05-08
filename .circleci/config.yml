@@ -349,9 +349,6 @@ jobs:
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
-            # osc may try to use a pager, even if stdout is not a TTY,
-            # cat avoids stalling on that.
-            export PAGER=cat
 
             packages/obs-setup.sh
             packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
