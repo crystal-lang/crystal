@@ -356,26 +356,6 @@ jobs:
                 /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
-  push_obs_maintenance:
-    docker:
-      - image: crystallang/osc
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          command: |
-            cd /tmp/workspace/distribution-scripts
-            source build.env
-            # osc may try to use a pager, even if stdout is not a TTY,
-            # cat avoids stalling on that.
-            export PAGER=cat
-
-            packages/obs-setup.sh
-            packages/obs-push.sh devel:languages:crystal:unstable ${CRYSTAL_NEXT_VERSION%-*} ${CRYSTAL_VERSION//-/} $CRYSTAL_SHA1 \
-                /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
-                /tmp/workspace/build/crystal-*-docs.tar.gz
-
   dist_docker:
     machine: true
     steps:
