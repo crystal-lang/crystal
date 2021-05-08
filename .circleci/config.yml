@@ -339,7 +339,7 @@ jobs:
           paths:
             - build
 
-  dist_obs_nightly:
+  push_obs_nightly:
     docker:
       - image: straightshoota/osc
     steps:
@@ -359,7 +359,7 @@ jobs:
                 /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
                 /tmp/workspace/build/crystal-*-docs.tar.gz
 
-  dist_obs_maintenance:
+  push_obs_maintenance:
     docker:
       - image: straightshoota/osc
     steps:
@@ -639,7 +639,7 @@ workflows:
       - dist_darwin:
           requires:
             - prepare_nightly
-      - dist_obs_nightly:
+      - push_obs_nightly:
           requires:
             - dist_linux
             - dist_linux32
@@ -742,7 +742,7 @@ workflows:
           filters: *maintenance
           requires:
             - dist_docker
-      - dist_obs_maintenance:
+      - push_obs_maintenance:
           requires:
             - dist_linux
             - dist_linux32
