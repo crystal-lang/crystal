@@ -230,10 +230,6 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/workspace
-      - checkout
-      - run: |
-          # CRYSTAL_NEXT_VERSION uses src/VERSION to publish maintenance releases as prereleases
-          echo "export CRYSTAL_NEXT_VERSION=$(cat src/VERSION)" >> /tmp/workspace/distribution-scripts/build.env
       - run: |
           cd /tmp/workspace/distribution-scripts
 
