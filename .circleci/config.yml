@@ -341,7 +341,7 @@ jobs:
 
   push_obs_nightly:
     docker:
-      - image: straightshoota/osc
+      - image: crystallang/osc
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -358,7 +358,7 @@ jobs:
 
   push_obs_maintenance:
     docker:
-      - image: straightshoota/osc
+      - image: crystallang/osc
     steps:
       - attach_workspace:
           at: /tmp/workspace
