@@ -715,11 +715,6 @@ workflows:
           filters: *maintenance
           requires:
             - dist_docker
-      - push_obs_maintenance:
-          requires:
-            - dist_linux
-            - dist_linux32
-            - dist_docs
       - dist_artifacts:
           filters: *maintenance
           requires:
