@@ -172,6 +172,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Call)
+    obj = node.obj
+    args = node.args
+    named_args = node.named_args
+
     # TODO: handle case of multidispatch
     target_def = node.target_def
 
@@ -183,17 +187,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = @defs[target_def]?
     unless compiled_def
-      args_bytesize =
-        node.args.sum { |arg| sizeof_type(arg) } +
-          (node.named_args.try &.sum { |arg| sizeof_type(arg.value) } || 0)
+      args_bytesize = 0
+      args_bytesize += sizeof_type(obj.type) if obj && obj.type != @program
+      args_bytesize += args.sum { |arg| sizeof_type(arg) }
+      args_bytesize += named_args.sum { |arg| sizeof_type(arg.value) } if named_args
 
       compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
       @defs[target_def] = compiled_def
 
       # Declare local variables for the newly compiled function
       target_def.vars.try &.each do |name, var|
-        # TODO don't always skip self
-        next if name == "self"
+        # Program is the only type we don't put on the stack
+        next if name == "self" && var.type == @program
+
         compiled_def.local_vars.declare(name, var.type)
       end
 
@@ -206,11 +212,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # puts "=== #{target_def.name} ==="
     end
 
-    # TODO: accept obj
-    p! node.args, node.named_args
-
-    node.args.each &.accept self
-    node.named_args.try &.each &.value.accept self
+    obj.try &.accept self
+    args.each &.accept self
+    named_args.try &.each &.value.accept self
 
     call compiled_def
     return false
@@ -289,6 +293,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.obj.try &.accept(self)
     node.args.each &.accept(self)
     # TODO: named arguments
+  end
+
+  def visit(node : ClassDef)
+    # TODO: change scope
+    node.body.accept self
+
+    put_nil
+    false
   end
 
   def visit(node : Def)

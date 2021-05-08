@@ -48,11 +48,11 @@ class Crystal::Repl::Interpreter
     compiler = Compiler.new(@program, @defs, @local_vars)
     @instructions = compiler.compile(node)
 
-    puts Disassembler.disassemble(@instructions, @local_vars)
+    # puts Disassembler.disassemble(@instructions, @local_vars)
 
-    time = Time.monotonic
+    # time = Time.monotonic
     value = interpret(node.type)
-    puts "Elapsed: #{Time.monotonic - time}"
+    # puts "Elapsed: #{Time.monotonic - time}"
 
     value
   end

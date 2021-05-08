@@ -443,6 +443,18 @@ describe Crystal::Repl::Interpreter do
         foo(x: 10, y: 25)
         CODE
     end
+
+    it "interprets self" do
+      interpret(<<-CODE).should eq(42)
+        struct Int32
+          def foo
+            self
+          end
+        end
+
+        42.foo
+        CODE
+    end
   end
 end
 
