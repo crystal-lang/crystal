@@ -2,6 +2,8 @@ require "./repl"
 require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
+  Decompile = false
+
   def initialize(
     @program : Program,
     @defs : Hash(Def, CompiledDef),
@@ -206,10 +208,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)
       compiler.compile(target_def.body)
 
-      # puts "=== #{target_def.name} ==="
-      # p! compiled_def
-      # puts Disassembler.disassemble(compiled_def)
-      # puts "=== #{target_def.name} ==="
+      {% if Decompile %}
+        puts "=== #{target_def.name} ==="
+        p! compiled_def.local_vars, compiled_def.args_bytesize
+        puts Disassembler.disassemble(compiled_def)
+        puts "=== #{target_def.name} ==="
+      {% end %}
     end
 
     obj.try &.accept self

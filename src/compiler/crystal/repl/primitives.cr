@@ -104,9 +104,18 @@ class Crystal::Repl::Compiler
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
         lt_i32
-        # when "<=" then binary_le
-        # when ">"  then binary_gt
-        # when ">=" then binary_ge
+      when "<="
+        # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
+        le_i32
+      when ">"
+        # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
+        gt_i32
+      when ">="
+        # TODO: don't assume Int32 + Int32
+        accept_call_members(node)
+        ge_i32
       when "=="
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)

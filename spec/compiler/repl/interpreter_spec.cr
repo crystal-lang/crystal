@@ -455,6 +455,16 @@ describe Crystal::Repl::Interpreter do
         42.foo
         CODE
     end
+
+    it "interprets call with if" do
+      interpret(<<-CODE).should eq(2)
+        def foo
+          1 == 1 ? 2 : 3
+        end
+
+        foo
+        CODE
+    end
   end
 end
 

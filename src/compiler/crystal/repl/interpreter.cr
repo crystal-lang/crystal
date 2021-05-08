@@ -48,7 +48,12 @@ class Crystal::Repl::Interpreter
     compiler = Compiler.new(@program, @defs, @local_vars)
     @instructions = compiler.compile(node)
 
-    # puts Disassembler.disassemble(@instructions, @local_vars)
+    {% if Compiler::Decompile %}
+      puts "=== top-level ==="
+      p @local_vars
+      puts Disassembler.disassemble(@instructions, @local_vars)
+      puts "=== top-level ==="
+    {% end %}
 
     # time = Time.monotonic
     value = interpret(node.type)
@@ -178,7 +183,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro set_ip(ip)
-    ip = @instructions.to_unsafe + {{ip}}
+    ip = instructions.to_unsafe + {{ip}}
   end
 
   private macro set_local_var(index, size)

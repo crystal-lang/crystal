@@ -62,6 +62,24 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a < b,
     },
+    le_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a > b,
+    },
+    ge_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a >= b,
+    },
     eq_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
