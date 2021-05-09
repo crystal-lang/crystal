@@ -154,7 +154,7 @@ class Crystal::Repl::Compiler
     when "object_crystal_type_id"
       put_i32 type_id(node.obj.not_nil!.type)
     when "allocate"
-      type = node.obj.not_nil!.type.instance_type
+      type = node.obj.try(&.type) || scope.instance_type
 
       # TODO: check struct
       allocate_class(instance_sizeof_type(type), type_id(type))

@@ -140,6 +140,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
+    # TODO: remove this
+    if node.cond.is_a?(RespondsTo)
+      put_nil
+      return false
+    end
+
     node.cond.accept self
     branch_unless 0
     cond_jump_location = patch_location
@@ -213,6 +219,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "BUG: missing interpret Not for #{exp.type}"
     end
 
+    false
+  end
+
+  def visit(node : RespondsTo)
+    # TODO
+    put_false
     false
   end
 

@@ -83,7 +83,7 @@ class Crystal::Repl
       parser.filename = filename
       parsed_nodes = parser.parse
       parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
-      @program.top_level_semantic(parsed_nodes)
+      @program.semantic(parsed_nodes)
     end
   end
 end
