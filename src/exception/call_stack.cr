@@ -53,7 +53,7 @@ struct Exception::CallStack
     # Returns the memory address
     #
     # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
-    # the column number would be the hexstring `5df02499e76`.
+    # the address would be the hexstring `5df02499e76`.
     getter address : String?
 
     protected def initialize(
