@@ -553,6 +553,28 @@ Crystal::Repl::Instructions =
         compiled_def: "#{compiled_def.def.name}",
       },
     },
+    allocate_class: {
+      operands:   [size : Int32, type_id : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       begin
+        ptr = Pointer(UInt8).malloc(size)
+        ptr.as(Int32*).value = type_id
+        ptr
+      end,
+    },
+    get_class_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_move_from(self_class_pointer + offset, size),
+    },
+    set_class_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_copy_to(self_class_pointer + offset, size),
+    },
     leave: {
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,
@@ -560,39 +582,5 @@ Crystal::Repl::Instructions =
       code:       leave(size),
     },
   }
-
-private macro binary_op!(op)
-  result = left.value.as(Int::Primitive | Float::Primitive) {{op.id}}
-           right.value.as(Int::Primitive | Float::Primitive)
-  type =
-    case result
-    when Int8    then @program.int8
-    when UInt8   then @program.uint8
-    when Int16   then @program.int16
-    when UInt16  then @program.uint16
-    when Int32   then @program.int32
-    when UInt32  then @program.uint32
-    when Int64   then @program.int64
-    when UInt64  then @program.uint64
-    when Float32 then @program.float32
-    when Float64 then @program.float64
-    else
-      raise "Unexpected result type from binary op: #{result.class}"
-    end
-  Value.new(result, type)
-end
-
-private macro binary_cmp!(op)
-  result = left.value.as(Int::Primitive | Float::Primitive) {{op.id}}
-    right.value.as(Int::Primitive | Float::Primitive)
-
-  Value.new(result, @program.bool)
-end
-
-private macro binary_eq!(op)
-  result = left.value {{op.id}} right.value
-
-  Value.new(result, @program.bool)
-end
 
 # {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}

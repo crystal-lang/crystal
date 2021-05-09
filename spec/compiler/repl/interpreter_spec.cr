@@ -466,6 +466,27 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
   end
+
+  context "classes" do
+    it "does allocate, set instance var and get instance var" do
+      interpret(<<-CODE).should eq(42)
+        class Foo
+          @x = 0
+
+          def x=(@x)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        foo = Foo.allocate
+        foo.x = 42
+        foo.x
+        CODE
+    end
+  end
 end
 
 private def interpret(string, prelude = "primitives")
@@ -475,19 +496,22 @@ end
 
 private def interpret_full(string, prelude = "primitives")
   program = Crystal::Program.new
-  load_prelude(program, prelude)
-  interpreter = Crystal::Repl::Interpreter.new(program)
+
   node = Crystal::Parser.parse(string)
+  node = program.normalize(node, inside_exp: false)
+
+  load_prelude(program, prelude, node)
+  interpreter = Crystal::Repl::Interpreter.new(program)
   {program, interpreter.interpret(node)}
 end
 
-private def load_prelude(program, prelude = "primitives")
+private def load_prelude(program, prelude, node)
   filenames = program.find_in_path(prelude)
   filenames.each do |filename|
     parser = Crystal::Parser.new File.read(filename), program.string_pool
     parser.filename = filename
     parsed_nodes = parser.parse
     parsed_nodes = program.normalize(parsed_nodes, inside_exp: false)
-    program.top_level_semantic(parsed_nodes)
+    program.top_level_semantic(Expressions.new([parsed_nodes, node]))
   end
 end

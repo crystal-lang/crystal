@@ -153,6 +153,11 @@ class Crystal::Repl::Compiler
       put_type node.obj.not_nil!.type
     when "object_crystal_type_id"
       put_i32 type_id(node.obj.not_nil!.type)
+    when "allocate"
+      type = node.obj.not_nil!.type.instance_type
+
+      # TODO: check struct
+      allocate_class(instance_sizeof_type(type), type_id(type))
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

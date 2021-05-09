@@ -204,12 +204,8 @@ class Crystal::Repl::Interpreter
     value
   end
 
-  private def literal_pointer(index)
-    @literals.pointer(index)
-  end
-
-  private def literal_size(index)
-    @literals.size(index)
+  private macro self_class_pointer
+    get_local_var_pointer(0).as(Pointer(Pointer(UInt8))).value
   end
 
   private macro stack_pop(t)

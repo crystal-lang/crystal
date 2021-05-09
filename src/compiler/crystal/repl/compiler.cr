@@ -4,12 +4,31 @@ require "./instructions"
 class Crystal::Repl::Compiler < Crystal::Visitor
   Decompile = false
 
+  private getter? inside_method
+  private getter scope
+
   def initialize(
     @program : Program,
     @defs : Hash(Def, CompiledDef),
     @local_vars : LocalVars,
-    @instructions : Array(Instruction) = [] of Instruction
+    @instructions : Array(Instruction) = [] of Instruction,
+    @scope : Type = program,
+    @inside_method = false
   )
+  end
+
+  def self.new(
+    program : Program,
+    defs : Hash(Def, CompiledDef),
+    compiled_def : CompiledDef
+  )
+    new(
+      program,
+      defs,
+      compiled_def.local_vars,
+      compiled_def.instructions,
+      scope: compiled_def.def.owner,
+      inside_method: true)
   end
 
   def compile(node : ASTNode) : Array(Instruction)
@@ -84,6 +103,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index = @local_vars.name_to_index(target.name)
       type = @local_vars.type(target.name)
       set_local index, sizeof_type(type)
+    when InstanceVar
+      if inside_method?
+        node.value.accept self
+
+        # TODO: check struct
+        ivar_index = scope.index_of_instance_var(target.name).not_nil!
+        ivar_offset = @program.instance_offset_of(@scope.sizeof_type, ivar_index).to_i32
+        ivar_size = sizeof_type(scope.lookup_instance_var(target.name))
+
+        set_class_ivar ivar_offset, ivar_size
+      else
+        node.type = @program.nil_type
+        put_nil
+      end
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -93,6 +126,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Var)
     index = @local_vars.name_to_index(node.name)
     get_local index, sizeof_type(@local_vars.type(node.name))
+    false
+  end
+
+  def visit(node : InstanceVar)
+    # TODO: check struct
+    ivar_index = scope.index_of_instance_var(node.name).not_nil!
+    ivar_offset = @program.instance_offset_of(@scope.sizeof_type, ivar_index).to_i32
+    ivar_size = sizeof_type(scope.lookup_instance_var(node.name))
+
+    get_class_ivar ivar_offset, ivar_size
     false
   end
 
@@ -205,7 +248,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         compiled_def.local_vars.declare(name, var.type)
       end
 
-      compiler = Compiler.new(@program, @defs, compiled_def.local_vars, compiled_def.instructions)
+      compiler = Compiler.new(@program, @defs, compiled_def)
       compiler.compile(target_def.body)
 
       {% if Decompile %}
@@ -390,6 +433,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
+  end
+
+  private def instance_sizeof_type(type : Type) : Int32
+    @program.instance_size_of(type.sizeof_type).to_i32
   end
 
   private macro nop
