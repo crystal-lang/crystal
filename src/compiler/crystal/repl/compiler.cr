@@ -101,6 +101,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Assign)
+    # TODO: downcast/upcast
+
     target = node.target
     case target
     when Var
@@ -158,6 +160,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
+    # TODO: upcast/downcast
+
     # TODO: remove this
     if node.cond.is_a?(RespondsTo)
       put_nil
@@ -195,6 +199,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     branch_if body_index
 
     put_nil
+
+    false
+  end
+
+  def visit(node : Return)
+    # TODO: downcast/upcast
+    exp = node.exp
+    if exp
+      exp.accept self
+      leave sizeof_type(exp)
+      exp.accept self
+    else
+      put_nil
+      leave 0
+    end
 
     false
   end
@@ -247,6 +266,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Call)
+    # TODO: downcast/upcast
+
     obj = node.obj
     args = node.args
     named_args = node.named_args

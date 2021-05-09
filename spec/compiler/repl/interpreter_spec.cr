@@ -255,7 +255,7 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
-  context "while and until" do
+  context "control flow" do
     it "interprets while" do
       interpret(<<-CODE).should eq(10)
         a = 0
@@ -282,6 +282,20 @@ describe Crystal::Repl::Interpreter do
           a = a + 1
         end
         a
+      CODE
+    end
+
+    it "interprets return" do
+      interpret(<<-CODE).should eq(2)
+        def foo(x)
+          if x == 1
+            return 2
+          end
+
+          3
+        end
+
+        foo(1)
       CODE
     end
   end
