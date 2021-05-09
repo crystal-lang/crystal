@@ -64,13 +64,20 @@ class Crystal::Repl
       begin
         value = @interpreter.interpret(node)
         p value.value
+      rescue ex : Crystal::CodeError
+        @nest = 0
+        @buffer = ""
+        @line_number += 1
+
+        ex.color = true
+        puts ex
+        next
       rescue ex : Exception
         @nest = 0
         @buffer = ""
         @line_number += 1
 
-        ex.color = true if ex.is_a?(Crystal::CodeError)
-        puts ex
+        ex.inspect_with_backtrace(STDOUT)
         next
       end
     end

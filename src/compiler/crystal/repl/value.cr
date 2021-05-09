@@ -55,7 +55,7 @@ struct Crystal::Repl::Value
       type_id = @pointer.as(Int32*).value
       @program.llvm_id.type_from_id(type_id)
     else
-      raise "BUG: missing handling of Repl value for #{type}"
+      @pointer
     end
   end
 
