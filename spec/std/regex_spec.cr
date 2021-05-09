@@ -108,7 +108,7 @@ describe "Regex" do
 
   describe "each_name" do
     it "yields capture group name and index" do
-      name_table = {} of UInt16 => String
+      name_table = {} of Int32 => String
 
       pattern = /(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x
       pattern.each_name do |name, index|
@@ -144,16 +144,10 @@ describe "Regex" do
   end
 
   describe "names" do
-    it "is an array of capture group names" do
-      (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).names
-        .should eq(%w[date day month year])
-    end
-
-    context "sorted: true" do
-      it "is an array of capture group names sorted by the capture index" do
-        (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x).names(sorted: true)
-          .should eq(%w[date year month day])
-      end
+    it "is an array of capture group names sorted by the capture index" do
+      (/(?<date> (?<year>(\d\d)?\d\d) - (?<month>\d\d) - (?<day>\d\d) )/x)
+        .names
+        .should eq(%w[date year month day])
     end
   end
 

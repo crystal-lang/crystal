@@ -539,7 +539,7 @@ class Regex
   #   index # => 1
   # end
   # ```
-  def each_name(& : String, UInt16 ->) : Nil
+  def each_name(& : String, Int32 ->) : Nil
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
 
@@ -557,7 +557,7 @@ class Regex
       checked = name_table[name_offset, name_entry_size - 3]
       name = String.new(checked.to_unsafe)
 
-      yield name, capture_number
+      yield name, capture_number.to_i
     end
   end
 
@@ -571,40 +571,26 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table : Hash(UInt16, String)
-    Hash(UInt16, String).new.tap do |name_table|
+  def name_table : Hash(Int32, String)
+    Hash(Int32, String).new.tap do |name_table|
       each_name do |name, capture_number|
         name_table[capture_number] = name
       end
     end
   end
 
-  # Returns an `Array` where the values are the names of capture groups.
+  # Returns an `Array` sorted by the capture index, where
+  # the values are the names of capture groups.
+  #
   # Non-named capture groups will not have entries in
   # the `Array`.
   #
   # ```
-  # /(.)/.names                         # => []
-  # /(?<foo>.)/.names                   # => ["foo"]
-  # /(?<foo>.)(?<bar>.)/.names          # => ["bar", "foo"]
-  # /(.)(?<foo>.)(.)(?<bar>.)(.)/.names # => ["bar", "foo"]
+  # /(.)/.names                # => []
+  # /(?<foo>.)(?<bar>.)/.names # => ["foo", "bar"]
   # ```
   def names : Array(String)
-    Array(String).new.tap do |names|
-      each_name do |name|
-        names << name
-      end
-    end
-  end
-
-  # Returns an `Array` sorted by the capture index when *sorted* named
-  # argument is given as `true`, otherwise it returns `names`.
-  #
-  # ```
-  # /(?<foo>.)(?<bar>.)/.names(sorted: true) # => ["foo", "bar"]
-  # ```
-  def names(*, sorted : Bool) : Array(String)
-    sorted ? name_table.to_a.sort!.map(&.[1]) : names
+    name_table.to_a.sort!.map(&.[1])
   end
 
   # Returns the number of (named & non-named) capture groups.
