@@ -500,6 +500,10 @@ describe Crystal::Repl::Interpreter do
         foo.x
       CODE
     end
+
+    it "interprets read instance var" do
+      interpret(%(x = "hello".@c)).should eq('h'.ord)
+    end
   end
 end
 

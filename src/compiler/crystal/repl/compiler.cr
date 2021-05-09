@@ -114,10 +114,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         # TODO: check struct
         ivar_index = scope.index_of_instance_var(target.name).not_nil!
-        ivar_offset = @program.instance_offset_of(@scope.sizeof_type, ivar_index).to_i32
+        ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
         ivar_size = sizeof_type(scope.lookup_instance_var(target.name))
 
-        set_class_ivar ivar_offset, ivar_size
+        set_self_class_ivar ivar_offset, ivar_size
       else
         node.type = @program.nil_type
         put_nil
@@ -137,8 +137,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : InstanceVar)
     # TODO: check struct
     ivar_index = scope.index_of_instance_var(node.name).not_nil!
-    ivar_offset = @program.instance_offset_of(@scope.sizeof_type, ivar_index).to_i32
+    ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
     ivar_size = sizeof_type(scope.lookup_instance_var(node.name))
+
+    get_self_class_ivar ivar_offset, ivar_size
+    false
+  end
+
+  def visit(node : ReadInstanceVar)
+    # TODO: check struct
+    node.obj.accept self
+
+    type = node.obj.type
+    ivar_index = type.index_of_instance_var(node.name).not_nil!
+    ivar_offset = @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
+    ivar_size = sizeof_type(type.lookup_instance_var(node.name))
 
     get_class_ivar ivar_offset, ivar_size
     false

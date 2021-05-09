@@ -563,17 +563,23 @@ Crystal::Repl::Instructions =
         ptr
       end,
     },
-    get_class_ivar: {
+    get_self_class_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
       code:       stack_move_from(self_class_pointer + offset, size),
     },
-    set_class_ivar: {
+    set_self_class_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
       code:       stack_copy_to(self_class_pointer + offset, size),
+    },
+    get_class_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
+      push:       false,
+      code:       stack_move_from(pointer + offset, size),
     },
     leave: {
       operands:   [size : Int32] of Nil,
