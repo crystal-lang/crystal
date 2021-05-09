@@ -219,8 +219,9 @@ struct Exception::CallStack
         file = file.lchop(CURRENT_DIR)
       end
 
-      # name = CallStack.decode_function_name(pc)
-      name = nil
+      if name = CallStack.decode_function_name(pc)
+        function_name = name
+      end
 
       if frame = CallStack.decode_frame(ip)
         _, sname = frame
@@ -231,7 +232,7 @@ struct Exception::CallStack
         sname = sname.lchop('*')
       end
 
-      Frame.new(file, line, column, name, sname, ip.address)
+      Frame.new(file, line, column, function_name, sname, ip.address)
     end
   end
 
