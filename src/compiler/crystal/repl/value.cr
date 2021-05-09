@@ -47,10 +47,9 @@ struct Crystal::Repl::Value
         raise "BUG: missing handling of Repl value for #{type}"
       end
     when type.program.string
-      # TODO
-      @pointer.unsafe_as(String)
+      @pointer.as(UInt8**).value.unsafe_as(String)
     when PointerInstanceType
-      @pointer.as(Pointer(Pointer(UInt8))).value
+      @pointer.as(UInt8**).value
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
       @program.llvm_id.type_from_id(type_id)

@@ -58,9 +58,9 @@ describe Crystal::Repl::Interpreter do
       interpret("'a'").should eq('a')
     end
 
-    # it "interprets a String literal" do
-    #   interpret(%("Hello world!")).should eq("Hello world!")
-    # end
+    it "interprets a String literal" do
+      interpret(%("Hello world!")).should eq("Hello world!")
+    end
   end
 
   context "local variables" do
