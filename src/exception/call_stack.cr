@@ -17,24 +17,72 @@ def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
 
-# :nodoc:
-struct Exception::CallStack
-  record Frame,
-    file : String,
-    function : String,
-    line_number : Int32,
-    column_number : Int32,
-    address : String? = nil do
-    def_equals_and_hash @function, @file, @line_number, @column_number, @address
+# Returns the current execution stack as an array of `Exception::CallStack::Frame`.
+def caller_frames : Array(Exception::CallStack::Frame)
+  Exception::CallStack.new.frames
+end
 
-    def filename : String
-      File.basename @file_path
+struct Exception::CallStack
+  # Represents a specific frame within an `Exception#backtrace`;
+  # exposing the location, function name, and memory address (if available).
+  struct Frame
+    # Returns the file that at which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the file would be `/home/crystal/test.cr`.
+    getter file : String
+
+    # Returns the function name in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the function would be `test_method`.
+    getter function : String
+
+    # Returns the line number in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the line number would be `24`.
+    getter line_number : Int32
+
+    # Returns the column number in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the column number would be `5`.
+    getter column_number : Int32
+
+    # Returns the memory address
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the column number would be the hexstring `5df02499e76`.
+    getter address : String?
+
+    protected def initialize(
+      @file : String,
+      @function : String,
+      @line_number : Int32,
+      @column_number : Int32,
+      @address : String? = nil
+    )
     end
 
+    def_equals_and_hash @function, @file, @line_number, @column_number, @address
+
+    # Returns the filename of `#file`.
+    #
+    # ```
+    # frame.file     # => /home/crystal/test.cr
+    # frame.filename # => test.cr
+    # ```
+    def filename : String
+      File.basename @file
+    end
+
+    # Returns a `Path` instance of `#file`.
     def file_path : Path
       Path.new @file
     end
 
+    # Returns a `String` representation of `self` as you would see it in `Exception#backtrace`.
     def to_s(io : IO) : Nil
       io << @file << ':' << @line_number << ':' << @column_number
       io << " in " << '\'' << @function << '\''
@@ -44,7 +92,7 @@ struct Exception::CallStack
 
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
-  CURRENT_DIR = begin
+  private CURRENT_DIR = begin
     dir = Process::INITIAL_PWD
     dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
     dir
@@ -52,6 +100,7 @@ struct Exception::CallStack
 
   @@skip = [] of String
 
+  # :nodoc:
   def self.skip(filename)
     @@skip << filename
   end
@@ -60,12 +109,16 @@ struct Exception::CallStack
 
   @callstack : Array(Void*)
   @backtrace : Array(String)?
+
+  # :nodoc:
   getter frames : Array(Frame) { decode_backtrace }
 
+  # :nodoc:
   def initialize
     @callstack = CallStack.unwind
   end
 
+  # :nodoc:
   def printable_backtrace
     self.frames.map &.to_s
   end
@@ -74,6 +127,7 @@ struct Exception::CallStack
     # This is only used for the workaround described in `Exception.unwind`
     @@makecontext_range : Range(Void*, Void*)?
 
+    # :nodoc:
     def self.makecontext_range
       @@makecontext_range ||= begin
         makecontext_start = makecontext_end = LibC.dlsym(LibC::RTLD_DEFAULT, "makecontext")
@@ -118,6 +172,7 @@ struct Exception::CallStack
     callstack
   end
 
+  # :nodoc:
   struct RepeatedFrame
     getter ip : Void*, count : Int32
 
@@ -130,6 +185,7 @@ struct Exception::CallStack
     end
   end
 
+  # :nodoc:
   def self.print_backtrace
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       last_frame = data.as(RepeatedFrame*)
