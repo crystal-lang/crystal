@@ -374,21 +374,32 @@ describe Crystal::Repl::Interpreter do
     it "put and remove from union, together with is_a? (truthy case)" do
       interpret(<<-CODE).should eq(2)
         a = 1 == 1 ? 2 : true
-        if a.is_a?(Int32)
-          a
-        else
-          4
-        end
+        a.is_a?(Int32) ? a : 4
         CODE
     end
 
     it "put and remove from union, together with is_a? (falsey case)" do
       interpret(<<-CODE).should eq(true)
         a = 1 == 2 ? 2 : true
-        if a.is_a?(Int32)
-          true
+        a.is_a?(Int32) ? true : a
+        CODE
+    end
+
+    it "returns union type" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          if 1 == 1
+            return 'a'
+          end
+
+          3
+        end
+
+        x = foo
+        if x.is_a?(Char)
+          x
         else
-          a
+          'b'
         end
         CODE
     end

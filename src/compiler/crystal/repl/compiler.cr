@@ -4,8 +4,8 @@ require "./instructions"
 class Crystal::Repl::Compiler < Crystal::Visitor
   Decompile = false
 
-  private getter? inside_method
   private getter scope
+  private getter def : Def?
 
   def initialize(
     @program : Program,
@@ -13,7 +13,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @local_vars : LocalVars,
     @instructions : Array(Instruction) = [] of Instruction,
     @scope : Type = program,
-    @inside_method = false
+    @def = nil
   )
   end
 
@@ -28,7 +28,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars,
       compiled_def.instructions,
       scope: compiled_def.def.owner,
-      inside_method: true)
+      def: compiled_def.def)
   end
 
   def compile(node : ASTNode) : Array(Instruction)
@@ -37,6 +37,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave sizeof_type(node)
 
     @instructions
+  end
+
+  private def inside_method?
+    !!@def
   end
 
   def visit(node : Nop)
@@ -135,7 +139,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     type = @local_vars.type(node.name)
 
     get_local index, sizeof_type(type)
-    bitcast type, node.type
+    convert type, node.type
     false
   end
 
@@ -167,11 +171,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if node.truthy?
       node.then.accept self
-      bitcast node.then.type, node.type
+      convert node.then.type, node.type
       return false
     elsif node.falsey?
       node.else.accept self
-      bitcast node.else.type, node.type
+      convert node.else.type, node.type
       return false
     end
 
@@ -179,14 +183,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     node.then.accept self
-    bitcast node.then.type, node.type
+    convert node.then.type, node.type
     jump 0
     then_jump_location = patch_location
 
     patch_jump(cond_jump_location)
 
     node.else.accept self
-    bitcast node.else.type, node.type
+    convert node.else.type, node.type
 
     patch_jump(then_jump_location)
 
@@ -216,8 +220,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     if exp
       exp.accept self
-      leave sizeof_type(exp)
-      exp.accept self
+
+      def_type = @def.not_nil!.type
+      convert exp.type, def_type
+      leave sizeof_type(def_type)
     else
       put_nil
       leave 0
@@ -457,26 +463,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @program.llvm_id.type_id(type)
   end
 
-  private def bitcast(from : Type, to : Type)
+  private def convert(from : Type, to : Type)
     return if from == to
 
-    bitcast_distinct(from, to)
+    convert_distinct(from, to)
   end
 
-  private def bitcast_distinct(from : Type, to : MixedUnionType)
+  private def convert_distinct(from : Type, to : MixedUnionType)
     put_in_union(type_id(from), sizeof_type(from), sizeof_type(to))
   end
 
-  private def bitcast_distinct(from : MixedUnionType, to : Type)
+  private def convert_distinct(from : MixedUnionType, to : Type)
     remove_from_union(sizeof_type(from), sizeof_type(to))
   end
 
-  private def bitcast_distinct(from : NoReturnType, to : Type)
+  private def convert_distinct(from : NoReturnType, to : Type)
     # Nothing
   end
 
-  private def bitcast_distinct(from : Type, to : Type)
-    raise "BUG: missing bitcast_distinct from #{from} to #{to}"
+  private def convert_distinct(from : Type, to : Type)
+    raise "BUG: missing convert_distinct from #{from} to #{to}"
   end
 
   private def append(op_code : OpCode)
