@@ -524,7 +524,7 @@ Crystal::Repl::Instructions =
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       stack_pop_size(size),
+      code:       stack_shrink_by(size),
     },
     branch_if: {
       operands:   [index : Int32],
@@ -586,6 +586,39 @@ Crystal::Repl::Instructions =
       pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       false,
       code:       stack_move_from(pointer + offset, size),
+    },
+    put_in_union: {
+      operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        (stack - from_size).copy_to(stack - from_size + type_id_bytesize, from_size)
+        (stack - from_size).as(Int64*).value = type_id.to_i64!
+        stack_grow_by(union_size - from_size)
+      end,
+    },
+    remove_from_union: {
+      operands:   [union_size : Int32, from_size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: clean up stack
+        stack_shrink_by(union_size)
+        stack_move_from(stack + type_id_bytesize, from_size)
+      end,
+    },
+    union_is_a: {
+      operands:   [union_size : Int32, filter_type_id : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       begin
+        type_id = (stack - union_size).as(Int32*).value
+        type = type_from_type_id(type_id)
+        stack_shrink_by(union_size)
+
+        filter_type = type_from_type_id(filter_type_id)
+        !!type.filter_by(filter_type)
+      end,
     },
     leave: {
       operands:   [size : Int32] of Nil,

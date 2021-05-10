@@ -28,6 +28,7 @@ class Crystal::Repl::Interpreter
 
     @main_visitor = MainVisitor.new(@program)
     @top_level_visitor = TopLevelVisitor.new(@program)
+    @cleanup_transformer = CleanupTransformer.new(@program)
   end
 
   def interpret(node : ASTNode) : Value
@@ -38,6 +39,8 @@ class Crystal::Repl::Interpreter
 
     @main_visitor.reset
     node.accept @main_visitor
+
+    node = node.transform(@cleanup_transformer)
 
     # Declare local variables
     # TODO: reuse previously declared variables
@@ -118,6 +121,14 @@ class Crystal::Repl::Interpreter
 
       {% if Trace %}
         p Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)
+        # stack_size = stack - @stack.to_unsafe
+        # print "Stack: "
+        # stack_size.times do |i|
+        #   print stack_bottom[i].to_s(16).rjust(2, '0')
+        #   print " " unless i == stack_size - 1
+        # end
+
+        # puts
       {% end %}
     end
 
@@ -210,18 +221,13 @@ class Crystal::Repl::Interpreter
 
   private macro stack_pop(t)
     value = (stack - sizeof({{t}})).as({{t}}*).value
-    stack_pop_size(sizeof({{t}}))
+    stack_shrink_by(sizeof({{t}}))
     value
-  end
-
-  private macro stack_pop_size(size)
-    # TODO: clean up stack
-    stack -= {{size}}
   end
 
   private macro stack_push(value)
     stack.as(Pointer(typeof({{value}}))).value = {{value}}
-    stack += sizeof(typeof({{value}}))
+    stack_grow_by(sizeof(typeof({{value}})))
   end
 
   private macro stack_copy_to(pointer, size)
@@ -230,7 +236,15 @@ class Crystal::Repl::Interpreter
 
   private macro stack_move_from(pointer, size)
     stack.copy_from({{pointer}}, {{size}})
+    stack_grow_by({{size}})
+  end
+
+  private macro stack_grow_by(size)
     stack += {{size}}
+  end
+
+  private macro stack_shrink_by(size)
+    stack -= {{size}}
   end
 
   private def sizeof_type(type : Type) : Int32
@@ -239,5 +253,9 @@ class Crystal::Repl::Interpreter
 
   private def type_from_type_id(id : Int32) : Type
     @program.llvm_id.type_from_id(id)
+  end
+
+  private macro type_id_bytesize
+    8
   end
 end

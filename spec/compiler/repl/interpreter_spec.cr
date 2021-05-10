@@ -370,6 +370,30 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "unions" do
+    it "put and remove from union, together with is_a? (truthy case)" do
+      interpret(<<-CODE).should eq(2)
+        a = 1 == 1 ? 2 : true
+        if a.is_a?(Int32)
+          a
+        else
+          4
+        end
+        CODE
+    end
+
+    it "put and remove from union, together with is_a? (falsey case)" do
+      interpret(<<-CODE).should eq(true)
+        a = 1 == 2 ? 2 : true
+        if a.is_a?(Int32)
+          true
+        else
+          a
+        end
+        CODE
+    end
+  end
+
   context "types" do
     it "interprets path to type" do
       program, repl_value = interpret_full("String")

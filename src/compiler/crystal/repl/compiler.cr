@@ -132,7 +132,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Var)
     index = @local_vars.name_to_index(node.name)
-    get_local index, sizeof_type(@local_vars.type(node.name))
+    type = @local_vars.type(node.name)
+
+    get_local index, sizeof_type(type)
+    bitcast type, node.type
     false
   end
 
@@ -160,25 +163,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
-    # TODO: upcast/downcast
+    node.cond.accept self
 
-    # TODO: remove this
-    if node.cond.is_a?(RespondsTo)
-      put_nil
+    if node.truthy?
+      node.then.accept self
+      bitcast node.then.type, node.type
+      return false
+    elsif node.falsey?
+      node.else.accept self
+      bitcast node.else.type, node.type
       return false
     end
 
-    node.cond.accept self
     branch_unless 0
     cond_jump_location = patch_location
 
     node.then.accept self
+    bitcast node.then.type, node.type
     jump 0
     then_jump_location = patch_location
 
     patch_jump(cond_jump_location)
 
     node.else.accept self
+    bitcast node.else.type, node.type
 
     patch_jump(then_jump_location)
 
@@ -213,6 +221,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       put_nil
       leave 0
+    end
+
+    false
+  end
+
+  def visit(node : IsA)
+    node.obj.accept self
+
+    obj_type = node.obj.type
+    const_type = node.const.type
+
+    filtered_type = obj_type.filter_by(const_type).not_nil!
+
+    if obj_type.is_a?(MixedUnionType)
+      union_is_a(sizeof_type(obj_type), type_id(filtered_type))
+    else
+      node.raise "BUG: missing IsA for #{obj_type}"
     end
 
     false
@@ -432,9 +457,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @program.llvm_id.type_id(type)
   end
 
-  # private def put_object(value, type : Type) : Nil
-  #   put_object Value.new(value, type)
-  # end
+  private def bitcast(from : Type, to : Type)
+    return if from == to
+
+    bitcast_distinct(from, to)
+  end
+
+  private def bitcast_distinct(from : Type, to : MixedUnionType)
+    put_in_union(type_id(from), sizeof_type(from), sizeof_type(to))
+  end
+
+  private def bitcast_distinct(from : MixedUnionType, to : Type)
+    remove_from_union(sizeof_type(from), sizeof_type(to))
+  end
+
+  private def bitcast_distinct(from : NoReturnType, to : Type)
+    # Nothing
+  end
+
+  private def bitcast_distinct(from : Type, to : Type)
+    raise "BUG: missing bitcast_distinct from #{from} to #{to}"
+  end
 
   private def append(op_code : OpCode)
     append op_code.value
