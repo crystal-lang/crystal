@@ -111,9 +111,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case target
     when Var
       node.value.accept self
+
       index = @local_vars.name_to_index(target.name)
       type = @local_vars.type(target.name)
+
+      # Before assigning to the var we must potentially box inside a union
+      convert node.value.type, type
       set_local index, sizeof_type(type)
+
+      # And because the assignment returns the right-hand side, we
+      # must then potentially unbox the union
+      convert type, node.value.type
     when InstanceVar
       if inside_method?
         node.value.accept self
@@ -170,10 +178,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.cond.accept self
 
     if node.truthy?
+      pop(sizeof_type(node.cond))
+
       node.then.accept self
       convert node.then.type, node.type
       return false
     elsif node.falsey?
+      pop(sizeof_type(node.cond))
+
       node.else.accept self
       convert node.else.type, node.type
       return false

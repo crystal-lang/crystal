@@ -133,7 +133,7 @@ class Crystal::Repl::Interpreter
     end
 
     if stack != stack_bottom_after_local_vars
-      raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes)"
+      raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes): #{Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)}"
     end
 
     Value.new(@program, return_value, node_type)

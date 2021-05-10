@@ -403,6 +403,14 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "put and remove from union in local var" do
+      interpret(<<-CODE).should eq(3)
+        a = 1 == 1 ? 2 : true
+        a = 3
+        a.is_a?(Int32) ? a : 4
+        CODE
+    end
   end
 
   context "types" do
