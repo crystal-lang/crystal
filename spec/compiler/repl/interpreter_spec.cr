@@ -411,6 +411,34 @@ describe Crystal::Repl::Interpreter do
         a.is_a?(Int32) ? a : 4
         CODE
     end
+
+    it "put and remove from union in instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          @x : Int32 | Char
+
+          def initialize
+            if 1 == 1
+              @x = 2
+            else
+              @x = 'a'
+            end
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        z = foo.x
+        if z.is_a?(Int32)
+          z
+        else
+          10
+        end
+      CODE
+    end
   end
 
   context "types" do

@@ -84,15 +84,18 @@ class Crystal::Repl::Interpreter
 
     while true
       {% if Trace %}
-        print (ip - instructions.to_unsafe).to_s.rjust(4, '0')
-        print ' '
+        puts
+        if call_frame = @call_stack.last?
+          puts "In: #{call_frame.compiled_def.def.name}"
+        else
+          puts "In: top-level"
+        end
+
+        Disassembler.disassemble_one(instructions, (ip - instructions.to_unsafe).to_i32, current_local_vars, STDOUT)
+        puts
       {% end %}
 
       op_code = next_instruction OpCode
-
-      {% if Trace %}
-        puts op_code
-      {% end %}
 
       {% begin %}
         case op_code
@@ -127,7 +130,28 @@ class Crystal::Repl::Interpreter
         #   print stack_bottom[i].to_s(16).rjust(2, '0')
         #   print " " unless i == stack_size - 1
         # end
+        # puts
 
+        # print "       "
+        # @local_vars.each_name_index_and_size do |name, index, size|
+        #   next if size == 0
+
+        #   print "-" * (2 + (3 * (size - 1)))
+        #   print " "
+        # end
+        # puts
+
+        # print "       "
+        # @local_vars.each_name_index_and_size do |name, index, size|
+        #   next if size == 0
+
+        #   width = (2 + (3 * (size - 1)))
+        #   part = name[0...width]
+        #   print part
+        #   print " " * (width - part.size)
+
+        #   print " "
+        # end
         # puts
       {% end %}
     end
@@ -137,6 +161,14 @@ class Crystal::Repl::Interpreter
     end
 
     Value.new(@program, return_value, node_type)
+  end
+
+  private def current_local_vars
+    if call_frame = @call_stack.last?
+      call_frame.compiled_def.local_vars
+    else
+      @local_vars
+    end
   end
 
   private macro call(compiled_def)
@@ -226,7 +258,8 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_push(value)
-    stack.as(Pointer(typeof({{value}}))).value = {{value}}
+    %temp = {{value}}
+    stack.as(Pointer(typeof({{value}}))).value = %temp
     stack_grow_by(sizeof(typeof({{value}})))
   end
 

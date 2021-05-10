@@ -617,6 +617,7 @@ Crystal::Repl::Instructions =
         stack_shrink_by(union_size)
 
         filter_type = type_from_type_id(filter_type_id)
+
         !!type.filter_by(filter_type)
       end,
     },

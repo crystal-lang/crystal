@@ -47,7 +47,19 @@ class Crystal::Repl::LocalVars
     @types[name]
   end
 
-  def sizeof_type(type) : Int32
+  def each_name_index_and_size
+    names_and_indexes = @name_to_index.to_a
+    names_and_indexes.each_with_index do |(name, index), i|
+      next_index = names_and_indexes[i + 1]?.try &.[1]
+      if next_index
+        yield name, index, next_index - index
+      else
+        yield name, index, @bytesize - index
+      end
+    end
+  end
+
+  private def sizeof_type(type) : Int32
     @program.size_of(type.sizeof_type).to_i32
   end
 end

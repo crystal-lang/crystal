@@ -129,9 +129,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: check struct
         ivar_index = scope.index_of_instance_var(target.name).not_nil!
         ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
-        ivar_size = sizeof_type(scope.lookup_instance_var(target.name))
+        ivar = scope.lookup_instance_var(target.name)
+        ivar_size = sizeof_type(ivar.type)
 
+        convert node.value.type, ivar.type
         set_self_class_ivar ivar_offset, ivar_size
+        convert ivar.type, node.value.type
       else
         node.type = @program.nil_type
         put_nil
