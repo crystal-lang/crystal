@@ -92,6 +92,18 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a == b,
     },
+    neq_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a != b,
+    },
+    div_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a / b,
+    },
     i8_to_i16: {
       operands:   [] of Nil,
       pop_values: [value : Int8],

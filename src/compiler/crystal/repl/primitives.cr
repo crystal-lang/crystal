@@ -5,153 +5,11 @@ class Crystal::Repl::Compiler
     obj = node.obj
 
     case body.name
-    when "unchecked_convert"
-      obj_type =
-        if obj
-          obj.accept self
-          obj.type
-        else
-          scope
-        end
-
-      return false unless @wants_value
-
-      target_type = body.type
-
-      obj_kind = integer_or_float_kind(obj_type)
-      target_kind = integer_or_float_kind(target_type)
-
-      unless obj_kind && target_kind
-        node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-      end
-
-      target_kind =
-        case target_kind
-        when :u8  then :i8
-        when :u16 then :i16
-        when :u32 then :i32
-        when :u64 then :i64
-        else           target_kind
-        end
-
-      case {obj_kind, target_kind}
-      when {:i8, :i8}   then nop
-      when {:i8, :i16}  then i8_to_i16
-      when {:i8, :i32}  then i8_to_i32
-      when {:i8, :i64}  then i8_to_i64
-      when {:i8, :f32}  then i8_to_f32
-      when {:i8, :f64}  then i8_to_f64
-      when {:u8, :i8}   then nop
-      when {:u8, :i16}  then u8_to_i16
-      when {:u8, :i32}  then u8_to_i32
-      when {:u8, :i64}  then u8_to_i64
-      when {:u8, :f32}  then u8_to_f32
-      when {:u8, :f64}  then u8_to_f64
-      when {:i16, :i8}  then i16_to_i8_bang
-      when {:i16, :i16} then nop
-      when {:i16, :i32} then i16_to_i32
-      when {:i16, :i64} then i16_to_i64
-      when {:i16, :f32} then i16_to_f32
-      when {:i16, :f64} then i16_to_f64
-      when {:u16, :i8}  then i16_to_i8_bang
-      when {:u16, :i16} then nop
-      when {:u16, :i32} then u16_to_i32
-      when {:u16, :i64} then u16_to_i64
-      when {:u16, :f32} then u16_to_f32
-      when {:u16, :f64} then u16_to_f64
-      when {:i32, :i8}  then i32_to_i8_bang
-      when {:i32, :i16} then i32_to_i16_bang
-      when {:i32, :i32} then nop
-      when {:i32, :i64} then i32_to_i64
-      when {:i32, :f32} then i32_to_f32
-      when {:i32, :f64} then i32_to_f64
-      when {:u32, :i8}  then i32_to_i8_bang
-      when {:u32, :i16} then i32_to_i16_bang
-      when {:u32, :i32} then nop
-      when {:u32, :u32} then nop
-      when {:u32, :i64} then u32_to_i64
-      when {:u32, :f32} then u32_to_f32
-      when {:u32, :f64} then u32_to_f64
-      when {:i64, :i8}  then i64_to_i8_bang
-      when {:i64, :i16} then i64_to_i16_bang
-      when {:i64, :i32} then i64_to_i32_bang
-      when {:i64, :i64} then nop
-      when {:i64, :f32} then i64_to_f32
-      when {:i64, :f64} then i64_to_f64
-      when {:u64, :i8}  then i64_to_i8_bang
-      when {:u64, :i16} then i64_to_i16_bang
-      when {:u64, :i32} then i64_to_i32_bang
-      when {:u64, :i64} then nop
-      when {:u64, :f32} then u64_to_f32
-      when {:u64, :f64} then u64_to_f64
-      when {:f32, :i8}  then f32_to_i8_bang
-      when {:f32, :i16} then f32_to_i16_bang
-      when {:f32, :i32} then f32_to_i32_bang
-      when {:f32, :i64} then f32_to_i64_bang
-      when {:f32, :f32} then nop
-      when {:f32, :f64} then f32_to_f64
-      when {:f64, :i8}  then f64_to_i8_bang
-      when {:f64, :i16} then f64_to_i16_bang
-      when {:f64, :i32} then f64_to_i32_bang
-      when {:f64, :i64} then f64_to_i64_bang
-      when {:f64, :f32} then f64_to_f32_bang
-      when {:f64, :f64} then nop
-      else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-      end
+    when "unchecked_convert", "convert"
+      # TODO: let convert raise on error
+      primitive_unchecked_convert(node, body)
     when "binary"
-      case node.name
-      when "+"
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        add_i32
-      when "-"
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        sub_i32
-      when "*"
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        mul_i32
-      when "<"
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        lt_i32
-      when "<="
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        le_i32
-      when ">"
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        gt_i32
-      when ">="
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        ge_i32
-      when "=="
-        # TODO: don't assume Int32 + Int32
-        accept_call_members(node)
-        return false unless @wants_value
-
-        eq_i32
-        # when "!=" then binary_neq
-      else
-        node.raise "BUG: missing handling of binary op #{node.name}"
-      end
+      primitive_binary(node, body)
     when "pointer_new"
       accept_call_members(node)
       return false unless @wants_value
@@ -219,6 +77,159 @@ class Crystal::Repl::Compiler
       allocate_class(instance_sizeof_type(type), type_id(type))
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
+    end
+  end
+
+  private def primitive_unchecked_convert(node, body)
+    obj = node.obj
+
+    obj_type =
+      if obj
+        obj.accept self
+        obj.type
+      else
+        scope
+      end
+
+    return false unless @wants_value
+
+    target_type = body.type
+
+    obj_kind = integer_or_float_kind(obj_type)
+    target_kind = integer_or_float_kind(target_type)
+
+    unless obj_kind && target_kind
+      node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+    end
+
+    target_kind =
+      case target_kind
+      when :u8  then :i8
+      when :u16 then :i16
+      when :u32 then :i32
+      when :u64 then :i64
+      else           target_kind
+      end
+
+    case {obj_kind, target_kind}
+    when {:i8, :i8}   then nop
+    when {:i8, :i16}  then i8_to_i16
+    when {:i8, :i32}  then i8_to_i32
+    when {:i8, :i64}  then i8_to_i64
+    when {:i8, :f32}  then i8_to_f32
+    when {:i8, :f64}  then i8_to_f64
+    when {:u8, :i8}   then nop
+    when {:u8, :i16}  then u8_to_i16
+    when {:u8, :i32}  then u8_to_i32
+    when {:u8, :i64}  then u8_to_i64
+    when {:u8, :f32}  then u8_to_f32
+    when {:u8, :f64}  then u8_to_f64
+    when {:i16, :i8}  then i16_to_i8_bang
+    when {:i16, :i16} then nop
+    when {:i16, :i32} then i16_to_i32
+    when {:i16, :i64} then i16_to_i64
+    when {:i16, :f32} then i16_to_f32
+    when {:i16, :f64} then i16_to_f64
+    when {:u16, :i8}  then i16_to_i8_bang
+    when {:u16, :i16} then nop
+    when {:u16, :i32} then u16_to_i32
+    when {:u16, :i64} then u16_to_i64
+    when {:u16, :f32} then u16_to_f32
+    when {:u16, :f64} then u16_to_f64
+    when {:i32, :i8}  then i32_to_i8_bang
+    when {:i32, :i16} then i32_to_i16_bang
+    when {:i32, :i32} then nop
+    when {:i32, :i64} then i32_to_i64
+    when {:i32, :f32} then i32_to_f32
+    when {:i32, :f64} then i32_to_f64
+    when {:u32, :i8}  then i32_to_i8_bang
+    when {:u32, :i16} then i32_to_i16_bang
+    when {:u32, :i32} then nop
+    when {:u32, :u32} then nop
+    when {:u32, :i64} then u32_to_i64
+    when {:u32, :f32} then u32_to_f32
+    when {:u32, :f64} then u32_to_f64
+    when {:i64, :i8}  then i64_to_i8_bang
+    when {:i64, :i16} then i64_to_i16_bang
+    when {:i64, :i32} then i64_to_i32_bang
+    when {:i64, :i64} then nop
+    when {:i64, :f32} then i64_to_f32
+    when {:i64, :f64} then i64_to_f64
+    when {:u64, :i8}  then i64_to_i8_bang
+    when {:u64, :i16} then i64_to_i16_bang
+    when {:u64, :i32} then i64_to_i32_bang
+    when {:u64, :i64} then nop
+    when {:u64, :f32} then u64_to_f32
+    when {:u64, :f64} then u64_to_f64
+    when {:f32, :i8}  then f32_to_i8_bang
+    when {:f32, :i16} then f32_to_i16_bang
+    when {:f32, :i32} then f32_to_i32_bang
+    when {:f32, :i64} then f32_to_i64_bang
+    when {:f32, :f32} then nop
+    when {:f32, :f64} then f32_to_f64
+    when {:f64, :i8}  then f64_to_i8_bang
+    when {:f64, :i16} then f64_to_i16_bang
+    when {:f64, :i32} then f64_to_i32_bang
+    when {:f64, :i64} then f64_to_i64_bang
+    when {:f64, :f32} then f64_to_f32_bang
+    when {:f64, :f64} then nop
+    else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+    end
+  end
+
+  private def primitive_binary(node, body)
+    case node.name
+    when "+"  then primitive_binary_op(node, body, :add)
+    when "-"  then primitive_binary_op(node, body, :sub)
+    when "*"  then primitive_binary_op(node, body, :mul)
+    when "<"  then primitive_binary_op(node, body, :lt)
+    when "<=" then primitive_binary_op(node, body, :le)
+    when ">"  then primitive_binary_op(node, body, :gt)
+    when ">=" then primitive_binary_op(node, body, :ge)
+    when "==" then primitive_binary_op(node, body, :eq)
+    when "!=" then primitive_binary_op(node, body, :neq)
+    when "/"
+      primitive_binary_float_div(node, body)
+    else
+      node.raise "BUG: missing handling of binary op #{node.name}"
+    end
+  end
+
+  private macro primitive_binary_op(node, body, instruction)
+    # TODO: don't assume Int32 op Int32
+    accept_call_members({{node}})
+    return false unless @wants_value
+
+    %obj_type = {{node}}.obj.not_nil!.type
+    %arg_type = {{node}}.args.first.type
+
+    %obj_kind = integer_or_float_kind(%obj_type)
+    %target_kind = integer_or_float_kind(%arg_type)
+
+    case { %obj_kind, %target_kind }
+    when {:i32, :i32}
+      {{instruction.id}}_i32
+    else
+      {{node}}.raise "BUG: missing handling of binary op {{instruction}} with types #{ %obj_type } and #{ %arg_type }"
+    end
+  end
+
+  private def primitive_binary_float_div(node, body)
+    # TODO: don't assume Float64 op Float64
+    accept_call_members(node)
+    return false unless @wants_value
+
+    obj_type = node.obj.not_nil!.type
+    arg_type = node.args.first.type
+
+    obj_kind = integer_or_float_kind(obj_type)
+    target_kind = integer_or_float_kind(arg_type)
+
+    case {obj_kind, target_kind}
+    when {:f64, :f64}
+      div_f64
+    else
+      node.raise "BUG: missing handling of binary float div with types #{obj_type} and #{arg_type}"
     end
   end
 

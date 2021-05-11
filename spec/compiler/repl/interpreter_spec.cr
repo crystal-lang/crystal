@@ -229,21 +229,25 @@ describe Crystal::Repl::Interpreter do
     #   interpret("1.2 < 2.3").should be_true
     # end
 
-    # it "interprets Int32 == Int32 (true)" do
-    #   interpret("1 == 1").should be_true
-    # end
+    it "interprets Int32 == Int32 (true)" do
+      interpret("1 == 1").should be_true
+    end
 
-    # it "interprets Int32 == Int32 (false)" do
-    #   interpret("1 == 2").should be_false
-    # end
+    it "interprets Int32 == Int32 (false)" do
+      interpret("1 == 2").should be_false
+    end
 
-    # it "interprets Int32 != Int32 (true)" do
-    #   interpret("1 != 2").should be_true
-    # end
+    it "interprets Int32 != Int32 (true)" do
+      interpret("1 != 2").should be_true
+    end
 
-    # it "interprets Int32 != Int32 (false)" do
-    #   interpret("1 != 1").should be_false
-    # end
+    it "interprets Int32 != Int32 (false)" do
+      interpret("1 != 1").should be_false
+    end
+
+    it "interprets Float64 / Float64" do
+      interpret("2.5 / 2.1").should eq(2.5 / 2.1)
+    end
 
     it "discards comparison" do
       interpret("1 < 2; 3").should eq(3)
