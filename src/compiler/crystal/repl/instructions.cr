@@ -476,7 +476,7 @@ Crystal::Repl::Instructions =
       operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       false,
-      code:       stack_copy_to(pointer, element_size),
+      code:       stack_move_to(pointer, element_size),
     },
     pointer_get: {
       operands:   [element_size : Int32] of Nil,
@@ -525,6 +525,12 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       stack_shrink_by(size),
+    },
+    dup: {
+      operands:   [size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_move_from(stack - size, size),
     },
     branch_if: {
       operands:   [index : Int32],
@@ -579,7 +585,7 @@ Crystal::Repl::Instructions =
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
-      code:       stack_copy_to(self_class_pointer + offset, size),
+      code:       stack_move_to(self_class_pointer + offset, size),
     },
     get_class_ivar: {
       operands:   [offset : Int32, size : Int32],

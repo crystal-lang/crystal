@@ -2,12 +2,20 @@ require "./compiler"
 
 class Crystal::Repl::Compiler
   private def visit_primitive(node, body)
+    obj = node.obj
+
     case body.name
     when "unchecked_convert"
-      obj = node.obj.not_nil!
-      obj.accept self
+      obj_type =
+        if obj
+          obj.accept self
+          obj.type
+        else
+          scope
+        end
 
-      obj_type = obj.type
+      return false unless @wants_value
+
       target_type = body.type
 
       obj_kind = integer_or_float_kind(obj_type)
@@ -95,34 +103,50 @@ class Crystal::Repl::Compiler
       when "+"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         add_i32
       when "-"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         sub_i32
       when "*"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         mul_i32
       when "<"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         lt_i32
       when "<="
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         le_i32
       when ">"
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         gt_i32
       when ">="
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         ge_i32
       when "=="
         # TODO: don't assume Int32 + Int32
         accept_call_members(node)
+        return false unless @wants_value
+
         eq_i32
         # when "!=" then binary_neq
       else
@@ -130,9 +154,14 @@ class Crystal::Repl::Compiler
       end
     when "pointer_new"
       accept_call_members(node)
+      return false unless @wants_value
+
       pointer_new
     when "pointer_malloc"
       node.args.first.accept self
+
+      # TODO: do we want the side effect of allocating memory
+      return false unless @wants_value
 
       pointer_instance_type = node.obj.not_nil!.type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
@@ -141,24 +170,50 @@ class Crystal::Repl::Compiler
       pointer_malloc(element_size)
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
-      node.args.first.accept self
-      node.obj.not_nil!.accept self
+      request_value(node.args.first)
+      request_value(node.obj.not_nil!)
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"
       accept_call_members(node)
+      return unless @wants_value
+
       pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "pointer_address"
       accept_call_members(node)
+      return unless @wants_value
+
       pointer_address
     when "pointer_diff"
       accept_call_members(node)
+      return unless @wants_value
+
       pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "class"
+      return unless @wants_value
+
       put_type node.obj.not_nil!.type
     when "object_crystal_type_id"
-      put_i32 type_id(node.obj.not_nil!.type)
+      type =
+        if obj
+          dont_request_value(obj)
+          obj.type
+        else
+          scope
+        end
+
+      return unless @wants_value
+
+      put_i32 type_id(type)
     when "allocate"
-      type = (node.obj.try(&.type) || scope).instance_type
+      type =
+        if obj
+          dont_request_value(obj)
+          obj.type.instance_type
+        else
+          scope.instance_type
+        end
+
+      return unless @wants_value
 
       # TODO: check struct
       allocate_class(instance_sizeof_type(type), type_id(type))

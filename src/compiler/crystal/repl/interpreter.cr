@@ -230,7 +230,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro set_local_var(index, size)
-    (stack - {{size}}).copy_to(stack_bottom + {{index}}, {{size}})
+    stack_move_to(stack_bottom + {{index}}, {{size}})
   end
 
   private macro get_local_var(index, size)
@@ -265,6 +265,11 @@ class Crystal::Repl::Interpreter
 
   private macro stack_copy_to(pointer, size)
     (stack - {{size}}).copy_to({{pointer}}, {{size}})
+  end
+
+  private macro stack_move_to(pointer, size)
+    stack_copy_to({{pointer}}, {{size}})
+    stack_shrink_by({{size}})
   end
 
   private macro stack_move_from(pointer, size)

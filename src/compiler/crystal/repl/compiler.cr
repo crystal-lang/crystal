@@ -15,6 +15,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @scope : Type = program,
     @def = nil
   )
+    @wants_value = true
   end
 
   def self.new(
@@ -44,21 +45,29 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Nop)
+    return false unless @wants_value
+
     put_nil
     false
   end
 
   def visit(node : NilLiteral)
+    return false unless @wants_value
+
     put_nil
     false
   end
 
   def visit(node : BoolLiteral)
+    return false unless @wants_value
+
     node.value ? put_true : put_false
     false
   end
 
   def visit(node : NumberLiteral)
+    return false unless @wants_value
+
     case node.kind
     when :i8
       put_i8 node.value.to_i8
@@ -87,30 +96,38 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : CharLiteral)
+    return false unless @wants_value
+
     put_i32 node.value.ord
     false
   end
 
   def visit(node : StringLiteral)
+    return false unless @wants_value
+
     put_i64 node.value.object_id.unsafe_as(Int64)
     false
   end
 
   def visit(node : Expressions)
+    old_wants_value = @wants_value
+
     node.expressions.each_with_index do |expression, i|
+      @wants_value = old_wants_value && i == node.expressions.size - 1
       expression.accept self
-      pop(sizeof_type(expression)) if i < node.expressions.size - 1
     end
+
+    @wants_value = old_wants_value
+
     false
   end
 
   def visit(node : Assign)
-    # TODO: downcast/upcast
-
     target = node.target
     case target
     when Var
-      node.value.accept self
+      request_value(node.value)
+      dup(sizeof_type(node.value)) if @wants_value
 
       index = @local_vars.name_to_index(target.name)
       type = @local_vars.type(target.name)
@@ -118,13 +135,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Before assigning to the var we must potentially box inside a union
       convert node.value.type, type
       set_local index, sizeof_type(type)
-
-      # And because the assignment returns the right-hand side, we
-      # must then potentially unbox the union
-      convert type, node.value.type
     when InstanceVar
       if inside_method?
-        node.value.accept self
+        request_value(node.value)
+        dup(sizeof_type(node.value)) if @wants_value
 
         # TODO: check struct
         ivar_index = scope.index_of_instance_var(target.name).not_nil!
@@ -134,10 +148,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         convert node.value.type, ivar.type
         set_self_class_ivar ivar_offset, ivar_size
-        convert ivar.type, node.value.type
       else
         node.type = @program.nil_type
-        put_nil
+        put_nil if @wants_value
       end
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
@@ -146,6 +159,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Var)
+    return false unless @wants_value
+
     index = @local_vars.name_to_index(node.name)
     type = @local_vars.type(node.name)
 
@@ -155,6 +170,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : InstanceVar)
+    return false unless @wants_value
+
     # TODO: check struct
     ivar_index = scope.index_of_instance_var(node.name).not_nil!
     ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
@@ -178,34 +195,37 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : If)
-    node.cond.accept self
-
     if node.truthy?
-      pop(sizeof_type(node.cond))
-
+      dont_request_value(node.cond)
       node.then.accept self
+      return false unless @wants_value
+
       convert node.then.type, node.type
       return false
     elsif node.falsey?
-      pop(sizeof_type(node.cond))
-
+      dont_request_value(node.cond)
       node.else.accept self
+      return false unless @wants_value
+
       convert node.else.type, node.type
       return false
     end
+
+    request_value(node.cond)
 
     branch_unless 0
     cond_jump_location = patch_location
 
     node.then.accept self
-    convert node.then.type, node.type
+    convert node.then.type, node.type if @wants_value
+
     jump 0
     then_jump_location = patch_location
 
     patch_jump(cond_jump_location)
 
     node.else.accept self
-    convert node.else.type, node.type
+    convert node.else.type, node.type if @wants_value
 
     patch_jump(then_jump_location)
 
@@ -217,15 +237,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     body_index = @instructions.size
-    node.body.accept self
-    pop sizeof_type(node.body.type)
+    dont_request_value(node.body)
 
     patch_jump(cond_jump_location)
 
-    node.cond.accept self
+    request_value(node.cond)
     branch_if body_index
 
-    put_nil
+    put_nil if @wants_value
 
     false
   end
@@ -234,7 +253,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: downcast/upcast
     exp = node.exp
     if exp
-      exp.accept self
+      request_value(exp)
 
       def_type = @def.not_nil!.type
       convert exp.type, def_type
@@ -249,6 +268,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : IsA)
     node.obj.accept self
+    return false unless @wants_value
 
     obj_type = node.obj.type
     const_type = node.const.type
@@ -265,21 +285,29 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TypeOf)
+    return false unless @wants_value
+
     put_type node.type
     false
   end
 
   def visit(node : Path)
+    return false unless @wants_value
+
     put_type node.type
     false
   end
 
   def visit(node : Generic)
+    return false unless @wants_value
+
     put_type node.type
     false
   end
 
   def visit(node : PointerOf)
+    return false unless @wants_value
+
     exp = node.exp
     case exp
     when Var
@@ -292,22 +320,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Not)
     exp = node.exp
+
     case exp.type
     when @program.nil_type
+      dont_request_value(exp)
+      return false unless @wants_value
+
       put_true
     when @program.bool
       exp.accept self
+      return false unless @wants_value
+
       logical_not
     else
       node.raise "BUG: missing interpret Not for #{exp.type}"
     end
 
-    false
-  end
-
-  def visit(node : RespondsTo)
-    # TODO
-    put_false
     false
   end
 
@@ -356,11 +384,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       {% end %}
     end
 
-    obj.try &.accept self
-    args.each &.accept self
-    named_args.try &.each &.value.accept self
+    obj.try { |o| request_value(o) }
+    args.each { |a| request_value(a) }
+    named_args.try &.each { |n| request_value(n) }
 
     call compiled_def
+    pop sizeof_type(node) unless @wants_value
+
     return false
 
     # arg_values = node.args.map do |arg|
@@ -443,11 +473,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: change scope
     node.body.accept self
 
+    return false unless @wants_value
+
     put_nil
     false
   end
 
   def visit(node : Def)
+    return false unless @wants_value
+
     put_nil
     false
   end
@@ -466,6 +500,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       {% end %}
     end
   {% end %}
+
+  private def request_value(node : ASTNode)
+    accept_with_wants_value node, true
+  end
+
+  private def dont_request_value(node : ASTNode)
+    accept_with_wants_value node, false
+  end
+
+  private def accept_with_wants_value(node : ASTNode, wants_value)
+    old_wants_value = @wants_value
+    @wants_value = wants_value
+    node.accept self
+    @wants_value = old_wants_value
+  end
 
   private def put_type(type : Type)
     put_i32 type_id(type)

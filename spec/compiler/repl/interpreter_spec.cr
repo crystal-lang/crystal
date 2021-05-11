@@ -165,6 +165,21 @@ describe Crystal::Repl::Interpreter do
         interpret("-23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
       end
     {% end %}
+
+    it "discards conversion" do
+      interpret(<<-CODE).should eq(3)
+      1.to_i8!
+      3
+      CODE
+    end
+
+    it "discards conversion with local var" do
+      interpret(<<-CODE).should eq(3)
+      x = 1
+      x.to_i8!
+      3
+      CODE
+    end
   end
 
   context "math" do
@@ -184,12 +199,16 @@ describe Crystal::Repl::Interpreter do
     #   interpret("2.5 + 2.3").should eq(4.8)
     # end
 
-    # it "interprets Int32 - Int32" do
-    #   interpret("1 - 2").should eq(-1)
-    # end
+    it "interprets Int32 - Int32" do
+      interpret("1 - 2").should eq(-1)
+    end
 
     it "interprets Int32 * Int32" do
       interpret("2 * 3").should eq(6)
+    end
+
+    it "discards math" do
+      interpret("1 + 2; 4").should eq(4)
     end
   end
 
@@ -225,11 +244,19 @@ describe Crystal::Repl::Interpreter do
     # it "interprets Int32 != Int32 (false)" do
     #   interpret("1 != 1").should be_false
     # end
+
+    it "discards comparison" do
+      interpret("1 < 2; 3").should eq(3)
+    end
   end
 
   context "not" do
     it "interprets not for nil" do
       interpret("!nil").should eq(true)
+    end
+
+    it "interprets not for nil type" do
+      interpret("x = 1; !(x = 2; nil); x").should eq(2)
     end
 
     it "interprets not for bool true" do
@@ -239,9 +266,17 @@ describe Crystal::Repl::Interpreter do
     it "interprets not for bool false" do
       interpret("!false").should eq(true)
     end
+
+    it "discards nil not" do
+      interpret("!nil; 3").should eq(3)
+    end
+
+    it "discards bool not" do
+      interpret("!false; 3").should eq(3)
+    end
   end
 
-  context "if and unless" do
+  context "control flow" do
     it "interprets if (true)" do
       interpret("1 == 1 ? 2 : 3").should eq(2)
     end
@@ -253,9 +288,11 @@ describe Crystal::Repl::Interpreter do
     it "interprets unless" do
       interpret("unless 1 == 1; 2; else; 3; end").should eq(3)
     end
-  end
 
-  context "control flow" do
+    it "discards if" do
+      interpret("1 == 1 ? 2 : 3; 4").should eq(4)
+    end
+
     it "interprets while" do
       interpret(<<-CODE).should eq(10)
         a = 0
@@ -283,6 +320,10 @@ describe Crystal::Repl::Interpreter do
         end
         a
       CODE
+    end
+
+    it "discards while" do
+      interpret("while 1 == 2; 3; end; 4").should eq(4)
     end
 
     it "interprets return" do
@@ -368,6 +409,45 @@ describe Crystal::Repl::Interpreter do
         ptr1 - ptr2
       CODE
     end
+
+    it "discards pointer malloc" do
+      interpret(<<-CODE).should eq(1)
+        Pointer(Int32).malloc(1_u64)
+        1
+      CODE
+    end
+
+    it "discards pointer get" do
+      interpret(<<-CODE).should eq(1)
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr.value
+        1
+      CODE
+    end
+
+    it "discards pointer new" do
+      interpret(<<-CODE).should eq(1)
+        Pointer(Int32).new(1_u64)
+        1
+      CODE
+    end
+
+    it "discards pointer diff" do
+      interpret(<<-CODE).should eq(1)
+        ptr1 = Pointer(Int32).new(133_u64)
+        ptr2 = Pointer(Int32).new(100_u64)
+        ptr1 - ptr2
+        1
+      CODE
+    end
+
+    it "discards pointerof" do
+      interpret(<<-CODE).should eq(3)
+        a = 1
+        pointerof(a)
+        3
+      CODE
+    end
   end
 
   context "unions" do
@@ -439,6 +519,14 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "discards is_a?" do
+      interpret(<<-CODE).should eq(3)
+        a = 1 == 1 ? 2 : true
+        a.is_a?(Int32)
+        3
+        CODE
+    end
   end
 
   context "types" do
@@ -469,6 +557,26 @@ describe Crystal::Repl::Interpreter do
     it "interprets crystal_type_id for non-nil" do
       program, repl_value = interpret_full("1.crystal_type_id")
       repl_value.value.should eq(program.llvm_id.type_id(program.int32))
+    end
+
+    it "discards Path" do
+      interpret("String; 1").should eq(1)
+    end
+
+    it "discards typeof" do
+      interpret("typeof(1); 1").should eq(1)
+    end
+
+    it "discards generic" do
+      interpret("Pointer(Int32); 1").should eq(1)
+    end
+
+    it "discards .class" do
+      interpret("1.class; 1").should eq(1)
+    end
+
+    it "discards crystal_type_id" do
+      interpret("nil.crystal_type_id; 1").should eq(1)
     end
   end
 
@@ -588,6 +696,16 @@ describe Crystal::Repl::Interpreter do
 
     it "interprets read instance var" do
       interpret(%(x = "hello".@c)).should eq('h'.ord)
+    end
+
+    it "discards allocate" do
+      interpret(<<-EXISTING, <<-CODE).should eq(3)
+        class Foo
+        end
+      EXISTING
+        Foo.allocate
+        3
+      CODE
     end
   end
 end
