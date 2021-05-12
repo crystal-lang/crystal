@@ -2382,6 +2382,10 @@ module Crystal
         node.type = program.pointer_of(program.void)
       when "va_arg"
         visit_va_arg node
+      when "repl_call_stack_unwind"
+        node.type = program.array_of(program.pointer_of(program.void))
+      when "repl_raise_without_backtrace"
+        node.type = program.no_return
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end

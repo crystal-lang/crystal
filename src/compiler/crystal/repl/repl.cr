@@ -91,7 +91,34 @@ class Crystal::Repl
       parser.filename = filename
       parsed_nodes = parser.parse
       parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
-      @program.semantic(parsed_nodes)
+      semantic(parsed_nodes)
     end
+  end
+
+  # TODO: this is more or less a copy of semantic.cr except
+  # that we replace some method's bodies for primitives
+  private def semantic(node : ASTNode, cleanup = true) : ASTNode
+    node, processor = @program.top_level_semantic(node)
+
+    @interpreter.define_primitives
+
+    visitor = InstanceVarsInitializerVisitor.new(@program)
+    @program.visit_with_finished_hooks(node, visitor)
+    visitor.finish
+
+    @program.visit_class_vars_initializers(node)
+
+    # Check that class vars without an initializer are nilable,
+    # give an error otherwise
+    processor.check_non_nilable_class_vars_without_initializers
+
+    result = @program.visit_main(node, process_finished_hooks: true, cleanup: cleanup)
+
+    @program.cleanup_types
+    @program.cleanup_files
+
+    RecursiveStructChecker.new(@program).run
+
+    result
   end
 end

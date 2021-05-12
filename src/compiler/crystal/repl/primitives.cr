@@ -75,6 +75,10 @@ class Crystal::Repl::Compiler
 
       # TODO: check struct
       allocate_class(instance_sizeof_type(type), type_id(type))
+    when "repl_call_stack_unwind"
+      repl_call_stack_unwind
+    when "repl_raise_without_backtrace"
+      repl_raise_without_backtrace
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

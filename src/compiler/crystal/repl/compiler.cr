@@ -133,7 +133,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       type = @local_vars.type(target.name)
 
       # Before assigning to the var we must potentially box inside a union
-      convert node.value.type, type
+      convert node.value, node.value.type, type
       set_local index, sizeof_type(type)
     when InstanceVar
       if inside_method?
@@ -146,7 +146,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         ivar = scope.lookup_instance_var(target.name)
         ivar_size = sizeof_type(ivar.type)
 
-        convert node.value.type, ivar.type
+        convert node.value, node.value.type, ivar.type
         set_self_class_ivar ivar_offset, ivar_size
       else
         node.type = @program.nil_type
@@ -165,7 +165,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     type = @local_vars.type(node.name)
 
     get_local index, sizeof_type(type)
-    convert type, node.type
+    convert node, type, node.type
     false
   end
 
@@ -200,14 +200,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.then.accept self
       return false unless @wants_value
 
-      convert node.then.type, node.type
+      convert node.then, node.then.type, node.type
       return false
     elsif node.falsey?
       dont_request_value(node.cond)
       node.else.accept self
       return false unless @wants_value
 
-      convert node.else.type, node.type
+      convert node.else, node.else.type, node.type
       return false
     end
 
@@ -218,7 +218,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     node.then.accept self
-    convert node.then.type, node.type if @wants_value
+    convert node.then, node.then.type, node.type if @wants_value
 
     jump 0
     then_jump_location = patch_location
@@ -226,7 +226,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     patch_jump(cond_jump_location)
 
     node.else.accept self
-    convert node.else.type, node.type if @wants_value
+    convert node.else, node.else.type, node.type if @wants_value
 
     patch_jump(then_jump_location)
 
@@ -259,7 +259,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       request_value(exp)
 
       def_type = @def.not_nil!.type
-      convert exp.type, def_type
+      convert exp, exp.type, def_type
       leave sizeof_type(def_type)
     else
       put_nil
@@ -378,7 +378,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiler = Compiler.new(@program, @defs, compiled_def)
 
-      compiler.compile(target_def.body)
+      begin
+        compiler.compile(target_def.body)
+      rescue ex : Crystal::CodeError
+        node.raise "compiling #{node}", inner: ex
+      end
 
       {% if Decompile %}
         puts "=== #{target_def.name} ==="
@@ -531,26 +535,44 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @program.llvm_id.type_id(type)
   end
 
-  private def convert(from : Type, to : Type)
+  private def convert(node : ASTNode, from : Type, to : Type)
     return if from == to
 
-    convert_distinct(from, to)
+    convert_distinct(node, from, to)
   end
 
-  private def convert_distinct(from : Type, to : MixedUnionType)
+  private def convert_distinct(node : ASTNode, from : Type, to : MixedUnionType)
     put_in_union(type_id(from), sizeof_type(from), sizeof_type(to))
   end
 
-  private def convert_distinct(from : MixedUnionType, to : Type)
-    remove_from_union(sizeof_type(from), sizeof_type(to))
+  private def convert_distinct(node : ASTNode, from : NilType, to : NilableType)
+    # TODO: pointer sizes
+    put_i64 0_i64
   end
 
-  private def convert_distinct(from : NoReturnType, to : Type)
+  private def convert_distinct(node : ASTNode, from : Type, to : NilableType)
     # Nothing
   end
 
-  private def convert_distinct(from : Type, to : Type)
-    raise "BUG: missing convert_distinct from #{from} to #{to}"
+  private def convert_distinct(node : ASTNode, from : NilType, to : NilableReferenceUnionType)
+    # TODO: pointer sizes
+    put_i64 0_i64
+  end
+
+  private def convert_distinct(node : ASTNode, from : Type, to : NilableReferenceUnionType)
+    # Nothing
+  end
+
+  private def convert_distinct(node : ASTNode, from : MixedUnionType, to : Type)
+    remove_from_union(sizeof_type(from), sizeof_type(to))
+  end
+
+  private def convert_distinct(node : ASTNode, from : NoReturnType, to : Type)
+    # Nothing
+  end
+
+  private def convert_distinct(node : ASTNode, from : Type, to : Type)
+    node.raise "BUG: missing convert_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
 
   private def value_to_bool(node : ASTNode, type : BoolType)

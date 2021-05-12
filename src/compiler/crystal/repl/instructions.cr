@@ -703,6 +703,24 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer.null?,
     },
+    repl_call_stack_unwind: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       true,
+      code:       begin
+        # TODO: compute interpreter call stack
+        Pointer(UInt8).null
+      end,
+    },
+    repl_raise_without_backtrace: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: actually raise and interpret things
+        raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
+      end,
+    },
     leave: {
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,

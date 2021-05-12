@@ -216,18 +216,23 @@ end
     {% end %}
 
     exception.callstack ||= Exception::CallStack.new
-    unwind_ex = Pointer(LibUnwind::Exception).malloc
-    unwind_ex.value.exception_class = LibC::SizeT.zero
-    unwind_ex.value.exception_cleanup = LibC::SizeT.zero
-    unwind_ex.value.exception_object = exception.as(Void*)
-    unwind_ex.value.exception_type_id = exception.crystal_type_id
-    __crystal_raise(unwind_ex)
+    raise_without_backtrace(exception)
   end
 {% end %}
 
 # Raises an Exception with the *message*.
 def raise(message : String) : NoReturn
   raise Exception.new(message)
+end
+
+# :nodoc:
+def raise_without_backtrace(exception : Exception) : NoReturn
+  unwind_ex = Pointer(LibUnwind::Exception).malloc
+  unwind_ex.value.exception_class = LibC::SizeT.zero
+  unwind_ex.value.exception_cleanup = LibC::SizeT.zero
+  unwind_ex.value.exception_object = exception.as(Void*)
+  unwind_ex.value.exception_type_id = exception.crystal_type_id
+  __crystal_raise(unwind_ex)
 end
 
 # :nodoc:

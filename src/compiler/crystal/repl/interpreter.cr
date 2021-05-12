@@ -296,4 +296,43 @@ class Crystal::Repl::Interpreter
   private macro type_id_bytesize
     8
   end
+
+  def define_primitives
+    exception = @program.types["Exception"]?
+    if exception
+      call_stack = exception.types["CallStack"]?
+      if call_stack
+        unwind_signature = CallSignature.new(
+          name: "unwind",
+          arg_types: [] of Type,
+          block: nil,
+          named_args: nil,
+        )
+
+        matches = call_stack.metaclass.lookup_matches(unwind_signature)
+        unless matches.empty?
+          unwind_def = matches.matches.not_nil!.first.def
+          unwind_def.body = Primitive.new("repl_call_stack_unwind")
+        end
+      end
+
+      raise_without_backtrace_signature = CallSignature.new(
+        name: "raise_without_backtrace",
+        arg_types: [exception] of Type,
+        block: nil,
+        named_args: nil,
+      )
+
+      matches = @program.lookup_matches(raise_without_backtrace_signature)
+      if matches.empty?
+        puts "OH NO!"
+      else
+        raise_without_backtrace_def = matches.matches.not_nil!.first.def
+        raise_without_backtrace_def.body = Primitive.new("repl_raise_without_backtrace")
+      end
+    end
+  end
+
+  private def define_primitive_raise_without_backtrace
+  end
 end
