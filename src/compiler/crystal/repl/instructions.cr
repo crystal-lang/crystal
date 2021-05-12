@@ -98,6 +98,42 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a != b,
     },
+    lt_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a < b,
+    },
+    le_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a > b,
+    },
+    ge_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a >= b,
+    },
+    eq_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a == b,
+    },
+    neq_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a != b,
+    },
     div_f64: {
       operands:   [] of Nil,
       pop_values: [a : Float64, b : Float64],

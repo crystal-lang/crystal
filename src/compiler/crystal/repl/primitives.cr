@@ -80,7 +80,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def primitive_unchecked_convert(node, body)
+  private def primitive_unchecked_convert(node : ASTNode, body : Primitive)
     obj = node.obj
 
     obj_type =
@@ -102,6 +102,10 @@ class Crystal::Repl::Compiler
       node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
     end
 
+    primitive_unchecked_convert(node, obj_kind, target_kind)
+  end
+
+  private def primitive_unchecked_convert(node : ASTNode, obj_kind : Symbol, target_kind : Symbol)
     target_kind =
       case target_kind
       when :u8  then :i8
@@ -173,21 +177,16 @@ class Crystal::Repl::Compiler
     when {:f64, :i64} then f64_to_i64_bang
     when {:f64, :f32} then f64_to_f32_bang
     when {:f64, :f64} then nop
-    else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
+    else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_kind} - #{target_kind}"
     end
   end
 
   private def primitive_binary(node, body)
     case node.name
-    when "+"  then primitive_binary_op(node, body, :add)
-    when "-"  then primitive_binary_op(node, body, :sub)
-    when "*"  then primitive_binary_op(node, body, :mul)
-    when "<"  then primitive_binary_op(node, body, :lt)
-    when "<=" then primitive_binary_op(node, body, :le)
-    when ">"  then primitive_binary_op(node, body, :gt)
-    when ">=" then primitive_binary_op(node, body, :ge)
-    when "==" then primitive_binary_op(node, body, :eq)
-    when "!=" then primitive_binary_op(node, body, :neq)
+    when "+", "-", "*"
+      primitive_binary_op_math(node, body, node.name)
+    when "<", "<=", ">", ">=", "==", "!="
+      primitive_binary_op_cmp(node, body, node.name)
     when "/"
       primitive_binary_float_div(node, body)
     else
@@ -195,23 +194,96 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private macro primitive_binary_op(node, body, instruction)
-    # TODO: don't assume Int32 op Int32
-    accept_call_members({{node}})
+  private def primitive_binary_op_math(node : ASTNode, body : Primitive, op : String)
+    obj = node.obj.not_nil!
+    arg = node.args.first
+
+    obj_type = obj.type
+    arg_type = arg.type
+
+    primitive_binary_op_math(obj_type, arg_type, obj, arg, op)
+  end
+
+  private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    right_node.accept self
     return false unless @wants_value
 
-    %obj_type = {{node}}.obj.not_nil!.type
-    %arg_type = {{node}}.args.first.type
-
-    %obj_kind = integer_or_float_kind(%obj_type)
-    %target_kind = integer_or_float_kind(%arg_type)
-
-    case { %obj_kind, %target_kind }
+    case {left_type.kind, right_type.kind}
     when {:i32, :i32}
-      {{instruction.id}}_i32
+      case op
+      when "+" then add_i32
+      when "-" then sub_i32
+      when "*" then mul_i32
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
     else
-      {{node}}.raise "BUG: missing handling of binary op {{instruction}} with types #{ %obj_type } and #{ %arg_type }"
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
+  end
+
+  private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.raise "BUG: primitive_binary_op_math called with #{left_type} #{op} #{right_type}"
+  end
+
+  private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, op : String)
+    obj = node.obj.not_nil!
+    arg = node.args.first
+
+    obj_type = obj.type
+    arg_type = arg.type
+
+    primitive_binary_op_cmp(obj_type, arg_type, obj, arg, op)
+  end
+
+  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    right_node.accept self
+    return false unless @wants_value
+
+    case {left_type.kind, right_type.kind}
+    when {:i32, :i32}
+      case op
+      when "==" then eq_i32
+      when "!=" then neq_i32
+      when "<"  then lt_i32
+      when "<=" then le_i32
+      when ">"  then gt_i32
+      when ">=" then ge_i32
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+  end
+
+  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    primitive_unchecked_convert(left_node, left_type.kind, right_type.kind)
+    right_node.accept self
+    return false unless @wants_value
+
+    case right_type.kind
+    when :f64
+      case op
+      when "==" then eq_f64
+      when "!=" then neq_f64
+      when "<"  then lt_f64
+      when "<=" then le_f64
+      when ">"  then gt_f64
+      when ">=" then ge_f64
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+  end
+
+  private def primitive_binary_op_cmp(left_type : Type, right_type : Type, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.raise "BUG: primitive_binary_op_cmp called with #{left_type} #{op} #{right_type}"
   end
 
   private def primitive_binary_float_div(node, body)
