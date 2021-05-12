@@ -270,7 +270,7 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
-  context "not" do
+  context "logical operations" do
     it "interprets not for nil" do
       interpret("!nil").should eq(true)
     end
@@ -297,12 +297,48 @@ describe Crystal::Repl::Interpreter do
   end
 
   context "control flow" do
-    it "interprets if (true)" do
+    it "interprets if (true literal)" do
+      interpret("true ? 2 : 3").should eq(2)
+    end
+
+    it "interprets if (false literal)" do
+      interpret("false ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if (nil literal)" do
+      interpret("nil ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if bool (true)" do
       interpret("1 == 1 ? 2 : 3").should eq(2)
     end
 
-    it "interprets if (false)" do
+    it "interprets if bool (false)" do
       interpret("1 == 2 ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if (nil type)" do
+      interpret("a = nil; a ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if (int type)" do
+      interpret("a = 1; a ? 2 : 3").should eq(2)
+    end
+
+    it "interprets if union type with bool, true" do
+      interpret("a = 1 == 1 ? 1 : false; a ? 2 : 3").should eq(2)
+    end
+
+    it "interprets if union type with bool, false" do
+      interpret("a = 1 == 2 ? 1 : false; a ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if union type with nil, false" do
+      interpret("a = 1 == 2 ? 1 : nil; a ? 2 : 3").should eq(3)
+    end
+
+    it "interprets if pointer, false" do
+      interpret("ptr = Pointer(Int32).new(0_u64); ptr ? 1 : 2").should eq(1)
     end
 
     it "interprets unless" do

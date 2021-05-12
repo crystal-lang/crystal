@@ -672,8 +672,10 @@ module Crystal
         node.truthy = true
       when node_cond.false_literal?
         node.falsey = true
-      when (cond_type = node_cond.type?) && cond_type.nil_type?
+      when (cond_type = node_cond.type?) && cond_type.always_falsey?
         node.falsey = true
+      when (cond_type = node_cond.type?) && cond_type.always_truthy?
+        node.truthy = true
       when cond_is_truthy
         node.truthy = true
       when cond_is_falsey

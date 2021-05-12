@@ -70,6 +70,7 @@ class Crystal::Repl
         @line_number += 1
 
         ex.color = true
+        ex.error_trace = true
         puts ex
         next
       rescue ex : Exception

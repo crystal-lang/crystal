@@ -675,6 +675,34 @@ Crystal::Repl::Instructions =
         !!type.filter_by(filter_type)
       end,
     },
+    union_to_bool: {
+      operands:   [union_size : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       begin
+        # TODO: clean up stack
+        stack_shrink_by(union_size)
+        type_id = stack.as(Int32*).value
+        type = type_from_type_id(type_id)
+        case type
+        when NilType
+          false
+        when BoolType
+          # TODO: union type id size
+          (stack + 8).as(Bool*).value
+        when PointerInstanceType
+          (stack + 8).as(UInt8**).value.null?
+        else
+          true
+        end
+      end,
+    },
+    pointer_is_null: {
+      operands:   [] of Nil,
+      pop_values: [pointer : Pointer(UInt8)],
+      push:       true,
+      code:       pointer.null?,
+    },
     leave: {
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,

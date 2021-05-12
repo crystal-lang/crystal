@@ -212,6 +212,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     request_value(node.cond)
+    value_to_bool(node.cond, node.cond.type)
 
     branch_unless 0
     cond_jump_location = patch_location
@@ -242,6 +243,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     patch_jump(cond_jump_location)
 
     request_value(node.cond)
+    # TODO: value_to_bool
+
     branch_if body_index
 
     put_nil if @wants_value
@@ -374,6 +377,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       compiler = Compiler.new(@program, @defs, compiled_def)
+
       compiler.compile(target_def.body)
 
       {% if Decompile %}
@@ -547,6 +551,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def convert_distinct(from : Type, to : Type)
     raise "BUG: missing convert_distinct from #{from} to #{to}"
+  end
+
+  private def value_to_bool(node : ASTNode, type : BoolType)
+    # Nothing to do
+  end
+
+  private def value_to_bool(node : ASTNode, type : PointerInstanceType)
+    pointer_is_null
+  end
+
+  private def value_to_bool(node : ASTNode, type : MixedUnionType)
+    union_to_bool(sizeof_type(type))
+  end
+
+  private def value_to_bool(node : ASTNode, type : Type)
+    node.raise "BUG: missing value_to_bool for #{type}"
   end
 
   private def append(op_code : OpCode)
