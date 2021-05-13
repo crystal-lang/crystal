@@ -144,7 +144,7 @@ jobs:
       - run: |
           git clone https://github.com/crystal-lang/distribution-scripts.git ~/distribution-scripts
           cd ~/distribution-scripts
-          git checkout 67cc662d3bdd01176b6a766f745d578d73f5ebff
+          git checkout 2d7716ae3d1a28130d7f681de8510e46bd6f6638
       # persist relevant information for build process
       - run: |
           cd ~/distribution-scripts
@@ -235,7 +235,7 @@ jobs:
 
           # How to brand it
           export VERSION=${CIRCLE_BRANCH/release\//}
-          export VERSION=${VERSION/\//-}-dev
+          export VERSION=${VERSION//\//-}-dev
           echo "export CRYSTAL_VERSION=$VERSION" >> build.env
           echo "export DOCKER_TAG=$VERSION" >> build.env
 
@@ -335,23 +335,22 @@ jobs:
           paths:
             - build
 
-  dist_bintray_nightly:
-    machine: true
+  push_obs_nightly:
+    docker:
+      - image: crystallang/osc
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - run:
-          no_output_timeout: 20m
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
-            cd bintray
-            ./publish-nightly.sh $CRYSTAL_VERSION $(date '+%Y-%m-%d') \
+
+            packages/obs-setup.sh
+            packages/obs-push.sh devel:languages:crystal:nightly ${CRYSTAL_VERSION%-*} $(date '+%Y%m%d') $CRYSTAL_SHA1 \
                 /tmp/workspace/build/crystal-*-linux-x86_64.tar.gz \
-                /tmp/workspace/build/crystal-*-linux-i686.tar.gz
-      - store_artifacts:
-          path: /tmp/workspace/distribution-scripts/bintray/build/unsigned
-          destination: unsigned
+                /tmp/workspace/build/crystal-*-linux-i686.tar.gz \
+                /tmp/workspace/build/crystal-*-docs.tar.gz
 
   dist_docker:
     machine: true
@@ -613,10 +612,11 @@ workflows:
       - dist_darwin:
           requires:
             - prepare_nightly
-      - dist_bintray_nightly:
+      - push_obs_nightly:
           requires:
             - dist_linux
             - dist_linux32
+            - dist_docs
       - dist_docker:
           requires:
             - dist_linux
