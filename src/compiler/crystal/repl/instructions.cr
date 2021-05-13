@@ -62,6 +62,24 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a * b,
     },
+    add_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a + b,
+    },
+    sub_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a - b,
+    },
+    mul_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a * b,
+    },
     lt_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -452,68 +470,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value.to_f32!,
     },
-
-    # binary_plus: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_op!(:+),
-    # },
-    # binary_minus: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_op!(:-),
-    # },
-    # binary_mult: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_op!(:*),
-    # },
-    # binary_lt: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_cmp!(:<),
-    # },
-    # binary_le: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_cmp!(:<=),
-    # },
-    # binary_gt: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_cmp!(:>),
-    # },
-    # binary_ge: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_cmp!(:>=),
-    # },
-    # binary_eq: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_eq!(:==),
-    # },
-    # binary_neq: {
-    #   operands:   [] of Nil,
-    #   pop_values: [left, right],
-    #   push:       true,
-    #   code:       binary_eq!(:!=),
-    # },
     logical_not: {
       operands:   [] of Nil,
       pop_values: [value : Bool],
       push:       true,
       code:       !value,
     },
-
     pointer_malloc: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [size : UInt64],
@@ -623,13 +585,22 @@ Crystal::Repl::Instructions =
         ptr
       end,
     },
-    get_self_class_ivar: {
+    allocate_struct: {
+      operands:   [size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        stack.clear(size)
+        stack_grow_by(size)
+      end,
+    },
+    get_self_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
       code:       stack_move_from(self_class_pointer + offset, size),
     },
-    set_self_class_ivar: {
+    set_self_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
@@ -729,4 +700,4 @@ Crystal::Repl::Instructions =
     },
   }
 
-# {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
+{% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}

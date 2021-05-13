@@ -15,7 +15,10 @@ class Crystal::Repl::LocalVars
     @name_to_index.keys
   end
 
-  def declare(name : String, type : Type) : Int32
+  def declare(name : String, type : Type) : Nil
+    is_self = name == "self"
+    return if is_self && type.is_a?(Program)
+
     index = @name_to_index[name]?
     if index
       existing_type = @types[name]
@@ -27,9 +30,15 @@ class Crystal::Repl::LocalVars
 
     index = @bytesize
     @name_to_index[name] = index
+
     @types[name] = type
-    @bytesize += sizeof_type(type)
-    index
+
+    # TODO: this logic is duplicated in Compiler
+    if is_self && !type.is_a?(PrimitiveType) && type.struct?
+      @bytesize += sizeof(Pointer(UInt8))
+    else
+      @bytesize += sizeof_type(type)
+    end
   end
 
   def name_to_index(name : String) : Int32

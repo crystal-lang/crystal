@@ -187,6 +187,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1 + 2").should eq(3)
     end
 
+    it "interprets Int64 + Int64" do
+      interpret("1_i64 + 2_i64").should eq(3)
+    end
+
     # it "interprets Int32 + Float64" do
     #   interpret("1 + 2.5").should eq(3.5)
     # end
@@ -764,6 +768,82 @@ describe Crystal::Repl::Interpreter do
     it "discards allocate" do
       interpret(<<-EXISTING, <<-CODE).should eq(3)
         class Foo
+        end
+      EXISTING
+        Foo.allocate
+        3
+      CODE
+    end
+  end
+
+  context "structs" do
+    it "does allocate, set instance var and get instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          @x = 0_i64
+          @y = 0_i64
+
+          def x=(@x)
+          end
+
+          def x
+            @x
+          end
+
+          def y=(@y)
+          end
+
+          def y
+            @y
+          end
+        end
+      EXISTING
+        foo = Foo.allocate
+        foo.x = 22_i64
+        foo.y = 20_i64
+        foo.x + foo.y
+      CODE
+    end
+
+    it "does constructor" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new(42)
+        foo.x
+      CODE
+    end
+
+    # it "interprets read instance var" do
+    #   interpret(<<-EXISTING, <<-CODE).should eq(20)
+    #     struct Foo
+    #       @x = 0_i64
+    #       @y = 0_i64
+
+    #       def y=(@y)
+    #       end
+
+    #       def y
+    #         @y
+    #       end
+    #     end
+    #   EXISTING
+    #     foo = Foo.allocate
+    #     foo.y = 20_i64
+    #     foo.@y
+    #   CODE
+    # end
+
+    it "discards allocate" do
+      interpret(<<-EXISTING, <<-CODE).should eq(3)
+        struct Foo
         end
       EXISTING
         Foo.allocate

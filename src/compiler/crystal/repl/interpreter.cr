@@ -86,7 +86,8 @@ class Crystal::Repl::Interpreter
       {% if Trace %}
         puts
         if call_frame = @call_stack.last?
-          puts "In: #{call_frame.compiled_def.def.name}"
+          a_def = call_frame.compiled_def.def
+          puts "In: #{a_def.owner}##{a_def.name}"
         else
           puts "In: top-level"
         end
@@ -123,7 +124,7 @@ class Crystal::Repl::Interpreter
       {% end %}
 
       {% if Trace %}
-        p Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)
+        puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
         # stack_size = stack - @stack.to_unsafe
         # print "Stack: "
         # stack_size.times do |i|
@@ -182,7 +183,7 @@ class Crystal::Repl::Interpreter
     # After the call, we want the stack to be at the point
     # where it doesn't have the call args, ready to push
     # return call's return value.
-    stack_before_call_args = stack  - {{compiled_def}}.args_bytesize
+    stack_before_call_args = stack - {{compiled_def}}.args_bytesize
 
     @call_stack << CallFrame.new(
       compiled_def: {{compiled_def}},

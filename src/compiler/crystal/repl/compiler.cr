@@ -140,14 +140,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         request_value(node.value)
         dup(sizeof_type(node.value)) if @wants_value
 
-        # TODO: check struct
-        ivar_index = scope.index_of_instance_var(target.name).not_nil!
-        ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
+        ivar_offset = ivar_offset(scope, target.name)
         ivar = scope.lookup_instance_var(target.name)
         ivar_size = sizeof_type(ivar.type)
 
         convert node.value, node.value.type, ivar.type
-        set_self_class_ivar ivar_offset, ivar_size
+
+        set_self_ivar ivar_offset, ivar_size
       else
         node.type = @program.nil_type
         put_nil if @wants_value
@@ -172,12 +171,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : InstanceVar)
     return false unless @wants_value
 
-    # TODO: check struct
-    ivar_index = scope.index_of_instance_var(node.name).not_nil!
-    ivar_offset = @program.instance_offset_of(scope.sizeof_type, ivar_index).to_i32
+    ivar_offset = ivar_offset(scope, node.name)
     ivar_size = sizeof_type(scope.lookup_instance_var(node.name))
 
-    get_self_class_ivar ivar_offset, ivar_size
+    get_self_ivar ivar_offset, ivar_size
     false
   end
 
@@ -186,8 +183,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.obj.accept self
 
     type = node.obj.type
-    ivar_index = type.index_of_instance_var(node.name).not_nil!
-    ivar_offset = @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
+
+    ivar_offset = ivar_offset(type, node.name)
     ivar_size = sizeof_type(type.lookup_instance_var(node.name))
 
     get_class_ivar ivar_offset, ivar_size
@@ -358,10 +355,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
+    if obj && obj.type.is_a?(LibType)
+      obj.raise "BUG: lib calls not yet supported"
+    end
+
     compiled_def = @defs[target_def]?
     unless compiled_def
       args_bytesize = 0
-      args_bytesize += sizeof_type(obj.type) if obj && obj.type != @program
+
+      if obj && obj.type != @program
+        if obj.type == @program
+          # Nothing
+        elsif !obj.type.is_a?(PrimitiveType) && obj.type.struct?
+          args_bytesize += sizeof(Pointer(UInt8))
+        else
+          args_bytesize += sizeof_type(obj.type)
+        end
+      end
+
       args_bytesize += args.sum { |arg| sizeof_type(arg) }
       args_bytesize += named_args.sum { |arg| sizeof_type(arg.value) } if named_args
 
@@ -370,9 +381,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # Declare local variables for the newly compiled function
       target_def.vars.try &.each do |name, var|
-        # Program is the only type we don't put on the stack
-        next if name == "self" && var.type == @program
-
         compiled_def.local_vars.declare(name, var.type)
       end
 
@@ -385,14 +393,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       {% if Decompile %}
-        puts "=== #{target_def.name} ==="
+        puts "=== #{target_def.owner}##{target_def.name} ==="
         p! compiled_def.local_vars, compiled_def.args_bytesize
         puts Disassembler.disassemble(compiled_def)
-        puts "=== #{target_def.name} ==="
+        puts "=== #{target_def.owner}##{target_def.name} ==="
       {% end %}
     end
 
-    obj.try { |o| request_value(o) }
+    # Self for structs is passed by reference
+    # TODO: pass implicit self here
+    obj.try do |o|
+      # TODO: discard primitives
+      if o.type.struct?
+        case o
+        when Var
+          pointerof_var(@local_vars.name_to_index(o.name))
+          # TODO: when InstanceVar
+        else
+          request_value(o)
+          # TODO: put pointer to struct
+        end
+      else
+        request_value(o)
+      end
+    end
+
     args.each { |a| request_value(a) }
     named_args.try &.each { |n| request_value(n) }
 
@@ -634,7 +659,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def sizeof_type(node : ASTNode) : Int32
-    sizeof_type(node.type)
+    type = node.type?
+    if type
+      sizeof_type(node.type)
+    else
+      node.raise "BUG: missing type for #{node} (#{node.class})"
+    end
   end
 
   private def sizeof_type(type : Type) : Int32
@@ -643,6 +673,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def instance_sizeof_type(type : Type) : Int32
     @program.instance_size_of(type.sizeof_type).to_i32
+  end
+
+  private def ivar_offset(type : Type, name : String) : Int32
+    ivar_index = type.index_of_instance_var(name).not_nil!
+
+    if !type.is_a?(PrimitiveType) && type.struct?
+      @program.offset_of(type.sizeof_type, ivar_index).to_i32
+    else
+      @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
+    end
   end
 
   private macro nop

@@ -21,7 +21,9 @@ class Crystal::Repl::Compiler
       # TODO: do we want the side effect of allocating memory
       return false unless @wants_value
 
-      pointer_instance_type = node.obj.not_nil!.type.instance_type.as(PointerInstanceType)
+      scope_type = (node.obj.try &.type) || scope
+
+      pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       element_size = sizeof_type(element_type)
 
@@ -77,7 +79,11 @@ class Crystal::Repl::Compiler
       return unless @wants_value
 
       # TODO: check struct
-      allocate_class(instance_sizeof_type(type), type_id(type))
+      if type.struct?
+        allocate_struct(instance_sizeof_type(type))
+      else
+        allocate_class(instance_sizeof_type(type), type_id(type))
+      end
     when "repl_call_stack_unwind"
       repl_call_stack_unwind
     when "repl_raise_without_backtrace"
@@ -222,6 +228,14 @@ class Crystal::Repl::Compiler
       when "+" then add_i32
       when "-" then sub_i32
       when "*" then mul_i32
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+    when {:i64, :i64}
+      case op
+      when "+" then add_i64
+      when "-" then sub_i64
+      when "*" then mul_i64
       else
         left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
