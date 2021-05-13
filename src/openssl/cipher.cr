@@ -7,7 +7,7 @@ require "openssl"
 # require "random/secure"
 #
 # key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
-# iv = Random::Secure.random_bytes(32) # You can also use OpenSSL::Cipher#random_iv to do this same thing
+# iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
 #
 # def encrypt(data)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
@@ -57,7 +57,7 @@ class OpenSSL::Cipher
   def encrypt
     cipherinit enc: 1
   end
-  
+
   # Sets this cipher to decryption mode.
   def decrypt
     cipherinit enc: 0
