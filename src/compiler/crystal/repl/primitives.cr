@@ -28,7 +28,10 @@ class Crystal::Repl::Compiler
       pointer_malloc(element_size)
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
-      request_value(node.args.first)
+      arg = node.args.first
+      request_value(arg)
+      dup(sizeof_type(arg)) if @wants_value
+
       request_value(node.obj.not_nil!)
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"

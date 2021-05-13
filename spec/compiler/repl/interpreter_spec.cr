@@ -481,6 +481,13 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "discards pointer set" do
+      interpret(<<-CODE).should eq(1)
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr.value = 1
+      CODE
+    end
+
     it "discards pointer new" do
       interpret(<<-CODE).should eq(1)
         Pointer(Int32).new(1_u64)
