@@ -16,9 +16,9 @@ end
 
 module HTTP
   describe Cookie do
-    describe ".from_header" do
+    describe ".from_set_cookie_header" do
       it "returns a cookie based on the provided header string" do
-        cookie = HTTP::Cookie.from_header "id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; SameSite=Lax"
+        cookie = HTTP::Cookie.from_set_cookie_header "id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; SameSite=Lax"
         cookie.name.should eq "id"
         cookie.secure.should be_true
         (cookie.samesite.should_not be_nil).lax?.should be_true
@@ -26,8 +26,8 @@ module HTTP
       end
 
       it "raises if the cookie header is invalid" do
-        expect_raises ArgumentError, "Invalid cookie header: foo:bar." do
-          HTTP::Cookie.from_header "foo:bar"
+        expect_raises ArgumentError, "Invalid set-cookie header: foo:bar." do
+          HTTP::Cookie.from_set_cookie_header "foo:bar"
         end
       end
     end
