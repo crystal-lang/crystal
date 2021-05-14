@@ -90,13 +90,14 @@ class Crystal::Repl::Compiler
 
       type = obj.type.as(TupleInstanceType)
       index = body.as(TupleIndexer).index
-      offset = 0
-      type.tuple_types.each_with_index do |tuple_type, i|
-        break if i == index
-        offset += sizeof_type(tuple_type)
+      case index
+      when Int32
+        element_type = type.tuple_types[index]
+        offset = @program.offset_of(type.sizeof_type, index)
+        tuple_indexer_known_index(sizeof_type(type), offset.to_i32, sizeof_type(element_type))
+      else
+        node.raise "BUG: missing handling of primitive #{body.name} with range"
       end
-      # TODO: why type.tuple_types[index] might return an Array ???
-      tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(type.tuple_types[index].as(Type)))
     when "repl_call_stack_unwind"
       repl_call_stack_unwind
     when "repl_raise_without_backtrace"

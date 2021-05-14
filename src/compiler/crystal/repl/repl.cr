@@ -63,7 +63,7 @@ class Crystal::Repl
 
       begin
         value = @interpreter.interpret(node)
-        p value.value
+        puts value
       rescue ex : Crystal::CodeError
         @nest = 0
         @buffer = ""

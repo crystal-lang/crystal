@@ -859,6 +859,20 @@ describe Crystal::Repl::Interpreter do
         a[0] + a[1] + a[2]
       CODE
     end
+
+    it "interprets tuple literal of different types (1)" do
+      interpret(<<-CODE).should eq(3)
+        a = {1, true}
+        a[0] + (a[1] ? 2 : 3)
+      CODE
+    end
+
+    it "interprets tuple literal of different types (2)" do
+      interpret(<<-CODE).should eq(3)
+        a = {true, 1}
+        a[1] + (a[0] ? 2 : 3)
+      CODE
+    end
   end
 end
 

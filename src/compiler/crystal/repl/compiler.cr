@@ -110,7 +110,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : TupleLiteral)
-    node.elements.each &.accept self
+    type = node.type.as(TupleInstanceType)
+    current_offset = 0
+    node.elements.each_with_index do |element, i|
+      element.accept self
+      size = sizeof_type(element)
+      next_offset =
+        if i == node.elements.size - 1
+          sizeof_type(type)
+        else
+          @program.offset_of(type.sizeof_type, i + 1).to_i32
+        end
+      if next_offset - (current_offset + size) > 0
+        push_zeros(next_offset - (current_offset + size))
+      end
+      current_offset = next_offset
+    end
+
     false
   end
 

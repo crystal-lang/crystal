@@ -684,6 +684,15 @@ Crystal::Repl::Instructions =
         stack_move_from(stack + offset, value_size)
       end,
     },
+    push_zeros: {
+      operands:   [amount : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: acutally put zeros
+        stack_grow_by(amount)
+      end,
+    },
     repl_call_stack_unwind: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
