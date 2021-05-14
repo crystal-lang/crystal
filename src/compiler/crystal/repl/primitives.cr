@@ -84,6 +84,19 @@ class Crystal::Repl::Compiler
       else
         allocate_class(instance_sizeof_type(type), type_id(type))
       end
+    when "tuple_indexer_known_index"
+      obj = obj.not_nil!
+      obj.accept self
+
+      type = obj.type.as(TupleInstanceType)
+      index = body.as(TupleIndexer).index
+      offset = 0
+      type.tuple_types.each_with_index do |tuple_type, i|
+        break if i == index
+        offset += sizeof_type(tuple_type)
+      end
+      # TODO: why type.tuple_types[index] might return an Array ???
+      tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(type.tuple_types[index].as(Type)))
     when "repl_call_stack_unwind"
       repl_call_stack_unwind
     when "repl_raise_without_backtrace"

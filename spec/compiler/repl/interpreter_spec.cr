@@ -851,6 +851,15 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  context "tuple" do
+    it "interprets tuple literal and access by known index" do
+      interpret(<<-CODE).should eq(6)
+        a = {1, 2, 3}
+        a[0] + a[1] + a[2]
+      CODE
+    end
+  end
 end
 
 private def interpret(string, *, prelude = "primitives")

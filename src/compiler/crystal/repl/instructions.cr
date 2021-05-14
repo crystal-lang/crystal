@@ -674,6 +674,16 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer.null?,
     },
+    tuple_indexer_known_index: {
+      operands:   [tuple_size : Int32, offset : Int32, value_size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: clean up stack
+        stack_shrink_by(tuple_size)
+        stack_move_from(stack + offset, value_size)
+      end,
+    },
     repl_call_stack_unwind: {
       operands:   [] of Nil,
       pop_values: [] of Nil,

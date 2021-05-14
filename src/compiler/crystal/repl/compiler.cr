@@ -109,6 +109,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : TupleLiteral)
+    node.elements.each &.accept self
+    false
+  end
+
   def visit(node : Expressions)
     old_wants_value = @wants_value
 
