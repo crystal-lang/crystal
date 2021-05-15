@@ -1,3 +1,5 @@
+require "uuid"
+
 # Deserializes the given YAML in *string_or_io* into
 # an instance of `self`. This simply creates an instance of
 # `YAML::ParseContext` and invokes `new(parser, yaml)`:
