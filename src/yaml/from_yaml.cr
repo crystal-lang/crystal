@@ -1,5 +1,3 @@
-require "uuid"
-
 # Deserializes the given YAML in *string_or_io* into
 # an instance of `self`. This simply creates an instance of
 # `YAML::ParseContext` and invokes `new(parser, yaml)`:
@@ -301,20 +299,6 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 
   node.raise "Couldn't parse #{self}"
-end
-
-def UUID.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  ctx.read_alias(node, String) do |obj|
-    return UUID.new(obj)
-  end
-
-  if node.is_a?(YAML::Nodes::Scalar)
-    value = node.value
-    ctx.record_anchor(node, value)
-    UUID.new(value)
-  else
-    node.raise "Expected String, not #{node.kind}"
-  end
 end
 
 def Time.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
