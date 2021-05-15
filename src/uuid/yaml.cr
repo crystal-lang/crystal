@@ -1,4 +1,4 @@
-require "json"
+require "yaml"
 require "uuid"
 
 def UUID.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
@@ -15,6 +15,8 @@ def UUID.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   end
 end
 
-def UUID.to_yaml(yaml : YAML::Nodes::Builder)
-  yaml.scalar self.to_s
+struct UUID
+  def to_yaml(yaml : YAML::Nodes::Builder)
+    yaml.scalar self.to_s
+  end
 end
