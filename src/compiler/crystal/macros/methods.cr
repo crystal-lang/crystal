@@ -530,7 +530,7 @@ module Crystal
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
 
-        yield me.to_i, other.to_i
+        yield me.as(Int), other.as(Int)
       end)
     end
 
