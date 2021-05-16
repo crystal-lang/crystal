@@ -17,11 +17,76 @@ def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
 
-# :nodoc:
+# Returns the current execution stack as an array of `Exception::CallStack::Frame`.
+def caller_frames : Array(Exception::CallStack::Frame)
+  Exception::CallStack.new.frames
+end
+
 struct Exception::CallStack
+  # Represents a specific frame within an `Exception#backtrace`;
+  # exposing the location, function name, and memory address (if available).
+  struct Frame
+    # Returns the file that at which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the file would be `/home/crystal/test.cr`.
+    getter file : String
+
+    # Returns the function name in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the function would be `test_method`.
+    getter function : String
+
+    # Returns the line number in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the line number would be `24`.
+    getter line_number : Int32
+
+    # Returns the column number in which the exception occurred.
+    #
+    # Assuming a frame like `/home/crystal/test.cr:24:5 in 'test_method' at 0x55df02499e76`,
+    # the column number would be `5`.
+    getter column_number : Int32
+
+    protected def initialize(
+      @file : String,
+      @function : String,
+      @line_number : Int32,
+      @column_number : Int32,
+      @address : String? = nil
+    )
+    end
+
+    def_equals_and_hash @function, @file, @line_number, @column_number, @address
+
+    # Returns the filename of `#file`.
+    #
+    # ```
+    # frame.file     # => /home/crystal/test.cr
+    # frame.filename # => test.cr
+    # ```
+    def filename : String
+      File.basename @file
+    end
+
+    # Returns a `Path` instance of `#file`.
+    def file_path : Path
+      Path.new @file
+    end
+
+    # Returns a `String` representation of `self` as you would see it in `Exception#backtrace`.
+    def to_s(io : IO) : Nil
+      io << @file << ':' << @line_number << ':' << @column_number
+      io << " in " << '\'' << @function << '\''
+      io << " at " << "0x#{@address}" if @address
+    end
+  end
+
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
-  CURRENT_DIR = begin
+  private CURRENT_DIR = begin
     dir = Process::INITIAL_PWD
     dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
     dir
@@ -29,6 +94,7 @@ struct Exception::CallStack
 
   @@skip = [] of String
 
+  # :nodoc:
   def self.skip(filename)
     @@skip << filename
   end
@@ -38,18 +104,24 @@ struct Exception::CallStack
   @callstack : Array(Void*)
   @backtrace : Array(String)?
 
+  # :nodoc:
+  getter frames : Array(Frame) { decode_backtrace }
+
+  # :nodoc:
   def initialize
     @callstack = CallStack.unwind
   end
 
+  # :nodoc:
   def printable_backtrace
-    @backtrace ||= decode_backtrace
+    self.frames.map &.to_s
   end
 
   {% if flag?(:gnu) && flag?(:i386) %}
     # This is only used for the workaround described in `Exception.unwind`
     @@makecontext_range : Range(Void*, Void*)?
 
+    # :nodoc:
     def self.makecontext_range
       @@makecontext_range ||= begin
         makecontext_start = makecontext_end = LibC.dlsym(LibC::RTLD_DEFAULT, "makecontext")
@@ -94,6 +166,7 @@ struct Exception::CallStack
     callstack
   end
 
+  # :nodoc:
   struct RepeatedFrame
     getter ip : Void*, count : Int32
 
@@ -106,6 +179,7 @@ struct Exception::CallStack
     end
   end
 
+  # :nodoc:
   def self.print_backtrace
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       last_frame = data.as(RepeatedFrame*)
@@ -163,21 +237,27 @@ struct Exception::CallStack
     end
   end
 
-  private def decode_backtrace
+  private def decode_backtrace : Array(Frame)
     show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
-      file, line, column = CallStack.decode_line_number(pc)
+      has_file_reference = false
+
+      file, line_number, column_number = CallStack.decode_line_number(pc)
 
       if file && file != "??"
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = file.lchop(CURRENT_DIR)
+        filename = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{file}:#{line}:#{column}"
+        has_file_reference = true
+      elsif file
+        filename = file
+      else
+        filename = "???"
       end
 
       if name = CallStack.decode_function_name(pc)
@@ -193,22 +273,16 @@ struct Exception::CallStack
         function = "???"
       end
 
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
-        end
-      else
-        line = function
+      if has_file_reference && show_full_info && (frame = CallStack.decode_frame(ip))
+        _, sname = frame
+        function = "#{String.new(sname)}"
       end
 
       if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
+        address = ip.address.to_s(16)
       end
 
-      line
+      Frame.new filename, function, line_number, column_number, address
     end
   end
 
