@@ -269,7 +269,7 @@ struct String::Formatter(A)
 
       format_buf = recreate_float_format_string(flags)
 
-      len = flags.width + (flags.precision || 0) + 23
+      len = LibC.snprintf(nil, 0, format_buf, float) + 1
       temp_buf = temp_buf(len)
       count = LibC.snprintf(temp_buf, len, format_buf, float)
 
