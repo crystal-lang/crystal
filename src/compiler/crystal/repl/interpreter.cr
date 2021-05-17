@@ -6,10 +6,9 @@ class Crystal::Repl::Interpreter
 
   record CallFrame,
     compiled_def : CompiledDef,
-    previous_instructions : Array(Instruction),
-    previous_ip : Pointer(UInt8),
-    previous_stack : Pointer(UInt8),
-    previous_stack_bottom : Pointer(UInt8)
+    ip : Pointer(UInt8),
+    stack : Pointer(UInt8),
+    stack_bottom : Pointer(UInt8)
 
   def initialize(program : Program)
     @program = program
@@ -82,15 +81,27 @@ class Crystal::Repl::Interpreter
     ip = instructions.to_unsafe
     return_value = Pointer(UInt8).null
 
+    @call_stack << CallFrame.new(
+      compiled_def: CompiledDef.new(
+        program: @program,
+        def: Def.new("main").tap { |a_def| a_def.owner = @program },
+        args_bytesize: 0,
+        instructions: instructions,
+        local_vars: @local_vars,
+      ),
+      ip: ip,
+      stack: stack,
+      stack_bottom: stack_bottom,
+    )
+
     while true
       {% if Trace %}
         puts
-        if call_frame = @call_stack.last?
-          a_def = call_frame.compiled_def.def
-          puts "In: #{a_def.owner}##{a_def.name}"
-        else
-          puts "In: top-level"
-        end
+
+        call_frame = @call_stack.last
+        a_def = call_frame.compiled_def.def
+        puts "In: #{a_def.owner}##{a_def.name}"
+        puts "Call stack size: #{@call_stack.size}"
 
         Disassembler.disassemble_one(instructions, (ip - instructions.to_unsafe).to_i32, current_local_vars, STDOUT)
         puts
@@ -183,22 +194,29 @@ class Crystal::Repl::Interpreter
     # After the call, we want the stack to be at the point
     # where it doesn't have the call args, ready to push
     # return call's return value.
-    stack_before_call_args = stack - {{compiled_def}}.args_bytesize
-
-    @call_stack << CallFrame.new(
-      compiled_def: {{compiled_def}},
-      previous_instructions: instructions,
-      previous_ip: ip,
-      previous_stack: stack_before_call_args,
-      previous_stack_bottom: stack_bottom,
+    %stack_before_call_args = stack - {{compiled_def}}.args_bytesize
+    @call_stack[-1] = @call_stack.last.copy_with(
+      ip: ip,
+      stack: %stack_before_call_args,
     )
-    instructions = {{compiled_def}}.instructions
-    ip = instructions.to_unsafe
-    stack_bottom = stack_before_call_args
 
-    # We need to adjust the call stack to start right
-    # after the target def's local variables.
-    stack = stack_bottom + {{compiled_def}}.local_vars.bytesize
+    %call_frame = CallFrame.new(
+      compiled_def: {{compiled_def}},
+      ip: {{compiled_def}}.instructions.to_unsafe,
+
+      # We need to adjust the call stack to start right
+      # after the target def's local variables.
+      stack: %stack_before_call_args + {{compiled_def}}.local_vars.bytesize,
+
+      stack_bottom: %stack_before_call_args,
+    )
+
+    @call_stack << %call_frame
+
+    instructions = %call_frame.compiled_def.instructions
+    ip = %call_frame.ip
+    stack = %call_frame.stack
+    stack_bottom = %call_frame.stack_bottom
   end
 
   private macro call_with_block(compiled_def)
@@ -214,7 +232,8 @@ class Crystal::Repl::Interpreter
   end
 
   private macro leave(size)
-    if @call_stack.empty?
+    if @call_stack.size == 1
+      @call_stack.pop
       return_value = Pointer(UInt8).malloc({{size}})
       return_value.copy_from(stack_bottom_after_local_vars, {{size}})
       stack -= {{size}}
@@ -222,14 +241,14 @@ class Crystal::Repl::Interpreter
     else
       # Remember the point the stack reached
       old_stack = stack
-      %call_frame = @call_stack.pop
+      @call_stack.pop
+      %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
-      instructions = %call_frame.previous_instructions
-      ip = %call_frame.previous_ip
-      stack_bottom = %call_frame.previous_stack_bottom
-
-      stack = %call_frame.previous_stack
+      instructions = %call_frame.compiled_def.instructions
+      ip = %call_frame.ip
+      stack_bottom = %call_frame.stack_bottom
+      stack = %call_frame.stack
 
       # Ccopy the return value
       stack_move_from(old_stack - {{size}}, {{size}})
