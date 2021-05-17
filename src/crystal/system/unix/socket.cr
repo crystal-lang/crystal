@@ -262,4 +262,73 @@ module Crystal::System::Socket
 
     ::Socket::IPAddress.from(sockaddr, addrlen)
   end
+
+  {% if flag?(:openbsd) %}
+    private def system_tcp_keepalive_idle
+      raise NotImplementedError.new("system_tcp_keepalive_idle")
+    end
+
+    private def system_tcp_keepalive_idle=(val : Int)
+      raise NotImplementedError.new("system_tcp_keepalive_idle=")
+    end
+
+    private def system_tcp_keepalive_interval
+      raise NotImplementedError.new("system_tcp_keepalive_interval")
+    end
+
+    private def system_tcp_keepalive_interval=(val : Int)
+      raise NotImplementedError.new("system_tcp_keepalive_interval=")
+    end
+
+    private def system_tcp_keepalive_count
+      raise NotImplementedError.new("system_tcp_keepalive_count")
+    end
+
+    private def system_tcp_keepalive_count=(val : Int)
+      raise NotImplementedError.new("system_tcp_keepalive_count=")
+    end
+  {% else %}
+    private def system_tcp_keepalive_idle
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      getsockopt optname, 0, level: ::Socket::Protocol::TCP
+    end
+
+    private def system_tcp_keepalive_idle=(val : Int)
+      optname = {% if flag?(:darwin) %}
+        LibC::TCP_KEEPALIVE
+      {% elsif flag?(:netbsd) %}
+        LibC::SO_KEEPALIVE
+      {% else %}
+        LibC::TCP_KEEPIDLE
+      {% end %}
+      setsockopt optname, val, level: ::Socket::Protocol::TCP
+      val
+    end
+
+    # The amount of time in seconds between keepalive probes.
+    private def system_tcp_keepalive_interval
+      getsockopt LibC::TCP_KEEPINTVL, 0, level: ::Socket::Protocol::TCP
+    end
+
+    private def system_tcp_keepalive_interval=(val : Int)
+      setsockopt LibC::TCP_KEEPINTVL, val, level: ::Socket::Protocol::TCP
+      val
+    end
+
+    # The number of probes sent, without response before dropping the connection.
+    private def system_tcp_keepalive_count
+      getsockopt LibC::TCP_KEEPCNT, 0, level: ::Socket::Protocol::TCP
+    end
+
+    private def system_tcp_keepalive_count=(val : Int)
+      setsockopt LibC::TCP_KEEPCNT, val, level: ::Socket::Protocol::TCP
+      val
+    end
+  {% end %}
 end

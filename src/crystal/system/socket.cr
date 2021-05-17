@@ -60,6 +60,20 @@ module Crystal::System::Socket
   # private def system_local_address
 
   # private def system_remote_address
+
+  # TCPSocket:
+
+  # private def system_tcp_keepalive_idle
+
+  # private def system_tcp_keepalive_idle=(val : Int)
+
+  # private def system_tcp_keepalive_interval
+
+  # private def system_tcp_keepalive_interval=(val : Int)
+
+  # private def system_tcp_keepalive_count
+
+  # private def system_tcp_keepalive_count=(val : Int)
 end
 
 {% if flag?(:unix) %}
