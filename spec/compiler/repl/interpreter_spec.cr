@@ -874,6 +874,37 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  context "blocks" do
+    it "interprets simplest block" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+
+    it "interprets block with multiple yields" do
+      interpret(<<-CODE).should eq(2)
+        def foo
+          yield
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+  end
 end
 
 private def interpret(string, *, prelude = "primitives")

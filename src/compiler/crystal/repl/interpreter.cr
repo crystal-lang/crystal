@@ -201,6 +201,18 @@ class Crystal::Repl::Interpreter
     stack = stack_bottom + {{compiled_def}}.local_vars.bytesize
   end
 
+  private macro call_with_block(compiled_def)
+    call({{compiled_def}})
+  end
+
+  private macro go_to_block
+    # Nothing
+  end
+
+  private macro return_from_block
+    # Nothing
+  end
+
   private macro leave(size)
     if @call_stack.empty?
       return_value = Pointer(UInt8).malloc({{size}})

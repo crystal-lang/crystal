@@ -7,6 +7,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private getter scope
   private getter def : Def?
 
+  property parent : Compiler?
+  @block : Block?
+
   def initialize(
     @program : Program,
     @defs : Hash(Def, CompiledDef),
@@ -398,7 +401,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += named_args.sum { |arg| sizeof_type(arg.value) } if named_args
 
       compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
-      @defs[target_def] = compiled_def
+
+      old_block = @block
+      @block = node.block
+
+      # We don't cache defs that yield because we inline the block's contents
+      # TODO: maybe do this differently?
+      @defs[target_def] = compiled_def unless @block
 
       # Declare local variables for the newly compiled function
       target_def.vars.try &.each do |name, var|
@@ -408,9 +417,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler = Compiler.new(@program, @defs, compiled_def)
 
       begin
+        compiler.parent = self if @block
         compiler.compile(target_def.body)
       rescue ex : Crystal::CodeError
         node.raise "compiling #{node}", inner: ex
+      ensure
+        @block = old_block
       end
 
       {% if Decompile %}
@@ -442,7 +454,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args.each { |a| request_value(a) }
     named_args.try &.each { |n| request_value(n) }
 
-    call compiled_def
+    if node.block
+      call_with_block compiled_def
+    else
+      call compiled_def
+    end
     pop sizeof_type(node) unless @wants_value
 
     return false
@@ -521,6 +537,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.obj.try &.accept(self)
     node.args.each &.accept(self)
     # TODO: named arguments
+  end
+
+  def visit(node : Yield)
+    parent.not_nil!.visit_block
+    false
+  end
+
+  def visit_block
+    go_to_block
+    @block.not_nil!.body.accept self
+    return_from_block
   end
 
   def visit(node : ClassDef)
