@@ -6,9 +6,11 @@ class Crystal::Repl::Interpreter
 
   record CallFrame,
     compiled_def : CompiledDef,
+    instructions : Array(UInt8),
     ip : Pointer(UInt8),
     stack : Pointer(UInt8),
-    stack_bottom : Pointer(UInt8)
+    stack_bottom : Pointer(UInt8),
+    block_caller_frame_index : Int32
 
   def initialize(program : Program)
     @program = program
@@ -89,9 +91,11 @@ class Crystal::Repl::Interpreter
         instructions: instructions,
         local_vars: @local_vars,
       ),
+      instructions: instructions,
       ip: ip,
       stack: stack,
       stack_bottom: stack_bottom,
+      block_caller_frame_index: -1,
     )
 
     while true
@@ -183,7 +187,7 @@ class Crystal::Repl::Interpreter
     end
   end
 
-  private macro call(compiled_def)
+  private macro call(compiled_def, block_caller_frame_index = -1)
     # At the point of a call like:
     #
     #     foo(x, y)
@@ -202,13 +206,13 @@ class Crystal::Repl::Interpreter
 
     %call_frame = CallFrame.new(
       compiled_def: {{compiled_def}},
+      instructions: {{compiled_def}}.instructions,
       ip: {{compiled_def}}.instructions.to_unsafe,
-
       # We need to adjust the call stack to start right
       # after the target def's local variables.
       stack: %stack_before_call_args + {{compiled_def}}.local_vars.bytesize,
-
       stack_bottom: %stack_before_call_args,
+      block_caller_frame_index: {{block_caller_frame_index}},
     )
 
     @call_stack << %call_frame
@@ -220,15 +224,25 @@ class Crystal::Repl::Interpreter
   end
 
   private macro call_with_block(compiled_def)
-    call({{compiled_def}})
+    call({{compiled_def}}, block_caller_frame_index: @call_stack.size - 1)
   end
 
-  private macro go_to_block
-    # Nothing
-  end
+  private macro call_block(compiled_block)
+    @call_stack[-1] = @call_stack.last.copy_with(
+      ip: ip,
+      stack: stack,
+    )
 
-  private macro return_from_block
-    # Nothing
+    copied_call_frame = @call_stack[@call_stack.last.block_caller_frame_index].copy_with(
+      instructions: {{compiled_block}}.instructions,
+      ip: {{compiled_block}}.instructions.to_unsafe,
+      stack: stack,
+    )
+    @call_stack << copied_call_frame
+
+    instructions = copied_call_frame.instructions
+    ip = copied_call_frame.ip
+    stack_bottom = copied_call_frame.stack_bottom
   end
 
   private macro leave(size)

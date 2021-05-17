@@ -904,6 +904,53 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets yield return value" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          yield
+        end
+
+        z = foo do
+          1
+        end
+        z
+      CODE
+    end
+
+    it "interprets yield inside another block" do
+      interpret(<<-CODE).should eq(1)
+        def foo
+          bar do
+            yield
+          end
+        end
+
+        def bar
+          yield
+        end
+
+        a = 0
+        foo do
+          a += 1
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield inside def with arguments" do
+      interpret(<<-CODE).should eq(18)
+        def foo(x)
+          a = yield
+          a + x
+        end
+
+        a = foo(10) do
+          8
+        end
+        a
+      CODE
+    end
   end
 end
 

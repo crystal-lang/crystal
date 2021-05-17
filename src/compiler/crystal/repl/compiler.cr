@@ -7,8 +7,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private getter scope
   private getter def : Def?
 
-  property parent : Compiler?
-  @block : Block?
+  property compiled_block : CompiledBlock?
 
   def initialize(
     @program : Program,
@@ -385,6 +384,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = @defs[target_def]?
     unless compiled_def
+      block = node.block
+
+      # Compile the block too if there's one
+      if block
+        compiled_block = CompiledBlock.new(@local_vars)
+        compiler = Compiler.new(@program, @defs, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
+        compiler.compiled_block = @compiled_block
+        compiler.compile(block.body)
+
+        {% if Decompile %}
+          puts "=== #{target_def.owner}##{target_def.name}#block ==="
+          puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
+          puts "=== #{target_def.owner}##{target_def.name}#block ==="
+        {% end %}
+      end
+
       args_bytesize = 0
 
       if obj && obj.type != @program
@@ -402,12 +417,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
 
-      old_block = @block
-      @block = node.block
-
       # We don't cache defs that yield because we inline the block's contents
-      # TODO: maybe do this differently?
-      @defs[target_def] = compiled_def unless @block
+      @defs[target_def] = compiled_def unless block
 
       # Declare local variables for the newly compiled function
       target_def.vars.try &.each do |name, var|
@@ -415,14 +426,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       compiler = Compiler.new(@program, @defs, compiled_def)
+      compiler.compiled_block = compiled_block
 
       begin
-        compiler.parent = self if @block
         compiler.compile(target_def.body)
       rescue ex : Crystal::CodeError
         node.raise "compiling #{node}", inner: ex
-      ensure
-        @block = old_block
       end
 
       {% if Decompile %}
@@ -540,14 +549,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Yield)
-    parent.not_nil!.visit_block
+    call_block @compiled_block.not_nil!
     false
-  end
-
-  def visit_block
-    go_to_block
-    @block.not_nil!.body.accept self
-    return_from_block
   end
 
   def visit(node : ClassDef)
@@ -670,6 +673,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(a_def : CompiledDef)
     append(a_def.object_id.unsafe_as(Int64))
+  end
+
+  private def append(a_block : CompiledBlock)
+    append(a_block.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

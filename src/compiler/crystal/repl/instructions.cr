@@ -584,17 +584,11 @@ Crystal::Repl::Instructions =
         compiled_def: "#{compiled_def.def.name}",
       },
     },
-    go_to_block: {
-      operands:   [] of Nil,
+    call_block: {
+      operands:   [compiled_block : CompiledBlock],
       pop_values: [] of Nil,
       push:       false,
-      code:       go_to_block,
-    },
-    return_from_block: {
-      operands:   [] of Nil,
-      pop_values: [] of Nil,
-      push:       false,
-      code:       return_from_block,
+      code:       call_block(compiled_block),
     },
     allocate_class: {
       operands:   [size : Int32, type_id : Int32],
