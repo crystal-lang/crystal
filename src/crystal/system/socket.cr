@@ -54,6 +54,12 @@ module Crystal::System::Socket
   # private def unbuffered_write(slice : Bytes)
 
   # private def system_close
+
+  # IPSocket:
+
+  # private def system_local_address
+
+  # private def system_remote_address
 end
 
 {% if flag?(:unix) %}
