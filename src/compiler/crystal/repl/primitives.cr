@@ -51,6 +51,11 @@ class Crystal::Repl::Compiler
       return unless @wants_value
 
       pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
+    when "pointer_add"
+      accept_call_members(node)
+      return unless @wants_value
+
+      pointer_add(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "class"
       return unless @wants_value
 

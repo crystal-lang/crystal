@@ -515,6 +515,22 @@ describe Crystal::Repl::Interpreter do
         3
       CODE
     end
+
+    it "interprets pointer add" do
+      interpret(<<-CODE).should eq(9)
+        ptr = Pointer(Int32).new(1_u64)
+        ptr2 = ptr + 2_i64
+        ptr2.address
+      CODE
+    end
+
+    it "discards pointer add" do
+      interpret(<<-CODE).should eq(3)
+        ptr = Pointer(Int32).new(1_u64)
+        ptr + 2_i64
+        3
+      CODE
+    end
   end
 
   context "unions" do

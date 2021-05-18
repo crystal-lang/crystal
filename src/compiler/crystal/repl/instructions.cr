@@ -536,6 +536,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       (pointer1.address - pointer2.address) // element_size,
     },
+    pointer_add: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [pointer : Pointer(UInt8), offset : Int64],
+      push:       true,
+      code:       pointer + (offset * element_size),
+    },
     set_local: {
       operands:    [index : Int32, size : Int32],
       pop_values:  [] of Nil,
