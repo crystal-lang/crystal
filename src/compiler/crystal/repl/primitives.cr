@@ -210,7 +210,7 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary(node, body)
     case node.name
-    when "+", "-", "*"
+    when "+", "&+", "-", "*", "^"
       primitive_binary_op_math(node, body, node.name)
     when "<", "<=", ">", ">=", "==", "!="
       primitive_binary_op_cmp(node, body, node.name)
@@ -239,17 +239,21 @@ class Crystal::Repl::Compiler
     case {left_type.kind, right_type.kind}
     when {:i32, :i32}
       case op
-      when "+" then add_i32
-      when "-" then sub_i32
-      when "*" then mul_i32
+      when "+"  then add_i32
+      when "&+" then add_wrap_i32
+      when "-"  then sub_i32
+      when "*"  then mul_i32
+      when "^"  then xor_i32
       else
         left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
     when {:i64, :i64}
       case op
-      when "+" then add_i64
-      when "-" then sub_i64
-      when "*" then mul_i64
+      when "+"  then add_i64
+      when "&+" then add_wrap_i64
+      when "-"  then sub_i64
+      when "*"  then mul_i64
+      when "^"  then xor_i64
       else
         left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end

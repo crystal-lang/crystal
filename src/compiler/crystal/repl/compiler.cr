@@ -404,7 +404,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @local_vars.declare(name, var.type)
         end
 
-        compiled_block = CompiledBlock.new(@local_vars)
+        block_args_bytesize = block.args.sum { |arg| sizeof_type(arg) }
+
+        compiled_block = CompiledBlock.new(@local_vars, block_args_bytesize)
         compiler = Compiler.new(@program, @defs, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
         compiler.compile_block(block)
@@ -570,6 +572,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     call_block @compiled_block.not_nil!
+    pop sizeof_type(node) unless @wants_value
+
     false
   end
 

@@ -50,6 +50,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a + b,
     },
+    add_wrap_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a &+ b,
+    },
     sub_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -62,11 +68,23 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a * b,
     },
+    xor_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a ^ b,
+    },
     add_i64: {
       operands:   [] of Nil,
       pop_values: [a : Int64, b : Int64],
       push:       true,
       code:       a + b,
+    },
+    add_wrap_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a &+ b,
     },
     sub_i64: {
       operands:   [] of Nil,
@@ -79,6 +97,12 @@ Crystal::Repl::Instructions =
       pop_values: [a : Int64, b : Int64],
       push:       true,
       code:       a * b,
+    },
+    xor_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a ^ b,
     },
     lt_i32: {
       operands:   [] of Nil,

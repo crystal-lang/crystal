@@ -2,7 +2,8 @@ require "./repl"
 require "ffi"
 
 class Crystal::Repl::Interpreter
-  Trace = false
+  Trace  = false
+  TimeIt = false
 
   record CallFrame,
     compiled_def : CompiledDef,
@@ -59,9 +60,11 @@ class Crystal::Repl::Interpreter
       puts "=== top-level ==="
     {% end %}
 
-    # time = Time.monotonic
+    time = Time.monotonic
     value = interpret(node.type)
-    # puts "Elapsed: #{Time.monotonic - time}"
+    {% if TimeIt %}
+      puts "Elapsed: #{Time.monotonic - time}"
+    {% end %}
 
     value
   end
@@ -228,9 +231,12 @@ class Crystal::Repl::Interpreter
   end
 
   private macro call_block(compiled_block)
+    # At this point the stack has the yield expressions, so after the call
+    # we must go back to before the yield expressions
+    %stack_before_call_args = stack - {{compiled_block}}.args_bytesize
     @call_stack[-1] = @call_stack.last.copy_with(
       ip: ip,
-      stack: stack,
+      stack: %stack_before_call_args,
     )
 
     copied_call_frame = @call_stack[@call_stack.last.block_caller_frame_index].copy_with(
