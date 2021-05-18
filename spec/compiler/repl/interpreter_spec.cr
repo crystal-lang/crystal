@@ -790,6 +790,27 @@ describe Crystal::Repl::Interpreter do
         3
       CODE
     end
+
+    it "calls implicit self method" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+        class Foo
+          def initialize
+            @x = 10
+          end
+
+          def foo
+            bar
+          end
+
+          def bar
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        foo.foo
+      CODE
+    end
   end
 
   context "structs" do

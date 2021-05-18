@@ -109,6 +109,7 @@ class Crystal::Repl::Interpreter
         a_def = call_frame.compiled_def.def
         puts "In: #{a_def.owner}##{a_def.name}"
         puts "Call stack size: #{@call_stack.size}"
+        puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
 
         Disassembler.disassemble_one(instructions, (ip - instructions.to_unsafe).to_i32, current_local_vars, STDOUT)
         puts

@@ -420,14 +420,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       args_bytesize = 0
 
-      if obj && obj.type != @program
-        if obj.type == @program
-          # Nothing
-        elsif !obj.type.is_a?(PrimitiveType) && obj.type.struct?
-          args_bytesize += sizeof(Pointer(UInt8))
-        else
-          args_bytesize += sizeof_type(obj.type)
-        end
+      obj_type = obj.try(&.type) || scope
+
+      if obj_type == @program
+        # Nothing
+      elsif !obj_type.is_a?(PrimitiveType) && obj_type.struct?
+        args_bytesize += sizeof(Pointer(UInt8))
+      else
+        args_bytesize += sizeof_type(obj_type)
       end
 
       args_bytesize += args.sum { |arg| sizeof_type(arg) }
@@ -461,20 +461,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Self for structs is passed by reference
-    # TODO: pass implicit self here
-    obj.try do |o|
+    if obj
       # TODO: discard primitives
-      if o.type.struct?
-        case o
+      if obj.type.struct? && !obj.type.is_a?(PrimitiveType)
+        case obj
         when Var
-          pointerof_var(@local_vars.name_to_index(o.name))
+          pointerof_var(@local_vars.name_to_index(obj.name))
           # TODO: when InstanceVar
         else
-          request_value(o)
+          request_value(obj)
           # TODO: put pointer to struct
         end
       else
-        request_value(o)
+        request_value(obj)
+      end
+    else
+      # Pass implicit self if needed
+      # TODO: does this work for structs?
+      unless scope.is_a?(Program)
+        get_local 0, sizeof_type(scope)
       end
     end
 
