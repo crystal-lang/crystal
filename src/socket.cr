@@ -8,13 +8,6 @@ class Socket < IO
   include IO::Buffered
   include IO::Evented
 
-  enum Type
-    STREAM    = LibC::SOCK_STREAM
-    DGRAM     = LibC::SOCK_DGRAM
-    RAW       = LibC::SOCK_RAW
-    SEQPACKET = LibC::SOCK_SEQPACKET
-  end
-
   # :nodoc:
   SOMAXCONN = 128
 
