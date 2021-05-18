@@ -406,7 +406,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         block_args_bytesize = block.args.sum { |arg| sizeof_type(arg) }
 
-        compiled_block = CompiledBlock.new(@local_vars, block_args_bytesize)
+        compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
         compiler = Compiler.new(@program, @defs, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
         compiler.compile_block(block)
@@ -567,11 +567,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Yield)
-    node.exps.each do |exp|
-      request_value(exp)
+    compiled_block = @compiled_block.not_nil!
+    block = compiled_block.block
+
+    node.exps.each_with_index do |exp, i|
+      if i < block.args.size
+        request_value(exp)
+      else
+        dont_request_value(exp)
+      end
     end
 
-    call_block @compiled_block.not_nil!
+    call_block compiled_block
     pop sizeof_type(node) unless @wants_value
 
     false

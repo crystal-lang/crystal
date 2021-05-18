@@ -979,6 +979,20 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "discards yield expression" do
+      interpret(<<-CODE).should eq(3)
+        def foo
+          yield 1
+        end
+
+        a = 2
+        foo do
+          a = 3
+        end
+        a
+      CODE
+    end
   end
 end
 
