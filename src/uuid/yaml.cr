@@ -2,7 +2,7 @@ require "yaml"
 require "uuid"
 
 struct UUID
-  # Creates UUID from YAML using `YAML::ParseContext`.
+  # Creates `UUID` from YAML using `YAML::ParseContext`.
   #
   # NOTE: `require "uuid/yaml"` is required to opt-in to this feature.
   #
