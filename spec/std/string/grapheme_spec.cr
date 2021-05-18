@@ -648,7 +648,7 @@ describe "String Grapheme" do
   end
 
   it "test str " do
-    gr = "möp".graphemes
+    gr = "möp".each_grapheme
     gr.next
     gr.next
     val = gr.next.as(String::Grapheme::Cluster)
@@ -656,7 +656,7 @@ describe "String Grapheme" do
   end
 
   it "test bytes " do
-    gr = "A👩‍❤️‍💋‍👩B".graphemes
+    gr = "A👩‍❤️‍💋‍👩B".each_grapheme
     gr.next
     gr.next
     val = gr.next.as(String::Grapheme::Cluster)
@@ -666,14 +666,14 @@ describe "String Grapheme" do
   end
 
   it "test position " do
-    gr = "A👩‍❤️‍💋‍👩B".graphemes
+    gr = "A👩‍❤️‍💋‍👩B".each_grapheme
     gr.next
     val = gr.next.as(String::Grapheme::Cluster)
     {1, 28}.should eq(val.positions)
   end
 
   it "test reset " do
-    gr = "möp".graphemes
+    gr = "möp".each_grapheme
     gr.next
     gr.next
     gr.next
