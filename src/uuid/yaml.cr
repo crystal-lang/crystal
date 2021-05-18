@@ -34,7 +34,7 @@ struct UUID
     end
   end
 
-  # Returns UUID as YAML value.
+  # Returns `UUID` as YAML value.
   #
   # NOTE: `require "uuid/yaml"` is required to opt-in to this feature.
   #
