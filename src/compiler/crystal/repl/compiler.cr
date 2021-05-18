@@ -42,6 +42,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions
   end
 
+  def compile_block(node : Block) : Array(Instruction)
+    node.args.reverse_each do |arg|
+      index = @local_vars.name_to_index(arg.name)
+      set_local index, sizeof_type(arg)
+    end
+
+    compile(node.body)
+  end
+
   private def inside_method?
     !!@def
   end
@@ -388,10 +397,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # Compile the block too if there's one
       if block
+        # TODO: name collisions and different types with different blocks
+        block.vars.try &.each do |name, var|
+          next if var.context != block
+
+          @local_vars.declare(name, var.type)
+        end
+
         compiled_block = CompiledBlock.new(@local_vars)
         compiler = Compiler.new(@program, @defs, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
-        compiler.compile(block.body)
+        compiler.compile_block(block)
 
         {% if Decompile %}
           puts "=== #{target_def.owner}##{target_def.name}#block ==="
@@ -549,6 +565,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Yield)
+    node.exps.each do |exp|
+      request_value(exp)
+    end
+
     call_block @compiled_block.not_nil!
     false
   end

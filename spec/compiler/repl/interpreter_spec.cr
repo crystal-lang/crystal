@@ -951,6 +951,34 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets yield expression" do
+      interpret(<<-CODE).should eq(2)
+        def foo
+          yield 1
+        end
+
+        a = 1
+        foo do |x|
+          a += x
+        end
+        a
+      CODE
+    end
+
+    it "interprets yield expressions" do
+      interpret(<<-CODE).should eq(2 + 2*3 + 4*5)
+        def foo
+          yield 3, 4, 5
+        end
+
+        a = 2
+        foo do |x, y, z|
+          a += a * x + y * z
+        end
+        a
+      CODE
+    end
   end
 end
 
