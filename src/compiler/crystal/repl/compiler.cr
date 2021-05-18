@@ -573,6 +573,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.exps.each_with_index do |exp, i|
       if i < block.args.size
         request_value(exp)
+        convert exp, exp.type, block.args[i].type
       else
         dont_request_value(exp)
       end

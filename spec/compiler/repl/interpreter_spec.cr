@@ -1009,6 +1009,27 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "yields different values to form a union" do
+      interpret(<<-CODE).should eq(5)
+        def foo
+          yield 1
+          yield 'a'
+        end
+
+        a = 2
+        foo do |x|
+          a +=
+            case x
+            in Int32
+              1
+            in Char
+              2
+            end
+        end
+        a
+      CODE
+    end
   end
 end
 
