@@ -179,7 +179,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOENT, file: path)
+      raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
     real_path
