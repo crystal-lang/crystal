@@ -112,9 +112,14 @@ struct Crystal::Repl::Value
       io << "}"
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
-      io << @program.llvm_id.type_from_id(type_id)
+      type = @program.llvm_id.type_from_id(type_id)
+      io << type
+    when MixedUnionType
+      type_id = @pointer.as(Int32*).value
+      type = @program.llvm_id.type_from_id(type_id)
+      io << Value.new(@program, @pointer + sizeof(Pointer(UInt8)), type)
     else
-      raise "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
+      io << "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
     end
   end
 end
