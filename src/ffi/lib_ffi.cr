@@ -31,6 +31,23 @@ lib LibFFI
   $ffi_type_double : Type
   $ffi_type_pointer : Type
 
+  # TODO: this is 12 for non-x
+
+  {% if flag?(:bits64) %}
+    FFI_TRAMPOLINE_SIZE = 24
+  {% else %}
+    FFI_TRAMPOLINE_SIZE = 12
+  {% end %}
+
+  alias ClosureFun = Cif*, Void*, Void**, Void* -> Void
+
+  struct Closure
+    tramp : LibC::Char[FFI_TRAMPOLINE_SIZE]
+    cif : Cif*
+    fun : ClosureFun
+    user_data : Void*
+  end
+
   fun prep_cif = ffi_prep_cif(
     cif : Cif*,
     abi : FFI::ABI,
@@ -45,4 +62,14 @@ lib LibFFI
     rvalue : Void*,
     avalue : Void**
   ) : Void
+
+  fun closure_alloc = ffi_closure_alloc(size : LibC::SizeT, code : Void**) : Closure*
+  fun closure_free = ffi_closure_free(Void*)
+  fun prep_closure_loc = ffi_prep_closure_loc(
+    closure : Closure*,
+    cif : Cif*,
+    fun : ClosureFun,
+    user_data : Void*,
+    code_loc : Void*
+  ) : FFI::Status
 end

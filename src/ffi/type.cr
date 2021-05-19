@@ -1,3 +1,5 @@
+require "./ffi"
+
 module FFI
   struct Type
     def initialize(@type : LibFFI::Type*)
