@@ -359,6 +359,11 @@ module Random
 
   # Generates *n* random bytes that are encoded into base64.
   #
+  # The parameter *n* specifies the length, in bytes, of the random number to
+  # be generated. The length of the result string is about 4/3 of *n* due to
+  # the base64 encoding. The result receives a padding
+  # consisting of `=` characters to fill up the string size to a multiple of 4.
+  #
   # Check `Base64#strict_encode` for details.
   #
   # ```
