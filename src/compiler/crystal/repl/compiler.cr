@@ -608,7 +608,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ASTNode)
-    node.raise "BUG: missing instruction compiler for #{node.class}"
+    node.raise "BUG: missing interpret for #{node.class}"
   end
 
   {% for name, instruction in Crystal::Repl::Instructions %}

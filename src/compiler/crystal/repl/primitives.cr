@@ -16,6 +16,7 @@ class Crystal::Repl::Compiler
 
       pointer_new
     when "pointer_malloc"
+      dont_request_value(obj) if obj
       node.args.first.accept self
 
       # TODO: do we want the side effect of allocating memory
@@ -28,6 +29,16 @@ class Crystal::Repl::Compiler
       element_size = sizeof_type(element_type)
 
       pointer_malloc(element_size)
+    when "pointer_realloc"
+      accept_call_members(node)
+
+      scope_type = (node.obj.try &.type) || scope
+
+      pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      element_size = sizeof_type(element_type)
+
+      pointer_realloc(element_size)
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
       arg = node.args.first

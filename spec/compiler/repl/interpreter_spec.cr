@@ -531,6 +531,22 @@ describe Crystal::Repl::Interpreter do
         3
       CODE
     end
+
+    it "interprets pointer realloc" do
+      interpret(<<-CODE).should eq(3)
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr2 = ptr.realloc(2_u64)
+        3
+      CODE
+    end
+
+    it "discards pointer realloc" do
+      interpret(<<-CODE).should eq(3)
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr.realloc(2_u64)
+        3
+      CODE
+    end
   end
 
   context "unions" do

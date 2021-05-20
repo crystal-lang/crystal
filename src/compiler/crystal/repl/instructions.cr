@@ -506,6 +506,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       Pointer(UInt8).malloc(size * element_size),
     },
+    pointer_realloc: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [pointer : Pointer(UInt8), size : UInt64],
+      push:       true,
+      code:       pointer.realloc(size * element_size),
+    },
     pointer_set: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8)] of Nil,
