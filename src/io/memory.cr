@@ -336,12 +336,11 @@ class IO::Memory < IO
 
   # Truncates the file to the specified *size*. Requires that the current IO is writable.
   def truncate(size = 0) : Nil
-    if bytesize >= size # Shrink: Reposition pos to eof if file smaller than cur pos
+    if bytesize >= size # Shrink
       check_open
       check_resizeable
       @bytesize = size
-      self.pos = size if @pos > size
-    else # Expand: Leaves pos at cur position
+    else # Extend
       if size > @capacity
         check_resizeable
         resize_to_capacity(Math.pw2ceil(size))
