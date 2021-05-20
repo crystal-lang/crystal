@@ -101,8 +101,13 @@ struct Crystal::Repl::Value
       @pointer.as(UInt8**).value.unsafe_as(String).inspect(io)
     when PointerInstanceType
       pointer = @pointer.as(UInt8**).value
-      io << type << "@0x"
-      pointer.address.to_s(io, base: 16)
+      io << type
+      if pointer.null?
+        io << ".null"
+      else
+        io << "@0x"
+        pointer.address.to_s(io, base: 16)
+      end
     when TupleInstanceType
       io << "{"
       type.tuple_types.each_with_index do |tuple_type, i|
@@ -118,6 +123,37 @@ struct Crystal::Repl::Value
       type_id = @pointer.as(Int32*).value
       type = @program.llvm_id.type_from_id(type_id)
       io << Value.new(@program, @pointer + sizeof(Pointer(UInt8)), type)
+    when InstanceVarContainer
+      if type.struct?
+        ptr = @pointer
+        io << type
+        io << "("
+        all_instance_vars = type.all_instance_vars
+        all_instance_vars.each_with_index do |(name, ivar), index|
+          offset = @program.offset_of(type.sizeof_type, index).to_i32
+          io << name
+          io << '='
+          io << Value.new(@program, ptr + offset, ivar.type)
+          io << ' ' unless index == all_instance_vars.size - 1
+        end
+        io << ")"
+      else
+        ptr = @pointer.as(UInt8**).value
+        type_id = ptr.as(Int32*).value
+        type = @program.llvm_id.type_from_id(type_id)
+        io << "#<"
+        io << type
+        io << ":0x"
+        ptr.address.to_s(io, 16)
+        type.all_instance_vars.each_with_index do |(name, ivar), index|
+          offset = @program.instance_offset_of(type.sizeof_type, index).to_i32
+          io << ' '
+          io << name
+          io << '='
+          io << Value.new(@program, ptr + offset, ivar.type)
+        end
+        io << ">"
+      end
     else
       io << "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
     end
