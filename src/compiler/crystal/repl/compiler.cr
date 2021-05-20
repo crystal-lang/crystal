@@ -431,7 +431,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       if obj_type == @program
         # Nothing
-      elsif !obj_type.is_a?(PrimitiveType) && obj_type.struct?
+      elsif obj_type.passed_by_value?
         args_bytesize += sizeof(Pointer(UInt8))
       else
         args_bytesize += sizeof_type(obj_type)
@@ -469,8 +469,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Self for structs is passed by reference
     if obj
-      # TODO: discard primitives
-      if obj.type.struct? && !obj.type.is_a?(PrimitiveType)
+      if obj.type.passed_by_value?
         case obj
         when Var
           if obj.name == "self"
@@ -655,10 +654,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def put_self
     # TODO: does this work for structs?
     if scope.struct?
-      if scope.is_a?(PrimitiveType)
-        get_local 0, sizeof_type(scope)
-      else
+      if scope.passed_by_value?
         get_local 0, sizeof(Pointer(UInt8))
+      else
+        get_local 0, sizeof_type(scope)
       end
     else
       get_local 0, sizeof(Pointer(UInt8))
@@ -791,7 +790,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def ivar_offset(type : Type, name : String) : Int32
     ivar_index = type.index_of_instance_var(name).not_nil!
 
-    if !type.is_a?(PrimitiveType) && type.struct?
+    if type.passed_by_value?
       @program.offset_of(type.sizeof_type, ivar_index).to_i32
     else
       @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32

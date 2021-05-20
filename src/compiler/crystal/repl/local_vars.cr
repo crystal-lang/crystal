@@ -33,8 +33,7 @@ class Crystal::Repl::LocalVars
 
     @types[name] = type
 
-    # TODO: this logic is duplicated in Compiler
-    if is_self && !type.is_a?(PrimitiveType) && type.struct?
+    if is_self && type.passed_by_value?
       @bytesize += sizeof(Pointer(UInt8))
     else
       @bytesize += sizeof_type(type)

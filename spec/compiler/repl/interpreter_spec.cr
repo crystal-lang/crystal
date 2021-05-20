@@ -797,19 +797,17 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "interprets implicit self call for primitive types" do
-      interpret(<<-CODE).should eq(42)
-        struct Int32
-          def foo
-            bar
-          end
-
-          def bar
-            self
+    it "interprets implicit self call for pointer" do
+      interpret(<<-CODE).should eq(1)
+        struct Pointer(T)
+          def plus1
+            self + 1_i64
           end
         end
 
-        42.foo
+        ptr = Pointer(UInt8).malloc(1_u64)
+        ptr2 = ptr.plus1
+        (ptr2 - ptr)
         CODE
     end
 
