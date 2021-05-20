@@ -298,6 +298,19 @@ describe Crystal::Repl::Interpreter do
     it "discards bool not" do
       interpret("!false; 3").should eq(3)
     end
+
+    it "interprets Int32.unsafe_shl(Int32) with self" do
+      interpret(<<-CODE).should eq(4)
+        struct Int32
+          def shl2
+            unsafe_shl(2)
+          end
+        end
+
+        a = 1
+        a.shl2
+        CODE
+    end
   end
 
   context "control flow" do

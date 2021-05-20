@@ -32,6 +32,9 @@ class Crystal::Repl::Compiler
     when "pointer_realloc"
       accept_call_members(node)
 
+      # TODO: do we want the side effect of reallocating memory
+      return false unless @wants_value
+
       scope_type = (node.obj.try &.type) || scope
 
       pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
@@ -226,7 +229,7 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary(node, body)
     case node.name
-    when "+", "&+", "-", "*", "^"
+    when "+", "&+", "-", "*", "^", "|", "&", "unsafe_shl", "unsafe_shr", "unsafe_div", "unsafe_mod"
       primitive_binary_op_math(node, body, node.name)
     when "<", "<=", ">", ">=", "==", "!="
       primitive_binary_op_cmp(node, body, node.name)
@@ -238,48 +241,65 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(node : ASTNode, body : Primitive, op : String)
-    obj = node.obj.not_nil!
+    obj = node.obj
     arg = node.args.first
 
-    obj_type = obj.type
+    obj_type = obj.try(&.type) || scope
     arg_type = arg.type
 
-    primitive_binary_op_math(obj_type, arg_type, obj, arg, op)
+    primitive_binary_op_math(obj_type, arg_type, obj, arg, node, op)
   end
 
-  private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
-    left_node.accept self
+  private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+    if left_node
+      left_node.accept self
+    else
+      put_self
+    end
+
     right_node.accept self
     return false unless @wants_value
 
     case {left_type.kind, right_type.kind}
     when {:i32, :i32}
       case op
-      when "+"  then add_i32
-      when "&+" then add_wrap_i32
-      when "-"  then sub_i32
-      when "*"  then mul_i32
-      when "^"  then xor_i32
+      when "+"          then add_i32
+      when "&+"         then add_wrap_i32
+      when "-"          then sub_i32
+      when "*"          then mul_i32
+      when "^"          then xor_i32
+      when "|"          then or_i32
+      when "&"          then and_i32
+      when "unsafe_shl" then unsafe_shl_i32
+      when "unsafe_shr" then unsafe_shr_i32
+      when "unsafe_div" then unsafe_div_i32
+      when "unsafe_mod" then unsafe_mod_i32
       else
-        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
     when {:i64, :i64}
       case op
-      when "+"  then add_i64
-      when "&+" then add_wrap_i64
-      when "-"  then sub_i64
-      when "*"  then mul_i64
-      when "^"  then xor_i64
+      when "+"          then add_i64
+      when "&+"         then add_wrap_i64
+      when "-"          then sub_i64
+      when "*"          then mul_i64
+      when "^"          then xor_i64
+      when "|"          then or_i64
+      when "&"          then and_i64
+      when "unsafe_shl" then unsafe_shl_i64
+      when "unsafe_shr" then unsafe_shr_i64
+      when "unsafe_div" then unsafe_div_i64
+      when "unsafe_mod" then unsafe_mod_i64
       else
-        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
     else
-      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
   end
 
-  private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode, right_node : ASTNode, op : String)
-    left_node.raise "BUG: primitive_binary_op_math called with #{left_type} #{op} #{right_type}"
+  private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+    node.raise "BUG: primitive_binary_op_math called with #{left_type} #{op} #{right_type}"
   end
 
   private def primitive_binary_op_cmp(node : ASTNode, body : Primitive, op : String)

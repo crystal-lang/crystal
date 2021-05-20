@@ -477,10 +477,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      # TODO: does this work for structs?
-      unless scope.is_a?(Program)
-        get_local 0, sizeof_type(scope)
-      end
+      put_self unless scope.is_a?(Program)
     end
 
     args.each { |a| request_value(a) }
@@ -642,6 +639,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def put_def(a_def : Def)
+  end
+
+  private def put_self
+    # TODO: does this work for structs?
+    get_local 0, sizeof_type(scope)
   end
 
   private def type_id(type : Type)
