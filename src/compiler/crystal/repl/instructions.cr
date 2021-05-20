@@ -674,6 +674,12 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       get_local_var_pointer(index),
     },
+    pointerof_ivar: {
+      operands:   [offset : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       get_ivar_pointer(offset),
+    },
     call: {
       operands:    [compiled_def : CompiledDef],
       pop_values:  [] of Nil,

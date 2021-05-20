@@ -344,6 +344,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case exp
     when Var
       pointerof_var(@local_vars.name_to_index(exp.name))
+    when InstanceVar
+      index = scope.index_of_instance_var(exp.name).not_nil!
+      if scope.struct?
+        pointerof_ivar(@program.offset_of(scope.sizeof_type, index).to_i32)
+      else
+        pointerof_ivar(@program.instance_offset_of(scope.sizeof_type, index).to_i32)
+      end
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
@@ -466,7 +473,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if obj.type.struct? && !obj.type.is_a?(PrimitiveType)
         case obj
         when Var
-          pointerof_var(@local_vars.name_to_index(obj.name))
+          if obj.name == "self"
+            put_self
+          else
+            pointerof_var(@local_vars.name_to_index(obj.name))
+          end
           # TODO: when InstanceVar
         else
           request_value(obj)
@@ -643,7 +654,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def put_self
     # TODO: does this work for structs?
-    get_local 0, sizeof_type(scope)
+    if scope.struct?
+      if scope.is_a?(PrimitiveType)
+        get_local 0, sizeof_type(scope)
+      else
+        get_local 0, sizeof(Pointer(UInt8))
+      end
+    else
+      get_local 0, sizeof(Pointer(UInt8))
+    end
   end
 
   private def type_id(type : Type)

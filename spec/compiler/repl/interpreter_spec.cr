@@ -459,6 +459,28 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "pointerof instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def x_ptr
+            pointerof(@x)
+          end
+        end
+      EXISTING
+        foo = Foo.new(1)
+        ptr = foo.x_ptr
+        ptr.value = 2
+        foo.x
+      CODE
+    end
+
     # it "interprets pointer set and get (union type)" do
     #   interpret(<<-CODE).should eq(true)
     #     ptr = Pointer(Int32 | Bool).malloc(1_u64)
@@ -747,10 +769,42 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    it "interprets self" do
+    it "interprets self for primitive types" do
       interpret(<<-CODE).should eq(42)
         struct Int32
           def foo
+            self
+          end
+        end
+
+        42.foo
+        CODE
+    end
+
+    it "interprets explicit self call for primitive types" do
+      interpret(<<-CODE).should eq(42)
+        struct Int32
+          def foo
+            self.bar
+          end
+
+          def bar
+            self
+          end
+        end
+
+        42.foo
+        CODE
+    end
+
+    it "interprets implicit self call for primitive types" do
+      interpret(<<-CODE).should eq(42)
+        struct Int32
+          def foo
+            bar
+          end
+
+          def bar
             self
           end
         end
@@ -820,9 +874,51 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "calls implicit self method" do
+    it "calls implicit class self method" do
       interpret(<<-EXISTING, <<-CODE).should eq(10)
         class Foo
+          def initialize
+            @x = 10
+          end
+
+          def foo
+            bar
+          end
+
+          def bar
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        foo.foo
+      CODE
+    end
+
+    it "calls explicit struct self method" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 10
+          end
+
+          def foo
+            self.bar
+          end
+
+          def bar
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        foo.foo
+      CODE
+    end
+
+    it "calls implicit struct self method" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+        struct Foo
           def initialize
             @x = 10
           end

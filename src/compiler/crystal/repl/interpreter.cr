@@ -294,6 +294,10 @@ class Crystal::Repl::Interpreter
     stack_bottom + {{index}}
   end
 
+  private macro get_ivar_pointer(offset)
+    self_class_pointer + offset
+  end
+
   private macro next_instruction(t)
     value = ip.as({{t}}*).value
     ip += sizeof({{t}})
