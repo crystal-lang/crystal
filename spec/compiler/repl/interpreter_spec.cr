@@ -420,6 +420,25 @@ describe Crystal::Repl::Interpreter do
         foo(1)
       CODE
     end
+
+    it "interprets return implicit nil and Int32" do
+      interpret(<<-CODE).should eq(10)
+        def foo(x)
+          if x == 1
+            return
+          end
+
+          3
+        end
+
+        z = foo(1)
+        if z.is_a?(Int32)
+          z
+        else
+          10
+        end
+      CODE
+    end
   end
 
   context "pointers" do

@@ -282,18 +282,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
-    # TODO: downcast/upcast
     exp = node.exp
-    if exp
-      request_value(exp)
 
-      def_type = @def.not_nil!.type
-      convert exp, exp.type, def_type
-      leave sizeof_type(def_type)
-    else
-      put_nil
-      leave 0
-    end
+    exp_type =
+      if exp
+        request_value(exp)
+        exp.type
+      else
+        put_nil
+        @program.nil_type
+      end
+
+    def_type = @def.not_nil!.type
+    convert node, exp_type, def_type
+    leave sizeof_type(def_type)
 
     false
   end
