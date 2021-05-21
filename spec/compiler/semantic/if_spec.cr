@@ -438,4 +438,28 @@ describe "Semantic: if" do
       foo
       )) { nilable union_of bool, pointer_of(int32), int32 }
   end
+
+  it "doesn't fail on new variables inside typeof condition" do
+    assert_type(%(
+      def foo
+        if typeof(1 || 'a')
+          ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on nested conditionals inside typeof condition" do
+    assert_type(%(
+      def foo
+        if typeof(1 || 'a')
+          ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
 end
