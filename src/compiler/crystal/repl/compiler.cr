@@ -272,7 +272,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     patch_jump(cond_jump_location)
 
     request_value(node.cond)
-    # TODO: value_to_bool
+    unless node.cond.type.is_a?(BoolType)
+      # TODO: value_to_bool
+      node.cond.raise "BUG: missing while condition that's not a Bool"
+    end
 
     branch_if body_index
 
@@ -374,7 +377,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       logical_not
     else
-      node.raise "BUG: missing interpret Not for #{exp.type}"
+      exp.accept self
+      return false unless @wants_value
+
+      value_to_bool(exp, exp.type)
+      logical_not
     end
 
     false
@@ -731,12 +738,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pointer_is_not_null
   end
 
+  private def value_to_bool(node : ASTNode, type : NilableType)
+    pointer_is_not_null
+  end
+
   private def value_to_bool(node : ASTNode, type : MixedUnionType)
     union_to_bool(sizeof_type(type))
   end
 
   private def value_to_bool(node : ASTNode, type : Type)
-    node.raise "BUG: missing value_to_bool for #{type}"
+    node.raise "BUG: missing value_to_bool for #{type} (#{type.class})"
   end
 
   private def append(op_code : OpCode)

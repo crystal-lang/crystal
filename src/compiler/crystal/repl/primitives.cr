@@ -134,11 +134,14 @@ class Crystal::Repl::Compiler
   private def primitive_unchecked_convert(node : ASTNode, body : Primitive)
     obj = node.obj
 
+    return false if !obj && !@wants_value
+
     obj_type =
       if obj
         obj.accept self
         obj.type
       else
+        put_self
         scope
       end
 
@@ -146,27 +149,40 @@ class Crystal::Repl::Compiler
 
     target_type = body.type
 
-    obj_kind = integer_or_float_kind(obj_type)
-    target_kind = integer_or_float_kind(target_type)
-
-    unless obj_kind && target_kind
-      node.raise "BUG: missing handling of unchecked_convert for #{obj_type} (#{node.name})"
-    end
-
-    primitive_unchecked_convert(node, obj_kind, target_kind)
+    primitive_unchecked_convert(node, obj_type, target_type)
   end
 
-  private def primitive_unchecked_convert(node : ASTNode, obj_kind : Symbol, target_kind : Symbol)
-    target_kind =
-      case target_kind
+  private def primitive_unchecked_convert(node : ASTNode, from_type : IntegerType | FloatType, to_type : IntegerType | FloatType)
+    from_kind = integer_or_float_kind(from_type)
+    to_kind = integer_or_float_kind(to_type)
+
+    unless from_kind && to_kind
+      node.raise "BUG: missing handling of unchecked_convert for #{from_type} (#{node.name})"
+    end
+
+    primitive_unchecked_convert(node, from_kind, to_kind)
+  end
+
+  private def primitive_unchecked_convert(node : ASTNode, from_type : CharType, to_type : IntegerType)
+    # This is Char#ord
+    nop
+  end
+
+  private def primitive_unchecked_convert(node : ASTNode, from_type : Type, to_type : Type)
+    node.raise "BUG: missing handling of unchecked_convert from #{from_type} to #{to_type}"
+  end
+
+  private def primitive_unchecked_convert(node : ASTNode, from_kind : Symbol, to_kind : Symbol)
+    to_kind =
+      case to_kind
       when :u8  then :i8
       when :u16 then :i16
       when :u32 then :i32
       when :u64 then :i64
-      else           target_kind
+      else           to_kind
       end
 
-    case {obj_kind, target_kind}
+    case {from_kind, to_kind}
     when {:i8, :i8}   then nop
     when {:i8, :i16}  then i8_to_i16
     when {:i8, :i32}  then i8_to_i32
@@ -228,7 +244,7 @@ class Crystal::Repl::Compiler
     when {:f64, :i64} then f64_to_i64_bang
     when {:f64, :f32} then f64_to_f32_bang
     when {:f64, :f64} then nop
-    else                   node.raise "BUG: missing handling of unchecked_convert for #{obj_kind} - #{target_kind}"
+    else                   node.raise "BUG: missing handling of unchecked_convert for #{from_kind} - #{to_kind}"
     end
   end
 

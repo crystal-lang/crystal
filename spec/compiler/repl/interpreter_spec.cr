@@ -166,6 +166,10 @@ describe Crystal::Repl::Interpreter do
       end
     {% end %}
 
+    it "interprets Char#ord" do
+      interpret("'a'.ord").should eq('a'.ord)
+    end
+
     it "discards conversion" do
       interpret(<<-CODE).should eq(3)
       1.to_i8!
@@ -301,6 +305,34 @@ describe Crystal::Repl::Interpreter do
 
     it "discards bool not" do
       interpret("!false; 3").should eq(3)
+    end
+
+    it "interprets not for bool false" do
+      interpret("!false").should eq(true)
+    end
+
+    it "interprets not for mixed union (nil)" do
+      interpret("!(1 == 1 ? nil : 2)").should eq(true)
+    end
+
+    it "interprets not for mixed union (false)" do
+      interpret("!(1 == 1 ? false : 2)").should eq(true)
+    end
+
+    it "interprets not for mixed union (true)" do
+      interpret("!(1 == 1 ? true : 2)").should eq(false)
+    end
+
+    it "interprets not for mixed union (other)" do
+      interpret("!(1 == 1 ? 2 : true)").should eq(false)
+    end
+
+    it "interprets not for nilable type (false)" do
+      interpret(%(!(1 == 1 ? "hello" : nil))).should eq(false)
+    end
+
+    it "interprets not for nilable type (true)" do
+      interpret(%(!(1 == 1 ? nil : "hello"))).should eq(true)
     end
 
     it "interprets Int32.unsafe_shl(Int32) with self" do
