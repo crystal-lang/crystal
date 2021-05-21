@@ -381,11 +381,19 @@ class Crystal::Repl::Interpreter
       )
 
       matches = @program.lookup_matches(raise_without_backtrace_signature)
-      if matches.empty?
-        puts "OH NO!"
-      else
+      unless matches.empty?
         raise_without_backtrace_def = matches.matches.not_nil!.first.def
         raise_without_backtrace_def.body = Primitive.new("repl_raise_without_backtrace")
+      end
+    end
+
+    lib_instrinsics = @program.types["LibIntrinsics"]?
+    if lib_instrinsics
+      %w(memcpy memset).each do |function_name|
+        match = lib_instrinsics.lookup_first_def(function_name, false)
+        if match
+          match.body = Primitive.new("repl_intrinsics_#{function_name}")
+        end
       end
     end
   end

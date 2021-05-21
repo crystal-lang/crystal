@@ -176,6 +176,75 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
+    #
+    add_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a + b,
+    },
+    add_wrap_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a &+ b,
+    },
+    sub_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a - b,
+    },
+    mul_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a * b,
+    },
+    xor_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a ^ b,
+    },
+    or_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a | b,
+    },
+    and_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a & b,
+    },
+    unsafe_shr_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a.unsafe_shr(b),
+    },
+    unsafe_shl_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a.unsafe_shl(b),
+    },
+    unsafe_div_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a.unsafe_div(b),
+    },
+    unsafe_mod_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a.unsafe_mod(b),
+    },
+    #
+
     lt_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -576,13 +645,20 @@ Crystal::Repl::Instructions =
       operands:   [element_size : Int32] of Nil,
       pop_values: [size : UInt64],
       push:       true,
-      code:       Pointer(UInt8).malloc(size * element_size),
+      code:       begin
+        ptr = Pointer(UInt8).malloc(size * element_size)
+        # p! ptr, size, element_size
+        ptr
+      end,
     },
     pointer_realloc: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8), size : UInt64],
       push:       true,
-      code:       pointer.realloc(size * element_size),
+      code:       begin
+        # p! pointer, size, element_size
+        pointer.realloc(size * element_size)
+      end,
     },
     pointer_set: {
       operands:   [element_size : Int32] of Nil,
@@ -797,11 +873,11 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    pointer_is_null: {
+    pointer_is_not_null: {
       operands:   [] of Nil,
       pop_values: [pointer : Pointer(UInt8)],
       push:       true,
-      code:       pointer.null?,
+      code:       !pointer.null?,
     },
     tuple_indexer_known_index: {
       operands:   [tuple_size : Int32, offset : Int32, value_size : Int32] of Nil,
@@ -838,6 +914,34 @@ Crystal::Repl::Instructions =
       code:       begin
         # TODO: actually raise and interpret things
         raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
+      end,
+    },
+    repl_intrinsics_memcpy: {
+      operands:   [] of Nil,
+      pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: memcpy varies depending on the platform, so don't assume these are always the pop values
+        # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
+        if is_volatile
+          LibIntrinsics.memcpy(dest, src, len, true)
+        else
+          LibIntrinsics.memcpy(dest, src, len, false)
+        end
+      end,
+    },
+    repl_intrinsics_memset: {
+      operands:   [] of Nil,
+      pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: memset varies depending on the platform, so don't assume these are always the pop values
+        # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
+        if is_volatile
+          LibIntrinsics.memset(dest, val, len, true)
+        else
+          LibIntrinsics.memset(dest, val, len, false)
+        end
       end,
     },
     leave: {

@@ -378,6 +378,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Cast)
+    obj_type = node.obj.type
+    to_type = node.to.type.virtual_type
+
+    if obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
+      nop
+    else
+      raise "BUG: missing interpret Cast from #{obj_type} to #{to_type}"
+    end
+
+    false
+  end
+
   def visit(node : Call)
     # TODO: downcast/upcast
 
@@ -713,7 +726,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def value_to_bool(node : ASTNode, type : PointerInstanceType)
-    pointer_is_null
+    pointer_is_not_null
   end
 
   private def value_to_bool(node : ASTNode, type : MixedUnionType)

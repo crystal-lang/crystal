@@ -17,44 +17,41 @@ class Crystal::Repl::Compiler
       pointer_new
     when "pointer_malloc"
       dont_request_value(obj) if obj
-      node.args.first.accept self
+      request_value(node.args.first)
 
-      # TODO: do we want the side effect of allocating memory
-      return false unless @wants_value
-
-      scope_type = (node.obj.try &.type) || scope
+      scope_type = ((obj.try &.type) || scope).instance_type
 
       pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       element_size = sizeof_type(element_type)
 
       pointer_malloc(element_size)
+      pop(sizeof_type(scope_type)) unless @wants_value
     when "pointer_realloc"
-      accept_call_members(node)
+      obj ? request_value(obj) : put_self
+      request_value(node.args.first)
 
-      # TODO: do we want the side effect of reallocating memory
-      return false unless @wants_value
-
-      scope_type = (node.obj.try &.type) || scope
+      scope_type = (obj.try &.type) || scope
 
       pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
       element_size = sizeof_type(element_type)
 
       pointer_realloc(element_size)
+      pop(sizeof_type(scope_type)) unless @wants_value
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
       arg = node.args.first
       request_value(arg)
       dup(sizeof_type(arg)) if @wants_value
 
-      request_value(node.obj.not_nil!)
+      request_value(obj.not_nil!)
       pointer_set(sizeof_type(node.args.first))
     when "pointer_get"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_get(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
+      pointer_get(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "pointer_address"
       accept_call_members(node)
       return unless @wants_value
@@ -64,16 +61,16 @@ class Crystal::Repl::Compiler
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_diff(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
+      pointer_diff(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "pointer_add"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_add(sizeof_type(node.obj.not_nil!.type.as(PointerInstanceType).element_type))
+      pointer_add(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type))
     when "class"
       return unless @wants_value
 
-      put_type node.obj.not_nil!.type
+      put_type obj.not_nil!.type
     when "object_crystal_type_id"
       type =
         if obj
@@ -121,6 +118,14 @@ class Crystal::Repl::Compiler
       repl_call_stack_unwind
     when "repl_raise_without_backtrace"
       repl_raise_without_backtrace
+    when "repl_intrinsics_memcpy"
+      node.args.each { |arg| request_value(arg) }
+
+      repl_intrinsics_memcpy
+    when "repl_intrinsics_memset"
+      node.args.each { |arg| request_value(arg) }
+
+      repl_intrinsics_memset
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
@@ -258,10 +263,22 @@ class Crystal::Repl::Compiler
     end
 
     right_node.accept self
+
+    if left_type.kind == right_type.kind
+      # All good
+    elsif left_type.unsigned? && right_type.signed?
+      # TODO: check for overflow
+      # Essentially: if the right value is less than zero, raise
+      # Otherwise, do this conversion
+      primitive_unchecked_convert(right_node, right_type.kind, left_type.kind)
+    else
+      node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+
     return false unless @wants_value
 
-    case {left_type.kind, right_type.kind}
-    when {:i32, :i32}
+    case left_type.kind
+    when :i32
       case op
       when "+"          then add_i32
       when "&+"         then add_wrap_i32
@@ -277,7 +294,7 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
-    when {:i64, :i64}
+    when :i64
       case op
       when "+"          then add_i64
       when "&+"         then add_wrap_i64
@@ -290,6 +307,22 @@ class Crystal::Repl::Compiler
       when "unsafe_shr" then unsafe_shr_i64
       when "unsafe_div" then unsafe_div_i64
       when "unsafe_mod" then unsafe_mod_i64
+      else
+        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+    when :u64
+      case op
+      when "+"          then add_u64
+      when "&+"         then add_wrap_u64
+      when "-"          then sub_u64
+      when "*"          then mul_u64
+      when "^"          then xor_u64
+      when "|"          then or_u64
+      when "&"          then and_u64
+      when "unsafe_shl" then unsafe_shl_u64
+      when "unsafe_shr" then unsafe_shr_u64
+      when "unsafe_div" then unsafe_div_u64
+      when "unsafe_mod" then unsafe_mod_u64
       else
         node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end

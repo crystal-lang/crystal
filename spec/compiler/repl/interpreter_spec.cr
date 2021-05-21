@@ -211,6 +211,10 @@ describe Crystal::Repl::Interpreter do
       interpret("2 * 3").should eq(6)
     end
 
+    it "interprets UInt64 * Int32" do
+      interpret("2_u64 * 3").should eq(6)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
@@ -354,8 +358,12 @@ describe Crystal::Repl::Interpreter do
       interpret("a = 1 == 2 ? 1 : nil; a ? 2 : 3").should eq(3)
     end
 
+    it "interprets if pointer, true" do
+      interpret("ptr = Pointer(Int32).new(1_u64); ptr ? 2 : 3").should eq(2)
+    end
+
     it "interprets if pointer, false" do
-      interpret("ptr = Pointer(Int32).new(0_u64); ptr ? 1 : 2").should eq(1)
+      interpret("ptr = Pointer(Int32).new(0_u64); ptr ? 2 : 3").should eq(3)
     end
 
     it "interprets unless" do
@@ -579,6 +587,20 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE).should eq(3)
         ptr = Pointer(Int32).malloc(1_u64)
         ptr.realloc(2_u64)
+        3
+      CODE
+    end
+
+    it "interprets pointer realloc wrapper" do
+      interpret(<<-CODE).should eq(3)
+        struct Pointer(T)
+          def realloc(n)
+            realloc(n.to_u64)
+          end
+        end
+
+        ptr = Pointer(Int32).malloc(1_u64)
+        ptr2 = ptr.realloc(2)
         3
       CODE
     end
