@@ -728,12 +728,24 @@ module Crystal
       end
     end
 
-    def end_visit(node : Expressions)
+    def visit(node : Expressions)
+      expressions = node.expressions
+      if needs_type_filters? && expressions.size > 1
+        ignoring_type_filters do
+          expressions.each(within: 0..-2, &.accept(self))
+        end
+        expressions.last.accept(self)
+      else
+        expressions.each &.accept(self)
+      end
+
       if node.empty?
         node.set_type(@program.nil)
       else
         node.bind_to node.last
       end
+
+      false
     end
 
     def visit(node : Assign)
