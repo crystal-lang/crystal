@@ -633,9 +633,9 @@ describe "String Grapheme" do
     testcases.each_with_index do |tc, tn|
       gr = tc[:original].graphemes
       index = 0
-      gr.each do |cluster|
+      gr.each do |v|
         index.should be < tc[:expected].size, "Test case #{tn} \"#{tc[:original]}\" failed: More grapheme clusters return than expected"
-        codepoints = cluster.codepoints
+        codepoints = v.is_a?(Char) ? [v.ord] : v.as(String).codepoints
         codepoints.size.should eq(tc[:expected][index].size), "Test case #{tn} \"#{tc[:original]}\" failed: Grapheme cluster at index #{index} has #{codepoints.size} codepoints #{codepoints}, #{tc[:expected][index].size} expected #{tc[:expected][index]}"
 
         codepoints.each_with_index do |c, i|
@@ -651,34 +651,7 @@ describe "String Grapheme" do
     gr = "möp".each_grapheme
     gr.next
     gr.next
-    val = gr.next.as(String::Grapheme::Cluster)
-    val.to_s.should eq("p")
-  end
-
-  it "test bytes " do
-    gr = "A👩‍❤️‍💋‍👩B".each_grapheme
-    gr.next
-    gr.next
-    val = gr.next.as(String::Grapheme::Cluster)
-    b = val.bytes
-    b.size.should eq(1)
-    b[0].should eq 'B'.ord
-  end
-
-  it "test position " do
-    gr = "A👩‍❤️‍💋‍👩B".each_grapheme
-    gr.next
-    val = gr.next.as(String::Grapheme::Cluster)
-    {1, 28}.should eq(val.positions)
-  end
-
-  it "test reset " do
-    gr = "möp".each_grapheme
-    gr.next
-    gr.next
-    gr.next
-    gr.reset
-    val = gr.next.as(String::Grapheme::Cluster)
-    val.to_s.should eq("m")
+    val = gr.next
+    val.should eq('p')
   end
 end
