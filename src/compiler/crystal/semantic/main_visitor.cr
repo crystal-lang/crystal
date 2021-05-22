@@ -729,20 +729,18 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      expressions = node.expressions
-      if needs_type_filters? && expressions.size > 1
-        ignoring_type_filters do
-          expressions.each(within: 0..-2, &.accept(self))
+      exp_count = node.expressions.size
+      node.expressions.each_with_index do |exp, i|
+        if i == exp_count - 1
+          exp.accept self
+          node.bind_to exp
+        else
+          ignoring_type_filters { exp.accept self }
         end
-        expressions.last.accept(self)
-      else
-        expressions.each &.accept(self)
       end
 
       if node.empty?
         node.set_type(@program.nil)
-      else
-        node.bind_to node.last
       end
 
       false
