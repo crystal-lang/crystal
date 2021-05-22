@@ -225,14 +225,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : If)
     if node.truthy?
-      dont_request_value(node.cond)
+      discard_value(node.cond)
       node.then.accept self
       return false unless @wants_value
 
       convert node.then, node.then.type, node.type
       return false
     elsif node.falsey?
-      dont_request_value(node.cond)
+      discard_value(node.cond)
       node.else.accept self
       return false unless @wants_value
 
@@ -267,15 +267,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     body_index = @instructions.size
-    dont_request_value(node.body)
+    discard_value(node.body)
 
     patch_jump(cond_jump_location)
 
     request_value(node.cond)
-    unless node.cond.type.is_a?(BoolType)
-      # TODO: value_to_bool
-      node.cond.raise "BUG: missing while condition that's not a Bool"
-    end
+    value_to_bool(node.cond, node.cond.type)
 
     branch_if body_index
 
@@ -364,25 +361,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Not)
     exp = node.exp
+    exp.accept self
+    return false unless @wants_value
 
-    case exp.type
-    when @program.nil_type
-      dont_request_value(exp)
-      return false unless @wants_value
-
-      put_true
-    when @program.bool
-      exp.accept self
-      return false unless @wants_value
-
-      logical_not
-    else
-      exp.accept self
-      return false unless @wants_value
-
-      value_to_bool(exp, exp.type)
-      logical_not
-    end
+    value_to_bool(exp, exp.type)
+    logical_not
 
     false
   end
@@ -609,7 +592,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         request_value(exp)
         convert exp, exp.type, block.args[i].type
       else
-        dont_request_value(exp)
+        discard_value(exp)
       end
     end
 
@@ -655,7 +638,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     accept_with_wants_value node, true
   end
 
-  private def dont_request_value(node : ASTNode)
+  private def discard_value(node : ASTNode)
     accept_with_wants_value node, false
   end
 
@@ -688,66 +671,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def type_id(type : Type)
     @program.llvm_id.type_id(type)
-  end
-
-  private def convert(node : ASTNode, from : Type, to : Type)
-    return if from == to
-
-    convert_distinct(node, from, to)
-  end
-
-  private def convert_distinct(node : ASTNode, from : Type, to : MixedUnionType)
-    put_in_union(type_id(from), sizeof_type(from), sizeof_type(to))
-  end
-
-  private def convert_distinct(node : ASTNode, from : NilType, to : NilableType)
-    # TODO: pointer sizes
-    put_i64 0_i64
-  end
-
-  private def convert_distinct(node : ASTNode, from : Type, to : NilableType)
-    # Nothing
-  end
-
-  private def convert_distinct(node : ASTNode, from : NilType, to : NilableReferenceUnionType)
-    # TODO: pointer sizes
-    put_i64 0_i64
-  end
-
-  private def convert_distinct(node : ASTNode, from : Type, to : NilableReferenceUnionType)
-    # Nothing
-  end
-
-  private def convert_distinct(node : ASTNode, from : MixedUnionType, to : Type)
-    remove_from_union(sizeof_type(from), sizeof_type(to))
-  end
-
-  private def convert_distinct(node : ASTNode, from : NoReturnType, to : Type)
-    # Nothing
-  end
-
-  private def convert_distinct(node : ASTNode, from : Type, to : Type)
-    node.raise "BUG: missing convert_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
-  end
-
-  private def value_to_bool(node : ASTNode, type : BoolType)
-    # Nothing to do
-  end
-
-  private def value_to_bool(node : ASTNode, type : PointerInstanceType)
-    pointer_is_not_null
-  end
-
-  private def value_to_bool(node : ASTNode, type : NilableType)
-    pointer_is_not_null
-  end
-
-  private def value_to_bool(node : ASTNode, type : MixedUnionType)
-    union_to_bool(sizeof_type(type))
-  end
-
-  private def value_to_bool(node : ASTNode, type : Type)
-    node.raise "BUG: missing value_to_bool for #{type} (#{type.class})"
   end
 
   private def append(op_code : OpCode)

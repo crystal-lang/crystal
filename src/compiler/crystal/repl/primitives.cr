@@ -16,7 +16,7 @@ class Crystal::Repl::Compiler
 
       pointer_new
     when "pointer_malloc"
-      dont_request_value(obj) if obj
+      discard_value(obj) if obj
       request_value(node.args.first)
 
       scope_type = ((obj.try &.type) || scope).instance_type
@@ -74,7 +74,7 @@ class Crystal::Repl::Compiler
     when "object_crystal_type_id"
       type =
         if obj
-          dont_request_value(obj)
+          discard_value(obj)
           obj.type
         else
           scope
@@ -86,7 +86,7 @@ class Crystal::Repl::Compiler
     when "allocate"
       type =
         if obj
-          dont_request_value(obj)
+          discard_value(obj)
           obj.type.instance_type
         else
           scope.instance_type
