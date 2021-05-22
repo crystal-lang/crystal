@@ -272,28 +272,37 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    if left_node
-      left_node.accept self
-    else
-      put_self
-    end
-
-    right_node.accept self
-
+    # TODO: check for overflow (in general)
     if left_type.kind == right_type.kind
       # All good
+      left_node ? left_node.accept(self) : put_self
+      right_node.accept self
+      kind = left_type.kind
+      # If both types fit inside Int32
+    elsif left_type.rank <= 5 && right_type.rank <= 5
+      # Convert them to both to Int32 first
+      left_node ? left_node.accept(self) : put_self
+      primitive_unchecked_convert(node, left_type.kind, :i32) if left_type.rank < 5
+
+      right_node.accept self
+      primitive_unchecked_convert(node, right_type.kind, :i32) if right_type.rank < 5
+
+      kind = :i32
     elsif left_type.unsigned? && right_type.signed?
       # TODO: check for overflow
       # Essentially: if the right value is less than zero, raise
       # Otherwise, do this conversion
-      primitive_unchecked_convert(right_node, right_type.kind, left_type.kind)
+      left_node ? left_node.accept(self) : put_self
+      right_node.accept self
+      primitive_unchecked_convert(node, right_type.kind, left_type.kind)
+      kind = left_type.kind
     else
       node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
 
     return false unless @wants_value
 
-    case left_type.kind
+    case kind
     when :i32
       case op
       when "+"          then add_i32
@@ -345,6 +354,10 @@ class Crystal::Repl::Compiler
     else
       node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
+
+    if kind != left_type.kind
+      primitive_unchecked_convert(node, kind, left_type.kind)
+    end
   end
 
   private def primitive_binary_op_math(left_type : Type, right_type : Type, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
@@ -362,12 +375,29 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
-    left_node.accept self
-    right_node.accept self
+    # If the types are the same
+    if left_type.kind == right_type.kind
+      left_node.accept self
+      right_node.accept self
+      kind = left_type.kind
+      # If both fit in an Int32
+    elsif left_type.rank <= 5 && right_type.rank <= 5
+      # Convert them to Int32 first, then do the comparison
+      left_node.accept self
+      primitive_unchecked_convert(left_node, left_type.kind, :i32) if left_type.rank < 5
+
+      right_node.accept self
+      primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
+
+      kind = :i32
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+
     return false unless @wants_value
 
-    case {left_type.kind, right_type.kind}
-    when {:i32, :i32}
+    case kind
+    when :i32
       case op
       when "==" then eq_i32
       when "!=" then neq_i32
