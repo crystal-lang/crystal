@@ -746,6 +746,13 @@ describe Crystal::Repl::Interpreter do
         3
         CODE
     end
+
+    it "converts from NilableType to NonGenericClassType" do
+      interpret(<<-CODE).should eq("a")
+        a = 1 == 1 ? "a" : nil
+        a || "b"
+        CODE
+    end
   end
 
   context "types" do

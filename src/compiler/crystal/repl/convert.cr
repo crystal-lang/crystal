@@ -37,6 +37,10 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def convert_distinct(node : ASTNode, from : NilableType, to : NonGenericClassType)
+    # Nothing to do
+  end
+
   private def convert_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing convert_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
