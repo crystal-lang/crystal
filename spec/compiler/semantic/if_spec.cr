@@ -442,7 +442,7 @@ describe "Semantic: if" do
   it "doesn't fail on new variables inside typeof condition" do
     assert_type(%(
       def foo
-        if typeof(1 || 'a')
+        if typeof(x = 1)
           ""
         end
       end
