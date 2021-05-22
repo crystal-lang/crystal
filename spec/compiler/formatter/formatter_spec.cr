@@ -724,13 +724,19 @@ describe Crystal::Formatter do
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"
 
-  assert_format "->foo="
-  assert_format "foo = 1\n->foo.bar"
-  assert_format "foo = 1\n->foo.bar="
+  %w(foo foo= foo? foo!).each do |method|
+    assert_format "->#{method}"
+    assert_format "foo = 1\n->foo.#{method}"
+    assert_format "->Foo.#{method}"
+    assert_format "->@foo.#{method}"
+    assert_format "->@@foo.#{method}"
+  end
+
   assert_format "foo = 1\n->foo.bar(Int32)"
   assert_format "foo = 1\n->foo.bar(Int32*)"
   assert_format "foo = 1\n->foo.bar=(Int32)"
   assert_format "foo = 1\n->foo.[](Int32)"
+  assert_format "foo = 1\n->foo.[]=(Int32)"
   assert_format "->{ x }"
   assert_format "->{\nx\n}", "->{\n  x\n}"
   assert_format "->do\nx\nend", "->do\n  x\nend"
@@ -738,9 +744,6 @@ describe Crystal::Formatter do
   assert_format "->() do x end", "->do x end"
   assert_format "->( x , y )   { x }", "->(x, y) { x }"
   assert_format "->( x : Int32 , y )   { x }", "->(x : Int32, y) { x }"
-
-  assert_format "->@foo.foo"
-  assert_format "->@@foo.foo"
 
   {:+, :-, :*, :/, :^, :>>, :<<, :|, :&, :&+, :&-, :&*, :&**}.each do |sym|
     assert_format ":#{sym}"

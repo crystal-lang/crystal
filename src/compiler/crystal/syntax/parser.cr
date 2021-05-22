@@ -1912,19 +1912,37 @@ module Crystal
         obj = parse_generic
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
       else
         unexpected_token
       end
