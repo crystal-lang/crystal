@@ -1,36 +1,6 @@
 require "./properties"
 
 module String::Grapheme
-  # Unicode extended grapheme cluster. `Graphemes` Iterator will return an instance of this struct to return information about specific grapheme cluster.
-  struct Cluster
-    # Returns codepoints which corresponds to the current grapheme cluster.
-    getter codepoints : Array(Int32)
-    # returns the interval of the current grapheme as byte positions into the
-    # original string. The first returned value "from" indexes the first byte
-    # and the second retured value "to" indexes the first byte that is not included
-    # anumore, i.e. `str[from...to]` is the current grapheme cluster of
-    # the original string "str".
-    getter positions : Tuple(Int32, Int32)
-
-    # :nodoc:
-    def initialize(@codepoints, @positions)
-    end
-
-    # returns a substring of the original string which corresponds to the current grapheme cluster
-    def str
-      @codepoints.map(&.chr).join
-    end
-
-    def to_s(io : IO) : Nil
-      io << str
-    end
-
-    # returns a byte slice which corresponds to the current grapheme cluster.
-    def bytes
-      str.to_slice
-    end
-  end
-
   # Graphemes implements an iterator over Unicode extended grapheme clusters,
   # specified in the Unicode Standard Annex #29. Grapheme clusters correspond to
   # "user-perceived characters". These characters often consist of multiple
@@ -38,57 +8,45 @@ module String::Grapheme
   # woman + ZWJ + heavy black heart (2 code points) + ZWJ + kiss mark + ZWJ +
   # woman) and the rules described in Annex #29 must be applied to group those
   # code points into clusters perceived by the user as one character.
-  struct Graphemes
-    include Iterator(Cluster)
+  class Graphemes
+    include Iterator(Char | String)
+
+    @last_char : Char? = nil
+    getter pos : Int32 = -1
 
     def initialize(str : String)
-      @codepoints = Array(Int32).new(str.size)
-      @indices = Array(Int32).new(str.size + 1)
-      @start = 0
-      @end = 0
-      @pos = 0
+      @reader = Char::Reader.new(str)
       @state = State::Any
-      str.each_char_with_index do |c, i|
-        @codepoints << c.ord
-        @indices << str.char_index_to_byte_index(i).not_nil!
-      end
-      @indices << str.bytesize
+      @cluster = [] of Tuple(Char, Int32)
+      @look_ahead = true
+      @last_char_pos = 0
       move_next # Parse ahead
     end
 
     def next
-      return stop unless move_next
-      Cluster.new(@codepoints[@start...@end], {@indices[@start], @indices[@end]})
-    end
-
-    # Reset puts the iterator into its initial state such that the next call to
-    # `next()` sets it to the first grapheme cluster again.
-    def reset : Nil
-      @start, @end, @pos, @state = 0, 0, 0, State::Any
+      @pos = -1
       move_next
+      return stop if @cluster.empty?
+      val = @cluster.size > 1 ? @cluster.map(&.[0]).join : @cluster[0][0]
+      @pos = @cluster[0][1]
+      @cluster.clear
+      val
     end
 
-    # advances the iterator by one grapheme cluster and returns false if no
-    # cluster are left. This function must be called before the first cluster is
-    # accessed
+    # advances the iterator by one grapheme cluster
+    # This method must be called before the first cluster is accessed
     private def move_next
-      @start = @end
+      if (c = @last_char) && @cluster.empty?
+        @cluster << {c, @last_char_pos}
+        @last_char = nil
+      end
 
-      # The state transition gives us a boundary instruction BEFORE the next code point
-      # so we always need to stay ahead by one code point.
+      while @reader.has_next?
+        value = @reader.current_char
+        @cluster << {value, @reader.pos}
+        @reader.next_char
 
-      # parse the next code point.
-      while @pos <= @codepoints.size
-        # GB2
-        if @pos == @codepoints.size
-          @end = @pos
-          @pos += 1
-          break
-        end
-
-        # Determine the property of the next character.
-        next_prop = Property.from(@codepoints[@pos])
-        @pos += 1
+        next_prop = Property.from(value.ord)
 
         # Find the applicable transition
         if (transition = @transitions[{@state, next_prop}]?)
@@ -123,18 +81,19 @@ module String::Grapheme
             boundary = true
           end
         end
-
         # If we found a cluster boundary, let's stop here. The current cluster will
         # be the one that just ended.
-        if @pos - 1 == 0 || boundary
-          @end = @pos - 1
+        if @look_ahead || boundary
+          unless @cluster.size == 1
+            @last_char, @last_char_pos = @cluster.delete_at(-1)
+          end
+          @look_ahead = false
           break
         end
       end
-      @start != @end
     end
 
-    # State::apheme cluster parser states
+    # cluster parser states
     private enum State
       Any
       CR
@@ -149,7 +108,7 @@ module String::Grapheme
       RIEven
     end
 
-    # State::apheme cluster parser's breaking instructions.
+    # cluster parser's breaking instructions.
     private enum Instruction
       NoBoundary
       Boundary
@@ -169,7 +128,7 @@ module String::Grapheme
     #      the transition with the lower rule number, prefer (3) if rule numbers
     #      are equal. Stop.
     #   6. Assume `State::Any` and `Instruction::Boundary`.
-    @transitions = {
+    @transitions : Hash(Tuple(State, Property), Tuple(State, Instruction, Int32)) = {
       # GB5
       {State::Any, Property::CR}      => {State::CR, Instruction::Boundary, 50},
       {State::Any, Property::LF}      => {State::ControlLF, Instruction::Boundary, 50},
@@ -208,8 +167,8 @@ module String::Grapheme
       {State::Any, Property::SpacingMark} => {State::Any, Instruction::NoBoundary, 91},
 
       # GB9b.
-      {State::Any, Property::Preprend} => {State::Prepend, Instruction::Boundary, 9990},
-      {State::Prepend, Property::Any}  => {State::Any, Instruction::NoBoundary, 92},
+      {State::Any, Property::Prepend} => {State::Prepend, Instruction::Boundary, 9990},
+      {State::Prepend, Property::Any} => {State::Any, Instruction::NoBoundary, 92},
 
       # GB11.
       {State::Any, Property::ExtendedPictographic}                     => {State::ExtendedPictographic, Instruction::Boundary, 9990},
@@ -221,6 +180,6 @@ module String::Grapheme
       {State::Any, Property::RegionalIndicator}    => {State::RIOdd, Instruction::Boundary, 9990},
       {State::RIOdd, Property::RegionalIndicator}  => {State::RIEven, Instruction::NoBoundary, 120},
       {State::RIEven, Property::RegionalIndicator} => {State::RIOdd, Instruction::Boundary, 120},
-    } of Tuple(State, Property) => Tuple(State, Instruction, Int32)
+    }
   end
 end
