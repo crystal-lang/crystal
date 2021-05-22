@@ -507,25 +507,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     return false
 
-    # arg_values = node.args.map do |arg|
-    #   visit(arg)
-    #   @last
-    # end
-
-    # named_arg_values =
-    #   if named_args = node.named_args
-    #     named_args.map do |named_arg|
-    #       named_arg.value.accept self
-    #       {named_arg.name, @last}
-    #     end
-    #   else
-    #     nil
-    #   end
-
-    # old_scope, @scope = scope, target_def.owner
-    # old_local_vars, @local_vars = @local_vars, LocalVars.new
-    # @def = target_def
-
     # if obj_value && obj_value.type.is_a?(LibType)
     #   # Okay... we need to d a C call. libffi to the rescue!
     #   handle = @dl_libraries[nil] ||= LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
@@ -552,27 +533,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     #   # TODO: missing return value
     # else
-    #   # Set up local vars for the def instatiation
-    #   if obj_value
-    #     @local_vars["self"] = obj_value
-    #   end
-
-    #   arg_values.zip(target_def.args) do |arg_value, def_arg|
-    #     @local_vars[def_arg.name] = arg_value
-    #   end
-
-    #   if named_arg_values
-    #     named_arg_values.each do |name, value|
-    #       @local_vars[name] = value
-    #     end
-    #   end
-
-    #   target_def.body.accept self
-    # end
-
-    # @scope = old_scope
-    # @local_vars = old_local_vars
-    # @def = nil
 
     false
   end
@@ -580,7 +540,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def accept_call_members(node : Call)
     node.obj.try &.accept(self)
     node.args.each &.accept(self)
-    # TODO: named arguments
+    node.named_args.try &.each &.value.accept(self)
   end
 
   def visit(node : Yield)
@@ -657,7 +617,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def put_self
-    # TODO: does this work for structs?
     if scope.struct?
       if scope.passed_by_value?
         get_local 0, sizeof(Pointer(UInt8))
