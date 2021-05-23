@@ -243,8 +243,18 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
-    #
-
+    eq_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a == b,
+    },
+    neq_i32: {
+      operands:   [] of Nil,
+      pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a != b,
+    },
     lt_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -269,17 +279,41 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a >= b,
     },
-    eq_i32: {
+    eq_u64: {
       operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
+      pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a == b,
     },
-    neq_i32: {
+    neq_u64: {
       operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
+      pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a != b,
+    },
+    lt_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a < b,
+    },
+    le_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a > b,
+    },
+    ge_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : UInt64],
+      push:       true,
+      code:       a >= b,
     },
     lt_f64: {
       operands:   [] of Nil,

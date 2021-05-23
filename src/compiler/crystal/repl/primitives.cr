@@ -375,13 +375,13 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
-    # If the types are the same
     if left_type.kind == right_type.kind
+      # If the types are the same
       left_node.accept self
       right_node.accept self
       kind = left_type.kind
-      # If both fit in an Int32
     elsif left_type.rank <= 5 && right_type.rank <= 5
+      # If both fit in an Int32
       # Convert them to Int32 first, then do the comparison
       left_node.accept self
       primitive_unchecked_convert(left_node, left_type.kind, :i32) if left_type.rank < 5
@@ -390,6 +390,19 @@ class Crystal::Repl::Compiler
       primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
 
       kind = :i32
+    elsif left_type.unsigned? && right_type.unsigned?
+      # If both are unsigned, convert the smallest to the biggest
+      if left_type.rank < right_type.rank
+        left_node.accept self
+        primitive_unchecked_convert(left_node, left_type.kind, right_type.kind)
+        right_node.accept self
+        kind = right_type.kind
+      else
+        left_node.accept self
+        right_node.accept self
+        primitive_unchecked_convert(right_node, right_type.kind, left_type.kind)
+        kind = left_type.kind
+      end
     else
       left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
@@ -405,6 +418,17 @@ class Crystal::Repl::Compiler
       when "<=" then le_i32
       when ">"  then gt_i32
       when ">=" then ge_i32
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+    when :u64
+      case op
+      when "==" then eq_u64
+      when "!=" then neq_u64
+      when "<"  then lt_u64
+      when "<=" then le_u64
+      when ">"  then gt_u64
+      when ">=" then ge_u64
       else
         left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end

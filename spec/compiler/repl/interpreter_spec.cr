@@ -227,6 +227,10 @@ describe Crystal::Repl::Interpreter do
       interpret("2_u64 * 3").should eq(6)
     end
 
+    it "interprets UInt8 | Int32" do
+      interpret("1_u8 | 2").should eq(3)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
@@ -293,8 +297,12 @@ describe Crystal::Repl::Interpreter do
       interpret("1_u8 < 0").should be_false
     end
 
-    it "interprets UInt8 | Int32" do
-      interpret("1_u8 | 2").should eq(3)
+    it "interprets UInt64 > UInt32 (true)" do
+      interpret("1_u64 > 0_u32").should be_true
+    end
+
+    it "interprets UInt64 > UInt32 (false)" do
+      interpret("0_u64 > 1_u32").should be_false
     end
 
     it "discards comparison" do
