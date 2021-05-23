@@ -319,6 +319,22 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
+    when :u32
+      case op
+      when "+"          then add_u32
+      when "&+"         then add_wrap_u32
+      when "-"          then sub_u32
+      when "*"          then mul_u32
+      when "^"          then xor_u32
+      when "|"          then or_u32
+      when "&"          then and_u32
+      when "unsafe_shl" then unsafe_shl_u32
+      when "unsafe_shr" then unsafe_shr_u32
+      when "unsafe_div" then unsafe_div_u32
+      when "unsafe_mod" then unsafe_mod_u32
+      else
+        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
     when :i64
       case op
       when "+"          then add_i64

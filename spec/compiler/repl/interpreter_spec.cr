@@ -231,6 +231,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1_u8 | 2").should eq(3)
     end
 
+    it "interprets UInt32 - Int32" do
+      interpret("3_u32 - 2").should eq(1)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
