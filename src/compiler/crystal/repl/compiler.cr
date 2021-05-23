@@ -387,8 +387,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
       nop
+    elsif obj_type.is_a?(PointerInstanceType) && to_type.reference_like?
+      nop
     else
-      raise "BUG: missing interpret Cast from #{obj_type} to #{to_type}"
+      node.raise "BUG: missing interpret Cast from #{obj_type} to #{to_type}"
     end
 
     false
