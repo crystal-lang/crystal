@@ -116,12 +116,6 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a + b,
     },
-    add_wrap_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a &+ b,
-    },
     sub_u32: {
       operands:   [] of Nil,
       pop_values: [a : UInt32, b : UInt32],
@@ -134,35 +128,11 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a * b,
     },
-    xor_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a ^ b,
-    },
-    or_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a | b,
-    },
-    and_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a & b,
-    },
     unsafe_shr_u32: {
       operands:   [] of Nil,
       pop_values: [a : UInt32, b : UInt32],
       push:       true,
       code:       a.unsafe_shr(b),
-    },
-    unsafe_shl_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a.unsafe_shl(b),
     },
     unsafe_div_u32: {
       operands:   [] of Nil,
@@ -242,18 +212,11 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
-    #
     add_u64: {
       operands:   [] of Nil,
       pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a + b,
-    },
-    add_wrap_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a &+ b,
     },
     sub_u64: {
       operands:   [] of Nil,
@@ -267,35 +230,11 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a * b,
     },
-    xor_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a ^ b,
-    },
-    or_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a | b,
-    },
-    and_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a & b,
-    },
     unsafe_shr_u64: {
       operands:   [] of Nil,
       pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a.unsafe_shr(b),
-    },
-    unsafe_shl_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a.unsafe_shl(b),
     },
     unsafe_div_u64: {
       operands:   [] of Nil,

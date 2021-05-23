@@ -322,13 +322,13 @@ class Crystal::Repl::Compiler
     when :u32
       case op
       when "+"          then add_u32
-      when "&+"         then add_wrap_u32
+      when "&+"         then add_wrap_i32
       when "-"          then sub_u32
       when "*"          then mul_u32
-      when "^"          then xor_u32
-      when "|"          then or_u32
-      when "&"          then and_u32
-      when "unsafe_shl" then unsafe_shl_u32
+      when "^"          then xor_i32
+      when "|"          then or_i32
+      when "&"          then and_i32
+      when "unsafe_shl" then unsafe_shl_i32
       when "unsafe_shr" then unsafe_shr_u32
       when "unsafe_div" then unsafe_div_u32
       when "unsafe_mod" then unsafe_mod_u32
@@ -354,13 +354,13 @@ class Crystal::Repl::Compiler
     when :u64
       case op
       when "+"          then add_u64
-      when "&+"         then add_wrap_u64
+      when "&+"         then add_wrap_i64
       when "-"          then sub_u64
       when "*"          then mul_u64
-      when "^"          then xor_u64
-      when "|"          then or_u64
-      when "&"          then and_u64
-      when "unsafe_shl" then unsafe_shl_u64
+      when "^"          then xor_i64
+      when "|"          then or_i64
+      when "&"          then and_i64
+      when "unsafe_shl" then unsafe_shl_i64
       when "unsafe_shr" then unsafe_shr_u64
       when "unsafe_div" then unsafe_div_u64
       when "unsafe_mod" then unsafe_mod_u64
