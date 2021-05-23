@@ -93,6 +93,14 @@ describe Crystal::Repl::Interpreter do
       a + b + c
       CODE
     end
+
+    it "interprets uninitialized" do
+      interpret(<<-CODE).should eq(3)
+        a = uninitialized Int32
+        a = 3
+        a
+        CODE
+    end
   end
 
   context "conversion" do

@@ -223,6 +223,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : UninitializedVar)
+    case var = node.var
+    when Var
+      var.accept self
+    else
+      node.raise "BUG: missing interpret UninitializedVar for #{var.class}"
+    end
+
+    false
+  end
+
   def visit(node : If)
     if node.truthy?
       discard_value(node.cond)
