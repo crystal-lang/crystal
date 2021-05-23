@@ -382,12 +382,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Cast)
+    node.obj.accept self
+
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
     if obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
+      # Cast between pointers is nop
       nop
     elsif obj_type.is_a?(PointerInstanceType) && to_type.reference_like?
+      # Cast from pointer to reference is nop
+      nop
+    elsif obj_type.reference_like? && to_type.is_a?(PointerInstanceType)
+      # Cast from reference to pointer is nop
       nop
     else
       node.raise "BUG: missing interpret Cast from #{obj_type} to #{to_type}"

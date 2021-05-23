@@ -1303,6 +1303,17 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  context "casts" do
+    it "casts from reference to pointer and back" do
+      interpret(<<-CODE).should eq("hello")
+        x = "hello"
+        p = x.as(UInt8*)
+        y = p.as(String)
+        y
+      CODE
+    end
+  end
 end
 
 private def interpret(string, *, prelude = "primitives")
