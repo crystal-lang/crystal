@@ -390,6 +390,22 @@ class Crystal::Repl::Compiler
     primitive_binary_op_cmp(obj_type, arg_type, obj, arg, op)
   end
 
+  private def primitive_binary_op_cmp(left_type : CharType, right_type : CharType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    right_node.accept self
+
+    case op
+    when "==" then eq_i32
+    when "!=" then neq_i32
+    when "<"  then lt_i32
+    when "<=" then le_i32
+    when ">"  then gt_i32
+    when ">=" then ge_i32
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+  end
+
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
     if left_type.kind == right_type.kind
       # If the types are the same
@@ -406,6 +422,16 @@ class Crystal::Repl::Compiler
       primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
 
       kind = :i32
+    elsif left_type.rank <= 7 && right_type.rank <= 7
+      # If both fit in an Int64
+      # Convert them to Int64 first, then do the comparison
+      left_node.accept self
+      primitive_unchecked_convert(left_node, left_type.kind, :i64) if left_type.rank < 7
+
+      right_node.accept self
+      primitive_unchecked_convert(right_node, right_type.kind, :i64) if right_type.rank < 7
+
+      kind = :i64
     elsif left_type.unsigned? && right_type.unsigned?
       # If both are unsigned, convert the smallest to the biggest
       if left_type.rank < right_type.rank
@@ -437,10 +463,21 @@ class Crystal::Repl::Compiler
       else
         left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
+    when :i64
+      case op
+      when "==" then eq_i64
+      when "!=" then neq_i64
+      when "<"  then lt_i64
+      when "<=" then le_i64
+      when ">"  then gt_i64
+      when ">=" then ge_i64
+      else
+        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
     when :u64
       case op
-      when "==" then eq_u64
-      when "!=" then neq_u64
+      when "==" then eq_i64
+      when "!=" then neq_i64
       when "<"  then lt_u64
       when "<=" then le_u64
       when ">"  then gt_u64

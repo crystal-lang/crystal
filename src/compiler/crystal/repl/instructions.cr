@@ -284,17 +284,41 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a >= b,
     },
-    eq_u64: {
+    eq_i64: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
+      pop_values: [a : Int64, b : Int64],
       push:       true,
       code:       a == b,
     },
-    neq_u64: {
+    neq_i64: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
+      pop_values: [a : Int64, b : Int64],
       push:       true,
       code:       a != b,
+    },
+    lt_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a < b,
+    },
+    le_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a > b,
+    },
+    ge_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : Int64],
+      push:       true,
+      code:       a >= b,
     },
     lt_u64: {
       operands:   [] of Nil,
