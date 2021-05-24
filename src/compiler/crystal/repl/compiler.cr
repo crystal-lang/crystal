@@ -2,8 +2,6 @@ require "./repl"
 require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
-  Decompile = false
-
   private getter scope : Type
   private getter def : Def?
 
@@ -460,11 +458,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         compiler.compiled_block = @compiled_block
         compiler.compile_block(block)
 
-        {% if Decompile %}
+        if @context.decompile
           puts "=== #{target_def.owner}##{target_def.name}#block ==="
           puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
           puts "=== #{target_def.owner}##{target_def.name}#block ==="
-        {% end %}
+        end
       end
 
       args_bytesize = 0
@@ -501,12 +499,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         node.raise "compiling #{node}", inner: ex
       end
 
-      {% if Decompile %}
+      if @context.decompile
         puts "=== #{target_def.owner}##{target_def.name} ==="
         p! compiled_def.local_vars, compiled_def.args_bytesize
         puts Disassembler.disassemble(compiled_def)
         puts "=== #{target_def.owner}##{target_def.name} ==="
-      {% end %}
+      end
     end
 
     # Self for structs is passed by reference

@@ -1391,12 +1391,13 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
+  context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)
 
   load_prelude(program, prelude, existing_code)
-  interpreter = Crystal::Repl::Interpreter.new(program)
+  interpreter = Crystal::Repl::Interpreter.new(context)
   {program, interpreter.interpret(node)}
 end
 

@@ -2,9 +2,6 @@ require "./repl"
 require "ffi"
 
 class Crystal::Repl::Interpreter
-  Trace  = false
-  TimeIt = false
-
   record CallFrame,
     compiled_def : CompiledDef,
     instructions : Array(UInt8),
@@ -13,8 +10,7 @@ class Crystal::Repl::Interpreter
     stack_bottom : Pointer(UInt8),
     block_caller_frame_index : Int32
 
-  def initialize(program : Program)
-    @context = Context.new(program)
+  def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
 
     @instructions = [] of Instruction
@@ -49,18 +45,18 @@ class Crystal::Repl::Interpreter
     compiler = Compiler.new(@context, @local_vars)
     @instructions = compiler.compile(node)
 
-    {% if Compiler::Decompile %}
+    if @context.decompile
       puts "=== top-level ==="
       p @local_vars
       puts Disassembler.disassemble(@instructions, @local_vars)
       puts "=== top-level ==="
-    {% end %}
+    end
 
     time = Time.monotonic
     value = interpret(node.type)
-    {% if TimeIt %}
+    if @context.stats
       puts "Elapsed: #{Time.monotonic - time}"
-    {% end %}
+    end
 
     value
   end
@@ -98,7 +94,7 @@ class Crystal::Repl::Interpreter
     )
 
     while true
-      {% if Trace %}
+      if @context.trace
         puts
 
         call_frame = @call_stack.last
@@ -109,7 +105,7 @@ class Crystal::Repl::Interpreter
 
         Disassembler.disassemble_one(instructions, (ip - instructions.to_unsafe).to_i32, current_local_vars, STDOUT)
         puts
-      {% end %}
+      end
 
       op_code = next_instruction OpCode
 
@@ -138,38 +134,9 @@ class Crystal::Repl::Interpreter
         end
       {% end %}
 
-      {% if Trace %}
+      if @context.trace
         puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
-        # stack_size = stack - @stack.to_unsafe
-        # print "Stack: "
-        # stack_size.times do |i|
-        #   print stack_bottom[i].to_s(16).rjust(2, '0')
-        #   print " " unless i == stack_size - 1
-        # end
-        # puts
-
-        # print "       "
-        # @local_vars.each_name_index_and_size do |name, index, size|
-        #   next if size == 0
-
-        #   print "-" * (2 + (3 * (size - 1)))
-        #   print " "
-        # end
-        # puts
-
-        # print "       "
-        # @local_vars.each_name_index_and_size do |name, index, size|
-        #   next if size == 0
-
-        #   width = (2 + (3 * (size - 1)))
-        #   part = name[0...width]
-        #   print part
-        #   print " " * (width - part.size)
-
-        #   print " "
-        # end
-        # puts
-      {% end %}
+      end
     end
 
     if stack != stack_bottom_after_local_vars

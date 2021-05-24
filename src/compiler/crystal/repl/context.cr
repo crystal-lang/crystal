@@ -4,8 +4,9 @@ class Crystal::Repl::Context
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
   getter lib_functions : Hash(External, LibFunction)
+  getter decompile, trace, stats
 
-  def initialize(@program : Program)
+  def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 

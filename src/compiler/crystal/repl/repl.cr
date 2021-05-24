@@ -1,10 +1,11 @@
 class Crystal::Repl
-  def initialize
+  def initialize(decompile : Bool, trace : Bool, stats : Bool)
     @program = Program.new
+    @context = Context.new(@program, decompile: decompile, trace: trace, stats: stats)
     @nest = 0
     @incomplete = false
     @line_number = 1
-    @interpreter = Interpreter.new(@program)
+    @interpreter = Interpreter.new(@context)
     @buffer = ""
 
     load_prelude
