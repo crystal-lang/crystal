@@ -120,10 +120,17 @@ class Crystal::Repl::Compiler
       repl_raise_without_backtrace
     when "repl_intrinsics_memcpy"
       node.args.each { |arg| request_value(arg) }
+      node.named_args.try &.each { |arg| request_value(arg.value) }
 
       repl_intrinsics_memcpy
+    when "repl_intrinsics_memmove"
+      node.args.each { |arg| request_value(arg) }
+      node.named_args.try &.each { |arg| request_value(arg.value) }
+
+      repl_intrinsics_memmove
     when "repl_intrinsics_memset"
       node.args.each { |arg| request_value(arg) }
+      node.named_args.try &.each { |arg| request_value(arg.value) }
 
       repl_intrinsics_memset
     else

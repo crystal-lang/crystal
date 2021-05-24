@@ -1008,6 +1008,20 @@ Crystal::Repl::Instructions =
         end
       end,
     },
+    repl_intrinsics_memmove: {
+      operands:   [] of Nil,
+      pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool] of Nil,
+      push:       false,
+      code:       begin
+        # TODO: memmove varies depending on the platform, so don't assume these are always the pop values
+        # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
+        if is_volatile
+          LibIntrinsics.memmove(dest, src, len, true)
+        else
+          LibIntrinsics.memmove(dest, src, len, false)
+        end
+      end,
+    },
     repl_intrinsics_memset: {
       operands:   [] of Nil,
       pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool] of Nil,

@@ -389,7 +389,7 @@ class Crystal::Repl::Interpreter
 
     lib_instrinsics = @program.types["LibIntrinsics"]?
     if lib_instrinsics
-      %w(memcpy memset).each do |function_name|
+      %w(memcpy memmove memset).each do |function_name|
         match = lib_instrinsics.lookup_first_def(function_name, false)
         if match
           match.body = Primitive.new("repl_intrinsics_#{function_name}")
