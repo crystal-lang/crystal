@@ -17,7 +17,6 @@ class Crystal::Repl::Interpreter
     @context = Context.new(program)
     @local_vars = LocalVars.new(@context)
 
-    @dl_libraries = {} of String? => Void*
     @instructions = [] of Instruction
 
     # TODO: what if the stack is exhausted?
@@ -249,34 +248,28 @@ class Crystal::Repl::Interpreter
     stack_bottom = copied_call_frame.stack_bottom
   end
 
-  private macro lib_call(call)
-    handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-    fn = LibC.dlsym(handle, {{call}}.name)
-    if fn.null?
-      raise "dlsym failed for #{call.name}"
+  private macro lib_call(lib_function)
+    %target_def = lib_function.def
+    %cif = lib_function.call_interface
+    %fn = lib_function.symbol
+
+    # Assume C calls don't have more than 100 arguments
+    # TODO: for speed, maybe compute these offsets and sizes back in the Compiler
+    %pointers = uninitialized StaticArray(Pointer(Void), 100)
+    %offset = 0
+    %i = %target_def.args.size - 1
+    %target_def.args.reverse_each do |arg|
+      %arg_bytesize = sizeof_type(arg.type)
+      %pointers[%i] = (stack - %offset - %arg_bytesize).as(Void*)
+      %offset -= %arg_bytesize
+      %i -= 1
     end
+    %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
 
-    target_def = {{call}}.target_def
+    %return_bytesize = sizeof_type(%target_def.type)
 
-    cif = FFI::CallInterface.new(
-      abi: FFI::ABI::DEFAULT,
-      args: call.target_def.args.map(&.type.ffi_type),
-      return_type: target_def.type.ffi_type,
-    )
-
-    pointers = Array(Void*).new(target_def.args.size)
-    offset = 0
-    target_def.args.reverse_each do |arg|
-      arg_bytesize = sizeof_type(arg.type)
-      pointers.unshift (stack - offset - arg_bytesize).as(Void*)
-      offset -= arg_bytesize
-    end
-    cif.call(fn, pointers, stack.as(Void*))
-
-    return_bytesize = sizeof_type(target_def.type)
-
-    (stack + offset).move_from(stack, return_bytesize)
-    stack = stack + offset + return_bytesize
+    (stack + %offset).move_from(stack, %return_bytesize)
+    stack = stack + %offset + %return_bytesize
   end
 
   private macro leave(size)

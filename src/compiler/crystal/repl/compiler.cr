@@ -421,7 +421,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # TODO: named args
       node.args.each { |arg| request_value(arg) }
 
-      lib_call(node)
+      lib_function = @context.lib_functions[target_def] ||= LibFunction.new(
+        def: target_def,
+        symbol: @context.c_function(nil, node.name),
+        call_interface: FFI::CallInterface.new(
+          abi: FFI::ABI::DEFAULT,
+          args: target_def.args.map(&.type.ffi_type),
+          return_type: target_def.type.ffi_type,
+        )
+      )
+
+      lib_call(lib_function)
 
       pop sizeof_type(node) unless @wants_value
 
@@ -656,8 +666,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     append(a_block.object_id.unsafe_as(Int64))
   end
 
-  private def append(call : Call)
-    append(call.object_id.unsafe_as(Int64))
+  private def append(lib_function : LibFunction)
+    append(lib_function.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

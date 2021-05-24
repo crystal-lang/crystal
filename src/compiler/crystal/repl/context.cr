@@ -3,10 +3,16 @@ require "./repl"
 class Crystal::Repl::Context
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
+  getter lib_functions : Hash(Def, LibFunction)
 
   def initialize(@program : Program)
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
+
+    @lib_functions = {} of Def => LibFunction
+    @lib_functions.compare_by_identity
+
+    @dl_handles = {} of String? => Void*
   end
 
   def sizeof_type(node : ASTNode) : Int32
@@ -50,5 +56,14 @@ class Crystal::Repl::Context
 
   def type_from_id(id : Int32) : Type
     @program.llvm_id.type_from_id(id)
+  end
+
+  def c_function(path : String?, name : String)
+    handle = @dl_handles[path] ||= LibC.dlopen(path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+    fn = LibC.dlsym(handle, name)
+    if fn.null?
+      raise "dlsym failed for path: #{path.inspect}, name: #{name.inspect}"
+    end
+    fn
   end
 end
