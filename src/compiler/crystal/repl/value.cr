@@ -4,7 +4,7 @@ struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
 
-  def initialize(@program : Program, @pointer : Pointer(UInt8), @type : Type)
+  def initialize(@context : Context, @pointer : Pointer(UInt8), @type : Type)
   end
 
   def value
@@ -52,7 +52,7 @@ struct Crystal::Repl::Value
       @pointer.as(UInt8**).value
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
-      @program.llvm_id.type_from_id(type_id)
+      @context.type_from_id(type_id)
     else
       @pointer
     end
@@ -111,18 +111,18 @@ struct Crystal::Repl::Value
     when TupleInstanceType
       io << "{"
       type.tuple_types.each_with_index do |tuple_type, i|
-        io << Value.new(@program, @pointer + @program.offset_of(type.sizeof_type, i).to_i32, tuple_type)
+        io << Value.new(@context, @pointer + @context.offset_of(type, i), tuple_type)
         io << ", " unless i == type.tuple_types.size - 1
       end
       io << "}"
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
-      type = @program.llvm_id.type_from_id(type_id)
+      type = @context.type_from_id(type_id)
       io << type
     when MixedUnionType
       type_id = @pointer.as(Int32*).value
-      type = @program.llvm_id.type_from_id(type_id)
-      io << Value.new(@program, @pointer + sizeof(Pointer(UInt8)), type)
+      type = @context.type_from_id(type_id)
+      io << Value.new(@context, @pointer + sizeof(Pointer(UInt8)), type)
     when InstanceVarContainer
       if type.struct?
         ptr = @pointer
@@ -130,27 +130,27 @@ struct Crystal::Repl::Value
         io << "("
         all_instance_vars = type.all_instance_vars
         all_instance_vars.each_with_index do |(name, ivar), index|
-          offset = @program.offset_of(type.sizeof_type, index).to_i32
+          offset = @context.offset_of(type, index)
           io << name
           io << '='
-          io << Value.new(@program, ptr + offset, ivar.type)
+          io << Value.new(@context, ptr + offset, ivar.type)
           io << ' ' unless index == all_instance_vars.size - 1
         end
         io << ")"
       else
         ptr = @pointer.as(UInt8**).value
         type_id = ptr.as(Int32*).value
-        type = @program.llvm_id.type_from_id(type_id)
+        type = @context.type_from_id(type_id)
         io << "#<"
         io << type
         io << ":0x"
         ptr.address.to_s(io, 16)
         type.all_instance_vars.each_with_index do |(name, ivar), index|
-          offset = @program.instance_offset_of(type.sizeof_type, index).to_i32
+          offset = @context.instance_offset_of(type, index)
           io << ' '
           io << name
           io << '='
-          io << Value.new(@program, ptr + offset, ivar.type)
+          io << Value.new(@context, ptr + offset, ivar.type)
         end
         io << ">"
       end

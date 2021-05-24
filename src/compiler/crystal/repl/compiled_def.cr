@@ -8,11 +8,11 @@ class Crystal::Repl
     getter args_bytesize
 
     def initialize(
-      program : Program,
+      context : Context,
       @def : Def,
       @args_bytesize : Int32,
       @instructions : Array(Instruction) = [] of Instruction,
-      @local_vars = LocalVars.new(program)
+      @local_vars = LocalVars.new(context)
     )
     end
   end

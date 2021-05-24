@@ -1,7 +1,7 @@
 require "./repl"
 
 class Crystal::Repl::LocalVars
-  def initialize(@program : Program)
+  def initialize(@context : Context)
     @types = {} of String => Type
     @name_to_index = {} of String => Int32
     @bytesize = 0
@@ -36,7 +36,7 @@ class Crystal::Repl::LocalVars
     if is_self && type.passed_by_value?
       @bytesize += sizeof(Pointer(UInt8))
     else
-      @bytesize += sizeof_type(type)
+      @bytesize += @context.sizeof_type(type)
     end
   end
 
@@ -69,9 +69,5 @@ class Crystal::Repl::LocalVars
         yield name, index, @bytesize - index
       end
     end
-  end
-
-  private def sizeof_type(type) : Int32
-    @program.size_of(type.sizeof_type).to_i32
   end
 end

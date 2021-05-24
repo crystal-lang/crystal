@@ -14,11 +14,8 @@ class Crystal::Repl::Interpreter
     block_caller_frame_index : Int32
 
   def initialize(program : Program)
-    @program = program
-    @local_vars = LocalVars.new(program)
-
-    @defs = {} of Def => CompiledDef
-    @defs.compare_by_identity
+    @context = Context.new(program)
+    @local_vars = LocalVars.new(@context)
 
     @dl_libraries = {} of String? => Void*
     @instructions = [] of Instruction
@@ -28,13 +25,13 @@ class Crystal::Repl::Interpreter
 
     @call_stack = [] of CallFrame
 
-    @main_visitor = MainVisitor.new(@program)
-    @top_level_visitor = TopLevelVisitor.new(@program)
-    @cleanup_transformer = CleanupTransformer.new(@program)
+    @main_visitor = MainVisitor.new(program)
+    @top_level_visitor = TopLevelVisitor.new(program)
+    @cleanup_transformer = CleanupTransformer.new(program)
   end
 
   def interpret(node : ASTNode) : Value
-    node = @program.normalize(node)
+    node = program.normalize(node)
 
     @top_level_visitor.reset
     node.accept @top_level_visitor
@@ -50,7 +47,7 @@ class Crystal::Repl::Interpreter
       @local_vars.declare(name, meta_var.type)
     end
 
-    compiler = Compiler.new(@program, @defs, @local_vars)
+    compiler = Compiler.new(@context, @local_vars)
     @instructions = compiler.compile(node)
 
     {% if Compiler::Decompile %}
@@ -88,8 +85,8 @@ class Crystal::Repl::Interpreter
 
     @call_stack << CallFrame.new(
       compiled_def: CompiledDef.new(
-        program: @program,
-        def: Def.new("main").tap { |a_def| a_def.owner = @program },
+        context: @context,
+        def: Def.new("main").tap { |a_def| a_def.owner = program },
         args_bytesize: 0,
         instructions: instructions,
         local_vars: @local_vars,
@@ -180,7 +177,7 @@ class Crystal::Repl::Interpreter
       raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes): #{Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)}"
     end
 
-    Value.new(@program, return_value, node_type)
+    Value.new(@context, return_value, node_type)
   end
 
   private def current_local_vars
@@ -250,6 +247,36 @@ class Crystal::Repl::Interpreter
     instructions = copied_call_frame.instructions
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
+  end
+
+  private macro lib_call(call)
+    handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+    fn = LibC.dlsym(handle, {{call}}.name)
+    if fn.null?
+      raise "dlsym failed for #{call.name}"
+    end
+
+    target_def = {{call}}.target_def
+
+    cif = FFI::CallInterface.new(
+      abi: FFI::ABI::DEFAULT,
+      args: call.target_def.args.map(&.type.ffi_type),
+      return_type: target_def.type.ffi_type,
+    )
+
+    pointers = Array(Void*).new(target_def.args.size)
+    offset = 0
+    target_def.args.reverse_each do |arg|
+      arg_bytesize = sizeof_type(arg.type)
+      pointers.unshift (stack - offset - arg_bytesize).as(Void*)
+      offset -= arg_bytesize
+    end
+    cif.call(fn, pointers, stack.as(Void*))
+
+    return_bytesize = sizeof_type(target_def.type)
+
+    (stack + offset).move_from(stack, return_bytesize)
+    stack = stack + offset + return_bytesize
   end
 
   private macro leave(size)
@@ -343,11 +370,11 @@ class Crystal::Repl::Interpreter
   end
 
   private def sizeof_type(type : Type) : Int32
-    @program.size_of(type.sizeof_type).to_i32
+    program.size_of(type.sizeof_type).to_i32
   end
 
   private def type_from_type_id(id : Int32) : Type
-    @program.llvm_id.type_from_id(id)
+    program.llvm_id.type_from_id(id)
   end
 
   private macro type_id_bytesize
@@ -355,7 +382,7 @@ class Crystal::Repl::Interpreter
   end
 
   def define_primitives
-    exception = @program.types["Exception"]?
+    exception = program.types["Exception"]?
     if exception
       call_stack = exception.types["CallStack"]?
       if call_stack
@@ -380,14 +407,14 @@ class Crystal::Repl::Interpreter
         named_args: nil,
       )
 
-      matches = @program.lookup_matches(raise_without_backtrace_signature)
+      matches = program.lookup_matches(raise_without_backtrace_signature)
       unless matches.empty?
         raise_without_backtrace_def = matches.matches.not_nil!.first.def
         raise_without_backtrace_def.body = Primitive.new("repl_raise_without_backtrace")
       end
     end
 
-    lib_instrinsics = @program.types["LibIntrinsics"]?
+    lib_instrinsics = program.types["LibIntrinsics"]?
     if lib_instrinsics
       %w(memcpy memmove memset).each do |function_name|
         match = lib_instrinsics.lookup_first_def(function_name, false)
@@ -399,5 +426,9 @@ class Crystal::Repl::Interpreter
   end
 
   private def define_primitive_raise_without_backtrace
+  end
+
+  private def program
+    @context.program
   end
 end

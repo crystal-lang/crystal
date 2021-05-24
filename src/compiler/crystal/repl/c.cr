@@ -28,6 +28,23 @@ module Crystal
     end
   end
 
+  class FloatType
+    def ffi_type
+      case kind
+      when :f32 then FFI::Type.float
+      when :f64 then FFI::Type.double
+      else
+        raise "BUG: missing ffi_type for #{self}"
+      end
+    end
+  end
+
+  class PointerInstanceType
+    def ffi_type
+      FFI::Type.pointer
+    end
+  end
+
   class NoReturnType
     def ffi_type
       FFI::Type.void

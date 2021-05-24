@@ -109,8 +109,8 @@ class Crystal::Repl::Compiler
       case index
       when Int32
         element_type = type.tuple_types[index]
-        offset = @program.offset_of(type.sizeof_type, index)
-        tuple_indexer_known_index(sizeof_type(type), offset.to_i32, sizeof_type(element_type))
+        offset = @context.offset_of(type, index)
+        tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(element_type))
       else
         node.raise "BUG: missing handling of primitive #{body.name} with range"
       end

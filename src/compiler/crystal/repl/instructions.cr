@@ -852,6 +852,12 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       call_block(compiled_block),
     },
+    lib_call: {
+      operands:   [call : Call],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       lib_call(call),
+    },
     allocate_class: {
       operands:   [size : Int32, type_id : Int32],
       pop_values: [] of Nil,

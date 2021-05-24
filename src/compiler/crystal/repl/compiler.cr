@@ -4,30 +4,28 @@ require "./instructions"
 class Crystal::Repl::Compiler < Crystal::Visitor
   Decompile = false
 
-  private getter scope
+  private getter scope : Type
   private getter def : Def?
 
   property compiled_block : CompiledBlock?
 
   def initialize(
-    @program : Program,
-    @defs : Hash(Def, CompiledDef),
+    @context : Context,
     @local_vars : LocalVars,
     @instructions : Array(Instruction) = [] of Instruction,
-    @scope : Type = program,
+    scope : Type? = nil,
     @def = nil
   )
+    @scope = scope || @context.program
     @wants_value = true
   end
 
   def self.new(
-    program : Program,
-    defs : Hash(Def, CompiledDef),
+    context : Context,
     compiled_def : CompiledDef
   )
     new(
-      program,
-      defs,
+      context,
       compiled_def.local_vars,
       compiled_def.instructions,
       scope: compiled_def.def.owner,
@@ -130,7 +128,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if i == node.elements.size - 1
           sizeof_type(type)
         else
-          @program.offset_of(type.sizeof_type, i + 1).to_i32
+          @context.offset_of(type, i + 1)
         end
       if next_offset - (current_offset + size) > 0
         push_zeros(next_offset - (current_offset + size))
@@ -180,7 +178,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         set_self_ivar ivar_offset, ivar_size
       else
-        node.type = @program.nil_type
+        node.type = @context.program.nil_type
         put_nil if @wants_value
       end
     else
@@ -301,7 +299,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         exp.type
       else
         put_nil
-        @program.nil_type
+        @context.program.nil_type
       end
 
     def_type = @def.not_nil!.type
@@ -360,9 +358,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       index = scope.index_of_instance_var(exp.name).not_nil!
       if scope.struct?
-        pointerof_ivar(@program.offset_of(scope.sizeof_type, index).to_i32)
+        pointerof_ivar(@context.offset_of(scope, index))
       else
-        pointerof_ivar(@program.instance_offset_of(scope.sizeof_type, index).to_i32)
+        pointerof_ivar(@context.instance_offset_of(scope, index))
       end
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
@@ -420,10 +418,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     if obj && obj.type.is_a?(LibType)
-      obj.raise "BUG: lib calls not yet supported"
+      # TODO: named args
+      node.args.each { |arg| request_value(arg) }
+
+      lib_call(node)
+
+      pop sizeof_type(node) unless @wants_value
+
+      return false
     end
 
-    compiled_def = @defs[target_def]?
+    compiled_def = @context.defs[target_def]?
     unless compiled_def
       block = node.block
 
@@ -439,7 +444,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         block_args_bytesize = block.args.sum { |arg| sizeof_type(arg) }
 
         compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
-        compiler = Compiler.new(@program, @defs, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
+        compiler = Compiler.new(@context, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
         compiler.compile_block(block)
 
@@ -454,7 +459,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       obj_type = obj.try(&.type) || scope
 
-      if obj_type == @program
+      if obj_type == @context.program
         # Nothing
       elsif obj_type.passed_by_value?
         args_bytesize += sizeof(Pointer(UInt8))
@@ -465,17 +470,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += args.sum { |arg| sizeof_type(arg) }
       args_bytesize += named_args.sum { |arg| sizeof_type(arg.value) } if named_args
 
-      compiled_def = CompiledDef.new(@program, target_def, args_bytesize)
+      compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
 
       # We don't cache defs that yield because we inline the block's contents
-      @defs[target_def] = compiled_def unless block
+      @context.defs[target_def] = compiled_def unless block
 
       # Declare local variables for the newly compiled function
       target_def.vars.try &.each do |name, var|
         compiled_def.local_vars.declare(name, var.type)
       end
 
-      compiler = Compiler.new(@program, @defs, compiled_def)
+      compiler = Compiler.new(@context, compiled_def)
       compiler.compiled_block = compiled_block
 
       begin
@@ -544,35 +549,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         pop sizeof_type(node)
       end
     end
-
-    return false
-
-    # if obj_value && obj_value.type.is_a?(LibType)
-    #   # Okay... we need to d a C call. libffi to the rescue!
-    #   handle = @dl_libraries[nil] ||= LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-    #   fn = LibC.dlsym(handle, node.name)
-    #   if fn.null?
-    #     node.raise "dlsym failed for #{node.name}"
-    #   end
-
-    #   # TODO: missing named arguments here
-    #   cif = FFI.prepare(
-    #     abi: FFI::ABI::DEFAULT,
-    #     args: arg_values.map(&.type.ffi_type),
-    #     return_type: node.type.ffi_type,
-    #   )
-
-    #   pointers = [] of Void*
-    #   arg_values.each do |arg_value|
-    #     pointer = Pointer(Void).malloc(@program.size_of(arg_value.type.sizeof_type))
-    #     arg_value.ffi_value(pointer)
-    #     pointers << pointer
-    #   end
-
-    #   cif.call(fn, pointers)
-
-    #   # TODO: missing return value
-    # else
 
     false
   end
@@ -668,10 +644,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def type_id(type : Type)
-    @program.llvm_id.type_id(type)
-  end
-
   private def append(op_code : OpCode)
     append op_code.value
   end
@@ -682,6 +654,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(a_block : CompiledBlock)
     append(a_block.object_id.unsafe_as(Int64))
+  end
+
+  private def append(call : Call)
+    append(call.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)
@@ -719,30 +695,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def sizeof_type(node : ASTNode) : Int32
-    type = node.type?
-    if type
-      sizeof_type(node.type)
-    else
-      node.raise "BUG: missing type for #{node} (#{node.class})"
-    end
+    @context.sizeof_type(node)
   end
 
   private def sizeof_type(type : Type) : Int32
-    @program.size_of(type.sizeof_type).to_i32
+    @context.sizeof_type(type)
   end
 
   private def instance_sizeof_type(type : Type) : Int32
-    @program.instance_size_of(type.sizeof_type).to_i32
+    @context.instance_sizeof_type(type)
   end
 
   private def ivar_offset(type : Type, name : String) : Int32
-    ivar_index = type.index_of_instance_var(name).not_nil!
+    @context.ivar_offset(type, name)
+  end
 
-    if type.passed_by_value?
-      @program.offset_of(type.sizeof_type, ivar_index).to_i32
-    else
-      @program.instance_offset_of(type.sizeof_type, ivar_index).to_i32
-    end
+  private def type_id(type : Type)
+    @context.type_id(type)
   end
 
   private macro nop

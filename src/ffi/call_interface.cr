@@ -22,13 +22,11 @@ module FFI
     def initialize(@cif : Pointer(LibFFI::Cif))
     end
 
-    def call(fn : Void*, values : Array(Void*))
-      rc = 0_u64
-
+    def call(fn : Void*, values : Array(Void*), return_value : Void*)
       LibFFI.call(
         @cif,
         fn,
-        pointerof(rc),
+        return_value,
         values,
       )
     end
