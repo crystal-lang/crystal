@@ -42,7 +42,6 @@ class HTTP::Server
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
       @status = :ok
-      @wrote_headers = false
       @output = output = @original_output = Output.new(@io)
       output.response = self
     end
@@ -53,7 +52,6 @@ class HTTP::Server
       @headers.clear
       @cookies = nil
       @status = :ok
-      @wrote_headers = false
       @output = @original_output
       @original_output.reset
     end
@@ -158,17 +156,11 @@ class HTTP::Server
 
     protected def write_headers
       @io << @version << ' ' << @status.code << ' ' << (@status_message || @status.description) << "\r\n"
-      headers.each do |name, values|
-        values.each do |value|
-          @io << name << ": " << value << "\r\n"
-        end
-      end
-      @io << "\r\n"
-      @wrote_headers = true
+      headers.serialize(@io)
     end
 
     protected def wrote_headers?
-      @wrote_headers
+      headers.serialized?
     end
 
     protected def has_cookies?
