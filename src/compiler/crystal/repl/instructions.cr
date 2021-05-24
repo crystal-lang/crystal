@@ -783,6 +783,15 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_shrink_by(size),
     },
+    pop_from_offset: {
+      operands:   [size : Int32, offset : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        stack_shrink_by(offset + size)
+        stack_move_from(stack + size, offset)
+      end,
+    },
     dup: {
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,
@@ -861,6 +870,12 @@ Crystal::Repl::Instructions =
         stack.clear(size)
         stack_grow_by(size)
       end,
+    },
+    put_stack_top_pointer: {
+      operands:   [size : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       stack - size,
     },
     get_self_ivar: {
       operands:   [offset : Int32, size : Int32],

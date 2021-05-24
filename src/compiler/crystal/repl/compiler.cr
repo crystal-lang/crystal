@@ -493,6 +493,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Self for structs is passed by reference
+    pop_obj = nil
+
     if obj
       if obj.type.passed_by_value?
         case obj
@@ -504,8 +506,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           end
           # TODO: when InstanceVar
         else
+          # For a struct, we first put it on the stack
           request_value(obj)
-          # TODO: put pointer to struct
+
+          # Then take a pointer to it (this is self inside the method)
+          put_stack_top_pointer(sizeof_type(obj))
+
+          # We must remember to later pop the struct that's still on the stack
+          pop_obj = obj
         end
       else
         request_value(obj)
@@ -523,7 +531,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       call compiled_def
     end
-    pop sizeof_type(node) unless @wants_value
+
+    if @wants_value
+      # Pop the struct that's on the stack, if any, if obj was a struct
+      # (but the struct is after the call's value, so we must
+      # remove it past that value)
+      pop_from_offset sizeof_type(pop_obj), sizeof_type(node) if pop_obj
+    else
+      if pop_obj
+        pop sizeof_type(node) + sizeof_type(pop_obj)
+      else
+        pop sizeof_type(node)
+      end
+    end
 
     return false
 

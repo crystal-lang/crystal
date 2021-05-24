@@ -948,6 +948,65 @@ describe Crystal::Repl::Interpreter do
         foo
         CODE
     end
+
+    it "does call with struct as obj" do
+      interpret(<<-EXISTING, <<-CODE).should eq(3)
+        struct Foo
+          def initialize(@x : Int64)
+          end
+
+          def itself
+            self
+          end
+
+          def x
+            @x + 2_i64
+          end
+        end
+      EXISTING
+        def foo
+          Foo.new(1_i64)
+        end
+
+        foo.x
+      CODE
+    end
+
+    it "does call with struct as obj (2)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        struct Foo
+          def two
+            2
+          end
+        end
+      EXISTING
+        Foo.new.two
+      CODE
+    end
+
+    it "discards call with struct as obj" do
+      interpret(<<-EXISTING, <<-CODE).should eq(4)
+        struct Foo
+          def initialize(@x : Int64)
+          end
+
+          def itself
+            self
+          end
+
+          def x
+            @x + 2_i64
+          end
+        end
+      EXISTING
+        def foo
+          Foo.new(1_i64)
+        end
+
+        foo.x
+        4
+      CODE
+    end
   end
 
   context "classes" do
