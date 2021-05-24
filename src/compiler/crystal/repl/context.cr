@@ -3,13 +3,13 @@ require "./repl"
 class Crystal::Repl::Context
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
-  getter lib_functions : Hash(Def, LibFunction)
+  getter lib_functions : Hash(External, LibFunction)
 
   def initialize(@program : Program)
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
-    @lib_functions = {} of Def => LibFunction
+    @lib_functions = {} of External => LibFunction
     @lib_functions.compare_by_identity
 
     @dl_handles = {} of String? => Void*
@@ -58,11 +58,17 @@ class Crystal::Repl::Context
     @program.llvm_id.type_from_id(id)
   end
 
-  def c_function(path : String?, name : String)
+  def c_function(lib_type : LibType, name : String)
+    # TODO: check lib_type @[Link], lookup library name, etc.
+    path = nil
     handle = @dl_handles[path] ||= LibC.dlopen(path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+    if handle.null?
+      raise "dlopen failed for lib_type: #{lib_type}"
+    end
+
     fn = LibC.dlsym(handle, name)
     if fn.null?
-      raise "dlsym failed for path: #{path.inspect}, name: #{name.inspect}"
+      raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}"
     end
     fn
   end

@@ -417,17 +417,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    if obj && obj.type.is_a?(LibType)
+    if obj && (obj_type = obj.type).is_a?(LibType)
+      external = target_def.as(External)
+
       # TODO: named args
       node.args.each { |arg| request_value(arg) }
 
-      lib_function = @context.lib_functions[target_def] ||= LibFunction.new(
-        def: target_def,
-        symbol: @context.c_function(nil, node.name),
+      lib_function = @context.lib_functions[external] ||= LibFunction.new(
+        def: external,
+        symbol: @context.c_function(obj_type, external.real_name),
         call_interface: FFI::CallInterface.new(
           abi: FFI::ABI::DEFAULT,
-          args: target_def.args.map(&.type.ffi_type),
-          return_type: target_def.type.ffi_type,
+          args: external.args.map(&.type.ffi_type),
+          return_type: external.type.ffi_type,
         )
       )
 
