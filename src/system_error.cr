@@ -19,11 +19,7 @@ module SystemError
   end
 
   # The original system error wrapped by this exception
-  {% if flag?(:windows) %}
-    getter os_error : Errno | WinError | Nil
-  {% else %}
-    getter os_error : Errno?
-  {% end %}
+  getter os_error : Errno | WinError | Nil
 
   # :nodoc:
   protected def os_error=(@os_error)

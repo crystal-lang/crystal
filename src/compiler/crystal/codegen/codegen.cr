@@ -1940,17 +1940,10 @@ module Crystal
       struct_type
     end
 
-    def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
-      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
+    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassInstanceType, type_ptr)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
-
-      return if type.is_a?(GenericClassType)
 
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
     end
