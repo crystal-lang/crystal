@@ -14,7 +14,7 @@ class Socket
       wsa_version = 0x202
       err = LibC.WSAStartup(wsa_version, out wsadata)
       unless err.zero?
-        raise IO::Error.from_winerror("WSAStartup", WinError.new(err.to_u32))
+        raise IO::Error.from_os_error("WSAStartup", WinError.new(err.to_u32))
       end
 
       if wsadata.wVersion != wsa_version

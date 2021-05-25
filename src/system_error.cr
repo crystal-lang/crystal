@@ -100,9 +100,23 @@ module SystemError
       from_os_error(message, WinError.value, **opts)
     end
 
+    # Builds an instance of the exception from a `WinError`
+    #
+    # By default it takes the current `WinError` value (see `WinError.value`).
+    # The system message corresponding to the OS error value amends the *message*.
+    # Additional keyword arguments are forwarded to the exception initializer.
+    def from_wsa_error(message : String? = nil, **opts)
+      from_os_error(message, WinError.wsa_value, **opts)
+    end
+
     {% if flag?(:win32) %}
       @[Deprecated("Use `.from_os_error` instead")]
-      def from_winerror(message : String? = nil, winerror : WinError = WinError.value, **opts)
+      def from_winerror(message : String, winerror : WinError, **opts)
+        from_os_error(message, winerror, **opts)
+      end
+
+      @[Deprecated("Use `.from_os_error` instead")]
+      def from_winerror(*, winerror : WinError = WinError.value, **opts)
         from_os_error(message, winerror, **opts)
       end
     {% end %}
