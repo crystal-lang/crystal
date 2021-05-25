@@ -494,6 +494,16 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
+
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.clone
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
+    end
   end
 
   describe "dup" do
@@ -535,6 +545,16 @@ describe "Hash" do
 
       h1.delete(0)
       h2[0].should eq([0])
+    end
+
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.dup
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
