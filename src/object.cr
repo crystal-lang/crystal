@@ -209,7 +209,7 @@ class Object
   # 10.in?(0, 1, 10)   # => true
   # 10.in?(:foo, :bar) # => false
   # ```
-  def in?(collection) : Bool
+  def in?(collection : Object) : Bool
     collection.includes?(self)
   end
 
