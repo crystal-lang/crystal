@@ -317,6 +317,18 @@ describe Crystal::Repl::Interpreter do
       interpret("1_u32 < 1").should be_false
     end
 
+    it "interprets UInt64 == Int32 (false when Int32 < 0)" do
+      interpret("1_u64 == -1").should be_false
+    end
+
+    it "interprets UInt64 == Int32 (false when Int32 >= 0)" do
+      interpret("1_u64 == 0").should be_false
+    end
+
+    it "interprets UInt64 == Int32 (true when Int32 >= 0)" do
+      interpret("1_u64 == 1").should be_false
+    end
+
     it "interprets Char == Char (false)" do
       interpret("'a' == 'b'").should be_false
     end

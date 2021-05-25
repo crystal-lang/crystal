@@ -1,7 +1,29 @@
 require "./repl"
 
+# Summary:
+# - Put: 7
+# - Conversions: 21
+# - Math: 35 / 76?
+# - Comparison: 22 / 40?
+# - Not: 1
+# - Pointers: 9
+# - Local variables: 2
+# - Stack manipulation: 5
+# - Jumps: 3
+# - Pointerof: 2
+# - Calls: 5
+# - Allocate: 2
+# - Instance vars: 3
+# - Unions: 4
+# - Tuples: 1
+# - Overrides: 5
+# ------------------------
+# - Total: 127
+# - Remaining: 129
+
 Crystal::Repl::Instructions =
   {
+    # <<< Put (7)
     put_nil: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
@@ -44,6 +66,146 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value,
     },
+    # >>> Put (7)
+
+    # <<< Conversions (21)
+    i8_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : Int8],
+      push:       true,
+      code:       value.to_f32,
+    },
+    i8_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int8],
+      push:       true,
+      code:       value.to_f64,
+    },
+    u8_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt8],
+      push:       true,
+      code:       value.to_f32,
+    },
+    u8_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt8],
+      push:       true,
+      code:       value.to_f64,
+    },
+    i16_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : Int16],
+      push:       true,
+      code:       value.to_f32,
+    },
+    i16_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int16],
+      push:       true,
+      code:       value.to_f64,
+    },
+    u16_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt16],
+      push:       true,
+      code:       value.to_f32,
+    },
+    u16_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt16],
+      push:       true,
+      code:       value.to_f64,
+    },
+    i32_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_f32,
+    },
+    i32_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int32],
+      push:       true,
+      code:       value.to_f64,
+    },
+    u32_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt32],
+      push:       true,
+      code:       value.to_f32,
+    },
+    u32_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt32],
+      push:       true,
+      code:       value.to_f64,
+    },
+    i64_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : Int64],
+      push:       true,
+      code:       value.to_f32,
+    },
+    i64_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Int64],
+      push:       true,
+      code:       value.to_f64,
+    },
+    u64_to_f32: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt64],
+      push:       true,
+      code:       value.to_f32,
+    },
+    u64_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : UInt64],
+      push:       true,
+      code:       value.to_f64,
+    },
+    f32_to_i64_bang: {
+      operands:   [] of Nil,
+      pop_values: [value : Float32],
+      push:       true,
+      code:       value.to_i64!,
+    },
+    f32_to_f64: {
+      operands:   [] of Nil,
+      pop_values: [value : Float32],
+      push:       true,
+      code:       value.to_f64,
+    },
+    f64_to_i64_bang: {
+      operands:   [] of Nil,
+      pop_values: [value : Float64],
+      push:       true,
+      code:       value.to_i64!,
+    },
+    f64_to_f32_bang: {
+      operands:   [] of Nil,
+      pop_values: [value : Float64],
+      push:       true,
+      code:       value.to_f32!,
+    },
+    extend_sign: {
+      operands:   [amount : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        if (stack - 1).as(Int8*).value < 0
+          Intrinsics.memset(stack.as(Void*), 255_u8, amount, false)
+        else
+          stack.clear(amount)
+        end
+
+        stack_grow_by(amount)
+      end,
+    },
+    # >>> Conversions (21)
+
+    # <<< Math (35)
     add_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -248,6 +410,15 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
+    div_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a / b,
+    },
+    # >>> Math (35)
+
+    # <<< Comparisons (22)
     eq_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -344,6 +515,18 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a >= b,
     },
+    eq_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a == b,
+    },
+    neq_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a != b,
+    },
     lt_f64: {
       operands:   [] of Nil,
       pop_values: [a : Float64, b : Float64],
@@ -368,360 +551,29 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a >= b,
     },
-    eq_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a == b,
-    },
-    neq_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a != b,
-    },
-    div_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a / b,
-    },
-    i8_to_i16: {
-      operands:   [] of Nil,
-      pop_values: [value : Int8],
-      push:       true,
-      code:       value.to_i16,
-    },
-    i8_to_i32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int8],
-      push:       true,
-      code:       value.to_i32,
-    },
-    i8_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int8],
-      push:       true,
-      code:       value.to_i64,
-    },
-    i8_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int8],
-      push:       true,
-      code:       value.to_f32,
-    },
-    i8_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int8],
-      push:       true,
-      code:       value.to_f64,
-    },
-    u8_to_i16: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt8],
-      push:       true,
-      code:       value.to_i16,
-    },
-    u8_to_i32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt8],
-      push:       true,
-      code:       value.to_i32,
-    },
-    u8_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt8],
-      push:       true,
-      code:       value.to_i64,
-    },
-    u8_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt8],
-      push:       true,
-      code:       value.to_f32,
-    },
-    u8_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt8],
-      push:       true,
-      code:       value.to_f64,
-    },
-    i16_to_i8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int16],
-      push:       true,
-      code:       value.to_i8!,
-    },
-    i16_to_i32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int16],
-      push:       true,
-      code:       value.to_i32!,
-    },
-    i16_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int16],
-      push:       true,
-      code:       value.to_i64,
-    },
-    i16_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int16],
-      push:       true,
-      code:       value.to_f32,
-    },
-    i16_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int16],
-      push:       true,
-      code:       value.to_f64,
-    },
-    u16_to_i32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt16],
-      push:       true,
-      code:       value.to_i32!,
-    },
-    u16_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt16],
-      push:       true,
-      code:       value.to_i64,
-    },
-    u16_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt16],
-      push:       true,
-      code:       value.to_f32,
-    },
-    u16_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt16],
-      push:       true,
-      code:       value.to_f64,
-    },
-    i32_to_i8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int32],
-      push:       true,
-      code:       value.to_i8!,
-    },
-    i32_to_i16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int32],
-      push:       true,
-      code:       value.to_u16!,
-    },
-    i32_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int32],
-      push:       true,
-      code:       value.to_i64,
-    },
-    i32_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int32],
-      push:       true,
-      code:       value.to_f32,
-    },
-    i32_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int32],
-      push:       true,
-      code:       value.to_f64,
-    },
-    u32_to_i64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt32],
-      push:       true,
-      code:       value.to_i64,
-    },
-    u32_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt32],
-      push:       true,
-      code:       value.to_f32,
-    },
-    u32_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt32],
-      push:       true,
-      code:       value.to_f64,
-    },
-    i64_to_i8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int64],
-      push:       true,
-      code:       value.to_i8!,
-    },
-    i64_to_i16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int64],
-      push:       true,
-      code:       value.to_u16!,
-    },
-    i64_to_i32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Int64],
-      push:       true,
-      code:       value.to_i32!,
-    },
-    i64_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : Int64],
-      push:       true,
-      code:       value.to_f32,
-    },
-    i64_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : Int64],
-      push:       true,
-      code:       value.to_f64,
-    },
-    u64_to_f32: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt64],
-      push:       true,
-      code:       value.to_f32,
-    },
-    u64_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : UInt64],
-      push:       true,
-      code:       value.to_f64,
-    },
-    f32_to_u8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_u8!,
-    },
-    f32_to_i8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_i8!,
-    },
-    f32_to_u16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_u16!,
-    },
-    f32_to_i16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_i16!,
-    },
-    f32_to_u32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_u32!,
-    },
-    f32_to_i32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_i32!,
-    },
-    f32_to_u64_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_u64!,
-    },
-    f32_to_i64_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_i64!,
-    },
-    f32_to_f64: {
-      operands:   [] of Nil,
-      pop_values: [value : Float32],
-      push:       true,
-      code:       value.to_f64,
-    },
-    f64_to_u8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_u8!,
-    },
-    f64_to_i8_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_i8!,
-    },
-    f64_to_u16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_u16!,
-    },
-    f64_to_i16_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_i16!,
-    },
-    f64_to_u32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_u32!,
-    },
-    f64_to_i32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_i32!,
-    },
-    f64_to_u64_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_u64!,
-    },
-    f64_to_i64_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_i64!,
-    },
-    f64_to_f32_bang: {
-      operands:   [] of Nil,
-      pop_values: [value : Float64],
-      push:       true,
-      code:       value.to_f32!,
-    },
+    # <<< Comparisons (22)
+
+    # <<< Not (1)
     logical_not: {
       operands:   [] of Nil,
       pop_values: [value : Bool],
       push:       true,
       code:       !value,
     },
+    # >>> Not (1)
+
+    # <<< Pointers (9)
     pointer_malloc: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [size : UInt64],
       push:       true,
-      code:       begin
-        ptr = Pointer(UInt8).malloc(size * element_size)
-        # p! ptr, size, element_size
-        ptr
-      end,
+      code:       Pointer(UInt8).malloc(size * element_size),
     },
     pointer_realloc: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [pointer : Pointer(UInt8), size : UInt64],
       push:       true,
-      code:       begin
-        # p! pointer, size, element_size
-        pointer.realloc(size * element_size)
-      end,
+      code:       pointer.realloc(size * element_size),
     },
     pointer_set: {
       operands:   [element_size : Int32] of Nil,
@@ -759,6 +611,15 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer + (offset * element_size),
     },
+    pointer_is_not_null: {
+      operands:   [] of Nil,
+      pop_values: [pointer : Pointer(UInt8)],
+      push:       true,
+      code:       !pointer.null?,
+    },
+    # >>> Pointers (9)
+
+    # <<< Local variables (2)
     set_local: {
       operands:    [index : Int32, size : Int32],
       pop_values:  [] of Nil,
@@ -777,6 +638,9 @@ Crystal::Repl::Instructions =
         index: "#{local_vars.index_to_name(index)}@#{index}",
       },
     },
+    # >>> Local variables (2)
+
+    # <<< Stack manipulation (5)
     pop: {
       operands:   [size : Int32] of Nil,
       pop_values: [] of Nil,
@@ -798,6 +662,24 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_move_from(stack - size, size),
     },
+    push_zeros: {
+      operands:   [amount : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        stack.clear(amount)
+        stack_grow_by(amount)
+      end,
+    },
+    put_stack_top_pointer: {
+      operands:   [size : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       stack - size,
+    },
+    # >>> Stack manipulation (5)
+
+    # <<< Jumps (3)
     branch_if: {
       operands:   [index : Int32],
       pop_values: [cond : Bool],
@@ -816,6 +698,9 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       set_ip(index),
     },
+    # >>> Jumps (3)
+
+    # <<< Pointerof (2)
     pointerof_var: {
       operands:   [index : Int32],
       pop_values: [] of Nil,
@@ -828,6 +713,9 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       get_ivar_pointer(offset),
     },
+    # >>> Pointerof (2)
+
+    # <<< Calls (5)
     call: {
       operands:    [compiled_def : CompiledDef],
       pop_values:  [] of Nil,
@@ -858,6 +746,15 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       lib_call(lib_function),
     },
+    leave: {
+      operands:   [size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       leave(size),
+    },
+    # >>> Calls (4)
+
+    # <<< Allocate (2)
     allocate_class: {
       operands:   [size : Int32, type_id : Int32],
       pop_values: [] of Nil,
@@ -877,12 +774,9 @@ Crystal::Repl::Instructions =
         stack_grow_by(size)
       end,
     },
-    put_stack_top_pointer: {
-      operands:   [size : Int32],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       stack - size,
-    },
+    # >>> Allocate (2)
+
+    # <<< Instance vars (3)
     get_self_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
@@ -901,6 +795,9 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_move_from(pointer + offset, size),
     },
+    # >>> Instance vars (3)
+
+    # <<< Unions (4)
     put_in_union: {
       operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
       pop_values: [] of Nil,
@@ -957,12 +854,9 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    pointer_is_not_null: {
-      operands:   [] of Nil,
-      pop_values: [pointer : Pointer(UInt8)],
-      push:       true,
-      code:       !pointer.null?,
-    },
+    # >>> Unions (4)
+
+    # <<< Tuples (1)
     tuple_indexer_known_index: {
       operands:   [tuple_size : Int32, offset : Int32, value_size : Int32] of Nil,
       pop_values: [] of Nil,
@@ -973,15 +867,9 @@ Crystal::Repl::Instructions =
         stack_move_from(stack + offset, value_size)
       end,
     },
-    push_zeros: {
-      operands:   [amount : Int32] of Nil,
-      pop_values: [] of Nil,
-      push:       false,
-      code:       begin
-        # TODO: acutally put zeros
-        stack_grow_by(amount)
-      end,
-    },
+    # >>> Tuples (1)
+
+    # <<< Overrides (5)
     repl_call_stack_unwind: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
@@ -1042,12 +930,7 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    leave: {
-      operands:   [size : Int32] of Nil,
-      pop_values: [] of Nil,
-      push:       false,
-      code:       leave(size),
-    },
+    # >>> Overrides (5)
   }
 
 {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
