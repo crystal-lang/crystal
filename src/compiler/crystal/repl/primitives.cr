@@ -444,26 +444,9 @@ class Crystal::Repl::Compiler
       # We first extend right to left
       left_node.accept self
       right_node.accept self
-      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+      primitive_unchecked_convert right_node, right_type.kind, :i64
 
-      # Now we do `right >= 0`
-      dup(sizeof_type(left_type))
-      put_zero(left_type.kind)
-      primitive_binary_op_ge(left_node, :i64)
-      branch_if 0
-      if_location = patch_location
-
-      # If right < 0 then the condition is false. We just pop the values and put true
-      pop(sizeof_type(left_type) * 2)
-      put_false
-      jump 0
-      jump_location = patch_location
-
-      # If right >= 0, we must do left == right (we have those on the stack)
-      patch_jump(if_location)
-      primitive_binary_op_eq(left_node, left_type.kind)
-
-      patch_jump(jump_location)
+      eq_u64_i64
     else
       # It's X == UInt64 where X is a signed integer.
       # We must do: left >= 0 && left == right
@@ -504,31 +487,13 @@ class Crystal::Repl::Compiler
       primitive_binary_op_lt(left_node, kind)
     elsif left_type.rank > right_type.rank
       # It's UInt64 < X where X is a signed integer
-      # We must do `right >= 0 && left < right`
 
       # We first extend right to left
       left_node.accept self
       right_node.accept self
-      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+      primitive_unchecked_convert right_node, right_type.kind, :i64
 
-      # Now we do `right >= 0`
-      dup(sizeof_type(left_type))
-      put_zero(left_type.kind)
-      primitive_binary_op_ge(left_node, :i64)
-      branch_if 0
-      if_location = patch_location
-
-      # If right < 0 then the condition is false. We just pop the values and put true
-      pop(sizeof_type(left_type) * 2)
-      put_false
-      jump 0
-      jump_location = patch_location
-
-      # If right >= 0, we must do left < right (we have those on the stack)
-      patch_jump(if_location)
-      primitive_binary_op_lt(left_node, left_type.kind)
-
-      patch_jump(jump_location)
+      lt_u64_i64
     else
       # It's X < UInt64 where X is a signed integer
       left_node.raise "BUG: missing handling of binary < with types #{left_type} and #{right_type}"
