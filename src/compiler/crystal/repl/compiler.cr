@@ -179,6 +179,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         node.type = @context.program.nil_type
         put_nil if @wants_value
       end
+    when Path
+      # TODO: I think we should track that the constant is initialized at this point,
+      # to avoid an init flag, we'll see
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -335,7 +338,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Path)
     return false unless @wants_value
 
-    put_type node.type
+    if const = node.target_const
+      if const.value.simple_literal?
+        const.value.accept self
+      else
+        node.raise "BUG: missing hinterpret of Path that points to a non-simple constant"
+      end
+    elsif replacement = node.syntax_replacement
+      replacement.accept self
+    else
+      put_type node.type
+    end
     false
   end
 

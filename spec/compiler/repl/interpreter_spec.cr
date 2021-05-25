@@ -1373,6 +1373,15 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  context "constants" do
+    it "interprets constant literal" do
+      interpret(<<-CODE).should eq(123)
+        A = 123
+        A
+      CODE
+    end
+  end
 end
 
 private def interpret(string, *, prelude = "primitives")
