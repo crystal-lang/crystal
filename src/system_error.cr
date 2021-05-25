@@ -111,7 +111,7 @@ module SystemError
 
     {% if flag?(:win32) %}
       @[Deprecated("Use `.from_os_error` instead")]
-      def from_winerror(message : String, winerror : WinError, **opts)
+      def from_winerror(message : String?, winerror : WinError, **opts)
         from_os_error(message, winerror, **opts)
       end
 
