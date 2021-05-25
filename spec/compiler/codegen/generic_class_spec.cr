@@ -123,8 +123,7 @@ describe "Code gen: generic class type" do
     run(%(
       class Bar(T)
         def x
-          # TODO: devirtualize T
-          {% if T <= FooBase(Int32) && T >= FooBase(Int32) %} 1 {% else %} 2 {% end %}
+          {% if T == FooBase(Int32) %} 1 {% else %} 2 {% end %}
         end
       end
 
