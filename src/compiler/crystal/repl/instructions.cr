@@ -4,7 +4,7 @@ require "./repl"
 # - Put: 7
 # - Conversions: 21
 # - Math: 35 / 76?
-# - Comparison: 22 / 40?
+# - Comparison: 26 / 40?
 # - Not: 1
 # - Pointers: 9
 # - Local variables: 2
@@ -18,8 +18,8 @@ require "./repl"
 # - Tuples: 1
 # - Overrides: 5
 # ------------------------
-# - Total: 127
-# - Remaining: 129
+# - Total: 131
+# - Remaining: 125
 
 Crystal::Repl::Instructions =
   {
@@ -418,7 +418,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Math (35)
 
-    # <<< Comparisons (22)
+    # <<< Comparisons (26)
     eq_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -452,6 +452,30 @@ Crystal::Repl::Instructions =
     ge_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
+      push:       true,
+      code:       a >= b,
+    },
+    lt_u32: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt32, b : UInt32],
+      push:       true,
+      code:       a < b,
+    },
+    le_u32: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt32, b : UInt32],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_u32: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt32, b : UInt32],
+      push:       true,
+      code:       a > b,
+    },
+    ge_u32: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt32, b : UInt32],
       push:       true,
       code:       a >= b,
     },

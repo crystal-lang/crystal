@@ -293,12 +293,28 @@ describe Crystal::Repl::Interpreter do
       interpret("2 > 2.1").should be_false
     end
 
-    it "interprets UInt8 < Int32 (true)" do
+    it "interprets UInt8 < Int32 (true, right is greater than zero)" do
       interpret("1_u8 < 2").should be_true
     end
 
-    it "interprets UInt8 < Int32 (false)" do
+    it "interprets UInt8 < Int32 (false, right is greater than zero)" do
       interpret("1_u8 < 0").should be_false
+    end
+
+    it "interprets UInt8 < Int32 (false, right is less than zero)" do
+      interpret("1_u8 < -1").should be_false
+    end
+
+    it "interprets UInt64 < Int32 (true, right is greater than zero)" do
+      interpret("1_u64 < 2").should be_true
+    end
+
+    it "interprets UInt64 < Int32 (false, right is greater than zero)" do
+      interpret("1_u64 < 0").should be_false
+    end
+
+    it "interprets UInt64 < Int32 (false, right is less than zero)" do
+      interpret("1_u64 < -1").should be_false
     end
 
     it "interprets UInt64 > UInt32 (true)" do
@@ -326,7 +342,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets UInt64 == Int32 (true when Int32 >= 0)" do
-      interpret("1_u64 == 1").should be_false
+      interpret("1_u64 == 1").should be_true
     end
 
     it "interprets Char == Char (false)" do

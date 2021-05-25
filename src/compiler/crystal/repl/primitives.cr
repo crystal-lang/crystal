@@ -434,195 +434,230 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_eq(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_eq(left_node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 == X where X is a signed integer.
+      # We must do: right >= 0 && left == right
+
+      # We first extend right to left
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+
+      # Now we do `right >= 0`
+      dup(sizeof_type(left_type))
+      put_zero(left_type.kind)
+      primitive_binary_op_ge(left_node, :i64)
+      branch_if 0
+      if_location = patch_location
+
+      # If right < 0 then the condition is false. We just pop the values and put true
+      pop(sizeof_type(left_type) * 2)
+      put_false
+      jump 0
+      jump_location = patch_location
+
+      # If right >= 0, we must do left == right (we have those on the stack)
+      patch_jump(if_location)
+      primitive_binary_op_eq(left_node, left_type.kind)
+
+      patch_jump(jump_location)
     else
+      # It's X == UInt64 where X is a signed integer.
+      # We must do: left >= 0 && left == right
       left_node.raise "BUG: missing handling of binary == with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_eq(node : ASTNode, kind : Symbol)
     case kind
     when :i32, :u32 then eq_i32
     when :i64, :u64 then eq_i64
     else
-      left_node.raise "BUG: missing handling of binary == with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary == for #{kind}"
     end
   end
 
   private def primitive_binary_op_neq(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_neq(left_node, kind)
     else
       left_node.raise "BUG: missing handling of binary == with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_neq(node : ASTNode, kind : Symbol)
     case kind
     when :i32, :u32 then neq_i32
     when :i64, :u64 then neq_i64
     else
-      left_node.raise "BUG: missing handling of binary != with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary != for #{kind}"
     end
   end
 
   private def primitive_binary_op_lt(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_lt(left_node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 < X where X is a signed integer
+      # We must do `right >= 0 && left < right`
+
+      # We first extend right to left
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+
+      # Now we do `right >= 0`
+      dup(sizeof_type(left_type))
+      put_zero(left_type.kind)
+      primitive_binary_op_ge(left_node, :i64)
+      branch_if 0
+      if_location = patch_location
+
+      # If right < 0 then the condition is false. We just pop the values and put true
+      pop(sizeof_type(left_type) * 2)
+      put_false
+      jump 0
+      jump_location = patch_location
+
+      # If right >= 0, we must do left < right (we have those on the stack)
+      patch_jump(if_location)
+      primitive_binary_op_lt(left_node, left_type.kind)
+
+      patch_jump(jump_location)
     else
+      # It's X < UInt64 where X is a signed integer
       left_node.raise "BUG: missing handling of binary < with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_lt(node : ASTNode, kind : Symbol)
     case kind
-    when :i32, :u32 then lt_i32
-    when :i64, :u64 then lt_i64
+    when :i32 then lt_i32
+    when :u32 then lt_u32
+    when :i64 then lt_i64
+    when :u64 then lt_u64
     else
-      left_node.raise "BUG: missing handling of binary < with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary < for #{kind}"
     end
   end
 
   private def primitive_binary_op_le(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_le(left_node, kind)
     else
       left_node.raise "BUG: missing handling of binary <= with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_le(node : ASTNode, kind : Symbol)
     case kind
-    when :i32, :u32 then le_i32
-    when :i64, :u64 then le_i64
+    when :i32 then le_i32
+    when :u32 then le_u32
+    when :i64 then le_i64
+    when :u64 then le_u64
     else
-      left_node.raise "BUG: missing handling of binary <= with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary <= for #{kind}"
     end
   end
 
   private def primitive_binary_op_gt(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_gt(left_node, kind)
     else
       left_node.raise "BUG: missing handling of binary > with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_gt(node : ASTNode, kind : Symbol)
     case kind
-    when :i32, :u32 then gt_i32
-    when :i64, :u64 then gt_i64
+    when :i32 then gt_i32
+    when :u32 then gt_u32
+    when :i64 then gt_i64
+    when :u64 then gt_u64
     else
-      left_node.raise "BUG: missing handling of binary > with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary > for #{kind}"
     end
   end
 
   private def primitive_binary_op_ge(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.signed? == right_type.signed?
-      kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node)
+    if kind
+      primitive_binary_op_ge(left_node, kind)
     else
       left_node.raise "BUG: missing handling of binary >= with types #{left_type} and #{right_type}"
     end
+  end
 
+  private def primitive_binary_op_ge(node : ASTNode, kind : Symbol)
     case kind
-    when :i32, :u32 then ge_i32
-    when :i64, :u64 then ge_i64
+    when :i32 then ge_i32
+    when :u32 then ge_u32
+    when :i64 then ge_i64
+    when :u64 then ge_u64
     else
-      left_node.raise "BUG: missing handling of binary >= with types #{left_type} and #{right_type}"
+      node.raise "BUG: missing handling of binary >= for #{kind}"
     end
   end
 
   private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
-    if left_type.rank == right_type.rank
+    if left_type.signed? == right_type.signed?
+      if left_type.rank == right_type.rank
+        left_node.accept self
+        right_node.accept self
+        left_type.kind
+      elsif left_type.rank < right_type.rank
+        left_node.accept self
+        primitive_unchecked_convert left_node, left_type.kind, right_type.kind
+        right_node.accept self
+        right_type.kind
+      else
+        left_node.accept self
+        right_node.accept self
+        primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+        left_type.kind
+      end
+    elsif left_type.rank <= 5 && right_type.rank <= 5
+      # If both fit in an Int32
+      # Convert them to Int32 first, then do the comparison
       left_node.accept self
+      primitive_unchecked_convert(left_node, left_type.kind, :i32) if left_type.rank < 5
+
       right_node.accept self
-      left_type.kind
-    elsif left_type.rank < right_type.rank
+      primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
+
+      :i32
+    elsif left_type.rank <= 7 && right_type.rank <= 7
+      # If both fit in an Int64
+      # Convert them to Int64 first, then do the comparison
       left_node.accept self
-      primitive_unchecked_convert left_node, left_type.kind, right_type.kind
+      primitive_unchecked_convert(left_node, left_type.kind, :i64) if left_type.rank < 7
+
       right_node.accept self
-      right_type.kind
+      primitive_unchecked_convert(right_node, right_type.kind, :i64) if right_type.rank < 7
+
+      :i64
     else
-      left_node.accept self
-      right_node.accept self
-      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
-      left_type.kind
+      nil
     end
   end
 
-  #   if left_type.kind == right_type.kind
-  #     # If the types are the same
-  #     left_node.accept self
-  #     right_node.accept self
-  #     kind = left_type.kind
-  #   elsif left_type.rank <= 5 && right_type.rank <= 5
-  #     # If both fit in an Int32
-  #     # Convert them to Int32 first, then do the comparison
-  #     left_node.accept self
-  #     primitive_unchecked_convert(left_node, left_type.kind, :i32) if left_type.rank < 5
-
-  #     right_node.accept self
-  #     primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
-
-  #     kind = :i32
-  #   elsif left_type.rank <= 7 && right_type.rank <= 7
-  #     # If both fit in an Int64
-  #     # Convert them to Int64 first, then do the comparison
-  #     left_node.accept self
-  #     primitive_unchecked_convert(left_node, left_type.kind, :i64) if left_type.rank < 7
-
-  #     right_node.accept self
-  #     primitive_unchecked_convert(right_node, right_type.kind, :i64) if right_type.rank < 7
-
-  #     kind = :i64
-  #   elsif left_type.unsigned? && right_type.unsigned?
-  #     # If both are unsigned, convert the smallest to the biggest
-  #     if left_type.rank < right_type.rank
-  #       left_node.accept self
-  #       primitive_unchecked_convert(left_node, left_type.kind, right_type.kind)
-  #       right_node.accept self
-  #       kind = right_type.kind
-  #     else
-  #       left_node.accept self
-  #       right_node.accept self
-  #       primitive_unchecked_convert(right_node, right_type.kind, left_type.kind)
-  #       kind = left_type.kind
-  #     end
-  #   else
-  #     left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-  #   end
-
-  #   return false unless @wants_value
-
-  #   case kind
-  #   when :i32
-  #     case op
-  #     when "==" then eq_i32
-  #     when "!=" then neq_i32
-  #     when "<"  then lt_i32
-  #     when "<=" then le_i32
-  #     when ">"  then gt_i32
-  #     when ">=" then ge_i32
-  #     else
-  #       left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-  #     end
-  #   when :i64
-  #     case op
-  #     when "==" then eq_i64
-  #     when "!=" then neq_i64
-  #     when "<"  then lt_i64
-  #     when "<=" then le_i64
-  #     when ">"  then gt_i64
-  #     when ">=" then ge_i64
-  #     else
-  #       left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-  #     end
-  #   when :u64
-  #     case op
-  #     when "==" then eq_i64
-  #     when "!=" then neq_i64
-  #     when "<"  then lt_u64
-  #     when "<=" then le_u64
-  #     when ">"  then gt_u64
-  #     when ">=" then ge_u64
-  #     else
-  #       left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-  #     end
-  #   else
-  #     left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-  #   end
-  # end
+  private def put_zero(kind : Symbol)
+    case kind
+    when :i8, :u8   then put_i8 0
+    when :i16, :u16 then put_i16 0
+    when :i32, :u32 then put_i32 0
+    when :i64, :u64 then put_i64 0
+    else
+      raise "Unknown kind for put_zero: #{kind}"
+    end
+  end
 
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, op : String)
     left_node.accept self
