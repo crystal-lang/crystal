@@ -199,6 +199,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1 + 2").should eq(3)
     end
 
+    it "interprets Int32 &+ Int32" do
+      interpret("1 &+ 2").should eq(3)
+    end
+
     it "interprets Int64 + Int64" do
       interpret("1_i64 + 2_i64").should eq(3)
     end
@@ -207,8 +211,16 @@ describe Crystal::Repl::Interpreter do
       interpret("1 - 2").should eq(-1)
     end
 
+    it "interprets Int32 &- Int32" do
+      interpret("1 &- 2").should eq(-1)
+    end
+
     it "interprets Int32 * Int32" do
       interpret("2 * 3").should eq(6)
+    end
+
+    it "interprets Int32 &* Int32" do
+      interpret("2 &* 3").should eq(6)
     end
 
     it "interprets UInt64 * Int32" do

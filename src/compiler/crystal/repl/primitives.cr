@@ -264,7 +264,7 @@ class Crystal::Repl::Compiler
     end
 
     case node.name
-    when "+", "&+", "-", "*", "^", "|", "&", "unsafe_shl", "unsafe_shr", "unsafe_div", "unsafe_mod"
+    when "+", "&+", "-", "&-", "*", "&*", "^", "|", "&", "unsafe_shl", "unsafe_shr", "unsafe_div", "unsafe_mod"
       primitive_binary_op_math(node, body, node.name)
     when "<", "<=", ">", ">=", "==", "!="
       primitive_binary_op_cmp(node, body, node.name)
@@ -357,7 +357,9 @@ class Crystal::Repl::Compiler
       when "+"          then add_i32
       when "&+"         then add_wrap_i32
       when "-"          then sub_i32
+      when "&-"         then sub_wrap_i32
       when "*"          then mul_i32
+      when "&*"         then mul_wrap_i32
       when "^"          then xor_i32
       when "|"          then or_i32
       when "&"          then and_i32
@@ -373,7 +375,9 @@ class Crystal::Repl::Compiler
       when "+"          then add_u32
       when "&+"         then add_wrap_i32
       when "-"          then sub_u32
+      when "&-"         then sub_wrap_i32
       when "*"          then mul_u32
+      when "&*"         then mul_wrap_i32
       when "^"          then xor_i32
       when "|"          then or_i32
       when "&"          then and_i32
@@ -389,7 +393,9 @@ class Crystal::Repl::Compiler
       when "+"          then add_i64
       when "&+"         then add_wrap_i64
       when "-"          then sub_i64
+      when "&-"         then sub_wrap_i64
       when "*"          then mul_i64
+      when "&*"         then mul_wrap_i64
       when "^"          then xor_i64
       when "|"          then or_i64
       when "&"          then and_i64
@@ -405,7 +411,9 @@ class Crystal::Repl::Compiler
       when "+"          then add_u64
       when "&+"         then add_wrap_i64
       when "-"          then sub_u64
+      when "&-"         then sub_wrap_i64
       when "*"          then mul_u64
+      when "&*"         then mul_wrap_i64
       when "^"          then xor_i64
       when "|"          then or_i64
       when "&"          then and_i64
