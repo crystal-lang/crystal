@@ -474,6 +474,51 @@ class Crystal::Repl::Compiler
     end
   end
 
+  private def primitive_binary_op_cmp(left_type : FloatType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    right_node.accept self
+    primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+
+    primitive_binary_op_cmp_float(left_node, left_type.kind, op)
+  end
+
+  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, op : String)
+    left_node.accept self
+    primitive_unchecked_convert(left_node, left_type.kind, right_type.kind)
+    right_node.accept self
+
+    primitive_binary_op_cmp_float(left_node, right_type.kind, op)
+  end
+
+  private def primitive_binary_op_cmp(left_type : FloatType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, op : String)
+    if left_type == right_type
+      left_node.accept self
+      right_node.accept self
+
+      primitive_binary_op_cmp_float(left_node, left_type.kind, op)
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+  end
+
+  private def primitive_binary_op_cmp_float(node : ASTNode, kind : Symbol, op : String)
+    case kind
+    when :f64
+      case op
+      when "==" then eq_f64
+      when "!=" then neq_f64
+      when "<"  then lt_f64
+      when "<=" then le_f64
+      when ">"  then gt_f64
+      when ">=" then ge_f64
+      else
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+      end
+    else
+      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+    end
+  end
+
   private def primitive_binary_op_eq(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode)
     kind = extend_int(left_type, right_type, left_node, right_node)
     if kind
@@ -662,28 +707,6 @@ class Crystal::Repl::Compiler
     when :i64, :u64 then put_i64 0
     else
       raise "Unknown kind for put_zero: #{kind}"
-    end
-  end
-
-  private def primitive_binary_op_cmp(left_type : IntegerType, right_type : FloatType, left_node : ASTNode, right_node : ASTNode, op : String)
-    left_node.accept self
-    primitive_unchecked_convert(left_node, left_type.kind, right_type.kind)
-    right_node.accept self
-
-    case right_type.kind
-    when :f64
-      case op
-      when "==" then eq_f64
-      when "!=" then neq_f64
-      when "<"  then lt_f64
-      when "<=" then le_f64
-      when ">"  then gt_f64
-      when ">=" then ge_f64
-      else
-        left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-      end
-    else
-      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end
   end
 

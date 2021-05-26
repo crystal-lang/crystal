@@ -203,26 +203,6 @@ describe Crystal::Repl::Interpreter do
       interpret("1_i64 + 2_i64").should eq(3)
     end
 
-    it "interprets Int32 + Float64" do
-      interpret("1 + 2.5").should eq(3.5)
-    end
-
-    it "interprets Float64 + Int32" do
-      interpret("2.5 + 1").should eq(3.5)
-    end
-
-    it "interprets Float64 + Float64" do
-      interpret("2.5 + 2.3").should eq(4.8)
-    end
-
-    it "interprets Float64 - Float64" do
-      interpret("2.5 - 2.3").should eq(2.5 - 2.3)
-    end
-
-    it "interprets Float64 * Float64" do
-      interpret("2.5 * 2.3").should eq(2.5 * 2.3)
-    end
-
     it "interprets Int32 - Int32" do
       interpret("1 - 2").should eq(-1)
     end
@@ -243,6 +223,26 @@ describe Crystal::Repl::Interpreter do
       interpret("3_u32 - 2").should eq(1)
     end
 
+    it "interprets Int32 + Float64" do
+      interpret("1 + 2.5").should eq(3.5)
+    end
+
+    it "interprets Float64 + Int32" do
+      interpret("2.5 + 1").should eq(3.5)
+    end
+
+    it "interprets Float64 + Float64" do
+      interpret("2.5 + 2.3").should eq(4.8)
+    end
+
+    it "interprets Float64 - Float64" do
+      interpret("2.5 - 2.3").should eq(2.5 - 2.3)
+    end
+
+    it "interprets Float64 * Float64" do
+      interpret("2.5 * 2.3").should eq(2.5 * 2.3)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
@@ -252,18 +252,6 @@ describe Crystal::Repl::Interpreter do
     it "interprets Int32 < Int32" do
       interpret("1 < 2").should be_true
     end
-
-    # it "interprets Int32 < Float64" do
-    #   interpret("1 < 2.5").should be_true
-    # end
-
-    # it "interprets Float64 < Int32" do
-    #   interpret("1.2 < 2").should be_true
-    # end
-
-    # it "interprets Float64 < Float64" do
-    #   interpret("1.2 < 2.3").should be_true
-    # end
 
     it "interprets Int32 == Int32 (true)" do
       interpret("1 == 1").should be_true
@@ -359,6 +347,18 @@ describe Crystal::Repl::Interpreter do
 
     it "interprets Char == Char (true)" do
       interpret("'a' == 'a'").should be_true
+    end
+
+    it "interprets Int32 < Float64" do
+      interpret("1 < 2.5").should be_true
+    end
+
+    it "interprets Float64 < Int32" do
+      interpret("1.2 < 2").should be_true
+    end
+
+    it "interprets Float64 < Float64" do
+      interpret("1.2 < 2.3").should be_true
     end
 
     it "discards comparison" do
