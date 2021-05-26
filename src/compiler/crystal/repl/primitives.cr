@@ -316,6 +316,41 @@ class Crystal::Repl::Compiler
 
     return false unless @wants_value
 
+    primitive_binary_op_math(node, kind, op)
+
+    if kind != left_type.kind
+      primitive_unchecked_convert(node, kind, left_type.kind)
+    end
+  end
+
+  private def primitive_binary_op_math(left_type : IntegerType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+    left_node ? left_node.accept(self) : put_self
+    primitive_unchecked_convert node, left_type.kind, right_type.kind
+    right_node.accept self
+
+    primitive_binary_op_math(node, right_type.kind, op)
+  end
+
+  private def primitive_binary_op_math(left_type : FloatType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+    left_node ? left_node.accept(self) : put_self
+    right_node.accept self
+    primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+
+    primitive_binary_op_math(node, left_type.kind, op)
+  end
+
+  private def primitive_binary_op_math(left_type : FloatType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
+    if left_type == right_type
+      left_node ? left_node.accept(self) : put_self
+      right_node.accept self
+    else
+      node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+
+    primitive_binary_op_math(node, left_type.kind, op)
+  end
+
+  private def primitive_binary_op_math(node : ASTNode, kind : Symbol, op : String)
     case kind
     when :i32
       case op
@@ -331,7 +366,7 @@ class Crystal::Repl::Compiler
       when "unsafe_div" then unsafe_div_i32
       when "unsafe_mod" then unsafe_mod_i32
       else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when :u32
       case op
@@ -347,7 +382,7 @@ class Crystal::Repl::Compiler
       when "unsafe_div" then unsafe_div_u32
       when "unsafe_mod" then unsafe_mod_u32
       else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when :i64
       case op
@@ -363,7 +398,7 @@ class Crystal::Repl::Compiler
       when "unsafe_div" then unsafe_div_i64
       when "unsafe_mod" then unsafe_mod_i64
       else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when :u64
       case op
@@ -379,14 +414,20 @@ class Crystal::Repl::Compiler
       when "unsafe_div" then unsafe_div_u64
       when "unsafe_mod" then unsafe_mod_u64
       else
-        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+      end
+    when :f32
+      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+    when :f64
+      case op
+      when "+" then add_f64
+      when "-" then sub_f64
+      when "*" then mul_f64
+      else
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     else
-      node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
-    end
-
-    if kind != left_type.kind
-      primitive_unchecked_convert(node, kind, left_type.kind)
+      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
     end
   end
 

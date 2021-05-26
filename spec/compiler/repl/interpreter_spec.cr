@@ -203,17 +203,25 @@ describe Crystal::Repl::Interpreter do
       interpret("1_i64 + 2_i64").should eq(3)
     end
 
-    # it "interprets Int32 + Float64" do
-    #   interpret("1 + 2.5").should eq(3.5)
-    # end
+    it "interprets Int32 + Float64" do
+      interpret("1 + 2.5").should eq(3.5)
+    end
 
-    # it "interprets Float64 + Int32" do
-    #   interpret("2.5 + 1").should eq(3.5)
-    # end
+    it "interprets Float64 + Int32" do
+      interpret("2.5 + 1").should eq(3.5)
+    end
 
-    # it "interprets Float64 + Float64" do
-    #   interpret("2.5 + 2.3").should eq(4.8)
-    # end
+    it "interprets Float64 + Float64" do
+      interpret("2.5 + 2.3").should eq(4.8)
+    end
+
+    it "interprets Float64 - Float64" do
+      interpret("2.5 - 2.3").should eq(2.5 - 2.3)
+    end
+
+    it "interprets Float64 * Float64" do
+      interpret("2.5 * 2.3").should eq(2.5 * 2.3)
+    end
 
     it "interprets Int32 - Int32" do
       interpret("1 - 2").should eq(-1)

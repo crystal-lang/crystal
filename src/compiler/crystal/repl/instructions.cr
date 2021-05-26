@@ -3,7 +3,7 @@ require "./repl"
 # Summary:
 # - Put: 7
 # - Conversions: 21
-# - Math: 35 / 76?
+# - Math: 36 / 76?
 # - Comparison: 26 / 40?
 # - Not: 1
 # - Pointers: 9
@@ -18,8 +18,8 @@ require "./repl"
 # - Tuples: 1
 # - Overrides: 5
 # ------------------------
-# - Total: 131
-# - Remaining: 125
+# - Total: 132
+# - Remaining: 124
 
 Crystal::Repl::Instructions =
   {
@@ -205,7 +205,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Conversions (21)
 
-    # <<< Math (35)
+    # <<< Math (36)
     add_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
@@ -410,13 +410,31 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
+    add_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a + b,
+    },
+    sub_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a - b,
+    },
+    mul_f64: {
+      operands:   [] of Nil,
+      pop_values: [a : Float64, b : Float64],
+      push:       true,
+      code:       a * b,
+    },
     div_f64: {
       operands:   [] of Nil,
       pop_values: [a : Float64, b : Float64],
       push:       true,
       code:       a / b,
     },
-    # >>> Math (35)
+    # >>> Math (36)
 
     # <<< Comparisons (26)
     eq_i32: {
