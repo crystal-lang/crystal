@@ -1270,6 +1270,15 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "named tuple" do
+    it "interprets named tuple literal and access by known index" do
+      interpret(<<-CODE).should eq(6)
+        a = {a: 1, b: 2, c: 3}
+        a[:a] + a[:b] + a[:c]
+      CODE
+    end
+  end
+
   context "blocks" do
     it "interprets simplest block" do
       interpret(<<-CODE).should eq(1)

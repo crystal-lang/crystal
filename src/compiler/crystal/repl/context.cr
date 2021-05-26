@@ -6,6 +6,8 @@ class Crystal::Repl::Context
   getter! constants : Constants
   getter lib_functions : Hash(External, LibFunction)
   getter decompile, trace, stats
+  getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
+  getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
 
   def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
     @defs = {} of Def => CompiledDef
@@ -15,6 +17,31 @@ class Crystal::Repl::Context
     @lib_functions.compare_by_identity
 
     @dl_handles = {} of String? => Void*
+
+    # TODO: finish porting all of LibM instrinsics
+
+    @procs_f32_f32 = {
+      :ceil  => Proc(Float32, Float32).new(&.ceil),
+      :cos   => Proc(Float32, Float32).new { |a| Math.cos(a) },
+      :exp   => Proc(Float32, Float32).new { |a| Math.exp(a) },
+      :exp2  => Proc(Float32, Float32).new { |a| Math.exp2(a) },
+      :floor => Proc(Float32, Float32).new(&.floor),
+      :log   => Proc(Float32, Float32).new { |a| Math.log(a) },
+      :log2  => Proc(Float32, Float32).new { |a| Math.log2(a) },
+      :log10 => Proc(Float32, Float32).new { |a| Math.log10(a) },
+      :log10 => Proc(Float32, Float32).new { |a| Math.log10(a) },
+    }
+
+    @procs_f64_f64 = {
+      :ceil  => Proc(Float64, Float64).new(&.ceil),
+      :cos   => Proc(Float64, Float64).new { |a| Math.cos(a) },
+      :exp   => Proc(Float64, Float64).new { |a| Math.exp(a) },
+      :exp2  => Proc(Float64, Float64).new { |a| Math.exp2(a) },
+      :floor => Proc(Float64, Float64).new(&.floor),
+      :log   => Proc(Float64, Float64).new { |a| Math.log(a) },
+      :log2  => Proc(Float64, Float64).new { |a| Math.log2(a) },
+      :log10 => Proc(Float64, Float64).new { |a| Math.log10(a) },
+    }
 
     @constants = Constants.new(self)
   end

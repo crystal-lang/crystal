@@ -402,8 +402,16 @@ class Crystal::Repl::Interpreter
     if lib_instrinsics
       %w(memcpy memmove memset).each do |function_name|
         match = lib_instrinsics.lookup_first_def(function_name, false)
-        if match
-          match.body = Primitive.new("repl_intrinsics_#{function_name}")
+        match.body = Primitive.new("repl_intrinsics_#{function_name}") if match
+      end
+    end
+
+    lib_m = program.types["LibM"]?
+    if lib_m
+      %w[32 64].each do |bits|
+        %w[ceil cos exp exp2 log log2 log10].each do |function_name|
+          match = lib_m.lookup_first_def("#{function_name}_f#{bits}", false)
+          match.body = Primitive.new("repl_#{function_name}_f#{bits}") if match
         end
       end
     end

@@ -118,12 +118,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : TupleLiteral)
     type = node.type.as(TupleInstanceType)
+
     current_offset = 0
     node.elements.each_with_index do |element, i|
       element.accept self
       size = sizeof_type(element)
       next_offset =
         if i == node.elements.size - 1
+          sizeof_type(type)
+        else
+          @context.offset_of(type, i + 1)
+        end
+      if next_offset - (current_offset + size) > 0
+        push_zeros(next_offset - (current_offset + size))
+      end
+      current_offset = next_offset
+    end
+
+    false
+  end
+
+  def visit(node : NamedTupleLiteral)
+    type = node.type.as(NamedTupleInstanceType)
+
+    current_offset = 0
+    node.entries.each_with_index do |entry, i|
+      entry.value.accept self
+      size = sizeof_type(entry.value)
+      next_offset =
+        if i == node.entries.size - 1
           sizeof_type(type)
         else
           @context.offset_of(type, i + 1)
@@ -730,6 +753,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(value : Int8)
     append value.unsafe_as(UInt8)
+  end
+
+  private def append(value : Symbol)
+    value.unsafe_as(StaticArray(UInt8, 4)).each do |byte|
+      append byte
+    end
   end
 
   private def append(value : UInt8)

@@ -104,38 +104,100 @@ class Crystal::Repl::Compiler
       obj = obj.not_nil!
       obj.accept self
 
-      type = obj.type.as(TupleInstanceType)
-      index = body.as(TupleIndexer).index
-      case index
-      when Int32
-        element_type = type.tuple_types[index]
-        offset = @context.offset_of(type, index)
-        tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(element_type))
+      type = obj.type
+      case type
+      when TupleInstanceType
+        index = body.as(TupleIndexer).index
+        case index
+        when Int32
+          element_type = type.tuple_types[index]
+          offset = @context.offset_of(type, index)
+          tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(element_type))
+        else
+          node.raise "BUG: missing handling of primitive #{body.name} with range"
+        end
+      when NamedTupleInstanceType
+        index = body.as(TupleIndexer).index
+        case index
+        when Int32
+          entry = type.entries[index]
+          offset = @context.offset_of(type, index)
+          tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(entry.type))
+        else
+          node.raise "BUG: missing handling of primitive #{body.name} with range"
+        end
       else
-        node.raise "BUG: missing handling of primitive #{body.name} with range"
+        node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
       end
     when "repl_call_stack_unwind"
       repl_call_stack_unwind
     when "repl_raise_without_backtrace"
       repl_raise_without_backtrace
     when "repl_intrinsics_memcpy"
-      node.args.each { |arg| request_value(arg) }
-      node.named_args.try &.each { |arg| request_value(arg.value) }
-
+      accept_call_args(node)
       repl_intrinsics_memcpy
     when "repl_intrinsics_memmove"
-      node.args.each { |arg| request_value(arg) }
-      node.named_args.try &.each { |arg| request_value(arg.value) }
-
+      accept_call_args(node)
       repl_intrinsics_memmove
     when "repl_intrinsics_memset"
-      node.args.each { |arg| request_value(arg) }
-      node.named_args.try &.each { |arg| request_value(arg.value) }
-
+      accept_call_args(node)
       repl_intrinsics_memset
+    when "repl_ceil_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :ceil
+    when "repl_ceil_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :ceil
+    when "repl_cos_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :cos
+    when "repl_cos_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :cos
+    when "repl_exp_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :exp
+    when "repl_exp_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :exp
+    when "repl_exp2_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :exp2
+    when "repl_exp2_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :exp2
+    when "repl_floor_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :floor
+    when "repl_floor_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :floor
+    when "repl_log_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :log
+    when "repl_log_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :log
+    when "repl_log2_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :log2
+    when "repl_log2_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :log2
+    when "repl_log10_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :log10
+    when "repl_log10_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :log10
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
+  end
+
+  private def accept_call_args(node : Call)
+    node.args.each { |arg| request_value(arg) }
+    node.named_args.try &.each { |arg| request_value(arg.value) }
   end
 
   private def primitive_unchecked_convert(node : ASTNode, body : Primitive)

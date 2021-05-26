@@ -956,7 +956,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Tuples (1)
 
-    # <<< Overrides (5)
+    # <<< Overrides (6)
     repl_call_stack_unwind: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
@@ -1017,7 +1017,19 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    # >>> Overrides (5)
+    repl_proc_f32_f32: {
+      operands:   [name : Symbol],
+      pop_values: [a : Float32] of Nil,
+      push:       true,
+      code:       @context.procs_f32_f32[name].call(a),
+    },
+    repl_proc_f64_f64: {
+      operands:   [name : Symbol],
+      pop_values: [a : Float64] of Nil,
+      push:       true,
+      code:       @context.procs_f64_f64[name].call(a),
+    },
+    # >>> Overrides (6)
   }
 
 {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
