@@ -1409,6 +1409,17 @@ describe Crystal::Repl::Interpreter do
         A
       CODE
     end
+
+    it "interprets complex constant" do
+      interpret(<<-CODE).should eq(6)
+        A = begin
+          a = 1
+          b = 2
+          a + b
+        end
+        A + A
+      CODE
+    end
   end
 end
 

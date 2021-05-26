@@ -3,6 +3,7 @@ require "./repl"
 class Crystal::Repl::Context
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
+  getter! constants : Constants
   getter lib_functions : Hash(External, LibFunction)
   getter decompile, trace, stats
 
@@ -14,6 +15,16 @@ class Crystal::Repl::Context
     @lib_functions.compare_by_identity
 
     @dl_handles = {} of String? => Void*
+
+    @constants = Constants.new(self)
+  end
+
+  def declare_const(const : Const, compiled_def : CompiledDef) : Int32
+    constants.declare(const, compiled_def)
+  end
+
+  def const_index?(const : Const) : Int32?
+    constants.const_to_index?(const)
   end
 
   def sizeof_type(node : ASTNode) : Int32

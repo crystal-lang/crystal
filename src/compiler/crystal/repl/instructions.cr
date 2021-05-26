@@ -676,6 +676,36 @@ Crystal::Repl::Instructions =
     },
     # >>> Local variables (2)
 
+    # <<< Instance vars (3)
+    get_self_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_move_from(self_class_pointer + offset, size),
+    },
+    set_self_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_move_to(self_class_pointer + offset, size),
+    },
+    get_class_ivar: {
+      operands:   [offset : Int32, size : Int32],
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
+      push:       false,
+      code:       stack_move_from(pointer + offset, size),
+    },
+    # >>> Instance vars (3)
+
+    # <<< Constants (3)
+    get_const: {
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       get_const(index, size),
+    },
+    # >>> Constants (3)
+
     # <<< Stack manipulation (5)
     pop: {
       operands:   [size : Int32] of Nil,
@@ -811,27 +841,6 @@ Crystal::Repl::Instructions =
       end,
     },
     # >>> Allocate (2)
-
-    # <<< Instance vars (3)
-    get_self_ivar: {
-      operands:   [offset : Int32, size : Int32],
-      pop_values: [] of Nil,
-      push:       false,
-      code:       stack_move_from(self_class_pointer + offset, size),
-    },
-    set_self_ivar: {
-      operands:   [offset : Int32, size : Int32],
-      pop_values: [] of Nil,
-      push:       false,
-      code:       stack_move_to(self_class_pointer + offset, size),
-    },
-    get_class_ivar: {
-      operands:   [offset : Int32, size : Int32],
-      pop_values: [pointer : Pointer(UInt8)] of Nil,
-      push:       false,
-      code:       stack_move_from(pointer + offset, size),
-    },
-    # >>> Instance vars (3)
 
     # <<< Unions (4)
     put_in_union: {

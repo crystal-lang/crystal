@@ -8,7 +8,8 @@ class Crystal::Repl::Interpreter
     ip : Pointer(UInt8),
     stack : Pointer(UInt8),
     stack_bottom : Pointer(UInt8),
-    block_caller_frame_index : Int32
+    block_caller_frame_index : Int32,
+    constant_index : Int32
 
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
@@ -16,9 +17,10 @@ class Crystal::Repl::Interpreter
     @instructions = [] of Instruction
 
     # TODO: what if the stack is exhausted?
+    # TODO: use 8MB for this, and on the heap
     @stack = uninitialized UInt8[8096]
-
     @call_stack = [] of CallFrame
+    @constants = Pointer(UInt8).null
 
     @main_visitor = MainVisitor.new(program)
     @top_level_visitor = TopLevelVisitor.new(program)
@@ -74,6 +76,9 @@ class Crystal::Repl::Interpreter
     stack_bottom_after_local_vars = stack_bottom + @local_vars.bytesize
     stack = stack_bottom_after_local_vars
 
+    # Reserve space for constants
+    @constants = @constants.realloc(@context.constants.bytesize)
+
     instructions = @instructions
     ip = instructions.to_unsafe
     return_value = Pointer(UInt8).null
@@ -91,6 +96,7 @@ class Crystal::Repl::Interpreter
       stack: stack,
       stack_bottom: stack_bottom,
       block_caller_frame_index: -1,
+      constant_index: -1,
     )
 
     while true
@@ -154,7 +160,7 @@ class Crystal::Repl::Interpreter
     end
   end
 
-  private macro call(compiled_def, block_caller_frame_index = -1)
+  private macro call(compiled_def, block_caller_frame_index = -1, constant_index = -1)
     # At the point of a call like:
     #
     #     foo(x, y)
@@ -180,6 +186,7 @@ class Crystal::Repl::Interpreter
       stack: %stack_before_call_args + {{compiled_def}}.local_vars.bytesize,
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
+      constant_index: {{constant_index}},
     )
 
     @call_stack << %call_frame
@@ -249,7 +256,7 @@ class Crystal::Repl::Interpreter
     else
       # Remember the point the stack reached
       old_stack = stack
-      @call_stack.pop
+      %previous_call_frame = @call_stack.pop
       %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
@@ -257,6 +264,11 @@ class Crystal::Repl::Interpreter
       ip = %call_frame.ip
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
+
+      # Copy the return value to a constant, if the frame was for a constant
+      if %previous_call_frame.constant_index != -1
+        (old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
+      end
 
       # Ccopy the return value
       stack_move_from(old_stack - {{size}}, {{size}})
@@ -283,6 +295,18 @@ class Crystal::Repl::Interpreter
 
   private macro get_ivar_pointer(offset)
     self_class_pointer + offset
+  end
+
+  private macro get_const(index, size)
+    # TODO: make this atomic
+    %initialized = @constants[{{index}}]
+    if %initialized == 1_u8
+      stack_move_from(@constants + {{index}} + 1, {{size}})
+    else
+      @constants[{{index}}] = 1_u8
+      %compiled_def = @context.constants.index_to_compiled_def({{index}})
+      call(%compiled_def, constant_index: {{index}})
+    end
   end
 
   private macro next_instruction(t)

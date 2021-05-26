@@ -342,7 +342,34 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if const.value.simple_literal?
         const.value.accept self
       else
-        node.raise "BUG: missing hinterpret of Path that points to a non-simple constant"
+        index = @context.const_index?(const)
+        unless index
+          fake_def = const.fake_def.not_nil!
+          fake_def.owner = const.visitor.not_nil!.current_type
+
+          compiled_def = CompiledDef.new(@context, fake_def, 0)
+
+          # Declare local variables for the constant initializer
+          fake_def.vars.try &.each do |name, var|
+            compiled_def.local_vars.declare(name, var.type)
+          end
+
+          value = const.value
+          value = @context.program.cleanup(value)
+
+          compiler = Compiler.new(@context, compiled_def)
+          compiler.compile(value)
+
+          if @context.decompile
+            puts "=== #{const} ==="
+            puts Disassembler.disassemble(compiled_def)
+            puts "=== #{const} ==="
+          end
+
+          index = @context.declare_const(const, compiled_def)
+        end
+
+        get_const index, sizeof_type(const.value)
       end
     elsif replacement = node.syntax_replacement
       replacement.accept self
