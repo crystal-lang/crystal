@@ -1,5 +1,20 @@
 require "../../spec_helper"
 
+describe "Code gen: untyped pointer" do
+  it "codegens malloc" do
+    run("UntypedPointer.malloc(10_u64)")
+  end
+
+  it "codegens realloc" do
+    run(%(
+      p = UntypedPointer.malloc(10_u64)
+      (p.as(UInt8*) + 9_i64).value = 1
+      x = p.realloc(20_u64)
+      (x.as(UInt8*) + 9_i64).value &+ 1_i64
+      )).to_i.should eq(2)
+  end
+end
+
 describe "Code gen: pointer" do
   it "get pointer and value of it" do
     run("a = 1; b = pointerof(a); b.value").to_i.should eq(1)

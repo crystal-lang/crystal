@@ -177,7 +177,7 @@ class Crystal::RecursiveStructChecker
   end
 
   def struct?(type)
-    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.abstract?
+    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.pointer? && !type.is_a?(ProcInstanceType) && !type.abstract?
   end
 
   def push(path, type)

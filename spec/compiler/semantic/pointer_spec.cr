@@ -1,5 +1,31 @@
 require "../../spec_helper"
 
+describe "Semantic: untyped pointer" do
+  it "types UntypedPointer.new" do
+    assert_type("UntypedPointer.new(10_u64)") { untyped_pointer }
+  end
+
+  it "types UntypedPointer.malloc" do
+    assert_type("UntypedPointer.malloc(10_u64)") { untyped_pointer }
+  end
+
+  it "types UntypedPointer casting to pointer" do
+    assert_type("UntypedPointer.new(10_u64).as(Char*)") { pointer_of(char) }
+  end
+
+  it "types UntypedPointer casting to pointer of void" do
+    assert_type("UntypedPointer.new(10_u64).as(Void*)") { pointer_of(void) }
+  end
+
+  it "types UntypedPointer casting to object type" do
+    assert_type("UntypedPointer.new(10_u64).as(String)") { string }
+  end
+
+  it "types pointer casting to UntypedPointer" do
+    assert_type("Pointer(Int32).new(10_u64).as(UntypedPointer)") { untyped_pointer }
+  end
+end
+
 describe "Semantic: pointer" do
   it "types int pointer" do
     assert_type("a = 1; pointerof(a)") { pointer_of(int32) }
@@ -48,7 +74,7 @@ describe "Semantic: pointer" do
   it "can't do Pointer.malloc without type var" do
     assert_error "
       Pointer.malloc(1_u64)
-    ", "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+    ", "can't infer the type parameter T for Pointer(T), use UntypedPointer.malloc(size) or Pointer(Type).malloc(size) instead"
   end
 
   it "create pointer by address" do
@@ -96,6 +122,14 @@ describe "Semantic: pointer" do
       x = pointerof(pointer)
       ),
       "recursive pointerof expansion"
+  end
+
+  it "types union of pointers" do
+    assert_type(%(
+      x = 1
+      y = 'a'
+      true ? pointerof(x) : pointerof(y)
+      )) { union_of pointer_of(int32), pointer_of(char) }
   end
 
   it "can assign nil to void pointer" do

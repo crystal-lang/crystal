@@ -1,18 +1,138 @@
 require "c/string"
 
+# An untyped pointer to some memory.
+#
+# This and `Pointer` are the only unsafe types in Crystal. If you are using a
+# pointer, you are writing unsafe code because a pointer doesn't know where it's
+# pointing to nor how much memory starting from it is valid. However, pointers
+# make it possible to interface with C and to implement efficient data
+# structures. For example, both `Array` and `Hash` are implemented using
+# pointers.
+#
+# `UntypedPointer` corresponds to `void *` from C, unlike `Pointer`, which
+# refers to typed storage. Because of this, untyped pointers cannot be
+# dereferenced and do not support pointer arithmetic. Typed pointers are
+# implicitly convertible to untyped ones when they are passed to C functions,
+# but not vice-versa.
+#
+# You can obtain untyped pointers in three ways: `.new`, `.malloc`, and by
+# calling a C function that returns an untyped pointer.
+#
+# Note that a pointer is *falsey* if it's null (if its address is zero).
+#
+# When calling a C function that expects an untyped pointer you can also pass
+# `nil` instead of using `UntypedPointer.null` to construct a null pointer.
+struct UntypedPointer
+  include Comparable(self)
+
+  # Allocates `size` bytes from the system's heap initialized
+  # to zero and returns a pointer to the first byte from that memory.
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # ```
+  # ptr = UntypedPointer.malloc(8)
+  # ptr.as(UInt8*).value # => 0
+  # ptr.as(UInt8*)[7]    # => 0
+  # ```
+  def self.malloc(size : Int) : self
+    if size < 0
+      raise ArgumentError.new("Negative UntypedPointer#malloc size")
+    end
+
+    malloc(size.to_u64)
+  end
+
+  # Returns a pointer whose memory address is zero. This doesn't allocate memory.
+  #
+  # When calling a C function you can also pass `nil` instead of constructing a
+  # null pointer with this method.
+  #
+  # ```
+  # UntypedPointer.null.address # => 0
+  # Pointer(Int32).null.address # => 0
+  # ```
+  def self.null : self
+    new 0_u64
+  end
+
+  # Returns a pointer that points to the given memory *address*. This doesn't
+  # allocate memory.
+  #
+  # ```
+  # UntypedPointer.new(1234).address # => 1234
+  # Pointer(Int32).new(5678).address # => 5678
+  # ```
+  def self.new(address : Int)
+    new address.to_u64!
+  end
+
+  # Returns `true` if this pointer's address is zero.
+  #
+  # ```
+  # a = UntypedPointer.null
+  # a.null? # => true
+  #
+  # b = Pointer(Int32).new(1)
+  # b.null? # => false
+  # ```
+  def null?
+    address.zero?
+  end
+
+  # Returns `-1`, `0` or `1` depending on whether this pointer's address is
+  # less, equal or greater than *other*'s address, respectively.
+  def <=>(other : self)
+    address <=> other.address
+  end
+
+  # Returns the address of this pointer.
+  #
+  # ```
+  # ptr = Pointer(Int32).new(1234)
+  # ptr.hash # => 1234
+  # ```
+  def_hash address
+
+  # Appends a string representation of this pointer to the given *io*,
+  # including its type and address in hexadecimal.
+  #
+  # ```
+  # ptr1 = Pointer(Int32).new(1234)
+  # ptr1.to_s # => "Pointer(Int32)@0x4d2"
+  #
+  # ptr2 = UntypedPointer.new(0)
+  # ptr2.to_s # => "UntypedPointer.null"
+  # ```
+  def to_s(io : IO) : Nil
+    io << "UntypedPointer"
+    if null?
+      io << ".null"
+    else
+      io << "@0x"
+      address.to_s(io, 16)
+    end
+  end
+
+  def clone
+    self
+  end
+end
+
 # A typed pointer to some memory.
 #
-# This is the only unsafe type in Crystal. If you are using a pointer, you are writing
-# unsafe code because a pointer doesn't know where it's pointing to nor how much memory
-# starting from it is valid. However, pointers make it possible to interface with C and
-# to implement efficient data structures. For example, both `Array` and `Hash` are
-# implemented using pointers.
+# This and `UntypedPointer` are the only unsafe types in Crystal. If you are
+# using a pointer, you are writing unsafe code because a pointer doesn't know
+# where it's pointing to nor how much memory starting from it is valid. However,
+# pointers make it possible to interface with C and to implement efficient data
+# structures. For example, both `Array` and `Hash` are implemented using
+# pointers.
 #
-# You can obtain pointers in four ways: `#new`, `#malloc`, `pointerof` and by calling a C
-# function that returns a pointer.
+# You can obtain typed pointers in four ways: `.new`, `.malloc`, `pointerof` and
+# by calling a C function that returns a typed pointer.
 #
-# `pointerof(x)`, where *x* is a variable or an instance variable, returns a pointer to
-# that variable:
+# `pointerof(x)`, where *x* is a variable or an instance variable, returns a
+# pointer to that variable:
 #
 # ```
 # x = 1
@@ -23,10 +143,11 @@ require "c/string"
 #
 # Note that a pointer is *falsey* if it's null (if its address is zero).
 #
-# When calling a C function that expects a pointer you can also pass `nil` instead of using
-# `Pointer.null` to construct a null pointer.
+# When calling a C function that expects a typed pointer you can also pass `nil`
+# instead of using `Pointer.null` to construct a null pointer.
 #
-# For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
+# For a safe alternative, see `Slice`, which is a typed pointer with a size and
+# with bounds checking.
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
   # it while advancing the location and keeping track of how many elements
@@ -64,6 +185,7 @@ struct Pointer(T)
   # b.null? # => true
   # ```
   def null?
+    # TODO: use `UntypedPointer`'s implementation
     address == 0
   end
 
@@ -403,6 +525,7 @@ struct Pointer(T)
   # ptr.address # => 0
   # ```
   def self.null
+    # TODO: use `UntypedPointer`'s implementation
     new 0_u64
   end
 
@@ -413,6 +536,7 @@ struct Pointer(T)
   # ptr.address # => 5678
   # ```
   def self.new(address : Int)
+    # TODO: use `UntypedPointer`'s implementation
     new address.to_u64!
   end
 

@@ -427,7 +427,7 @@ describe "Semantic: if" do
     assert_type(%(
       def foo
         x = 1
-        y = false || pointerof(x) || nil
+        y = false || pointerof(x) || UntypedPointer.new(0_u64) || nil
 
         if !y
           return y
@@ -436,7 +436,7 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable union_of bool, pointer_of(int32), int32 }
+      )) { nilable union_of bool, pointer_of(int32), untyped_pointer, int32 }
   end
 
   it "doesn't fail on Expressions condition (1)" do
