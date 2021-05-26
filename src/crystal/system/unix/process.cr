@@ -42,7 +42,7 @@ struct Crystal::System::Process
 
   def self.pgid(pid)
     # Disallow users from depending on ppid(0) instead of `pgid`
-    raise RuntimeError.from_errno("getpgid", Errno::EINVAL) if pid == 0
+    raise RuntimeError.from_os_error("getpgid", Errno::EINVAL) if pid == 0
 
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
@@ -153,7 +153,7 @@ struct Crystal::System::Process
       when 1
         # Errno coming
         errno = Errno.new(reader_pipe.read_bytes(Int32))
-        self.raise_exception_from_errno(command_args[0], errno)
+        self.raise_exception_from_os_error(command_args[0], errno)
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
