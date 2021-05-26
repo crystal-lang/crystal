@@ -153,7 +153,7 @@ struct Crystal::System::Process
       when 1
         # Errno coming
         errno = Errno.new(reader_pipe.read_bytes(Int32))
-        self.raise_exception_from_os_error(command_args[0], errno)
+        self.raise_exception_from_errno(command_args[0], errno)
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
