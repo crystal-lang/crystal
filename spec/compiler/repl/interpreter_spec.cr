@@ -231,6 +231,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1_u8 | 2").should eq(3)
     end
 
+    it "interprets UInt64 | UInt32" do
+      interpret("1_u64 | 2_u32").should eq(3)
+    end
+
     it "interprets UInt32 - Int32" do
       interpret("3_u32 - 2").should eq(1)
     end
@@ -261,6 +265,22 @@ describe Crystal::Repl::Interpreter do
   end
 
   context "comparisons" do
+    it "interprets Bool == Bool (false)" do
+      interpret("true == false").should be_false
+    end
+
+    it "interprets Bool == Bool (true)" do
+      interpret("true == true").should be_true
+    end
+
+    it "interprets Bool != Bool (false)" do
+      interpret("true != true").should be_false
+    end
+
+    it "interprets Bool != Bool (true)" do
+      interpret("true != false").should be_true
+    end
+
     it "interprets Int32 < Int32" do
       interpret("1 < 2").should be_true
     end
