@@ -700,7 +700,7 @@ struct Char
   # 130
   # ```
   def each_byte : Nil
-    # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
+    # See https://en.wikipedia.org/wiki/UTF-8#Description
 
     c = ord
     if c < 0x80
@@ -733,7 +733,7 @@ struct Char
   # '好'.bytesize # => 3
   # ```
   def bytesize
-    # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
+    # See https://en.wikipedia.org/wiki/UTF-8#Description
 
     c = ord
     if c < 0x80
@@ -774,10 +774,15 @@ struct Char
   # 'あ'.to_s # => "あ"
   # ```
   def to_s : String
-    String.new(4) do |buffer|
-      appender = buffer.appender
-      each_byte { |byte| appender << byte }
-      {appender.size, 1}
+    chars = uninitialized UInt8[4]
+    i = 0
+    each_byte do |byte|
+      chars[i] = byte
+      i += 1
+    end
+    String.new(i) do |buffer|
+      buffer.copy_from(chars.to_unsafe, i)
+      {i, 1}
     end
   end
 
