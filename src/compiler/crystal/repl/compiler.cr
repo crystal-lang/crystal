@@ -217,8 +217,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     index = @local_vars.name_to_index(node.name)
     type = @local_vars.type(node.name)
 
-    get_local index, sizeof_type(type)
-    convert node, type, node.type
+    if node.name == "self" && type.passed_by_value?
+      # Load the entire self from the pointer that's self
+      get_self_ivar 0, sizeof_type(type)
+    else
+      get_local index, sizeof_type(type)
+      convert node, type, node.type
+    end
+
     false
   end
 
@@ -564,7 +570,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       if @context.decompile
         puts "=== #{target_def.owner}##{target_def.name} ==="
-        p! compiled_def.local_vars, compiled_def.args_bytesize
+        puts compiled_def.local_vars
         puts Disassembler.disassemble(compiled_def)
         puts "=== #{target_def.owner}##{target_def.name} ==="
       end

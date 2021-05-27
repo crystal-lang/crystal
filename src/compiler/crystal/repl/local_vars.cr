@@ -70,4 +70,14 @@ class Crystal::Repl::LocalVars
       end
     end
   end
+
+  def to_s(io : IO) : Nil
+    return if @bytesize == 0
+
+    io << "local table (bytesize: " << @bytesize << ")\n"
+    @name_to_index.each do |name, index|
+      io << "\t" unless index == 0
+      io << name << '@' << index
+    end
+  end
 end

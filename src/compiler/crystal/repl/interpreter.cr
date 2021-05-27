@@ -49,7 +49,7 @@ class Crystal::Repl::Interpreter
 
     if @context.decompile
       puts "=== top-level ==="
-      p @local_vars
+      puts @local_vars
       puts Disassembler.disassemble(@instructions, @local_vars)
       puts "=== top-level ==="
     end

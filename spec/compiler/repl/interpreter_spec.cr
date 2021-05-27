@@ -1288,6 +1288,20 @@ describe Crystal::Repl::Interpreter do
         a[1] + (a[0] ? 2 : 3)
       CODE
     end
+
+    it "interprets tuple self" do
+      interpret(<<-CODE).should eq(6)
+        struct Tuple
+          def itself
+            self
+          end
+        end
+
+        a = {1, 2, 3}
+        b = a.itself
+        b[0] + b[1] + b[2]
+      CODE
+    end
   end
 
   context "named tuple" do
