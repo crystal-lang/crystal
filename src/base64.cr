@@ -203,13 +203,28 @@ module Base64
     bytes = chars.to_unsafe
     size = data.size
     cstr = data.to_unsafe
-    endcstr = cstr + size - size % 3
+    endcstr = cstr + size - size % 3 - 3
+
     while cstr < endcstr
       n = Intrinsics.bswap32(cstr.as(UInt32*).value)
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]
       yield bytes[(n >> 8) & 63]
+      cstr += 3
+    end
+
+    if size >= 3
+      a = cstr.value
+      b = (cstr + 1).value
+      c = (cstr + 2).value
+      n = (a.to_u32 << 0x10) + (b.to_u32 << 0x08) + c
+
+      yield bytes[(n >> 18) & 63]
+      yield bytes[(n >> 12) & 63]
+      yield bytes[(n >> 6) & 63]
+      yield bytes[(n) & 63]
+
       cstr += 3
     end
 
