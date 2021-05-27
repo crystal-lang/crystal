@@ -1143,6 +1143,12 @@ Crystal::Repl::Instructions =
         end
       end,
     },
+    repl_intrinsics_debugtrap: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       pry,
+    },
     repl_proc_f32_f32: {
       operands:   [name : Symbol],
       pop_values: [a : Float32] of Nil,

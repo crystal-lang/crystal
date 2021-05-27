@@ -1,5 +1,6 @@
 require "./repl"
 require "ffi"
+require "colorize"
 
 class Crystal::Repl::Interpreter
   record CallFrame,
@@ -11,6 +12,8 @@ class Crystal::Repl::Interpreter
     stack_bottom : Pointer(UInt8),
     block_caller_frame_index : Int32,
     constant_index : Int32
+
+  @pry_node : ASTNode?
 
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
@@ -27,6 +30,9 @@ class Crystal::Repl::Interpreter
     @main_visitor = MainVisitor.new(program)
     @top_level_visitor = TopLevelVisitor.new(program)
     @cleanup_transformer = CleanupTransformer.new(program)
+
+    @pry = false
+    @pry_node = nil
   end
 
   def interpret(node : ASTNode) : Value
@@ -122,6 +128,8 @@ class Crystal::Repl::Interpreter
         Disassembler.disassemble_one(instructions, offset, current_local_vars, STDOUT)
         puts
       end
+
+      pry(ip, instructions, nodes, stack, stack_bottom) if @pry
 
       op_code = next_instruction OpCode
 
@@ -324,6 +332,10 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private macro pry
+    @pry = true
+  end
+
   private macro next_instruction(t)
     value = ip.as({{t}}*).value
     ip += sizeof({{t}})
@@ -415,7 +427,7 @@ class Crystal::Repl::Interpreter
 
     lib_instrinsics = program.types["LibIntrinsics"]?
     if lib_instrinsics
-      %w(memcpy memmove memset).each do |function_name|
+      %w(memcpy memmove memset debugtrap).each do |function_name|
         match = lib_instrinsics.lookup_first_def(function_name, false)
         match.body = Primitive.new("repl_intrinsics_#{function_name}") if match
       end
@@ -437,5 +449,73 @@ class Crystal::Repl::Interpreter
 
   private def program
     @context.program
+  end
+
+  private def pry(ip, instructions, nodes, stack, stack_bottom)
+    call_frame = @call_stack.last
+    a_def = call_frame.compiled_def.def
+    local_vars = call_frame.compiled_def.local_vars
+    offset = (ip - instructions.to_unsafe).to_i32
+    node = nodes[offset]?
+    pry_node = @pry_node
+    if node && (location = node.location) && different_node_line?(node, pry_node)
+      puts "From: #{location} #{a_def.owner}##{a_def.name}:"
+      puts
+      filename = location.filename
+      case filename
+      when String
+        lines = File.read_lines(filename)
+
+        {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
+          line = lines[line_number - 1]
+          if line_number == location.line_number
+            print " => "
+          else
+            print "    "
+          end
+          print line_number.colorize.blue
+          print ": "
+          puts line
+        end
+        puts
+      end
+
+      while @pry
+        print "pry> "
+        line = gets
+        unless line
+          @pry = false
+          @pry_node = nil
+          break
+        end
+
+        case line
+        when "continue"
+          @pry = false
+          @pry_node = nil
+          break
+        when "next", "step"
+          @pry_node = node
+          break
+        end
+
+        local_var_index = local_vars.name_to_index?(line)
+        if local_var_index
+          type = local_vars.type(line)
+          size = @context.sizeof_type(type)
+
+          puts Value.new(@context, stack_bottom + local_var_index, type)
+        else
+          puts "Sorry, pry only lets you inspect local variables for now..."
+        end
+      end
+    end
+  end
+
+  private def different_node_line?(node : ASTNode, previous_node : ASTNode?)
+    return true unless previous_node
+    return true if node.location.not_nil!.filename != previous_node.location.not_nil!.filename
+
+    node.location.not_nil!.line_number != previous_node.location.not_nil!.line_number
   end
 end
