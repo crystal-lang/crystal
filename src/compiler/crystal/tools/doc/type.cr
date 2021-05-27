@@ -166,7 +166,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        stable_sort! defs, &.name.downcase
+        defs.sort_by!(stable: true, &.name.downcase)
       end
     end
   end
@@ -191,7 +191,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      stable_sort! class_methods, &.name.downcase
+      class_methods.sort_by!(stable: true, &.name.downcase)
     end
   end
 
@@ -215,7 +215,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      stable_sort! macros, &.name.downcase
+      macros.sort_by!(stable: true, &.name.downcase)
     end
   end
 
@@ -817,11 +817,5 @@ class Crystal::Doc::Type
 
   def annotations(annotation_type)
     @type.annotations(annotation_type)
-  end
-
-  private def stable_sort!(list)
-    # TODO: use #10163 instead
-    i = 0
-    list.sort_by! { |elem| {yield(elem), i += 1} }
   end
 end
