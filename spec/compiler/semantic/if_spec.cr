@@ -436,7 +436,7 @@ describe "Semantic: if" do
       end
 
       foo
-      )) { nilable union_of bool, pointer_of(int32), untyped_pointer, int32 }
+      )) { nilable union_of([bool, pointer_of(int32), untyped_pointer, int32]) }
   end
 
   it "doesn't fail on Expressions condition (1)" do
