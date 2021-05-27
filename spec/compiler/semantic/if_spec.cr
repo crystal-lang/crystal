@@ -462,4 +462,28 @@ describe "Semantic: if" do
       foo
       )) { nilable string }
   end
+
+  it "doesn't fail on Expressions condition (1)" do
+    assert_type(%(
+      def foo
+        if (v = 1; true)
+          typeof(v)
+        end
+      end
+
+      foo
+      )) { nilable int32.metaclass }
+  end
+
+  it "doesn't fail on Expressions condition (2)" do
+    assert_type(%(
+      def foo
+        if (v = nil; true)
+          typeof(v)
+        end
+      end
+
+      foo
+      )) { nilable nil_type.metaclass }
+  end
 end

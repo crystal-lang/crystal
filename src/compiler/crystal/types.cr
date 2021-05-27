@@ -3201,7 +3201,7 @@ module Crystal
       lookup_defs_with_modules, lookup_instance_var, lookup_instance_var?,
       index_of_instance_var, lookup_macro, lookup_macros, all_instance_vars,
       abstract?, implements?, ancestors, struct?,
-      type_var?, to: base_type
+      type_var?, unbound?, to: base_type
 
     def remove_indirection
       if struct?

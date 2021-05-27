@@ -728,12 +728,22 @@ module Crystal
       end
     end
 
-    def end_visit(node : Expressions)
+    def visit(node : Expressions)
+      exp_count = node.expressions.size
+      node.expressions.each_with_index do |exp, i|
+        if i == exp_count - 1
+          exp.accept self
+          node.bind_to exp
+        else
+          ignoring_type_filters { exp.accept self }
+        end
+      end
+
       if node.empty?
         node.set_type(@program.nil)
-      else
-        node.bind_to node.last
       end
+
+      false
     end
 
     def visit(node : Assign)
