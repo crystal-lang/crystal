@@ -458,6 +458,78 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a / b,
     },
+    add_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a + b,
+    },
+    sub_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a - b,
+    },
+    mul_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a * b,
+    },
+    unsafe_shr_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a.unsafe_shr(b),
+    },
+    unsafe_div_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a.unsafe_div(b),
+    },
+    unsafe_mod_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a.unsafe_mod(b),
+    },
+    add_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a + b,
+    },
+    sub_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a - b,
+    },
+    mul_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a * b,
+    },
+    unsafe_shr_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a.unsafe_shr(b),
+    },
+    unsafe_div_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a.unsafe_div(b),
+    },
+    unsafe_mod_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a.unsafe_mod(b),
+    },
     # >>> Math (36)
 
     # <<< Comparisons (26)
@@ -635,11 +707,53 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a == b,
     },
+    lt_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a < b,
+    },
     lt_u64_i64: {
       operands:   [] of Nil,
       pop_values: [a : UInt64, b : Int64],
       push:       true,
       code:       a < b,
+    },
+    le_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a <= b,
+    },
+    le_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a <= b,
+    },
+    gt_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a > b,
+    },
+    gt_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a > b,
+    },
+    ge_i64_u64: {
+      operands:   [] of Nil,
+      pop_values: [a : Int64, b : UInt64],
+      push:       true,
+      code:       a >= b,
+    },
+    ge_u64_i64: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt64, b : Int64],
+      push:       true,
+      code:       a >= b,
     },
     # <<< Comparisons (22)
 

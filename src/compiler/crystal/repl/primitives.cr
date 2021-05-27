@@ -348,28 +348,66 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    # TODO: check for overflow (in general)
     kind = extend_int(left_type, right_type, left_node, right_node)
-    unless kind
-      # TODO: do this well, knowing that either left or right are UInt64 and the other one is signed
-      if left_type.unsigned? && right_type.signed?
-        # TODO: check for overflow
-        # Essentially: if the right value is less than zero, raise
-        # Otherwise, do this conversion
-        left_node ? left_node.accept(self) : put_self
-        right_node.accept self
-        primitive_unchecked_convert(node, right_type.kind, left_type.kind)
-        kind = left_type.kind
+    if kind
+      # Go on
+      return false unless @wants_value
+
+      primitive_binary_op_math(node, kind, op)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 op X where X is a signed integer
+      left_node ? left_node.accept(self) : put_self
+      right_node.accept self
+      primitive_unchecked_convert node, right_type.kind, :i64
+
+      case node.name
+      when "+"          then add_u64_i64
+      when "&+"         then add_wrap_i64
+      when "-"          then sub_u64_i64
+      when "&-"         then sub_wrap_i64
+      when "*"          then mul_u64_i64
+      when "&*"         then mul_wrap_i64
+      when "^"          then xor_i64
+      when "|"          then or_i64
+      when "&"          then or_i64
+      when "unsafe_shl" then unsafe_shl_i64
+      when "unsafe_shr" then unsafe_shr_u64_i64
+      when "unsafe_div" then unsafe_div_u64_i64
+      when "unsafe_mod" then unsafe_mod_u64_i64
       else
         node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
       end
+
+      kind = :u64
+    else
+      # It's X op UInt64 where X is a signed integer
+      left_node ? left_node.accept(self) : put_self
+      primitive_unchecked_convert node, left_type.kind, :i64
+      right_node.accept self
+
+      case node.name
+      when "+"          then add_i64_u64
+      when "&+"         then add_wrap_i64
+      when "-"          then sub_i64_u64
+      when "&-"         then sub_wrap_i64
+      when "*"          then mul_i64_u64
+      when "&*"         then mul_wrap_i64
+      when "^"          then xor_i64
+      when "|"          then or_i64
+      when "&"          then or_i64
+      when "unsafe_shl" then unsafe_shl_i64
+      when "unsafe_shr" then unsafe_shr_i64_u64
+      when "unsafe_div" then unsafe_div_i64_u64
+      when "unsafe_mod" then unsafe_mod_i64_u64
+      else
+        node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      end
+
+      kind = :i64
     end
 
-    return false unless @wants_value
-
-    primitive_binary_op_math(node, kind, op)
-
     if kind != left_type.kind
+      # TODO: check overflow here
       primitive_unchecked_convert(node, kind, left_type.kind)
     end
   end
@@ -459,11 +497,13 @@ class Crystal::Repl::Compiler
       end
     when :u64
       case op
-      when "+"          then add_u64
-      when "&+"         then add_wrap_i64
-      when "-"          then sub_u64
-      when "&-"         then sub_wrap_i64
-      when "*"          then mul_u64
+      when "+"  then add_u64
+      when "&+" then add_wrap_i64
+      when "-"  then sub_u64
+      when "&-" then sub_wrap_i64
+      when "*"
+        p! node, node.location
+        mul_u64
       when "&*"         then mul_wrap_i64
       when "^"          then xor_i64
       when "|"          then or_i64
@@ -644,16 +684,16 @@ class Crystal::Repl::Compiler
       primitive_binary_op_lt(left_node, kind)
     elsif left_type.rank > right_type.rank
       # It's UInt64 < X where X is a signed integer
-
-      # We first extend right to left
       left_node.accept self
       right_node.accept self
       primitive_unchecked_convert right_node, right_type.kind, :i64
-
       lt_u64_i64
     else
       # It's X < UInt64 where X is a signed integer
-      left_node.raise "BUG: missing handling of binary < with types #{left_type} and #{right_type}"
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+      lt_i64_u64
     end
   end
 
@@ -672,8 +712,18 @@ class Crystal::Repl::Compiler
     kind = extend_int(left_type, right_type, left_node, right_node)
     if kind
       primitive_binary_op_le(left_node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 <= X where X is a signed integer
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, :i64
+      le_u64_i64
     else
-      left_node.raise "BUG: missing handling of binary <= with types #{left_type} and #{right_type}"
+      # It's X <= UInt64 where X is a signed integer
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+      le_i64_u64
     end
   end
 
@@ -692,8 +742,18 @@ class Crystal::Repl::Compiler
     kind = extend_int(left_type, right_type, left_node, right_node)
     if kind
       primitive_binary_op_gt(left_node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 > X where X is a signed integer
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, :i64
+      gt_u64_i64
     else
-      left_node.raise "BUG: missing handling of binary > with types #{left_type} and #{right_type}"
+      # It's X > UInt64 where X is a signed integer
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+      gt_i64_u64
     end
   end
 
@@ -712,8 +772,18 @@ class Crystal::Repl::Compiler
     kind = extend_int(left_type, right_type, left_node, right_node)
     if kind
       primitive_binary_op_ge(left_node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 >= X where X is a signed integer
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, :i64
+      ge_u64_i64
     else
-      left_node.raise "BUG: missing handling of binary >= with types #{left_type} and #{right_type}"
+      # It's X >= UInt64 where X is a signed integer
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+      ge_i64_u64
     end
   end
 
