@@ -28,7 +28,7 @@ class Crystal::Repl::Compiler
       pointer_malloc(element_size, node: node)
       pop(sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_realloc"
-      obj ? request_value(obj) : put_self
+      obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
 
       scope_type = (obj.try &.type) || scope
@@ -212,7 +212,7 @@ class Crystal::Repl::Compiler
         obj.accept self
         obj.type
       else
-        put_self
+        put_self(node: node)
         scope
       end
 
@@ -350,7 +350,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       # Go on
       return false unless @wants_value
@@ -358,7 +358,7 @@ class Crystal::Repl::Compiler
       primitive_binary_op_math(node, kind, op)
     elsif left_type.rank > right_type.rank
       # It's UInt64 op X where X is a signed integer
-      left_node ? left_node.accept(self) : put_self
+      left_node ? left_node.accept(self) : put_self(node: node)
       right_node.accept self
       primitive_unchecked_convert node, right_type.kind, :i64
 
@@ -383,7 +383,7 @@ class Crystal::Repl::Compiler
       kind = :u64
     else
       # It's X op UInt64 where X is a signed integer
-      left_node ? left_node.accept(self) : put_self
+      left_node ? left_node.accept(self) : put_self(node: node)
       primitive_unchecked_convert node, left_type.kind, :i64
       right_node.accept self
 
@@ -415,7 +415,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : IntegerType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    left_node ? left_node.accept(self) : put_self
+    left_node ? left_node.accept(self) : put_self(node: node)
     primitive_unchecked_convert node, left_type.kind, right_type.kind
     right_node.accept self
 
@@ -423,7 +423,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_math(left_type : FloatType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
-    left_node ? left_node.accept(self) : put_self
+    left_node ? left_node.accept(self) : put_self(node: node)
     right_node.accept self
     primitive_unchecked_convert right_node, right_type.kind, left_type.kind
 
@@ -432,7 +432,7 @@ class Crystal::Repl::Compiler
 
   private def primitive_binary_op_math(left_type : FloatType, right_type : FloatType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode, op : String)
     if left_type == right_type
-      left_node ? left_node.accept(self) : put_self
+      left_node ? left_node.accept(self) : put_self(node: node)
       right_node.accept self
     else
       node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
@@ -635,7 +635,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_eq(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_eq(node, kind)
     elsif left_type.rank > right_type.rank
@@ -664,7 +664,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_neq(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_neq(node, kind)
     else
@@ -682,7 +682,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_lt(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_lt(node, kind)
     elsif left_type.rank > right_type.rank
@@ -712,7 +712,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_le(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_le(node, kind)
     elsif left_type.rank > right_type.rank
@@ -742,7 +742,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_gt(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_gt(node, kind)
     elsif left_type.rank > right_type.rank
@@ -772,7 +772,7 @@ class Crystal::Repl::Compiler
   end
 
   private def primitive_binary_op_ge(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode)
-    kind = extend_int(left_type, right_type, left_node, right_node)
+    kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_ge(node, kind)
     elsif left_type.rank > right_type.rank
@@ -801,19 +801,19 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode)
+  private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode)
     if left_type.signed? == right_type.signed?
       if left_type.rank == right_type.rank
-        left_node ? left_node.accept(self) : put_self
+        left_node ? left_node.accept(self) : put_self(node: node)
         right_node.accept self
         left_type.kind
       elsif left_type.rank < right_type.rank
-        left_node ? left_node.accept(self) : put_self
+        left_node ? left_node.accept(self) : put_self(node: node)
         primitive_unchecked_convert(left_node || right_node, left_type.kind, right_type.kind)
         right_node.accept self
         right_type.kind
       else
-        left_node ? left_node.accept(self) : put_self
+        left_node ? left_node.accept(self) : put_self(node: node)
         right_node.accept self
         primitive_unchecked_convert right_node, right_type.kind, left_type.kind
         left_type.kind
@@ -821,7 +821,7 @@ class Crystal::Repl::Compiler
     elsif left_type.rank <= 5 && right_type.rank <= 5
       # If both fit in an Int32
       # Convert them to Int32 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self
+      left_node ? left_node.accept(self) : put_self(node: node)
       primitive_unchecked_convert(left_node || right_node, left_type.kind, :i32) if left_type.rank < 5
 
       right_node.accept self
@@ -831,7 +831,7 @@ class Crystal::Repl::Compiler
     elsif left_type.rank <= 7 && right_type.rank <= 7
       # If both fit in an Int64
       # Convert them to Int64 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self
+      left_node ? left_node.accept(self) : put_self(node: node)
       primitive_unchecked_convert(left_node || right_node, left_type.kind, :i64) if left_type.rank < 7
 
       right_node.accept self

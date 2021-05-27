@@ -593,7 +593,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         case obj
         when Var
           if obj.name == "self"
-            put_self
+            put_self(node: obj)
           else
             pointerof_var(@local_vars.name_to_index(obj.name), node: obj)
           end
@@ -613,7 +613,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      put_self unless scope.is_a?(Program)
+      put_self(node: node) unless scope.is_a?(Program)
     end
 
     args.each { |a| request_value(a) }
@@ -728,15 +728,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def put_def(a_def : Def)
   end
 
-  private def put_self
+  private def put_self(*, node : ASTNode)
     if scope.struct?
       if scope.passed_by_value?
-        get_local 0, sizeof(Pointer(UInt8)), node: nil
+        get_local 0, sizeof(Pointer(UInt8)), node: node
       else
-        get_local 0, sizeof_type(scope), node: nil
+        get_local 0, sizeof_type(scope), node: node
       end
     else
-      get_local 0, sizeof(Pointer(UInt8)), node: nil
+      get_local 0, sizeof(Pointer(UInt8)), node: node
     end
   end
 

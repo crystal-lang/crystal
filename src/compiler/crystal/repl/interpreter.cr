@@ -23,7 +23,7 @@ class Crystal::Repl::Interpreter
 
     # TODO: what if the stack is exhausted?
     # TODO: use 8MB for this, and on the heap
-    @stack = uninitialized UInt8[8096]
+    @stack = Pointer(UInt8).malloc(8096)
     @call_stack = [] of CallFrame
     @constants = Pointer(UInt8).null
 
@@ -31,6 +31,38 @@ class Crystal::Repl::Interpreter
     @top_level_visitor = TopLevelVisitor.new(program)
     @cleanup_transformer = CleanupTransformer.new(program)
 
+    @compiled_def = nil
+    @pry = false
+    @pry_node = nil
+  end
+
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8))
+    @context = interpreter.@context
+    @local_vars = compiled_def.local_vars.dup
+
+    @instructions = [] of Instruction
+    @nodes = {} of Int32 => ASTNode
+
+    @stack = stack
+    @call_stack = [] of CallFrame
+    @constants = interpreter.@constants
+
+    meta_vars = MetaVars.new
+    compiled_def.local_vars.each_name_and_type do |name, type|
+      meta_vars[name] = MetaVar.new(name, type)
+    end
+
+    @main_visitor = MainVisitor.new(
+      interpreter.@context.program,
+      vars: meta_vars,
+      typed_def: compiled_def.def)
+    @main_visitor.scope = compiled_def.def.owner
+    @main_visitor.path_lookup = compiled_def.def.owner # TODO: this is probably not right
+
+    @top_level_visitor = interpreter.@top_level_visitor
+    @cleanup_transformer = interpreter.@cleanup_transformer
+
+    @compiled_def = compiled_def
     @pry = false
     @pry_node = nil
   end
@@ -38,11 +70,13 @@ class Crystal::Repl::Interpreter
   def interpret(node : ASTNode) : Value
     node = program.normalize(node)
 
-    @top_level_visitor.reset
-    node.accept @top_level_visitor
+    @top_level_visitor.backup do
+      node.accept @top_level_visitor
+    end
 
-    @main_visitor.reset
-    node.accept @main_visitor
+    @main_visitor.backup do
+      node.accept @main_visitor
+    end
 
     node = node.transform(@cleanup_transformer)
 
@@ -52,17 +86,33 @@ class Crystal::Repl::Interpreter
       @local_vars.declare(name, meta_var.type)
     end
 
-    compiler = Compiler.new(@context, @local_vars)
+    compiled_def = @compiled_def
+
+    compiler =
+      if compiled_def
+        Compiler.new(@context, @local_vars, scope: compiled_def.def.owner, def: compiled_def.def)
+      else
+        Compiler.new(@context, @local_vars)
+      end
     compiler.compile(node)
 
     @instructions = compiler.instructions
     @nodes = compiler.nodes
 
     if @context.decompile
-      puts "=== top-level ==="
+      if compiled_def
+        puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
+      else
+        puts "=== top-level ==="
+      end
       puts @local_vars
       puts Disassembler.disassemble(@instructions, @local_vars)
-      puts "=== top-level ==="
+
+      if compiled_def
+        puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
+      else
+        puts "=== top-level ==="
+      end
     end
 
     time = Time.monotonic
@@ -79,7 +129,7 @@ class Crystal::Repl::Interpreter
   end
 
   def interpret(node_type : Type) : Value
-    stack_bottom = @stack.to_unsafe
+    stack_bottom = @stack
 
     # Shift stack to leave ream for local vars
     # Previous runs that wrote to local vars would have those values
@@ -95,10 +145,12 @@ class Crystal::Repl::Interpreter
     ip = instructions.to_unsafe
     return_value = Pointer(UInt8).null
 
+    compiled_def = @compiled_def
+
     @call_stack << CallFrame.new(
       compiled_def: CompiledDef.new(
         context: @context,
-        def: Def.new("main").tap { |a_def| a_def.owner = program },
+        def: compiled_def ? compiled_def.def : Def.new("main").tap { |a_def| a_def.owner = program },
         args_bytesize: 0,
         instructions: instructions,
         nodes: @nodes,
@@ -123,13 +175,13 @@ class Crystal::Repl::Interpreter
         puts "In: #{a_def.owner}##{a_def.name}"
         node = nodes[offset]?
         puts "Node: #{node}" if node
-        puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
+        puts Slice.new(@stack, stack - @stack).hexdump
 
         Disassembler.disassemble_one(instructions, offset, current_local_vars, STDOUT)
         puts
       end
 
-      pry(ip, instructions, nodes, stack, stack_bottom) if @pry
+      pry(ip, instructions, nodes, stack_bottom) if @pry
 
       op_code = next_instruction OpCode
 
@@ -159,12 +211,12 @@ class Crystal::Repl::Interpreter
       {% end %}
 
       if @context.trace
-        puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
+        puts Slice.new(@stack, stack - @stack).hexdump
       end
     end
 
     if stack != stack_bottom_after_local_vars
-      raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes): #{Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe)}"
+      raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes): #{Slice.new(@stack, stack - @stack)}"
     end
 
     Value.new(@context, return_value, node_type)
@@ -451,34 +503,18 @@ class Crystal::Repl::Interpreter
     @context.program
   end
 
-  private def pry(ip, instructions, nodes, stack, stack_bottom)
+  private def pry(ip, instructions, nodes, stack_bottom)
     call_frame = @call_stack.last
-    a_def = call_frame.compiled_def.def
-    local_vars = call_frame.compiled_def.local_vars
+    compiled_def = call_frame.compiled_def
+    a_def = compiled_def.def
+    local_vars = compiled_def.local_vars
     offset = (ip - instructions.to_unsafe).to_i32
     node = nodes[offset]?
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
-      puts "From: #{location} #{a_def.owner}##{a_def.name}:"
-      puts
-      filename = location.filename
-      case filename
-      when String
-        lines = File.read_lines(filename)
+      whereami(a_def, location)
 
-        {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
-          line = lines[line_number - 1]
-          if line_number == location.line_number
-            print " => "
-          else
-            print "    "
-          end
-          print line_number.colorize.blue
-          print ": "
-          puts line
-        end
-        puts
-      end
+      interpreter = Interpreter.new(self, compiled_def, stack_bottom)
 
       while @pry
         print "pry> "
@@ -497,18 +533,54 @@ class Crystal::Repl::Interpreter
         when "next", "step"
           @pry_node = node
           break
+        when "whereami"
+          whereami(a_def, location)
+          next
         end
 
-        local_var_index = local_vars.name_to_index?(line)
-        if local_var_index
-          type = local_vars.type(line)
-          size = @context.sizeof_type(type)
+        begin
+          parser = Parser.new(
+            line,
+            string_pool: @context.program.string_pool,
+            def_vars: [local_vars.names.to_set]
+          )
+          line_node = parser.parse
 
-          puts Value.new(@context, stack_bottom + local_var_index, type)
-        else
-          puts "Sorry, pry only lets you inspect local variables for now..."
+          value = interpreter.interpret(line_node)
+          puts value
+        rescue ex : Crystal::CodeError
+          ex.color = true
+          ex.error_trace = true
+          puts ex
+          next
+        rescue ex : Exception
+          ex.inspect_with_backtrace(STDOUT)
+          next
         end
       end
+    end
+  end
+
+  private def whereami(a_def : Def, location : Location)
+    puts "From: #{location} #{a_def.owner}##{a_def.name}:"
+    puts
+    filename = location.filename
+    case filename
+    when String
+      lines = File.read_lines(filename)
+
+      {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
+        line = lines[line_number - 1]
+        if line_number == location.line_number
+          print " => "
+        else
+          print "    "
+        end
+        print line_number.colorize.blue
+        print ": "
+        puts line
+      end
+      puts
     end
   end
 

@@ -7,6 +7,13 @@ class Crystal::Repl::LocalVars
     @bytesize = 0
   end
 
+  def initialize(local_vars : LocalVars)
+    @context = local_vars.@context
+    @types = local_vars.@types.dup
+    @name_to_index = local_vars.@name_to_index.dup
+    @bytesize = local_vars.@bytesize
+  end
+
   def bytesize
     @bytesize
   end
@@ -71,6 +78,12 @@ class Crystal::Repl::LocalVars
     end
   end
 
+  def each_name_and_type
+    @types.each do |name, type|
+      yield name, type
+    end
+  end
+
   def to_s(io : IO) : Nil
     return if @bytesize == 0
 
@@ -79,5 +92,9 @@ class Crystal::Repl::LocalVars
       io << "\t" unless index == 0
       io << name << '@' << index
     end
+  end
+
+  def dup
+    LocalVars.new(self)
   end
 end
