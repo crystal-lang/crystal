@@ -5,6 +5,7 @@ class Crystal::Repl::Interpreter
   record CallFrame,
     compiled_def : CompiledDef,
     instructions : Array(UInt8),
+    nodes : Hash(Int32, ASTNode),
     ip : Pointer(UInt8),
     stack : Pointer(UInt8),
     stack_bottom : Pointer(UInt8),
@@ -15,6 +16,7 @@ class Crystal::Repl::Interpreter
     @local_vars = LocalVars.new(@context)
 
     @instructions = [] of Instruction
+    @nodes = {} of Int32 => ASTNode
 
     # TODO: what if the stack is exhausted?
     # TODO: use 8MB for this, and on the heap
@@ -45,7 +47,10 @@ class Crystal::Repl::Interpreter
     end
 
     compiler = Compiler.new(@context, @local_vars)
-    @instructions = compiler.compile(node)
+    compiler.compile(node)
+
+    @instructions = compiler.instructions
+    @nodes = compiler.nodes
 
     if @context.decompile
       puts "=== top-level ==="
@@ -80,6 +85,7 @@ class Crystal::Repl::Interpreter
     @constants = @constants.realloc(@context.constants.bytesize)
 
     instructions = @instructions
+    nodes = @nodes
     ip = instructions.to_unsafe
     return_value = Pointer(UInt8).null
 
@@ -89,9 +95,11 @@ class Crystal::Repl::Interpreter
         def: Def.new("main").tap { |a_def| a_def.owner = program },
         args_bytesize: 0,
         instructions: instructions,
+        nodes: @nodes,
         local_vars: @local_vars,
       ),
       instructions: instructions,
+      nodes: nodes,
       ip: ip,
       stack: stack,
       stack_bottom: stack_bottom,
@@ -105,11 +113,13 @@ class Crystal::Repl::Interpreter
 
         call_frame = @call_stack.last
         a_def = call_frame.compiled_def.def
+        offset = (ip - instructions.to_unsafe).to_i32
         puts "In: #{a_def.owner}##{a_def.name}"
-        puts "Call stack size: #{@call_stack.size}"
+        node = nodes[offset]?
+        puts "Node: #{node}" if node
         puts Slice.new(@stack.to_unsafe, stack - @stack.to_unsafe).hexdump
 
-        Disassembler.disassemble_one(instructions, (ip - instructions.to_unsafe).to_i32, current_local_vars, STDOUT)
+        Disassembler.disassemble_one(instructions, offset, current_local_vars, STDOUT)
         puts
       end
 
@@ -180,6 +190,7 @@ class Crystal::Repl::Interpreter
     %call_frame = CallFrame.new(
       compiled_def: {{compiled_def}},
       instructions: {{compiled_def}}.instructions,
+      nodes: {{compiled_def}}.nodes,
       ip: {{compiled_def}}.instructions.to_unsafe,
       # We need to adjust the call stack to start right
       # after the target def's local variables.
@@ -192,6 +203,7 @@ class Crystal::Repl::Interpreter
     @call_stack << %call_frame
 
     instructions = %call_frame.compiled_def.instructions
+    nodes = %call_frame.compiled_def.nodes
     ip = %call_frame.ip
     stack = %call_frame.stack
     stack_bottom = %call_frame.stack_bottom
@@ -212,12 +224,14 @@ class Crystal::Repl::Interpreter
 
     copied_call_frame = @call_stack[@call_stack.last.block_caller_frame_index].copy_with(
       instructions: {{compiled_block}}.instructions,
+      nodes: {{compiled_block}}.nodes,
       ip: {{compiled_block}}.instructions.to_unsafe,
       stack: stack,
     )
     @call_stack << copied_call_frame
 
     instructions = copied_call_frame.instructions
+    nodes = copied_call_frame.nodes
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
   end
@@ -261,6 +275,7 @@ class Crystal::Repl::Interpreter
 
       # Restore ip, instructions and stack bottom
       instructions = %call_frame.compiled_def.instructions
+      nodes = %call_frame.compiled_def.nodes
       ip = %call_frame.ip
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack

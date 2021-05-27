@@ -2,7 +2,7 @@ require "./compiler"
 
 class Crystal::Repl::Compiler
   private def value_to_bool(node : ASTNode, type : NilType)
-    put_false
+    put_false node: nil
   end
 
   private def value_to_bool(node : ASTNode, type : BoolType)
@@ -10,15 +10,15 @@ class Crystal::Repl::Compiler
   end
 
   private def value_to_bool(node : ASTNode, type : PointerInstanceType)
-    pointer_is_not_null
+    pointer_is_not_null node: nil
   end
 
   private def value_to_bool(node : ASTNode, type : NilableType)
-    pointer_is_not_null
+    pointer_is_not_null node: nil
   end
 
   private def value_to_bool(node : ASTNode, type : MixedUnionType)
-    union_to_bool(sizeof_type(type))
+    union_to_bool sizeof_type(type), node: nil
   end
 
   private def value_to_bool(node : ASTNode, type : Type)

@@ -6,11 +6,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private getter def : Def?
 
   property compiled_block : CompiledBlock?
+  getter instructions
+  getter nodes
 
   def initialize(
     @context : Context,
     @local_vars : LocalVars,
     @instructions : Array(Instruction) = [] of Instruction,
+    @nodes : Hash(Int32, ASTNode) = {} of Int32 => ASTNode,
     scope : Type? = nil,
     @def = nil
   )
@@ -23,25 +26,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def : CompiledDef
   )
     new(
-      context,
-      compiled_def.local_vars,
-      compiled_def.instructions,
+      context: context,
+      local_vars: compiled_def.local_vars,
+      instructions: compiled_def.instructions,
+      nodes: compiled_def.nodes,
       scope: compiled_def.def.owner,
       def: compiled_def.def)
   end
 
-  def compile(node : ASTNode) : Array(Instruction)
+  def compile(node : ASTNode) : Nil
     node.accept self
 
-    leave sizeof_type(node)
+    leave sizeof_type(node), node: nil
 
     @instructions
   end
 
-  def compile_block(node : Block) : Array(Instruction)
+  def compile_block(node : Block) : Nil
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name)
-      set_local index, sizeof_type(arg)
+      set_local index, sizeof_type(arg), node: arg
     end
 
     compile(node.body)
@@ -54,21 +58,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Nop)
     return false unless @wants_value
 
-    put_nil
+    put_nil node: node
     false
   end
 
   def visit(node : NilLiteral)
     return false unless @wants_value
 
-    put_nil
+    put_nil node: node
     false
   end
 
   def visit(node : BoolLiteral)
     return false unless @wants_value
 
-    node.value ? put_true : put_false
+    if node.value
+      put_true node: node
+    else
+      put_false node: node
+    end
+
     false
   end
 
@@ -77,25 +86,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     case node.kind
     when :i8
-      put_i8 node.value.to_i8
+      put_i8 node.value.to_i8, node: node
     when :u8
-      put_i8 node.value.to_u8.to_i8!
+      put_i8 node.value.to_u8.to_i8!, node: node
     when :i16
-      put_i16 node.value.to_i16
+      put_i16 node.value.to_i16, node: node
     when :u16
-      put_i16 node.value.to_u16.to_i16!
+      put_i16 node.value.to_u16.to_i16!, node: node
     when :i32
-      put_i32 node.value.to_i32
+      put_i32 node.value.to_i32, node: node
     when :u32
-      put_i32 node.value.to_u32.to_i32!
+      put_i32 node.value.to_u32.to_i32!, node: node
     when :i64
-      put_i64 node.value.to_i64
+      put_i64 node.value.to_i64, node: node
     when :u64
-      put_i64 node.value.to_u64.to_i64!
+      put_i64 node.value.to_u64.to_i64!, node: node
     when :f32
-      put_i32 node.value.to_f32.unsafe_as(Int32)
+      put_i32 node.value.to_f32.unsafe_as(Int32), node: node
     when :f64
-      put_i64 node.value.to_f64.unsafe_as(Int64)
+      put_i64 node.value.to_f64.unsafe_as(Int64), node: node
     else
       node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
     end
@@ -105,14 +114,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : CharLiteral)
     return false unless @wants_value
 
-    put_i32 node.value.ord
+    put_i32 node.value.ord, node: node
     false
   end
 
   def visit(node : StringLiteral)
     return false unless @wants_value
 
-    put_i64 node.value.object_id.unsafe_as(Int64)
+    put_i64 node.value.object_id.unsafe_as(Int64), node: node
     false
   end
 
@@ -130,7 +139,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @context.offset_of(type, i + 1)
         end
       if next_offset - (current_offset + size) > 0
-        push_zeros(next_offset - (current_offset + size))
+        push_zeros(next_offset - (current_offset + size), node: nil)
       end
       current_offset = next_offset
     end
@@ -152,7 +161,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @context.offset_of(type, i + 1)
         end
       if next_offset - (current_offset + size) > 0
-        push_zeros(next_offset - (current_offset + size))
+        push_zeros(next_offset - (current_offset + size), node: nil)
       end
       current_offset = next_offset
     end
@@ -178,18 +187,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case target
     when Var
       request_value(node.value)
-      dup(sizeof_type(node.value)) if @wants_value
+      dup(sizeof_type(node.value), node: nil) if @wants_value
 
       index = @local_vars.name_to_index(target.name)
       type = @local_vars.type(target.name)
 
       # Before assigning to the var we must potentially box inside a union
       convert node.value, node.value.type, type
-      set_local index, sizeof_type(type)
+      set_local index, sizeof_type(type), node: node
     when InstanceVar
       if inside_method?
         request_value(node.value)
-        dup(sizeof_type(node.value)) if @wants_value
+        dup(sizeof_type(node.value), node: nil) if @wants_value
 
         ivar_offset = ivar_offset(scope, target.name)
         ivar = scope.lookup_instance_var(target.name)
@@ -197,10 +206,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         convert node.value, node.value.type, ivar.type
 
-        set_self_ivar ivar_offset, ivar_size
+        set_self_ivar ivar_offset, ivar_size, node: node
       else
         node.type = @context.program.nil_type
-        put_nil if @wants_value
+        put_nil node: nil if @wants_value
       end
     when Path
       # TODO: I think we should track that the constant is initialized at this point,
@@ -219,9 +228,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if node.name == "self" && type.passed_by_value?
       # Load the entire self from the pointer that's self
-      get_self_ivar 0, sizeof_type(type)
+      get_self_ivar 0, sizeof_type(type), node: node
     else
-      get_local index, sizeof_type(type)
+      get_local index, sizeof_type(type), node: node
       convert node, type, node.type
     end
 
@@ -234,7 +243,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     ivar_offset = ivar_offset(scope, node.name)
     ivar_size = sizeof_type(scope.lookup_instance_var(node.name))
 
-    get_self_ivar ivar_offset, ivar_size
+    get_self_ivar ivar_offset, ivar_size, node: node
     false
   end
 
@@ -247,7 +256,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     ivar_offset = ivar_offset(type, node.name)
     ivar_size = sizeof_type(type.lookup_instance_var(node.name))
 
-    get_class_ivar ivar_offset, ivar_size
+    get_class_ivar ivar_offset, ivar_size, node: node
     false
   end
 
@@ -282,13 +291,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     request_value(node.cond)
     value_to_bool(node.cond, node.cond.type)
 
-    branch_unless 0
+    branch_unless 0, node: nil
     cond_jump_location = patch_location
 
     node.then.accept self
     convert node.then, node.then.type, node.type if @wants_value
 
-    jump 0
+    jump 0, node: nil
     then_jump_location = patch_location
 
     patch_jump(cond_jump_location)
@@ -302,7 +311,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : While)
-    jump 0
+    jump 0, node: nil
     cond_jump_location = patch_location
 
     body_index = @instructions.size
@@ -313,9 +322,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     request_value(node.cond)
     value_to_bool(node.cond, node.cond.type)
 
-    branch_if body_index
+    branch_if body_index, node: nil
 
-    put_nil if @wants_value
+    put_nil node: nil if @wants_value
 
     false
   end
@@ -328,13 +337,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         request_value(exp)
         exp.type
       else
-        put_nil
+        put_nil node: node
         @context.program.nil_type
       end
 
     def_type = @def.not_nil!.type
     convert node, exp_type, def_type
-    leave sizeof_type(def_type)
+    leave sizeof_type(def_type), node: node
 
     false
   end
@@ -349,7 +358,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     filtered_type = obj_type.filter_by(const_type).not_nil!
 
     if obj_type.is_a?(MixedUnionType)
-      union_is_a(sizeof_type(obj_type), type_id(filtered_type))
+      union_is_a(sizeof_type(obj_type), type_id(filtered_type), node: node)
     else
       node.raise "BUG: missing IsA for #{obj_type}"
     end
@@ -360,7 +369,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : TypeOf)
     return false unless @wants_value
 
-    put_type node.type
+    put_type node.type, node: node
     false
   end
 
@@ -398,12 +407,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           index = @context.declare_const(const, compiled_def)
         end
 
-        get_const index, sizeof_type(const.value)
+        get_const index, sizeof_type(const.value), node: node
       end
     elsif replacement = node.syntax_replacement
       replacement.accept self
     else
-      put_type node.type
+      put_type node.type, node: node
     end
     false
   end
@@ -411,7 +420,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Generic)
     return false unless @wants_value
 
-    put_type node.type
+    put_type node.type, node: node
     false
   end
 
@@ -421,13 +430,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      pointerof_var(@local_vars.name_to_index(exp.name))
+      pointerof_var(@local_vars.name_to_index(exp.name), node: node)
     when InstanceVar
       index = scope.index_of_instance_var(exp.name).not_nil!
       if scope.struct?
-        pointerof_ivar(@context.offset_of(scope, index))
+        pointerof_ivar(@context.offset_of(scope, index), node: node)
       else
-        pointerof_ivar(@context.instance_offset_of(scope, index))
+        pointerof_ivar(@context.instance_offset_of(scope, index), node: node)
       end
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
@@ -441,7 +450,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     return false unless @wants_value
 
     value_to_bool(exp, exp.type)
-    logical_not
+    logical_not node: node
 
     false
   end
@@ -500,9 +509,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         )
       )
 
-      lib_call(lib_function)
+      lib_call(lib_function, node: node)
 
-      pop sizeof_type(node) unless @wants_value
+      pop sizeof_type(node), node: nil unless @wants_value
 
       return false
     end
@@ -586,7 +595,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           if obj.name == "self"
             put_self
           else
-            pointerof_var(@local_vars.name_to_index(obj.name))
+            pointerof_var(@local_vars.name_to_index(obj.name), node: obj)
           end
           # TODO: when InstanceVar
         else
@@ -594,7 +603,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           request_value(obj)
 
           # Then take a pointer to it (this is self inside the method)
-          put_stack_top_pointer(sizeof_type(obj))
+          put_stack_top_pointer(sizeof_type(obj), node: nil)
 
           # We must remember to later pop the struct that's still on the stack
           pop_obj = obj
@@ -611,21 +620,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     named_args.try &.each { |n| request_value(n) }
 
     if node.block
-      call_with_block compiled_def
+      call_with_block compiled_def, node: node
     else
-      call compiled_def
+      call compiled_def, node: node
     end
 
     if @wants_value
       # Pop the struct that's on the stack, if any, if obj was a struct
       # (but the struct is after the call's value, so we must
       # remove it past that value)
-      pop_from_offset sizeof_type(pop_obj), sizeof_type(node) if pop_obj
+      pop_from_offset sizeof_type(pop_obj), sizeof_type(node), node: nil if pop_obj
     else
       if pop_obj
-        pop sizeof_type(node) + sizeof_type(pop_obj)
+        pop sizeof_type(node) + sizeof_type(pop_obj), node: nil
       else
-        pop sizeof_type(node)
+        pop sizeof_type(node), node: nil
       end
     end
 
@@ -651,8 +660,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     end
 
-    call_block compiled_block
-    pop sizeof_type(node) unless @wants_value
+    call_block compiled_block, node: node
+    pop sizeof_type(node), node: nil unless @wants_value
 
     false
   end
@@ -663,14 +672,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     return false unless @wants_value
 
-    put_nil
+    put_nil(node: node)
     false
   end
 
   def visit(node : Def)
     return false unless @wants_value
 
-    put_nil
+    put_nil(node: node)
     false
   end
 
@@ -681,7 +690,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   {% for name, instruction in Crystal::Repl::Instructions %}
     {% operands = instruction[:operands] %}
 
-    def {{name.id}}( {{*operands}} ) : Nil
+    def {{name.id}}(
+      {% if operands.empty? %}
+        *, node : ASTNode?
+      {% else %}
+        {{*operands}}, *, node : ASTNode?
+      {% end %}
+    ) : Nil
+      @nodes[@instructions.size] = node if node
+
       append OpCode::{{ name.id.upcase }}
       {% for operand in operands %}
         append {{operand.var}}
@@ -704,8 +721,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @wants_value = old_wants_value
   end
 
-  private def put_type(type : Type)
-    put_i32 type_id(type)
+  private def put_type(type : Type, *, node : ASTNode)
+    put_i32 type_id(type), node: node
   end
 
   private def put_def(a_def : Def)
@@ -714,12 +731,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   private def put_self
     if scope.struct?
       if scope.passed_by_value?
-        get_local 0, sizeof(Pointer(UInt8))
+        get_local 0, sizeof(Pointer(UInt8)), node: nil
       else
-        get_local 0, sizeof_type(scope)
+        get_local 0, sizeof_type(scope), node: nil
       end
     else
-      get_local 0, sizeof(Pointer(UInt8))
+      get_local 0, sizeof(Pointer(UInt8)), node: nil
     end
   end
 
