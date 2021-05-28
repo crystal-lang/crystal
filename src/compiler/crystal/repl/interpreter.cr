@@ -44,6 +44,7 @@ class Crystal::Repl::Interpreter
     @nodes = {} of Int32 => ASTNode
 
     @stack = stack
+    # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
     @constants = interpreter.@constants
 
@@ -181,7 +182,7 @@ class Crystal::Repl::Interpreter
         puts
       end
 
-      pry(ip, instructions, nodes, stack_bottom) if @pry
+      pry(ip, instructions, nodes, stack_bottom, stack) if @pry
 
       op_code = next_instruction OpCode
 
@@ -503,7 +504,7 @@ class Crystal::Repl::Interpreter
     @context.program
   end
 
-  private def pry(ip, instructions, nodes, stack_bottom)
+  private def pry(ip, instructions, nodes, stack_bottom, stack)
     call_frame = @call_stack.last
     compiled_def = call_frame.compiled_def
     a_def = compiled_def.def
@@ -513,6 +514,13 @@ class Crystal::Repl::Interpreter
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
       whereami(a_def, location)
+
+      # Remember the portion from stack_bottom + local_vars.bytesize up to stack
+      # because it might happen that the child interpreter will overwrite some
+      # of that if we already have some values in the stack past the local vars
+      data_size = stack - (stack_bottom + local_vars.bytesize)
+      data = Pointer(UInt8).malloc(data_size)
+      data.copy_from(stack_bottom + local_vars.bytesize, data_size)
 
       interpreter = Interpreter.new(self, compiled_def, stack_bottom)
 
@@ -558,6 +566,9 @@ class Crystal::Repl::Interpreter
           next
         end
       end
+
+      # Restore the stack data in case it was overwritten
+      (stack_bottom + local_vars.bytesize).copy_from(data, data_size)
     end
   end
 
