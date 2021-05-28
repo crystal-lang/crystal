@@ -2077,6 +2077,13 @@ module Crystal
 
       filter_vars cond_type_filters
 
+      # `node.body` may reset this status, so we capture them in a set
+      # (we don't need the full MetaVars at the moment)
+      after_cond_vars_nil_if_read = Set(String).new
+      @vars.each do |name, var|
+        after_cond_vars_nil_if_read << name if var.nil_if_read?
+      end
+
       @type_filters = nil
       @block, old_block = nil, @block
 
@@ -2088,7 +2095,7 @@ module Crystal
 
       cond = node.cond.single_expression
       endless_while = cond.true_literal?
-      merge_while_vars endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, node.break_vars
+      merge_while_vars endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, after_cond_vars_nil_if_read, node.break_vars
 
       @while_stack.pop
       @block = old_block
@@ -2109,7 +2116,7 @@ module Crystal
     end
 
     # Here we assign the types of variables after a while.
-    def merge_while_vars(endless, before_cond_vars_copy, before_cond_vars, after_cond_vars, all_break_vars)
+    def merge_while_vars(endless, before_cond_vars_copy, before_cond_vars, after_cond_vars, after_cond_vars_nil_if_read, all_break_vars)
       after_while_vars = MetaVars.new
 
       @vars.each do |name, while_var|
@@ -2179,7 +2186,7 @@ module Crystal
             # If the variable after the condition is nil-if-read, that means the
             # assignment inside the condition might not run upon loop exit, so
             # the variable may receive the type inside the loop.
-            if after_cond_var.nil_if_read?
+            if after_cond_vars_nil_if_read.includes?(name)
               after_while_var.nil_if_read = true
               after_while_var.bind_to(while_var) if !after_cond_var.same?(while_var)
             end

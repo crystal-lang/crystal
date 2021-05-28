@@ -370,7 +370,7 @@ describe "Semantic: while" do
       )) { nilable union_of(int32, char) }
   end
 
-  it "finds all while cond assign targets in expressions (4)", focus: true do
+  it "finds all while cond assign targets in expressions (4)" do
     assert_type(%(
       x = ""
       while 1 == 1 ? (x = 1; 1 == 1) : false
@@ -380,7 +380,7 @@ describe "Semantic: while" do
       )) { union_of(int32, char, string) }
   end
 
-  pending "finds all while cond assign targets in expressions (5)" do
+  it "finds all while cond assign targets in expressions (5)" do
     assert_type(%(
       while 1 == 1 ? (x = 1; 1 == 1) : false
         x
