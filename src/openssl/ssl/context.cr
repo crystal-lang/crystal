@@ -455,7 +455,7 @@ abstract class OpenSSL::SSL::Context
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
     end
 
-    # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
+    # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
     # the already set ones.
     def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
       param = LibSSL.ssl_ctx_get0_param(@handle)
