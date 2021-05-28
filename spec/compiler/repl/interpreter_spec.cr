@@ -569,6 +569,16 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    # it "interprets return cast to Nil" do
+    #   interpret(<<-CODE).should be_nil
+    #     def foo : Nil
+    #       1
+    #     end
+
+    #     foo
+    #   CODE
+    # end
+
     it "interprets return implicit nil and Int32" do
       interpret(<<-CODE).should eq(10)
         def foo(x)
@@ -1255,6 +1265,21 @@ describe Crystal::Repl::Interpreter do
     #     foo.@y
     #   CODE
     # end
+
+    it "casts def body to def type" do
+      interpret(<<-EXISTING, <<-CODE).should eq(1)
+        struct Foo
+          def foo
+            return nil if 1 == 2
+
+            self
+          end
+        end
+      EXISTING
+        value = Foo.new.foo
+        value ? 1 : 2
+      CODE
+    end
 
     it "discards allocate" do
       interpret(<<-EXISTING, <<-CODE).should eq(3)

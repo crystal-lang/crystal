@@ -51,6 +51,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compile(node.body)
   end
 
+  def compile_def(node : Def) : Nil
+    node.body.accept self
+    convert node.body, node.body.type, node.type
+
+    leave sizeof_type(node.type), node: nil
+
+    @instructions
+  end
+
   private def inside_method?
     !!@def
   end
@@ -572,7 +581,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.compiled_block = compiled_block
 
       begin
-        compiler.compile(target_def.body)
+        compiler.compile_def(target_def)
       rescue ex : Crystal::CodeError
         node.raise "compiling #{node}", inner: ex
       end
