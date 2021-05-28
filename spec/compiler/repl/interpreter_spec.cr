@@ -569,15 +569,15 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    # it "interprets return cast to Nil" do
-    #   interpret(<<-CODE).should be_nil
-    #     def foo : Nil
-    #       1
-    #     end
+    it "interprets return Nil" do
+      interpret(<<-CODE).should be_nil
+        def foo : Nil
+          1
+        end
 
-    #     foo
-    #   CODE
-    # end
+        foo
+      CODE
+    end
 
     it "interprets return implicit nil and Int32" do
       interpret(<<-CODE).should eq(10)

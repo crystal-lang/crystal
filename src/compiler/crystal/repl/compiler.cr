@@ -53,7 +53,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def compile_def(node : Def) : Nil
     node.body.accept self
-    convert node.body, node.body.type, node.type
+
+    if node.type.nil_type?
+      pop sizeof_type(node.body), node: nil
+    else
+      convert node.body, node.body.type, node.type
+    end
 
     leave sizeof_type(node.type), node: nil
 
