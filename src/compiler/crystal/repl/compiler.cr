@@ -499,7 +499,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     named_args = node.named_args
 
     # TODO: handle case of multidispatch
-    target_def = node.target_def
+    target_defs = node.target_defs
+    if !target_defs || target_defs.size > 1
+      node.raise "BUG: missing interpreter multidispatch"
+    end
+
+    target_def = target_defs.first
 
     body = target_def.body
     if body.is_a?(Primitive)
