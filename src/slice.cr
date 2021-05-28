@@ -279,7 +279,6 @@ struct Slice(T)
   # ```
   def [](range : Range) : self
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
-    p! range, start, count, self, size
     self[start, count]
   end
 
