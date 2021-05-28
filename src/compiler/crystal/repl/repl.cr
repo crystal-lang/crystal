@@ -85,15 +85,18 @@ class Crystal::Repl
     end
   end
 
+  def load_file(filename)
+    parser = Parser.new File.read(filename), @program.string_pool
+    parser.filename = filename
+    parsed_nodes = parser.parse
+    parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
+    semantic(parsed_nodes)
+    parsed_nodes
+  end
+
   private def load_prelude
     filenames = @program.find_in_path("prelude")
-    filenames.each do |filename|
-      parser = Parser.new File.read(filename), @program.string_pool
-      parser.filename = filename
-      parsed_nodes = parser.parse
-      parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
-      semantic(parsed_nodes)
-    end
+    filenames.each { |filename| load_file(filename) }
   end
 
   # TODO: this is more or less a copy of semantic.cr except

@@ -27,10 +27,16 @@ class Crystal::Command
       end
     end
 
-    Repl.new(
+    repl = Repl.new(
       decompile: decompile,
       trace: trace,
       stats: stats,
-    ).run
+    )
+
+    options.each do |filename|
+      repl.load_file(filename)
+    end
+
+    repl.run
   end
 end
