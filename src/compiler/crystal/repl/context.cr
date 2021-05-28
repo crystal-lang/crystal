@@ -54,21 +54,34 @@ class Crystal::Repl::Context
     constants.const_to_index?(const)
   end
 
-  def sizeof_type(node : ASTNode) : Int32
+  def aligned_sizeof_type(node : ASTNode) : Int32
     type = node.type?
     if type
-      sizeof_type(node.type)
+      aligned_sizeof_type(node.type)
     else
       node.raise "BUG: missing type for #{node} (#{node.class})"
     end
   end
 
-  def sizeof_type(type : Type) : Int32
+  def aligned_sizeof_type(type : Type) : Int32
+    align(inner_sizeof_type(type))
+  end
+
+  def inner_sizeof_type(node : ASTNode) : Int32
+    type = node.type?
+    if type
+      inner_sizeof_type(node.type)
+    else
+      node.raise "BUG: missing type for #{node} (#{node.class})"
+    end
+  end
+
+  def inner_sizeof_type(type : Type) : Int32
     @program.size_of(type.sizeof_type).to_i32
   end
 
-  def instance_sizeof_type(type : Type) : Int32
-    @program.instance_size_of(type.sizeof_type).to_i32
+  def aligned_instance_sizeof_type(type : Type) : Int32
+    align(@program.instance_size_of(type.sizeof_type).to_i32)
   end
 
   def offset_of(type : Type, index : Int32) : Int32
@@ -110,5 +123,14 @@ class Crystal::Repl::Context
       raise "dlsym failed for lib: #{lib_type}, name: #{name.inspect}"
     end
     fn
+  end
+
+  def align(size : Int32) : Int32
+    rem = size.remainder(8)
+    if rem == 0
+      size
+    else
+      size + (8 - rem)
+    end
   end
 end

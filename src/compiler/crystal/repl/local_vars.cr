@@ -43,7 +43,7 @@ class Crystal::Repl::LocalVars
     if is_self && type.passed_by_value?
       @bytesize += sizeof(Pointer(UInt8))
     else
-      @bytesize += @context.sizeof_type(type)
+      @bytesize += @context.aligned_sizeof_type(type)
     end
   end
 

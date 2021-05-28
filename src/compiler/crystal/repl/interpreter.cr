@@ -308,17 +308,19 @@ class Crystal::Repl::Interpreter
     %offset = 0
     %i = %target_def.args.size - 1
     %target_def.args.reverse_each do |arg|
-      %arg_bytesize = sizeof_type(arg.type)
+      %arg_bytesize = aligned_sizeof_type(arg.type)
       %pointers[%i] = (stack - %offset - %arg_bytesize).as(Void*)
       %offset -= %arg_bytesize
       %i -= 1
     end
     %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
 
-    %return_bytesize = sizeof_type(%target_def.type)
+    %return_bytesize = inner_sizeof_type(%target_def.type)
+    %aligned_return_bytesize = align(%return_bytesize)
 
     (stack + %offset).move_from(stack, %return_bytesize)
     stack = stack + %offset + %return_bytesize
+    stack_clear(%aligned_return_bytesize - %return_bytesize)
   end
 
   private macro leave(size)
@@ -400,15 +402,20 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_pop(t)
-    value = (stack - sizeof({{t}})).as({{t}}*).value
-    stack_shrink_by(sizeof({{t}}))
-    value
+    %aligned_size = align(sizeof({{t}}))
+    %value = (stack - %aligned_size).as({{t}}*).value
+    stack_shrink_by(%aligned_size)
+    %value
   end
 
   private macro stack_push(value)
     %temp = {{value}}
     stack.as(Pointer(typeof({{value}}))).value = %temp
-    stack_grow_by(sizeof(typeof({{value}})))
+
+    %size = sizeof(typeof({{value}}))
+    %aligned_size = align(%size)
+    stack += %size
+    stack_grow_by(%aligned_size - %size)
   end
 
   private macro stack_copy_to(pointer, size)
@@ -416,25 +423,42 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_move_to(pointer, size)
-    stack_copy_to({{pointer}}, {{size}})
-    stack_shrink_by({{size}})
+    %size = {{size}}
+    %aligned_size = align(%size)
+    (stack - %aligned_size).copy_to({{pointer}}, %size)
+    stack_shrink_by(%aligned_size)
   end
 
   private macro stack_move_from(pointer, size)
-    stack.copy_from({{pointer}}, {{size}})
-    stack_grow_by({{size}})
+    %size = {{size}}
+    %aligned_size = align(%size)
+
+    stack.copy_from({{pointer}}, %size)
+    stack += %size
+    stack_grow_by(%aligned_size - %size)
   end
 
   private macro stack_grow_by(size)
+    stack_clear({{size}})
     stack += {{size}}
   end
 
   private macro stack_shrink_by(size)
     stack -= {{size}}
+    stack_clear({{size}})
   end
 
-  private def sizeof_type(type : Type) : Int32
-    program.size_of(type.sizeof_type).to_i32
+  private macro stack_clear(size)
+    # TODO: clearing the stack after every step is very slow!
+    stack.clear({{size}})
+  end
+
+  private def aligned_sizeof_type(type : Type) : Int32
+    @context.aligned_sizeof_type(type)
+  end
+
+  private def inner_sizeof_type(type : Type) : Int32
+    @context.inner_sizeof_type(type)
   end
 
   private def type_from_type_id(id : Int32) : Type
@@ -443,6 +467,10 @@ class Crystal::Repl::Interpreter
 
   private macro type_id_bytesize
     8
+  end
+
+  private def align(value : Int32)
+    @context.align(value)
   end
 
   def define_primitives
@@ -514,6 +542,9 @@ class Crystal::Repl::Interpreter
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
       whereami(a_def, location)
+      puts
+      puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
+      puts
 
       # Remember the portion from stack_bottom + local_vars.bytesize up to stack
       # because it might happen that the child interpreter will overwrite some
@@ -550,7 +581,7 @@ class Crystal::Repl::Interpreter
           parser = Parser.new(
             line,
             string_pool: @context.program.string_pool,
-            def_vars: [local_vars.names.to_set]
+            def_vars: [interpreter.local_var_keys.to_set],
           )
           line_node = parser.parse
 
@@ -567,7 +598,7 @@ class Crystal::Repl::Interpreter
         end
       end
 
-      # Restore the stack data in case it was overwritten
+      # Restore the stack data in case it tas overwritten
       (stack_bottom + local_vars.bytesize).copy_from(data, data_size)
     end
   end

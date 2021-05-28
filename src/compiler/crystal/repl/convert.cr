@@ -8,7 +8,7 @@ class Crystal::Repl::Compiler
   end
 
   private def convert_distinct(node : ASTNode, from : Type, to : MixedUnionType)
-    put_in_union(type_id(from), sizeof_type(from), sizeof_type(to), node: node)
+    put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: node)
   end
 
   private def convert_distinct(node : ASTNode, from : NilType, to : NilableType)
@@ -30,7 +30,7 @@ class Crystal::Repl::Compiler
   end
 
   private def convert_distinct(node : ASTNode, from : MixedUnionType, to : Type)
-    remove_from_union(sizeof_type(from), sizeof_type(to), node: nil)
+    remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
   private def convert_distinct(node : ASTNode, from : NoReturnType, to : Type)

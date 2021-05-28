@@ -30,36 +30,6 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       nil,
     },
-    put_false: {
-      operands:   [] of Nil,
-      pop_values: [] of Nil,
-      push:       true,
-      code:       0_u8,
-    },
-    put_true: {
-      operands:   [] of Nil,
-      pop_values: [] of Nil,
-      push:       true,
-      code:       1_u8,
-    },
-    put_i8: {
-      operands:   [value : Int8],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
-    put_i16: {
-      operands:   [value : Int16],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
-    put_i32: {
-      operands:   [value : Int32],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       value,
-    },
     put_i64: {
       operands:   [value : Int64],
       pop_values: [] of Nil,
@@ -189,19 +159,23 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       value.to_f32!,
     },
-    extend_sign: {
+    sign_extend: {
       operands:   [amount : Int32] of Nil,
       pop_values: [] of Nil,
       push:       false,
       code:       begin
-        if (stack - 1).as(Int8*).value < 0
-          Intrinsics.memset(stack.as(Void*), 255_u8, amount, false)
+        if (stack - amount - 1).as(Int8*).value < 0
+          Intrinsics.memset((stack - amount).as(Void*), 255_u8, amount, false)
         else
-          stack.clear(amount)
+          (stack - amount).clear(amount)
         end
-
-        stack_grow_by(amount)
       end,
+    },
+    zero_extend: {
+      operands:   [amount : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       (stack - amount).clear(amount),
     },
     # >>> Conversions (21)
 
@@ -886,8 +860,8 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       begin
-        stack_shrink_by(offset + size)
-        stack_move_from(stack + size, offset)
+        (stack - offset - size).move_from(stack - offset, offset)
+        stack_shrink_by(size)
       end,
     },
     dup: {
@@ -900,10 +874,7 @@ Crystal::Repl::Instructions =
       operands:   [amount : Int32] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       begin
-        stack.clear(amount)
-        stack_grow_by(amount)
-      end,
+      code:       stack_grow_by(amount),
     },
     put_stack_top_pointer: {
       operands:   [size : Int32],
@@ -999,14 +970,12 @@ Crystal::Repl::Instructions =
         ptr
       end,
     },
+    # TODO: remove, this is the same as push zeros
     allocate_struct: {
       operands:   [size : Int32],
       pop_values: [] of Nil,
       push:       false,
-      code:       begin
-        stack.clear(size)
-        stack_grow_by(size)
-      end,
+      code:       stack_grow_by(size),
     },
     # >>> Allocate (2)
 
@@ -1016,9 +985,10 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       begin
-        (stack - from_size).copy_to(stack - from_size + type_id_bytesize, from_size)
-        (stack - from_size).as(Int64*).value = type_id.to_i64!
+        tmp_stack = stack
         stack_grow_by(union_size - from_size)
+        (tmp_stack - from_size).copy_to(tmp_stack - from_size + type_id_bytesize, from_size)
+        (tmp_stack - from_size).as(Int64*).value = type_id.to_i64!
       end,
     },
     remove_from_union: {
@@ -1026,9 +996,8 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       begin
-        # TODO: clean up stack
-        stack_shrink_by(union_size)
-        stack_move_from(stack + type_id_bytesize, from_size)
+        (stack - union_size).move_from(stack - union_size + type_id_bytesize, from_size)
+        stack_shrink_by(union_size - from_size)
       end,
     },
     union_is_a: {
@@ -1050,21 +1019,22 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       true,
       code:       begin
-        # TODO: clean up stack
-        stack_shrink_by(union_size)
-        type_id = stack.as(Int32*).value
+        type_id = (stack - union_size).as(Int32*).value
         type = type_from_type_id(type_id)
-        case type
-        when NilType
-          false
-        when BoolType
-          # TODO: union type id size
-          (stack + 8).as(Bool*).value
-        when PointerInstanceType
-          (stack + 8).as(UInt8**).value.null?
-        else
-          true
-        end
+        value = case type
+                when NilType
+                  false
+                when BoolType
+                  # TODO: union type id size
+                  (stack - union_size + 8).as(Bool*).value
+                when PointerInstanceType
+                  (stack - union_size + 8).as(UInt8**).value.null?
+                else
+                  true
+                end
+        stack_shrink_by(union_size)
+
+        value
       end,
     },
     # >>> Unions (4)
@@ -1075,9 +1045,10 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       begin
-        # TODO: clean up stack
-        stack_shrink_by(tuple_size)
-        stack_move_from(stack + offset, value_size)
+        (stack - tuple_size).copy_from(stack - tuple_size + offset, value_size)
+        aligned_value_size = align(value_size)
+        stack_shrink_by(tuple_size - value_size)
+        stack_grow_by(aligned_value_size - value_size)
       end,
     },
     # >>> Tuples (1)

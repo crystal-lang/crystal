@@ -37,7 +37,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def compile(node : ASTNode) : Nil
     node.accept self
 
-    leave sizeof_type(node), node: nil
+    leave aligned_sizeof_type(node), node: nil
 
     @instructions
   end
@@ -45,7 +45,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def compile_block(node : Block) : Nil
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name)
-      set_local index, sizeof_type(arg), node: arg
+      set_local index, aligned_sizeof_type(arg), node: arg
     end
 
     compile(node.body)
@@ -55,12 +55,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.body.accept self
 
     if node.type.nil_type?
-      pop sizeof_type(node.body), node: nil
+      pop aligned_sizeof_type(node.body), node: nil
     else
       convert node.body, node.body.type, node.type
     end
 
-    leave sizeof_type(node.type), node: nil
+    leave aligned_sizeof_type(node.type), node: nil
 
     @instructions
   end
@@ -102,19 +102,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when :i8
       put_i8 node.value.to_i8, node: node
     when :u8
-      put_i8 node.value.to_u8.to_i8!, node: node
+      put_u8 node.value.to_u8, node: node
     when :i16
       put_i16 node.value.to_i16, node: node
     when :u16
-      put_i16 node.value.to_u16.to_i16!, node: node
+      put_u16 node.value.to_u16, node: node
     when :i32
       put_i32 node.value.to_i32, node: node
     when :u32
-      put_i32 node.value.to_u32.to_i32!, node: node
+      put_u32 node.value.to_u32, node: node
     when :i64
       put_i64 node.value.to_i64, node: node
     when :u64
-      put_i64 node.value.to_u64.to_i64!, node: node
+      put_u64 node.value.to_u64, node: node
     when :f32
       put_i32 node.value.to_f32.unsafe_as(Int32), node: node
     when :f64
@@ -145,16 +145,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     current_offset = 0
     node.elements.each_with_index do |element, i|
       element.accept self
-      size = sizeof_type(element)
+      aligned_size = aligned_sizeof_type(element)
       next_offset =
         if i == node.elements.size - 1
-          sizeof_type(type)
+          aligned_sizeof_type(type)
         else
           @context.offset_of(type, i + 1)
         end
-      if next_offset - (current_offset + size) > 0
-        push_zeros(next_offset - (current_offset + size), node: nil)
+
+      difference = next_offset - (current_offset + aligned_size)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
       end
+
       current_offset = next_offset
     end
 
@@ -167,16 +172,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     current_offset = 0
     node.entries.each_with_index do |entry, i|
       entry.value.accept self
-      size = sizeof_type(entry.value)
+      aligned_size = aligned_sizeof_type(entry.value)
       next_offset =
         if i == node.entries.size - 1
-          sizeof_type(type)
+          aligned_sizeof_type(type)
         else
           @context.offset_of(type, i + 1)
         end
-      if next_offset - (current_offset + size) > 0
-        push_zeros(next_offset - (current_offset + size), node: nil)
+
+      difference = next_offset - (current_offset + aligned_size)
+      if difference > 0
+        push_zeros(difference, node: nil)
+      elsif difference < 0
+        pop(-difference, node: nil)
       end
+
       current_offset = next_offset
     end
 
@@ -201,22 +211,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case target
     when Var
       request_value(node.value)
-      dup(sizeof_type(node.value), node: nil) if @wants_value
+      dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
       index = @local_vars.name_to_index(target.name)
       type = @local_vars.type(target.name)
 
       # Before assigning to the var we must potentially box inside a union
       convert node.value, node.value.type, type
-      set_local index, sizeof_type(type), node: node
+      set_local index, aligned_sizeof_type(type), node: node
     when InstanceVar
       if inside_method?
         request_value(node.value)
-        dup(sizeof_type(node.value), node: nil) if @wants_value
+        dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
         ivar_offset = ivar_offset(scope, target.name)
         ivar = scope.lookup_instance_var(target.name)
-        ivar_size = sizeof_type(ivar.type)
+        ivar_size = inner_sizeof_type(ivar.type)
 
         convert node.value, node.value.type, ivar.type
 
@@ -242,9 +252,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if node.name == "self" && type.passed_by_value?
       # Load the entire self from the pointer that's self
-      get_self_ivar 0, sizeof_type(type), node: node
+      get_self_ivar 0, aligned_sizeof_type(type), node: node
     else
-      get_local index, sizeof_type(type), node: node
+      get_local index, aligned_sizeof_type(type), node: node
       convert node, type, node.type
     end
 
@@ -255,7 +265,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     return false unless @wants_value
 
     ivar_offset = ivar_offset(scope, node.name)
-    ivar_size = sizeof_type(scope.lookup_instance_var(node.name))
+    ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
 
     get_self_ivar ivar_offset, ivar_size, node: node
     false
@@ -268,7 +278,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     type = node.obj.type
 
     ivar_offset = ivar_offset(type, node.name)
-    ivar_size = sizeof_type(type.lookup_instance_var(node.name))
+    ivar_size = inner_sizeof_type(type.lookup_instance_var(node.name))
 
     get_class_ivar ivar_offset, ivar_size, node: node
     false
@@ -357,7 +367,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     def_type = @def.not_nil!.type
     convert node, exp_type, def_type
-    leave sizeof_type(def_type), node: node
+    leave aligned_sizeof_type(def_type), node: node
 
     false
   end
@@ -372,7 +382,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     filtered_type = obj_type.filter_by(const_type).not_nil!
 
     if obj_type.is_a?(MixedUnionType)
-      union_is_a(sizeof_type(obj_type), type_id(filtered_type), node: node)
+      union_is_a(aligned_sizeof_type(obj_type), type_id(filtered_type), node: node)
     else
       node.raise "BUG: missing IsA for #{obj_type}"
     end
@@ -421,7 +431,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           index = @context.declare_const(const, compiled_def)
         end
 
-        get_const index, sizeof_type(const.value), node: node
+        get_const index, aligned_sizeof_type(const.value), node: node
       end
     elsif replacement = node.syntax_replacement
       replacement.accept self
@@ -530,7 +540,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       lib_call(lib_function, node: node)
 
-      pop sizeof_type(node), node: nil unless @wants_value
+      pop aligned_sizeof_type(node), node: nil unless @wants_value
 
       return false
     end
@@ -548,7 +558,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @local_vars.declare(name, var.type)
         end
 
-        block_args_bytesize = block.args.sum { |arg| sizeof_type(arg) }
+        block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
         compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
         compiler = Compiler.new(@context, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
@@ -571,11 +581,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       elsif obj_type.passed_by_value?
         args_bytesize += sizeof(Pointer(UInt8))
       else
-        args_bytesize += sizeof_type(obj_type)
+        args_bytesize += aligned_sizeof_type(obj_type)
       end
 
-      args_bytesize += args.sum { |arg| sizeof_type(arg) }
-      args_bytesize += named_args.sum { |arg| sizeof_type(arg.value) } if named_args
+      args_bytesize += args.sum { |arg| aligned_sizeof_type(arg) }
+      args_bytesize += named_args.sum { |arg| aligned_sizeof_type(arg.value) } if named_args
 
       compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
 
@@ -622,7 +632,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           request_value(obj)
 
           # Then take a pointer to it (this is self inside the method)
-          put_stack_top_pointer(sizeof_type(obj), node: nil)
+          put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
 
           # We must remember to later pop the struct that's still on the stack
           pop_obj = obj
@@ -648,12 +658,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Pop the struct that's on the stack, if any, if obj was a struct
       # (but the struct is after the call's value, so we must
       # remove it past that value)
-      pop_from_offset sizeof_type(pop_obj), sizeof_type(node), node: nil if pop_obj
+      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
     else
       if pop_obj
-        pop sizeof_type(node) + sizeof_type(pop_obj), node: nil
+        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
       else
-        pop sizeof_type(node), node: nil
+        pop aligned_sizeof_type(node), node: nil
       end
     end
 
@@ -680,7 +690,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     call_block compiled_block, node: node
-    pop sizeof_type(node), node: nil unless @wants_value
+    pop aligned_sizeof_type(node), node: nil unless @wants_value
 
     false
   end
@@ -740,6 +750,42 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @wants_value = old_wants_value
   end
 
+  private def put_true(*, node : ASTNode?)
+    put_i64 1_i64, node: node
+  end
+
+  private def put_false(*, node : ASTNode?)
+    put_i64 0_i64, node: node
+  end
+
+  private def put_i8(value : Int8, *, node : ASTNode)
+    put_i64 value.to_i64!, node: node
+  end
+
+  private def put_u8(value : UInt8, *, node : ASTNode)
+    put_i64 value.to_u64!.to_i64!, node: node
+  end
+
+  private def put_i16(value : Int16, *, node : ASTNode)
+    put_i64 value.to_i64!, node: node
+  end
+
+  private def put_u16(value : UInt16, *, node : ASTNode)
+    put_i64 value.to_u64!.to_i64!, node: node
+  end
+
+  private def put_i32(value : Int32, *, node : ASTNode)
+    put_i64 value.to_i64!, node: node
+  end
+
+  private def put_u32(value : UInt32, *, node : ASTNode)
+    put_i64 value.to_u64!.to_i64!, node: node
+  end
+
+  private def put_u64(value : UInt64, *, node : ASTNode)
+    put_i64 value.to_i64!, node: node
+  end
+
   private def put_type(type : Type, *, node : ASTNode)
     put_i32 type_id(type), node: node
   end
@@ -752,7 +798,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if scope.passed_by_value?
         get_local 0, sizeof(Pointer(UInt8)), node: node
       else
-        get_local 0, sizeof_type(scope), node: node
+        get_local 0, aligned_sizeof_type(scope), node: node
       end
     else
       get_local 0, sizeof(Pointer(UInt8)), node: node
@@ -815,16 +861,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     (@instructions.to_unsafe + offset).as(Int32*).value = @instructions.size
   end
 
-  private def sizeof_type(node : ASTNode) : Int32
-    @context.sizeof_type(node)
+  private def aligned_sizeof_type(node : ASTNode) : Int32
+    @context.aligned_sizeof_type(node)
   end
 
-  private def sizeof_type(type : Type) : Int32
-    @context.sizeof_type(type)
+  private def aligned_sizeof_type(type : Type) : Int32
+    @context.aligned_sizeof_type(type)
   end
 
-  private def instance_sizeof_type(type : Type) : Int32
-    @context.instance_sizeof_type(type)
+  private def inner_sizeof_type(node : ASTNode) : Int32
+    @context.inner_sizeof_type(node)
+  end
+
+  private def inner_sizeof_type(type : Type) : Int32
+    @context.inner_sizeof_type(type)
+  end
+
+  private def aligned_instance_sizeof_type(type : Type) : Int32
+    @context.aligned_instance_sizeof_type(type)
   end
 
   private def ivar_offset(type : Type, name : String) : Int32

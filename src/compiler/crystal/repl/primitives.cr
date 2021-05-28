@@ -23,10 +23,10 @@ class Crystal::Repl::Compiler
 
       pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
-      element_size = sizeof_type(element_type)
+      element_size = inner_sizeof_type(element_type)
 
       pointer_malloc(element_size, node: node)
-      pop(sizeof_type(scope_type), node: nil) unless @wants_value
+      pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_realloc"
       obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
@@ -35,23 +35,23 @@ class Crystal::Repl::Compiler
 
       pointer_instance_type = scope_type.instance_type.as(PointerInstanceType)
       element_type = pointer_instance_type.element_type
-      element_size = sizeof_type(element_type)
+      element_size = inner_sizeof_type(element_type)
 
       pointer_realloc(element_size, node: node)
-      pop(sizeof_type(scope_type), node: nil) unless @wants_value
+      pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
       arg = node.args.first
       request_value(arg)
-      dup(sizeof_type(arg), node: nil) if @wants_value
+      dup(aligned_sizeof_type(arg), node: nil) if @wants_value
 
       request_value(obj.not_nil!)
-      pointer_set(sizeof_type(node.args.first), node: node)
+      pointer_set(inner_sizeof_type(node.args.first), node: node)
     when "pointer_get"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_get(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      pointer_get(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "pointer_address"
       accept_call_members(node)
       return unless @wants_value
@@ -61,12 +61,12 @@ class Crystal::Repl::Compiler
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_diff(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      pointer_diff(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "pointer_add"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_add(sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      pointer_add(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
     when "class"
       return unless @wants_value
 
@@ -96,9 +96,9 @@ class Crystal::Repl::Compiler
 
       # TODO: check struct
       if type.struct?
-        allocate_struct(instance_sizeof_type(type), node: node)
+        allocate_struct(aligned_instance_sizeof_type(type), node: node)
       else
-        allocate_class(instance_sizeof_type(type), type_id(type), node: node)
+        allocate_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
       end
     when "tuple_indexer_known_index"
       obj = obj.not_nil!
@@ -112,7 +112,7 @@ class Crystal::Repl::Compiler
         when Int32
           element_type = type.tuple_types[index]
           offset = @context.offset_of(type, index)
-          tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(element_type), node: node)
+          tuple_indexer_known_index(aligned_sizeof_type(type), offset, inner_sizeof_type(element_type), node: node)
         else
           node.raise "BUG: missing handling of primitive #{body.name} with range"
         end
@@ -122,7 +122,7 @@ class Crystal::Repl::Compiler
         when Int32
           entry = type.entries[index]
           offset = @context.offset_of(type, index)
-          tuple_indexer_known_index(sizeof_type(type), offset, sizeof_type(entry.type), node: node)
+          tuple_indexer_known_index(aligned_sizeof_type(type), offset, inner_sizeof_type(entry.type), node: node)
         else
           node.raise "BUG: missing handling of primitive #{body.name} with range"
         end
@@ -257,65 +257,67 @@ class Crystal::Repl::Compiler
       else           to_kind
       end
 
+    # Most of these are nop because we align the stack to 64 bits,
+    # so numbers are already converted to 64 bits
     case {from_kind, to_kind}
     when {:i8, :i8}   then nop
-    when {:i8, :i16}  then extend_sign(1, node: node)
-    when {:i8, :i32}  then extend_sign(3, node: node)
-    when {:i8, :i64}  then extend_sign(7, node: node)
+    when {:i8, :i16}  then sign_extend(7, node: node)
+    when {:i8, :i32}  then sign_extend(7, node: node)
+    when {:i8, :i64}  then sign_extend(7, node: node)
     when {:i8, :f32}  then i8_to_f32(node: node)
     when {:i8, :f64}  then i8_to_f64(node: node)
-    when {:u8, :i8}   then nop
-    when {:u8, :i16}  then push_zeros(1, node: node)
-    when {:u8, :i32}  then push_zeros(3, node: node)
-    when {:u8, :i64}  then push_zeros(7, node: node)
+    when {:u8, :i8}   then zero_extend(7, node: node)
+    when {:u8, :i16}  then zero_extend(7, node: node)
+    when {:u8, :i32}  then zero_extend(7, node: node)
+    when {:u8, :i64}  then nop
     when {:u8, :f32}  then u8_to_f32(node: node)
     when {:u8, :f64}  then u8_to_f64(node: node)
-    when {:i16, :i8}  then pop(1, node: node)
+    when {:i16, :i8}  then nop
     when {:i16, :i16} then nop
-    when {:i16, :i32} then extend_sign(2, node: node)
-    when {:i16, :i64} then extend_sign(6, node: node)
+    when {:i16, :i32} then sign_extend(6, node: node)
+    when {:i16, :i64} then sign_extend(6, node: node)
     when {:i16, :f32} then i16_to_f32(node: node)
     when {:i16, :f64} then i16_to_f64(node: node)
-    when {:u16, :i8}  then pop(1, node: node)
+    when {:u16, :i8}  then nop
     when {:u16, :i16} then nop
-    when {:u16, :i32} then push_zeros(2, node: node)
-    when {:u16, :i64} then push_zeros(6, node: node)
+    when {:u16, :i32} then zero_extend(6, node: node)
+    when {:u16, :i64} then zero_extend(6, node: node)
     when {:u16, :f32} then u16_to_f32(node: node)
     when {:u16, :f64} then u16_to_f64(node: node)
-    when {:i32, :i8}  then pop(3, node: node)
-    when {:i32, :i16} then pop(2, node: node)
+    when {:i32, :i8}  then nop
+    when {:i32, :i16} then nop
     when {:i32, :i32} then nop
-    when {:i32, :i64} then extend_sign(4, node: node)
+    when {:i32, :i64} then sign_extend(4, node: node)
     when {:i32, :f32} then i32_to_f32(node: node)
     when {:i32, :f64} then i32_to_f64(node: node)
-    when {:u32, :i8}  then pop(3, node: node)
-    when {:u32, :i16} then pop(2, node: node)
+    when {:u32, :i8}  then nop
+    when {:u32, :i16} then nop
     when {:u32, :i32} then nop
     when {:u32, :u32} then nop
-    when {:u32, :i64} then push_zeros(4, node: node)
+    when {:u32, :i64} then zero_extend(4, node: node)
     when {:u32, :f32} then u32_to_f32(node: node)
     when {:u32, :f64} then u32_to_f64(node: node)
-    when {:i64, :i8}  then pop(7, node: node)
-    when {:i64, :i16} then pop(6, node: node)
-    when {:i64, :i32} then pop(4, node: node)
+    when {:i64, :i8}  then nop
+    when {:i64, :i16} then nop
+    when {:i64, :i32} then nop
     when {:i64, :i64} then nop
     when {:i64, :f32} then i64_to_f32(node: node)
     when {:i64, :f64} then i64_to_f64(node: node)
-    when {:u64, :i8}  then pop(7, node: node)
-    when {:u64, :i16} then pop(6, node: node)
-    when {:u64, :i32} then pop(4, node: node)
+    when {:u64, :i8}  then nop
+    when {:u64, :i16} then nop
+    when {:u64, :i32} then nop
     when {:u64, :i64} then nop
     when {:u64, :f32} then u64_to_f32(node: node)
     when {:u64, :f64} then u64_to_f64(node: node)
-    when {:f32, :i8}  then f32_to_i64_bang(node: node); pop(7, node: node)
-    when {:f32, :i16} then f32_to_i64_bang(node: node); pop(6, node: node)
-    when {:f32, :i32} then f32_to_i64_bang(node: node); pop(4, node: node)
+    when {:f32, :i8}  then f32_to_i64_bang(node: node)
+    when {:f32, :i16} then f32_to_i64_bang(node: node)
+    when {:f32, :i32} then f32_to_i64_bang(node: node)
     when {:f32, :i64} then f32_to_i64_bang(node: node)
     when {:f32, :f32} then nop
     when {:f32, :f64} then f32_to_f64(node: node)
-    when {:f64, :i8}  then f64_to_i64_bang(node: node); pop(7, node: node)
-    when {:f64, :i16} then f64_to_i64_bang(node: node); pop(6, node: node)
-    when {:f64, :i32} then f64_to_i64_bang(node: node); pop(4, node: node)
+    when {:f64, :i8}  then f64_to_i64_bang(node: node)
+    when {:f64, :i16} then f64_to_i64_bang(node: node)
+    when {:f64, :i32} then f64_to_i64_bang(node: node)
     when {:f64, :i64} then f64_to_i64_bang(node: node)
     when {:f64, :f32} then f64_to_f32_bang(node: node)
     when {:f64, :f64} then nop

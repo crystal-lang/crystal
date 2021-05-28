@@ -21,7 +21,7 @@ class Crystal::Repl::Constants
 
     @types[const] = type
     @bytesize += 1 # We need a bit to know if the constant was already initialized
-    @bytesize += @context.sizeof_type(type)
+    @bytesize += @context.aligned_sizeof_type(type)
 
     index
   end

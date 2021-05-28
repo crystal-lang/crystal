@@ -18,7 +18,7 @@ class Crystal::Repl::Compiler
   end
 
   private def value_to_bool(node : ASTNode, type : MixedUnionType)
-    union_to_bool sizeof_type(type), node: nil
+    union_to_bool aligned_sizeof_type(type), node: nil
   end
 
   private def value_to_bool(node : ASTNode, type : Type)

@@ -624,6 +624,14 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets pointer set and get (clear stack)" do
+      interpret(<<-CODE).should eq(50.unsafe_chr)
+        ptr = Pointer(UInt8).malloc(1_u64)
+        ptr.value = 50_u8
+        ptr.value.unsafe_chr
+      CODE
+    end
+
     it "interprets pointerof, mutates pointer, read var" do
       interpret(<<-CODE).should eq(2)
         a = 1
@@ -1335,6 +1343,14 @@ describe Crystal::Repl::Interpreter do
         b[0] + b[1] + b[2]
       CODE
     end
+
+    it "extends sign when doing to_i32" do
+      interpret(<<-CODE).should eq(-50)
+        t = {-50_i16}
+        exp = t[0]
+        z = exp.to_i32
+        CODE
+    end
   end
 
   context "named tuple" do
@@ -1535,7 +1551,8 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
+  context = Crystal::Repl::Context.new(program, decompile: true, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)
