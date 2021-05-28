@@ -239,6 +239,10 @@ class Crystal::Repl::Compiler
     nop
   end
 
+  private def primitive_unchecked_convert(node : ASTNode, from_type : IntegerType, to_type : CharType)
+    primitive_unchecked_convert(node, from_type, @context.program.int32)
+  end
+
   private def primitive_unchecked_convert(node : ASTNode, from_type : Type, to_type : Type)
     node.raise "BUG: missing handling of unchecked_convert from #{from_type} to #{to_type}"
   end

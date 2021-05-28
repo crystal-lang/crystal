@@ -178,6 +178,14 @@ describe Crystal::Repl::Interpreter do
       interpret("'a'.ord").should eq('a'.ord)
     end
 
+    it "Int32#unsafe_chr" do
+      interpret("97.unsafe_chr").should eq(97.unsafe_chr)
+    end
+
+    it "UInt8#unsafe_chr" do
+      interpret("97_u8.unsafe_chr").should eq(97.unsafe_chr)
+    end
+
     it "discards conversion" do
       interpret(<<-CODE).should eq(3)
       1.to_i8!

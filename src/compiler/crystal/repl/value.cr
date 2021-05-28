@@ -66,7 +66,7 @@ struct Crystal::Repl::Value
     when BoolType
       io << @pointer.as(Bool*).value
     when CharType
-      io << @pointer.as(Char*).value
+      @pointer.as(Char*).value.inspect(io)
     when IntegerType
       case type.kind
       when :i8
