@@ -625,22 +625,26 @@ class Crystal::Repl::Interpreter
     puts
     filename = location.filename
     case filename
-    when String
+    in String
       lines = File.read_lines(filename)
-
-      {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
-        line = lines[line_number - 1]
-        if line_number == location.line_number
-          print " => "
-        else
-          print "    "
-        end
-        print line_number.colorize.blue
-        print ": "
-        puts line
-      end
-      puts
+    in VirtualFile
+      lines = filename.source.lines.to_a
+    in Nil
+      return
     end
+
+    {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
+      line = lines[line_number - 1]
+      if line_number == location.line_number
+        print " => "
+      else
+        print "    "
+      end
+      print line_number.colorize.blue
+      print ": "
+      puts line
+    end
+    puts
   end
 
   private def different_node_line?(node : ASTNode, previous_node : ASTNode?)
