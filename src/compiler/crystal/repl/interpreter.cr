@@ -14,6 +14,7 @@ class Crystal::Repl::Interpreter
     constant_index : Int32
 
   @pry_node : ASTNode?
+  @pry_max_target_frame : Int32?
 
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
@@ -22,8 +23,7 @@ class Crystal::Repl::Interpreter
     @nodes = {} of Int32 => ASTNode
 
     # TODO: what if the stack is exhausted?
-    # TODO: use 8MB for this, and on the heap
-    @stack = Pointer(UInt8).malloc(8096)
+    @stack = Pointer(UInt8).malloc(8 * 1024 * 1024)
     @call_stack = [] of CallFrame
     @constants = Pointer(UInt8).null
 
@@ -34,6 +34,7 @@ class Crystal::Repl::Interpreter
     @compiled_def = nil
     @pry = false
     @pry_node = nil
+    @pry_max_target_frame = nil
   end
 
   def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8))
@@ -66,6 +67,7 @@ class Crystal::Repl::Interpreter
     @compiled_def = compiled_def
     @pry = false
     @pry_node = nil
+    @pry_max_target_frame = nil
   end
 
   def interpret(node : ASTNode) : Value
@@ -182,7 +184,12 @@ class Crystal::Repl::Interpreter
         puts
       end
 
-      pry(ip, instructions, nodes, stack_bottom, stack) if @pry
+      if @pry
+        pry_max_target_frame = @pry_max_target_frame
+        if !pry_max_target_frame || @call_stack.size <= pry_max_target_frame
+          pry(ip, instructions, nodes, stack_bottom, stack)
+        end
+      end
 
       op_code = next_instruction OpCode
 
@@ -568,9 +575,19 @@ class Crystal::Repl::Interpreter
         when "continue"
           @pry = false
           @pry_node = nil
+          @pry_max_target_frame = nil
           break
-        when "next", "step"
+        when "step"
           @pry_node = node
+          @pry_max_target_frame = nil
+          break
+        when "next"
+          @pry_node = node
+          @pry_max_target_frame = @call_stack.size
+          break
+        when "finish"
+          @pry_node = node
+          @pry_max_target_frame = @call_stack.size - 1
           break
         when "whereami"
           whereami(a_def, location)
