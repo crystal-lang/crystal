@@ -34,5 +34,9 @@ lib LibC
 
   fun htons(hostshort : UShort) : UShort
   fun ntohs(netshort : UShort) : UShort
+
   fun WSAStartup(wVersionRequired : WORD, lpWSAData : WSAData*) : Int
+
+  fun WSASetLastError(iError : Int) : Void
+  fun WSAGetLastError : Int
 end

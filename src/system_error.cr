@@ -94,15 +94,15 @@ module SystemError
     end
 
     # Builds an instance of the exception from the current windows error value (`WinError.value`).
+    #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
     def from_winerror(message : String?, **opts)
       from_os_error(message, WinError.value, **opts)
     end
 
-    # Builds an instance of the exception from a `WinError`
+    # Builds an instance of the exception from the current Windows Socket API error value (`WinError.wsa_value`).
     #
-    # By default it takes the current `WinError` value (see `WinError.value`).
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer.
     def from_wsa_error(message : String? = nil, **opts)
