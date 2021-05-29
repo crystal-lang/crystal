@@ -34,7 +34,7 @@ class Crystal::Command
     )
 
     options.each do |filename|
-      repl.load_file(filename)
+      repl.load_and_interpret_file(filename)
     end
 
     repl.run

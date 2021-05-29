@@ -94,6 +94,27 @@ class Crystal::Repl
     parsed_nodes
   end
 
+  def load_and_interpret_file(filename)
+    parser = Parser.new File.read(filename), @program.string_pool
+    parser.filename = filename
+    parsed_nodes = parser.parse
+    parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
+    @program.top_level_semantic(parsed_nodes)
+
+    begin
+      value = @interpreter.interpret(parsed_nodes)
+      puts value
+    rescue ex : Crystal::CodeError
+      ex.color = true
+      ex.error_trace = true
+      puts ex
+      exit 1
+    rescue ex : Exception
+      ex.inspect_with_backtrace(STDOUT)
+      exit 1
+    end
+  end
+
   private def load_prelude
     filenames = @program.find_in_path("prelude")
     filenames.each { |filename| load_file(filename) }
