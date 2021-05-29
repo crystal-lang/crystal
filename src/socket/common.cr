@@ -14,7 +14,7 @@ class Socket
       wsa_version = 0x202
       err = LibC.WSAStartup(wsa_version, out wsadata)
       unless err.zero?
-        raise IO::Error.from_winerror("WSAStartup", WinError.new(err.to_u32))
+        raise IO::Error.from_os_error("WSAStartup", WinError.new(err.to_u32))
       end
 
       if wsadata.wVersion != wsa_version
@@ -53,14 +53,14 @@ class Socket
   end
 
   class Error < IO::Error
-    private def self.new_from_errno(message, errno, **opts)
-      case errno
+    private def self.new_from_os_error(message, os_error, **opts)
+      case os_error
       when Errno::ECONNREFUSED
         Socket::ConnectError.new(message, **opts)
       when Errno::EADDRINUSE
         Socket::BindError.new(message, **opts)
       else
-        super message, errno, **opts
+        super message, os_error, **opts
       end
     end
   end
