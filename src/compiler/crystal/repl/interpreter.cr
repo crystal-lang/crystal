@@ -642,7 +642,7 @@ class Crystal::Repl::Interpreter
       end
       print line_number.colorize.blue
       print ": "
-      puts line
+      puts SyntaxHighlighter.highlight(line)
     end
     puts
   end
