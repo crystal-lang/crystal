@@ -16,6 +16,18 @@ enum WinError : UInt32
     {% end %}
   end
 
+  # Sets the value of [`SetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setlasterror)
+  # which signifies the error code of the previously called win32 function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.value=(winerror : self)
+    {% if flag?(:win32) %}
+      LibC.SetLastError(winerror.value)
+    {% else %}
+      raise NotImplementedError.new("WinError.value=")
+    {% end %}
+  end
+
   # Returns the system error message associated with this error code.
   #
   # The message is retrieved via [`FormatMessageW`](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew)
