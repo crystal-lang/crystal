@@ -572,7 +572,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
         compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
-        compiler = Compiler.new(@context, @local_vars, compiled_block.instructions, scope: @scope, def: @def)
+        compiler = Compiler.new(@context, @local_vars,
+          instructions: compiled_block.instructions,
+          nodes: compiled_block.nodes,
+          scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
         compiler.compile_block(block)
 

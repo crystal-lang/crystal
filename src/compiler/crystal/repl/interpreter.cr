@@ -114,7 +114,6 @@ class Crystal::Repl::Interpreter
     node = node.transform(@cleanup_transformer)
 
     # Declare local variables
-    # TODO: reuse previously declared variables
     @main_visitor.meta_vars.each do |name, meta_var|
       @local_vars.declare(name, meta_var.type)
     end
@@ -381,8 +380,8 @@ class Crystal::Repl::Interpreter
       %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
-      instructions = %call_frame.compiled_def.instructions
-      nodes = %call_frame.compiled_def.nodes
+      instructions = %call_frame.instructions
+      nodes = %call_frame.nodes
       ip = %call_frame.ip
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
@@ -417,8 +416,8 @@ class Crystal::Repl::Interpreter
       %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
-      instructions = %call_frame.compiled_def.instructions
-      nodes = %call_frame.compiled_def.nodes
+      instructions = %call_frame.instructions
+      nodes = %call_frame.nodes
       ip = %call_frame.ip
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
@@ -622,6 +621,7 @@ class Crystal::Repl::Interpreter
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
       whereami(a_def, location)
+
       # puts
       # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
       # puts
