@@ -4,4 +4,10 @@ class IPSocket < Socket
 
   # Returns the `IPAddress` for the remote end of the IP socket.
   getter remote_address : Socket::IPAddress { system_remote_address }
+
+  def close
+    super
+    @local_address = nil
+    @remote_address = nil
+  end
 end
