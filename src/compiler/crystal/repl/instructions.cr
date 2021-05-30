@@ -976,13 +976,6 @@ Crystal::Repl::Instructions =
         ptr
       end,
     },
-    # TODO: remove, this is the same as push zeros
-    allocate_struct: {
-      operands:   [size : Int32],
-      pop_values: [] of Nil,
-      push:       false,
-      code:       stack_grow_by(size),
-    },
     # >>> Allocate (2)
 
     # <<< Unions (4)

@@ -94,9 +94,8 @@ class Crystal::Repl::Compiler
 
       return unless @wants_value
 
-      # TODO: check struct
       if type.struct?
-        allocate_struct(aligned_instance_sizeof_type(type), node: node)
+        push_zeros(aligned_instance_sizeof_type(type), node: node)
       else
         allocate_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
       end
