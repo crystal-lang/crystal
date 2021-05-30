@@ -1501,6 +1501,32 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "returns from block" do
+      interpret(<<-CODE).should eq(42)
+        def foo
+          baz do
+            yield
+          end
+        end
+
+        def baz
+          yield
+        end
+
+        def bar
+          foo do
+            foo do
+              return 42
+            end
+          end
+
+          1
+        end
+
+        bar
+      CODE
+    end
   end
 
   context "casts" do

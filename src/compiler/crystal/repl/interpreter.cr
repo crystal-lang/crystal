@@ -4,13 +4,43 @@ require "colorize"
 
 class Crystal::Repl::Interpreter
   record CallFrame,
+    # The CompiledDef related to this call frame
     compiled_def : CompiledDef,
+    # Instructions for this frame
     instructions : Array(UInt8),
+    # Nodes to related instructions indexes back to ASTNodes (mainly for location purposes)
     nodes : Hash(Int32, ASTNode),
+    # The pointer to the current instruction for this call frame.
+    # This value changes as the program goes, and when a call is made
+    # this value is useful to know where we need to continue after
+    # the call returns.
     ip : Pointer(UInt8),
+    # What's the frame's stack.
+    # This value changes as the program goes, and when a call is made
+    # this value is useful to know what values in the stack we need
+    # to have when the call returns.
     stack : Pointer(UInt8),
+    # What's the frame's stack bottom. After this position come the
+    # def's local variables.
     stack_bottom : Pointer(UInt8),
+    # The index of the frame that called a block.
+    # This is useful to know because when a `yield` happens,
+    # we more or less create a new stack frame that has the same
+    # local variables as this frame, because the block will need
+    # to access that frame's variables.
+    # It's -1 if the value is not present.
     block_caller_frame_index : Int32,
+    # When a `yield` happens we copy the frame pointed by
+    # `block_caller_frame_index`. If a `return` happens inside
+    # that block we need to return from that frame (the `def`s one.)
+    # With `real_frame_index` we know where that frame is actually
+    # in the call stack (the original, not the copy) and we can
+    # go back to just before that frame when a `return` happens.
+    real_frame_index : Int32,
+    # When we jump to do a constant initialization we store the
+    # index where to store the constant value in the `@constants`
+    # memory location.
+    # It's -1 if no constant needs to be initialized.
     constant_index : Int32
 
   @pry_node : ASTNode?
@@ -165,6 +195,7 @@ class Crystal::Repl::Interpreter
       stack: stack,
       stack_bottom: stack_bottom,
       block_caller_frame_index: -1,
+      real_frame_index: 0,
       constant_index: -1,
     )
 
@@ -238,7 +269,9 @@ class Crystal::Repl::Interpreter
     end
   end
 
-  private macro call(compiled_def, block_caller_frame_index = -1, constant_index = -1)
+  private macro call(compiled_def,
+                     block_caller_frame_index = -1,
+                     constant_index = -1)
     # At the point of a call like:
     #
     #     foo(x, y)
@@ -265,6 +298,7 @@ class Crystal::Repl::Interpreter
       stack: %stack_before_call_args + {{compiled_def}}.local_vars.bytesize,
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
+      real_frame_index: @call_stack.size,
       constant_index: {{constant_index}},
     )
 
@@ -290,7 +324,9 @@ class Crystal::Repl::Interpreter
       stack: %stack_before_call_args,
     )
 
-    copied_call_frame = @call_stack[@call_stack.last.block_caller_frame_index].copy_with(
+    %block_caller_frame_index = @call_stack.last.block_caller_frame_index
+
+    copied_call_frame = @call_stack[%block_caller_frame_index].copy_with(
       instructions: {{compiled_block}}.instructions,
       nodes: {{compiled_block}}.nodes,
       ip: {{compiled_block}}.instructions.to_unsafe,
@@ -335,12 +371,13 @@ class Crystal::Repl::Interpreter
       @call_stack.pop
       return_value = Pointer(UInt8).malloc({{size}})
       return_value.copy_from(stack_bottom_after_local_vars, {{size}})
-      stack -= {{size}}
+      stack_shrink_by({{size}})
       break
     else
       # Remember the point the stack reached
-      old_stack = stack
+      %old_stack = stack
       %previous_call_frame = @call_stack.pop
+
       %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
@@ -352,11 +389,47 @@ class Crystal::Repl::Interpreter
 
       # Copy the return value to a constant, if the frame was for a constant
       if %previous_call_frame.constant_index != -1
-        (old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
+        (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
       end
 
       # Ccopy the return value
-      stack_move_from(old_stack - {{size}}, {{size}})
+      stack_move_from(%old_stack - {{size}}, {{size}})
+
+      # TODO: clean up stack
+    end
+  end
+
+  private macro leave_def(size)
+    # Remember the point the stack reached
+    %old_stack = stack
+    %previous_call_frame = @call_stack.pop
+
+    if %previous_call_frame.real_frame_index == 0
+      return_value = Pointer(UInt8).malloc({{size}})
+      return_value.copy_from(stack_bottom_after_local_vars, {{size}})
+      stack_shrink_by({{size}})
+      break
+    else
+      until @call_stack.size == %previous_call_frame.real_frame_index
+        @call_stack.pop
+      end
+
+      %call_frame = @call_stack.last
+
+      # Restore ip, instructions and stack bottom
+      instructions = %call_frame.compiled_def.instructions
+      nodes = %call_frame.compiled_def.nodes
+      ip = %call_frame.ip
+      stack_bottom = %call_frame.stack_bottom
+      stack = %call_frame.stack
+
+      # Copy the return value to a constant, if the frame was for a constant
+      if %previous_call_frame.constant_index != -1
+        (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
+      end
+
+      # Ccopy the return value
+      stack_move_from(%old_stack - {{size}}, {{size}})
 
       # TODO: clean up stack
     end
@@ -549,9 +622,9 @@ class Crystal::Repl::Interpreter
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
       whereami(a_def, location)
-      puts
-      puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
-      puts
+      # puts
+      # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
+      # puts
 
       # Remember the portion from stack_bottom + local_vars.bytesize up to stack
       # because it might happen that the child interpreter will overwrite some

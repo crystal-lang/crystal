@@ -9,6 +9,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   getter instructions
   getter nodes
 
+  @compiling_block = false
+
   def initialize(
     @context : Context,
     @local_vars : LocalVars,
@@ -43,12 +45,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def compile_block(node : Block) : Nil
+    @compiling_block = true
+
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name)
       set_local index, aligned_sizeof_type(arg), node: arg
     end
 
     compile(node.body)
+
+    @compiling_block = false
   end
 
   def compile_def(node : Def) : Nil
@@ -367,7 +373,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     def_type = @def.not_nil!.type
     convert node, exp_type, def_type
-    leave aligned_sizeof_type(def_type), node: node
+
+    if @compiling_block
+      leave_def aligned_sizeof_type(def_type), node: node
+    else
+      leave aligned_sizeof_type(def_type), node: node
+    end
 
     false
   end
