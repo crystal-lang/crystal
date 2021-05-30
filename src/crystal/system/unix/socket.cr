@@ -239,7 +239,7 @@ module Crystal::System::Socket
     end
   end
 
-  private getter(system_local_address : ::Socket::IPAddress) do
+  private def system_local_address
     sockaddr6 = uninitialized LibC::SockaddrIn6
     sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
     addrlen = sizeof(LibC::SockaddrIn6).to_u32!
@@ -251,7 +251,7 @@ module Crystal::System::Socket
     ::Socket::IPAddress.from(sockaddr, addrlen)
   end
 
-  private getter(system_remote_address : ::Socket::IPAddress) do
+  private def system_remote_address
     sockaddr6 = uninitialized LibC::SockaddrIn6
     sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
     addrlen = sizeof(LibC::SockaddrIn6).to_u32!
