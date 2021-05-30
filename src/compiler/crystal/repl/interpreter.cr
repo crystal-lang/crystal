@@ -114,6 +114,7 @@ class Crystal::Repl::Interpreter
     node = node.transform(@cleanup_transformer)
 
     # Declare local variables
+    # TODO: reuse previously declared variables
     @main_visitor.meta_vars.each do |name, meta_var|
       @local_vars.declare(name, meta_var.type)
     end
@@ -366,35 +367,14 @@ class Crystal::Repl::Interpreter
   end
 
   private macro leave(size)
-    if @call_stack.size == 1
-      @call_stack.pop
-      return_value = Pointer(UInt8).malloc({{size}})
-      return_value.copy_from(stack_bottom_after_local_vars, {{size}})
-      stack_shrink_by({{size}})
-      break
+    # Remember the point the stack reached
+    %old_stack = stack
+    %previous_call_frame = @call_stack.pop
+
+    if @call_stack.empty?
+      return_value({{size}})
     else
-      # Remember the point the stack reached
-      %old_stack = stack
-      %previous_call_frame = @call_stack.pop
-
-      %call_frame = @call_stack.last
-
-      # Restore ip, instructions and stack bottom
-      instructions = %call_frame.instructions
-      nodes = %call_frame.nodes
-      ip = %call_frame.ip
-      stack_bottom = %call_frame.stack_bottom
-      stack = %call_frame.stack
-
-      # Copy the return value to a constant, if the frame was for a constant
-      if %previous_call_frame.constant_index != -1
-        (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
-      end
-
-      # Ccopy the return value
-      stack_move_from(%old_stack - {{size}}, {{size}})
-
-      # TODO: clean up stack
+      leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
     end
   end
 
@@ -404,34 +384,44 @@ class Crystal::Repl::Interpreter
     %previous_call_frame = @call_stack.pop
 
     if %previous_call_frame.real_frame_index == 0
-      return_value = Pointer(UInt8).malloc({{size}})
-      return_value.copy_from(stack_bottom_after_local_vars, {{size}})
-      stack_shrink_by({{size}})
-      break
+      return_value({{size}})
     else
       until @call_stack.size == %previous_call_frame.real_frame_index
         @call_stack.pop
       end
 
-      %call_frame = @call_stack.last
-
-      # Restore ip, instructions and stack bottom
-      instructions = %call_frame.instructions
-      nodes = %call_frame.nodes
-      ip = %call_frame.ip
-      stack_bottom = %call_frame.stack_bottom
-      stack = %call_frame.stack
-
-      # Copy the return value to a constant, if the frame was for a constant
-      if %previous_call_frame.constant_index != -1
-        (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
-      end
-
-      # Ccopy the return value
-      stack_move_from(%old_stack - {{size}}, {{size}})
-
-      # TODO: clean up stack
+      leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
     end
+  end
+
+  private macro return_value(size)
+    return_value = Pointer(UInt8).malloc({{size}})
+    return_value.copy_from(stack_bottom_after_local_vars, {{size}})
+    stack_shrink_by({{size}})
+    break
+  end
+
+  private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
+    %old_stack = {{old_stack}}
+    %previous_call_frame = {{previous_call_frame}}
+    %call_frame = @call_stack.last
+
+    # Restore ip, instructions and stack bottom
+    instructions = %call_frame.instructions
+    nodes = %call_frame.nodes
+    ip = %call_frame.ip
+    stack_bottom = %call_frame.stack_bottom
+    stack = %call_frame.stack
+
+    # Copy the return value to a constant, if the frame was for a constant
+    if %previous_call_frame.constant_index != -1
+      (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
+    end
+
+    # Ccopy the return value
+    stack_move_from(%old_stack - {{size}}, {{size}})
+
+    # TODO: clean up stack
   end
 
   private macro set_ip(ip)
