@@ -1527,6 +1527,22 @@ describe Crystal::Repl::Interpreter do
         bar
       CODE
     end
+
+    it "interprets next inside block" do
+      interpret(<<-CODE).should eq(10)
+        def foo
+          yield
+        end
+
+        a = 0
+        foo do
+          if a == 0
+            next 10
+          end
+          20
+        end
+      CODE
+    end
   end
 
   context "casts" do

@@ -690,6 +690,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.named_args.try &.each &.value.accept(self)
   end
 
+  def visit(node : Next)
+    exp = node.exp
+
+    exp_type =
+      if exp
+        request_value(exp)
+        exp.type
+      else
+        put_nil node: node
+        @context.program.nil_type
+      end
+
+    # TODO: convert?
+    # def_type = @def.not_nil!.type
+    # convert node, exp_type, def_type
+
+    if @compiling_block
+      leave aligned_sizeof_type(exp_type), node: node
+    else
+      node.raise "BUG: missing interpret next outside of block"
+    end
+
+    false
+  end
+
   def visit(node : Yield)
     compiled_block = @compiled_block.not_nil!
     block = compiled_block.block
