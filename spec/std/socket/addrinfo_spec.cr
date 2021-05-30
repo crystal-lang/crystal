@@ -1,5 +1,5 @@
 require "spec"
-require "socket"
+require "socket/addrinfo"
 
 describe Socket::Addrinfo do
   describe ".resolve" do

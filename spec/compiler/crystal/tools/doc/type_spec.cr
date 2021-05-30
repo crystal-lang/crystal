@@ -97,5 +97,25 @@ describe Doc::Type do
       foo = generator.type(program.types["Foo"])
       foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">Foo</a>))
     end
+
+    it "ASTNode has no superclass" do
+      program = semantic(<<-CODE).program
+        module Crystal
+          module Macros
+            class ASTNode
+            end
+            class Arg < ASTNode
+            end
+          end
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      macros_module = program.types["Crystal"].types["Macros"]
+      astnode = generator.type(macros_module.types["ASTNode"])
+      astnode.superclass.should eq(nil)
+      # Sanity check: subclasses of ASTNode has the right superclass
+      generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
+    end
   end
 end

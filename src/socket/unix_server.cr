@@ -34,7 +34,7 @@ class UNIXServer < UNIXSocket
   def initialize(@path : String, type : Type = Type::STREAM, backlog : Int = 128)
     super(Family::UNIX, type)
 
-    bind(UNIXAddress.new(path), path) do |error|
+    system_bind(UNIXAddress.new(path), path) do |error|
       close(delete: false)
       raise error
     end
@@ -68,7 +68,7 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
-    if client_fd = accept_impl
+    if client_fd = system_accept
       sock = UNIXSocket.new(fd: client_fd, type: type, path: @path)
       sock.sync = sync?
       sock

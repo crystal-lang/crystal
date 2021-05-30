@@ -13,7 +13,7 @@ module Crystal::System::Dir
 
   def self.open(path : String) : DirHandle
     unless ::Dir.exists? path
-      raise ::File::Error.from_errno("Error opening directory", Errno::ENOENT, file: path)
+      raise ::File::Error.from_os_error("Error opening directory", Errno::ENOENT, file: path)
     end
 
     DirHandle.new(LibC::INVALID_HANDLE_VALUE, to_windows_path(path + "\\*"))
@@ -31,7 +31,7 @@ module Crystal::System::Dir
         if error == WinError::ERROR_FILE_NOT_FOUND
           return nil
         else
-          raise ::File::Error.from_winerror("Error reading directory entries", error, file: path)
+          raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
       end
     else
@@ -43,7 +43,7 @@ module Crystal::System::Dir
         if error == WinError::ERROR_NO_MORE_FILES
           return nil
         else
-          raise ::File::Error.from_winerror("Error reading directory entries", error, file: path)
+          raise ::File::Error.from_os_error("Error reading directory entries", error, file: path)
         end
       end
     end
