@@ -239,35 +239,28 @@ module Crystal::System::Socket
     end
   end
 
-  @local_address_cache : ::Socket::IPAddress?
-  @remote_address_cache : ::Socket::IPAddress?
+  private getter(system_local_address : ::Socket::IPAddress) do
+    sockaddr6 = uninitialized LibC::SockaddrIn6
+    sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
+    addrlen = sizeof(LibC::SockaddrIn6).to_u32!
 
-  private def system_local_address
-    @local_address_cache ||= begin
-      sockaddr6 = uninitialized LibC::SockaddrIn6
-      sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
-      addrlen = sizeof(LibC::SockaddrIn6).to_u32!
-
-      if LibC.getsockname(fd, sockaddr, pointerof(addrlen)) != 0
-        raise ::Socket::Error.from_errno("getsockname")
-      end
-
-      ::Socket::IPAddress.from(sockaddr, addrlen)
+    if LibC.getsockname(fd, sockaddr, pointerof(addrlen)) != 0
+      raise ::Socket::Error.from_errno("getsockname")
     end
+
+    ::Socket::IPAddress.from(sockaddr, addrlen)
   end
 
-  private def system_remote_address
-    @remote_address_cache ||= begin
-      sockaddr6 = uninitialized LibC::SockaddrIn6
-      sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
-      addrlen = sizeof(LibC::SockaddrIn6).to_u32!
+  private getter(system_remote_address : ::Socket::IPAddress) do
+    sockaddr6 = uninitialized LibC::SockaddrIn6
+    sockaddr = pointerof(sockaddr6).as(LibC::Sockaddr*)
+    addrlen = sizeof(LibC::SockaddrIn6).to_u32!
 
-      if LibC.getpeername(fd, sockaddr, pointerof(addrlen)) != 0
-        raise ::Socket::Error.from_errno("getpeername")
-      end
-
-      ::Socket::IPAddress.from(sockaddr, addrlen)
+    if LibC.getpeername(fd, sockaddr, pointerof(addrlen)) != 0
+      raise ::Socket::Error.from_errno("getpeername")
     end
+
+    ::Socket::IPAddress.from(sockaddr, addrlen)
   end
 
   {% if flag?(:openbsd) %}
