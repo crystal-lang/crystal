@@ -18,9 +18,6 @@ lib LibC
   fun GetSystemTimeAsFileTime(time : FILETIME*)
   fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
 
-  fun QueryPerformanceCounter(performance_count : Int64*) : BOOL
-  fun QueryPerformanceFrequency(frequency : Int64*) : BOOL
-
   fun GetCurrentDirectoryW(nBufferLength : DWORD, lpBuffer : LPWSTR) : DWORD
   fun SetCurrentDirectoryW(lpPathname : LPWSTR) : BOOL
 

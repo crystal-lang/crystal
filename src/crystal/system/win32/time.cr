@@ -1,5 +1,6 @@
 require "c/winbase"
 require "c/timezoneapi"
+require "c/windows"
 require "./zone_names"
 
 module Crystal::System::Time
