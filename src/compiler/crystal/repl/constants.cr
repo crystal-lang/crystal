@@ -1,6 +1,8 @@
 require "./repl"
 
 class Crystal::Repl::Constants
+  OFFSET_FROM_INITIALIZED = 8
+
   def initialize(@context : Context)
     @types = {} of Const => Type
     @const_to_index = {} of Const => Int32
@@ -20,7 +22,11 @@ class Crystal::Repl::Constants
     @index_to_compiled_def[index] = compiled_def
 
     @types[const] = type
-    @bytesize += 1 # We need a bit to know if the constant was already initialized
+    # We need a bit to know if the constant was already initialized,
+    # but we use a byte so that things are aligned.
+    # TODO: maybe put this information somewhere else?
+    # Though here it's closer to the constant so maybe good for cache locality.
+    @bytesize += OFFSET_FROM_INITIALIZED
     @bytesize += @context.aligned_sizeof_type(type)
 
     index

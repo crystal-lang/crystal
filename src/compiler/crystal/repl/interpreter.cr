@@ -415,7 +415,7 @@ class Crystal::Repl::Interpreter
 
     # Copy the return value to a constant, if the frame was for a constant
     if %previous_call_frame.constant_index != -1
-      (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + 1, {{size}})
+      (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + Constants::OFFSET_FROM_INITIALIZED, {{size}})
     end
 
     # Ccopy the return value
@@ -448,7 +448,7 @@ class Crystal::Repl::Interpreter
     # TODO: make this atomic
     %initialized = @constants[{{index}}]
     if %initialized == 1_u8
-      stack_move_from(@constants + {{index}} + 1, {{size}})
+      stack_move_from(@constants + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
     else
       @constants[{{index}}] = 1_u8
       %compiled_def = @context.constants.index_to_compiled_def({{index}})
