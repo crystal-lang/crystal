@@ -222,7 +222,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
-    ary = [] of typeof((yield first_internal).not_nil!)
+    ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
     each do |e|
       v = yield e
       unless v.is_a?(Nil)
@@ -525,7 +525,7 @@ module Enumerable(T)
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
   def flat_map(&block : T -> _)
-    ary = [] of typeof(flat_map_type(yield first_internal))
+    ary = [] of typeof(flat_map_type(yield Enumerable.element_type(self)))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -1233,7 +1233,7 @@ module Enumerable(T)
   # ```
   def reject(type : U.class) forall U
     ary = [] of typeof(begin
-      e = first_internal
+      e = Enumerable.element_type(self)
       e.is_a?(U) ? raise("") : e
     end)
     each { |e| ary << e unless e.is_a?(U) }
@@ -1480,7 +1480,7 @@ module Enumerable(T)
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
   def sum(&block)
-    sum(additive_identity(Reflect(typeof(yield first_internal)))) do |value|
+    sum(additive_identity(Reflect(typeof(yield Enumerable.element_type(self))))) do |value|
       yield value
     end
   end
@@ -1559,7 +1559,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(&block)
-    product(Reflect(typeof(yield first_internal)).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -1650,7 +1650,7 @@ module Enumerable(T)
   # Tuple.new({:a, 1}, {:c, 2}).to_h # => {:a => 1, :c => 2}
   # ```
   def to_h
-    each_with_object(Hash(typeof(first_internal[0]), typeof(first_internal[1])).new) do |item, hash|
+    each_with_object(Hash(typeof(Enumerable.element_type(self)[0]), typeof(Enumerable.element_type(self)[1])).new) do |item, hash|
       hash[item[0]] = item[1]
     end
   end
@@ -1912,9 +1912,20 @@ module Enumerable(T)
     end
   end
 
-  # :nodoc:
-  def first_internal
-    # overridden in Tuple to disable literal index lookup
-    first
+  # Returns a value with the same type as an element of *x*, even if *x* is not
+  # an `Enumerable`.
+  #
+  # Used by splat expansion inside array literals. For example, this code
+  #
+  # ```
+  # [1, *{2, 3.5}, 4]
+  # ```
+  #
+  # will end up calling `typeof(1, ::Enumerable.element_type({2, 3.5}), 4)`.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  def self.element_type(x)
+    x.each { |elem| return elem }
+    ::raise ""
   end
 end

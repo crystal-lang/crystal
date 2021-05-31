@@ -1275,7 +1275,7 @@ class Array(T)
   end
 
   def self.product(arrays : Array(Array))
-    result = [] of Array(typeof(arrays.first_internal.first_internal))
+    result = [] of Array(typeof(Enumerable.element_type Enumerable.element_type arrays))
     each_product(arrays) do |product|
       result << product
     end
@@ -1857,7 +1857,7 @@ class Array(T)
   # a           # => [[:a, :b], [:c, :d], [:e, :f]]
   # ```
   def transpose
-    return Array(Array(typeof(first_internal.first_internal))).new if empty?
+    return Array(Array(typeof(Enumerable.element_type Enumerable.element_type self))).new if empty?
 
     len = self[0].size
     (1...@size).each do |i|
@@ -1865,8 +1865,8 @@ class Array(T)
       raise IndexError.new if len != l
     end
 
-    Array(Array(typeof(first_internal.first_internal))).new(len) do |i|
-      Array(typeof(first_internal.first_internal)).new(@size) do |j|
+    Array(Array(typeof(Enumerable.element_type Enumerable.element_type self))).new(len) do |i|
+      Array(typeof(Enumerable.element_type Enumerable.element_type self)).new(@size) do |j|
         self[j][i]
       end
     end
