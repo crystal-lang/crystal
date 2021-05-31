@@ -1,19 +1,44 @@
-require "c/winbase"
+{% if flag?(:win32) %}
+  require "c/winbase"
+{% end %}
 
+# `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
 enum WinError : UInt32
+  # Returns the value of [`GetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror)
+  # which is used to retrieve the error code of the previously called win32 function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
   def self.value : self
-    WinError.new LibC.GetLastError
+    {% if flag?(:win32) %}
+      WinError.new LibC.GetLastError
+    {% else %}
+      raise NotImplementedError.new("WinError.value")
+    {% end %}
   end
 
+  # Returns the system error message associated with this error code.
+  #
+  # The message is retrieved via [`FormatMessageW`](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-formatmessagew)
+  # using the current default `LANGID`.
+  #
+  # On non-win32 platforms the result is always an empty string.
   def message : String
-    buffer = uninitialized UInt16[256]
-    size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
-    String.from_utf16(buffer.to_slice[0, size]).strip
+    {% if flag?(:win32) %}
+      buffer = uninitialized UInt16[256]
+      size = LibC.FormatMessageW(LibC::FORMAT_MESSAGE_FROM_SYSTEM, nil, value, 0, buffer, buffer.size, nil)
+      String.from_utf16(buffer.to_slice[0, size]).strip
+    {% else %}
+      ""
+    {% end %}
   end
 
-  # https://github.com/python/cpython/blob/master/PC/generrmap.c
-  # https://github.com/python/cpython/blob/master/PC/errmap.h
-  def to_errno
+  # Transforms this `WinError` value to the equivalent `Errno` value.
+  #
+  # This is only defined for some values. If no transformation is defined for
+  # a specific value, the default result is `Errno::EINVAL`.
+  def to_errno : Errno
+    # https://github.com/python/cpython/blob/master/PC/generrmap.c
+    # https://github.com/python/cpython/blob/master/PC/errmap.h
     case self
     when ERROR_FILE_NOT_FOUND            then Errno::ENOENT
     when ERROR_PATH_NOT_FOUND            then Errno::ENOENT

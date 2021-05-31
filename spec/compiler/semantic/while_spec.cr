@@ -6,11 +6,37 @@ describe "Semantic: while" do
   end
 
   it "types while with break without value" do
-    assert_type("while true; break; end") { nil_type }
+    assert_type("while 1; break; end") { nil_type }
   end
 
   it "types while with break with value" do
-    assert_type("while true; break 1; end") { nil_type }
+    assert_type("while 1; break 'a'; end") { nilable char }
+  end
+
+  it "types while with multiple breaks with value" do
+    assert_type(%(
+      while 1
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { nilable union_of(char, tuple_of([string, int32])) }
+  end
+
+  it "types endless while with break without value" do
+    assert_type("while true; break; end") { nil_type }
+  end
+
+  it "types endless while with break with value" do
+    assert_type("while true; break 1; end") { int32 }
+  end
+
+  it "types endless while with multiple breaks with value" do
+    assert_type(%(
+      while true
+        break 'a' if 1
+        break "", 123 if 1
+      end
+      )) { union_of(char, tuple_of([string, int32])) }
   end
 
   it "reports break cannot be used outside a while" do
@@ -307,5 +333,55 @@ describe "Semantic: while" do
       end
       x
       )) { int32 }
+  end
+
+  it "doesn't fail on new variables inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(x = 1)
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on nested conditionals inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(1 || 'a')
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on Expressions condition (1)" do
+    assert_type(%(
+      def foo
+        while (v = 1; true)
+          return typeof(v)
+        end
+        'a'
+      end
+
+      foo
+      )) { union_of int32.metaclass, char }
+  end
+
+  it "doesn't fail on Expressions condition (2)" do
+    assert_type(%(
+      def foo
+        while (v = nil; true)
+          return typeof(v)
+        end
+        'a'
+      end
+
+      foo
+      )) { union_of nil_type.metaclass, char }
   end
 end

@@ -1622,6 +1622,27 @@ module Crystal
         end
       end
 
+      it "== and != devirtualize generic type arguments (#10730)" do
+        assert_type(%(
+          class A
+          end
+
+          class B < A
+          end
+
+          module Foo(T)
+            def self.foo
+              {
+                {% if T == A %} 1 {% else %} 'a' {% end %},
+                {% if T != A %} 1 {% else %} 'a' {% end %},
+              }
+            end
+          end
+
+          Foo(A).foo
+          )) { tuple_of([int32, char]) }
+      end
+
       it "executes <" do
         assert_macro("x", "{{x < Reference}}", "true") do |program|
           [TypeNode.new(program.string)] of ASTNode
