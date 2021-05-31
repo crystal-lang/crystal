@@ -611,6 +611,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         block.vars.try &.each do |name, var|
           next if var.context != block
 
+          if @local_vars.name_to_index?(name)
+            var.raise "BUG: can't declare block var that overwrites local var yet"
+          end
+
           @local_vars.declare(name, var.type)
         end
 
