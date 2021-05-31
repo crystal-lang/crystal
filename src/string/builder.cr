@@ -116,10 +116,6 @@ class String::Builder < IO
     @bytesize + String::HEADER_SIZE
   end
 
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if real_bytesize == @capacity
-  end
-
   private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
