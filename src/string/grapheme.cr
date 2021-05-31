@@ -8,7 +8,7 @@ class String
   # ```
   # "🧙‍♂️💈".graphemes # => ["🧙‍♂️", '💈']
   # ```
-  def graphemes : Array(Char | String)
+  def graphemes : Array(Grapheme::Cluster)
     Grapheme::Graphemes.new(self).to_a
   end
 
@@ -19,7 +19,7 @@ class String
   #   p! cluster
   # end
   # ```
-  def each_grapheme(& : (Char | String) -> Nil) : Nil
+  def each_grapheme(& : Grapheme::Cluster -> Nil) : Nil
     Grapheme::Graphemes.new(self).each do |cluster|
       yield cluster
     end
@@ -31,7 +31,7 @@ class String
   #   pp cluster
   # end
   # ```
-  def each_grapheme : Iterator(Char | String)
+  def each_grapheme : Iterator(Grapheme::Cluster)
     Grapheme::Graphemes.new(self)
   end
 end

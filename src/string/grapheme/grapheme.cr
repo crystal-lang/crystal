@@ -1,18 +1,33 @@
 require "./properties"
 
 module String::Grapheme
-  # Graphemes implements an iterator over Unicode extended grapheme clusters,
-  # specified in the Unicode Standard Annex #29. Grapheme clusters correspond to
+  # Grapheme Cluster correspond to
   # "user-perceived characters". These characters often consist of multiple
   # code points (e.g. the "woman kissing woman" emoji consists of 8 code points:
   # woman + ZWJ + heavy black heart (2 code points) + ZWJ + kiss mark + ZWJ +
   # woman) and the rules described in Annex #29 must be applied to group those
   # code points into clusters perceived by the user as one character.
+  struct Cluster
+    @cluster : Array(Tuple(Char, Int32))
+
+    protected def initialize(@cluster)
+    end
+
+    def pos
+      @cluster.size > 0 ? @cluster[0][1] : -1
+    end
+
+    def to_s(io : IO) : Nil
+      io << (@cluster.size > 1 ? @cluster.map(&.[0]).join : @cluster[0][0])
+    end
+  end
+
+  # Graphemes implements an iterator over Unicode extended grapheme clusters,
+  # specified in the Unicode Standard Annex #29.
   class Graphemes
-    include Iterator(Char | String)
+    include Iterator(Cluster)
 
     @last_char : Char? = nil
-    getter pos : Int32 = -1
 
     def initialize(str : String)
       @reader = Char::Reader.new(str)
@@ -24,11 +39,9 @@ module String::Grapheme
     end
 
     def next
-      @pos = -1
       move_next
       return stop if @cluster.empty?
-      val = @cluster.size > 1 ? @cluster.map(&.[0]).join : @cluster[0][0]
-      @pos = @cluster[0][1]
+      val = Cluster.new(@cluster.dup)
       @cluster.clear
       val
     end
