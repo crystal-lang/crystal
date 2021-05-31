@@ -386,6 +386,18 @@ class Crystal::Repl::Interpreter
     leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
   end
 
+  private macro break_block(size)
+    # Remember the point the stack reached
+    %old_stack = stack
+    %previous_call_frame = @call_stack.pop
+
+    until @call_stack.size - 1 == %previous_call_frame.real_frame_index
+      @call_stack.pop
+    end
+
+    leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
+  end
+
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
     if @call_stack.empty?
       return_value = Pointer(UInt8).malloc({{size}})

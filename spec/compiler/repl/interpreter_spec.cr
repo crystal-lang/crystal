@@ -1657,6 +1657,29 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "interprets break inside block" do
+      interpret(<<-CODE).should eq(20)
+        def baz
+          yield
+        end
+
+        def foo
+          baz do
+            w = yield
+            w + 100
+          end
+        end
+
+        a = 0
+        foo do
+          if a == 0
+            break 20
+          end
+          20
+        end
+      CODE
+    end
   end
 
   context "casts" do

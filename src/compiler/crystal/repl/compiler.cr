@@ -723,22 +723,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Break)
+    exp = node.exp
+
+    exp_type =
+      if exp
+        request_value(exp)
+        exp.type
+      else
+        put_nil node: node
+
+        @context.program.nil_type
+      end
+
     if compiling_block = @compiling_block
-      node.raise "BUG: missing interpret break inside of block"
+      # TODO: convert
+
+      break_block aligned_sizeof_type(exp_type), node: node
     else
       target_while = @while.not_nil!
-
-      exp = node.exp
-
-      exp_type =
-        if exp
-          request_value(exp)
-          exp.type
-        else
-          put_nil node: node
-
-          @context.program.nil_type
-        end
 
       convert node, exp_type, target_while.type
 

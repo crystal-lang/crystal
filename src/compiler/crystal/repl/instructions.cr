@@ -963,6 +963,12 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       leave_def(size),
     },
+    break_block: {
+      operands:   [size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       break_block(size),
+    },
     # >>> Calls (4)
 
     # <<< Allocate (2)
