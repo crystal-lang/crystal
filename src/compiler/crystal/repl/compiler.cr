@@ -612,7 +612,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           next if var.context != block
 
           if @local_vars.name_to_index?(name)
-            var.raise "BUG: can't declare block var that overwrites local var yet"
+            node.raise "BUG: can't declare block var that overwrites local var yet"
           end
 
           @local_vars.declare(name, var.type)

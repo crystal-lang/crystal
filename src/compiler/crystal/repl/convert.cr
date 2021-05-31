@@ -37,6 +37,10 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def convert_distinct(node : ASTNode, from : Type, to : NoReturnType)
+    # Nothing
+  end
+
   private def convert_distinct(node : ASTNode, from : NilableType, to : NonGenericClassType)
     # Nothing to do
   end
