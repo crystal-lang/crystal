@@ -27,15 +27,6 @@ lib LibC
   fun CreateHardLinkW(lpFileName : LPWSTR, lpExistingFileName : LPWSTR, lpSecurityAttributes : Void*) : BOOL
   fun CreateSymbolicLinkW(lpSymlinkFileName : LPWSTR, lpTargetFileName : LPWSTR, dwFlags : DWORD) : BOOLEAN
 
-  struct WIN32_FILE_ATTRIBUTE_DATA
-    dwFileAttributes : DWORD
-    ftCreationTime : FILETIME
-    ftLastAccessTime : FILETIME
-    ftLastWriteTime : FILETIME
-    nFileSizeHigh : DWORD
-    nFileSizeLow : DWORD
-  end
-
   struct SECURITY_ATTRIBUTES
     nLength : DWORD
     lpSecurityDescriptor : Void*

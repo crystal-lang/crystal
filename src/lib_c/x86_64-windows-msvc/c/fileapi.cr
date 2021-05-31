@@ -12,6 +12,15 @@ lib LibC
 
   fun GetFileType(hFile : HANDLE) : DWORD
 
+  struct WIN32_FILE_ATTRIBUTE_DATA
+    dwFileAttributes : DWORD
+    ftCreationTime : FILETIME
+    ftLastAccessTime : FILETIME
+    ftLastWriteTime : FILETIME
+    nFileSizeHigh : DWORD
+    nFileSizeLow : DWORD
+  end
+
   struct BY_HANDLE_FILE_INFORMATION
     dwFileAttributes : DWORD
     ftCreationTime : FILETIME
