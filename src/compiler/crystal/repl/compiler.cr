@@ -347,6 +347,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     body_index = @instructions.size
 
     old_while_breaks = @while_breaks
+    old_while = @while
+    @while = node
     while_breaks = @while_breaks = [] of Int32
 
     # Now write the body
@@ -360,14 +362,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # If the condition holds, jump back to the body
     branch_if body_index, node: nil
 
+    # Here we are at the point where the condition didn't hold anymore.
+    # We must convert `nil` to whatever while's type is.
+    convert node.body, @context.program.nil_type, node.type
+
     # Otherwise we are at the end of the while.
     # Any breaks that happened lead us to here
     while_breaks.each do |while_break|
       patch_jump(while_break)
     end
 
-    put_nil node: nil if @wants_value
+    unless @wants_value
+      pop aligned_sizeof_type(node), node: nil
+    end
 
+    @while = old_while
     @while_breaks = old_while_breaks
 
     false
@@ -705,20 +714,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Break)
-    exp = node.exp
-
-    exp_type =
-      if exp
-        request_value(exp)
-        exp.type
-      else
-        put_nil node: node
-        @context.program.nil_type
-      end
-
     if compiling_block = @compiling_block
       node.raise "BUG: missing interpret break inside of block"
     else
+      target_while = @while.not_nil!
+
+      exp = node.exp
+
+      exp_type =
+        if exp
+          request_value(exp)
+          exp.type
+        else
+          put_nil node: node
+
+          @context.program.nil_type
+        end
+
+      convert node, exp_type, target_while.type
+
       jump 0, node: nil
       @while_breaks.not_nil! << patch_location
     end
