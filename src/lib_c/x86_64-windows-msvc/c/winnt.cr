@@ -1,3 +1,5 @@
+require "c/int_safe"
+
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32

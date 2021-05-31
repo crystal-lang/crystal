@@ -1,5 +1,6 @@
 {% if flag?(:win32) %}
   require "c/winbase"
+  require "c/errhandlingapi"
 {% end %}
 
 # `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
