@@ -16,7 +16,7 @@ describe OpenSSL::SSL::Socket do
           end
         end
 
-        socket = tcp_server.accept
+        socket = with_timeout { tcp_server.accept }
         ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context)
         ssl_server.gets.should eq("hello")
         ssl_server.close
@@ -33,9 +33,9 @@ describe OpenSSL::SSL::Socket do
           end
         end
 
-        socket = tcp_server.accept
+        socket = with_timeout { tcp_server.accept }
         ssl_server = OpenSSL::SSL::Socket::Server.new(socket, server_context, accept: false)
-        ssl_server.accept
+        with_timeout { ssl_server.accept }
         ssl_server.gets.should eq("hello")
         ssl_server.close
       end
@@ -52,7 +52,7 @@ describe OpenSSL::SSL::Socket do
         end
       end
 
-      client = server.accept
+      client = with_timeout { server.accept }
       client.cipher.should_not be_empty
       client.close
     end
@@ -68,7 +68,7 @@ describe OpenSSL::SSL::Socket do
         end
       end
 
-      client = server.accept
+      client = with_timeout { server.accept }
       client.tls_version.should contain "TLS"
       client.close
     end
@@ -91,7 +91,7 @@ describe OpenSSL::SSL::Socket do
         end
       end
 
-      client = server.accept # shouldn't raise "Broken pipe (Errno)"
+      client = with_timeout { server.accept } # shouldn't raise "Broken pipe (Errno)"
       client.close
     end
   end
