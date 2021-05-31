@@ -2,6 +2,8 @@ require "./repl"
 require "./instructions"
 
 class Crystal::Repl::Compiler < Crystal::Visitor
+  record CompilingBlock, block : Block, target_def : Def
+
   private getter scope : Type
   private getter def : Def?
 
@@ -40,8 +42,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(node), node: nil
   end
 
-  def compile_block(node : Block) : Nil
-    @compiling_block = node
+  def compile_block(node : Block, target_def : Def) : Nil
+    @compiling_block = CompilingBlock.new(node, target_def)
 
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name)
@@ -52,20 +54,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     convert node.body, node.body.type, node.type
 
     leave aligned_sizeof_type(node), node: nil
-
-    @compiling_block = nil
   end
 
   def compile_def(node : Def) : Nil
     node.body.accept self
 
+    final_type = node.type
+
+    compiled_block = @compiled_block
+    if compiled_block
+      final_type = merge_block_break_type(final_type, compiled_block.block)
+    end
+
     if node.type.nil_type?
       pop aligned_sizeof_type(node.body), node: nil
     else
-      convert node.body, node.body.type, node.type
+      convert node.body, node.body.type, final_type
     end
 
-    leave aligned_sizeof_type(node.type), node: nil
+    leave aligned_sizeof_type(final_type), node: nil
 
     @instructions
   end
@@ -404,6 +411,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
     def_type = @def.not_nil!.type
+
+    compiled_block = @compiled_block
+    if compiled_block
+      def_type = merge_block_break_type(def_type, compiled_block.block)
+    end
+
     convert node, exp_type, def_type
 
     if @compiling_block
@@ -609,7 +622,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           nodes: compiled_block.nodes,
           scope: @scope, def: @def)
         compiler.compiled_block = @compiled_block
-        compiler.compile_block(block)
+        compiler.compile_block(block, target_def)
 
         if @context.decompile
           puts "=== #{target_def.owner}##{target_def.name}#block ==="
@@ -736,9 +749,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
     if compiling_block = @compiling_block
-      # TODO: convert
+      block = compiling_block.block
+      target_def = compiling_block.target_def
 
-      break_block aligned_sizeof_type(exp_type), node: node
+      final_type = merge_block_break_type(target_def.type, block)
+
+      convert node, exp_type, final_type
+
+      break_block aligned_sizeof_type(final_type), node: node
     else
       target_while = @while.not_nil!
 
@@ -764,8 +782,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @context.program.nil_type
         end
 
-      convert node, exp_type, compiling_block.type
-      leave aligned_sizeof_type(compiling_block.type), node: node
+      convert node, exp_type, compiling_block.block.type
+      leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
       if exp
         discard_value(exp)
@@ -852,6 +870,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @wants_value = wants_value
     node.accept self
     @wants_value = old_wants_value
+  end
+
+  # TODO: block.break shouldn't exist: the type should be merged in target_def
+  private def merge_block_break_type(def_type : Type, block : Block)
+    block_break_type = block.break.type?
+    if block_break_type
+      @context.program.type_merge([def_type, block_break_type] of Type) ||
+        @context.program.no_return
+    else
+      def_type
+    end
   end
 
   private def put_true(*, node : ASTNode?)

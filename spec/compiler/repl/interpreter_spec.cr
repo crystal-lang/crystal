@@ -1680,6 +1680,72 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "interprets break inside block (union, through break)" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield
+          'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 0
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Int32)
+          w
+        else
+          30
+        end
+      CODE
+    end
+
+    it "interprets break inside block (union, through normal flow)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+          'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 1
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Char)
+          w
+        else
+          'b'
+        end
+      CODE
+    end
+
+    it "interprets break inside block (union, through return)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+          return 'a'
+        end
+
+        a = 0
+        w = foo do
+          if a == 1
+            break 20
+          end
+          20
+        end
+        if w.is_a?(Char)
+          w
+        else
+          'b'
+        end
+      CODE
+    end
   end
 
   context "casts" do
