@@ -1148,22 +1148,6 @@ describe "Semantic: class" do
     )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
   end
 
-  it "errors if reading instance var of union type (#7187)" do
-    assert_error %(
-      class Foo
-        @x = 1
-      end
-
-      class Bar
-        @x = 1
-      end
-
-      z = Foo.new || Bar.new
-      z.@x
-      ),
-      "can't read instance variables of union types (@x of (Bar | Foo))"
-  end
-
   it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do
     assert_type(%(
       require "prelude"
