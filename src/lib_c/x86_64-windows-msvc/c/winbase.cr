@@ -18,9 +18,6 @@ lib LibC
   fun GetSystemTimeAsFileTime(time : FILETIME*)
   fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
 
-  fun GetCurrentDirectoryW(nBufferLength : DWORD, lpBuffer : LPWSTR) : DWORD
-  fun SetCurrentDirectoryW(lpPathname : LPWSTR) : BOOL
-
   SYMBOLIC_LINK_FLAG_DIRECTORY                 = 0x1
   SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE = 0x2
 
