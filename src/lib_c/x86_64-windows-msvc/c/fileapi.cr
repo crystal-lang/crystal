@@ -1,5 +1,6 @@
 require "c/winnt"
 require "c/basetsd"
+require "c/wtypesbase"
 
 lib LibC
   fun GetFullPathNameW(lpFileName : LPWSTR, nBufferLength : DWORD, lpBuffer : LPWSTR, lpFilePart : LPWSTR*) : DWORD
