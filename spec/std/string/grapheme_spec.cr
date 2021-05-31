@@ -635,7 +635,7 @@ describe "String Grapheme" do
       index = 0
       gr.each do |v|
         index.should be < tc[:expected].size, "Test case #{tn} \"#{tc[:original]}\" failed: More grapheme clusters return than expected"
-        codepoints = v.is_a?(Char) ? [v.ord] : v.as(String).codepoints
+        codepoints = v.to_s.codepoints
         codepoints.size.should eq(tc[:expected][index].size), "Test case #{tn} \"#{tc[:original]}\" failed: Grapheme cluster at index #{index} has #{codepoints.size} codepoints #{codepoints}, #{tc[:expected][index].size} expected #{tc[:expected][index]}"
 
         codepoints.each_with_index do |c, i|
@@ -651,7 +651,7 @@ describe "String Grapheme" do
     gr = "möp".each_grapheme
     gr.next
     gr.next
-    val = gr.next
-    val.should eq('p')
+    val = gr.next.to_s
+    val.should eq("p")
   end
 end
