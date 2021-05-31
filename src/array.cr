@@ -615,7 +615,7 @@ class Array(T)
   # ```
   #
   # Raises `IndexError` if the start index is out of range (`range.begin >
-  # self.size || range.begin < -self.size). If `range.begin == self.size` an
+  # self.size || range.begin < -self.size`). If `range.begin == self.size` an
   # empty array is returned. If `range.begin > range.end`, an empty array is
   # returned.
   #
