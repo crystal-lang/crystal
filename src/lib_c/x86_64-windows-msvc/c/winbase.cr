@@ -1,6 +1,7 @@
 require "c/winnt"
 require "c/win_def"
 require "c/int_safe"
+require "c/minwinbase"
 
 lib LibC
   FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100_u32
@@ -13,22 +14,6 @@ lib LibC
 
   fun FormatMessageW(dwFlags : DWORD, lpSource : Void*, dwMessageId : DWORD, dwLanguageId : DWORD,
                      lpBuffer : LPWSTR, nSize : DWORD, arguments : Void*) : DWORD
-
-  struct FILETIME
-    dwLowDateTime : DWORD
-    dwHighDateTime : DWORD
-  end
-
-  struct SYSTEMTIME
-    wYear : WORD
-    wMonth : WORD
-    wDayOfWeek : WORD
-    wDay : WORD
-    wHour : WORD
-    wMinute : WORD
-    wSecond : WORD
-    wMilliseconds : WORD
-  end
 
   struct TIME_ZONE_INFORMATION
     bias : LONG
@@ -69,11 +54,6 @@ lib LibC
     nFileSizeLow : DWORD
   end
 
-  enum GET_FILEEX_INFO_LEVELS
-    GetFileExInfoStandard
-    GetFileExMaxInfoLevel
-  end
-
   struct SECURITY_ATTRIBUTES
     nLength : DWORD
     lpSecurityDescriptor : Void*
@@ -86,8 +66,6 @@ lib LibC
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 
   INFINITE = 0xFFFFFFFF
-
-  STILL_ACTIVE = 0x103
 
   STARTF_USESTDHANDLES = 0x00000100
 
