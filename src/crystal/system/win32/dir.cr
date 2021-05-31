@@ -1,6 +1,7 @@
 require "crystal/system/windows"
 require "c/winbase"
 require "c/direct"
+require "c/handleapi"
 
 module Crystal::System::Dir
   private class DirHandle

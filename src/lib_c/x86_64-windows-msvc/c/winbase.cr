@@ -83,10 +83,6 @@ lib LibC
     bInheritHandle : BOOL
   end
 
-  INVALID_HANDLE_VALUE = HANDLE.new(-1)
-
-  fun CloseHandle(hObject : HANDLE) : BOOL
-
   fun GetEnvironmentVariableW(lpName : LPWSTR, lpBuffer : LPWSTR, nSize : DWORD) : DWORD
   fun GetEnvironmentStringsW : LPWCH
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
@@ -97,10 +93,6 @@ lib LibC
   STILL_ACTIVE = 0x103
 
   STARTF_USESTDHANDLES = 0x00000100
-
-  fun DuplicateHandle(hSourceProcessHandle : HANDLE, hSourceHandle : HANDLE,
-                      hTargetProcessHandle : HANDLE, lpTargetHandle : HANDLE*,
-                      dwDesiredAccess : DWORD, bInheritHandle : BOOL, dwOptions : DWORD) : BOOL
 
   MOVEFILE_REPLACE_EXISTING      =  0x1_u32
   MOVEFILE_COPY_ALLOWED          =  0x2_u32
