@@ -346,15 +346,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     body_index = @instructions.size
 
-    old_while_breaks = @while_breaks
     old_while = @while
+    old_while_breaks = @while_breaks
+    old_while_nexts = @while_nexts
+
     @while = node
     while_breaks = @while_breaks = [] of Int32
+    while_nexts = @while_nexts = [] of Int32
 
     # Now write the body
     discard_value(node.body)
 
-    # Here starts the condition
+    # Here starts the condition.
+    # Any `next` that happened leads us here.
+    while_nexts.each do |while_next|
+      patch_jump(while_next)
+    end
+
     patch_jump(cond_jump_location)
     request_value(node.cond)
     value_to_bool(node.cond, node.cond.type)
@@ -367,7 +375,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     convert node.body, @context.program.nil_type, node.type
 
     # Otherwise we are at the end of the while.
-    # Any breaks that happened lead us to here
+    # Any `break` that happened leads us here
     while_breaks.each do |while_break|
       patch_jump(while_break)
     end
@@ -378,6 +386,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     @while = old_while
     @while_breaks = old_while_breaks
+    @while_nexts = old_while_nexts
 
     false
   end
@@ -743,20 +752,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Next)
     exp = node.exp
 
-    exp_type =
-      if exp
-        request_value(exp)
-        exp.type
-      else
-        put_nil node: node
-        @context.program.nil_type
-      end
-
     if compiling_block = @compiling_block
+      exp_type =
+        if exp
+          request_value(exp)
+          exp.type
+        else
+          put_nil node: node
+          @context.program.nil_type
+        end
+
       convert node, exp_type, compiling_block.type
       leave aligned_sizeof_type(compiling_block.type), node: node
     else
-      node.raise "BUG: missing interpret next outside of block"
+      if exp
+        discard_value(exp)
+      else
+        put_nil node: node
+      end
+
+      jump 0, node: nil
+      @while_nexts.not_nil! << patch_location
     end
 
     false

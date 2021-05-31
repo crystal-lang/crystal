@@ -614,6 +614,21 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "interprets next inside while" do
+      interpret(<<-CODE).should eq(1 + 2 + 8 + 9 + 10)
+        a = 0
+        x = 0
+        while a < 10
+          a += 1
+
+          next if 3 <= a <= 7
+
+          x += a
+        end
+        x
+        CODE
+    end
+
     it "discards while" do
       interpret("while 1 == 2; 3; end; 4").should eq(4)
     end
