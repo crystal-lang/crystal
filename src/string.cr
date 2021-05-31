@@ -799,7 +799,7 @@ class String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if `range.begin` is out of range.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # "hello"[6..7]? # => nil
@@ -820,7 +820,7 @@ class String
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
   def []?(start : Int, count : Int) : String?
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return byte_slice?(start, count) if single_byte_optimizable?

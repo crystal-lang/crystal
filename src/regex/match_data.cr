@@ -207,7 +207,7 @@ class Regex
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
     end
 
-    # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+    # Like `#[](Range)`, but returns `nil` if the range's start is out of range.
     def []?(range : Range)
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
     end
@@ -218,7 +218,7 @@ class Regex
       self[start, count]? || raise IndexError.new
     end
 
-    # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+    # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
     def []?(start : Int, count : Int)
       raise ArgumentError.new "Negative count: #{count}" if count < 0
       return Array(String).new if start == size

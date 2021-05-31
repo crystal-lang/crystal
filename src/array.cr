@@ -634,7 +634,7 @@ class Array(T)
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if `range.begin` is out of range.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
@@ -665,7 +665,7 @@ class Array(T)
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
   def []?(start : Int, count : Int) : self | Nil
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return Array(T).new if start == size
