@@ -351,6 +351,21 @@ describe "Semantic: doc" do
     foo.doc.should eq("Hello")
   end
 
+  it "stores doc for macro defined in macro call" do
+    result = semantic <<-CR, wants_doc: true, inject_primitives: false
+      macro def_foo
+        macro foo
+        end
+      end
+
+      # Hello
+      def_foo
+      CR
+    program = result.program
+    foo = program.macros.not_nil!["foo"].first
+    foo.doc.should eq("Hello")
+  end
+
   {% for module_type in %w[class struct module enum].map &.id %}
     it "stores doc for {{module_type}} when reopening" do
       result = semantic %(

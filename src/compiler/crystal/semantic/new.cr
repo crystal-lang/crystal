@@ -224,7 +224,7 @@ module Crystal
         init.block_arg = Var.new(block_arg.name).at(self)
       end
 
-      self.body = Expressions.from(exps).at(self)
+      self.body = Expressions.from(exps).at(self.body)
     end
 
     def self.argless_new(instance_type)
