@@ -64,8 +64,8 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
     # ```
-    def begin(n = 0)
-      @string.byte_index_to_char_index byte_begin(n)
+    def begin(n = 0) : Int32
+      @string.byte_index_to_char_index(byte_begin(n)).not_nil!
     end
 
     # Returns the position of the next character after the match.
@@ -78,8 +78,8 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
     # ```
-    def end(n = 0)
-      @string.byte_index_to_char_index byte_end(n)
+    def end(n = 0) : Int32
+      @string.byte_index_to_char_index(byte_end(n)).not_nil!
     end
 
     # Returns the position of the first byte of the *n*th match.

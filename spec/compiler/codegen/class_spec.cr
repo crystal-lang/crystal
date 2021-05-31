@@ -118,8 +118,6 @@ describe "Code gen: class" do
 
   it "codegens virtual method of generic class" do
     run("
-      require \"char\"
-
       class Object
         def foo
           bar

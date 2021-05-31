@@ -505,6 +505,11 @@ class Crystal::Call
       str << "&block"
     end
     str << ')'
+
+    if free_vars = a_def.free_vars
+      str << " forall "
+      free_vars.join(str, ", ")
+    end
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)
