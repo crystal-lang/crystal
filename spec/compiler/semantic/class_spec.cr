@@ -524,6 +524,25 @@ describe "Semantic: class" do
       "can't use instance variables inside primitive types (at Int32)"
   end
 
+  it "reads an object instance var from a union type" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+      end
+
+      foo = Foo.new(1)
+      bar = Bar.new(2, 'a')
+      union = foo || bar
+      union.@x
+      )) { union_of(int32, char) }
+  end
+
   it "says that instance vars are not allowed in metaclass" do
     assert_error %(
       module Foo
