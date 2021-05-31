@@ -1543,6 +1543,50 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "interprets next inside block (union, through next)" do
+      interpret(<<-CODE).should eq(10)
+        def foo
+          yield
+        end
+
+        a = 0
+        x = foo do
+          if a == 0
+            next 10
+          end
+          'a'
+        end
+
+        if x.is_a?(Int32)
+          x
+        else
+          20
+        end
+      CODE
+    end
+
+    it "interprets next inside block (union, through normal exit)" do
+      interpret(<<-CODE).should eq('a')
+        def foo
+          yield
+        end
+
+        a = 0
+        x = foo do
+          if a == 1
+            next 10
+          end
+          'a'
+        end
+
+        if x.is_a?(Char)
+          x
+        else
+          'b'
+        end
+      CODE
+    end
   end
 
   context "casts" do

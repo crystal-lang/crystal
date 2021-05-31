@@ -9,8 +9,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   getter instructions
   getter nodes
 
-  @compiling_block = false
-
   def initialize(
     @context : Context,
     @local_vars : LocalVars,
@@ -40,21 +38,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.accept self
 
     leave aligned_sizeof_type(node), node: nil
-
-    @instructions
   end
 
   def compile_block(node : Block) : Nil
-    @compiling_block = true
+    @compiling_block = node
 
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name)
       set_local index, aligned_sizeof_type(arg), node: arg
     end
 
-    compile(node.body)
+    node.body.accept self
+    convert node.body, node.body.type, node.type
 
-    @compiling_block = false
+    leave aligned_sizeof_type(node), node: nil
+
+    @compiling_block = nil
   end
 
   def compile_def(node : Def) : Nil
@@ -702,12 +701,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         @context.program.nil_type
       end
 
-    # TODO: convert?
-    # def_type = @def.not_nil!.type
-    # convert node, exp_type, def_type
-
-    if @compiling_block
-      leave aligned_sizeof_type(exp_type), node: node
+    if compiling_block = @compiling_block
+      convert node, exp_type, compiling_block.type
+      leave aligned_sizeof_type(compiling_block.type), node: node
     else
       node.raise "BUG: missing interpret next outside of block"
     end
