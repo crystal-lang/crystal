@@ -43,7 +43,7 @@ module Crystal::System::Env
         when WinError::ERROR_ENVVAR_NOT_FOUND
           return
         else
-          raise RuntimeError.from_winerror("GetEnvironmentVariableW", last_error)
+          raise RuntimeError.from_os_error("GetEnvironmentVariableW", last_error)
         end
       end
     end

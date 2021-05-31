@@ -1,4 +1,5 @@
 require "uri/punycode"
+require "./address"
 
 class Socket
   # Domain name resolver.
@@ -83,11 +84,21 @@ class Socket
       getter error_code : Int32
 
       def self.new(error_code, domain)
-        new error_code, String.new(LibC.gai_strerror(error_code)), domain
+        new error_code, error_string(error_code), domain
       end
 
       def initialize(@error_code, message, domain)
         super("Hostname lookup for #{domain} failed: #{message}")
+      end
+
+      def self.error_string(error_code)
+        {% if flag?(:win32) %}
+          # gai_strerror is defined as a macro in WS2tcpip.h, we can just use
+          # WinError for this
+          return WinError.new(error_code.to_u32).message
+        {% else %}
+          String.new(LibC.gai_strerror(error_code))
+        {% end %}
       end
     end
 
