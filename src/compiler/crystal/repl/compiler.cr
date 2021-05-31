@@ -340,20 +340,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : While)
+    # Jump directly to the condition
     jump 0, node: nil
     cond_jump_location = patch_location
 
     body_index = @instructions.size
+
+    old_while_breaks = @while_breaks
+    while_breaks = @while_breaks = [] of Int32
+
+    # Now write the body
     discard_value(node.body)
 
+    # Here starts the condition
     patch_jump(cond_jump_location)
-
     request_value(node.cond)
     value_to_bool(node.cond, node.cond.type)
 
+    # If the condition holds, jump back to the body
     branch_if body_index, node: nil
 
+    # Otherwise we are at the end of the while.
+    # Any breaks that happened lead us to here
+    while_breaks.each do |while_break|
+      patch_jump(while_break)
+    end
+
     put_nil node: nil if @wants_value
+
+    @while_breaks = old_while_breaks
 
     false
   end
@@ -687,6 +702,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.obj.try &.accept(self)
     node.args.each &.accept(self)
     node.named_args.try &.each &.value.accept(self)
+  end
+
+  def visit(node : Break)
+    exp = node.exp
+
+    exp_type =
+      if exp
+        request_value(exp)
+        exp.type
+      else
+        put_nil node: node
+        @context.program.nil_type
+      end
+
+    if compiling_block = @compiling_block
+      node.raise "BUG: missing interpret break inside of block"
+    else
+      jump 0, node: nil
+      @while_breaks.not_nil! << patch_location
+    end
+
+    false
   end
 
   def visit(node : Next)

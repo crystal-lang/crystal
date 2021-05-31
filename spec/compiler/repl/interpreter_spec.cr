@@ -559,6 +559,39 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets break inside while" do
+      interpret(<<-CODE).should eq(3)
+        a = 0
+        while a < 10
+          a += 1
+          break if a == 3
+        end
+        a
+        CODE
+    end
+
+    it "interprets break inside nested while" do
+      interpret(<<-CODE).should eq(6)
+        a = 0
+        b = 0
+        c = 0
+
+        while a < 3
+          while b < 3
+            b += 1
+            c += 1
+            break if b == 1
+          end
+
+          a += 1
+          c += 1
+          break if a == 3
+        end
+
+        c
+        CODE
+    end
+
     it "discards while" do
       interpret("while 1 == 2; 3; end; 4").should eq(4)
     end
