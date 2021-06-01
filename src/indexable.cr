@@ -626,6 +626,7 @@ module Indexable(T)
     end
   end
 
+  # :nodoc:
   def self.normalize_start_and_count(start, count, collection_size)
     normalize_start_and_count(start, count, collection_size) { raise IndexError.new }
   end
