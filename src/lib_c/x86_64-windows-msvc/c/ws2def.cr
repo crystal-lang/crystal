@@ -1,4 +1,6 @@
 lib LibC
+  alias ADDRESS_FAMILY = UShort
+
   AF_UNSPEC     = 0      # unspecified
   AF_UNIX       = 1      # local to host (pipes, portals)
   AF_INET       = 2      # internetwork: UDP, TCP, etc.
