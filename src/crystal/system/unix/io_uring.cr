@@ -59,7 +59,8 @@ class Crystal::System::IoUring
 
     # This should return `true` on Linux 5.6+ unless it was built with io_uring disabled
     @@available = probe.has_io_uring &&
-                  probe.features.nodrop? && # NODROP is required because we do not keep track of inflight requests
+                  probe.features.nodrop? &&     # NODROP is required because we do not keep track of inflight requests
+                  probe.features.rw_cur_pos? && # Support reading and writing with the "current" file offset
                   probe.operations.nop? &&
                   (probe.operations.read? || probe.operations.readv?) &&
                   (probe.operations.write? || probe.operations.writev?) &&
