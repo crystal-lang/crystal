@@ -51,7 +51,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     node.body.accept self
-    convert node.body, node.body.type, node.type
+    upcast node.body, node.body.type, node.type
 
     leave aligned_sizeof_type(node), node: nil
   end
@@ -69,7 +69,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if node.type.nil_type?
       pop aligned_sizeof_type(node.body), node: nil
     else
-      convert node.body, node.body.type, final_type
+      upcast node.body, node.body.type, final_type
     end
 
     leave aligned_sizeof_type(final_type), node: nil
@@ -229,7 +229,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       type = @local_vars.type(target.name)
 
       # Before assigning to the var we must potentially box inside a union
-      convert node.value, node.value.type, type
+      upcast node.value, node.value.type, type
       set_local index, aligned_sizeof_type(type), node: node
     when InstanceVar
       if inside_method?
@@ -240,7 +240,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         ivar = scope.lookup_instance_var(target.name)
         ivar_size = inner_sizeof_type(ivar.type)
 
-        convert node.value, node.value.type, ivar.type
+        upcast node.value, node.value.type, ivar.type
 
         set_self_ivar ivar_offset, ivar_size, node: node
       else
@@ -267,7 +267,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       get_self_ivar 0, aligned_sizeof_type(type), node: node
     else
       get_local index, aligned_sizeof_type(type), node: node
-      convert node, type, node.type
+      downcast node, type, node.type
     end
 
     false
@@ -313,14 +313,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.then.accept self
       return false unless @wants_value
 
-      convert node.then, node.then.type, node.type
+      upcast node.then, node.then.type, node.type
       return false
     elsif node.falsey?
       discard_value(node.cond)
       node.else.accept self
       return false unless @wants_value
 
-      convert node.else, node.else.type, node.type
+      upcast node.else, node.else.type, node.type
       return false
     end
 
@@ -331,7 +331,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     node.then.accept self
-    convert node.then, node.then.type, node.type if @wants_value
+    upcast node.then, node.then.type, node.type if @wants_value
 
     jump 0, node: nil
     then_jump_location = patch_location
@@ -339,7 +339,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     patch_jump(cond_jump_location)
 
     node.else.accept self
-    convert node.else, node.else.type, node.type if @wants_value
+    upcast node.else, node.else.type, node.type if @wants_value
 
     patch_jump(then_jump_location)
 
@@ -379,7 +379,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Here we are at the point where the condition didn't hold anymore.
     # We must convert `nil` to whatever while's type is.
-    convert node.body, @context.program.nil_type, node.type
+    upcast node.body, @context.program.nil_type, node.type
 
     # Otherwise we are at the end of the while.
     # Any `break` that happened leads us here
@@ -417,7 +417,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       def_type = merge_block_break_type(def_type, compiled_block.block)
     end
 
-    convert node, exp_type, def_type
+    upcast node, exp_type, def_type
 
     if @compiling_block
       leave_def aligned_sizeof_type(def_type), node: node
@@ -763,13 +763,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       final_type = merge_block_break_type(target_def.type, block)
 
-      convert node, exp_type, final_type
+      upcast node, exp_type, final_type
 
       break_block aligned_sizeof_type(final_type), node: node
     else
       target_while = @while.not_nil!
 
-      convert node, exp_type, target_while.type
+      upcast node, exp_type, target_while.type
 
       jump 0, node: nil
       @while_breaks.not_nil! << patch_location
@@ -791,7 +791,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           @context.program.nil_type
         end
 
-      convert node, exp_type, compiling_block.block.type
+      upcast node, exp_type, compiling_block.block.type
       leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
       if exp
@@ -814,7 +814,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.exps.each_with_index do |exp, i|
       if i < block.args.size
         request_value(exp)
-        convert exp, exp.type, block.args[i].type
+        upcast exp, exp.type, block.args[i].type
       else
         discard_value(exp)
       end
