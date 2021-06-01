@@ -8,40 +8,32 @@ module String::Grapheme
   # woman) and the rules described in Annex #29 must be applied to group those
   # code points into clusters perceived by the user as one character.
   struct Cluster
-    @cluster : Array(Tuple(Char, Int32))
+    @cluster : Char | String
 
     protected def initialize(@cluster)
     end
 
-    def pos
-      @cluster.size > 0 ? @cluster[0][1] : -1
-    end
-
     def to_s(io : IO) : Nil
-      io << (@cluster.size > 1 ? @cluster.map(&.[0]).join : @cluster[0][0])
+      io << @cluster
     end
   end
 
   # Graphemes implements an iterator over Unicode extended grapheme clusters,
   # specified in the Unicode Standard Annex #29.
   class Graphemes
-    include Iterator(Cluster)
-
     @last_char : Char? = nil
 
     def initialize(str : String)
       @reader = Char::Reader.new(str)
       @state = State::Any
-      @cluster = [] of Tuple(Char, Int32)
+      @cluster = [] of Char
       @look_ahead = true
-      @last_char_pos = 0
       move_next # Parse ahead
     end
 
     def next
-      move_next
-      return stop if @cluster.empty?
-      val = Cluster.new(@cluster.dup)
+      return nil unless move_next
+      val = Cluster.new(@cluster.size > 1 ? @cluster.join : @cluster.first)
       @cluster.clear
       val
     end
@@ -50,13 +42,13 @@ module String::Grapheme
     # This method must be called before the first cluster is accessed
     private def move_next
       if (c = @last_char) && @cluster.empty?
-        @cluster << {c, @last_char_pos}
+        @cluster << c
         @last_char = nil
       end
 
       while @reader.has_next?
         value = @reader.current_char
-        @cluster << {value, @reader.pos}
+        @cluster << value
         @reader.next_char
 
         next_prop = Property.from(value.ord)
@@ -98,12 +90,13 @@ module String::Grapheme
         # be the one that just ended.
         if @look_ahead || boundary
           unless @cluster.size == 1
-            @last_char, @last_char_pos = @cluster.delete_at(-1)
+            @last_char = @cluster.delete_at(-1)
           end
           @look_ahead = false
           break
         end
       end
+      !@cluster.empty?
     end
 
     # cluster parser states
@@ -194,5 +187,20 @@ module String::Grapheme
       {State::RIOdd, Property::RegionalIndicator}  => {State::RIEven, Instruction::NoBoundary, 120},
       {State::RIEven, Property::RegionalIndicator} => {State::RIOdd, Instruction::Boundary, 120},
     }
+  end
+
+  # :nodoc:
+  class GraphemeIterator
+    include Iterator(Cluster)
+
+    def initialize(@grapheme : Graphemes)
+    end
+
+    def next
+      if val = @grapheme.next
+        return val
+      end
+      stop
+    end
   end
 end
