@@ -6,10 +6,14 @@ class String
   # woman + ZWJ + heavy black heart (2 code points) + ZWJ + kiss mark + ZWJ + woman) and the rules described in Annex #29 must be applied to group those
   # code points into clusters perceived by the user as one character.
   # ```
-  # "🧙‍♂️💈".graphemes # => ["🧙‍♂️", '💈']
+  # "🧙‍♂️💈".graphemes # => [String::Grapheme::Cluster(@cluster="🧙‍♂️"), String::Grapheme::Cluster(@cluster='💈')]
   # ```
   def graphemes : Array(Grapheme::Cluster)
-    Grapheme::Graphemes.new(self).to_a
+    graphemes = [] of Grapheme::Cluster
+    each_grapheme do |cluster|
+      graphemes << cluster
+    end
+    graphemes
   end
 
   # Yields each Unicode extended grapheme cluster in the string to the block.
@@ -20,7 +24,8 @@ class String
   # end
   # ```
   def each_grapheme(& : Grapheme::Cluster -> Nil) : Nil
-    Grapheme::Graphemes.new(self).each do |cluster|
+    grapheme = Grapheme::Graphemes.new(self)
+    while cluster = grapheme.next
       yield cluster
     end
   end
@@ -32,6 +37,6 @@ class String
   # end
   # ```
   def each_grapheme : Iterator(Grapheme::Cluster)
-    Grapheme::Graphemes.new(self)
+    Grapheme::GraphemeIterator.new(Grapheme::Graphemes.new(self))
   end
 end
