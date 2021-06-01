@@ -734,7 +734,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def accept_call_members(node : Call)
-    node.obj.try &.accept(self)
+    if obj = node.obj
+      obj.accept(self)
+    else
+      put_self(node: node) unless scope.is_a?(Program)
+    end
+
     node.args.each &.accept(self)
     node.named_args.try &.each &.value.accept(self)
   end
