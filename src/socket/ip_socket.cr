@@ -13,12 +13,14 @@ class IPSocket < Socket
 
   def connect(addr, timeout = nil, &)
     super(addr, timeout) { |error| yield error }
+  ensure
     @local_address = nil
     @remote_address = nil
   end
 
   def bind(addr)
     super(addr)
+  ensure
     @local_address = nil
     @remote_address = nil
   end
