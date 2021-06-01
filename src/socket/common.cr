@@ -24,11 +24,18 @@ class Socket
   {% end %}
 
   enum Protocol
-    IP   = LibC::IPPROTO_IP
-    TCP  = LibC::IPPROTO_TCP
-    UDP  = LibC::IPPROTO_UDP
-    RAW  = LibC::IPPROTO_RAW
-    ICMP = LibC::IPPROTO_ICMP
+    IP = LibC::IPPROTO_IP
+    {% if flag?(:win32) %}
+      TCP  = LibC::IPPROTO::IPPROTO_TCP
+      UDP  = LibC::IPPROTO::IPPROTO_UDP
+      RAW  = LibC::IPPROTO::IPPROTO_RAW
+      ICMP = LibC::IPPROTO::IPPROTO_ICMP
+    {% else %}
+      TCP  = LibC::IPPROTO_TCP
+      UDP  = LibC::IPPROTO_UDP
+      RAW  = LibC::IPPROTO_RAW
+      ICMP = LibC::IPPROTO_ICMP
+    {% end %}
   end
 
   # :nodoc:
