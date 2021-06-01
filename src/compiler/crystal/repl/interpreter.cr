@@ -175,7 +175,7 @@ class Crystal::Repl::Interpreter
     # Shift stack to leave ream for local vars
     # Previous runs that wrote to local vars would have those values
     # written to @stack alreay
-    stack_bottom_after_local_vars = stack_bottom + @local_vars.bytesize
+    stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
     stack = stack_bottom_after_local_vars
 
     # Reserve space for constants
@@ -291,6 +291,17 @@ class Crystal::Repl::Interpreter
     # where it doesn't have the call args, ready to push
     # return call's return value.
     %stack_before_call_args = stack - {{compiled_def}}.args_bytesize
+
+    # Clear the portion after the call args and upto the def local vars
+    # because it might contain garbage data from previous block calls or
+    # method calls.
+    %size_to_clear = {{compiled_def}}.local_vars.max_bytesize - {{compiled_def}}.args_bytesize
+    if %size_to_clear < 0
+      raise "OH NO, size to clear DEF is: #{ %size_to_clear }"
+    end
+
+    stack.clear(%size_to_clear)
+
     @call_stack[-1] = @call_stack.last.copy_with(
       ip: ip,
       stack: %stack_before_call_args,
@@ -303,7 +314,7 @@ class Crystal::Repl::Interpreter
       ip: {{compiled_def}}.instructions.to_unsafe,
       # We need to adjust the call stack to start right
       # after the target def's local variables.
-      stack: %stack_before_call_args + {{compiled_def}}.local_vars.bytesize,
+      stack: %stack_before_call_args + {{compiled_def}}.local_vars.max_bytesize,
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
       real_frame_index: @call_stack.size,
@@ -346,6 +357,21 @@ class Crystal::Repl::Interpreter
     nodes = copied_call_frame.nodes
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
+
+    %offset_to_clear = {{compiled_block}}.locals_bytesize_start + {{compiled_block}}.args_bytesize
+    %size_to_clear = {{compiled_block}}.locals_bytesize_end - {{compiled_block}}.locals_bytesize_start - {{compiled_block}}.args_bytesize
+    if %size_to_clear < 0
+      raise "OH NO, size to clear BLOCK is: #{ %size_to_clear }"
+    end
+
+    # Clear the portion after the block args and upto the block local vars
+    # because it might contain garbage data from previous block calls or
+    # method calls.
+    #
+    # stack ... locals ... locals_bytesize_start ... args_bytesize ... locals_bytesize_end
+    #                                                            [ ..................... ]
+    #                                                                   delete this
+    (stack_bottom + %offset_to_clear).clear(%size_to_clear)
   end
 
   private macro lib_call(lib_function)
@@ -628,12 +654,12 @@ class Crystal::Repl::Interpreter
       # puts Slice.new(stack_bottom, stack - stack_bottom).hexdump
       # puts
 
-      # Remember the portion from stack_bottom + local_vars.bytesize up to stack
+      # Remember the portion from stack_bottom + local_vars.max_bytesize up to stack
       # because it might happen that the child interpreter will overwrite some
       # of that if we already have some values in the stack past the local vars
-      data_size = stack - (stack_bottom + local_vars.bytesize)
+      data_size = stack - (stack_bottom + local_vars.max_bytesize)
       data = Pointer(UInt8).malloc(data_size)
-      data.copy_from(stack_bottom + local_vars.bytesize, data_size)
+      data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
       interpreter = Interpreter.new(self, compiled_def, stack_bottom)
 
@@ -694,7 +720,7 @@ class Crystal::Repl::Interpreter
       end
 
       # Restore the stack data in case it tas overwritten
-      (stack_bottom + local_vars.bytesize).copy_from(data, data_size)
+      (stack_bottom + local_vars.max_bytesize).copy_from(data, data_size)
     end
   end
 

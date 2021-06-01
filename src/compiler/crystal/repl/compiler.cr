@@ -633,6 +633,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # Compile the block too if there's one
       if block
+        bytesize_before_block_local_vars = @local_vars.current_bytesize
+
         @local_vars.push_block
 
         begin
@@ -642,9 +644,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
             @local_vars.declare(name, var.type)
           end
 
+          bytesize_after_block_local_vars = @local_vars.current_bytesize
+
           block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-          compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
+          compiled_block = CompiledBlock.new(block, @local_vars,
+            args_bytesize: block_args_bytesize,
+            locals_bytesize_start: bytesize_before_block_local_vars,
+            locals_bytesize_end: bytesize_after_block_local_vars,
+          )
           compiler = Compiler.new(@context, @local_vars,
             instructions: compiled_block.instructions,
             nodes: compiled_block.nodes,
@@ -666,7 +674,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       args_bytesize = 0
 
-      obj_type = obj.try(&.type) || scope
+      obj_type = obj.try(&.type) || target_def.owner
 
       if obj_type == @context.program
         # Nothing
@@ -735,7 +743,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      put_self(node: node) unless scope.is_a?(Program)
+      put_self(node: node) unless obj_type.is_a?(Program)
     end
 
     args.each { |a| request_value(a) }

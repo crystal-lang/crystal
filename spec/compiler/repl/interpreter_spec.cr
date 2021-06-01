@@ -1807,6 +1807,37 @@ describe Crystal::Repl::Interpreter do
         x + a
       CODE
     end
+
+    it "clears block local variables when calling block" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield 1
+        end
+
+        def bar
+          a = 1
+
+          foo do |b|
+            x = 1
+          end
+
+          foo do |b|
+            if a == 0 || b == 0
+              x = 10
+            end
+
+            return x
+          end
+        end
+
+        z = bar
+        if z.is_a?(Nil)
+          20
+        else
+          z
+        end
+        CODE
+    end
   end
 
   context "casts" do

@@ -56,7 +56,11 @@ class Crystal::Repl::LocalVars
     @bytesize = @bytesize_per_block_level.pop
   end
 
-  def bytesize
+  def current_bytesize
+    @bytesize
+  end
+
+  def max_bytesize
     @max_bytesize
   end
 
@@ -115,9 +119,9 @@ class Crystal::Repl::LocalVars
   # end
 
   def to_s(io : IO) : Nil
-    return if @bytesize == 0
+    return if @max_bytesize == 0
 
-    io << "local table (bytesize: " << @bytesize << ")\n"
+    io << "local table (bytesize: " << @max_bytesize << ")\n"
     @name_to_index.each do |name, index|
       io << "\t" unless index == 0
       io << name << '@' << index
