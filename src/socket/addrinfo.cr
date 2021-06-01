@@ -137,10 +137,14 @@ class Socket
         raise Error.new(ret, "The requested socket type #{type} protocol #{protocol} is not supported", domain)
       when LibC::EAI_SERVICE
         raise Error.new(ret, "The requested service #{service} is not available for the requested socket type #{type}", domain)
-      when LibC::EAI_SYSTEM
-        errno = Errno.value
-        raise Error.new(errno.value, errno.message, domain)
       else
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            errno = Errno.value
+            raise Error.new(errno.value, errno.message, domain)
+          end
+        {% end %}
         raise Error.new(ret, domain)
       end
 
