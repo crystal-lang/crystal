@@ -659,6 +659,9 @@ class Crystal::Repl::Interpreter
         when "whereami"
           whereami(a_def, location)
           next
+        when "disassemble"
+          puts Disassembler.disassemble(compiled_def)
+          next
         end
 
         begin
