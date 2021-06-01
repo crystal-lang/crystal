@@ -483,7 +483,7 @@ module Crystal
           end
           exp_values = Array({Type, LLVM::Value}).new(tuple_size)
 
-          node.elements.each_with_index do |exp|
+          node.elements.each do |exp|
             accept exp
 
             if exp.is_a?(Splat)
