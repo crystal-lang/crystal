@@ -1746,6 +1746,67 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "interprets block with args that conflict with a local var" do
+      interpret(<<-CODE).should eq(201)
+        def foo
+          yield 1
+        end
+
+        a = 200
+        x = 0
+
+        foo do |a|
+          x += a
+        end
+
+        x + a
+      CODE
+    end
+
+    it "interprets block with args that conflict with a local var" do
+      interpret(<<-CODE).should eq(216)
+        def foo
+          yield 1
+        end
+
+        def bar
+          yield 2
+        end
+
+        def baz
+          yield 3, 4, 5
+        end
+
+        # a: 0, 8
+        a = 200
+
+        # x: 8, 16
+        x = 0
+
+        # a: 16, 24
+        foo do |a|
+          x += a
+
+          # a: 24, 32
+          bar do |a|
+            x += a
+          end
+
+          # a: 24, 32
+          # b: 32, 40
+          # c: 40, 48
+          baz do |a, b, c|
+            x += a
+            x += b
+            x += c
+          end
+
+          x += a
+        end
+        x + a
+      CODE
+    end
   end
 
   context "casts" do
@@ -1796,8 +1857,8 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  # context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
-  context = Crystal::Repl::Context.new(program, decompile: true, trace: true, stats: false)
+  context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: true, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)

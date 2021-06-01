@@ -10,6 +10,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   property compiled_block : CompiledBlock?
   getter instructions
   getter nodes
+  property block_level = 0
+  property parent : Compiler?
 
   def initialize(
     @context : Context,
@@ -44,9 +46,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def compile_block(node : Block, target_def : Def) : Nil
     @compiling_block = CompilingBlock.new(node, target_def)
-
     node.args.reverse_each do |arg|
-      index = @local_vars.name_to_index(arg.name)
+      index = @local_vars.name_to_index(arg.name, @block_level)
       set_local index, aligned_sizeof_type(arg), node: arg
     end
 
@@ -225,8 +226,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       request_value(node.value)
       dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
-      index = @local_vars.name_to_index(target.name)
-      type = @local_vars.type(target.name)
+      index, type = lookup_local_var_index_and_type(target.name)
 
       # Before assigning to the var we must potentially box inside a union
       upcast node.value, node.value.type, type
@@ -259,8 +259,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Var)
     return false unless @wants_value
 
-    index = @local_vars.name_to_index(node.name)
-    type = @local_vars.type(node.name)
+    index, type = lookup_local_var_index_and_type(node.name)
 
     if node.name == "self" && type.passed_by_value?
       # Load the entire self from the pointer that's self
@@ -271,6 +270,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     false
+  end
+
+  def lookup_local_var_index_and_type(name : String) : {Int32, Type}
+    compiling_block = @compiling_block
+    if compiling_block
+      var = compiling_block.block.vars.try &.[name]?
+      if var && var.context == compiling_block.block
+        index = @local_vars.name_to_index(name, @block_level)
+        type = @local_vars.type(name, @block_level)
+        {index, type}
+      else
+        @parent.not_nil!.lookup_local_var_index_and_type(name)
+      end
+    elsif a_def = @def
+      if a_def.vars.try &.has_key?(name)
+        index = @local_vars.name_to_index(name, @block_level)
+        type = @local_vars.type(name, @block_level)
+        {index, type}
+      else
+        @parent.not_nil!.lookup_local_var_index_and_type(name)
+      end
+    else
+      index = @local_vars.name_to_index(name, @block_level)
+      type = @local_vars.type(name, @block_level)
+      {index, type}
+    end
   end
 
   def visit(node : InstanceVar)
@@ -510,7 +535,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      pointerof_var(@local_vars.name_to_index(exp.name), node: node)
+      index, type = lookup_local_var_index_and_type(exp.name)
+      pointerof_var(index, node: node)
     when InstanceVar
       index = scope.index_of_instance_var(exp.name).not_nil!
       if scope.struct?
@@ -607,31 +633,34 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # Compile the block too if there's one
       if block
-        # TODO: name collisions and different types with different blocks
-        block.vars.try &.each do |name, var|
-          next if var.context != block
+        @local_vars.push_block
 
-          if @local_vars.name_to_index?(name)
-            node.raise "BUG: can't declare block var that overwrites local var yet"
+        begin
+          block.vars.try &.each do |name, var|
+            next if var.context != block
+
+            @local_vars.declare(name, var.type)
           end
 
-          @local_vars.declare(name, var.type)
-        end
+          block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-        block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
+          compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
+          compiler = Compiler.new(@context, @local_vars,
+            instructions: compiled_block.instructions,
+            nodes: compiled_block.nodes,
+            scope: @scope, def: @def)
+          compiler.compiled_block = @compiled_block
+          compiler.block_level = block_level + 1
+          compiler.parent = self
+          compiler.compile_block(block, target_def)
 
-        compiled_block = CompiledBlock.new(block, @local_vars, block_args_bytesize)
-        compiler = Compiler.new(@context, @local_vars,
-          instructions: compiled_block.instructions,
-          nodes: compiled_block.nodes,
-          scope: @scope, def: @def)
-        compiler.compiled_block = @compiled_block
-        compiler.compile_block(block, target_def)
-
-        if @context.decompile
-          puts "=== #{target_def.owner}##{target_def.name}#block ==="
-          puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
-          puts "=== #{target_def.owner}##{target_def.name}#block ==="
+          if @context.decompile
+            puts "=== #{target_def.owner}##{target_def.name}#block ==="
+            puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
+            puts "=== #{target_def.owner}##{target_def.name}#block ==="
+          end
+        ensure
+          @local_vars.pop_block
         end
       end
 
@@ -687,7 +716,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           if obj.name == "self"
             put_self(node: obj)
           else
-            pointerof_var(@local_vars.name_to_index(obj.name), node: obj)
+            ptr_index, _ = lookup_local_var_index_and_type(obj.name)
+            pointerof_var(ptr_index, node: obj)
           end
           # TODO: when InstanceVar
         else

@@ -799,22 +799,22 @@ Crystal::Repl::Instructions =
 
     # <<< Local variables (2)
     set_local: {
-      operands:    [index : Int32, size : Int32],
-      pop_values:  [] of Nil,
-      push:        false,
-      code:        set_local_var(index, size),
-      disassemble: {
-        index: "#{local_vars.index_to_name(index)}@#{index}",
-      },
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       set_local_var(index, size),
+      # disassemble: {
+      #   index: "#{local_vars.index_to_name(index)}@#{index}",
+      # },
     },
     get_local: {
-      operands:    [index : Int32, size : Int32],
-      pop_values:  [] of Nil,
-      push:        false,
-      code:        get_local_var(index, size),
-      disassemble: {
-        index: "#{local_vars.index_to_name(index)}@#{index}",
-      },
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       get_local_var(index, size),
+      # disassemble: {
+      #   index: "#{local_vars.index_to_name(index)}@#{index}",
+      # },
     },
     # >>> Local variables (2)
 

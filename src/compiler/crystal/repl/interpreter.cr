@@ -80,9 +80,10 @@ class Crystal::Repl::Interpreter
     @constants = interpreter.@constants
 
     meta_vars = MetaVars.new
-    compiled_def.local_vars.each_name_and_type do |name, type|
-      meta_vars[name] = MetaVar.new(name, type)
-    end
+    # TODO: declare all local variables up to this point. How?
+    # compiled_def.local_vars.each_name_and_type do |name, type|
+    #   meta_vars[name] = MetaVar.new(name, type)
+    # end
 
     @main_visitor = MainVisitor.new(
       interpreter.@context.program,
@@ -116,7 +117,14 @@ class Crystal::Repl::Interpreter
     # Declare local variables
     # TODO: reuse previously declared variables
     @main_visitor.meta_vars.each do |name, meta_var|
-      @local_vars.declare(name, meta_var.type)
+      existing_type = @local_vars.type?(name, 0)
+      if existing_type
+        if existing_type != meta_var.type
+          raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
+        end
+      else
+        @local_vars.declare(name, meta_var.type)
+      end
     end
 
     compiled_def = @compiled_def
