@@ -1,10 +1,6 @@
 {% skip_file unless flag?(:linux) && flag?(:aarch64) %}
 
 module Crystal::System::Syscall
-  alias SizeT = UInt32
-  alias SSizeT = Int32
-  alias OffT = Int32
-
   # Based on https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/unistd.h
   private enum Code : UInt32
     IO_SETUP                     =   0

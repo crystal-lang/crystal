@@ -4,16 +4,16 @@ require "./*"
 
 module Crystal::System::Syscall
   def_syscall close, Int32, fd : Int32
-  def_syscall mmap, Pointer(Void), addr : Void*, length : SizeT, prot : Prot, flags : Map, fd : Int32, offset : OffT
-  def_syscall munmap, Int32, addr : Void*, length : SizeT
+  def_syscall mmap, Pointer(Void), addr : Void*, length : LibC::SizeT, prot : Prot, flags : Map, fd : Int32, offset : LibC::OffT
+  def_syscall munmap, Int32, addr : Void*, length : LibC::SizeT
   def_syscall io_uring_setup, Int32, entries : UInt32, params : IoUringParams*
-  def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : IoUringEnterFlags, sig : LibC::SigsetT*, sigsz : SizeT
+  def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : IoUringEnterFlags, sig : LibC::SigsetT*, sigsz : LibC::SizeT
   def_syscall io_uring_register, Int32, fd : Int32, op : IoUringRegisterOp, arg : Void*, nr_args : UInt32
   def_syscall uname, Int32, buf : UtsName*
 
-  IORING_OFF_SQ_RING = OffT.new(0)
-  IORING_OFF_CQ_RING = OffT.new(0x8000000)
-  IORING_OFF_SQES    = OffT.new(0x10000000)
+  IORING_OFF_SQ_RING = LibC::OffT.new(0)
+  IORING_OFF_CQ_RING = LibC::OffT.new(0x8000000)
+  IORING_OFF_SQES    = LibC::OffT.new(0x10000000)
 
   @[Flags]
   enum Prot
@@ -213,20 +213,21 @@ module Crystal::System::Syscall
   @[Extern(union: true)]
   struct IoUringSqeInnerFlags
     property rw_flags = RwFlags::None
-    property fsync_flags = 0i32
-    property poll_events = 0i16
-    property poll32_events = 0i32
-    property sync_range_flags = 0i32
-    property msg_flags = 0i32
-    property timeout_flags = 0i32
-    property accept_flags = 0i32
-    property cancel_flags = 0i32
-    property open_flags = 0i32
-    property statx_flags = 0i32
-    property fadvise_advice = 0i32
-    property splice_flags = 0i32
-    property rename_flags = 0i32
-    property unlink_flags = 0i32
+    # TODO: Define all flag enums
+    property fsync_flags = 0u32
+    property poll_events = 0u16
+    property poll32_events = 0u32
+    property sync_range_flags = 0u32
+    property msg_flags = 0u32
+    property timeout_flags = 0u32
+    property accept_flags = 0u32
+    property cancel_flags = 0u32
+    property open_flags = 0u32
+    property statx_flags = 0u32
+    property fadvise_advice = 0u32
+    property splice_flags = 0u32
+    property rename_flags = 0u32
+    property unlink_flags = 0u32
   end
 
   @[Extern]
@@ -278,4 +279,9 @@ module Crystal::System::Syscall
     machine = StaticArray(UInt8, 65).new(0)
     domainname = StaticArray(UInt8, 65).new(0)
   end
+
+  @[Extern]
+  record IOVec,
+    base : UInt8*,
+    len : LibC::SizeT
 end

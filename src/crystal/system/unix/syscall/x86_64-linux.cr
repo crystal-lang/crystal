@@ -1,10 +1,6 @@
 {% skip_file unless flag?(:linux) && flag?(:x86_64) %}
 
 module Crystal::System::Syscall
-  alias SizeT = UInt64
-  alias SSizeT = Int64
-  alias OffT = Int64
-
   # Based on https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_64.tbl
   private enum Code : UInt64
     READ                    =   0

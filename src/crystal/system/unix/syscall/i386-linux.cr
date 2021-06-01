@@ -1,10 +1,6 @@
 {% skip_file unless flag?(:linux) && flag?(:i386) %}
 
 module Crystal::System::Syscall
-  alias SizeT = UInt32
-  alias SSizeT = Int32
-  alias OffT = Int32
-
   # Based on https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
   private enum Code : UInt32
     RESTART_SYSCALL              =   0
@@ -447,48 +443,48 @@ module Crystal::System::Syscall
   # TODO: Use correct assembly for i386
   private macro def_syscall(name, return_type, *args)
     @[AlwaysInline]
-    def self.{{name.id}}({{*args}}) : {{return_type}}
-      ret = uninitialized {{return_type}}
+    def self.{{name.id}}({{*args}}) : {{eeturn_type}}
+      ret = uninitialized {{eeturn_type}}
 
       {% if args.size == 0 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 1 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 2 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 3 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
+                          "{edx}"({{args[2].var.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 4 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
+                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 5 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
+                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}}), "{edi}"({{args[4].var.id}})
+                        : "memory"
+                        : "volatile")
       {% elsif args.size == 6 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}}), "{r9}"({{args[5].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("int $0x80" : "={eax}"(ret)
+                        : "{eax}"(Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
+                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}}), "{edi}"({{args[4].var.id}}), "{ebp}"({{args[5].var.id}})
+                        : "memory"
+                        : "volatile")
       {% else %}
         {% raise "Not supported number of arguments for syscall" %}
       {% end %}

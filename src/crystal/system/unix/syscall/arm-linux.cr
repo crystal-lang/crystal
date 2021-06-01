@@ -1,10 +1,6 @@
 {% skip_file unless flag?(:linux) && flag?(:arm) %}
 
 module Crystal::System::Syscall
-  alias SizeT = UInt32
-  alias SSizeT = Int32
-  alias OffT = Int32
-
   # Based on https://github.com/torvalds/linux/blob/master/arch/arm/tools/syscall.tbl
   private enum Code : UInt32
     RESTART_SYSCALL              =   0
