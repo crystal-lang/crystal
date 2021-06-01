@@ -292,7 +292,7 @@ struct Path
   #
   # In case the last component is the empty string (i.e. the path has a trailing
   # separator), the second to last component is returned.
-  # For path that only consists of an anchor, or an empty path, the base name
+  # For a path that only consists of an anchor, or an empty path, the base name
   # is equivalent to the full path.
   #
   # ```
