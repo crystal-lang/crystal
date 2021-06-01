@@ -7,6 +7,7 @@ class IPSocket < Socket
 
   def close
     super
+  ensure
     @local_address = nil
     @remote_address = nil
   end
