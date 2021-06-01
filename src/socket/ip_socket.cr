@@ -10,4 +10,16 @@ class IPSocket < Socket
     @local_address = nil
     @remote_address = nil
   end
+
+  def connect(addr, timeout = nil, &)
+    super(addr, timeout) { |error| yield error }
+    @local_address = nil
+    @remote_address = nil
+  end
+
+  def bind(addr)
+    super(addr)
+    @local_address = nil
+    @remote_address = nil
+  end
 end

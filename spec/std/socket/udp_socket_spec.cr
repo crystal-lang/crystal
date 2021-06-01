@@ -14,6 +14,14 @@ describe UDPSocket do
       socket.local_address.address.should eq address
     end
 
+    it "#remote_address resets after connect" do
+      socket = UDPSocket.new
+      socket.connect(address, 1)
+      socket.remote_address.port.should eq 1
+      socket.connect(address, 2)
+      socket.remote_address.port.should eq 2
+    end
+
     it "sends and receives messages" do
       port = unused_local_port
 
