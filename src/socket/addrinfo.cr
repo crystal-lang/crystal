@@ -212,7 +212,7 @@ class Socket
       @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 
-    def to_s(io : IO)
+    def inspect(io : IO)
       io << "Socket::Addrinfo("
       io << ip_address << ", "
       io << family << ", "
