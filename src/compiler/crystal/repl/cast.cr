@@ -38,8 +38,6 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
-  # TODO: remove these two because they are probably not needed
-
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
@@ -66,8 +64,6 @@ class Crystal::Repl::Compiler
   private def downcast_distinct(node : ASTNode, from : Type, to : NoReturnType)
     # Nothing
   end
-
-  # TODO: remove these two because they are probably not needed
 
   private def downcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing downcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"

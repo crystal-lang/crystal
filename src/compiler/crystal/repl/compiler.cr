@@ -11,7 +11,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   getter instructions
   getter nodes
   property block_level = 0
-  property parent : Compiler?
 
   def initialize(
     @context : Context,
@@ -273,29 +272,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_index_and_type(name : String) : {Int32, Type}
-    compiling_block = @compiling_block
-    if compiling_block
-      var = compiling_block.block.vars.try &.[name]?
-      if var && var.context == compiling_block.block
-        index = @local_vars.name_to_index(name, @block_level)
-        type = @local_vars.type(name, @block_level)
-        {index, type}
-      else
-        @parent.not_nil!.lookup_local_var_index_and_type(name)
+    block_level = @block_level
+    while block_level >= 0
+      index = @local_vars.name_to_index?(name, block_level)
+      if index
+        type = @local_vars.type(name, block_level)
+        return {index, type}
       end
-    elsif a_def = @def
-      if a_def.vars.try &.has_key?(name)
-        index = @local_vars.name_to_index(name, @block_level)
-        type = @local_vars.type(name, @block_level)
-        {index, type}
-      else
-        @parent.not_nil!.lookup_local_var_index_and_type(name)
-      end
-    else
-      index = @local_vars.name_to_index(name, @block_level)
-      type = @local_vars.type(name, @block_level)
-      {index, type}
+
+      block_level -= 1
     end
+
+    raise "BUG: can't find local var #{name}"
   end
 
   def visit(node : InstanceVar)
@@ -659,7 +647,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
             scope: @scope, def: @def)
           compiler.compiled_block = @compiled_block
           compiler.block_level = block_level + 1
-          compiler.parent = self
           compiler.compile_block(block, target_def)
 
           if @context.decompile

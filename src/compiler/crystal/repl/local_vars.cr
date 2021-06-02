@@ -64,8 +64,11 @@ class Crystal::Repl::LocalVars
     @max_bytesize
   end
 
+  def names_at_block_level_zero
+    @name_to_index.keys.select { |key| key.block_level == 0 }.map(&.name)
+  end
+
   def names
-    # TODO: block level
     @name_to_index.keys.map(&.name)
   end
 

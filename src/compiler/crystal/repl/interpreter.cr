@@ -46,6 +46,8 @@ class Crystal::Repl::Interpreter
   @pry_node : ASTNode?
   @pry_max_target_frame : Int32?
 
+  getter local_vars : LocalVars
+
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
 
@@ -60,6 +62,7 @@ class Crystal::Repl::Interpreter
     @main_visitor = MainVisitor.new(program)
     @top_level_visitor = TopLevelVisitor.new(program)
     @cleanup_transformer = CleanupTransformer.new(program)
+    @block_level = 0
 
     @compiled_def = nil
     @pry = false
@@ -67,7 +70,7 @@ class Crystal::Repl::Interpreter
     @pry_max_target_frame = nil
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8))
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location, stack : Pointer(UInt8))
     @context = interpreter.@context
     @local_vars = compiled_def.local_vars.dup
 
@@ -79,15 +82,15 @@ class Crystal::Repl::Interpreter
     @call_stack = [] of CallFrame
     @constants = interpreter.@constants
 
-    meta_vars = MetaVars.new
-    # TODO: declare all local variables up to this point. How?
-    # compiled_def.local_vars.each_name_and_type do |name, type|
-    #   meta_vars[name] = MetaVar.new(name, type)
-    # end
+    gatherer = LocalVarsGatherer.new(location, compiled_def.def)
+    gatherer.gather
+    meta_vars = gatherer.meta_vars
+    @block_level = gatherer.block_level
 
     @main_visitor = MainVisitor.new(
       interpreter.@context.program,
       vars: meta_vars,
+      meta_vars: meta_vars,
       typed_def: compiled_def.def)
     @main_visitor.scope = compiled_def.def.owner
     @main_visitor.path_lookup = compiled_def.def.owner # TODO: this is probably not right
@@ -114,20 +117,24 @@ class Crystal::Repl::Interpreter
 
     node = node.transform(@cleanup_transformer)
 
+    compiled_def = @compiled_def
+
     # Declare local variables
     # TODO: reuse previously declared variables
-    @main_visitor.meta_vars.each do |name, meta_var|
-      existing_type = @local_vars.type?(name, 0)
-      if existing_type
-        if existing_type != meta_var.type
-          raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
+
+    # Don't declare local variables again if we are in the middle of pry
+    unless compiled_def
+      @main_visitor.meta_vars.each do |name, meta_var|
+        existing_type = @local_vars.type?(name, 0)
+        if existing_type
+          if existing_type != meta_var.type
+            raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
+          end
+        else
+          @local_vars.declare(name, meta_var.type)
         end
-      else
-        @local_vars.declare(name, meta_var.type)
       end
     end
-
-    compiled_def = @compiled_def
 
     compiler =
       if compiled_def
@@ -135,6 +142,7 @@ class Crystal::Repl::Interpreter
       else
         Compiler.new(@context, @local_vars)
       end
+    compiler.block_level = @block_level
     compiler.compile(node)
 
     @instructions = compiler.instructions
@@ -157,7 +165,7 @@ class Crystal::Repl::Interpreter
     end
 
     time = Time.monotonic
-    value = interpret(node.type)
+    value = interpret(node, node.type)
     if @context.stats
       puts "Elapsed: #{Time.monotonic - time}"
     end
@@ -165,11 +173,7 @@ class Crystal::Repl::Interpreter
     value
   end
 
-  def local_var_keys
-    @local_vars.names
-  end
-
-  def interpret(node_type : Type) : Value
+  def interpret(node : ASTNode, node_type : Type) : Value
     stack_bottom = @stack
 
     # Shift stack to leave ream for local vars
@@ -187,11 +191,18 @@ class Crystal::Repl::Interpreter
     return_value = Pointer(UInt8).null
 
     compiled_def = @compiled_def
+    if compiled_def
+      a_def = compiled_def.def
+    else
+      a_def = Def.new("<top-level>", body: node)
+      a_def.owner = program
+      a_def.vars = program.vars
+    end
 
     @call_stack << CallFrame.new(
       compiled_def: CompiledDef.new(
         context: @context,
-        def: compiled_def ? compiled_def.def : Def.new("main").tap { |a_def| a_def.owner = program },
+        def: a_def,
         args_bytesize: 0,
         instructions: instructions,
         nodes: @nodes,
@@ -661,7 +672,7 @@ class Crystal::Repl::Interpreter
       data = Pointer(UInt8).malloc(data_size)
       data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
-      interpreter = Interpreter.new(self, compiled_def, stack_bottom)
+      interpreter = Interpreter.new(self, compiled_def, location, stack_bottom)
 
       while @pry
         print "pry> "
@@ -702,7 +713,7 @@ class Crystal::Repl::Interpreter
           parser = Parser.new(
             line,
             string_pool: @context.program.string_pool,
-            def_vars: [interpreter.local_var_keys.to_set],
+            def_vars: [interpreter.local_vars.names.to_set],
           )
           line_node = parser.parse
 
