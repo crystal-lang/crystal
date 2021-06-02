@@ -79,15 +79,6 @@ module Crystal::System::Syscall
     NATIVE_WORKERS
   end
 
-  @[Flags]
-  enum RwFlags
-    HIPRI
-    DSYNC
-    SYNC
-    NOWAIT
-    APPEND
-  end
-
   enum IoUringOp : UInt8
     NOP
     READV
@@ -209,13 +200,37 @@ module Crystal::System::Syscall
     property flags = 0u32
   end
 
+  @[Flags]
+  enum RwFlag : UInt32
+    HIPRI
+    DSYNC
+    SYNC
+    NOWAIT
+    APPEND
+  end
+
+  @[Flags]
+  enum PollEvent : UInt32
+    IN     = 0x0001
+    PRI    = 0x0002
+    OUT    = 0x0004
+    ERR    = 0x0008
+    HUP    = 0x0010
+    NVAL   = 0x0020
+    RDNORM = 0x0040
+    RDBAND = 0x0080
+    WRNORM = 0x0100
+    WRBAND = 0x0200
+    MSG    = 0x0400
+    REMOVE = 0x1000
+    RDHUP  = 0x2000
+  end
+
   @[Extern(union: true)]
   struct IoUringSqeInnerFlags
-    property rw_flags = RwFlags::None
-    # TODO: Define all flag enums
+    property rw_flags = RwFlag::None
     property fsync_flags = 0u32
-    property poll_events = 0u16
-    property poll32_events = 0u32
+    property poll_events = PollEvent::None
     property sync_range_flags = 0u32
     property msg_flags = 0u32
     property timeout_flags = 0u32

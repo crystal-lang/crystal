@@ -101,7 +101,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate submission and completion queues: #{Errno.new(-ret)}"
+        fatal_error "Cannot allocate submission and completion queues: #{Errno.new(err)}"
       end
 
       @completion_queue_mmap = @submission_queue_mmap = mem
@@ -112,7 +112,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate submission queue: #{Errno.new(-ret)}"
+        fatal_error "Cannot allocate submission queue: #{Errno.new(err)}"
       end
 
       @submission_queue_mmap = mem
@@ -123,7 +123,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate completion queue: #{Errno.new(-ret)}"
+        fatal_error "Cannot allocate completion queue: #{Errno.new(err)}"
       end
 
       @completion_queue_mmap = mem
@@ -135,8 +135,7 @@ class Crystal::System::IoUring
 
     if mem.address.to_i64! < 0
       err = Errno.new(-mem.address.to_i64!.to_i)
-
-      fatal_error "Cannot allocate submission entries: #{Errno.new(-ret)}"
+      fatal_error "Cannot allocate submission entries: #{Errno.new(err)}"
     end
 
     @submission_entries = mem.as(Syscall::IoUringSqe*)
@@ -614,6 +613,20 @@ class Crystal::System::IoUring
       sqe.value.addr = addr.address
       sqe.value.off = addr_len.to_u64
       sqe.value.fd = fd
+    end
+  end
+
+  def wait_readable(fd : Int32, *, timeout : ::Time::Span? = nil)
+    submit :poll_add, timeout: timeout do |sqe|
+      sqe.value.fd = fd
+      sqe.value.inner_flags.poll_events = Syscall::PollEvent::IN
+    end
+  end
+
+  def wait_writable(fd : Int32, *, timeout : ::Time::Span? = nil)
+    submit :poll_add, timeout: timeout do |sqe|
+      sqe.value.fd = fd
+      sqe.value.inner_flags.poll_events = Syscall::PollEvent::OUT
     end
   end
 end
