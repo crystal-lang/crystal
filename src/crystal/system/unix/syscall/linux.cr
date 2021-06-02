@@ -229,19 +229,19 @@ module Crystal::System::Syscall
   @[Extern(union: true)]
   struct IoUringSqeInnerFlags
     property rw_flags = RwFlag::None
-    property fsync_flags = 0u32
     property poll_events = PollEvent::None
-    property sync_range_flags = 0u32
-    property msg_flags = 0u32
-    property timeout_flags = 0u32
-    property accept_flags = 0u32
-    property cancel_flags = 0u32
-    property open_flags = 0u32
-    property statx_flags = 0u32
-    property fadvise_advice = 0u32
-    property splice_flags = 0u32
-    property rename_flags = 0u32
-    property unlink_flags = 0u32
+    # property fsync_flags = 0u32
+    # property sync_range_flags = 0u32
+    # property msg_flags = 0u32
+    # property timeout_flags = 0u32
+    # property accept_flags = 0u32
+    # property cancel_flags = 0u32
+    # property open_flags = 0u32
+    # property statx_flags = 0u32
+    # property fadvise_advice = 0u32
+    # property splice_flags = 0u32
+    # property rename_flags = 0u32
+    # property unlink_flags = 0u32
   end
 
   @[Extern]
