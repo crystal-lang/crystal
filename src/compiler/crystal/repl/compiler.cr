@@ -572,138 +572,186 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Call)
-    # TODO: downcast/upcast
-
     obj = node.obj
-    args = node.args
-    named_args = node.named_args
+
+    if obj && (obj_type = obj.type).is_a?(LibType)
+      compile_lib_call(node, obj_type)
+      return false
+    end
 
     # TODO: handle case of multidispatch
     target_defs = node.target_defs
-    if !target_defs || target_defs.size > 1
-      node.raise "BUG: missing interpreter multidispatch"
+    if !target_defs
+      node.raise "BUG: no target defs"
     end
 
-    target_def = target_defs.first
+    if target_defs.size == 1
+      compile_simple_call(node, target_defs.first)
+      return false
+    end
 
+    node.raise "BUG: missing interpreter multidispatch"
+
+    false
+  end
+
+  private def compile_simple_call(node : Call, target_def : Def)
     body = target_def.body
     if body.is_a?(Primitive)
       visit_primitive(node, body)
       return false
     end
 
-    if obj && (obj_type = obj.type).is_a?(LibType)
-      external = target_def.as(External)
+    compiled_def = @context.defs[target_def]? ||
+                   create_compiled_def(node, target_def)
 
-      # TODO: named args
-      node.args.each { |arg| request_value(arg) }
+    pop_obj = compile_call_args(node)
 
-      lib_function = @context.lib_functions[external] ||= LibFunction.new(
-        def: external,
-        symbol: @context.c_function(obj_type, external.real_name),
-        call_interface: FFI::CallInterface.new(
-          abi: FFI::ABI::DEFAULT,
-          args: external.args.map(&.type.ffi_type),
-          return_type: external.type.ffi_type,
-        )
-      )
-
-      lib_call(lib_function, node: node)
-
-      pop aligned_sizeof_type(node), node: nil unless @wants_value
-
-      return false
+    if node.block
+      call_with_block compiled_def, node: node
+    else
+      call compiled_def, node: node
     end
 
-    compiled_def = @context.defs[target_def]?
-    unless compiled_def
-      block = node.block
-
-      # Compile the block too if there's one
-      if block
-        bytesize_before_block_local_vars = @local_vars.current_bytesize
-
-        @local_vars.push_block
-
-        begin
-          block.vars.try &.each do |name, var|
-            next if var.context != block
-
-            @local_vars.declare(name, var.type)
-          end
-
-          bytesize_after_block_local_vars = @local_vars.current_bytesize
-
-          block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
-
-          compiled_block = CompiledBlock.new(block, @local_vars,
-            args_bytesize: block_args_bytesize,
-            locals_bytesize_start: bytesize_before_block_local_vars,
-            locals_bytesize_end: bytesize_after_block_local_vars,
-          )
-          compiler = Compiler.new(@context, @local_vars,
-            instructions: compiled_block.instructions,
-            nodes: compiled_block.nodes,
-            scope: @scope, def: @def)
-          compiler.compiled_block = @compiled_block
-          compiler.block_level = block_level + 1
-          compiler.compile_block(block, target_def)
-
-          if @context.decompile
-            puts "=== #{target_def.owner}##{target_def.name}#block ==="
-            puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
-            puts "=== #{target_def.owner}##{target_def.name}#block ==="
-          end
-        ensure
-          @local_vars.pop_block
-        end
-      end
-
-      args_bytesize = 0
-
-      obj_type = obj.try(&.type) || target_def.owner
-
-      if obj_type == @context.program
-        # Nothing
-      elsif obj_type.passed_by_value?
-        args_bytesize += sizeof(Pointer(UInt8))
+    if @wants_value
+      # Pop the struct that's on the stack, if any, if obj was a struct
+      # (but the struct is after the call's value, so we must
+      # remove it past that value)
+      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
+    else
+      if pop_obj
+        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
       else
-        args_bytesize += aligned_sizeof_type(obj_type)
+        pop aligned_sizeof_type(node), node: nil
+      end
+    end
+  end
+
+  private def compile_lib_call(node : Call, obj_type)
+    target_def = node.target_def
+    external = target_def.as(External)
+
+    # TODO: named args
+    node.args.each { |arg| request_value(arg) }
+
+    lib_function = @context.lib_functions[external] ||= LibFunction.new(
+      def: external,
+      symbol: @context.c_function(obj_type, external.real_name),
+      call_interface: FFI::CallInterface.new(
+        abi: FFI::ABI::DEFAULT,
+        args: external.args.map(&.type.ffi_type),
+        return_type: external.type.ffi_type,
+      )
+    )
+
+    lib_call(lib_function, node: node)
+
+    pop aligned_sizeof_type(node), node: nil unless @wants_value
+
+    return false
+  end
+
+  private def create_compiled_def(node : Call, target_def : Def)
+    block = node.block
+
+    # Compile the block too if there's one
+    if block
+      compiled_block = create_compiled_block(block, target_def)
+    end
+
+    args_bytesize = 0
+
+    obj = node.obj
+    args = node.args
+    named_args = node.named_args
+    obj_type = obj.try(&.type) || target_def.owner
+
+    if obj_type == @context.program
+      # Nothing
+    elsif obj_type.passed_by_value?
+      args_bytesize += sizeof(Pointer(UInt8))
+    else
+      args_bytesize += aligned_sizeof_type(obj_type)
+    end
+
+    args_bytesize += args.sum { |arg| aligned_sizeof_type(arg) }
+    args_bytesize += named_args.sum { |arg| aligned_sizeof_type(arg.value) } if named_args
+
+    compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
+
+    # We don't cache defs that yield because we inline the block's contents
+    @context.defs[target_def] = compiled_def unless block
+
+    # Declare local variables for the newly compiled function
+    target_def.vars.try &.each do |name, var|
+      compiled_def.local_vars.declare(name, var.type)
+    end
+
+    compiler = Compiler.new(@context, compiled_def)
+    compiler.compiled_block = compiled_block
+
+    begin
+      compiler.compile_def(target_def)
+    rescue ex : Crystal::CodeError
+      node.raise "compiling #{node}", inner: ex
+    end
+
+    if @context.decompile
+      puts "=== #{target_def.owner}##{target_def.name} ==="
+      puts compiled_def.local_vars
+      puts Disassembler.disassemble(compiled_def)
+      puts "=== #{target_def.owner}##{target_def.name} ==="
+    end
+
+    compiled_def
+  end
+
+  private def create_compiled_block(block : Block, target_def : Def)
+    bytesize_before_block_local_vars = @local_vars.current_bytesize
+
+    @local_vars.push_block
+
+    begin
+      block.vars.try &.each do |name, var|
+        next if var.context != block
+
+        @local_vars.declare(name, var.type)
       end
 
-      args_bytesize += args.sum { |arg| aligned_sizeof_type(arg) }
-      args_bytesize += named_args.sum { |arg| aligned_sizeof_type(arg.value) } if named_args
+      bytesize_after_block_local_vars = @local_vars.current_bytesize
 
-      compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
+      block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-      # We don't cache defs that yield because we inline the block's contents
-      @context.defs[target_def] = compiled_def unless block
-
-      # Declare local variables for the newly compiled function
-      target_def.vars.try &.each do |name, var|
-        compiled_def.local_vars.declare(name, var.type)
-      end
-
-      compiler = Compiler.new(@context, compiled_def)
-      compiler.compiled_block = compiled_block
-
-      begin
-        compiler.compile_def(target_def)
-      rescue ex : Crystal::CodeError
-        node.raise "compiling #{node}", inner: ex
-      end
+      compiled_block = CompiledBlock.new(block, @local_vars,
+        args_bytesize: block_args_bytesize,
+        locals_bytesize_start: bytesize_before_block_local_vars,
+        locals_bytesize_end: bytesize_after_block_local_vars,
+      )
+      compiler = Compiler.new(@context, @local_vars,
+        instructions: compiled_block.instructions,
+        nodes: compiled_block.nodes,
+        scope: @scope, def: @def)
+      compiler.compiled_block = @compiled_block
+      compiler.block_level = block_level + 1
+      compiler.compile_block(block, target_def)
 
       if @context.decompile
-        puts "=== #{target_def.owner}##{target_def.name} ==="
-        puts compiled_def.local_vars
-        puts Disassembler.disassemble(compiled_def)
-        puts "=== #{target_def.owner}##{target_def.name} ==="
+        puts "=== #{target_def.owner}##{target_def.name}#block ==="
+        puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
+        puts "=== #{target_def.owner}##{target_def.name}#block ==="
       end
+    ensure
+      @local_vars.pop_block
     end
 
+    compiled_block
+  end
+
+  private def compile_call_args(node : Call)
     # Self for structs is passed by reference
     pop_obj = nil
 
+    obj = node.obj
     if obj
       if obj.type.passed_by_value?
         case obj
@@ -730,32 +778,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      put_self(node: node) unless obj_type.is_a?(Program)
+      put_self(node: node) unless node.scope.is_a?(Program)
     end
 
-    args.each { |a| request_value(a) }
-    named_args.try &.each { |n| request_value(n) }
+    node.args.each { |a| request_value(a) }
+    node.named_args.try &.each { |n| request_value(n) }
 
-    if node.block
-      call_with_block compiled_def, node: node
-    else
-      call compiled_def, node: node
-    end
-
-    if @wants_value
-      # Pop the struct that's on the stack, if any, if obj was a struct
-      # (but the struct is after the call's value, so we must
-      # remove it past that value)
-      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
-    else
-      if pop_obj
-        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
-      else
-        pop aligned_sizeof_type(node), node: nil
-      end
-    end
-
-    false
+    pop_obj
   end
 
   private def accept_call_members(node : Call)
