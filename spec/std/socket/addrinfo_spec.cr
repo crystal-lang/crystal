@@ -65,11 +65,11 @@ describe Socket::Addrinfo do
     end
   end
 
-  it "#to_s" do
+  it "#inspect" do
     addrinfos = Socket::Addrinfo.tcp("127.0.0.1", 12345)
-    addrinfos.first.to_s.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, STREAM, TCP)"
+    addrinfos.first.inspect.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, STREAM, TCP)"
 
     addrinfos = Socket::Addrinfo.udp("127.0.0.1", 12345)
-    addrinfos.first.to_s.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, DGRAM, UDP)"
+    addrinfos.first.inspect.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, DGRAM, UDP)"
   end
 end
