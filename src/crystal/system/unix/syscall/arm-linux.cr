@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:linux) && flag?(:arm) %}
+{% skip_file unless flag?(:linux) && (flag?(:arm) || flag?(:aarch64)) %}
 
 module Crystal::System::Syscall
   # Based on https://github.com/torvalds/linux/blob/master/arch/arm/tools/syscall.tbl
@@ -411,44 +411,44 @@ module Crystal::System::Syscall
       ret = uninitialized {{return_type}}
 
       {% if args.size == 0 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 1 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 2 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}}), "{r2}"({{args[1].var.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 3 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}}), "{r2}"({{args[1].var.id}}),
+                        "{r3}"({{args[2].var.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 4 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}}), "{r2}"({{args[1].var.id}}),
+                        "{r3}"({{args[2].var.id}}), "{r4}"({{args[3].var.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 5 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}}), "{r2}"({{args[1].var.id}}),
+                        "{r3}"({{args[2].var.id}}), "{r4}"({{args[3].var.id}}), "{r5}"({{args[4].var.id}})
+                     : "memory"
+                     : "volatile")
       {% elsif args.size == 6 %}
-        asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}}), "{r9}"({{args[5].var.id}})
-                      : "rcx", "r11", "memory"
-                      : "volatile")
+        asm("swi %1" : "={r0}"(ret)
+                     : "{r0}"(Code::{{name.stringify.upcase.id}}), "{r1}"({{args[0].var.id}}), "{r2}"({{args[1].var.id}}),
+                        "{r3}"({{args[2].var.id}}), "{r4}"({{args[3].var.id}}), "{r5}"({{args[4].var.id}}), "{r6}"({{args[5].var.id}})
+                     : "memory"
+                     : "volatile")
       {% else %}
         {% raise "Not supported number of arguments for syscall" %}
       {% end %}
