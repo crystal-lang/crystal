@@ -60,7 +60,7 @@ enum Errno
       LibC.__error.value = errno.value
     {% elsif flag?(:win32) %}
       ret = LibC._set_errno(errno.value)
-      raise RuntimeError.from_os_error("_set_errno", ret) unless ret == 0
+      raise RuntimeError.from_os_error("_set_errno", Errno.new(ret)) unless ret == 0
     {% end %}
     errno
   end
