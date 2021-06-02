@@ -1,5 +1,6 @@
 require "spec"
-require "socket"
+require "socket/address"
+require "../../support/win32"
 
 describe Socket::Address do
   describe ".parse" do
@@ -18,7 +19,7 @@ describe Socket::Address do
       address.should eq Socket::IPAddress.new("192.168.0.1", 8081)
     end
 
-    it "parses UNIX" do
+    pending_win32 "parses UNIX" do
       address = Socket::Address.parse "unix://socket.sock"
       address.should eq Socket::UNIXAddress.new("socket.sock")
     end
@@ -152,76 +153,78 @@ describe Socket::IPAddress do
   end
 end
 
-describe Socket::UNIXAddress do
-  it "transforms into a C struct and back" do
-    path = "unix_address.sock"
+{% unless flag?(:win32) %}
+  describe Socket::UNIXAddress do
+    it "transforms into a C struct and back" do
+      path = "unix_address.sock"
 
-    addr1 = Socket::UNIXAddress.new(path)
-    addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
+      addr1 = Socket::UNIXAddress.new(path)
+      addr2 = Socket::UNIXAddress.from(addr1.to_unsafe, addr1.size)
 
-    addr2.family.should eq(addr1.family)
-    addr2.path.should eq(addr1.path)
-    addr2.to_s.should eq(path)
-  end
-
-  it "raises when path is too long" do
-    path = "unix_address-too-long-#{("a" * 2048)}.sock"
-
-    expect_raises(ArgumentError, "Path size exceeds the maximum size") do
-      Socket::UNIXAddress.new(path)
-    end
-  end
-
-  it "to_s" do
-    Socket::UNIXAddress.new("some_path").to_s.should eq("some_path")
-  end
-
-  it "#==" do
-    Socket::UNIXAddress.new("some_path").should eq Socket::UNIXAddress.new("some_path")
-    Socket::UNIXAddress.new("some_path").hash.should eq Socket::UNIXAddress.new("some_path").hash
-
-    Socket::UNIXAddress.new("some_path").should_not eq Socket::UNIXAddress.new("other_path")
-    Socket::UNIXAddress.new("some_path").hash.should_not eq Socket::UNIXAddress.new("other_path").hash
-  end
-
-  describe ".parse" do
-    it "parses relative" do
-      address = Socket::UNIXAddress.parse "unix://foo.sock"
-      address.should eq Socket::UNIXAddress.new("foo.sock")
+      addr2.family.should eq(addr1.family)
+      addr2.path.should eq(addr1.path)
+      addr2.to_s.should eq(path)
     end
 
-    it "parses relative subpath" do
-      address = Socket::UNIXAddress.parse "unix://foo/bar.sock"
-      address.should eq Socket::UNIXAddress.new("foo/bar.sock")
+    it "raises when path is too long" do
+      path = "unix_address-too-long-#{("a" * 2048)}.sock"
+
+      expect_raises(ArgumentError, "Path size exceeds the maximum size") do
+        Socket::UNIXAddress.new(path)
+      end
     end
 
-    it "parses relative dot" do
-      address = Socket::UNIXAddress.parse "unix://./bar.sock"
-      address.should eq Socket::UNIXAddress.new("./bar.sock")
+    it "to_s" do
+      Socket::UNIXAddress.new("some_path").to_s.should eq("some_path")
     end
 
-    it "relative with" do
-      address = Socket::UNIXAddress.parse "unix://foo:21/bar.sock"
-      address.should eq Socket::UNIXAddress.new("foo:21/bar.sock")
+    it "#==" do
+      Socket::UNIXAddress.new("some_path").should eq Socket::UNIXAddress.new("some_path")
+      Socket::UNIXAddress.new("some_path").hash.should eq Socket::UNIXAddress.new("some_path").hash
+
+      Socket::UNIXAddress.new("some_path").should_not eq Socket::UNIXAddress.new("other_path")
+      Socket::UNIXAddress.new("some_path").hash.should_not eq Socket::UNIXAddress.new("other_path").hash
     end
 
-    it "parses absolute" do
-      address = Socket::UNIXAddress.parse "unix:///foo.sock"
-      address.should eq Socket::UNIXAddress.new("/foo.sock")
-    end
+    describe ".parse" do
+      it "parses relative" do
+        address = Socket::UNIXAddress.parse "unix://foo.sock"
+        address.should eq Socket::UNIXAddress.new("foo.sock")
+      end
 
-    it "ignores params" do
-      address = Socket::UNIXAddress.parse "unix:///foo.sock?bar=baz"
-      address.should eq Socket::UNIXAddress.new("/foo.sock")
-    end
+      it "parses relative subpath" do
+        address = Socket::UNIXAddress.parse "unix://foo/bar.sock"
+        address.should eq Socket::UNIXAddress.new("foo/bar.sock")
+      end
 
-    it "fails with missing path" do
-      expect_raises(Socket::Error, "Invalid UNIX address: missing path") do
-        Socket::UNIXAddress.parse "unix://?foo=bar"
+      it "parses relative dot" do
+        address = Socket::UNIXAddress.parse "unix://./bar.sock"
+        address.should eq Socket::UNIXAddress.new("./bar.sock")
+      end
+
+      it "relative with" do
+        address = Socket::UNIXAddress.parse "unix://foo:21/bar.sock"
+        address.should eq Socket::UNIXAddress.new("foo:21/bar.sock")
+      end
+
+      it "parses absolute" do
+        address = Socket::UNIXAddress.parse "unix:///foo.sock"
+        address.should eq Socket::UNIXAddress.new("/foo.sock")
+      end
+
+      it "ignores params" do
+        address = Socket::UNIXAddress.parse "unix:///foo.sock?bar=baz"
+        address.should eq Socket::UNIXAddress.new("/foo.sock")
+      end
+
+      it "fails with missing path" do
+        expect_raises(Socket::Error, "Invalid UNIX address: missing path") do
+          Socket::UNIXAddress.parse "unix://?foo=bar"
+        end
       end
     end
   end
-end
+{% end %}
 
 describe Socket do
   # Tests from libc-test:
@@ -273,7 +276,11 @@ describe Socket do
     Socket.ip?("1:2:3:4:5:6:7:8::").should be_false
     Socket.ip?("1:2:3:4:5:6:7::9").should be_false
     Socket.ip?("::1:2:3:4:5:6").should be_true
-    Socket.ip?("::1:2:3:4:5:6:7").should be_true
+    {% if flag?(:win32) %}
+      Socket.ip?("::1:2:3:4:5:6:7").should be_false
+    {% else %}
+      Socket.ip?("::1:2:3:4:5:6:7").should be_true
+    {% end %}
     Socket.ip?("::1:2:3:4:5:6:7:8").should be_false
     Socket.ip?("a:b::c:d:e:f").should be_true
     Socket.ip?("ffff:c0a8:5e4").should be_false

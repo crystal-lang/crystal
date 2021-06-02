@@ -239,7 +239,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
     end

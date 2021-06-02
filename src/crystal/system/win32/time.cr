@@ -1,5 +1,4 @@
 require "c/winbase"
-require "winerror"
 require "./zone_names"
 
 module Crystal::System::Time

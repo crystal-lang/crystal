@@ -188,8 +188,8 @@ struct Enum
   # end
   #
   # Sides::LEFT.to_json                  # => %(["left"])
-  # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left", "right"])
-  # Sides::All.to_json                   # => %(["left", "right"])
+  # (Sides::LEFT | Sides::RIGHT).to_json # => %(["left","right"])
+  # Sides::All.to_json                   # => %(["left","right"])
   # Sides::None.to_json                  # => %([])
   # ```
   #

@@ -2001,6 +2001,34 @@ describe "Semantic: instance var" do
       )) { int32 }
   end
 
+  it "doesn't error if not initializing variables but calling super and previous_def" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super()
+        end
+
+        def initialize(x)
+          previous_def(x)
+        end
+      end
+
+      Bar.new(10).x
+      )) { int32 }
+  end
+
   it "doesn't error if not initializing variables but calling previous_def (2) (#3210)" do
     assert_type(%(
       class Some
@@ -5246,5 +5274,47 @@ describe "Semantic: instance var" do
       Foo.new
       ),
       "can't infer the type parameter T for the generic class Gen(T)"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        def initialize
+          @x = Gen.new('a')
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass, metaclass context" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        @x = Gen.new('a')
+      end
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
   end
 end

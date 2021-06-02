@@ -58,7 +58,7 @@ class HTTP::Request
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
   def cookies
-    @cookies ||= Cookies.from_headers(headers)
+    @cookies ||= Cookies.from_client_headers(headers)
   end
 
   # Returns a convenience wrapper around querying and setting query params,
@@ -257,15 +257,6 @@ class HTTP::Request
     uri.query = value
     update_query_params
     value
-  end
-
-  # Returns request host from headers.
-  @[Deprecated("Use `#hostname` instead.")]
-  def host
-    host = @headers["Host"]?
-    return unless host
-    index = host.index(":")
-    index ? host[0...index] : host
   end
 
   # Extracts the hostname from `Host` header.

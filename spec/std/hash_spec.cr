@@ -97,6 +97,61 @@ describe "Hash" do
     end
   end
 
+  context "subset/superset operators" do
+    h1 = {"a" => 1, "b" => 2}
+    h2 = {"a" => 1, "b" => 2, "c" => 3}
+    h3 = {"c" => 3}
+    h4 = {} of Nil => Nil
+
+    describe "#proper_subset_of?" do
+      it do
+        h1.proper_subset_of?(h2).should be_true
+        h2.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h3).should be_false
+        h1.proper_subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
+      end
+    end
+
+    describe "#subset_of?" do
+      it do
+        h1.subset_of?(h2).should be_true
+        h2.subset_of?(h1).should be_false
+        h1.subset_of?(h1).should be_true
+        h1.subset_of?(h3).should be_false
+        h1.subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.subset_of?({"b" => nil}).should be_false
+      end
+    end
+
+    describe "#proper_superset_of?" do
+      it do
+        h1.proper_superset_of?(h2).should be_false
+        h2.proper_superset_of?(h1).should be_true
+        h1.proper_superset_of?(h1).should be_false
+        h1.proper_superset_of?(h3).should be_false
+        h1.proper_superset_of?(h4).should be_true
+      end
+    end
+
+    describe "#superset_of?" do
+      it do
+        h1.superset_of?(h2).should be_false
+        h2.superset_of?(h1).should be_true
+        h1.superset_of?(h1).should be_true
+        h1.superset_of?(h3).should be_false
+        h1.superset_of?(h4).should be_true
+      end
+    end
+  end
+
   describe "[]" do
     it "gets" do
       a = {1 => 2}
@@ -440,6 +495,16 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
+
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.clone
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
+    end
   end
 
   describe "dup" do
@@ -481,6 +546,16 @@ describe "Hash" do
 
       h1.delete(0)
       h2[0].should eq([0])
+    end
+
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.dup
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
