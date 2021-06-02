@@ -86,7 +86,7 @@ class Crystal::System::IoUring
     @fd = Syscall.io_uring_setup(sq_entries_hint, pointerof(@params))
 
     if @fd < 0
-      raise RuntimeError.from_os_error("Failed to create io_uring interface", Errno.new(-@fd))
+      fatal_error "Failed to create io_uring interface: #{Errno.new(-@fd)}"
     end
 
     @submission_queue_mmap = Pointer(Void).null
@@ -101,7 +101,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        raise RuntimeError.from_os_error("Cannot allocate submission and completion queues", err)
+        fatal_error "Cannot allocate submission and completion queues: #{Errno.new(-ret)}"
       end
 
       @completion_queue_mmap = @submission_queue_mmap = mem
@@ -112,7 +112,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        raise RuntimeError.from_os_error("Cannot allocate submission queue", err)
+        fatal_error "Cannot allocate submission queue: #{Errno.new(-ret)}"
       end
 
       @submission_queue_mmap = mem
@@ -123,7 +123,7 @@ class Crystal::System::IoUring
 
       if mem.address.to_i64! < 0
         err = Errno.new(-mem.address.to_i64!.to_i)
-        raise RuntimeError.from_os_error("Cannot allocate completion queue", err)
+        fatal_error "Cannot allocate completion queue: #{Errno.new(-ret)}"
       end
 
       @completion_queue_mmap = mem
@@ -135,7 +135,8 @@ class Crystal::System::IoUring
 
     if mem.address.to_i64! < 0
       err = Errno.new(-mem.address.to_i64!.to_i)
-      raise RuntimeError.from_os_error("Cannot allocate submission entries", err)
+
+      fatal_error "Cannot allocate submission entries: #{Errno.new(-ret)}"
     end
 
     @submission_entries = mem.as(Syscall::IoUringSqe*)
@@ -186,10 +187,10 @@ class Crystal::System::IoUring
     LibC::SizeT.new(@params.sq_entries * sizeof(Syscall::IoUringSqe))
   end
 
-  # Data pointed by the `user_data` field
-  private struct UserData
-    property res = 0
-    property fiber = ::Fiber.current
+  private def fatal_error(message)
+    Crystal::System.print_error "\nFATAL (io_uring): #{message}\n"
+    caller.each { |line| Crystal::System.print_error "  from #{line}\n" }
+    exit 1
   end
 
   private def make_timeval(time : ::Time::Span)
@@ -197,6 +198,12 @@ class Crystal::System::IoUring
       tv_sec: LibC::TimeT.new(time.total_seconds),
       tv_usec: time.nanoseconds // 1_000
     )
+  end
+
+  # Data pointed by the `user_data` field
+  private struct UserData
+    property res = 0
+    property fiber = ::Fiber.current
   end
 
   # Obtains one submission entry, populates, and submits it. When the completion
@@ -298,8 +305,15 @@ class Crystal::System::IoUring
         return
       end
 
-      # TODO: Trying to print the stack trace will most likely result in infinite recursion. Better abort() here.
-      raise RuntimeError.from_os_error("Failed to send submission entries to the kernel", Errno.new(-ret))
+      fatal_error "Failed to send submission entries to the kernel: #{Errno.new(-ret)}"
+    end
+
+    if @submission_queue.dropped > 0
+      fatal_error "Submission queue has dropped entries: #{@submission_queue.dropped}"
+    end
+
+    if @completion_queue.overflow > 0
+      fatal_error "Completion queue has overflown: #{@submission_queue.dropped}"
     end
   end
 
@@ -351,12 +365,6 @@ class Crystal::System::IoUring
       end
     end
 
-    # TODO: Remove it.
-    def inspect(io)
-      head = Atomic::Ops.load(@head, :acquire, false)
-      io << "SubmissionQueue(H: #{head}, T: #{@tail.value}, F: #{@free}, #{size}/#{@size})"
-    end
-
     # Optimistic view of how many itens are queued. As soon as this is computed the Kernel might consume
     # items from one of its threads.
     def size
@@ -365,7 +373,7 @@ class Crystal::System::IoUring
 
     # Returns the number of requests the Kernel refused to process because were malformed. It should
     # always be zero as there is no way to know which request was dropped. If this is ever not zero,
-    # we better abort(). TODO: Check `@dropped`.
+    # we better abort().
     def dropped
       Atomic::Ops.load(@dropped, :acquire, false)
     end
@@ -427,12 +435,6 @@ class Crystal::System::IoUring
       if @size != @mask + 1
         raise RuntimeError.new("CompletionQueue size and mask are mismatched")
       end
-    end
-
-    # TODO: Remove it.
-    def inspect(io)
-      tail = Atomic::Ops.load(@tail, :acquire, false)
-      io << "CompletionQueue(H: #{@head.value}, T: #{tail}, #{size}/#{@size})"
     end
 
     # Optimistic view of how many itens are queued. As soon as this is computed the Kernel might insert
