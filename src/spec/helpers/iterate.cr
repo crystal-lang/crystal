@@ -16,7 +16,7 @@ module Spec::Methods
   # passing `infinite: true` skips that check and allows to test a finite sample
   # of an infinite iteration.
   #
-  # ```cr
+  # ```
   # require "spec/helpers/iterate"
   #
   # it_iterates "Array#each", [1, 2, 3], (1..3).each
@@ -28,7 +28,7 @@ module Spec::Methods
   # mechanics. Passing `tuple: true` ensures all yielded arguments are collected
   # using a splat.
   #
-  # ```cr
+  # ```
   # require "spec/helpers/iterate"
   #
   # it_iterates "Array#each_with_index", [{1, 0}, {2, 1}, {3, 2}], (1..3).each_with_index, tuple: true
