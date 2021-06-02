@@ -19,6 +19,41 @@ end
 
 # :nodoc:
 struct Exception::CallStack
+  record Frame,
+    file : String?,
+    line : Int32?,
+    column : Int32?,
+    name : String?,
+    sname : String?,
+    ip_address : UInt64 do
+    def to_s(*, full_info : Bool = false) : String
+      String.build do |io|
+        to_s io, full_info: full_info
+      end
+    end
+
+    def to_s(io : IO, *, full_info : Bool = false) : Nil
+      function = name || "???"
+      function = sname if full_info && sname
+
+      if file
+        io << file
+        if line && column
+          io << ':' << line << ':' << column
+        elsif line
+          io << ':' << line
+        end
+        io << " in '" << function << '\''
+      else
+        io << function
+      end
+
+      if full_info
+        io << " at 0x" << ip_address.to_s(16)
+      end
+    end
+  end
+
   # Compute current directory at the beginning so filenames
   # are always shown relative to the *starting* working directory.
   CURRENT_DIR = begin
@@ -36,14 +71,18 @@ struct Exception::CallStack
   skip(__FILE__)
 
   @callstack : Array(Void*)
-  @backtrace : Array(String)?
+  getter frames : Array(Frame) { decode_frames }
 
   def initialize
     @callstack = CallStack.unwind
   end
 
-  def printable_backtrace
-    @backtrace ||= decode_backtrace
+  def printable_backtrace : Array(String)
+    full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+
+    frames.map do |frame|
+      frame.to_s(full_info: full_info)
+    end
   end
 
   {% if flag?(:gnu) && flag?(:i386) %}
@@ -132,16 +171,20 @@ struct Exception::CallStack
 
   private def self.print_frame(repeated_frame)
     {% if flag?(:debug) %}
-      if @@dwarf_loaded &&
-         (name = decode_function_name(repeated_frame.ip.address))
-        file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
-        if file && file != "??"
-          if repeated_frame.count == 0
-            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
-          else
-            Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
+      if @@dwarf_loaded
+        if name = decode_function_name(repeated_frame.ip.address)
+          file, line, column = Exception::CallStack.decode_line_number(repeated_frame.ip.address)
+          if file
+            line ||= 0
+            column ||= 0
+
+            if repeated_frame.count == 0
+              Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i\n", repeated_frame.ip, name, file, line, column
+            else
+              Crystal::System.print_error "[0x%lx] %s at %s:%ld:%i (%ld times)\n", repeated_frame.ip, name, file, line, column, repeated_frame.count + 1
+            end
+            return
           end
-          return
         end
       end
     {% end %}
@@ -163,52 +206,33 @@ struct Exception::CallStack
     end
   end
 
-  private def decode_backtrace
-    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
-
+  private def decode_frames : Array(Frame)
     @callstack.compact_map do |ip|
       pc = CallStack.decode_address(ip)
 
       file, line, column = CallStack.decode_line_number(pc)
 
-      if file && file != "??"
+      if file
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
-
-        file_line_column = "#{file}:#{line}:#{column}"
       end
 
       if name = CallStack.decode_function_name(pc)
-        function = name
-      elsif frame = CallStack.decode_frame(ip)
+        function_name = name
+      end
+
+      if frame = CallStack.decode_frame(ip)
         _, sname = frame
-        function = String.new(sname)
+        sname = String.new(sname)
 
         # Crystal methods (their mangled name) start with `*`, so
         # we remove that to have less clutter in the output.
-        function = function.lchop('*')
-      else
-        function = "???"
+        sname = sname.lchop('*')
       end
 
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
-        end
-      else
-        line = function
-      end
-
-      if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
-      end
-
-      line
+      Frame.new(file, line, column, function_name, sname, ip.address)
     end
   end
 
