@@ -93,8 +93,6 @@ require "./spec/cli"
 module Spec
 end
 
-Colorize.on_tty_only!
-
 # :nodoc:
 #
 # Implement formatter configuration.

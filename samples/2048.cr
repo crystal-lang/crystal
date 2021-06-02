@@ -3,24 +3,26 @@
 require "colorize"
 
 module Screen
+  alias Color = Colorize::ColorANSI
+
   TILES = {
-        0 => {:white, nil},
-        2 => {:black, :white},
-        4 => {:blue, :white},
-        8 => {:black, :yellow},
-       16 => {:white, :red},
-       32 => {:black, :red},
-       64 => {:white, :magenta},
-      128 => {:red, :yellow},
-      256 => {:magenta, :yellow},
-      512 => {:white, :yellow},
-     1024 => {:white, :yellow},
-     2048 => {:white, :yellow},
-     4096 => {:white, :black},
-     8192 => {:white, :black},
-    16384 => {:white, :black},
-    32768 => {:white, :black},
-    65536 => {:white, :black},
+        0 => {Color::White, nil},
+        2 => {Color::Black, Color::White},
+        4 => {Color::Blue, Color::White},
+        8 => {Color::Black, Color::Yellow},
+       16 => {Color::White, Color::Red},
+       32 => {Color::Black, Color::Red},
+       64 => {Color::White, Color::Magenta},
+      128 => {Color::Red, Color::Yellow},
+      256 => {Color::Magenta, Color::Yellow},
+      512 => {Color::White, Color::Yellow},
+     1024 => {Color::White, Color::Yellow},
+     2048 => {Color::White, Color::Yellow},
+     4096 => {Color::White, Color::Black},
+     8192 => {Color::White, Color::Black},
+    16384 => {Color::White, Color::Black},
+    32768 => {Color::White, Color::Black},
+    65536 => {Color::White, Color::Black},
   }
 
   def self.colorize_for(tile)
