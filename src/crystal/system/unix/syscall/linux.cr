@@ -9,7 +9,6 @@ module Crystal::System::Syscall
   def_syscall io_uring_setup, Int32, entries : UInt32, params : IoUringParams*
   def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : IoUringEnterFlags, sig : LibC::SigsetT*, sigsz : LibC::SizeT
   def_syscall io_uring_register, Int32, fd : Int32, op : IoUringRegisterOp, arg : Void*, nr_args : UInt32
-  def_syscall uname, Int32, buf : UtsName*
 
   IORING_OFF_SQ_RING = LibC::OffT.new(0)
   IORING_OFF_CQ_RING = LibC::OffT.new(0x8000000)
@@ -268,16 +267,6 @@ module Crystal::System::Syscall
     property resv = 0u16
     property resv2 = StaticArray(UInt32, 3).new(0)
     property ops = StaticArray(IoUringProbeOp, N).new(IoUringProbeOp.new)
-  end
-
-  @[Extern]
-  struct UtsName
-    sysname = StaticArray(UInt8, 65).new(0)
-    nodename = StaticArray(UInt8, 65).new(0)
-    release = StaticArray(UInt8, 65).new(0)
-    version = StaticArray(UInt8, 65).new(0)
-    machine = StaticArray(UInt8, 65).new(0)
-    domainname = StaticArray(UInt8, 65).new(0)
   end
 
   @[Extern]
