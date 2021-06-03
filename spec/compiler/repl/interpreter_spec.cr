@@ -1384,6 +1384,23 @@ describe Crystal::Repl::Interpreter do
         foo.foo
       CODE
     end
+
+    it "does dispatch on one argument with block" do
+      interpret(<<-CODE).should eq(42)
+        def foo(x : Char)
+          yield x.ord.to_i32
+        end
+
+        def foo(x : Int32)
+          yield x
+        end
+
+        a = 32 || 'a'
+        foo(a) do |x|
+          x + 10
+        end
+      CODE
+    end
   end
 
   context "classes" do
@@ -1496,6 +1513,18 @@ describe Crystal::Repl::Interpreter do
       EXISTING
         foo = Foo.new
         foo.foo
+      CODE
+    end
+
+    it "does object_id" do
+      interpret(<<-EXISTING, <<-CODE).should be_true
+        class Foo
+        end
+      EXISTING
+        foo = Foo.allocate
+        object_id = foo.object_id
+        address = foo.as(Void*).address
+        object_id == address
       CODE
     end
   end

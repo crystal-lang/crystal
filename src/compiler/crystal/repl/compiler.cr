@@ -147,6 +147,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : StringLiteral)
     return false unless @wants_value
 
+    # TODO: use a string pool?
     put_i64 node.value.object_id.unsafe_as(Int64), node: node
     false
   end

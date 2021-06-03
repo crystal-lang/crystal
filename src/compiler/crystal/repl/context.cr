@@ -55,6 +55,7 @@ class Crystal::Repl::Context
   end
 
   def symbol_index(symbol : String) : Int32
+    # TODO: use a string pool?
     index = @symbol_to_index[symbol]?
     unless index
       index = @symbol_to_index.size

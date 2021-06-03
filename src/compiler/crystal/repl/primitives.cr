@@ -134,7 +134,14 @@ class Crystal::Repl::Compiler
       accept_call_args(node)
     when "symbol_to_s"
       accept_call_members(node)
+      return unless @wants_value
+
       symbol_to_s(node: node)
+    when "object_id"
+      accept_call_members(node)
+      return unless @wants_value
+
+      pointer_address(node: node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
