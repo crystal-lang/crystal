@@ -4,7 +4,7 @@ require "spec"
 require "syscall"
 
 describe Syscall do
-  it "can call into the system successfuly" do
+  it "can call into the system successfully" do
     pair = uninitialized Int32[2]
     Syscall.pipe2(pointerof(pair), 0).should eq(0)
 
