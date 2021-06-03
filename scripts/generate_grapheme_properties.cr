@@ -33,7 +33,6 @@ def parse_graphemes_data(body)
     next if line.empty?
     next if line.starts_with?('#')
     parts = line.split(';')
-    p!
     next unless parts.size >= 2
 
     fields = parts.first.strip.split("..")
