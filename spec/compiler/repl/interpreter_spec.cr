@@ -1618,6 +1618,15 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "symbol" do
+    it "Symbol#to_s" do
+      interpret(<<-CODE).should eq("hello")
+        x = :hello
+        x.to_s
+      CODE
+    end
+  end
+
   context "tuple" do
     it "interprets tuple literal and access by known index" do
       interpret(<<-CODE).should eq(6)

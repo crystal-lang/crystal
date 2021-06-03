@@ -151,6 +151,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : SymbolLiteral)
+    return false unless @wants_value
+
+    index = @context.symbol_index(node.value)
+
+    put_i32 index, node: node
+    false
+  end
+
   def visit(node : TupleLiteral)
     type = node.type.as(TupleInstanceType)
 

@@ -21,6 +21,9 @@ class Crystal::Repl::Context
 
     @dl_handles = {} of String? => Void*
 
+    @symbol_to_index = {} of String => Int32
+    @symbols = [] of String
+
     @multidispatchs = {} of MultidispatchKey => Def
 
     # TODO: finish porting all of LibM instrinsics
@@ -49,6 +52,20 @@ class Crystal::Repl::Context
     }
 
     @constants = Constants.new(self)
+  end
+
+  def symbol_index(symbol : String) : Int32
+    index = @symbol_to_index[symbol]?
+    unless index
+      index = @symbol_to_index.size
+      @symbol_to_index[symbol] = index
+      @symbols << symbol
+    end
+    index
+  end
+
+  def index_to_symbol(index : Int32) : String
+    @symbols[index]
   end
 
   def declare_const(const : Const, compiled_def : CompiledDef) : Int32

@@ -1058,6 +1058,15 @@ Crystal::Repl::Instructions =
     },
     # >>> Tuples (1)
 
+    # <<< Symbol (1)
+    symbol_to_s: {
+      operands:   [] of Nil,
+      pop_values: [index : Int32] of Nil,
+      push:       true,
+      code:       @context.index_to_symbol(index).object_id.unsafe_as(UInt64),
+    },
+    # >>> Symbol (1)
+
     # <<< Overrides (6)
     repl_call_stack_unwind: {
       operands:   [] of Nil,

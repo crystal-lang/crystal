@@ -132,6 +132,9 @@ class Crystal::Repl::Compiler
       accept_call_members(node)
     when "enum_new"
       accept_call_args(node)
+    when "symbol_to_s"
+      accept_call_members(node)
+      symbol_to_s(node: node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
