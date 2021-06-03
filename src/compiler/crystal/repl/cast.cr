@@ -29,6 +29,10 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : NonGenericClassType, to : VirtualType)
+    # Nothing
+  end
+
   # TODO: remove these two because they are probably not needed
   private def upcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing

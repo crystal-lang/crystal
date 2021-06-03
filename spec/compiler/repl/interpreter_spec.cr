@@ -1173,6 +1173,130 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "multidispatch" do
+    it "does dispatch on one argument" do
+      interpret(<<-CODE).should eq(42)
+        def foo(x : Char)
+          x.ord.to_i32
+        end
+
+        def foo(x : Int32)
+          x
+        end
+
+        a = 42 || 'a'
+        foo(a)
+      CODE
+    end
+
+    it "does dispatch on one argument inside module with implicit self" do
+      interpret(<<-CODE).should eq(42)
+        module Moo
+          def self.foo(x : Char)
+            x.ord.to_i32
+          end
+
+          def self.foo(x : Int32)
+            x
+          end
+
+          def self.bar
+            a = 42 || 'a'
+            foo(a)
+          end
+        end
+
+        Moo.bar
+      CODE
+    end
+
+    it "does dispatch on one argument inside module with explicit receiver" do
+      interpret(<<-CODE).should eq(42)
+        module Moo
+          def self.foo(x : Char)
+            x.ord.to_i32
+          end
+
+          def self.foo(x : Int32)
+            x
+          end
+
+          def self.bar
+          end
+        end
+
+        a = 42 || 'a'
+        Moo.foo(a)
+      CODE
+    end
+
+    it "does dispatch on receiver type" do
+      interpret(<<-CODE).should eq(42)
+        struct Char
+          def foo
+            self.ord.to_i32
+          end
+        end
+
+        struct Int32
+          def foo
+            self
+          end
+        end
+
+        a = 42 || 'a'
+        a.foo
+      CODE
+    end
+
+    it "does dispatch on receiver type and argument type" do
+      interpret(<<-CODE).should eq(42 + 'b'.ord)
+        struct Char
+          def foo(x : Int32)
+            self.ord.to_i32 + x
+          end
+
+          def foo(x : Char)
+            self.ord.to_i32 + x.ord.to_i32
+          end
+        end
+
+        struct Int32
+          def foo(x : Int32)
+            self + x
+          end
+
+          def foo(x : Char)
+            self + x.ord.to_i32
+          end
+        end
+
+        a = 42 || 'a'
+        b = 'b' || 43
+        a.foo(b)
+      CODE
+    end
+
+    pending "does dispatch on virtual type" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def foo
+            1
+          end
+        end
+
+        class Bar < Foo
+          def foo
+            2
+          end
+        end
+      EXISTING
+        foo = Bar.new || Foo.new
+        foo.foo
+      CODE
+    end
+  end
+
   context "classes" do
     it "does allocate, set instance var and get instance var" do
       interpret(<<-EXISTING, <<-CODE).should eq(42)

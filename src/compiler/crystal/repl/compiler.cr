@@ -574,31 +574,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Call)
     obj = node.obj
 
-    if obj && (obj_type = obj.type).is_a?(LibType)
-      compile_lib_call(node, obj_type)
-      return false
-    end
-
-    # TODO: handle case of multidispatch
     target_defs = node.target_defs
-    if !target_defs
+    unless target_defs
       node.raise "BUG: no target defs"
     end
 
     if target_defs.size == 1
-      compile_simple_call(node, target_defs.first)
-      return false
+      target_def = target_defs.first
+    else
+      target_def = Multidispatch.create_def(@context, node, target_defs)
     end
 
-    node.raise "BUG: missing interpreter multidispatch"
-
-    false
-  end
-
-  private def compile_simple_call(node : Call, target_def : Def)
     body = target_def.body
     if body.is_a?(Primitive)
       visit_primitive(node, body)
+      return false
+    end
+
+    if obj && (obj_type = obj.type).is_a?(LibType)
+      compile_lib_call(node, obj_type)
       return false
     end
 
@@ -625,6 +619,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         pop aligned_sizeof_type(node), node: nil
       end
     end
+
+    false
+  end
+
+  private def compile_simple_call(node : Call, target_def : Def)
   end
 
   private def compile_lib_call(node : Call, obj_type)
@@ -722,6 +721,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
+      # TODO: store this somewhere because it might not end up aligned in the instructions
       compiled_block = CompiledBlock.new(block, @local_vars,
         args_bytesize: block_args_bytesize,
         locals_bytesize_start: bytesize_before_block_local_vars,
@@ -890,10 +890,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : ModuleDef)
+    # TODO: change scope
+    node.body.accept self
+
+    return false unless @wants_value
+
+    put_nil(node: node)
+    false
+  end
+
   def visit(node : Def)
     return false unless @wants_value
 
     put_nil(node: node)
+    false
+  end
+
+  def visit(node : Unreachable)
+    unreachable(node: node)
+
     false
   end
 
@@ -1015,6 +1031,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(lib_function : LibFunction)
     append(lib_function.object_id.unsafe_as(Int64))
+  end
+
+  private def append(call : Call)
+    append(call.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

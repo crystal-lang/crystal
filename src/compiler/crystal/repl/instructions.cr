@@ -1137,7 +1137,14 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       @context.procs_f64_f64[name].call(a),
     },
+    unreachable: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       raise "BUG: reached the unreachable",
+    },
     # >>> Overrides (6)
+
   }
 
 {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
