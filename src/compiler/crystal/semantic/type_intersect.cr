@@ -243,8 +243,7 @@ module Crystal
       common_descendent_type1(type1, type2)
     end
 
-    # replacement of `type1.restriction_of?(type2, owner, strict)`
-    # `owner` is unused, `strict` is true
+    # replacement of `type1.restriction_of?(type2, owner)`, `owner` is unused
     # TODO: check whether `#implements?` works
     def self.descendent?(type1, type2)
       type1 == type2 || type1.parents.try &.any? { |parent| descendent?(parent, type2) }
