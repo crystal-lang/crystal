@@ -29,8 +29,7 @@ end
 def parse_graphemes_data(body)
   result = Hash(String, Array(RRange)).new
   body.each_line do |line|
-    line = line.strip
-    next if line.empty?
+    next unless line = line.strip.presence
     next if line.starts_with?('#')
     parts = line.split(';')
     next unless parts.size >= 2
@@ -41,7 +40,7 @@ def parse_graphemes_data(body)
 
     prop = parts[1].split('#').first.strip.gsub('_', "")
 
-    result[prop] = (result[prop]? || Array(RRange).new) << RRange.new(f1, f2, prop)
+    (result[prop] ||= Array(RRange).new) << RRange.new(f1, f2, prop)
   end
   result.transform_values { |v| shapeup(v) }
 end
@@ -50,8 +49,7 @@ def parse_emoji(body)
   emoji = Array(RRange).new
   extended = false
   body.each_line do |line|
-    line = line.strip
-    next if line.empty?
+    next unless line = line.strip.presence
     unless extended
       extended = line.ends_with?("Extended_Pictographic ; No")
       next unless extended
@@ -76,8 +74,6 @@ props["ExtendedPictographic"] = parse_emoji(body)
 
 props_data = props.values.flatten.sort! { |a, b| a.low <=> b.low }
 
-output = String.build do |str|
-  ECR.embed "#{__DIR__}/grapheme_properties.ecr", str
-end
+output = ECR.render("#{__DIR__}/grapheme_properties.ecr")
 output = Crystal.format(output)
 File.write("#{__DIR__}/../src/string/grapheme/properties.cr", output)
