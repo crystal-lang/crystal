@@ -1277,6 +1277,36 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does dispatch on receiver type and argument type, multiple times" do
+      interpret(<<-CODE).should eq(2 * (42 + 'b'.ord))
+        struct Char
+          def foo(x : Int32)
+            self.ord.to_i32 + x
+          end
+
+          def foo(x : Char)
+            self.ord.to_i32 + x.ord.to_i32
+          end
+        end
+
+        struct Int32
+          def foo(x : Int32)
+            self + x
+          end
+
+          def foo(x : Char)
+            self + x.ord.to_i32
+          end
+        end
+
+        a = 42 || 'a'
+        b = 'b' || 43
+        x = a.foo(b)
+        y = a.foo(b)
+        x + y
+      CODE
+    end
+
     pending "does dispatch on virtual type" do
       interpret(<<-EXISTING, <<-CODE).should eq(2)
         class Foo

@@ -1,6 +1,8 @@
 require "./repl"
 
 class Crystal::Repl::Context
+  record MultidispatchKey, obj_type : Type, call_signature : CallSignature
+
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
   getter! constants : Constants
@@ -8,6 +10,7 @@ class Crystal::Repl::Context
   getter decompile, trace, stats
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
+  getter multidispatchs : Hash(MultidispatchKey, Def)
 
   def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
     @defs = {} of Def => CompiledDef
@@ -17,6 +20,8 @@ class Crystal::Repl::Context
     @lib_functions.compare_by_identity
 
     @dl_handles = {} of String? => Void*
+
+    @multidispatchs = {} of MultidispatchKey => Def
 
     # TODO: finish porting all of LibM instrinsics
 
