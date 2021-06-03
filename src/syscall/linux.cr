@@ -7,6 +7,6 @@ module Syscall
   def_syscall close, Int32, fd : Int32
   def_syscall read, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
   def_syscall write, Int32, fd : Int32, buf : UInt8*, count : LibC::SizeT
-  def_syscall pipe, Int32, pipefd : Int32[2]*
+  def_syscall pipe2, Int32, pipefd : Int32[2]*, flags : Int32
   def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
 end

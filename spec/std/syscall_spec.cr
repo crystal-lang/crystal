@@ -6,7 +6,7 @@ require "syscall"
 describe Syscall do
   it "can call into the system successfuly" do
     pair = uninitialized Int32[2]
-    Syscall.pipe(pointerof(pair)).should eq(0)
+    Syscall.pipe2(pointerof(pair), 0).should eq(0)
 
     str = "Hello"
     Syscall.write(pair[1], str.to_unsafe, LibC::SizeT.new(str.bytesize)).should eq(str.bytesize)
