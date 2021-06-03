@@ -128,6 +128,10 @@ class Crystal::Repl::Compiler
       else
         node.raise "BUG: missing handling of primitive #{body.name} for #{type}"
       end
+    when "enum_value"
+      accept_call_members(node)
+    when "enum_new"
+      accept_call_args(node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"

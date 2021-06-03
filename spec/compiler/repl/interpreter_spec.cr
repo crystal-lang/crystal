@@ -1591,6 +1591,33 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "enum" do
+    it "does enum value" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        enum Color
+          Red
+          Green
+          Blue
+        end
+      EXISTING
+        Color::Blue.value
+      CODE
+    end
+
+    it "does enum new" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        enum Color
+          Red
+          Green
+          Blue
+        end
+      EXISTING
+        blue = Color.new(2)
+        blue.value
+      CODE
+    end
+  end
+
   context "tuple" do
     it "interprets tuple literal and access by known index" do
       interpret(<<-CODE).should eq(6)
