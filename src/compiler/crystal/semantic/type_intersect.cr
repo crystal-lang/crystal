@@ -14,7 +14,7 @@ module Crystal
     #
     # except that `nil` is returned if the above produces `NoReturn`.
     def self.common_descendent(type1 : Type, type2 : Type)
-      common_descendent_type1(type1, type2)
+      common_descendent_base(type1, type2)
     end
 
     def self.common_descendent(type1 : TupleInstanceType, type2 : TupleInstanceType)
@@ -29,18 +29,52 @@ module Crystal
       type1.compatible_with?(type2) ? type2 : nil
     end
 
-    def self.common_descendent(type1 : NonGenericModuleType, type2 : Type)
-      common_descendent_type1(type1, type2) ||
-        type1.including_types.try { |t| common_descendent(t, type2) }
+    def self.common_descendent(type1 : NonGenericModuleType | GenericModuleInstanceType, type2 : AliasType)
+      common_descendent(type1, type2.remove_alias) ||
+        common_descendent_including_types(type1, type2)
     end
 
-    def self.common_descendent(type1 : GenericModuleInstanceType, type2 : Type)
-      common_descendent_generic_instance1(type1, type2) ||
-        type1.including_types.try { |t| common_descendent(t, type2) }
+    def self.common_descendent(type1 : NonGenericModuleType | GenericModuleInstanceType, type2 : UnionType)
+      common_descendent_union(type1, type2) ||
+        common_descendent_including_types(type1, type2)
     end
 
-    def self.common_descendent(type1 : GenericInstanceType, type2 : Type)
-      common_descendent_generic_instance1(type1, type2)
+    def self.common_descendent(type1 : NonGenericModuleType | GenericModuleInstanceType, type2 : VirtualType)
+      common_descendent_including_types(type1, type2)
+    end
+
+    def self.common_descendent(type1 : NonGenericModuleType | GenericModuleInstanceType, type2 : GenericClassType)
+      common_descendent_instance_and_generic(type1, type2) ||
+        common_descendent_including_types(type1, type2)
+    end
+
+    def self.common_descendent(type1 : GenericModuleInstanceType, type2 : GenericModuleInstanceType)
+      common_descendent_generic_instances(type1, type2) ||
+        common_descendent_base(type1, type2) ||
+        common_descendent_including_types(type1, type2)
+    end
+
+    def self.common_descendent(type1 : GenericModuleInstanceType, type2 : GenericModuleType)
+      return type1 if type1.generic_type == type2
+
+      common_descendent_instance_and_generic(type1, type2) ||
+        common_descendent_including_types(type1, type2)
+    end
+
+    def self.common_descendent(type1 : NonGenericModuleType | GenericModuleInstanceType, type2 : Type)
+      common_descendent_base(type1, type2) ||
+        common_descendent_including_types(type1, type2)
+    end
+
+    def self.common_descendent(type1 : GenericClassInstanceType, type2 : GenericClassType)
+      return type1 if type1.generic_type == type2
+
+      common_descendent_instance_and_generic(type1, type2)
+    end
+
+    def self.common_descendent(type1 : GenericInstanceType, type2 : GenericInstanceType)
+      common_descendent_generic_instances(type1, type2) ||
+        common_descendent_base(type1, type2)
     end
 
     def self.common_descendent(type1 : MetaclassType, type2 : VirtualMetaclassType)
@@ -51,14 +85,7 @@ module Crystal
       restricted ? type1 : nil
     end
 
-    def self.common_descendent(type1 : GenericClassInstanceMetaclassType, type2 : MetaclassType)
-      return type1 if type1.instance_type.generic_type.metaclass == type2
-
-      restricted = common_descendent(type1.instance_type, type2.instance_type)
-      restricted ? type1 : nil
-    end
-
-    def self.common_descendent(type1 : GenericModuleInstanceMetaclassType, type2 : MetaclassType)
+    def self.common_descendent(type1 : GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType, type2 : MetaclassType)
       return type1 if type1.instance_type.generic_type.metaclass == type2
 
       restricted = common_descendent(type1.instance_type, type2.instance_type)
@@ -67,7 +94,7 @@ module Crystal
 
     def self.common_descendent(type1 : UnionType, type2 : Type)
       types = type1.union_types.compact_map do |union_type|
-        common_descendent(union_type, type2).as(Type?)
+        common_descendent(union_type, type2)
       end
       type1.program.type_merge_union_of(types)
     end
@@ -83,13 +110,11 @@ module Crystal
     end
 
     def self.common_descendent(type1 : AliasType, type2 : Type)
-      return type1 if type1 == type2
-
       common_descendent(type1.remove_alias, type2)
     end
 
     def self.common_descendent(type1 : TypeDefType, type2 : UnionType)
-      common_descendent_type1(type1, type2)
+      common_descendent_union(type1, type2)
     end
 
     def self.common_descendent(type1 : TypeDefType, type2 : AliasType)
@@ -111,21 +136,29 @@ module Crystal
       end
     end
 
+    def self.common_descendent(type1 : VirtualType, type2 : VirtualType)
+      return type1 if type1 == type2
+
+      base_type1 = type1.base_type
+      base_type2 = type2.base_type
+      (common_descendent(base_type1, base_type2) || common_descendent(base_type2, base_type1)).try &.virtual_type
+    end
+
+    def self.common_descendent(type1 : VirtualType, type2 : AliasType)
+      common_descendent(type1, type2.remove_alias)
+    end
+
+    def self.common_descendent(type1 : VirtualType, type2 : UnionType)
+      types = type2.union_types.compact_map do |t|
+        common_descendent(type1, t)
+      end
+      type1.program.type_merge types
+    end
+
     def self.common_descendent(type1 : VirtualType, type2 : Type)
-      type2 = type2.remove_alias
       base_type = type1.base_type
 
-      if type1 == type2
-        type1
-      elsif type2.is_a?(UnionType)
-        types = type2.union_types.compact_map do |t|
-          common_descendent(type1, t).as(Type?)
-        end
-        type1.program.type_merge types
-      elsif type2.is_a?(VirtualType)
-        result = common_descendent(base_type, type2.base_type) || common_descendent(type2.base_type, base_type)
-        result ? result.virtual_type : nil
-      elsif type2.implements?(base_type)
+      if type2.implements?(base_type)
         type2.virtual_type
       elsif base_type.implements?(type2)
         type1
@@ -134,7 +167,7 @@ module Crystal
           type1
         else
           types = base_type.subclasses.compact_map do |subclass|
-            common_descendent(subclass.virtual_type, type2).as(Type?)
+            common_descendent(subclass.virtual_type, type2)
           end
           type1.program.type_merge_union_of types
         end
@@ -151,96 +184,83 @@ module Crystal
       end
     end
 
-    private def self.common_descendent_type1(type1, type2 : AliasType)
-      if type1 == type2
-        type1
-      else
-        common_descendent(type1, type2.remove_alias)
-      end
+    def self.common_descendent(type1 : NilType, type2 : VoidType)
+      # Allow Nil to match Void (useful for `Pointer(Void)#value=`)
+      type1
     end
 
-    private def self.common_descendent_type1(type1, type2 : UnionType)
-      restricted = nil
+    def self.common_descendent(type1 : Type, type2 : AliasType)
+      return type1 if type1 == type2
 
-      type2.union_types.each do |union_type|
-        # Apply the restriction logic on each union type, even if we already
-        # have a match, so that we can detect ambiguous calls between of
-        # literal types against aliases that resolve to union types.
-        restriction = common_descendent(type1, union_type)
-        restricted ||= restriction
-      end
-
-      restricted ? type1 : nil
+      common_descendent(type1, type2.remove_alias)
     end
 
-    private def self.common_descendent_type1(type1, type2 : VirtualType)
+    def self.common_descendent(type1 : Type, type2 : UnionType)
+      common_descendent_union(type1, type2)
+    end
+
+    def self.common_descendent(type1 : Type, type2 : VirtualType)
       type1.implements?(type2.base_type) ? type1 : nil
     end
 
-    private def self.common_descendent_type1(type1, type2 : GenericClassType)
-      type1.parents.try &.each do |parent|
-        if parent.module?
-          return type1 if parent.implements?(type2)
-        else
-          restricted = common_descendent(parent, type2)
-          return type1 if restricted
-        end
-      end
-
-      nil
+    def self.common_descendent(type1 : Type, type2 : GenericClassType)
+      common_descendent_instance_and_generic(type1, type2)
     end
 
-    private def self.common_descendent_type1(type1, type2)
+    private def self.common_descendent_base(type1, type2)
       if type1 == type2
-        return type1
-      end
-
-      # Allow Nil to match Void (useful for `Pointer(Void)#value=`)
-      if type1.nil_type? && type2.void?
         return type1
       end
 
       if type1.parents.try &.any? &.implements?(type2)
         return type1
       end
-
-      nil
     end
 
-    private def self.common_descendent_generic_instance1(type1, type2 : GenericType)
-      return type1 if type1.generic_type == type2
+    private def self.common_descendent_union(type, union)
+      restricted = nil
 
-      type1.parents.try &.each do |parent|
-        if parent.module?
-          return type1 if parent.implements?(type2)
-        else
-          restricted = common_descendent(parent, type2)
-          return type1 if restricted
-        end
+      union.union_types.each do |union_type|
+        # Apply the restriction logic on each union type, even if we already
+        # have a match, so that we can detect ambiguous calls between of
+        # literal types against aliases that resolve to union types.
+        restriction = common_descendent(type, union_type)
+        restricted ||= restriction
       end
 
-      nil
+      restricted ? type : nil
     end
 
-    private def self.common_descendent_generic_instance1(type1, type2 : GenericInstanceType)
-      return common_descendent_type1(type1, type2) unless type1.generic_type == type2.generic_type
+    private def self.common_descendent_including_types(mod, type)
+      mod.including_types.try { |t| common_descendent(t, type) }
+    end
+
+    private def self.common_descendent_instance_and_generic(instance, generic)
+      instance.parents.try &.each do |parent|
+        if parent.module?
+          return instance if parent.implements?(generic)
+        else
+          restricted = common_descendent(parent, generic)
+          return instance if restricted
+        end
+      end
+    end
+
+    private def self.common_descendent_generic_instances(type1, type2)
+      return nil unless type1.generic_type == type2.generic_type
 
       type1.type_vars.each do |name, type_var1|
         type_var2 = type2.type_vars[name]
         if type_var1.is_a?(Var) && type_var2.is_a?(Var)
           # type vars are invariant except for Tuple and NamedTuple and those have
           # separate logic
-          return common_descendent_type1(type1, type2) unless type_var1.type.devirtualize == type_var2.type.devirtualize
+          return nil unless type_var1.type.devirtualize == type_var2.type.devirtualize
         else
-          return common_descendent_type1(type1, type2) unless type_var1 == type_var2
+          return nil unless type_var1 == type_var2
         end
       end
 
       type1
-    end
-
-    private def self.common_descendent_generic_instance1(type1, type2)
-      common_descendent_type1(type1, type2)
     end
   end
 end
