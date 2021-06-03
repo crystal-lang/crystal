@@ -18,7 +18,7 @@ module String::Grapheme
     end
   end
 
-  # Graphemes implements an iterator over Unicode extended grapheme clusters,
+  # Graphemes class iterate over string to identify Unicode extended grapheme clusters,
   # specified in the Unicode Standard Annex #29.
   class Graphemes
     @last_char : Char? = nil
@@ -31,16 +31,17 @@ module String::Grapheme
       move_next # Parse ahead
     end
 
-    def next
+    # Returns the identified grapheme cluster or nil if none found.
+    def next : Cluster?
       return nil unless move_next
       val = Cluster.new(@cluster.size > 1 ? @cluster.join : @cluster.first)
       @cluster.clear
       val
     end
 
-    # advances the iterator by one grapheme cluster
-    # This method must be called before the first cluster is accessed
-    private def move_next
+    # This method identifies the grapheme cluster and returns false if none found
+    # This method must be called before the first cluster is accessed.
+    private def move_next : Bool
       if (c = @last_char) && @cluster.empty?
         @cluster << c
         @last_char = nil
@@ -99,7 +100,7 @@ module String::Grapheme
       !@cluster.empty?
     end
 
-    # cluster parser states
+    # Cluster parser states
     private enum State
       Any
       CR
@@ -114,7 +115,7 @@ module String::Grapheme
       RIEven
     end
 
-    # cluster parser's breaking instructions.
+    # Cluster parser's breaking instructions.
     private enum Instruction
       NoBoundary
       Boundary
