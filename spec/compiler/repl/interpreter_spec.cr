@@ -1307,6 +1307,65 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does dispatch on one argument with struct receiver, and modifies it" do
+      interpret(<<-EXISTING, <<-CODE).should eq(32)
+        struct Foo
+          def initialize
+            @x = 2_i64
+          end
+
+          def foo(x : Int32)
+            v = @x + x
+            @x = 10_i64
+            v
+          end
+
+          def foo(x : Char)
+            v = @x + x.ord.to_i32
+            @x = 30_i64
+            v
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+
+        a = 20 || 'a'
+        b = foo.foo(a)
+        b + foo.x
+      CODE
+    end
+
+    it "downcasts self from union to struct (pass pointer to self)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def initialize
+            @x = 1_i64
+          end
+
+          def x
+            @x
+          end
+        end
+
+        struct Point
+          def initialize
+            @x = 2_i64
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        obj = Point.new || Foo.new
+        obj.x
+      CODE
+    end
+
     pending "does dispatch on virtual type" do
       interpret(<<-EXISTING, <<-CODE).should eq(2)
         class Foo

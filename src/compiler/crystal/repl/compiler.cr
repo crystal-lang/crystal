@@ -265,8 +265,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       get_self_ivar 0, aligned_sizeof_type(type), node: node
     else
       get_local index, aligned_sizeof_type(type), node: node
-      downcast node, type, node.type
     end
+
+    downcast node, type, node.type
 
     false
   end
@@ -599,7 +600,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = @context.defs[target_def]? ||
                    create_compiled_def(node, target_def)
 
-    pop_obj = compile_call_args(node)
+    pop_obj = compile_call_args(node, target_def)
 
     if node.block
       call_with_block compiled_def, node: node
@@ -737,7 +738,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       if @context.decompile
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
-        puts Disassembler.disassemble(compiled_block.instructions, @local_vars)
+        puts Disassembler.disassemble(compiled_block.instructions, compiled_block.nodes, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
       end
     ensure
@@ -747,7 +748,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_block
   end
 
-  private def compile_call_args(node : Call)
+  private def compile_call_args(node : Call, target_def : Def)
     # Self for structs is passed by reference
     pop_obj = nil
 
@@ -757,12 +758,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         case obj
         when Var
           if obj.name == "self"
-            put_self(node: obj)
+            self_type = @def.not_nil!.vars.not_nil!["self"].type
+            if self_type == target_def.owner
+              put_self(node: obj)
+            else
+              # It might happen that self's type was narrowed down,
+              # so we need to accept it regularly and downcast it.
+              request_value(obj)
+
+              # Then take a pointer to it (this is self inside the method)
+              put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
+
+              # We must remember to later pop the struct that's still on the stack
+              pop_obj = obj
+            end
           else
             ptr_index, _ = lookup_local_var_index_and_type(obj.name)
             pointerof_var(ptr_index, node: obj)
           end
           # TODO: when InstanceVar
+        when InstanceVar
+          obj.raise "BUG: missing interpret call with instance var receiver"
         else
           # For a struct, we first put it on the stack
           request_value(obj)
