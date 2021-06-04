@@ -96,17 +96,6 @@ class Socket
         new error_code, nil, domain: domain
       end
 
-      def from_os_error(message : String?, os_error : Errno, *, domain, **opts)
-        {% if flag?(:posix) %}
-          # EAI_SYSTEM is not defined on win32
-          if os_error == LibC::EAI_SYSTEM
-            from_errno message, domain: domain
-          end
-        {% end %}
-
-        super
-      end
-
       protected def self.new_from_os_error(message : String, os_error, *, domain, type, service, protocol, **opts)
         new(message, **opts)
       end
@@ -162,6 +151,13 @@ class Socket
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            raise Error.from_errno message, domain: domain
+          end
+        {% end %}
+
         error = {% if flag?(:win32) %}
                   WinError.new(ret.to_u32!)
                 {% else %}
