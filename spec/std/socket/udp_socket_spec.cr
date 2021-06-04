@@ -4,9 +4,9 @@ require "socket"
 describe UDPSocket do
   it "#remote_address resets after connect" do
     socket = UDPSocket.new
-    socket.connect("localhost", 1)
+    socket.connect("127.0.0.1", 1)
     socket.remote_address.port.should eq 1
-    socket.connect("localhost", 2)
+    socket.connect("127.0.0.1", 2)
     socket.remote_address.port.should eq 2
   end
 
