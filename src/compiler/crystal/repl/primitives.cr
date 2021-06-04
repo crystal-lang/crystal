@@ -591,6 +591,18 @@ class Crystal::Repl::Compiler
     end
   end
 
+  private def primitive_binary_op_cmp(left_type : SymbolType, right_type : SymbolType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
+    left_node.accept self
+    right_node.accept self
+
+    case op
+    when "==" then eq_i32(node: node)
+    when "!=" then neq_i32(node: node)
+    else
+      left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+    end
+  end
+
   private def primitive_binary_op_cmp(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode, right_node : ASTNode, node : ASTNode, op : String)
     case op
     when "==" then primitive_binary_op_eq(left_type, right_type, left_node, right_node, node)

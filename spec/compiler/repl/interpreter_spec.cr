@@ -1674,6 +1674,20 @@ describe Crystal::Repl::Interpreter do
         x.to_s
       CODE
     end
+
+    it "symbol equality" do
+      interpret(<<-CODE).should eq(9)
+        s1 = :foo
+        s2 = :bar
+
+        a = 0
+        a += 1 if s1 == s1
+        a += 2 if s1 == s2
+        a += 4 if s1 != s1
+        a += 8 if s1 != s2
+        a
+      CODE
+    end
   end
 
   context "tuple" do
