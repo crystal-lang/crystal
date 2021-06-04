@@ -27,7 +27,7 @@
 #   Prepares the message that goes before the system error description.
 #   By default it returns the original message unchanged. But that could be
 #   customized based on the keyword arguments passed to `from_errno` or `from_winerror`.
-# * `protected def new_from_os_error(message : String, os_error, **opts)`
+# * `protected def new_from_os_error(message : String?, os_error, **opts)`
 #   Creates an instance of the exception that wraps a system error.
 #   This is a factory method and by default it creates an instance
 #   of the current class. It can be overridden to generate different
@@ -103,7 +103,7 @@ module SystemError
     # This is a factory method and by default it creates an instance
     # of the current class. It can be overridden to generate different
     # classes based on the `os_error` value or keyword arguments.
-    protected def new_from_os_error(message : String, os_error, **opts)
+    protected def new_from_os_error(message : String?, os_error, **opts)
       self.new(message, **opts)
     end
 

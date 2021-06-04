@@ -96,7 +96,7 @@ class Socket
         new error_code, nil, domain: domain
       end
 
-      protected def self.new_from_os_error(message : String, os_error, *, domain, type, service, protocol, **opts)
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
         new(message, **opts)
       end
 
