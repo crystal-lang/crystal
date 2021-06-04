@@ -14,6 +14,7 @@
 #
 # For more details about Linux system calls, refer to
 # [https://man7.org/linux/man-pages/man2/syscalls.2.html](https://man7.org/linux/man-pages/man2/syscalls.2.html).
+@[Experimental]
 module Syscall
   private macro def_syscall(name, return_type, *args)
     {% raise "The Syscall module is not supported on this target. It's only available for Linux." %}
