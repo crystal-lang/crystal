@@ -637,7 +637,7 @@ class Array(T)
   # a[-2..1]  # => []
   # a[3..-4]  # => []
   # ```
-  def [](range : Range) : self
+  def [](range : Range) : Array(T)
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
@@ -648,7 +648,7 @@ class Array(T)
   # a[6..10]? # => nil
   # a[6..]?   # => nil
   # ```
-  def []?(range : Range) : self | Nil
+  def []?(range : Range) : Array(T)?
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
@@ -668,12 +668,12 @@ class Array(T)
   # a[5, 1]  # => []
   # a[6, 1]  # raises IndexError
   # ```
-  def [](start : Int, count : Int) : self
+  def [](start : Int, count : Int) : Array(T)
     self[start, count]? || raise IndexError.new
   end
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
-  def []?(start : Int, count : Int) : self | Nil
+  def []?(start : Int, count : Int) : Array(T)?
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return Array(T).new if start == size
 
