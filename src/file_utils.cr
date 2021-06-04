@@ -305,7 +305,7 @@ module FileUtils
   end
 
   # Moves *src_path* to *dest_path*.
-  # If *src_path* and *dest_path* exist on different disk partitions,
+  # If *src_path* and *dest_path* exist on different mounted filesystems,
   # the file at *src_path* is copied to *dest_path* and then removed.
   #
   # ```
