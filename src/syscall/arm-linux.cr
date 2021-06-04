@@ -1,6 +1,7 @@
 {% skip_file unless flag?(:linux) && flag?(:arm) %}
 
 module Syscall
+  # :nodoc:
   # Based on https://github.com/torvalds/linux/blob/master/arch/arm/tools/syscall.tbl
   enum Code : UInt32
     RESTART_SYSCALL              =   0

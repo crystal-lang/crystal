@@ -1,6 +1,7 @@
 {% skip_file unless flag?(:linux) && flag?(:aarch64) %}
 
 module Syscall
+  # :nodoc:
   # Based on https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/unistd.h
   enum Code : UInt64
     IO_SETUP                     =   0

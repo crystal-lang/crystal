@@ -1,6 +1,7 @@
 {% skip_file unless flag?(:linux) && flag?(:i386) %}
 
 module Syscall
+  # :nodoc:
   # Based on https://github.com/torvalds/linux/blob/master/arch/x86/entry/syscalls/syscall_32.tbl
   enum Code : UInt32
     RESTART_SYSCALL              =   0
