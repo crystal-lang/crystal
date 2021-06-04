@@ -1,5 +1,7 @@
 {% if flag?(:win32) %}
   require "c/winbase"
+  require "c/errhandlingapi"
+  require "c/winsock2"
 {% end %}
 
 # `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
@@ -13,6 +15,42 @@ enum WinError : UInt32
       WinError.new LibC.GetLastError
     {% else %}
       raise NotImplementedError.new("WinError.value")
+    {% end %}
+  end
+
+  # Sets the value of [`SetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-setlasterror)
+  # which signifies the error code of the previously called win32 function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.value=(winerror : self)
+    {% if flag?(:win32) %}
+      LibC.SetLastError(winerror.value)
+    {% else %}
+      raise NotImplementedError.new("WinError.value=")
+    {% end %}
+  end
+
+  # Returns the value of [`WSAGetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsagetlasterror)
+  # which is used to retrieve the error code of the previously called Windows Socket API function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.wsa_value
+    {% if flag?(:win32) %}
+      WinError.new LibC.WSAGetLastError.to_u32!
+    {% else %}
+      raise NotImplementedError.new("WinError.wsa_value")
+    {% end %}
+  end
+
+  # Sets the value of [`WSASetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasetlasterror)
+  # which signifies the error code of the previously called Windows Socket API function.
+  #
+  # Raises `NotImplementedError` on non-win32 platforms.
+  def self.wsa_value=(winerror : self)
+    {% if flag?(:win32) %}
+      LibC.WSASetLastError(winerror.value)
+    {% else %}
+      raise NotImplementedError.new("WinError.value=")
     {% end %}
   end
 

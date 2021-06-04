@@ -256,8 +256,8 @@ module HTTP
     end
 
     # Sets a new cookie in the collection with a string value.
-    # This creates a never expiring, insecure, not HTTP only cookie with
-    # no explicit domain restriction and the path `/`.
+    # This creates a never expiring, insecure, not HTTP-only cookie with
+    # no explicit domain restriction and no path.
     #
     # ```
     # require "http/client"

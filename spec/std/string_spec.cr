@@ -2280,6 +2280,8 @@ describe "String" do
 
   pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
+
+    sprintf("%f", 1e15).should eq("1000000000000000.000000")
   end
 
   it "does each_char" do

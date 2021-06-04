@@ -1200,7 +1200,32 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node.type, node.obj.type, node.name, @last
+      obj_type = node.obj.type
+      if obj_type.is_a?(UnionType)
+        union_ptr = @last
+        union_type_id = type_id(union_ptr, obj_type)
+
+        Phi.open(self, node, @needs_value) do |phi|
+          obj_type.union_types.each do |union_type|
+            id_matches = match_type_id(node.type, union_type, union_type_id)
+
+            current_match_label, next_match_label = new_blocks "current_match", "next_match"
+            cond id_matches, current_match_label, next_match_label
+            position_at_end current_match_label
+
+            value_ptr = downcast union_ptr, union_type, obj_type, true
+            ivar_type = union_type.lookup_instance_var(node.name).type
+            read_instance_var ivar_type, union_type, node.name, value_ptr
+
+            phi.add @last, ivar_type
+
+            position_at_end next_match_label
+          end
+          unreachable
+        end
+      else
+        read_instance_var node.type, node.obj.type, node.name, @last
+      end
     end
 
     def read_instance_var(node_type, type, name, value)
