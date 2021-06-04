@@ -1,5 +1,6 @@
 require "crystal/system/windows"
 require "c/winbase"
+require "c/processenv"
 
 module Crystal::System::Env
   # Sets an environment variable or unsets it if *value* is `nil`.

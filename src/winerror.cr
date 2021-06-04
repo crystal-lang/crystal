@@ -1,5 +1,6 @@
 {% if flag?(:win32) %}
   require "c/winbase"
+  require "c/errhandlingapi"
   require "c/winsock2"
 {% end %}
 
