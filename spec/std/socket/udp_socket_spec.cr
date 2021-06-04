@@ -2,6 +2,22 @@ require "./spec_helper"
 require "socket"
 
 describe UDPSocket do
+  # Note: This spec fails with a IPv6 address. See pending below.
+  it "#remote_address resets after connect" do
+    socket = UDPSocket.new
+    socket.connect("127.0.0.1", 1)
+    socket.remote_address.port.should eq 1
+    socket.connect("127.0.0.1", 2)
+    socket.remote_address.port.should eq 2
+    socket.close
+  end
+
+  pending "#connect with a IPv6 address" do
+    socket = UDPSocket.new
+    socket.connect("::1", 1)
+    socket.close
+  end
+
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
       port = unused_local_port
