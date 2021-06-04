@@ -546,6 +546,8 @@ module Crystal
       when "@type"
         target = @scope == @program.class_type ? @scope : @scope.instance_type
         @last = TypeNode.new(target.devirtualize)
+      when "@top_level"
+        @last = TypeNode.new(@program)
       when "@def"
         @last = @def || NilLiteral.new
       else
