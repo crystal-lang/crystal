@@ -787,9 +787,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
             ptr_index, _ = lookup_local_var_index_and_type(obj.name)
             pointerof_var(ptr_index, node: obj)
           end
-          # TODO: when InstanceVar
         when InstanceVar
-          obj.raise "BUG: missing interpret call with instance var receiver"
+          index = scope.index_of_instance_var(obj.name).not_nil!
+          pointerof_ivar(@context.offset_of(scope, index), node: node)
         else
           # For a struct, we first put it on the stack
           request_value(obj)
