@@ -309,6 +309,30 @@ describe Crystal::Repl::Interpreter do
       interpret("1 != 1").should be_false
     end
 
+    it "interprets Int32 == UInt64 (true)" do
+      interpret("1 == 1_u64").should be_true
+    end
+
+    it "interprets Int32 == UInt64 (false)" do
+      interpret("2 == 1_u64").should be_false
+    end
+
+    it "interprets Int32 != UInt64 (true)" do
+      interpret("1 != 2_u64").should be_true
+    end
+
+    it "interprets Int32 != UInt64 (false)" do
+      interpret("1 != 1_u64").should be_false
+    end
+
+    it "interprets UInt64 != Int32 (true)" do
+      interpret("2_u64 != 1").should be_true
+    end
+
+    it "interprets UInt64 != Int32 (false)" do
+      interpret("1_u64 != 1").should be_false
+    end
+
     it "interprets Float64 / Float64" do
       interpret("2.5 / 2.1").should eq(2.5 / 2.1)
     end

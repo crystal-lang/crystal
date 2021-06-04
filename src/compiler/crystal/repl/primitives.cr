@@ -679,9 +679,12 @@ class Crystal::Repl::Compiler
 
       eq_u64_i64(node: node)
     else
-      # It's X == UInt64 where X is a signed integer.
-      # We must do: left >= 0 && left == right
-      left_node.raise "BUG: missing handling of binary == with types #{left_type} and #{right_type}"
+      # It's X < UInt64 where X is a signed integer
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+
+      eq_i64_u64(node: node)
     end
   end
 
@@ -698,8 +701,22 @@ class Crystal::Repl::Compiler
     kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       primitive_binary_op_neq(node, kind)
+    elsif left_type.rank > right_type.rank
+      # It's UInt64 != X where X is a signed integer.
+
+      # We first extend right to left
+      left_node.accept self
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, :i64
+
+      neq_u64_i64(node: node)
     else
-      left_node.raise "BUG: missing handling of binary == with types #{left_type} and #{right_type}"
+      # It's X != UInt64 where X is a signed integer
+      left_node.accept self
+      primitive_unchecked_convert left_node, left_type.kind, :i64
+      right_node.accept self
+
+      neq_i64_u64(node: node)
     end
   end
 
