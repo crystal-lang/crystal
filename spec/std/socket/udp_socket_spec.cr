@@ -2,6 +2,14 @@ require "./spec_helper"
 require "socket"
 
 describe UDPSocket do
+  it "#remote_address resets after connect" do
+    socket = UDPSocket.new
+    socket.connect("localhost", 1)
+    socket.remote_address.port.should eq 1
+    socket.connect("localhost", 2)
+    socket.remote_address.port.should eq 2
+  end
+
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do
       port = unused_local_port
@@ -12,14 +20,6 @@ describe UDPSocket do
       socket = UDPSocket.new(family)
       socket.bind(address, 0)
       socket.local_address.address.should eq address
-    end
-
-    it "#remote_address resets after connect" do
-      socket = UDPSocket.new
-      socket.connect(address, 1)
-      socket.remote_address.port.should eq 1
-      socket.connect(address, 2)
-      socket.remote_address.port.should eq 2
     end
 
     it "sends and receives messages" do
