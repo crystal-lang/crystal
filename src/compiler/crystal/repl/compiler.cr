@@ -634,9 +634,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_simple_call(node : Call, target_def : Def)
-  end
-
   private def compile_lib_call(node : Call, obj_type)
     target_def = node.target_def
     external = target_def.as(External)
@@ -740,7 +737,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       )
 
       # Store it so the GC doesn't collect it (it's in the instructions but it might not be aligned)
-      @context.compiled_blocks << compiled_block
+      @context.gc_references << compiled_block.object_id
 
       compiler = Compiler.new(@context, @local_vars,
         instructions: compiled_block.instructions,
@@ -826,6 +823,56 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.args.each &.accept(self)
     node.named_args.try &.each &.value.accept(self)
+  end
+
+  def visit(node : ProcLiteral)
+    is_closure = node.def.closure?
+    if is_closure
+      node.raise "BUG: closures not yet supported"
+    end
+
+    # TODO: This was copied from Codegen. Why is it not in CleanupTransformer?
+    # If we don't care about a proc literal's return type then we mark the associated
+    # def as returning void. This can't be done in the type inference phase because
+    # of bindings and type propagation.
+    if node.force_nil?
+      node.def.set_type @context.program.nil
+    else
+      # Use proc literal's type, which might have a broader type then the body
+      # (for example, return type: Int32 | String, body: String)
+      node.def.set_type node.return_type
+    end
+
+    target_def = node.def
+    target_def.owner = @context.program
+    args = target_def.args
+
+    # 1. Compile def
+    args_bytesize = args.sum { |arg| aligned_sizeof_type(arg) }
+    compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
+
+    # 2. Store it in context
+    @context.gc_references << compiled_def.object_id
+
+    # Declare local variables for the newly compiled function
+    target_def.vars.try &.each do |name, var|
+      compiled_def.local_vars.declare(name, var.type)
+    end
+
+    compiler = Compiler.new(@context, compiled_def)
+    begin
+      compiler.compile_def(target_def)
+    rescue ex : Crystal::CodeError
+      node.raise "compiling #{node}", inner: ex
+    end
+
+    # 3. Push compiled_def id to stack
+    put_i64 compiled_def.object_id.to_i64!, node: node
+
+    # 4. Push context to stack (null for now, so i64 0)
+    put_i64 0, node: node
+
+    false
   end
 
   def visit(node : Break)

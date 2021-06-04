@@ -16,6 +16,7 @@ require "./repl"
 # - Instance vars: 3
 # - Unions: 4
 # - Tuples: 1
+# - Procs: 1
 # - Overrides: 5
 # ------------------------
 # - Total: 132
@@ -1082,6 +1083,15 @@ Crystal::Repl::Instructions =
       pop_values: [index : Int32] of Nil,
       push:       true,
       code:       @context.index_to_symbol(index).object_id.unsafe_as(UInt64),
+    },
+    # >>> Symbol (1)
+
+    # <<< Symbol (1)
+    proc_call: {
+      operands:   [] of Nil,
+      pop_values: [compiled_def : CompiledDef, closure_data : Pointer(Void)] of Nil,
+      push:       true,
+      code:       call(compiled_def),
     },
     # >>> Symbol (1)
 

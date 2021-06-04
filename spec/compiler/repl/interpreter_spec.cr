@@ -2206,6 +2206,43 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  context "procs" do
+    it "interprets no args proc literal" do
+      interpret(<<-CODE).should eq(42)
+        proc = ->{ 40 }
+        proc.call + 2
+      CODE
+    end
+
+    it "interprets proc literal with args" do
+      interpret(<<-CODE).should eq(30)
+        proc = ->(x : Int32, y : Int32) { x + y }
+        proc.call(10, 20)
+      CODE
+    end
+
+    it "interprets call inside Proc type" do
+      interpret(<<-CODE).should eq(42)
+        struct Proc
+          def call2
+            call
+          end
+        end
+
+        proc = ->{ 40 }
+        proc.call2 + 2
+      CODE
+    end
+
+    it "discards proc call" do
+      interpret(<<-CODE).should eq(2)
+        proc = ->{ 40 }
+        proc.call
+        2
+      CODE
+    end
+  end
 end
 
 private def interpret(string, *, prelude = "primitives")

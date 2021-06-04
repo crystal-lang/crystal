@@ -6,7 +6,7 @@ module Crystal::Repl::Multidispatch
       a_def = create_def_uncached(context, node, target_defs)
 
       # Store it so the GC doesn't collect it (it's in the instructions but it might not be aligned)
-      context.multidispatchs_with_block << a_def
+      context.gc_references << a_def.object_id
 
       return a_def
     end

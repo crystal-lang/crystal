@@ -142,6 +142,14 @@ class Crystal::Repl::Compiler
       return unless @wants_value
 
       pointer_address(node: node)
+    when "proc_call"
+      node.args.each { |arg| request_value(arg) }
+
+      obj ? request_value(obj) : put_self(node: node)
+
+      proc_call(node: node)
+
+      pop(aligned_sizeof_type(node.type), node: nil) unless @wants_value
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
