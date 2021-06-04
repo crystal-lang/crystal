@@ -133,7 +133,7 @@ module Crystal::System::File
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
+      return ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
     end
   end
 

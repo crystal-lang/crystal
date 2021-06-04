@@ -315,11 +315,11 @@ module FileUtils
   # ```
   #
   def mv(src_path : String, dest_path : String) : Nil
-    File.rename(src_path, dest_path)
-  rescue ex : File::Error
-    raise ex unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
-    cp_r(src_path, dest_path)
-    rm_r(src_path)
+    if error = Crystal::System::File.rename(src_path, dest_path)
+      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      cp_r(src_path, dest_path)
+      rm_r(src_path)
+    end
   end
 
   # Moves every *srcs* to *dest*.

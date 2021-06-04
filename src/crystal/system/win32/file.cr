@@ -204,7 +204,7 @@ module Crystal::System::File
 
   def self.rename(old_path : String, new_path : String) : Nil
     if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
-      raise ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
+      return ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
   end
 
