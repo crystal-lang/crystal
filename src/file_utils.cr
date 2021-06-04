@@ -305,6 +305,8 @@ module FileUtils
   end
 
   # Moves *src_path* to *dest_path*.
+  # If src_path and dest_path exist on the different disk partition,
+  # the file is copied then the original file is removed.
   #
   # ```
   # require "file_utils"
@@ -312,9 +314,12 @@ module FileUtils
   # FileUtils.mv("afile", "afile.cr")
   # ```
   #
-  # NOTE: Alias of `File.rename`
   def mv(src_path : String, dest_path : String) : Nil
     File.rename(src_path, dest_path)
+  rescue ex : File::Error
+    raise ex unless Errno.value.in? [Errno::EXDEV, Errno::EPERM]
+    cp_r(src_path, dest_path)
+    rm_r(src_path)
   end
 
   # Moves every *srcs* to *dest*.
