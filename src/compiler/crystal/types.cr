@@ -2370,7 +2370,19 @@ module Crystal
     end
 
     def replace_type_parameters(instance)
-      new_tuple_types = tuple_types.map &.replace_type_parameters(instance)
+      new_tuple_types = [] of Type
+      tuple_types.each do |tuple_type|
+        if tuple_type.is_a?(TypeSplat)
+          type = tuple_type.splatted_type.replace_type_parameters(instance)
+          if type.is_a?(TupleInstanceType)
+            new_tuple_types.concat(type.tuple_types)
+          else
+            raise "expected type to be a tuple type, not #{type}"
+          end
+        else
+          new_tuple_types << tuple_type.replace_type_parameters(instance)
+        end
+      end
       program.tuple_of(new_tuple_types)
     end
 
