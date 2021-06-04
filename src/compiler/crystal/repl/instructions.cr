@@ -507,236 +507,116 @@ Crystal::Repl::Instructions =
     },
     # >>> Math (36)
 
-    # <<< Comparisons (26)
-    eq_i32: {
+    # <<< Comparisons (18)
+    cmp_i8: {
+      operands:   [] of Nil,
+      pop_values: [a : Int8, b : Int8],
+      push:       true,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
+    },
+    cmp_u8: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt8, b : UInt8],
+      push:       true,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
+    },
+    cmp_i16: {
+      operands:   [] of Nil,
+      pop_values: [a : Int16, b : Int16],
+      push:       true,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
+    },
+    cmp_u16: {
+      operands:   [] of Nil,
+      pop_values: [a : UInt16, b : UInt16],
+      push:       true,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
+    },
+    cmp_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
       push:       true,
-      code:       a == b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    neq_i32: {
-      operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
-      push:       true,
-      code:       a != b,
-    },
-    lt_i32: {
-      operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
-      push:       true,
-      code:       a < b,
-    },
-    le_i32: {
-      operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
-      push:       true,
-      code:       a <= b,
-    },
-    gt_i32: {
-      operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
-      push:       true,
-      code:       a > b,
-    },
-    ge_i32: {
-      operands:   [] of Nil,
-      pop_values: [a : Int32, b : Int32],
-      push:       true,
-      code:       a >= b,
-    },
-    lt_u32: {
+    cmp_u32: {
       operands:   [] of Nil,
       pop_values: [a : UInt32, b : UInt32],
       push:       true,
-      code:       a < b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    le_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a <= b,
-    },
-    gt_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a > b,
-    },
-    ge_u32: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt32, b : UInt32],
-      push:       true,
-      code:       a >= b,
-    },
-    eq_i64: {
+    cmp_i64: {
       operands:   [] of Nil,
       pop_values: [a : Int64, b : Int64],
       push:       true,
-      code:       a == b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    neq_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
-      push:       true,
-      code:       a != b,
-    },
-    lt_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
-      push:       true,
-      code:       a < b,
-    },
-    le_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
-      push:       true,
-      code:       a <= b,
-    },
-    gt_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
-      push:       true,
-      code:       a > b,
-    },
-    ge_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
-      push:       true,
-      code:       a >= b,
-    },
-    lt_u64: {
+    cmp_u64: {
       operands:   [] of Nil,
       pop_values: [a : UInt64, b : UInt64],
       push:       true,
-      code:       a < b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    le_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a <= b,
-    },
-    gt_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a > b,
-    },
-    ge_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : UInt64],
-      push:       true,
-      code:       a >= b,
-    },
-    eq_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a == b,
-    },
-    neq_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a != b,
-    },
-    lt_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a < b,
-    },
-    le_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a <= b,
-    },
-    gt_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a > b,
-    },
-    ge_f64: {
-      operands:   [] of Nil,
-      pop_values: [a : Float64, b : Float64],
-      push:       true,
-      code:       a >= b,
-    },
-    eq_u64_i64: {
+    cmp_u64_i64: {
       operands:   [] of Nil,
       pop_values: [a : UInt64, b : Int64],
       push:       true,
-      code:       a == b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    eq_i64_u64: {
+    cmp_i64_u64: {
       operands:   [] of Nil,
       pop_values: [a : Int64, b : UInt64],
       push:       true,
-      code:       a == b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    neq_u64_i64: {
+    cmp_f32: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : Int64],
+      pop_values: [a : Float32, b : Float32],
       push:       true,
-      code:       a != b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    neq_i64_u64: {
+    cmp_f64: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : UInt64],
+      pop_values: [a : Float64, b : Float64],
       push:       true,
-      code:       a != b,
+      code:       a == b ? 0 : (a < b ? -1 : 1),
     },
-    lt_i64_u64: {
+    cmp_eq: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : UInt64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a < b,
+      code:       cmp == 0,
     },
-    lt_u64_i64: {
+    cmp_neq: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : Int64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a < b,
+      code:       cmp != 0,
     },
-    le_i64_u64: {
+    cmp_lt: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : UInt64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a <= b,
+      code:       cmp < 0,
     },
-    le_u64_i64: {
+    cmp_le: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : Int64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a <= b,
+      code:       cmp <= 0,
     },
-    gt_i64_u64: {
+    cmp_gt: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : UInt64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a > b,
+      code:       cmp > 0,
     },
-    gt_u64_i64: {
+    cmp_ge: {
       operands:   [] of Nil,
-      pop_values: [a : UInt64, b : Int64],
+      pop_values: [cmp : Int32],
       push:       true,
-      code:       a > b,
+      code:       cmp >= 0,
     },
-    ge_i64_u64: {
-      operands:   [] of Nil,
-      pop_values: [a : Int64, b : UInt64],
-      push:       true,
-      code:       a >= b,
-    },
-    ge_u64_i64: {
-      operands:   [] of Nil,
-      pop_values: [a : UInt64, b : Int64],
-      push:       true,
-      code:       a >= b,
-    },
-    # <<< Comparisons (22)
+    # <<< Comparisons (18)
 
     # <<< Not (1)
     logical_not: {
