@@ -3,6 +3,8 @@
 require "c/unistd"
 require "syscall"
 
+private Syscall.def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
+
 module Crystal::System::Random
   @@initialized = false
   @@getrandom_available = false
@@ -68,12 +70,6 @@ module Crystal::System::Random
     end
   end
 
-  private module Syscall
-    include ::Syscall
-
-    def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
-  end
-
   # Low-level wrapper for the `getrandom(2)` syscall, returns the number of
   # bytes read or `-1` if an error occurred (or the syscall isn't available)
   # and sets `Errno.value`.
@@ -84,7 +80,7 @@ module Crystal::System::Random
   # portable).
   private def self.sys_getrandom(buf : Bytes)
     loop do
-      read_bytes = Syscall.getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), 0)
+      read_bytes = ::getrandom(buf.to_unsafe, LibC::SizeT.new(buf.size), 0)
       if read_bytes < 0 && (Errno.value == Errno::EINTR || Errno.value == Errno::EAGAIN)
         ::Fiber.yield
       else
