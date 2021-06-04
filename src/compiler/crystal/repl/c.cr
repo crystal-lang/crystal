@@ -5,7 +5,7 @@ require "./repl"
 module Crystal
   class Type
     def ffi_type
-      raise "BUG: missing ffi_type for #{self}"
+      raise "BUG: missing ffi_type for #{self} (#{self.class})"
     end
   end
 
@@ -23,7 +23,7 @@ module Crystal
       when :f32 then FFI::Type.float
       when :f64 then FFI::Type.double
       else
-        raise "BUG: missing ffi_type for #{self}"
+        raise "BUG: missing ffi_type for #{self} (#{self.class})"
       end
     end
   end
@@ -34,7 +34,7 @@ module Crystal
       when :f32 then FFI::Type.float
       when :f64 then FFI::Type.double
       else
-        raise "BUG: missing ffi_type for #{self}"
+        raise "BUG: missing ffi_type for #{self} (#{self.class})"
       end
     end
   end
@@ -48,6 +48,12 @@ module Crystal
   class NoReturnType
     def ffi_type
       FFI::Type.void
+    end
+  end
+
+  class TypeDefType
+    def ffi_type
+      typedef.ffi_type
     end
   end
 end
