@@ -576,8 +576,8 @@ class Crystal::Repl::Compiler
     right_node.accept self
 
     case op
-    when "==" then eq_bool(node: node)
-    when "!=" then neq_bool(node: node)
+    when "==" then eq_i32(node: node)
+    when "!=" then neq_i32(node: node)
     else
       left_node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
     end

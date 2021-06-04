@@ -508,18 +508,6 @@ Crystal::Repl::Instructions =
     # >>> Math (36)
 
     # <<< Comparisons (26)
-    eq_bool: {
-      operands:   [] of Nil,
-      pop_values: [a : Bool, b : Bool],
-      push:       true,
-      code:       a == b,
-    },
-    neq_bool: {
-      operands:   [] of Nil,
-      pop_values: [a : Bool, b : Bool],
-      push:       true,
-      code:       a != b,
-    },
     eq_i32: {
       operands:   [] of Nil,
       pop_values: [a : Int32, b : Int32],
