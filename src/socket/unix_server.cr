@@ -46,7 +46,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
     super(fd: fd, type: type, path: @path)
   end
 

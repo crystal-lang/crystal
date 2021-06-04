@@ -251,6 +251,19 @@ struct Slice(T)
 
   # Returns a new slice with the elements in the given range.
   #
+  # The first element in the returned slice is `self[range.begin]` followed
+  # by the next elements up to index `range.end` (or `self[range.end - 1]` if
+  # the range is exclusive).
+  # If there are fewer elements in `self`, the returned slice is shorter than
+  # `range.size`.
+  #
+  # ```
+  # a = Slice["a", "b", "c", "d", "e"]
+  # a[1..3] # => Slice["b", "c", "d"]
+  # # range.end > array.size
+  # a[3..7] # => Slice["d", "e"]
+  # ```
+  #
   # Negative indices count backward from the end of the slice (`-1` is the last
   # element). Additionally, an empty slice is returned when the starting index
   # for an element range is at the end of the slice.
@@ -264,7 +277,7 @@ struct Slice(T)
   # slice[1..3]  # => Slice[11, 12, 13]
   # slice[1..33] # raises IndexError
   # ```
-  def [](range : Range)
+  def [](range : Range) : self
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]
   end
