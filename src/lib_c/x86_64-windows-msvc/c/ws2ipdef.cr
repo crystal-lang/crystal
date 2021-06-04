@@ -1,4 +1,5 @@
 require "./in6addr"
+require "./inaddr"
 
 lib LibC
   struct SockaddrIn6
@@ -15,4 +16,9 @@ lib LibC
     sin_addr : InAddr
     sin_zero : StaticArray(CHAR, 8)
   end
+
+  TCP_KEEPALIVE =  3
+  TCP_KEEPCNT   = 16
+  TCP_KEEPINTVL = 17
+  TCP_KEEPIDLE  = TCP_KEEPALIVE
 end

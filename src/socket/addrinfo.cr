@@ -148,6 +148,11 @@ class Socket
           service = "00"
         end
       {% end %}
+      {% if flag?(:win32) %}
+        if service.is_a?(Int) && service < 0
+          raise Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
+        end
+      {% end %}
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
