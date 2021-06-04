@@ -1401,6 +1401,26 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "doesn't compile block if it's not used (no yield)" do
+      interpret(<<-CODE).should eq(2)
+        class Object
+          def try
+            yield self
+          end
+        end
+
+        struct Nil
+          def try(&)
+            self
+          end
+        end
+
+        a = 1 || nil
+        b = a.try { |x| x + 1 }
+        b || 10
+      CODE
+    end
   end
 
   context "classes" do

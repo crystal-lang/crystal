@@ -663,6 +663,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def create_compiled_def(node : Call, target_def : Def)
     block = node.block
+    block = nil if block && !block.visited?
 
     # Compile the block too if there's one
     if block
