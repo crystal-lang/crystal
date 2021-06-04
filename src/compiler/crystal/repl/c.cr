@@ -45,6 +45,19 @@ module Crystal
     end
   end
 
+  class ProcInstanceType
+    def ffi_type
+      FFI::Type.pointer
+    end
+  end
+
+  class NilType
+    def ffi_type
+      # Nil is used to pass a null pointer
+      FFI::Type.pointer
+    end
+  end
+
   class NoReturnType
     def ffi_type
       FFI::Type.void
