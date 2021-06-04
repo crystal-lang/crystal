@@ -733,12 +733,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       block_args_bytesize = block.args.sum { |arg| aligned_sizeof_type(arg) }
 
-      # TODO: store this somewhere because it might not end up aligned in the instructions
       compiled_block = CompiledBlock.new(block, @local_vars,
         args_bytesize: block_args_bytesize,
         locals_bytesize_start: bytesize_before_block_local_vars,
         locals_bytesize_end: bytesize_after_block_local_vars,
       )
+
+      # Store it so the GC doesn't collect it (it's in the instructions but it might not be aligned)
+      @context.compiled_blocks << compiled_block
+
       compiler = Compiler.new(@context, @local_vars,
         instructions: compiled_block.instructions,
         nodes: compiled_block.nodes,

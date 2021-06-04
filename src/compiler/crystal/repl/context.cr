@@ -11,6 +11,8 @@ class Crystal::Repl::Context
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
   getter multidispatchs : Hash(MultidispatchKey, Def)
+  getter multidispatchs_with_block = [] of Def
+  getter compiled_blocks = [] of CompiledBlock
 
   def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
     @defs = {} of Def => CompiledDef

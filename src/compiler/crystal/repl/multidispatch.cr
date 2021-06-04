@@ -2,6 +2,15 @@ require "./repl"
 
 module Crystal::Repl::Multidispatch
   def self.create_def(context : Context, node : Call, target_defs : Array(Def))
+    if node.block
+      a_def = create_def_uncached(context, node, target_defs)
+
+      # Store it so the GC doesn't collect it (it's in the instructions but it might not be aligned)
+      context.multidispatchs_with_block << a_def
+
+      return a_def
+    end
+
     obj = node.obj
     obj_type = obj.try(&.type) || node.scope
 
@@ -17,6 +26,17 @@ module Crystal::Repl::Multidispatch
     cache_key = Context::MultidispatchKey.new(obj_type, signature)
     cached_def = context.multidispatchs[cache_key]?
     return cached_def if cached_def
+
+    a_def = create_def_uncached(context, node, target_defs)
+
+    context.multidispatchs[cache_key] = a_def
+
+    a_def
+  end
+
+  private def self.create_def_uncached(context : Context, node : Call, target_defs : Array(Def))
+    obj = node.obj
+    obj_type = obj.try(&.type) || node.scope
 
     a_def = Def.new(node.name).at(node)
 
@@ -155,8 +175,6 @@ module Crystal::Repl::Multidispatch
     a_def.bind_to(a_def.body)
 
     a_def.body = context.program.cleanup(a_def.body)
-
-    context.multidispatchs[cache_key] = a_def
 
     # puts a_def
 
