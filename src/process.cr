@@ -284,7 +284,7 @@ class Process
     end
   end
 
-  private def initialize(pid)
+  private def initialize(pid : LibC::PidT)
     @process_info = Crystal::System::Process.new(pid)
   end
 

@@ -959,7 +959,7 @@ struct Path
   # Resolves path *name* in this path's parent directory.
   #
   # Raises `Path::Error` if `#parent` is `nil`.
-  def sibling(name : Path | String) : Path?
+  def sibling(name : Path | String) : Path
     if parent = self.parent
       parent.join(name)
     else
