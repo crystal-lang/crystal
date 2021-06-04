@@ -71,7 +71,7 @@ class Socket
 
           unless addrinfo = addrinfo.try(&.next?)
             if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_errno("Error connecting to '#{domain}:#{service}'")
+              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
             else
               raise error if error
             end
