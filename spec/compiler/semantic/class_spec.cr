@@ -524,6 +524,25 @@ describe "Semantic: class" do
       "can't use instance variables inside primitive types (at Int32)"
   end
 
+  it "reads an object instance var from a union type" do
+    assert_type(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+      end
+
+      foo = Foo.new(1)
+      bar = Bar.new(2, 'a')
+      union = foo || bar
+      union.@x
+      )) { union_of(int32, char) }
+  end
+
   it "says that instance vars are not allowed in metaclass" do
     assert_error %(
       module Foo
@@ -1127,22 +1146,6 @@ describe "Semantic: class" do
 
       { {{ Foo::Bar.superclass }}, {{ Foo::Baz.superclass }} }
     )) { tuple_of [types["Foo"].metaclass, types["Foo"].metaclass] }
-  end
-
-  it "errors if reading instance var of union type (#7187)" do
-    assert_error %(
-      class Foo
-        @x = 1
-      end
-
-      class Bar
-        @x = 1
-      end
-
-      z = Foo.new || Bar.new
-      z.@x
-      ),
-      "can't read instance variables of union types (@x of (Bar | Foo))"
   end
 
   it "types as no return if calling method on abstract class with all abstract subclasses (#6996)" do
