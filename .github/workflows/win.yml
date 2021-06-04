@@ -191,7 +191,7 @@ jobs:
           bin\crystal.exe build spec/std_spec.cr --exclude-warnings spec/std --exclude-warnings spec/compiler -Dwithout_openssl -Di_know_what_im_doing
       - name: Run stdlib specs
         run: |
-          .\std_spec.exe
+          .\std_spec.exe --verbose
 
       - name: Build compiler specs executable
         run: |
