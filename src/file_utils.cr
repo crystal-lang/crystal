@@ -305,8 +305,8 @@ module FileUtils
   end
 
   # Moves *src_path* to *dest_path*.
-  # If src_path and dest_path exist on the different disk partition,
-  # the file is copied then the original file is removed.
+  # If *src_path* and *dest_path* exist on different disk partitions,
+  # the file at *src_path* is copied to *dest_path* and then removed.
   #
   # ```
   # require "file_utils"
