@@ -64,8 +64,8 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.begin(0)    # => 1
     # ```
-    def begin(n = 0)
-      @string.byte_index_to_char_index byte_begin(n)
+    def begin(n = 0) : Int32
+      @string.byte_index_to_char_index(byte_begin(n)).not_nil!
     end
 
     # Returns the position of the next character after the match.
@@ -78,8 +78,8 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.end(0)    # => 3
     # ```
-    def end(n = 0)
-      @string.byte_index_to_char_index byte_end(n)
+    def end(n = 0) : Int32
+      @string.byte_index_to_char_index(byte_end(n)).not_nil!
     end
 
     # Returns the position of the first byte of the *n*th match.
@@ -207,7 +207,7 @@ class Regex
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
     end
 
-    # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+    # Like `#[](Range)`, but returns `nil` if the range's start is out of range.
     def []?(range : Range)
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
     end
@@ -218,7 +218,7 @@ class Regex
       self[start, count]? || raise IndexError.new
     end
 
-    # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
+    # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
     def []?(start : Int, count : Int)
       raise ArgumentError.new "Negative count: #{count}" if count < 0
       return Array(String).new if start == size

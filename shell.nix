@@ -146,6 +146,5 @@ pkgs.stdenv.mkDerivation rec {
 
   LLVM_CONFIG = "${llvm_suite.llvm}/bin/llvm-config";
 
-  # ld: warning: object file (.../src/ext/libcrystal.a(sigfault.o)) was built for newer OSX version (10.14) than being linked (10.12)
   MACOSX_DEPLOYMENT_TARGET = "10.11";
 }

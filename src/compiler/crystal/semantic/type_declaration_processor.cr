@@ -477,7 +477,7 @@ struct Crystal::TypeDeclarationProcessor
     # super or assign all of those variables
     if ancestor_non_nilable
       infos.each do |info|
-        unless info.def.calls_super? || info.def.calls_initialize? || info.def.macro_def?
+        unless info.def.calls_super? || info.def.calls_previous_def? || info.def.calls_initialize? || info.def.macro_def?
           ancestor_non_nilable.each do |name|
             # If the variable is initialized outside, it's OK
             next if initialized_outside?(owner, name)

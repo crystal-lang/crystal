@@ -269,11 +269,11 @@ struct String::Formatter(A)
 
       format_buf = recreate_float_format_string(flags)
 
-      len = flags.width + (flags.precision || 0) + 23
+      len = LibC.snprintf(nil, 0, format_buf, float) + 1
       temp_buf = temp_buf(len)
-      count = LibC.snprintf(temp_buf, len, format_buf, float)
+      LibC.snprintf(temp_buf, len, format_buf, float)
 
-      @io.write_utf8 Slice.new(temp_buf, count)
+      @io.write_utf8 Slice.new(temp_buf, len - 1)
     else
       raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end

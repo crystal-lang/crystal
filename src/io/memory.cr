@@ -428,10 +428,6 @@ class IO::Memory < IO
     end
   end
 
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if @bytesize == @capacity
-  end
-
   private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)

@@ -149,6 +149,17 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # The implementation uses `GC.malloc` if the compiler is aware that the
+  # allocated type contains inner address pointers. Otherwise it uses
+  # `GC.malloc_atomic`. Primitive types are expected to not contain pointers,
+  # except `Void`. `Proc` and `Pointer` are expected to contain pointers.
+  # For unions, structs and collection types (tuples, static array)
+  # it depends on the contained types. All other types, including classes are
+  # expected to contain inner address pointers.
+  #
+  # To override this implicit behaviour, `GC.malloc` and `GC.malloc_atomic`
+  # can be used directly instead.
   @[Primitive(:pointer_malloc)]
   def self.malloc(size : UInt64)
   end
