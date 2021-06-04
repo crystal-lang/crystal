@@ -68,6 +68,12 @@ module Crystal::System::Random
     end
   end
 
+  private module Syscall
+    include ::Syscall
+
+    def_syscall getrandom, LibC::SSizeT, buf : UInt8*, buflen : LibC::SizeT, flags : UInt32
+  end
+
   # Low-level wrapper for the `getrandom(2)` syscall, returns the number of
   # bytes read or `-1` if an error occurred (or the syscall isn't available)
   # and sets `Errno.value`.
