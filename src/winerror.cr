@@ -1,10 +1,11 @@
 {% if flag?(:win32) %}
   require "c/winbase"
+  require "c/errhandlingapi"
 {% end %}
 
 # `WinError` represents Windows' [System Error Codes](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes#system-error-codes-1).
 enum WinError : UInt32
-  # Returns the value of the [`GetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror)
+  # Returns the value of [`GetLastError`](https://docs.microsoft.com/en-us/windows/win32/api/errhandlingapi/nf-errhandlingapi-getlasterror)
   # which is used to retrieve the error code of the previously called win32 function.
   #
   # Raises `NotImplementedError` on non-win32 platforms.

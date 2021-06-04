@@ -335,6 +335,30 @@ describe "Semantic: while" do
       )) { int32 }
   end
 
+  it "doesn't fail on new variables inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(x = 1)
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on nested conditionals inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(1 || 'a')
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
   it "doesn't fail on Expressions condition (1)" do
     assert_type(%(
       def foo

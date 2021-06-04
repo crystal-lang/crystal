@@ -1076,6 +1076,12 @@ module Crystal
     end
   end
 
+  class GenericModuleInstanceType
+    def restrict(other : Type, context)
+      super || including_types.try(&.restrict(other, context))
+    end
+  end
+
   class AliasType
     def restriction_of?(other, owner, strict = false)
       return true if self == other
