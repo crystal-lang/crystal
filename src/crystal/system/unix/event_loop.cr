@@ -54,6 +54,7 @@ module Crystal::EventLoop
     Crystal::System.perform_io_event do
       io_uring do
         Crystal::IoUringEvent.new(:timeout, 0) do |res|
+          next if res == -Errno::ECANCELED.value
           if (select_action = fiber.timeout_select_action)
             fiber.timeout_select_action = nil
             select_action.time_expired(fiber)

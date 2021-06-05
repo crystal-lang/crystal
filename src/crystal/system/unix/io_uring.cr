@@ -205,18 +205,21 @@ class Crystal::System::IoUring
     )
   end
 
+  # Obtains one free index from the submission queue for our use. If there is none
+  # available then we should call into the kernel to process what is there. Retry
+  # until the kernel has consumed at least one request so that we can write ours.
+  private def get_free_index
+    until (index = @submission_queue.consume_free_index) != UInt32::MAX
+      process_completion_events(blocking: false)
+    end
+    index
+  end
+
   # Obtains one submission entry, populates, and submits it. When the completion
   # event arrives the current Fiber will be enqueued for execution.
   # The caller of this method MUST either reschedule the current Fiber or
   # resume into another Fiber.
-  private def submit(opcode : Syscall::IoUringOp, user_data : UInt64, *, timeout : ::Time::Span? = nil)
-    # Obtains one free index from the submission queue for our use. If there is none
-    # available then we should call into the kernel to process what is there. Retry
-    # until the kernel has consumed at least one request so that we can write ours.
-    until (index = @submission_queue.consume_free_index) != UInt32::MAX
-      process_completion_events(blocking: false)
-    end
-
+  private def submit(opcode : Syscall::IoUringOp, user_data : UInt64, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # The submission queue just stores indices into the `submission_entries` array.
     sqe = @submission_entries + index
 
@@ -231,9 +234,7 @@ class Crystal::System::IoUring
     # If there is a timeout, we submit a LINK_TIMEOUT as well. It will make the
     # original event fail with ECANCELED if it doesn't complete in time.
     if timeout
-      until (index_timeout = @submission_queue.consume_free_index) != UInt32::MAX
-        process_completion_events(blocking: false)
-      end
+      index_timeout = get_free_index
 
       @timeval_entries[index_timeout] = make_timeval(timeout)
 
@@ -252,17 +253,21 @@ class Crystal::System::IoUring
   end
 
   # This will block the current fiber until the request completes and return the completion result.
-  private def submit_and_wait(opcode : Syscall::IoUringOp, *, timeout : ::Time::Span? = nil)
+  private def submit_and_wait(opcode : Syscall::IoUringOp, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     user_data = ::Fiber.current.as(Void*).address
-    submit(opcode, user_data, timeout: timeout) { |sqe| yield sqe }
+    submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
     Crystal::Scheduler.reschedule # The completion event will wake up this fiber.
     ::Fiber.current.iouring_result
   end
 
-  private def submit_and_callback(opcode : Syscall::IoUringOp, callback : Void*, *, timeout : ::Time::Span? = nil)
+  private def submit_and_callback(opcode : Syscall::IoUringOp, callback : Void*, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # Heap allocated objects are always word-aligned. Use the last bit to store if it's a Fiber or a Proc.
     user_data = callback.as(Void*).address + 1
-    submit(opcode, user_data, timeout: timeout) { |sqe| yield sqe }
+    submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
+  end
+
+  private def submit_and_forget(opcode : Syscall::IoUringOp, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
+    submit(opcode, 0, index: index, timeout: timeout) { |sqe| yield sqe }
   end
 
   # Enters the kernel to process events. This can be called either by the event loop when no fiber has
@@ -308,14 +313,14 @@ class Crystal::System::IoUring
     if ret < 0
       err = Errno.new(-ret)
 
+      # - EBUSY indicates that there are so many events being completed right now that the completion queue
+      #   is already full and there are more events being stored in a backlog. The kernel  is refusing to accept
+      #   any new submission until we consume the completion queue. Just repeat and consume it.
       # - EINTR indicates that a signal arrived to the current process while it was processing io_uring_enter.
       #   It is safe to try again.
-      # - EBUSY indicates that there are so many events being completed right now that the completion queue
-      #   is already full and there are more events being stored in a backlog. The is refusing to accept any
-      #   new submission until we consume the completion queue. Just repeat and consume it.
       # - EAGAIN indicates that the kernel failed to allocate memory because there are too many inflight requests
       #   for it to keep track and we should retry after some of them have completed. We can retry until it works.
-      if err = Errno::EBUSY || err == Errno::EINTR || err == Errno::EAGAIN
+      if err == Errno::EBUSY || err == Errno::EINTR || err == Errno::EAGAIN
         process_completion_events(blocking: blocking)
         return
       end
@@ -612,10 +617,26 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span, callback : Void*)
-    timeval = make_timeval(time)
-    submit_and_callback :timeout, callback do |sqe|
-      sqe.value.addr = pointerof(timeval).address
+    unless IoUring.probe.operations.timeout?
+      raise RuntimeError.new("IoUring's 'timeout' operation is not supported by current kernel. Needs Linux 5.4 or newer.")
+    end
+
+    index = get_free_index
+    @timeval_entries[index] = make_timeval(time)
+
+    submit_and_callback :timeout, callback, index: index do |sqe|
+      sqe.value.addr = (@timeval_entries.to_unsafe + index).address
       sqe.value.len = 1u32
+    end
+  end
+
+  def timeout_remove(callback : Void*)
+    unless IoUring.probe.operations.timeout_remove?
+      raise RuntimeError.new("IoUring's 'timeout_remove' operation is not supported by current kernel. Needs Linux 5.5 or newer.")
+    end
+
+    submit_and_forget :timeout_remove do |sqe|
+      sqe.value.addr = callback.address + 1
     end
   end
 
@@ -689,6 +710,9 @@ struct Crystal::IoUringEvent < Crystal::Event
   end
 
   def delete : Nil
+    if @type.timeout?
+      io_uring.timeout_remove(@callback)
+    end
   end
 
   private def io_uring
@@ -697,9 +721,7 @@ struct Crystal::IoUringEvent < Crystal::Event
 
   def add(time_span : Time::Span?) : Nil
     case @type
-    when .resume?
-      io_uring.nop(@callback, timeout: time_span)
-    when .timeout?
+    when .resume?, .timeout?
       if time_span
         io_uring.timeout(time_span, @callback)
       else
