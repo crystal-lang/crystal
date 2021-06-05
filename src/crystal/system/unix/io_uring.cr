@@ -1,6 +1,6 @@
 {% skip_file unless flag?(:linux) %}
 
-require "./syscall/*"
+require "./io_uring_syscalls"
 require "time/span"
 
 class Fiber
