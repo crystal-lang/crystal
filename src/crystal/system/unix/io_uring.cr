@@ -199,16 +199,18 @@ class Crystal::System::IoUring
   # If there are too many inflight requests, wait for then to complete before sending
   # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
   private def get_free_index
-    loop do
-      if @params.features.nodrop? || @inflight < @params.cq_entries
-        index = @submission_queue.consume_free_index
-        if index != UInt32::MAX
-          @inflight += 1
-          return index
-        end
-      end
+    # If there are too many in flight events, wait for some completions.
+    until @params.features.nodrop? || @inflight < @params.cq_entries
+      process_completion_events(blocking: true)
+    end
+
+    # If the submission queue is full, submit some events.
+    until (index = @submission_queue.consume_free_index) != UInt32::MAX
       process_completion_events(blocking: false)
     end
+
+    @inflight += 1
+    index
   end
 
   # Obtains one submission entry, populates, and submits it. When the completion
@@ -276,6 +278,8 @@ class Crystal::System::IoUring
     @completion_queue.consume_all do |cqe|
       @inflight -= 1
 
+      completed_some = true
+
       # cqe.user_data is zero when this is the completion for a LINK_TIMEOUT event.
       # We always skip it and use the fact that the original event will be fail with ECANCELED.
       next if cqe.user_data == 0
@@ -299,8 +303,6 @@ class Crystal::System::IoUring
           fatal_error("Exception inside io_uring callback: #{ex}")
         end
       end
-
-      completed_some = true
     end
 
     # If we consumed at least one event, then there are fibers with work to do.
