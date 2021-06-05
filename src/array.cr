@@ -588,45 +588,77 @@ class Array(T)
 
   # Returns all elements that are within the given range.
   #
-  # Negative indices count backward from the end of the array (-1 is the last
-  # element). Additionally, an empty array is returned when the starting index
-  # for an element range is at the end of the array.
-  #
-  # Raises `IndexError` if the range's start is out of range.
+  # The first element in the returned array is `self[range.begin]` followed
+  # by the next elements up to index `range.end` (or `self[range.end - 1]` if
+  # the range is exclusive).
+  # If there are fewer elements in `self`, the returned array is shorter than
+  # `range.size`.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
-  # a[1..3]    # => ["b", "c", "d"]
-  # a[4..7]    # => ["e"]
-  # a[6..10]   # raise IndexError
-  # a[5..10]   # => []
-  # a[-2...-1] # => ["d"]
-  # a[2..]     # => ["c", "d", "e"]
+  # a[1..3] # => ["b", "c", "d"]
+  # # range.end > array.size
+  # a[3..7] # => ["d", "e"]
   # ```
-  def [](range : Range)
+  #
+  # Open ended ranges are clamped at the start and end of the array, respectively.
+  #
+  # ```
+  # # open ended ranges
+  # a[2..] # => ["c", "d", "e"]
+  # a[..2] # => ["a", "b", "c"]
+  # ```
+  #
+  # Negative range values are added to `self.size`, thus they are treated as
+  # indices counting from the end of the array, `-1` designating the last element.
+  #
+  # ```
+  # # negative indices, both ranges are equivalent for `a`
+  # a[1..3]   # => ["b", "c", "d"]
+  # a[-4..-2] # => ["b", "c", "d"]
+  # # Mixing negative and positive indices, both ranges are equivalent for `a`
+  # a[1..-2] # => ["b", "c", "d"]
+  # a[-4..3] # => ["b", "c", "d"]
+  # ```
+  #
+  # Raises `IndexError` if the start index is out of range (`range.begin >
+  # self.size || range.begin < -self.size`). If `range.begin == self.size` an
+  # empty array is returned. If `range.begin > range.end`, an empty array is
+  # returned.
+  #
+  # ```
+  # # range.begin > array.size
+  # a[6..10] # raise IndexError
+  # # range.begin == array.size
+  # a[5..10] # => []
+  # # range.begin > range.end
+  # a[3..1]   # => []
+  # a[-2..-4] # => []
+  # a[-2..1]  # => []
+  # a[3..-4]  # => []
+  # ```
+  def [](range : Range) : self
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[6..10]? # => nil
   # a[6..]?   # => nil
   # ```
-  def []?(range : Range)
+  def []?(range : Range) : self | Nil
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
   # given start index.
   #
-  # Negative indices count backward from the end of the array (-1 is the last
-  # element). Additionally, an empty array is returned when the starting index
-  # for an element range is at the end of the array.
+  # Negative *start* is added to `self.size`, thus it's treated as
+  # index counting from the end of the array, `-1` designating the last element.
   #
-  # Raises `IndexError` if the *start* index is out of range.
-  #
+  # Raises `IndexError` if *start* index is out of bounds.
   # Raises `ArgumentError` if *count* is negative.
   #
   # ```
@@ -636,12 +668,12 @@ class Array(T)
   # a[5, 1]  # => []
   # a[6, 1]  # raises IndexError
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : self
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
-  def []?(start : Int, count : Int)
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int) : self | Nil
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return Array(T).new if start == size
 

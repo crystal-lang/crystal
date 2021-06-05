@@ -171,6 +171,7 @@ describe BigDecimal do
     BigDecimal.new(500.to_big_i, 0).should eq(BigDecimal.new(-1000) / BigDecimal.new(-2))
     BigDecimal.new(0).should eq(BigDecimal.new(0) / BigDecimal.new(1))
     BigDecimal.new("3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333".to_big_i, 100_u64).should eq(BigDecimal.new(1) / BigDecimal.new(3))
+    BigDecimal.new(-2000).should eq(BigDecimal.new(-0.02) / (BigDecimal.new(0.00001)))
 
     BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(2))
     BigDecimal.new(-1).should eq(BigDecimal.new(1) // BigDecimal.new(-2))
@@ -183,6 +184,7 @@ describe BigDecimal do
     BigDecimal.new(500).should eq(BigDecimal.new(-1000) // BigDecimal.new(-2))
     BigDecimal.new(0).should eq(BigDecimal.new(0) // BigDecimal.new(1))
     BigDecimal.new(0).should eq(BigDecimal.new(1) // BigDecimal.new(3))
+    BigDecimal.new(-2000).should eq(BigDecimal.new(-0.02) // (BigDecimal.new(0.00001)))
 
     BigDecimal.new(33333.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3), 5))
     BigDecimal.new(33.to_big_i, 5_u64).should eq(BigDecimal.new(1).div(BigDecimal.new(3000), 5))
@@ -329,6 +331,7 @@ describe BigDecimal do
 
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 9)).to_s.should eq "36122.824080384"
     (BigDecimal.new("112839719283").div(BigDecimal.new("3123779"), 14)).to_s.should eq "36122.8240803846879"
+    (BigDecimal.new("-0.4098").div(BigDecimal.new("0.2229011193"), 20)).to_s.should eq "-1.83848336557007141059"
 
     BigDecimal.new(1, 2).to_s.should eq "0.01"
     BigDecimal.new(100, 4).to_s.should eq "0.01"

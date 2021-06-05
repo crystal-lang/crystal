@@ -49,7 +49,7 @@ class TCPServer < TCPSocket
   end
 
   # Creates a TCPServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
+  def initialize(*, fd : Handle, family : Family = Family::INET)
     super(fd: fd, family: family)
   end
 
