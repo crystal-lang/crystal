@@ -30,24 +30,24 @@ module Crystal::EventLoop
   end
 
   # Create a new resume event for a fiber.
-  def self.create_resume_event(fiber : Fiber) : Crystal::Event
+  def self.create_resume_event(fiber : Fiber) : Crystal::IocpEvent
     enqueue(fiber)
 
-    Crystal::Event.new(fiber)
+    Crystal::IocpEvent.new(fiber)
   end
 
   # Creates a write event for a file descriptor.
-  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::Event.new(Fiber.current)
+  def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::IocpEvent
+    Crystal::IocpEvent.new(Fiber.current)
   end
 
   # Creates a read event for a file descriptor.
-  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
-    Crystal::Event.new(Fiber.current)
+  def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::IocpEvent
+    Crystal::IocpEvent.new(Fiber.current)
   end
 end
 
-struct Crystal::Event
+struct Crystal::IocpEvent < Crystal::Event
   def initialize(@fiber : Fiber)
   end
 
