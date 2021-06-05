@@ -37,7 +37,7 @@ module System
   # ```
   # System.file_descriptor_limit = 4096
   # ```
-  def self.file_descriptor_limit=(limit)
+  def self.file_descriptor_limit=(limit : UInt32)
     Crystal::System.file_descriptor_limit = limit
   end
 end
