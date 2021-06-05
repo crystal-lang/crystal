@@ -1,7 +1,7 @@
 require "./libxml2"
 require "./parser_options"
 
-struct XML::Reader
+class XML::Reader
   # Creates a new reader from a string.
   #
   # See `XML::ParserOptions.default` for default options.

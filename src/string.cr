@@ -767,47 +767,82 @@ class String
     char_at(index) { raise IndexError.new }
   end
 
-  # Returns a substring by using a Range's *begin* and *end*
-  # as character indices. Indices can be negative to start
-  # counting from the end of the string.
+  # Returns the substring indicated by *range* as span of character indices.
   #
-  # Raises `IndexError` if the range's start is out of bounds.
+  # The substring ranges from `self[range.begin]` to `self[range.end]`
+  # (or `self[range.end - 1]` if the range is exclusive). It can be smaller than
+  # `range.size` if the end index is larger than `self.size`.
   #
   # ```
-  # "hello"[0..2]   # => "hel"
-  # "hello"[0...2]  # => "he"
-  # "hello"[1..-1]  # => "ello"
-  # "hello"[1...-1] # => "ell"
-  # "hello"[6..7]   # raises IndexError
+  # s = "abcde"
+  # s[1..3] # => "bcd"
+  # # range.end > s.size
+  # s[3..7] # => "de"
   # ```
-  def [](range : Range)
+  #
+  # Open ended ranges are clamped at the start and end of `self`, respectively.
+  #
+  # ```
+  # # open ended ranges
+  # s[2..] # => "cde"
+  # s[..2] # => "abc"
+  # ```
+  #
+  # Negative range values are added to `self.size`, thus they are treated as
+  # character indices counting from the end, `-1` designating the last character.
+  #
+  # ```
+  # # negative indices, both ranges are equivalent for `s`
+  # s[1..3]   # => "bcd"
+  # s[-4..-2] # => "bcd"
+  # # Mixing negative and positive indices, both ranges are equivalent for `s`
+  # s[1..-2] # => "bcd"
+  # s[-4..3] # => "bcd"
+  # ```
+  #
+  # Raises `IndexError` if the start index it out of range (`range.begin >
+  # self.size || range.begin < -self.size). If `range.begin == self.size` an
+  # empty string is returned. If `range.begin > range.end`, an empty string is
+  # returned.
+  #
+  # ```
+  # # range.begin > array.size
+  # s[6..10] # raise IndexError
+  # # range.begin == s.size
+  # s[5..10] # => ""
+  # # range.begin > range.end
+  # s[3..1]   # => ""
+  # s[-2..-4] # => ""
+  # s[-2..1]  # => ""
+  # s[3..-4]  # => ""
+  # ```
+  def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if the range's start is out of bounds.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # "hello"[6..7]? # => nil
   # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range)
+  def []?(range : Range) : String?
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns a substring starting from the *start* character of size *count*.
   #
-  # *start* can can be negative to start counting
-  # from the end of the string.
+  # Negative *start* is added to `self.size`, thus it's treated as a character
+  # index counting from the end, `-1` designating the last character.
   #
-  # Raises `IndexError` if the *start* index is out of bounds.
-  #
+  # Raises `IndexError` if *start* index is out of bounds.
   # Raises `ArgumentError` if *count* is negative.
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : String
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
-  def []?(start : Int, count : Int)
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
+  def []?(start : Int, count : Int) : String?
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return byte_slice?(start, count) if single_byte_optimizable?
 
@@ -4079,19 +4114,6 @@ class String
     just len, char, -1
   end
 
-  # Adds spaces to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, io)
-  # io.to_s # => "Purple  "
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, io : IO) : Nil
-    ljust(io, len)
-  end
-
   # Adds instances of *char* to right of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
@@ -4105,19 +4127,6 @@ class String
     (len - size).times { io << char }
   end
 
-  # Adds instances of *char* to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, '-', io)
-  # io.to_s # => "Purple--"
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, char : Char, io : IO) : Nil
-    ljust(io, len, char)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
@@ -4129,43 +4138,17 @@ class String
     just len, char, 1
   end
 
-  # Adds spaces to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, io)
-  # io.to_s # => "  Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, io : IO) : Nil
-    rjust(io, len)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
+  # "Purple".rjust(io, 8, '-')
   # io.to_s # => "--Purple"
   # ```
   def rjust(io : IO, len : Int, char : Char = ' ') : Nil
     (len - size).times { io << char }
     io << self
-  end
-
-  # Adds instances of *char* to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
-  # io.to_s # => "--Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, char : Char, io : IO) : Nil
-    rjust(io, len, char)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*.
@@ -4180,25 +4163,12 @@ class String
     just len, char, 0
   end
 
-  # Adds spaces to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, io)
-  # io.to_s # => " Purple  "
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, io : IO) : Nil
-    center(io, len)
-  end
-
   # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
+  # "Purple".center(io, 9, '-')
   # io.to_s # => "-Purple--"
   # ```
   def center(io : IO, len : Int, char : Char = ' ') : Nil
@@ -4215,19 +4185,6 @@ class String
     left_padding.times { io << char }
     io << self
     right_padding.times { io << char }
-  end
-
-  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
-  # io.to_s # => "-Purple--"
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, char : Char, io : IO) : Nil
-    center(io, len, char)
   end
 
   private def just(len, char, justify)

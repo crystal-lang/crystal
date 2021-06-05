@@ -189,7 +189,7 @@ module Crystal
           type_visitor.inside_constant = true
           type.value.accept type_visitor
 
-          type.vars = const_def.vars
+          type.fake_def = const_def
           type.visitor = self
           type.used = true
 
@@ -728,12 +728,22 @@ module Crystal
       end
     end
 
-    def end_visit(node : Expressions)
+    def visit(node : Expressions)
+      exp_count = node.expressions.size
+      node.expressions.each_with_index do |exp, i|
+        if i == exp_count - 1
+          exp.accept self
+          node.bind_to exp
+        else
+          ignoring_type_filters { exp.accept self }
+        end
+      end
+
       if node.empty?
         node.set_type(@program.nil)
-      else
-        node.bind_to node.last
       end
+
+      false
     end
 
     def visit(node : Assign)
@@ -769,7 +779,7 @@ module Crystal
           # OK
         else
           # Check autocast too
-          restriction_type = (path_lookup || scope).lookup_type(restriction, free_vars: free_vars)
+          restriction_type = (path_lookup || scope).lookup_type?(restriction, free_vars: free_vars)
           if casted_value = check_automatic_cast(value, restriction_type, node)
             value = casted_value
           else
@@ -2110,7 +2120,7 @@ module Crystal
         filter_vars TypeFilters.not(cond_type_filters)
       end
 
-      node.type = @program.nil
+      node.bind_to(@program.nil_var) unless endless_while
 
       false
     end
@@ -2139,8 +2149,28 @@ module Crystal
 
           # If the loop is endless
           if endless
-            after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read?
+            # Suppose we have
+            #
+            #     x = exp1
+            #     while true
+            #       x = exp2
+            #       break if ...
+            #       x = exp3
+            #       break if ...
+            #       x = exp4
+            #     end
+            #
+            # Here the type of x after the loop will never be affected by
+            # `x = exp4`, because `x = exp2` must have been executed before the
+            # loop may exit at the first break. Therefore, if the x right before
+            # the first break is different from the last x, we don't use the
+            # latter's type upon exit (but exp2 itself may depend on exp4 if it
+            # refers to x).
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+              after_while_var.nil_if_read = while_var.nil_if_read?
+            end
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
@@ -2159,21 +2189,23 @@ module Crystal
           # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
-          after_while_var.bind_to(while_var)
-          nilable = false
+
           if endless
+            break_var = all_break_vars.try &.dig?(0, name)
+            unless break_var && !break_var.same?(while_var)
+              after_while_var.bind_to(while_var)
+            end
+
             # In an endless loop if not all variable with the given name end up
             # in a break it means that they can be nilable.
             # Alternatively, if any var that ends in a break is nil-if-read then
             # the resulting variable will be nil-if-read too.
             if !all_break_vars.try(&.all? &.has_key?(name)) ||
                all_break_vars.try(&.any? &.[name]?.try &.nil_if_read?)
-              nilable = true
+              after_while_var.nil_if_read = true
             end
           else
-            nilable = true
-          end
-          if nilable
+            after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = true
           end
 
@@ -2271,6 +2303,7 @@ module Crystal
 
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
+        target_while.bind_to(node_exp_or_nil_literal(node))
       else
         if @typed_def.try &.captured_block?
           node.raise "can't break from captured block, try using `next`."
@@ -2526,7 +2559,9 @@ module Crystal
       @in_type_args = 0
 
       @typeof_nest += 1
-      node.expressions.each &.accept self
+      ignoring_type_filters do
+        node.expressions.each &.accept self
+      end
       @typeof_nest -= 1
 
       @in_type_args = old_in_type_args
@@ -2849,6 +2884,15 @@ module Crystal
       node.elements.each &.add_observer(node)
       node.program = @program
       node.update
+
+      node.elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            node.raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+
       false
     end
 
@@ -2945,10 +2989,8 @@ module Crystal
         case type
         when GenericClassType
           generic_type = TypeNode.new(type).at(node.location)
-          type_of = TypeOf.new(node.elements).at(node.location)
-
+          type_of = @program.literal_expander.typeof_exp(node)
           generic = Generic.new(generic_type, type_of).at(node.location)
-
           node.name = generic
         when GenericClassInstanceType
           # Nothing

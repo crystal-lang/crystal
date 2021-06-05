@@ -1,4 +1,4 @@
-struct XML::NodeSet
+class XML::NodeSet
   include Enumerable(Node)
 
   def initialize(@doc : Node, @set : LibXML::NodeSet*)

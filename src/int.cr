@@ -630,11 +630,6 @@ struct Int
     end
   end
 
-  @[Deprecated("Use `#to_s(base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, _upcase : Bool) : String
-    to_s(base, upcase: _upcase)
-  end
-
   def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
@@ -649,11 +644,6 @@ struct Int
         io.write_utf8 Slice.new(ptr, count)
       end
     end
-  end
-
-  @[Deprecated("Use `#to_s(io : IO, base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
-    to_s(io, base, upcase: upcase)
   end
 
   private def internal_to_s(base, upcase = false)

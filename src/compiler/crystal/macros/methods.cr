@@ -1624,19 +1624,6 @@ module Crystal
           value = arg.to_string("argument to 'TypeNode#has_method?'")
           TypeNode.has_method?(type, value)
         end
-      when "has_attribute?"
-        interpreter.report_warning_at(name_loc, "Deprecated TypeNode#has_attribute?. Use #annotation instead")
-        interpret_one_arg_method(method, args) do |arg|
-          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
-          case value
-          when "Flags"
-            BoolLiteral.new(!!type.as?(EnumType).try &.flags?)
-          when "Packed"
-            BoolLiteral.new(!!type.as?(ClassType).try &.packed?)
-          else
-            BoolLiteral.new(false)
-          end
-        end
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
@@ -1706,6 +1693,20 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.new(type.metaclass) }
       when "instance"
         interpret_argless_method(method, args) { TypeNode.new(type.instance_type) }
+      when "==", "!="
+        interpret_one_arg_method(method, args) do |arg|
+          return super unless arg.is_a?(TypeNode)
+
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
+          case method
+          when "=="
+            BoolLiteral.new(self_type == other_type)
+          else # "!="
+            BoolLiteral.new(self_type != other_type)
+          end
+        end
       when "<", "<=", ">", ">="
         interpret_one_arg_method(method, args) do |arg|
           unless arg.is_a?(TypeNode)

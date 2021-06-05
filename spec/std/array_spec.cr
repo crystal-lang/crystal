@@ -1336,6 +1336,58 @@ describe "Array" do
     end
   end
 
+  describe "#truncate" do
+    it "truncates with index and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 3).should be(a)
+      a.should eq([4, 9, 16])
+    end
+
+    it "truncates with index and count == 0" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 0).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index and count, not enough elements" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(4, 4).should be(a)
+      a.should eq([16, 25])
+    end
+
+    it "truncates with index == size and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(6, 1).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index < 0 and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(-5, 3).should be(a)
+      a.should eq([1, 4, 9])
+    end
+
+    it "raises on out of bound index" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(IndexError) { a.truncate(-7, 1) }
+    end
+
+    it "raises on negative count" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(ArgumentError) { a.truncate(0, -1) }
+    end
+
+    it "truncates with range" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2..4).should be(a)
+      a.should eq([4, 9, 16])
+
+      b = [0, 1, 4, 9, 16, 25]
+      b.truncate(-5..-3).should be(b)
+      b.should eq([1, 4, 9])
+    end
+  end
+
   describe "uniq" do
     it "uniqs without block" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]

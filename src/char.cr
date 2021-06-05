@@ -1,4 +1,5 @@
 require "comparable"
+require "steppable"
 
 # A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
@@ -39,6 +40,7 @@ require "comparable"
 # ```
 struct Char
   include Comparable(Char)
+  include Steppable
 
   # The character representing the end of a C string.
   ZERO = '\0'
@@ -116,6 +118,26 @@ struct Char
   # ```
   def <=>(other : Char)
     self - other
+  end
+
+  def step(*, to limit = nil, exclusive : Bool = false, &)
+    if limit
+      direction = limit <=> self
+    end
+    step = direction.try(&.sign) || 1
+
+    step(to: limit, by: step, exclusive: exclusive) do |x|
+      yield x
+    end
+  end
+
+  def step(*, to limit = nil, exclusive : Bool = false)
+    if limit
+      direction = limit <=> self
+    end
+    step = direction.try(&.sign) || 1
+
+    step(to: limit, by: step, exclusive: exclusive)
   end
 
   # Returns `true` if this char is an ASCII character

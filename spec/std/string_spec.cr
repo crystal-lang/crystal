@@ -2193,13 +2193,6 @@ describe "String" do
       it { String.build { |io| "12".ljust(io, 7, '-') }.should eq("12-----") }
       it { String.build { |io| "12".ljust(io, 7, 'あ') }.should eq("12あああああ") }
     end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".ljust(2, io) }.should eq("123") }
-      it { String.build { |io| "123".ljust(5, io) }.should eq("123  ") }
-      it { String.build { |io| "12".ljust(7, '-', io) }.should eq("12-----") }
-      it { String.build { |io| "12".ljust(7, 'あ', io) }.should eq("12あああああ") }
-    end
   end
 
   describe "rjust" do
@@ -2214,13 +2207,6 @@ describe "String" do
       it { String.build { |io| "12".rjust(io, 7, '-') }.should eq("-----12") }
       it { String.build { |io| "12".rjust(io, 7, 'あ') }.should eq("あああああ12") }
     end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".rjust(2, io) }.should eq("123") }
-      it { String.build { |io| "123".rjust(5, io) }.should eq("  123") }
-      it { String.build { |io| "12".rjust(7, '-', io) }.should eq("-----12") }
-      it { String.build { |io| "12".rjust(7, 'あ', io) }.should eq("あああああ12") }
-    end
   end
 
   describe "center" do
@@ -2234,13 +2220,6 @@ describe "String" do
       it { String.build { |io| "123".center(io, 5) }.should eq(" 123 ") }
       it { String.build { |io| "12".center(io, 7, '-') }.should eq("--12---") }
       it { String.build { |io| "12".center(io, 7, 'あ') }.should eq("ああ12あああ") }
-    end
-
-    describe "to io (deprecated)" do
-      it { String.build { |io| "123".center(2, io) }.should eq("123") }
-      it { String.build { |io| "123".center(5, io) }.should eq(" 123 ") }
-      it { String.build { |io| "12".center(7, '-', io) }.should eq("--12---") }
-      it { String.build { |io| "12".center(7, 'あ', io) }.should eq("ああ12あああ") }
     end
   end
 
@@ -2301,6 +2280,8 @@ describe "String" do
 
   pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
+
+    sprintf("%f", 1e15).should eq("1000000000000000.000000")
   end
 
   it "does each_char" do

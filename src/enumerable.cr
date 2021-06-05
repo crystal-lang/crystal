@@ -1911,4 +1911,21 @@ module Enumerable(T)
       {% end %}
     end
   end
+
+  # Returns a value with the same type as an element of *x*, even if *x* is not
+  # an `Enumerable`.
+  #
+  # Used by splat expansion inside array literals. For example, this code
+  #
+  # ```
+  # [1, *{2, 3.5}, 4]
+  # ```
+  #
+  # will end up calling `typeof(1, ::Enumerable.element_type({2, 3.5}), 4)`.
+  #
+  # NOTE: there should never be a need to call this method outside the standard library.
+  def self.element_type(x)
+    x.each { |elem| return elem }
+    ::raise ""
+  end
 end
