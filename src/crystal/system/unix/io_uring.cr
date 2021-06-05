@@ -688,6 +688,9 @@ struct Crystal::IoUringEvent < Crystal::Event
   def free : Nil
   end
 
+  def delete : Nil
+  end
+
   private def io_uring
     Crystal::System.io_uring
   end
