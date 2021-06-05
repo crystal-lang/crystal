@@ -25,7 +25,7 @@ module Levenshtein
       t_size, s_size = s_size, t_size
     end
 
-    costs = Slice(Int32).malloc(t_size + 1) { |i| i }
+    costs = Slice(Int32).new(t_size + 1) { |i| i }
     last_cost = 0
 
     if string1.single_byte_optimizable? && string2.single_byte_optimizable?
