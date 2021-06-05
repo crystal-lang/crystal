@@ -1,11 +1,28 @@
 class IPSocket < Socket
   # Returns the `IPAddress` for the local end of the IP socket.
-  def local_address
-    system_local_address
-  end
+  getter local_address : Socket::IPAddress { system_local_address }
 
   # Returns the `IPAddress` for the remote end of the IP socket.
-  def remote_address
-    system_remote_address
+  getter remote_address : Socket::IPAddress { system_remote_address }
+
+  def close
+    super
+  ensure
+    @local_address = nil
+    @remote_address = nil
+  end
+
+  def connect(addr, timeout = nil, &)
+    super(addr, timeout) { |error| yield error }
+  ensure
+    @local_address = nil
+    @remote_address = nil
+  end
+
+  def bind(addr)
+    super(addr)
+  ensure
+    @local_address = nil
+    @remote_address = nil
   end
 end
