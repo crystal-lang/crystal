@@ -1,3 +1,5 @@
+{% skip_file if flag?(:linux) && flag?(:force_iouring) %}
+
 require "./lib_event2"
 
 {% if flag?(:preview_mt) %}
@@ -5,7 +7,7 @@ require "./lib_event2"
 {% end %}
 
 # :nodoc:
-struct Crystal::Event
+struct Crystal::LibEvent < Crystal::Event
   VERSION = String.new(LibEvent2.event_get_version)
 
   def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
@@ -57,7 +59,7 @@ struct Crystal::Event
 
     def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
       event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-      Event.new(event)
+      LibEvent.new(event)
     end
 
     def run_loop

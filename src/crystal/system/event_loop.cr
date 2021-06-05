@@ -20,7 +20,8 @@ module Crystal::EventLoop
   # def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
 end
 
-struct Crystal::Event
+# :nodoc:
+abstract struct Crystal::Event
   # Frees the event.
   # def free : Nil
 
@@ -29,7 +30,7 @@ struct Crystal::Event
 end
 
 {% if flag?(:unix) %}
-  require "./unix/event_loop_libevent"
+  require "./unix/event_loop"
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
 {% else %}

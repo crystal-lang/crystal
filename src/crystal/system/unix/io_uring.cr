@@ -1,7 +1,7 @@
 {% skip_file unless flag?(:linux) %}
 
 require "./io_uring_syscalls"
-require "time/span"
+require "time"
 
 class Fiber
   # :nodoc:
@@ -209,7 +209,7 @@ class Crystal::System::IoUring
   # event arrives the current Fiber will be enqueued for execution.
   # The caller of this method MUST either reschedule the current Fiber or
   # resume into another Fiber.
-  private def submit(opcode : Syscall::IoUringOp, *, fiber : ::Fiber = ::Fiber.current, timeout : ::Time::Span? = nil)
+  private def submit(opcode : Syscall::IoUringOp, user_data : UInt64, *, timeout : ::Time::Span? = nil)
     # Obtains one free index from the submission queue for our use. If there is none
     # available then we should call into the kernel to process what is there. Retry
     # until the kernel has consumed at least one request so that we can write ours.
@@ -225,7 +225,7 @@ class Crystal::System::IoUring
 
     # Populate fields and submit the index into the submission queue.
     yield sqe
-    sqe.value.user_data = pointerof(fiber).address
+    sqe.value.user_data = user_data
     sqe.value.opcode = opcode
 
     # If there is a timeout, we submit a LINK_TIMEOUT as well. It will make the
@@ -253,9 +253,16 @@ class Crystal::System::IoUring
 
   # This will block the current fiber until the request completes and return the completion result.
   private def submit_and_wait(opcode : Syscall::IoUringOp, *, timeout : ::Time::Span? = nil)
-    submit(opcode, timeout: timeout) { |sqe| yield sqe }
+    user_data = ::Fiber.current.as(Void*).address
+    submit(opcode, user_data, timeout: timeout) { |sqe| yield sqe }
     Crystal::Scheduler.reschedule # The completion event will wake up this fiber.
     ::Fiber.current.iouring_result
+  end
+
+  private def submit_and_callback(opcode : Syscall::IoUringOp, callback : Void*, *, timeout : ::Time::Span? = nil)
+    # Heap allocated objects are always word-aligned. Use the last bit to store if it's a Fiber or a Proc.
+    user_data = callback.as(Void*).address + 1
+    submit(opcode, user_data, timeout: timeout) { |sqe| yield sqe }
   end
 
   # Enters the kernel to process events. This can be called either by the event loop when no fiber has
@@ -270,10 +277,20 @@ class Crystal::System::IoUring
       # We always skip it and use the fact that the original event will be fail with ECANCELED.
       next if cqe.user_data == 0
 
-      # Store result and enqueue the fiber that is waiting for this completion.
-      fiber = Pointer(::Fiber).new(cqe.user_data).value
-      fiber.iouring_result = cqe.res
-      Crystal::Scheduler.enqueue fiber
+      # It's either a Fiber or a Box(Int32->)
+      if cqe.user_data.even?
+        # Store result and enqueue the fiber that is waiting for this completion.
+        fiber = Pointer(Void).new(cqe.user_data).as(::Fiber)
+        fiber.iouring_result = cqe.res
+        Crystal::Scheduler.enqueue fiber
+      else
+        callback = Box(Int32 ->).unbox(Pointer(Void).new(cqe.user_data - 1))
+        begin
+          callback.call(cqe.res)
+        rescue ex
+          fatal_error("Exception inside io_uring callback: #{ex}")
+        end
+      end
 
       completed_some = true
     end
@@ -476,6 +493,11 @@ class Crystal::System::IoUring
     end
   end
 
+  def nop(callback : Void*, *, timeout : ::Time::Span? = nil)
+    submit_and_callback :nop, callback, timeout: timeout do |sqe|
+    end
+  end
+
   # Writes a sequence o slices to fd. Each slice is written sequencially starting at `offset` of the file, by default the current position.
   # The entire write is atomic in the sense that it is garanteed that all buffers will be written into the file one after the other
   # even if other process is trying to write to the same file at the same time.
@@ -589,6 +611,14 @@ class Crystal::System::IoUring
     end
   end
 
+  def timeout(time : ::Time::Span, callback : Void*)
+    timeval = make_timeval(time)
+    submit_and_callback :timeout, callback do |sqe|
+      sqe.value.addr = pointerof(timeval).address
+      sqe.value.len = 1u32
+    end
+  end
+
   def accept(fd : Int32, addr : LibC::Sockaddr* = Pointer(LibC::Sockaddr).null, addr_len : LibC::SocklenT* = Pointer(LibC::SocklenT).null, *, timeout : ::Time::Span? = nil)
     unless IoUring.probe.operations.accept?
       raise RuntimeError.new("IoUring's 'accept' operation is not supported by current kernel. Needs Linux 5.5 or newer.")
@@ -620,8 +650,8 @@ class Crystal::System::IoUring
     end
   end
 
-  def submit_wait_readable(fd : Int32, *, timeout : ::Time::Span? = nil)
-    submit :poll_add, timeout: timeout do |sqe|
+  def wait_readable(fd : Int32, callback : Void*, *, timeout : ::Time::Span? = nil)
+    submit_and_callback :poll_add, callback, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.inner_flags.poll_events = Syscall::PollEvent::IN
     end
@@ -634,10 +664,48 @@ class Crystal::System::IoUring
     end
   end
 
-  def submit_wait_writable(fd : Int32, *, timeout : ::Time::Span? = nil)
-    submit :poll_add, timeout: timeout do |sqe|
+  def wait_writable(fd : Int32, callback : Void*, *, timeout : ::Time::Span? = nil)
+    submit_and_callback :poll_add, callback, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.inner_flags.poll_events = Syscall::PollEvent::OUT
+    end
+  end
+end
+
+# :nodoc:
+struct Crystal::IoUringEvent < Crystal::Event
+  enum Type
+    Resume
+    Timeout
+    ReadableFd
+    WritableFd
+  end
+
+  def initialize(@type : Type, @fd : Int32, &callback : Int32 ->)
+    @callback = Box.box(callback)
+  end
+
+  def free : Nil
+  end
+
+  private def io_uring
+    Crystal::System.io_uring
+  end
+
+  def add(time_span : Time::Span?) : Nil
+    case @type
+    when .resume?
+      io_uring.nop(@callback, timeout: time_span)
+    when .timeout?
+      if time_span
+        io_uring.timeout(time_span, @callback)
+      else
+        io_uring.nop(@callback)
+      end
+    when .readable_fd?
+      io_uring.wait_readable(@fd, @callback, timeout: time_span)
+    when .writable_fd?
+      io_uring.wait_writable(@fd, @callback, timeout: time_span)
     end
   end
 end
