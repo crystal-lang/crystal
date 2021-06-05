@@ -89,7 +89,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass
+      superclass = type.superclass unless type.full_name == Crystal::Macros::ASTNode.name
     when GenericClassInstanceType
       superclass = type.superclass
     end
@@ -166,7 +166,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by! &.name.downcase
+        stable_sort! defs, &.name.downcase
       end
     end
   end
@@ -191,7 +191,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by! &.name.downcase
+      stable_sort! class_methods, &.name.downcase
     end
   end
 
@@ -215,7 +215,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by! &.name.downcase
+      stable_sort! macros, &.name.downcase
     end
   end
 
@@ -829,5 +829,11 @@ class Crystal::Doc::Type
 
   def annotations(annotation_type)
     @type.annotations(annotation_type)
+  end
+
+  private def stable_sort!(list)
+    # TODO: use #10163 instead
+    i = 0
+    list.sort_by! { |elem| {yield(elem), i += 1} }
   end
 end

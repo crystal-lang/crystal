@@ -530,9 +530,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.unsafe_chr.ascii_whitespace?
-        ptr += 1
-      end
+      ptr += calc_excess_left
     end
 
     negative = false
@@ -624,9 +622,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.unsafe_chr.ascii_whitespace?
-            ptr += 1
-          end
+          ptr += calc_excess_right
         end
 
         if strict && ptr.value != 0
@@ -641,7 +637,9 @@ class String
   end
 
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method raises an exception if the string is not a valid float representation.
+  # This method raises an exception if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -658,8 +656,15 @@ class String
     to_f64(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64(whitespace : Bool = true, strict : Bool = true)
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+  end
+
   # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
-  # This method returns `nil` if the string is not a valid float representation.
+  # This method returns `nil` if the string is not a valid float representation
+  # or exceeds the range of the data type. Values representing infinity or NaN
+  # are considered valid.
   #
   # Options:
   # * **whitespace**: if `true`, leading and trailing whitespaces are allowed
@@ -676,6 +681,14 @@ class String
     to_f64?(whitespace: whitespace, strict: strict)
   end
 
+  # :ditto:
+  def to_f64?(whitespace : Bool = true, strict : Bool = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtod self, out endptr
+      {v, endptr}
+    end
+  end
+
   # Same as `#to_f` but returns a Float32.
   def to_f32(whitespace : Bool = true, strict : Bool = true)
     to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
@@ -689,23 +702,29 @@ class String
     end
   end
 
-  # Same as `#to_f`.
-  def to_f64(whitespace : Bool = true, strict : Bool = true)
-    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
-  end
-
-  # Same as `#to_f?`.
-  def to_f64?(whitespace : Bool = true, strict : Bool = true)
-    to_f_impl(whitespace: whitespace, strict: strict) do
-      v = LibC.strtod self, out endptr
-      {v, endptr}
-    end
-  end
-
   private def to_f_impl(whitespace : Bool = true, strict : Bool = true)
     return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
 
     v, endptr = yield
+
+    unless v.finite?
+      startptr = to_unsafe
+      if whitespace
+        while startptr.value.chr.ascii_whitespace?
+          startptr += 1
+        end
+      end
+      if startptr.value.chr.in?('+', '-')
+        startptr += 1
+      end
+
+      if v.nan?
+        return unless startptr.value.chr.in?('n', 'N')
+      else
+        return unless startptr.value.chr.in?('i', 'I')
+      end
+    end
+
     string_end = to_unsafe + bytesize
 
     # blank string
@@ -748,47 +767,82 @@ class String
     char_at(index) { raise IndexError.new }
   end
 
-  # Returns a substring by using a Range's *begin* and *end*
-  # as character indices. Indices can be negative to start
-  # counting from the end of the string.
+  # Returns the substring indicated by *range* as span of character indices.
   #
-  # Raises `IndexError` if the range's start is out of bounds.
+  # The substring ranges from `self[range.begin]` to `self[range.end]`
+  # (or `self[range.end - 1]` if the range is exclusive). It can be smaller than
+  # `range.size` if the end index is larger than `self.size`.
   #
   # ```
-  # "hello"[0..2]   # => "hel"
-  # "hello"[0...2]  # => "he"
-  # "hello"[1..-1]  # => "ello"
-  # "hello"[1...-1] # => "ell"
-  # "hello"[6..7]   # raises IndexError
+  # s = "abcde"
+  # s[1..3] # => "bcd"
+  # # range.end > s.size
+  # s[3..7] # => "de"
   # ```
-  def [](range : Range)
+  #
+  # Open ended ranges are clamped at the start and end of `self`, respectively.
+  #
+  # ```
+  # # open ended ranges
+  # s[2..] # => "cde"
+  # s[..2] # => "abc"
+  # ```
+  #
+  # Negative range values are added to `self.size`, thus they are treated as
+  # character indices counting from the end, `-1` designating the last character.
+  #
+  # ```
+  # # negative indices, both ranges are equivalent for `s`
+  # s[1..3]   # => "bcd"
+  # s[-4..-2] # => "bcd"
+  # # Mixing negative and positive indices, both ranges are equivalent for `s`
+  # s[1..-2] # => "bcd"
+  # s[-4..3] # => "bcd"
+  # ```
+  #
+  # Raises `IndexError` if the start index it out of range (`range.begin >
+  # self.size || range.begin < -self.size). If `range.begin == self.size` an
+  # empty string is returned. If `range.begin > range.end`, an empty string is
+  # returned.
+  #
+  # ```
+  # # range.begin > array.size
+  # s[6..10] # raise IndexError
+  # # range.begin == s.size
+  # s[5..10] # => ""
+  # # range.begin > range.end
+  # s[3..1]   # => ""
+  # s[-2..-4] # => ""
+  # s[-2..1]  # => ""
+  # s[3..-4]  # => ""
+  # ```
+  def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if the range's start is out of bounds.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # "hello"[6..7]? # => nil
   # "hello"[6..]?  # => nil
   # ```
-  def []?(range : Range)
+  def []?(range : Range) : String?
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns a substring starting from the *start* character of size *count*.
   #
-  # *start* can can be negative to start counting
-  # from the end of the string.
+  # Negative *start* is added to `self.size`, thus it's treated as a character
+  # index counting from the end, `-1` designating the last character.
   #
-  # Raises `IndexError` if the *start* index is out of bounds.
-  #
+  # Raises `IndexError` if *start* index is out of bounds.
   # Raises `ArgumentError` if *count* is negative.
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : String
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of bounds.
-  def []?(start : Int, count : Int)
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
+  def []?(start : Int, count : Int) : String?
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return byte_slice?(start, count) if single_byte_optimizable?
 
@@ -1883,11 +1937,15 @@ class String
   end
 
   private def calc_excess_right
-    i = bytesize - 1
-    while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
-      i -= 1
+    if single_byte_optimizable?
+      i = bytesize - 1
+      while i >= 0 && to_unsafe[i].unsafe_chr.ascii_whitespace?
+        i -= 1
+      end
+      bytesize - 1 - i
+    else
+      calc_excess_right &.whitespace?
     end
-    bytesize - 1 - i
   end
 
   private def calc_excess_right(char : Char)
@@ -1917,13 +1975,17 @@ class String
   end
 
   private def calc_excess_left
-    excess_left = 0
-    # All strings end with '\0', and it's not a whitespace
-    # so it's safe to access past 1 byte beyond the string data
-    while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
-      excess_left += 1
+    if single_byte_optimizable?
+      excess_left = 0
+      # All strings end with '\0', and it's not a whitespace
+      # so it's safe to access past 1 byte beyond the string data
+      while to_unsafe[excess_left].unsafe_chr.ascii_whitespace?
+        excess_left += 1
+      end
+      excess_left
+    else
+      calc_excess_left &.whitespace?
     end
-    excess_left
   end
 
   private def calc_excess_left(char : Char)
@@ -3466,8 +3528,48 @@ class String
       return
     end
 
+    if single_byte_optimizable?
+      split_single_byte(limit) do |piece|
+        yield piece
+      end
+      return
+    end
+
     yielded = 0
-    single_byte_optimizable = single_byte_optimizable?
+    start_pos = 0
+    piece_size = 0
+    looking_for_space = false
+
+    reader = Char::Reader.new(self)
+    reader.each do |char|
+      if char.whitespace?
+        if looking_for_space
+          piece_bytesize = reader.pos - start_pos
+          yield String.new(to_unsafe + start_pos, piece_bytesize, piece_size)
+          yielded += 1
+          looking_for_space = false
+        end
+      else
+        if looking_for_space
+          piece_size += 1
+        else
+          start_pos = reader.pos
+          piece_size = 1
+          looking_for_space = true
+
+          break if limit && yielded + 1 == limit
+        end
+      end
+    end
+
+    if looking_for_space
+      piece_bytesize = bytesize - start_pos
+      yield String.new(to_unsafe + start_pos, piece_bytesize, piece_size)
+    end
+  end
+
+  private def split_single_byte(limit, &)
+    yielded = 0
     index = 0
     i = 0
     looking_for_space = false
@@ -3479,8 +3581,7 @@ class String
           i += 1
           if c.unsafe_chr.ascii_whitespace?
             piece_bytesize = i - 1 - index
-            piece_size = single_byte_optimizable ? piece_bytesize : 0
-            yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+            yield String.new(to_unsafe + index, piece_bytesize, piece_bytesize)
             yielded += 1
             looking_for_space = false
 
@@ -3507,8 +3608,7 @@ class String
     end
     if looking_for_space
       piece_bytesize = bytesize - index
-      piece_size = single_byte_optimizable ? piece_bytesize : 0
-      yield String.new(to_unsafe + index, piece_bytesize, piece_size)
+      yield String.new(to_unsafe + index, piece_bytesize, piece_bytesize)
     end
   end
 
@@ -4014,19 +4114,6 @@ class String
     just len, char, -1
   end
 
-  # Adds spaces to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, io)
-  # io.to_s # => "Purple  "
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, io : IO) : Nil
-    ljust(io, len)
-  end
-
   # Adds instances of *char* to right of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
@@ -4040,19 +4127,6 @@ class String
     (len - size).times { io << char }
   end
 
-  # Adds instances of *char* to right of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".ljust(8, '-', io)
-  # io.to_s # => "Purple--"
-  # ```
-  @[Deprecated("Use `#ljust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def ljust(len : Int, char : Char, io : IO) : Nil
-    ljust(io, len, char)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*.
   #
   # ```
@@ -4064,43 +4138,17 @@ class String
     just len, char, 1
   end
 
-  # Adds spaces to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, io)
-  # io.to_s # => "  Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, io : IO) : Nil
-    rjust(io, len)
-  end
-
   # Adds instances of *char* to left of the string until it is at least size of *len*,
   # and then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
+  # "Purple".rjust(io, 8, '-')
   # io.to_s # => "--Purple"
   # ```
   def rjust(io : IO, len : Int, char : Char = ' ') : Nil
     (len - size).times { io << char }
     io << self
-  end
-
-  # Adds instances of *char* to left of the string until it is at least size of *len*,
-  # and then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".rjust(8, '-', io)
-  # io.to_s # => "--Purple"
-  # ```
-  @[Deprecated("Use `#rjust(io :IO, len : Int, char : Char = ' ')` instead")]
-  def rjust(len : Int, char : Char, io : IO) : Nil
-    rjust(io, len, char)
   end
 
   # Adds instances of *char* to left and right of the string until it is at least size of *len*.
@@ -4115,25 +4163,12 @@ class String
     just len, char, 0
   end
 
-  # Adds spaces to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, io)
-  # io.to_s # => " Purple  "
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, io : IO) : Nil
-    center(io, len)
-  end
-
   # Adds instances of *char* to left and right of the string until it is at least size of *len*,
   # then appends the result to the given IO.
   #
   # ```
   # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
+  # "Purple".center(io, 9, '-')
   # io.to_s # => "-Purple--"
   # ```
   def center(io : IO, len : Int, char : Char = ' ') : Nil
@@ -4150,19 +4185,6 @@ class String
     left_padding.times { io << char }
     io << self
     right_padding.times { io << char }
-  end
-
-  # Adds instances of *char* to left and right of the string until it is at least size of *len*,
-  # then appends the result to the given IO.
-  #
-  # ```
-  # io = IO::Memory.new
-  # "Purple".center(9, '-', io)
-  # io.to_s # => "-Purple--"
-  # ```
-  @[Deprecated("Use `#center(io :IO, len : Int, char : Char = ' ')` instead")]
-  def center(len : Int, char : Char, io : IO) : Nil
-    center(io, len, char)
   end
 
   private def just(len, char, justify)

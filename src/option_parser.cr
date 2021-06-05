@@ -115,11 +115,6 @@ class OptionParser
     parser
   end
 
-  @[Deprecated("Use `parse` instead.")]
-  def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
-  end
-
   # Creates a new parser.
   def initialize
     @flags = [] of String
@@ -446,10 +441,5 @@ class OptionParser
         end
       end
     end
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def parse!
-    parse
   end
 end

@@ -1,5 +1,6 @@
 require "spec"
 require "unicode"
+require "../support/iterate"
 
 describe "Char" do
   describe "upcase" do
@@ -256,6 +257,11 @@ describe "Char" do
     ('a' <=> 'b').should be < 0
     ('a' <=> 'a').should eq(0)
     ('b' <=> 'a').should be > 0
+  end
+
+  describe "#step" do
+    it_iterates "basic", ['a', 'b', 'c', 'd', 'e'], 'a'.step(to: 'e')
+    it_iterates "basic by", ['a', 'c', 'e'], 'a'.step(to: 'e', by: 2)
   end
 
   describe "+" do

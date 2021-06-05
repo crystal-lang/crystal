@@ -232,12 +232,6 @@ class URI
     end
   end
 
-  # :ditto:
-  @[Deprecated("Use `#request_target` instead.")]
-  def full_path : String
-    request_target
-  end
-
   # Returns `true` if URI has a *scheme* specified.
   def absolute? : Bool
     @scheme ? true : false
@@ -288,9 +282,9 @@ class URI
   #
   # ```
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
-  # uri.authority # => "user:pass@example.com"
+  # uri.authority # => "user:pass@example.com:80"
   #
-  # uri = URI.parse(path: "/relative")
+  # uri = URI.parse("/relative")
   # uri.authority # => nil
   # ```
   def authority : String?

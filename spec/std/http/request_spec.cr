@@ -439,9 +439,9 @@ module HTTP
         request.query_params.to_s.should eq(new_query)
       end
 
-      it "gets request host from the headers" do
+      it "gets request hostname from the headers" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org:3000\r\nReferer:\r\n\r\n")).as(Request)
-        request.host.should eq("host.example.org")
+        request.hostname.should eq("host.example.org")
       end
 
       it "#hostname" do

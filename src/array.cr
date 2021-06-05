@@ -588,45 +588,77 @@ class Array(T)
 
   # Returns all elements that are within the given range.
   #
-  # Negative indices count backward from the end of the array (-1 is the last
-  # element). Additionally, an empty array is returned when the starting index
-  # for an element range is at the end of the array.
-  #
-  # Raises `IndexError` if the range's start is out of range.
+  # The first element in the returned array is `self[range.begin]` followed
+  # by the next elements up to index `range.end` (or `self[range.end - 1]` if
+  # the range is exclusive).
+  # If there are fewer elements in `self`, the returned array is shorter than
+  # `range.size`.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
-  # a[1..3]    # => ["b", "c", "d"]
-  # a[4..7]    # => ["e"]
-  # a[6..10]   # raise IndexError
-  # a[5..10]   # => []
-  # a[-2...-1] # => ["d"]
-  # a[2..]     # => ["c", "d", "e"]
+  # a[1..3] # => ["b", "c", "d"]
+  # # range.end > array.size
+  # a[3..7] # => ["d", "e"]
   # ```
-  def [](range : Range)
+  #
+  # Open ended ranges are clamped at the start and end of the array, respectively.
+  #
+  # ```
+  # # open ended ranges
+  # a[2..] # => ["c", "d", "e"]
+  # a[..2] # => ["a", "b", "c"]
+  # ```
+  #
+  # Negative range values are added to `self.size`, thus they are treated as
+  # indices counting from the end of the array, `-1` designating the last element.
+  #
+  # ```
+  # # negative indices, both ranges are equivalent for `a`
+  # a[1..3]   # => ["b", "c", "d"]
+  # a[-4..-2] # => ["b", "c", "d"]
+  # # Mixing negative and positive indices, both ranges are equivalent for `a`
+  # a[1..-2] # => ["b", "c", "d"]
+  # a[-4..3] # => ["b", "c", "d"]
+  # ```
+  #
+  # Raises `IndexError` if the start index is out of range (`range.begin >
+  # self.size || range.begin < -self.size`). If `range.begin == self.size` an
+  # empty array is returned. If `range.begin > range.end`, an empty array is
+  # returned.
+  #
+  # ```
+  # # range.begin > array.size
+  # a[6..10] # raise IndexError
+  # # range.begin == array.size
+  # a[5..10] # => []
+  # # range.begin > range.end
+  # a[3..1]   # => []
+  # a[-2..-4] # => []
+  # a[-2..1]  # => []
+  # a[3..-4]  # => []
+  # ```
+  def [](range : Range) : self
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
-  # Like `#[Range]`, but returns `nil` if the range's start is out of range.
+  # Like `#[](Range)`, but returns `nil` if `range.begin` is out of range.
   #
   # ```
   # a = ["a", "b", "c", "d", "e"]
   # a[6..10]? # => nil
   # a[6..]?   # => nil
   # ```
-  def []?(range : Range)
+  def []?(range : Range) : self | Nil
     self[*Indexable.range_to_index_and_count(range, size) || return nil]?
   end
 
   # Returns count or less (if there aren't enough) elements starting at the
   # given start index.
   #
-  # Negative indices count backward from the end of the array (-1 is the last
-  # element). Additionally, an empty array is returned when the starting index
-  # for an element range is at the end of the array.
+  # Negative *start* is added to `self.size`, thus it's treated as
+  # index counting from the end of the array, `-1` designating the last element.
   #
-  # Raises `IndexError` if the *start* index is out of range.
-  #
+  # Raises `IndexError` if *start* index is out of bounds.
   # Raises `ArgumentError` if *count* is negative.
   #
   # ```
@@ -636,12 +668,12 @@ class Array(T)
   # a[5, 1]  # => []
   # a[6, 1]  # raises IndexError
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : self
     self[start, count]? || raise IndexError.new
   end
 
-  # Like `#[Int, Int]` but returns `nil` if the *start* index is out of range.
-  def []?(start : Int, count : Int)
+  # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
+  def []?(start : Int, count : Int) : self | Nil
     raise ArgumentError.new "Negative count: #{count}" if count < 0
     return Array(T).new if start == size
 
@@ -1216,6 +1248,12 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
+  #
+  # ```
+  # gems = ["crystal", "pearl", "diamond"]
+  # results = gems.map_with_index { |gem, i| "#{i}: #{gem}" }
+  # results # => ["0: crystal", "1: pearl", "2: diamond"]
+  # ```
   def map_with_index(offset = 0, &block : T, Int32 -> U) forall U
     Array(U).new(size) { |i| yield @buffer[i], offset + i }
   end
@@ -1224,6 +1262,12 @@ class Array(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
+  #
+  # ```
+  # gems = ["crystal", "pearl", "diamond"]
+  # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
+  # gems # => ["0: crystal", "1: pearl", "2: diamond"]
+  # ```
   def map_with_index!(offset = 0, &block : (T, Int32) -> T)
     to_unsafe.map_with_index!(size) { |e, i| yield e, offset + i }
     self
@@ -1262,7 +1306,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def self.product(arrays)
+  def self.product(arrays : Array(Array))
     result = [] of Array(typeof(arrays.first.first))
     each_product(arrays) do |product|
       result << product
@@ -1344,6 +1388,8 @@ class Array(T)
   # a.pop # => "c"
   # a     # => ["a", "b"]
   # ```
+  #
+  # See also: `#truncate`.
   def pop
     pop { raise IndexError.new }
   end
@@ -1356,6 +1402,8 @@ class Array(T)
   # a.pop { "Testing" } # => 1
   # a.pop { "Testing" } # => "Testing"
   # ```
+  #
+  # See also: `#truncate`.
   def pop
     if @size == 0
       yield
@@ -1389,6 +1437,8 @@ class Array(T)
   # a.pop(4) # => ["a", "b", "c"]
   # a        # => []
   # ```
+  #
+  # See also: `#truncate`.
   def pop(n : Int)
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
@@ -1404,6 +1454,8 @@ class Array(T)
   end
 
   # Like `pop`, but returns `nil` if `self` is empty.
+  #
+  # See also: `#truncate`.
   def pop?
     pop { nil }
   end
@@ -1561,6 +1613,8 @@ class Array(T)
   # a.shift # => "a"
   # a       # => ["b", "c"]
   # ```
+  #
+  # See also: `#truncate`.
   def shift
     shift { raise IndexError.new }
   end
@@ -1576,6 +1630,8 @@ class Array(T)
   # a.shift { "empty!" } # => "empty!"
   # a                    # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift
     if @size == 0
       yield
@@ -1614,6 +1670,8 @@ class Array(T)
   # a.shift(4) # => ["a", "b", "c"]
   # a          # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift(n : Int)
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
@@ -1647,6 +1705,8 @@ class Array(T)
   # a.shift? # => nil
   # a        # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift?
     shift { nil }
   end
@@ -1842,6 +1902,53 @@ class Array(T)
         self[j][i]
       end
     end
+  end
+
+  # Removes all elements except the *count* or less (if there aren't enough)
+  # elements starting at the given *start* index. Returns `self`.
+  #
+  # Negative values of *start* count from the end of the array.
+  #
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # a = [0, 1, 4, 9, 16, 25]
+  # a.truncate(2, 3) # => [4, 9, 16]
+  # a                # => [4, 9, 16]
+  # ```
+  #
+  # See also: `#pop`, `#shift`.
+  def truncate(start : Int, count : Int) : self
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+    count = {count, size - start}.min
+
+    if count == 0
+      clear
+      reset_buffer_to_root_buffer
+    else
+      @buffer.clear(start)
+      (@buffer + start + count).clear(size - start - count)
+      @size = count
+      shift_buffer_by(start)
+    end
+
+    self
+  end
+
+  # Removes all elements except those within the given *range*. Returns `self`.
+  #
+  # ```
+  # a = [0, 1, 4, 9, 16, 25]
+  # a.truncate(1..-3) # => [1, 4, 9]
+  # a                 # => [1, 4, 9]
+  # ```
+  def truncate(range : Range) : self
+    truncate(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
   # Returns a new `Array` by removing duplicate values in `self`.
