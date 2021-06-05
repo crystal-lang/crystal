@@ -64,14 +64,9 @@ class Crystal::System::IoUring
 
     # This should return `true` on Linux 5.6+ unless it was built with io_uring disabled
     @@available = probe.has_io_uring &&
-                  probe.features.nodrop? &&     # NODROP is required because we do not keep track of inflight requests
-                  probe.features.rw_cur_pos? && # Support reading and writing with the "current" file offset
                   probe.operations.nop? &&
-                  (probe.operations.read? || probe.operations.readv?) &&
-                  (probe.operations.write? || probe.operations.writev?) &&
                   probe.operations.timeout? &&
-                  probe.operations.accept? &&
-                  probe.operations.connect?
+                  probe.operations.poll_add?
   end
 
   # Creates a new io_uring instance with room for at least `sq_entries_hint`. This value is just
@@ -79,16 +74,7 @@ class Crystal::System::IoUring
   def initialize(sq_entries_hint : UInt32 = 128)
     @params = Syscall::IoUringParams.new
 
-    # Just clamp to the maximum value if `sq_entries_hint` is too high.
-    @params.flags |= Syscall::IoUringFlags::CLAMP
-
-    # TODO: Consider using SQPOLL when running as root.
-
-    {% if flag? :preview_mt %}
-      # TODO: Use ATTACH_WQ to share kernel resources between threads.
-    {% end %}
-
-    @fd = Syscall.io_uring_setup(sq_entries_hint, pointerof(@params))
+    @fd = Syscall.io_uring_setup(sq_entries_hint.clamp(16u32, 32768u32), pointerof(@params))
 
     if @fd < 0
       fatal_error "Failed to create io_uring interface: #{Errno.new(-@fd)}"
@@ -97,6 +83,8 @@ class Crystal::System::IoUring
     @submission_queue_mmap = Pointer(Void).null
     @completion_queue_mmap = Pointer(Void).null
     @submission_entries = Pointer(Syscall::IoUringSqe).null
+    @inflight = 0
+    @canceled_userdata = Set(UInt64).new
 
     # Since Linux 5.4 both queues can be mapped in a single call to `mmap`.
     if @params.features.single_mmap?
@@ -208,11 +196,19 @@ class Crystal::System::IoUring
   # Obtains one free index from the submission queue for our use. If there is none
   # available then we should call into the kernel to process what is there. Retry
   # until the kernel has consumed at least one request so that we can write ours.
+  # If there are too many inflight requests, wait for then to complete before sending
+  # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
   private def get_free_index
-    until (index = @submission_queue.consume_free_index) != UInt32::MAX
+    loop do
+      if @params.features.nodrop? || @inflight < @params.cq_entries
+        index = @submission_queue.consume_free_index
+        if index != UInt32::MAX
+          @inflight += 1
+          return index
+        end
+      end
       process_completion_events(blocking: false)
     end
-    index
   end
 
   # Obtains one submission entry, populates, and submits it. When the completion
@@ -278,9 +274,16 @@ class Crystal::System::IoUring
     # Consume available completion events and enqueue their fibers for execution.
     completed_some = false
     @completion_queue.consume_all do |cqe|
+      @inflight -= 1
+
       # cqe.user_data is zero when this is the completion for a LINK_TIMEOUT event.
       # We always skip it and use the fact that the original event will be fail with ECANCELED.
       next if cqe.user_data == 0
+
+      if @canceled_userdata.includes?(cqe.user_data)
+        @canceled_userdata.delete(cqe.user_data)
+        next
+      end
 
       # It's either a Fiber or a Box(Int32->)
       if cqe.user_data.even?
@@ -604,10 +607,6 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span)
-    unless IoUring.probe.operations.timeout?
-      raise RuntimeError.new("IoUring's 'timeout' operation is not supported by current kernel. Needs Linux 5.4 or newer.")
-    end
-
     timeval = make_timeval(time)
 
     submit_and_wait :timeout do |sqe|
@@ -617,10 +616,6 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span, callback : Void*)
-    unless IoUring.probe.operations.timeout?
-      raise RuntimeError.new("IoUring's 'timeout' operation is not supported by current kernel. Needs Linux 5.4 or newer.")
-    end
-
     index = get_free_index
     @timeval_entries[index] = make_timeval(time)
 
@@ -631,12 +626,12 @@ class Crystal::System::IoUring
   end
 
   def timeout_remove(callback : Void*)
-    unless IoUring.probe.operations.timeout_remove?
-      raise RuntimeError.new("IoUring's 'timeout_remove' operation is not supported by current kernel. Needs Linux 5.5 or newer.")
-    end
-
-    submit_and_forget :timeout_remove do |sqe|
-      sqe.value.addr = callback.address + 1
+    if IoUring.probe.operations.timeout_remove?
+      submit_and_forget :timeout_remove do |sqe|
+        sqe.value.addr = callback.address + 1
+      end
+    else
+      @canceled_userdata.add(callback.address + 1)
     end
   end
 

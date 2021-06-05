@@ -39,7 +39,7 @@ module Crystal::System
         {% if flag?(:force_iouring) %}
           @event ||= yield
         {% else %}
-          if Crystal::System::IoUring.available?
+          if ENV["CRYSTAL_DISABLE_IO_URING"]? != "1" && Crystal::System::IoUring.available?
             @event ||= yield
           end
         {% end %}
