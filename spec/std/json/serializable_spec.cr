@@ -378,10 +378,10 @@ class JSONVariableDiscriminatorValueType
   include JSON::Serializable
 
   use_json_discriminator "type", {
-                                        0 => JSONVariableDiscriminatorNumber,
-    "1"                                   => JSONVariableDiscriminatorString,
-    true                                  => JSONVariableDiscriminatorBool,
-    JSONVariableDiscriminatorEnumFoo::Foo => JSONVariableDiscriminatorEnum,
+                                         0 => JSONVariableDiscriminatorNumber,
+    "1"                                    => JSONVariableDiscriminatorString,
+    true                                   => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
     JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
 end

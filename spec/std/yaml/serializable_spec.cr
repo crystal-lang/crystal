@@ -359,10 +359,10 @@ class YAMLVariableDiscriminatorValueType
   include YAML::Serializable
 
   use_yaml_discriminator "type", {
-                                        0 => YAMLVariableDiscriminatorNumber,
-    "1"                                   => YAMLVariableDiscriminatorString,
-    true                                  => YAMLVariableDiscriminatorBool,
-    YAMLVariableDiscriminatorEnumFoo::Foo => YAMLVariableDiscriminatorEnum,
+                                         0 => YAMLVariableDiscriminatorNumber,
+    "1"                                    => YAMLVariableDiscriminatorString,
+    true                                   => YAMLVariableDiscriminatorBool,
+    YAMLVariableDiscriminatorEnumFoo::Foo  => YAMLVariableDiscriminatorEnum,
     YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
   }
 end
