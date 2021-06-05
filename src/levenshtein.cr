@@ -25,13 +25,13 @@ module Levenshtein
       t_size, s_size = s_size, t_size
     end
 
+    costs = Slice(Int32).malloc(t_size + 1) { |i| i }
+    last_cost = 0
+
     if string1.single_byte_optimizable? && string2.single_byte_optimizable?
       s = string1.to_unsafe
       t = string2.to_unsafe
 
-      costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
-
-      last_cost = 0
       s_size.times do |i|
         last_cost = i + 1
 
@@ -51,9 +51,6 @@ module Levenshtein
       # Use an array instead of a reader to decode the second string only once
       chars = string2.chars
 
-      costs = Pointer(Int32).malloc(t_size + 1) { |i| i }
-
-      last_cost = 0
       reader.each_with_index do |char1, i|
         last_cost = i + 1
 
