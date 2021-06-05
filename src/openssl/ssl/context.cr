@@ -268,7 +268,7 @@ abstract class OpenSSL::SSL::Context
   #
   # See `#security_level=` for some sensible system configuration.
   def cipher_suites=(cipher_suites : String)
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
       raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
     {% else %}
@@ -281,7 +281,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`. See `#security_level=` for some
   # sensible system configuration.
   def set_modern_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_MODERN
     {% else %}
       self.ciphers = CIPHERS_MODERN
@@ -292,7 +292,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`. See `#security_level=` for some
   # sensible system configuration.
   def set_intermediate_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
     {% else %}
       self.ciphers = CIPHERS_INTERMEDIATE
@@ -303,7 +303,7 @@ abstract class OpenSSL::SSL::Context
   # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`. See `#security_level=` for some
   # sensible system configuration.
   def set_old_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_OLD
     {% else %}
       self.ciphers = CIPHERS_OLD
@@ -455,9 +455,9 @@ abstract class OpenSSL::SSL::Context
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
     end
 
-    # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
+    # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
     # the already set ones.
-    def add_x509_verify_flags(flags : OpenSSL::X509VerifyFlags)
+    def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
       param = LibSSL.ssl_ctx_get0_param(@handle)
       ret = LibCrypto.x509_verify_param_set_flags(param, flags)
       raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1

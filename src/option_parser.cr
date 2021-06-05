@@ -115,11 +115,6 @@ class OptionParser
     parser
   end
 
-  @[Deprecated("Use `parse` instead.")]
-  def self.parse! : self
-    parse(ARGV) { |parser| yield parser }
-  end
-
   # Creates a new parser.
   def initialize
     @flags = [] of String
@@ -278,8 +273,10 @@ class OptionParser
   end
 
   private def append_flag(flag, description)
+    indent = " " * 37
+    description = description.gsub("\n", "\n#{indent}")
     if flag.size >= 33
-      @flags << "    #{flag}\n#{" " * 37}#{description}"
+      @flags << "    #{flag}\n#{indent}#{description}"
     else
       @flags << "    #{flag}#{" " * (33 - flag.size)}#{description}"
     end
@@ -444,10 +441,5 @@ class OptionParser
         end
       end
     end
-  end
-
-  @[Deprecated("Use `parse` instead.")]
-  def parse!
-    parse
   end
 end

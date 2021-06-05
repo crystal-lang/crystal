@@ -270,11 +270,14 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     if arg.external_name != arg.name
-      name = arg.external_name.presence || "_"
-      if Symbol.needs_quotes? name
-        HTML.escape name.inspect, io
+      if name = arg.external_name.presence
+        if Symbol.needs_quotes_for_named_argument? name
+          HTML.escape name.inspect, io
+        else
+          io << name
+        end
       else
-        io << name
+        io << "_"
       end
       io << ' '
     end
@@ -317,6 +320,7 @@ class Crystal::Doc::Method
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
+      builder.field "args_html", args_to_html
       builder.field "location", location
       builder.field "def", self.def
     end

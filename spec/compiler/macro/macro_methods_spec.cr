@@ -1011,15 +1011,15 @@ module Crystal
       end
 
       it "executes double splat" do
-        assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{**{a: 1, "foo bar": 2, "+": 3}}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat with arg" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3, )
       end
 
       describe "#each" do
@@ -1622,6 +1622,27 @@ module Crystal
         end
       end
 
+      it "== and != devirtualize generic type arguments (#10730)" do
+        assert_type(%(
+          class A
+          end
+
+          class B < A
+          end
+
+          module Foo(T)
+            def self.foo
+              {
+                {% if T == A %} 1 {% else %} 'a' {% end %},
+                {% if T != A %} 1 {% else %} 'a' {% end %},
+              }
+            end
+          end
+
+          Foo(A).foo
+          )) { tuple_of([int32, char]) }
+      end
+
       it "executes <" do
         assert_macro("x", "{{x < Reference}}", "true") do |program|
           [TypeNode.new(program.string)] of ASTNode
@@ -2151,8 +2172,8 @@ module Crystal
         assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
       end
 
-      it "executes instance_var" do
-        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      it "executes offset" do
+        assert_macro "x", %({{x.offset}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 

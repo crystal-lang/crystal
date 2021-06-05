@@ -2,27 +2,6 @@ require "spec"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
-private class BadSortingClass
-  include Comparable(self)
-
-  def <=>(other)
-    1
-  end
-end
-
-private class Spaceship
-  getter value : Float64
-
-  def initialize(@value : Float64, @return_nil = false)
-  end
-
-  def <=>(other : Spaceship)
-    return nil if @return_nil
-
-    value <=> other.value
-  end
-end
-
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -1096,68 +1075,6 @@ describe "Array" do
     end
   end
 
-  describe "sample" do
-    it "sample" do
-      [1].sample.should eq(1)
-
-      x = [1, 2, 3].sample
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "sample with random" do
-      x = [1, 2, 3]
-      x.sample(Random.new(1)).should eq(2)
-    end
-
-    it "gets sample of negative count elements raises" do
-      expect_raises ArgumentError do
-        [1].sample(-1)
-      end
-    end
-
-    it "gets sample of 0 elements" do
-      [1].sample(0).should eq([] of Int32)
-    end
-
-    it "gets sample of 1 elements" do
-      [1].sample(1).should eq([1])
-
-      x = [1, 2, 3].sample(1)
-      x.size.should eq(1)
-      x = x.first
-      [1, 2, 3].includes?(x).should be_true
-    end
-
-    it "gets sample of k elements out of n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3)
-      set = Set.new(b)
-      set.size.should eq(3)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, where k > n" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(10)
-      b.size.should eq(5)
-      set = Set.new(b)
-      set.size.should eq(5)
-
-      set.each do |e|
-        a.includes?(e).should be_true
-      end
-    end
-
-    it "gets sample of k elements out of n, with random" do
-      a = [1, 2, 3, 4, 5]
-      b = a.sample(3, Random.new(1))
-      b.should eq([4, 3, 1])
-    end
-  end
-
   describe "shift" do
     it "shifts when non empty" do
       a = [1, 2, 3]
@@ -1332,42 +1249,6 @@ describe "Array" do
       b.should eq(["a", "foo", "hello"])
       a.should_not eq(b)
     end
-
-    it "doesn't crash on special situations" do
-      [1, 2, 3].sort { 1 }
-      Array.new(10) { BadSortingClass.new }.sort
-    end
-
-    it "can sort just by using <=> (#6608)" do
-      spaceships = [
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      sorted = spaceships.sort
-      4.times do |i|
-        sorted[i].value.should eq(i)
-      end
-    end
-
-    it "raises if <=> returns nil" do
-      spaceships = [
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort
-      end
-    end
-
-    it "raises if sort block returns nil" do
-      expect_raises(ArgumentError) do
-        [1, 2].sort { nil }
-      end
-    end
   end
 
   describe "sort!" do
@@ -1381,43 +1262,6 @@ describe "Array" do
       a = ["foo", "a", "hello"]
       a.sort! { |x, y| x.size <=> y.size }
       a.should eq(["a", "foo", "hello"])
-    end
-
-    it "sorts with invalid block (#4379)" do
-      a = [1] * 17
-      b = a.sort { -1 }
-      a.should eq(b)
-    end
-
-    it "can sort! just by using <=> (#6608)" do
-      spaceships = [
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
-
-      spaceships.sort!
-      4.times do |i|
-        spaceships[i].value.should eq(i)
-      end
-    end
-
-    it "raises if <=> returns nil" do
-      spaceships = [
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort!
-      end
-    end
-
-    it "raises if sort! block returns nil" do
-      expect_raises(ArgumentError) do
-        [1, 2].sort! { nil }
-      end
     end
   end
 
@@ -1489,6 +1333,58 @@ describe "Array" do
       ary = [] of RecursiveArray
       ary << ary
       ary.to_s.should eq("[[...]]")
+    end
+  end
+
+  describe "#truncate" do
+    it "truncates with index and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 3).should be(a)
+      a.should eq([4, 9, 16])
+    end
+
+    it "truncates with index and count == 0" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 0).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index and count, not enough elements" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(4, 4).should be(a)
+      a.should eq([16, 25])
+    end
+
+    it "truncates with index == size and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(6, 1).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index < 0 and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(-5, 3).should be(a)
+      a.should eq([1, 4, 9])
+    end
+
+    it "raises on out of bound index" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(IndexError) { a.truncate(-7, 1) }
+    end
+
+    it "raises on negative count" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(ArgumentError) { a.truncate(0, -1) }
+    end
+
+    it "truncates with range" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2..4).should be(a)
+      a.should eq([4, 9, 16])
+
+      b = [0, 1, 4, 9, 16, 25]
+      b.truncate(-5..-3).should be(b)
+      b.should eq([1, 4, 9])
     end
   end
 
@@ -2045,262 +1941,6 @@ describe "Array" do
       a = Array(Int32).new(50) { |i| i }
       a.rotate!(-20)
       a.should eq([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29])
-    end
-  end
-
-  describe "permutations" do
-    it { [1, 2, 2].permutations.should eq([[1, 2, 2], [1, 2, 2], [2, 1, 2], [2, 2, 1], [2, 1, 2], [2, 2, 1]]) }
-    it { [1, 2, 3].permutations.should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
-    it { [1, 2, 3].permutations(1).should eq([[1], [2], [3]]) }
-    it { [1, 2, 3].permutations(2).should eq([[1, 2], [1, 3], [2, 1], [2, 3], [3, 1], [3, 2]]) }
-    it { [1, 2, 3].permutations(3).should eq([[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]) }
-    it { [1, 2, 3].permutations(0).should eq([[] of Int32]) }
-    it { [1, 2, 3].permutations(4).should eq([] of Array(Int32)) }
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].permutations(-1) } }
-
-    it "accepts a block" do
-      sums = [] of Int32
-      [1, 2, 3].each_permutation(2) do |perm|
-        sums << perm.sum
-      end.should be_nil
-      sums.should eq([3, 4, 3, 5, 4, 5])
-    end
-
-    it "yielding dup of arrays" do
-      sums = [] of Int32
-      [1, 2, 3].each_permutation(3) do |perm|
-        perm.map! &.+(1)
-        sums << perm.sum
-      end.should be_nil
-      sums.should eq([9, 9, 9, 9, 9, 9])
-    end
-
-    it "yields with reuse = true" do
-      sums = [] of Int32
-      object_ids = Set(UInt64).new
-      [1, 2, 3].each_permutation(3, reuse: true) do |perm|
-        object_ids << perm.object_id
-        perm.map! &.+(1)
-        sums << perm.sum
-      end.should be_nil
-      sums.should eq([9, 9, 9, 9, 9, 9])
-      object_ids.size.should eq(1)
-    end
-
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_permutation(-1) { } } }
-
-    it "returns iterator" do
-      a = [1, 2, 3]
-      perms = a.permutations
-      iter = a.each_permutation
-      perms.each do |perm|
-        iter.next.should eq(perm)
-      end
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns iterator with given size" do
-      a = [1, 2, 3]
-      perms = a.permutations(2)
-      iter = a.each_permutation(2)
-      perms.each do |perm|
-        iter.next.should eq(perm)
-      end
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns iterator with reuse = true" do
-      a = [1, 2, 3]
-      object_ids = Set(UInt64).new
-      perms = a.permutations
-      iter = a.each_permutation(reuse: true)
-      perms.each do |perm|
-        b = iter.next.as(Array)
-        object_ids << b.object_id
-        b.should eq(perm)
-      end
-      iter.next.should be_a(Iterator::Stop)
-      object_ids.size.should eq(1)
-    end
-  end
-
-  describe "combinations" do
-    it { [1, 2, 2].combinations.should eq([[1, 2, 2]]) }
-    it { [1, 2, 3].combinations.should eq([[1, 2, 3]]) }
-    it { [1, 2, 3].combinations(1).should eq([[1], [2], [3]]) }
-    it { [1, 2, 3].combinations(2).should eq([[1, 2], [1, 3], [2, 3]]) }
-    it { [1, 2, 3].combinations(3).should eq([[1, 2, 3]]) }
-    it { [1, 2, 3].combinations(0).should eq([[] of Int32]) }
-    it { [1, 2, 3].combinations(4).should eq([] of Array(Int32)) }
-    it { [1, 2, 3, 4].combinations(3).should eq([[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]]) }
-    it { [1, 2, 3, 4].combinations(2).should eq([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]) }
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].combinations(-1) } }
-
-    it "accepts a block" do
-      sums = [] of Int32
-      [1, 2, 3].each_combination(2) do |comb|
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([3, 4, 5])
-    end
-
-    it "yielding dup of arrays" do
-      sums = [] of Int32
-      [1, 2, 3].each_combination(3) do |comb|
-        comb.map! &.+(1)
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([9])
-    end
-
-    it "does with reuse = true" do
-      sums = [] of Int32
-      object_ids = Set(UInt64).new
-      [1, 2, 3].each_combination(2, reuse: true) do |comb|
-        sums << comb.sum
-        object_ids << comb.object_id
-      end.should be_nil
-      sums.should eq([3, 4, 5])
-      object_ids.size.should eq(1)
-    end
-
-    it "does with reuse = array" do
-      sums = [] of Int32
-      reuse = [] of Int32
-      [1, 2, 3].each_combination(2, reuse: reuse) do |comb|
-        sums << comb.sum
-        comb.should be(reuse)
-      end.should be_nil
-      sums.should eq([3, 4, 5])
-    end
-
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_combination(-1) { } } }
-
-    it "returns iterator" do
-      a = [1, 2, 3, 4]
-      combs = a.combinations(2)
-      iter = a.each_combination(2)
-      combs.each do |comb|
-        iter.next.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns iterator with reuse = true" do
-      a = [1, 2, 3, 4]
-      combs = a.combinations(2)
-      object_ids = Set(UInt64).new
-      iter = a.each_combination(2, reuse: true)
-      combs.each do |comb|
-        b = iter.next
-        object_ids << b.object_id
-        b.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
-      object_ids.size.should eq(1)
-    end
-
-    it "returns iterator with reuse = array" do
-      a = [1, 2, 3, 4]
-      reuse = [] of Int32
-      combs = a.combinations(2)
-      iter = a.each_combination(2, reuse: reuse)
-      combs.each do |comb|
-        b = iter.next
-        b.should be(reuse)
-        b.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
-
-  describe "repeated_combinations" do
-    it { [1, 2, 2].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 2], [1, 2, 2], [1, 2, 2], [1, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]) }
-    it { [1, 2, 3].repeated_combinations.should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
-    it { [1, 2, 3].repeated_combinations(1).should eq([[1], [2], [3]]) }
-    it { [1, 2, 3].repeated_combinations(2).should eq([[1, 1], [1, 2], [1, 3], [2, 2], [2, 3], [3, 3]]) }
-    it { [1, 2, 3].repeated_combinations(3).should eq([[1, 1, 1], [1, 1, 2], [1, 1, 3], [1, 2, 2], [1, 2, 3], [1, 3, 3], [2, 2, 2], [2, 2, 3], [2, 3, 3], [3, 3, 3]]) }
-    it { [1, 2, 3].repeated_combinations(0).should eq([[] of Int32]) }
-    it { [1, 2, 3].repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_combinations(-1) } }
-
-    it "accepts a block" do
-      sums = [] of Int32
-      [1, 2, 3].each_repeated_combination(2) do |comb|
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([2, 3, 4, 4, 5, 6])
-    end
-
-    it "yielding dup of arrays" do
-      sums = [] of Int32
-      [1, 2, 3].each_repeated_combination(3) do |comb|
-        comb.map! &.+(1)
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
-    end
-
-    it { expect_raises(ArgumentError, "Size must be positive") { [1].each_repeated_combination(-1) { } } }
-
-    it "yields with reuse = true" do
-      sums = [] of Int32
-      object_ids = Set(UInt64).new
-      [1, 2, 3].each_repeated_combination(3, reuse: true) do |comb|
-        object_ids << comb.object_id
-        comb.map! &.+(1)
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
-      object_ids.size.should eq(1)
-    end
-
-    it "yields with reuse = array" do
-      sums = [] of Int32
-      reuse = [] of Int32
-      [1, 2, 3].each_repeated_combination(3, reuse: reuse) do |comb|
-        comb.should be(reuse)
-        comb.map! &.+(1)
-        sums << comb.sum
-      end.should be_nil
-      sums.should eq([6, 7, 8, 8, 9, 10, 9, 10, 11, 12])
-    end
-
-    it "returns iterator" do
-      a = [1, 2, 3, 4]
-      combs = a.repeated_combinations(2)
-      iter = a.each_repeated_combination(2)
-      combs.each do |comb|
-        iter.next.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
-    end
-
-    it "returns iterator with reuse = true" do
-      a = [1, 2, 3, 4]
-      object_ids = Set(UInt64).new
-      combs = a.repeated_combinations(2)
-      iter = a.each_repeated_combination(2, reuse: true)
-      combs.each do |comb|
-        b = iter.next
-        object_ids << b.object_id
-        b.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
-      object_ids.size.should eq(1)
-    end
-
-    it "returns iterator with reuse = array" do
-      a = [1, 2, 3, 4]
-      reuse = [] of Int32
-      combs = a.repeated_combinations(2)
-      iter = a.each_repeated_combination(2, reuse: reuse)
-      combs.each do |comb|
-        b = iter.next
-        b.should be(reuse)
-        b.should eq(comb)
-      end
-      iter.next.should be_a(Iterator::Stop)
     end
   end
 

@@ -332,4 +332,15 @@ describe "Semantic: named tuples" do
       call("")
       )) { int32 }
   end
+
+  it "doesn't unify named tuple metaclasses (#5384)" do
+    assert_type(%(
+      NamedTuple(a: Int32) || NamedTuple(a: String)
+      )) {
+      union_of(
+        named_tuple_of({"a": int32}).metaclass,
+        named_tuple_of({"a": string}).metaclass,
+      )
+    }
+  end
 end

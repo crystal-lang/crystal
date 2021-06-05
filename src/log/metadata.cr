@@ -180,6 +180,10 @@ class Log::Metadata
     false
   end
 
+  def hash(hasher)
+    to_a.sort_by!(&.[0]).hash(hasher)
+  end
+
   def to_s(io : IO) : Nil
     found_one = false
     each do |(key, value)|

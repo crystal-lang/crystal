@@ -4,7 +4,12 @@ class File::PReader < IO
 
   getter? closed = false
 
-  def initialize(@file : File, @offset : Int32, @bytesize : Int32)
+  @offset : Int64
+  @bytesize : Int64
+
+  def initialize(@file : File, offset : Int, bytesize : Int)
+    @offset = offset.to_i64
+    @bytesize = bytesize.to_i64
     @pos = 0
   end
 

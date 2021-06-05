@@ -184,7 +184,7 @@ struct Char
       end
     end
 
-    private def decode_char_at(pos)
+    private def decode_char_at(pos, & : UInt32, Int32, UInt8? ->)
       first = byte_at(pos)
       if first < 0x80
         return yield first, 1, nil
@@ -241,7 +241,7 @@ struct Char
     end
 
     private macro invalid_byte_sequence
-      return yield Char::REPLACEMENT.ord, 1, first.to_u8
+      return yield Char::REPLACEMENT.ord.to_u32!, 1, first.to_u8
     end
 
     @[AlwaysInline]

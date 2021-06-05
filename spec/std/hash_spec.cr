@@ -22,9 +22,6 @@ private class HashWrapper(K, V)
   delegate each, to: @hash
 end
 
-private class HashSubclass(K, V) < Hash(K, V)
-end
-
 describe "Hash" do
   describe "empty" do
     it "size should be zero" do
@@ -96,6 +93,61 @@ describe "Hash" do
       a = { {1 => 2} => 3 }
       b = { {1 => 2} => 3 }
       a.should eq(b)
+    end
+  end
+
+  context "subset/superset operators" do
+    h1 = {"a" => 1, "b" => 2}
+    h2 = {"a" => 1, "b" => 2, "c" => 3}
+    h3 = {"c" => 3}
+    h4 = {} of Nil => Nil
+
+    describe "#proper_subset_of?" do
+      it do
+        h1.proper_subset_of?(h2).should be_true
+        h2.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h1).should be_false
+        h1.proper_subset_of?(h3).should be_false
+        h1.proper_subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.proper_subset_of?({"b" => nil, "c" => nil}).should be_false
+      end
+    end
+
+    describe "#subset_of?" do
+      it do
+        h1.subset_of?(h2).should be_true
+        h2.subset_of?(h1).should be_false
+        h1.subset_of?(h1).should be_true
+        h1.subset_of?(h3).should be_false
+        h1.subset_of?(h4).should be_false
+      end
+
+      it "handles edge case where both values are nil" do
+        {"a" => nil}.subset_of?({"b" => nil}).should be_false
+      end
+    end
+
+    describe "#proper_superset_of?" do
+      it do
+        h1.proper_superset_of?(h2).should be_false
+        h2.proper_superset_of?(h1).should be_true
+        h1.proper_superset_of?(h1).should be_false
+        h1.proper_superset_of?(h3).should be_false
+        h1.proper_superset_of?(h4).should be_true
+      end
+    end
+
+    describe "#superset_of?" do
+      it do
+        h1.superset_of?(h2).should be_false
+        h2.superset_of?(h1).should be_true
+        h1.superset_of?(h1).should be_true
+        h1.superset_of?(h3).should be_false
+        h1.superset_of?(h4).should be_true
+      end
     end
   end
 
@@ -443,18 +495,14 @@ describe "Hash" do
       clone.should be(clone.first[1])
     end
 
-    it "clones subclass" do
-      h1 = HashSubclass(Int32, Array(Int32)).new
-      h1[0] = [0]
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
       h2 = h1.clone
-      h1.should_not be(h2)
-      h1.should eq(h2)
-      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+      h2[0].should eq("a")
 
-      h1[0].should_not be(h2[0])
-
-      h1.delete(0)
-      h2[0].should eq([0])
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
     end
   end
 
@@ -499,18 +547,14 @@ describe "Hash" do
       h2[0].should eq([0])
     end
 
-    it "dups subclass" do
-      h1 = HashSubclass(Int32, Array(Int32)).new
-      h1[0] = [0]
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
       h2 = h1.dup
-      h1.should_not be(h2)
-      h1.should eq(h2)
-      typeof(h2).should eq(HashSubclass(Int32, Array(Int32)))
+      h2[0].should eq("a")
 
-      h1[0].should be(h2[0])
-
-      h1.delete(0)
-      h2[0].should eq([0])
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
@@ -1004,15 +1048,15 @@ describe "Hash" do
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
-      end
+      end.should eq(:memo)
     end
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = nil
-      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+      result = {} of Char => Symbol
+      hash.each_with_object(result) do |(k, v), memo|
         memo[v] = k
-      end
+      end.should be(result)
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end

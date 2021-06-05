@@ -184,7 +184,7 @@ abstract class IO
   # io.print "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def print(obj) : Nil
+  def print(obj : _) : Nil
     self << obj
     nil
   end
@@ -204,7 +204,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given string to this `IO` followed by a newline character
+  # Writes *string* to this `IO`, followed by a newline character
   # unless the string already ends with one.
   #
   # ```
@@ -219,7 +219,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given object to this `IO` followed by a newline character.
+  # Writes *obj* to this `IO`, followed by a newline character.
   #
   # ```
   # io = IO::Memory.new
@@ -227,7 +227,7 @@ abstract class IO
   # io.puts "Crystal"
   # io.to_s # => "1\nCrystal\n"
   # ```
-  def puts(obj) : Nil
+  def puts(obj : _) : Nil
     self << obj
     puts
   end
@@ -244,7 +244,8 @@ abstract class IO
     nil
   end
 
-  # Writes the given objects, each followed by a newline character.
+  # Writes *objects* to this `IO`, each followed by a newline character unless
+  # the object is a `String` and already ends with a newline.
   #
   # ```
   # io = IO::Memory.new
@@ -1099,7 +1100,7 @@ abstract class IO
   # `File` and `IO::Memory` implement it.
   #
   # Multiple sections can be read concurrently.
-  def read_at(offset, bytesize, &block)
+  def read_at(offset, bytesize, & : IO ->)
     raise Error.new "Unable to read_at"
   end
 

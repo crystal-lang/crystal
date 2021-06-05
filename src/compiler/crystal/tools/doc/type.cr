@@ -89,7 +89,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass
+      superclass = type.superclass unless type.full_name == Crystal::Macros::ASTNode.name
     when GenericClassInstanceType
       superclass = type.superclass
     end
@@ -166,7 +166,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by! &.name.downcase
+        stable_sort! defs, &.name.downcase
       end
     end
   end
@@ -191,7 +191,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by! &.name.downcase
+      stable_sort! class_methods, &.name.downcase
     end
   end
 
@@ -215,7 +215,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by! &.name.downcase
+      stable_sort! macros, &.name.downcase
     end
   end
 
@@ -605,7 +605,7 @@ class Crystal::Doc::Type
   def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
     io << '{'
     type.entries.join(io, ", ") do |entry|
-      if Symbol.needs_quotes?(entry.name)
+      if Symbol.needs_quotes_for_named_argument?(entry.name)
         entry.name.inspect(io)
       else
         io << entry.name
@@ -771,7 +771,8 @@ class Crystal::Doc::Type
       builder.field "program", program?
       builder.field "enum", enum?
       builder.field "alias", alias?
-      builder.field "aliased", alias_definition.to_s
+      builder.field "aliased", alias? ? alias_definition.to_s : nil
+      builder.field "aliased_html", alias? ? formatted_alias_definition : nil
       builder.field "const", const?
       builder.field "constants", constants
       builder.field "included_modules" do
@@ -816,5 +817,11 @@ class Crystal::Doc::Type
 
   def annotations(annotation_type)
     @type.annotations(annotation_type)
+  end
+
+  private def stable_sort!(list)
+    # TODO: use #10163 instead
+    i = 0
+    list.sort_by! { |elem| {yield(elem), i += 1} }
   end
 end

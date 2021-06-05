@@ -16,7 +16,7 @@ require "crystal/hasher"
 # hash["one"] # => 1
 # ```
 #
-# [Hash literals](http://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
+# [Hash literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/hash.html)
 # can also be used to create a `Hash`:
 #
 # ```
@@ -640,6 +640,7 @@ class Hash(K, V)
   # Initializes a `dup` copy from the contents of `other`.
   protected def initialize_dup(other)
     initialize_compare_by_identity(other)
+    initialize_default_block(other)
 
     return if other.empty?
 
@@ -650,6 +651,7 @@ class Hash(K, V)
   # Initializes a `clone` copy from the contents of `other`.
   protected def initialize_clone(other)
     initialize_compare_by_identity(other)
+    initialize_default_block(other)
 
     return if other.empty?
 
@@ -659,6 +661,10 @@ class Hash(K, V)
 
   private def initialize_compare_by_identity(other)
     compare_by_identity if other.compare_by_identity?
+  end
+
+  private def initialize_default_block(other)
+    @block = other.@block
   end
 
   # Initializes `@entries` for a dup copy.
@@ -685,14 +691,13 @@ class Hash(K, V)
     end
   end
 
-  # Initializes all variables other than `@entries` for a copy.
+  # Initializes all variables other than `@entries` and `@block` for a copy.
   private def initialize_copy_non_entries_vars(other)
     @indices_bytesize = other.@indices_bytesize
     @first = other.@first
     @size = other.@size
     @deleted_count = other.@deleted_count
     @indices_size_pow2 = other.@indices_size_pow2
-    @block = other.@block
 
     unless other.@indices.null?
       @indices = malloc_indices(other.indices_size)
@@ -1208,25 +1213,6 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  # Deletes each key-value pair for which the given block returns `true`.
-  #
-  # ```
-  # h = {"foo" => "bar", "fob" => "baz", "bar" => "qux"}
-  # h.delete_if { |key, value| key.starts_with?("fo") }
-  # h # => { "bar" => "qux" }
-  # ```
-  @[Deprecated("Use `#reject!` instead")]
-  def delete_if
-    keys_to_delete = [] of K
-    each do |key, value|
-      keys_to_delete << key if yield(key, value)
-    end
-    keys_to_delete.each do |key|
-      delete(key)
-    end
-    self
-  end
-
   # Returns `true` when hash contains no key-value pairs.
   #
   # ```
@@ -1541,7 +1527,6 @@ class Hash(K, V)
   # ```
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact! # => {"hello" => "world"}
-  # hash.compact! # => nil
   # ```
   def compact!
     reject! { |key, value| value.nil? }
@@ -1747,6 +1732,34 @@ class Hash(K, V)
     true
   end
 
+  # Returns `true` if `self` is a subset of *other*.
+  def proper_subset_of?(other : Hash)
+    return false if other.size <= size
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
+  end
+
+  # Returns `true` if `self` is a subset of *other* or equals to *other*.
+  def subset_of?(other : Hash)
+    return false if other.size < size
+    all? do |key, value|
+      other_value = other.fetch(key) { return false }
+      other_value == value
+    end
+  end
+
+  # Returns `true` if *other* is a subset of `self`.
+  def superset_of?(other : Hash)
+    other.subset_of?(self)
+  end
+
+  # Returns `true` if *other* is a subset of `self` or equals to `self`.
+  def proper_superset_of?(other : Hash)
+    other.proper_subset_of?(self)
+  end
+
   # See `Object#hash(hasher)`
   def hash(hasher)
     # The hash value must be the same regardless of the
@@ -1772,7 +1785,7 @@ class Hash(K, V)
   # hash_a # => {"foo" => "bar"}
   # ```
   def dup
-    hash = self.class.new
+    hash = Hash(K, V).new
     hash.initialize_dup(self)
     hash
   end
@@ -1787,12 +1800,12 @@ class Hash(K, V)
   # ```
   def clone
     {% if V == ::Bool || V == ::Char || V == ::String || V == ::Symbol || V < ::Number::Primitive %}
-      clone = self.class.new
+      clone = Hash(K, V).new
       clone.initialize_clone(self)
       clone
     {% else %}
       exec_recursive_clone do |hash|
-        clone = self.class.new
+        clone = Hash(K, V).new
         hash[object_id] = clone.object_id
         clone.initialize_clone(self)
         clone
