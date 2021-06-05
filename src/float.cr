@@ -137,7 +137,7 @@ struct Float32
   # Float32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float32:   20 (ArgumentError)
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
-    value.to_f32 whitespace, strict
+    value.to_f32 whitespace: whitespace, strict: strict
   end
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
@@ -244,7 +244,7 @@ struct Float64
   # Float64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Float64:   20 (ArgumentError)
   # ```
   def self.new(value : String, whitespace : Bool = true, strict : Bool = true) : self
-    value.to_f64 whitespace, strict
+    value.to_f64 whitespace: whitespace, strict: strict
   end
 
   # Returns a `Float64` by invoking `to_f64` on *value*.
