@@ -23,7 +23,7 @@
   {% end %}
 {% end %}
 
-{% if flag?(:linux) && flag?(:force_iouring) %}
+{% unless flag?(:linux) && flag?(:force_iouring) %}
   class Thread
     # :nodoc:
     getter(event_base) { Crystal::LibEvent::Base.new }

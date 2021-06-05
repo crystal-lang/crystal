@@ -51,7 +51,7 @@ struct Crystal::LibEvent < Crystal::Event
       @base = LibEvent2.event_base_new
     end
 
-    def reinit
+    def reinit : Nil
       unless LibEvent2.event_reinit(@base) == 0
         raise "Error reinitializing libevent"
       end
@@ -62,15 +62,15 @@ struct Crystal::LibEvent < Crystal::Event
       LibEvent.new(event)
     end
 
-    def run_loop
+    def run_loop : Nil
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::None)
     end
 
-    def run_once
+    def run_once : Nil
       LibEvent2.event_base_loop(@base, LibEvent2::EventLoopFlags::Once)
     end
 
-    def loop_break
+    def loop_break : Nil
       LibEvent2.event_base_loopbreak(@base)
     end
 
