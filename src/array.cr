@@ -812,10 +812,7 @@ class Array(T)
   def delete_at(index : Int, count : Int)
     index, count = normalize_start_and_count(index, count)
 
-    val = Array(T).build(count) do |buffer|
-      buffer.copy_from(@buffer + index, count)
-      count
-    end
+    val = self[index, count]
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
     @size -= count
     (@buffer + @size).clear(count)

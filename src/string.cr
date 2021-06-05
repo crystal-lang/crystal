@@ -814,7 +814,7 @@ class String
     return "" if count == 0
     return self if count == size
 
-    start_pos, end_pos = find_start_end_and_index(start, count)
+    start_pos, end_pos = find_start_and_end(start, count)
     byte_count = end_pos - start_pos
 
     String.new(byte_count) do |buffer|
@@ -1024,11 +1024,11 @@ class String
   end
 
   private def unicode_delete_at(start, count)
-    start_pos, end_pos = find_start_end_and_index(start, count)
+    start_pos, end_pos = find_start_and_end(start, count)
     byte_delete_at(start_pos, count, end_pos - start_pos)
   end
 
-  private def find_start_end_and_index(start, count)
+  private def find_start_and_end(start, count)
     start_pos = nil
     end_pos = nil
 
