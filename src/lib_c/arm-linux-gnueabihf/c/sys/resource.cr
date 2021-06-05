@@ -1,5 +1,5 @@
 lib LibC
-  alias RlimT = ULongLong
+  alias RlimT = ULong
 
   struct Rlimit
     rlim_cur : RlimT
