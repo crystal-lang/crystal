@@ -33,6 +33,12 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : NilType, to : NilableProcType)
+    # This is Proc.new(Pointer(Void).null, Pointer(Void).null)
+    put_i64 0, node: node
+    put_i64 0, node: node
+  end
+
   # TODO: remove these two because they are probably not needed
   private def upcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing
