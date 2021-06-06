@@ -279,15 +279,17 @@ module Crystal
   end
 
   class JSONHierarchyPrinter < HierarchyPrinter
+    private getter json = JSON::Builder.new(STDOUT)
+
     def print_all
-      JSON.build(STDOUT) do |json|
+      json.document do
         json.object do
-          print_type(@program.object, json)
+          print_type(@program.object)
         end
       end
     end
 
-    def print_subtypes(types, json)
+    def print_subtypes(types)
       types = types.sort_by &.to_s
 
       json.field "sub_types" do
@@ -295,7 +297,7 @@ module Crystal
           types.each_with_index do |type, index|
             if must_print? type
               json.object do
-                print_type(type, json)
+                print_type(type)
               end
             end
           end
@@ -303,7 +305,7 @@ module Crystal
       end
     end
 
-    def print_type_name(type, json)
+    def print_type_name(type)
       json.field "name", type.to_s
       json.field "kind", type.struct? ? "struct" : "class"
 
@@ -313,19 +315,19 @@ module Crystal
       end
     end
 
-    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType, json)
-      print_type_name(type, json)
+    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType)
+      print_type_name(type)
       subtypes = type.subclasses.select { |sub| must_print?(sub) }
 
-      print_instance_vars(type, !subtypes.empty?, json)
-      print_subtypes(subtypes, json)
+      print_instance_vars(type, !subtypes.empty?)
+      print_subtypes(subtypes)
     end
 
-    def print_type(type, json)
+    def print_type(type)
       # Nothing to do
     end
 
-    def print_instance_vars(type : GenericClassType, has_subtypes, json)
+    def print_instance_vars(type : GenericClassType, has_subtypes)
       instance_vars = type.instance_vars
       return if instance_vars.empty?
 
@@ -341,7 +343,7 @@ module Crystal
       end
     end
 
-    def print_instance_vars(type, has_subtypes, json)
+    def print_instance_vars(type, has_subtypes)
       instance_vars = type.instance_vars
       return if instance_vars.empty?
 
