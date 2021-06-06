@@ -1,7 +1,6 @@
 {% skip_file unless flag?(:linux) %}
 
 require "./io_uring_syscalls"
-require "time"
 
 class Fiber
   # :nodoc:
