@@ -669,6 +669,8 @@ module Enumerable(T)
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
   #
+  # Raises `Enumerable::EmptyError` if the collection is empty.
+  #
   # ```
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
   # ```
@@ -713,6 +715,75 @@ module Enumerable(T)
     end
 
     found ? memo : nil
+  end
+
+  # Returns an array of the prefix sums of the elements in this collection. The
+  # first element of the returned array is same as the first element of `self`.
+  #
+  # Expects all element types to respond to the `#+` method.
+  #
+  # ```
+  # [1, 2, 3, 4, 5, 6].accumulate # => [1, 3, 6, 10, 15, 21]
+  # ```
+  def accumulate : Array(T)
+    accumulate { |x, y| x + y }
+  end
+
+  # Returns an array containing *initial* and its prefix sums with the elements
+  # in this collection.
+  #
+  # Expects `U` to respond to the `#+` method.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].accumulate(6) # => [6, 7, 9, 12, 16, 21]
+  # ```
+  def accumulate(initial : U) : Array(U) forall U
+    accumulate(initial) { |x, y| x + y }
+  end
+
+  # Returns an array containing the successive values of applying a binary
+  # operation, specified by the given *block*, to this collection's elements.
+  #
+  # For each element in the collection the block is passed an accumulator value
+  # and the element. The result becomes the new value for the accumulator and is
+  # also appended to the returned array. The initial value for the accumulator
+  # is the first element in the collection.
+  #
+  # ```
+  # [2, 3, 4, 5].accumulate { |x, y| x * y } # => [2, 6, 24, 120]
+  # ```
+  def accumulate(&block : T, T -> T) : Array(T)
+    values = [] of T
+    memo = uninitialized T
+
+    each do |elem|
+      memo = values.empty? ? elem : (yield memo, elem)
+      values << memo
+    end
+
+    values
+  end
+
+  # Returns an array containing *initial* and the successive values of applying
+  # a binary operation, specified by the given *block*, to this collection's
+  # elements.
+  #
+  # Similar to `#accumulate(&block : T, T -> T)`, except the initial value is
+  # provided by an argument and needs not have the same type as the elements in
+  # the collection. This initial value is always present in the returned array.
+  #
+  # ```
+  # [1, 3, 5, 7].accumulate(9) { |x, y| x * y } # => [9, 9, 27, 135, 945]
+  # ```
+  def accumulate(initial : U, &block : U, T -> U) : Array(U) forall U
+    values = [initial]
+
+    each do |elem|
+      initial = yield initial, elem
+      values << initial
+    end
+
+    values
   end
 
   # Returns a `String` created by concatenating the elements in the collection,
