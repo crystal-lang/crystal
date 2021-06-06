@@ -3,12 +3,12 @@ require "colorize"
 require "../syntax/ast"
 
 module Crystal
-  def self.print_hierarchy(program, exp, format)
+  def self.print_hierarchy(program, io, exp, format)
     case format
     when "text"
-      TextHierarchyPrinter.new(program, exp).execute
+      TextHierarchyPrinter.new(program, io, exp).execute
     when "json"
-      JSONHierarchyPrinter.new(program, exp).execute
+      JSONHierarchyPrinter.new(program, io, exp).execute
     else
       raise "Unknown hierarchy format: #{format}"
     end
@@ -116,10 +116,15 @@ module Crystal
   end
 
   class TextHierarchyPrinter < HierarchyPrinter
-    @indents = [] of Bool
+    private getter io
+
+    def initialize(program : Program, @io : IO, exp : String?)
+      super(program, exp)
+      @indents = [] of Bool
+    end
 
     def print_all
-      with_color.light_gray.bold.surround(STDOUT) do
+      with_color.light_gray.bold.surround(io) do
         print_type @program.object
       end
     end
@@ -139,8 +144,7 @@ module Crystal
 
       unless @indents.empty?
         print_indent
-        print "|"
-        puts
+        io << "|\n"
       end
 
       print_type type
@@ -148,21 +152,16 @@ module Crystal
 
     def print_type_name(type)
       print_indent
-      print "+" unless @indents.empty?
-      print "- "
-      print type.struct? ? "struct" : "class"
-      print " "
-      print type
+      io << "+" unless @indents.empty?
+      io << "- " << (type.struct? ? "struct" : "class") << " " << type
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        with_color.light_gray.surround(STDOUT) do
-          print " ("
-          print type_size(type).to_s
-          print " bytes)"
+        with_color.light_gray.surround(io) do
+          io << " (" << type_size(type) << " bytes)"
         end
       end
-      puts
+      io << '\n'
     end
 
     def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType)
@@ -188,19 +187,13 @@ module Crystal
 
       instance_vars.each do |name, var|
         print_indent
-        print (@indents.last ? "|" : " ")
-        if has_subtypes
-          print "  .   "
-        else
-          print "      "
-        end
+        io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
 
-        with_color.light_gray.surround(STDOUT) do
-          print name.ljust(max_name_size)
-          print " : "
-          print var
+        with_color.light_gray.surround(io) do
+          name.ljust(io, max_name_size)
+          io << " : " << var
         end
-        puts
+        io << '\n'
       end
     end
 
@@ -218,40 +211,35 @@ module Crystal
 
       instance_vars.each do |ivar|
         print_indent
-        print (@indents.last ? "|" : " ")
-        if has_subtypes
-          print "  .   "
-        else
-          print "      "
-        end
+        io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
 
-        with_color.light_gray.surround(STDOUT) do
-          print ivar.name.ljust(max_name_size)
-          print " : "
+        with_color.light_gray.surround(io) do
+          ivar.name.ljust(io, max_name_size)
+          io << " : "
           if ivar_type = ivar.type?
-            print ivar_type.to_s.ljust(max_type_size)
-            with_color.light_gray.surround(STDOUT) do
-              print " ("
-              print ivar_size(ivar).to_s.rjust(max_bytes_size)
-              print " bytes)"
+            ivar_type.to_s.ljust(io, max_type_size)
+            with_color.light_gray.surround(io) do
+              io << " ("
+              ivar_size(ivar).to_s.rjust(io, max_bytes_size)
+              io << " bytes)"
             end
           else
-            print "MISSING".colorize.red.bright
+            io << "MISSING".colorize.red.bright
           end
         end
-        puts
+        io << '\n'
       end
     end
 
     def print_indent
       unless @indents.empty?
-        print "  "
+        io << "  "
         0.upto(@indents.size - 2) do |i|
           indent = @indents[i]
           if indent
-            print "|  "
+            io << "|  "
           else
-            print "   "
+            io << "   "
           end
         end
       end
@@ -269,7 +257,12 @@ module Crystal
   end
 
   class JSONHierarchyPrinter < HierarchyPrinter
-    private getter json = JSON::Builder.new(STDOUT)
+    private getter json
+
+    def initialize(program : Program, io : IO, exp : String?)
+      super(program, exp)
+      @json = JSON::Builder.new(io)
+    end
 
     def print_all
       json.document do
