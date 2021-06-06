@@ -24,7 +24,7 @@ describe System do
     end
   end
 
-  describe "file_descriptor_limit" do
+  pending_win32 describe: "file_descriptor_limit" do
     it "returns the current file descriptor limit" do
       hard_fd_limit = `ulimit -Hn`.strip
       $?.success?.should be_true
