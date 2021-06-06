@@ -34,12 +34,25 @@ module Crystal::System
   struct IoPerformer
     property! event : Crystal::Event
 
+    {% if flag?(:linux) && flag?(:preview_iouring) %}
+      @@use_io_uring = begin
+        case ENV["CRYSTAL_EVENTLOOP"]?
+        when "io_uring"
+          true
+        when "libevent"
+          false
+        else
+          Crystal::System::IoUring.available?
+        end
+      end
+    {% end %}
+
     def io_uring
       {% if flag?(:linux) && (flag?(:preview_iouring) || flag?(:force_iouring)) %}
         {% if flag?(:force_iouring) %}
           @event ||= yield
         {% else %}
-          if ENV["CRYSTAL_DISABLE_IO_URING"]? != "1" && Crystal::System::IoUring.available?
+          if @@use_io_uring
             @event ||= yield
           end
         {% end %}
