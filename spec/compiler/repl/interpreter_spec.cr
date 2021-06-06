@@ -1729,6 +1729,15 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "Symbol#to_i" do
+      interpret(<<-CODE).should eq(0 + 1 + 2)
+        x = :hello
+        y = :bye
+        z = :foo
+        x.to_i + y.to_i + z.to_i
+      CODE
+    end
+
     it "symbol equality" do
       interpret(<<-CODE).should eq(9)
         s1 = :foo

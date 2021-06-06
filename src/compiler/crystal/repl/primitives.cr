@@ -264,6 +264,11 @@ class Crystal::Repl::Compiler
     primitive_unchecked_convert(node, from_type, @context.program.int32)
   end
 
+  private def primitive_unchecked_convert(node : ASTNode, from_type : SymbolType, to_type : IntegerType)
+    # This is Symbol#to_i, but a symbol is already represented as an Int32
+    nop
+  end
+
   private def primitive_unchecked_convert(node : ASTNode, from_type : Type, to_type : Type)
     node.raise "BUG: missing handling of unchecked_convert from #{from_type} to #{to_type}"
   end
