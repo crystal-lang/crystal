@@ -69,6 +69,29 @@ class Crystal::System::IoUring
                   probe.operations.poll_add?
   end
 
+  enum CancelablePollStatus
+    Running
+    Finished
+    Canceled
+  end
+
+  class CancelablePollInfo
+    property user_data : UInt64
+    property status : CancelablePollStatus
+
+    def initialize(@user_data, @status)
+    end
+  end
+
+  # This object is only used for Linux 5.4 because it has no LINK_TIMEOUT. And for
+  # Linux 5.5 because it has no way to detect the fact that it does support LINK_TIMEOUT.
+  # As a workaround two events are submitted: a POLL_ADD and a TIMEOUT.
+  # 'Running' means neither returned yet.
+  # 'Finished' means the POLL_ADD returned first.
+  # 'Canceled' means the TIMEOUT returned first.
+  @cancelable_poll_info = {} of UInt64 => CancelablePollInfo
+  @next_cancelable_poll_info_id = 1u64
+
   # Creates a new io_uring instance with room for at least `sq_entries_hint`. This value is just
   # a hint. It will be rounded up to the nearest power of two and it will max at 32768.
   def initialize(sq_entries_hint : UInt32 = 128)
@@ -238,10 +261,21 @@ class Crystal::System::IoUring
 
       sqe_timeout = @submission_entries + index_timeout
       Intrinsics.memset(sqe_timeout, 0_u8, sizeof(Syscall::IoUringSqe), false)
-      sqe_timeout.value.opcode = Syscall::IoUringOp::LINK_TIMEOUT
       sqe_timeout.value.addr = (@timeval_entries.to_unsafe + index_timeout).address
       sqe_timeout.value.len = 1u32
-      sqe.value.flags = sqe.value.flags | Syscall::IoUringSqeFlags::IO_LINK
+
+      if IoUring.probe.operations.link_timeout?
+        sqe_timeout.value.opcode = Syscall::IoUringOp::LINK_TIMEOUT
+        sqe.value.flags = sqe.value.flags | Syscall::IoUringSqeFlags::IO_LINK
+      else
+        id = @next_cancelable_poll_info_id
+        @next_cancelable_poll_info_id += 1
+        @cancelable_poll_info[id] = CancelablePollInfo.new(user_data, CancelablePollStatus::Running)
+
+        sqe.value.user_data = (id << 2) + 2
+        sqe_timeout.value.opcode = Syscall::IoUringOp::TIMEOUT
+        sqe_timeout.value.user_data = (id << 2) + 3
+      end
 
       @submission_queue.push(index)
       @submission_queue.push(index_timeout)
@@ -286,16 +320,44 @@ class Crystal::System::IoUring
 
       if @canceled_userdata.includes?(cqe.user_data)
         @canceled_userdata.delete(cqe.user_data)
-        next
+        cqe.res = -Errno::ECANCELED.value
       end
 
-      # It's either a Fiber or a Box(Int32->)
-      if cqe.user_data.even?
+      case cqe.user_data & 3
+      when 2 # If cqe.user_data is XXXXX10, then it is an id from @cancelable_poll_info and this is a POLL_ADD
+        id = cqe.user_data >> 2
+        info = @cancelable_poll_info[id]
+        case info.status
+        when .running?
+          info.status = CancelablePollStatus::Finished
+          cqe.user_data = info.user_data # Process the wrapped event.
+        when .canceled?
+          @cancelable_poll_info.delete(id)
+        when .finished?
+          fatal_error("A POLL_ADD event finished twice")
+        end
+      when 3 # If cqe.user_data is XXXXX11, then it is an id from @cancelable_poll_info and this is a TIMEOUT
+        id = cqe.user_data >> 2
+        info = @cancelable_poll_info[id]
+        case info.status
+        when .running?
+          info.status = CancelablePollStatus::Canceled
+          cqe.res = -Errno::ECANCELED.value
+          cqe.user_data = info.user_data # Process the wrapped event.
+        when .finished?
+          @cancelable_poll_info.delete(id)
+        when .canceled?
+          fatal_error("A TIMEOUT event finished twice")
+        end
+      end
+
+      case cqe.user_data & 3
+      when 0 # If cqe.user_data is XXXXX00, then it is the address of a Fiber that must be awaken.
         # Store result and enqueue the fiber that is waiting for this completion.
         fiber = Pointer(Void).new(cqe.user_data).as(::Fiber)
         fiber.iouring_result = cqe.res
         Crystal::Scheduler.enqueue fiber
-      else
+      when 1 # If cqe.user_data is XXXXX01, then it is a Box(Int32->) that must be called with the result.
         callback = Box(Int32 ->).unbox(Pointer(Void).new(cqe.user_data - 1))
         begin
           callback.call(cqe.res)
@@ -618,6 +680,13 @@ class Crystal::System::IoUring
   end
 
   def timeout(time : ::Time::Span, callback : Void*)
+    # This callback might have been reused from a previous timeout that was attempted to be canceled,
+    # but that completed before the cancelation order was inserted. Ensure that this new submission
+    # won't born canceled already.
+    unless IoUring.probe.operations.timeout_remove?
+      @canceled_userdata.delete(callback.address + 1)
+    end
+
     index = get_free_index
     @timeval_entries[index] = make_timeval(time)
 
@@ -717,6 +786,8 @@ struct Crystal::IoUringEvent < Crystal::Event
   end
 
   def add(time_span : Time::Span?) : Nil
+    time_span = nil if time_span == Time::Span::ZERO
+
     case @type
     when .resume?, .timeout?
       if time_span
