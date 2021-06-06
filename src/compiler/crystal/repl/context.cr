@@ -6,6 +6,7 @@ class Crystal::Repl::Context
   getter program : Program
   getter defs : Hash(Def, CompiledDef)
   getter! constants : Constants
+  getter! class_vars : ClassVars
   getter lib_functions : Hash(External, LibFunction)
   getter decompile, trace, stats
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
@@ -53,6 +54,7 @@ class Crystal::Repl::Context
     }
 
     @constants = Constants.new(self)
+    @class_vars = ClassVars.new(self)
   end
 
   def symbol_index(symbol : String) : Int32
@@ -76,6 +78,14 @@ class Crystal::Repl::Context
 
   def const_index?(const : Const) : Int32?
     constants.const_to_index?(const)
+  end
+
+  def declare_class_var(owner : Type, name : String, type : Type) : Int32
+    class_vars.declare(owner, name, type)
+  end
+
+  def class_var_index?(owner : Type, name : String) : Int32?
+    class_vars.key_to_index?(owner, name)
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32

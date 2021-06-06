@@ -726,14 +726,29 @@ Crystal::Repl::Instructions =
     },
     # >>> Instance vars (3)
 
-    # <<< Constants (3)
+    # <<< Constants (1)
     get_const: {
       operands:   [index : Int32, size : Int32],
       pop_values: [] of Nil,
       push:       false,
       code:       get_const(index, size),
     },
-    # >>> Constants (3)
+    # >>> Constants (1)
+
+    # <<< Class vars (1)
+    get_class_var: {
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       get_class_var(index, size),
+    },
+    set_class_var: {
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       set_class_var(index, size),
+    },
+    # >>> Class vars (1)
 
     # <<< Stack manipulation (5)
     pop: {

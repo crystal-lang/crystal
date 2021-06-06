@@ -2237,6 +2237,38 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "class vars" do
+    it "interprets class var without initializer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(41)
+        class Foo
+          @@x : Int32?
+
+          def set
+            @@x = 41
+          end
+
+          def get
+            @@x
+          end
+        end
+      EXISTING
+        foo = Foo.new
+
+        a = 0
+
+        x = foo.get
+        a += 1 if x
+
+        foo.set
+
+        x = foo.get
+        a += x if x
+
+        a
+      CODE
+    end
+  end
+
   context "procs" do
     it "interprets no args proc literal" do
       interpret(<<-CODE).should eq(42)

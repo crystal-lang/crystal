@@ -256,6 +256,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         node.type = @context.program.nil_type
         put_nil node: nil if @wants_value
       end
+    when ClassVar
+      index = class_var_index(target)
+
+      if inside_method?
+        request_value(node.value)
+        dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
+
+        var = target.var
+
+        upcast node.value, node.value.type, var.type
+
+        set_class_var index, aligned_sizeof_type(var), node: node
+      else
+        node.type = @context.program.nil_type
+        put_nil node: nil if @wants_value
+      end
     when Path
       # TODO: I think we should track that the constant is initialized at this point,
       # to avoid an init flag, we'll see
@@ -305,6 +321,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     get_self_ivar ivar_offset, ivar_size, node: node
     false
+  end
+
+  def visit(node : ClassVar)
+    index = class_var_index(node)
+    get_class_var index, aligned_sizeof_type(node.var), node: node
+
+    false
+  end
+
+  private def class_var_index(node : ClassVar)
+    var = node.var
+
+    case var.owner
+    when VirtualType
+      node.raise "BUG: missing interpret class var for virtual type"
+    when VirtualMetaclassType
+      node.raise "BUG: missing interpret class var for virtual metaclass type"
+    end
+
+    if var.initializer
+      node.raise "BUG: missing interpret class var with initializer"
+    end
+
+    index = @context.class_var_index?(var.owner, var.name)
+    unless index
+      index = @context.declare_class_var(var.owner, var.name, var.type)
+    end
+
+    index
   end
 
   def visit(node : ReadInstanceVar)

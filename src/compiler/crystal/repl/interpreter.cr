@@ -58,6 +58,7 @@ class Crystal::Repl::Interpreter
     @stack = Pointer(UInt8).malloc(8 * 1024 * 1024)
     @call_stack = [] of CallFrame
     @constants = Pointer(UInt8).null
+    @class_vars = Pointer(UInt8).null
 
     @main_visitor = MainVisitor.new(program)
     @top_level_visitor = TopLevelVisitor.new(program)
@@ -81,6 +82,7 @@ class Crystal::Repl::Interpreter
     # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
     @constants = interpreter.@constants
+    @class_vars = interpreter.@class_vars
 
     gatherer = LocalVarsGatherer.new(location, compiled_def.def)
     gatherer.gather
@@ -184,6 +186,9 @@ class Crystal::Repl::Interpreter
 
     # Reserve space for constants
     @constants = @constants.realloc(@context.constants.bytesize)
+
+    # Reserve space for class vars
+    @class_vars = @class_vars.realloc(@context.class_vars.bytesize)
 
     instructions = @instructions
     nodes = @nodes
@@ -503,6 +508,15 @@ class Crystal::Repl::Interpreter
       %compiled_def = @context.constants.index_to_compiled_def({{index}})
       call(%compiled_def, constant_index: {{index}})
     end
+  end
+
+  private macro get_class_var(index, size)
+    # TODO: initialized
+    stack_move_from(@class_vars + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+  end
+
+  private macro set_class_var(index, size)
+    stack_move_to(@class_vars + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
   end
 
   private macro pry
