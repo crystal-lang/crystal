@@ -6,7 +6,7 @@ module Crystal
   def self.print_hierarchy(program, exp, format)
     case format
     when "text"
-      HierarchyPrinter.new(program, exp).execute
+      TextHierarchyPrinter.new(program, exp).execute
     when "json"
       JSONHierarchyPrinter.new(program, exp).execute
     else
@@ -14,12 +14,13 @@ module Crystal
     end
   end
 
-  class HierarchyPrinter
+  abstract class HierarchyPrinter
+    abstract def print_all
+
     @llvm_typer : LLVMTyper
 
     def initialize(@program : Program, exp : String?)
       @exp = exp ? Regex.new(exp) : nil
-      @indents = [] of Bool
       @targets = Set(Type).new
       @llvm_typer = @program.llvm_typer
     end
@@ -29,9 +30,7 @@ module Crystal
         compute_targets(@program.types, exp, false)
       end
 
-      with_color.light_gray.bold.surround(STDOUT) do
-        print_type @program.object
-      end
+      print_all
     end
 
     def compute_targets(types : Array, exp, must_include = false)
@@ -93,6 +92,28 @@ module Crystal
 
     def compute_target(type, exp, must_include)
       false
+    end
+
+    def must_print?(type : NonGenericClassType)
+      !(@exp && !@targets.includes?(type))
+    end
+
+    def must_print?(type : GenericClassType)
+      !(@exp && !@targets.includes?(type))
+    end
+
+    def must_print?(type)
+      false
+    end
+  end
+
+  class TextHierarchyPrinter < HierarchyPrinter
+    @indents = [] of Bool
+
+    def print_all
+      with_color.light_gray.bold.surround(STDOUT) do
+        print_type @program.object
+      end
     end
 
     def print_subtypes(types)
@@ -232,18 +253,6 @@ module Crystal
       end
     end
 
-    def must_print?(type : NonGenericClassType)
-      !(@exp && !@targets.includes?(type))
-    end
-
-    def must_print?(type : GenericClassType)
-      !(@exp && !@targets.includes?(type))
-    end
-
-    def must_print?(type)
-      false
-    end
-
     def print_indent
       unless @indents.empty?
         print "  "
@@ -270,11 +279,7 @@ module Crystal
   end
 
   class JSONHierarchyPrinter < HierarchyPrinter
-    def execute
-      if exp = @exp
-        compute_targets(@program.types, exp, false)
-      end
-
+    def print_all
       JSON.build(STDOUT) do |json|
         json.object do
           print_type(@program.object, json)
