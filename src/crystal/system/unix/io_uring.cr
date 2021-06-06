@@ -33,7 +33,7 @@ class Crystal::System::IoUring
       probe = Syscall::IoUringProbe(255).new
       ret = Syscall.io_uring_register(fd, Syscall::IoUringRegisterOp::REGISTER_PROBE, pointerof(probe).as(Void*), 255)
       Syscall.close(fd)
-      return if fd < 0
+      return if ret < 0
 
       @has_io_uring = true
       @features = params.features
