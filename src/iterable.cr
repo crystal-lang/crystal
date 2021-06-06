@@ -75,4 +75,24 @@ module Iterable(T)
   def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
     each.chunk_while(reuse, &block)
   end
+
+  # Same as `each.accumulate`.
+  def each_accumulated
+    each.accumulate
+  end
+
+  # Same as `each.accumulate(initial)`.
+  def each_accumulated(initial : U) forall U
+    each.accumulate(initial)
+  end
+
+  # Same as `each.accumulate(&block)`.
+  def each_accumulated(&block : T, T -> T)
+    each.accumulate(&block)
+  end
+
+  # Same as `each.accumulate(initial, &block)`.
+  def each_accumulated(initial : U, &block : U, T -> U) forall U
+    each.accumulate(initial, &block)
+  end
 end
