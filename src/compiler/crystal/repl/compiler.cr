@@ -340,13 +340,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "BUG: missing interpret class var for virtual metaclass type"
     end
 
-    if var.initializer
-      node.raise "BUG: missing interpret class var with initializer"
-    end
-
     index = @context.class_var_index?(var.owner, var.name)
     unless index
-      index = @context.declare_class_var(var.owner, var.name, var.type)
+      initializer = var.initializer
+      if initializer
+        def_name = "#{var.owner}::#{var.name}}"
+        fake_def = Def.new(def_name)
+        fake_def.owner = var.owner
+
+        compiled_def = CompiledDef.new(@context, fake_def, 0)
+
+        # Declare local variables for the constant initializer
+        initializer.meta_vars.each do |name, var|
+          compiled_def.local_vars.declare(name, var.type)
+        end
+
+        value = initializer.node
+        value = @context.program.cleanup(value)
+
+        compiler = Compiler.new(@context, compiled_def)
+        compiler.compile(value)
+
+        if @context.decompile
+          puts "=== #{def_name} ==="
+          puts Disassembler.disassemble(compiled_def)
+          puts "=== #{def_name} ==="
+        end
+      end
+
+      index = @context.declare_class_var(var.owner, var.name, var.type, compiled_def)
     end
 
     index

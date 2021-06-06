@@ -8,7 +8,8 @@ class Crystal::Repl::ClassVars
   def initialize(@context : Context)
     @types = {} of Key => Type
     @key_to_index = {} of Key => Int32
-    @index_to_compiled_def = {} of Int32 => CompiledDef
+    @index_to_compiled_def = {} of Int32 => CompiledDef?
+    @keys_with_initializer = Set(Key).new
     @bytesize = 0
   end
 
@@ -16,11 +17,12 @@ class Crystal::Repl::ClassVars
     @bytesize
   end
 
-  def declare(owner : Type, name : String, type : Type) : Int32
+  def declare(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
     key = Key.new(owner, name)
 
     index = @bytesize
     @key_to_index[key] = index
+    @index_to_compiled_def[index] = compiled_def
 
     @types[key] = type
 
@@ -36,5 +38,19 @@ class Crystal::Repl::ClassVars
 
   def key_to_index?(owner : Type, name : String) : Int32?
     @key_to_index[Key.new(owner, name)]?
+  end
+
+  def index_to_compiled_def(index : Int32) : CompiledDef?
+    @index_to_compiled_def[index].not_nil!
+  end
+
+  def index_to_compiled_def?(index : Int32) : CompiledDef?
+    @index_to_compiled_def[index]
+  end
+
+  def each_initialized_index
+    @index_to_compiled_def.each do |index, compiled_def|
+      yield index unless compiled_def
+    end
   end
 end

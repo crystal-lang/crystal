@@ -80,8 +80,8 @@ class Crystal::Repl::Context
     constants.const_to_index?(const)
   end
 
-  def declare_class_var(owner : Type, name : String, type : Type) : Int32
-    class_vars.declare(owner, name, type)
+  def declare_class_var(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
+    class_vars.declare(owner, name, type, compiled_def)
   end
 
   def class_var_index?(owner : Type, name : String) : Int32?
