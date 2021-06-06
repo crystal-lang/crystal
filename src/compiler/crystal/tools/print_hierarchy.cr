@@ -105,6 +105,14 @@ module Crystal
     def must_print?(type)
       false
     end
+
+    def type_size(type)
+      @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
+    end
+
+    def ivar_size(ivar)
+      @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
+    end
   end
 
   class TextHierarchyPrinter < HierarchyPrinter
@@ -148,28 +156,16 @@ module Crystal
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
         with_color.light_gray.surround(STDOUT) do
           print " ("
-          print size.to_s
+          print type_size(type).to_s
           print " bytes)"
         end
       end
       puts
     end
 
-    def print_type(type : NonGenericClassType | GenericClassInstanceType)
-      print_type_name type
-
-      subtypes = type.subclasses.select { |sub| must_print?(sub) }
-      print_instance_vars type, !subtypes.empty?
-
-      with_indent do
-        print_subtypes subtypes
-      end
-    end
-
-    def print_type(type : GenericClassType)
+    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType)
       print_type_name type
 
       subtypes = type.subclasses.select { |sub| must_print?(sub) }
@@ -217,13 +213,8 @@ module Crystal
 
       max_name_size = instance_vars.max_of &.name.size
 
-      if typed_instance_vars.empty?
-        max_type_size = 0
-        max_bytes_size = 0
-      else
-        max_type_size = typed_instance_vars.max_of &.type.to_s.size
-        max_bytes_size = typed_instance_vars.max_of { |var| @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(var.type)).to_s.size }
-      end
+      max_type_size = typed_instance_vars.max_of?(&.type.to_s.size) || 0
+      max_bytes_size = typed_instance_vars.max_of? { |var| ivar_size(var).to_s.size } || 0
 
       instance_vars.each do |ivar|
         print_indent
@@ -239,10 +230,9 @@ module Crystal
           print " : "
           if ivar_type = ivar.type?
             print ivar_type.to_s.ljust(max_type_size)
-            size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
             with_color.light_gray.surround(STDOUT) do
               print " ("
-              print size.to_s.rjust(max_bytes_size)
+              print ivar_size(ivar).to_s.rjust(max_bytes_size)
               print " bytes)"
             end
           else
@@ -311,7 +301,7 @@ module Crystal
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        json.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
+        json.field "size_in_bytes", type_size(type)
       end
     end
 
@@ -355,7 +345,7 @@ module Crystal
               json.object do
                 json.field "name", instance_var.name.to_s
                 json.field "type", ivar_type.to_s
-                json.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
+                json.field "size_in_bytes", ivar_size(instance_var)
               end
             end
           end
