@@ -34,10 +34,10 @@ module Spec::Methods
   # it_iterates "Array#each_with_index", [{1, 0}, {2, 1}, {3, 2}], (1..3).each_with_index, tuple: true
   # ```
   macro it_iterates(description, expected, method, *, infinite = false, tuple = false)
-    it "{{ description.id }} yielding" do
+    it {{ "#{description} yielding" }} do
       assert_iterates_yielding {{ expected }}, {{ method }}, infinite: {{ infinite }}, tuple: {{ tuple }}
     end
-    it "{{ description.id }} iterator" do
+    it {{ "#{description} iterator" }} do
       assert_iterates_iterator {{ expected }}, {{ method }}, infinite: {{ infinite }}
     end
   end
