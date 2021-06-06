@@ -413,30 +413,82 @@ describe "Int" do
     end
   end
 
-  it "casts" do
-    Int8.new(1).should be_a(Int8)
-    Int8.new(1).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Int8.new("1").should be_a(Int8)
+      Int8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int8.new(" 1 ", whitespace: false)
+      end
 
-    Int16.new(1).should be_a(Int16)
-    Int16.new(1).should eq(1)
+      Int16.new("1").should be_a(Int16)
+      Int16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int16.new(" 1 ", whitespace: false)
+      end
 
-    Int32.new(1).should be_a(Int32)
-    Int32.new(1).should eq(1)
+      Int32.new("1").should be_a(Int32)
+      Int32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int32.new(" 1 ", whitespace: false)
+      end
 
-    Int64.new(1).should be_a(Int64)
-    Int64.new(1).should eq(1)
+      Int64.new("1").should be_a(Int64)
+      Int64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int64.new(" 1 ", whitespace: false)
+      end
 
-    UInt8.new(1).should be_a(UInt8)
-    UInt8.new(1).should eq(1)
+      UInt8.new("1").should be_a(UInt8)
+      UInt8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt8.new(" 1 ", whitespace: false)
+      end
 
-    UInt16.new(1).should be_a(UInt16)
-    UInt16.new(1).should eq(1)
+      UInt16.new("1").should be_a(UInt16)
+      UInt16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt16.new(" 1 ", whitespace: false)
+      end
 
-    UInt32.new(1).should be_a(UInt32)
-    UInt32.new(1).should eq(1)
+      UInt32.new("1").should be_a(UInt32)
+      UInt32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt32.new(" 1 ", whitespace: false)
+      end
 
-    UInt64.new(1).should be_a(UInt64)
-    UInt64.new(1).should eq(1)
+      UInt64.new("1").should be_a(UInt64)
+      UInt64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Int8.new(1).should be_a(Int8)
+      Int8.new(1).should eq(1)
+
+      Int16.new(1).should be_a(Int16)
+      Int16.new(1).should eq(1)
+
+      Int32.new(1).should be_a(Int32)
+      Int32.new(1).should eq(1)
+
+      Int64.new(1).should be_a(Int64)
+      Int64.new(1).should eq(1)
+
+      UInt8.new(1).should be_a(UInt8)
+      UInt8.new(1).should eq(1)
+
+      UInt16.new(1).should be_a(UInt16)
+      UInt16.new(1).should eq(1)
+
+      UInt32.new(1).should be_a(UInt32)
+      UInt32.new(1).should eq(1)
+
+      UInt64.new(1).should be_a(UInt64)
+      UInt64.new(1).should eq(1)
+    end
   end
 
   describe "arithmetic division /" do

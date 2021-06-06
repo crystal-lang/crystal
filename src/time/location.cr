@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.unix(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s(io, "%F %T")
       if standard?
         io << " STD"
       else
