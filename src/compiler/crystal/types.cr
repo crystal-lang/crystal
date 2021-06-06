@@ -2124,7 +2124,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      including_types.try &.filter_by_responds_to(name)
     end
 
     def module?
