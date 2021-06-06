@@ -2884,6 +2884,15 @@ module Crystal
       node.elements.each &.add_observer(node)
       node.program = @program
       node.update
+
+      node.elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            node.raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+
       false
     end
 
@@ -2980,10 +2989,8 @@ module Crystal
         case type
         when GenericClassType
           generic_type = TypeNode.new(type).at(node.location)
-          type_of = TypeOf.new(node.elements).at(node.location)
-
+          type_of = @program.literal_expander.typeof_exp(node)
           generic = Generic.new(generic_type, type_of).at(node.location)
-
           node.name = generic
         when GenericClassInstanceType
           # Nothing
