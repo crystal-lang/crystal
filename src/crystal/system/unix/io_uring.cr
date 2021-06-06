@@ -294,7 +294,7 @@ class Crystal::System::IoUring
 
   private def submit_and_callback(opcode : Syscall::IoUringOp, callback : Void*, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
     # Heap allocated objects are always word-aligned. Use the last bit to store if it's a Fiber or a Proc.
-    user_data = callback.as(Void*).address + 1
+    user_data = callback.address + 1
     submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
   end
 
