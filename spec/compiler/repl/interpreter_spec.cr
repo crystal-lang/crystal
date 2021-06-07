@@ -988,6 +988,20 @@ describe Crystal::Repl::Interpreter do
         a || "b"
         CODE
     end
+
+    it "puts union inside union" do
+      interpret(<<-CODE).should eq('a'.ord)
+        a = 'a' || 1 || true
+        case a
+        in Char
+          a.ord
+        in Int32
+          a
+        in Bool
+          20
+        end
+        CODE
+    end
   end
 
   context "types" do

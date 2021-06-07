@@ -1,20 +1,20 @@
 require "./repl"
 
 module Crystal::Repl::Disassembler
-  def self.disassemble(compiled_def : CompiledDef) : String
-    disassemble(compiled_def.instructions, compiled_def.nodes, compiled_def.local_vars)
+  def self.disassemble(context : Context, compiled_def : CompiledDef) : String
+    disassemble(context, compiled_def.instructions, compiled_def.nodes, compiled_def.local_vars)
   end
 
-  def self.disassemble(instructions : Array(Instruction), nodes : Hash(Int32, ASTNode), local_vars : LocalVars) : String
+  def self.disassemble(context : Context, instructions : Array(Instruction), nodes : Hash(Int32, ASTNode), local_vars : LocalVars) : String
     String.build do |io|
       ip = 0
       while ip < instructions.size
-        ip = disassemble_one(instructions, ip, nodes, local_vars, io)
+        ip = disassemble_one(context, instructions, ip, nodes, local_vars, io)
       end
     end
   end
 
-  def self.disassemble_one(instructions : Array(Instruction), ip : Int32, nodes : Hash(Int32, ASTNode), local_vars : LocalVars, io : IO) : Int32
+  def self.disassemble_one(context : Context, instructions : Array(Instruction), ip : Int32, nodes : Hash(Int32, ASTNode), local_vars : LocalVars, io : IO) : Int32
     io.print ip.to_s.rjust(4, '0')
     io.print ' '
 

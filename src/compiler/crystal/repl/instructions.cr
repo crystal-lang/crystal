@@ -897,6 +897,9 @@ Crystal::Repl::Instructions =
         (tmp_stack - from_size).copy_to(tmp_stack - from_size + type_id_bytesize, from_size)
         (tmp_stack - from_size).as(Int64*).value = type_id.to_i64!
       end,
+      disassemble: {
+        type_id: context.type_from_id(type_id),
+      },
     },
     remove_from_union: {
       operands:   [union_size : Int32, from_size : Int32],
@@ -920,6 +923,9 @@ Crystal::Repl::Instructions =
 
         !!type.filter_by(filter_type)
       end,
+      disassemble: {
+        filter_type_id: context.type_from_id(filter_type_id),
+      },
     },
     union_to_bool: {
       operands:   [union_size : Int32],

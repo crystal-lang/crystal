@@ -363,7 +363,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         if @context.decompile
           puts "=== #{def_name} ==="
-          puts Disassembler.disassemble(compiled_def)
+          puts Disassembler.disassemble(@context, compiled_def)
           puts "=== #{def_name} ==="
         end
       end
@@ -571,7 +571,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
           if @context.decompile
             puts "=== #{const} ==="
-            puts Disassembler.disassemble(compiled_def)
+            puts Disassembler.disassemble(@context, compiled_def)
             puts "=== #{const} ==="
           end
 
@@ -774,7 +774,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if @context.decompile
       puts "=== #{target_def.owner}##{target_def.name} ==="
       puts compiled_def.local_vars
-      puts Disassembler.disassemble(compiled_def)
+      puts Disassembler.disassemble(@context, compiled_def)
       puts "=== #{target_def.owner}##{target_def.name} ==="
     end
 
@@ -816,7 +816,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       if @context.decompile
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
-        puts Disassembler.disassemble(compiled_block.instructions, compiled_block.nodes, @local_vars)
+        puts Disassembler.disassemble(@context, compiled_block.instructions, compiled_block.nodes, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
       end
     ensure

@@ -162,7 +162,7 @@ class Crystal::Repl::Interpreter
         puts "=== top-level ==="
       end
       puts @local_vars
-      puts Disassembler.disassemble(@instructions, @nodes, @local_vars)
+      puts Disassembler.disassemble(@context, @instructions, @nodes, @local_vars)
 
       if compiled_def
         puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
@@ -245,7 +245,7 @@ class Crystal::Repl::Interpreter
         puts "Node: #{node}" if node
         puts Slice.new(@stack, stack - @stack).hexdump
 
-        Disassembler.disassemble_one(instructions, offset, nodes, current_local_vars, STDOUT)
+        Disassembler.disassemble_one(@context, instructions, offset, nodes, current_local_vars, STDOUT)
         puts
       end
 
@@ -751,7 +751,7 @@ class Crystal::Repl::Interpreter
           whereami(a_def, location)
           next
         when "disassemble"
-          puts Disassembler.disassemble(compiled_def)
+          puts Disassembler.disassemble(@context, compiled_def)
           next
         end
 

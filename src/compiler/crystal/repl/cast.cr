@@ -7,6 +7,35 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast_distinct(node : ASTNode, from : MixedUnionType, to : MixedUnionType)
+    # It might happen that some types inside the union `value_type` are not inside `target_type`,
+    # for example with named tuple of same keys with different order. In that case we need cast
+    # those value to the correct type before finally storing them in the target union.
+    needs_union_value_cast = from.union_types.any? do |from_element|
+      needs_value_cast_inside_union?(from_element, to)
+    end
+
+    if needs_union_value_cast # Compute the values that need a cast
+      node.raise "BUG: missing upcast from #{from} to #{to}"
+    end
+
+    # Putting a smaller union type inside a bigger one is just extending the value
+    difference = aligned_sizeof_type(to) - aligned_sizeof_type(from)
+    if difference > 0
+      push_zeros(difference, node: node)
+    end
+  end
+
+  private def needs_value_cast_inside_union?(value_type, union_type)
+    # A type needs a special cast if:
+    # 1. It's a tuple or named tuple
+    # 2. It's not inside the target union
+    # 3. There's a compatible type inside the target union
+    return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
+    !union_type.union_types.any?(&.==(value_type)) &&
+      union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : MixedUnionType)
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: node)
   end
