@@ -17,6 +17,7 @@ module Crystal::EventLoop
     iocp
   end
 
+  # This is a temporary stub as a stand in for fiber swapping required for concurrency
   def self.wait_completion(timeout = nil)
     result = LibC.GetQueuedCompletionStatusEx(iocp, out io_entry, 1, out removed, timeout, false)
     if result == 0
