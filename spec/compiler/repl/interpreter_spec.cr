@@ -776,14 +776,25 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    # it "interprets pointer set and get (union type)" do
-    #   interpret(<<-CODE).should eq(true)
-    #     ptr = Pointer(Int32 | Bool).malloc(1_u64)
-    #     ptr.value = 10
-    #     ptr.value = true
-    #     ptr.value
-    #   CODE
-    # end
+    it "interprets pointer set and get (union type)" do
+      interpret(<<-CODE).should eq(10)
+        ptr = Pointer(Int32 | Bool).malloc(1_u64)
+        ptr.value = 10
+        value = ptr.value
+        if value.is_a?(Int32)
+          value
+        else
+          20
+        end
+      CODE
+    end
+
+    it "interprets pointer set and get (union type, setter value)" do
+      interpret(<<-CODE).should eq(10)
+        ptr = Pointer(Int32 | Bool).malloc(1_u64)
+        ptr.value = 10
+      CODE
+    end
 
     it "interprets pointer new and pointer address" do
       interpret(<<-CODE).should eq(123_u64)

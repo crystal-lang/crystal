@@ -41,17 +41,23 @@ class Crystal::Repl::Compiler
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_set"
       # Accept in reverse order so that it's easier for the interpreter
+      obj = obj.not_nil!
+      element_type = obj.type.as(PointerInstanceType).element_type
+
       arg = node.args.first
       request_value(arg)
       dup(aligned_sizeof_type(arg), node: nil) if @wants_value
+      upcast arg, arg.type, element_type
 
-      request_value(obj.not_nil!)
-      pointer_set(inner_sizeof_type(node.args.first), node: node)
+      request_value(obj)
+
+      pointer_set(inner_sizeof_type(element_type), node: node)
     when "pointer_get"
       accept_call_members(node)
       return unless @wants_value
 
-      pointer_get(inner_sizeof_type(obj.not_nil!.type.as(PointerInstanceType).element_type), node: node)
+      element_type = obj.not_nil!.type.as(PointerInstanceType).element_type
+      pointer_get(inner_sizeof_type(element_type), node: node)
     when "pointer_address"
       accept_call_members(node)
       return unless @wants_value
