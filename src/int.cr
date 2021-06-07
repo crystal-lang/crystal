@@ -67,7 +67,7 @@ struct Int
   # ```
   # 97.chr # => 'a'
   # ```
-  def chr
+  def chr : Char
     unless 0 <= self <= Char::MAX_CODEPOINT
       raise ArgumentError.new("#{self} out of char range")
     end
