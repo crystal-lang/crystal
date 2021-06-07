@@ -77,7 +77,7 @@ module MIME
     # MIME::MediaType.parse("x-application/example").fetch("foo", "baz")          # => "baz"
     # MIME::MediaType.parse("x-application/example; foo=bar").fetch("foo", "baz") # => "bar"
     # ```
-    def fetch(key : String, default)
+    def fetch(key : String, default : T) : String | T forall T
       @params.fetch(key, default)
     end
 
@@ -483,17 +483,17 @@ module MIME
     end
 
     # :nodoc:
-    def self.token?(char : Char)
+    def self.token?(char : Char) : Bool
       !TSPECIAL_CHARACTERS.includes?(char) && 0x20 <= char.ord < 0x7F
     end
 
     # :nodoc:
-    def self.token?(string)
+    def self.token?(string) : Bool
       string.each_char.all? { |char| token? char }
     end
 
     # :nodoc:
-    def self.quote_string(string, io)
+    def self.quote_string(string, io) : Nil
       string.each_byte do |byte|
         case byte
         when '"'.ord, '\\'.ord

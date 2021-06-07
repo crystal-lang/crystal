@@ -702,7 +702,7 @@ module Math
   # ```
   # Math.pw2ceil(33) # => 64
   # ```
-  def pw2ceil(v)
+  def pw2ceil(v : Int32)
     # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
     v -= 1
     v |= v >> 1
@@ -710,6 +710,18 @@ module Math
     v |= v >> 4
     v |= v >> 8
     v |= v >> 16
-    v += 1
+    v += v == -1 ? 2 : 1
+  end
+
+  def pw2ceil(v : Int64)
+    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+    v -= 1
+    v |= v >> 1
+    v |= v >> 2
+    v |= v >> 4
+    v |= v >> 8
+    v |= v >> 16
+    v |= v >> 32
+    v += v == -1 ? 2 : 1
   end
 end

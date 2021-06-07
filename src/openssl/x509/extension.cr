@@ -42,7 +42,7 @@ module OpenSSL::X509
       LibCrypto.obj_obj2nid(obj)
     end
 
-    def oid
+    def oid : String
       obj = LibCrypto.x509_extension_get_object(@ext)
       LibCrypto.obj_obj2nid(obj)
 
@@ -56,7 +56,7 @@ module OpenSSL::X509
       String.new(buf)
     end
 
-    def value
+    def value : String
       bio = OpenSSL::BIO.new(io = IO::Memory.new)
 
       if LibCrypto.x509v3_ext_print(bio, @ext, 0, 0) == 0

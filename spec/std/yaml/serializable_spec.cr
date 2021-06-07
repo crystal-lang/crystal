@@ -735,6 +735,13 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":''}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":}))
+      yaml.b.should eq "Haha"
     end
 
     it "bool" do

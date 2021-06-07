@@ -123,7 +123,7 @@ module Crystal
     property compiler : Compiler?
 
     def initialize
-      super(self, self, "main")
+      super(self, self, "top_level")
 
       # Every crystal program comes with some predefined types that we initialize here,
       # like Object, Value, Reference, etc.

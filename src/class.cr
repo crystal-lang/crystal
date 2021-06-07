@@ -54,7 +54,7 @@ class Class
   # Number > Number # => false
   # Number > Object # => false
   # ```
-  def >(other : T.class) forall T
+  def >(other : T.class) : Bool forall T
     # This is so that the method is expanded differently for each type
     {% @type %}
     other._lt(self)
@@ -141,7 +141,7 @@ class Class
   # Int32.nilable? # => false
   # Nil.nilable?   # => true
   # ```
-  def nilable?
+  def nilable? : Bool
     self == ::Nil
   end
 

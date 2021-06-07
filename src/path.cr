@@ -399,7 +399,7 @@ struct Path
   # Path["file.tar.gz"].stem # => "file.tar"
   # Path["foo/file.cr"].stem # => "file"
   # ```
-  def stem
+  def stem : String
     basename(extension)
   end
 
@@ -681,7 +681,7 @@ struct Path
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind)
+  def to_kind(kind) : Path
     if kind.posix?
       to_posix
     else
@@ -959,7 +959,7 @@ struct Path
   # Resolves path *name* in this path's parent directory.
   #
   # Raises `Path::Error` if `#parent` is `nil`.
-  def sibling(name : Path | String) : Path?
+  def sibling(name : Path | String) : Path
     if parent = self.parent
       parent.join(name)
     else
@@ -1284,7 +1284,7 @@ struct Path
     Path.separators(@kind)
   end
 
-  def ends_with_separator?
+  def ends_with_separator? : Bool
     ends_with_separator?(@name)
   end
 

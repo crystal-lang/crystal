@@ -168,15 +168,15 @@ struct Proc
     {{T.size}}
   end
 
-  def pointer
+  def pointer : Void*
     internal_representation[0]
   end
 
-  def closure_data
+  def closure_data : Void*
     internal_representation[1]
   end
 
-  def closure?
+  def closure? : Bool
     !closure_data.null?
   end
 

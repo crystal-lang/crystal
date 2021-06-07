@@ -309,6 +309,43 @@ struct BigFloat < Float
     self
   end
 
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : self
+    if self >= 0
+      halfway = self + 0.5
+    else
+      halfway = self - 0.5
+    end
+    if halfway.integer?
+      if halfway == (halfway / 2).trunc * 2
+        halfway
+      else
+        halfway - sign
+      end
+    else
+      if self >= 0
+        halfway.floor
+      else
+        halfway.ceil
+      end
+    end
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away : self
+    if self >= 0
+      (self + 0.5).floor
+    else
+      (self - 0.5).ceil
+    end
+  end
+
+  protected def integer?
+    !LibGMP.mpf_integer_p(mpf).zero?
+  end
+
   private def mpf
     pointerof(@mpf)
   end
