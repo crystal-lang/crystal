@@ -68,6 +68,10 @@ class Crystal::Repl::Compiler
     put_i64 0, node: nil
   end
 
+  private def upcast_distinct(node : ASTNode, from : ProcInstanceType, to : NilableProcType)
+    # Nothing
+  end
+
   # TODO: remove these two because they are probably not needed
   private def upcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing
@@ -103,6 +107,15 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : NilableType, to : NonGenericClassType)
     # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
+    # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : NilableProcType, to : NilType)
+    # TODO: not tested
+    pop 16, node: nil
   end
 
   # TODO: remove these two because they are probably not needed

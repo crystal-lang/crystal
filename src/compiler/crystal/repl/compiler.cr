@@ -633,7 +633,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
-    if obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
+    if obj_type == to_type
+      # TODO: not tested
+      nop
+    elsif obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
       # Cast between pointers is nop
       nop
     elsif obj_type.is_a?(PointerInstanceType) && to_type.reference_like?

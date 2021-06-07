@@ -270,6 +270,19 @@ describe Crystal::Repl::Interpreter do
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end
+
+    it "interprets Int32.unsafe_shl(Int32) with self" do
+      interpret(<<-CODE).should eq(4)
+        struct Int32
+          def shl2
+            unsafe_shl(2)
+          end
+        end
+
+        a = 1
+        a.shl2
+        CODE
+    end
   end
 
   context "comparisons" do
@@ -483,16 +496,27 @@ describe Crystal::Repl::Interpreter do
       interpret(%(!(1 == 1 ? nil : "hello"))).should eq(true)
     end
 
-    it "interprets Int32.unsafe_shl(Int32) with self" do
-      interpret(<<-CODE).should eq(4)
-        struct Int32
-          def shl2
-            unsafe_shl(2)
+    it "interprets not for nilable proc type (true)" do
+      interpret(<<-CODE).should eq(true)
+        a =
+          if 1 == 1
+            nil
+          else
+            ->{ 1 }
           end
-        end
+        !a
+        CODE
+    end
 
-        a = 1
-        a.shl2
+    it "interprets not for nilable proc type (false)" do
+      interpret(<<-CODE).should eq(false)
+        a =
+          if 1 == 1
+            ->{ 1 }
+          else
+            nil
+          end
+        !a
         CODE
     end
   end
@@ -2396,6 +2420,23 @@ describe Crystal::Repl::Interpreter do
 
         proc = ->{ 40 }
         proc.call2 + 2
+      CODE
+    end
+
+    it "casts from nilable proc type to proc type" do
+      interpret(<<-CODE).should eq(42)
+        proc =
+          if 1 == 1
+            ->{ 42 }
+          else
+            nil
+          end
+
+        if proc
+          proc.call
+        else
+          1
+        end
       CODE
     end
 

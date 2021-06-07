@@ -13,6 +13,12 @@ class Crystal::Repl::Compiler
     pointer_is_not_null node: nil
   end
 
+  private def value_to_bool(node : ASTNode, type : NilableProcType)
+    # We have {pointer, closure_data} and we need to check if pointer is not null
+    pop 8, node: nil
+    pointer_is_not_null node: nil
+  end
+
   private def value_to_bool(node : ASTNode, type : NilableType)
     pointer_is_not_null node: nil
   end
