@@ -40,7 +40,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.same_content?`
-  def cmp(filename1 : Path | String, filename2 : Path | String)
+  def cmp(filename1 : Path | String, filename2 : Path | String) : Bool
     File.same_content?(filename1, filename2)
   end
 

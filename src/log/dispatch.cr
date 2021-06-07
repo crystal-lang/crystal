@@ -14,7 +14,7 @@ class Log
     end
 
     # :nodoc:
-    def self.for(mode : DispatchMode)
+    def self.for(mode : DispatchMode) : self
       case mode
       in .sync?
         SyncDispatcher.new
