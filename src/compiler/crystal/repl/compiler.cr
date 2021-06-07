@@ -854,8 +854,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
               pop_obj = obj
             end
           else
-            ptr_index, _ = lookup_local_var_index_and_type(obj.name)
-            pointerof_var(ptr_index, node: obj)
+            ptr_index, var_type = lookup_local_var_index_and_type(obj.name)
+            if obj.type == var_type
+              pointerof_var(ptr_index, node: obj)
+            elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
+              # Get pointer of var
+              pointerof_var(ptr_index, node: obj)
+
+              # Add 8 to it, to reach the union value
+              put_i64 8_i64, node: nil
+              pointer_add 1_i64, node: nil
+            else
+              node.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type}"
+            end
           end
         when InstanceVar
           index = scope.index_of_instance_var(obj.name).not_nil!

@@ -1741,6 +1741,35 @@ describe Crystal::Repl::Interpreter do
         3
       CODE
     end
+
+    it "mutates struct inside union" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        struct Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = 1 == 1 ? Foo.new : nil
+        if foo
+          foo.inc
+        end
+
+        if foo
+          foo.x
+        else
+          0
+        end
+      CODE
+    end
   end
 
   context "enum" do
