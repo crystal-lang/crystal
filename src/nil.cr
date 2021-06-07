@@ -63,7 +63,7 @@ struct Nil
   end
 
   # Returns `false`.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     false
   end
 
@@ -102,7 +102,7 @@ struct Nil
   # Raises `NilAssertionError`.
   #
   # See also: `Object#not_nil!`.
-  def not_nil!
+  def not_nil! : NoReturn
     raise NilAssertionError.new
   end
 
