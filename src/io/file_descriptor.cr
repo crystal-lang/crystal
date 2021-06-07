@@ -151,10 +151,10 @@ class IO::FileDescriptor < IO
 
   # Write to a specific position in a file
   # It will flush the current write buffer and not buffer this write.
-  def write_at(bytes, offset)
+  def write_at(bytes : Bytes, offset)
     check_open
     flush
-    Crystal::System::FileDescriptor.write_at(fd, bytes, offset)
+    unbuffered_write_at(bytes, offset)
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)

@@ -31,6 +31,10 @@ module Crystal::System::FileDescriptor
     end
   end
 
+  private def unbuffered_write_at(bytes : Bytes, offset)
+    raise NotImplementedError.new("FileDescriptor#unbuffered_write_at")
+  end
+
   private def system_blocking?
     true
   end
@@ -182,9 +186,5 @@ module Crystal::System::FileDescriptor
       io.flush_on_newline = true
     end
     io
-  end
-
-  def self.write_at(fd, buffer, offset)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor#write_at")
   end
 end

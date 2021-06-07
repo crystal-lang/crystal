@@ -27,6 +27,17 @@ module Crystal::System::FileDescriptor
     end
   end
 
+  private def unbuffered_write_at(bytes : Bytes, offset)
+    evented_write(bytes, "Error writing file") do |slice|
+      at = offset - (bytes.bytesize - slice.bytesize)
+      LibC.pwrite(fd, slice, slice.size, at).tap do |return_code|
+        if return_code == -1 && Errno.value == Errno::EBADF
+          raise IO::Error.new "File not open for writing"
+        end
+      end
+    end
+  end
+
   private def system_blocking?
     flags = fcntl(LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
@@ -180,15 +191,5 @@ module Crystal::System::FileDescriptor
     io.close_on_exec = true
     io.sync = true
     io
-  end
-
-  def self.write_at(fd, buffer, offset)
-    bytes_written = LibC.pwrite(fd, buffer, buffer.size, offset)
-
-    if bytes_written == -1
-      raise IO::Error.from_errno("Could not write to file")
-    end
-
-    bytes_written
   end
 end

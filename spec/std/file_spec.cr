@@ -723,7 +723,7 @@ describe "File" do
         File.open(path, "w") do |f|
           f.sync = false
           f.write "foobar".to_slice
-          f.write_at "bar", 0
+          f.write_at "bar".to_slice, 0
           f.write "foo".to_slice
         end
         File.read(path).should eq "barbarfoo"
