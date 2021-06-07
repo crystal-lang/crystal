@@ -39,7 +39,7 @@ struct BitArray
     return LibC.memcmp(@bits, other.@bits, bytesize) == 0
   end
 
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : Bool
     bit_index, sub_index = index.divmod(32)
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
@@ -84,7 +84,7 @@ struct BitArray
   # ba[5..10]   # => BitArray[]
   # ba[-2...-1] # => BitArray[0]
   # ```
-  def [](range : Range)
+  def [](range : Range) : BitArray
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
 
@@ -109,7 +109,7 @@ struct BitArray
   # ba[1, 2]  # => BitArray[01]
   # ba[5, 1]  # => BitArray[]
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : BitArray
     raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     if start == size
