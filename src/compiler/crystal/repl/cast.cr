@@ -22,7 +22,7 @@ class Crystal::Repl::Compiler
     # Putting a smaller union type inside a bigger one is just extending the value
     difference = aligned_sizeof_type(to) - aligned_sizeof_type(from)
     if difference > 0
-      push_zeros(difference, node: node)
+      push_zeros(difference, node: nil)
     end
   end
 
@@ -37,7 +37,7 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : MixedUnionType)
-    put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: node)
+    put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableType)
@@ -64,8 +64,8 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableProcType)
     # This is Proc.new(Pointer(Void).null, Pointer(Void).null)
-    put_i64 0, node: node
-    put_i64 0, node: node
+    put_i64 0, node: nil
+    put_i64 0, node: nil
   end
 
   # TODO: remove these two because they are probably not needed
@@ -87,7 +87,17 @@ class Crystal::Repl::Compiler
     downcast_distinct(node, from, to)
   end
 
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : MixedUnionType)
+    difference = aligned_sizeof_type(from) - aligned_sizeof_type(to)
+
+    if difference > 0
+      pop(difference, node: nil)
+    end
+  end
+
   private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : Type)
+    # TODO: tuples and named tuples
+
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 

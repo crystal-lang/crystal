@@ -691,7 +691,7 @@ Crystal::Repl::Instructions =
       push:        false,
       code:        set_local_var(index, size),
       disassemble: {
-        index: "#{node.not_nil!.as(Assign).target}@#{index}",
+        index: "#{node.is_a?(Var) ? node : node.not_nil!.as(Assign).target}@#{index}",
       },
     },
     get_local: {
