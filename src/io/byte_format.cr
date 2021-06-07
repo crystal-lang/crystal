@@ -85,11 +85,11 @@ module IO::ByteFormat
     encode(float.unsafe_as(Int32), bytes)
   end
 
-  def decode(type : Float32.class, io : IO)
+  def decode(type : Float32.class, io : IO) : Float32
     decode(Int32, io).unsafe_as(Float32)
   end
 
-  def decode(type : Float32.class, bytes : Bytes)
+  def decode(type : Float32.class, bytes : Bytes) : Float32
     decode(Int32, bytes).unsafe_as(Float32)
   end
 
@@ -101,11 +101,11 @@ module IO::ByteFormat
     encode(float.unsafe_as(Int64), bytes)
   end
 
-  def decode(type : Float64.class, io : IO)
+  def decode(type : Float64.class, io : IO) : Float64
     decode(Int64, io).unsafe_as(Float64)
   end
 
-  def decode(type : Float64.class, bytes : Bytes)
+  def decode(type : Float64.class, bytes : Bytes) : Float64
     decode(Int64, bytes).unsafe_as(Float64)
   end
 

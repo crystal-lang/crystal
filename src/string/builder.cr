@@ -34,7 +34,7 @@ class String::Builder < IO
     io
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Not implemented"
   end
 
@@ -51,7 +51,7 @@ class String::Builder < IO
     @bytesize += count
   end
 
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     new_bytesize = real_bytesize + 1
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))

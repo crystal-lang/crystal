@@ -386,7 +386,7 @@ class Socket < IO
     close rescue nil
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
