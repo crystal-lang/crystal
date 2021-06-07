@@ -25,7 +25,7 @@ class Socket < IO
 
   # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
   # need full control over the socket.
-  def self.tcp(family : Family, blocking = false)
+  def self.tcp(family : Family, blocking = false) : self
     new(family, Type::STREAM, Protocol::TCP, blocking)
   end
 
@@ -37,7 +37,7 @@ class Socket < IO
 
   # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
   # you need full control over the socket.
-  def self.unix(type : Type = Type::STREAM, blocking = false)
+  def self.unix(type : Type = Type::STREAM, blocking = false) : self
     new(Family::UNIX, type, blocking: blocking)
   end
 
@@ -175,7 +175,7 @@ class Socket < IO
   #   socket.close
   # end
   # ```
-  def accept?
+  def accept? : Socket?
     if client_fd = system_accept
       sock = Socket.new(client_fd, family, type, protocol, blocking)
       sock.sync = sync?
@@ -264,7 +264,7 @@ class Socket < IO
     io << "#<#{self.class}:fd #{fd}>"
   end
 
-  def send_buffer_size
+  def send_buffer_size : Int32
     getsockopt LibC::SO_SNDBUF, 0
   end
 
@@ -273,7 +273,7 @@ class Socket < IO
     val
   end
 
-  def recv_buffer_size
+  def recv_buffer_size : Int32
     getsockopt LibC::SO_RCVBUF, 0
   end
 
@@ -282,7 +282,7 @@ class Socket < IO
     val
   end
 
-  def reuse_address?
+  def reuse_address? : Bool
     getsockopt_bool LibC::SO_REUSEADDR
   end
 
@@ -290,7 +290,7 @@ class Socket < IO
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
-  def reuse_port?
+  def reuse_port? : Bool
     system_reuse_port?
   end
 
@@ -298,7 +298,7 @@ class Socket < IO
     self.system_reuse_port = val
   end
 
-  def broadcast?
+  def broadcast? : Bool
     getsockopt_bool LibC::SO_BROADCAST
   end
 

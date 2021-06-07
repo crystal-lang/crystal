@@ -226,7 +226,7 @@ class Socket
     @ip_address : IPAddress?
 
     # Returns an `IPAddress` matching this addrinfo.
-    def ip_address
+    def ip_address : Socket::IPAddress
       @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 
