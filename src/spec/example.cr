@@ -43,7 +43,7 @@ module Spec
     private def internal_run(start, block)
       Crystal::System.print_error "running before_each_hooks\n"
       @parent.run_before_each_hooks
-      Crystal::System.print_error "running example\n"
+      Crystal::System.print_error "running example #{description}\n"
       block.call
       Crystal::System.print_error "example finished\n"
       @parent.report(:success, description, file, line, Time.monotonic - start)
