@@ -5,7 +5,7 @@ class Object
     end
   end
 
-  def to_json(io : IO)
+  def to_json(io : IO) : Nil
     JSON.build(io) do |json|
       to_json(json)
     end
@@ -17,7 +17,7 @@ class Object
     end
   end
 
-  def to_pretty_json(io : IO, indent : String = "  ")
+  def to_pretty_json(io : IO, indent : String = "  ") : Nil
     JSON.build(io, indent: indent) do |json|
       to_json(json)
     end

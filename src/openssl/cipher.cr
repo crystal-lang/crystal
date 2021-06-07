@@ -54,12 +54,12 @@ class OpenSSL::Cipher
   end
 
   # Sets this cipher to encryption mode.
-  def encrypt
+  def encrypt : Nil
     cipherinit enc: 1
   end
 
   # Sets this cipher to decryption mode.
-  def decrypt
+  def decrypt : Nil
     cipherinit enc: 0
   end
 

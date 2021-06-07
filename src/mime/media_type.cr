@@ -493,7 +493,7 @@ module MIME
     end
 
     # :nodoc:
-    def self.quote_string(string, io)
+    def self.quote_string(string, io) : Nil
       string.each_byte do |byte|
         case byte
         when '"'.ord, '\\'.ord

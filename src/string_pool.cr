@@ -176,7 +176,7 @@ class StringPool
   # if values of key objects have changed since they were inserted.
   #
   # Call this method if you modified a string submitted to the pool.
-  def rehash
+  def rehash : Nil
     if @capacity * 2 <= 0
       raise "Hash table too big"
     end

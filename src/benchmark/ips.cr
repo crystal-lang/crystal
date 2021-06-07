@@ -34,13 +34,13 @@ module Benchmark
         item
       end
 
-      def execute
+      def execute : Nil
         run_warmup
         run_calculation
         run_comparison
       end
 
-      def report
+      def report : Nil
         max_label = ran_items.max_of &.label.size
         max_compare = ran_items.max_of &.human_compare.size
         max_bytes_per_op = ran_items.max_of &.bytes_per_op.humanize(base: 1024).size
@@ -164,11 +164,11 @@ module Benchmark
         @ran
       end
 
-      def call
+      def call : Nil
         action.call
       end
 
-      def call_for_100ms
+      def call_for_100ms : Nil
         cycles.times { action.call }
       end
 

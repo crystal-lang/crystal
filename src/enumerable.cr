@@ -752,7 +752,7 @@ module Enumerable(T)
   # ```text
   # 1, 2, 3, 4, 5
   # ```
-  def join(io : IO, separator = "")
+  def join(io : IO, separator = "") : Nil
     join(io, separator) do |elem|
       elem.to_s(io)
     end
@@ -770,7 +770,7 @@ module Enumerable(T)
   # 1, 2, 3, 4, 5
   # ```
   @[Deprecated(%(Use `#join(io : IO, separator = "") instead`))]
-  def join(separator, io : IO)
+  def join(separator, io : IO) : Nil
     join(io, separator)
   end
 

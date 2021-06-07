@@ -389,11 +389,11 @@ class Channel(T)
     value
   end
 
-  def self.send_first(value, *channels)
+  def self.send_first(value, *channels) : Nil
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Tuple | Array)
+  def self.send_first(value, channels : Tuple | Array) : Nil
     self.select(channels.map(&.send_select_action(value)))
     nil
   end
@@ -512,7 +512,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -539,11 +539,11 @@ class Channel(T)
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -574,7 +574,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -601,11 +601,11 @@ class Channel(T)
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -631,7 +631,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @sender.fiber = Fiber.current
       @sender.select_context = context
       @channel.@senders.push pointerof(@sender)
@@ -658,11 +658,11 @@ class Channel(T)
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -690,7 +690,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @select_context = context
       Fiber.timeout(@timeout, self)
     end

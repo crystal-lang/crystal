@@ -471,7 +471,7 @@ class XML::Node
   end
 
   # Removes the node from the XML document.
-  def unlink
+  def unlink : Nil
     LibXML.xmlUnlinkNode(self)
   end
 

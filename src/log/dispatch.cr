@@ -64,7 +64,7 @@ class Log
       @done.send nil
     end
 
-    def close
+    def close : Nil
       # TODO: this might fail if being closed from different threads
       unless @channel.closed?
         @channel.close

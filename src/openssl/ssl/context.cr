@@ -166,7 +166,7 @@ abstract class OpenSSL::SSL::Context
     # unidirectionally, the server connects, then sends a ticket
     # after the connect handshake, the ticket send can fail with Broken Pipe.
     # So if you have that kind of behavior (clients that never read) call this method.
-    def disable_session_resume_tickets
+    def disable_session_resume_tickets : Nil
       add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
         ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
@@ -336,7 +336,7 @@ abstract class OpenSSL::SSL::Context
 
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
-  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
+  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1) : Nil
     key = LibCrypto.ec_key_new_by_curve_name(curve)
     raise OpenSSL::Error.new("ec_key_new_by_curve_name") if key.null?
     LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TMP_ECDH, 0, key)

@@ -202,7 +202,7 @@ class Fiber
   # This signals to the scheduler that the fiber is eligible for being resumed
   # the next time it has the opportunity to reschedule to an other fiber. There
   # are no guarantees when that will happen.
-  def enqueue
+  def enqueue : Nil
     Crystal::Scheduler.enqueue(self)
   end
 
@@ -223,7 +223,7 @@ class Fiber
   end
 
   # :nodoc:
-  def cancel_timeout
+  def cancel_timeout : Nil
     @timeout_select_action = nil
     @timeout_event.try &.delete
   end
@@ -235,7 +235,7 @@ class Fiber
     Crystal::Scheduler.current_fiber.timeout(timeout, select_action)
   end
 
-  def self.cancel_timeout
+  def self.cancel_timeout : Nil
     Crystal::Scheduler.current_fiber.cancel_timeout
   end
 
@@ -267,7 +267,7 @@ class Fiber
   #   end
   # end
   # ```
-  def self.yield
+  def self.yield : Nil
     Crystal::Scheduler.yield
   end
 
@@ -285,7 +285,7 @@ class Fiber
   end
 
   # :nodoc:
-  def push_gc_roots
+  def push_gc_roots : Nil
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack_bottom
   end

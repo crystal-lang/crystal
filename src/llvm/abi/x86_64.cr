@@ -103,7 +103,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def classify_struct(tys, cls, i, off, packed)
+  def classify_struct(tys, cls, i, off, packed) : Nil
     field_off = off
     tys.each do |ty|
       field_off = align(field_off, ty) unless packed
@@ -112,7 +112,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def fixup(ty, cls)
+  def fixup(ty, cls) : Nil
     i = 0
     ty_kind = ty.kind
     e = cls.size

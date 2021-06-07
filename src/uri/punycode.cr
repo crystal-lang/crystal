@@ -30,7 +30,7 @@ class URI
       String.build { |io| encode string, io }
     end
 
-    def self.encode(string, io)
+    def self.encode(string, io) : Nil
       others = [] of Char
 
       string.each_char do |c|

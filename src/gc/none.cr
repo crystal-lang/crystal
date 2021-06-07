@@ -32,7 +32,7 @@ module GC
   def self.disable
   end
 
-  def self.free(pointer : Void*)
+  def self.free(pointer : Void*) : Nil
     LibC.free(pointer)
   end
 

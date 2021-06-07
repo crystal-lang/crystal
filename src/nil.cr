@@ -115,7 +115,7 @@ struct Nil
   # config["empty"]?.presence   # => nil
   # config["missing"]?.presence # => nil
   # ```
-  def presence
+  def presence : Nil
     self
   end
 

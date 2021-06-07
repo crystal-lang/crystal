@@ -459,7 +459,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def hexstring(buffer)
+  def hexstring(buffer) : Nil
     self.as(Slice(UInt8))
 
     offset = 0
