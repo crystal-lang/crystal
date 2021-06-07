@@ -26,7 +26,7 @@ module YAML::Nodes
 
     # Raises a `YAML::ParseException` with the given message
     # located at this node's `location`.
-    def raise(message)
+    def raise(message) : NoReturn
       ::raise YAML::ParseException.new(message, *location)
     end
 

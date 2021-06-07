@@ -94,7 +94,7 @@ module YAML
       end
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end
