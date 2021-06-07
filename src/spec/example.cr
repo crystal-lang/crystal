@@ -41,8 +41,11 @@ module Spec
     end
 
     private def internal_run(start, block)
+      Crystal::System.print_error "running before_each_hooks\n"
       @parent.run_before_each_hooks
+      Crystal::System.print_error "running example\n"
       block.call
+      Crystal::System.print_error "example finished\n"
       @parent.report(:success, description, file, line, Time.monotonic - start)
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, Time.monotonic - start, ex)
@@ -53,6 +56,7 @@ module Spec
       @parent.report(:error, description, file, line, Time.monotonic - start, ex)
       Spec.abort! if Spec.fail_fast?
     ensure
+      Crystal::System.print_error "running after_each_hooks\n"
       @parent.run_after_each_hooks
     end
   end
