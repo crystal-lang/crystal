@@ -94,12 +94,8 @@ module Crystal
       false
     end
 
-    def must_print?(type : NonGenericClassType)
-      !(@exp && !@targets.includes?(type))
-    end
-
-    def must_print?(type : GenericClassType)
-      !(@exp && !@targets.includes?(type))
+    def must_print?(type : NonGenericClassType | GenericClassType)
+      !@exp || @targets.includes?(type)
     end
 
     def must_print?(type)
