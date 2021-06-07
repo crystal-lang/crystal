@@ -28,7 +28,7 @@ describe TCPSocket do
         end
       end
 
-      it "raises when connection is refused" do
+      pending_win32 "raises when connection is refused" do
         port = unused_local_port
 
         expect_raises(Socket::ConnectError, "Error connecting to '#{address}:#{port}'") do
