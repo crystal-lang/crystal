@@ -101,7 +101,7 @@ class Channel(T)
     def initialize(@state, @action : SelectAction(S))
     end
 
-    def activated?
+    def activated? : Bool
       @activated
     end
 
@@ -205,7 +205,7 @@ class Channel(T)
     true
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
@@ -214,7 +214,7 @@ class Channel(T)
   # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
-  def send(value : T)
+  def send(value : T) : self
     sender = Sender(T).new
 
     @lock.lock
@@ -535,7 +535,7 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
@@ -597,7 +597,7 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
@@ -654,7 +654,7 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
@@ -703,7 +703,7 @@ class Channel(T)
       Fiber.cancel_timeout
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       self.object_id
     end
 
@@ -733,6 +733,6 @@ end
 # ```
 #
 # NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
-def timeout_select_action(timeout : Time::Span)
+def timeout_select_action(timeout : Time::Span) : Channel::TimeoutAction
   Channel::TimeoutAction.new(timeout)
 end

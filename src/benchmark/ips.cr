@@ -28,7 +28,7 @@ module Benchmark
       end
 
       # Adds code to be benchmarked
-      def report(label = "", &action)
+      def report(label = "", &action) : Benchmark::IPS::Entry
         item = Entry.new(label, action)
         @items << item
         item
@@ -160,7 +160,7 @@ module Benchmark
       def initialize(@label : String, @action : ->)
       end
 
-      def ran?
+      def ran? : Bool
         @ran
       end
 
@@ -186,11 +186,11 @@ module Benchmark
         @relative_stddev = 100.0 * (stddev / mean)
       end
 
-      def human_mean
+      def human_mean : String
         mean.humanize(precision: 2, significant: false, prefixes: Number::SI_PREFIXES_PADDED).rjust(7)
       end
 
-      def human_iteration_time
+      def human_iteration_time : String
         iteration_time = 1.0 / mean
 
         iteration_time.humanize(precision: 2, significant: false) do |magnitude, _|
@@ -199,7 +199,7 @@ module Benchmark
         end.rjust(8)
       end
 
-      def human_compare
+      def human_compare : String
         if slower == 1.0
           "fastest"
         else

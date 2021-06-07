@@ -9,17 +9,17 @@ module GC
   end
 
   # :nodoc:
-  def self.malloc(size : LibC::SizeT)
+  def self.malloc(size : LibC::SizeT) : Void*
     LibC.malloc(size)
   end
 
   # :nodoc:
-  def self.malloc_atomic(size : LibC::SizeT)
+  def self.malloc_atomic(size : LibC::SizeT) : Void*
     LibC.malloc(size)
   end
 
   # :nodoc:
-  def self.realloc(pointer : Void*, size : LibC::SizeT)
+  def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
     LibC.realloc(pointer, size)
   end
 
@@ -36,7 +36,7 @@ module GC
     LibC.free(pointer)
   end
 
-  def self.is_heap_ptr(pointer : Void*)
+  def self.is_heap_ptr(pointer : Void*) : Bool
     false
   end
 
@@ -46,7 +46,7 @@ module GC
   def self.register_disappearing_link(pointer : Void**)
   end
 
-  def self.stats
+  def self.stats : GC::Stats
     zero = LibC::ULong.new(0)
     Stats.new(zero, zero, zero, zero, zero)
   end
@@ -86,7 +86,7 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.current_thread_stack_bottom
+  def self.current_thread_stack_bottom : {Void*, Void*}
     {Pointer(Void).null, Pointer(Void).null}
   end
 
