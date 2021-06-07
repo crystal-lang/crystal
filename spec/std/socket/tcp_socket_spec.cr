@@ -4,7 +4,7 @@ require "../../support/win32"
 describe TCPSocket do
   describe "#connect" do
     each_ip_family do |family, address|
-      pending_win32 "connects to server" do
+      it "connects to server" do
         port = unused_local_port
 
         TCPServer.open(address, port) do |server|
@@ -28,7 +28,7 @@ describe TCPSocket do
         end
       end
 
-      pending_win32 "raises when connection is refused" do
+      it "raises when connection is refused" do
         port = unused_local_port
 
         expect_raises(Socket::ConnectError, "Error connecting to '#{address}:#{port}'") do
