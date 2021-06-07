@@ -304,13 +304,16 @@ module Crystal::System::Socket
 
   private def system_blocking?
     mode = uninitialized UInt32
-    LibC.WSAIoctl(fd, LibC::FIONBIO, nil, 0, pointerof(mode), sizeof(UInt32), out bytes_returned, nil, nil)
+    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, nil, 0, pointerof(mode), sizeof(UInt32), out bytes_returned, nil, nil)
+    raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
+
     !mode.zero?
   end
 
   private def system_blocking=(value)
     mode = value ? 1_u32 : 0_u32
-    LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out bytes_returned, nil, nil)
+    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out bytes_returned, nil, nil)
+    raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
   end
 
   private def system_close_on_exec?
