@@ -302,16 +302,18 @@ module Crystal::System::Socket
     ret
   end
 
-  private def system_blocking?
-    mode = uninitialized UInt32
-    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, nil, 0, pointerof(mode), sizeof(UInt32), out bytes_returned, nil, nil)
-    raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
+  @blocking = true
 
-    !mode.zero?
+  # WSA does not provide a direct way to query the blocking mode of a file descriptor.
+  # The best option seems to be just keeping track in an instance variable.
+  # This becomes invalid if the blocking mode was changed directly on the
+  # socket handle without going through `Socket#blocking=`.
+  private def system_blocking?
+    @blocking
   end
 
-  private def system_blocking=(value)
-    mode = value ? 1_u32 : 0_u32
+  private def system_blocking=(@blocking)
+    mode = blocking ? 1_u32 : 0_u32
     ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out bytes_returned, nil, nil)
     raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
   end
