@@ -344,7 +344,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current modes set on the TLS context.
-  def modes
+  def modes : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
@@ -359,7 +359,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current options set on the TLS context.
-  def options
+  def options : LibSSL::Options
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
              LibSSL.ssl_ctx_get_options(@handle)
            {% else %}
@@ -403,7 +403,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode
+  def verify_mode : LibSSL::VerifyMode
     LibSSL.ssl_ctx_get_verify_mode(@handle)
   end
 
