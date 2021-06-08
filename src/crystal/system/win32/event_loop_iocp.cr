@@ -1,7 +1,7 @@
 require "crystal/system/print_error"
 
 class Crystal::EventLoop
-  def create : Crystal::IocpEventLoop
+  def self.create : Crystal::IocpEventLoop
     return IocpEventLoop.new
   end
 end
