@@ -380,9 +380,9 @@ module Crystal
 
             atomic_value = with_isolated_var_scope(needs_new_scope) do
               if @token.keyword?(:uninitialized) && (
-                  atomic.is_a?(Var) || atomic.is_a?(InstanceVar) ||
-                  atomic.is_a?(ClassVar) || atomic.is_a?(Global)
-                )
+                   atomic.is_a?(Var) || atomic.is_a?(InstanceVar) ||
+                   atomic.is_a?(ClassVar) || atomic.is_a?(Global)
+                 )
                 push_var atomic
                 next_token_skip_space
                 type = parse_bare_proc_type
@@ -5513,11 +5513,11 @@ module Crystal
         next_token_skip_space_or_newline
 
         name = if top_level
-                check_ident
-              else
-                check IdentOrConst
-                @token.value.to_s
-              end
+                 check_ident
+               else
+                 check IdentOrConst
+                 @token.value.to_s
+               end
 
         next_token_skip_space_or_newline
 
