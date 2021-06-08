@@ -220,19 +220,24 @@ class Crystal::System::IoUring
   # until the kernel has consumed at least one request so that we can write ours.
   # If there are too many inflight requests, wait for then to complete before sending
   # more. This check is only needed before the NODROP feature was implemented (Linux 5.5+)
-  private def get_free_index
+  private def get_free_index : UInt32
     # If there are too many in flight events, wait for some completions.
     until @params.features.nodrop? || @inflight < @params.cq_entries
       process_completion_events(blocking: true)
     end
 
-    # If the submission queue is full, submit some events.
-    until (index = @submission_queue.consume_free_index) != UInt32::MAX
-      process_completion_events(blocking: false)
-    end
+    loop do
+      index = @submission_queue.consume_free_index
 
-    @inflight += 1
-    index
+      # If the submission queue is full, submit some events.
+      if index == UInt32::MAX
+        process_completion_events(blocking: false)
+        next
+      end
+
+      @inflight += 1
+      return index
+    end
   end
 
   # Obtains one submission entry, populates, and submits it. When the completion
