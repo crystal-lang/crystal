@@ -70,6 +70,7 @@ class Socket
           end
 
           addrinfo = addrinfo.try(&.next?)
+          Crystal::System.print_error "#{addrinfo.to_s}\n"
           unless addrinfo
             if error.is_a?(Socket::ConnectError)
               raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
