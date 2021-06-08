@@ -632,7 +632,7 @@ Crystal::Repl::Instructions =
       operands:   [element_size : Int32] of Nil,
       pop_values: [size : UInt64],
       push:       true,
-      code:       Pointer(UInt8).malloc(size * element_size),
+      code:       Pointer(Void).malloc(size * element_size).as(UInt8*),
     },
     pointer_realloc: {
       operands:   [element_size : Int32] of Nil,
@@ -879,7 +879,7 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       true,
       code:       begin
-        ptr = Pointer(UInt8).malloc(size)
+        ptr = Pointer(Void).malloc(size).as(UInt8*)
         ptr.as(Int32*).value = type_id
         ptr
       end,

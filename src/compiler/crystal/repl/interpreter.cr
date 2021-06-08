@@ -60,7 +60,7 @@ class Crystal::Repl::Interpreter
     @nodes = {} of Int32 => ASTNode
 
     # TODO: what if the stack is exhausted?
-    @stack = Pointer(UInt8).malloc(8 * 1024 * 1024)
+    @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
     @call_stack = [] of CallFrame
     @constants = Pointer(UInt8).null
     @class_vars = Pointer(UInt8).null
@@ -463,7 +463,7 @@ class Crystal::Repl::Interpreter
 
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
     if @call_stack.empty?
-      return_value = Pointer(UInt8).malloc({{size}})
+      return_value = Pointer(Void).malloc({{size}}).as(UInt8*)
       return_value.copy_from(stack_bottom_after_local_vars, {{size}})
       stack_shrink_by({{size}})
       break
@@ -716,7 +716,7 @@ class Crystal::Repl::Interpreter
       # because it might happen that the child interpreter will overwrite some
       # of that if we already have some values in the stack past the local vars
       data_size = stack - (stack_bottom + local_vars.max_bytesize)
-      data = Pointer(UInt8).malloc(data_size)
+      data = Pointer(Void).malloc(data_size).as(UInt8*)
       data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
       interpreter = Interpreter.new(self, compiled_def, location, stack_bottom)
