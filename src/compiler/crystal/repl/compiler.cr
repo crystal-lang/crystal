@@ -762,7 +762,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
 
     # We don't cache defs that yield because we inline the block's contents
-    @context.defs[target_def] = compiled_def unless block
+    if block
+      @context.add_gc_reference(compiled_def)
+    else
+      @context.defs[target_def] = compiled_def
+    end
 
     # Declare local variables for the newly compiled function
     target_def.vars.try &.each do |name, var|
@@ -811,7 +815,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       )
 
       # Store it so the GC doesn't collect it (it's in the instructions but it might not be aligned)
-      @context.gc_references << compiled_block.object_id
+      @context.add_gc_reference(compiled_block)
 
       compiler = Compiler.new(@context, @local_vars,
         instructions: compiled_block.instructions,
@@ -936,7 +940,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
 
     # 2. Store it in context
-    @context.gc_references << compiled_def.object_id
+    @context.add_gc_reference(compiled_def)
 
     # Declare local variables for the newly compiled function
     target_def.vars.try &.each do |name, var|

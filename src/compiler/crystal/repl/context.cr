@@ -12,9 +12,10 @@ class Crystal::Repl::Context
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
   getter multidispatchs : Hash(MultidispatchKey, Def)
-  getter gc_references = [] of UInt64
 
   def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
+    @gc_references = [] of Void*
+
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
@@ -55,6 +56,10 @@ class Crystal::Repl::Context
 
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
+  end
+
+  def add_gc_reference(ref : Reference)
+    @gc_references << ref.as(Void*)
   end
 
   def symbol_index(symbol : String) : Int32
