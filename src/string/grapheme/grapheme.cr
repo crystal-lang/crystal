@@ -128,6 +128,23 @@ class String
       io << ")"
     end
 
+    def size
+      case cluster = @cluster
+      in Char
+        1
+      in String
+        cluster.size
+      end
+    end
+
+    def bytesize
+      @cluster.bytesize
+    end
+
+    def ==(other : self)
+      @cluster == other.@cluster
+    end
+
     # :nodoc:
     def self.break?(c1 : Char, c2 : Char)
       break?(Property.from(c1), Property.from(c2))
