@@ -13,6 +13,9 @@ class Crystal::Repl::Context
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
   getter multidispatchs : Hash(MultidispatchKey, Def)
 
+  property constants_memory : Pointer(UInt8)
+  property class_vars_memory : Pointer(UInt8)
+
   def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
     @gc_references = [] of Void*
 
@@ -53,6 +56,9 @@ class Crystal::Repl::Context
       :log2  => Proc(Float64, Float64).new { |a| Math.log2(a) },
       :log10 => Proc(Float64, Float64).new { |a| Math.log10(a) },
     }
+
+    @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
+    @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
 
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)

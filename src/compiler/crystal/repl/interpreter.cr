@@ -38,12 +38,12 @@ class Crystal::Repl::Interpreter
     # go back to just before that frame when a `return` happens.
     real_frame_index : Int32,
     # When we jump to do a constant initialization we store the
-    # index where to store the constant value in the `@constants`
+    # index where to store the constant value in the `@context.constants_memory`
     # memory location.
     # It's -1 if no constant needs to be initialized.
     constant_index : Int32,
     # When we jump to do a class var initialization we store the
-    # index where to store the class var value in the `@class_vars`
+    # index where to store the class var value in the `@context.class_vars_memory`
     # memory location.
     # It's -1 if no class var needs to be initialized.
     class_var_index : Int32
@@ -62,8 +62,6 @@ class Crystal::Repl::Interpreter
     # TODO: what if the stack is exhausted?
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
     @call_stack = [] of CallFrame
-    @constants = Pointer(UInt8).null
-    @class_vars = Pointer(UInt8).null
 
     @main_visitor = MainVisitor.new(program)
     @top_level_visitor = TopLevelVisitor.new(program)
@@ -86,8 +84,6 @@ class Crystal::Repl::Interpreter
     @stack = stack
     # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
-    @constants = interpreter.@constants
-    @class_vars = interpreter.@class_vars
 
     gatherer = LocalVarsGatherer.new(location, compiled_def.def)
     gatherer.gather
@@ -190,13 +186,13 @@ class Crystal::Repl::Interpreter
     stack = stack_bottom_after_local_vars
 
     # Reserve space for constants
-    @constants = @constants.realloc(@context.constants.bytesize)
+    @context.constants_memory = @context.constants_memory.realloc(@context.constants.bytesize)
 
     # Reserve space for class vars
-    @class_vars = @class_vars.realloc(@context.class_vars.bytesize)
+    @context.class_vars_memory = @context.class_vars_memory.realloc(@context.class_vars.bytesize)
 
     @context.class_vars.each_initialized_index do |index|
-      @class_vars[index] = 1_u8
+      @context.class_vars_memory[index] = 1_u8
     end
 
     instructions = @instructions
@@ -481,12 +477,12 @@ class Crystal::Repl::Interpreter
 
       # Copy the return value to a constant, if the frame was for a constant
       if %previous_call_frame.constant_index != -1
-        (%old_stack - {{size}}).copy_to(@constants + %previous_call_frame.constant_index + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+        (%old_stack - {{size}}).copy_to(@context.constants_memory + %previous_call_frame.constant_index + Constants::OFFSET_FROM_INITIALIZED, {{size}})
       end
 
       # Copy the return value to a class, if the frame was for a class var
       if %previous_call_frame.class_var_index != -1
-        (%old_stack - {{size}}).copy_to(@class_vars + %previous_call_frame.class_var_index + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+        (%old_stack - {{size}}).copy_to(@context.class_vars_memory + %previous_call_frame.class_var_index + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
       end
 
       # Ccopy the return value
@@ -518,11 +514,11 @@ class Crystal::Repl::Interpreter
 
   private macro get_const(index, size)
     # TODO: make this atomic
-    %initialized = @constants[{{index}}]
+    %initialized = @context.constants_memory[{{index}}]
     if %initialized == 1_u8
-      stack_move_from(@constants + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+      stack_move_from(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
     else
-      @constants[{{index}}] = 1_u8
+      @context.constants_memory[{{index}}] = 1_u8
       %compiled_def = @context.constants.index_to_compiled_def({{index}})
       call(%compiled_def, constant_index: {{index}})
     end
@@ -530,11 +526,11 @@ class Crystal::Repl::Interpreter
 
   private macro get_class_var(index, size)
     # TODO: make this atomic
-    %initialized = @class_vars[{{index}}]
+    %initialized = @context.class_vars_memory[{{index}}]
     if %initialized == 1_u8
-      stack_move_from(@class_vars + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+      stack_move_from(@context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
     else
-      @class_vars[{{index}}] = 1_u8
+      @context.class_vars_memory[{{index}}] = 1_u8
       %compiled_def = @context.class_vars.index_to_compiled_def({{index}})
       call(%compiled_def, class_var_index: {{index}})
     end
@@ -542,14 +538,14 @@ class Crystal::Repl::Interpreter
 
   private macro set_class_var(index, size)
     # TODO: we need to run the class var initialization!
-    %initialized = @class_vars[{{index}}]
+    %initialized = @context.class_vars_memory[{{index}}]
     if %initialized == 0_u8 && @context.class_vars.index_to_compiled_def?({{index}})
       # TODO: this is missing a pending spec that's failing for some reason
       raise "BUG: missing initializing class var before setting it!"
     end
 
-    @class_vars[{{index}}] = 1_u8
-    stack_move_to(@class_vars + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+    @context.class_vars_memory[{{index}}] = 1_u8
+    stack_move_to(@context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
   end
 
   private macro pry
