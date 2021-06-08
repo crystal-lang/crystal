@@ -57,7 +57,7 @@ module Enumerable(T)
   # [2, "a", 3].all?(String)    # => false
   # %w[foo bar baz].all?(/o|a/) # => true
   # ```
-  def all?(pattern)
+  def all?(pattern) : Bool
     all? { |e| pattern === e }
   end
 
@@ -67,7 +67,7 @@ module Enumerable(T)
   # [nil, true, 99].all? # => false
   # [15].all?            # => true
   # ```
-  def all?
+  def all? : Bool
     all? &.itself
   end
 
@@ -92,7 +92,7 @@ module Enumerable(T)
   # [2, "a", 3].any?(String)  # => true
   # %w[foo bar baz].any?(/a/) # => true
   # ```
-  def any?(pattern)
+  def any?(pattern) : Bool
     any? { |e| pattern === e }
   end
 
@@ -102,7 +102,7 @@ module Enumerable(T)
   # [nil, true, 99].any? # => true
   # [nil, false].any?    # => false
   # ```
-  def any?
+  def any? : Bool
     any? &.itself
   end
 
@@ -182,7 +182,7 @@ module Enumerable(T)
         end
       end
 
-      def same_as?(key)
+      def same_as?(key) : Bool
         return false unless @initialized
         return false if key == Alone || key == Drop
         @key == key
@@ -249,7 +249,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].count(3) # => 1
   # ```
-  def count(item)
+  def count(item) : Int32
     count { |e| e == item }
   end
 
@@ -498,7 +498,7 @@ module Enumerable(T)
   # ([1, 2, 3]).first   # => 1
   # ([] of Int32).first # raises Enumerable::EmptyError
   # ```
-  def first
+  def first : T
     first { raise Enumerable::EmptyError.new }
   end
 
@@ -509,7 +509,7 @@ module Enumerable(T)
   # ([1, 2, 3]).first?   # => 1
   # ([] of Int32).first? # => nil
   # ```
-  def first?
+  def first? : T?
     first { nil }
   end
 
@@ -613,7 +613,7 @@ module Enumerable(T)
   # [1, 2, 3].includes?(2) # => true
   # [1, 2, 3].includes?(5) # => false
   # ```
-  def includes?(obj)
+  def includes?(obj) : Bool
     any? { |e| e == obj }
   end
 
@@ -721,7 +721,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4, 5].join(", ") # => "1, 2, 3, 4, 5"
   # ```
-  def join(separator = "")
+  def join(separator = "") : String
     String.build do |io|
       join io, separator
     end
@@ -752,7 +752,7 @@ module Enumerable(T)
   # ```text
   # 1, 2, 3, 4, 5
   # ```
-  def join(io : IO, separator = "")
+  def join(io : IO, separator = "") : Nil
     join(io, separator) do |elem|
       elem.to_s(io)
     end
@@ -770,7 +770,7 @@ module Enumerable(T)
   # 1, 2, 3, 4, 5
   # ```
   @[Deprecated(%(Use `#join(io : IO, separator = "") instead`))]
-  def join(separator, io : IO)
+  def join(separator, io : IO) : Nil
     join(io, separator)
   end
 
@@ -848,12 +848,12 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def max
+  def max : T
     max_by &.itself
   end
 
   # Like `max` but returns `nil` if the collection is empty.
-  def max?
+  def max? : T?
     max_by? &.itself
   end
 
@@ -937,12 +937,12 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def min
+  def min : T
     min_by &.itself
   end
 
   # Like `min` but returns `nil` if the collection is empty.
-  def min?
+  def min? : T?
     min_by? &.itself
   end
 
@@ -1023,12 +1023,12 @@ module Enumerable(T)
   # ```
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
-  def minmax
+  def minmax : {T, T}
     minmax_by &.itself
   end
 
   # Like `minmax` but returns `{nil, nil}` if the collection is empty.
-  def minmax?
+  def minmax? : {T?, T?}
     minmax_by? &.itself
   end
 
@@ -1138,7 +1138,7 @@ module Enumerable(T)
   # [2, "a", 3].none?(String)  # => false
   # %w[foo bar baz].none?(/e/) # => true
   # ```
-  def none?(pattern)
+  def none?(pattern) : Bool
     none? { |e| pattern === e }
   end
 
@@ -1150,7 +1150,7 @@ module Enumerable(T)
   # ```
   #
   # It's the opposite of `all?`.
-  def none?
+  def none? : Bool
     none? &.itself
   end
 
@@ -1178,7 +1178,7 @@ module Enumerable(T)
   # [2, "a", 3].one?(Int32)    # => false
   # %w[foo bar baz].one?(/oo/) # => true
   # ```
-  def one?(pattern)
+  def one?(pattern) : Bool
     one? { |e| pattern === e }
   end
 
@@ -1191,7 +1191,7 @@ module Enumerable(T)
   # [1].one?               # => true
   # [false].one?           # => false
   # ```
-  def one?
+  def one? : Bool
     one? &.itself
   end
 
@@ -1246,7 +1246,7 @@ module Enumerable(T)
   # ```
   # [1, 3, 2, 5, 4, 6].reject(3..5) # => [1, 2, 6]
   # ```
-  def reject(pattern)
+  def reject(pattern) : Array(T)
     reject { |e| pattern === e }
   end
 
@@ -1262,7 +1262,7 @@ module Enumerable(T)
   # {1, 2, 3, 4, 5}.sample(2)                # => [3, 4]
   # {1, 2, 3, 4, 5}.sample(2, Random.new(1)) # => [1, 5]
   # ```
-  def sample(n : Int, random = Random::DEFAULT)
+  def sample(n : Int, random = Random::DEFAULT) : Array(T)
     raise ArgumentError.new("Can't sample negative number of elements") if n < 0
 
     # Unweighted reservoir sampling:
@@ -1298,7 +1298,7 @@ module Enumerable(T)
   # a.sample                # => 1
   # a.sample(Random.new(1)) # => 3
   # ```
-  def sample(random = Random::DEFAULT)
+  def sample(random = Random::DEFAULT) : T
     value = uninitialized T
     found = false
 
@@ -1347,7 +1347,7 @@ module Enumerable(T)
   # [1, 3, 2, 5, 4, 6].select(3..5) # => [3, 5, 4]
   # ["Alice", "Bob"].select(/^A/)   # => ["Alice"]
   # ```
-  def select(pattern)
+  def select(pattern) : Array(T)
     self.select { |elem| pattern === elem }
   end
 
@@ -1356,7 +1356,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].size # => 4
   # ```
-  def size
+  def size : Int32
     count { true }
   end
 
@@ -1366,7 +1366,7 @@ module Enumerable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
-  def empty?
+  def empty? : Bool
     each { return false }
     true
   end
@@ -1587,7 +1587,7 @@ module Enumerable(T)
   # If *count* is bigger than the number of elements in the collection,
   # returns as many as possible. This include the case of calling it over
   # an empty collection, in which case it returns an empty array.
-  def first(count : Int)
+  def first(count : Int) : Array(T)
     raise ArgumentError.new("Attempt to take negative size") if count < 0
 
     ary = Array(T).new(count)

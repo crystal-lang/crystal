@@ -30,7 +30,7 @@ class Socket
     # * `unix://<path>`
     #
     # See `IPAddress.parse` and `UNIXAddress.parse` for details.
-    def self.parse(uri : URI)
+    def self.parse(uri : URI) : self
       case uri.scheme
       when "ip", "tcp", "udp"
         IPAddress.parse uri
@@ -42,7 +42,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 
@@ -138,7 +138,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 
@@ -379,7 +379,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 

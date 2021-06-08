@@ -98,7 +98,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_read(timed_out = false)
+  def resume_read(timed_out = false) : Nil
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
@@ -107,7 +107,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def resume_write(timed_out = false)
+  def resume_write(timed_out = false) : Nil
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
@@ -116,7 +116,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_readable(timeout = @read_timeout)
+  def wait_readable(timeout = @read_timeout) : Nil
     wait_readable(timeout: timeout) { raise TimeoutError.new("Read timed out") }
   end
 
@@ -141,7 +141,7 @@ module IO::Evented
   end
 
   # :nodoc:
-  def wait_writable(timeout = @write_timeout)
+  def wait_writable(timeout = @write_timeout) : Nil
     wait_writable(timeout: timeout) { raise TimeoutError.new("Write timed out") }
   end
 

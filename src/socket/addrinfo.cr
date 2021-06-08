@@ -151,6 +151,13 @@ class Socket
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            raise Error.from_errno message, domain: domain
+          end
+        {% end %}
+
         error = {% if flag?(:win32) %}
                   WinError.new(ret.to_u32!)
                 {% else %}
@@ -226,7 +233,7 @@ class Socket
     @ip_address : IPAddress?
 
     # Returns an `IPAddress` matching this addrinfo.
-    def ip_address
+    def ip_address : Socket::IPAddress
       @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 

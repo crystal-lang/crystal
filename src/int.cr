@@ -67,7 +67,7 @@ struct Int
   # ```
   # 97.chr # => 'a'
   # ```
-  def chr
+  def chr : Char
     unless 0 <= self <= Char::MAX_CODEPOINT
       raise ArgumentError.new("#{self} out of char range")
     end
@@ -401,7 +401,7 @@ struct Int
   # 0b1101.bits_set?(0b0111) # => false
   # 0b1101.bits_set?(0b1100) # => true
   # ```
-  def bits_set?(mask)
+  def bits_set?(mask) : Bool
     (self & mask) == mask
   end
 
@@ -676,7 +676,7 @@ struct Int
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat)
+  def to_io(io : IO, format : IO::ByteFormat) : Nil
     format.encode(self, io)
   end
 

@@ -50,7 +50,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.size          # => 2
     # "Crystal".match(/r(ys)(?<ok>ta)/).not_nil!.size # => 3
     # ```
-    def size
+    def size : Int32
       group_size + 1
     end
 
@@ -92,7 +92,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.byte_begin(1) # => 2
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_begin(0)    # => 3
     # ```
-    def byte_begin(n = 0)
+    def byte_begin(n = 0) : Int32
       check_index_out_of_bounds n
       n += size if n < 0
       @ovector[n * 2]
@@ -108,7 +108,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil!.byte_end(1) # => 4
     # "クリスタル".match(/リ(ス)/).not_nil!.byte_end(0)    # => 9
     # ```
-    def byte_end(n = 0)
+    def byte_end(n = 0) : Int32
       check_index_out_of_bounds n
       n += size if n < 0
       @ovector[n * 2 + 1]
@@ -124,7 +124,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil![1]? # => "ys"
     # "Crystal".match(/r(ys)/).not_nil![2]? # => nil
     # ```
-    def []?(n : Int)
+    def []?(n : Int) : String?
       return unless valid_group?(n)
 
       n += size if n < 0
@@ -141,7 +141,7 @@ class Regex
     # "Crystal".match(/r(ys)/).not_nil![1] # => "ys"
     # "Crystal".match(/r(ys)/).not_nil![2] # raises IndexError
     # ```
-    def [](n : Int)
+    def [](n : Int) : String
       check_index_out_of_bounds n
       n += size if n < 0
 
@@ -164,7 +164,7 @@ class Regex
     # ```
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"]? # => "al"
     # ```
-    def []?(group_name : String)
+    def []?(group_name : String) : String?
       max_start = -1
       match = nil
       named_capture_number(group_name) do |n|
@@ -191,7 +191,7 @@ class Regex
     # ```
     # "Crystal".match(/(?<ok>Cr).*(?<ok>al)/).not_nil!["ok"] # => "al"
     # ```
-    def [](group_name : String)
+    def [](group_name : String) : String
       match = self[group_name]?
       unless match
         named_capture_number(group_name) do
@@ -203,23 +203,23 @@ class Regex
     end
 
     # Returns all matches that are within the given range.
-    def [](range : Range)
+    def [](range : Range) : Array(String)
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
     end
 
     # Like `#[](Range)`, but returns `nil` if the range's start is out of range.
-    def []?(range : Range)
+    def []?(range : Range) : Array(String)?
       self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]?
     end
 
     # Returns count or less (if there aren't enough) matches starting at the
     # given start index.
-    def [](start : Int, count : Int)
+    def [](start : Int, count : Int) : Array(String)
       self[start, count]? || raise IndexError.new
     end
 
     # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
-    def []?(start : Int, count : Int)
+    def []?(start : Int, count : Int) : Array(String)?
       raise ArgumentError.new "Negative count: #{count}" if count < 0
       return Array(String).new if start == size
 
@@ -253,7 +253,7 @@ class Regex
     # ```
     # "Crystal".match(/yst/).not_nil!.pre_match # => "Cr"
     # ```
-    def pre_match
+    def pre_match : String
       @string.byte_slice(0, byte_begin(0))
     end
 
@@ -263,7 +263,7 @@ class Regex
     # ```
     # "Crystal".match(/yst/).not_nil!.post_match # => "al"
     # ```
-    def post_match
+    def post_match : String
       @string.byte_slice(byte_end(0))
     end
 
@@ -280,7 +280,7 @@ class Regex
     # match = "Crystal".match(/(Cr)(stal)?/).not_nil!
     # match.captures # => ["Cr", nil]
     # ```
-    def captures
+    def captures : Array(String?)
       name_table = @regex.name_table
 
       caps = [] of String?
@@ -302,7 +302,7 @@ class Regex
     # match = "Crystal".match(/(?<name1>Cr)(?<name2>stal)?/).not_nil!
     # match.named_captures # => {"name1" => "Cr", "name2" => nil}
     # ```
-    def named_captures
+    def named_captures : Hash(String, String?)
       name_table = @regex.name_table
 
       caps = {} of String => String?
@@ -326,7 +326,7 @@ class Regex
     # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
     # match.to_a # => ["Cr", "Cr", nil]
     # ```
-    def to_a
+    def to_a : Array(String?)
       (0...size).map { |i| self[i]? }
     end
 
@@ -341,7 +341,7 @@ class Regex
     # match = "Crystal".match(/(Cr)(?<name1>stal)?/).not_nil!
     # match.to_h # => {0 => "Cr", 1 => "Cr", "name1" => nil}
     # ```
-    def to_h
+    def to_h : Hash(Int32 | String, String?)
       name_table = @regex.name_table
 
       hash = {} of (String | Int32) => String?

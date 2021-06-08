@@ -85,7 +85,7 @@ module SystemError
     #
     # By default it returns the original message unchanged. But that could be
     # customized based on the keyword arguments passed to `from_errno` or `from_winerror`.
-    protected def build_message(message, **opts)
+    protected def build_message(message, **opts) : String
       message
     end
 
