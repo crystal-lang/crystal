@@ -5202,6 +5202,9 @@ module Crystal
         raise "missing typeof argument"
       end
 
+      current_vars = @def_vars.last.dup
+      push_def current_vars
+
       exps = [] of ASTNode
       while @token.type != :")"
         exps << parse_op_assign
@@ -5212,6 +5215,8 @@ module Crystal
           check :")"
         end
       end
+
+      pop_def
 
       end_location = token_end_location
       next_token_skip_space
