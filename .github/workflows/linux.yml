@@ -101,7 +101,7 @@ jobs:
         run: bin/ci with_build_env 'make crystal'
 
       - name: Test
-        run: bin/ci with_build_env 'make std_spec FLAGS="-D force_iouring"'
+        run: bin/ci with_build_env 'make std_spec threads=1 FLAGS="-D force_iouring"'
 
   check_format:
     env:
