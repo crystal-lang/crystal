@@ -9,10 +9,10 @@ class String
   # ```
   # "🧙‍♂️💈".graphemes # => [String::Grapheme::Cluster(@cluster="🧙‍♂️"), String::Grapheme::Cluster(@cluster='💈')]
   # ```
-  def graphemes : Array(Grapheme::Cluster)
-    graphemes = [] of Grapheme::Cluster
-    each_grapheme do |cluster|
-      graphemes << cluster
+  def graphemes : Array(Grapheme)
+    graphemes = [] of Grapheme
+    each_grapheme do |grapheme|
+      graphemes << grapheme
     end
     graphemes
   end
@@ -24,21 +24,26 @@ class String
   #   p! cluster
   # end
   # ```
-  def each_grapheme(& : Grapheme::Cluster -> Nil) : Nil
-    grapheme = Grapheme::Graphemes.new(self)
-    while cluster = grapheme.next
-      yield cluster
+  def each_grapheme(& : Grapheme -> _) : Nil
+    each_grapheme_boundary do |range, last_char|
+      yield Grapheme.new(self, range, last_char)
     end
   end
 
-  # Returns an `Iterator` over each grapheme cluster in the string.
+  def grapheme_size : Int32
+    size = 0
+    each_grapheme_boundary do
+      size += 1
+    end
+    size
+  end
+
+  # Returns an iterator of the grapheme clusters in this string.
   #
   # ```
-  # "🔮👍🏼!".each do |cluster|
-  #   pp cluster
-  # end
+  # "🔮👍🏼!".each_grapheme.to_a # => [String::Grapheme('\u{1f52e}'), String::Grapheme("\u{1F44D}\u{1F3FC}"), String::Grapheme('!')]
   # ```
-  def each_grapheme : Iterator(Grapheme::Cluster)
-    Grapheme::GraphemeIterator.new(Grapheme::Graphemes.new(self))
+  def each_grapheme : Iterator(Grapheme)
+    GraphemeIterator.new(self)
   end
 end

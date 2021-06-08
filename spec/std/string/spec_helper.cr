@@ -1,8 +1,8 @@
 require "spec"
 require "../../support/iterate"
 
-def it_iterates_graphemes(string, graphemes, *, file = __FILE__, line = __LINE__)
+def it_iterates_graphemes(string, graphemes)
   graphemes = graphemes.map { |grapheme| String::Grapheme.new(grapheme) }
 
-  it_iterates string.dump, graphemes, string.each_grapheme, file: file, line: line
+  it_iterates string.dump, graphemes, string.each_grapheme
 end

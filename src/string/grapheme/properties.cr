@@ -4,9 +4,13 @@
 #
 # DO NOT EDIT
 
-module String::Grapheme
-  # The unicode properties.
-  private enum Property
+struct String::Grapheme
+  # :nodoc:
+  #
+  # The Grapheme Cluster Break Property values
+  # http://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Break_Property_Values
+  enum Property
+    Start
     Any
     Prepend
     CR
@@ -23,9 +27,12 @@ module String::Grapheme
     ZWJ
     ExtendedPictographic
 
+    ExtendedPlusZeroWidth
+
     # returns the Unicode property value (see `Codepoints` constants below)
     # of the given code point
-    def self.from(r : Int32)
+    def self.from(char : Char)
+      r = char.ord
       # run a binary search
       f = 0
       t = Grapheme.codepoints.size

@@ -1,207 +1,215 @@
 require "./properties"
 
-module String::Grapheme
-  # Grapheme Cluster correspond to
-  # "user-perceived characters". These characters often consist of multiple
-  # code points (e.g. the "woman kissing woman" emoji consists of 8 code points:
-  # woman + ZWJ + heavy black heart (2 code points) + ZWJ + kiss mark + ZWJ +
-  # woman) and the rules described in Annex #29 must be applied to group those
-  # code points into clusters perceived by the user as one character.
-  struct Cluster
+class String
+  private def each_grapheme_boundary
+    state = Grapheme::Property::Start
+
+    reader = Char::Reader.new(self)
+    last_char = reader.current_char
+    # cache last_property to avoid re-calculation on the following iteration
+    last_property = Grapheme::Property.from(last_char)
+    last_boundary = 0
+
+    while reader.has_next?
+      char = reader.next_char
+      property = Grapheme::Property.from(char)
+      boundary = Grapheme.break?(last_property, property, pointerof(state))
+
+      if boundary
+        index = reader.pos
+        yield last_boundary...index, last_char
+
+        last_boundary = index
+      end
+
+      last_char = char
+      last_property = property
+    end
+  end
+
+  # :nodoc:
+  class GraphemeIterator
+    include Iterator(Grapheme)
+
+    @last_char : Char
+    @last_property : Grapheme::Property
+
+    def initialize(str : String)
+      @reader = Char::Reader.new(str)
+      @state = Grapheme::Property::Start
+      @last_char = @reader.current_char
+      # cache last_property to avoid re-calculation on the following iteration
+      @last_property = Grapheme::Property.from(@last_char)
+      @last_boundary = 0
+    end
+
+    def next
+      return stop unless @reader.has_next?
+
+      while char = @reader.next_char
+        property = Grapheme::Property.from(char)
+        boundary = Grapheme.break?(@last_property, property, pointerof(@state))
+
+        last_char = @last_char
+        @last_char = char
+        @last_property = property
+
+        if boundary
+          index = @reader.pos
+          grapheme = Grapheme.new(@reader.string, @last_boundary...index, last_char)
+          @last_boundary = index
+
+          return grapheme
+        end
+      end
+
+      Grapheme.new(@reader.string, @last_boundary..@reader.string.bytesize, @last_char)
+    end
+  end
+
+  # `Grapheme` represents a Unicode grapheme cluster, which describes the smallest
+  # functional unit of a writing system. This is also called a *user-perceived character*.
+  #
+  # In the latin alphabet, most graphemes consist of a single Unicode codepoint
+  # (equivalent to `Char`). But a grapheme can also consiste of a sequence of codepoints,
+  # which combine into a single unit.
+  #
+  # For example, the string `"e\u0301"` consists of two characters, the latin small letter `e`
+  # and the combining acute accent `´`. Together, they form a single grapheme: `é`.
+  # That same grapheme could alternatively be described in a single codepoint, `\u00E9` (latin small letter e with acute).
+  # But the combinatory possibilities are far bigger than the amount of directly
+  # available codepoints.
+  #
+  # ```
+  # "e\u0301".size # => 2
+  # "é".size       # => 1
+  #
+  # "e\u0301".grapheme_size # => 1
+  # "é".grapheme_size       # => 1
+  # ```
+  #
+  # Instances of this type can be acquired via `String#each_grapheme` or `String#graphemes`.
+  #
+  # The algorithm to determine boundaries between grapheme clusters is specified
+  # in the [Unicode Standard Annex #29](https://www.unicode.org/reports/tr29/tr29-37.html#Grapheme_Cluster_Boundaries),
+  # and implemented in Version Unicode 13.0.0.
+  struct Grapheme
     @cluster : Char | String
 
-    protected def initialize(@cluster)
+    # :nodoc:
+    def self.new(string : String, range : Range(Int32, Int32), char : Char)
+      if char.bytesize == range.size
+        new(char)
+      else
+        new(string.byte_slice(range.begin, range.end - range.begin))
+      end
+    end
+
+    # :nodoc:
+    def initialize(@cluster)
     end
 
     def to_s(io : IO) : Nil
       io << @cluster
     end
-  end
 
-  # Graphemes class iterate over string to identify Unicode extended grapheme clusters,
-  # specified in the Unicode Standard Annex #29.
-  class Graphemes
-    @last_char : Char? = nil
-
-    def initialize(str : String)
-      @reader = Char::Reader.new(str)
-      @state = State::Any
-      @cluster = [] of Char
-      @look_ahead = true
-      move_next # Parse ahead
-    end
-
-    # Returns the identified grapheme cluster or nil if none found.
-    def next : Cluster?
-      return nil unless move_next
-      val = Cluster.new(@cluster.size > 1 ? @cluster.join : @cluster.first)
-      @cluster.clear
-      val
-    end
-
-    # This method identifies the grapheme cluster and returns false if none found
-    # This method must be called before the first cluster is accessed.
-    private def move_next : Bool
-      if (c = @last_char) && @cluster.empty?
-        @cluster << c
-        @last_char = nil
+    def to_s : String
+      case cluster = @cluster
+      in Char
+        cluster.to_s
+      in String
+        cluster
       end
+    end
 
-      while @reader.has_next?
-        value = @reader.current_char
-        @cluster << value
-        @reader.next_char
+    def inspect(io : IO) : Nil
+      io << "String::Grapheme("
+      @cluster.inspect(io)
+      io << ")"
+    end
 
-        next_prop = Property.from(value.ord)
+    # :nodoc:
+    def self.break?(c1 : Char, c2 : Char)
+      break?(Property.from(c1), Property.from(c2))
+    end
 
-        # Find the applicable transition
-        if (transition = @transitions[{@state, next_prop}]?)
-          # We have a specific transition. We'll use it
-          @state = transition[0]
-          boundary = transition[1] == Instruction::Boundary
+    # :nodoc:
+    #
+    # Returns whether there is a grapheme break between boundclasses lbc and tbc.
+    #
+    # Please note that evaluation of GB10 (grapheme breaks between emoji zwj sequences)
+    # and GB 12/13 (regional indicator code points) require knowledge of previous characters
+    # which is not handled by this oberload. This may result in an incorrect break before
+    # an E_Modifier class codepoint and an incorrectly missing break between two
+    # REGIONAL_INDICATOR class code points if such support does not exist in the caller.
+    #
+    # The rules are graphically displayed in a tyble on https://www.unicode.org/Public/13.0.0/ucd/auxiliary/GraphemeBreakTest.html
+    #
+    # The implementation is insipred by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L261
+    def self.break?(lbc : Property, tbc : Property)
+      return true if lbc.start?                                                   # GB1
+      return false if lbc.cr? && tbc.lf?                                          # GB3
+      return true if lbc.cr? || lbc.lf? || lbc.control?                           # GB4
+      return true if tbc.cr? || tbc.lf? || tbc.control?                           # GB5
+      return false if lbc.l? && (tbc.l? || tbc.v? || tbc.lv? || tbc.lvt?)         # GB6
+      return false if (lbc.lv? || lbc.v?) && (tbc.v? || tbc.t?)                   # GB7
+      return false if (lbc.lvt? || lbc.t?) && tbc.t?                              # GB8
+      return false if tbc.extend? || tbc.zwj?                                     # GB9
+      return false if tbc.spacing_mark?                                           # GB9a
+      return false if lbc.prepend?                                                # GB9b
+      return false if lbc.extended_plus_zero_width? && tbc.extended_pictographic? # GB11 (requires additional handling)
+      return false if lbc.regional_indicator? && tbc.regional_indicator?          # GB12/13 (requires additional handling)
+      true                                                                        # GB999
+    end
+
+    # :nodoc:
+    def self.break?(c1 : Char, c2 : Char, state : Pointer(Property))
+      break?(Property.from(c1), Property.from(c2), state)
+    end
+
+    # :nodoc:
+    #
+    # Returns whether there is a grapheme break between boundclasses lbc and tbc.
+    #
+    # Please note that evaluation of GB10 (grapheme breaks between emoji zwj sequences)
+    # and GB 12/13 (regional indicator code points) require knowledge of previous characters
+    # which is accounted for in the state argument.
+    #
+    # The implementation is inspired by https://github.com/JuliaStrings/utf8proc/blob/462093b3924c7491defc67fda4bc7a27baf9b088/utf8proc.c#L291
+    def self.break?(lbc : Property, tbc : Property, state : Pointer(Property))
+      if state
+        if state.value.start?
+          state.value = lbc_override = lbc
         else
-          # No specific transition found. Try the less specific ones.
-          if (trans_any_prop = @transitions[{@state, Property::Any}]?) &&
-             (trans_any_state = @transitions[{State::Any, next_prop}]?)
-            # Both apply. We'll use a mix (see comments for `Transitions`)
-            @state = trans_any_state[0]
-            boundary = trans_any_state[1] == Instruction::Boundary
-            if trans_any_prop[2] < trans_any_state[2]
-              @state = trans_any_prop[0]
-              boundary = trans_any_prop[1] == Instruction::Boundary
-            end
-          elsif trans_any_prop = @transitions[{@state, Property::Any}]?
-            # We only have a spefic state.
-            @state = trans_any_prop[0]
-            boundary = trans_any_prop[1] == Instruction::Boundary
-            # This branch will propbably never be reached because trans_any_state
-            # will always be true given the current transition map. But we keep it here
-            # for future modifications to the transition map where this may not be true anymore.
-          elsif trans_any_state = @transitions[{State::Any, next_prop}]?
-            # we only have a specific property
-            @state = trans_any_state[0]
-            boundary = trans_any_state[1] == Instruction::Boundary
+          lbc_override = state.value
+        end
+
+        break_permitted = break?(lbc_override, tbc)
+
+        # Special support for GB 12/13 made possible by GB999. After two RI
+        # class codepoints we want to force a break. Do this by resetting the
+        # second RI's bound class to UTF8PROC_BOUNDCLASS_OTHER, to force a break
+        # after that character according to GB999 (unless of course such a break is
+        # forbidden by a different rule such as GB9).
+        if state.value == tbc && tbc.regional_indicator?
+          state.value = :any
+          # Special support for GB11 (emoji extend* zwj / emoji)
+        elsif state.value.extended_pictographic?
+          if tbc.extend? # fold EXTEND codepoints into emoji
+            state.value = :extended_pictographic
+          elsif tbc.zwj?
+            state.value = :extended_plus_zero_width # state to record emoji+zwg combo
           else
-            # No known transition. GB999: Any x Any
-            @state = State::Any
-            boundary = true
+            state.value = tbc
           end
+        else
+          state.value = tbc
         end
-        # If we found a cluster boundary, let's stop here. The current cluster will
-        # be the one that just ended.
-        if @look_ahead || boundary
-          unless @cluster.size == 1
-            @last_char = @cluster.delete_at(-1)
-          end
-          @look_ahead = false
-          break
-        end
+
+        break_permitted
+      else
+        break?(lbc, tbc)
       end
-      !@cluster.empty?
-    end
-
-    # Cluster parser states
-    private enum State
-      Any
-      CR
-      ControlLF
-      L
-      LVV
-      LVTT
-      Prepend
-      ExtendedPictographic
-      ExtendedPictographicZWJ
-      RIOdd
-      RIEven
-    end
-
-    # Cluster parser's breaking instructions.
-    private enum Instruction
-      NoBoundary
-      Boundary
-    end
-
-    # Grapheme cluster parser's state transitions. Maps {State, Property} to
-    # {State, Instruction, Rule number}. The breaking instruction always refers to
-    # the boundary between the last and the next code point.
-    #
-    # This Hash is required as follows:
-    #
-    #   1. Find specific state + specific property. Stop if found.
-    #   2. Find specific state + any property.
-    #   3. Find any state + specific property.
-    #   4. If only (2) or (3) (but not both) was found, stop.
-    #   5. If both (2) and (3) were found, use state and breaking instruction from
-    #      the transition with the lower rule number, prefer (3) if rule numbers
-    #      are equal. Stop.
-    #   6. Assume `State::Any` and `Instruction::Boundary`.
-    @transitions : Hash(Tuple(State, Property), Tuple(State, Instruction, Int32)) = {
-      # GB5
-      {State::Any, Property::CR}      => {State::CR, Instruction::Boundary, 50},
-      {State::Any, Property::LF}      => {State::ControlLF, Instruction::Boundary, 50},
-      {State::Any, Property::Control} => {State::ControlLF, Instruction::Boundary, 50},
-
-      # GB4
-      {State::CR, Property::Any}        => {State::Any, Instruction::Boundary, 40},
-      {State::ControlLF, Property::Any} => {State::Any, Instruction::Boundary, 40},
-
-      # GB3.
-      {State::CR, Property::LF} => {State::Any, Instruction::NoBoundary, 30},
-
-      # GB6.
-      {State::Any, Property::L} => {State::L, Instruction::Boundary, 9990},
-      {State::L, Property::L}   => {State::L, Instruction::NoBoundary, 60},
-      {State::L, Property::V}   => {State::LVV, Instruction::NoBoundary, 60},
-      {State::L, Property::LV}  => {State::LVV, Instruction::NoBoundary, 60},
-      {State::L, Property::LVT} => {State::LVTT, Instruction::NoBoundary, 60},
-
-      # GB7.
-      {State::Any, Property::LV} => {State::LVV, Instruction::Boundary, 9990},
-      {State::Any, Property::V}  => {State::LVV, Instruction::Boundary, 9990},
-      {State::LVV, Property::V}  => {State::LVV, Instruction::NoBoundary, 70},
-      {State::LVV, Property::T}  => {State::LVTT, Instruction::NoBoundary, 70},
-
-      # GB8.
-      {State::Any, Property::LVT} => {State::LVTT, Instruction::Boundary, 9990},
-      {State::Any, Property::T}   => {State::LVTT, Instruction::Boundary, 9990},
-      {State::LVTT, Property::T}  => {State::LVTT, Instruction::NoBoundary, 80},
-
-      # GB9.
-      {State::Any, Property::Extend} => {State::Any, Instruction::NoBoundary, 90},
-      {State::Any, Property::ZWJ}    => {State::Any, Instruction::NoBoundary, 90},
-
-      # GB9a.
-      {State::Any, Property::SpacingMark} => {State::Any, Instruction::NoBoundary, 91},
-
-      # GB9b.
-      {State::Any, Property::Prepend} => {State::Prepend, Instruction::Boundary, 9990},
-      {State::Prepend, Property::Any} => {State::Any, Instruction::NoBoundary, 92},
-
-      # GB11.
-      {State::Any, Property::ExtendedPictographic}                     => {State::ExtendedPictographic, Instruction::Boundary, 9990},
-      {State::ExtendedPictographic, Property::Extend}                  => {State::ExtendedPictographic, Instruction::NoBoundary, 110},
-      {State::ExtendedPictographic, Property::ZWJ}                     => {State::ExtendedPictographicZWJ, Instruction::NoBoundary, 110},
-      {State::ExtendedPictographicZWJ, Property::ExtendedPictographic} => {State::ExtendedPictographic, Instruction::NoBoundary, 110},
-
-      # GB12 / GB13.
-      {State::Any, Property::RegionalIndicator}    => {State::RIOdd, Instruction::Boundary, 9990},
-      {State::RIOdd, Property::RegionalIndicator}  => {State::RIEven, Instruction::NoBoundary, 120},
-      {State::RIEven, Property::RegionalIndicator} => {State::RIOdd, Instruction::Boundary, 120},
-    }
-  end
-
-  # :nodoc:
-  class GraphemeIterator
-    include Iterator(Cluster)
-
-    def initialize(@grapheme : Graphemes)
-    end
-
-    def next
-      if val = @grapheme.next
-        return val
-      end
-      stop
     end
   end
 end
