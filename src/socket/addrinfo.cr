@@ -151,6 +151,13 @@ class Socket
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            raise Error.from_errno message, domain: domain
+          end
+        {% end %}
+
         error = {% if flag?(:win32) %}
                   WinError.new(ret.to_u32!)
                 {% else %}
