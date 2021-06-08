@@ -1,35 +1,40 @@
-module Crystal::EventLoop
+abstract class Crystal::EventLoop
+  # Creates an event loop instance
+  # def self.create : Crystal::EventLoop
+
   # Runs the event loop.
-  # def self.run_once : Nil
+  abstract def run_once : Nil
 
   {% unless flag?(:preview_mt) %}
     # Reinitializes the event loop after a fork.
-    # def self.after_fork : Nil
+    abstract def after_fork : Nil
   {% end %}
 
   # Create a new resume event for a fiber.
-  # def self.create_resume_event(fiber : Fiber) : Crystal::Event
+  abstract def create_resume_event(fiber : Fiber) : Crystal::Event
 
   # Creates a timeout_event.
-  # def self.create_timeout_event(fiber) : Crystal::Event
+  abstract def create_timeout_event(fiber) : Crystal::Event
 
   # Creates a write event for a file descriptor.
-  # def self.create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
+  abstract def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
 
   # Creates a read event for a file descriptor.
-  # def self.create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
+  abstract def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event
 end
 
 # :nodoc:
 abstract struct Crystal::Event
   # Frees the event.
-  # def free : Nil
+  abstract def free : Nil
 
   # Adds a new timeout to this event.
-  # def add(time_span : Time::Span?) : Nil
+  abstract def add(time_span : Time::Span?) : Nil
 end
 
 {% if flag?(:unix) %}
+  require "./unix/event_loop_io_uring"
+  require "./unix/event_loop_libevent"
   require "./unix/event_loop"
 {% elsif flag?(:win32) %}
   require "./win32/event_loop_iocp"
