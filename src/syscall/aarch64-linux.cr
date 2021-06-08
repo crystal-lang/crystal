@@ -29,6 +29,7 @@ module Syscall
     EPOLL_PWAIT                  =  22
     DUP                          =  23
     DUP3                         =  24
+    FCNTL                        =  25
     INOTIFY_INIT1                =  26
     INOTIFY_ADD_WATCH            =  27
     INOTIFY_RM_WATCH             =  28
@@ -46,6 +47,10 @@ module Syscall
     MOUNT                        =  40
     PIVOT_ROOT                   =  41
     NFSSERVCTL                   =  42
+    STATFS                       =  43
+    FSTATFS                      =  44
+    TRUNCATE                     =  45
+    FTRUNCATE                    =  46
     FALLOCATE                    =  47
     FACCESSAT                    =  48
     CHDIR                        =  49
@@ -61,6 +66,7 @@ module Syscall
     PIPE2                        =  59
     QUOTACTL                     =  60
     GETDENTS64                   =  61
+    LSEEK                        =  62
     READ                         =  63
     WRITE                        =  64
     READV                        =  65
@@ -69,6 +75,7 @@ module Syscall
     PWRITE64                     =  68
     PREADV                       =  69
     PWRITEV                      =  70
+    SENDFILE                     =  71
     PSELECT6                     =  72
     PPOLL                        =  73
     SIGNALFD4                    =  74
@@ -76,6 +83,8 @@ module Syscall
     SPLICE                       =  76
     TEE                          =  77
     READLINKAT                   =  78
+    FSTATAT                      =  79
+    FSTAT                        =  80
     SYNC                         =  81
     FSYNC                        =  82
     FDATASYNC                    =  83
@@ -218,6 +227,8 @@ module Syscall
     KEYCTL                       = 219
     CLONE                        = 220
     EXECVE                       = 221
+    MMAP                         = 222
+    FADVISE64                    = 223
     SWAPON                       = 224
     SWAPOFF                      = 225
     MPROTECT                     = 226
