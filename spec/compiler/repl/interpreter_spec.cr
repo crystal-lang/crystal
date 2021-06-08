@@ -1221,10 +1221,46 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "does call on instance var that's a struct" do
+    it "does call on instance var that's a struct, from a class" do
       interpret(<<-EXISTING, <<-CODE).should eq(10)
         class Foo
           def initialize
+            @x = 0_i64
+            @y = 0_i64
+            @z = 0_i64
+            @bar = Bar.new(2)
+          end
+
+          def foo
+            @bar.mutate
+            @bar.x
+          end
+        end
+
+        struct Bar
+          def initialize(@x : Int32)
+          end
+
+          def mutate
+            @x = 10
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        Foo.new.foo
+      CODE
+    end
+
+    it "does call on instance var that's a struct, from a struct" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0_i64
+            @y = 0_i64
+            @z = 0_i64
             @bar = Bar.new(2)
           end
 

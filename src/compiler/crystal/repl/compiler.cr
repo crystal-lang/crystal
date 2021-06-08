@@ -604,16 +604,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index, type = lookup_local_var_index_and_type(exp.name)
       pointerof_var(index, node: node)
     when InstanceVar
-      index = scope.index_of_instance_var(exp.name).not_nil!
-      if scope.struct?
-        pointerof_ivar(@context.offset_of(scope, index), node: node)
-      else
-        pointerof_ivar(@context.instance_offset_of(scope, index), node: node)
-      end
+      compile_pointerof_ivar(node, exp.name)
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
     false
+  end
+
+  private def compile_pointerof_ivar(node : ASTNode, name : String)
+    index = scope.index_of_instance_var(name).not_nil!
+    if scope.struct?
+      pointerof_ivar(@context.offset_of(scope, index), node: node)
+    else
+      pointerof_ivar(@context.instance_offset_of(scope, index), node: node)
+    end
   end
 
   def visit(node : Not)
@@ -869,8 +873,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
             end
           end
         when InstanceVar
-          index = scope.index_of_instance_var(obj.name).not_nil!
-          pointerof_ivar(@context.offset_of(scope, index), node: node)
+          compile_pointerof_ivar(obj, obj.name)
         else
           # For a struct, we first put it on the stack
           request_value(obj)
