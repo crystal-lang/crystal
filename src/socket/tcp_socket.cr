@@ -30,13 +30,14 @@ class TCPSocket < IPSocket
       Crystal::System.print_error "e\n"
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
       Crystal::System.print_error "f\n"
-      connect(addrinfo, timeout: connect_timeout) do |error|
+      e = connect(addrinfo, timeout: connect_timeout) do |error|
         Crystal::System.print_error "g\n"
         close
         Crystal::System.print_error "h\n"
         error
       end
       Crystal::System.print_error "i\n"
+      e
     end
     Crystal::System.print_error "j\n"
   end
