@@ -59,6 +59,32 @@ struct Crystal::Repl::Value
   end
 
   def to_s(io : IO)
+    decl = UninitializedVar.new(
+      Var.new("x"),
+      TypeNode.new(@type),
+    )
+    call = Call.new(Var.new("x"), "inspect")
+    exps = Expressions.new([decl, call] of ASTNode)
+
+    begin
+      interpreter = Interpreter.new(@context, meta_vars: MetaVars.new)
+      # TODO: make stack private? Does it matter?
+      interpreter.stack.copy_from(@pointer, @context.inner_sizeof_type(@type))
+
+      value = interpreter.interpret(exps)
+
+      if value.type == @context.program.string
+        value.pointer.as(UInt8**).value.unsafe_as(String).to_s(io)
+      else
+        value.fallback_to_s(io)
+      end
+    rescue ex
+      io.puts "Error while calling inspect on value: #{ex.message}"
+      fallback_to_s(io)
+    end
+  end
+
+  def fallback_to_s(io : IO)
     type = @type
     case type
     when NilType

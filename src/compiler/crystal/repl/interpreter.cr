@@ -52,8 +52,9 @@ class Crystal::Repl::Interpreter
   @pry_max_target_frame : Int32?
 
   getter local_vars : LocalVars
+  getter stack : Pointer(UInt8)
 
-  def initialize(@context : Context)
+  def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
 
     @instructions = [] of Instruction
@@ -63,7 +64,7 @@ class Crystal::Repl::Interpreter
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
     @call_stack = [] of CallFrame
 
-    @main_visitor = MainVisitor.new(program)
+    @main_visitor = MainVisitor.new(program, meta_vars: meta_vars)
     @top_level_visitor = TopLevelVisitor.new(program)
     @cleanup_transformer = CleanupTransformer.new(program)
     @block_level = 0
