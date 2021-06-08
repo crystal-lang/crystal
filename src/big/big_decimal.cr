@@ -339,7 +339,7 @@ struct BigDecimal < Number
     #
     # Where:
     # - `mantissa` and `rem` are both integers
-    # - `10 ** @scale < rem < 10 ** @scale`
+    # - `rem.abs < 10 ** @scale`
     # - if `self` is negative, so are `mantissa` and `rem`
     multiplier = power_ten_to(@scale)
     mantissa, rem = @value.unsafe_truncated_divmod(multiplier)
@@ -350,38 +350,6 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
-  # Rounds `self` to an integer value using rounding *mode*.
-  #
-  # The rounding *mode* controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
-  def round(mode : RoundingMode = :ties_even) : BigDecimal
-    case mode
-    in .to_zero?
-      trunc
-    in .to_positive?
-      ceil
-    in .to_negative?
-      floor
-    in .ties_away?
-      round_away
-    in .ties_even?
-      round_even
-    end
-  end
-
-  # Rounds this number to a given precision.
-  #
-  # Rounds to the specified number of *digits* after the decimal place,
-  # (or before if negative), in base *base*.
-  #
-  # The rounding *mode* controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
-  #
-  # ```
-  # -1763.116.round(2) # => -1763.12
-  # ```
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
     return self if base == 10 && @scale <= digits
 

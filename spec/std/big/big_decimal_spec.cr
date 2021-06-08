@@ -485,17 +485,17 @@ describe BigDecimal do
   describe "#round" do
     describe "rounding modes" do
       it "to_zero" do
-        "-1.5".to_big_d.round(:to_zero).should eq -1.0.to_big_d
-        "-1.0".to_big_d.round(:to_zero).should eq -1.0.to_big_d
-        "-0.9".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "-0.5".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "-0.1".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "0.0".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "0.1".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "0.5".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "0.9".to_big_d.round(:to_zero).should eq 0.0.to_big_d
-        "1.0".to_big_d.round(:to_zero).should eq 1.0.to_big_d
-        "1.5".to_big_d.round(:to_zero).should eq 1.0.to_big_d
+        "-1.5".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "1.0".to_big_d.round(:to_zero).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_zero).should eq "1".to_big_d
 
         "123456789123456789123.0".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
@@ -510,17 +510,17 @@ describe BigDecimal do
       end
 
       it "to_positive" do
-        "-1.5".to_big_d.round(:to_positive).should eq -1.0.to_big_d
-        "-1.0".to_big_d.round(:to_positive).should eq -1.0.to_big_d
-        "-0.9".to_big_d.round(:to_positive).should eq 0.0.to_big_d
-        "-0.5".to_big_d.round(:to_positive).should eq 0.0.to_big_d
-        "-0.1".to_big_d.round(:to_positive).should eq 0.0.to_big_d
-        "0.0".to_big_d.round(:to_positive).should eq 0.0.to_big_d
-        "0.1".to_big_d.round(:to_positive).should eq 1.0.to_big_d
-        "0.5".to_big_d.round(:to_positive).should eq 1.0.to_big_d
-        "0.9".to_big_d.round(:to_positive).should eq 1.0.to_big_d
-        "1.0".to_big_d.round(:to_positive).should eq 1.0.to_big_d
-        "1.5".to_big_d.round(:to_positive).should eq 2.0.to_big_d
+        "-1.5".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.5".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.9".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.0".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_positive).should eq "2".to_big_d
 
         "123456789123456789123.0".to_big_d.round(:to_positive).should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
@@ -535,17 +535,17 @@ describe BigDecimal do
       end
 
       it "to_negative" do
-        "-1.5".to_big_d.round(:to_negative).should eq -2.0.to_big_d
-        "-1.0".to_big_d.round(:to_negative).should eq -1.0.to_big_d
-        "-0.9".to_big_d.round(:to_negative).should eq -1.0.to_big_d
-        "-0.5".to_big_d.round(:to_negative).should eq -1.0.to_big_d
-        "-0.1".to_big_d.round(:to_negative).should eq -1.0.to_big_d
-        "0.0".to_big_d.round(:to_negative).should eq 0.0.to_big_d
-        "0.1".to_big_d.round(:to_negative).should eq 0.0.to_big_d
-        "0.5".to_big_d.round(:to_negative).should eq 0.0.to_big_d
-        "0.9".to_big_d.round(:to_negative).should eq 0.0.to_big_d
-        "1.0".to_big_d.round(:to_negative).should eq 1.0.to_big_d
-        "1.5".to_big_d.round(:to_negative).should eq 1.0.to_big_d
+        "-1.5".to_big_d.round(:to_negative).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "0.0".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "1.0".to_big_d.round(:to_negative).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:to_negative).should eq "1.0".to_big_d
 
         "123456789123456789123.0".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
@@ -560,19 +560,19 @@ describe BigDecimal do
       end
 
       it "ties_even" do
-        "-2.5".to_big_d.round(:ties_even).should eq -2.0.to_big_d
-        "-1.5".to_big_d.round(:ties_even).should eq -2.0.to_big_d
-        "-1.0".to_big_d.round(:ties_even).should eq -1.0.to_big_d
-        "-0.9".to_big_d.round(:ties_even).should eq -1.0.to_big_d
-        "-0.5".to_big_d.round(:ties_even).should eq 0.0.to_big_d
-        "-0.1".to_big_d.round(:ties_even).should eq 0.0.to_big_d
-        "0.0".to_big_d.round(:ties_even).should eq 0.0.to_big_d
-        "0.1".to_big_d.round(:ties_even).should eq 0.0.to_big_d
-        "0.5".to_big_d.round(:ties_even).should eq 0.0.to_big_d
-        "0.9".to_big_d.round(:ties_even).should eq 1.0.to_big_d
-        "1.0".to_big_d.round(:ties_even).should eq 1.0.to_big_d
-        "1.5".to_big_d.round(:ties_even).should eq 2.0.to_big_d
-        "2.5".to_big_d.round(:ties_even).should eq 2.0.to_big_d
+        "-2.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "-0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
 
         "123456789123456789123.0".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
@@ -589,19 +589,19 @@ describe BigDecimal do
       end
 
       it "ties_away" do
-        "-2.5".to_big_d.round(:ties_away).should eq -3.0.to_big_d
-        "-1.5".to_big_d.round(:ties_away).should eq -2.0.to_big_d
-        "-1.0".to_big_d.round(:ties_away).should eq -1.0.to_big_d
-        "-0.9".to_big_d.round(:ties_away).should eq -1.0.to_big_d
-        "-0.5".to_big_d.round(:ties_away).should eq -1.0.to_big_d
-        "-0.1".to_big_d.round(:ties_away).should eq 0.0.to_big_d
-        "0.0".to_big_d.round(:ties_away).should eq 0.0.to_big_d
-        "0.1".to_big_d.round(:ties_away).should eq 0.0.to_big_d
-        "0.5".to_big_d.round(:ties_away).should eq 1.0.to_big_d
-        "0.9".to_big_d.round(:ties_away).should eq 1.0.to_big_d
-        "1.0".to_big_d.round(:ties_away).should eq 1.0.to_big_d
-        "1.5".to_big_d.round(:ties_away).should eq 2.0.to_big_d
-        "2.5".to_big_d.round(:ties_away).should eq 3.0.to_big_d
+        "-2.5".to_big_d.round(:ties_away).should eq "-3.0".to_big_d
+        "-1.5".to_big_d.round(:ties_away).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "0.9".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_away).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_away).should eq "3.0".to_big_d
 
         "123456789123456789123.0".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
@@ -618,19 +618,19 @@ describe BigDecimal do
       end
 
       it "default (=ties_even)" do
-        "-2.5".to_big_d.round.should eq -2.0.to_big_d
-        "-1.5".to_big_d.round.should eq -2.0.to_big_d
-        "-1.0".to_big_d.round.should eq -1.0.to_big_d
-        "-0.9".to_big_d.round.should eq -1.0.to_big_d
-        "-0.5".to_big_d.round.should eq 0.0.to_big_d
-        "-0.1".to_big_d.round.should eq 0.0.to_big_d
-        "0.0".to_big_d.round.should eq 0.0.to_big_d
-        "0.1".to_big_d.round.should eq 0.0.to_big_d
-        "0.5".to_big_d.round.should eq 0.0.to_big_d
-        "0.9".to_big_d.round.should eq 1.0.to_big_d
-        "1.0".to_big_d.round.should eq 1.0.to_big_d
-        "1.5".to_big_d.round.should eq 2.0.to_big_d
-        "2.5".to_big_d.round.should eq 2.0.to_big_d
+        "-2.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round.should eq "0.0".to_big_d
+        "-0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.0".to_big_d.round.should eq "0.0".to_big_d
+        "0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.5".to_big_d.round.should eq "0.0".to_big_d
+        "0.9".to_big_d.round.should eq "1.0".to_big_d
+        "1.0".to_big_d.round.should eq "1.0".to_big_d
+        "1.5".to_big_d.round.should eq "2.0".to_big_d
+        "2.5".to_big_d.round.should eq "2.0".to_big_d
 
         "123456789123456789123.0".to_big_d.round.should eq "123456789123456789123.0".to_big_d
         "123456789123456789123.1".to_big_d.round.should eq "123456789123456789123.0".to_big_d
