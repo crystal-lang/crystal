@@ -62,10 +62,13 @@ class Socket
 
         loop do
           value = yield addrinfo.not_nil!
+          Crystal::System.print_error "k\n"
 
           if value.is_a?(Exception)
+            Crystal::System.print_error "l1\n"
             error = value
           else
+            Crystal::System.print_error "l2\n"
             return value
           end
 
