@@ -294,17 +294,17 @@ struct BigDecimal < Number
     BigDecimal.new(@value ** other, @scale * other)
   end
 
-  # Rounds towards the nearest integer towards positive infinity.
+  # Rounds towards positive infinity.
   def ceil : BigDecimal
     round_impl { |rem| rem > 0 }
   end
 
-  # Rounds towards the nearest integer towards negative infinity.
+  # Rounds towards negative infinity.
   def floor : BigDecimal
     round_impl { |rem| rem < 0 }
   end
 
-  # Rounds towards the nearest integer towards zero.
+  # Rounds towards zero.
   def trunc : BigDecimal
     round_impl { false }
   end
