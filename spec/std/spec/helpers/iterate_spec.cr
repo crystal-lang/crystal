@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 describe Spec::Methods do
   describe ".assert_iterates_yielding" do
