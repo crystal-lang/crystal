@@ -58,4 +58,9 @@ lib LibC
   alias SusecondsT = Long
   alias TimeT = Long
   alias UidT = UInt
+
+  struct IoVec
+    iov_base : Void*
+    iov_len : SizeT
+  end
 end

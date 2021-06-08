@@ -284,10 +284,5 @@ class Crystal::System::IoUring
       property resv2 = StaticArray(UInt32, 3).new(0)
       property ops = StaticArray(IoUringProbeOp, N).new(IoUringProbeOp.new)
     end
-
-    @[Extern]
-    record IOVec,
-      base : UInt8*,
-      len : LibC::SizeT
   end
 end
