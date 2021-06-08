@@ -31,7 +31,7 @@ class Crystal::System::IoUring
 
       probe = Syscall::IoUringProbe(255).new
       ret = Syscall.io_uring_register(fd, Syscall::IoUringRegisterOp::REGISTER_PROBE, pointerof(probe).as(Void*), 255)
-      Syscall.close(fd)
+      LibC.close(fd)
       return if ret < 0
 
       @has_io_uring = true
@@ -110,47 +110,43 @@ class Crystal::System::IoUring
 
     # Since Linux 5.4 both queues can be mapped in a single call to `mmap`.
     if @params.features.single_mmap?
-      mem = Syscall.mmap(Pointer(Void).null, {sq_size, cq_size}.max,
-        Syscall::Prot::READ | Syscall::Prot::WRITE, Syscall::Map::SHARED | Syscall::Map::POPULATE,
+      mem = LibC.mmap(Pointer(Void).null, {sq_size, cq_size}.max,
+        LibC::PROT_READ | LibC::PROT_WRITE, LibC::MAP_SHARED | LibC::MAP_POPULATE,
         @fd, Syscall::IORING_OFF_SQ_RING)
 
-      if mem.address.to_i64! < 0
-        err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate submission and completion queues: #{Errno.new(err)}"
+      if mem == LibC::MAP_FAILED
+        fatal_error "Cannot allocate submission and completion queues: #{Errno.value}"
       end
 
       @completion_queue_mmap = @submission_queue_mmap = mem
     else
-      mem = Syscall.mmap(Pointer(Void).null, sq_size,
-        Syscall::Prot::READ | Syscall::Prot::WRITE, Syscall::Map::SHARED | Syscall::Map::POPULATE,
+      mem = LibC.mmap(Pointer(Void).null, sq_size,
+        LibC::PROT_READ | LibC::PROT_WRITE, LibC::MAP_SHARED | LibC::MAP_POPULATE,
         @fd, Syscall::IORING_OFF_SQ_RING)
 
-      if mem.address.to_i64! < 0
-        err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate submission queue: #{Errno.new(err)}"
+      if mem == LibC::MAP_FAILED
+        fatal_error "Cannot allocate submission queue: #{Errno.value}"
       end
 
       @submission_queue_mmap = mem
 
-      mem = Syscall.mmap(Pointer(Void).null, cq_size,
-        Syscall::Prot::READ | Syscall::Prot::WRITE, Syscall::Map::SHARED | Syscall::Map::POPULATE,
+      mem = LibC.mmap(Pointer(Void).null, cq_size,
+        LibC::PROT_READ | LibC::PROT_WRITE, LibC::MAP_SHARED | LibC::MAP_POPULATE,
         @fd, Syscall::IORING_OFF_CQ_RING)
 
-      if mem.address.to_i64! < 0
-        err = Errno.new(-mem.address.to_i64!.to_i)
-        fatal_error "Cannot allocate completion queue: #{Errno.new(err)}"
+      if mem == LibC::MAP_FAILED
+        fatal_error "Cannot allocate completion queue: #{Errno.value}"
       end
 
       @completion_queue_mmap = mem
     end
 
-    mem = Syscall.mmap(Pointer(Void).null, sq_entries_size,
-      Syscall::Prot::READ | Syscall::Prot::WRITE, Syscall::Map::SHARED | Syscall::Map::POPULATE,
+    mem = LibC.mmap(Pointer(Void).null, sq_entries_size,
+      LibC::PROT_READ | LibC::PROT_WRITE, LibC::MAP_SHARED | LibC::MAP_POPULATE,
       @fd, Syscall::IORING_OFF_SQES)
 
-    if mem.address.to_i64! < 0
-      err = Errno.new(-mem.address.to_i64!.to_i)
-      fatal_error "Cannot allocate submission entries: #{Errno.new(err)}"
+    if mem == LibC::MAP_FAILED
+      fatal_error "Cannot allocate submission entries: #{Errno.value}"
     end
 
     @submission_entries = mem.as(Syscall::IoUringSqe*)
@@ -170,23 +166,23 @@ class Crystal::System::IoUring
     @closed = true
 
     if @submission_queue_mmap && @submission_queue_mmap == @completion_queue_mmap
-      Syscall.munmap(@submission_queue_mmap, {sq_size, cq_size}.max)
+      LibC.munmap(@submission_queue_mmap, {sq_size, cq_size}.max)
     end
 
     if @submission_queue_mmap
-      Syscall.munmap(@submission_queue_mmap, sq_size)
+      LibC.munmap(@submission_queue_mmap, sq_size)
     end
 
     if @completion_queue_mmap
-      Syscall.munmap(@completion_queue_mmap, cq_size)
+      LibC.munmap(@completion_queue_mmap, cq_size)
     end
 
     if @completion_queue_mmap
-      Syscall.munmap(@completion_queue_mmap, sq_entries_size)
+      LibC.munmap(@completion_queue_mmap, sq_entries_size)
     end
 
     if @fd > 0
-      Syscall.close(@fd)
+      LibC.close(@fd)
     end
   end
 

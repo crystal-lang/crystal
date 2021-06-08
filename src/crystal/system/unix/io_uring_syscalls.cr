@@ -4,9 +4,6 @@ require "syscall"
 
 class Crystal::System::IoUring
   module Syscall
-    ::Syscall.def_syscall close, Int32, fd : Int32
-    ::Syscall.def_syscall mmap, Pointer(Void), addr : Void*, length : LibC::SizeT, prot : Prot, flags : Map, fd : Int32, offset : LibC::OffT
-    ::Syscall.def_syscall munmap, Int32, addr : Void*, length : LibC::SizeT
     ::Syscall.def_syscall io_uring_setup, Int32, entries : UInt32, params : IoUringParams*
     ::Syscall.def_syscall io_uring_enter, Int32, fd : Int32, to_submit : UInt32, min_complete : UInt32, flags : IoUringEnterFlags, sig : LibC::SigsetT*, sigsz : LibC::SizeT
     ::Syscall.def_syscall io_uring_register, Int32, fd : Int32, op : IoUringRegisterOp, arg : Void*, nr_args : UInt32
@@ -14,38 +11,6 @@ class Crystal::System::IoUring
     IORING_OFF_SQ_RING = LibC::OffT.new(0)
     IORING_OFF_CQ_RING = LibC::OffT.new(0x8000000)
     IORING_OFF_SQES    = LibC::OffT.new(0x10000000)
-
-    @[Flags]
-    enum Prot
-      READ                   # Page can be read.
-      WRITE                  # Page can be written.
-      EXEC                   # Page can be executed.
-      GROWSDOWN = 0x01000000 # Extend change to start of growsdown vma (mprotect only).
-      GROWSUP   = 0x02000000 # Extend change to start of growsup vma (mprotect only).
-    end
-
-    @[Flags]
-    enum Map
-      SHARED          =     0x01 # Share changes.
-      PRIVATE         =     0x02 # Changes are private.
-      SHARED_VALIDATE =     0x03 # Share changes and valid
-      TYPE            =     0x0f # Mask for type of mapping.
-      FIXED           =     0x10 # Interpret addr exactly.
-      ANONYMOUS       =     0x20 # Don't use a file.
-      HUGE_SHIFT      =     0x1a
-      HUGE_MASK       =     0x3f
-      GROWSDOWN       =  0x00100 # Stack-like segment.
-      DENYWRITE       =  0x00800 # ETXTBSY.
-      EXECUTABLE      =  0x01000 # Mark it as an executable.
-      LOCKED          =  0x02000 # Lock the mapping.
-      NORESERVE       =  0x04000 # Don't check for reservations.
-      POPULATE        =  0x08000 # Populate (prefault) pagetables.
-      NONBLOCK        =  0x10000 # Do not block on IO.
-      STACK           =  0x20000 # Allocation is for a stack.
-      HUGETLB         =  0x40000 # Create huge page mapping.
-      SYNC            =  0x80000 # Perform synchronous page faults for the mapping.
-      FIXED_NOREPLACE = 0x100000 # FIXED but do not unmap underlying mapping.
-    end
 
     @[Flags]
     enum IoUringFlags : UInt32
