@@ -1023,17 +1023,78 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_block = @compiled_block.not_nil!
     block = compiled_block.block
 
-    node.exps.each_with_index do |exp, i|
-      if i < block.args.size
-        request_value(exp)
-        upcast exp, exp.type, block.args[i].type
-      else
-        discard_value(exp)
+    splat_index = block.splat_index
+    if splat_index
+      node.raise "BUG: block with splat not yet supported"
+    end
+
+    if node.exps.any?(Splat)
+      node.raise "BUG: splat inside yield not yet supported"
+    end
+
+    pop_obj = nil
+
+    # Check if tuple unpacking is needed
+    if node.exps.size == 1 &&
+       (tuple_type = node.exps.first.type).is_a?(TupleInstanceType) &&
+       block.args.size > 1
+      # Accept the tuple
+      exp = node.exps.first
+      request_value exp
+
+      offset = aligned_sizeof_type(tuple_type)
+
+      # Now copy tuple members to block args
+      block.args.each_with_index do |arg, i|
+        tuple_element_type = tuple_type.tuple_types[i]
+        inner_size = inner_sizeof_type(tuple_element_type)
+
+        # Copy inner size bytes from the struct.
+        # The interpreter will make sure to align this value.
+        copy_from(offset, inner_size, node: nil)
+
+        upcast exp, tuple_element_type, arg.type
+
+        current_offset =
+          @context.offset_of(tuple_type, i)
+
+        next_offset =
+          if i == tuple_type.tuple_types.size - 1
+            aligned_sizeof_type(tuple_type)
+          else
+            @context.offset_of(tuple_type, i + 1)
+          end
+
+        # Now we have arg.type in front of the tuple so we must skip it
+        offset += aligned_sizeof_type(arg.type)
+        # But we need to access the next tuple member, so we move forward
+        offset -= next_offset - current_offset
+      end
+
+      # We need to discard the tuple value that comes before the unpacked values
+      pop_obj = tuple_type
+    else
+      node.exps.each_with_index do |exp, i|
+        if i < block.args.size
+          request_value(exp)
+          upcast exp, exp.type, block.args[i].type
+        else
+          discard_value(exp)
+        end
       end
     end
 
     call_block compiled_block, node: node
-    pop aligned_sizeof_type(node), node: nil unless @wants_value
+
+    if @wants_value
+      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
+    else
+      if pop_obj
+        pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
+      else
+        pop aligned_sizeof_type(node), node: nil
+      end
+    end
 
     false
   end

@@ -1874,6 +1874,19 @@ describe Crystal::Repl::Interpreter do
         z = exp.to_i32
         CODE
     end
+
+    it "unpacks tuple in block arguments" do
+      interpret(<<-CODE).should eq(6)
+        def foo
+          t = {1, 2, 3}
+          yield t
+        end
+
+        foo do |x, y, z|
+          x + y + z
+        end
+        CODE
+    end
   end
 
   context "named tuple" do
@@ -2477,6 +2490,20 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
   end
+
+  # context "integration" do
+  #   it "does Int32#to_s" do
+  #     interpret(<<-CODE, prelude: "prelude").should eq("123456789")
+  #       123456789.to_s
+  #     CODE
+  #   end
+
+  #   it "does Float64#to_s" do
+  #     interpret(<<-CODE, prelude: "prelude").should eq("123456789.12345")
+  #       123456789.12345.to_s
+  #     CODE
+  #   end
+  # end
 end
 
 private def interpret(string, *, prelude = "primitives")
@@ -2503,6 +2530,7 @@ private def interpret_full(existing_code, string, *, prelude = "primitives")
 
   load_prelude(program, prelude, existing_code)
   interpreter = Crystal::Repl::Interpreter.new(context)
+
   {program, interpreter.interpret(node)}
 end
 

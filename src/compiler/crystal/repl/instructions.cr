@@ -964,6 +964,12 @@ Crystal::Repl::Instructions =
         stack_grow_by(aligned_value_size - value_size)
       end,
     },
+    copy_from: {
+      operands:   [offset : Int32, size : Int32] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       stack_move_from(stack - offset, size),
+    },
     # >>> Tuples (1)
 
     # <<< Symbol (1)
