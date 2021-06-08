@@ -14,7 +14,7 @@ abstract class Crystal::EventLoop
   abstract def create_resume_event(fiber : Fiber) : Crystal::Event
 
   # Creates a timeout_event.
-  abstract def create_timeout_event(fiber) : Crystal::Event
+  abstract def create_timeout_event(fiber : Fiber) : Crystal::Event
 
   # Creates a write event for a file descriptor.
   abstract def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::Event

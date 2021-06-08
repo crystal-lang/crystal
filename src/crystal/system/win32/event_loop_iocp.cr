@@ -42,6 +42,13 @@ class Crystal::IocpEventLoop < Crystal::EventLoop
     Crystal::IocpEvent.new(self, fiber)
   end
 
+  # Create a new timeout event for a fiber.
+  def create_timeout_event(fiber : Fiber) : Crystal::IocpEvent
+    enqueue(fiber)
+
+    Crystal::IocpEvent.new(self, fiber)
+  end
+
   # Creates a write event for a file descriptor.
   def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::IocpEvent
     Crystal::IocpEvent.new(self, Fiber.current)
