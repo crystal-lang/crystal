@@ -5983,7 +5983,7 @@ module Crystal
     end
 
     # Creates a new variable scope with the same variables as the current scope,
-    # and then returns the yield result, resettin the scope afterwards.
+    # and then returns the yield result, resetting the scope afterwards.
     def with_lexical_var_scope
       current_scope = @var_scopes.last.dup
       @var_scopes.push current_scope
