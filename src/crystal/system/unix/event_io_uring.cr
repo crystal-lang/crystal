@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:linux) %}
+
 require "./io_uring"
 
 # :nodoc:

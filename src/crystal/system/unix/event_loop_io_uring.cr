@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:linux) %}
+
 require "./event_io_uring"
 
 # :nodoc:

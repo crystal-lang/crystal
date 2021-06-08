@@ -29,13 +29,13 @@ class Crystal::System::IoUring
       fd = Syscall.io_uring_setup(1, pointerof(params))
       return if fd < 0
 
+      @has_io_uring = true
+      @features = params.features
+
       probe = Syscall::IoUringProbe(255).new
       ret = Syscall.io_uring_register(fd, Syscall::IoUringRegisterOp::REGISTER_PROBE, pointerof(probe).as(Void*), 255)
       LibC.close(fd)
       return if ret < 0
-
-      @has_io_uring = true
-      @features = params.features
 
       {probe.ops_len, 64}.min.times do |i|
         operation = probe.ops[i]
