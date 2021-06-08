@@ -36,7 +36,9 @@ class TCPSocket < IPSocket
         Crystal::System.print_error "h\n"
         error
       end
+      Crystal::System.print_error "i\n"
     end
+    Crystal::System.print_error "j\n"
   end
 
   protected def initialize(family : Family, type : Type, protocol : Protocol)
