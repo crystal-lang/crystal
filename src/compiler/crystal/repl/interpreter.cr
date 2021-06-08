@@ -424,8 +424,9 @@ class Crystal::Repl::Interpreter
     %aligned_return_bytesize = align(%return_bytesize)
 
     (stack + %offset).move_from(stack, %return_bytesize)
-    stack = stack + %offset + %return_bytesize
-    stack_clear(%aligned_return_bytesize - %return_bytesize)
+    stack += %offset + %return_bytesize
+
+    stack_grow_by(%aligned_return_bytesize - %return_bytesize)
   end
 
   private macro leave(size)
