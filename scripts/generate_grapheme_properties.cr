@@ -4,7 +4,6 @@
 
 require "http/client"
 require "ecr"
-require "compiler/crystal/formatter"
 
 record RRange, low : Int32, high : Int32, prop : String
 
@@ -74,6 +73,9 @@ props["ExtendedPictographic"] = parse_emoji(body)
 
 props_data = props.values.flatten.sort! { |a, b| a.low <=> b.low }
 
-output = ECR.render("#{__DIR__}/grapheme_properties.ecr")
-output = Crystal.format(output)
-File.write("#{__DIR__}/../src/string/grapheme/properties.cr", output)
+path = "#{__DIR__}/../src/string/grapheme/properties.cr"
+File.open(path, "w") do |file|
+  ECR.embed "#{__DIR__}/grapheme_properties.ecr", file
+end
+
+`crystal tool format #{path}`
