@@ -154,7 +154,7 @@ class IO::FileDescriptor < IO
   def write_at(bytes : Bytes, offset)
     check_open
     flush
-    unbuffered_write_at(bytes, offset)
+    system_write_at(bytes, offset)
   end
 
   # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)

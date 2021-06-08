@@ -27,7 +27,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  private def unbuffered_write_at(bytes : Bytes, offset)
+  private def system_write_at(bytes : Bytes, offset)
     evented_write(bytes, "Error writing file") do |slice|
       at = offset - (bytes.bytesize - slice.bytesize)
       LibC.pwrite(fd, slice, slice.size, at).tap do |return_code|
