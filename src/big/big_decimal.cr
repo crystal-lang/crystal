@@ -351,7 +351,7 @@ struct BigDecimal < Number
   end
 
   def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
-    return self if base == 10 && @scale <= digits
+    return self if (base == 10 && @scale <= digits) || zero?
 
     # the following is same as the overload in `Number` except `base.to_f`
     # becomes `.to_big_d`
