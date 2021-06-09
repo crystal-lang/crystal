@@ -508,6 +508,7 @@ Crystal::Repl::Instructions =
     # >>> Math (36)
 
     # <<< Comparisons (18)
+    # TODO: maybe cmp below i32 is not needed after all if we always operate on or above i32
     cmp_i8: {
       operands:   [] of Nil,
       pop_values: [a : Int8, b : Int8],

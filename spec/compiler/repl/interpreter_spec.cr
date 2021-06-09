@@ -267,6 +267,10 @@ describe Crystal::Repl::Interpreter do
       interpret("2.5 * 2.3").should eq(2.5 * 2.3)
     end
 
+    it "interprets Int8 + Int8" do
+      interpret("1_i8 + 2_i8").should eq(3)
+    end
+
     it "discards math" do
       interpret("1 + 2; 4").should eq(4)
     end

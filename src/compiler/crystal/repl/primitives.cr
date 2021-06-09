@@ -739,7 +739,17 @@ class Crystal::Repl::Compiler
   end
 
   private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode)
-    if left_type.signed? == right_type.signed?
+    if left_type.rank <= 5 && right_type.rank <= 5
+      # If both fit in an Int32
+      # Convert them to Int32 first, then do the comparison
+      left_node ? left_node.accept(self) : put_self(node: node)
+      primitive_unchecked_convert(left_node || right_node, left_type.kind, :i32) if left_type.rank < 5
+
+      right_node.accept self
+      primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
+
+      :i32
+    elsif left_type.signed? == right_type.signed?
       if left_type.rank == right_type.rank
         left_node ? left_node.accept(self) : put_self(node: node)
         right_node.accept self
@@ -755,16 +765,6 @@ class Crystal::Repl::Compiler
         primitive_unchecked_convert right_node, right_type.kind, left_type.kind
         left_type.kind
       end
-    elsif left_type.rank <= 5 && right_type.rank <= 5
-      # If both fit in an Int32
-      # Convert them to Int32 first, then do the comparison
-      left_node ? left_node.accept(self) : put_self(node: node)
-      primitive_unchecked_convert(left_node || right_node, left_type.kind, :i32) if left_type.rank < 5
-
-      right_node.accept self
-      primitive_unchecked_convert(right_node, right_type.kind, :i32) if right_type.rank < 5
-
-      :i32
     elsif left_type.rank <= 7 && right_type.rank <= 7
       # If both fit in an Int64
       # Convert them to Int64 first, then do the comparison
