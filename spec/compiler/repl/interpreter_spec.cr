@@ -2351,6 +2351,18 @@ describe Crystal::Repl::Interpreter do
         y
       CODE
     end
+
+    it "casts from reference to nilable reference" do
+      interpret(<<-CODE).should eq("hello")
+        x = "hello"
+        y = x.as(String | Nil)
+        if y
+          y
+        else
+          "bye"
+        end
+      CODE
+    end
   end
 
   context "constants" do

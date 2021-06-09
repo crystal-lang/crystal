@@ -649,20 +649,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     obj_type = node.obj.type
     to_type = node.to.type.virtual_type
 
+    # TODO: check the proper conditions in codegen
     if obj_type == to_type
       # TODO: not tested
       nop
-    elsif obj_type.is_a?(PointerInstanceType) && to_type.is_a?(PointerInstanceType)
+    elsif obj_type.pointer? && to_type.pointer?
       # Cast between pointers is nop
       nop
-    elsif obj_type.is_a?(PointerInstanceType) && to_type.reference_like?
+    elsif obj_type.pointer? && to_type.reference_like?
       # Cast from pointer to reference is nop
       nop
     elsif obj_type.reference_like? && to_type.is_a?(PointerInstanceType)
       # Cast from reference to pointer is nop
       nop
+    elsif node.upcast?
+      upcast node, obj_type, to_type
     else
-      node.raise "BUG: missing interpret Cast from #{obj_type} to #{to_type}"
+      node.raise "BUG: missing interpret Cast from #{obj_type} to #{to_type} (#{obj_type.class} to #{to_type.class})"
     end
 
     false
