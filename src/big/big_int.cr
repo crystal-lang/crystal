@@ -344,6 +344,35 @@ struct BigInt < Int
     {the_q, the_r}
   end
 
+  def divisible_by?(number : BigInt) : Bool
+    LibGMP.divisible_p(self, number) != 0
+  end
+
+  def divisible_by?(number : LibGMP::ULong) : Bool
+    LibGMP.divisible_ui_p(self, number) != 0
+  end
+
+  def divisible_by?(number : Int) : Bool
+    if 0 <= number <= LibGMP::ULong::MAX
+      LibGMP.divisible_ui_p(self, number) != 0
+    elsif LibGMP::Long::MIN < number < 0
+      LibGMP.divisible_ui_p(self, number.abs) != 0
+    else
+      divisible_by?(number.to_big_i)
+    end
+  end
+
+  # :nodoc:
+  # returns `{reduced, count}` such that `self % (number ** count) == 0`,
+  # `self % (number ** (count + 1)) != 0`, and `reduced == self / (number ** count)`
+  def factor_by(number : Int) : {BigInt, LibGMP::ULong}
+    return {self, LibGMP::ULong.zero} unless divisible_by?(number)
+
+    reduced = BigInt.new
+    count = LibGMP.remove(reduced, self, number.to_big_i)
+    {reduced, count}
+  end
+
   def ~ : BigInt
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end

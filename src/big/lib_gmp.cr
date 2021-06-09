@@ -77,6 +77,9 @@ lib LibGMP
   fun tdiv_qr = __gmpz_tdiv_qr(q : MPZ*, r : MPZ*, n : MPZ*, d : MPZ*)
   fun tdiv_qr_ui = __gmpz_tdiv_qr_ui(q : MPZ*, r : MPZ*, n : MPZ*, d : ULong) : ULong
 
+  fun divisible_p = __gmpz_divisible_p(n : MPZ*, d : MPZ*) : Int
+  fun divisible_ui_p = __gmpz_divisible_ui_p(n : MPZ*, d : ULong) : Int
+
   fun neg = __gmpz_neg(rop : MPZ*, op : MPZ*)
   fun abs = __gmpz_abs(rop : MPZ*, op : MPZ*)
 
@@ -116,6 +119,7 @@ lib LibGMP
   fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong) : ULong
   fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+  fun remove = __gmpz_remove(rop : MPZ*, op : MPZ*, f : MPZ*) : BitcntT
 
   # MPQ
   struct MPQ
