@@ -502,6 +502,8 @@ module Crystal
         end
       when "kind"
         SymbolLiteral.new(kind.to_s)
+      when "to_number"
+        MacroId.new(to_number.to_s)
       else
         super
       end
