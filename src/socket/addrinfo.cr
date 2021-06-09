@@ -73,7 +73,7 @@ class Socket
             if error.is_a?(Socket::ConnectError)
               raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
             else
-              Crystal::System.print_error "k2\n"
+              Crystal::System.print_error ""
               raise error if error
             end
           end
