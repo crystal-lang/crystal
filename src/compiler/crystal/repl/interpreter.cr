@@ -129,13 +129,19 @@ class Crystal::Repl::Interpreter
     # Don't declare local variables again if we are in the middle of pry
     unless compiled_def
       @main_visitor.meta_vars.each do |name, meta_var|
+        meta_var_type = meta_var.type?
+
+        # A meta var might end up without a type if it's assigned a value
+        # in a branch that's never executed/typed, and never read afterwards
+        next unless meta_var_type
+
         existing_type = @local_vars.type?(name, 0)
         if existing_type
           if existing_type != meta_var.type
             raise "BUG: can't change type of local variable #{name} from #{existing_type} to #{meta_var.type} yet"
           end
         else
-          @local_vars.declare(name, meta_var.type)
+          @local_vars.declare(name, meta_var_type)
         end
       end
     end

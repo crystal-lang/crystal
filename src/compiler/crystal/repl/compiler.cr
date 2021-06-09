@@ -364,7 +364,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         # Declare local variables for the constant initializer
         initializer.meta_vars.each do |name, var|
-          compiled_def.local_vars.declare(name, var.type)
+          var_type = var.type?
+          next unless var_type
+
+          compiled_def.local_vars.declare(name, var_type)
         end
 
         value = initializer.node
@@ -579,7 +582,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
           # Declare local variables for the constant initializer
           fake_def.vars.try &.each do |name, var|
-            compiled_def.local_vars.declare(name, var.type)
+            var_type = var.type?
+            next unless var_type
+
+            compiled_def.local_vars.declare(name, var_type)
           end
 
           value = const.value
@@ -792,7 +798,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Declare local variables for the newly compiled function
     target_def.vars.try &.each do |name, var|
-      compiled_def.local_vars.declare(name, var.type)
+      var_type = var.type?
+      next unless var_type
+
+      compiled_def.local_vars.declare(name, var_type)
     end
 
     compiler = Compiler.new(@context, compiled_def)
@@ -821,9 +830,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     begin
       block.vars.try &.each do |name, var|
+        var_type = var.type?
+        next unless var_type
+
         next if var.context != block
 
-        @local_vars.declare(name, var.type)
+        @local_vars.declare(name, var_type)
       end
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
@@ -983,7 +995,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Declare local variables for the newly compiled function
     target_def.vars.try &.each do |name, var|
-      compiled_def.local_vars.declare(name, var.type)
+      var_type = var.type?
+      next unless var_type
+
+      compiled_def.local_vars.declare(name, var_type)
     end
 
     compiler = Compiler.new(@context, compiled_def)

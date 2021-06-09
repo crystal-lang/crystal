@@ -101,6 +101,27 @@ describe Crystal::Repl::Interpreter do
         a
         CODE
     end
+
+    it "doesn't declare variable with no type" do
+      interpret(<<-CODE).should eq(nil)
+      x = nil
+      if x
+        y = x
+      end
+      CODE
+    end
+
+    it "doesn't declare variable with no type inside method" do
+      interpret(<<-CODE).should eq(nil)
+        def foo(x)
+          if x
+            y = x
+          end
+        end
+
+        foo(nil)
+      CODE
+    end
   end
 
   context "conversion" do
