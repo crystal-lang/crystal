@@ -39,6 +39,12 @@ module Crystal
     end
   end
 
+  class EnumType
+    def ffi_type
+      base_type.ffi_type
+    end
+  end
+
   class PointerInstanceType
     def ffi_type
       FFI::Type.pointer
