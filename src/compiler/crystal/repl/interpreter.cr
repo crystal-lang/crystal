@@ -406,13 +406,14 @@ class Crystal::Repl::Interpreter
 
     # Assume C calls don't have more than 100 arguments
     # TODO: for speed, maybe compute these offsets and sizes back in the Compiler
+    # TODO: use the stack for this?
     %pointers = uninitialized StaticArray(Pointer(Void), 100)
     %offset = 0
     %i = %target_def.args.size - 1
     %target_def.args.reverse_each do |arg|
       %arg_bytesize = aligned_sizeof_type(arg.type)
       %pointers[%i] = (stack - %offset - %arg_bytesize).as(Void*)
-      %offset -= %arg_bytesize
+      %offset += %arg_bytesize
       %i -= 1
     end
     %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
@@ -420,8 +421,8 @@ class Crystal::Repl::Interpreter
     %return_bytesize = inner_sizeof_type(%target_def.type)
     %aligned_return_bytesize = align(%return_bytesize)
 
-    (stack + %offset).move_from(stack, %return_bytesize)
-    stack += %offset + %return_bytesize
+    (stack - %offset).move_from(stack, %return_bytesize)
+    stack = stack - %offset + %return_bytesize
 
     stack_grow_by(%aligned_return_bytesize - %return_bytesize)
   end

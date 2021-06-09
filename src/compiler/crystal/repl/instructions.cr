@@ -981,14 +981,42 @@ Crystal::Repl::Instructions =
     },
     # >>> Symbol (1)
 
-    # <<< Symbol (1)
+    # <<< Proc (1)
     proc_call: {
       operands:   [] of Nil,
       pop_values: [compiled_def : CompiledDef, closure_data : Pointer(Void)] of Nil,
       push:       true,
       code:       call(compiled_def),
     },
-    # >>> Symbol (1)
+    # >>> Proc (1)
+
+    # <<< Atomic (1)
+    load_atomic: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [ptr : Pointer(UInt8), ordering : Symbol, volatile : Bool],
+      push:       false,
+      code:       begin
+        # TODO: don't hardcode ordering and volatile
+        # TODO: not tested
+        case element_size
+        when 1
+          i8 = Atomic::Ops.load(ptr, :sequentially_consistent, true)
+          stack_push(i8)
+        when 2
+          i16 = Atomic::Ops.load(ptr.as(Int16*), :sequentially_consistent, true)
+          stack_push(i16)
+        when 4
+          i32 = Atomic::Ops.load(ptr.as(Int32*), :sequentially_consistent, true)
+          stack_push(i32)
+        when 8
+          i64 = Atomic::Ops.load(ptr.as(Int32*), :sequentially_consistent, true)
+          stack_push(i64)
+        else
+          raise "BUG: unhandled element size for load_atomic instruction: #{element_size}"
+        end
+      end,
+    },
+    # >>> Proc (1)
 
     # <<< Overrides (6)
     repl_call_stack_unwind: {

@@ -913,6 +913,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.named_args.try &.each &.value.accept(self)
   end
 
+  def visit(node : Out)
+    case exp = node.exp
+    when Var
+      index, type = lookup_local_var_index_and_type(exp.name)
+      pointerof_var(index, node: node)
+    when InstanceVar
+      node.raise "BUG: missing interpret out with instance variable"
+    when Underscore
+      node.raise "BUG: missing interpret out with underscore"
+      # Nothing to do
+    else
+      node.raise "BUG: unexpected out exp: #{exp}"
+    end
+
+    false
+  end
+
   def visit(node : ProcLiteral)
     is_closure = node.def.closure?
     if is_closure

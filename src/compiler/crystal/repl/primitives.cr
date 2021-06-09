@@ -156,6 +156,14 @@ class Crystal::Repl::Compiler
       proc_call(node: node)
 
       pop(aligned_sizeof_type(node.type), node: nil) unless @wants_value
+    when "load_atomic"
+      node.args.each { |arg| request_value(arg) }
+
+      pointer_instance_type = node.args.first.type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      element_size = inner_sizeof_type(element_type)
+
+      load_atomic(element_size, node: node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
