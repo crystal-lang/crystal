@@ -90,10 +90,7 @@ class Socket < IO
   # Tries to connect to a remote address. Yields an `IO::TimeoutError` or an
   # `Socket::ConnectError` error if the connection failed.
   def connect(addr, timeout = nil, &)
-    e = system_connect(addr, timeout) { |error| yield error }
-
-    Crystal::System.print_error e.to_s
-    e
+    system_connect(addr, timeout) { |error| yield error }
   end
 
   # Binds the socket to a local address.

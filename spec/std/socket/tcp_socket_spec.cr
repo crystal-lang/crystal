@@ -29,12 +29,9 @@ describe TCPSocket do
       end
 
       it "raises when connection is refused" do
-        Crystal::System.print_error "a\n"
         port = unused_local_port
-        Crystal::System.print_error "b\n"
 
         expect_raises(Socket::ConnectError, "Error connecting to '#{address}:#{port}'") do
-          Crystal::System.print_error "c\n"
           TCPSocket.new(address, port)
         end
       end

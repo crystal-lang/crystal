@@ -25,21 +25,13 @@ class TCPSocket < IPSocket
   #
   # Note that `dns_timeout` is currently ignored.
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    Crystal::System.print_error "d\n"
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-      Crystal::System.print_error "e\n"
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
-      Crystal::System.print_error "f\n"
-      e = connect(addrinfo, timeout: connect_timeout) do |error|
-        Crystal::System.print_error "g\n"
+      connect(addrinfo, timeout: connect_timeout) do |error|
         close
-        Crystal::System.print_error "h\n"
         error
       end
-      Crystal::System.print_error "i\n"
-      e
     end
-    Crystal::System.print_error "j\n"
   end
 
   protected def initialize(family : Family, type : Type, protocol : Protocol)
