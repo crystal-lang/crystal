@@ -164,6 +164,19 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       load_atomic(element_size, node: node)
+    when "external_var_get"
+      return unless @wants_value
+
+      lib_type = node.obj.not_nil!.type.as(LibType)
+      external = node.target_def.as(External)
+
+      fn = @context.c_function(lib_type, external.real_name)
+
+      # Put the symbol address, which is a pointer
+      put_u64 fn.address, node: node
+
+      # Read from the pointer
+      pointer_get(inner_sizeof_type(node), node: node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
