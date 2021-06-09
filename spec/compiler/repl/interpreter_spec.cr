@@ -1051,6 +1051,49 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "does is_a? from NilableType to GenericClassInstanceType (true)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(1)
+        class Foo(T)
+          def initialize(@x : T)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        EXISTING
+        a = Foo.new(1) || nil
+        if a.is_a?(Foo)
+          a.x
+        else
+          2
+        end
+        CODE
+    end
+
+    it "does is_a? from NilableType to GenericClassInstanceType (false)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo(T)
+          def initialize(@x : T)
+          end
+
+          def x
+            @x
+          end
+        end
+
+        EXISTING
+        a = 1 == 1 ? nil : Foo.new(1)
+        if a.is_a?(Foo)
+          a.x
+        else
+          z = a
+          2
+        end
+        CODE
+    end
   end
 
   context "types" do

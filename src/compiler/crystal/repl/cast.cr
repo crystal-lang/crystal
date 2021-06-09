@@ -105,7 +105,7 @@ class Crystal::Repl::Compiler
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
-  private def downcast_distinct(node : ASTNode, from : NilableType, to : NonGenericClassType)
+  private def downcast_distinct(node : ASTNode, from : NilableType, to : NonGenericClassType | GenericClassInstanceType)
     # Nothing to do
   end
 
