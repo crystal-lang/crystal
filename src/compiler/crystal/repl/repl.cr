@@ -29,6 +29,11 @@ class Crystal::Repl
           @buffer + line
         end
 
+      if new_buffer.blank?
+        @line_number += 1
+        next
+      end
+
       parser = Parser.new(
         new_buffer,
         string_pool: @program.string_pool,
@@ -64,6 +69,7 @@ class Crystal::Repl
 
       begin
         value = @interpreter.interpret(node)
+        print "=> "
         puts value
       rescue ex : Crystal::CodeError
         @nest = 0
