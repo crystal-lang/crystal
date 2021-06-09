@@ -161,7 +161,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int)
+  def +(other : Int) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +177,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int)
+  def -(other : Int) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +185,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int)
+  def *(other : Int) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -338,7 +338,7 @@ struct BigDecimal < Number
   end
 
   # Converts to `BigInt`. Truncates anything on the right side of the decimal point.
-  def to_big_i
+  def to_big_i : BigInt
     trunc.value
   end
 
@@ -351,37 +351,37 @@ struct BigDecimal < Number
     self
   end
 
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self.value, BigDecimal::TEN ** self.scale)
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i64
+  def to_i64 : Int64
     to_big_i.to_i64
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i32
+  def to_i32 : Int32
     to_big_i.to_i32
   end
 
   # Converts to `Int16`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i16
+  def to_i16 : Int16
     to_big_i.to_i16
   end
 
   # Converts to `Int8`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i8
+  def to_i8 : Int8
     to_big_i.to_i8
   end
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_i
+  def to_i : Int32
     to_i32
   end
 
@@ -399,7 +399,7 @@ struct BigDecimal < Number
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # In case of overflow a wrapping is performed.
-  def to_i32!
+  def to_i32! : Int32
     to_big_i.to_i32!
   end
 
@@ -411,7 +411,7 @@ struct BigDecimal < Number
 
   # Converts to `Int32`. Truncates anything on the right side of the decimal point.
   # In case of overflow a wrapping is performed.
-  def to_i!
+  def to_i! : Int32
     to_i32!
   end
 
@@ -426,31 +426,31 @@ struct BigDecimal < Number
 
   # Converts to `UInt64`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u64
+  def to_u64 : UInt64
     to_big_u.to_u64
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u32
+  def to_u32 : UInt32
     to_big_u.to_u32
   end
 
   # Converts to `UInt16`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u16
+  def to_u16 : UInt16
     to_big_u.to_u16
   end
 
   # Converts to `UInt8`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u8
+  def to_u8 : UInt8
     to_big_u.to_u8
   end
 
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point.
   # Raises `OverflowError` in case of overflow.
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
@@ -471,7 +471,7 @@ struct BigDecimal < Number
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
-  def to_u32!
+  def to_u32! : UInt32
     to_big_u!.to_u32!
   end
 
@@ -485,25 +485,25 @@ struct BigDecimal < Number
   # Converts to `UInt32`. Truncates anything on the right side of the decimal point,
   # converting negative to positive.
   # In case of overflow a wrapping is performed.
-  def to_u!
+  def to_u! : UInt32
     to_u32!
   end
 
   # Converts to `Float64`.
   # Raises `OverflowError` in case of overflow.
-  def to_f64
+  def to_f64 : Float64
     to_s.to_f64
   end
 
   # Converts to `Float32`.
   # Raises `OverflowError` in case of overflow.
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
   # Converts to `Float64`.
   # Raises `OverflowError` in case of overflow.
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
@@ -515,13 +515,13 @@ struct BigDecimal < Number
 
   # Converts to `Float64`.
   # In case of overflow a wrapping is performed.
-  def to_f64!
+  def to_f64! : Float64
     to_f64
   end
 
   # Converts to `Float64`.
   # In case of overflow a wrapping is performed.
-  def to_f!
+  def to_f! : Float64
     to_f64!
   end
 
@@ -572,7 +572,7 @@ struct Int
   # require "big"
   # 12123415151254124124.to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 
@@ -580,15 +580,15 @@ struct Int
     to_big_d <=> other
   end
 
-  def +(other : BigDecimal)
+  def +(other : BigDecimal) : BigDecimal
     other + self
   end
 
-  def -(other : BigDecimal)
+  def -(other : BigDecimal) : BigDecimal
     to_big_d - other
   end
 
-  def *(other : BigDecimal)
+  def *(other : BigDecimal) : BigDecimal
     other * self
   end
 end
@@ -608,7 +608,7 @@ struct Float
   # require "big"
   # 1212341515125412412412421.0.to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end
@@ -621,7 +621,7 @@ struct BigRational
   end
 
   # Converts `self` to `BigDecimal`.
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end
@@ -632,7 +632,7 @@ class String
   # require "big"
   # "1212341515125412412412421".to_big_d
   # ```
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 end
