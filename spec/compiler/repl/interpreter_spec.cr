@@ -2527,6 +2527,21 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "exception handling" do
+    it "does ensure without rescue/raise" do
+      interpret(<<-CODE).should eq(12)
+        x = 1
+        y =
+          begin
+            10
+          ensure
+            x = 2
+          end
+        x + y
+      CODE
+    end
+  end
+
   # context "integration" do
   #   it "does Int32#to_s" do
   #     interpret(<<-CODE, prelude: "prelude").should eq("123456789")

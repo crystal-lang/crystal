@@ -215,6 +215,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : ExceptionHandler)
+    # TODO: rescues, else, etc.
+
+    node.body.accept self
+
+    if node_ensure = node.ensure
+      discard_value node_ensure
+    end
+
+    false
+  end
+
   def visit(node : Expressions)
     old_wants_value = @wants_value
 
