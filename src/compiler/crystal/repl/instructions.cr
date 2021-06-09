@@ -1009,10 +1009,35 @@ Crystal::Repl::Instructions =
           i32 = Atomic::Ops.load(ptr.as(Int32*), :sequentially_consistent, true)
           stack_push(i32)
         when 8
-          i64 = Atomic::Ops.load(ptr.as(Int32*), :sequentially_consistent, true)
+          i64 = Atomic::Ops.load(ptr.as(Int64*), :sequentially_consistent, true)
           stack_push(i64)
         else
           raise "BUG: unhandled element size for load_atomic instruction: #{element_size}"
+        end
+      end,
+    },
+    store_atomic: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [ptr : Pointer(UInt8), value : UInt64, ordering : Symbol, volatile : Bool],
+      push:       false,
+      code:       begin
+        # TODO: don't hardcode ordering and volatile
+        # TODO: not tested
+        case element_size
+        when 1
+          i8 = Atomic::Ops.store(ptr, value.to_u8!, :sequentially_consistent, true)
+          stack_push(i8)
+        when 2
+          i16 = Atomic::Ops.store(ptr.as(Int16*), value.to_i16!, :sequentially_consistent, true)
+          stack_push(i16)
+        when 4
+          i32 = Atomic::Ops.store(ptr.as(Int32*), value.to_i32!, :sequentially_consistent, true)
+          stack_push(i32)
+        when 8
+          i64 = Atomic::Ops.store(ptr.as(Int64*), value.to_i64!, :sequentially_consistent, true)
+          stack_push(i64)
+        else
+          raise "BUG: unhandled element size for store_atomic instruction: #{element_size}"
         end
       end,
     },

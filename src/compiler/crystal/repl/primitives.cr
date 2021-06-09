@@ -164,6 +164,14 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       load_atomic(element_size, node: node)
+    when "store_atomic"
+      node.args.each { |arg| request_value(arg) }
+
+      pointer_instance_type = node.args.first.type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      element_size = inner_sizeof_type(element_type)
+
+      store_atomic(element_size, node: node)
     when "external_var_get"
       return unless @wants_value
 
