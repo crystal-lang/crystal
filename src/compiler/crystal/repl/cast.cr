@@ -109,6 +109,11 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
+  private def downcast_distinct(node : ASTNode, from : NilableType, to : NilType)
+    # TODO: pointer sizes
+    pop 8, node: nil
+  end
+
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
     # Nothing to do
   end

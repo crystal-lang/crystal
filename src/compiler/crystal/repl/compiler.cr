@@ -540,10 +540,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     filtered_type = obj_type.filter_by(const_type).not_nil!
 
-    if obj_type.is_a?(MixedUnionType)
+    case obj_type
+    when MixedUnionType
       union_is_a(aligned_sizeof_type(obj_type), type_id(filtered_type), node: node)
+    when NilableType
+      if filtered_type.nil_type?
+        pointer_is_null(node: node)
+      else
+        pointer_is_not_null(node: node)
+      end
     else
-      node.raise "BUG: missing IsA for #{obj_type}"
+      node.raise "BUG: missing IsA from #{obj_type} to #{const_type} (#{obj_type.class} to #{const_type.class})"
     end
 
     false

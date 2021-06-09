@@ -676,6 +676,13 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       pointer + (offset * element_size),
     },
+    pointer_is_null: {
+      operands:   [] of Nil,
+      pop_values: [pointer : Pointer(UInt8)],
+      push:       true,
+      code:       pointer.null?,
+    },
+    # TODO: remove this and use logical_not
     pointer_is_not_null: {
       operands:   [] of Nil,
       pop_values: [pointer : Pointer(UInt8)],

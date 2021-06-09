@@ -1028,6 +1028,31 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "is_a?" do
+    it "does is_a? from NilableType to NonGenericClassType (true)" do
+      interpret(<<-CODE).should eq("hello")
+        a = "hello" || nil
+        if a.is_a?(String)
+          a
+        else
+          "bar"
+        end
+        CODE
+    end
+
+    it "does is_a? from NilableType to NonGenericClassType (false)" do
+      interpret(<<-CODE).should eq("bar")
+        a = 1 == 1 ? nil : "hello"
+        if a.is_a?(String)
+          a
+        else
+          z = a
+          "bar"
+        end
+        CODE
+    end
+  end
+
   context "types" do
     it "interprets path to type" do
       program, repl_value = interpret_full("String")
