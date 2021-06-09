@@ -15,8 +15,10 @@ end
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number
-  ZERO                       = BigInt.new(0)
-  TEN                        = BigInt.new(10)
+  private TWO  = BigInt.new(2)
+  private FIVE = BigInt.new(5)
+  private TEN  = BigInt.new(10)
+
   DEFAULT_MAX_DIV_ITERATIONS = 100_u64
 
   include Comparable(Int)
@@ -196,7 +198,7 @@ struct BigDecimal < Number
   Number.expand_div [BigInt, BigFloat], BigDecimal
   Number.expand_div [BigRational], BigRational
 
-  # Divides `self` with another `BigDecimal`, with a optionally configurable *max_div_iterations*, which
+  # Divides `self` with another `BigDecimal`, with an optionally configurable *max_div_iterations*, which
   # defines a maximum number of iterations in case the division is not exact.
   #
   # ```
@@ -205,31 +207,57 @@ struct BigDecimal < Number
   # ```
   def div(other : BigDecimal, max_div_iterations = DEFAULT_MAX_DIV_ITERATIONS) : BigDecimal
     check_division_by_zero other
+    return self if @value.zero?
     other.factor_powers_of_ten
+
+    # ```
+    #    (a / 10 ** b) / (c / 10 ** d)
+    # == (a / c) / 10 ** (b - d)
+    # == (a * 10 ** scale_add // c) / 10 ** (b - d + scale_add)
+    # ```
+    #
+    # We want to find the minimum `scale_add` such that:
+    #
+    # - `b - d + scale_add >= 0`
+    # - `a * 10 ** scale_add % c == 0`
+    #
+    # If this is not possible, we let the returned number's scale be
+    # `{b - d, 0}.max + max_div_iterations`.
 
     numerator, denominator = @value, other.@value
     scale = if @scale >= other.scale
               @scale - other.scale
             else
-              numerator *= TEN ** (other.scale - @scale)
+              numerator *= power_ten_to(other.scale - @scale)
               0
             end
 
+    # Attempt division first; if `a % c == 0`, we're done.
     quotient, remainder = numerator.divmod(denominator)
-    if remainder == ZERO
+    if remainder.zero?
       return BigDecimal.new(normalize_quotient(other, quotient), scale)
     end
 
-    remainder = remainder * TEN
-    i = 0
-    while remainder != ZERO && i < max_div_iterations
-      inner_quotient, inner_remainder = remainder.divmod(denominator)
-      quotient = quotient * TEN + inner_quotient
-      remainder = inner_remainder * TEN
-      i += 1
+    # `c == denominator_reduced * 2 ** denominator_exp2 * 5 ** denominator_exp5`
+    denominator_reduced, denominator_exp2 = denominator.factor_by(TWO)
+    denominator_reduced, denominator_exp5 = denominator_reduced.factor_by(FIVE)
+
+    if denominator_reduced != 1
+      # If `c` has any prime factor other than 2 or 5, then division will always
+      # be inexact; use *max_div_iterations*.
+      scale_add = max_div_iterations.to_u64
+    else
+      # `a = ... * 10 ** numerator_exp10`
+      # For `a * 10 ** scale_add` to be divisible by `c`, it must be the case
+      # `numerator_exp10 + scale_add` is greater than `denominator_exp2` and
+      # `denominator_exp5`
+      _, numerator_exp10 = remainder.factor_by(TEN)
+      scale_add = {denominator_exp2, denominator_exp5}.max - numerator_exp10
+      scale_add = max_div_iterations.to_u64 if scale_add > max_div_iterations
     end
 
-    BigDecimal.new(normalize_quotient(other, quotient), scale + i)
+    quotient = numerator * power_ten_to(scale_add) // denominator
+    BigDecimal.new(normalize_quotient(other, quotient), scale + scale_add)
   end
 
   def <=>(other : BigDecimal) : Int32
@@ -352,7 +380,7 @@ struct BigDecimal < Number
   end
 
   def to_big_r : BigRational
-    BigRational.new(self.value, BigDecimal::TEN ** self.scale)
+    BigRational.new(@value, power_ten_to(@scale))
   end
 
   # Converts to `Int64`. Truncates anything on the right side of the decimal point.
@@ -554,12 +582,15 @@ struct BigDecimal < Number
   # Factors out any extra powers of ten in the internal representation.
   # For instance, value=100 scale=2 => value=1 scale=0
   protected def factor_powers_of_ten
-    while @scale > 0
-      quotient, remainder = value.divmod(TEN)
-      break if remainder != 0
-
-      @value = quotient
-      @scale = @scale - 1
+    if @scale > 0
+      reduced, exp = value.factor_by(TEN)
+      if exp <= @scale
+        @value = reduced
+        @scale -= exp
+      else
+        @value //= power_ten_to(@scale)
+        @scale = 0
+      end
     end
   end
 end
