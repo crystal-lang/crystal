@@ -240,12 +240,32 @@ struct BigDecimal < Number
 
     # `c == denominator_reduced * 2 ** denominator_exp2 * 5 ** denominator_exp5`
     denominator_reduced, denominator_exp2 = denominator.factor_by(TWO)
-    denominator_reduced, denominator_exp5 = denominator_reduced.factor_by(FIVE)
+
+    # Heuristic: for low powers of 5 we perform the divisions ourselves, since
+    # `BigInt#factor_by` can be slower
+    case denominator_reduced
+    when 1
+      denominator_exp5 = 0_u64
+    when 5
+      denominator_reduced = denominator_reduced // FIVE
+      denominator_exp5 = 1_u64
+    when 25
+      denominator_reduced = denominator_reduced // FIVE // FIVE
+      denominator_exp5 = 2_u64
+    else
+      denominator_reduced, denominator_exp5 = denominator_reduced.factor_by(FIVE)
+    end
 
     if denominator_reduced != 1
       # If `c` has any prime factor other than 2 or 5, then division will always
       # be inexact; use *max_div_iterations*.
       scale_add = max_div_iterations.to_u64
+    elsif denominator_exp2 <= 1 && denominator_exp5 <= 1
+      # Heuristic: if `denominator` is one of 2, 5, or 10, then `scale_add` must
+      # be 1 because `remainder` can never be divisible by 10. Thus we could
+      # skip the `factor_by` and `power_ten_to` calls here.
+      quotient = numerator * TEN // denominator
+      return BigDecimal.new(normalize_quotient(other, quotient), scale + 1)
     else
       # `a = ... * 10 ** numerator_exp10`
       # For `a * 10 ** scale_add` to be divisible by `c`, it must be the case
