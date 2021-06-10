@@ -308,20 +308,20 @@ describe BigDecimal do
   end
 
   it "converts to string" do
-    BigDecimal.new.to_s.should eq "0"
-    BigDecimal.new(0).to_s.should eq "0"
-    BigDecimal.new(1).to_s.should eq "1"
-    BigDecimal.new(-1).to_s.should eq "-1"
+    BigDecimal.new.to_s.should eq "0.0"
+    BigDecimal.new(0).to_s.should eq "0.0"
+    BigDecimal.new(1).to_s.should eq "1.0"
+    BigDecimal.new(-1).to_s.should eq "-1.0"
     BigDecimal.new("-0.35").to_s.should eq "-0.35"
     BigDecimal.new("-.35").to_s.should eq "-0.35"
     BigDecimal.new("0.01").to_s.should eq "0.01"
     BigDecimal.new("-0.01").to_s.should eq "-0.01"
     BigDecimal.new("0.00123").to_s.should eq "0.00123"
     BigDecimal.new("-0.00123").to_s.should eq "-0.00123"
-    BigDecimal.new("1.0").to_s.should eq "1"
-    BigDecimal.new("-1.0").to_s.should eq "-1"
-    BigDecimal.new("1.000").to_s.should eq "1"
-    BigDecimal.new("-1.000").to_s.should eq "-1"
+    BigDecimal.new("1.0").to_s.should eq "1.0"
+    BigDecimal.new("-1.0").to_s.should eq "-1.0"
+    BigDecimal.new("1.000").to_s.should eq "1.0"
+    BigDecimal.new("-1.000").to_s.should eq "-1.0"
     BigDecimal.new("1.0001").to_s.should eq "1.0001"
     BigDecimal.new("-1.0001").to_s.should eq "-1.0001"
 
@@ -335,6 +335,17 @@ describe BigDecimal do
 
     BigDecimal.new(1, 2).to_s.should eq "0.01"
     BigDecimal.new(100, 4).to_s.should eq "0.01"
+
+    "12345678901234567".to_big_d.to_s.should eq "1.2345678901234567e+16"
+    "1234567890123456789".to_big_d.to_s.should eq "1.234567890123456789e+18"
+
+    BigDecimal.new(1_000_000_000_000_000_i64, 0).to_s.should eq "1.0e+15"
+    BigDecimal.new(100_000_000_000_000_i64, 0).to_s.should eq "100000000000000.0"
+    BigDecimal.new(1, 4).to_s.should eq "0.0001"
+    BigDecimal.new(1, 5).to_s.should eq "1.0e-5"
+
+    "1.23e45".to_big_d.to_s.should eq "1.23e+45"
+    "1e-234".to_big_d.to_s.should eq "1.0e-234"
   end
 
   it "converts to other number types" do
