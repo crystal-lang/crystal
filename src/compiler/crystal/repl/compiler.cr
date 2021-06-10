@@ -630,6 +630,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointerof_var(index, node: node)
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
+    when ClassVar
+      index = class_var_index(exp)
+      pointerof_class_var(index, node: node)
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end

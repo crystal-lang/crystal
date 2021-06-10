@@ -815,7 +815,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Jumps (3)
 
-    # <<< Pointerof (2)
+    # <<< Pointerof (3)
     pointerof_var: {
       operands:   [index : Int32],
       pop_values: [] of Nil,
@@ -828,7 +828,13 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       get_ivar_pointer(offset),
     },
-    # >>> Pointerof (2)
+    pointerof_class_var: {
+      operands:   [index : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       get_class_var_pointer(index),
+    },
+    # >>> Pointerof (3)
 
     # <<< Calls (5)
     call: {

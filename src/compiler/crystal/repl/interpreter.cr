@@ -556,6 +556,18 @@ class Crystal::Repl::Interpreter
     stack_move_to(@context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
   end
 
+  private macro get_class_var_pointer(index)
+    # TODO: we need to run the class var initialization!
+    %initialized = @context.class_vars_memory[{{index}}]
+    if %initialized == 0_u8 && @context.class_vars.index_to_compiled_def?({{index}})
+      # TODO: this is missing a pending spec that's failing for some reason
+      raise "BUG: missing initializing class var before getting a pointer to it!"
+    end
+
+    @context.class_vars_memory[{{index}}] = 1_u8
+    @context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED
+  end
+
   private macro pry
     @pry = true
   end
