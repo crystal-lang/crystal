@@ -248,17 +248,6 @@ describe "File" do
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
     end
-
-    it "creates a symbolic link", focus: true do
-      with_tempfile("sylink-dir") do |symlink_dir|
-        target = Path[symlink_dir, "target"]
-        link = Path[symlink_dir, "link"]
-        Dir.mkdir_p(target)
-        File.symlink(target, link)
-        File.symlink?(link).should be_true
-        File.same?(target, link, follow_symlinks: true).should be_true
-      end
-    end
   end
 
   describe "symlink?" do
