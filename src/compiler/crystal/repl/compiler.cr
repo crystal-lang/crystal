@@ -1038,7 +1038,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         @context.program.nil_type
       end
 
-    if compiling_block = @compiling_block
+    if target_while = @while
+      target_while = @while.not_nil!
+
+      upcast node, exp_type, target_while.type
+
+      jump 0, node: nil
+      @while_breaks.not_nil! << patch_location
+    elsif compiling_block = @compiling_block
       block = compiling_block.block
       target_def = compiling_block.target_def
 
@@ -1048,12 +1055,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       break_block aligned_sizeof_type(final_type), node: node
     else
-      target_while = @while.not_nil!
-
-      upcast node, exp_type, target_while.type
-
-      jump 0, node: nil
-      @while_breaks.not_nil! << patch_location
+      node.raise "BUG: break without target while or block"
     end
 
     false
@@ -1062,7 +1064,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Next)
     exp = node.exp
 
-    if compiling_block = @compiling_block
+    if @while
+      if exp
+        discard_value(exp)
+      else
+        put_nil node: node
+      end
+
+      jump 0, node: nil
+      @while_nexts.not_nil! << patch_location
+    elsif compiling_block = @compiling_block
       exp_type =
         if exp
           request_value(exp)
@@ -1075,14 +1086,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node, exp_type, compiling_block.block.type
       leave aligned_sizeof_type(compiling_block.block.type), node: node
     else
-      if exp
-        discard_value(exp)
-      else
-        put_nil node: node
-      end
-
-      jump 0, node: nil
-      @while_nexts.not_nil! << patch_location
+      node.raise "BUG: next without target while or block"
     end
 
     false

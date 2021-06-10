@@ -665,6 +665,24 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "interprets break inside while inside block" do
+      interpret(<<-CODE).should eq(3)
+        def foo
+          yield
+          20
+        end
+
+        a = 0
+        foo do
+          while a < 10
+            a += 1
+            break if a == 3
+          end
+        end
+        a
+        CODE
+    end
+
     it "interprets break with value inside while (through break)" do
       interpret(<<-CODE).should eq(8)
         a = 0
@@ -697,6 +715,28 @@ describe Crystal::Repl::Interpreter do
           next if 3 <= a <= 7
 
           x += a
+        end
+        x
+        CODE
+    end
+
+    it "interprets next inside while inside block" do
+      interpret(<<-CODE).should eq(1 + 2 + 8 + 9 + 10)
+        def foo
+          yield
+          10
+        end
+
+        a = 0
+        x = 0
+        foo do
+          while a < 10
+            a += 1
+
+            next if 3 <= a <= 7
+
+            x += a
+          end
         end
         x
         CODE
