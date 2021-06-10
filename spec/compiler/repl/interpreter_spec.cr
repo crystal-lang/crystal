@@ -2647,6 +2647,55 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "extern" do
+    it "interprets primitive struct_or_union_set and get (struct)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(30)
+          lib LibFoo
+            struct Foo
+              x : Int32
+              y : Int32
+            end
+          end
+        EXISTING
+          foo = LibFoo::Foo.new
+          foo.x = 10
+          foo.y = 20
+          foo.x + foo.y
+        CODE
+    end
+
+    it "discards primitive struct_or_union_set and get (struct)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+          lib LibFoo
+            struct Foo
+              x : Int32
+              y : Int32
+            end
+          end
+        EXISTING
+          foo = LibFoo::Foo.new
+          foo.y = 10
+        CODE
+    end
+
+    it "discards primitive struct_or_union_set because it's a copy" do
+      interpret(<<-EXISTING, <<-CODE).should eq(10)
+          lib LibFoo
+            struct Foo
+              x : Int32
+              y : Int32
+            end
+          end
+
+          def copy
+            LibFoo::Foo.new
+          end
+        EXISTING
+          copy.y = 10
+        CODE
+    end
+  end
+
   # context "integration" do
   #   it "does Int32#to_s" do
   #     interpret(<<-CODE, prelude: "prelude").should eq("123456789")

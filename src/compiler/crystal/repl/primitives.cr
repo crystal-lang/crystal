@@ -185,6 +185,48 @@ class Crystal::Repl::Compiler
 
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
+    when "struct_or_union_set"
+      obj = obj.not_nil!
+      arg = node.args.first
+
+      case obj
+      when Var, InstanceVar, ClassVar
+        # all good
+      else
+        # we'll need to accept obj, but at that pointer modifying
+        # the struct will be pointless, so we just ignore setting
+        # a value altogether.
+        discard_value(obj)
+        arg.accept self
+        return
+      end
+
+      type = obj.type.as(NonGenericClassType)
+      if type.extern_union?
+        node.raise "BUG: missing struct_or_union_set for unions"
+      end
+
+      ivar_name = '@' + node.name.rchop # remove the '=' suffix
+      ivar = type.lookup_instance_var(ivar_name)
+      ivar_offset = ivar_offset(type, ivar_name)
+      ivar_size = inner_sizeof_type(type.lookup_instance_var(ivar_name))
+
+      # pointer_set needs first arg, then obj
+      request_value(arg)
+      dup(aligned_sizeof_type(arg), node: nil) if @wants_value
+
+      upcast arg, arg.type, ivar.type
+
+      # With this we get a pointer to the struct
+      compile_struct_call_receiver(obj, obj.type)
+
+      # Shift the pointer to the offset, if needed
+      if ivar_offset > 0
+        put_i64 1, node: nil
+        pointer_add(ivar_offset, node: node)
+      end
+
+      pointer_set(inner_sizeof_type(ivar.type), node: node)
     when "repl_call_stack_unwind"
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"

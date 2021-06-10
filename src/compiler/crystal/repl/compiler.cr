@@ -878,50 +878,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     obj = node.obj
     if obj
       if obj.type.passed_by_value?
-        case obj
-        when Var
-          if obj.name == "self"
-            self_type = @def.not_nil!.vars.not_nil!["self"].type
-            if self_type == target_def.owner
-              put_self(node: obj)
-            else
-              # It might happen that self's type was narrowed down,
-              # so we need to accept it regularly and downcast it.
-              request_value(obj)
-
-              # Then take a pointer to it (this is self inside the method)
-              put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
-
-              # We must remember to later pop the struct that's still on the stack
-              pop_obj = obj
-            end
-          else
-            ptr_index, var_type = lookup_local_var_index_and_type(obj.name)
-            if obj.type == var_type
-              pointerof_var(ptr_index, node: obj)
-            elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
-              # Get pointer of var
-              pointerof_var(ptr_index, node: obj)
-
-              # Add 8 to it, to reach the union value
-              put_i64 8_i64, node: nil
-              pointer_add 1_i64, node: nil
-            else
-              node.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type}"
-            end
-          end
-        when InstanceVar
-          compile_pointerof_ivar(obj, obj.name)
-        else
-          # For a struct, we first put it on the stack
-          request_value(obj)
-
-          # Then take a pointer to it (this is self inside the method)
-          put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
-
-          # We must remember to later pop the struct that's still on the stack
-          pop_obj = obj
-        end
+        pop_obj = compile_struct_call_receiver(obj, target_def.owner)
       else
         request_value(obj)
       end
@@ -932,6 +889,57 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.args.each { |a| request_value(a) }
     node.named_args.try &.each { |n| request_value(n) }
+
+    pop_obj
+  end
+
+  private def compile_struct_call_receiver(obj : ASTNode, owner : Type)
+    case obj
+    when Var
+      if obj.name == "self"
+        self_type = @def.not_nil!.vars.not_nil!["self"].type
+        if self_type == owner
+          put_self(node: obj)
+        else
+          # It might happen that self's type was narrowed down,
+          # so we need to accept it regularly and downcast it.
+          request_value(obj)
+
+          # Then take a pointer to it (this is self inside the method)
+          put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
+
+          # We must remember to later pop the struct that's still on the stack
+          pop_obj = obj
+        end
+      else
+        ptr_index, var_type = lookup_local_var_index_and_type(obj.name)
+        if obj.type == var_type
+          pointerof_var(ptr_index, node: obj)
+        elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
+          # Get pointer of var
+          pointerof_var(ptr_index, node: obj)
+
+          # Add 8 to it, to reach the union value
+          put_i64 8_i64, node: nil
+          pointer_add 1_i64, node: nil
+        else
+          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type}"
+        end
+      end
+    when InstanceVar
+      compile_pointerof_ivar(obj, obj.name)
+    when ClassVar
+      obj.raise "BUG: missing class var call receiver"
+    else
+      # For a struct, we first put it on the stack
+      request_value(obj)
+
+      # Then take a pointer to it (this is self inside the method)
+      put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
+
+      # We must remember to later pop the struct that's still on the stack
+      pop_obj = obj
+    end
 
     pop_obj
   end
