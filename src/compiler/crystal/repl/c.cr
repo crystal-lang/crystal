@@ -75,6 +75,14 @@ module Crystal
       typedef.ffi_type
     end
   end
+
+  class NonGenericClassType
+    def ffi_type
+      FFI::Type.struct(all_instance_vars.map do |name, var|
+        var.type.ffi_type
+      end)
+    end
+  end
 end
 
 struct Crystal::Repl::Value

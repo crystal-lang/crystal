@@ -9,7 +9,7 @@ module FFI
         abi,
         args.size,
         return_type,
-        args.to_unsafe.as(Pointer(LibFFI::Type*)),
+        args.map(&.to_unsafe),
       )
 
       unless status.ok?
@@ -29,7 +29,7 @@ module FFI
         fixed_args,
         total_args,
         return_type,
-        args.to_unsafe.as(Pointer(LibFFI::Type*)),
+        args.map(&.to_unsafe),
       )
 
       unless status.ok?

@@ -14,7 +14,7 @@ lib LibFFI
   struct Type
     size : LibC::SizeT
     alignment : UInt16
-    type : UInt16
+    type : FFI::TypeEnum
     elements : Type**
   end
 

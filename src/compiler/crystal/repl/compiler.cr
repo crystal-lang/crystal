@@ -755,11 +755,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args_ffi_types = [] of FFI::Type
 
     node.args.each do |arg|
-      request_value(arg)
+      if arg.is_a?(NilLiteral)
+        # Nil is used to mean Pointer.null
+        put_i64 0, node: arg
+      else
+        request_value(arg)
+      end
       # TODO: upcast?
 
-      args_bytesizes << aligned_sizeof_type(arg)
-      args_ffi_types << arg.type.ffi_type
+      # TODO: this out handling is bad. Why is out's type not a pointer already?
+      case arg
+      when NilLiteral
+        args_bytesizes << sizeof(Pointer(Void))
+        args_ffi_types << FFI::Type.pointer
+      when Out
+        args_bytesizes << sizeof(Pointer(Void))
+        args_ffi_types << FFI::Type.pointer
+      else
+        args_bytesizes << aligned_sizeof_type(arg)
+        args_ffi_types << arg.type.ffi_type
+      end
     end
 
     if node.named_args

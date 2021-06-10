@@ -2,7 +2,10 @@ require "./ffi"
 
 module FFI
   struct Type
-    def initialize(@type : LibFFI::Type*)
+    def initialize(@type : LibFFI::Type*, @elements : Array(Type)? = nil)
+      # TODO: we store @elements here to avoid the GC,
+      # maybe that should be stored somewhere else.
+      # But maybe libffi already dups these?
     end
 
     def to_unsafe
@@ -55,6 +58,27 @@ module FFI
 
     def self.pointer
       new(pointerof(LibFFI.ffi_type_pointer))
+    end
+
+    def self.struct(elements : Array(Type))
+      elements_ptr = Pointer(LibFFI::Type*).malloc(elements.size + 1)
+      elements.each_with_index do |element, i|
+        elements_ptr[i] = element.to_unsafe
+      end
+      elements_ptr[elements.size] = Pointer(LibFFI::Type).null
+
+      pointer = Pointer(LibFFI::Type).malloc(1)
+      pointer.value = LibFFI::Type.new(
+        type: FFI::TypeEnum::STRUCT,
+        elements: elements_ptr,
+      )
+      new(pointer, elements)
+    end
+
+    def inspect(io : IO)
+      io << "FFI::Type("
+      io << @type.value
+      io << ")"
     end
   end
 end
