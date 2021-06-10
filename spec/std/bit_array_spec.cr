@@ -9,7 +9,7 @@ private def from_int(size : Int32, int : Int)
 end
 
 private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LINE__)
-  bit_count = (ba.size - 1) // 32 + 1
+  bit_count = 32 * ((ba.size - 1) // 32 + 1)
   (ba.size...bit_count).each do |index|
     ba.unsafe_fetch(index).should be_false, file: file, line: line
   end
