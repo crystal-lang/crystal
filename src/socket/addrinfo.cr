@@ -67,10 +67,7 @@ class Socket
                 raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
               else
                 {% if flag?(:win32) %}
-                  message = ""
                   buffer = StaticArray(UInt8, 512).new(0_u8)
-                  len = LibC.snprintf(buffer, buffer.size, message)
-                  LibC._write 2, buffer, len
                 {% end %}
 
                 raise value
