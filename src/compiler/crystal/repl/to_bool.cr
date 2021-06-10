@@ -27,6 +27,11 @@ class Crystal::Repl::Compiler
     union_to_bool aligned_sizeof_type(type), node: nil
   end
 
+  private def value_to_bool(node : ASTNode, type : GenericClassInstanceType)
+    pop aligned_sizeof_type(type), node: nil
+    put_true node: nil
+  end
+
   private def value_to_bool(node : ASTNode, type : Type)
     node.raise "BUG: missing value_to_bool for #{type} (#{type.class})"
   end

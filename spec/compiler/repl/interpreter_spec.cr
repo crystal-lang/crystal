@@ -544,6 +544,16 @@ describe Crystal::Repl::Interpreter do
         !a
         CODE
     end
+
+    it "interprets not for generic class instance type" do
+      interpret(<<-EXISTING, <<-CODE).should eq(false)
+        class Foo(T)
+        end
+        EXISTING
+        foo = Foo(Int32).new
+        !foo
+        CODE
+    end
   end
 
   context "control flow" do
@@ -1231,6 +1241,12 @@ describe Crystal::Repl::Interpreter do
 
     it "discards crystal_type_id" do
       interpret("nil.crystal_type_id; 1").should eq(1)
+    end
+  end
+
+  context "sizeof" do
+    it "interprets sizeof typeof" do
+      interpret("sizeof(typeof(1))").should eq(4)
     end
   end
 

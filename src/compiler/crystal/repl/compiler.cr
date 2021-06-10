@@ -566,6 +566,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : SizeOf)
+    return false unless @wants_value
+
+    put_i32 inner_sizeof_type(node.exp), node: node
+
+    false
+  end
+
   def visit(node : Path)
     return false unless @wants_value
 
