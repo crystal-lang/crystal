@@ -8,7 +8,7 @@ class Crystal::Repl::Context
   getter! constants : Constants
   getter! class_vars : ClassVars
   getter lib_functions : Hash(External, LibFunction)
-  getter decompile, trace, stats
+  getter decompile, decompile_defs, trace, stats
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
   getter multidispatchs : Hash(MultidispatchKey, Def)
@@ -16,7 +16,7 @@ class Crystal::Repl::Context
   property constants_memory : Pointer(UInt8)
   property class_vars_memory : Pointer(UInt8)
 
-  def initialize(@program : Program, @decompile : Bool, @trace : Bool, @stats : Bool)
+  def initialize(@program : Program, @decompile : Bool, @decompile_defs : Bool, @trace : Bool, @stats : Bool)
     @gc_references = [] of Void*
 
     @defs = {} of Def => CompiledDef

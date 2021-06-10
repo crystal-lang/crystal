@@ -54,6 +54,8 @@ class Crystal::Repl::Interpreter
   getter local_vars : LocalVars
   getter stack : Pointer(UInt8)
 
+  property decompile = true
+
   def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
 
@@ -158,7 +160,7 @@ class Crystal::Repl::Interpreter
     @instructions = compiler.instructions
     @nodes = compiler.nodes
 
-    if @context.decompile
+    if @decompile && @context.decompile
       if compiled_def
         puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
       else
@@ -409,17 +411,17 @@ class Crystal::Repl::Interpreter
     %target_def = lib_function.def
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
+    %args_bytesizes = lib_function.args_bytesizes
 
     # Assume C calls don't have more than 100 arguments
-    # TODO: for speed, maybe compute these offsets and sizes back in the Compiler
     # TODO: use the stack for this?
     %pointers = uninitialized StaticArray(Pointer(Void), 100)
     %offset = 0
-    %i = %target_def.args.size - 1
-    %target_def.args.reverse_each do |arg|
-      %arg_bytesize = aligned_sizeof_type(arg.type)
-      %pointers[%i] = (stack - %offset - %arg_bytesize).as(Void*)
-      %offset += %arg_bytesize
+
+    %i = %args_bytesizes.size - 1
+    %args_bytesizes.reverse_each do |arg_bytesize|
+      %pointers[%i] = (stack - %offset - arg_bytesize).as(Void*)
+      %offset += arg_bytesize
       %i -= 1
     end
     %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
@@ -702,6 +704,18 @@ class Crystal::Repl::Interpreter
           match = lib_m.lookup_first_def("#{function_name}_f#{bits}", false)
           match.body = Primitive.new("repl_#{function_name}_f#{bits}") if match
         end
+      end
+    end
+
+    match = program.lookup_first_def("caller", false)
+    match.body = Primitive.new("repl_caller") if match
+
+    crystal = program.types["Crystal"]?
+    if crystal
+      scheduler = crystal.types["Scheduler"]?
+      if scheduler
+        match = scheduler.metaclass.lookup_first_def("reschedule", false)
+        match.body = Primitive.new("repl_crystal_scheduler_reschedule") if match
       end
     end
   end

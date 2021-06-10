@@ -376,7 +376,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         compiler = Compiler.new(@context, compiled_def)
         compiler.compile(value)
 
-        if @context.decompile
+        if @context.decompile_defs
           puts "=== #{def_name} ==="
           puts Disassembler.disassemble(@context, compiled_def)
           puts "=== #{def_name} ==="
@@ -602,7 +602,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           compiler = Compiler.new(@context, compiled_def)
           compiler.compile(value)
 
-          if @context.decompile
+          if @context.decompile_defs
             puts "=== #{const} ==="
             puts Disassembler.disassemble(@context, compiled_def)
             puts "=== #{const} ==="
@@ -751,18 +751,47 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target_def = node.target_def
     external = target_def.as(External)
 
-    # TODO: named args
-    node.args.each { |arg| request_value(arg) }
+    args_bytesizes = [] of Int32
+    args_ffi_types = [] of FFI::Type
 
-    lib_function = @context.lib_functions[external] ||= LibFunction.new(
-      def: external,
-      symbol: @context.c_function(obj_type, external.real_name),
-      call_interface: FFI::CallInterface.new(
-        abi: FFI::ABI::DEFAULT,
-        args: external.args.map(&.type.ffi_type),
-        return_type: external.type.ffi_type,
+    node.args.each do |arg|
+      request_value(arg)
+      # TODO: upcast?
+
+      args_bytesizes << aligned_sizeof_type(arg)
+      args_ffi_types << arg.type.ffi_type
+    end
+
+    if node.named_args
+      node.raise "BUG: missing lib call with named args"
+    end
+
+    if external.varargs?
+      lib_function = LibFunction.new(
+        def: external,
+        symbol: @context.c_function(obj_type, external.real_name),
+        call_interface: FFI::CallInterface.variadic(
+          abi: FFI::ABI::DEFAULT,
+          args: args_ffi_types,
+          return_type: external.type.ffi_type,
+          fixed_args: external.args.size,
+          total_args: node.args.size,
+        ),
+        args_bytesizes: args_bytesizes,
       )
-    )
+      @context.add_gc_reference(lib_function)
+    else
+      lib_function = @context.lib_functions[external] ||= LibFunction.new(
+        def: external,
+        symbol: @context.c_function(obj_type, external.real_name),
+        call_interface: FFI::CallInterface.new(
+          abi: FFI::ABI::DEFAULT,
+          args: args_ffi_types,
+          return_type: external.type.ffi_type,
+        ),
+        args_bytesizes: args_bytesizes,
+      )
+    end
 
     lib_call(lib_function, node: node)
 
@@ -824,7 +853,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "compiling #{node}", inner: ex
     end
 
-    if @context.decompile
+    if @context.decompile_defs
       puts "=== #{target_def.owner}##{target_def.name} ==="
       puts compiled_def.local_vars
       puts Disassembler.disassemble(@context, compiled_def)
@@ -870,7 +899,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.block_level = block_level + 1
       compiler.compile_block(block, target_def)
 
-      if @context.decompile
+      if @context.decompile_defs
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
         puts Disassembler.disassemble(@context, compiled_block.instructions, compiled_block.nodes, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
@@ -933,8 +962,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           # Add 8 to it, to reach the union value
           put_i64 8_i64, node: nil
           pointer_add 1_i64, node: nil
+        elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
+          pointerof_var(ptr_index, node: obj)
         else
-          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type}"
+          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
         end
       end
     when InstanceVar

@@ -1004,7 +1004,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Proc (1)
 
-    # <<< Atomic (1)
+    # <<< Atomic (3)
     load_atomic: {
       operands:   [element_size : Int32] of Nil,
       pop_values: [ptr : Pointer(UInt8), ordering : Symbol, volatile : Bool],
@@ -1055,7 +1055,18 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    # >>> Proc (1)
+    atomicrmw: {
+      operands:   [element_size : Int32] of Nil,
+      pop_values: [op_i : Int32, ptr : Pointer(UInt8), val : UInt64, ordering : Symbol, singlethread : Bool],
+      push:       false,
+      code:       begin
+        # TODO: don't hardcode ordering
+        # TODO: not tested
+        op = @context.index_to_symbol(op_i)
+        raise "TODO: atomicrmw #{op}"
+      end,
+    },
+    # >>> Proc (3)
 
     # <<< Overrides (6)
     repl_call_stack_unwind: {
@@ -1067,6 +1078,13 @@ Crystal::Repl::Instructions =
         Pointer(UInt8).null
       end,
     },
+    # TODO: maybe redefine Exception::CallStack#decode_backtrace
+    repl_caller: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       raise "TODO: repl_caller",
+    },
     repl_raise_without_backtrace: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
@@ -1075,6 +1093,13 @@ Crystal::Repl::Instructions =
         # TODO: actually raise and interpret things
         raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
       end,
+    },
+    # TODO: think this well
+    repl_crystal_scheduler_reschedule: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       Crystal::Scheduler.reschedule,
     },
     repl_intrinsics_memcpy: {
       operands:   [] of Nil,

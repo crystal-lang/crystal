@@ -172,6 +172,14 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       store_atomic(element_size, node: node)
+    when "atomicrmw"
+      node.args.each { |arg| request_value(arg) }
+
+      pointer_instance_type = node.args[1].type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      element_size = inner_sizeof_type(element_type)
+
+      atomicrmw(element_size, node: node)
     when "external_var_get"
       return unless @wants_value
 
@@ -231,6 +239,10 @@ class Crystal::Repl::Compiler
       repl_call_stack_unwind(node: node)
     when "repl_raise_without_backtrace"
       repl_raise_without_backtrace(node: node)
+    when "repl_caller"
+      repl_caller(node: node)
+    when "repl_crystal_scheduler_reschedule"
+      repl_crystal_scheduler_reschedule(node: node)
     when "repl_intrinsics_memcpy"
       accept_call_args(node)
       repl_intrinsics_memcpy(node: node)

@@ -56,6 +56,15 @@ lib LibFFI
     atypes : Type**
   ) : FFI::Status
 
+  fun prep_cif_var = ffi_prep_cif_var(
+    cif : Cif*,
+    abi : FFI::ABI,
+    nfixedargs : LibC::UInt,
+    varntotalargs : LibC::UInt,
+    rtype : Type*,
+    atypes : Type**
+  ) : FFI::Status
+
   fun call = ffi_call(
     cif : Cif*,
     fn : Void*,

@@ -2569,6 +2569,17 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "casts from mixed union type to another mixed union type for caller" do
+      interpret(<<-CODE).should eq(true)
+        a = 1 == 1 ? 1 : (1 == 1 ? 20_i16 : nil)
+        if a
+          a < 2
+        else
+          false
+        end
+      CODE
+    end
   end
 
   context "constants" do
@@ -2840,8 +2851,8 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  context = Crystal::Repl::Context.new(program, decompile: false, trace: false, stats: false)
-  # context = Crystal::Repl::Context.new(program, decompile: true, trace: true, stats: false)
+  context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: false, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)

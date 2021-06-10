@@ -1,7 +1,11 @@
 class Crystal::Repl
-  def initialize(decompile : Bool, trace : Bool, stats : Bool)
+  def initialize(decompile : Bool, decompile_defs : Bool, trace : Bool, stats : Bool)
     @program = Program.new
-    @context = Context.new(@program, decompile: decompile, trace: trace, stats: stats)
+    @context = Context.new(@program,
+      decompile: decompile,
+      decompile_defs: decompile_defs,
+      trace: trace,
+      stats: stats)
     @nest = 0
     @incomplete = false
     @line_number = 1

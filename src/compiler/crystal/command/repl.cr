@@ -29,6 +29,7 @@ class Crystal::Command
 
     repl = Repl.new(
       decompile: decompile,
+      decompile_defs: false,
       trace: trace,
       stats: stats,
     )
