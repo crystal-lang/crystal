@@ -67,7 +67,7 @@ class Socket
                 raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
               else
                 {% if flag?(:win32) %}
-                  buffer = StaticArray(UInt8, 1).new(0_u8)
+                  buffer = StaticArray(UInt8, 0).new(0_u8)
                 {% end %}
 
                 raise value
