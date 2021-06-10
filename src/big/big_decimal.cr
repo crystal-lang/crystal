@@ -259,6 +259,10 @@ struct BigDecimal < Number
     end
   end
 
+  def zero? : Bool
+    @value.zero?
+  end
+
   # Scales a `BigDecimal` to another `BigDecimal`, so they can be
   # computed easier.
   def scale_to(new_scale : BigDecimal) : BigDecimal
