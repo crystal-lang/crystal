@@ -4790,7 +4790,7 @@ module Crystal
 
     def leading_space_count(line, max_count)
       max_count.times do |index|
-        return index unless line[index]?.try &.ascii_whitespace?
+        return index unless line.byte_at?(index) == 0x20 # ' '
       end
       max_count
     end
