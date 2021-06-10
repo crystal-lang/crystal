@@ -73,9 +73,9 @@ class Socket
             if error.is_a?(Socket::ConnectError)
               raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
             else
-              if error.is_a?(Exception)
-                raise error
-              end
+              return unless error
+
+              raise error
             end
           end
         end
