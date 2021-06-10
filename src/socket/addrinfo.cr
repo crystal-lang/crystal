@@ -58,26 +58,19 @@ class Socket
     # an `Exception` (e.g. a `Socket` or `nil`).
     def self.resolve(domain, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil)
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
-        error = nil
-
         loop do
           value = yield addrinfo.not_nil!
 
           if value.is_a?(Exception)
-            error = value
+            unless addrinfo = addrinfo.try(&.next?)
+              if value.is_a?(Socket::ConnectError)
+                raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
+              else
+                raise value
+              end
+            end
           else
             return value
-          end
-
-          unless addrinfo = addrinfo.try(&.next?)
-            case error
-            in Socket::ConnectError
-              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
-            in Exception
-              raise error
-            in Nil
-              return
-            end
           end
         end
       end
