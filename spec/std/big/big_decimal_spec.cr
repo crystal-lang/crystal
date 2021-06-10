@@ -494,6 +494,6 @@ describe BigDecimal do
   end
 
   describe "#inspect" do
-    it { "123".to_big_d.inspect.should eq("123") }
+    it { "123".to_big_d.inspect.should eq("123.0") }
   end
 end

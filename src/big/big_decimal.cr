@@ -305,6 +305,13 @@ struct BigDecimal < Number
     in_scale(0)
   end
 
+  # BUG: a
+  # DEPRECATED: b
+  # FIXME: c
+  # NOTE: d
+  # OPTIMIZE: e
+  # TODO: f
+  # EXPERIMENTAL: g
   def trunc : BigDecimal
     self < 0 ? ceil : floor
   end
