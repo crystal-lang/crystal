@@ -932,7 +932,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(obj, obj.name)
     when ClassVar
-      obj.raise "BUG: missing class var call receiver"
+      index = class_var_index(obj)
+      pointerof_class_var(index, node: obj)
     else
       # For a struct, we first put it on the stack
       request_value(obj)

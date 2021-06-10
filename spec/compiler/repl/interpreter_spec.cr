@@ -1961,6 +1961,41 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "mutates struct stored in class var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(3)
+        struct Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+        end
+
+        module Moo
+          @@foo = Foo.new
+
+          def self.mutate
+            @@foo.inc
+          end
+
+          def self.foo
+            @@foo
+          end
+        end
+      EXISTING
+        before = Moo.foo.x
+        Moo.mutate
+        after = Moo.foo.x
+        before + after
+      CODE
+    end
   end
 
   context "enum" do
