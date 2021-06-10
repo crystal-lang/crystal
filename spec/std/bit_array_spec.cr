@@ -271,6 +271,9 @@ describe "BitArray" do
       ba = BitArray.new(100, true)
       assert_no_unused_bits ba[60, 26]
       assert_no_unused_bits ba[0, 97]
+
+      ba = BitArray.new(38, true)
+      ba[0, 34].should eq(BitArray.new(34, true))
     end
   end
 
