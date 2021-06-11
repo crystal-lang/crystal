@@ -2108,6 +2108,9 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
+        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
+      when "global?"
         interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
