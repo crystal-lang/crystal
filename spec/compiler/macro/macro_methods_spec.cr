@@ -2117,8 +2117,19 @@ module Crystal
         assert_macro "x", %({{x.return_type}}), [Def.new("some_def")] of ASTNode, ""
       end
 
+      it "executes free_vars" do
+        assert_macro "x", %({{x.free_vars}}), [Def.new("some_def")] of ASTNode, "[] of ::NoReturn"
+        assert_macro "x", %({{x.free_vars}}), [Def.new("some_def", free_vars: %w(T))] of ASTNode, "[T]"
+        assert_macro "x", %({{x.free_vars}}), [Def.new("some_def", free_vars: %w(T U V))] of ASTNode, "[T, U, V]"
+      end
+
       it "executes receiver" do
         assert_macro "x", %({{x.receiver}}), [Def.new("some_def", receiver: Var.new("self"))] of ASTNode, "self"
+      end
+
+      it "executes abstract?" do
+        assert_macro "x", %({{x.abstract?}}), [Def.new("some_def")] of ASTNode, "false"
+        assert_macro "x", %({{x.abstract?}}), [Def.new("some_def", abstract: true)] of ASTNode, "true"
       end
 
       it "executes visibility" do
@@ -2255,6 +2266,11 @@ module Crystal
       it "executes named args value" do
         assert_macro "x", %({{x.named_args[0].value}}), [Call.new(1.int32, "some_call", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])] of ASTNode, "1"
       end
+
+      it "executes global?" do
+        assert_macro "x", %({{x.global?}}), [Call.new(1.int32, "some_call")] of ASTNode, "false"
+        assert_macro "x", %({{x.global?}}), [Call.new(nil, "some_call", global: true)] of ASTNode, "true"
+      end
     end
 
     describe "arg methods" do
@@ -2321,8 +2337,16 @@ module Crystal
           assert_macro "x", %({{x.whens[0].body}}), [case_node] of ASTNode, "4"
         end
 
+        it "executes when exhaustive?" do
+          assert_macro "x", %({{x.whens[0].exhaustive?}}), [case_node] of ASTNode, "false"
+        end
+
         it "executes else" do
           assert_macro "x", %({{x.else}}), [case_node] of ASTNode, "5"
+        end
+
+        it "executes exhaustive?" do
+          assert_macro "x", %({{x.exhaustive?}}), [case_node] of ASTNode, "false"
         end
       end
 
@@ -2331,6 +2355,14 @@ module Crystal
 
         it "executes whens" do
           assert_macro "x", %({{x.whens}}), [case_node] of ASTNode, "[in 2, 3\n  4\n]"
+        end
+
+        it "executes when exhaustive?" do
+          assert_macro "x", %({{x.whens[0].exhaustive?}}), [case_node] of ASTNode, "true"
+        end
+
+        it "executes exhaustive?" do
+          assert_macro "x", %({{x.exhaustive?}}), [case_node] of ASTNode, "true"
         end
       end
     end
@@ -2532,6 +2564,11 @@ module Crystal
     end
 
     describe "annotation methods" do
+      it "executes name" do
+        assert_macro "x", %({{x.name}}), [Annotation.new(Path.new("Foo"))] of ASTNode, %(Foo)
+        assert_macro "x", %({{x.name}}), [Annotation.new(Path.new(["Foo", "Bar"]))] of ASTNode, %(Foo::Bar)
+      end
+
       it "executes [] with NumberLiteral" do
         assert_macro "x, y", %({{x[y]}}), [
           Annotation.new(Path.new("Foo"), [42.int32] of ASTNode),
