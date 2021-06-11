@@ -324,7 +324,7 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator : String | Char | Number = "")
+  def join(separator : String | Char | Number = "") : String
     return "" if empty?
 
     {% if T == String %}
@@ -388,7 +388,7 @@ module Indexable(T)
   # ```
   # {1, 2, 3}.to_a # => [1, 2, 3]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = Array(T).new(size)
     each { |e| ary << e }
     ary
@@ -400,7 +400,7 @@ module Indexable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
-  def empty?
+  def empty? : Bool
     size == 0
   end
 
@@ -483,7 +483,7 @@ module Indexable(T)
   # ([1, 2, 3]).last   # => 3
   # ([] of Int32).last # raises IndexError
   # ```
-  def last
+  def last : T
     last { raise IndexError.new }
   end
 
@@ -503,7 +503,7 @@ module Indexable(T)
   # ([1, 2, 3]).last?   # => 3
   # ([] of Int32).last? # => nil
   # ```
-  def last?
+  def last? : T?
     last { nil }
   end
 
@@ -529,7 +529,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1)
+  def rindex(value, offset = size - 1) : Int32?
     rindex(offset) { |elem| elem == value }
   end
 
@@ -570,7 +570,7 @@ module Indexable(T)
   end
 
   # :nodoc:
-  def sample(n : Int, random = Random::DEFAULT)
+  def sample(n : Int, random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 
     if empty?
@@ -639,7 +639,7 @@ module Indexable(T)
   # a.permutations(0) # => [[]]
   # a.permutations(4) # => []
   # ```
-  def permutations(size : Int = self.size)
+  def permutations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_permutation(size) do |a|
       ary << a
@@ -783,7 +783,7 @@ module Indexable(T)
     CombinationIterator(self, T).new(self, size.to_i, check_reuse(reuse, size))
   end
 
-  def repeated_combinations(size : Int = self.size)
+  def repeated_combinations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a

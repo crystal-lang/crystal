@@ -2739,6 +2739,9 @@ module Crystal
         hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
         codepoint = 16 * codepoint + hex_value
       end
+      if 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
+      end
       codepoint
     end
 
@@ -2773,6 +2776,8 @@ module Crystal
         expected_hexacimal_character_in_unicode_escape
       elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"
+      elsif 0xD800 <= codepoint <= 0xDFFF
+        raise "invalid unicode codepoint (surrogate half)"
       end
 
       unless found_space

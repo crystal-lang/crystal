@@ -65,7 +65,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def accept
+    def accept : Nil
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
         @bio.io.close if @sync_close
@@ -115,7 +115,7 @@ abstract class OpenSSL::SSL::Socket < IO
     LibSSL.ssl_free(@ssl)
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -134,7 +134,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?
@@ -159,7 +159,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   {% end %}
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 

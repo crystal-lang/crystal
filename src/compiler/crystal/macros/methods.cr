@@ -1623,6 +1623,20 @@ module Crystal
         interpret_check_args { TypeNode.new(type.metaclass) }
       when "instance"
         interpret_check_args { TypeNode.new(type.instance_type) }
+      when "==", "!="
+        interpret_check_args do |arg|
+          return super unless arg.is_a?(TypeNode)
+
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
+          case method
+          when "=="
+            BoolLiteral.new(self_type == other_type)
+          else # "!="
+            BoolLiteral.new(self_type != other_type)
+          end
+        end
       when "<", "<=", ">", ">="
         interpret_check_args do |arg|
           unless arg.is_a?(TypeNode)

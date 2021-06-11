@@ -109,7 +109,7 @@ def Float32.new(pull : JSON::PullParser)
   end
 end
 
-def Float32.from_json_object_key?(key : String)
+def Float32.from_json_object_key?(key : String) : Float32?
   key.to_f32?
 end
 
@@ -124,7 +124,7 @@ def Float64.new(pull : JSON::PullParser)
   end
 end
 
-def Float64.from_json_object_key?(key : String)
+def Float64.from_json_object_key?(key : String) : Float64?
   key.to_f64?
 end
 
@@ -136,7 +136,7 @@ def Path.new(pull : JSON::PullParser)
   new(pull.read_string)
 end
 
-def String.from_json_object_key?(key : String)
+def String.from_json_object_key?(key : String) : String
   key
 end
 
@@ -285,11 +285,14 @@ end
 #   @[JSON::Field(converter: Enum::ValueConverter(MyEnum))]
 #   @[YAML::Field(converter: Enum::ValueConverter(MyEnum))]
 #   property foo : MyEnum = MyEnum::ONE
+#
+#   def initialize(@foo)
+#   end
 # end
 #
-# foo = Foo.new
-# foo.to_json # => %({"my_enum":1})
-# foo.to_yaml # => %(---\nmy_enum: 1\n)
+# foo = Foo.new(MyEnum::ONE)
+# foo.to_json # => %({"foo":1})
+# foo.to_yaml # => %(---\nfoo: 1\n)
 # ```
 #
 # NOTE: Automatically assigned enum values are subject to change when the order
@@ -381,7 +384,7 @@ def Time.new(pull : JSON::PullParser)
 end
 
 struct Time::Format
-  def from_json(pull : JSON::PullParser)
+  def from_json(pull : JSON::PullParser) : Time
     string = pull.read_string
     parse(string, Time::Location::UTC)
   end
@@ -424,7 +427,7 @@ module Time::EpochMillisConverter
 end
 
 module String::RawConverter
-  def self.from_json(value : JSON::PullParser)
+  def self.from_json(value : JSON::PullParser) : String
     value.read_raw
   end
 end
