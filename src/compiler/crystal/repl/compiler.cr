@@ -1023,7 +1023,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index, type = lookup_local_var_index_and_type(exp.name)
       pointerof_var(index, node: node)
     when InstanceVar
-      node.raise "BUG: missing interpret out with instance variable"
+      compile_pointerof_ivar(node, exp.name)
     when Underscore
       node.raise "BUG: missing interpret out with underscore"
       # Nothing to do
