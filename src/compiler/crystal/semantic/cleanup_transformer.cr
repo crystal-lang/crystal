@@ -4,8 +4,9 @@ require "../types"
 
 module Crystal
   class Program
-    def cleanup(node)
+    def cleanup(node, inside_def = false)
       transformer = CleanupTransformer.new(self)
+      transformer.inside_def! if inside_def
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
       node
@@ -67,6 +68,10 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+    end
+
+    def inside_def!
+      @def_nest_count += 1
     end
 
     def after_transform(node)

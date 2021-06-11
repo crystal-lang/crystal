@@ -174,7 +174,7 @@ module Crystal::Repl::Multidispatch
 
     a_def.bind_to(a_def.body)
 
-    a_def.body = context.program.cleanup(a_def.body)
+    a_def.body = context.program.cleanup(a_def.body, inside_def: true)
 
     # puts a_def
 

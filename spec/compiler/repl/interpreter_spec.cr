@@ -2072,6 +2072,73 @@ describe Crystal::Repl::Interpreter do
         before + after
       CODE
     end
+
+    it "does simple class instance var initializer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        class Foo
+          @x = 42
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.allocate
+        foo.x
+      CODE
+    end
+
+    it "does complex class instance var initializer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        class Foo
+          @x : Int32 = begin
+            a = 20
+            b = 22
+            a + b
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.allocate
+        foo.x
+      CODE
+    end
+
+    it "does class instance var initializer inheritance" do
+      interpret(<<-EXISTING, <<-CODE).should eq(6)
+        module Moo
+          @z = 3
+
+          def z
+            @z
+          end
+        end
+
+        class Foo
+          include Moo
+
+          @x = 1
+
+          def x
+            @x
+          end
+        end
+
+        class Bar < Foo
+          @y = 2
+
+          def y
+            @y
+          end
+        end
+      EXISTING
+        bar = Bar.allocate
+        bar.x + bar.y + bar.z
+      CODE
+    end
   end
 
   context "enum" do

@@ -105,6 +105,24 @@ class Crystal::Repl::Compiler
       else
         allocate_class(aligned_instance_sizeof_type(type), type_id(type), node: node)
       end
+
+      initializer_compiled_defs = @context.type_instance_var_initializers(type)
+      unless initializer_compiled_defs.empty?
+        if type.struct?
+          node.raise "BUG: missing interpret instance var initializers for struct #{type}"
+        end
+
+        # We create a method that will receive "self" to initialize each instance var,
+        # and call that by passing a pointer to the class/struct. So we need to dup
+        # the self pointer once per initializer, and then do one call per initializer too.
+        initializer_compiled_defs.size.times do
+          dup sizeof(Pointer(Void)), node: nil
+        end
+
+        initializer_compiled_defs.each do |compiled_def|
+          call compiled_def, node: nil
+        end
+      end
     when "tuple_indexer_known_index"
       obj = obj.not_nil!
       obj.accept self
@@ -867,5 +885,22 @@ class Crystal::Repl::Compiler
     else
       nil
     end
+  end
+
+  private def collect_instance_vars_initializers(type : ClassType | GenericClassInstanceType, collected)
+    if superclass = type.superclass
+      collect_instance_vars_initializers superclass, collected
+    end
+
+    collect_instance_vars_initializers_non_recursive type, collected
+  end
+
+  private def collect_instance_vars_initializers(type : Type, collected)
+    # Nothing to do
+  end
+
+  private def collect_instance_vars_initializers_non_recursive(type : Type, collected)
+    initializers = type.instance_vars_initializers
+    collected.concat initializers if initializers
   end
 end

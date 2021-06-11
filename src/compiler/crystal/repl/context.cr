@@ -60,12 +60,91 @@ class Crystal::Repl::Context
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
     @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
 
+    @type_instance_var_initializers = {} of Type => Array(CompiledDef)
+
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
   end
 
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
+  end
+
+  def type_instance_var_initializers(type : Type)
+    @type_instance_var_initializers[type] ||= begin
+      initializers = [] of InstanceVarInitializerContainer::InstanceVarInitializer
+      collect_instance_vars_initializers(type, initializers)
+
+      initializers.map do |initializer|
+        a_def = create_instance_var_initializer_def(type, initializer)
+
+        compiled_def = CompiledDef.new(self, a_def, sizeof(Pointer(Void)))
+        compiled_def.local_vars.declare("self", type)
+
+        initializer.meta_vars.each do |name, var|
+          var_type = var.type?
+          next unless var_type
+
+          compiled_def.local_vars.declare(name, var_type)
+        end
+
+        compiler = Compiler.new(self, compiled_def)
+        compiler.compile_def(a_def)
+
+        if @decompile_defs
+          puts "=== #{a_def.name} ==="
+          puts Disassembler.disassemble(self, compiled_def)
+          puts "=== #{a_def.name} ==="
+        end
+
+        compiled_def
+      end
+    end
+  end
+
+  private def collect_instance_vars_initializers(type : ClassType | GenericClassInstanceType, collected) : Nil
+    if superclass = type.superclass
+      collect_instance_vars_initializers superclass, collected
+    end
+
+    collect_instance_vars_initializers_non_recursive type, collected
+  end
+
+  private def collect_instance_vars_initializers(type : Type, collected) : Nil
+    # Nothing to do
+  end
+
+  private def collect_instance_vars_initializers_non_recursive(type : Type, collected) : Nil
+    initializers = type.instance_vars_initializers
+    collected.concat initializers if initializers
+  end
+
+  private def create_instance_var_initializer_def(type : Type, initializer : InstanceVarInitializerContainer::InstanceVarInitializer)
+    a_def = Def.new("initialize_#{initializer.name}", args: [Arg.new("self")])
+    a_def.body = Assign.new(
+      InstanceVar.new(initializer.name),
+      initializer.value.clone,
+    )
+
+    a_def = program.normalize(a_def)
+    a_def.owner = type
+
+    def_args = MetaVars.new
+    def_args["self"] = MetaVar.new("self", type)
+
+    visitor = MainVisitor.new(program, def_args, a_def)
+    visitor.untyped_def = a_def
+    visitor.scope = type
+    visitor.path_lookup = type
+    # visitor.yield_vars = yield_vars
+    # visitor.match_context = match.context
+    # visitor.call = self
+    a_def.body.accept visitor
+
+    a_def.body = program.cleanup(a_def.body, inside_def: true)
+    a_def.type = program.nil_type
+
+    a_def
   end
 
   def symbol_index(symbol : String) : Int32
