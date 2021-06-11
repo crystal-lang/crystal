@@ -122,6 +122,13 @@ describe Crystal::Repl::Interpreter do
         foo(nil)
       CODE
     end
+
+    it "assigns to underscore" do
+      interpret(<<-CODE).should eq(1)
+        _ = (a = 1)
+        a
+      CODE
+    end
   end
 
   context "conversion" do
