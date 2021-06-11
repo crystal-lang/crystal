@@ -127,6 +127,11 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
+  private def downcast_distinct(node : ASTNode, from : VirtualType, to : VirtualType)
+    # TODO: not tested
+    # Nothing to do
+  end
+
   # TODO: remove these two because they are probably not needed
   private def downcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing
