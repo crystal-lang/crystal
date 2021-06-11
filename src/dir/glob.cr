@@ -202,9 +202,10 @@ class Dir
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
         in ConstantDirectory
-          path_stack << {next_pos, join(path, cmd.path), nil}
-          # Don't check if full exists. It just costs us time
-          # and the downstream node will be able to check properly.
+          fullpath = join(path, cmd.path)
+          if dir?(fullpath, follow_symlinks)
+            path_stack << {next_pos, fullpath, nil}
+          end
         in RecursiveDirectories
           path_stack << {next_pos, path, nil}
           next_cmd = sequence[next_pos]?

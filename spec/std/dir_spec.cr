@@ -179,6 +179,18 @@ describe "Dir" do
       ].sort
     end
 
+    it "tests double recursive matcher" do
+      with_tempfile "glob-double-recurse" do |path|
+        sub_4 = Path[path, "sub-1", "sub-2", "sub-3", "sub-4"]
+        Dir.mkdir_p sub_4
+        File.touch sub_4.join("file")
+        Dir["#{path}/sub-1/**/sub-3/**/*"].sort.should eq [
+          sub_4.to_s,
+          sub_4.join("file").to_s
+        ].sort
+      end
+    end
+
     it "tests a recursive glob with '?'" do
       Dir["#{datapath}/dir/f?.tx?"].sort.should eq [
         datapath("dir", "f1.txt"),
