@@ -2731,6 +2731,19 @@ describe Crystal::Repl::Interpreter do
         end
       CODE
     end
+
+    it "casts from nilable type to mixed union type" do
+      interpret(<<-CODE).should eq(2)
+        ascii = true
+        delimiter = 1 == 1 ? nil : "foo"
+
+        if ascii && delimiter
+          1
+        else
+          2
+        end
+        CODE
+    end
   end
 
   context "constants" do

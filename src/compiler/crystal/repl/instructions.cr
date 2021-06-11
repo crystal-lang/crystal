@@ -900,7 +900,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Allocate (2)
 
-    # <<< Unions (3)
+    # <<< Unions (4)
     put_in_union: {
       operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
       pop_values: [] of Nil,
@@ -914,6 +914,30 @@ Crystal::Repl::Instructions =
       disassemble: {
         type_id: context.type_from_id(type_id),
       },
+    },
+    # TODO: maybe avoid introducing one instruction per cast
+    put_nilable_type_in_union: {
+      operands:   [union_size : Int32],
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
+      push:       false,
+      code:       begin
+        if pointer.null?
+          # All zeros since this is putting nil inside a union
+          stack_grow_by(union_size)
+        else
+          type_id = pointer.as(Int32*).value
+
+          # Put the type id
+          stack_push(type_id)
+
+          # Put the pointer
+          stack_push(pointer)
+
+          # Fill with zeros until we reach union_size
+          remaining = union_size - sizeof(Pointer(Void))
+          stack_grow_by(remaining) if remaining > 0
+        end
+      end,
     },
     remove_from_union: {
       operands:   [union_size : Int32, from_size : Int32],
@@ -931,6 +955,7 @@ Crystal::Repl::Instructions =
       code:       begin
         type_id = (stack - union_size).as(Int32*).value
         type = type_from_type_id(type_id)
+
         value = case type
                 when NilType
                   false
@@ -947,7 +972,7 @@ Crystal::Repl::Instructions =
         value
       end,
     },
-    # >>> Unions (3)
+    # >>> Unions (4)
 
     # <<< is_a? (2)
     reference_is_a: {

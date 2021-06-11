@@ -7,6 +7,10 @@ class Crystal::Repl::Compiler
     upcast_distinct(node, from, to)
   end
 
+  private def upcast_distinct(node : ASTNode, from : NilableType, to : MixedUnionType)
+    put_nilable_type_in_union(aligned_sizeof_type(to), node: nil)
+  end
+
   private def upcast_distinct(node : ASTNode, from : MixedUnionType, to : MixedUnionType)
     # It might happen that some types inside the union `value_type` are not inside `target_type`,
     # for example with named tuple of same keys with different order. In that case we need cast
