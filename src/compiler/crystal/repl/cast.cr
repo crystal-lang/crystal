@@ -123,6 +123,10 @@ class Crystal::Repl::Compiler
     pop 16, node: nil
   end
 
+  private def downcast_distinct(node : ASTNode, from : VirtualType, to : NonGenericClassType)
+    # Nothing to do
+  end
+
   # TODO: remove these two because they are probably not needed
   private def downcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing

@@ -1191,6 +1191,52 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "does is_a? from VirtualType to NonGenericClassType (true)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def x
+            1
+          end
+        end
+
+        class Bar < Foo
+          def x
+            2
+          end
+        end
+        EXISTING
+        foo = Bar.new || Foo.new
+        if foo.is_a?(Bar)
+          foo.x
+        else
+          20
+        end
+        CODE
+    end
+
+    it "does is_a? from VirtualType to NonGenericClassType (false)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(20)
+        class Foo
+          def x
+            1
+          end
+        end
+
+        class Bar < Foo
+          def x
+            2
+          end
+        end
+        EXISTING
+        foo = Foo.new || Bar.new
+        if foo.is_a?(Bar)
+          foo.x
+        else
+          20
+        end
+        CODE
+    end
   end
 
   context "types" do

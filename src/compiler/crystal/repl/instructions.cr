@@ -900,7 +900,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Allocate (2)
 
-    # <<< Unions (4)
+    # <<< Unions (3)
     put_in_union: {
       operands:   [type_id : Int32, from_size : Int32, union_size : Int32],
       pop_values: [] of Nil,
@@ -923,23 +923,6 @@ Crystal::Repl::Instructions =
         (stack - union_size).move_from(stack - union_size + type_id_bytesize, from_size)
         stack_shrink_by(union_size - from_size)
       end,
-    },
-    union_is_a: {
-      operands:   [union_size : Int32, filter_type_id : Int32],
-      pop_values: [] of Nil,
-      push:       true,
-      code:       begin
-        type_id = (stack - union_size).as(Int32*).value
-        type = type_from_type_id(type_id)
-        stack_shrink_by(union_size)
-
-        filter_type = type_from_type_id(filter_type_id)
-
-        !!type.filter_by(filter_type)
-      end,
-      disassemble: {
-        filter_type_id: context.type_from_id(filter_type_id),
-      },
     },
     union_to_bool: {
       operands:   [union_size : Int32],
@@ -964,7 +947,43 @@ Crystal::Repl::Instructions =
         value
       end,
     },
-    # >>> Unions (4)
+    # >>> Unions (3)
+
+    # <<< is_a? (2)
+    reference_is_a: {
+      operands:   [filter_type_id : Int32],
+      pop_values: [pointer : Pointer(UInt8)] of Nil,
+      push:       true,
+      code:       begin
+        type_id = pointer.as(Int32*).value
+        type = type_from_type_id(type_id)
+
+        filter_type = type_from_type_id(filter_type_id)
+
+        !!type.filter_by(filter_type)
+      end,
+      disassemble: {
+        filter_type_id: context.type_from_id(filter_type_id),
+      },
+    },
+    union_is_a: {
+      operands:   [union_size : Int32, filter_type_id : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       begin
+        type_id = (stack - union_size).as(Int32*).value
+        type = type_from_type_id(type_id)
+        stack_shrink_by(union_size)
+
+        filter_type = type_from_type_id(filter_type_id)
+
+        !!type.filter_by(filter_type)
+      end,
+      disassemble: {
+        filter_type_id: context.type_from_id(filter_type_id),
+      },
+    },
+    # >>> is_a? (2)
 
     # <<< Tuples (1)
     tuple_indexer_known_index: {

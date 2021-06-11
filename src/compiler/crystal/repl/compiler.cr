@@ -544,6 +544,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     filtered_type = obj_type.filter_by(const_type).not_nil!
 
     case obj_type
+    when VirtualType
+      reference_is_a(type_id(filtered_type), node: node)
     when MixedUnionType
       union_is_a(aligned_sizeof_type(obj_type), type_id(filtered_type), node: node)
     when NilableType
