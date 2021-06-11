@@ -129,6 +129,13 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "doesn't discard underscore right hand side" do
+      interpret(<<-CODE).should eq(1)
+        a = (_ = 1)
+        a
+      CODE
+    end
   end
 
   context "conversion" do
@@ -2145,6 +2152,15 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CODE).should eq(3)
         a = {true, 1}
         a[1] + (a[0] ? 2 : 3)
+      CODE
+    end
+
+    it "discards tuple access" do
+      interpret(<<-CODE).should eq(1)
+        foo = {1, 2}
+        a = foo[0]
+        foo[1]
+        a
       CODE
     end
 

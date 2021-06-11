@@ -285,7 +285,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         put_nil node: nil if @wants_value
       end
     when Underscore
-      discard_value(node.value)
+      node.value.accept self
     when Path
       # TODO: I think we should track that the constant is initialized at this point,
       # to avoid an init flag, we'll see

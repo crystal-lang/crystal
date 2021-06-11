@@ -109,6 +109,8 @@ class Crystal::Repl::Compiler
       obj = obj.not_nil!
       obj.accept self
 
+      return unless @wants_value
+
       type = obj.type
       case type
       when TupleInstanceType
