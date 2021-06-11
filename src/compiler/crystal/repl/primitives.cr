@@ -108,8 +108,9 @@ class Crystal::Repl::Compiler
 
       initializer_compiled_defs = @context.type_instance_var_initializers(type)
       unless initializer_compiled_defs.empty?
+        # If it's a struct we need a pointer to it
         if type.struct?
-          node.raise "BUG: missing interpret instance var initializers for struct #{type}"
+          put_stack_top_pointer(aligned_sizeof_type(type), node: nil)
         end
 
         # We create a method that will receive "self" to initialize each instance var,
@@ -121,6 +122,11 @@ class Crystal::Repl::Compiler
 
         initializer_compiled_defs.each do |compiled_def|
           call compiled_def, node: nil
+        end
+
+        # Pop the struct pointer
+        if type.struct?
+          pop(sizeof(Pointer(Void)), node: nil)
         end
       end
     when "tuple_indexer_known_index"

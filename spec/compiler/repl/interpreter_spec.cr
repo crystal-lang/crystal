@@ -2139,6 +2139,21 @@ describe Crystal::Repl::Interpreter do
         bar.x + bar.y + bar.z
       CODE
     end
+
+    it "does simple struct instance var initializer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          @x = 42
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        foo = Foo.allocate
+        foo.x
+      CODE
+    end
   end
 
   context "enum" do
