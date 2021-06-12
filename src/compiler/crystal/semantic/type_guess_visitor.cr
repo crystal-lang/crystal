@@ -265,8 +265,7 @@ module Crystal
         #
         # and we can guess the type of `exp` and it's a tuple type,
         # we can guess the type of @x and @y
-        if node.values.size == 1 &&
-           node.targets.any? { |t| t.is_a?(InstanceVar) || t.is_a?(ClassVar) || t.is_a?(Global) }
+        if node.values.size == 1 && node.targets.any?(InstanceVar | ClassVar | Global)
           type = guess_type(node.values.first)
           if type.is_a?(TupleInstanceType) && type.size >= node.targets.size
             node.targets.zip(type.tuple_types) do |target, tuple_type|

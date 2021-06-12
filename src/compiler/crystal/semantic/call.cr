@@ -122,7 +122,7 @@ class Crystal::Call
   end
 
   def lookup_matches(*, with_literals = false)
-    if args.any? { |arg| arg.is_a?(Splat) || arg.is_a?(DoubleSplat) }
+    if args.any?(Splat | DoubleSplat)
       lookup_matches_with_splat(with_literals)
     else
       arg_types = args.map(&.type(with_literals: with_literals))
@@ -570,7 +570,7 @@ class Crystal::Call
   end
 
   def replace_splats
-    return unless args.any? { |arg| arg.is_a?(Splat) || arg.is_a?(DoubleSplat) }
+    return unless args.any?(Splat | DoubleSplat)
 
     new_args = [] of ASTNode
     args.each_with_index do |arg, i|

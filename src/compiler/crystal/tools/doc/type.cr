@@ -573,7 +573,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::UnionType, io, text = nil, links = true)
-    has_type_splat = type.union_types.any? &.is_a?(TypeSplat)
+    has_type_splat = type.union_types.any? TypeSplat
 
     if !has_type_splat && type.union_types.size == 2
       if type.union_types[0].nil_type?
