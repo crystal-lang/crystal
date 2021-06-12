@@ -286,7 +286,7 @@ class Crystal::System::IoUring
 
   # This will block the current fiber until the request completes and return the completion result.
   private def submit_and_wait(opcode : Syscall::IoUringOp, *, index : UInt32 = get_free_index, timeout : ::Time::Span? = nil)
-    user_data = ::Fiber.current.as(Void*).address
+    user_data = ::Fiber.current.object_id
     submit(opcode, user_data, index: index, timeout: timeout) { |sqe| yield sqe }
     Crystal::Scheduler.reschedule # The completion event will wake up this fiber.
     ::Fiber.current.iouring_result
