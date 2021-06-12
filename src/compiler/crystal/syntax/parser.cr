@@ -4957,7 +4957,7 @@ module Crystal
           args << parse_type_splat { parse_type_arg }
         end
 
-        has_int = args.any?(NumberLiteral | SizeOf | InstanceSizeOf | OffsetOf)
+        has_int = args.any? { |arg| arg.is_a?(NumberLiteral) || arg.is_a?(SizeOf) || arg.is_a?(InstanceSizeOf) || arg.is_a?(OffsetOf) }
         if @token.type == :"->" && !has_int
           args = [parse_proc_type_output(args, args.first.location)] of ASTNode
         end

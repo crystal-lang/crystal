@@ -330,7 +330,7 @@ module Indexable(T)
     {% if T == String %}
       join_strings(separator)
     {% elsif String < T %}
-      if all? String
+      if all?(String)
         join_strings(separator)
       else
         super(separator)

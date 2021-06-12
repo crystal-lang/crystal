@@ -381,7 +381,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # If any argument is a MacroExpression, solve it first and
     # replace Path with Const/TypeNode if it denotes such thing
     args = node.args
-    if args.any? MacroExpression
+    if args.any?(MacroExpression)
       @exp_nest -= 1
       args = args.map do |arg|
         if arg.is_a?(MacroExpression)
