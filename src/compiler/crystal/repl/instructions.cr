@@ -1145,6 +1145,8 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       Crystal::Scheduler.reschedule,
     },
+    # TODO: maybe avoid having one instruction per LLVM intrinsic (but how to do this efficiently?)
+    # At least memcpy, memmove and memset could be a single instruction with an enum value
     repl_intrinsics_memcpy: {
       operands:   [] of Nil,
       pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool] of Nil,
@@ -1192,6 +1194,24 @@ Crystal::Repl::Instructions =
       pop_values: [] of Nil,
       push:       false,
       code:       pry,
+    },
+    repl_intrinsics_pause: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       false,
+      code:       LibIntrinsics.pause,
+    },
+    repl_intrinsics_bswap32: {
+      operands:   [] of Nil,
+      pop_values: [id : UInt32] of Nil,
+      push:       true,
+      code:       LibIntrinsics.bswap32(id),
+    },
+    repl_intrinsics_bswap16: {
+      operands:   [] of Nil,
+      pop_values: [id : UInt16] of Nil,
+      push:       true,
+      code:       LibIntrinsics.bswap16(id),
     },
     repl_proc_f32_f32: {
       operands:   [name : Symbol],
