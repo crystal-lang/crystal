@@ -280,6 +280,9 @@ class Crystal::Repl::Compiler
       repl_intrinsics_memset(node: node)
     when "repl_intrinsics_debugtrap"
       repl_intrinsics_debugtrap(node: node)
+    when "repl_intrinsics_pause"
+      # TODO: use a real pause?
+      nop
     when "repl_ceil_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :ceil, node: node

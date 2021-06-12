@@ -17,6 +17,8 @@ class Crystal::Repl::Context
   property class_vars_memory : Pointer(UInt8)
 
   def initialize(@program : Program, @decompile : Bool, @decompile_defs : Bool, @trace : Bool, @stats : Bool)
+    @program.flags << "interpreted"
+
     @gc_references = [] of Void*
 
     @defs = {} of Def => CompiledDef
@@ -88,7 +90,7 @@ class Crystal::Repl::Context
           compiled_def.local_vars.declare(name, var_type)
         end
 
-        compiler = Compiler.new(self, compiled_def)
+        compiler = Compiler.new(self, compiled_def, top_level: false)
         compiler.compile_def(a_def)
 
         if @decompile_defs

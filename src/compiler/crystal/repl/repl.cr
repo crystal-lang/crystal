@@ -11,11 +11,11 @@ class Crystal::Repl
     @line_number = 1
     @interpreter = Interpreter.new(@context)
     @buffer = ""
-
-    load_prelude
   end
 
   def run
+    load_prelude
+
     while true
       print "icr:#{@line_number}:#{@nest}"
       print(@incomplete ? '*' : '>')
@@ -95,25 +95,16 @@ class Crystal::Repl
     end
   end
 
-  def load_file(filename)
-    parser = Parser.new File.read(filename), @program.string_pool
-    parser.filename = filename
-    parsed_nodes = parser.parse
-    parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
-    semantic(parsed_nodes)
-    parsed_nodes
-  end
+  def run_files(filenames)
+    prelude_node = parse_prelude
 
-  def load_and_interpret_file(filename)
-    parser = Parser.new File.read(filename), @program.string_pool
-    parser.filename = filename
-    parsed_nodes = parser.parse
-    parsed_nodes = @program.normalize(parsed_nodes, inside_exp: false)
-    @program.top_level_semantic(parsed_nodes)
+    other_nodes = filenames.map { |filename| parse_file(filename) }
+
+    exps = Expressions.new([prelude_node, Expressions.new(other_nodes)] of ASTNode)
+    node, main_visitor = semantic(exps)
 
     begin
-      value = @interpreter.interpret(parsed_nodes)
-      puts value
+      @interpreter.interpret_with_main_already_visited(exps, main_visitor)
     rescue ex : Crystal::CodeError
       ex.color = true
       ex.error_trace = true
@@ -126,13 +117,25 @@ class Crystal::Repl
   end
 
   private def load_prelude
+    semantic(parse_prelude)
+  end
+
+  private def parse_prelude
     filenames = @program.find_in_path("prelude")
-    filenames.each { |filename| load_file(filename) }
+    parsed_nodes = filenames.map { |filename| parse_file(filename) }
+    Expressions.new(parsed_nodes)
+  end
+
+  private def parse_file(filename)
+    parser = Parser.new File.read(filename), @program.string_pool
+    parser.filename = filename
+    parsed_nodes = parser.parse
+    @program.normalize(parsed_nodes, inside_exp: false)
   end
 
   # TODO: this is more or less a copy of semantic.cr except
   # that we replace some method's bodies for primitives
-  private def semantic(node : ASTNode, cleanup = true) : ASTNode
+  private def semantic(node : ASTNode, cleanup = true) : {ASTNode, MainVisitor}
     node, processor = @program.top_level_semantic(node)
 
     @interpreter.define_primitives
@@ -147,13 +150,14 @@ class Crystal::Repl
     # give an error otherwise
     processor.check_non_nilable_class_vars_without_initializers
 
-    result = @program.visit_main(node, process_finished_hooks: true, cleanup: cleanup)
+    visitor = MainVisitor.new(@program)
+    result = @program.visit_main(node, visitor: visitor, process_finished_hooks: true, cleanup: cleanup)
 
     @program.cleanup_types
     @program.cleanup_files
 
     RecursiveStructChecker.new(@program).run
 
-    result
+    {result, visitor}
   end
 end

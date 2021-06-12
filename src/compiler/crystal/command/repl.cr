@@ -34,10 +34,16 @@ class Crystal::Command
       stats: stats,
     )
 
-    options.each do |filename|
-      repl.load_and_interpret_file(filename)
-    end
+    if options.empty?
+      repl.run
+    else
+      options.each do |filename|
+        unless File.file?(filename)
+          error "File '#{filename}' doesn't exist"
+        end
+      end
 
-    repl.run
+      repl.run_files(options)
+    end
   end
 end

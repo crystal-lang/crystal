@@ -18,7 +18,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions : Array(Instruction) = [] of Instruction,
     @nodes : Hash(Int32, ASTNode) = {} of Int32 => ASTNode,
     scope : Type? = nil,
-    @def = nil
+    @def = nil,
+    @top_level = true
   )
     @scope = scope || @context.program
     @wants_value = true
@@ -26,7 +27,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def self.new(
     context : Context,
-    compiled_def : CompiledDef
+    compiled_def : CompiledDef,
+    top_level : Bool
   )
     new(
       context: context,
@@ -34,7 +36,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       instructions: compiled_def.instructions,
       nodes: compiled_def.nodes,
       scope: compiled_def.def.owner,
-      def: compiled_def.def)
+      def: compiled_def.def,
+      top_level: top_level,
+    )
   end
 
   def compile(node : ASTNode) : Nil
@@ -78,6 +82,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def inside_method?
+    return false if @top_level
+
     !!@def
   end
 
@@ -269,9 +275,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         put_nil node: nil if @wants_value
       end
     when ClassVar
-      index = class_var_index(target)
-
       if inside_method?
+        index = class_var_index(target)
+
         request_value(node.value)
         dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
@@ -375,7 +381,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         value = initializer.node
         value = @context.program.cleanup(value)
 
-        compiler = Compiler.new(@context, compiled_def)
+        compiler = Compiler.new(@context, compiled_def, top_level: true)
         compiler.compile(value)
 
         if @context.decompile_defs
@@ -408,6 +414,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case var = node.var
     when Var
       var.accept self
+    when InstanceVar
+      # Nothing to do
+    when ClassVar
+      # TODO: declare the class var (though it will be declared later on)
     else
       node.raise "BUG: missing interpret UninitializedVar for #{var.class}"
     end
@@ -603,7 +613,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           value = const.value
           value = @context.program.cleanup(value)
 
-          compiler = Compiler.new(@context, compiled_def)
+          compiler = Compiler.new(@context, compiled_def, top_level: true)
           compiler.compile(value)
 
           if @context.decompile_defs
@@ -863,7 +873,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
-    compiler = Compiler.new(@context, compiled_def)
+    compiler = Compiler.new(@context, compiled_def, top_level: false)
     compiler.compiled_block = compiled_block
 
     begin
@@ -913,7 +923,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler = Compiler.new(@context, @local_vars,
         instructions: compiled_block.instructions,
         nodes: compiled_block.nodes,
-        scope: @scope, def: @def)
+        scope: @scope, def: @def, top_level: false)
       compiler.compiled_block = @compiled_block
       compiler.block_level = block_level + 1
       compiler.compile_block(block, target_def)
@@ -1071,7 +1081,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
-    compiler = Compiler.new(@context, compiled_def)
+    compiler = Compiler.new(@context, compiled_def, top_level: false)
     begin
       compiler.compile_def(target_def)
     rescue ex : Crystal::CodeError
@@ -1254,10 +1264,53 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def visit(node : Def)
-    return false unless @wants_value
+  def visit(node : EnumDef)
+    # TODO: visit body?
+    false
+  end
 
-    put_nil(node: node)
+  def visit(node : Def)
+    false
+  end
+
+  def visit(node : FunDef)
+    false
+  end
+
+  def visit(node : LibDef)
+    false
+  end
+
+  def visit(node : Macro)
+    false
+  end
+
+  def visit(node : VisibilityModifier)
+    node.exp.accept self
+    false
+  end
+
+  def visit(node : Annotation)
+    false
+  end
+
+  def visit(node : AnnotationDef)
+    false
+  end
+
+  def visit(node : TypeDeclaration)
+    false
+  end
+
+  def visit(node : Alias)
+    false
+  end
+
+  def visit(node : Include)
+    false
+  end
+
+  def visit(node : Extend)
     false
   end
 
@@ -1265,6 +1318,37 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     unreachable(node: node)
 
     false
+  end
+
+  def visit(node : FileNode)
+    file_module = @context.program.file_module(node.filename)
+
+    a_def = Def.new(node.filename)
+    a_def.body = node.node
+    a_def.owner = @context.program
+    a_def.type = @context.program.nil_type
+
+    compiled_def = CompiledDef.new(@context, a_def, 0)
+
+    file_module.vars.each do |name, var|
+      var_type = var.type?
+      next unless var_type
+
+      compiled_def.local_vars.declare(name, var_type)
+    end
+
+    compiler = Compiler.new(@context, compiled_def, top_level: true)
+    compiler.compile_def(a_def)
+
+    @context.add_gc_reference(compiled_def)
+
+    if @context.decompile_defs
+      puts "=== #{node.filename} ==="
+      puts Disassembler.disassemble(@context, compiled_def)
+      puts "=== #{node.filename} ==="
+    end
+
+    call compiled_def, node: node
   end
 
   def visit(node : ASTNode)

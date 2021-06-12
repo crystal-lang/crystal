@@ -123,6 +123,10 @@ class Crystal::Repl::Interpreter
 
     node = node.transform(@cleanup_transformer)
 
+    interpret_with_main_already_visited(node, @main_visitor)
+  end
+
+  def interpret_with_main_already_visited(node : ASTNode, main_visitor : MainVisitor) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
@@ -148,6 +152,7 @@ class Crystal::Repl::Interpreter
       end
     end
 
+    # TODO: top_level or not
     compiler =
       if compiled_def
         Compiler.new(@context, @local_vars, scope: compiled_def.def.owner, def: compiled_def.def)
@@ -185,7 +190,7 @@ class Crystal::Repl::Interpreter
     value
   end
 
-  def interpret(node : ASTNode, node_type : Type) : Value
+  private def interpret(node : ASTNode, node_type : Type) : Value
     stack_bottom = @stack
 
     # Shift stack to leave ream for local vars
@@ -691,7 +696,7 @@ class Crystal::Repl::Interpreter
 
     lib_instrinsics = program.types["LibIntrinsics"]?
     if lib_instrinsics
-      %w(memcpy memmove memset debugtrap).each do |function_name|
+      %w(memcpy memmove memset debugtrap pause).each do |function_name|
         match = lib_instrinsics.lookup_first_def(function_name, false)
         match.body = Primitive.new("repl_intrinsics_#{function_name}") if match
       end
@@ -718,9 +723,6 @@ class Crystal::Repl::Interpreter
         match.body = Primitive.new("repl_crystal_scheduler_reschedule") if match
       end
     end
-  end
-
-  private def define_primitive_raise_without_backtrace
   end
 
   private def program

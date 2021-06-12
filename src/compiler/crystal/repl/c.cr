@@ -83,6 +83,15 @@ module Crystal
       end)
     end
   end
+
+  class StaticArrayInstanceType
+    def ffi_type
+      element_ffi_type = element_type.ffi_type
+      FFI::Type.struct(
+        Array.new(size.as(NumberLiteral).value.to_i, element_ffi_type)
+      )
+    end
+  end
 end
 
 struct Crystal::Repl::Value

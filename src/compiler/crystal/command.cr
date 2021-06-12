@@ -21,6 +21,7 @@ class Crystal::Command
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
+        i/interactive            starts interactive Crystal
         play                     starts Crystal playground server
         repl                     launch a repl
         run (default)            build and run program
@@ -65,7 +66,7 @@ class Crystal::Command
     when !command
       puts USAGE
       exit
-    when "init".starts_with?(command)
+    when command == "init"
       options.shift
       init
     when "build".starts_with?(command)
@@ -96,7 +97,7 @@ class Crystal::Command
       options.shift
       use_crystal_opts
       eval
-    when command == "repl"
+    when command == "i" || command == "interactive"
       options.shift
       repl
     when command == "run"
