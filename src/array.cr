@@ -1274,7 +1274,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def self.product(arrays)
+  def self.product(arrays : Array(Array))
     result = [] of Array(typeof(arrays.first.first))
     each_product(arrays) do |product|
       result << product
@@ -1356,6 +1356,8 @@ class Array(T)
   # a.pop # => "c"
   # a     # => ["a", "b"]
   # ```
+  #
+  # See also: `#truncate`.
   def pop
     pop { raise IndexError.new }
   end
@@ -1368,6 +1370,8 @@ class Array(T)
   # a.pop { "Testing" } # => 1
   # a.pop { "Testing" } # => "Testing"
   # ```
+  #
+  # See also: `#truncate`.
   def pop
     if @size == 0
       yield
@@ -1401,6 +1405,8 @@ class Array(T)
   # a.pop(4) # => ["a", "b", "c"]
   # a        # => []
   # ```
+  #
+  # See also: `#truncate`.
   def pop(n : Int)
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
@@ -1416,6 +1422,8 @@ class Array(T)
   end
 
   # Like `pop`, but returns `nil` if `self` is empty.
+  #
+  # See also: `#truncate`.
   def pop?
     pop { nil }
   end
@@ -1573,6 +1581,8 @@ class Array(T)
   # a.shift # => "a"
   # a       # => ["b", "c"]
   # ```
+  #
+  # See also: `#truncate`.
   def shift
     shift { raise IndexError.new }
   end
@@ -1588,6 +1598,8 @@ class Array(T)
   # a.shift { "empty!" } # => "empty!"
   # a                    # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift
     if @size == 0
       yield
@@ -1626,6 +1638,8 @@ class Array(T)
   # a.shift(4) # => ["a", "b", "c"]
   # a          # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift(n : Int)
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
@@ -1659,6 +1673,8 @@ class Array(T)
   # a.shift? # => nil
   # a        # => []
   # ```
+  #
+  # See also: `#truncate`.
   def shift?
     shift { nil }
   end
@@ -1854,6 +1870,53 @@ class Array(T)
         self[j][i]
       end
     end
+  end
+
+  # Removes all elements except the *count* or less (if there aren't enough)
+  # elements starting at the given *start* index. Returns `self`.
+  #
+  # Negative values of *start* count from the end of the array.
+  #
+  # Raises `IndexError` if the *start* index is out of range.
+  #
+  # Raises `ArgumentError` if *count* is negative.
+  #
+  # ```
+  # a = [0, 1, 4, 9, 16, 25]
+  # a.truncate(2, 3) # => [4, 9, 16]
+  # a                # => [4, 9, 16]
+  # ```
+  #
+  # See also: `#pop`, `#shift`.
+  def truncate(start : Int, count : Int) : self
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+
+    start += size if start < 0
+    raise IndexError.new unless 0 <= start <= size
+    count = {count, size - start}.min
+
+    if count == 0
+      clear
+      reset_buffer_to_root_buffer
+    else
+      @buffer.clear(start)
+      (@buffer + start + count).clear(size - start - count)
+      @size = count
+      shift_buffer_by(start)
+    end
+
+    self
+  end
+
+  # Removes all elements except those within the given *range*. Returns `self`.
+  #
+  # ```
+  # a = [0, 1, 4, 9, 16, 25]
+  # a.truncate(1..-3) # => [1, 4, 9]
+  # a                 # => [1, 4, 9]
+  # ```
+  def truncate(range : Range) : self
+    truncate(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
   end
 
   # Returns a new `Array` by removing duplicate values in `self`.

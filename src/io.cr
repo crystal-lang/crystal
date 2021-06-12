@@ -184,7 +184,7 @@ abstract class IO
   # io.print "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def print(obj) : Nil
+  def print(obj : _) : Nil
     self << obj
     nil
   end
@@ -227,7 +227,7 @@ abstract class IO
   # io.puts "Crystal"
   # io.to_s # => "1\nCrystal\n"
   # ```
-  def puts(obj) : Nil
+  def puts(obj : _) : Nil
     self << obj
     puts
   end
