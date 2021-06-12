@@ -1251,6 +1251,14 @@ module Crystal::Macros
   class Out < UnaryExpression
   end
 
+  # A splat expression: `*exp`.
+  class Splat < UnaryExpression
+  end
+
+  # A double splat expression: `**exp`.
+  class DoubleSplat < UnaryExpression
+  end
+
   # An `offsetof` expression.
   class OffsetOf < ASTNode
     # Returns the type that has been used in this `offsetof` expression.
