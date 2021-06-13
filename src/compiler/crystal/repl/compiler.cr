@@ -597,7 +597,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       else
         index = @context.const_index?(const)
         unless index
-          # TODO: al parecer fake_def puede ser nil!
+          # TODO: support magic constants like ARGV_UNSAFE
           fake_def = const.fake_def.not_nil!
           fake_def.owner = const.visitor.not_nil!.current_type
 
