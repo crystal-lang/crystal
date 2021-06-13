@@ -177,7 +177,7 @@ class Dir
             yield fullpath
           end
         in EntryMatch
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
             next if !match_hidden && entry.name.starts_with?('.')
             yield join(path, entry.name) if cmd.matches?(entry.name)
@@ -198,14 +198,13 @@ class Dir
             end
           end
         in ConstantEntry
-          return if sequence[pos + 1]?.is_a?(RecursiveDirectories)
+          next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           full = join(path, cmd.path)
           yield full if File.exists?(full) || File.symlink?(full)
         in ConstantDirectory
-          fullpath = join(path, cmd.path)
-          if dir?(fullpath, follow_symlinks)
-            path_stack << {next_pos, fullpath, nil}
-          end
+          path_stack << {next_pos, join(path, cmd.path), nil}
+          # Don't check if full exists. It just costs us time
+          # and the downstream node will be able to check properly.
         in RecursiveDirectories
           path_stack << {next_pos, path, nil}
           next_cmd = sequence[next_pos]?
@@ -217,7 +216,7 @@ class Dir
             dir = Dir.new(path || ".")
             dir_stack << dir
           rescue File::Error
-            return
+            next
           end
           recurse = false
 
