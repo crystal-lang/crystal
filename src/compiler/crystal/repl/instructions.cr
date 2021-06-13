@@ -1225,6 +1225,18 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       @context.procs_f64_f64[name].call(a),
     },
+    repl_powi_f32: {
+      operands:   [name : Symbol],
+      pop_values: [value : Float32, power : Int32] of Nil,
+      push:       true,
+      code:       LibM.powi_f32(value, power),
+    },
+    repl_powi_f64: {
+      operands:   [name : Symbol],
+      pop_values: [value : Float64, power : Int32] of Nil,
+      push:       true,
+      code:       LibM.powi_f64(value, power),
+    },
     unreachable: {
       operands:   [] of Nil,
       pop_values: [] of Nil,

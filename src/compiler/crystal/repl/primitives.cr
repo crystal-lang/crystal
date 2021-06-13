@@ -334,6 +334,12 @@ class Crystal::Repl::Compiler
     when "repl_log10_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :log10, node: node
+    when "repl_powi_f32"
+      accept_call_args(node)
+      repl_powi_f32 :powi, node: node
+    when "repl_powi_f64"
+      accept_call_args(node)
+      repl_powi_f64 :powi, node: node
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end
