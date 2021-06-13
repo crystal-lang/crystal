@@ -493,17 +493,19 @@ module Crystal
     end
 
     def int_bin_op(method, args, named_args, block)
-      if @kind == :f32 || @kind == :f64
-        raise "undefined method '#{method}' for float literal: #{self}"
-      end
-
       interpret_check_args do |other|
         raise "can't #{method} with #{other}" unless other.is_a?(NumberLiteral)
-        if other.kind == :f32 || other.kind == :f64
+        me = to_number
+        other = other.to_number
+
+        case {me, other}
+        when {Int, Int}
+          NumberLiteral.new(yield me, other)
+        when {Float, _}
+          raise "undefined method '#{method}' for float literal: #{self}"
+        else
           raise "argument to NumberLiteral##{method} can't be float literal: #{self}"
         end
-
-        NumberLiteral.new(yield to_number.to_i, other.to_number.to_i)
       end
     end
 
@@ -2038,6 +2040,9 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
+        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpret_check_args { BoolLiteral.new(@global) }
+      when "global?"
         interpret_check_args { BoolLiteral.new(@global) }
       when "resolve"
         interpret_check_args { interpreter.resolve(self) }
