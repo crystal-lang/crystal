@@ -568,6 +568,40 @@ describe Crystal::Repl::Interpreter do
         !foo
         CODE
     end
+
+    it "interprets not for nilable type (false)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(false)
+        class Foo
+        end
+        EXISTING
+        a =
+          if 1 == 1
+            "a"
+          elsif 1 == 1
+            Foo.new
+          else
+            nil
+          end
+        !a
+        CODE
+    end
+
+    it "interprets not for nilable type (true)" do
+      interpret(<<-EXISTING, <<-CODE).should eq(true)
+        class Foo
+        end
+        EXISTING
+        a =
+          if 1 == 1
+            nil
+          elsif 1 == 1
+            Foo.new
+          else
+            "a"
+          end
+        !a
+        CODE
+    end
   end
 
   context "control flow" do

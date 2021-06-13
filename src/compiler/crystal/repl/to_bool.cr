@@ -23,6 +23,10 @@ class Crystal::Repl::Compiler
     pointer_is_not_null node: nil
   end
 
+  private def value_to_bool(node : ASTNode, type : NilableReferenceUnionType)
+    pointer_is_not_null node: nil
+  end
+
   private def value_to_bool(node : ASTNode, type : MixedUnionType)
     union_to_bool aligned_sizeof_type(type), node: nil
   end
