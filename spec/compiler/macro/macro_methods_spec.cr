@@ -213,6 +213,10 @@ module Crystal
         assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
       end
 
+      it "preserves integer size (#10713)" do
+        assert_macro "", "{{ 3000000000u64 % 2 }}", [] of ASTNode, "0_u64"
+      end
+
       it "executes &" do
         assert_macro "", "{{5 & 3}}", [] of ASTNode, "1"
       end
