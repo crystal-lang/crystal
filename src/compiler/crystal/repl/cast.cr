@@ -118,6 +118,10 @@ class Crystal::Repl::Compiler
     pop 8, node: nil
   end
 
+  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType)
+    # TODO: not tested
+  end
+
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
     # Nothing to do
   end
