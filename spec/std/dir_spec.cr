@@ -179,7 +179,7 @@ describe "Dir" do
       ].sort
     end
 
-    it "tests double recursive matcher" do
+    it "tests double recursive matcher (#10807)" do
       with_tempfile "glob-double-recurse" do |path|
         path1 = Path[path, "a", "x", "b", "x"]
         Dir.mkdir_p path1
