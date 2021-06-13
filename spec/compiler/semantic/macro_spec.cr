@@ -841,6 +841,35 @@ describe "Semantic: macro" do
       "missing argument: z"
   end
 
+  it "solves macro expression arguments before macro expansion (type)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(TypeNode) && x.name == "String" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      foo({{ String }})
+      )) { int32 }
+  end
+
+  it "solves macro expression arguments before macro expansion (constant)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(NumberLiteral) && x == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      CONST = 1
+      foo({{ CONST }})
+      )) { int32 }
+  end
+
   it "finds generic type argument of included module" do
     assert_type(%(
       module Bar(T)
