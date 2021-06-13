@@ -187,7 +187,7 @@ describe "Dir" do
 
         Dir["#{path}/a/**/b/**/*"].sort.should eq [
           path1.to_s,
-          path1.join("file").to_s
+          path1.join("file").to_s,
         ].sort
       end
     end
