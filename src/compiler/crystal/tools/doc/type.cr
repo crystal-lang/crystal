@@ -508,7 +508,7 @@ class Crystal::Doc::Type
           io << entry.name
         end
         io << ": "
-        node_to_html entry.value, io, links: links
+        node_to_html entry.value, io, html: html
       end
     end
     io << ')'
