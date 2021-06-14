@@ -37,26 +37,36 @@ class Crystal::Repl::Context
     # TODO: finish porting all of LibM instrinsics
 
     @procs_f32_f32 = {
-      :ceil  => Proc(Float32, Float32).new(&.ceil),
-      :cos   => Proc(Float32, Float32).new { |a| Math.cos(a) },
-      :exp   => Proc(Float32, Float32).new { |a| Math.exp(a) },
-      :exp2  => Proc(Float32, Float32).new { |a| Math.exp2(a) },
-      :floor => Proc(Float32, Float32).new(&.floor),
-      :log   => Proc(Float32, Float32).new { |a| Math.log(a) },
-      :log2  => Proc(Float32, Float32).new { |a| Math.log2(a) },
-      :log10 => Proc(Float32, Float32).new { |a| Math.log10(a) },
-      :log10 => Proc(Float32, Float32).new { |a| Math.log10(a) },
+      :ceil  => Proc(Float32, Float32).new { |a| LibM.ceil_f32(a) },
+      :cos   => Proc(Float32, Float32).new { |a| LibM.cos_f32(a) },
+      :exp   => Proc(Float32, Float32).new { |a| LibM.exp_f32(a) },
+      :exp2  => Proc(Float32, Float32).new { |a| LibM.exp2_f32(a) },
+      :floor => Proc(Float32, Float32).new { |a| LibM.floor_f32(a) },
+      :log   => Proc(Float32, Float32).new { |a| LibM.log_f32(a) },
+      :log2  => Proc(Float32, Float32).new { |a| LibM.log2_f32(a) },
+      :log10 => Proc(Float32, Float32).new { |a| LibM.log10_f32(a) },
+      :log10 => Proc(Float32, Float32).new { |a| LibM.log10_f32(a) },
+      :round => Proc(Float32, Float32).new { |a| LibM.round_f32(a) },
+      :rint  => Proc(Float32, Float32).new { |a| LibM.rint_f32(a) },
+      :sin   => Proc(Float32, Float32).new { |a| LibM.sin_f32(a) },
+      :sqrt  => Proc(Float32, Float32).new { |a| LibM.sqrt_f32(a) },
+      :trunc => Proc(Float32, Float32).new { |a| LibM.trunc_f32(a) },
     }
 
     @procs_f64_f64 = {
-      :ceil  => Proc(Float64, Float64).new(&.ceil),
-      :cos   => Proc(Float64, Float64).new { |a| Math.cos(a) },
-      :exp   => Proc(Float64, Float64).new { |a| Math.exp(a) },
-      :exp2  => Proc(Float64, Float64).new { |a| Math.exp2(a) },
-      :floor => Proc(Float64, Float64).new(&.floor),
-      :log   => Proc(Float64, Float64).new { |a| Math.log(a) },
-      :log2  => Proc(Float64, Float64).new { |a| Math.log2(a) },
-      :log10 => Proc(Float64, Float64).new { |a| Math.log10(a) },
+      :ceil  => Proc(Float64, Float64).new { |a| LibM.ceil_f64(a) },
+      :cos   => Proc(Float64, Float64).new { |a| LibM.cos_f64(a) },
+      :exp   => Proc(Float64, Float64).new { |a| LibM.exp_f64(a) },
+      :exp2  => Proc(Float64, Float64).new { |a| LibM.exp2_f64(a) },
+      :floor => Proc(Float64, Float64).new { |a| LibM.floor_f64(a) },
+      :log   => Proc(Float64, Float64).new { |a| LibM.log_f64(a) },
+      :log2  => Proc(Float64, Float64).new { |a| LibM.log2_f64(a) },
+      :log10 => Proc(Float64, Float64).new { |a| LibM.log10_f64(a) },
+      :round => Proc(Float64, Float64).new { |a| LibM.round_f64(a) },
+      :rint  => Proc(Float64, Float64).new { |a| LibM.rint_f64(a) },
+      :sin   => Proc(Float64, Float64).new { |a| LibM.sin_f64(a) },
+      :sqrt  => Proc(Float64, Float64).new { |a| LibM.sqrt_f64(a) },
+      :trunc => Proc(Float64, Float64).new { |a| LibM.trunc_f64(a) },
     }
 
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)

@@ -706,7 +706,7 @@ class Crystal::Repl::Interpreter
     lib_m = program.types["LibM"]?
     if lib_m
       %w[32 64].each do |bits|
-        %w[ceil cos exp exp2 log log2 log10 powi].each do |function_name|
+        %w[ceil cos exp exp2 floor log log2 log10 round rint sin sqrt trunc powi].each do |function_name|
           match = lib_m.lookup_first_def("#{function_name}_f#{bits}", false)
           match.body = Primitive.new("repl_#{function_name}_f#{bits}") if match
         end

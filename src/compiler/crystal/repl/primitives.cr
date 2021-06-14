@@ -334,6 +334,36 @@ class Crystal::Repl::Compiler
     when "repl_log10_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :log10, node: node
+    when "repl_round_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :round, node: node
+    when "repl_round_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :round, node: node
+    when "repl_rint_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :rint, node: node
+    when "repl_rint_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :rint, node: node
+    when "repl_sin_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :sin, node: node
+    when "repl_sin_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :sin, node: node
+    when "repl_sqrt_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :sqrt, node: node
+    when "repl_sqrt_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :sqrt, node: node
+    when "repl_trunc_f32"
+      accept_call_args(node)
+      repl_proc_f32_f32 :trunc, node: node
+    when "repl_trunc_f64"
+      accept_call_args(node)
+      repl_proc_f64_f64 :trunc, node: node
     when "repl_powi_f32"
       accept_call_args(node)
       repl_powi_f32 :powi, node: node
