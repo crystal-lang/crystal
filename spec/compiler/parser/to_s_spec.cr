@@ -133,6 +133,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(1 <= (2 <= 3))
   expect_to_s %(case 1; when .foo?; 2; end), %(case 1\nwhen .foo?\n  2\nend)
   expect_to_s %(case 1; in .foo?; 2; end), %(case 1\nin .foo?\n  2\nend)
+  expect_to_s %(case 1; when .!; 2; when .< 0; 3; end), %(case 1\nwhen .!\n  2\nwhen .<(0)\n  3\nend)
   expect_to_s %({(1 + 2)})
   expect_to_s %({foo: (1 + 2)})
   expect_to_s %q("#{(1 + 2)}")

@@ -341,6 +341,10 @@ module Crystal
       call_args_need_parens = false
 
       @str << "::" if node.global?
+      if node_obj.is_a?(ImplicitObj)
+        @str << '.'
+        node_obj = nil
+      end
 
       if node_obj && (node.name == "[]" || node.name == "[]?")
         in_parenthesis(need_parens, node_obj)
@@ -1108,6 +1112,7 @@ module Crystal
     end
 
     def visit(node : Not)
+      @str << '.' if node.exp.is_a?(ImplicitObj)
       @str << '!'
       need_parens = need_parens(node.exp)
       in_parenthesis(need_parens, node.exp)
