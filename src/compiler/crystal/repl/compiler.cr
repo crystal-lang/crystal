@@ -51,7 +51,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @compiling_block = CompilingBlock.new(node, target_def)
     node.args.reverse_each do |arg|
       index = @local_vars.name_to_index(arg.name, @block_level)
-      set_local index, aligned_sizeof_type(arg), node: arg
+      # Don't use location so we don't pry break on a block arg (useless)
+      set_local index, aligned_sizeof_type(arg), node: nil
     end
 
     node.body.accept self
