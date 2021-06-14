@@ -593,11 +593,22 @@ class Crystal::Repl::Compiler
     if left_type == right_type
       left_node ? left_node.accept(self) : put_self(node: node)
       right_node.accept self
+      kind = left_type.kind
+    elsif left_type.rank < right_type.rank
+      # TODO: not tested
+      left_node ? left_node.accept(self) : put_self(node: node)
+      primitive_unchecked_convert node, left_type.kind, right_type.kind
+      right_node.accept self
+      kind = right_type.kind
     else
-      node.raise "BUG: missing handling of binary #{op} with types #{left_type} and #{right_type}"
+      # TODO: not tested
+      left_node ? left_node.accept(self) : put_self(node: node)
+      right_node.accept self
+      primitive_unchecked_convert right_node, right_type.kind, left_type.kind
+      kind = left_type.kind
     end
 
-    primitive_binary_op_math(node, left_type.kind, op)
+    primitive_binary_op_math(node, kind, op)
   end
 
   private def primitive_binary_op_math(node : ASTNode, kind : Symbol, op : String)
@@ -675,7 +686,14 @@ class Crystal::Repl::Compiler
         node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
       end
     when :f32
-      node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+      # TODO: not tested
+      case op
+      when "+" then add_f32(node: node)
+      when "-" then sub_f32(node: node)
+      when "*" then mul_f32(node: node)
+      else
+        node.raise "BUG: missing handling of binary #{op} with kind #{kind}"
+      end
     when :f64
       case op
       when "+" then add_f64(node: node)

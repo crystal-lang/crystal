@@ -409,6 +409,24 @@ Crystal::Repl::Instructions =
       push:       true,
       code:       a.unsafe_mod(b),
     },
+    add_f32: {
+      operands:   [] of Nil,
+      pop_values: [a : Float32, b : Float32],
+      push:       true,
+      code:       a + b,
+    },
+    sub_f32: {
+      operands:   [] of Nil,
+      pop_values: [a : Float32, b : Float32],
+      push:       true,
+      code:       a - b,
+    },
+    mul_f32: {
+      operands:   [] of Nil,
+      pop_values: [a : Float32, b : Float32],
+      push:       true,
+      code:       a * b,
+    },
     add_f64: {
       operands:   [] of Nil,
       pop_values: [a : Float64, b : Float64],
