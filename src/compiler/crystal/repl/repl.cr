@@ -133,12 +133,9 @@ class Crystal::Repl
     @program.normalize(parsed_nodes, inside_exp: false)
   end
 
-  # TODO: this is more or less a copy of semantic.cr except
-  # that we replace some method's bodies for primitives
+  # TODO: this is more or less a copy of semantic.cr
   private def semantic(node : ASTNode, cleanup = true) : {ASTNode, MainVisitor}
     node, processor = @program.top_level_semantic(node)
-
-    @interpreter.define_primitives
 
     visitor = InstanceVarsInitializerVisitor.new(@program)
     @program.visit_with_finished_hooks(node, visitor)

@@ -212,18 +212,6 @@ describe "Semantic: primitives" do
       "expected Primitive argument to be a symbol literal"
   end
 
-  it "errors if @[Primitive] method has body" do
-    assert_error %(
-      struct Int32
-        @[Primitive(:binary)]
-        def +(other : Int32) : Int32
-          1
-        end
-      end
-      ),
-      "method marked as Primitive must have an empty body"
-  end
-
   pending_win32 "types va_arg primitive" do
     assert_type(%(
       struct VaList

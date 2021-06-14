@@ -261,113 +261,113 @@ class Crystal::Repl::Compiler
       end
 
       pointer_set(inner_sizeof_type(ivar.type), node: node)
-    when "repl_call_stack_unwind"
-      repl_call_stack_unwind(node: node)
-    when "repl_raise_without_backtrace"
-      repl_raise_without_backtrace(node: node)
-    when "repl_caller"
-      repl_caller(node: node)
-    when "repl_crystal_scheduler_reschedule"
-      repl_crystal_scheduler_reschedule(node: node)
-    when "repl_intrinsics_memcpy"
+    when "interpreter_call_stack_unwind"
+      interpreter_call_stack_unwind(node: node)
+    when "interpreter_raise_without_backtrace"
+      interpreter_raise_without_backtrace(node: node)
+    when "interpreter_caller"
+      interpreter_caller(node: node)
+    when "interpreter_crystal_scheduler_reschedule"
+      interpreter_crystal_scheduler_reschedule(node: node)
+    when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
-      repl_intrinsics_memcpy(node: node)
-    when "repl_intrinsics_memmove"
+      interpreter_intrinsics_memcpy(node: node)
+    when "interpreter_intrinsics_memmove"
       accept_call_args(node)
-      repl_intrinsics_memmove(node: node)
-    when "repl_intrinsics_memset"
+      interpreter_intrinsics_memmove(node: node)
+    when "interpreter_intrinsics_memset"
       accept_call_args(node)
-      repl_intrinsics_memset(node: node)
-    when "repl_intrinsics_debugtrap"
-      repl_intrinsics_debugtrap(node: node)
-    when "repl_intrinsics_pause"
-      repl_intrinsics_pause(node: node)
-    when "repl_intrinsics_bswap32"
-      repl_intrinsics_bswap32(node: node)
-    when "repl_intrinsics_bswap16"
-      repl_intrinsics_bswap16(node: node)
-    when "repl_ceil_f32"
+      interpreter_intrinsics_memset(node: node)
+    when "interpreter_intrinsics_debugtrap"
+      interpreter_intrinsics_debugtrap(node: node)
+    when "interpreter_intrinsics_pause"
+      interpreter_intrinsics_pause(node: node)
+    when "interpreter_intrinsics_bswap32"
+      interpreter_intrinsics_bswap32(node: node)
+    when "interpreter_intrinsics_bswap16"
+      interpreter_intrinsics_bswap16(node: node)
+    when "interpreter_libm_ceil_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :ceil, node: node
-    when "repl_ceil_f64"
+    when "interpreter_libm_ceil_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :ceil, node: node
-    when "repl_cos_f32"
+    when "interpreter_libm_cos_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :cos, node: node
-    when "repl_cos_f64"
+    when "interpreter_libm_cos_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :cos, node: node
-    when "repl_exp_f32"
+    when "interpreter_libm_exp_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :exp, node: node
-    when "repl_exp_f64"
+    when "interpreter_libm_exp_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :exp, node: node
-    when "repl_exp2_f32"
+    when "interpreter_libm_exp2_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :exp2, node: node
-    when "repl_exp2_f64"
+    when "interpreter_libm_exp2_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :exp2, node: node
-    when "repl_floor_f32"
+    when "interpreter_libm_floor_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :floor, node: node
-    when "repl_floor_f64"
+    when "interpreter_libm_floor_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :floor, node: node
-    when "repl_log_f32"
+    when "interpreter_libm_log_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :log, node: node
-    when "repl_log_f64"
+    when "interpreter_libm_log_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :log, node: node
-    when "repl_log2_f32"
+    when "interpreter_libm_log2_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :log2, node: node
-    when "repl_log2_f64"
+    when "interpreter_libm_log2_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :log2, node: node
-    when "repl_log10_f32"
+    when "interpreter_libm_log10_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :log10, node: node
-    when "repl_log10_f64"
+    when "interpreter_libm_log10_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :log10, node: node
-    when "repl_round_f32"
+    when "interpreter_libm_round_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :round, node: node
-    when "repl_round_f64"
+    when "interpreter_libm_round_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :round, node: node
-    when "repl_rint_f32"
+    when "interpreter_libm_rint_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :rint, node: node
-    when "repl_rint_f64"
+    when "interpreter_libm_rint_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :rint, node: node
-    when "repl_sin_f32"
+    when "interpreter_libm_sin_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :sin, node: node
-    when "repl_sin_f64"
+    when "interpreter_libm_sin_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :sin, node: node
-    when "repl_sqrt_f32"
+    when "interpreter_libm_sqrt_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :sqrt, node: node
-    when "repl_sqrt_f64"
+    when "interpreter_libm_sqrt_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :sqrt, node: node
-    when "repl_trunc_f32"
+    when "interpreter_libm_trunc_f32"
       accept_call_args(node)
       repl_proc_f32_f32 :trunc, node: node
-    when "repl_trunc_f64"
+    when "interpreter_libm_trunc_f64"
       accept_call_args(node)
       repl_proc_f64_f64 :trunc, node: node
-    when "repl_powi_f32"
+    when "interpreter_libm_powi_f32"
       accept_call_args(node)
       repl_powi_f32 :powi, node: node
-    when "repl_powi_f64"
+    when "interpreter_libm_powi_f64"
       accept_call_args(node)
       repl_powi_f64 :powi, node: node
     else

@@ -40,6 +40,9 @@ class Crystal::Scheduler
     end
   end
 
+  {% if flag?(:interpreted) %}
+    @[Primitive(:interpreter_crystal_scheduler_reschedule)]
+  {% end %}
   def self.reschedule : Nil
     Thread.current.scheduler.reschedule
   end

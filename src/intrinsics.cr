@@ -1,31 +1,57 @@
 # Intrinsics as exported by LLVM.
 # Use `Intrinsics` to have a unified API across LLVM versions.
 lib LibIntrinsics
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_debugtrap)] {% end %}
   fun debugtrap = "llvm.debugtrap"
+
   {% if flag?(:bits64) %}
     {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
       fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
       fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, align : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
       fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool)
     {% else %}
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
       fun memcpy = "llvm.memcpy.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
       fun memmove = "llvm.memmove.p0i8.p0i8.i64"(dest : Void*, src : Void*, len : UInt64, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
       fun memset = "llvm.memset.p0i8.i64"(dest : Void*, val : UInt8, len : UInt64, is_volatile : Bool)
     {% end %}
   {% else %}
     {% if compare_versions(Crystal::LLVM_VERSION, "7.0.0") < 0 %}
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
       fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, align : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
       fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, align : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
       fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool)
     {% else %}
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memcpy)] {% end %}
       fun memcpy = "llvm.memcpy.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memmove)] {% end %}
       fun memmove = "llvm.memmove.p0i8.p0i8.i32"(dest : Void*, src : Void*, len : UInt32, is_volatile : Bool)
+
+      {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_memset)] {% end %}
       fun memset = "llvm.memset.p0i8.i32"(dest : Void*, val : UInt8, len : UInt32, is_volatile : Bool)
     {% end %}
   {% end %}
 
   fun read_cycle_counter = "llvm.readcyclecounter" : UInt64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap32)] {% end %}
   fun bswap32 = "llvm.bswap.i32"(id : UInt32) : UInt32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_bswap16)] {% end %}
   fun bswap16 = "llvm.bswap.i16"(id : UInt16) : UInt16
 
   fun popcount8 = "llvm.ctpop.i8"(src : Int8) : Int8
@@ -50,6 +76,7 @@ lib LibIntrinsics
   fun va_end = "llvm.va_end"(ap : Void*)
 
   {% if flag?(:i386) || flag?(:x86_64) %}
+    {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
     fun pause = "llvm.x86.sse2.pause"
   {% end %}
 end

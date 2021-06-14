@@ -1146,7 +1146,7 @@ Crystal::Repl::Instructions =
     # >>> Proc (3)
 
     # <<< Overrides (6)
-    repl_call_stack_unwind: {
+    interpreter_call_stack_unwind: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       true,
@@ -1156,13 +1156,13 @@ Crystal::Repl::Instructions =
       end,
     },
     # TODO: maybe redefine Exception::CallStack#decode_backtrace
-    repl_caller: {
+    interpreter_caller: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       raise "TODO: repl_caller",
+      code:       raise "TODO: interpreter_caller",
     },
-    repl_raise_without_backtrace: {
+    interpreter_raise_without_backtrace: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
@@ -1172,7 +1172,7 @@ Crystal::Repl::Instructions =
       end,
     },
     # TODO: think this well
-    repl_crystal_scheduler_reschedule: {
+    interpreter_crystal_scheduler_reschedule: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
@@ -1180,7 +1180,7 @@ Crystal::Repl::Instructions =
     },
     # TODO: maybe avoid having one instruction per LLVM intrinsic (but how to do this efficiently?)
     # At least memcpy, memmove and memset could be a single instruction with an enum value
-    repl_intrinsics_memcpy: {
+    interpreter_intrinsics_memcpy: {
       operands:   [] of Nil,
       pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool] of Nil,
       push:       false,
@@ -1194,7 +1194,7 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    repl_intrinsics_memmove: {
+    interpreter_intrinsics_memmove: {
       operands:   [] of Nil,
       pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, is_volatile : Bool] of Nil,
       push:       false,
@@ -1208,7 +1208,7 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    repl_intrinsics_memset: {
+    interpreter_intrinsics_memset: {
       operands:   [] of Nil,
       pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, is_volatile : Bool] of Nil,
       push:       false,
@@ -1222,25 +1222,25 @@ Crystal::Repl::Instructions =
         end
       end,
     },
-    repl_intrinsics_debugtrap: {
+    interpreter_intrinsics_debugtrap: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
       code:       pry,
     },
-    repl_intrinsics_pause: {
+    interpreter_intrinsics_pause: {
       operands:   [] of Nil,
       pop_values: [] of Nil,
       push:       false,
       code:       LibIntrinsics.pause,
     },
-    repl_intrinsics_bswap32: {
+    interpreter_intrinsics_bswap32: {
       operands:   [] of Nil,
       pop_values: [id : UInt32] of Nil,
       push:       true,
       code:       LibIntrinsics.bswap32(id),
     },
-    repl_intrinsics_bswap16: {
+    interpreter_intrinsics_bswap16: {
       operands:   [] of Nil,
       pop_values: [id : UInt16] of Nil,
       push:       true,

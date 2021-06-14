@@ -226,6 +226,7 @@ def raise(message : String) : NoReturn
 end
 
 # :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
 def raise_without_backtrace(exception : Exception) : NoReturn
   unwind_ex = Pointer(LibUnwind::Exception).malloc
   unwind_ex.value.exception_class = LibC::SizeT.zero
