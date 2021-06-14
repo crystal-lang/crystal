@@ -2371,6 +2371,91 @@ module Crystal
       end
     end
 
+    describe "control expression methods" do
+      it "executes exp" do
+        assert_macro "x", %({{x.exp}}), [Break.new(1.int32)] of ASTNode, "1"
+        assert_macro "x", %({{x.exp}}), [Next.new(1.int32)] of ASTNode, "1"
+        assert_macro "x", %({{x.exp}}), [Return.new(1.int32)] of ASTNode, "1"
+      end
+
+      it "executes exp (nop)" do
+        assert_macro "x", %({{x.exp}}), [Break.new] of ASTNode, ""
+        assert_macro "x", %({{x.exp}}), [Next.new] of ASTNode, ""
+        assert_macro "x", %({{x.exp}}), [Return.new] of ASTNode, ""
+      end
+    end
+
+    describe "yield methods" do
+      it "executes expressions" do
+        assert_macro "x", %({{x.expressions}}), [Yield.new] of ASTNode, "[]"
+        assert_macro "x", %({{x.expressions}}), [Yield.new([1.int32] of ASTNode)] of ASTNode, "[1]"
+        assert_macro "x", %({{x.expressions}}), [Yield.new([1.int32, 2.int32] of ASTNode)] of ASTNode, "[1, 2]"
+      end
+
+      it "executes scope" do
+        assert_macro "x", %({{x.scope}}), [Yield.new(scope: 1.int32)] of ASTNode, "1"
+        assert_macro "x", %({{x.scope}}), [Yield.new(scope: NilLiteral.new)] of ASTNode, "nil"
+      end
+
+      it "executes scope (nop)" do
+        assert_macro "x", %({{x.scope}}), [Yield.new] of ASTNode, ""
+      end
+    end
+
+    describe "exception handler methods" do
+      # begin
+      #   1
+      # rescue ex : Int32
+      #   2
+      # rescue Char | String
+      # else
+      #   3
+      # ensure
+      #   4
+      # end
+      begin_node = ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Int32".path] of ASTNode, "ex"), Rescue.new(Nop.new, ["Char".path, "String".path] of ASTNode)], 3.int32, 4.int32)
+
+      it "executes body" do
+        assert_macro "x", %({{x.body}}), [begin_node] of ASTNode, "1"
+      end
+
+      it "executes rescues" do
+        assert_macro "x", %({{x.rescues}}), [begin_node] of ASTNode, "[rescue ex : Int32\n  2\n, rescue Char | String\n]"
+      end
+
+      it "executes rescue body" do
+        assert_macro "x", %({{x.rescues[0].body}}), [begin_node] of ASTNode, "2"
+        assert_macro "x", %({{x.rescues[1].body}}), [begin_node] of ASTNode, ""
+      end
+
+      it "executes rescue types" do
+        assert_macro "x", %({{x.rescues[0].types}}), [begin_node] of ASTNode, "[Int32]"
+        assert_macro "x", %({{x.rescues[1].types}}), [begin_node] of ASTNode, "[Char, String]"
+        assert_macro "x", %({{x.types}}), [Rescue.new(1.int32)] of ASTNode, "nil"
+      end
+
+      it "executes rescue name" do
+        assert_macro "x", %({{x.rescues[0].name}}), [begin_node] of ASTNode, "ex"
+        assert_macro "x", %({{x.rescues[1].name}}), [begin_node] of ASTNode, ""
+      end
+
+      it "executes else" do
+        assert_macro "x", %({{x.else}}), [begin_node] of ASTNode, "3"
+      end
+
+      it "executes else (nop)" do
+        assert_macro "x", %({{x.else}}), [ExceptionHandler.new(Nop.new)] of ASTNode, ""
+      end
+
+      it "executes ensure" do
+        assert_macro "x", %({{x.ensure}}), [begin_node] of ASTNode, "4"
+      end
+
+      it "executes ensure (nop)" do
+        assert_macro "x", %({{x.ensure}}), [ExceptionHandler.new(Nop.new)] of ASTNode, ""
+      end
+    end
+
     describe "assign methods" do
       it "executes target" do
         assert_macro "x", %({{x.target}}), [Assign.new("foo".var, 2.int32)] of ASTNode, "foo"
