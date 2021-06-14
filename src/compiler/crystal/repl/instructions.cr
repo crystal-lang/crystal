@@ -1119,13 +1119,28 @@ Crystal::Repl::Instructions =
     },
     atomicrmw: {
       operands:   [element_size : Int32] of Nil,
-      pop_values: [op_i : Int32, ptr : Pointer(UInt8), val : UInt64, ordering : Symbol, singlethread : Bool],
+      pop_values: [op_i : Int32, ptr : Pointer(UInt8), value : UInt64, ordering : Symbol, singlethread : Bool],
       push:       false,
       code:       begin
         # TODO: don't hardcode ordering
         # TODO: not tested
+        # TODO: optimize, don't case over string
         op = @context.index_to_symbol(op_i)
-        raise "TODO: atomicrmw #{op}"
+        case op
+        when "add"  then atomicrmw_op(:add)
+        when "sub"  then atomicrmw_op(:sub)
+        when "and"  then atomicrmw_op(:and)
+        when "nand" then atomicrmw_op(:nand)
+        when "or"   then atomicrmw_op(:or)
+        when "xor"  then atomicrmw_op(:xor)
+        when "max"  then atomicrmw_op(:max)
+        when "umax" then atomicrmw_op(:umax)
+        when "min"  then atomicrmw_op(:min)
+        when "umin" then atomicrmw_op(:umin)
+        when "xchg" then atomicrmw_op(:xchg)
+        else
+          raise "BUG: missing atomicrmw #{op}"
+        end
       end,
     },
     # >>> Proc (3)
@@ -1264,5 +1279,24 @@ Crystal::Repl::Instructions =
     # >>> Overrides (6)
 
   }
+
+private macro atomicrmw_op(op)
+  case element_size
+  when 1
+    i8 = Atomic::Ops.atomicrmw({{op}}, ptr, value.to_u8!, :sequentially_consistent, false)
+    stack_push(i8)
+  when 2
+    i16 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt16*), value.to_u16!, :sequentially_consistent, false)
+    stack_push(i16)
+  when 4
+    i32 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt32*), value.to_u32!, :sequentially_consistent, false)
+    stack_push(i32)
+  when 8
+    i64 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt64*), value.to_u64!, :sequentially_consistent, false)
+    stack_push(i64)
+  else
+    raise "BUG: unhandled element size for store_atomic instruction: #{element_size}"
+  end
+end
 
 {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
