@@ -261,7 +261,7 @@ class Crystal::Repl::Interpreter
 
       if @pry
         pry_max_target_frame = @pry_max_target_frame
-        if !pry_max_target_frame || @call_stack.size <= pry_max_target_frame
+        if !pry_max_target_frame || @call_stack.last.real_frame_index <= pry_max_target_frame
           pry(ip, instructions, nodes, stack_bottom, stack)
         end
       end
@@ -775,11 +775,18 @@ class Crystal::Repl::Interpreter
           break
         when "next"
           @pry_node = node
-          @pry_max_target_frame = @call_stack.size
+          @pry_max_target_frame = @call_stack.last.real_frame_index
           break
         when "finish"
           @pry_node = node
-          @pry_max_target_frame = @call_stack.size - 1
+          if @call_stack.size > 1
+            @pry_max_target_frame = @call_stack[-2].real_frame_index
+          else
+            # Same as continue. TODO: is this correct?
+            @pry = false
+            @pry_node = nil
+            @pry_max_target_frame = nil
+          end
           break
         when "whereami"
           whereami(a_def, location)
