@@ -1468,7 +1468,7 @@ module Crystal::Macros
     end
   end
 
-  # A `begin ... end` expression with `rescue` or `ensure` clauses.
+  # A `begin ... end` expression with `rescue`, `else` and `ensure` clauses.
   class ExceptionHandler < ASTNode
     # Returns this exception handler's main body.
     def body : ASTNode
