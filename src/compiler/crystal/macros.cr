@@ -1350,6 +1350,11 @@ module Crystal::Macros
     def global? : BoolLiteral
     end
 
+    # Returns `true` if this is a global path (starts with `::`)
+    @[Deprecated("Use `#global?` instead")]
+    def global : BoolLiteral
+    end
+
     # Resolves this path to a `TypeNode` if it denotes a type, to
     # the value of a constant if it denotes a constant, or otherwise
     # gives a compile-time error.
