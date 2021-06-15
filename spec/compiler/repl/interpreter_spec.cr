@@ -2731,6 +2731,20 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "captures non-closure block" do
+      interpret(<<-CODE).should eq(42)
+        def capture(&block : Int32 -> Int32)
+          block
+        end
+
+        # This variable is needed in the test because it's also
+        # part of the block, even though it's not closured (it's in node.def.vars)
+        a = 100
+        b = capture { |x| x + 1 }
+        b.call(41)
+      CODE
+    end
   end
 
   context "casts" do

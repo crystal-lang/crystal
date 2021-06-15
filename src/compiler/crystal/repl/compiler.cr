@@ -741,7 +741,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     pop_obj = compile_call_args(node, target_def)
 
-    if node.block
+    if (block = node.block) && !block.fun_literal
       call_with_block compiled_def, node: node
     else
       call compiled_def, node: node
@@ -833,10 +833,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def create_compiled_def(node : Call, target_def : Def)
     block = node.block
-    block = nil if block && !block.visited?
+    block = nil if block && !block.visited? && !block.fun_literal
 
     # Compile the block too if there's one
-    if block
+    if block && !block.fun_literal
       compiled_block = create_compiled_block(block, target_def)
     end
 
@@ -857,6 +857,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     args_bytesize += args.sum { |arg| aligned_sizeof_type(arg) }
     args_bytesize += named_args.sum { |arg| aligned_sizeof_type(arg.value) } if named_args
+
+    # If the block is captured there's an extra argument
+    if block && block.fun_literal
+      args_bytesize += sizeof(Proc(Void))
+    end
 
     compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
 
@@ -960,6 +965,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     node.args.each { |a| request_value(a) }
     node.named_args.try &.each { |n| request_value(n) }
+
+    if fun_literal = node.block.try(&.fun_literal)
+      request_value fun_literal
+    end
 
     pop_obj
   end
@@ -1080,6 +1089,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       var_type = var.type?
       next unless var_type
 
+      # TODO: closures!
+      next if var.context != target_def
+
       compiled_def.local_vars.declare(name, var_type)
     end
 
@@ -1088,6 +1100,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.compile_def(target_def)
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
+    end
+
+    if @context.decompile_defs
+      puts "=== ProcLiteral ==="
+      puts Disassembler.disassemble(@context, compiled_def)
+      puts "=== ProcLiteral ==="
     end
 
     # 3. Push compiled_def id to stack
