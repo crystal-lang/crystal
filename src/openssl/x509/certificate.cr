@@ -28,7 +28,7 @@ module OpenSSL::X509
       @cert
     end
 
-    def subject
+    def subject : X509::Name
       subject = LibCrypto.x509_get_subject_name(@cert)
       raise Error.new("X509_get_subject_name") if subject.null?
       Name.new(subject)
@@ -47,7 +47,7 @@ module OpenSSL::X509
       subject
     end
 
-    def extensions
+    def extensions : Array(X509::Extension)
       count = LibCrypto.x509_get_ext_count(@cert)
       Array(Extension).new(count) do |i|
         Extension.new(LibCrypto.x509_get_ext(@cert, i))

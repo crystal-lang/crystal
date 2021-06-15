@@ -144,16 +144,16 @@ lib LibLLVMExt
                                                               input : LibLLVM::ValueRef*,
                                                               num_input : LibC::UInt) : LibLLVMExt::OperandBundleDefRef
 
-  fun build_call = LLVMExtBuildCall(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                    args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                    bundle : LibLLVMExt::OperandBundleDefRef,
-                                    name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_call2 = LLVMExtBuildCall2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
+                                      args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
+                                      bundle : LibLLVMExt::OperandBundleDefRef,
+                                      name : LibC::Char*) : LibLLVM::ValueRef
 
-  fun build_invoke = LLVMExtBuildInvoke(builder : LibLLVM::BuilderRef, fn : LibLLVM::ValueRef,
-                                        args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
-                                        then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
-                                        bundle : LibLLVMExt::OperandBundleDefRef,
-                                        name : LibC::Char*) : LibLLVM::ValueRef
+  fun build_invoke2 = LLVMExtBuildInvoke2(builder : LibLLVM::BuilderRef, ty : LibLLVM::TypeRef, fn : LibLLVM::ValueRef,
+                                          args : LibLLVM::ValueRef*, arg_count : LibC::UInt,
+                                          then : LibLLVM::BasicBlockRef, catch : LibLLVM::BasicBlockRef,
+                                          bundle : LibLLVMExt::OperandBundleDefRef,
+                                          name : LibC::Char*) : LibLLVM::ValueRef
 
   {% unless LibLLVM::IS_38 || LibLLVM::IS_39 %}
     fun write_bitcode_with_summary_to_file = LLVMExtWriteBitcodeWithSummaryToFile(module : LibLLVM::ModuleRef, path : UInt8*) : Void

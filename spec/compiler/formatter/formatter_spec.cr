@@ -88,6 +88,9 @@ describe Crystal::Formatter do
   assert_format "{ {foo: 2} }"
   assert_format "{ # foo\n  1,\n}"
 
+  assert_format "{ * 1 * 2,\n*\n3, 4 }", "{*1 * 2,\n *3, 4}"
+  assert_format "[ * [ * [ 1 ] ], *    \n[ 2] ]", "[*[*[1]], *[2]]"
+
   assert_format "{  } of  A   =>   B", "{} of A => B"
   assert_format "{ 1   =>   2 }", "{1 => 2}"
   assert_format "{ 1   =>   2 ,   3  =>  4 }", "{1 => 2, 3 => 4}"
@@ -107,6 +110,7 @@ describe Crystal::Formatter do
   assert_format "Foo( A , 1 )", "Foo(A, 1)"
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
+  assert_format "Foo(  * T, { * A  ,*\n  B } )", "Foo(*T, {*A, *B})"
 
   assert_format "NamedTuple(a: Int32,)", "NamedTuple(a: Int32)"
   assert_format "NamedTuple(\n  a: Int32,\n)"
@@ -294,6 +298,10 @@ describe Crystal::Formatter do
   assert_format "foo(1, ) do\nend", "foo(1) do\nend"
   assert_format "foo {;1}", "foo { 1 }"
   assert_format "foo {;;1}", "foo { 1 }"
+  assert_format "foo.%(bar)"
+  assert_format "foo.% bar"
+  assert_format "foo.bar(&.%(baz))"
+  assert_format "foo.bar(&.% baz)"
 
   assert_format "foo.bar\n.baz", "foo.bar\n  .baz"
   assert_format "foo.bar.baz\n.qux", "foo.bar.baz\n  .qux"
@@ -586,6 +594,12 @@ describe Crystal::Formatter do
   assert_format "(1 .. )", "(1..)"
   assert_format " .. 2", "..2"
 
+  assert_format "1..\n2"
+  assert_format "1\n.."
+  assert_format "1\n..2"
+  assert_format "...\n2"
+  assert_format "1\n..\n2"
+
   assert_format "typeof( 1, 2, 3 )", "typeof(1, 2, 3)"
   assert_format "sizeof( Int32 )", "sizeof(Int32)"
   assert_format "instance_sizeof( Int32 )", "instance_sizeof(Int32)"
@@ -617,6 +631,8 @@ describe Crystal::Formatter do
   assert_format "def foo(@x)\n\nrescue\nend"
 
   assert_format "macro foo\nend"
+  assert_format "macro foo=(x)\nend"
+  assert_format "macro []=(x, y)\nend"
   assert_format "macro foo()\nend", "macro foo\nend"
   assert_format "macro foo( x , y )\nend", "macro foo(x, y)\nend"
   assert_format "macro foo( x  =   1, y  =  2,  &block)\nend", "macro foo(x = 1, y = 2, &block)\nend"
@@ -948,6 +964,8 @@ describe Crystal::Formatter do
   assert_format "1\n# hello\n\n\n", "1\n# hello"
   assert_format "def foo\n  a = 1; # foo\n  a = 2; # bar\nend\n", "def foo\n  a = 1 # foo\n  a = 2 # bar\nend"
   assert_format "# Hello\n#\n# ```\n# puts 1+2 # bye\n# 1+2 # hello\n#\n# 1+2\n# ```\n\n# ```\n# puts 1+2\n\n# ```\n# puts 1+2\n\n# Hola\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n\n# Hey\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n#\n# ```\n# 1+2\n# ```\n#\n#     1+2\n#\n# Bye\n", "# Hello\n#\n# ```\n# puts 1 + 2 # bye\n# 1 + 2      # hello\n#\n# 1 + 2\n# ```\n\n# ```\n# puts 1+2\n\n# ```\n# puts 1+2\n\n# Hola\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n\n# Hey\n#\n#     1+2\n#     foo do\n#     3+4\n#     end\n#\n# ```\n# 1 + 2\n# ```\n#\n#     1+2\n#\n# Bye"
+  assert_format "# Hello\n#\n# ```cr\n#   1\n# ```\n# Bye", "# Hello\n#\n# ```\n# 1\n# ```\n# Bye"
+  assert_format "# Hello\n#\n# ```crystal\n#   1\n# ```\n# Bye", "# Hello\n#\n# ```\n# 1\n# ```\n# Bye"
   assert_format "macro foo\n  {% for value, i in values %}\\\n    {% if true %}\\\n    {% end %}\\\n    {{ 1 }}/\n  {% end %}\\\nend\n\n{\n  1 => 2,\n  1234 => 5,\n}\n", "macro foo\n  {% for value, i in values %}\\\n    {% if true %}\\\n    {% end %}\\\n    {{ 1 }}/\n  {% end %}\\\nend\n\n{\n     1 => 2,\n  1234 => 5,\n}"
   assert_format "a = \"\n\"\n1    # 1\n12 # 2\n", "a = \"\n\"\n1  # 1\n12 # 2"
   assert_format "enum Foo\n  A;   B;   C\nend\n", "enum Foo\n  A; B; C\nend"
@@ -1050,6 +1068,7 @@ describe Crystal::Formatter do
 
   assert_format "foo : (A) | D"
   assert_format "foo : (F(A)) | D"
+  assert_format "foo : (   A  |  B   )", "foo : (A | B)"
 
   assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
   assert_format "foo : (String -> String?) | (String)"
@@ -1059,6 +1078,7 @@ describe Crystal::Formatter do
   assert_format "alias A = (B(C, (C | D)) | E)"
   assert_format "alias A = ((B(C | D) | E) | F)"
   assert_format "alias A = ({A, (B)})"
+  assert_format "alias A = (   A  |  B   )", "alias A = (A | B)"
 
   assert_format "foo : A(B)\nbar : C"
   assert_format "foo : (A -> B)\nbar : C"
@@ -1068,6 +1088,7 @@ describe Crystal::Formatter do
   assert_format "def foo : (A, B) ->\n  nil\nend"
   assert_format "def foo : (A | B(C))\n  nil\nend"
   assert_format "def foo : A | B(C)\n  nil\nend"
+  assert_format "def foo(x : (   A  |  B   )) : (   A  |  B   )\nend", "def foo(x : (A | B)) : (A | B)\nend"
 
   assert_format "foo &.bar.is_a?(Baz)"
   assert_format "foo &.bar.responds_to?(:baz)"
@@ -1769,5 +1790,22 @@ describe Crystal::Formatter do
       # bar
       do
       end
+    CODE
+
+  # #10190
+  assert_format <<-CODE
+    foo(
+      1,
+    ) do
+      2
+    end
+    CODE
+
+  assert_format <<-CODE
+    foo(
+      1,
+    ) {
+      2
+    }
     CODE
 end

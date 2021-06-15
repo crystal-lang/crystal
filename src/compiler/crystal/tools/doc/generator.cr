@@ -382,9 +382,7 @@ class Crystal::Doc::Generator
       filename = location.filename
       next unless filename
 
-      url = project_info.source_url(location)
-      next unless url
-      location.url = url
+      location.url = project_info.source_url(location)
 
       # Prevent identical link generation in the "Defined in:" section in the docs because of macros
       next if locations.includes?(location)

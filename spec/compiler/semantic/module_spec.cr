@@ -101,7 +101,7 @@ describe "Semantic: module" do
       "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it "errors if including generic module and not specifying type vars" do
     assert_error "
       module Foo(T)
       end
@@ -110,7 +110,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when including Foo(T)"
   end
 
   it "includes generic module explicitly" do
@@ -898,6 +898,92 @@ describe "Semantic: module" do
       "can't declare module dynamically"
   end
 
+  it "can't reopen as class" do
+    assert_error "
+      module Foo
+      end
+
+      class Foo
+      end
+      ", "Foo is not a class, it's a module"
+  end
+
+  it "can't reopen as struct" do
+    assert_error "
+      module Foo
+      end
+
+      struct Foo
+      end
+      ", "Foo is not a struct, it's a module"
+  end
+
+  it "errors if reopening non-generic module as generic" do
+    assert_error %(
+      module Foo
+      end
+
+      module Foo(T)
+      end
+      ),
+      "Foo is not a generic module"
+  end
+
+  it "errors if reopening generic module with different type vars" do
+    assert_error %(
+      module Foo(T)
+      end
+
+      module Foo(U)
+      end
+      ),
+      "type var must be T, not U"
+  end
+
+  it "errors if reopening generic module with different type vars (2)" do
+    assert_error %(
+      module Foo(A, B)
+      end
+
+      module Foo(C)
+      end
+      ),
+      "type vars must be A, B, not C"
+  end
+
+  it "errors if reopening generic module with different splat index" do
+    assert_error %(
+      module Foo(A)
+      end
+
+      module Foo(*A)
+      end
+      ),
+      "type var must be A, not *A"
+  end
+
+  it "errors if reopening generic module with different splat index (2)" do
+    assert_error %(
+      module Foo(*A)
+      end
+
+      module Foo(A)
+      end
+      ),
+      "type var must be *A, not A"
+  end
+
+  it "errors if reopening generic module with different splat index (3)" do
+    assert_error %(
+      module Foo(*A, B)
+      end
+
+      module Foo(A, *B)
+      end
+      ),
+      "type vars must be *A, B, not A, *B"
+  end
+
   it "uses :Module name for modules in errors" do
     assert_error %(
       module Moo; end
@@ -1105,7 +1191,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "declares and includes generic module" do
+  it "instantiates generic variadic module, accesses T from instance method" do
     assert_type(%(
       module Moo(*T)
         def t
@@ -1121,7 +1207,55 @@ describe "Semantic: module" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "declares and includes generic module, more args" do
+  it "instantiates generic variadic module, accesses T from class method" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo
+        extend Moo(Int32, Char)
+      end
+
+      Foo.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        include Moo(*T)
+      end
+
+      Foo(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from class method through generic extend" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        extend Moo(*T)
+      end
+
+      Foo(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method, more args" do
     assert_type(%(
       module Moo(A, *T, B)
         def t
@@ -1134,6 +1268,22 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include, more args" do
+    assert_type(%(
+      module Moo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Foo(*T)
+        include Moo(Int32, *T, String)
+      end
+
+      Foo(Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
   end
 

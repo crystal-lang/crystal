@@ -1,6 +1,22 @@
 require "spec"
 require "iterator"
 
+struct StructIter
+  include Iterator(Int32)
+
+  def initialize(@a : Int32, @b : Int32); end
+
+  def next
+    if @a > @b
+      stop
+    else
+      cur = @a
+      @a += 1
+      cur
+    end
+  end
+end
+
 describe Iterator do
   describe "Iterator.of" do
     it "creates singleton" do
@@ -30,10 +46,7 @@ describe Iterator do
 
   describe "compact_map" do
     it "applies the function and removes nil values" do
-      iter = (1..3).each.compact_map { |e| e.odd? ? e : nil }
-      iter.next.should eq(1)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
+      assert_iterates_iterator [1, 3], (1..3).each.compact_map { |e| e.odd? ? e : nil }
     end
 
     it "sums after compact_map to_a" do
@@ -591,6 +604,15 @@ describe Iterator do
       iter.next.should eq({3, "a"})
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "does with object, with block" do
+      tuples = [] of {Int32, String}
+      object = "a"
+      (1..3).each.with_object(object) do |value, obj|
+        tuples << {value, obj}
+      end.should be(object)
+      tuples.should eq([{1, object}, {2, object}, {3, object}])
+    end
   end
 
   describe "zip" do
@@ -694,6 +716,18 @@ describe Iterator do
       iter.next.should be_a(Iterator::Stop)
     end
 
+    it "flattens nested struct iterators with internal state being value types" do
+      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten
+
+      iter.next.should eq(11)
+      iter.next.should eq(12)
+      iter.next.should eq(13)
+      iter.next.should eq(21)
+      iter.next.should eq(22)
+      iter.next.should eq(23)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
     it "return iterator itself by rewind" do
       iter = [1, [2, 3], 4].each.flatten
 
@@ -711,6 +745,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned items" do
@@ -719,6 +754,7 @@ describe Iterator do
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned iterators" do
@@ -730,6 +766,7 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
     end
 
     it "flattens returned values" do
@@ -749,6 +786,21 @@ describe Iterator do
       iter.next.should eq(2)
       iter.next.should eq(3)
       iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "flattens returned values of mixed element types in #to_a" do
+      iter = [1, 'a', ""].each.flat_map do |x|
+        case x
+        when Int32
+          x
+        when Char
+          [x, x]
+        else
+          [x, x].each
+        end
+      end
+      iter.to_a.should eq([1, 'a', 'a', "", ""])
     end
   end
 

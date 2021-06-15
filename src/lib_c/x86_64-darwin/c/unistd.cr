@@ -8,6 +8,7 @@ lib LibC
   X_OK                = 1 << 0
   SC_CLK_TCK          =  3
   SC_NPROCESSORS_ONLN = 58
+  SC_PAGESIZE         = 29
 
   fun chroot(dirname : Char*) : Int
   fun access(x0 : Char*, x1 : Int) : Int

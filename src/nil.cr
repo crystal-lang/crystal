@@ -43,7 +43,7 @@ struct Nil
   # Returns `0_u64`. Even though `Nil` is not a `Reference` type, it is usually
   # mixed with them to form nilable types so it's useful to have an
   # object id for `nil`.
-  def object_id
+  def object_id : UInt64
     0_u64
   end
 
@@ -63,7 +63,7 @@ struct Nil
   end
 
   # Returns `false`.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     false
   end
 
@@ -102,7 +102,7 @@ struct Nil
   # Raises `NilAssertionError`.
   #
   # See also: `Object#not_nil!`.
-  def not_nil!
+  def not_nil! : NoReturn
     raise NilAssertionError.new
   end
 
@@ -115,7 +115,7 @@ struct Nil
   # config["empty"]?.presence   # => nil
   # config["missing"]?.presence # => nil
   # ```
-  def presence
+  def presence : Nil
     self
   end
 

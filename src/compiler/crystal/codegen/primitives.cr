@@ -291,10 +291,14 @@ class Crystal::CodeGenVisitor
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
-    # arg < min_value || arg > max_value
-    or(
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
-      builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+    # checks for arg being outside of range and not infinity
+    # (arg < min_value || arg > max_value) && arg != 2 * arg
+    and(
+      or(
+        builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+      ),
+      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg))
     )
   end
 
@@ -992,6 +996,7 @@ class Crystal::CodeGenVisitor
       else
         null_fun_ptr, null_args = real_fun_ptr, closure_args
       end
+      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
@@ -1002,6 +1007,7 @@ class Crystal::CodeGenVisitor
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
+      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
@@ -1074,7 +1080,27 @@ class Crystal::CodeGenVisitor
     codegen_tuple_indexer(context.type, call_args[0], index)
   end
 
-  def codegen_tuple_indexer(type, value, index)
+  def codegen_tuple_indexer(type, value, index : Range)
+    case type
+    when TupleInstanceType
+      tuple_types = type.tuple_types[index].map &.as(Type)
+      allocate_tuple(@program.tuple_of(tuple_types).as(TupleInstanceType)) do |tuple_type, i|
+        ptr = aggregate_index value, index.begin + i
+        tuple_value = to_lhs ptr, tuple_type
+        {tuple_type, tuple_value}
+      end
+    else
+      type = type.instance_type
+      case type
+      when TupleInstanceType
+        type_id(@program.tuple_of(type.tuple_types[index].map &.as(Type)).metaclass)
+      else
+        raise "BUG: unsupported codegen for tuple_indexer"
+      end
+    end
+  end
+
+  def codegen_tuple_indexer(type, value, index : Int32)
     case type
     when TupleInstanceType
       ptr = aggregate_index value, index

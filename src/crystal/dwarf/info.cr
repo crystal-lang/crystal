@@ -120,7 +120,13 @@ module Crystal
         when FORM::String
           @io.gets('\0', chomp: true).to_s
         when FORM::Strp
-          read_ulong
+          # HACK: A call to read_ulong is failing with an .ud2 / Illegal instruction: 4 error
+          #       Calling with @[AlwaysInline] makes no difference.
+          if @dwarf64
+            @io.read_bytes(UInt64)
+          else
+            @io.read_bytes(UInt32)
+          end
         when FORM::Indirect
           form = FORM.new(DWARF.read_unsigned_leb128(@io))
           read_attribute_value(form)

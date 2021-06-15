@@ -586,7 +586,7 @@ module Crystal
 
         begin
           generic_type = instance_type.as(GenericType).instantiate(type_vars_types)
-        rescue ex : Crystal::Exception
+        rescue ex : Crystal::CodeError
           raise ex.message, ex
         end
       end
@@ -604,9 +604,19 @@ module Crystal
     property! program : Program
 
     def update(from = nil)
-      return unless elements.all? &.type?
+      types = [] of TypeVar
+      elements.each do |node|
+        if node.is_a?(Splat)
+          type = node.type?
+          return unless type.is_a?(TupleInstanceType)
+          types.concat(type.tuple_types)
+        else
+          type = node.type?
+          return unless type
+          types << type
+        end
+      end
 
-      types = elements.map &.type.as(TypeVar)
       tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)
@@ -652,12 +662,16 @@ module Crystal
       obj_type = obj.type?
       return unless obj_type
 
-      if obj_type.is_a?(UnionType)
-        raise "can't read instance variables of union types (#{name} of #{obj_type})"
-      end
-
-      var = visitor.lookup_instance_var(self, obj_type)
-      self.type = var.type
+      self.type =
+        if obj_type.is_a?(UnionType)
+          obj_type.program.type_merge(
+            obj_type.union_types.map do |union_type|
+              visitor.lookup_instance_var(self, union_type).type
+            end
+          )
+        else
+          visitor.lookup_instance_var(self, obj_type).type
+        end
     end
   end
 
@@ -735,6 +749,15 @@ module Crystal
         end
       end
 
+      if splat_index
+        # Error if there are less expressions than the number of block arguments
+        if exps_types.size < (args_size - 1)
+          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size})"
+        end
+        splat_range = (splat_index..splat_index - args_size)
+        exps_types[splat_range] = @program.tuple_of(exps_types[splat_range])
+      end
+
       # Check if there are missing yield expressions to match
       # the (optional) block signature, and if they match the declared types
       if yield_vars
@@ -752,52 +775,24 @@ module Crystal
         end
       end
 
+      # Check if tuple unpacking is needed
+      if exps_types.size == 1 &&
+         (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
+         args_size > 1 &&
+         !splat_index
+        exps_types = exp_type.tuple_types
+      end
+
       # Now move exps_types to block_arg_types
-      if splat_index
-        # Error if there are less expressions than the number of block arguments
-        if exps_types.size < (args_size - 1)
-          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size}+)"
-        end
+      if block.args.size > exps_types.size
+        block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+      end
 
-        j = 0
-        args_size.times do |i|
-          types = block_arg_types[i] ||= [] of Type
-          if i == splat_index
-            tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-            types << @program.tuple_of(tuple_types)
-            j += tuple_types.size
-          else
-            types << exps_types[j]
-            j += 1
-          end
-        end
-      else
-        # Check if tuple unpacking is needed
-        if exps_types.size == 1 &&
-           (exp_type = exps_types.first).is_a?(TupleInstanceType) &&
-           args_size > 1
-          if block.args.size > exp_type.tuple_types.size
-            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exp_type.tuple_types.size})"
-          end
+      exps_types.each_with_index do |exp_type, i|
+        break if i >= block_arg_types.size
 
-          exp_type.tuple_types.each_with_index do |tuple_type, i|
-            break if i >= block_arg_types.size
-
-            types = block_arg_types[i] ||= [] of Type
-            types << tuple_type
-          end
-        else
-          if block.args.size > exps_types.size
-            block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
-          end
-
-          exps_types.each_with_index do |exp_type, i|
-            break if i >= block_arg_types.size
-
-            types = block_arg_types[i] ||= [] of Type
-            types << exp_type
-          end
-        end
+        types = block_arg_types[i] ||= [] of Type
+        types << exp_type
       end
     end
 

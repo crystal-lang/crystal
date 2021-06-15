@@ -347,6 +347,41 @@ class YAMLWithShape
   property shape : YAMLShape
 end
 
+enum YAMLVariableDiscriminatorEnumFoo
+  Foo = 4
+end
+
+enum YAMLVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
+class YAMLVariableDiscriminatorValueType
+  include YAML::Serializable
+
+  use_yaml_discriminator "type", {
+                                         0 => YAMLVariableDiscriminatorNumber,
+    "1"                                    => YAMLVariableDiscriminatorString,
+    true                                   => YAMLVariableDiscriminatorBool,
+    YAMLVariableDiscriminatorEnumFoo::Foo  => YAMLVariableDiscriminatorEnum,
+    YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
+  }
+end
+
+class YAMLVariableDiscriminatorNumber < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorString < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorBool < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
+end
+
 describe "YAML::Serializable" do
   it "works with record" do
     YAMLAttrPoint.new(1, 2).to_yaml.should eq "---\nx: 1\ny: 2\n"
@@ -708,6 +743,13 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":''}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":}))
+      yaml.b.should eq "Haha"
     end
 
     it "bool" do
@@ -890,6 +932,23 @@ describe "YAML::Serializable" do
       point = container.shape.as(YAMLPoint)
       point.x.should eq(1)
       point.y.should eq(2)
+    end
+
+    it "deserializes with variable discriminator value type" do
+      object_number = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 0}))
+      object_number.should be_a(YAMLVariableDiscriminatorNumber)
+
+      object_string = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": "1"}))
+      object_string.should be_a(YAMLVariableDiscriminatorString)
+
+      object_bool = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": true}))
+      object_bool.should be_a(YAMLVariableDiscriminatorBool)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 4}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
   end
 

@@ -34,11 +34,23 @@ class Time::Location
       end
 
       it "invalid timezone identifier" do
-        expect_raises(InvalidLocationNameError, "Foobar/Baz") do
-          Location.load("Foobar/Baz")
+        with_zoneinfo(datapath("zoneinfo")) do
+          expect_raises(InvalidLocationNameError, "Foobar/Baz") do
+            Location.load("Foobar/Baz")
+          end
         end
 
-        Location.load?("Foobar/Baz", Crystal::System::Time.zone_sources).should be_nil
+        Location.load?("Foobar/Baz", [datapath("zoneinfo")]).should be_nil
+      end
+
+      it "name is folder" do
+        Location.load?("Foo", [datapath("zoneinfo")]).should be_nil
+      end
+
+      it "invalid zone file" do
+        expect_raises(Time::Location::InvalidTZDataError) do
+          Location.load?("Foo/invalid", [datapath("zoneinfo")])
+        end
       end
 
       it "treats UTC as special case" do

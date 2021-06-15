@@ -398,12 +398,79 @@ describe "BigInt" do
     u64.should be_a(UInt64)
   end
 
-  {% if flag?(:x86_64) %}
-    # For 32 bits libgmp can't seem to be able to do it
-    it "can cast UInt64::MAX to UInt64 (#2264)" do
-      BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  context "conversion to 64-bit" do
+    it "above 64 bits" do
+      big = BigInt.new("9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(7766279631452241919) # 99999999999999999999 - 5*(2**64)
+      big.to_u64!.should eq(7766279631452241919)
+
+      big = BigInt.new("9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-8814407033341083649) # 99999999999999999999999999999999 - 5421010862428*(2**64)
+      big.to_u64!.should eq(9632337040368467967)  # 99999999999999999999999999999999 - 5421010862427*(2**64)
     end
-  {% end %}
+
+    it "between 63 and 64 bits" do
+      big = BigInt.new(i = 9999999999999999999)
+      expect_raises(OverflowError) { big.to_i64 }
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(-8446744073709551617) # 9999999999999999999 - 2**64
+      big.to_u64!.should eq(i)
+    end
+
+    it "between 32 and 63 bits" do
+      big = BigInt.new(i = 9999999999999)
+      big.to_i64.should eq(i)
+      big.to_u64.should eq(i)
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(i)
+    end
+
+    it "negative under 32 bits" do
+      big = BigInt.new(i = -9999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446744073709541617) # -9999 + 2**64
+    end
+
+    it "negative between 32 and 63 bits" do
+      big = BigInt.new(i = -9999999999999)
+      big.to_i64.should eq(i)
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(i)
+      big.to_u64!.should eq(18446734073709551617) # -9999999999999 + 2**64
+    end
+
+    it "negative between 63 and 64 bits" do
+      big = BigInt.new("-9999999999999999999")
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8446744073709551617) # -9999999999999999999 + 2**64
+      big.to_u64!.should eq(8446744073709551617)
+    end
+
+    it "negative above 64 bits" do
+      big = BigInt.new("-" + "9" * 20)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(-7766279631452241919) # -9999999999999999999 + 5*(2**64)
+      big.to_u64!.should eq(10680464442257309697) # -9999999999999999999 + 6*(2**64)
+
+      big = BigInt.new("-" + "9" * 32)
+      expect_raises(OverflowError) { big.to_i64 }
+      expect_raises(OverflowError) { big.to_u64 }
+      big.to_i64!.should eq(8814407033341083649) # -99999999999999999999999999999999 + 5421010862428*(2**64)
+      big.to_u64!.should eq(8814407033341083649)
+    end
+  end
+
+  it "can cast UInt64::MAX to UInt64 (#2264)" do
+    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  end
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
@@ -421,10 +488,12 @@ describe "BigInt" do
   it "#hash" do
     b1 = 5.to_big_i
     b2 = 5.to_big_i
-    b3 = 6.to_big_i
+    b3 = -6.to_big_i
 
     b1.hash.should eq(b2.hash)
     b1.hash.should_not eq(b3.hash)
+
+    b3.hash.should eq((-6).hash)
   end
 
   it "clones" do

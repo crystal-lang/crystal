@@ -5,11 +5,6 @@ require "log"
 class HTTP::LogHandler
   include HTTP::Handler
 
-  @[Deprecated("Use `new([Log])` instead")]
-  def initialize(io : IO)
-    @log = Log.new("http.server", Log::IOBackend.new(io), :info)
-  end
-
   def initialize(@log = Log.for("http.server"))
   end
 

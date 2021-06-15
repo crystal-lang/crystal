@@ -276,10 +276,10 @@ struct Crystal::TypeDeclarationProcessor
       remove_error owner, name
 
       if owner.is_a?(GenericType)
-        owner.generic_types.each_value do |generic_type|
-          new_type = type_decl.type.replace_type_parameters(generic_type)
+        owner.each_instantiated_type do |instance|
+          new_type = type_decl.type.replace_type_parameters(instance)
           new_type_decl = TypeDeclarationWithLocation.new(new_type, type_decl.location, type_decl.uninitialized, type_decl.annotations)
-          declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type_decl, instance_var: true, check_nilable: false)
+          declare_meta_type_var(instance.instance_vars, instance, name, new_type_decl, instance_var: true, check_nilable: false)
         end
       end
 
@@ -395,9 +395,9 @@ struct Crystal::TypeDeclarationProcessor
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
 
-      owner.generic_types.each_value do |generic_type|
-        new_type = type.replace_type_parameters(generic_type)
-        declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type, type_info.location, instance_var: true, annotations: type_info.annotations)
+      owner.each_instantiated_type do |instance|
+        new_type = type.replace_type_parameters(instance)
+        declare_meta_type_var(instance.instance_vars, instance, name, new_type, type_info.location, instance_var: true, annotations: type_info.annotations)
       end
 
       remove_error owner, name
@@ -477,7 +477,7 @@ struct Crystal::TypeDeclarationProcessor
     # super or assign all of those variables
     if ancestor_non_nilable
       infos.each do |info|
-        unless info.def.calls_super? || info.def.calls_initialize? || info.def.macro_def?
+        unless info.def.calls_super? || info.def.calls_previous_def? || info.def.calls_initialize? || info.def.macro_def?
           ancestor_non_nilable.each do |name|
             # If the variable is initialized outside, it's OK
             next if initialized_outside?(owner, name)

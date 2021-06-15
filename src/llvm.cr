@@ -4,7 +4,7 @@ require "c/string"
 module LLVM
   @@initialized = false
 
-  def self.init_x86
+  def self.init_x86 : Nil
     return if @@initialized_x86
     @@initialized_x86 = true
 
@@ -21,7 +21,7 @@ module LLVM
     {% end %}
   end
 
-  def self.init_aarch64
+  def self.init_aarch64 : Nil
     return if @@initialized_aarch64
     @@initialized_aarch64 = true
 
@@ -38,7 +38,7 @@ module LLVM
     {% end %}
   end
 
-  def self.init_arm
+  def self.init_arm : Nil
     return if @@initialized_arm
     @@initialized_arm = true
 
@@ -83,7 +83,15 @@ module LLVM
     end
   end
 
-  def self.normalize_triple(triple : String)
+  def self.host_cpu_name : String
+    {% unless LibLLVM::IS_LT_70 %}
+      String.new LibLLVM.get_host_cpu_name
+    {% else %}
+      raise "LibLLVM.host_cpu_name requires LLVM 7.0 or newer"
+    {% end %}
+  end
+
+  def self.normalize_triple(triple : String) : String
     normalized = LibLLVMExt.normalize_target_triple(triple)
     normalized = LLVM.string_and_dispose(normalized)
 
@@ -94,7 +102,7 @@ module LLVM
     normalized
   end
 
-  def self.to_io(chars, io)
+  def self.to_io(chars, io) : Nil
     io.write Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)
   end

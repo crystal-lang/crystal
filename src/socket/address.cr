@@ -1,4 +1,4 @@
-require "socket"
+require "./common"
 require "uri"
 
 class Socket
@@ -30,7 +30,7 @@ class Socket
     # * `unix://<path>`
     #
     # See `IPAddress.parse` and `UNIXAddress.parse` for details.
-    def self.parse(uri : URI)
+    def self.parse(uri : URI) : self
       case uri.scheme
       when "ip", "tcp", "udp"
         IPAddress.parse uri
@@ -42,7 +42,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 
@@ -138,7 +138,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 
@@ -208,7 +208,7 @@ class Socket
     def loopback? : Bool
       case addr = @addr
       in LibC::InAddr
-        addr.s_addr & 0x00000000ff_u32 == 0x0000007f_u32
+        addr.s_addr & 0x000000ff_u32 == 0x0000007f_u32
       in LibC::In6Addr
         ipv6_addr8(addr) == StaticArray[0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 0_u8, 1_u8]
       end
@@ -224,6 +224,21 @@ class Socket
       end
     end
 
+    # Returns `true` if this IP is a private address.
+    #
+    # IPv4 addresses in `10.0.0.0/8`, `172.16.0.0/12` and `192.168.0.0/16` as defined in [RFC 1918](https://tools.ietf.org/html/rfc1918)
+    # and IPv6 Unique Local Addresses in `fc00::/7` as defined in [RFC 4193](https://tools.ietf.org/html/rfc4193) are considered private.
+    def private? : Bool
+      case addr = @addr
+      in LibC::InAddr
+        addr.s_addr & 0x000000ff_u32 == 0x00000000a_u32 ||     # 10.0.0.0/8
+          addr.s_addr & 0x000000f0ff_u32 == 0x0000010ac_u32 || # 172.16.0.0/12
+          addr.s_addr & 0x000000ffff_u32 == 0x0000a8c0_u32     # 192.168.0.0/16
+      in LibC::In6Addr
+        ipv6_addr8(addr)[0] & 0xfe_u8 == 0xfc_u8
+      end
+    end
+
     private def ipv6_addr8(addr : LibC::In6Addr)
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8
@@ -231,16 +246,14 @@ class Socket
         addr.__in6_union.__s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8
+      {% elsif flag?(:win32) %}
+        addr.u.byte
       {% else %}
         {% raise "Unsupported platform" %}
       {% end %}
     end
 
-    def ==(other : IPAddress)
-      family == other.family &&
-        port == other.port &&
-        address == other.address
-    end
+    def_equals_and_hash family, port, address
 
     def to_s(io : IO) : Nil
       if family == Family::INET6
@@ -366,7 +379,7 @@ class Socket
     end
 
     # :ditto:
-    def self.parse(uri : String)
+    def self.parse(uri : String) : self
       parse URI.parse(uri)
     end
 
@@ -376,9 +389,7 @@ class Socket
       @size = size || sizeof(LibC::SockaddrUn)
     end
 
-    def ==(other : UNIXAddress)
-      path == other.path
-    end
+    def_equals_and_hash path
 
     def to_s(io : IO) : Nil
       io << path
@@ -390,5 +401,12 @@ class Socket
       sockaddr.value.sun_path.to_unsafe.copy_from(@path.to_unsafe, @path.bytesize + 1)
       sockaddr.as(LibC::Sockaddr*)
     end
+  end
+
+  # Returns `true` if the string represents a valid IPv4 or IPv6 address.
+  def self.ip?(string : String)
+    addr = LibC::In6Addr.new
+    ptr = pointerof(addr).as(Void*)
+    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
   end
 end

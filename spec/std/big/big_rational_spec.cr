@@ -6,20 +6,20 @@ private def br(n, d)
 end
 
 private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
-  (val < greater).should eq(true), file, line
-  (greater < val).should eq(false), file, line
-  (val <=> greater).should eq(-1), file, line
-  (greater <=> val).should eq(1), file, line
+  (val < greater).should eq(true), file: file, line: line
+  (greater < val).should eq(false), file: file, line: line
+  (val <=> greater).should eq(-1), file: file, line: line
+  (greater <=> val).should eq(1), file: file, line: line
 
-  (val == equal).should eq(true), file, line
-  (equal == val).should eq(true), file, line
-  (val <=> equal).should eq(0), file, line
-  (equal <=> val).should eq(0), file, line
+  (val == equal).should eq(true), file: file, line: line
+  (equal == val).should eq(true), file: file, line: line
+  (val <=> equal).should eq(0), file: file, line: line
+  (equal <=> val).should eq(0), file: file, line: line
 
-  (val > less).should eq(true), file, line
-  (less > val).should eq(false), file, line
-  (val <=> less).should eq(1), file, line
-  (less <=> val).should eq(-1), file, line
+  (val > less).should eq(true), file: file, line: line
+  (less > val).should eq(false), file: file, line: line
+  (val <=> less).should eq(1), file: file, line: line
+  (less <=> val).should eq(-1), file: file, line: line
 end
 
 describe BigRational do
