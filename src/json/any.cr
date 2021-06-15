@@ -279,7 +279,7 @@ struct JSON::Any
     raw.to_json(json)
   end
 
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     raw.to_yaml(yaml)
   end
 

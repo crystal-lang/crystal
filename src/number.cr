@@ -146,7 +146,7 @@ struct Number
   # 123.abs  # => 123
   # -123.abs # => 123
   # ```
-  def abs
+  def abs : self
     self < 0 ? -self : self
   end
 
@@ -170,7 +170,7 @@ struct Number
   # 0.sign   # => 0
   # -42.sign # => -1
   # ```
-  def sign
+  def sign : Int32
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 

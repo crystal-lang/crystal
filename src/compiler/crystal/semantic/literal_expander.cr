@@ -50,9 +50,7 @@ module Crystal
 
       generic = Generic.new(Path.global("Array"), type_var).at(node)
 
-      if capacity.zero?
-        Call.new(generic, "new").at(node)
-      elsif node.elements.any?(Splat)
+      if node.elements.any?(Splat)
         ary_var = new_temp_var.at(node)
 
         ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
@@ -71,6 +69,8 @@ module Crystal
         exps << ary_var.clone
 
         Expressions.new(exps).at(node)
+      elsif capacity.zero?
+        Call.new(generic, "new").at(node)
       else
         ary_var = new_temp_var.at(node)
 

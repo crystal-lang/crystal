@@ -48,4 +48,12 @@ describe "Normalize: array literal" do
       __temp_1
       CR
   end
+
+  it "normalizes non-empty without of, with splat only" do
+    assert_expand "[*1]", <<-CR
+      __temp_1 = ::Array(typeof(::Enumerable.element_type(1))).new(0)
+      __temp_1.concat(1)
+      __temp_1
+      CR
+  end
 end

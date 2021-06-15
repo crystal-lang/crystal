@@ -404,6 +404,11 @@ module YAML
             {% if key.is_a?(Path) %}
               {% key = key.resolve %}
             {% end %}
+            {% if key.is_a?(NumberLiteral) %}
+              # An enum value is always a typed NumberLiteral and stringifies with type
+              # suffix unless it's Int32.
+              {% key = key.id.split("_")[0] %}
+            {% end %}
             when {{key.id.stringify}}
               return {{value.id}}.new(ctx, node)
           {% end %}

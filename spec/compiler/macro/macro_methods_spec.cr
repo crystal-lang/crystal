@@ -213,6 +213,10 @@ module Crystal
         assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
       end
 
+      it "preserves integer size (#10713)" do
+        assert_macro "", "{{ 3000000000u64 % 2 }}", [] of ASTNode, "0_u64"
+      end
+
       it "executes &" do
         assert_macro "", "{{5 & 3}}", [] of ASTNode, "1"
       end
@@ -2513,6 +2517,22 @@ module Crystal
     end
 
     describe "path methods" do
+      it "executes names" do
+        assert_macro "x", %({{x.names}}), [Path.new("String")] of ASTNode, %([String])
+        assert_macro "x", %({{x.names}}), [Path.new(["Foo", "Bar"])] of ASTNode, %([Foo, Bar])
+      end
+
+      it "executes global?" do
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
+      # TODO: remove deprecated tests
+      it "executes global" do
+        assert_macro "x", %({{x.global}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
       it "executes resolve" do
         assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
 

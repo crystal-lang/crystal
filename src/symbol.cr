@@ -76,7 +76,7 @@ struct Symbol
   # :nodoc:
   # Determines if a string needs to be quoted to be used for an external
   # parameter name or a named argument's key.
-  def self.needs_quotes_for_named_argument?(string)
+  def self.needs_quotes_for_named_argument?(string) : Bool
     case string
     when "", "_"
       true
