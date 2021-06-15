@@ -219,6 +219,22 @@ class Crystal::Repl::Compiler
 
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
+    when "external_var_set"
+      lib_type = node.obj.not_nil!.type.as(LibType)
+      external = node.target_def.as(External)
+
+      # pointer_set needs first arg, then obj
+      arg = node.args.first
+      request_value(arg)
+      dup(aligned_sizeof_type(arg), node: nil) if @wants_value
+
+      fn = @context.c_function(lib_type, external.real_name)
+
+      # Put the symbol address, which is a pointer
+      put_u64 fn.address, node: node
+
+      # Set the pointer's value
+      pointer_set(inner_sizeof_type(node), node: node)
     when "struct_or_union_set"
       obj = obj.not_nil!
       arg = node.args.first
