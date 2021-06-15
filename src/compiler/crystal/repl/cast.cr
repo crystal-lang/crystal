@@ -40,7 +40,12 @@ class Crystal::Repl::Compiler
       union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
-  private def upcast_distinct(node : ASTNode, from : Type, to : MixedUnionType)
+  private def upcast_distinct(node : ASTNode, from : NilType, to : MixedUnionType)
+    # Nil inside a union is all zeros
+    push_zeros(aligned_sizeof_type(to), node: nil)
+  end
+
+  private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType, to : MixedUnionType)
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -103,9 +108,8 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : Type)
-    # TODO: tuples and named tuples
-
+  # TODO: restrict here
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType)
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
