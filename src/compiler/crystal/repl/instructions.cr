@@ -1171,13 +1171,6 @@ Crystal::Repl::Instructions =
         raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
       end,
     },
-    # TODO: think this well
-    interpreter_crystal_scheduler_reschedule: {
-      operands:   [] of Nil,
-      pop_values: [] of Nil,
-      push:       false,
-      code:       Crystal::Scheduler.reschedule,
-    },
     # TODO: maybe avoid having one instruction per LLVM intrinsic (but how to do this efficiently?)
     # At least memcpy, memmove and memset could be a single instruction with an enum value
     interpreter_intrinsics_memcpy: {

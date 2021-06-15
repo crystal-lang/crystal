@@ -267,8 +267,6 @@ class Crystal::Repl::Compiler
       interpreter_raise_without_backtrace(node: node)
     when "interpreter_caller"
       interpreter_caller(node: node)
-    when "interpreter_crystal_scheduler_reschedule"
-      interpreter_crystal_scheduler_reschedule(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)

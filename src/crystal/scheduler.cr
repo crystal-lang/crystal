@@ -40,9 +40,6 @@ class Crystal::Scheduler
     end
   end
 
-  {% if flag?(:interpreted) %}
-    @[Primitive(:interpreter_crystal_scheduler_reschedule)]
-  {% end %}
   def self.reschedule : Nil
     Thread.current.scheduler.reschedule
   end
@@ -100,7 +97,11 @@ class Crystal::Scheduler
     {% end %}
 
     current, @current = @current, fiber
-    Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+
+    # TODO: this is obviously wrong for interpreted
+    {% unless flag?(:interpreted) %}
+      Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+    {% end %}
 
     {% if flag?(:preview_mt) %}
       GC.unlock_read
