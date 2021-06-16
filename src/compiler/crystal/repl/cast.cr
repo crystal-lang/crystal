@@ -94,6 +94,11 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : EnumType, to : IntegerType)
+    # TODO: not tested
+    # Nothing
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
@@ -127,6 +132,11 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType)
     # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : NilType)
+    # TODO: not tested
+    pop aligned_sizeof_type(from), node: nil
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
