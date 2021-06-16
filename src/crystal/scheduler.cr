@@ -87,6 +87,8 @@ class Crystal::Scheduler
     @lock.sync { @runnables.concat fibers }
   end
 
+  # TODO: maybe this is the single method that we need to override in the interpreter.
+  # It would switch from one interpreter to the other. Not sure!
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
     {% if flag?(:preview_mt) %}

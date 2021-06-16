@@ -17,5 +17,9 @@ module FFI
     def cast(t : T.class) forall T
       T.new(@code.as(Pointer(Void)), Pointer(Void).null)
     end
+
+    def to_unsafe
+      @code
+    end
   end
 end

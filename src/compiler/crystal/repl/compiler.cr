@@ -769,8 +769,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
+    proc_args = [] of FFI::CallInterface?
 
     node.args.each do |arg|
+      arg_type = arg.type
+
       if arg.is_a?(NilLiteral)
         # Nil is used to mean Pointer.null
         put_i64 0, node: arg
@@ -779,17 +782,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
       # TODO: upcast?
 
-      # TODO: this out handling is bad. Why is out's type not a pointer already?
-      case arg
-      when NilLiteral
-        args_bytesizes << sizeof(Pointer(Void))
-        args_ffi_types << FFI::Type.pointer
-      when Out
-        args_bytesizes << sizeof(Pointer(Void))
-        args_ffi_types << FFI::Type.pointer
-      else
+      if arg_type.is_a?(ProcInstanceType)
         args_bytesizes << aligned_sizeof_type(arg)
-        args_ffi_types << arg.type.ffi_type
+        args_ffi_types << FFI::Type.pointer
+        proc_args << arg_type.ffi_call_interface
+      else
+        case arg
+        when NilLiteral
+          args_bytesizes << sizeof(Pointer(Void))
+          args_ffi_types << FFI::Type.pointer
+        when Out
+          # TODO: this out handling is bad. Why is out's type not a pointer already?
+          args_bytesizes << sizeof(Pointer(Void))
+          args_ffi_types << FFI::Type.pointer
+        else
+          args_bytesizes << aligned_sizeof_type(arg)
+          args_ffi_types << arg.type.ffi_type
+        end
+        proc_args << nil
       end
     end
 
@@ -809,6 +819,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           total_args: node.args.size,
         ),
         args_bytesizes: args_bytesizes,
+        proc_args: proc_args,
       )
       @context.add_gc_reference(lib_function)
     else
@@ -821,6 +832,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           return_type: external.type.ffi_type,
         ),
         args_bytesizes: args_bytesizes,
+        proc_args: proc_args,
       )
     end
 

@@ -53,8 +53,17 @@ class Crystal::Repl::Interpreter
 
   getter local_vars : LocalVars
   getter stack : Pointer(UInt8)
+  @stack_top : Pointer(UInt8)
 
   property decompile = true
+
+  class ClosureContext
+    getter interpreter : Interpreter
+    getter compiled_def : CompiledDef
+
+    def initialize(@interpreter : Interpreter, @compiled_def : CompiledDef)
+    end
+  end
 
   def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
@@ -64,6 +73,7 @@ class Crystal::Repl::Interpreter
 
     # TODO: what if the stack is exhausted?
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+    @stack_top = @stack
     @call_stack = [] of CallFrame
 
     @main_visitor = MainVisitor.new(program, meta_vars: meta_vars)
@@ -71,13 +81,18 @@ class Crystal::Repl::Interpreter
     @cleanup_transformer = CleanupTransformer.new(program)
     @block_level = 0
 
+    @ffi_closure_fun = LibFFI::ClosureFun.new do |cif, ret, args, user_data|
+      Interpreter.ffi_closure_fun(cif, ret, args, user_data)
+      nil
+    end
+
     @compiled_def = nil
     @pry = false
     @pry_node = nil
     @pry_max_target_frame = nil
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location, stack : Pointer(UInt8))
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location?, stack : Pointer(UInt8))
     @context = interpreter.@context
     @local_vars = compiled_def.local_vars.dup
 
@@ -85,13 +100,19 @@ class Crystal::Repl::Interpreter
     @nodes = {} of Int32 => ASTNode
 
     @stack = stack
+    @stack_top = @stack
     # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
 
-    gatherer = LocalVarsGatherer.new(location, compiled_def.def)
-    gatherer.gather
-    meta_vars = gatherer.meta_vars
-    @block_level = gatherer.block_level
+    if location
+      gatherer = LocalVarsGatherer.new(location, compiled_def.def)
+      gatherer.gather
+      meta_vars = gatherer.meta_vars
+      @block_level = gatherer.block_level
+    else
+      meta_vars = compiled_def.def.vars || MetaVars.new
+      @block_level = 0
+    end
 
     @main_visitor = MainVisitor.new(
       interpreter.@context.program,
@@ -103,6 +124,7 @@ class Crystal::Repl::Interpreter
 
     @top_level_visitor = interpreter.@top_level_visitor
     @cleanup_transformer = interpreter.@cleanup_transformer
+    @ffi_closure_fun = interpreter.@ffi_closure_fun
 
     @compiled_def = compiled_def
     @pry = false
@@ -305,6 +327,29 @@ class Crystal::Repl::Interpreter
     Value.new(@context, return_value, node_type)
   end
 
+  protected def self.ffi_closure_fun(cif, ret, args, user_data)
+    closure_context = user_data.as(ClosureContext)
+    interpreter = closure_context.interpreter
+    compiled_def = closure_context.compiled_def
+
+    # What to do:
+    #   - create a new interpreter that uses the same stack
+    #     (call the second initialize overload)
+    #   - copy args into the stack, starting from stack_top
+    #   - call interpret on the compiled_def.def.body
+    #   - copy the value back to ret
+
+    stack_top = interpreter.@stack_top
+    compiled_def.def.args.each_with_index do |arg, i|
+      args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
+      stack_top += interpreter.aligned_sizeof_type(arg.type)
+    end
+
+    sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, stack_top)
+    value = sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
+    value.copy_to(ret.as(UInt8*))
+  end
+
   private def current_local_vars
     if call_frame = @call_stack.last?
       call_frame.compiled_def.local_vars
@@ -417,6 +462,7 @@ class Crystal::Repl::Interpreter
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
     %args_bytesizes = lib_function.args_bytesizes
+    %proc_args = lib_function.proc_args
 
     # Assume C calls don't have more than 100 arguments
     # TODO: use the stack for this?
@@ -425,10 +471,22 @@ class Crystal::Repl::Interpreter
 
     %i = %args_bytesizes.size - 1
     %args_bytesizes.reverse_each do |arg_bytesize|
+      if %proc_arg_cif = %proc_args[%i]
+        proc_compiled_def = (stack - %offset - arg_bytesize).as(CompiledDef*).value
+        closure_context = ClosureContext.new(self, proc_compiled_def)
+        %closure = FFI::Closure.new(%proc_arg_cif, @ffi_closure_fun, closure_context.as(Void*))
+        (stack - %offset - arg_bytesize).as(Int64*).value = %closure.to_unsafe.unsafe_as(Int64)
+      end
       %pointers[%i] = (stack - %offset - arg_bytesize).as(Void*)
       %offset += arg_bytesize
       %i -= 1
     end
+
+    # Remember the stack top so that if a callback is called from C
+    # and back to the interpreter, we can continue using the stack
+    # from this point.
+    @stack_top = stack
+
     %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
 
     %return_bytesize = inner_sizeof_type(%target_def.type)
@@ -641,11 +699,11 @@ class Crystal::Repl::Interpreter
     stack.clear({{size}})
   end
 
-  private def aligned_sizeof_type(type : Type) : Int32
+  def aligned_sizeof_type(type : Type) : Int32
     @context.aligned_sizeof_type(type)
   end
 
-  private def inner_sizeof_type(type : Type) : Int32
+  def inner_sizeof_type(type : Type) : Int32
     @context.inner_sizeof_type(type)
   end
 

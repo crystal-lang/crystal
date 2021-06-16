@@ -58,6 +58,10 @@ struct Crystal::Repl::Value
     end
   end
 
+  def copy_to(pointer : Pointer(UInt8))
+    @pointer.copy_to(pointer, @context.inner_sizeof_type(@type))
+  end
+
   def to_s(io : IO)
     decl = UninitializedVar.new(
       Var.new("x"),

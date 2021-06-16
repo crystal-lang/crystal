@@ -51,6 +51,12 @@ module FFI
       )
     end
 
+    def inspect(io : IO)
+      io << "FFI::CallInterface("
+      io << @cif.value
+      io << ")"
+    end
+
     def to_unsafe
       @cif
     end

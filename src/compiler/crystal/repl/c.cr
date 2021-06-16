@@ -55,6 +55,14 @@ module Crystal
     def ffi_type
       FFI::Type.pointer
     end
+
+    def ffi_call_interface
+      FFI::CallInterface.new(
+        abi: FFI::ABI::DEFAULT,
+        args: arg_types.map(&.ffi_type),
+        return_type: return_type.ffi_type,
+      )
+    end
   end
 
   class NilType
