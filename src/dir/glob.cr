@@ -80,8 +80,14 @@ class Dir
         sequences = compile(pattern)
 
         sequences.each do |sequence|
-          run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
-            yield match
+          if sequence.count(&.is_a?(RecursiveDirectories)) > 1
+            run_tracking(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+              yield match
+            end
+          else
+            run(sequence, match_hidden: match_hidden, follow_symlinks: follow_symlinks) do |match|
+              yield match
+            end
           end
         end
       end
@@ -145,6 +151,16 @@ class Dir
       end
 
       true
+    end
+
+    private def self.run_tracking(sequence, match_hidden, follow_symlinks, &block : String -> _)
+      result_tracker = Set(String).new
+
+      run(sequence, match_hidden, follow_symlinks) do |result|
+        if result_tracker.add?(result)
+          yield result
+        end
+      end
     end
 
     private def self.run(sequence, match_hidden, follow_symlinks, &block : String -> _)
