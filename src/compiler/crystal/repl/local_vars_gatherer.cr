@@ -20,6 +20,11 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
       @meta_vars[var.name] = var.clone if var
     end
 
+    if @def.uses_block_arg? && (block_arg = @def.block_arg)
+      block_arg_var = @def.vars.try &.[block_arg.name]?
+      @meta_vars[block_arg.name] = block_arg_var.clone if block_arg_var
+    end
+
     @def.body.accept self
   end
 
