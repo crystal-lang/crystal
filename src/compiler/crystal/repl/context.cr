@@ -34,6 +34,8 @@ class Crystal::Repl::Context
 
     @multidispatchs = {} of MultidispatchKey => Def
 
+    @ffi_closure_contexts = {} of {UInt64, UInt64} => Interpreter::ClosureContext
+
     # TODO: finish porting all of LibM instrinsics
 
     @procs_f32_f32 = {
@@ -80,6 +82,12 @@ class Crystal::Repl::Context
 
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
+  end
+
+  def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
+    # Keep the closure contexts in a Hash by the compiled def so we don't
+    # lose a reference to it in the GC.
+    @ffi_closure_contexts[{interpreter.object_id, compiled_def.object_id}] ||= Interpreter::ClosureContext.new(interpreter, compiled_def)
   end
 
   def type_instance_var_initializers(type : Type)

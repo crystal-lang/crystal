@@ -483,8 +483,8 @@ class Crystal::Repl::Interpreter
       # pass it to the FFI call below.
       if %proc_arg_cif = %proc_args[%i]
         proc_compiled_def = (stack - %offset - arg_bytesize).as(CompiledDef*).value
-        # TODO: don't lose a GC reference to closure_context!
-        closure_context = ClosureContext.new(self, proc_compiled_def)
+        closure_context = @context.ffi_closure_context(self, proc_compiled_def)
+
         %closure = FFI::Closure.new(%proc_arg_cif, @ffi_closure_fun, closure_context.as(Void*))
         (stack - %offset - arg_bytesize).as(Int64*).value = %closure.to_unsafe.unsafe_as(Int64)
       end
