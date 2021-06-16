@@ -328,6 +328,7 @@ class Crystal::Repl::Interpreter
   end
 
   protected def self.ffi_closure_fun(cif, ret, args, user_data)
+    # This is the generic callback that gets called on any C callback.
     closure_context = user_data.as(ClosureContext)
     interpreter = closure_context.interpreter
     compiled_def = closure_context.compiled_def
@@ -340,12 +341,13 @@ class Crystal::Repl::Interpreter
     #   - copy the value back to ret
 
     stack_top = interpreter.@stack_top
+
     compiled_def.def.args.each_with_index do |arg, i|
       args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
       stack_top += interpreter.aligned_sizeof_type(arg.type)
     end
 
-    sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, stack_top)
+    sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
     value = sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
     value.copy_to(ret.as(UInt8*))
   end
@@ -471,12 +473,22 @@ class Crystal::Repl::Interpreter
 
     %i = %args_bytesizes.size - 1
     %args_bytesizes.reverse_each do |arg_bytesize|
+      # If an argument is a Proc, in the stack it's {pointer, closure_data},
+      # where pointer is actually the object_id of a CompiledDef.
+      # TODO: check that closure_data is null and raise otherwise
+      # We need to wrap the Proc in an FFI::Closure. proc_args[%i] will have
+      # the CallInterface for the Proc.
+      # We copy the CompiledDef from the stack and into a ClosureContext,
+      # include also the interpreter, and put that in the stack to later
+      # pass it to the FFI call below.
       if %proc_arg_cif = %proc_args[%i]
         proc_compiled_def = (stack - %offset - arg_bytesize).as(CompiledDef*).value
+        # TODO: don't lose a GC reference to closure_context!
         closure_context = ClosureContext.new(self, proc_compiled_def)
         %closure = FFI::Closure.new(%proc_arg_cif, @ffi_closure_fun, closure_context.as(Void*))
         (stack - %offset - arg_bytesize).as(Int64*).value = %closure.to_unsafe.unsafe_as(Int64)
       end
+
       %pointers[%i] = (stack - %offset - arg_bytesize).as(Void*)
       %offset += arg_bytesize
       %i -= 1
