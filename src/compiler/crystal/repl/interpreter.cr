@@ -821,9 +821,17 @@ class Crystal::Repl::Interpreter
   end
 
   private def whereami(a_def : Def, location : Location)
-    puts "From: #{location} #{a_def.owner}##{a_def.name}:"
-    puts
     filename = location.filename
+    line_number = location.line_number
+    column_number = location.column_number
+
+    if filename.is_a?(String)
+      puts "From: #{Crystal.relative_filename(filename)}:#{line_number}:#{column_number} #{a_def.owner}##{a_def.name}:"
+    else
+      puts "From: #{location} #{a_def.owner}##{a_def.name}:"
+    end
+
+    puts
     case filename
     in String
       lines = File.read_lines(filename)
