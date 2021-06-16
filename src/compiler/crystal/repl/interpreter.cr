@@ -833,13 +833,25 @@ class Crystal::Repl::Interpreter
       return
     end
 
-    {location.line_number - 5, 1}.max.upto({location.line_number + 5, lines.size}.min) do |line_number|
+    min_line_number = {location.line_number - 5, 1}.max
+    max_line_number = {location.line_number + 5, lines.size}.min
+
+    max_line_number_size = max_line_number.to_s.size
+
+    min_line_number.upto(max_line_number) do |line_number|
       line = lines[line_number - 1]
       if line_number == location.line_number
         print " => "
       else
         print "    "
       end
+
+      # Pad line number if needed
+      line_number_size = line_number.to_s.size
+      (max_line_number_size - line_number_size).times do
+        print ' '
+      end
+
       print line_number.colorize.blue
       print ": "
       puts SyntaxHighlighter.highlight(line)
