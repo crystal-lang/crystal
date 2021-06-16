@@ -48,6 +48,7 @@ class Crystal::Repl::Interpreter
     # It's -1 if no class var needs to be initialized.
     class_var_index : Int32
 
+  getter? pry : Bool
   @pry_node : ASTNode?
   @pry_max_target_frame : Int32?
 
@@ -348,8 +349,14 @@ class Crystal::Repl::Interpreter
     end
 
     sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
+    sub_interpreter.parent = interpreter
+    sub_interpreter.pry = interpreter.pry?
+
     value = sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
     value.copy_to(ret.as(UInt8*))
+  end
+
+  def parent=(@parent : Interpreter)
   end
 
   private def current_local_vars
@@ -646,7 +653,19 @@ class Crystal::Repl::Interpreter
   end
 
   private macro pry
-    @pry = true
+    self.pry = true
+  end
+
+  def pry=(pry)
+    @pry = pry
+
+    unless pry
+      @pry_node = nil
+      @pry_max_target_frame = nil
+    end
+
+    parent = @parent
+    parent.pry = pry if parent
   end
 
   private macro next_instruction(t)
@@ -763,16 +782,13 @@ class Crystal::Repl::Interpreter
         print "pry> "
         line = gets
         unless line
-          @pry = false
-          @pry_node = nil
+          self.pry = false
           break
         end
 
         case line
         when "continue"
-          @pry = false
-          @pry_node = nil
-          @pry_max_target_frame = nil
+          self.pry = false
           break
         when "step"
           @pry_node = node
