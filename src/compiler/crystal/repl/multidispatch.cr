@@ -41,18 +41,24 @@ module Crystal::Repl::Multidispatch
     a_def = Def.new(node.name).at(node)
 
     unless obj_type.is_a?(Program)
-      a_def.args << Arg.new("self").at(node)
+      self_arg = Arg.new("self").at(node)
+      self_arg.type = obj_type
+      a_def.args << self_arg
     end
 
     i = 0
 
-    node.args.each do
-      a_def.args << Arg.new("arg#{i}").at(node)
+    node.args.each do |arg|
+      def_arg = Arg.new("arg#{i}").at(node)
+      def_arg.type = arg.type
+      a_def.args << def_arg
       i += 1
     end
 
-    node.named_args.try &.each do
-      a_def.args << Arg.new("arg#{i}").at(node)
+    node.named_args.try &.each do |named_arg|
+      def_arg = Arg.new("arg#{i}").at(node)
+      def_arg.type = named_arg.value.type
+      a_def.args << def_arg
       i += 1
     end
 

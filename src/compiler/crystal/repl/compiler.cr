@@ -982,14 +982,51 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_self(node: node) unless node.scope.is_a?(Program)
     end
 
-    node.args.each { |a| request_value(a) }
-    node.named_args.try &.each { |n| request_value(n) }
+    target_def_args = target_def.args
+
+    i = 0
+    node.args.each do |arg|
+      arg_type = arg.type
+      target_def_arg_type = target_def_args[i].type
+
+      compile_call_arg(arg, arg_type, target_def_arg_type)
+
+      i += 1
+    end
+
+    node.named_args.try &.each do |n|
+      arg = n.value
+      arg_type = arg.type
+      target_def_arg_type = target_def_args[i].type
+
+      compile_call_arg(arg, arg_type, target_def_arg_type)
+
+      i += 1
+    end
 
     if fun_literal = node.block.try(&.fun_literal)
       request_value fun_literal
     end
 
     pop_obj
+  end
+
+  private def compile_call_arg(arg, arg_type, target_def_arg_type)
+    # Check autocasting from symbol to enum
+    if arg.is_a?(SymbolLiteral) && target_def_arg_type.is_a?(EnumType)
+      symbol_name = arg.value.underscore
+      target_def_arg_type.types.each do |enum_name, enum_value|
+        if enum_name.underscore == symbol_name
+          request_value(enum_value.as(Const).value)
+          return
+        end
+      end
+    end
+
+    request_value(arg)
+
+    # TODO: downcast!
+    # downcast arg, arg.type, target_def_arg_type
   end
 
   private def compile_struct_call_receiver(obj : ASTNode, owner : Type)

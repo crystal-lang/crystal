@@ -3060,6 +3060,25 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "autocast" do
+    it "autocasts symbol to enum" do
+      interpret(<<-EXISTING, <<-CODE).should eq(1)
+          enum Color
+            Red
+            Green
+            Blue
+          end
+
+          def foo(x : Color)
+            x
+          end
+        EXISTING
+          c = foo :green
+          c.value
+        CODE
+    end
+  end
+
   # context "integration" do
   #   it "does Int32#to_s" do
   #     interpret(<<-CODE, prelude: "prelude").should eq("123456789")
