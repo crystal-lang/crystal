@@ -427,7 +427,7 @@ end
 # It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
 #
 # ```
-# `echo hi` # => "hi\n"
+# `echo hi`   # => "hi\n"
 # $?.success? # => true
 # ```
 #
