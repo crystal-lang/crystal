@@ -13,74 +13,7 @@ require "c/string"
 # "hello world"
 # ```
 #
-# A backslash can be used to denote some characters inside the string:
-#
-# ```
-# "\"" # double quote
-# "\\" # backslash
-# "\e" # escape
-# "\f" # form feed
-# "\n" # newline
-# "\r" # carriage return
-# "\t" # tab
-# "\v" # vertical tab
-# ```
-#
-# You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
-#
-# ```
-# "\u0041" # == "A"
-# ```
-#
-# Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):
-#
-# ```
-# "\u{41}" # == "A"
-# ```
-#
-# A string can span multiple lines:
-#
-# ```
-# "hello
-#       world" # same as "hello\n      world"
-# ```
-#
-# Note that in the above example trailing and leading spaces, as well as newlines,
-# end up in the resulting string. To avoid this, you can split a string into multiple lines
-# by joining multiple literals with a backslash:
-#
-# ```
-# "hello " \
-# "world, " \
-# "no newlines" # same as "hello world, no newlines"
-# ```
-#
-# Alternatively, a backslash followed by a newline can be inserted inside the string literal:
-#
-# ```
-# "hello \
-#      world, \
-#      no newlines" # same as "hello world, no newlines"
-# ```
-#
-# In this case, leading whitespace is not included in the resulting string.
-#
-# If you need to write a string that has many double quotes, parentheses, or similar
-# characters, you can use alternative literals:
-#
-# ```
-# # Supports double quotes and nested parentheses
-# %(hello ("world")) # same as "hello (\"world\")"
-#
-# # Supports double quotes and nested brackets
-# %[hello ["world"]] # same as "hello [\"world\"]"
-#
-# # Supports double quotes and nested curlies
-# %{hello {"world"}} # same as "hello {\"world\"}"
-#
-# # Supports double quotes and nested angles
-# %<hello <"world">> # same as "hello <\"world\">"
-# ```
+# See [`String` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/string.html) in the language reference.
 #
 # To create a `String` with embedded expressions, you can use string interpolation:
 #

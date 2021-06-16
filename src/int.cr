@@ -55,6 +55,8 @@
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```
+#
+# See [`Integer` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/integers.html) in the language reference.
 struct Int
   alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
