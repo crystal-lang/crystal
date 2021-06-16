@@ -12,6 +12,9 @@ class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
   end
 
   def gather : Nil
+    self_var = @def.vars.try &.["self"]?
+    @meta_vars["self"] = self_var.clone if self_var
+
     @def.args.each do |arg|
       var = @def.vars.try &.[arg.name]?
       @meta_vars[var.name] = var.clone if var
