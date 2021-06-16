@@ -567,6 +567,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       else
         pointer_is_not_null(node: node)
       end
+    when NilableReferenceUnionType
+      if filtered_type.nil_type?
+        # TODO: not tested
+        pointer_is_null(node: node)
+      else
+        reference_is_a(type_id(filtered_type), node: node)
+      end
     else
       node.raise "BUG: missing IsA from #{obj_type} to #{const_type} (#{obj_type.class} to #{const_type.class})"
     end

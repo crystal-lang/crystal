@@ -998,12 +998,16 @@ Crystal::Repl::Instructions =
       pop_values: [pointer : Pointer(UInt8)] of Nil,
       push:       true,
       code:       begin
-        type_id = pointer.as(Int32*).value
-        type = type_from_type_id(type_id)
+        if pointer.null?
+          false
+        else
+          type_id = pointer.as(Int32*).value
+          type = type_from_type_id(type_id)
 
-        filter_type = type_from_type_id(filter_type_id)
+          filter_type = type_from_type_id(filter_type_id)
 
-        !!type.filter_by(filter_type)
+          !!type.filter_by(filter_type)
+        end
       end,
       disassemble: {
         filter_type_id: context.type_from_id(filter_type_id),

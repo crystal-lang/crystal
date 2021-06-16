@@ -1240,6 +1240,34 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does is_a? from NilableReferenceUnionType to NonGenericClassType (true)" do
+      interpret(<<-EXISTING, <<-CODE).should eq("hello")
+        class Foo
+        end
+        EXISTING
+        a = 1 == 1 ? "hello" : (1 == 1 ? Foo.new : nil)
+        if a.is_a?(String)
+          a
+        else
+          "bar"
+        end
+        CODE
+    end
+
+    it "does is_a? from NilableReferenceUnionType to NonGenericClassType (false)" do
+      interpret(<<-EXISTING, <<-CODE).should eq("baz")
+        class Foo
+        end
+        EXISTING
+        a = 1 == 1 ? "hello" : (1 == 1 ? Foo.new : nil)
+        if a.is_a?(Foo)
+          "bar"
+        else
+          "baz"
+        end
+        CODE
+    end
+
     it "does is_a? from VirtualType to NonGenericClassType (true)" do
       interpret(<<-EXISTING, <<-CODE).should eq(2)
         class Foo
@@ -3064,7 +3092,7 @@ end
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
   context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
-  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: false, trace: true, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)

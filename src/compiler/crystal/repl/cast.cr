@@ -67,6 +67,10 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : Type, to : ReferenceUnionType)
+    # Nothing
+  end
+
   private def upcast_distinct(node : ASTNode, from : NonGenericClassType, to : VirtualType)
     # Nothing
   end
@@ -118,12 +122,11 @@ class Crystal::Repl::Compiler
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableType, to : NilType)
-    # TODO: pointer sizes
-    pop 8, node: nil
+    pop sizeof(Pointer(Void)), node: nil
   end
 
-  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType)
-    # TODO: not tested
+  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType)
+    # Nothing to do
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)
