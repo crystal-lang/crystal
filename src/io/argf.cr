@@ -25,7 +25,7 @@ class IO::ARGF < IO
       read_count = 0
     end
 
-    read_count
+    read_count.to_i32
   end
 
   # :nodoc:
