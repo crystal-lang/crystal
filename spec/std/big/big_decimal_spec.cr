@@ -482,6 +482,229 @@ describe BigDecimal do
     it { -2.91.to_big_d.trunc.should eq(-2) }
   end
 
+  describe "#round" do
+    describe "rounding modes" do
+      it "to_zero" do
+        "-1.5".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_zero).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.5".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "0.9".to_big_d.round(:to_zero).should eq "0".to_big_d
+        "1.0".to_big_d.round(:to_zero).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_zero).should eq "1".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_zero).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_zero).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_zero).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_zero).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "to_positive" do
+        "-1.5".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-1.0".to_big_d.round(:to_positive).should eq "-1".to_big_d
+        "-0.9".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.5".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "-0.1".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.0".to_big_d.round(:to_positive).should eq "0".to_big_d
+        "0.1".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.5".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "0.9".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.0".to_big_d.round(:to_positive).should eq "1".to_big_d
+        "1.5".to_big_d.round(:to_positive).should eq "2".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_positive).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_positive).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_positive).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_positive).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "to_negative" do
+        "-1.5".to_big_d.round(:to_negative).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:to_negative).should eq "-1.0".to_big_d
+        "0.0".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:to_negative).should eq "0.0".to_big_d
+        "1.0".to_big_d.round(:to_negative).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:to_negative).should eq "1.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:to_negative).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:to_negative).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:to_negative).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:to_negative).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "ties_even" do
+        "-2.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round(:ties_even).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_even).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "-0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_even).should eq "0.0".to_big_d
+        "0.9".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_even).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_even).should eq "2.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:ties_even).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round(:ties_even).should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:ties_even).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:ties_even).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round(:ties_even).should eq "-123456789123456789124.0".to_big_d
+      end
+
+      it "ties_away" do
+        "-2.5".to_big_d.round(:ties_away).should eq "-3.0".to_big_d
+        "-1.5".to_big_d.round(:ties_away).should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round(:ties_away).should eq "-1.0".to_big_d
+        "-0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.0".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.1".to_big_d.round(:ties_away).should eq "0.0".to_big_d
+        "0.5".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "0.9".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.0".to_big_d.round(:ties_away).should eq "1.0".to_big_d
+        "1.5".to_big_d.round(:ties_away).should eq "2.0".to_big_d
+        "2.5".to_big_d.round(:ties_away).should eq "3.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round(:ties_away).should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round(:ties_away).should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round(:ties_away).should eq "123456789123456789125.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round(:ties_away).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round(:ties_away).should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round(:ties_away).should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round(:ties_away).should eq "-123456789123456789125.0".to_big_d
+      end
+
+      it "default (=ties_even)" do
+        "-2.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.5".to_big_d.round.should eq "-2.0".to_big_d
+        "-1.0".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.9".to_big_d.round.should eq "-1.0".to_big_d
+        "-0.5".to_big_d.round.should eq "0.0".to_big_d
+        "-0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.0".to_big_d.round.should eq "0.0".to_big_d
+        "0.1".to_big_d.round.should eq "0.0".to_big_d
+        "0.5".to_big_d.round.should eq "0.0".to_big_d
+        "0.9".to_big_d.round.should eq "1.0".to_big_d
+        "1.0".to_big_d.round.should eq "1.0".to_big_d
+        "1.5".to_big_d.round.should eq "2.0".to_big_d
+        "2.5".to_big_d.round.should eq "2.0".to_big_d
+
+        "123456789123456789123.0".to_big_d.round.should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.1".to_big_d.round.should eq "123456789123456789123.0".to_big_d
+        "123456789123456789123.5".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789123.9".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.0".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "123456789123456789124.5".to_big_d.round.should eq "123456789123456789124.0".to_big_d
+        "-123456789123456789123.0".to_big_d.round.should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.1".to_big_d.round.should eq "-123456789123456789123.0".to_big_d
+        "-123456789123456789123.5".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789123.9".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.0".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+        "-123456789123456789124.5".to_big_d.round.should eq "-123456789123456789124.0".to_big_d
+      end
+    end
+
+    describe "with digits" do
+      it "to_zero" do
+        "12.345".to_big_d.round(-1, mode: :to_zero).should eq "10".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_zero).should eq "12".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_zero).should eq "12.3".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_zero).should eq "12.34".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_zero).should eq "-10".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_zero).should eq "-12".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_zero).should eq "-12.3".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_zero).should eq "-12.34".to_big_d
+      end
+
+      it "to_positive" do
+        "12.345".to_big_d.round(-1, mode: :to_positive).should eq "20".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_positive).should eq "13".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_positive).should eq "12.4".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_positive).should eq "12.35".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_positive).should eq "-10".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_positive).should eq "-12".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_positive).should eq "-12.3".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_positive).should eq "-12.34".to_big_d
+      end
+
+      it "to_negative" do
+        "12.345".to_big_d.round(-1, mode: :to_negative).should eq "10".to_big_d
+        "12.345".to_big_d.round(0, mode: :to_negative).should eq "12".to_big_d
+        "12.345".to_big_d.round(1, mode: :to_negative).should eq "12.3".to_big_d
+        "12.345".to_big_d.round(2, mode: :to_negative).should eq "12.34".to_big_d
+        "-12.345".to_big_d.round(-1, mode: :to_negative).should eq "-20".to_big_d
+        "-12.345".to_big_d.round(0, mode: :to_negative).should eq "-13".to_big_d
+        "-12.345".to_big_d.round(1, mode: :to_negative).should eq "-12.4".to_big_d
+        "-12.345".to_big_d.round(2, mode: :to_negative).should eq "-12.35".to_big_d
+      end
+
+      it "ties_away" do
+        "13.825".to_big_d.round(-1, mode: :ties_away).should eq "10".to_big_d
+        "13.825".to_big_d.round(0, mode: :ties_away).should eq "14".to_big_d
+        "13.825".to_big_d.round(1, mode: :ties_away).should eq "13.8".to_big_d
+        "13.825".to_big_d.round(2, mode: :ties_away).should eq "13.83".to_big_d
+        "-13.825".to_big_d.round(-1, mode: :ties_away).should eq "-10".to_big_d
+        "-13.825".to_big_d.round(0, mode: :ties_away).should eq "-14".to_big_d
+        "-13.825".to_big_d.round(1, mode: :ties_away).should eq "-13.8".to_big_d
+        "-13.825".to_big_d.round(2, mode: :ties_away).should eq "-13.83".to_big_d
+      end
+
+      it "ties_even" do
+        "15.255".to_big_d.round(-1, mode: :ties_even).should eq "20".to_big_d
+        "15.255".to_big_d.round(0, mode: :ties_even).should eq "15".to_big_d
+        "15.255".to_big_d.round(1, mode: :ties_even).should eq "15.3".to_big_d
+        "15.255".to_big_d.round(2, mode: :ties_even).should eq "15.26".to_big_d
+        "-15.255".to_big_d.round(-1, mode: :ties_even).should eq "-20".to_big_d
+        "-15.255".to_big_d.round(0, mode: :ties_even).should eq "-15".to_big_d
+        "-15.255".to_big_d.round(1, mode: :ties_even).should eq "-15.3".to_big_d
+        "-15.255".to_big_d.round(2, mode: :ties_even).should eq "-15.26".to_big_d
+      end
+    end
+  end
+
   describe "#inspect" do
     it { "123".to_big_d.inspect.should eq("123") }
   end
