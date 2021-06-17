@@ -10,7 +10,7 @@ class IO::ARGF < IO
     @read_from_stdin = false
   end
 
-  def read(slice : Bytes) : Int32 | Int64
+  def read(slice : Bytes) : Int32
     first_initialize unless @initialized
 
     if current_io = @current_io
@@ -25,7 +25,7 @@ class IO::ARGF < IO
       read_count = 0
     end
 
-    read_count
+    read_count.to_i32
   end
 
   # :nodoc:
