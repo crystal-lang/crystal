@@ -2166,17 +2166,6 @@ module Crystal
     end
   end
 
-  class Splat
-    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
-      case method
-      when "exp"
-        interpret_argless_method(method, args) { exp }
-      else
-        super
-      end
-    end
-  end
-
   class Generic
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
