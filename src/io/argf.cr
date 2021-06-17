@@ -10,7 +10,7 @@ class IO::ARGF < IO
     @read_from_stdin = false
   end
 
-  def read(slice : Bytes) : Int32
+  def read(slice : Bytes) : Int32 | Int64
     first_initialize unless @initialized
 
     if current_io = @current_io
