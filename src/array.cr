@@ -12,6 +12,8 @@
 # [1, "hello", 'x'] # Array(Int32 | String | Char)
 # ```
 #
+# See [`Array` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/array.html) in the language reference.
+#
 # An `Array` can have mixed types, meaning T will be a union of types, but these are determined
 # when the array is created, either by specifying T or by using an array literal. In the latter
 # case, T will be set to the union of the array literal elements' types.

@@ -34,6 +34,8 @@ require "./float/printer"
 # ```
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
+#
+# See [`Float` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/floats.html) in the language reference.
 struct Float
   alias Primitive = Float32 | Float64
 

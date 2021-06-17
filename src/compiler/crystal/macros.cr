@@ -68,6 +68,14 @@ module Crystal::Macros
 
   # Executes a system command and returns the output as a `MacroId`.
   # Gives a compile-time error if the command failed to execute.
+  #
+  # It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
+  #
+  # ```
+  # {{ `echo hi` }} # => "hi\n"
+  # ```
+  #
+  # See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
   def `(command) : MacroId
   end
 
