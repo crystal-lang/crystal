@@ -14,6 +14,8 @@
 # language[:other] # compile time error
 # ```
 #
+# See [`NamedTuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/named_tuple.html) in the language reference.
+#
 # The compiler knows what types are in each key, so when indexing a named tuple
 # with a symbol literal the compiler will return the value for that key and
 # with the expected type, like in the above snippet. Indexing with a symbol

@@ -17,7 +17,7 @@ module OpenSSL::SSL::HostnameValidation
   # The Common Name (CN) entry will only be used if no SAN entries are present
   # in the certificate, as per
   # [RFC 6125, Section 6.4.4](https://tools.ietf.org/html/rfc6125#section-6.4.4).
-  def self.validate_hostname(hostname : String, server_cert : LibCrypto::X509)
+  def self.validate_hostname(hostname : String, server_cert : LibCrypto::X509) : Result
     return Result::Error if server_cert.null?
     result = matches_subject_alternative_name(hostname, server_cert)
     result = matches_common_name(hostname, server_cert) if result.no_san_present?
@@ -27,7 +27,7 @@ module OpenSSL::SSL::HostnameValidation
   # Matches hostname against Subject Alternate Name (SAN) entries of certificate.
   #
   # Adapted from https://wiki.openssl.org/index.php/Hostname_validation
-  def self.matches_subject_alternative_name(hostname, server_cert : LibCrypto::X509)
+  def self.matches_subject_alternative_name(hostname, server_cert : LibCrypto::X509) : Result
     san_names = LibCrypto.x509_get_ext_d2i(server_cert, LibCrypto::NID_subject_alt_name, nil, nil)
     return Result::NoSANPresent if san_names.null?
 
@@ -78,7 +78,7 @@ module OpenSSL::SSL::HostnameValidation
   # called if no SAN entries could be found in certificate.
   #
   # Adapted from https://wiki.openssl.org/index.php/Hostname_validation
-  def self.matches_common_name(hostname, server_cert : LibCrypto::X509)
+  def self.matches_common_name(hostname, server_cert : LibCrypto::X509) : Result
     subject = LibCrypto.x509_get_subject_name(server_cert)
 
     index = LibCrypto.x509_name_get_index_by_nid(subject, LibCrypto::NID_commonName, -1)
@@ -121,7 +121,7 @@ module OpenSSL::SSL::HostnameValidation
   # Adapted from cURL:
   # Copyright (C) 1998 - 2014, Daniel Stenberg, <daniel@haxx.se>, et al.
   # https://github.com/curl/curl/blob/curl-7_41_0/lib/hostcheck.c
-  def self.matches_hostname?(pattern, hostname)
+  def self.matches_hostname?(pattern, hostname) : Bool
     pattern = pattern.chomp('.').downcase
     hostname = hostname.chomp('.').downcase
 

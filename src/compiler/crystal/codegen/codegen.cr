@@ -476,10 +476,35 @@ module Crystal
     def visit(node : TupleLiteral)
       request_value do
         type = node.type.as(TupleInstanceType)
-        @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.elements[i]
-          accept exp
-          {exp.type, @last}
+
+        if node.elements.any?(Splat)
+          tuple_size = node.elements.sum do |exp|
+            exp.is_a?(Splat) ? exp.type.as(TupleInstanceType).tuple_types.size : 1
+          end
+          exp_values = Array({Type, LLVM::Value}).new(tuple_size)
+
+          node.elements.each do |exp|
+            accept exp
+
+            if exp.is_a?(Splat)
+              tuple_type = exp.type.as(TupleInstanceType)
+              tuple_type.tuple_types.each_with_index do |subtype, j|
+                exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+              end
+            else
+              exp_values << {exp.type, @last}
+            end
+          end
+
+          @last = allocate_tuple(type) do |_, i|
+            exp_values[i]
+          end
+        else
+          @last = allocate_tuple(type) do |tuple_type, i|
+            exp = node.elements[i]
+            accept exp
+            {exp.type, @last}
+          end
         end
       end
       false
@@ -1200,7 +1225,32 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node.type, node.obj.type, node.name, @last
+      obj_type = node.obj.type
+      if obj_type.is_a?(UnionType)
+        union_ptr = @last
+        union_type_id = type_id(union_ptr, obj_type)
+
+        Phi.open(self, node, @needs_value) do |phi|
+          obj_type.union_types.each do |union_type|
+            id_matches = match_type_id(node.type, union_type, union_type_id)
+
+            current_match_label, next_match_label = new_blocks "current_match", "next_match"
+            cond id_matches, current_match_label, next_match_label
+            position_at_end current_match_label
+
+            value_ptr = downcast union_ptr, union_type, obj_type, true
+            ivar_type = union_type.lookup_instance_var(node.name).type
+            read_instance_var ivar_type, union_type, node.name, value_ptr
+
+            phi.add @last, ivar_type
+
+            position_at_end next_match_label
+          end
+          unreachable
+        end
+      else
+        read_instance_var node.type, node.obj.type, node.name, @last
+      end
     end
 
     def read_instance_var(node_type, type, name, value)
@@ -1480,7 +1530,7 @@ module Crystal
           block.args.each_with_index do |arg, i|
             block_var = block_context.vars[arg.name]
             if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
                 exp_value2, exp_type = exp_values[j]
                 j += 1
                 {exp_type, exp_value2}
@@ -1940,17 +1990,10 @@ module Crystal
       struct_type
     end
 
-    def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
-      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
+    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassInstanceType, type_ptr)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
-
-      return if type.is_a?(GenericClassType)
 
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
     end
