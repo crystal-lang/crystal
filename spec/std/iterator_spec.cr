@@ -46,10 +46,7 @@ describe Iterator do
 
   describe "compact_map" do
     it "applies the function and removes nil values" do
-      iter = (1..3).each.compact_map { |e| e.odd? ? e : nil }
-      iter.next.should eq(1)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
+      assert_iterates_iterator [1, 3], (1..3).each.compact_map { |e| e.odd? ? e : nil }
     end
 
     it "sums after compact_map to_a" do

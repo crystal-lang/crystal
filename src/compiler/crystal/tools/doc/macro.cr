@@ -33,7 +33,7 @@ class Crystal::Doc::Macro
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").delete(' ')
+      io << to_s.delete(' ')
       io << "-macro"
     end
   end
@@ -68,6 +68,14 @@ class Crystal::Doc::Macro
   end
 
   def args_to_s(io : IO) : Nil
+    args_to_html(io, html: :none)
+  end
+
+  def args_to_html(html : HTMLOption = :all)
+    String.build { |io| args_to_html io, html }
+  end
+
+  def args_to_html(io : IO, html : HTMLOption = :all) : Nil
     return unless has_args?
 
     printed = false
@@ -76,31 +84,35 @@ class Crystal::Doc::Macro
     @macro.args.each_with_index do |arg, i|
       io << ", " if printed
       io << '*' if @macro.splat_index == i
-      arg_to_s arg, io
+      arg_to_html arg, io, html: html
       printed = true
     end
 
     if double_splat = @macro.double_splat
       io << ", " if printed
       io << "**"
-      arg_to_s double_splat, io
+      arg_to_html double_splat, io, html: html
       printed = true
     end
 
     if block_arg = @macro.block_arg
       io << ", " if printed
       io << '&'
-      arg_to_s block_arg, io
+      arg_to_html block_arg, io, html: html
     end
 
     io << ')'
   end
 
-  def arg_to_s(arg : Arg, io : IO) : Nil
+  def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
         if Symbol.needs_quotes_for_named_argument? name
-          HTML.escape name.inspect, io
+          if html.none?
+            name.inspect io
+          else
+            HTML.escape name.inspect, io
+          end
         else
           io << name
         end
@@ -116,16 +128,16 @@ class Crystal::Doc::Macro
 
     if default_value = arg.default_value
       io << " = "
-      io << Highlighter.highlight(default_value.to_s)
+      if html.highlight?
+        io << Highlighter.highlight(default_value.to_s)
+      else
+        io << default_value
+      end
     end
   end
 
   def has_args?
     !@macro.args.empty? || @macro.double_splat || @macro.block_arg
-  end
-
-  def args_to_html
-    args_to_s
   end
 
   def must_be_included?
@@ -134,14 +146,14 @@ class Crystal::Doc::Macro
 
   def to_json(builder : JSON::Builder)
     builder.object do
-      builder.field "id", id
-      builder.field "html_id", html_id
+      builder.field "html_id", id
       builder.field "name", name
       builder.field "doc", doc
       builder.field "summary", formatted_summary
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
+      builder.field "args_html", args_to_html
       builder.field "location", location
       builder.field "def", self.macro
     end

@@ -126,7 +126,7 @@ class HTTP::WebSocket
   # # Start infinite loop
   # ws.run
   # ```
-  def run
+  def run : Nil
     loop do
       begin
         info = @ws.receive(@buffer)
