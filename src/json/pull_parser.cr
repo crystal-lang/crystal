@@ -170,7 +170,7 @@ class JSON::PullParser
   end
 
   # Reads an object's key and returns it.
-  def read_object_key
+  def read_object_key : String
     read_string
   end
 
@@ -191,20 +191,20 @@ class JSON::PullParser
   end
 
   # Reads a null value and returns it.
-  def read_null
+  def read_null : Nil
     expect_kind :null
     read_next
     nil
   end
 
   # Reads a `Bool` value.
-  def read_bool
+  def read_bool : Bool
     expect_kind :bool
     @bool_value.tap { read_next }
   end
 
   # Reads an integer value.
-  def read_int
+  def read_int : Int64
     expect_kind :int
     @int_value.tap { read_next }
   end
@@ -212,7 +212,7 @@ class JSON::PullParser
   # Reads a float value.
   #
   # If the value is actually an integer, it is converted to float.
-  def read_float
+  def read_float : Float64
     case @kind
     when .int?
       @int_value.to_f.tap { read_next }
@@ -240,7 +240,7 @@ class JSON::PullParser
   # pull.read_raw # => "{\"foo\":\"bar\"}"
   # pull.read_end_array
   # ```
-  def read_raw
+  def read_raw : String
     case @kind
     when .null?
       read_next
@@ -301,28 +301,28 @@ class JSON::PullParser
   end
 
   # Reads a string and returns it.
-  def read_string
+  def read_string : String
     expect_kind :string
     @string_value.tap { read_next }
   end
 
   # Reads a `Bool` or a null value, and returns it.
-  def read_bool_or_null
+  def read_bool_or_null : Bool?
     read_null_or { read_bool }
   end
 
   # Reads an integer or a null value, and returns it.
-  def read_int_or_null
+  def read_int_or_null : Int64?
     read_null_or { read_int }
   end
 
   # Reads a float or a null value, and returns it.
-  def read_float_or_null
+  def read_float_or_null : Float64?
     read_null_or { read_float }
   end
 
   # Reads a string or a null value, and returns it.
-  def read_string_or_null
+  def read_string_or_null : String?
     read_null_or { read_string }
   end
 
@@ -392,7 +392,7 @@ class JSON::PullParser
   #
   # Contrary to `read_raw`, it does not read a full value.
   # For example if the next token is the beginning of an array, it will stop there, while `read_raw` would have read the whole array.
-  def read_next
+  def read_next : Kind
     read_next_internal
     @kind
   end
@@ -400,7 +400,7 @@ class JSON::PullParser
   # Reads a `Bool` value and returns it.
   #
   # If the value is not a `Bool`, returns `nil`.
-  def read?(klass : Bool.class)
+  def read?(klass : Bool.class) : Bool?
     read_bool if kind.bool?
   end
 
@@ -418,7 +418,7 @@ class JSON::PullParser
   # Reads an `Int64` value and returns it.
   #
   # If the value is not an integer or does not fin in an `Int64` variable, it returns `nil`.
-  def read?(klass : UInt64.class)
+  def read?(klass : UInt64.class) : UInt64?
     # UInt64 is a special case due to exceeding bounds of @int_value
     UInt64.new(raw_value).tap { read_next } if kind.int?
   rescue ArgumentError
@@ -429,7 +429,7 @@ class JSON::PullParser
   #
   # If the value is not an integer or does not fit in an `Float32`, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
-  def read?(klass : Float32.class)
+  def read?(klass : Float32.class) : Float32?
     return read_int.to_f32 if kind.int?
     return float_value.to_f32.tap { read_next } if kind.float?
   rescue OverflowError
@@ -440,7 +440,7 @@ class JSON::PullParser
   #
   # If the value is not an integer or does not fit in a `Float64` variable, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
-  def read?(klass : Float64.class)
+  def read?(klass : Float64.class) : Float64?
     return read_int.to_f64 if kind.int?
     return read_float.to_f64 if kind.float?
   end
@@ -448,7 +448,7 @@ class JSON::PullParser
   # Reads a `String` value and returns it.
   #
   # If the value is not a `String`, returns `nil`.
-  def read?(klass : String.class)
+  def read?(klass : String.class) : String?
     read_string if kind.string?
   end
 
@@ -687,7 +687,7 @@ class JSON::PullParser
   end
 
   # Raises `ParseException` with *message* at current location.
-  def raise(message : String)
+  def raise(message : String) : NoReturn
     ::raise ParseException.new(message, token.line_number, token.column_number)
   end
 

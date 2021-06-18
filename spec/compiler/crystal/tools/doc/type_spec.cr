@@ -98,6 +98,36 @@ describe Doc::Type do
       foo.node_to_html("Foo".path(global: true)).should eq(%(<a href="Foo.html">Foo</a>))
     end
 
+    it "shows tuples" do
+      program = semantic(<<-CODE).program
+        class Foo
+        end
+
+        class Bar
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      node = Generic.new("Tuple".path(global: true), ["Foo".path, "Bar".path] of ASTNode)
+      foo.node_to_html(node).should eq(%(Tuple(<a href="Foo.html">Foo</a>, <a href="Bar.html">Bar</a>)))
+    end
+
+    it "shows named tuples" do
+      program = semantic(<<-CODE).program
+        class Foo
+        end
+
+        class Bar
+        end
+        CODE
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      node = Generic.new("NamedTuple".path(global: true), [] of ASTNode, named_args: [NamedArgument.new("x", "Foo".path), NamedArgument.new("y", "Bar".path)])
+      foo.node_to_html(node).should eq(%(NamedTuple(x: <a href="Foo.html">Foo</a>, y: <a href="Bar.html">Bar</a>)))
+    end
+
     it "ASTNode has no superclass" do
       program = semantic(<<-CODE).program
         module Crystal
