@@ -55,6 +55,8 @@
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```
+#
+# See [`Integer` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/integers.html) in the language reference.
 struct Int
   alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
@@ -68,7 +70,7 @@ struct Int
   # ```
   # 97.chr # => 'a'
   # ```
-  def chr
+  def chr : Char
     unless 0 <= self <= 0xd7ff || 0xe000 <= self <= Char::MAX_CODEPOINT
       raise ArgumentError.new("0x#{self.to_s(16)} out of char range")
     end
@@ -146,7 +148,7 @@ struct Int
     {% end %}
   end
 
-  def fdiv(other)
+  def fdiv(other) : Float64
     to_f / other
   end
 
@@ -238,23 +240,33 @@ struct Int
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
-  def abs
+  def abs : self
     self >= 0 ? self : -self
   end
 
-  def ceil
+  def round(mode : RoundingMode) : self
     self
   end
 
-  def floor
+  def ceil : self
     self
   end
 
-  def round
+  def floor : self
     self
   end
 
-  def trunc
+  def trunc : self
+    self
+  end
+
+  # Returns `self`.
+  def round_even : self
+    self
+  end
+
+  # Returns `self`.
+  def round_away
     self
   end
 
@@ -392,7 +404,7 @@ struct Int
   # 0b1101.bits_set?(0b0111) # => false
   # 0b1101.bits_set?(0b1100) # => true
   # ```
-  def bits_set?(mask)
+  def bits_set?(mask) : Bool
     (self & mask) == mask
   end
 
@@ -483,15 +495,15 @@ struct Int
     (self // gcd(other) * other).abs
   end
 
-  def divisible_by?(num)
+  def divisible_by?(num) : Bool
     remainder(num) == 0
   end
 
-  def even?
+  def even? : Bool
     divisible_by? 2
   end
 
-  def odd?
+  def odd? : Bool
     !even?
   end
 
@@ -500,11 +512,11 @@ struct Int
     hasher.int(self)
   end
 
-  def succ
+  def succ : self
     self + 1
   end
 
-  def pred
+  def pred : self
     self - 1
   end
 
@@ -621,11 +633,6 @@ struct Int
     end
   end
 
-  @[Deprecated("Use `#to_s(base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, _upcase : Bool) : String
-    to_s(base, upcase: _upcase)
-  end
-
   def to_s(io : IO, base : Int = 10, *, upcase : Bool = false) : Nil
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
@@ -640,11 +647,6 @@ struct Int
         io.write_utf8 Slice.new(ptr, count)
       end
     end
-  end
-
-  @[Deprecated("Use `#to_s(io : IO, base : Int, *, upcase : Bool = false)` instead")]
-  def to_s(base : Int, io : IO, upcase : Bool = false) : Nil
-    to_s(io, base, upcase: upcase)
   end
 
   private def internal_to_s(base, upcase = false)
@@ -677,7 +679,7 @@ struct Int
   # Writes this integer to the given *io* in the given *format*.
   #
   # See also: `IO#write_bytes`.
-  def to_io(io : IO, format : IO::ByteFormat)
+  def to_io(io : IO, format : IO::ByteFormat) : Nil
     format.encode(self, io)
   end
 
@@ -769,12 +771,23 @@ struct Int8
   MAX =  127_i8
 
   # Returns an `Int8` by invoking `to_i8` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int8.new "20"                        # => 20
+  # Int8.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int8:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int8` by invoking `to_i8` on *value*.
+  def self.new(value) : self
     value.to_i8
   end
 
   # Returns an `Int8` by invoking `to_i8!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i8!
   end
 
@@ -782,11 +795,11 @@ struct Int8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int8
     0_i8 - self
   end
 
-  def popcount
+  def popcount : Int8
     Intrinsics.popcount8(self)
   end
 
@@ -809,12 +822,23 @@ struct Int16
   MAX =  32767_i16
 
   # Returns an `Int16` by invoking `to_i16` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int16.new "20"                        # => 20
+  # Int16.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int16:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int16` by invoking `to_i16` on *value*.
+  def self.new(value) : self
     value.to_i16
   end
 
   # Returns an `Int16` by invoking `to_i16!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i16!
   end
 
@@ -822,11 +846,11 @@ struct Int16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int16
     0_i16 - self
   end
 
-  def popcount
+  def popcount : Int16
     Intrinsics.popcount16(self)
   end
 
@@ -849,12 +873,23 @@ struct Int32
   MAX =  2147483647_i32
 
   # Returns an `Int32` by invoking `to_i32` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int32.new "20"                        # => 20
+  # Int32.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int32:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int32` by invoking `to_i32` on *value*.
+  def self.new(value) : self
     value.to_i32
   end
 
   # Returns an `Int32` by invoking `to_i32!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i32!
   end
 
@@ -862,11 +897,11 @@ struct Int32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int32
     0 - self
   end
 
-  def popcount
+  def popcount : Int32
     Intrinsics.popcount32(self)
   end
 
@@ -889,12 +924,23 @@ struct Int64
   MAX =  9223372036854775807_i64
 
   # Returns an `Int64` by invoking `to_i64` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int64.new "20"                        # => 20
+  # Int64.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int64:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int64` by invoking `to_i64` on *value*.
+  def self.new(value) : self
     value.to_i64
   end
 
   # Returns an `Int64` by invoking `to_i64!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i64!
   end
 
@@ -902,11 +948,11 @@ struct Int64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def -
+  def - : Int64
     0_i64 - self
   end
 
-  def popcount
+  def popcount : Int64
     Intrinsics.popcount64(self)
   end
 
@@ -930,12 +976,23 @@ struct Int128
   MAX = ~MIN
 
   # Returns an `Int128` by invoking `to_i128` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # Int128.new "20"                        # => 20
+  # Int128.new "  20  ", whitespace: false # => Unhandled exception: Invalid Int128:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_i128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `Int128` by invoking `to_i128` on *value*.
+  def self.new(value) : self
     value.to_i128
   end
 
   # Returns an `Int128` by invoking `to_i128!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_i128!
   end
 
@@ -971,12 +1028,23 @@ struct UInt8
   MAX = 255_u8
 
   # Returns an `UInt8` by invoking `to_u8` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt8.new "20"                        # => 20
+  # UInt8.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt8:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u8 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt8` by invoking `to_u8` on *value*.
+  def self.new(value) : self
     value.to_u8
   end
 
   # Returns an `UInt8` by invoking `to_u8!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u8!
   end
 
@@ -984,15 +1052,15 @@ struct UInt8
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def &-
+  def &- : UInt8
     0_u8 &- self
   end
 
-  def abs
+  def abs : self
     self
   end
 
-  def popcount
+  def popcount : Int8
     Intrinsics.popcount8(self)
   end
 
@@ -1015,12 +1083,23 @@ struct UInt16
   MAX = 65535_u16
 
   # Returns an `UInt16` by invoking `to_u16` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt16.new "20"                        # => 20
+  # UInt16.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt16:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u16 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt16` by invoking `to_u16` on *value*.
+  def self.new(value) : self
     value.to_u16
   end
 
   # Returns an `UInt16` by invoking `to_u16!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u16!
   end
 
@@ -1028,15 +1107,15 @@ struct UInt16
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def &-
+  def &- : UInt16
     0_u16 &- self
   end
 
-  def abs
+  def abs : self
     self
   end
 
-  def popcount
+  def popcount : Int16
     Intrinsics.popcount16(self)
   end
 
@@ -1059,12 +1138,23 @@ struct UInt32
   MAX = 4294967295_u32
 
   # Returns an `UInt32` by invoking `to_u32` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt32.new "20"                        # => 20
+  # UInt32.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt32:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u32 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt32` by invoking `to_u32` on *value*.
+  def self.new(value) : self
     value.to_u32
   end
 
   # Returns an `UInt32` by invoking `to_u32!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u32!
   end
 
@@ -1072,15 +1162,15 @@ struct UInt32
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def &-
+  def &- : UInt32
     0_u32 &- self
   end
 
-  def abs
+  def abs : self
     self
   end
 
-  def popcount
+  def popcount : Int32
     Intrinsics.popcount32(self)
   end
 
@@ -1103,12 +1193,23 @@ struct UInt64
   MAX = 18446744073709551615_u64
 
   # Returns an `UInt64` by invoking `to_u64` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt64.new "20"                        # => 20
+  # UInt64.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt64:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u64 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt64` by invoking `to_u64` on *value*.
+  def self.new(value) : self
     value.to_u64
   end
 
   # Returns an `UInt64` by invoking `to_u64!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u64!
   end
 
@@ -1116,15 +1217,15 @@ struct UInt64
   Number.expand_div [Float32], Float32
   Number.expand_div [Float64], Float64
 
-  def &-
+  def &- : UInt64
     0_u64 &- self
   end
 
-  def abs
+  def abs : self
     self
   end
 
-  def popcount
+  def popcount : Int64
     Intrinsics.popcount64(self)
   end
 
@@ -1148,12 +1249,23 @@ struct UInt128
   MAX = ~MIN
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
-  def self.new(value)
+  # See `String#to_i` for more details.
+  #
+  # ```
+  # UInt128.new "20"                        # => 20
+  # UInt128.new "  20  ", whitespace: false # => Unhandled exception: Invalid UInt128:   20 (ArgumentError)
+  # ```
+  def self.new(value : String, base : Int = 10, whitespace : Bool = true, underscore : Bool = false, prefix : Bool = false, strict : Bool = true, leading_zero_is_octal : Bool = false) : self
+    value.to_u128 base: base, whitespace: whitespace, underscore: underscore, prefix: prefix, strict: strict, leading_zero_is_octal: leading_zero_is_octal
+  end
+
+  # Returns an `UInt128` by invoking `to_u128` on *value*.
+  def self.new(value) : self
     value.to_u128
   end
 
   # Returns an `UInt128` by invoking `to_u128!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_u128!
   end
 

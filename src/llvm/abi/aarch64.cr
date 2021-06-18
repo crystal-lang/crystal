@@ -3,17 +3,17 @@ require "../abi"
 # Based on
 # https://github.com/rust-lang/rust/blob/master/src/librustc_trans/cabi_aarch64.rs
 class LLVM::ABI::AArch64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = atys.map { |aty| compute_arg_type(aty, context) }
     FunctionType.new(arg_tys, ret_ty)
   end
 
-  def align(type : Type)
+  def align(type : Type) : Int32
     align(type, 8)
   end
 
-  def size(type : Type)
+  def size(type : Type) : Int32
     size(type, 8)
   end
 
@@ -139,7 +139,7 @@ class LLVM::ABI::AArch64 < LLVM::ABI
     end
   end
 
-  def register?(type)
+  def register?(type) : Bool
     case type.kind
     when Type::Kind::Integer,
          Type::Kind::Float,
