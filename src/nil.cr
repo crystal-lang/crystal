@@ -39,6 +39,8 @@
 # # if our assumption doesn't hold.
 # idx3 = str.index('o').not_nil!
 # ```
+#
+# See [`Nil` literal](https://crystal-lang.org/reference/syntax_and_semantics/literals/nil.html) in the language reference.
 struct Nil
   # Returns `0_u64`. Even though `Nil` is not a `Reference` type, it is usually
   # mixed with them to form nilable types so it's useful to have an

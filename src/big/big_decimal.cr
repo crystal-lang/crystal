@@ -259,6 +259,10 @@ struct BigDecimal < Number
     end
   end
 
+  def zero? : Bool
+    @value.zero?
+  end
+
   # Scales a `BigDecimal` to another `BigDecimal`, so they can be
   # computed easier.
   def scale_to(new_scale : BigDecimal) : BigDecimal
@@ -266,7 +270,7 @@ struct BigDecimal < Number
   end
 
   # :nodoc:
-  def in_scale(new_scale : UInt64) : BigDecimal
+  private def in_scale(new_scale : UInt64) : BigDecimal
     if @value == 0
       BigDecimal.new(0.to_big_i, new_scale)
     elsif @scale > new_scale
@@ -294,19 +298,84 @@ struct BigDecimal < Number
     BigDecimal.new(@value ** other, @scale * other)
   end
 
+  # Rounds towards positive infinity.
   def ceil : BigDecimal
-    mask = power_ten_to(@scale)
-    diff = (mask - @value % mask) % mask
-    value = self + BigDecimal.new(diff, @scale)
-    value.in_scale(0)
+    round_impl { |rem| rem > 0 }
   end
 
+  # Rounds towards negative infinity.
   def floor : BigDecimal
-    in_scale(0)
+    round_impl { |rem| rem < 0 }
   end
 
+  # Rounds towards zero.
   def trunc : BigDecimal
-    self < 0 ? ceil : floor
+    round_impl { false }
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds towards the even neighbor (Banker's rounding).
+  def round_even : BigDecimal
+    round_impl do |rem, rem_range, mantissa|
+      case rem.abs <=> rem_range // 2
+      when .<(0)
+        false
+      when .>(0)
+        true
+      else
+        # `to_i!` is safe as GMP explicitly states the "least significant part"
+        # is returned and that always preserves `mantissa`'s parity modulo 2
+        mantissa.to_i!.odd?
+      end
+    end
+  end
+
+  # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+  # rounds away from zero.
+  def round_away : BigDecimal
+    round_impl { |rem, rem_range| rem.abs >= rem_range // 2 }
+  end
+
+  private def round_impl
+    return self if @scale <= 0 || zero?
+
+    # `self == @value / 10 ** @scale == mantissa + (rem / 10 ** @scale)`
+    #
+    # Where:
+    # - `mantissa` and `rem` are both integers
+    # - `rem.abs < 10 ** @scale`
+    # - if `self` is negative, so are `mantissa` and `rem`
+    multiplier = power_ten_to(@scale)
+    mantissa, rem = @value.unsafe_truncated_divmod(multiplier)
+
+    round_away = yield rem, multiplier, mantissa
+    mantissa += self.sign if round_away
+
+    BigDecimal.new(mantissa, 0)
+  end
+
+  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
+    return self if (base == 10 && @scale <= digits) || zero?
+
+    # the following is same as the overload in `Number` except `base.to_f`
+    # becomes `.to_big_d`
+    if digits < 0
+      multiplier = base.to_big_d ** digits.abs
+      shifted = self / multiplier
+    else
+      multiplier = base.to_big_d ** digits
+      shifted = self * multiplier
+    end
+
+    rounded = shifted.round(mode)
+
+    if digits < 0
+      result = rounded * multiplier
+    else
+      result = rounded / multiplier
+    end
+
+    BigDecimal.new result
   end
 
   def to_s(io : IO) : Nil

@@ -12,6 +12,8 @@
 # [1, "hello", 'x'] # Array(Int32 | String | Char)
 # ```
 #
+# See [`Array` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/array.html) in the language reference.
+#
 # An `Array` can have mixed types, meaning T will be a union of types, but these are determined
 # when the array is created, either by specifying T or by using an array literal. In the latter
 # case, T will be set to the union of the array literal elements' types.
@@ -445,16 +447,7 @@ class Array(T)
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(index : Int, count : Int, value : T)
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-
-    # We allow index == size because the range to replace
-    # can start at exactly the end of the array.
-    # So, we can't use check_index_out_of_bounds.
-    raise IndexError.new unless 0 <= index <= size
-
-    count = index + count <= size ? count : size - index
+    index, count = normalize_start_and_count(index, count)
 
     case count
     when 0
@@ -530,16 +523,7 @@ class Array(T)
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(index : Int, count : Int, values : Array(T))
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-
-    # We allow index == size because the range to replace
-    # can start at exactly the end of the array.
-    # So, we can't use check_index_out_of_bounds.
-    raise IndexError.new unless 0 <= index <= size
-
-    count = index + count <= size ? count : size - index
+    index, count = normalize_start_and_count(index, count)
     diff = values.size - count
 
     if diff == 0
@@ -674,20 +658,12 @@ class Array(T)
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
   def []?(start : Int, count : Int) : Array(T)?
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-    return Array(T).new if start == size
+    start, count = normalize_start_and_count(start, count) { return nil }
+    return Array(T).new if count == 0
 
-    start += size if start < 0
-
-    if 0 <= start <= size
-      return Array(T).new if count == 0
-
-      count = Math.min(count, size - start)
-
-      Array(T).build(count) do |buffer|
-        buffer.copy_from(@buffer + start, count)
-        count
-      end
+    Array(T).build(count) do |buffer|
+      buffer.copy_from(@buffer + start, count)
+      count
     end
   end
 
@@ -868,13 +844,9 @@ class Array(T)
   # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int) : self
-    index += size if index < 0
-    unless 0 <= index <= size
-      raise IndexError.new
-    end
+    index, count = normalize_start_and_count(index, count)
 
     val = self[index, count]
-    count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
     @size -= count
     (@buffer + @size).clear(count)
@@ -1836,12 +1808,8 @@ class Array(T)
   # a.swap(2, 3)  # => raises "Index out of bounds (IndexError)"
   # ```
   def swap(index0, index1) : Array(T)
-    index0 += size if index0 < 0
-    index1 += size if index1 < 0
-
-    unless (0 <= index0 < size) && (0 <= index1 < size)
-      raise IndexError.new
-    end
+    index0 = check_index_out_of_bounds(index0)
+    index1 = check_index_out_of_bounds(index1)
 
     @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
 
@@ -1921,11 +1889,7 @@ class Array(T)
   #
   # See also: `#pop`, `#shift`.
   def truncate(start : Int, count : Int) : self
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
-    count = {count, size - start}.min
+    start, count = normalize_start_and_count(start, count)
 
     if count == 0
       clear

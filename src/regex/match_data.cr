@@ -220,17 +220,9 @@ class Regex
 
     # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
     def []?(start : Int, count : Int) : Array(String)?
-      raise ArgumentError.new "Negative count: #{count}" if count < 0
-      return Array(String).new if start == size
+      start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
 
-      start += size if start < 0
-
-      if 0 <= start <= size
-        return Array(String).new if count == 0
-
-        count = Math.min(count, size - start)
-        Array(String).new(count) { |i| self[start + i] }
-      end
+      Array(String).new(count) { |i| self[start + i] }
     end
 
     private def named_capture_number(group_name)

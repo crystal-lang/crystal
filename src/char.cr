@@ -38,6 +38,8 @@ require "steppable"
 # ```
 # '\u{41}' # == 'A'
 # ```
+#
+# See [`Char` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/char.html) in the language reference.
 struct Char
   include Comparable(Char)
   include Steppable

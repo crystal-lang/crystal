@@ -509,9 +509,6 @@ jobs:
 
 workflows:
   version: 2
-  test_all_platforms:
-    jobs:
-      - test_darwin
   tagged_release:
     jobs:
       - test_linux:

@@ -68,6 +68,14 @@ module Crystal::Macros
 
   # Executes a system command and returns the output as a `MacroId`.
   # Gives a compile-time error if the command failed to execute.
+  #
+  # It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
+  #
+  # ```
+  # {{ `echo hi` }} # => "hi\n"
+  # ```
+  #
+  # See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
   def `(command) : MacroId
   end
 
@@ -1251,6 +1259,14 @@ module Crystal::Macros
   class Out < UnaryExpression
   end
 
+  # A splat expression: `*exp`.
+  class Splat < UnaryExpression
+  end
+
+  # A double splat expression: `**exp`.
+  class DoubleSplat < UnaryExpression
+  end
+
   # An `offsetof` expression.
   class OffsetOf < ASTNode
     # Returns the type that has been used in this `offsetof` expression.
@@ -1606,13 +1622,6 @@ module Crystal::Macros
 
   # class Underscore < ASTNode
   # end
-
-  # A splat expression: `*exp`.
-  class Splat < ASTNode
-    # Returns the splatted expression.
-    def exp : ASTNode
-    end
-  end
 
   # class MagicConstant < ASTNode
   # end
