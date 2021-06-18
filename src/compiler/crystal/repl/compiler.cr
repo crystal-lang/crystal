@@ -547,40 +547,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def visit(node : IsA)
-    node.obj.accept self
-    return false unless @wants_value
-
-    obj_type = node.obj.type
-    const_type = node.const.type
-
-    filtered_type = obj_type.filter_by(const_type).not_nil!
-
-    case obj_type
-    when VirtualType
-      reference_is_a(type_id(filtered_type), node: node)
-    when MixedUnionType
-      union_is_a(aligned_sizeof_type(obj_type), type_id(filtered_type), node: node)
-    when NilableType
-      if filtered_type.nil_type?
-        pointer_is_null(node: node)
-      else
-        pointer_is_not_null(node: node)
-      end
-    when NilableReferenceUnionType
-      if filtered_type.nil_type?
-        # TODO: not tested
-        pointer_is_null(node: node)
-      else
-        reference_is_a(type_id(filtered_type), node: node)
-      end
-    else
-      node.raise "BUG: missing IsA from #{obj_type} to #{const_type} (#{obj_type.class} to #{const_type.class})"
-    end
-
-    false
-  end
-
   def visit(node : TypeOf)
     return false unless @wants_value
 
@@ -712,10 +678,61 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     elsif node.upcast?
       upcast node, obj_type, to_type
     else
-      node.raise "BUG: missing interpret Cast from #{obj_type} to #{to_type} (#{obj_type.class} to #{to_type.class})"
+      # Check if obj is a `to_type`
+      dup aligned_sizeof_type(node.obj), node: nil
+      is_a(node, obj_type, to_type)
+
+      # If so, branch
+      branch_if 0, node: nil
+      cond_jump_location = patch_location
+
+      # Otherwise we need to raise
+      # TODO: actually raise
+      unreachable "BUG: missing handling of `.as(...)` when it fails", node: nil
+
+      patch_jump(cond_jump_location)
+      downcast node.obj, obj_type, to_type
     end
 
     false
+  end
+
+  def visit(node : IsA)
+    node.obj.accept self
+    return false unless @wants_value
+
+    obj_type = node.obj.type
+    const_type = node.const.type
+
+    is_a(node, obj_type, const_type)
+
+    false
+  end
+
+  private def is_a(node, type, target_type)
+    filtered_type = type.filter_by(target_type).not_nil!
+
+    case type
+    when VirtualType
+      reference_is_a(type_id(filtered_type), node: node)
+    when MixedUnionType
+      union_is_a(aligned_sizeof_type(type), type_id(filtered_type), node: node)
+    when NilableType
+      if filtered_type.nil_type?
+        pointer_is_null(node: node)
+      else
+        pointer_is_not_null(node: node)
+      end
+    when NilableReferenceUnionType
+      if filtered_type.nil_type?
+        # TODO: not tested
+        pointer_is_null(node: node)
+      else
+        reference_is_a(type_id(filtered_type), node: node)
+      end
+    else
+      node.raise "BUG: missing IsA from #{type} to #{target_type} (#{type.class} to #{target_type.class})"
+    end
   end
 
   def visit(node : Call)
@@ -1391,7 +1408,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Unreachable)
-    unreachable(node: node)
+    unreachable("Reached the unreachable", node: node)
 
     false
   end
@@ -1549,6 +1566,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(call : Call)
     append(call.object_id.unsafe_as(Int64))
+  end
+
+  private def append(string : String)
+    append(string.object_id.unsafe_as(Int64))
   end
 
   private def append(value : Int64)

@@ -1268,10 +1268,10 @@ Crystal::Repl::Instructions =
       code:       LibM.powi_f64(value, power),
     },
     unreachable: {
-      operands:   [] of Nil,
+      operands:   [message : String] of Nil,
       pop_values: [] of Nil,
       push:       false,
-      code:       raise "BUG: reached the unreachable",
+      code:       raise message,
     },
     # >>> Overrides (6)
 

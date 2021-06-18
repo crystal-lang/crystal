@@ -2820,6 +2820,13 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "casts from mixed union type to primitive type" do
+      interpret(<<-CODE).should eq(2)
+        x = 1 == 1 ? 2 : nil
+        x.as(Int32)
+      CODE
+    end
   end
 
   context "constants" do
