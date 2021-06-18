@@ -163,14 +163,10 @@ module Crystal
       elsif base_type.implements?(type2)
         type1
       elsif type2.module?
-        if base_type.implements?(type2)
-          type1
-        else
-          types = base_type.subclasses.compact_map do |subclass|
-            common_descendent(subclass.virtual_type, type2)
-          end
-          type1.program.type_merge_union_of types
+        types = base_type.subclasses.compact_map do |subclass|
+          common_descendent(subclass.virtual_type, type2)
         end
+        type1.program.type_merge_union_of types
       elsif base_type.is_a?(GenericInstanceType) && type2.is_a?(GenericType)
         # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
         # we want to return Bar(Int32), so we search in Bar's generic instantiations
