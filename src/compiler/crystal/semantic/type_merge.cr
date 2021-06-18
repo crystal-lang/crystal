@@ -214,6 +214,16 @@ module Crystal
       nil
     end
 
+    def self.least_common_ancestor(
+      type1 : MetaclassType | GenericClassInstanceMetaclassType,
+      type2 : MetaclassType | GenericClassInstanceMetaclassType
+    )
+      return nil unless unifiable_metaclass?(type1) && unifiable_metaclass?(type2)
+
+      common = least_common_ancestor(type1.instance_type, type2.instance_type)
+      common.try &.metaclass
+    end
+
     def self.least_common_ancestor(type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType, type2 : Type)
       type1 if type2.implements?(type1)
     end
@@ -295,16 +305,6 @@ module Crystal
       end
 
       type1.program.named_tuple_of(merged_entries)
-    end
-
-    def self.least_common_ancestor(
-      type1 : MetaclassType | GenericClassInstanceMetaclassType,
-      type2 : MetaclassType | GenericClassInstanceMetaclassType
-    )
-      return nil unless unifiable_metaclass?(type1) && unifiable_metaclass?(type2)
-
-      common = least_common_ancestor(type1.instance_type, type2.instance_type)
-      common.try &.metaclass
     end
 
     private def self.unifiable_metaclass?(type)
