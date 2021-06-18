@@ -31,28 +31,28 @@ class System::Group
   # Returns the group associated with the given name.
   #
   # Raises `NotFoundError` if no such group exists.
-  def self.find_by(*, name : String)
+  def self.find_by(*, name : String) : System::Group
     find_by?(name: name) || raise NotFoundError.new("No such group: #{name}")
   end
 
   # Returns the group associated with the given name.
   #
   # Returns `nil` if no such group exists.
-  def self.find_by?(*, name : String)
+  def self.find_by?(*, name : String) : System::Group?
     from_name?(name)
   end
 
   # Returns the group associated with the given ID.
   #
   # Raises `NotFoundError` if no such group exists.
-  def self.find_by(*, id : String)
+  def self.find_by(*, id : String) : System::Group
     find_by?(id: id) || raise NotFoundError.new("No such group: #{id}")
   end
 
   # Returns the group associated with the given ID.
   #
   # Returns `nil` if no such group exists.
-  def self.find_by?(*, id : String)
+  def self.find_by?(*, id : String) : System::Group?
     from_id?(id)
   end
 

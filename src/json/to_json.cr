@@ -1,23 +1,23 @@
 class Object
-  def to_json
+  def to_json : String
     String.build do |str|
       to_json str
     end
   end
 
-  def to_json(io : IO)
+  def to_json(io : IO) : Nil
     JSON.build(io) do |json|
       to_json(json)
     end
   end
 
-  def to_pretty_json(indent : String = "  ")
+  def to_pretty_json(indent : String = "  ") : String
     String.build do |str|
       to_pretty_json str, indent: indent
     end
   end
 
-  def to_pretty_json(io : IO, indent : String = "  ")
+  def to_pretty_json(io : IO, indent : String = "  ") : Nil
     JSON.build(io, indent: indent) do |json|
       to_json(json)
     end
@@ -29,7 +29,7 @@ struct Nil
     json.null
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     ""
   end
 end
@@ -45,7 +45,7 @@ struct Int
     json.number(self)
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     to_s
   end
 end
@@ -55,7 +55,7 @@ struct Float
     json.number(self)
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     to_s
   end
 end
@@ -65,7 +65,7 @@ class String
     json.string(self)
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     self
   end
 end
@@ -85,7 +85,7 @@ struct Symbol
     json.string(to_s)
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     to_s
   end
 end

@@ -26,9 +26,9 @@ class IO::Hexdump < IO
   def initialize(@io : IO, @output : IO = STDERR, @read = false, @write = false)
   end
 
-  def read(buf : Bytes)
+  def read(buf : Bytes) : Int32
     @io.read(buf).tap do |read_bytes|
-      @output.puts buf[0, read_bytes].hexdump if @read && read_bytes
+      buf[0, read_bytes].hexdump(@output) if @read && read_bytes
     end
   end
 
@@ -36,7 +36,7 @@ class IO::Hexdump < IO
     return if buf.empty?
 
     @io.write(buf).tap do
-      @output.puts buf.hexdump if @write
+      buf.hexdump(@output) if @write
     end
   end
 

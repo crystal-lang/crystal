@@ -1042,9 +1042,9 @@ module Crystal
 
     def visit(node : RangeLiteral)
       accept node.from
-      skip_space_or_newline
+      skip_space
       write_token(node.exclusive? ? :"..." : :"..")
-      skip_space_or_newline
+      skip_space
       accept node.to
       false
     end
@@ -1259,9 +1259,12 @@ module Crystal
         accept type
 
         last = last?(i, node.types)
-        skip_space_or_newline unless last
+        if last
+          skip_space
+        else
+          skip_space_or_newline
+        end
 
-        must_break = false
         while true
           case @token.type
           when :"|"
@@ -1284,7 +1287,6 @@ module Crystal
             break
           end
         end
-        break if must_break
       end
 
       check_close_paren
