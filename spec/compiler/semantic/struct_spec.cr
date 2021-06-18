@@ -180,4 +180,49 @@ describe "Semantic: struct" do
       ),
       "structs can't have finalizers because they are not tracked by the GC"
   end
+
+  it "passes subtype check with generic module type on virtual type" do
+    mod = semantic(%(
+      module Base(T)
+      end
+
+      abstract struct Foo
+        include Base(Foo)
+      end
+      )).program
+
+    base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type!)
+    mod.types["Foo"].implements?(base_foo).should be_true
+  end
+
+  it "passes subtype check with generic module type on virtual type (2) (#10302)" do
+    mod = semantic(%(
+      module Base(T)
+      end
+
+      abstract struct Foo
+        include Base(Foo)
+      end
+
+      struct Bar < Foo
+      end
+      )).program
+
+    base_foo = mod.generic_module("Base", mod.types["Foo"].virtual_type)
+    mod.types["Bar"].implements?(base_foo).should be_true
+  end
+
+  it "passes subtype check with generic module type on virtual type (3)" do
+    mod = semantic(%(
+      module Base(T, N)
+      end
+
+      abstract struct Foo
+        include Base(Foo, 10)
+      end
+      )).program
+
+    mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("10", :i32))).should be_true
+    mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("9", :i32))).should be_false
+  end
 end

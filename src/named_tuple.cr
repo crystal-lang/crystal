@@ -14,6 +14,8 @@
 # language[:other] # compile time error
 # ```
 #
+# See [`NamedTuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/named_tuple.html) in the language reference.
+#
 # The compiler knows what types are in each key, so when indexing a named tuple
 # with a symbol literal the compiler will return the value for that key and
 # with the expected type, like in the above snippet. Indexing with a symbol
@@ -351,7 +353,7 @@ struct NamedTuple
         io << ", "
       {% end %}
       key = {{key.stringify}}
-      if Symbol.needs_quotes?(key)
+      if Symbol.needs_quotes_for_named_argument?(key)
         key.inspect(io)
       else
         io << key
@@ -370,7 +372,7 @@ struct NamedTuple
         {% end %}
         pp.group do
           key = {{key.stringify}}
-          if Symbol.needs_quotes?(key)
+          if Symbol.needs_quotes_for_named_argument?(key)
             pp.text key.inspect
           else
             pp.text key

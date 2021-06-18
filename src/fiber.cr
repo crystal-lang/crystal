@@ -157,25 +157,25 @@ class Fiber
   end
 
   # Returns the current fiber.
-  def self.current
+  def self.current : Fiber
     Crystal::Scheduler.current_fiber
   end
 
   # The fiber's proc is currently running or didn't fully save its context. The
   # fiber can't be resumed.
-  def running?
+  def running? : Bool
     @context.resumable == 0
   end
 
   # The fiber's proc is currently not running and fully saved its context. The
   # fiber can be resumed safely.
-  def resumable?
+  def resumable? : Bool
     @context.resumable == 1
   end
 
   # The fiber's proc has terminated, and the fiber is now considered dead. The
   # fiber is impossible to resume, ever.
-  def dead?
+  def dead? : Bool
     @alive == false
   end
 
@@ -202,17 +202,17 @@ class Fiber
   # This signals to the scheduler that the fiber is eligible for being resumed
   # the next time it has the opportunity to reschedule to an other fiber. There
   # are no guarantees when that will happen.
-  def enqueue
+  def enqueue : Nil
     Crystal::Scheduler.enqueue(self)
   end
 
   # :nodoc:
-  def resume_event
+  def resume_event : Crystal::Event
     @resume_event ||= Crystal::EventLoop.create_resume_event(self)
   end
 
   # :nodoc:
-  def timeout_event
+  def timeout_event : Crystal::Event
     @timeout_event ||= Crystal::EventLoop.create_timeout_event(self)
   end
 
@@ -223,7 +223,7 @@ class Fiber
   end
 
   # :nodoc:
-  def cancel_timeout
+  def cancel_timeout : Nil
     @timeout_select_action = nil
     @timeout_event.try &.delete
   end
@@ -235,7 +235,7 @@ class Fiber
     Crystal::Scheduler.current_fiber.timeout(timeout, select_action)
   end
 
-  def self.cancel_timeout
+  def self.cancel_timeout : Nil
     Crystal::Scheduler.current_fiber.cancel_timeout
   end
 
@@ -267,7 +267,7 @@ class Fiber
   #   end
   # end
   # ```
-  def self.yield
+  def self.yield : Nil
     Crystal::Scheduler.yield
   end
 
@@ -285,7 +285,7 @@ class Fiber
   end
 
   # :nodoc:
-  def push_gc_roots
+  def push_gc_roots : Nil
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack_bottom
   end

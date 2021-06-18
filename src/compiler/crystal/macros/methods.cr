@@ -520,18 +520,17 @@ module Crystal
     end
 
     def int_bin_op(op, args)
-      if @kind == :f32 || @kind == :f64
-        raise "undefined method '#{op}' for float literal: #{self}"
-      end
-
-      NumberLiteral.new(bin_op(op, args) do |me, other|
-        other_kind = args.first.as(NumberLiteral).kind
-        if other_kind == :f32 || other_kind == :f64
+      result = bin_op(op, args) do |me, other|
+        if me.is_a?(Int) && other.is_a?(Int)
+          yield me, other
+        elsif me.is_a?(Float)
+          raise "undefined method '#{op}' for float literal: #{self}"
+        else
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
+      end
 
-        yield me.to_i, other.to_i
-      end)
+      NumberLiteral.new result
     end
 
     def bin_op(op, args)
@@ -1062,7 +1061,7 @@ module Crystal
 
     private def to_double_splat(trailing_string = "")
       MacroId.new(entries.join(", ") do |entry|
-        if Symbol.needs_quotes?(entry.key)
+        if Symbol.needs_quotes_for_named_argument?(entry.key)
           "#{entry.key.inspect}: #{entry.value}"
         else
           "#{entry.key}: #{entry.value}"
@@ -1624,19 +1623,6 @@ module Crystal
           value = arg.to_string("argument to 'TypeNode#has_method?'")
           TypeNode.has_method?(type, value)
         end
-      when "has_attribute?"
-        interpreter.report_warning_at(name_loc, "Deprecated TypeNode#has_attribute?. Use #annotation instead")
-        interpret_one_arg_method(method, args) do |arg|
-          value = arg.to_string("argument to 'TypeNode#has_attribute?'")
-          case value
-          when "Flags"
-            BoolLiteral.new(!!type.as?(EnumType).try &.flags?)
-          when "Packed"
-            BoolLiteral.new(!!type.as?(ClassType).try &.packed?)
-          else
-            BoolLiteral.new(false)
-          end
-        end
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.type.annotation(type)
@@ -1706,6 +1692,20 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.new(type.metaclass) }
       when "instance"
         interpret_argless_method(method, args) { TypeNode.new(type.instance_type) }
+      when "==", "!="
+        interpret_one_arg_method(method, args) do |arg|
+          return super unless arg.is_a?(TypeNode)
+
+          self_type = self.type.devirtualize
+          other_type = arg.type.devirtualize
+
+          case method
+          when "=="
+            BoolLiteral.new(self_type == other_type)
+          else # "!="
+            BoolLiteral.new(self_type != other_type)
+          end
+        end
       when "<", "<=", ">", ">="
         interpret_one_arg_method(method, args) do |arg|
           unless arg.is_a?(TypeNode)
@@ -2107,6 +2107,9 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
+        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
+      when "global?"
         interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
@@ -2157,17 +2160,6 @@ module Crystal
         interpret_argless_method(method, args) { obj }
       when "to"
         interpret_argless_method(method, args) { to }
-      else
-        super
-      end
-    end
-  end
-
-  class Splat
-    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
-      case method
-      when "exp"
-        interpret_argless_method(method, args) { exp }
       else
         super
       end

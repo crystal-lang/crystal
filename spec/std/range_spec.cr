@@ -1,5 +1,6 @@
 require "./spec_helper"
-require "../support/iterate"
+require "spec/helpers/iterate"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -58,6 +59,19 @@ describe "Range" do
     r.begin.should eq(1)
     r.end.should eq(5)
     r.excludes_end?.should be_true
+  end
+
+  it "#==" do
+    ((1..1) == (1..1)).should be_true
+    ((1...1) == (1..1)).should be_false
+    ((1...1) == (1...1)).should be_true
+    ((1..1) == (1...1)).should be_false
+
+    ((1..nil) == (1..nil)).should be_true
+
+    (1..1).should eq Range(Int32?, Int32?).new(1, 1)
+    ((1..1) == Range(Int32?, Int32?).new(1, 1)).should be_true
+    ((1.0..1.0) == (1..1)).should be_true
   end
 
   it "includes?" do

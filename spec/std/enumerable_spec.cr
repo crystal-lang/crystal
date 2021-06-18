@@ -501,6 +501,10 @@ describe "Enumerable" do
     it "flattens iterators" do
       [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
     end
+
+    it "accepts mixed element types" do
+      [[1, 2, 3], ['a', 'b'].each, "cde"].flat_map { |e| e }.should eq([1, 2, 3, 'a', 'b', "cde"])
+    end
   end
 
   describe "group_by" do
@@ -618,6 +622,42 @@ describe "Enumerable" do
 
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+  end
+
+  describe "#accumulate" do
+    context "prefix sums" do
+      it { SpecEnumerable.new.accumulate.should eq([1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate.should eq([1.5, 5.25, 11.375]) }
+      it { Array(Int32).new.accumulate.should eq(Array(Int32).new) }
+    end
+
+    context "prefix sums, with init" do
+      it { SpecEnumerable.new.accumulate(0).should eq([0, 1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate(0.5).should eq([0.5, 2.0, 5.75, 11.875]) }
+      it { Array(Int32).new.accumulate(7).should eq([7]) }
+
+      it "preserves initial type" do
+        x = SpecEnumerable.new.accumulate(4.0)
+        x.should be_a(Array(Float64))
+        x.should eq([4.0, 5.0, 7.0, 10.0])
+      end
+    end
+
+    context "generic cumulative fold" do
+      it { SpecEnumerable.new.accumulate { |x, y| x * 10 + y }.should eq([1, 12, 123]) }
+      it { Array(Int32).new.accumulate { raise "" }.should eq(Array(Int32).new) }
+    end
+
+    context "generic cumulative fold, with init" do
+      it { SpecEnumerable.new.accumulate(4) { |x, y| x * 10 + y }.should eq([4, 41, 412, 4123]) }
+      it { Array(Int32).new.accumulate(7) { raise "" }.should eq([7]) }
+
+      it "preserves initial type" do
+        x = [4, 3, 2].accumulate("X") { |x, y| x * y }
+        x.should be_a(Array(String))
+        x.should eq(%w(X XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXX))
+      end
     end
   end
 

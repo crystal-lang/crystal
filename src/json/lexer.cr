@@ -29,7 +29,7 @@ abstract class JSON::Lexer
   private abstract def append_number_char
   private abstract def number_string
 
-  def next_token
+  def next_token : JSON::Token
     skip_whitespace
 
     @token.line_number = @line_number
@@ -189,14 +189,19 @@ abstract class JSON::Lexer
       '\t'
     when 'u'
       hexnum1 = read_hex_number
-      if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
+      if hexnum1 < 0xd800 || hexnum1 >= 0xe000
+        hexnum1.unsafe_chr
+      elsif hexnum1 < 0xdc00
         if next_char != '\\' || next_char != 'u'
           raise "Unterminated UTF-16 sequence"
         end
         hexnum2 = read_hex_number
-        (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+        unless 0xdc00 <= hexnum2 <= 0xdfff
+          raise "Invalid UTF-16 sequence"
+        end
+        ((hexnum1 << 10) &+ hexnum2 &- 0x35fdc00).unsafe_chr
       else
-        hexnum1.chr
+        raise "Invalid UTF-16 sequence"
       end
     else
       raise "Unknown escape char: #{char}"
