@@ -1798,22 +1798,33 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    pending "does dispatch on virtual type" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
-        class Foo
+    it "does dispatch on virtual type" do
+      interpret(<<-EXISTING, <<-CODE).should eq(4)
+        abstract class Foo
           def foo
             1
           end
         end
 
         class Bar < Foo
+        end
+
+        class Baz < Foo
           def foo
-            2
+            3
           end
         end
+
+        class Qux < Foo
+        end
       EXISTING
-        foo = Bar.new || Foo.new
-        foo.foo
+        foo = Bar.new || Baz.new
+        x = foo.foo
+
+        foo = Baz.new || Bar.new
+        y = foo.foo
+
+        x + y
       CODE
     end
 

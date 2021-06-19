@@ -70,6 +70,7 @@ module Crystal::Repl::Multidispatch
 
     main_if = nil
     current_if = nil
+    calls = [] of Call
 
     target_defs.each do |target_def|
       i = 0
@@ -120,6 +121,7 @@ module Crystal::Repl::Multidispatch
         end
 
       call = Call.new(call_obj, node.name, call_args)
+      calls << call
 
       if block
         block_args = block.args.map_with_index { |arg, i| Var.new("barg#{i}") }
@@ -177,6 +179,15 @@ module Crystal::Repl::Multidispatch
     # visitor.call = self
     # visitor.path_lookup = match.context.defining_type
     a_def.body.accept visitor
+
+    # Let the calls resolve to each target def.
+    # This is needed because otherwise it's a dispatch on a virtual type,
+    # calling `self.method` as the last dispatch branch would resolve
+    # to the same dispatch, recursively.
+    target_defs.zip(calls) do |target_def, call|
+      call.target_defs = [target_def]
+      call.type = target_def.type
+    end
 
     a_def.bind_to(a_def.body)
 
