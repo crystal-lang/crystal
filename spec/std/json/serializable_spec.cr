@@ -366,6 +366,41 @@ class JSONCircle < JSONShape
   property radius : Int32
 end
 
+enum JSONVariableDiscriminatorEnumFoo
+  Foo = 4
+end
+
+enum JSONVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
+class JSONVariableDiscriminatorValueType
+  include JSON::Serializable
+
+  use_json_discriminator "type", {
+                                         0 => JSONVariableDiscriminatorNumber,
+    "1"                                    => JSONVariableDiscriminatorString,
+    true                                   => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
+    JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
+  }
+end
+
+class JSONVariableDiscriminatorNumber < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorString < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
+end
+
 module JSONNamespace
   struct FooRequest
     include JSON::Serializable
@@ -903,6 +938,23 @@ describe "JSON mapping" do
       expect_raises(::JSON::SerializableError, %(Unknown 'type' discriminator value: "unknown")) do
         JSONShape.from_json(%({"type": "unknown"}))
       end
+    end
+
+    it "deserializes with variable discriminator value type" do
+      object_number = JSONVariableDiscriminatorValueType.from_json(%({"type": 0}))
+      object_number.should be_a(JSONVariableDiscriminatorNumber)
+
+      object_string = JSONVariableDiscriminatorValueType.from_json(%({"type": "1"}))
+      object_string.should be_a(JSONVariableDiscriminatorString)
+
+      object_bool = JSONVariableDiscriminatorValueType.from_json(%({"type": true}))
+      object_bool.should be_a(JSONVariableDiscriminatorBool)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum8)
     end
   end
 

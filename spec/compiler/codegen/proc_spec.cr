@@ -393,6 +393,12 @@ describe "Code gen: proc" do
 
   it "does new on proc type" do
     run("
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
       alias Func = Int32 -> Int32
 
       a = 2

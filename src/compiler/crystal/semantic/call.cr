@@ -500,17 +500,56 @@ class Crystal::Call
       index = arg.value.to_i
       index += instance_type.size if index < 0
       in_bounds = (0 <= index < instance_type.size)
-      if nilable || in_bounds
-        indexer_def = yield instance_type, (in_bounds ? index : -1)
-        indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
-      elsif instance_type.size == 0
-        raise "index '#{arg}' out of bounds for empty tuple"
-      else
-        raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+      unless in_bounds
+        unless nilable
+          raise "index '#{arg}' out of bounds for empty tuple" if instance_type.size == 0
+          raise "index out of bounds for #{owner} (#{arg} not in #{-instance_type.size}..#{instance_type.size - 1})"
+        end
+        index = -1
       end
+    elsif arg.is_a?(RangeLiteral)
+      from = arg.from
+      if from.is_a?(NumberLiteral) && from.kind == :i32
+        from_index = from.value.to_i
+        from_index += instance_type.size if from_index < 0
+        in_bounds = (0 <= from_index <= instance_type.size)
+        if !in_bounds && !nilable
+          raise "begin index out of bounds for #{owner} (#{from} not in #{-instance_type.size}..#{instance_type.size})"
+        end
+      elsif from.is_a?(Nop)
+        from_index = 0
+        in_bounds = true
+      else
+        return nil
+      end
+
+      to = arg.to
+      if to.is_a?(NumberLiteral) && to.kind == :i32
+        to_index = to.value.to_i
+        to_index += instance_type.size if to_index < 0
+        to_index = (to_index - (arg.exclusive? ? 1 : 0)).clamp(-1, instance_type.size - 1)
+      elsif to.is_a?(Nop)
+        to_index = instance_type.size - 1
+      else
+        return nil
+      end
+
+      if in_bounds
+        if from_index <= to_index
+          index = (from_index..to_index)
+        else
+          index = (0...0)
+        end
+      else
+        index = -1
+      end
+    else
+      return nil
     end
-    nil
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
   end
 
   def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
@@ -744,8 +783,7 @@ class Crystal::Call
     if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = Array(Var).new(inputs.size + 1)
-        i = 0
+        yield_types = Array(Type).new(inputs.size + 1)
         inputs.each do |input|
           if input.is_a?(Splat)
             tuple_type = lookup_node_type(match.context, input.exp)
@@ -754,17 +792,24 @@ class Crystal::Call
             end
             tuple_type.tuple_types.each do |arg_type|
               MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-              i += 1
+              yield_types << arg_type.virtual_type
             end
           else
             arg_type = lookup_node_type(match.context, input)
             MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
-
-            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
-            i += 1
+            yield_types << arg_type.virtual_type
           end
         end
+
+        if splat_index = block.splat_index
+          if yield_types.size < block.args.size - 1
+            block.raise "too many block arguments (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+          end
+          splat_range = (splat_index..splat_index - block.args.size)
+          yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
+        end
+
+        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
@@ -1072,13 +1117,13 @@ class Crystal::Call
         when "proc_call"
           owner = owner.as(ProcInstanceType)
           proc_arg_type = owner.arg_types[index]
-          unless type.covariant?(proc_arg_type)
+          unless type.implements?(proc_arg_type)
             self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
           end
         when "pointer_set"
           owner = owner.remove_typedef.as(PointerInstanceType)
           pointer_type = owner.var.type
-          unless type.filter_by(pointer_type)
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
             self.args[index].raise "type must be #{pointer_type}, not #{type}"
           end
         end

@@ -1042,9 +1042,9 @@ module Crystal
 
     def visit(node : RangeLiteral)
       accept node.from
-      skip_space_or_newline
+      skip_space
       write_token(node.exclusive? ? :"..." : :"..")
-      skip_space_or_newline
+      skip_space
       accept node.to
       false
     end
@@ -1259,9 +1259,12 @@ module Crystal
         accept type
 
         last = last?(i, node.types)
-        skip_space_or_newline unless last
+        if last
+          skip_space
+        else
+          skip_space_or_newline
+        end
 
-        must_break = false
         while true
           case @token.type
           when :"|"
@@ -1284,7 +1287,6 @@ module Crystal
             break
           end
         end
-        break if must_break
       end
 
       check_close_paren
@@ -1673,6 +1675,11 @@ module Crystal
 
       write node.name
       next_token
+
+      if @token.type == :"=" && node.name.ends_with?('=')
+        next_token
+      end
+
       skip_space(consume_newline: false)
 
       format_def_args node
@@ -2550,7 +2557,9 @@ module Crystal
           return false
         end
 
+        @lexer.wants_def_or_macro_name = true
         next_token
+        @lexer.wants_def_or_macro_name = false
         skip_space
         if (@token.type == :NEWLINE) || @wrote_newline
           base_indent = @indent + 2
@@ -2968,8 +2977,10 @@ module Crystal
         write " " if needs_space
         write_token :"&"
         skip_space_or_newline
-        write_token :"."
-        skip_space_or_newline
+        write :"."
+        @lexer.wants_def_or_macro_name = true
+        next_token_skip_space_or_newline
+        @lexer.wants_def_or_macro_name = false
 
         body = node.body
         case body
@@ -3807,7 +3818,7 @@ module Crystal
     end
 
     def visit(node : OffsetOf)
-      visit Call.new(nil, "offsetof", [node.offsetof_type, node.instance_var])
+      visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
     end
 
     def visit(node : PointerOf)

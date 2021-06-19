@@ -161,7 +161,7 @@ describe "Semantic: module" do
       "cannot splat *V into non-splat type parameter V of Foo(T, *U, V, W)"
   end
 
-  it "includes generic module but wrong number of arguments 2" do
+  it "errors if including generic module and not specifying type vars" do
     assert_error "
       module Foo(T)
       end
@@ -170,7 +170,7 @@ describe "Semantic: module" do
         include Foo
       end
       ",
-      "wrong number of type vars for Foo(T) (given 0, expected 1)"
+      "generic type arguments must be specified when including Foo(T)"
   end
 
   it "includes generic module explicitly" do
@@ -1251,7 +1251,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "declares and includes generic module" do
+  it "instantiates generic variadic module, accesses T from instance method" do
     assert_type(%(
       module Moo(*T)
         def t
@@ -1267,7 +1267,55 @@ describe "Semantic: module" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "declares and includes generic module, more args" do
+  it "instantiates generic variadic module, accesses T from class method" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo
+        extend Moo(Int32, Char)
+      end
+
+      Foo.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        include Moo(*T)
+      end
+
+      Foo(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from class method through generic extend" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        extend Moo(*T)
+      end
+
+      Foo(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method, more args" do
     assert_type(%(
       module Moo(A, *T, B)
         def t
@@ -1280,6 +1328,22 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include, more args" do
+    assert_type(%(
+      module Moo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Foo(*T)
+        include Moo(Int32, *T, String)
+      end
+
+      Foo(Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
   end
 

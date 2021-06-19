@@ -1,6 +1,6 @@
 require "./uri/uri_parser"
 require "./uri/encoding"
-require "./http/params"
+require "./uri/params"
 
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
@@ -66,7 +66,7 @@ require "./http/params"
 # (see `.reserved?`), while `.encode` does not. The decode methods are
 # identical except for the handling of `+` characters.
 #
-# NOTE: `HTTP::Params` provides a higher-level API for handling `x-www-form-urlencoded`
+# NOTE: `URI::Params` provides a higher-level API for handling `x-www-form-urlencoded`
 # serialized data.
 class URI
   class Error < Exception
@@ -171,7 +171,8 @@ class URI
 
   def_equals_and_hash scheme, host, port, path, query, user, password, fragment
 
-  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", @query = nil, @user = nil, @password = nil, @fragment = nil)
+  def initialize(@scheme = nil, @host = nil, @port = nil, @path = "", query : String | Params | Nil = nil, @user = nil, @password = nil, @fragment = nil)
+    @query = query.try(&.to_s)
   end
 
   # Returns the host part of the URI and unwrap brackets for IPv6 addresses.
@@ -182,7 +183,7 @@ class URI
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
-  def hostname
+  def hostname : String?
     host.try { |host| self.class.unwrap_ipv6(host) }
   end
 
@@ -195,7 +196,7 @@ class URI
   # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
-  def self.unwrap_ipv6(host)
+  def self.unwrap_ipv6(host) : String
     if host.starts_with?('[') && host.ends_with?(']')
       host.byte_slice(1, host.bytesize - 2)
     else
@@ -231,12 +232,6 @@ class URI
     end
   end
 
-  # :ditto:
-  @[Deprecated("Use `#request_target` instead.")]
-  def full_path : String
-    request_target
-  end
-
   # Returns `true` if URI has a *scheme* specified.
   def absolute? : Bool
     @scheme ? true : false
@@ -255,16 +250,29 @@ class URI
     !@scheme.nil? && @host.nil? && !@path.starts_with?('/')
   end
 
-  # Returns a `HTTP::Params` of the URI#query.
+  # Returns a `URI::Params` of the URI#query.
   #
   # ```
   # require "uri"
   #
   # uri = URI.parse "http://foo.com?id=30&limit=5#time=1305298413"
-  # uri.query_params # => HTTP::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
+  # uri.query_params # => URI::Params(@raw_params={"id" => ["30"], "limit" => ["5"]})
   # ```
-  def query_params : HTTP::Params
-    HTTP::Params.parse(@query || "")
+  def query_params : URI::Params
+    URI::Params.parse(@query || "")
+  end
+
+  # Sets `query` to stringified *params*.
+  #
+  # ```
+  # require "uri"
+  #
+  # uri = URI.new
+  # uri.query_params = URI::Params.parse("foo=bar&foo=baz")
+  # uri.to_s # => "?foo=bar&foo=baz"
+  # ```
+  def query_params=(params : URI::Params)
+    self.query = params.to_s
   end
 
   # Returns the authority component of this URI.
@@ -274,9 +282,9 @@ class URI
   #
   # ```
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
-  # uri.authority # => "user:pass@example.com"
+  # uri.authority # => "user:pass@example.com:80"
   #
-  # uri = URI.parse(path: "/relative")
+  # uri = URI.parse("/relative")
   # uri.authority # => nil
   # ```
   def authority : String?
@@ -549,7 +557,7 @@ class URI
   # ```
   #
   # The return value is URL encoded (see `#encode_www_form`).
-  def userinfo
+  def userinfo : String?
     if user = @user
       String.build { |io| userinfo(user, io) }
     end

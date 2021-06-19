@@ -10,41 +10,41 @@ end
 
 private def it_encodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode(string, **options).should eq(expected_result), file, line
+    URI.encode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode(string, **options).should eq(expected_result), file, line
+    URI.decode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_encodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode_www_form(string, **options).should eq(expected_result), file, line
+    URI.encode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode_www_form(string, **options).should eq(expected_result), file, line
+    URI.decode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
@@ -176,6 +176,12 @@ describe "URI" do
     end
   end
 
+  describe ".new" do
+    it "with query params" do
+      URI.new(query: URI::Params.parse("foo=bar&foo=baz")).should eq URI.parse("?foo=bar&foo=baz")
+    end
+  end
+
   describe "#hostname" do
     it { URI.new("http", "www.example.com", path: "/foo").hostname.should eq("www.example.com") }
     it { URI.new("http", "[::1]", path: "foo").hostname.should eq("::1") }
@@ -196,21 +202,6 @@ describe "URI" do
     it { URI.new(scheme: "scheme", password: "pass", host: "example.com").authority.should eq "example.com" }
     it { URI.new(scheme: "scheme", path: "opaque").authority.should be_nil }
     it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
-  end
-
-  describe "#full_path" do
-    it { URI.new(path: "/foo").full_path.should eq("/foo") }
-    it { URI.new.full_path.should eq("/") }
-    it { URI.new(path: "/foo", query: "q=1").full_path.should eq("/foo?q=1") }
-    it { URI.new(path: "/", query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(path: "/a%3Ab").full_path.should eq("/a%3Ab") }
-
-    it "does not add '?' to the end if the query params are empty" do
-      uri = URI.parse("http://www.example.com/foo")
-      uri.query = ""
-      uri.full_path.should eq("/foo")
-    end
   end
 
   describe "#request_target" do
@@ -358,21 +349,39 @@ describe "URI" do
 
   describe "#query_params" do
     context "when there is no query parameters" do
-      it "returns an empty instance of HTTP::Params" do
+      it "returns an empty instance of URI::Params" do
         uri = URI.parse("http://foo.com")
-        uri.query_params.should be_a(HTTP::Params)
-        uri.query_params.should eq(HTTP::Params.new)
+        uri.query_params.should be_a(URI::Params)
+        uri.query_params.should eq(URI::Params.new)
       end
     end
 
-    it "returns a HTTP::Params instance based on the query parameters" do
-      expected_params = HTTP::Params{"id" => "30", "limit" => "5"}
+    it "returns a URI::Params instance based on the query parameters" do
+      expected_params = URI::Params{"id" => "30", "limit" => "5"}
 
       uri = URI.parse("http://foo.com?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
 
       uri = URI.parse("?id=30&limit=5#time=1305298413")
       uri.query_params.should eq(expected_params)
+    end
+  end
+
+  describe "#query_params=" do
+    it "empty" do
+      uri = URI.new
+      params = URI::Params.new
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq ""
+    end
+
+    it "params with values" do
+      uri = URI.new
+      params = URI::Params.parse("foo=bar&foo=baz")
+      uri.query_params = params
+      uri.query_params.should eq params
+      uri.query.should eq "foo=bar&foo=baz"
     end
   end
 

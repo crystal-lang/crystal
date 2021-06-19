@@ -109,7 +109,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         find_root_generic_type_parameters: false).devirtualize
       case superclass
       when GenericClassType
-        node_superclass.raise "wrong number of type vars for #{superclass} (given 0, expected #{superclass.type_vars.size})"
+        node_superclass.raise "generic type arguments must be specified when inheriting #{superclass}"
       when NonGenericClassType, GenericClassInstanceType
         if superclass == @program.enum
           node_superclass.raise "can't inherit Enum. Use the enum keyword to define enums"
@@ -1004,7 +1004,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     type = lookup_type(node_name)
     case type
     when GenericModuleType
-      node.raise "wrong number of type vars for #{type} (given 0, expected #{type.type_vars.size})"
+      node.raise "generic type arguments must be specified when including #{type}"
     when .module?
       # OK
     else
@@ -1091,14 +1091,6 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     return if !@program.wants_doc?
     stripped_doc = node.doc.try &.strip
     if stripped_doc == ":ditto:"
-      node.doc = @last_doc
-    elsif stripped_doc == "ditto"
-      # TODO: remove after 0.34.0
-      if location
-        # Show one line above to highlight the ditto line
-        location = Location.new(location.filename, location.line_number - 1, location.column_number)
-      end
-      @program.report_warning_at location, "`ditto` is no longer supported. Use `:ditto:` instead"
       node.doc = @last_doc
     else
       @last_doc = node.doc

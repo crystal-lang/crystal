@@ -1,5 +1,6 @@
 require "./spec_helper"
-require "../support/iterate"
+require "spec/helpers/iterate"
+
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
@@ -20,7 +21,7 @@ struct RangeSpecIntWrapper
     value <=> other.value
   end
 
-  def self.zero
+  def self.additive_identity
     RangeSpecIntWrapper.new(0)
   end
 
@@ -58,6 +59,19 @@ describe "Range" do
     r.begin.should eq(1)
     r.end.should eq(5)
     r.excludes_end?.should be_true
+  end
+
+  it "#==" do
+    ((1..1) == (1..1)).should be_true
+    ((1...1) == (1..1)).should be_false
+    ((1...1) == (1...1)).should be_true
+    ((1..1) == (1...1)).should be_false
+
+    ((1..nil) == (1..nil)).should be_true
+
+    (1..1).should eq Range(Int32?, Int32?).new(1, 1)
+    ((1..1) == Range(Int32?, Int32?).new(1, 1)).should be_true
+    ((1.0..1.0) == (1..1)).should be_true
   end
 
   it "includes?" do
@@ -382,6 +396,40 @@ describe "Range" do
       expect_raises(ArgumentError, "Can't reverse_each endless range") do
         (1..(true ? nil : 1)).reverse_each
       end
+    end
+  end
+
+  describe "sample" do
+    it "raises on open range" do
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        (1..(true ? nil : 1)).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        ((true ? nil : 1)..1).sample
+      end
+      expect_raises(ArgumentError, "Can't sample an open range") do
+        ((true ? nil : 1)..(true ? nil : 1)).sample
+      end
+    end
+
+    it "samples a float range as a distribution" do
+      r = (1.2..3.4)
+      x = r.sample
+      r.includes?(x).should be_true
+
+      r.sample(Random.new(1)).should be_close(2.9317256017544837, 1e-12)
+    end
+
+    it "samples a range with nilable types" do
+      r = ((true ? 1 : nil)..(true ? 4 : nil))
+      x = r.sample
+      r.includes?(x).should be_true
+
+      ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
+
+      r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
+      x = r.sample
+      r.includes?(x).should be_true
     end
   end
 
