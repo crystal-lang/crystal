@@ -1,3 +1,7 @@
+# 1.1.0 (2021-06-19)
+
+TBD
+
 # 1.0.0 (2021-03-22)
 
 ## Language changes
@@ -15,6 +19,7 @@
 
 ### Macros
 
+- Add `LibC::MAP_ANONYMOUS` to x86_64-darwin to match other platforms. ([#10398](https://github.com/crystal-lang/crystal/pull/10398), thanks @sourgrasses)
 - **(breaking-change)** Always add explicit return types in getter/property macros. ([#10405](https://github.com/crystal-lang/crystal/pull/10405), thanks @Sija)
 
 ### Numeric
@@ -70,19 +75,18 @@
 
 - Fix `Process.parse_argument` behavior against a quote in a word. ([#10337](https://github.com/crystal-lang/crystal/pull/10337), thanks @MakeNowJust)
 - Add aarch64 support for macOS/darwin targets. ([#10348](https://github.com/crystal-lang/crystal/pull/10348), thanks @maxfierke, @RomainFranceschini)
-- Add `LibC::MAP_ANONYMOUS` to x86_64-darwin to match other platforms. ([#10398](https://github.com/crystal-lang/crystal/pull/10398), thanks @sourgrasses)
 
 ### Runtime
 
 - Improve error message for ELF reader on uninitialized runtime. ([#10282](https://github.com/crystal-lang/crystal/pull/10282), thanks @straight-shoota)
 
+- Support closured vars inside `Const` initializer. ([#10478](https://github.com/crystal-lang/crystal/pull/10478), thanks @RX14)
 ## Compiler
 
 - **(breaking-change)** Disallow surrogate halves in escape sequences of string and character literals, use `\x` for arbitrary binary values. ([#10443](https://github.com/crystal-lang/crystal/pull/10443), thanks @HertzDevil)
 - Fix ICE when exhaustive in-clause calls pseudo-method. ([#10382](https://github.com/crystal-lang/crystal/pull/10382), thanks @HertzDevil)
 - Fix ICE when parsing `foo.%` calls. ([#10351](https://github.com/crystal-lang/crystal/pull/10351), thanks @MakeNowJust)
 - Fix edge cases for symbol quoting rules. ([#10389](https://github.com/crystal-lang/crystal/pull/10389), thanks @HertzDevil)
-- Support closured vars inside `Const` initializer. ([#10478](https://github.com/crystal-lang/crystal/pull/10478), thanks @RX14)
 - Documentation grammar fix. ([#10369](https://github.com/crystal-lang/crystal/pull/10369), thanks @szTheory)
 
 ### Language semantics
