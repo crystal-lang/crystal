@@ -2,6 +2,9 @@ require "./compiler"
 
 class Crystal::Repl::Compiler
   private def upcast(node : ASTNode, from : Type, to : Type)
+    from = from.remove_indirection
+    to = to.remove_indirection
+
     return if from == to
 
     upcast_distinct(node, from, to)
@@ -150,6 +153,9 @@ class Crystal::Repl::Compiler
   end
 
   private def downcast(node : ASTNode, from : Type, to : Type)
+    from = from.remove_indirection
+    to = to.remove_indirection
+
     return if from == to
 
     downcast_distinct(node, from, to)
@@ -183,6 +189,10 @@ class Crystal::Repl::Compiler
   private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : NilType)
     # TODO: not tested
     pop aligned_sizeof_type(from), node: nil
+  end
+
+  private def downcast_distinct(node : ASTNode, from : ReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType)
+    # Nothing to do
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableProcType, to : ProcInstanceType)

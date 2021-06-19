@@ -2840,6 +2840,37 @@ describe Crystal::Repl::Interpreter do
         a[0].as(Int32) + a[1].as(Char).ord
       CODE
     end
+
+    it "upcasts to module type" do
+      interpret(<<-EXISTING, <<-CODE).should eq(1)
+        module Moo
+        end
+
+        class Foo
+          include Moo
+
+          def foo
+            1
+          end
+        end
+
+        class Bar
+          include Moo
+
+          def foo
+            2
+          end
+        end
+
+      EXISTING
+        moo = (1 == 1 ? Foo.new : Bar.new).as(Moo)
+        if moo.is_a?(Foo)
+          moo.foo
+        else
+          10
+        end
+      CODE
+    end
   end
 
   context "constants" do

@@ -710,6 +710,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def is_a(node, type, target_type)
+    type = type.remove_indirection
     filtered_type = type.filter_by(target_type).not_nil!
 
     case type
@@ -728,7 +729,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: not tested
         pointer_is_null(node: node)
       else
+        # TODO: maybe missing checking against another reference union type?
         reference_is_a(type_id(filtered_type), node: node)
+      end
+    when ReferenceUnionType
+      case filtered_type
+      when NonGenericClassType
+        reference_is_a(type_id(filtered_type), node: node)
+      when GenericClassInstanceType
+        reference_is_a(type_id(filtered_type), node: node)
+      else
+        node.raise "BUG: missing IsA from #{type} to #{target_type} (#{type.class} to #{target_type.class})"
       end
     else
       node.raise "BUG: missing IsA from #{type} to #{target_type} (#{type.class} to #{target_type.class})"
