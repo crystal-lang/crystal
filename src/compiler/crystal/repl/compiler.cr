@@ -1280,34 +1280,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       exp = node.exps.first
       request_value exp
 
-      offset = aligned_sizeof_type(tuple_type)
-
-      # Now copy tuple members to block args
-      block.args.each_with_index do |arg, i|
-        tuple_element_type = tuple_type.tuple_types[i]
-        inner_size = inner_sizeof_type(tuple_element_type)
-
-        # Copy inner size bytes from the struct.
-        # The interpreter will make sure to align this value.
-        copy_from(offset, inner_size, node: nil)
-
-        upcast exp, tuple_element_type, arg.type
-
-        current_offset =
-          @context.offset_of(tuple_type, i)
-
-        next_offset =
-          if i == tuple_type.tuple_types.size - 1
-            aligned_sizeof_type(tuple_type)
-          else
-            @context.offset_of(tuple_type, i + 1)
-          end
-
-        # Now we have arg.type in front of the tuple so we must skip it
-        offset += aligned_sizeof_type(arg.type)
-        # But we need to access the next tuple member, so we move forward
-        offset -= next_offset - current_offset
-      end
+      unpack_tuple exp, tuple_type, block.args.map(&.type)
 
       # We need to discard the tuple value that comes before the unpacked values
       pop_obj = tuple_type

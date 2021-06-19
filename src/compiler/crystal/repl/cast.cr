@@ -101,12 +101,21 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
     # If we are here it means the tuples are different
-    # TODO: all of this is very similar to `Yield` tuple unpacking,
-    # maybe we can extract a common method?
+    unpack_tuple(node, from, to.tuple_types)
+
+    # Finally, we must pop the original tuple that was casted
+    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
+  end
+
+  # Unpacks a tuple into a series of types.
+  # Each of the tuple elements is upcasted to the corresponding type in `to_types`.
+  # It's the caller's responsibility to pop the original, unpacked tuple, from the
+  # stack if needed.
+  private def unpack_tuple(node : ASTNode, from : TupleInstanceType, to_types : Array(Type))
     offset = aligned_sizeof_type(from)
 
-    from.tuple_types.each_with_index do |from_element_type, i|
-      to_element_type = to.tuple_types[i]
+    to_types.each_with_index do |to_element_type, i|
+      from_element_type = from.tuple_types[i]
 
       from_inner_size = inner_sizeof_type(from_element_type)
 
@@ -134,9 +143,6 @@ class Crystal::Repl::Compiler
       # But we need to access the next tuple member, so we move forward
       offset -= next_offset - current_offset
     end
-
-    # Finally, we must pop the original tuple that was casted
-    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
