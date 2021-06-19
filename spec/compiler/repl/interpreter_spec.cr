@@ -2827,6 +2827,19 @@ describe Crystal::Repl::Interpreter do
         x.as(Int32)
       CODE
     end
+
+    it "upcasts between tuple types" do
+      interpret(<<-CODE).should eq(1 + 'a'.ord)
+        a =
+          if 1 == 1
+            {1, 'a'}
+          else
+            {true, 3}
+          end
+
+        a[0].as(Int32) + a[1].as(Char).ord
+      CODE
+    end
   end
 
   context "constants" do

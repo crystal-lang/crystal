@@ -99,6 +99,46 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
+    # If we are here it means the tuples are different
+    # TODO: all of this is very similar to `Yield` tuple unpacking,
+    # maybe we can extract a common method?
+    offset = aligned_sizeof_type(from)
+
+    from.tuple_types.each_with_index do |from_element_type, i|
+      to_element_type = to.tuple_types[i]
+
+      from_inner_size = inner_sizeof_type(from_element_type)
+
+      # Copy inner size bytes from the tuple.
+      # The interpreter will make sure to align this value.
+      copy_from(offset, from_inner_size, node: nil)
+
+      # Then upcast it to the target tuple element type
+      upcast node, from_element_type, to_element_type
+
+      # Check the offset of this tuple element in `from`
+      current_offset =
+        @context.offset_of(from, i)
+
+      # Check what's the next offset in `from` is
+      next_offset =
+        if i == from.tuple_types.size - 1
+          aligned_sizeof_type(from)
+        else
+          @context.offset_of(from, i + 1)
+        end
+
+      # Now we have element_type in front of the tuple so we must skip it
+      offset += aligned_sizeof_type(to_element_type)
+      # But we need to access the next tuple member, so we move forward
+      offset -= next_offset - current_offset
+    end
+
+    # Finally, we must pop the original tuple that was casted
+    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
