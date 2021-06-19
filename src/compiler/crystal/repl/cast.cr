@@ -52,6 +52,15 @@ class Crystal::Repl::Compiler
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
+  private def upcast_distinct(node : ASTNode, from : VirtualType, to : MixedUnionType)
+    put_reference_type_in_union(aligned_sizeof_type(to), node: nil)
+  end
+
+  private def upcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : MixedUnionType)
+    # TODO: not tested
+    put_reference_type_in_union(aligned_sizeof_type(to), node: nil)
+  end
+
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableType)
     # TODO: pointer sizes
     put_i64 0_i64, node: nil
@@ -148,6 +157,11 @@ class Crystal::Repl::Compiler
     end
   end
 
+  private def upcast_distinct(node : ASTNode, from : NilType, to : VoidType)
+    # TODO: not tested
+    # Nothing to do
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
@@ -169,8 +183,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  # TODO: restrict here
-  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | NilableType | NilableReferenceUnionType | MetaclassType)
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | NilableType | NilableReferenceUnionType | MetaclassType | VirtualType)
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -182,7 +195,7 @@ class Crystal::Repl::Compiler
     pop sizeof(Pointer(Void)), node: nil
   end
 
-  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType)
+  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType | NilableType)
     # Nothing to do
   end
 

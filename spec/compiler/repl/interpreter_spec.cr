@@ -2828,6 +2828,22 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "casts nilable from mixed union type to primitive type (non-nil case)" do
+      interpret(<<-CODE).should eq(2)
+        x = 1 == 1 ? 2 : nil
+        y = x.as?(Int32)
+        y ? y : 20
+      CODE
+    end
+
+    it "casts nilable from mixed union type to primitive type (nil case)" do
+      interpret(<<-CODE).should eq(20)
+        x = 1 == 1 ? nil : 2
+        y = x.as?(Int32)
+        y ? y : 20
+      CODE
+    end
+
     it "upcasts between tuple types" do
       interpret(<<-CODE).should eq(1 + 'a'.ord)
         a =
@@ -2868,6 +2884,30 @@ describe Crystal::Repl::Interpreter do
           moo.foo
         else
           10
+        end
+      CODE
+    end
+
+    it "upcasts virtual type to union" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def foo
+            1
+          end
+        end
+
+        class Bar < Foo
+          def foo
+            2
+          end
+        end
+      EXISTING
+        foo = 1 == 1 ? Bar.new : Foo.new
+        a = 1 == 1 ? foo : 10
+        if a.is_a?(Foo)
+          a.foo
+        else
+          20
         end
       CODE
     end

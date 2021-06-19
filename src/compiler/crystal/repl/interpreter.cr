@@ -739,7 +739,7 @@ class Crystal::Repl::Interpreter
   end
 
   private def type_from_type_id(id : Int32) : Type
-    program.llvm_id.type_from_id(id)
+    @context.type_from_id(id)
   end
 
   private macro type_id_bytesize
