@@ -31,7 +31,7 @@ class Crystal::Repl::Compiler
     union_to_bool aligned_sizeof_type(type), node: nil
   end
 
-  private def value_to_bool(node : ASTNode, type : NonGenericClassType | GenericClassInstanceType)
+  private def value_to_bool(node : ASTNode, type : NonGenericClassType | GenericClassInstanceType | IntegerType | CharType | SymbolType)
     pop aligned_sizeof_type(type), node: nil
     put_true node: nil
   end

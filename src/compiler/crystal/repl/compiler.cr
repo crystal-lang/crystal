@@ -749,6 +749,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     type = type.remove_indirection
     filtered_type = type.filter_by(target_type).not_nil!
 
+    if type == filtered_type
+      # TODO: not tested
+      pop aligned_sizeof_type(type), node: nil
+      put_true node: nil
+      return
+    end
+
     case type
     when VirtualType
       reference_is_a(type_id(filtered_type), node: node)
