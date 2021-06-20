@@ -2942,6 +2942,20 @@ describe Crystal::Repl::Interpreter do
         A + A
       CODE
     end
+
+    it "hoists constants" do
+      interpret(<<-CODE).should eq(6)
+        x = A + A
+
+        A = begin
+          a = 1
+          b = 2
+          a + b
+        end
+
+        x
+      CODE
+    end
   end
 
   context "class vars" do

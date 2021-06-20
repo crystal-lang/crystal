@@ -190,6 +190,10 @@ class Crystal::Repl::Context
     constants.const_to_index?(const)
   end
 
+  def const_compiled_def(index : Int32) : CompiledDef
+    constants.index_to_compiled_def(index)
+  end
+
   def declare_class_var(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
     class_vars.declare(owner, name, type, compiled_def)
   end

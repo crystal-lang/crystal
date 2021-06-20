@@ -37,11 +37,6 @@ class Crystal::Repl::Interpreter
     # in the call stack (the original, not the copy) and we can
     # go back to just before that frame when a `return` happens.
     real_frame_index : Int32,
-    # When we jump to do a constant initialization we store the
-    # index where to store the constant value in the `@context.constants_memory`
-    # memory location.
-    # It's -1 if no constant needs to be initialized.
-    constant_index : Int32,
     # When we jump to do a class var initialization we store the
     # index where to store the class var value in the `@context.class_vars_memory`
     # memory location.
@@ -262,7 +257,6 @@ class Crystal::Repl::Interpreter
       stack_bottom: stack_bottom,
       block_caller_frame_index: -1,
       real_frame_index: 0,
-      constant_index: -1,
       class_var_index: -1,
     )
 
@@ -369,7 +363,6 @@ class Crystal::Repl::Interpreter
 
   private macro call(compiled_def,
                      block_caller_frame_index = -1,
-                     constant_index = -1,
                      class_var_index = -1)
     # At the point of a call like:
     #
@@ -409,7 +402,6 @@ class Crystal::Repl::Interpreter
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
       real_frame_index: @call_stack.size,
-      constant_index: {{constant_index}},
       class_var_index: {{class_var_index}},
     )
 
@@ -567,11 +559,6 @@ class Crystal::Repl::Interpreter
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
 
-      # Copy the return value to a constant, if the frame was for a constant
-      if %previous_call_frame.constant_index != -1
-        (%old_stack - {{size}}).copy_to(@context.constants_memory + %previous_call_frame.constant_index + Constants::OFFSET_FROM_INITIALIZED, {{size}})
-      end
-
       # Copy the return value to a class, if the frame was for a class var
       if %previous_call_frame.class_var_index != -1
         (%old_stack - {{size}}).copy_to(@context.class_vars_memory + %previous_call_frame.class_var_index + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
@@ -604,16 +591,23 @@ class Crystal::Repl::Interpreter
     self_class_pointer + offset
   end
 
-  private macro get_const(index, size)
+  private macro const_initialized?(index)
     # TODO: make this atomic
     %initialized = @context.constants_memory[{{index}}]
     if %initialized == 1_u8
-      stack_move_from(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+      true
     else
       @context.constants_memory[{{index}}] = 1_u8
-      %compiled_def = @context.constants.index_to_compiled_def({{index}})
-      call(%compiled_def, constant_index: {{index}})
+      false
     end
+  end
+
+  private macro get_const(index, size)
+    stack_move_from(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+  end
+
+  private macro set_const(index, size)
+    stack_move_to(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
   end
 
   private macro get_class_var(index, size)

@@ -294,8 +294,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when Underscore
       node.value.accept self
     when Path
-      # TODO: I think we should track that the constant is initialized at this point,
-      # to avoid an init flag, we'll see
+      const = target.target_const.not_nil!
+      index, compiled_def = get_const_index_and_compiled_def const
+
+      # This will initialize the constant
+      const_initialized index, node: nil
+      pop(sizeof(Pointer(Void)), node: nil) # pop the bool value
+
+      call compiled_def, node: nil
+      dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
+      set_const index, aligned_sizeof_type(const.value), node: nil
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -569,37 +577,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if const.value.simple_literal?
         const.value.accept self
       else
-        index = @context.const_index?(const)
-        unless index
-          # TODO: support magic constants like ARGV_UNSAFE
-          fake_def = const.fake_def.not_nil!
-          fake_def.owner = const.visitor.not_nil!.current_type
+        index, compiled_def = get_const_index_and_compiled_def const
 
-          compiled_def = CompiledDef.new(@context, fake_def, 0)
+        # Do this:
+        #
+        # ```
+        # unless const_initialized(index)
+        #   call const_initializer
+        #   set_const index
+        # end
+        #
+        # get_const index
+        # ```
 
-          # Declare local variables for the constant initializer
-          fake_def.vars.try &.each do |name, var|
-            var_type = var.type?
-            next unless var_type
+        # This is `unless const_initialized(index)`
+        const_initialized index, node: nil
+        branch_if 0, node: nil
+        cond_jump_location = patch_location
 
-            compiled_def.local_vars.declare(name, var_type)
-          end
+        # Now we are on the `then` branch
+        call compiled_def, node: nil
+        set_const index, aligned_sizeof_type(const.value), node: nil
 
-          value = const.value
-          value = @context.program.cleanup(value)
-
-          compiler = Compiler.new(@context, compiled_def, top_level: true)
-          compiler.compile(value)
-
-          if @context.decompile_defs
-            puts "=== #{const} ==="
-            puts Disassembler.disassemble(@context, compiled_def)
-            puts "=== #{const} ==="
-          end
-
-          index = @context.declare_const(const, compiled_def)
-        end
-
+        # Here we are outside of the unless
+        patch_jump(cond_jump_location)
         get_const index, aligned_sizeof_type(const.value), node: node
       end
     elsif replacement = node.syntax_replacement
@@ -608,6 +609,41 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_type node.type, node: node
     end
     false
+  end
+
+  private def get_const_index_and_compiled_def(const : Const) : {Int32, CompiledDef}
+    index = @context.const_index?(const)
+    if index
+      return index, @context.const_compiled_def(index)
+    end
+
+    # TODO: support magic constants like ARGV_UNSAFE
+    fake_def = const.fake_def.not_nil!
+    fake_def.owner = const.visitor.not_nil!.current_type
+
+    compiled_def = CompiledDef.new(@context, fake_def, 0)
+
+    # Declare local variables for the constant initializer
+    fake_def.vars.try &.each do |name, var|
+      var_type = var.type?
+      next unless var_type
+
+      compiled_def.local_vars.declare(name, var_type)
+    end
+
+    value = const.value
+    value = @context.program.cleanup(value)
+
+    compiler = Compiler.new(@context, compiled_def, top_level: true)
+    compiler.compile(value)
+
+    if @context.decompile_defs
+      puts "=== #{const} ==="
+      puts Disassembler.disassemble(@context, compiled_def)
+      puts "=== #{const} ==="
+    end
+
+    {@context.declare_const(const, compiled_def), compiled_def}
   end
 
   def visit(node : Generic)
