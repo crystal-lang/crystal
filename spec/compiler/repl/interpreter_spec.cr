@@ -1603,6 +1603,28 @@ describe Crystal::Repl::Interpreter do
         4
       CODE
     end
+
+    it "does call on constant that's a struct, takes a pointer to instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+      EXISTING
+        CONST = Foo.new
+        CONST.to_unsafe.value
+      CODE
+    end
   end
 
   context "multidispatch" do

@@ -295,15 +295,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.value.accept self
     when Path
       const = target.target_const.not_nil!
-      index, compiled_def = get_const_index_and_compiled_def const
+      if const.value.simple_literal?
+        const.value.accept self
+      elsif const.fake_def
+        index, compiled_def = get_const_index_and_compiled_def const
 
-      # This will initialize the constant
-      const_initialized index, node: nil
-      pop(sizeof(Pointer(Void)), node: nil) # pop the bool value
+        # This will initialize the constant
+        const_initialized index, node: nil
+        pop(sizeof(Pointer(Void)), node: nil) # pop the bool value
 
-      call compiled_def, node: nil
-      dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
-      set_const index, aligned_sizeof_type(const.value), node: nil
+        call compiled_def, node: nil
+        dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
+        set_const index, aligned_sizeof_type(const.value), node: nil
+      elsif @wants_value
+        node.raise "BUG: missing interprter assign constant that isn't 'used'"
+      end
     else
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
@@ -577,30 +583,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       if const.value.simple_literal?
         const.value.accept self
       else
-        index, compiled_def = get_const_index_and_compiled_def const
-
-        # Do this:
-        #
-        # ```
-        # unless const_initialized(index)
-        #   call const_initializer
-        #   set_const index
-        # end
-        #
-        # get_const index
-        # ```
-
-        # This is `unless const_initialized(index)`
-        const_initialized index, node: nil
-        branch_if 0, node: nil
-        cond_jump_location = patch_location
-
-        # Now we are on the `then` branch
-        call compiled_def, node: nil
-        set_const index, aligned_sizeof_type(const.value), node: nil
-
-        # Here we are outside of the unless
-        patch_jump(cond_jump_location)
+        index = initialize_const_if_needed(const)
         get_const index, aligned_sizeof_type(const.value), node: node
       end
     elsif replacement = node.syntax_replacement
@@ -1180,6 +1163,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when ClassVar
       index = class_var_index(obj)
       pointerof_class_var(index, node: obj)
+    when Path
+      const = obj.target_const.not_nil!
+      index = initialize_const_if_needed(const)
+      get_const_pointer index, node: obj
     else
       # For a struct, we first put it on the stack
       request_value(obj)
@@ -1192,6 +1179,33 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     pop_obj
+  end
+
+  private def initialize_const_if_needed(const)
+    index, compiled_def = get_const_index_and_compiled_def const
+
+    # Do this:
+    #
+    # ```
+    # unless const_initialized(index)
+    #   call const_initializer
+    #   set_const index
+    # end
+    # ```
+
+    # This is `unless const_initialized(index)`
+    const_initialized index, node: nil
+    branch_if 0, node: nil
+    cond_jump_location = patch_location
+
+    # Now we are on the `then` branch
+    call compiled_def, node: nil
+    set_const index, aligned_sizeof_type(const.value), node: nil
+
+    # Here we are outside of the unless
+    patch_jump(cond_jump_location)
+
+    index
   end
 
   private def accept_call_members(node : Call)
@@ -1406,7 +1420,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : ClassDef)
     # TODO: change scope
-    node.body.accept self
+    discard_value node.body
 
     return false unless @wants_value
 
@@ -1416,7 +1430,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : ModuleDef)
     # TODO: change scope
-    node.body.accept self
+    discard_value node.body
 
     return false unless @wants_value
 

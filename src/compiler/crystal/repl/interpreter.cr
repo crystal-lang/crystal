@@ -603,11 +603,15 @@ class Crystal::Repl::Interpreter
   end
 
   private macro get_const(index, size)
-    stack_move_from(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+    stack_move_from(get_const_pointer(index), {{size}})
+  end
+
+  private macro get_const_pointer(index)
+    @context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED
   end
 
   private macro set_const(index, size)
-    stack_move_to(@context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED, {{size}})
+    stack_move_to(get_const_pointer(index), {{size}})
   end
 
   private macro get_class_var(index, size)
