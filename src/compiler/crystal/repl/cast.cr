@@ -48,7 +48,7 @@ class Crystal::Repl::Compiler
     push_zeros(aligned_sizeof_type(to), node: nil)
   end
 
-  private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType, to : MixedUnionType)
+  private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | MetaclassType, to : MixedUnionType)
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
