@@ -1625,6 +1625,109 @@ describe Crystal::Repl::Interpreter do
         CONST.to_unsafe.value
       CODE
     end
+
+    it "does call on constant that's a struct, takes a pointer to instance var, inside if" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+      EXISTING
+        CONST = Foo.new
+        c = (1 == 1 ? CONST : CONST).to_unsafe
+        c.value
+      CODE
+    end
+
+    it "does call on var that's a struct, takes a pointer to instance var, inside if" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+      EXISTING
+        a = Foo.new
+        c = (1 == 1 ? a : a).to_unsafe
+        c.value
+      CODE
+    end
+
+    it "does call on ivar that's a struct, takes a pointer to instance var, inside if" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+        struct Bar
+          def initialize
+            @foo = Foo.new
+          end
+
+          def do_it
+            c = (1 == 1 ? @foo : @foo).to_unsafe
+            c.value
+          end
+        end
+
+      EXISTING
+        Bar.new.do_it
+      CODE
+    end
+
+    it "does call on self that's a struct, takes a pointer to instance var, inside if" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+
+          def do_it
+            c = (1 == 1 ? self : self).to_unsafe
+            c.value
+          end
+        end
+      EXISTING
+        Foo.new.do_it
+      CODE
+    end
   end
 
   context "multidispatch" do

@@ -22,7 +22,70 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @top_level = true
   )
     @scope = scope || @context.program
+
+    # Do we want to push a value to the stack?
+    # This value is false for nodes whose value is not needed.
+    # For example, consider this code:
+    #
+    # ```
+    # a = 1
+    # 2
+    # a
+    # ```
+    #
+    # The value of the second node, `2`, is not needed at all
+    # and so it's not even pushed to the stack.
+    #
+    # And, actually, the value of `a = 1` is not needed either
+    # (it's not assigned to anything else after `a`).
+    #
+    # An alternative way to have done this is to push every
+    # node to the stack, and pop afterwards if not needed
+    # (this is in intermediary nodes of `Expressions`) but
+    # this is less efficient.
     @wants_value = true
+
+    # Do we want to produce a struct pointer instead of a struct
+    # value?
+    #
+    # This is needed because a struct call receiver is actually
+    # passed as a pointer, which becomes `self`. Then through
+    # this pointer struct mutation is possible.
+    #
+    # For code like:
+    #
+    # ```
+    # @foo.bar
+    # ```
+    #
+    # this is handled by checking whether the receiver is an InstanceVar,
+    # and if so, we load a pointer to the instance var.
+    #
+    # But what if it's something like this:
+    #
+    # ```
+    # (cond ? @foo : @bar).bar
+    # ```
+    #
+    # Assuming `@foo` and `@bar` have the same type, and `bar` mutates
+    # them, we'd like to pass a pointer to them here too.
+    # In this case we set `@wants_struct_pointer` to true, and then
+    # when an instance variable is visited, we put the pointer instead
+    # of the value. In this particular case we actually put some zeros
+    # (the size of the struct) before the pointer because we don't know
+    # whether other branches of the `if` (or expressions, in general)
+    # will actually put a full struct followed by a pointer. For example:
+    #
+    # ```
+    # (cond ? @foo : some_call).bar
+    # ```
+    #
+    # In this case `some_call` returns a struct, and we'll push it to the
+    # stack, and then we'll push a pointer to it. After `bar` is done
+    # we remove the extra struct before the pointer. So in the case of
+    # `@foo`, it must also produce something that's like `struct - pointer`
+    # so that the struct is popped uniformly.
+    @wants_struct_pointer = false
   end
 
   def self.new(
@@ -236,18 +299,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Expressions)
     old_wants_value = @wants_value
+    old_wants_struct_pointer = @wants_struct_pointer
 
     node.expressions.each_with_index do |expression, i|
       @wants_value = old_wants_value && i == node.expressions.size - 1
+      @wants_struct_pointer = old_wants_struct_pointer && i == node.expressions.size - 1
       expression.accept self
     end
 
     @wants_value = old_wants_value
+    @wants_struct_pointer = old_wants_struct_pointer
 
     false
   end
 
   def visit(node : Assign)
+    raise_if_wants_struct_pointer(node)
+
     target = node.target
     case target
     when Var
@@ -322,10 +390,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     index, type = lookup_local_var_index_and_type(node.name)
 
     if node.name == "self" && type.passed_by_value?
-      # Load the entire self from the pointer that's self
-      get_self_ivar 0, aligned_sizeof_type(type), node: node
+      if @wants_struct_pointer
+        push_zeros aligned_sizeof_type(scope), node: nil
+        put_self(node: node)
+        return false
+      else
+        # Load the entire self from the pointer that's self
+        get_self_ivar 0, aligned_sizeof_type(type), node: node
+      end
     else
-      get_local index, aligned_sizeof_type(type), node: node
+      if @wants_struct_pointer
+        push_zeros aligned_sizeof_type(node), node: nil
+        pointerof_var index, node: node
+      else
+        get_local index, aligned_sizeof_type(type), node: node
+      end
     end
 
     downcast node, type, node.type
@@ -351,16 +430,30 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : InstanceVar)
     return false unless @wants_value
 
-    ivar_offset = ivar_offset(scope, node.name)
-    ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+    if @wants_struct_pointer
+      push_zeros aligned_sizeof_type(node), node: nil
+      compile_pointerof_ivar(node, node.name)
+    else
+      ivar_offset = ivar_offset(scope, node.name)
+      ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
 
-    get_self_ivar ivar_offset, ivar_size, node: node
+      get_self_ivar ivar_offset, ivar_size, node: node
+    end
+
     false
   end
 
   def visit(node : ClassVar)
+    return false unless @wants_value
+
     index = class_var_index(node)
-    get_class_var index, aligned_sizeof_type(node.var), node: node
+
+    if @wants_struct_pointer
+      push_zeros aligned_sizeof_type(node), node: nil
+      pointerof_class_var(index, node: node)
+    else
+      get_class_var index, aligned_sizeof_type(node.var), node: node
+    end
 
     false
   end
@@ -413,6 +506,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ReadInstanceVar)
+    raise_if_wants_struct_pointer(node)
+
     # TODO: check struct
     node.obj.accept self
 
@@ -426,6 +521,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : UninitializedVar)
+    raise_if_wants_struct_pointer(node)
+
     case var = node.var
     when Var
       var.accept self
@@ -457,7 +554,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
-    request_value(node.cond)
+    dont_request_struct_pointer do
+      request_value(node.cond)
+    end
+
     value_to_bool(node.cond, node.cond.type)
 
     branch_unless 0, node: nil
@@ -480,6 +580,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : While)
+    raise_if_wants_struct_pointer(node)
+
     # Jump directly to the condition
     jump 0, node: nil
     cond_jump_location = patch_location
@@ -532,6 +634,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Return)
+    raise_if_wants_struct_pointer(node)
+
     exp = node.exp
 
     exp_type =
@@ -584,7 +688,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         const.value.accept self
       else
         index = initialize_const_if_needed(const)
-        get_const index, aligned_sizeof_type(const.value), node: node
+        if @wants_struct_pointer
+          push_zeros(aligned_sizeof_type(const.value), node: nil)
+          get_const_pointer index, node: node
+        else
+          get_const index, aligned_sizeof_type(const.value), node: node
+        end
       end
     elsif replacement = node.syntax_replacement
       replacement.accept self
@@ -676,6 +785,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Cast)
+    raise_if_wants_struct_pointer(node)
+
     node.obj.accept self
 
     obj_type = node.obj.type
@@ -840,7 +951,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiled_def = @context.defs[target_def]? ||
                    create_compiled_def(node, target_def)
 
-    pop_obj = compile_call_args(node, target_def)
+    pop_obj = dont_request_struct_pointer do
+      compile_call_args(node, target_def)
+    end
 
     if (block = node.block) && !block.fun_literal
       call_with_block compiled_def, node: node
@@ -853,6 +966,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # (but the struct is after the call's value, so we must
       # remove it past that value)
       pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
+      put_stack_top_pointer_if_needed(node)
     else
       if pop_obj
         pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
@@ -872,35 +986,37 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     args_ffi_types = [] of FFI::Type
     proc_args = [] of FFI::CallInterface?
 
-    node.args.each do |arg|
-      arg_type = arg.type
+    dont_request_struct_pointer do
+      node.args.each do |arg|
+        arg_type = arg.type
 
-      if arg.is_a?(NilLiteral)
-        # Nil is used to mean Pointer.null
-        put_i64 0, node: arg
-      else
-        request_value(arg)
-      end
-      # TODO: upcast?
-
-      if arg_type.is_a?(ProcInstanceType)
-        args_bytesizes << aligned_sizeof_type(arg)
-        args_ffi_types << FFI::Type.pointer
-        proc_args << arg_type.ffi_call_interface
-      else
-        case arg
-        when NilLiteral
-          args_bytesizes << sizeof(Pointer(Void))
-          args_ffi_types << FFI::Type.pointer
-        when Out
-          # TODO: this out handling is bad. Why is out's type not a pointer already?
-          args_bytesizes << sizeof(Pointer(Void))
-          args_ffi_types << FFI::Type.pointer
+        if arg.is_a?(NilLiteral)
+          # Nil is used to mean Pointer.null
+          put_i64 0, node: arg
         else
-          args_bytesizes << aligned_sizeof_type(arg)
-          args_ffi_types << arg.type.ffi_type
+          request_value(arg)
         end
-        proc_args << nil
+        # TODO: upcast?
+
+        if arg_type.is_a?(ProcInstanceType)
+          args_bytesizes << aligned_sizeof_type(arg)
+          args_ffi_types << FFI::Type.pointer
+          proc_args << arg_type.ffi_call_interface
+        else
+          case arg
+          when NilLiteral
+            args_bytesizes << sizeof(Pointer(Void))
+            args_ffi_types << FFI::Type.pointer
+          when Out
+            # TODO: this out handling is bad. Why is out's type not a pointer already?
+            args_bytesizes << sizeof(Pointer(Void))
+            args_ffi_types << FFI::Type.pointer
+          else
+            args_bytesizes << aligned_sizeof_type(arg)
+            args_ffi_types << arg.type.ffi_type
+          end
+          proc_args << nil
+        end
       end
     end
 
@@ -939,7 +1055,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     lib_call(lib_function, node: node)
 
-    pop aligned_sizeof_type(node), node: nil unless @wants_value
+    if @wants_value
+      put_stack_top_pointer_if_needed(node)
+    else
+      pop aligned_sizeof_type(node), node: nil
+    end
 
     return false
   end
@@ -1133,6 +1253,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         else
           # It might happen that self's type was narrowed down,
           # so we need to accept it regularly and downcast it.
+          # TODO: how to handle needs_struct_pointer?
           request_value(obj)
 
           # Then take a pointer to it (this is self inside the method)
@@ -1168,11 +1289,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       index = initialize_const_if_needed(const)
       get_const_pointer index, node: obj
     else
-      # For a struct, we first put it on the stack
-      request_value(obj)
+      if needs_struct_pointer?(obj.type)
+        request_struct_pointer(obj)
+      else
+        # For a struct, we first put it on the stack
+        request_value(obj)
 
-      # Then take a pointer to it (this is self inside the method)
-      put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
+        # Then take a pointer to it (this is self inside the method)
+        put_stack_top_pointer(aligned_sizeof_type(obj), node: nil)
+      end
 
       # We must remember to later pop the struct that's still on the stack
       pop_obj = obj
@@ -1209,14 +1334,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def accept_call_members(node : Call)
-    if obj = node.obj
-      obj.accept(self)
-    else
-      put_self(node: node) unless scope.is_a?(Program)
-    end
+    dont_request_struct_pointer do
+      if obj = node.obj
+        obj.accept(self)
+      else
+        put_self(node: node) unless scope.is_a?(Program)
+      end
 
-    node.args.each &.accept(self)
-    node.named_args.try &.each &.value.accept(self)
+      node.args.each &.accept(self)
+      node.named_args.try &.each &.value.accept(self)
+    end
   end
 
   def visit(node : Out)
@@ -1299,6 +1426,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Break)
+    raise_if_wants_struct_pointer(node)
+
     exp = node.exp
 
     exp_type =
@@ -1335,6 +1464,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Next)
+    raise_if_wants_struct_pointer(node)
+
     exp = node.exp
 
     if @while
@@ -1386,7 +1517,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
        block.args.size > 1
       # Accept the tuple
       exp = node.exps.first
-      request_value exp
+      dont_request_struct_pointer do
+        request_value exp
+      end
 
       unpack_tuple exp, tuple_type, block.args.map(&.type)
 
@@ -1395,7 +1528,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       node.exps.each_with_index do |exp, i|
         if i < block.args.size
-          request_value(exp)
+          dont_request_struct_pointer do
+            request_value(exp)
+          end
           upcast exp, exp.type, block.args[i].type
         else
           discard_value(exp)
@@ -1407,6 +1542,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if @wants_value
       pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil if pop_obj
+      put_stack_top_pointer_if_needed(node)
     else
       if pop_obj
         pop aligned_sizeof_type(node) + aligned_sizeof_type(pop_obj), node: nil
@@ -1553,7 +1689,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def discard_value(node : ASTNode)
-    accept_with_wants_value node, false
+    dont_request_struct_pointer do
+      accept_with_wants_value node, false
+    end
   end
 
   private def accept_with_wants_value(node : ASTNode, wants_value)
@@ -1561,6 +1699,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @wants_value = wants_value
     node.accept self
     @wants_value = old_wants_value
+  end
+
+  private def request_struct_pointer(node : ASTNode)
+    old_wants_stuct_pointer = @wants_struct_pointer
+    @wants_struct_pointer = true
+    request_value node
+    @wants_struct_pointer = old_wants_stuct_pointer
+  end
+
+  private def dont_request_struct_pointer
+    old_wants_stuct_pointer = @wants_struct_pointer
+    @wants_struct_pointer = false
+    value = yield
+    @wants_struct_pointer = old_wants_stuct_pointer
+    value
+  end
+
+  private def put_stack_top_pointer_if_needed(value)
+    if @wants_struct_pointer
+      put_stack_top_pointer(aligned_sizeof_type(value), node: nil)
+    end
+  end
+
+  private def raise_if_wants_struct_pointer(node : ASTNode)
+    # We'll slowly handle these cases, but they are probably very uncommon.
+    # We still want to know where they happen!
+    if @wants_struct_pointer
+      node.raise "BUG: missing handling of @wants_struct_pointer for #{node.class}"
+    end
   end
 
   # TODO: block.break shouldn't exist: the type should be merged in target_def
@@ -1719,6 +1886,36 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def type_id(type : Type)
     @context.type_id(type)
+  end
+
+  # The only types that we want to put a struct pointer for
+  # (for @wants_struct_pointer) are mutable types that are not
+  # inside a union. The reason is that if they are inside a union,
+  # they are already copied, so passing a perfect pointer is useless.
+  private def needs_struct_pointer?(type : Type)
+    case type
+    when PrimitiveType, PointerInstanceType, ProcInstanceType,
+         TupleInstanceType, NamedTupleInstanceType, MixedUnionType
+      false
+    when StaticArrayInstanceType
+      true
+    when VirtualType
+      type.struct?
+    when NonGenericModuleType
+      type.including_types.try { |t| needs_struct_pointer?(t) }
+    when GenericModuleInstanceType
+      type.including_types.try { |t| needs_struct_pointer?(t) }
+    when GenericClassInstanceType
+      needs_struct_pointer?(type.generic_type)
+    when TypeDefType
+      needs_struct_pointer?(type.typedef)
+    when AliasType
+      needs_struct_pointer?(type.aliased_type)
+    when ClassType
+      type.struct?
+    else
+      false
+    end
   end
 
   private macro nop

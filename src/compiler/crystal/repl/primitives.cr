@@ -28,6 +28,8 @@ class Crystal::Repl::Compiler
       pointer_malloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_realloc"
+      raise_if_wants_struct_pointer(node)
+
       obj ? request_value(obj) : put_self(node: node)
       request_value(node.args.first)
 
@@ -40,6 +42,8 @@ class Crystal::Repl::Compiler
       pointer_realloc(element_size, node: node)
       pop(aligned_sizeof_type(scope_type), node: nil) unless @wants_value
     when "pointer_set"
+      raise_if_wants_struct_pointer(node)
+
       # Accept in reverse order so that it's easier for the interpreter
       obj = obj.not_nil!
       element_type = obj.type.as(PointerInstanceType).element_type
@@ -53,6 +57,8 @@ class Crystal::Repl::Compiler
 
       pointer_set(inner_sizeof_type(element_type), node: node)
     when "pointer_get"
+      raise_if_wants_struct_pointer(node)
+
       accept_call_members(node)
       return unless @wants_value
 
@@ -90,6 +96,8 @@ class Crystal::Repl::Compiler
 
       put_i32 type_id(type), node: node
     when "allocate"
+      raise_if_wants_struct_pointer(node)
+
       type =
         if obj
           discard_value(obj)
@@ -130,6 +138,8 @@ class Crystal::Repl::Compiler
         end
       end
     when "tuple_indexer_known_index"
+      raise_if_wants_struct_pointer(node)
+
       obj = obj.not_nil!
       obj.accept self
 
@@ -175,6 +185,8 @@ class Crystal::Repl::Compiler
 
       pointer_address(node: node)
     when "proc_call"
+      raise_if_wants_struct_pointer(node)
+
       node.args.each { |arg| request_value(arg) }
 
       obj ? request_value(obj) : put_self(node: node)
@@ -207,6 +219,8 @@ class Crystal::Repl::Compiler
 
       atomicrmw(element_size, node: node)
     when "external_var_get"
+      raise_if_wants_struct_pointer(node)
+
       return unless @wants_value
 
       lib_type = node.obj.not_nil!.type.as(LibType)
@@ -220,6 +234,8 @@ class Crystal::Repl::Compiler
       # Read from the pointer
       pointer_get(inner_sizeof_type(node), node: node)
     when "external_var_set"
+      raise_if_wants_struct_pointer(node)
+
       lib_type = node.obj.not_nil!.type.as(LibType)
       external = node.target_def.as(External)
 
@@ -236,6 +252,8 @@ class Crystal::Repl::Compiler
       # Set the pointer's value
       pointer_set(inner_sizeof_type(node), node: node)
     when "struct_or_union_set"
+      raise_if_wants_struct_pointer(node)
+
       obj = obj.not_nil!
       arg = node.args.first
 
@@ -390,8 +408,10 @@ class Crystal::Repl::Compiler
   end
 
   private def accept_call_args(node : Call)
-    node.args.each { |arg| request_value(arg) }
-    node.named_args.try &.each { |arg| request_value(arg.value) }
+    dont_request_struct_pointer do
+      node.args.each { |arg| request_value(arg) }
+      node.named_args.try &.each { |arg| request_value(arg.value) }
+    end
   end
 
   private def primitive_unchecked_convert(node : ASTNode, body : Primitive)
