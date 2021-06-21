@@ -1728,6 +1728,30 @@ describe Crystal::Repl::Interpreter do
         Foo.new.do_it
       CODE
     end
+
+    it "does call on Pointer#value that's a struct, takes a pointer to instance var, inside if" do
+      # TODO: this should actually be 42 (it is in regular Crystal)
+      interpret(<<-EXISTING, <<-CODE).should eq(0)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        ptr = pointerof(foo)
+        c = (1 == 1 ? ptr.value : ptr.value).to_unsafe
+        c.value
+      CODE
+    end
   end
 
   context "multidispatch" do
