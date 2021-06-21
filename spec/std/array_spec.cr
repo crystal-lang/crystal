@@ -111,11 +111,9 @@ describe "Array" do
 
   describe "+" do
     it "same element type" do
-      a = [1, 2, 3]
-      b = [4, 5]
-      c = a + b
-      c.size.should eq(5)
-      0.upto(4) { |i| c[i].should eq(i + 1) }
+      a = [1, 2, 3] + [4, 5]
+      a.should eq([1, 2, 3, 4, 5])
+      typeof(a).should eq(Array(Int32))
     end
 
     it "different types" do
@@ -125,8 +123,8 @@ describe "Array" do
     end
 
     it "NoReturn (#909)" do
-      ([1, 2] + Tuple.new.to_a).should eq([1, 2])
-      (Tuple.new.to_a + [1, 2]).should eq([1, 2])
+      ([1, 2] + Array(NoReturn).new).should eq([1, 2])
+      (Array(NoReturn).new + [1, 2]).should eq([1, 2])
     end
 
     it "union of arrays" do
