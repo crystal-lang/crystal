@@ -656,7 +656,15 @@ module Crystal
   end
 
   class Alias
+    include Annotatable
+
     property! resolved_type : AliasType
+  end
+
+  class AnnotationDef
+    include Annotatable
+
+    property! resolved_type : AnnotationType
   end
 
   class External < Def
