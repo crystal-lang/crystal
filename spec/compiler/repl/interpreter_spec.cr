@@ -1729,9 +1729,8 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    it "does call on Pointer#value that's a struct, takes a pointer to instance var, inside if" do
-      # TODO: this should actually be 42 (it is in regular Crystal)
-      interpret(<<-EXISTING, <<-CODE).should eq(0)
+    it "does call on Pointer#value that's a struct, takes a pointer to instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1748,7 +1747,7 @@ describe Crystal::Repl::Interpreter do
       EXISTING
         foo = Foo.new
         ptr = pointerof(foo)
-        c = (1 == 1 ? ptr.value : ptr.value).to_unsafe
+        c = ptr.value.to_unsafe
         c.value
       CODE
     end

@@ -57,17 +57,19 @@ class Crystal::Repl::Compiler
 
       pointer_set(inner_sizeof_type(element_type), node: node)
     when "pointer_get"
-      accept_call_members(node)
-      return unless @wants_value
-
       element_type = obj.not_nil!.type.as(PointerInstanceType).element_type
 
-      pointer_get(inner_sizeof_type(element_type), node: node)
+      if @wants_struct_pointer
+        # If we have `pointer.value`, we actually want `pointer`.
+        # But first put some zeros for the value that will be popped.
+        push_zeros aligned_sizeof_type(element_type), node: nil
+        accept_call_members(node)
+      else
+        accept_call_members(node)
+        return unless @wants_value
 
-      # TODO: this is a difference from regular Crystal in that
-      # a copy will be made, so we probably need to figure out
-      # a way to do this...
-      put_stack_top_pointer_if_needed(node)
+        pointer_get(inner_sizeof_type(element_type), node: node)
+      end
     when "pointer_address"
       accept_call_members(node)
       return unless @wants_value
