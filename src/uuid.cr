@@ -129,12 +129,12 @@ struct UUID
     new(new_bytes, variant, version)
   end
 
-  def self.empty
+  def self.empty : self
     new(StaticArray(UInt8, 16).new(0_u8), UUID::Variant::NCS, UUID::Version::V4)
   end
 
   # Returns UUID variant.
-  def variant
+  def variant : UUID::Variant
     case
     when @bytes[8] & 0x80 == 0x00
       Variant::NCS
@@ -150,7 +150,7 @@ struct UUID
   end
 
   # Returns version based on RFC4122 format. See also `#variant`.
-  def version
+  def version : UUID::Version
     case @bytes[6] >> 4
     when 1 then Version::V1
     when 2 then Version::V2
@@ -196,11 +196,11 @@ struct UUID
     io.write(buffer.to_slice)
   end
 
-  def hexstring
+  def hexstring : String
     @bytes.to_slice.hexstring
   end
 
-  def urn
+  def urn : String
     String.build(45) do |str|
       str << "urn:uuid:"
       to_s(str)

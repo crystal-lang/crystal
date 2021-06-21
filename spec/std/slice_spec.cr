@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private class BadSortingClass
   include Comparable(self)
@@ -359,31 +360,9 @@ describe "Slice" do
     io.to_s.should eq(ascii_table_num)
   end
 
-  it "does iterator" do
-    slice = Slice(Int32).new(3) { |i| i + 1 }
-    iter = slice.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "does reverse iterator" do
-    slice = Slice(Int32).new(3) { |i| i + 1 }
-    iter = slice.reverse_each
-    iter.next.should eq(3)
-    iter.next.should eq(2)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "does index iterator" do
-    slice = Slice(Int32).new(2) { |i| i + 1 }
-    iter = slice.each_index
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], Slice[1, 2, 3].each
+  it_iterates "#reverse_each", [3, 2, 1], Slice[1, 2, 3].reverse_each
+  it_iterates "#each_index", [0, 1, 2], Slice[1, 2, 3].each_index
 
   it "does to_a" do
     slice = Slice.new(3) { |i| i }
