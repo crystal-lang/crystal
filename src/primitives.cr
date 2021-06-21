@@ -132,6 +132,53 @@ struct Symbol
   end
 end
 
+struct UntypedPointer
+  # Allocates `size` bytes from the system's heap initialized
+  # to zero and returns a pointer to the first byte from that memory.
+  # The memory is allocated by the `GC`, so when there are
+  # no pointers to this memory, it will be automatically freed.
+  #
+  # The implementation uses `GC.malloc`, so that the allocated memory is
+  # expected to contain inner address pointers.
+  @[Primitive(:pointer_malloc)]
+  def self.malloc(size : UInt64) : self
+  end
+
+  # Tries to change the size of the allocation pointed to by this pointer to *size*,
+  # and returns that pointer.
+  #
+  # Since the space after the end of the block may be in use, realloc may find it
+  # necessary to copy the block to a new address where more free space is available.
+  # The value of realloc is the new address of the block.
+  # If the block needs to be moved, realloc copies the old contents.
+  #
+  # Remember to always assign the value of realloc.
+  @[Primitive(:pointer_realloc)]
+  def realloc(byte_count : UInt64) : self
+  end
+
+  # Returns a pointer that points to the given memory address.
+  # This doesn't allocate memory.
+  #
+  # ```
+  # ptr = UntypedPointer.new(5678_u64)
+  # ptr.address # => 5678
+  # ```
+  @[Primitive(:pointer_new)]
+  def self.new(address : UInt64)
+  end
+
+  # Returns the address of this pointer.
+  #
+  # ```
+  # ptr = UntypedPointer.new(1234)
+  # ptr.address # => 1234
+  # ```
+  @[Primitive(:pointer_address)]
+  def address : UInt64
+  end
+end
+
 struct Pointer(T)
   # Allocates `size * sizeof(T)` bytes from the system's heap initialized
   # to zero and returns a pointer to the first byte from that memory.

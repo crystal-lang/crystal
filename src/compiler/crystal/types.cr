@@ -184,7 +184,7 @@ module Crystal
     end
 
     def pointer?
-      self.is_a?(PointerInstanceType)
+      self.is_a?(PointerInstanceType) || self.is_a?(UntypedPointerType)
     end
 
     def nil_type?
@@ -549,7 +549,8 @@ module Crystal
       case self
       when program.object, program.value, program.struct,
            program.number, program.int, program.float,
-           PrimitiveType, program.reference
+           PrimitiveType, program.reference,
+           program.pointer, program.untyped_pointer
         false
       else
         true
@@ -1358,6 +1359,9 @@ module Crystal
   class NilType < PrimitiveType
   end
 
+  class UntypedPointerType < PrimitiveType
+  end
+
   class NoReturnType < NamedType
     # NoReturn can be assigned to any other type (because it never will)
     def implements?(other_type)
@@ -2159,6 +2163,11 @@ module Crystal
 
     def type_desc
       "generic struct"
+    end
+
+    def all_instance_vars
+      # don't use superclass (UntypedPointer)
+      instance_vars
     end
   end
 

@@ -2032,15 +2032,22 @@ module Crystal
       generic_malloc(type) { crystal_malloc_atomic_fun }
     end
 
-    def generic_malloc(type)
-      size = type.size
+    # In order for `UntypedPointer.malloc(...).as(ReferenceType)` to consider
+    # potential inner pointers as such, this cannot use `malloc_atomic`.
+    def malloc_untyped(size)
+      malloc_untyped(size) { crystal_malloc_fun }
+    end
 
+    def malloc_untyped(size)
       if malloc_fun = yield
-        pointer = call malloc_fun, size
+        call malloc_fun, size
       else
-        pointer = call_c_malloc size
+        call_c_malloc size
       end
+    end
 
+    def generic_malloc(type)
+      pointer = malloc_untyped(type.size) { yield }
       bit_cast pointer, type.pointer
     end
 
@@ -2054,13 +2061,7 @@ module Crystal
 
     def generic_array_malloc(type, count)
       size = builder.mul type.size, count
-
-      if malloc_fun = yield
-        pointer = call malloc_fun, size
-      else
-        pointer = call_c_malloc size
-      end
-
+      pointer = malloc_untyped(size) { yield }
       memset pointer, int8(0), size
       bit_cast pointer, type.pointer
     end

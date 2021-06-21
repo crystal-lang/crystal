@@ -722,18 +722,22 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_malloc(node, target_def, call_args)
-    type = node.type.as(PointerInstanceType)
-    llvm_type = llvm_embedded_type(type.element_type)
-
     old_debug_location = @current_debug_location
     if @debug.line_numbers? && (location = node.location)
       set_current_debug_location(node.location)
     end
 
-    if type.element_type.has_inner_pointers?
-      last = array_malloc(llvm_type, call_args[1])
+    if node.type.is_a?(UntypedPointerType)
+      last = malloc_untyped(call_args[0])
     else
-      last = array_malloc_atomic(llvm_type, call_args[1])
+      type = node.type.as(PointerInstanceType)
+      llvm_type = llvm_embedded_type(type.element_type)
+
+      if type.element_type.has_inner_pointers?
+        last = array_malloc(llvm_type, call_args[1])
+      else
+        last = array_malloc_atomic(llvm_type, call_args[1])
+      end
     end
 
     if @debug.line_numbers?
@@ -764,16 +768,24 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_pointer_new(node, target_def, call_args)
-    int2ptr(call_args[1], llvm_type(node.type))
+    if node.type.is_a?(UntypedPointerType)
+      int2ptr call_args[0], llvm_context.void_pointer
+    else
+      int2ptr call_args[1], llvm_type(node.type)
+    end
   end
 
   def codegen_primitive_pointer_realloc(node, target_def, call_args)
-    type = context.type.as(PointerInstanceType)
+    if context.type.is_a?(UntypedPointerType)
+      realloc call_args[0], call_args[1]
+    else
+      type = context.type.as(PointerInstanceType)
 
-    casted_ptr = cast_to_void_pointer(call_args[0])
-    size = builder.mul call_args[1], llvm_size(type.element_type)
-    reallocated_ptr = realloc casted_ptr, size
-    cast_to_pointer reallocated_ptr, type.element_type
+      casted_ptr = cast_to_void_pointer(call_args[0])
+      size = builder.mul call_args[1], llvm_size(type.element_type)
+      reallocated_ptr = realloc casted_ptr, size
+      cast_to_pointer reallocated_ptr, type.element_type
+    end
   end
 
   def codegen_primitive_pointer_add(node, target_def, call_args)

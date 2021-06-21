@@ -1852,7 +1852,7 @@ module Crystal
       end
 
       obj_type = node.obj.type?
-      if obj_type.is_a?(PointerInstanceType)
+      if obj_type.is_a?(PointerInstanceType) || obj_type.is_a?(UntypedPointerType)
         to_type = node.to.type.instance_type
         if to_type.is_a?(GenericType)
           node.raise "can't cast #{obj_type} to #{to_type}"
@@ -2393,7 +2393,7 @@ module Crystal
 
     def visit_pointer_malloc(node)
       if scope.instance_type.is_a?(GenericClassType)
-        node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+        node.raise "can't infer the type parameter T for Pointer(T), use UntypedPointer.malloc(size) or Pointer(Type).malloc(size) instead"
       end
 
       node.type = scope.instance_type
@@ -2416,7 +2416,7 @@ module Crystal
 
     def visit_pointer_new(node)
       if scope.instance_type.is_a?(GenericClassType)
-        node.raise "can't create pointer without type, use Pointer(Type).new(address)"
+        node.raise "can't infer the type parameter T for Pointer(T), use UntypedPointer.new(address) or Pointer(Type).new(address) instead"
       end
 
       node.type = scope.instance_type

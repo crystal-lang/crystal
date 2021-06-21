@@ -16,7 +16,7 @@ module Crystal
     # In the codegen phase these types are passed as byval pointers.
     def passed_by_value?
       case self
-      when PrimitiveType, PointerInstanceType, ProcInstanceType
+      when PrimitiveType, PointerInstanceType, UntypedPointerType, ProcInstanceType
         false
       when TupleInstanceType, NamedTupleInstanceType, MixedUnionType
         true
@@ -51,6 +51,8 @@ module Crystal
         # We consider Void to have pointers, so doing
         # Pointer(Void).malloc(...).as(ReferenceType)
         # will consider potential inner pointers as such.
+        true
+      when UntypedPointerType
         true
       when PointerInstanceType
         true

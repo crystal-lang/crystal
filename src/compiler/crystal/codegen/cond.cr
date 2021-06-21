@@ -17,7 +17,7 @@ class Crystal::CodeGenVisitor
     codegen_cond type.typedef
   end
 
-  private def codegen_cond_impl(type : NilableType | NilableReferenceUnionType | PointerInstanceType)
+  private def codegen_cond_impl(type : NilableType | NilableReferenceUnionType | PointerInstanceType | UntypedPointerType)
     not_null_pointer? @last
   end
 
@@ -31,7 +31,7 @@ class Crystal::CodeGenVisitor
 
     has_nil = union_types.any? &.nil_type?
     has_bool = union_types.any? &.bool_type?
-    has_pointer = union_types.any? &.is_a?(PointerInstanceType)
+    has_pointer = union_types.any? &.pointer?
 
     cond = llvm_true
 
@@ -51,7 +51,7 @@ class Crystal::CodeGenVisitor
 
       if has_pointer
         union_types.each do |union_type|
-          next unless union_type.is_a?(PointerInstanceType)
+          next unless union_type.pointer?
 
           is_pointer = equal? type_id, type_id(union_type)
           pointer_value = load(bit_cast value_ptr, llvm_type(union_type).pointer)
