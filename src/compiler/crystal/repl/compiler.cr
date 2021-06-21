@@ -766,13 +766,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when ClassVar
-      index, compiled_def = class_var_index_and_compiled_def(exp)
-
-      if compiled_def
-        initialize_class_var_if_needed(exp.var, index, compiled_def)
-      end
-
-      pointerof_class_var(index, node: node)
+      compile_pointerof_class_var(node, exp)
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
@@ -786,6 +780,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     else
       pointerof_ivar(@context.instance_offset_of(scope, index), node: node)
     end
+  end
+
+  private def compile_pointerof_class_var(node : ASTNode, exp : ClassVar)
+    index, compiled_def = class_var_index_and_compiled_def(exp)
+
+    if compiled_def
+      initialize_class_var_if_needed(exp.var, index, compiled_def)
+    end
+
+    pointerof_class_var(index, node: node)
   end
 
   def visit(node : Not)
@@ -1297,13 +1301,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(obj, obj.name)
     when ClassVar
-      index, compiled_def = class_var_index_and_compiled_def(obj)
-
-      if compiled_def
-        initialize_class_var_if_needed(obj.var, index, compiled_def)
-      end
-
-      pointerof_class_var(index, node: obj)
+      compile_pointerof_class_var(obj, obj)
     when Path
       const = obj.target_const.not_nil!
       index = initialize_const_if_needed(const)
