@@ -118,7 +118,7 @@ struct Tuple
   # ```
   #
   # See also: `#from`.
-  def self.from(array : Array) : self
+  def self.from(array : Array)
     {% begin %}
     Tuple.new(*{{T}}).from(array)
     {% end %}

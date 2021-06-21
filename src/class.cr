@@ -120,7 +120,7 @@ class Class
   # typeof(number)             # => (String | Int32)
   # typeof(klass.cast(number)) # => Int32
   # ```
-  def cast(other) : self
+  def cast(other)
     other.as(self)
   end
 
