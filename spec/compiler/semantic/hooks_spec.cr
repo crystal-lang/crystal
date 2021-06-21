@@ -36,6 +36,27 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
+  it "evaluate included macro on included module context" do
+    assert_type("
+      module Foo
+        A = 1
+
+        macro included
+          def self.foo
+            {{A}}
+          end
+        end
+      end
+
+      class Bar
+        A = 1.5
+        include Foo
+      end
+
+      Bar.foo
+      ") { int32 }
+  end
+
   it "does extended macro" do
     assert_type("
       module Foo
@@ -51,6 +72,27 @@ describe "Semantic: hooks" do
       end
 
       Bar.bar
+      ") { int32 }
+  end
+
+  it "evaluate extended macro on extended module context" do
+    assert_type("
+      module Foo
+        A = 1
+
+        macro extended
+          def self.foo
+            {{A}}
+          end
+        end
+      end
+
+      class Bar
+        A = 1.5
+        extend Foo
+      end
+
+      Bar.foo
       ") { int32 }
   end
 
