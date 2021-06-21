@@ -9,7 +9,7 @@ module Compress::Zip
     def initialize(@compute_crc32 = false)
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise IO::Error.new "Can't read from Zip::Writer entry"
     end
 

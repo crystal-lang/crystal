@@ -483,6 +483,9 @@ module Crystal
     def guess_array_literal_element_types(node)
       element_types = nil
       node.elements.each do |element|
+        # Splats here require the yield type of `#each`, which we cannot guess
+        return nil if element.is_a?(Splat)
+
         element_type = guess_type(element)
         next unless element_type
 
@@ -558,11 +561,20 @@ module Crystal
     def guess_type(node : TupleLiteral)
       element_types = nil
       node.elements.each do |element|
-        element_type = guess_type(element)
-        return nil unless element_type
+        if element.is_a?(Splat)
+          element_type = guess_type(element.exp)
+          return nil unless element_type.is_a?(TupleInstanceType)
 
-        element_types ||= [] of Type
-        element_types << element_type
+          next if element_type.tuple_types.empty?
+          element_types ||= [] of Type
+          element_types.concat(element_type.tuple_types)
+        else
+          element_type = guess_type(element)
+          return nil unless element_type
+
+          element_types ||= [] of Type
+          element_types << element_type
+        end
       end
 
       if element_types

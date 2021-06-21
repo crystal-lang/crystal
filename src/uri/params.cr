@@ -87,7 +87,7 @@ class URI
     #
     # URI::Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(hash : Hash(String, String | Array(String)))
+    def self.encode(hash : Hash(String, String | Array(String))) : String
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -190,7 +190,7 @@ class URI
     # params["email"]              # => "john@example.org"
     # params["non_existent_param"] # KeyError
     # ```
-    def [](name)
+    def [](name) : String
       fetch(name) { raise KeyError.new "Missing param name: #{name.inspect}" }
     end
 
@@ -200,7 +200,7 @@ class URI
     # params["email"]?              # => "john@example.org"
     # params["non_existent_param"]? # nil
     # ```
-    def []?(name)
+    def []?(name) : String?
       fetch(name, nil)
     end
 
@@ -248,7 +248,7 @@ class URI
     # params.set_all("item", ["pencil", "book", "workbook"])
     # params.fetch_all("item") # => ["pencil", "book", "workbook"]
     # ```
-    def fetch_all(name)
+    def fetch_all(name) : Array(String)
       raw_params.fetch(name) { [] of String }
     end
 
@@ -332,7 +332,7 @@ class URI
     #
     # params.delete("non_existent_param") # KeyError
     # ```
-    def delete(name)
+    def delete(name) : String
       value = raw_params[name].shift
       raw_params.delete(name) if raw_params[name].size == 0
       value
@@ -346,7 +346,7 @@ class URI
     # params.delete_all("comments") # => ["hello, world!", ":+1:"]
     # params.has_key?("comments")   # => false
     # ```
-    def delete_all(name)
+    def delete_all(name) : Array(String)?
       raw_params.delete(name)
     end
 

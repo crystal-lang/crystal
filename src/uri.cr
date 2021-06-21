@@ -183,7 +183,7 @@ class URI
   # URI.parse("http://[::1]/bar").hostname # => "::1"
   # URI.parse("http://[::1]/bar").host     # => "[::1]"
   # ```
-  def hostname
+  def hostname : String?
     host.try { |host| self.class.unwrap_ipv6(host) }
   end
 
@@ -196,7 +196,7 @@ class URI
   # URI.unwrap_ipv6("127.0.0.1")   # => "127.0.0.1"
   # URI.unwrap_ipv6("example.com") # => "example.com"
   # ```
-  def self.unwrap_ipv6(host)
+  def self.unwrap_ipv6(host) : String
     if host.starts_with?('[') && host.ends_with?(']')
       host.byte_slice(1, host.bytesize - 2)
     else
@@ -230,12 +230,6 @@ class URI
         str << '?' << query
       end
     end
-  end
-
-  # :ditto:
-  @[Deprecated("Use `#request_target` instead.")]
-  def full_path : String
-    request_target
   end
 
   # Returns `true` if URI has a *scheme* specified.
@@ -288,9 +282,9 @@ class URI
   #
   # ```
   # uri = URI.parse "http://user:pass@example.com:80/path?query"
-  # uri.authority # => "user:pass@example.com"
+  # uri.authority # => "user:pass@example.com:80"
   #
-  # uri = URI.parse(path: "/relative")
+  # uri = URI.parse("/relative")
   # uri.authority # => nil
   # ```
   def authority : String?
@@ -563,7 +557,7 @@ class URI
   # ```
   #
   # The return value is URL encoded (see `#encode_www_form`).
-  def userinfo
+  def userinfo : String?
     if user = @user
       String.build { |io| userinfo(user, io) }
     end
