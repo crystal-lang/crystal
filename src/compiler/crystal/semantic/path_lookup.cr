@@ -62,6 +62,7 @@ module Crystal
       #
       # ```
       # class Foo(T1); end
+      #
       # class Bar(T2) < Foo(T2); end
       # ```
       #
