@@ -104,8 +104,7 @@ class Crystal::Doc::Method
       other_defs_with_metadata = ancestor.defs.try &.[@def.name]?
       other_defs_with_metadata.try &.each do |other_def_with_metadata|
         # If we find an ancestor method with the same signature
-        if def_with_metadata.restriction_of?(other_def_with_metadata, type.type) &&
-           other_def_with_metadata.restriction_of?(def_with_metadata, ancestor)
+        if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type.type, other_owner: ancestor) == 0
           other_def = other_def_with_metadata.def
           doc = other_def.doc
           return DocInfo.new(doc, @generator.type(ancestor)) if doc
