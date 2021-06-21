@@ -25,7 +25,7 @@ module Benchmark
       end
 
       # Total time, that is utime + stime + cutime + cstime
-      def total
+      def total : Float64
         utime + stime + cutime + cstime
       end
 
