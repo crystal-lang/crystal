@@ -375,6 +375,10 @@ module Crystal::Macros
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
     def kind : SymbolLiteral
     end
+
+    # Returns the value of this number without a type suffix.
+    def to_number : MacroId
+    end
   end
 
   # A character literal.
