@@ -299,7 +299,7 @@ struct Set(T)
   # Set{'a', 'b', 'b', 'z'} ^ ['a', 'b', 'c'] # => Set{'z', 'c'}
   # ```
   def ^(other : Enumerable)
-    set = Set(T | typeof(other.first_internal)).new(self)
+    set = Set(T | typeof(Enumerable.element_type(other))).new(self)
     other.each do |value|
       if includes?(value)
         set.delete value

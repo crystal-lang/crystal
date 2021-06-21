@@ -1983,12 +1983,6 @@ module Enumerable(T)
     end
   end
 
-  # :nodoc:
-  def first_internal
-    # overridden in Tuple to disable literal index lookup
-    first
-  end
-
   # Returns a value with the same type as an element of *x*, even if *x* is not
   # an `Enumerable`.
   #

@@ -589,11 +589,4 @@ struct Tuple
       self[{{T.size - 1}}]
     {% end %}
   end
-
-  # :nodoc:
-  def first_internal
-    # overrides Enumerable's definition to disable literal index lookup
-    i = 0
-    self[i]
-  end
 end
