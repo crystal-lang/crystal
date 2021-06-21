@@ -944,15 +944,21 @@ module Crystal
     end
 
     def include(mod)
-      if mod == self
+      generic_module = mod.is_a?(GenericModuleInstanceType) ? mod.generic_type : mod
+
+      if generic_module == self
         raise TypeException.new "cyclic include detected"
-      elsif mod.ancestors.includes?(self)
-        raise TypeException.new "cyclic include detected"
-      else
-        unless parents.includes?(mod)
-          parents.insert 0, mod
-          mod.add_including_type(self)
+      end
+
+      generic_module.ancestors.each do |ancestor|
+        if ancestor == self || ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == self
+          raise TypeException.new "cyclic include detected"
         end
+      end
+
+      unless parents.includes?(mod)
+        parents.insert 0, mod
+        mod.add_including_type(self)
       end
     end
 
