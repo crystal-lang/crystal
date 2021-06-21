@@ -36,12 +36,7 @@ class Crystal::Repl::Interpreter
     # With `real_frame_index` we know where that frame is actually
     # in the call stack (the original, not the copy) and we can
     # go back to just before that frame when a `return` happens.
-    real_frame_index : Int32,
-    # When we jump to do a class var initialization we store the
-    # index where to store the class var value in the `@context.class_vars_memory`
-    # memory location.
-    # It's -1 if no class var needs to be initialized.
-    class_var_index : Int32
+    real_frame_index : Int32
 
   getter? pry : Bool
   @pry_node : ASTNode?
@@ -257,7 +252,6 @@ class Crystal::Repl::Interpreter
       stack_bottom: stack_bottom,
       block_caller_frame_index: -1,
       real_frame_index: 0,
-      class_var_index: -1,
     )
 
     while true
@@ -362,8 +356,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro call(compiled_def,
-                     block_caller_frame_index = -1,
-                     class_var_index = -1)
+                     block_caller_frame_index = -1)
     # At the point of a call like:
     #
     #     foo(x, y)
@@ -402,7 +395,6 @@ class Crystal::Repl::Interpreter
       stack_bottom: %stack_before_call_args,
       block_caller_frame_index: {{block_caller_frame_index}},
       real_frame_index: @call_stack.size,
-      class_var_index: {{class_var_index}},
     )
 
     @call_stack << %call_frame
@@ -559,11 +551,6 @@ class Crystal::Repl::Interpreter
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
 
-      # Copy the return value to a class, if the frame was for a class var
-      if %previous_call_frame.class_var_index != -1
-        (%old_stack - {{size}}).copy_to(@context.class_vars_memory + %previous_call_frame.class_var_index + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
-      end
-
       # Ccopy the return value
       stack_move_from(%old_stack - {{size}}, {{size}})
 
@@ -614,39 +601,26 @@ class Crystal::Repl::Interpreter
     stack_move_to(get_const_pointer(index), {{size}})
   end
 
-  private macro get_class_var(index, size)
+  private macro class_var_initialized?(index)
     # TODO: make this atomic
     %initialized = @context.class_vars_memory[{{index}}]
     if %initialized == 1_u8
-      stack_move_from(@context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+      true
     else
       @context.class_vars_memory[{{index}}] = 1_u8
-      %compiled_def = @context.class_vars.index_to_compiled_def({{index}})
-      call(%compiled_def, class_var_index: {{index}})
+      false
     end
+  end
+
+  private macro get_class_var(index, size)
+    stack_move_from(get_class_var_pointer(index), {{size}})
   end
 
   private macro set_class_var(index, size)
-    # TODO: we need to run the class var initialization!
-    %initialized = @context.class_vars_memory[{{index}}]
-    if %initialized == 0_u8 && @context.class_vars.index_to_compiled_def?({{index}})
-      # TODO: this is missing a pending spec that's failing for some reason
-      raise "BUG: missing initializing class var before setting it!"
-    end
-
-    @context.class_vars_memory[{{index}}] = 1_u8
-    stack_move_to(@context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED, {{size}})
+    stack_move_to(get_class_var_pointer(index), {{size}})
   end
 
   private macro get_class_var_pointer(index)
-    # TODO: we need to run the class var initialization!
-    %initialized = @context.class_vars_memory[{{index}}]
-    if %initialized == 0_u8 && @context.class_vars.index_to_compiled_def?({{index}})
-      # TODO: this is missing a pending spec that's failing for some reason
-      raise "BUG: missing initializing class var before getting a pointer to it!"
-    end
-
-    @context.class_vars_memory[{{index}}] = 1_u8
     @context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED
   end
 

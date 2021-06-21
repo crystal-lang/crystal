@@ -202,6 +202,10 @@ class Crystal::Repl::Context
     class_vars.key_to_index?(owner, name)
   end
 
+  def class_var_compiled_def(index : Int32) : CompiledDef?
+    class_vars.index_to_compiled_def?(index)
+  end
+
   def aligned_sizeof_type(node : ASTNode) : Int32
     type = node.type?
     if type

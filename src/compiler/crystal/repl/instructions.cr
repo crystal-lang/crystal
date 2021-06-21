@@ -779,7 +779,13 @@ Crystal::Repl::Instructions =
     },
     # >>> Constants (4)
 
-    # <<< Class vars (1)
+    # <<< Class vars (3)
+    class_var_initialized: {
+      operands:   [index : Int32],
+      pop_values: [] of Nil,
+      push:       true,
+      code:       class_var_initialized?(index),
+    },
     get_class_var: {
       operands:   [index : Int32, size : Int32],
       pop_values: [] of Nil,
@@ -792,7 +798,7 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       set_class_var(index, size),
     },
-    # >>> Class vars (1)
+    # >>> Class vars (3)
 
     # <<< Stack manipulation (5)
     pop: {

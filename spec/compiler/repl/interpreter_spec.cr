@@ -3166,44 +3166,6 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
-
-    pending "interprets class var with initializer, sets before get" do
-      interpret(<<-EXISTING, <<-CODE).should eq(50)
-        class Foo
-          @@y : Int32?
-
-          @@x = begin
-            @@y = 20
-            10
-          end
-
-          def set_x
-            @@x = 30
-          end
-
-          def get_x
-            @@x
-          end
-
-          def get_y
-            @@y
-          end
-        end
-      EXISTING
-        foo = Foo.new
-        foo.set_x
-
-        a = 0
-
-        x = foo.get_x
-        a += x if x
-
-        y = foo.get_y
-        a += y if y
-
-        a
-      CODE
-    end
   end
 
   context "procs" do

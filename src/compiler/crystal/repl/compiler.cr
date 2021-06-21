@@ -345,7 +345,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     when ClassVar
       if inside_method?
-        index = class_var_index(target)
+        index, compiled_def = class_var_index_and_compiled_def(target)
+
+        if compiled_def
+          initialize_class_var_if_needed(target.var, index, compiled_def)
+        end
 
         request_value(node.value)
         dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
@@ -446,7 +450,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : ClassVar)
     return false unless @wants_value
 
-    index = class_var_index(node)
+    index, compiled_def = class_var_index_and_compiled_def(node)
+
+    if compiled_def
+      initialize_class_var_if_needed(node.var, index, compiled_def)
+    end
 
     if @wants_struct_pointer
       push_zeros aligned_sizeof_type(node), node: nil
@@ -458,7 +466,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def class_var_index(node : ClassVar)
+  private def class_var_index_and_compiled_def(node : ClassVar) : {Int32, CompiledDef?}
     var = node.var
 
     case var.owner
@@ -469,40 +477,42 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     index = @context.class_var_index?(var.owner, var.name)
-    unless index
-      initializer = var.initializer
-      if initializer
-        def_name = "#{var.owner}::#{var.name}}"
-        fake_def = Def.new(def_name)
-        fake_def.owner = var.owner
-
-        compiled_def = CompiledDef.new(@context, fake_def, 0)
-
-        # Declare local variables for the constant initializer
-        initializer.meta_vars.each do |name, var|
-          var_type = var.type?
-          next unless var_type
-
-          compiled_def.local_vars.declare(name, var_type)
-        end
-
-        value = initializer.node
-        value = @context.program.cleanup(value)
-
-        compiler = Compiler.new(@context, compiled_def, top_level: true)
-        compiler.compile(value)
-
-        if @context.decompile_defs
-          puts "=== #{def_name} ==="
-          puts Disassembler.disassemble(@context, compiled_def)
-          puts "=== #{def_name} ==="
-        end
-      end
-
-      index = @context.declare_class_var(var.owner, var.name, var.type, compiled_def)
+    if index
+      return index, @context.class_var_compiled_def(index)
     end
 
-    index
+    initializer = var.initializer
+    if initializer
+      def_name = "#{var.owner}::#{var.name}}"
+      fake_def = Def.new(def_name)
+      fake_def.owner = var.owner
+
+      compiled_def = CompiledDef.new(@context, fake_def, 0)
+
+      # Declare local variables for the constant initializer
+      initializer.meta_vars.each do |name, var|
+        var_type = var.type?
+        next unless var_type
+
+        compiled_def.local_vars.declare(name, var_type)
+      end
+
+      value = initializer.node
+      value = @context.program.cleanup(value)
+
+      compiler = Compiler.new(@context, compiled_def, top_level: true)
+      compiler.compile(value)
+
+      if @context.decompile_defs
+        puts "=== #{def_name} ==="
+        puts Disassembler.disassemble(@context, compiled_def)
+        puts "=== #{def_name} ==="
+      end
+    end
+
+    index = @context.declare_class_var(var.owner, var.name, var.type, compiled_def)
+
+    {index, compiled_def}
   end
 
   def visit(node : ReadInstanceVar)
@@ -756,7 +766,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when ClassVar
-      index = class_var_index(exp)
+      index, compiled_def = class_var_index_and_compiled_def(exp)
+
+      if compiled_def
+        initialize_class_var_if_needed(exp.var, index, compiled_def)
+      end
+
       pointerof_class_var(index, node: node)
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
@@ -1282,7 +1297,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       compile_pointerof_ivar(obj, obj.name)
     when ClassVar
-      index = class_var_index(obj)
+      index, compiled_def = class_var_index_and_compiled_def(obj)
+
+      if compiled_def
+        initialize_class_var_if_needed(obj.var, index, compiled_def)
+      end
+
       pointerof_class_var(index, node: obj)
     when Path
       const = obj.target_const.not_nil!
@@ -1326,6 +1346,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Now we are on the `then` branch
     call compiled_def, node: nil
     set_const index, aligned_sizeof_type(const.value), node: nil
+
+    # Here we are outside of the unless
+    patch_jump(cond_jump_location)
+
+    index
+  end
+
+  private def initialize_class_var_if_needed(var, index, compiled_def)
+    # Do this:
+    #
+    # ```
+    # unless class_var_initialized(index)
+    #   call class_var_initializer
+    #   set_class_var index
+    # end
+    # ```
+
+    # This is `unless class_var_initialized(index)`
+    class_var_initialized index, node: nil
+    branch_if 0, node: nil
+    cond_jump_location = patch_location
+
+    # Now we are on the `then` branch
+    call compiled_def, node: nil
+    set_class_var index, aligned_sizeof_type(var), node: nil
 
     # Here we are outside of the unless
     patch_jump(cond_jump_location)
