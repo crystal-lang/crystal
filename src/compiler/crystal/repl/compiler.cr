@@ -180,31 +180,36 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : NumberLiteral)
     return false unless @wants_value
 
-    case node.kind
-    when :i8
-      put_i8 node.value.to_i8, node: node
-    when :u8
-      put_u8 node.value.to_u8, node: node
-    when :i16
-      put_i16 node.value.to_i16, node: node
-    when :u16
-      put_u16 node.value.to_u16, node: node
-    when :i32
-      put_i32 node.value.to_i32, node: node
-    when :u32
-      put_u32 node.value.to_u32, node: node
-    when :i64
-      put_i64 node.value.to_i64, node: node
-    when :u64
-      put_u64 node.value.to_u64, node: node
-    when :f32
-      put_i32 node.value.to_f32.unsafe_as(Int32), node: node
-    when :f64
-      put_i64 node.value.to_f64.unsafe_as(Int64), node: node
-    else
-      node.raise "BUG: missing interpret for NumberLiteral with kind #{node.kind}"
-    end
+    compile_number(node, node.kind, node.value)
+
     false
+  end
+
+  private def compile_number(node, kind, value)
+    case kind
+    when :i8
+      put_i8 value.to_i8, node: node
+    when :u8
+      put_u8 value.to_u8, node: node
+    when :i16
+      put_i16 value.to_i16, node: node
+    when :u16
+      put_u16 value.to_u16, node: node
+    when :i32
+      put_i32 value.to_i32, node: node
+    when :u32
+      put_u32 value.to_u32, node: node
+    when :i64
+      put_i64 value.to_i64, node: node
+    when :u64
+      put_u64 value.to_u64, node: node
+    when :f32
+      put_i32 value.to_f32.unsafe_as(Int32), node: node
+    when :f64
+      put_i64 value.to_f64.unsafe_as(Int64), node: node
+    else
+      node.raise "BUG: missing interpret for NumberLiteral with kind #{kind}"
+    end
   end
 
   def visit(node : CharLiteral)
@@ -360,6 +365,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
         set_class_var index, aligned_sizeof_type(var), node: node
       else
+        # TODO: eagerly initialize the class var?
         node.type = @context.program.nil_type
         put_nil node: nil if @wants_value
       end
@@ -1107,8 +1113,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += aligned_sizeof_type(obj_type)
     end
 
-    args_bytesize += args.sum { |arg| aligned_sizeof_type(arg) }
-    args_bytesize += named_args.sum { |arg| aligned_sizeof_type(arg.value) } if named_args
+    i = 0
+
+    # This is the case of a multidispatch with an explicit "self" being passed
+    i += 1 if target_def.args.first?.try &.name == "self"
+
+    args.each do
+      target_def_arg = target_def.args[i]
+      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
+      args_bytesize += aligned_sizeof_type(target_def_var_type)
+
+      i += 1
+    end
+
+    named_args.try &.each do
+      target_def_arg = target_def.args[i]
+      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
+      args_bytesize += aligned_sizeof_type(target_def_var_type)
+
+      i += 1
+    end
 
     # If the block is captured there's an extra argument
     if block && block.fun_literal
@@ -1218,11 +1242,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     target_def_args = target_def.args
 
     i = 0
+
+    # This is the case of a multidispatch with an explicit "self" being passed
+    i += 1 if target_def.args.first?.try &.name == "self"
+
     node.args.each do |arg|
       arg_type = arg.type
-      target_def_arg_type = target_def_args[i].type
+      target_def_arg = target_def_args[i]
+      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
 
-      compile_call_arg(arg, arg_type, target_def_arg_type)
+      compile_call_arg(arg, arg_type, target_def_var_type)
 
       i += 1
     end
@@ -1230,9 +1259,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.named_args.try &.each do |n|
       arg = n.value
       arg_type = arg.type
-      target_def_arg_type = target_def_args[i].type
+      target_def_arg = target_def_args[i]
+      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
 
-      compile_call_arg(arg, arg_type, target_def_arg_type)
+      compile_call_arg(arg, arg_type, target_def_var_type)
 
       i += 1
     end
@@ -1244,11 +1274,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pop_obj
   end
 
-  private def compile_call_arg(arg, arg_type, target_def_arg_type)
+  private def compile_call_arg(arg, arg_type, target_def_var_type)
     # Check autocasting from symbol to enum
-    if arg.is_a?(SymbolLiteral) && target_def_arg_type.is_a?(EnumType)
+    if arg.is_a?(SymbolLiteral) && target_def_var_type.is_a?(EnumType)
       symbol_name = arg.value.underscore
-      target_def_arg_type.types.each do |enum_name, enum_value|
+      target_def_var_type.types.each do |enum_name, enum_value|
         if enum_name.underscore == symbol_name
           request_value(enum_value.as(Const).value)
           return
@@ -1256,10 +1286,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     end
 
+    if arg_type != target_def_var_type && arg.is_a?(NumberLiteral)
+      case target_def_var_type
+      when IntegerType
+        # Autocast to integer
+        compile_number(arg, target_def_var_type.kind, arg.value)
+        return
+      when FloatType
+        # Autocast to float
+        compile_number(arg, target_def_var_type.kind, arg.value)
+        return
+      end
+    end
+
     request_value(arg)
 
-    # TODO: downcast!
-    # downcast arg, arg.type, target_def_arg_type
+    upcast arg, arg_type, target_def_var_type
   end
 
   private def compile_struct_call_receiver(obj : ASTNode, owner : Type)

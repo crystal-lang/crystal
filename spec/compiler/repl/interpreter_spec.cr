@@ -1751,6 +1751,24 @@ describe Crystal::Repl::Interpreter do
         c.value
       CODE
     end
+
+    it "mutates call argument" do
+      interpret(<<-CODE).should eq(9000)
+        def foo(x)
+          if 1 == 0
+            x = "hello"
+          end
+
+          if x.is_a?(Int32)
+            x
+          else
+            10
+          end
+        end
+
+        foo 9000
+      CODE
+    end
   end
 
   context "multidispatch" do
@@ -3301,6 +3319,26 @@ describe Crystal::Repl::Interpreter do
         EXISTING
           c = foo :green
           c.value
+        CODE
+    end
+
+    it "autocasts number literal to integer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(12)
+          def foo(x : UInt8)
+            x
+          end
+        EXISTING
+          foo(12)
+        CODE
+    end
+
+    it "autocasts number literal to float" do
+      interpret(<<-EXISTING, <<-CODE).should eq(12.0)
+          def foo(x : Float64)
+            x
+          end
+        EXISTING
+          foo(12)
         CODE
     end
   end
