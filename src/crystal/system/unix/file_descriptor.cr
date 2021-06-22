@@ -80,7 +80,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64!
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
