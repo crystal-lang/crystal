@@ -1071,6 +1071,17 @@ describe Crystal::Repl::Interpreter do
         3
       CODE
     end
+
+    it "interprets nilable pointer truthiness" do
+      interpret(<<-CODE).should eq(1)
+        ptr = 1 == 1 ? Pointer(UInt8).malloc(1) : nil
+        if ptr
+          1
+        else
+          2
+        end
+      CODE
+    end
   end
 
   context "unions" do

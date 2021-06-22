@@ -1027,7 +1027,7 @@ Crystal::Repl::Instructions =
                   # TODO: union type id size
                   (stack - union_size + 8).as(Bool*).value
                 when PointerInstanceType
-                  (stack - union_size + 8).as(UInt8**).value.null?
+                  !(stack - union_size + 8).as(UInt8**).value.null?
                 else
                   true
                 end
