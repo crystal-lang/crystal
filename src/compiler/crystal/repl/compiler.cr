@@ -1848,6 +1848,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
+  private def raise_if_wants_struct_pointer(node : ASTNode, body : Primitive)
+    # We'll slowly handle these cases, but they are probably very uncommon.
+    # We still want to know where they happen!
+    if @wants_struct_pointer
+      node.raise "BUG: missing handling of @wants_struct_pointer for #{body}"
+    end
+  end
+
   private def raise_if_wants_struct_pointer(node : ASTNode)
     # We'll slowly handle these cases, but they are probably very uncommon.
     # We still want to know where they happen!
