@@ -64,7 +64,7 @@ module Crystal::System::FileDescriptor
 
     if file_type == LibC::FILE_TYPE_UNKNOWN
       error = WinError.value
-      raise IO::Error.from_winerror("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
+      raise IO::Error.from_os_error("Unable to get info", error) unless error == WinError::ERROR_SUCCESS
     end
 
     if file_type == LibC::FILE_TYPE_DISK

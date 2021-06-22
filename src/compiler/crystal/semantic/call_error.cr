@@ -189,6 +189,7 @@ class Crystal::Call
   private def no_overload_matches_message(io, full_name, defs, args, arg_types, named_args_types)
     if message = single_def_error_message(defs, named_args_types)
       io << message
+      io << '\n'
       return
     end
 
@@ -301,6 +302,7 @@ class Crystal::Call
     raise(String.build do |str|
       if single_message = single_def_error_message(defs, named_args_types)
         str << single_message
+        str << '\n'
       else
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
@@ -423,6 +425,7 @@ class Crystal::Call
 
   def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
+      next if a_def.abstract?
       str << "\n - "
       append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
@@ -502,6 +505,11 @@ class Crystal::Call
       str << "&block"
     end
     str << ')'
+
+    if free_vars = a_def.free_vars
+      str << " forall "
+      free_vars.join(str, ", ")
+    end
   end
 
   def raise_matches_not_found_for_virtual_metaclass_new(owner)

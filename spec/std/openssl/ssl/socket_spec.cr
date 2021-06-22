@@ -41,37 +41,56 @@ describe OpenSSL::SSL::Socket do
       end
     end
   end
+end
 
-  it "returns the cipher that is currently in use" do
-    tcp_server = TCPServer.new("127.0.0.1", 0)
-    server_context, client_context = ssl_context_pair
+private alias Server = OpenSSL::SSL::Socket::Server
+private alias Client = OpenSSL::SSL::Socket::Client
 
-    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
-      spawn do
-        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
-        end
+private def socket_test(server_tests, client_tests)
+  tcp_server = TCPServer.new("127.0.0.1", 0)
+  server_context, client_context = ssl_context_pair
+
+  OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
+    spawn do
+      Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
+        client_tests.call(socket)
       end
-
-      client = server.accept
-      client.cipher.should_not be_empty
-      client.close
     end
+
+    client = server.accept
+    server_tests.call(client)
+    client.close
+  end
+end
+
+describe OpenSSL::SSL::Socket do
+  it "returns the cipher that is currently in use" do
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.cipher.should_not be_empty
+      },
+      client_tests: ->(client : Client) {}
+    )
   end
 
   it "returns the TLS version" do
-    tcp_server = TCPServer.new("127.0.0.1", 0)
-    server_context, client_context = ssl_context_pair
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.tls_version.should contain "TLS"
+      },
+      client_tests: ->(client : Client) {}
+    )
+  end
 
-    OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|
-      spawn do
-        OpenSSL::SSL::Socket::Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "example.com") do |socket|
-        end
-      end
-
-      client = server.accept
-      client.tls_version.should contain "TLS"
-      client.close
-    end
+  it "returns the peer certificate" do
+    socket_test(
+      server_tests: ->(client : Server) {
+        client.peer_certificate.should be_nil
+      },
+      client_tests: ->(client : Client) {
+        client.peer_certificate.should_not be_nil
+      }
+    )
   end
 
   it "accepts clients that only write then close the connection" do

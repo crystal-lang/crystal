@@ -281,7 +281,7 @@ class Screen
   end
 
   def put_pixel(point, color)
-    color = color.to_u32
+    color = color.to_u32!
     offset = @surface.offset(point.x, point.y)
     @surface[offset] = color
 

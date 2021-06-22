@@ -1,5 +1,6 @@
 require "spec"
 require "bit_array"
+require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
   ba = BitArray.new(size)
@@ -328,36 +329,13 @@ describe "BitArray" do
     end
   end
 
-  it "provides an iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
+  ary = BitArray.new(2)
+  ary[0] = true
+  ary[1] = false
 
-    iter = ary.each
-    iter.next.should be_true
-    iter.next.should be_false
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides an index iterator" do
-    ary = BitArray.new(2)
-
-    iter = ary.each_index
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides a reverse iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
-
-    iter = ary.reverse_each
-    iter.next.should be_false
-    iter.next.should be_true
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [true, false], ary.each
+  it_iterates "#each_index", [0, 1], ary.each_index
+  it_iterates "#reverse_each", [false, true], ary.reverse_each
 
   it "provides dup" do
     a = BitArray.new(2)

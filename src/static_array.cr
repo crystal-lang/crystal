@@ -156,7 +156,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
-  def size
+  def size : Int32
     N
   end
 
@@ -191,20 +191,6 @@ struct StaticArray(T, N)
       to_unsafe[i] = yield i
     end
     self
-  end
-
-  # Fills the array by substituting all elements with the given value.
-  #
-  # ```
-  # array = StaticArray(Int32, 3).new { |i| i + 1 }
-  # array.[]= 2 # => nil
-  # array       # => StaticArray[2, 2, 2]
-  # ```
-  @[Deprecated("Use `#fill(value : T)` instead")]
-  def []=(value : T)
-    size.times do |i|
-      to_unsafe[i] = value
-    end
   end
 
   # Modifies `self` by randomizing the order of elements in the array
@@ -279,7 +265,7 @@ struct StaticArray(T, N)
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice
+  def to_slice : Slice(T)
     Slice.new(to_unsafe, size)
   end
 

@@ -370,14 +370,19 @@ enum JSONVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum JSONVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class JSONVariableDiscriminatorValueType
   include JSON::Serializable
 
   use_json_discriminator "type", {
-                                        0 => JSONVariableDiscriminatorNumber,
-    "1"                                   => JSONVariableDiscriminatorString,
-    true                                  => JSONVariableDiscriminatorBool,
-    JSONVariableDiscriminatorEnumFoo::Foo => JSONVariableDiscriminatorEnum,
+                                         0 => JSONVariableDiscriminatorNumber,
+    "1"                                    => JSONVariableDiscriminatorString,
+    true                                   => JSONVariableDiscriminatorBool,
+    JSONVariableDiscriminatorEnumFoo::Foo  => JSONVariableDiscriminatorEnum,
+    JSONVariableDiscriminatorEnumFoo8::Foo => JSONVariableDiscriminatorEnum8,
   }
 end
 
@@ -391,6 +396,9 @@ class JSONVariableDiscriminatorBool < JSONVariableDiscriminatorValueType
 end
 
 class JSONVariableDiscriminatorEnum < JSONVariableDiscriminatorValueType
+end
+
+class JSONVariableDiscriminatorEnum8 < JSONVariableDiscriminatorValueType
 end
 
 module JSONNamespace
@@ -944,6 +952,9 @@ describe "JSON mapping" do
 
       object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 4}))
       object_enum.should be_a(JSONVariableDiscriminatorEnum)
+
+      object_enum = JSONVariableDiscriminatorValueType.from_json(%({"type": 18}))
+      object_enum.should be_a(JSONVariableDiscriminatorEnum8)
     end
   end
 

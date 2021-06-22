@@ -52,7 +52,7 @@ struct Atomic(T)
   # atomic.add(2) # => 1
   # atomic.get    # => 3
   # ```
-  def add(value : T)
+  def add(value : T) : T
     Ops.atomicrmw(:add, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -63,7 +63,7 @@ struct Atomic(T)
   # atomic.sub(2) # => 9
   # atomic.get    # => 7
   # ```
-  def sub(value : T)
+  def sub(value : T) : T
     Ops.atomicrmw(:sub, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -74,7 +74,7 @@ struct Atomic(T)
   # atomic.and(3) # => 5
   # atomic.get    # => 1
   # ```
-  def and(value : T)
+  def and(value : T) : T
     Ops.atomicrmw(:and, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -85,7 +85,7 @@ struct Atomic(T)
   # atomic.nand(3) # => 5
   # atomic.get     # => -2
   # ```
-  def nand(value : T)
+  def nand(value : T) : T
     Ops.atomicrmw(:nand, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -96,7 +96,7 @@ struct Atomic(T)
   # atomic.or(2) # => 5
   # atomic.get   # => 7
   # ```
-  def or(value : T)
+  def or(value : T) : T
     Ops.atomicrmw(:or, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -107,7 +107,7 @@ struct Atomic(T)
   # atomic.xor(3) # => 5
   # atomic.get    # => 6
   # ```
-  def xor(value : T)
+  def xor(value : T) : T
     Ops.atomicrmw(:xor, pointerof(@value), value, :sequentially_consistent, false)
   end
 
@@ -172,7 +172,7 @@ struct Atomic(T)
   # atomic.set(10) # => 10
   # atomic.get     # => 10
   # ```
-  def set(value : T)
+  def set(value : T) : T
     Ops.store(pointerof(@value), value.as(T), :sequentially_consistent, true)
     value
   end
@@ -184,11 +184,11 @@ struct Atomic(T)
   # atomic.lazy_set(10) # => 10
   # atomic.get          # => 10
   # ```
-  def lazy_set(@value : T)
+  def lazy_set(@value : T) : T
   end
 
   # Atomically returns this atomic's value.
-  def get
+  def get : T
     Ops.load(pointerof(@value), :sequentially_consistent, true)
   end
 

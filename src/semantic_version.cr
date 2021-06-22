@@ -61,6 +61,8 @@ struct SemanticVersion
                   end
   end
 
+  def_equals_and_hash major, minor, patch, prerelease, build
+
   # Returns the string representation of this semantic version
   #
   # ```
@@ -102,9 +104,6 @@ struct SemanticVersion
     return r unless r.zero?
     r = patch <=> other.patch
     return r unless r.zero?
-
-    pre1 = prerelease
-    pre2 = other.prerelease
 
     prerelease <=> other.prerelease
   end

@@ -69,7 +69,7 @@ class HTTP::Server
     end
 
     # Convenience method to retrieve the HTTP status code.
-    def status_code
+    def status_code : Int32
       status.code
     end
 
@@ -87,12 +87,12 @@ class HTTP::Server
     end
 
     # Convenience method to set cookies, see `HTTP::Cookies`.
-    def cookies
+    def cookies : HTTP::Cookies
       @cookies ||= HTTP::Cookies.new
     end
 
     # :nodoc:
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "Can't read from HTTP::Server::Response"
     end
 
@@ -117,7 +117,7 @@ class HTTP::Server
     end
 
     # Returns `true` if this response has been closed.
-    def closed?
+    def closed? : Bool
       @output.closed?
     end
 
@@ -131,7 +131,11 @@ class HTTP::Server
     #
     # If *message* is `nil`, the default message for *status* is used provided
     # by `HTTP::Status#description`.
+    #
+    # Raises `IO::Error` if the response is closed or headers were already
+    # sent.
     def respond_with_status(status : HTTP::Status, message : String? = nil)
+      check_headers
       reset
       @status = status
       @status_message = message ||= @status.description
@@ -143,6 +147,13 @@ class HTTP::Server
     # :ditto:
     def respond_with_status(status : Int, message : String? = nil)
       respond_with_status(HTTP::Status.new(status), message)
+    end
+
+    private def check_headers
+      check_open
+      if wrote_headers?
+        raise IO::Error.new("Headers already sent")
+      end
     end
 
     protected def write_headers
@@ -223,7 +234,12 @@ class HTTP::Server
       def close
         return if closed?
 
-        if !response.wrote_headers? && !response.headers.has_key?("Content-Length")
+        # Conditionally determine based on status if the `content-length` header should be added automatically.
+        # See https://tools.ietf.org/html/rfc7230#section-3.3.2.
+        status = response.status
+        set_content_length = !(status.not_modified? || status.no_content? || status.informational?)
+
+        if !response.wrote_headers? && !response.headers.has_key?("Content-Length") && set_content_length
           response.content_length = @out_count
         end
 

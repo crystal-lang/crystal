@@ -4,7 +4,7 @@
 # an invalid XML (for example, if invoking `end_element`
 # without a matching `start_element`, or trying to use
 # a non-string value as an object's field name)
-struct XML::Builder
+class XML::Builder
   private CDATA_END    = "]]>"
   private CDATA_ESCAPE = "]]]]><![CDATA[>"
 
@@ -89,7 +89,7 @@ struct XML::Builder
   end
 
   # :ditto:
-  def element(name : String, attributes : Hash | NamedTuple)
+  def element(name : String, attributes : Hash | NamedTuple) : Nil
     element(name, attributes) { }
   end
 
@@ -109,12 +109,12 @@ struct XML::Builder
   end
 
   # Emits an element with namespace info with the given *attributes*.
-  def element(prefix : String?, name : String, namespace_uri : String?, **attributes)
+  def element(prefix : String?, name : String, namespace_uri : String?, **attributes) : Nil
     element(prefix, name, namespace_uri, attributes)
   end
 
   # :ditto:
-  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple)
+  def element(prefix : String?, name : String, namespace_uri : String?, attributes : Hash | NamedTuple) : Nil
     start_element(prefix, name, namespace_uri)
     attributes(attributes)
     end_element
@@ -158,7 +158,7 @@ struct XML::Builder
   end
 
   # :ditto:
-  def attributes(attributes : Hash | NamedTuple)
+  def attributes(attributes : Hash | NamedTuple) : Nil
     attributes.each do |key, value|
       attribute key.to_s, value
     end
@@ -241,7 +241,7 @@ struct XML::Builder
   end
 
   # Emits a namespace.
-  def namespace(prefix, uri)
+  def namespace(prefix, uri) : Nil
     attribute "xmlns", prefix, nil, uri
   end
 

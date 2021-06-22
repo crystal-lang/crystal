@@ -40,7 +40,7 @@ class XML::Error < Exception
     end
   end
 
-  def self.errors
+  def self.errors : Array(XML::Error)?
     if @@errors.empty?
       nil
     else

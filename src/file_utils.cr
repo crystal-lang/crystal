@@ -10,7 +10,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd`
-  def cd(path : String)
+  def cd(path : Path | String)
     Dir.cd(path)
   end
 
@@ -24,7 +24,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : String)
+  def cd(path : Path | String)
     Dir.cd(path) { yield }
   end
 
@@ -40,7 +40,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.same_content?`
-  def cmp(filename1 : String, filename2 : String)
+  def cmp(filename1 : Path | String, filename2 : Path | String) : Bool
     File.same_content?(filename1, filename2)
   end
 
@@ -56,7 +56,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.touch`
-  def touch(path : String, time : Time = Time.utc)
+  def touch(path : Path | String, time : Time = Time.utc) : Nil
     File.touch(path, time)
   end
 
@@ -70,7 +70,7 @@ module FileUtils
   #
   # FileUtils.touch(["foo", "bar"])
   # ```
-  def touch(paths : Enumerable(String), time : Time = Time.utc)
+  def touch(paths : Enumerable(Path | String), time : Time = Time.utc) : Nil
     paths.each do |path|
       touch(path, time)
     end
@@ -88,7 +88,7 @@ module FileUtils
   # FileUtils.cp("afile", "afile_copy")
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
-  def cp(src_path : String, dest : String)
+  def cp(src_path : Path | String, dest : Path | String) : Nil
     dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
     File.copy(src_path, dest)
   end
@@ -102,7 +102,7 @@ module FileUtils
   # Dir.mkdir("files")
   # FileUtils.cp({"bar.cr", "afile"}, "files")
   # ```
-  def cp(srcs : Enumerable(String), dest : String)
+  def cp(srcs : Enumerable(Path | String), dest : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       cp(src, dest)
@@ -118,12 +118,12 @@ module FileUtils
   #
   # FileUtils.cp_r("files", "dir")
   # ```
-  def cp_r(src_path : String, dest_path : String)
+  def cp_r(src_path : Path | String, dest_path : Path | String) : Nil
     dest_path = File.join(dest_path, File.basename(src_path)) if File.directory?(dest_path)
     cp_recursive(src_path, dest_path)
   end
 
-  private def cp_recursive(src_path : String, dest_path : String)
+  private def cp_recursive(src_path : Path | String, dest_path : Path | String)
     if Dir.exists?(src_path)
       Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
@@ -147,7 +147,7 @@ module FileUtils
   # # Create a hard link, pointing from /tmp/foo.c to foo.c
   # FileUtils.ln("foo.c", "/tmp")
   # ```
-  def ln(src_path : String, dest_path : String)
+  def ln(src_path : Path | String, dest_path : Path | String)
     if Dir.exists?(dest_path)
       File.link(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -164,7 +164,7 @@ module FileUtils
   # # Create /usr/bin/vim, /usr/bin/emacs, and /usr/bin/nano as hard links
   # FileUtils.ln(["vim", "emacs", "nano"], "/usr/bin")
   # ```
-  def ln(src_paths : Enumerable(String), dest_dir : String)
+  def ln(src_paths : Enumerable(Path | String), dest_dir : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|
@@ -183,7 +183,7 @@ module FileUtils
   # # Create a symbolic link pointing from /tmp/src to src
   # FileUtils.ln_s("src", "/tmp")
   # ```
-  def ln_s(src_path : String, dest_path : String)
+  def ln_s(src_path : Path | String, dest_path : Path | String)
     if Dir.exists?(dest_path)
       File.symlink(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -200,7 +200,7 @@ module FileUtils
   # # Create symbolic links in src/ pointing to every .c file in the current directory
   # FileUtils.ln_s(Dir["*.c"], "src")
   # ```
-  def ln_s(src_paths : Enumerable(String), dest_dir : String)
+  def ln_s(src_paths : Enumerable(Path | String), dest_dir : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|
@@ -208,7 +208,7 @@ module FileUtils
     end
   end
 
-  # Like `#ln_s(String, String)`, but overwrites `dest_path` if it exists and is not a directory
+  # Like `#ln_s(Path | String, Path | String)`, but overwrites `dest_path` if it exists and is not a directory
   # or if `dest_path/src_path` exists.
   #
   # ```
@@ -217,7 +217,7 @@ module FileUtils
   # # Create a symbolic link pointing from bar.c to foo.c, even if bar.c already exists
   # FileUtils.ln_sf("foo.c", "bar.c")
   # ```
-  def ln_sf(src_path : String, dest_path : String)
+  def ln_sf(src_path : Path | String, dest_path : Path | String)
     if File.directory?(dest_path)
       dest_path = File.join(dest_path, File.basename(src_path))
     end
@@ -238,7 +238,7 @@ module FileUtils
   # # even if it means overwriting files in src/
   # FileUtils.ln_sf(Dir["*.c"], "src")
   # ```
-  def ln_sf(src_paths : Enumerable(String), dest_dir : String)
+  def ln_sf(src_paths : Enumerable(Path | String), dest_dir : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest_dir}") unless Dir.exists?(dest_dir)
 
     src_paths.each do |path|
@@ -256,7 +256,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.mkdir`
-  def mkdir(path : String, mode = 0o777) : Nil
+  def mkdir(path : Path | String, mode = 0o777) : Nil
     Dir.mkdir(path, mode)
   end
 
@@ -268,7 +268,7 @@ module FileUtils
   #
   # FileUtils.mkdir(["foo", "bar"])
   # ```
-  def mkdir(paths : Enumerable(String), mode = 0o777) : Nil
+  def mkdir(paths : Enumerable(Path | String), mode = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir(path, mode)
     end
@@ -285,7 +285,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.mkdir_p`
-  def mkdir_p(path : String, mode = 0o777) : Nil
+  def mkdir_p(path : Path | String, mode = 0o777) : Nil
     Dir.mkdir_p(path, mode)
   end
 
@@ -298,7 +298,7 @@ module FileUtils
   #
   # FileUtils.mkdir_p(["foo", "bar", "baz", "dir1", "dir2", "dir3"])
   # ```
-  def mkdir_p(paths : Enumerable(String), mode = 0o777) : Nil
+  def mkdir_p(paths : Enumerable(Path | String), mode = 0o777) : Nil
     paths.each do |path|
       Dir.mkdir_p(path, mode)
     end
@@ -313,7 +313,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.rename`
-  def mv(src_path : String, dest_path : String) : Nil
+  def mv(src_path : Path | String, dest_path : Path | String) : Nil
     File.rename(src_path, dest_path)
   end
 
@@ -324,7 +324,7 @@ module FileUtils
   #
   # FileUtils.mv(["foo", "bar"], "src")
   # ```
-  def mv(srcs : Enumerable(String), dest : String) : Nil
+  def mv(srcs : Enumerable(Path | String), dest : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       begin
@@ -356,7 +356,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `File.delete`
-  def rm(path : String) : Nil
+  def rm(path : Path | String) : Nil
     File.delete(path)
   end
 
@@ -367,7 +367,7 @@ module FileUtils
   #
   # FileUtils.rm(["dir/afile", "afile_copy"])
   # ```
-  def rm(paths : Enumerable(String)) : Nil
+  def rm(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       File.delete(path)
     end
@@ -382,7 +382,7 @@ module FileUtils
   # FileUtils.rm_r("dir")
   # FileUtils.rm_r("file.cr")
   # ```
-  def rm_r(path : String) : Nil
+  def rm_r(path : Path | String) : Nil
     if Dir.exists?(path) && !File.symlink?(path)
       Dir.each_child(path) do |entry|
         src = File.join(path, entry)
@@ -402,7 +402,7 @@ module FileUtils
   #
   # FileUtils.rm_r(["files", "bar.cr"])
   # ```
-  def rm_r(paths : Enumerable(String)) : Nil
+  def rm_r(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       rm_r(path)
     end
@@ -419,7 +419,7 @@ module FileUtils
   # FileUtils.rm_rf("file.cr")
   # FileUtils.rm_rf("non_existent_file")
   # ```
-  def rm_rf(path : String) : Nil
+  def rm_rf(path : Path | String) : Nil
     begin
       rm_r(path)
     rescue File::Error
@@ -435,7 +435,7 @@ module FileUtils
   #
   # FileUtils.rm_rf(["dir", "file.cr", "non_existent_file"])
   # ```
-  def rm_rf(paths : Enumerable(String)) : Nil
+  def rm_rf(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       begin
         rm_r(path)
@@ -453,7 +453,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.rmdir`
-  def rmdir(path : String) : Nil
+  def rmdir(path : Path | String) : Nil
     Dir.delete(path)
   end
 
@@ -464,7 +464,7 @@ module FileUtils
   #
   # FileUtils.rmdir(["dir1", "dir2", "dir3"])
   # ```
-  def rmdir(paths : Enumerable(String)) : Nil
+  def rmdir(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       Dir.delete(path)
     end

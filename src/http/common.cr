@@ -243,7 +243,7 @@ module HTTP
   )
 
   # :nodoc:
-  def self.header_name(slice : Bytes)
+  def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
     if slice.size < 20
@@ -306,7 +306,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.content_length(headers)
+  def self.content_length(headers) : UInt64?
     length_headers = headers.get? "Content-Length"
     return nil unless length_headers
     first_header = length_headers[0]
@@ -317,7 +317,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.keep_alive?(message)
+  def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
       true
@@ -333,7 +333,7 @@ module HTTP
     end
   end
 
-  def self.expect_continue?(headers)
+  def self.expect_continue?(headers) : Bool
     headers["Expect"]?.try(&.downcase) == "100-continue"
   end
 
@@ -379,7 +379,7 @@ module HTTP
   # quoted = %q(\"foo\\bar\")
   # HTTP.dequote_string(quoted) # => %q("foo\bar")
   # ```
-  def self.dequote_string(str)
+  def self.dequote_string(str) : String
     data = str.to_slice
     quoted_pair_index = data.index('\\'.ord)
     return str unless quoted_pair_index
@@ -409,7 +409,7 @@ module HTTP
   # io.rewind
   # io.gets_to_end # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string, io)
+  def self.quote_string(string, io) : Nil
     # Escaping rules: https://evolvis.org/pipermail/evolvis-platfrm-discuss/2014-November/000675.html
 
     string.each_byte do |byte|
@@ -434,7 +434,7 @@ module HTTP
   # string = %q("foo\ bar")
   # HTTP.quote_string(string) # => %q(\"foo\\\ bar\")
   # ```
-  def self.quote_string(string)
+  def self.quote_string(string) : String
     String.build do |io|
       quote_string(string, io)
     end

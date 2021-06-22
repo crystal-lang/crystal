@@ -130,34 +130,38 @@ color_maker = ColorMaker.new(delay)
 rects = parse_rectangles
 puts "Rects: #{rects.size}"
 
-while true
-  SDL.poll_events do |event|
-    if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
-      ms = SDL.ticks - start
-      puts "#{frames} frames in #{ms} ms"
-      puts "Average FPS: #{frames / (ms * 0.001)}"
-      SDL.quit
-      exit
+begin
+  while true
+    SDL.poll_events do |event|
+      if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
+        ms = SDL.ticks - start
+        puts "#{frames} frames in #{ms} ms"
+        puts "Average FPS: #{frames / (ms * 0.001)}"
+        SDL.quit
+        exit
+      end
     end
-  end
 
-  surface.lock
+    surface.lock
 
-  (height // 10).times do |h|
-    (width // 10).times do |w|
-      rect = rects.find { |rect| rect.contains?(w, h) }
-      10.times do |y|
-        10.times do |x|
-          surface[x + 10 * w, y + 10 * h] = rect ? (rect.light? ? color_maker.light_color : color_maker.dark_color) : color_maker.black_color
+    (height // 10).times do |h|
+      (width // 10).times do |w|
+        rect = rects.find { |rect| rect.contains?(w, h) }
+        10.times do |y|
+          10.times do |x|
+            surface[x + 10 * w, y + 10 * h] = rect ? (rect.light? ? color_maker.light_color : color_maker.dark_color) : color_maker.black_color
+          end
         end
       end
     end
+
+    color_maker.next
+
+    surface.unlock
+    surface.flip
+
+    frames += 1
   end
-
-  color_maker.next
-
-  surface.unlock
-  surface.flip
-
-  frames += 1
+ensure
+  SDL.quit
 end

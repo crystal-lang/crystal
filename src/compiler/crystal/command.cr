@@ -387,7 +387,11 @@ class Crystal::Command
           link_flags << some_link_flags
         end
         opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-          compiler.mcpu = cpu
+          if cpu == "native"
+            compiler.mcpu = LLVM.host_cpu_name
+          else
+            compiler.mcpu = cpu
+          end
         end
         opts.on("--mattr CPU", "Target specific features") do |features|
           compiler.mattr = features

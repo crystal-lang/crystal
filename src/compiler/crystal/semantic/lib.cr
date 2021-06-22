@@ -287,8 +287,6 @@ class Crystal::Type
       self.not_nil_type.allowed_in_lib?
     when NilableProcType
       self.proc_type.allowed_in_lib?
-    when NilablePointerType
-      self.pointer_type.allowed_in_lib?
     when ProcInstanceType
       self.arg_types.all?(&.allowed_in_lib?) && (self.return_type.allowed_in_lib? || self.return_type.nil_type?)
     when StaticArrayInstanceType
@@ -310,9 +308,6 @@ class Crystal::Type
     when ProcInstanceType
       # fun will be cast to return nil
       expected_type.is_a?(ProcInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
-    when NilablePointerType
-      # nilable pointer is just a pointer
-      self.pointer_type == expected_type
     when PointerInstanceType
       # any pointer matches a void*
       expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?

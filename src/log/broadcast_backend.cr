@@ -19,13 +19,13 @@ class Log::BroadcastBackend < Log::Backend
     @backends[backend] = level
   end
 
-  def write(entry : Entry)
+  def write(entry : Entry) : Nil
     @backends.each do |backend, level|
       backend.dispatch(entry) if (@level || level) <= entry.severity
     end
   end
 
-  def close
+  def close : Nil
     @backends.each_key &.close
   end
 

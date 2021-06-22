@@ -204,6 +204,32 @@ class URI
       end
     end
 
+    describe "#dup" do
+      it "gives a whole new set of params" do
+        ary = ["bar"]
+        params = Params{"foo" => ary}
+        duped = params.dup
+
+        ary << "baz"
+
+        duped.fetch_all("foo").should eq ["bar"]
+        params.fetch_all("foo").should eq ["bar", "baz"]
+      end
+    end
+
+    describe "#clone" do
+      it "gives a whole new set of params" do
+        ary = ["bar"]
+        params = Params{"foo" => ary}
+        duped = params.clone
+
+        ary << "baz"
+
+        duped.fetch_all("foo").should eq ["bar"]
+        params.fetch_all("foo").should eq ["bar", "baz"]
+      end
+    end
+
     describe "#each" do
       it "calls provided proc for each name, value pair, including multiple values per one param name" do
         received = [] of {String, String}

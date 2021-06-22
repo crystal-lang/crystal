@@ -213,6 +213,10 @@ module Crystal
         assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
       end
 
+      it "preserves integer size (#10713)" do
+        assert_macro "", "{{ 3000000000u64 % 2 }}", [] of ASTNode, "0_u64"
+      end
+
       it "executes &" do
         assert_macro "", "{{5 & 3}}", [] of ASTNode, "1"
       end
@@ -266,6 +270,12 @@ module Crystal
 
         assert_macro "", "{{0.0.zero?}}", [] of ASTNode, "true"
         assert_macro "", "{{0.1.zero?}}", [] of ASTNode, "false"
+      end
+
+      it "#to_number" do
+        assert_macro "", "{{ 4_u8.to_number }}", [] of ASTNode, "4"
+        assert_macro "", "{{ 2147483648.to_number }}", [] of ASTNode, "2147483648"
+        assert_macro "", "{{ 1_f32.to_number }}", [] of ASTNode, "1.0"
       end
     end
 
@@ -1019,15 +1029,15 @@ module Crystal
       end
 
       it "executes double splat" do
-        assert_macro "", %({{**{a: 1, "foo bar": 2}}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{**{a: 1, "foo bar": 2, "+": 3}}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2)
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3)
       end
 
       it "executes double splat with arg" do
-        assert_macro "", %({{{a: 1, "foo bar": 2}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, )
+        assert_macro "", %({{{a: 1, "foo bar": 2, "+": 3}.double_splat(", ")}}), [] of ASTNode, %(a: 1, "foo bar": 2, "+": 3, )
       end
 
       describe "#each" do
@@ -1630,6 +1640,27 @@ module Crystal
         end
       end
 
+      it "== and != devirtualize generic type arguments (#10730)" do
+        assert_type(%(
+          class A
+          end
+
+          class B < A
+          end
+
+          module Foo(T)
+            def self.foo
+              {
+                {% if T == A %} 1 {% else %} 'a' {% end %},
+                {% if T != A %} 1 {% else %} 'a' {% end %},
+              }
+            end
+          end
+
+          Foo(A).foo
+          )) { tuple_of([int32, char]) }
+      end
+
       it "executes <" do
         assert_macro("x", "{{x < Reference}}", "true") do |program|
           [TypeNode.new(program.string)] of ASTNode
@@ -2159,8 +2190,8 @@ module Crystal
         assert_macro "x", %({{x.type}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "SomeType"
       end
 
-      it "executes instance_var" do
-        assert_macro "x", %({{x.instance_var}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
+      it "executes offset" do
+        assert_macro "x", %({{x.offset}}), [OffsetOf.new("SomeType".path, "@some_ivar".instance_var)] of ASTNode, "@some_ivar"
       end
     end
 
@@ -2500,6 +2531,22 @@ module Crystal
     end
 
     describe "path methods" do
+      it "executes names" do
+        assert_macro "x", %({{x.names}}), [Path.new("String")] of ASTNode, %([String])
+        assert_macro "x", %({{x.names}}), [Path.new(["Foo", "Bar"])] of ASTNode, %([Foo, Bar])
+      end
+
+      it "executes global?" do
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
+      # TODO: remove deprecated tests
+      it "executes global" do
+        assert_macro "x", %({{x.global}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
       it "executes resolve" do
         assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
 

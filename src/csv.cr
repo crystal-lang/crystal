@@ -218,7 +218,7 @@ class CSV
   # Advanced the cursor to the next row. Must be called once to position
   # the cursor in the first row. Returns `true` if a next row was found,
   # `false` otherwise.
-  def next
+  def next : Bool
     return false if @traversed
 
     row = @row ||= [] of String
@@ -318,7 +318,7 @@ class CSV
   end
 
   # :nodoc:
-  def indices
+  def indices : Hash(String, Int32)
     @indices || raise(Error.new("Headers not requested"))
   end
 
@@ -326,7 +326,7 @@ class CSV
   getter? strip
 
   # :nodoc:
-  def headers?
+  def headers? : Array(String)?
     @headers
   end
 
@@ -405,7 +405,7 @@ class CSV
 
     # Returns the number of columns in this row, regardless of the number
     # of headers (if requested).
-    def size
+    def size : Int32
       @row.size
     end
 

@@ -229,6 +229,16 @@ describe "at_exit" do
     status.success?.should be_true
     output.should eq("3\n4\n1\n2\n")
   end
+
+  it "prints unhandled exception with cause" do
+    status, _, error = compile_and_run_source <<-CODE
+      raise Exception.new("secondary", cause: Exception.new("primary"))
+    CODE
+
+    status.success?.should be_false
+    error.should contain "Unhandled exception: secondary"
+    error.should contain "Caused by: primary"
+  end
 end
 
 describe "seg fault" do

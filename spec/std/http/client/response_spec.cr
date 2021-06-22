@@ -223,7 +223,7 @@ class HTTP::Client::Response
 
       io.clear
       response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=baz; path=/\r\nSet-Cookie: quux=baz; path=/\r\n\r\nhello")
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=baz\r\nSet-Cookie: quux=baz\r\n\r\nhello")
     end
 
     it "sets content length from body" do

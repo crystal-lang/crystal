@@ -422,4 +422,68 @@ describe "Semantic: if" do
       foo
       ), inject_primitives: false) { int32 }
   end
+
+  it "includes pointer types in falsey branch" do
+    assert_type(%(
+      def foo
+        x = 1
+        y = false || pointerof(x) || nil
+
+        if !y
+          return y
+        end
+        1
+      end
+
+      foo
+      )) { nilable union_of bool, pointer_of(int32), int32 }
+  end
+
+  it "doesn't fail on new variables inside typeof condition" do
+    assert_type(%(
+      def foo
+        if typeof(x = 1)
+          ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on nested conditionals inside typeof condition" do
+    assert_type(%(
+      def foo
+        if typeof(1 || 'a')
+          ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on Expressions condition (1)" do
+    assert_type(%(
+      def foo
+        if (v = 1; true)
+          typeof(v)
+        end
+      end
+
+      foo
+      )) { nilable int32.metaclass }
+  end
+
+  it "doesn't fail on Expressions condition (2)" do
+    assert_type(%(
+      def foo
+        if (v = nil; true)
+          typeof(v)
+        end
+      end
+
+      foo
+      )) { nilable nil_type.metaclass }
+  end
 end

@@ -94,7 +94,7 @@ module YAML
       end
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end
@@ -155,7 +155,7 @@ module YAML
   end
 
   # Serializes an object to YAML, writing it to *io*.
-  def self.dump(object, io : IO)
+  def self.dump(object, io : IO) : Nil
     object.to_yaml(io)
   end
 

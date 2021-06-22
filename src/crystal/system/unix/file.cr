@@ -127,7 +127,7 @@ module Crystal::System::File
       end
     end
 
-    raise ::File::Error.from_errno("Cannot read link", Errno::ENAMETOOLONG, file: path)
+    raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
   end
 
   def self.rename(old_filename, new_filename)

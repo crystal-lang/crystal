@@ -42,7 +42,7 @@ class IO::Delimited < IO
     @active_delimiter_buffer = Bytes.empty
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
     return 0 if @finished
 

@@ -4,14 +4,14 @@ module YAML::Schema::Core
   # Deserializes a YAML document.
   #
   # Same as `YAML.parse`.
-  def self.parse(data : String | IO)
+  def self.parse(data : String | IO) : YAML::Any
     Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
   #
   # Same as `YAML.parse_all`.
-  def self.parse_all(data : String | IO)
+  def self.parse_all(data : String | IO) : Array(YAML::Any)
     Parser.new data, &.parse_all
   end
 
@@ -129,7 +129,7 @@ module YAML::Schema::Core
   # If `node` parses to a null value, returns `nil`, otherwise
   # invokes the given block.
   def self.parse_null_or(node : YAML::Nodes::Node)
-    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node.value)
+    if node.is_a?(YAML::Nodes::Scalar) && parse_null?(node)
       nil
     else
       yield
@@ -291,6 +291,10 @@ module YAML::Schema::Core
     else
       # not a tag we support
     end
+  end
+
+  private def self.parse_null?(node : Nodes::Scalar)
+    parse_null?(node.value) && node.style.plain?
   end
 
   private def self.parse_null?(string)

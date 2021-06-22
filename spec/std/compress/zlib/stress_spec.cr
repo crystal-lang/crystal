@@ -5,7 +5,7 @@ module Compress::Zlib
   describe Zlib do
     it "write read should be inverse with random string" do
       expected = String.build do |io|
-        1_000_000.times { rand(2000).to_i.to_s(32, io) }
+        1_000_000.times { rand(2000).to_i.to_s(io, 32) }
       end
 
       io = IO::Memory.new

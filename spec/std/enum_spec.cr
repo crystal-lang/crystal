@@ -26,6 +26,13 @@ enum SpecEnumFlags
 end
 
 @[Flags]
+enum SpecEnumFlags8 : Int8
+  One
+  Two
+  Three
+end
+
+@[Flags]
 private enum PrivateFlagsEnum
   FOO
   BAR
@@ -167,6 +174,7 @@ describe Enum do
       SpecEnumFlags.from_value?(2).should eq(SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(3).should eq(SpecEnumFlags::One | SpecEnumFlags::Two)
       SpecEnumFlags.from_value?(8).should be_nil
+      SpecEnumFlags8.from_value?(1_i8).should eq(SpecEnumFlags8::One)
     end
   end
 

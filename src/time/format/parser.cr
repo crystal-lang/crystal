@@ -37,7 +37,7 @@ struct Time::Format
       @nanosecond_offset = 0_i64
     end
 
-    def time(location : Location? = nil)
+    def time(location : Location? = nil) : Time
       if @hour_is_12
         if @hour > 12
           raise ArgumentError.new("Invalid hour for 12-hour clock")

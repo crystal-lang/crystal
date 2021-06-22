@@ -25,7 +25,7 @@ class Reference
 
   # Returns `true` if this reference is the same as *other*. This is only
   # `true` if this reference's `object_id` is the same as *other*'s.
-  def same?(other : Reference)
+  def same?(other : Reference) : Bool
     object_id == other.object_id
   end
 

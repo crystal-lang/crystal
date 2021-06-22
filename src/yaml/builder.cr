@@ -53,15 +53,6 @@ class YAML::Builder
   def self.build(io : IO, & : self ->) : Nil
     builder = new(io)
     yield builder ensure builder.close
-    io.flush
-  end
-
-  # :ditto:
-  @[Deprecated("Use .build instead")]
-  def self.new(io : IO, & : self ->) : Nil
-    build(io) do |builder|
-      yield builder
-    end
   end
 
   # Starts a YAML stream.
@@ -72,7 +63,7 @@ class YAML::Builder
   # Ends a YAML stream.
   def end_stream
     emit stream_end
-    @io.flush
+    flush
   end
 
   # Starts a YAML stream, invokes the block, and ends it.

@@ -43,6 +43,11 @@ private def it_parses_scalar_from_pull(string, file = __FILE__, line = __LINE__,
   end
 end
 
+private def parse_first_node(content)
+  parser = YAML::Nodes::Parser.new(%(value: #{content}))
+  parser.parse.nodes.first.as(YAML::Nodes::Mapping).nodes[1]
+end
+
 describe YAML::Schema::Core do
   # nil
   it_parses_scalar "~", nil
@@ -229,4 +234,11 @@ describe YAML::Schema::Core do
   # # !!timestamp
   it_parses "!!timestamp 2010-01-02", Time.utc(2010, 1, 2)
   it_raises_on_parse "!!timestamp foo", "Invalid timestamp"
+
+  it ".parse_null_or" do
+    YAML::Schema::Core.parse_null_or(parse_first_node(%())) { true }.should be_nil
+    YAML::Schema::Core.parse_null_or(parse_first_node(%(~))) { true }.should be_nil
+    YAML::Schema::Core.parse_null_or(parse_first_node(%(""))) { true }.should be_true
+    YAML::Schema::Core.parse_null_or(parse_first_node(%(''))) { true }.should be_true
+  end
 end

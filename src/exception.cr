@@ -27,7 +27,7 @@ class Exception
   # Returns any backtrace associated with the exception.
   # The backtrace is an array of strings, each containing
   # “0xAddress: Function at File Line Column”.
-  def backtrace
+  def backtrace : Array(String)
     self.backtrace?.not_nil!
   end
 

@@ -14,25 +14,25 @@ class YAML::Nodes::Parser < YAML::Parser
     [] of Array(Node)
   end
 
-  def new_document
+  def new_document : YAML::Nodes::Document
     Document.new
   end
 
-  def new_sequence
+  def new_sequence : YAML::Nodes::Sequence
     sequence = Sequence.new
     set_common_properties(sequence)
     sequence.style = @pull_parser.sequence_style
     sequence
   end
 
-  def new_mapping
+  def new_mapping : YAML::Nodes::Mapping
     mapping = Mapping.new
     set_common_properties(mapping)
     mapping.style = @pull_parser.mapping_style
     mapping
   end
 
-  def new_scalar
+  def new_scalar : YAML::Nodes::Scalar
     scalar = Scalar.new(@pull_parser.value)
     set_common_properties(scalar)
     scalar.style = @pull_parser.scalar_style
@@ -55,7 +55,7 @@ class YAML::Nodes::Parser < YAML::Parser
     @anchors[anchor] = value
   end
 
-  def get_anchor(anchor)
+  def get_anchor(anchor) : YAML::Nodes::Alias
     value = @anchors.fetch(anchor) do
       @pull_parser.raise("Unknown anchor '#{anchor}'")
     end

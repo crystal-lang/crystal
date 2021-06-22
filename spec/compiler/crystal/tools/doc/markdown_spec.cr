@@ -3,7 +3,7 @@ require "../../../../../src/compiler/crystal/tools/doc/markdown"
 
 private def assert_render(input, output, file = __FILE__, line = __LINE__)
   it "renders #{input.inspect}", file, line do
-    Crystal::Doc::Markdown.to_html(input).should eq(output), file, line
+    Crystal::Doc::Markdown.to_html(input).should eq(output), file: file, line: line
   end
 end
 

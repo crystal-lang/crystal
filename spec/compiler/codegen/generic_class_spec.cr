@@ -96,6 +96,52 @@ describe "Code gen: generic class type" do
       )).to_i.should eq(1)
   end
 
+  it "runs generic instance var initializers in superclass's metaclass context (#4753)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == Int32 %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(T).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
+  it "runs generic instance var initializers in superclass's metaclass context (2) (#6482)" do
+    run(%(
+      class Bar(T)
+        def x
+          {% if T == FooBase(Int32) %} 1 {% else %} 2 {% end %}
+        end
+      end
+
+      class FooBase(T)
+        @bar = Bar(FooBase(T)).new
+
+        def bar
+          @bar
+        end
+      end
+
+      class Foo(T) < FooBase(T)
+      end
+
+      Foo(Int32).new.bar.x
+      )).to_i.should eq(1)
+  end
+
   it "codegens static array size after instantiating" do
     run(%(
       struct StaticArray(T, N)

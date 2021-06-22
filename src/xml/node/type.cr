@@ -1,4 +1,4 @@
-struct XML::Node
+class XML::Node
   enum Type
     NONE               =  0
     ELEMENT_NODE       =  1

@@ -179,7 +179,7 @@ class Time::Location
     def inspect(io : IO) : Nil
       io << "Time::Location::ZoneTransition("
       io << '#' << index << ' '
-      Time.unix(self.when).to_s("%F %T", io)
+      Time.unix(self.when).to_s(io, "%F %T")
       if standard?
         io << " STD"
       else
@@ -223,7 +223,7 @@ class Time::Location
   # Creates a `Location` instance with fixed *offset* in seconds from UTC.
   #
   # The formatted *offset* is used as name.
-  def self.fixed(offset : Int32)
+  def self.fixed(offset : Int32) : self
     zone = Zone.new(nil, offset, false)
     new zone.name, [zone]
   end

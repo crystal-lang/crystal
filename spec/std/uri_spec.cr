@@ -10,41 +10,41 @@ end
 
 private def it_encodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode(string, **options).should eq(expected_result), file, line
+    URI.encode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode(string, **options).should eq(expected_result), file, line
+    URI.decode(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_encodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "encodes #{string.inspect}", file, line do
-    URI.encode_www_form(string, **options).should eq(expected_result), file, line
+    URI.encode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.encode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
 private def it_decodes_www_form(string, expected_result, file = __FILE__, line = __LINE__, **options)
   it "decodes #{string.inspect}", file, line do
-    URI.decode_www_form(string, **options).should eq(expected_result), file, line
+    URI.decode_www_form(string, **options).should eq(expected_result), file: file, line: line
 
     String.build do |io|
       URI.decode_www_form(string, io, **options)
-    end.should eq(expected_result), file, line
+    end.should eq(expected_result), file: file, line: line
   end
 end
 
@@ -202,21 +202,6 @@ describe "URI" do
     it { URI.new(scheme: "scheme", password: "pass", host: "example.com").authority.should eq "example.com" }
     it { URI.new(scheme: "scheme", path: "opaque").authority.should be_nil }
     it { URI.new(scheme: "scheme", path: "/path").authority.should be_nil }
-  end
-
-  describe "#full_path" do
-    it { URI.new(path: "/foo").full_path.should eq("/foo") }
-    it { URI.new.full_path.should eq("/") }
-    it { URI.new(path: "/foo", query: "q=1").full_path.should eq("/foo?q=1") }
-    it { URI.new(path: "/", query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(query: "q=1").full_path.should eq("/?q=1") }
-    it { URI.new(path: "/a%3Ab").full_path.should eq("/a%3Ab") }
-
-    it "does not add '?' to the end if the query params are empty" do
-      uri = URI.parse("http://www.example.com/foo")
-      uri.query = ""
-      uri.full_path.should eq("/foo")
-    end
   end
 
   describe "#request_target" do

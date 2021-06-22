@@ -13,24 +13,24 @@ class Thread
       {% end %}
 
       ret = LibC.pthread_cond_init(out @cond, pointerof(attributes))
-      raise RuntimeError.from_errno("pthread_cond_init", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_cond_init", Errno.new(ret)) unless ret == 0
 
       LibC.pthread_condattr_destroy(pointerof(attributes))
     end
 
-    def signal
+    def signal : Nil
       ret = LibC.pthread_cond_signal(self)
-      raise RuntimeError.from_errno("pthread_cond_signal", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_cond_signal", Errno.new(ret)) unless ret == 0
     end
 
-    def broadcast
+    def broadcast : Nil
       ret = LibC.pthread_cond_broadcast(self)
-      raise RuntimeError.from_errno("pthread_cond_broadcast", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_cond_broadcast", Errno.new(ret)) unless ret == 0
     end
 
-    def wait(mutex : Thread::Mutex)
+    def wait(mutex : Thread::Mutex) : Nil
       ret = LibC.pthread_cond_wait(self, mutex)
-      raise RuntimeError.from_errno("pthread_cond_wait", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_cond_wait", Errno.new(ret)) unless ret == 0
     end
 
     def wait(mutex : Thread::Mutex, time : Time::Span)
@@ -60,13 +60,13 @@ class Thread
       when Errno::ETIMEDOUT
         yield
       else
-        raise RuntimeError.from_errno("pthread_cond_timedwait", errno)
+        raise RuntimeError.from_os_error("pthread_cond_timedwait", errno)
       end
     end
 
     def finalize
       ret = LibC.pthread_cond_destroy(self)
-      raise RuntimeError.from_errno("pthread_cond_broadcast", Errno.new(ret)) unless ret == 0
+      raise RuntimeError.from_os_error("pthread_cond_broadcast", Errno.new(ret)) unless ret == 0
     end
 
     def to_unsafe

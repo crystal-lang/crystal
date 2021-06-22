@@ -18,11 +18,11 @@ class URI
       @ptr = 0
     end
 
-    def c
+    def c : UInt8
       @input[@ptr]
     end
 
-    def run
+    def run : self
       parse_scheme_start
       self
     end

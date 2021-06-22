@@ -476,10 +476,35 @@ module Crystal
     def visit(node : TupleLiteral)
       request_value do
         type = node.type.as(TupleInstanceType)
-        @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.elements[i]
-          accept exp
-          {exp.type, @last}
+
+        if node.elements.any?(Splat)
+          tuple_size = node.elements.sum do |exp|
+            exp.is_a?(Splat) ? exp.type.as(TupleInstanceType).tuple_types.size : 1
+          end
+          exp_values = Array({Type, LLVM::Value}).new(tuple_size)
+
+          node.elements.each do |exp|
+            accept exp
+
+            if exp.is_a?(Splat)
+              tuple_type = exp.type.as(TupleInstanceType)
+              tuple_type.tuple_types.each_with_index do |subtype, j|
+                exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+              end
+            else
+              exp_values << {exp.type, @last}
+            end
+          end
+
+          @last = allocate_tuple(type) do |_, i|
+            exp_values[i]
+          end
+        else
+          @last = allocate_tuple(type) do |tuple_type, i|
+            exp = node.elements[i]
+            accept exp
+            {exp.type, @last}
+          end
         end
       end
       false
@@ -796,37 +821,57 @@ module Crystal
       set_ensure_exception_handler(node)
 
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks "while", "body", "exit"
+        cond = node.cond.single_expression
+        endless_while = cond.true_literal?
 
-        context.while_block = while_block
-        context.while_exit_block = exit_block
-        context.break_phi = nil
-        context.next_phi = nil
+        if endless_while
+          while_block = new_block "while"
 
-        br while_block
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
 
-        position_at_end while_block
+            br while_block
 
-        request_value do
-          set_current_debug_location node.cond if @debug.line_numbers?
-          codegen_cond_branch node.cond, body_block, exit_block
-        end
+            position_at_end while_block
 
-        position_at_end body_block
-
-        request_value(false) do
-          accept node.body
-        end
-        br while_block
-
-        position_at_end exit_block
-
-        if node.no_returns?
-          unreachable
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+          end
         else
-          @last = llvm_nil
+          while_block, body_block, fail_block = new_blocks "while", "body", "fail"
+
+          Phi.open(self, node, @needs_value) do |phi|
+            context.while_block = while_block
+            context.break_phi = phi
+            context.next_phi = nil
+
+            br while_block
+
+            position_at_end while_block
+
+            request_value do
+              set_current_debug_location node.cond if @debug.line_numbers?
+              codegen_cond_branch node.cond, body_block, fail_block
+            end
+
+            position_at_end body_block
+
+            request_value(false) do
+              accept node.body
+            end
+            br while_block
+
+            position_at_end fail_block
+
+            phi.add llvm_nil, @program.nil, last: true
+          end
         end
       end
+
       false
     end
 
@@ -854,20 +899,28 @@ module Crystal
       set_current_debug_location(node) if @debug.line_numbers?
       node_type = accept_control_expression(node)
 
-      if break_phi = context.break_phi
-        old_last = @last
-        execute_ensures_until(node.target.as(Call))
-        @last = old_last
+      case target = node.target
+      when Call
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
 
-        break_phi.add @last, node_type
-      elsif while_exit_block = context.while_exit_block
-        execute_ensures_until(node.target.as(While))
-        br while_exit_block
-      else
-        node.raise "BUG: unknown exit for break"
+          break_phi.add @last, node_type
+          return false
+        end
+      when While
+        if break_phi = context.break_phi
+          old_last = @last
+          execute_ensures_until(target)
+          @last = old_last
+
+          break_phi.add @last, node_type
+          return false
+        end
       end
 
-      false
+      node.raise "BUG: unknown exit for break"
     end
 
     def visit(node : Next)
@@ -878,7 +931,7 @@ module Crystal
       when Block
         if next_phi = context.next_phi
           old_last = @last
-          execute_ensures_until(target.as(Block))
+          execute_ensures_until(target)
           @last = old_last
 
           next_phi.add @last, node_type
@@ -886,7 +939,7 @@ module Crystal
         end
       when While
         if while_block = context.while_block
-          execute_ensures_until(target.as(While))
+          execute_ensures_until(target)
           br while_block
           return false
         end
@@ -1172,7 +1225,32 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node.type, node.obj.type, node.name, @last
+      obj_type = node.obj.type
+      if obj_type.is_a?(UnionType)
+        union_ptr = @last
+        union_type_id = type_id(union_ptr, obj_type)
+
+        Phi.open(self, node, @needs_value) do |phi|
+          obj_type.union_types.each do |union_type|
+            id_matches = match_type_id(node.type, union_type, union_type_id)
+
+            current_match_label, next_match_label = new_blocks "current_match", "next_match"
+            cond id_matches, current_match_label, next_match_label
+            position_at_end current_match_label
+
+            value_ptr = downcast union_ptr, union_type, obj_type, true
+            ivar_type = union_type.lookup_instance_var(node.name).type
+            read_instance_var ivar_type, union_type, node.name, value_ptr
+
+            phi.add @last, ivar_type
+
+            position_at_end next_match_label
+          end
+          unreachable
+        end
+      else
+        read_instance_var node.type, node.obj.type, node.name, @last
+      end
     end
 
     def read_instance_var(node_type, type, name, value)
@@ -1452,7 +1530,7 @@ module Crystal
           block.args.each_with_index do |arg, i|
             block_var = block_context.vars[arg.name]
             if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
                 exp_value2, exp_type = exp_values[j]
                 j += 1
                 {exp_type, exp_value2}
@@ -1497,7 +1575,6 @@ module Crystal
 
           context.break_phi = old.return_phi
           context.next_phi = phi
-          context.while_exit_block = nil
           context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true
@@ -1913,17 +1990,10 @@ module Crystal
       struct_type
     end
 
-    def run_instance_vars_initializers(real_type, type : GenericClassInstanceType, type_ptr)
-      run_instance_vars_initializers(real_type, type.generic_type, type_ptr)
-      run_instance_vars_initializers_non_recursive real_type, type, type_ptr
-    end
-
-    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassType, type_ptr)
+    def run_instance_vars_initializers(real_type, type : ClassType | GenericClassInstanceType, type_ptr)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, type_ptr)
       end
-
-      return if type.is_a?(GenericClassType)
 
       run_instance_vars_initializers_non_recursive real_type, type, type_ptr
     end

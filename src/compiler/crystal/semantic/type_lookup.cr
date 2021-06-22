@@ -280,7 +280,7 @@ class Crystal::Type
       end
 
       begin
-        if instance_type.is_a?(GenericUnionType) && type_vars.any? &.is_a?(TypeSplat)
+        if instance_type.is_a?(GenericUnionType) && type_vars.any?(TypeSplat)
           # In the case of `Union(*T)`, we don't need to instantiate the union right
           # now because it will just return `*T`, but what we want to expand the
           # union types only when the type is instantiated.

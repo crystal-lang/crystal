@@ -42,7 +42,7 @@ struct Crystal::System::Process
 
   def self.pgid(pid)
     # Disallow users from depending on ppid(0) instead of `pgid`
-    raise RuntimeError.from_errno("getpgid", Errno::EINVAL) if pid == 0
+    raise RuntimeError.from_os_error("getpgid", Errno::EINVAL) if pid == 0
 
     ret = LibC.getpgid(pid)
     raise RuntimeError.from_errno("getpgid") if ret < 0
@@ -107,7 +107,7 @@ struct Crystal::System::Process
       # error:
       errno = Errno.value
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_errno("fork", errno)
+      raise RuntimeError.from_os_error("fork", errno)
     else
       # parent:
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
@@ -171,7 +171,7 @@ struct Crystal::System::Process
 
       if args
         unless command.includes?(%("${@}"))
-          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+          raise ArgumentError.new(%(can't specify arguments in both command and args without including "${@}" into your command))
         end
 
         {% if flag?(:freebsd) || flag?(:dragonfly) %}
@@ -220,9 +220,9 @@ struct Crystal::System::Process
   private def self.raise_exception_from_errno(command, errno = Errno.value)
     case errno
     when Errno::EACCES, Errno::ENOENT
-      raise ::File::Error.from_errno("Error executing process", errno, file: command)
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     else
-      raise IO::Error.from_errno("Error executing process: '#{command}'", errno)
+      raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
     end
   end
 

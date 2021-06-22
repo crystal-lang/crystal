@@ -51,7 +51,7 @@ module OpenSSL::X509
     # name.add_entry "CN", "Nobody"
     # name.add_entry "DC", "example"
     # ```
-    def add_entry(oid : String, value : String)
+    def add_entry(oid : String, value : String) : Nil
       type = LibCrypto::MBSTRING_UTF8
       ret = LibCrypto.x509_name_add_entry_by_txt(@name, oid, type, value, value.bytesize, -1, 0)
       raise Error.new("X509_NAME_add_entry_by_txt") if ret.null?
@@ -64,7 +64,7 @@ module OpenSSL::X509
     # name = OpenSSL::X509::Name.parse("CN=Nobody/DC=example")
     # name.to_a # => [{"CN", "Nobody"}, {"DC", "example"}]
     # ```
-    def to_a
+    def to_a : Array({String, String})
       count = LibCrypto.x509_name_entry_count(@name)
       raise Error.new("X509_NAME_entry_count") if count < 0
 

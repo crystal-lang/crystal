@@ -15,7 +15,7 @@ class Crypto::Blowfish
     @s3 = @s.to_unsafe + 768
   end
 
-  def expand_key(key)
+  def expand_key(key) : Nil
     pos = 0
 
     0.upto(17) do |i|
@@ -52,7 +52,7 @@ class Crypto::Blowfish
     {l, r}
   end
 
-  def decrypt_pair(l : UInt32, r : UInt32)
+  def decrypt_pair(l : UInt32, r : UInt32) : {UInt32, UInt32}
     (@rounds + 1).downto(2) do |i|
       l ^= @p.to_unsafe[i]
       r ^= f(l)

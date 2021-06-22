@@ -108,7 +108,7 @@ describe Benchmark::IPS::Entry, "#human_iteration_time" do
   it { h_ips(0.000_001_234_567).should eq("  1.23µs") }
 
   it { h_ips(0.000_000_123_456).should eq("123.46ns") }
-  it { h_ips(0.000_000_012_345).should eq(" 12.35ns") }
+  it { h_ips(0.000_000_012_345).should eq(" 12.34ns") }
   it { h_ips(0.000_000_001_234).should eq("  1.23ns") }
   it { h_ips(0.000_000_000_123).should eq("  0.12ns") }
 end

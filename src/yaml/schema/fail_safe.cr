@@ -20,33 +20,33 @@ module YAML::Schema::FailSafe
       @anchors[anchor] = value
     end
 
-    def get_anchor(anchor)
+    def get_anchor(anchor) : YAML::Any
       @anchors.fetch(anchor) do
         @pull_parser.raise("Unknown anchor '#{anchor}'")
       end
     end
 
-    def new_documents
+    def new_documents : Array(YAML::Any)
       [] of Any
     end
 
-    def new_document
+    def new_document : YAML::Any
       Any.new([] of Any)
     end
 
-    def cast_document(doc)
+    def cast_document(doc) : YAML::Any
       doc[0]? || Any.new(nil)
     end
 
-    def new_sequence
+    def new_sequence : YAML::Any
       Any.new([] of Any)
     end
 
-    def new_mapping
+    def new_mapping : YAML::Any
       Any.new({} of Any => Any)
     end
 
-    def new_scalar
+    def new_scalar : YAML::Any
       Any.new(@pull_parser.value)
     end
 

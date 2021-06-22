@@ -2,7 +2,7 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86_64.rs
 class LLVM::ABI::X86_64 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     arg_tys = Array(LLVM::Type).new(atys.size)
     arg_tys = atys.map do |arg_type|
       x86_64_type(arg_type, Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
@@ -31,7 +31,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def register?(type)
+  def register?(type) : Bool
     case type.kind
     when Type::Kind::Integer, Type::Kind::Float, Type::Kind::Double, Type::Kind::Pointer
       true
@@ -40,14 +40,14 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def pass_by_val?(cls)
+  def pass_by_val?(cls) : Bool
     return false if cls.empty?
 
     cl = cls.first
     cl == RegClass::Memory || cl == RegClass::X87 || cl == RegClass::ComplexX87
   end
 
-  def sret?(cls)
+  def sret?(cls) : Bool
     return false if cls.empty?
 
     cls.first == RegClass::Memory
@@ -103,7 +103,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def classify_struct(tys, cls, i, off, packed)
+  def classify_struct(tys, cls, i, off, packed) : Nil
     field_off = off
     tys.each do |ty|
       field_off = align(field_off, ty) unless packed
@@ -112,7 +112,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def fixup(ty, cls)
+  def fixup(ty, cls) : Nil
     i = 0
     ty_kind = ty.kind
     e = cls.size
@@ -188,7 +188,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     reg_classes.fill(RegClass::Memory)
   end
 
-  def llreg(context, reg_classes)
+  def llreg(context, reg_classes) : LLVM::Type
     types = Array(Type).new
     i = 0
     e = reg_classes.size
@@ -214,7 +214,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     context.struct(types)
   end
 
-  def llvec_len(reg_classes)
+  def llvec_len(reg_classes) : Int32
     len = 1
     reg_classes.each do |reg_class|
       break if reg_class != RegClass::SSEUp
@@ -223,7 +223,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     len
   end
 
-  def align(type : Type)
+  def align(type : Type) : Int32
     case type.kind
     when Type::Kind::Integer
       (type.int_width + 7) // 8
@@ -248,7 +248,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def size(type : Type)
+  def size(type : Type) : Int32
     case type.kind
     when Type::Kind::Integer
       (type.int_width + 7) // 8
@@ -276,7 +276,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     end
   end
 
-  def align(offset, type)
+  def align(offset, type) : Int32
     align = align(type)
     (offset + align - 1) // align * align
   end
@@ -295,7 +295,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
     ComplexX87
     Memory
 
-    def sse?
+    def sse? : Bool
       case self
       when SSEFs, SSEFv, SSEDs
         true

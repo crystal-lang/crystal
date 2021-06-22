@@ -16,6 +16,7 @@ describe Crystal::Codegen::Target do
   it "normalizes triples" do
     Target.new("i686-unknown-linux-gnu").to_s.should eq("i386-unknown-linux-gnu")
     Target.new("amd64-unknown-openbsd").to_s.should eq("x86_64-unknown-openbsd")
+    Target.new("arm64-apple-darwin20.2.0").to_s.should eq("aarch64-apple-darwin20.2.0")
   end
 
   it "parses freebsd version" do

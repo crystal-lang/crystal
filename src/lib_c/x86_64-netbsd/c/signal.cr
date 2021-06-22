@@ -34,6 +34,8 @@ lib LibC
   SIGINFO   = 29
   SIGWINCH  = 28
 
+  SIGSTKSZ = 40960
+
   SIG_SETMASK = 3
 
   alias SighandlerT = Int ->
@@ -44,9 +46,39 @@ lib LibC
     bits : UInt32[4]
   end
 
+  SA_ONSTACK = 0x0001
+  SA_SIGINFO = 0x0040
+
+  struct SiginfoT
+    si_signo : Int
+    si_code : Int
+    si_errno : Int
+    _pad1 : Int
+    si_addr : Void*
+    _pad2 : StaticArray(UInt64, 13)
+  end
+
+  alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
+
+  struct Sigaction
+    # Technically a union, but only one can be valid and we only use sa_sigaction
+    # and not sa_handler (which would be a SighandlerT)
+    sa_sigaction : SigactionHandlerT
+    sa_flags : Int
+    sa_mask : SigsetT
+  end
+
+  struct StackT
+    ss_sp : Void*
+    ss_size : SizeT
+    ss_flags : Int
+  end
+
   fun kill(x0 : PidT, x1 : Int) : Int
   fun pthread_sigmask(Int, SigsetT*, SigsetT*) : Int
   fun signal(x0 : Int, x1 : Int -> Void) : Int -> Void
+  fun sigaction = __sigaction14(x0 : Int, x1 : Sigaction*, x2 : Sigaction*) : Int
+  fun sigaltstack = __sigaltstack14(x0 : StackT*, x1 : StackT*) : Int
   fun sigemptyset = __sigemptyset14(SigsetT*) : Int
   fun sigfillset = __sigfillset14(SigsetT*) : Int
   fun sigaddset = __sigaddset14(SigsetT*, Int) : Int

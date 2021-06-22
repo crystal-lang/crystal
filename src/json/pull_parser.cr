@@ -170,7 +170,7 @@ class JSON::PullParser
   end
 
   # Reads an object's key and returns it.
-  def read_object_key
+  def read_object_key : String
     read_string
   end
 
@@ -191,20 +191,20 @@ class JSON::PullParser
   end
 
   # Reads a null value and returns it.
-  def read_null
+  def read_null : Nil
     expect_kind :null
     read_next
     nil
   end
 
   # Reads a `Bool` value.
-  def read_bool
+  def read_bool : Bool
     expect_kind :bool
     @bool_value.tap { read_next }
   end
 
   # Reads an integer value.
-  def read_int
+  def read_int : Int64
     expect_kind :int
     @int_value.tap { read_next }
   end
@@ -212,14 +212,14 @@ class JSON::PullParser
   # Reads a float value.
   #
   # If the value is actually an integer, it is converted to float.
-  def read_float
+  def read_float : Float64
     case @kind
     when .int?
       @int_value.to_f.tap { read_next }
     when .float?
       @float_value.tap { read_next }
     else
-      parse_exception "expecting int or float but was #{@kind}"
+      raise "expecting int or float but was #{@kind}"
     end
   end
 
@@ -230,17 +230,17 @@ class JSON::PullParser
   # If the value in unknown, it raises a `ParseException`.
   #
   # ```
-  # pull = JSON::PullParser.new %([nil, true, 1, "foo", [1, "two"], {"foo": "bar"}])
+  # pull = JSON::PullParser.new %([null, true, 1, "foo", [1, "two"], {"foo": "bar"}])
   # pull.read_begin_array
-  # pull.read_raw # => "nil"
+  # pull.read_raw # => "null"
   # pull.read_raw # => "true"
   # pull.read_raw # => "1"
-  # pull.read_raw # => "foo"
-  # pull.read_raw # => "[1, \"two\"]"
-  # pull.read_raw # => "{\"foo\": \"bar\"}"
+  # pull.read_raw # => "\"foo\""
+  # pull.read_raw # => "[1,\"two\"]"
+  # pull.read_raw # => "{\"foo\":\"bar\"}"
   # pull.read_end_array
   # ```
-  def read_raw
+  def read_raw : String
     case @kind
     when .null?
       read_next
@@ -301,28 +301,28 @@ class JSON::PullParser
   end
 
   # Reads a string and returns it.
-  def read_string
+  def read_string : String
     expect_kind :string
     @string_value.tap { read_next }
   end
 
   # Reads a `Bool` or a null value, and returns it.
-  def read_bool_or_null
+  def read_bool_or_null : Bool?
     read_null_or { read_bool }
   end
 
   # Reads an integer or a null value, and returns it.
-  def read_int_or_null
+  def read_int_or_null : Int64?
     read_null_or { read_int }
   end
 
   # Reads a float or a null value, and returns it.
-  def read_float_or_null
+  def read_float_or_null : Float64?
     read_null_or { read_float }
   end
 
   # Reads a string or a null value, and returns it.
-  def read_string_or_null
+  def read_string_or_null : String?
     read_null_or { read_string }
   end
 
@@ -392,7 +392,7 @@ class JSON::PullParser
   #
   # Contrary to `read_raw`, it does not read a full value.
   # For example if the next token is the beginning of an array, it will stop there, while `read_raw` would have read the whole array.
-  def read_next
+  def read_next : Kind
     read_next_internal
     @kind
   end
@@ -400,7 +400,7 @@ class JSON::PullParser
   # Reads a `Bool` value and returns it.
   #
   # If the value is not a `Bool`, returns `nil`.
-  def read?(klass : Bool.class)
+  def read?(klass : Bool.class) : Bool?
     read_bool if kind.bool?
   end
 
@@ -418,7 +418,7 @@ class JSON::PullParser
   # Reads an `Int64` value and returns it.
   #
   # If the value is not an integer or does not fin in an `Int64` variable, it returns `nil`.
-  def read?(klass : UInt64.class)
+  def read?(klass : UInt64.class) : UInt64?
     # UInt64 is a special case due to exceeding bounds of @int_value
     UInt64.new(raw_value).tap { read_next } if kind.int?
   rescue ArgumentError
@@ -429,7 +429,7 @@ class JSON::PullParser
   #
   # If the value is not an integer or does not fit in an `Float32`, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
-  def read?(klass : Float32.class)
+  def read?(klass : Float32.class) : Float32?
     return read_int.to_f32 if kind.int?
     return float_value.to_f32.tap { read_next } if kind.float?
   rescue OverflowError
@@ -440,7 +440,7 @@ class JSON::PullParser
   #
   # If the value is not an integer or does not fit in a `Float64` variable, it returns `nil`.
   # If the value was actually an integer, it is converted to a float.
-  def read?(klass : Float64.class)
+  def read?(klass : Float64.class) : Float64?
     return read_int.to_f64 if kind.int?
     return read_float.to_f64 if kind.float?
   end
@@ -448,7 +448,7 @@ class JSON::PullParser
   # Reads a `String` value and returns it.
   #
   # If the value is not a `String`, returns `nil`.
-  def read?(klass : String.class)
+  def read?(klass : String.class) : String?
     read_string if kind.string?
   end
 
@@ -679,20 +679,21 @@ class JSON::PullParser
   end
 
   private def expect_kind(kind : Kind)
-    parse_exception "Expected #{kind} but was #{@kind}" unless @kind == kind
+    raise "Expected #{kind} but was #{@kind}" unless @kind == kind
   end
 
   private def unexpected_token
-    parse_exception "Unexpected token: #{token}"
+    raise "Unexpected token: #{token}"
   end
 
-  private def parse_exception(msg)
-    raise ParseException.new(msg, token.line_number, token.column_number)
+  # Raises `ParseException` with *message* at current location.
+  def raise(message : String) : NoReturn
+    ::raise ParseException.new(message, token.line_number, token.column_number)
   end
 
   private def push_in_object_stack(kind : ObjectStackKind)
     if @object_stack.size >= @max_nesting
-      parse_exception "Nesting of #{@object_stack.size + 1} is too deep"
+      raise "Nesting of #{@object_stack.size + 1} is too deep"
     end
 
     @object_stack.push(kind)

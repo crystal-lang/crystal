@@ -118,8 +118,6 @@ describe "Code gen: class" do
 
   it "codegens virtual method of generic class" do
     run("
-      require \"char\"
-
       class Object
         def foo
           bar
@@ -313,6 +311,134 @@ describe "Code gen: class" do
       foo = Foo.new(1) || Bar.new(2)
       foo.@x
       )).to_i.should eq(1)
+  end
+
+  it "reads a union type instance var (reference union, first type)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Bool)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, true)
+      union = foo || bar
+      var = union.@x
+      if var.is_a?(Int32)
+        var
+      else
+        20
+      end
+      )).to_i.should eq(10)
+  end
+
+  it "reads a union type instance var (reference union, second type)" do
+    run(%(
+      class Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, 'a')
+      union = bar || foo
+      var = union.@x
+      if var.is_a?(Char)
+        var
+      else
+        'b'
+      end
+      )).to_i.should eq('a'.ord)
+  end
+
+  it "reads a union type instance var (mixed union, first type)" do
+    run(%(
+      struct Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Bool)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, true)
+      union = foo || bar
+      var = union.@x
+      if var.is_a?(Int32)
+        var
+      else
+        20
+      end
+      )).to_i.should eq(10)
+  end
+
+  it "reads a union type instance var (mixed union, second type)" do
+    run(%(
+      struct Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(@y : Int32, @x : Char)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(10)
+      bar = Bar.new(2, 'a')
+      union = bar || foo
+      var = union.@x
+      if var.is_a?(Char)
+        var
+      else
+        'b'
+      end
+      )).to_i.should eq('a'.ord)
   end
 
   it "runs with nilable instance var" do

@@ -42,11 +42,7 @@ SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
-LIB_CRYSTAL_OBJS = $(subst .c,.o,$(LIB_CRYSTAL_SOURCES))
-LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
-DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
-CFLAGS += -fPIC $(if $(debug),-g -O0)
+DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
@@ -55,7 +51,7 @@ ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
 endif
 
 ifeq (${LLVM_CONFIG},)
-  $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
+  $(error Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt))
 else
   $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
 endif
@@ -99,11 +95,9 @@ docs: ## Generate standard library documentation
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
 
-.PHONY: deps llvm_ext libcrystal
+.PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
-
 llvm_ext: $(LLVM_EXT_OBJ)
-libcrystal: $(LIB_CRYSTAL_TARGET)
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -124,13 +118,9 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
-$(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
-	$(AR) -rcs $@ $^
-
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf $(LIB_CRYSTAL_OBJS) $(LIB_CRYSTAL_TARGET)
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files

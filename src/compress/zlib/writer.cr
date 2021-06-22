@@ -39,7 +39,7 @@ class Compress::Zlib::Writer < IO
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't read from Gzip::Writer")
   end
 

@@ -121,6 +121,7 @@ module Crystal
           macro_owner = item.def.macro_owner?
           context.defining_type = macro_owner if macro_owner
           context.def_free_vars = item.def.free_vars
+          context.free_vars.try &.clear
 
           match = signature.match(item, context)
 
@@ -143,6 +144,7 @@ module Crystal
           else
             context.defining_type = path_lookup if macro_owner
             context.def_free_vars = nil
+            context.free_vars.try &.clear
           end
         end
 

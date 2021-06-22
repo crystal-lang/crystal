@@ -1,5 +1,6 @@
 require "crystal/system/windows"
 require "c/winbase"
+require "c/processenv"
 
 module Crystal::System::Env
   # Sets an environment variable or unsets it if *value* is `nil`.
@@ -43,7 +44,7 @@ module Crystal::System::Env
         when WinError::ERROR_ENVVAR_NOT_FOUND
           return
         else
-          raise RuntimeError.from_winerror("GetEnvironmentVariableW", last_error)
+          raise RuntimeError.from_os_error("GetEnvironmentVariableW", last_error)
         end
       end
     end

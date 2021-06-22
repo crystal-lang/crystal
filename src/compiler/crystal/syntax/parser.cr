@@ -637,23 +637,18 @@ module Crystal
 
           @wants_regex = false
 
-          if current_char == '%'
-            next_char
-            @token.type = :"%"
-            @token.column_number += 1
-            skip_space_or_newline
-          else
-            next_token_skip_space_or_newline
+          @wants_def_or_macro_name = true
+          next_token_skip_space_or_newline
+          @wants_def_or_macro_name = false
 
-            if @token.type == :INSTANCE_VAR
-              ivar_name = @token.value.to_s
-              end_location = token_end_location
-              next_token_skip_space
+          if @token.type == :INSTANCE_VAR
+            ivar_name = @token.value.to_s
+            end_location = token_end_location
+            next_token_skip_space
 
-              atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
-              atomic.end_location = end_location
-              next
-            end
+            atomic = ReadInstanceVar.new(atomic, ivar_name).at(location)
+            atomic.end_location = end_location
+            next
           end
 
           check AtomicWithMethodCheck
@@ -667,7 +662,7 @@ module Crystal
             atomic = parse_as?(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
-          elsif @token.value == :nil?
+          elsif !@in_macro_expression && @token.value == :nil?
             atomic = parse_nil?(atomic).at(location)
           elsif @token.type == :"!"
             atomic = parse_negation_suffix(atomic).at(location)
@@ -1294,7 +1289,7 @@ module Crystal
       named_args = nil
 
       if @token.type == :"("
-        open("attribute") do
+        open("annotation") do
           next_token_skip_space_or_newline
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
@@ -1546,7 +1541,7 @@ module Crystal
       elsif @token.value == :responds_to?
         call = parse_responds_to(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
-      elsif @token.value == :nil?
+      elsif !@in_macro_expression && @token.value == :nil?
         call = parse_nil?(obj).at(location)
         call = parse_atomic_method_suffix_special(call, location)
       elsif @token.type == :"!"
@@ -2325,7 +2320,16 @@ module Crystal
       open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
-          exps << parse_op_assign_no_control
+          exp_location = @token.location
+
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
+          end
+
+          exps << exp
           end_location = token_end_location
           skip_space
 
@@ -2373,9 +2377,17 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
+          if @token.type == :"*"
+            first_is_splat = true
+            next_token_skip_space_or_newline
+          end
+
           first_key = parse_op_assign_no_control
+          first_key = Splat.new(first_key).at(location) if first_is_splat
           case @token.type
           when :":"
+            unexpected_token if first_is_splat
+
             # Check that there's no space before the ':'
             if @token.column_number != first_key.end_location.not_nil!.column_number + 1
               raise "space not allowed between named argument name and ':'"
@@ -2401,6 +2413,7 @@ module Crystal
             check :"}"
             return parse_tuple first_key, location
           else
+            unexpected_token if first_is_splat
             check :"=>"
           end
         end
@@ -2477,8 +2490,18 @@ module Crystal
       open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
-          exps << parse_op_assign_no_control
+          exp_location = @token.location
+
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
+          end
+
+          exps << exp
           skip_space
+
           if @token.type == :","
             next_token_skip_space_or_newline
           else
@@ -2633,6 +2656,8 @@ module Crystal
             when_conds = [] of ASTNode
 
             if cond.is_a?(TupleLiteral)
+              raise "splat is not allowed inside case expression" if cond.elements.any?(Splat)
+
               while true
                 if @token.type == :"{"
                   curly_location = @token.location
@@ -2732,7 +2757,7 @@ module Crystal
         end
       end
 
-      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`) a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
+      raise "expression of exhaustive case (case ... in) must be a constant (like `IO::Memory`), a generic (like `Array(Int32)`), a bool literal (true or false), a nil literal (nil) or a question method (like `.red?`)", exp.location.not_nil!
     end
 
     # Adds an expression to all when expressions and error on duplicates
@@ -2770,11 +2795,11 @@ module Crystal
     end
 
     def when_expression_end
+      slash_is_regex!
       if @token.keyword?(:then)
         next_token_skip_space_or_newline
         return true
       else
-        slash_is_regex!
         case @token.type
         when :","
           next_token_skip_space_or_newline
@@ -2793,8 +2818,9 @@ module Crystal
 
     def parse_when_expression(cond, single, exhaustive)
       if cond && @token.type == :"."
+        location = @token.location
         next_token
-        call = parse_var_or_call(force_call: true)
+        call = parse_var_or_call(force_call: true).at(location)
         case call
         when Call        then call.obj = ImplicitObj.new
         when RespondsTo  then call.obj = ImplicitObj.new
@@ -2978,13 +3004,13 @@ module Crystal
         check_valid_def_name
         next_token
         if @token.type == :"="
-          raise "macro can't be a setter"
+          name += '='
+          next_token
         end
         skip_space
-      when :"[]"
-        next_token_skip_space
       else
-        raise "invalid macro name"
+        check_valid_def_op_name
+        next_token_skip_space
       end
 
       args = [] of Arg
@@ -3577,7 +3603,7 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns)
+          body = Expressions.from(extra_assigns).at(@token.location)
           next_token_skip_space
         else
           body = parse_expressions
@@ -3589,7 +3615,7 @@ module Crystal
             else
               exps.push body
             end
-            body = Expressions.from(exps)
+            body = Expressions.from(exps).at(body)
           end
           body, end_location = parse_exception_handler body, implicit: true
         end
@@ -3856,6 +3882,7 @@ module Crystal
         uses_arg = false
         do_next_token = true
       when :INSTANCE_VAR
+        # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         arg_name = @token.value.to_s[1..-1]
         if arg_name == external_name
           raise "when specified, external name must be different than internal name", @token
@@ -4063,8 +4090,10 @@ module Crystal
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
       when :nil?
-        obj = Var.new("self").at(location)
-        return parse_nil?(obj)
+        unless @in_macro_expression
+          obj = Var.new("self").at(location)
+          return parse_nil?(obj)
+        end
       else
         # Not a special call, go on
       end
@@ -4371,7 +4400,7 @@ module Crystal
         else
           exps.push block_body
         end
-        block_body = Expressions.from exps
+        block_body = Expressions.from(exps).at(block_body)
       end
 
       block_body, end_location = yield block_body
@@ -4792,7 +4821,7 @@ module Crystal
         if named_tuple_start? || @token.type == :DELIMITER_START
           type = make_named_tuple_type parse_named_type_args(:"}")
         else
-          type = make_tuple_type parse_union_types(:"}")
+          type = make_tuple_type parse_union_types(:"}", allow_splats: true)
         end
         check :"}"
         next_token_skip_space
@@ -4832,13 +4861,17 @@ module Crystal
       end
     end
 
-    def parse_union_types(end_token)
-      types = [parse_union_type]
+    def parse_union_types(end_token, *, allow_splats = false)
+      type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+      types = [type]
+
       while @token.type == :","
         next_token_skip_space_or_newline
         break if @token.type == end_token # allow trailing comma
-        types << parse_union_type
+        type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+        types << type
       end
+
       types
     end
 
@@ -5662,10 +5695,16 @@ module Crystal
       check :","
 
       next_token_skip_space_or_newline
-      check :INSTANCE_VAR
-
-      ivar_location = @token.location
-      instance_var = InstanceVar.new(@token.value.to_s).at(ivar_location)
+      offset = case @token.type
+               when :INSTANCE_VAR
+                 InstanceVar.new(@token.value.to_s)
+               when :NUMBER
+                 raise "expecting an integer offset, not '#{@token}'", @token if @token.number_kind != :i32
+                 NumberLiteral.new(@token.value.to_s, @token.number_kind)
+               else
+                 raise "expecting an instance variable or a integer offset, not '#{@token}'", @token
+               end
+      offset.at(@token.location)
 
       next_token_skip_space_or_newline
 
@@ -5673,7 +5712,7 @@ module Crystal
       check :")"
       next_token_skip_space
 
-      OffsetOf.new(type, instance_var).at_end(end_location)
+      OffsetOf.new(type, offset).at_end(end_location)
     end
 
     def parse_type_def

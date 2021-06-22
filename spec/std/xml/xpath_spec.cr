@@ -206,5 +206,10 @@ module XML
       result = doc.xpath_string("string(//feed/person[@id=$value]/@id)", variables: {"value" => 2})
       result.should eq("2")
     end
+
+    it "NodeSet#to_s" do
+      doc = doc()
+      doc.xpath("//people/person").to_s
+    end
   end
 end

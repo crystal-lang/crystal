@@ -1,5 +1,6 @@
 require "spec"
 require "set"
+require "spec/helpers/iterate"
 
 describe "Set" do
   describe "an empty set" do
@@ -36,7 +37,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set(Int32).new
-      set.add(1).should eq(set)
+      set.add(1).should be(set)
     end
   end
 
@@ -129,7 +130,7 @@ describe "Set" do
 
     it "returns self" do
       set = Set{1, 4, 8}
-      set.concat([1, 9, 10]).should eq(Set{1, 4, 8, 9, 10})
+      set.concat([1, 9, 10]).should be(set)
     end
   end
 
@@ -332,68 +333,62 @@ describe "Set" do
     i.should eq(4)
   end
 
-  it "gets each iterator" do
-    iter = Set{1, 2, 3}.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], Set{1, 2, 3}.each
 
-  it "check subset" do
+  it "#subset_of?" do
     set = Set{1, 2, 3}
     empty_set = Set(Int32).new
 
-    set.subset?(Set{1, 2, 3, 4}).should be_true
-    set.subset?(Set{1, 2, 3, "4"}).should be_true
-    set.subset?(Set{1, 2, 3}).should be_true
-    set.subset?(Set{1, 2}).should be_false
-    set.subset?(empty_set).should be_false
+    set.subset_of?(Set{1, 2, 3, 4}).should be_true
+    set.subset_of?(Set{1, 2, 3, "4"}).should be_true
+    set.subset_of?(Set{1, 2, 3}).should be_true
+    set.subset_of?(Set{1, 2}).should be_false
+    set.subset_of?(empty_set).should be_false
 
-    empty_set.subset?(Set{1}).should be_true
-    empty_set.subset?(empty_set).should be_true
+    empty_set.subset_of?(Set{1}).should be_true
+    empty_set.subset_of?(empty_set).should be_true
   end
 
-  it "check proper_subset" do
+  it "#proper_subset_of?" do
     set = Set{1, 2, 3}
     empty_set = Set(Int32).new
 
-    set.proper_subset?(Set{1, 2, 3, 4}).should be_true
-    set.proper_subset?(Set{1, 2, 3, "4"}).should be_true
-    set.proper_subset?(Set{1, 2, 3}).should be_false
-    set.proper_subset?(Set{1, 2}).should be_false
-    set.proper_subset?(empty_set).should be_false
+    set.proper_subset_of?(Set{1, 2, 3, 4}).should be_true
+    set.proper_subset_of?(Set{1, 2, 3, "4"}).should be_true
+    set.proper_subset_of?(Set{1, 2, 3}).should be_false
+    set.proper_subset_of?(Set{1, 2}).should be_false
+    set.proper_subset_of?(empty_set).should be_false
 
-    empty_set.proper_subset?(Set{1}).should be_true
-    empty_set.proper_subset?(empty_set).should be_false
+    empty_set.proper_subset_of?(Set{1}).should be_true
+    empty_set.proper_subset_of?(empty_set).should be_false
   end
 
-  it "check superset" do
+  it "#superset_of?" do
     set = Set{1, 2, "3"}
     empty_set = Set(Int32).new
 
-    set.superset?(empty_set).should be_true
-    set.superset?(Set{1, 2}).should be_true
-    set.superset?(Set{1, 2, "3"}).should be_true
-    set.superset?(Set{1, 2, 3}).should be_false
-    set.superset?(Set{1, 2, 3, 4}).should be_false
-    set.superset?(Set{1, 4}).should be_false
+    set.superset_of?(empty_set).should be_true
+    set.superset_of?(Set{1, 2}).should be_true
+    set.superset_of?(Set{1, 2, "3"}).should be_true
+    set.superset_of?(Set{1, 2, 3}).should be_false
+    set.superset_of?(Set{1, 2, 3, 4}).should be_false
+    set.superset_of?(Set{1, 4}).should be_false
 
-    empty_set.superset?(empty_set).should be_true
+    empty_set.superset_of?(empty_set).should be_true
   end
 
-  it "check proper_superset" do
+  it "#proper_superset_of?" do
     set = Set{1, 2, "3"}
     empty_set = Set(Int32).new
 
-    set.proper_superset?(empty_set).should be_true
-    set.proper_superset?(Set{1, 2}).should be_true
-    set.proper_superset?(Set{1, 2, "3"}).should be_false
-    set.proper_superset?(Set{1, 2, 3}).should be_false
-    set.proper_superset?(Set{1, 2, 3, 4}).should be_false
-    set.proper_superset?(Set{1, 4}).should be_false
+    set.proper_superset_of?(empty_set).should be_true
+    set.proper_superset_of?(Set{1, 2}).should be_true
+    set.proper_superset_of?(Set{1, 2, "3"}).should be_false
+    set.proper_superset_of?(Set{1, 2, 3}).should be_false
+    set.proper_superset_of?(Set{1, 2, 3, 4}).should be_false
+    set.proper_superset_of?(Set{1, 4}).should be_false
 
-    empty_set.proper_superset?(empty_set).should be_false
+    empty_set.proper_superset_of?(empty_set).should be_false
   end
 
   it "has object_id" do

@@ -12,7 +12,7 @@ struct String::Formatter(A)
     @format_buf_len = 0
   end
 
-  def format
+  def format : Nil
     while true
       case char = current_char
       when '\0'
@@ -201,7 +201,7 @@ struct String::Formatter(A)
     end
   end
 
-  def char(flags, arg, arg_specified)
+  def char(flags, arg, arg_specified) : Nil
     arg = next_arg unless arg_specified
 
     pad 1, flags if flags.left_padding?
@@ -209,7 +209,7 @@ struct String::Formatter(A)
     pad 1, flags if flags.right_padding?
   end
 
-  def string(flags, arg, arg_specified)
+  def string(flags, arg, arg_specified) : Nil
     arg = next_arg unless arg_specified
 
     if precision = flags.precision
@@ -221,7 +221,7 @@ struct String::Formatter(A)
     pad arg.to_s.size, flags if flags.right_padding?
   end
 
-  def int(flags, arg, arg_specified)
+  def int(flags, arg, arg_specified) : Nil
     arg = next_arg unless arg_specified
 
     if arg.responds_to?(:to_i)
@@ -261,7 +261,7 @@ struct String::Formatter(A)
   end
 
   # We don't actually format the float ourselves, we delegate to snprintf
-  def float(flags, arg, arg_specified)
+  def float(flags, arg, arg_specified) : Nil
     arg = next_arg unless arg_specified
 
     if arg.responds_to?(:to_f64)
@@ -269,11 +269,11 @@ struct String::Formatter(A)
 
       format_buf = recreate_float_format_string(flags)
 
-      len = flags.width + (flags.precision || 0) + 23
+      len = LibC.snprintf(nil, 0, format_buf, float) + 1
       temp_buf = temp_buf(len)
-      count = LibC.snprintf(temp_buf, len, format_buf, float)
+      LibC.snprintf(temp_buf, len, format_buf, float)
 
-      @io.write_utf8 Slice.new(temp_buf, count)
+      @io.write_utf8 Slice.new(temp_buf, len - 1)
     else
       raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end
@@ -310,14 +310,14 @@ struct String::Formatter(A)
     original_format_buf
   end
 
-  def pad(consumed, flags)
+  def pad(consumed, flags) : Nil
     padding_char = flags.padding_char
     (flags.width.abs - consumed).times do
       @io << padding_char
     end
   end
 
-  def pad_int(int, flags)
+  def pad_int(int, flags) : Nil
     size = int.to_s(flags.base).bytesize
     size += 1 if int >= 0 && (flags.plus || flags.space)
     pad size, flags
@@ -386,15 +386,15 @@ struct String::Formatter(A)
       @precision_size = 0
     end
 
-    def left_padding?
+    def left_padding? : Bool
       @minus ? @width < 0 : @width > 0
     end
 
-    def right_padding?
+    def right_padding? : Bool
       @minus ? @width > 0 : @width < 0
     end
 
-    def padding_char
+    def padding_char : Char
       @zero ? '0' : ' '
     end
   end

@@ -892,7 +892,7 @@ describe "Semantic: annotation" do
         "funs can only be annotated with: NoInline, AlwaysInline, Naked, ReturnsTwice, Raises, CallConvention"
     end
 
-    it "doesn't carry link attribute from lib to fun" do
+    it "doesn't carry link annotation from lib to fun" do
       semantic(%(
         @[Link("foo")]
         lib LibFoo

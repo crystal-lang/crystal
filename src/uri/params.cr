@@ -87,7 +87,7 @@ class URI
     #
     # URI::Params.encode({"foo" => "bar", "baz" => ["quux", "quuz"]}) # => "foo=bar&baz=quux&baz=quuz"
     # ```
-    def self.encode(hash : Hash(String, String | Array(String)))
+    def self.encode(hash : Hash(String, String | Array(String))) : String
       build do |builder|
         hash.each do |key, value|
           builder.add key, value
@@ -142,8 +142,43 @@ class URI
     def initialize(@raw_params : Hash(String, Array(String)))
     end
 
-    def ==(other : self)
-      self.raw_params == other.raw_params
+    def_equals_and_hash @raw_params
+
+    # Returns a copy of this `URI::Params` instance.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # original = URI::Params{"name" => "Jamie"}
+    # updated = original.dup
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    #
+    # Identical to `#clone`.
+    def dup : self
+      # Since the component types (keys and values) are immutable, there's no
+      # difference between deep and shallow copy, so we can just use `clone`
+      # here.
+      clone
+    end
+
+    # Returns a copy of this `URI::Params` instance.
+    #
+    # ```
+    # require "uri/params"
+    #
+    # original = URI::Params{"name" => "Jamie"}
+    # updated = original.clone
+    # updated["name"] = "Ary"
+    #
+    # original["name"] # => "Jamie"
+    # ```
+    #
+    # Identical to `#dup`.
+    def clone : self
+      self.class.new(raw_params.clone)
     end
 
     # Returns first value for specified param name.
@@ -155,7 +190,7 @@ class URI
     # params["email"]              # => "john@example.org"
     # params["non_existent_param"] # KeyError
     # ```
-    def [](name)
+    def [](name) : String
       fetch(name) { raise KeyError.new "Missing param name: #{name.inspect}" }
     end
 
@@ -165,7 +200,7 @@ class URI
     # params["email"]?              # => "john@example.org"
     # params["non_existent_param"]? # nil
     # ```
-    def []?(name)
+    def []?(name) : String?
       fetch(name, nil)
     end
 
@@ -213,7 +248,7 @@ class URI
     # params.set_all("item", ["pencil", "book", "workbook"])
     # params.fetch_all("item") # => ["pencil", "book", "workbook"]
     # ```
-    def fetch_all(name)
+    def fetch_all(name) : Array(String)
       raw_params.fetch(name) { [] of String }
     end
 
@@ -297,7 +332,7 @@ class URI
     #
     # params.delete("non_existent_param") # KeyError
     # ```
-    def delete(name)
+    def delete(name) : String
       value = raw_params[name].shift
       raw_params.delete(name) if raw_params[name].size == 0
       value
@@ -311,7 +346,7 @@ class URI
     # params.delete_all("comments") # => ["hello, world!", ":+1:"]
     # params.has_key?("comments")   # => false
     # ```
-    def delete_all(name)
+    def delete_all(name) : Array(String)?
       raw_params.delete(name)
     end
 

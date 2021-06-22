@@ -54,9 +54,11 @@ module Crystal::System::Time
   end
 
   def self.load_localtime : ::Time::Location?
-    if ::File.exists?(LOCALTIME)
+    if ::File.file?(LOCALTIME) && ::File.readable?(LOCALTIME)
       ::File.open(LOCALTIME) do |file|
         ::Time::Location.read_zoneinfo("Local", file)
+      rescue ::Time::Location::InvalidTZDataError
+        nil
       end
     end
   end

@@ -15,7 +15,7 @@ private def it_renders(context, input, output, file = __FILE__, line = __LINE__)
         generator.type(program)
       end
       Doc::Markdown.parse input, Doc::Markdown::DocRenderer.new(c, io)
-    end.should eq(output), file, line
+    end.should eq(output), file: file, line: line
   end
 end
 

@@ -19,11 +19,11 @@ module Random::Secure
   extend Random
   extend self
 
-  def next_u
+  def next_u : UInt8
     Crystal::System::Random.next_u
   end
 
-  def random_bytes(buf : Bytes)
+  def random_bytes(buf : Bytes) : Nil
     Crystal::System::Random.random_bytes(buf)
   end
 

@@ -55,22 +55,6 @@ describe "Semantic: pointer" do
     assert_type("Pointer(Int32).new(123_u64)") { pointer_of(int32) }
   end
 
-  it "types nil or pointer type" do
-    result = assert_type("1 == 1 ? nil : Pointer(Int32).new(0_u64)") { nilable pointer_of(int32) }
-    result.node.type.should be_a(NilablePointerType)
-  end
-
-  it "types nil or pointer type with typedef" do
-    result = assert_type(%(
-      lib LibC
-        type T = Void*
-        fun foo : T?
-      end
-      LibC.foo
-      )) { nilable types["LibC"].types["T"] }
-    result.node.type.should be_a(NilablePointerType)
-  end
-
   it "types pointer of constant" do
     result = assert_type("
       FOO = 1
@@ -210,5 +194,22 @@ describe "Semantic: pointer" do
       ptr.value = Foo(Int32).new
       ),
       "type must be Moo(Char | Int32), not Foo(Int32)"
+  end
+
+  it "errors with non-matching generic value with value=, union of generic types (#10544)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar1
+      end
+
+      class Bar2
+      end
+
+      ptr = Pointer(Foo(Char | Int32)).malloc(1_u64)
+      ptr.value = Foo(Int32).new || Foo(Char | Int32).new
+      ),
+      "type must be Foo(Char | Int32), not (Foo(Char | Int32) | Foo(Int32))"
   end
 end

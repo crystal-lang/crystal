@@ -51,7 +51,7 @@ struct Crystal::ExhaustivenessChecker
     # If we covered all types, we are done.
     return if targets.empty?
 
-    if targets.all?(&.is_a?(TypeTarget)) && all_patterns_are_types
+    if targets.all?(TypeTarget) && all_patterns_are_types
       node.raise <<-MSG
         case is not exhaustive.
 

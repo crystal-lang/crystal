@@ -364,8 +364,7 @@ describe JSON::PullParser do
                     [UInt8, -1],
                     [UInt16, -1],
                     [UInt32, -1],
-                    [UInt64, -1],
-                    [Float32, Float64::MAX]] %}
+                    [UInt64, -1]] %}
       {% type = pair[0] %}
       {% value = pair[1] %}
 
@@ -374,5 +373,21 @@ describe JSON::PullParser do
         pull.read?({{type}}).should be_nil
       end
     {% end %}
+
+    pending "returns nil in place of Float32 when an overflow occurs" do
+      pull = JSON::PullParser.new(Float64::MAX.to_json)
+      pull.read?(Float32).should be_nil
+    end
+  end
+
+  it "#raise" do
+    pull = JSON::PullParser.new("[1, 2, 3]")
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 2") do
+      pull.raise "foo bar"
+    end
+    pull.read_begin_array
+    expect_raises(JSON::ParseException, "foo bar at line 1, column 3") do
+      pull.raise "foo bar"
+    end
   end
 end

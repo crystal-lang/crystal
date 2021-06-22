@@ -382,11 +382,12 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("bar")
   end
 
-  it "works with named arguments, using names (#3654)" do
+  it "works with named arguments (#3654)" do
     run(%(
       class A
         macro method_missing(call)
-          x &+ y
+          {{call.named_args[0].value}} &+
+            {{call.named_args[1].value}}
         end
       end
 
@@ -395,17 +396,17 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "works with named arguments, named args in call (#3654)" do
+  it "works with named arguments that aren't legal variable names (#10381)" do
     run(%(
       class A
         macro method_missing(call)
-          {{call.named_args[0].name}} &+
-            {{call.named_args[1].name}}
+          {{call.named_args[0].value}} &+
+            {{call.named_args[1].value}}
         end
       end
 
       a = A.new
-      a.b(x: 1, y: 2)
+      a.b("@x": 1, Y: 2)
       )).to_i.should eq(3)
   end
 

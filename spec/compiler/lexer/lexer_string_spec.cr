@@ -288,6 +288,10 @@ describe "Lexer string" do
   assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
+  assert_syntax_error "\"\\uD800\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\uDFFF\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{D800}\"", "invalid unicode codepoint (surrogate half)"
+  assert_syntax_error "\"\\u{DFFF}\"", "invalid unicode codepoint (surrogate half)"
 
   it "lexes backtick string" do
     lexer = Lexer.new(%(`hello`))

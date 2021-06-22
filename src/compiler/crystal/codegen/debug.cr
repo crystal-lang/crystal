@@ -206,10 +206,6 @@ module Crystal
       get_debug_type(type.not_nil_type, original_type)
     end
 
-    def create_debug_type(type : NilablePointerType, original_type : Type)
-      get_debug_type(type.pointer_type, original_type)
-    end
-
     def create_debug_type(type : StaticArrayInstanceType, original_type : Type)
       debug_type = get_debug_type(type.element_type)
       return unless debug_type

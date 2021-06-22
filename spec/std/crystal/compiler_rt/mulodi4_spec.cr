@@ -6,9 +6,9 @@ private def test__mulodi4(a : Int64, b : Int64, expected : Int64, expected_overf
   it "passes compiler-rt builtins unit tests" do
     actual_overflow : Int32 = 0
     actual = __mulodi4(a, b, pointerof(actual_overflow))
-    actual_overflow.should eq(expected_overflow), file, line
+    actual_overflow.should eq(expected_overflow), file: file, line: line
     if !expected_overflow
-      actual.should eq(expected), file, line
+      actual.should eq(expected), file: file, line: line
     end
   end
 end

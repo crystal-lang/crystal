@@ -14,6 +14,10 @@ describe "levenshtein" do
   it { Levenshtein.distance("hippo", "zzzzzzzz").should eq(8) }
   it { Levenshtein.distance("hello", "hallo").should eq(1) }
   it { Levenshtein.distance("こんにちは", "こんちは").should eq(1) }
+  it { Levenshtein.distance("한자", "漢字").should eq(2) }
+  it { Levenshtein.distance("abc", "cba").should eq(2) }
+  it { Levenshtein.distance("かんじ", "じんか").should eq(2) }
+  it { Levenshtein.distance("", "かんじ").should eq(3) }
 
   it "finds with finder" do
     finder = Levenshtein::Finder.new "hallo"

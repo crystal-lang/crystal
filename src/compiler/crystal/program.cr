@@ -123,7 +123,7 @@ module Crystal
     property compiler : Compiler?
 
     def initialize
-      super(self, self, "main")
+      super(self, self, "top_level")
 
       # Every crystal program comes with some predefined types that we initialize here,
       # like Object, Value, Reference, etc.
@@ -376,8 +376,6 @@ module Crystal
             untyped_type = other_type.remove_typedef
             if untyped_type.proc?
               return NilableProcType.new(self, other_type)
-            elsif untyped_type.is_a?(PointerInstanceType)
-              return NilablePointerType.new(self, other_type)
             end
           end
         end

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "\U00002753 Crystal Community Forum"
+    url: https://forum.crystal-lang.org/c/help-support
+    about: Questions about installing, using Crystal and any related issues.
+  - name: "\U0001F4AC Crystal Community Chat"
+    url: https://gitter.im/crystal-lang/crystal
+    about: "Get in touch with the community, ask for help and talk about Crystal. (IRC: #crystal-lang on freenode)"

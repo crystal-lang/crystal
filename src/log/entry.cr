@@ -17,7 +17,7 @@ enum Log::Severity
   # Used only for severity level filter.
   None
 
-  def label
+  def label : String
     case self
     in Trace  then "TRACE"
     in Debug  then "DEBUG"

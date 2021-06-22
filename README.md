@@ -38,7 +38,7 @@ Oh, and we don't want to write C code to make the code run faster.
 Project Status
 --------------
 
-Crystal is still under heavy development. There can be breaking changes but we're trying to keep them as minimum as possible.
+Within a major version language features won't be removed or changed in any way that could prevent an existing code to keep compiling and working. And the built in standard library might be enriched but always with backward compatibility in mind.
 
 The development is possible thanks to the community's effort and the continued support of [84codes](https://www.84codes.com/), [Nikola Motor Company](https://nikolamotor.com/) and every other [sponsor](https://crystal-lang.org/sponsors).
 

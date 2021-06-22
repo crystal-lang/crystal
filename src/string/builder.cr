@@ -34,7 +34,7 @@ class String::Builder < IO
     io
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Not implemented"
   end
 
@@ -51,7 +51,7 @@ class String::Builder < IO
     @bytesize += count
   end
 
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     new_bytesize = real_bytesize + 1
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -64,17 +64,17 @@ class String::Builder < IO
     nil
   end
 
-  def buffer
+  def buffer : Pointer(UInt8)
     @buffer + String::HEADER_SIZE
   end
 
-  def empty?
+  def empty? : Bool
     @bytesize == 0
   end
 
   # Chomps the last byte from the string buffer.
   # If the byte is `'\n'` and there's a `'\r'` before it, it is also removed.
-  def chomp!(byte : UInt8)
+  def chomp!(byte : UInt8) : self
     if bytesize > 0 && buffer[bytesize - 1] == byte
       back(1)
 
@@ -87,7 +87,7 @@ class String::Builder < IO
 
   # Moves the write pointer, and the resulting string bytesize,
   # by the given *amount*.
-  def back(amount : Int)
+  def back(amount : Int) : Int32
     unless 0 <= amount <= @bytesize
       raise ArgumentError.new "Invalid back amount"
     end
@@ -114,10 +114,6 @@ class String::Builder < IO
 
   private def real_bytesize
     @bytesize + String::HEADER_SIZE
-  end
-
-  private def check_needs_resize
-    resize_to_capacity(@capacity * 2) if real_bytesize == @capacity
   end
 
   private def resize_to_capacity(capacity)

@@ -54,7 +54,8 @@ describe "Float" do
   end
 
   describe "round" do
-    it { 2.5.round.should eq(3) }
+    it { 2.5.round.should eq(2) }
+    it { 3.5.round.should eq(4) }
     it { 2.4.round.should eq(2) }
   end
 
@@ -234,12 +235,28 @@ describe "Float" do
     end
   end
 
-  it "casts" do
-    Float32.new(1_f64).should be_a(Float32)
-    Float32.new(1_f64).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Float32.new("1").should be_a(Float32)
+      Float32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Float32.new(" 1 ", whitespace: false)
+      end
 
-    Float64.new(1_f32).should be_a(Float64)
-    Float64.new(1_f32).should eq(1)
+      Float64.new("1").should be_a(Float64)
+      Float64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Float64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Float32.new(1_f64).should be_a(Float32)
+      Float32.new(1_f64).should eq(1)
+
+      Float64.new(1_f32).should be_a(Float64)
+      Float64.new(1_f32).should eq(1)
+    end
   end
 
   it "does nan?" do
@@ -264,6 +281,26 @@ describe "Float" do
     (-1.0/0.0).finite?.should be_false
     (-0.0/0.0).finite?.should be_false
   end
+
+  {% if compare_versions(Crystal::VERSION, "0.36.1") > 0 %}
+    it "converts infinity" do
+      Float32::INFINITY.to_f64.infinite?.should eq 1
+      Float32::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float32::INFINITY.to_i }
+      (-Float32::INFINITY).to_f64.infinite?.should eq -1
+      (-Float32::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float32::INFINITY).to_i }
+
+      Float64::INFINITY.to_f64.infinite?.should eq 1
+      Float64::INFINITY.to_f32.infinite?.should eq 1
+      expect_raises(OverflowError) { Float64::INFINITY.to_i }
+      (-Float64::INFINITY).to_f64.infinite?.should eq -1
+      (-Float64::INFINITY).to_f32.infinite?.should eq -1
+      expect_raises(OverflowError) { (-Float64::INFINITY).to_i }
+    end
+  {% else %}
+    pending "converts infinity"
+  {% end %}
 
   it "does unary -" do
     f = -(1.5)

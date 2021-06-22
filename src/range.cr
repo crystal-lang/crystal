@@ -10,6 +10,8 @@
 # ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
@@ -85,6 +87,10 @@ struct Range(B, E)
   # Range.new(1, 10, exclusive: true) # => 1...10
   # ```
   def initialize(@begin : B, @end : E, @exclusive : Bool = false)
+  end
+
+  def ==(other : Range)
+    @begin == other.@begin && @end == other.@end && @exclusive == other.@exclusive
   end
 
   # Returns an `Iterator` that cycles over the values of this range.
@@ -209,14 +215,13 @@ struct Range(B, E)
   # (1..4).step(by: 2) do |x|
   #   ary << x
   # end
-  # ary                                      # => [1, 3]
-  # (1..4).step(by: 2).to_a                  # => [1, 3]
-  # (1..4).step(by: 1).to_a                  # => [1, 2, 3, 4]
-  # (1..4).step(by: 1, exclusive: true).to_a # => [1, 2, 3]
+  # ary                      # => [1, 3]
+  # (1..4).step(by: 2).to_a  # => [1, 3]
+  # (1..4).step(by: 1).to_a  # => [1, 2, 3, 4]
+  # (1...4).step(by: 1).to_a # => [1, 2, 3]
   # ```
   #
-  # The implementation is based on `B#step` method if available. The interface
-  # is defined at `Number#step`.
+  # If `B` is a `Steppable`, implementation is delegated to `Steppable#step`.
   # Otherwise `#succ` method is expected to be defined on `begin` and its
   # successors and iteration is based on calling `#succ` sequentially
   # (*step* times per iteration).
@@ -228,7 +233,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if current.responds_to?(:step)
+    if current.is_a?(Steppable)
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
@@ -258,7 +263,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if start.responds_to?(:step)
+    if start.is_a?(Steppable)
       start.step(to: @end, by: by, exclusive: @exclusive)
     else
       StepIterator(self, B, typeof(by)).new(self, by)
@@ -271,7 +276,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
-  def excludes_end?
+  def excludes_end? : Bool
     @exclusive
   end
 
@@ -285,7 +290,7 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
-  def includes?(value)
+  def includes?(value) : Bool
     begin_value = @begin
     end_value = @end
 
@@ -334,8 +339,8 @@ struct Range(B, E)
     to_s(io)
   end
 
-  # If `self` is a `Int` range, it provides O(1) implementation,
-  # otherwise it is same as `Enumerable#sum`.
+  # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
+  # an `Int` range.
   def sum(initial)
     b = self.begin
     e = self.end
@@ -350,6 +355,54 @@ struct Range(B, E)
       end
     else
       super
+    end
+  end
+
+  # Optimized version of `Enumerable#sample` that runs in O(1) time when `self`
+  # is an `Int` or `Float` range. In these cases, this range is considered to be
+  # a distribution of numeric values rather than a collection of elements, and
+  # the method simply calls `random.rand(self)`.
+  #
+  # Raises `ArgumentError` if `self` is an open range.
+  def sample(random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    {% if B < Int && E < Int %}
+      random.rand(self)
+    {% elsif B < Float && E < Float %}
+      random.rand(self)
+    {% elsif B.nilable? || E.nilable? %}
+      b = self.begin
+      e = self.end
+
+      if b.nil? || e.nil?
+        raise ArgumentError.new("Can't sample an open range")
+      end
+
+      Range.new(b, e, @exclusive).sample(random)
+    {% else %}
+      super
+    {% end %}
+  end
+
+  # :nodoc:
+  def sample(n : Int, random = Random::DEFAULT)
+    {% if B == Nil || E == Nil %}
+      {% raise "Can't sample an open range" %}
+    {% end %}
+
+    if self.begin.nil? || self.end.nil?
+      raise ArgumentError.new("Can't sample an open range")
+    end
+
+    return super unless n == 1
+
+    if empty?
+      [] of B
+    else
+      [sample(random)]
     end
   end
 

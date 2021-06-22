@@ -53,7 +53,7 @@ class JSON::Builder
     when DocumentEndState
       # okay
     end
-    @io.flush
+    flush
   end
 
   def document
@@ -415,6 +415,5 @@ module JSON
     builder.document do
       yield builder
     end
-    io.flush
   end
 end

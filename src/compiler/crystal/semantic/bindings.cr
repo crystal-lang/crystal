@@ -604,9 +604,19 @@ module Crystal
     property! program : Program
 
     def update(from = nil)
-      return unless elements.all? &.type?
+      types = [] of TypeVar
+      elements.each do |node|
+        if node.is_a?(Splat)
+          type = node.type?
+          return unless type.is_a?(TupleInstanceType)
+          types.concat(type.tuple_types)
+        else
+          type = node.type?
+          return unless type
+          types << type
+        end
+      end
 
-      types = elements.map &.type.as(TypeVar)
       tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)
@@ -652,12 +662,16 @@ module Crystal
       obj_type = obj.type?
       return unless obj_type
 
-      if obj_type.is_a?(UnionType)
-        raise "can't read instance variables of union types (#{name} of #{obj_type})"
-      end
-
-      var = visitor.lookup_instance_var(self, obj_type)
-      self.type = var.type
+      self.type =
+        if obj_type.is_a?(UnionType)
+          obj_type.program.type_merge(
+            obj_type.union_types.map do |union_type|
+              visitor.lookup_instance_var(self, union_type).type
+            end
+          )
+        else
+          visitor.lookup_instance_var(self, obj_type).type
+        end
     end
   end
 

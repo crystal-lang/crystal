@@ -42,7 +42,7 @@ struct Exception::CallStack
     @callstack = CallStack.unwind
   end
 
-  def printable_backtrace
+  def printable_backtrace : Array(String)
     @backtrace ||= decode_backtrace
   end
 

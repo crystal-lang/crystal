@@ -6,33 +6,33 @@ class YAML::Schema::Core::Parser < YAML::Parser
     @anchors[anchor] = value
   end
 
-  def get_anchor(anchor)
+  def get_anchor(anchor) : YAML::Any
     @anchors.fetch(anchor) do
       @pull_parser.raise("Unknown anchor '#{anchor}'")
     end
   end
 
-  def new_documents
+  def new_documents : Array(YAML::Any)
     [] of YAML::Any
   end
 
-  def new_document
+  def new_document : YAML::Any
     Any.new([] of Any)
   end
 
-  def cast_document(document)
+  def cast_document(document) : YAML::Any
     document.as_a.first? || Any.new(nil)
   end
 
-  def new_sequence
+  def new_sequence : YAML::Any
     Any.new([] of Any)
   end
 
-  def new_mapping
+  def new_mapping : YAML::Any
     Any.new({} of Any => Any)
   end
 
-  def new_scalar
+  def new_scalar : YAML::Any
     Any.new(Core.parse_scalar(@pull_parser))
   end
 

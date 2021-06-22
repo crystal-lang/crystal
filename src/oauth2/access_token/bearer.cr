@@ -5,7 +5,7 @@ class OAuth2::AccessToken::Bearer < OAuth2::AccessToken
     OAuth2::AccessToken.new(pull).as(self)
   end
 
-  def token_type
+  def token_type : String
     "Bearer"
   end
 

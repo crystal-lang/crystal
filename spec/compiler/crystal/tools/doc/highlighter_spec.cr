@@ -5,16 +5,16 @@ require "../../../../spec_helper"
 private def it_highlights(code, expected, file = __FILE__, line = __LINE__)
   it "highlights #{code.inspect}", file, line do
     highlighted = Crystal::Doc::Highlighter.highlight code
-    highlighted.should eq(expected), file, line
+    highlighted.should eq(expected), file: file, line: line
     doc = XML.parse_html highlighted
-    doc.content.should eq(code), file, line
+    doc.content.should eq(code), file: file, line: line
   end
 end
 
 private def it_does_not_highlight(code, file = __FILE__, line = __LINE__)
   it "does not highlight #{code.inspect} due to error", file, line do
     highlighted = Crystal::Doc::Highlighter.highlight code
-    highlighted.should eq(code), file, line
+    highlighted.should eq(code), file: file, line: line
   end
 end
 

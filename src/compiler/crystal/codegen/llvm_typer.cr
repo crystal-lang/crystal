@@ -233,10 +233,6 @@ module Crystal
       proc_type
     end
 
-    private def create_llvm_type(type : NilablePointerType, wants_size)
-      llvm_type(type.pointer_type, wants_size)
-    end
-
     private def create_llvm_type(type : TypeDefType, wants_size)
       llvm_type(type.typedef, wants_size)
     end

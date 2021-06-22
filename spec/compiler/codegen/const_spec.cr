@@ -533,4 +533,39 @@ describe "Codegen: const" do
       a &+ Foo.x
       )).to_i.should eq(6)
   end
+
+  it "supports closured vars inside initializers (#10474)" do
+    run(%(
+      class Foo
+        def bar
+          3
+        end
+      end
+
+      def func(&block : -> Int32)
+        block.call
+      end
+
+      CONST = begin
+        foo = Foo.new
+        func do
+          foo.bar
+        end
+      end
+
+      CONST
+      )).to_i.should eq(3)
+  end
+
+  it "supports storing function returning nil" do
+    run(%(
+      def foo
+        "foo"
+        nil
+      end
+
+      CONST = foo
+      CONST.nil?
+      )).to_b.should eq(true)
+  end
 end

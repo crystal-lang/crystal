@@ -73,13 +73,13 @@ class Crypto::Bcrypt
 
   @digest : Bytes?
 
-  def digest
+  def digest : Bytes
     @digest ||= hash_password
   end
 
   @hash : String?
 
-  def to_s
+  def to_s : String
     @hash ||= begin
       salt64 = Base64.encode(salt, salt.size)
       digest64 = Base64.encode(digest, digest.size - 1)

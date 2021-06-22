@@ -1,8 +1,9 @@
-require "c/winnt"
-require "c/win_def"
-require "c/int_safe"
+require "c/winbase"
 
 lib LibC
+  fun GetSystemTimeAsFileTime(time : FILETIME*)
+  fun GetSystemTimePreciseAsFileTime(time : FILETIME*)
+
   fun GetNativeSystemInfo(system_info : SYSTEM_INFO*)
 
   struct PROCESSOR_INFO

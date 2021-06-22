@@ -1,4 +1,5 @@
 require "uri/punycode"
+require "./address"
 
 class Socket
   # Domain name resolver.
@@ -70,7 +71,7 @@ class Socket
 
           unless addrinfo = addrinfo.try(&.next?)
             if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_errno("Error connecting to '#{domain}:#{service}'")
+              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
             else
               raise error if error
             end
@@ -80,14 +81,45 @@ class Socket
     end
 
     class Error < Socket::Error
-      getter error_code : Int32
-
-      def self.new(error_code, domain)
-        new error_code, String.new(LibC.gai_strerror(error_code)), domain
+      @[Deprecated("Use `#os_error` instead")]
+      def error_code : Int32
+        os_error.not_nil!.value.to_i32!
       end
 
-      def initialize(@error_code, message, domain)
-        super("Hostname lookup for #{domain} failed: #{message}")
+      @[Deprecated("Use `.from_os_error` instead")]
+      def self.new(error_code : Int32, message, domain)
+        from_os_error(message, Errno.new(error_code), domain: domain)
+      end
+
+      @[Deprecated("Use `.from_os_error` instead")]
+      def self.new(error_code : Int32, domain)
+        new error_code, nil, domain: domain
+      end
+
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
+        new(message, **opts)
+      end
+
+      def self.build_message(message, *, domain, **opts)
+        "Hostname lookup for #{domain} failed"
+      end
+
+      def self.os_error_message(os_error : Errno, *, type, service, protocol, **opts)
+        case os_error.value
+        when LibC::EAI_NONAME
+          "No address found"
+        when LibC::EAI_SOCKTYPE
+          "The requested socket type #{type} protocol #{protocol} is not supported"
+        when LibC::EAI_SERVICE
+          "The requested service #{service} is not available for the requested socket type #{type}"
+        else
+          {% unless flag?(:win32) %}
+            # There's no need for a special win32 branch because the os_error on Windows
+            # is of type WinError, which wouldn't match this overload anyways.
+
+            String.new(LibC.gai_strerror(os_error.value))
+          {% end %}
+        end
       end
     end
 
@@ -117,17 +149,21 @@ class Socket
         end
       {% end %}
 
-      case ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
-      when 0
-        # success
-      when LibC::EAI_NONAME
-        raise Error.new(ret, "No address found", domain)
-      when LibC::EAI_SOCKTYPE
-        raise Error.new(ret, "The requested socket type #{type} protocol #{protocol} is not supported", domain)
-      when LibC::EAI_SERVICE
-        raise Error.new(ret, "The requested service #{service} is not available for the requested socket type #{type}", domain)
-      else
-        raise Error.new(ret, domain)
+      ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
+      unless ret.zero?
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            raise Error.from_errno message, domain: domain
+          end
+        {% end %}
+
+        error = {% if flag?(:win32) %}
+                  WinError.new(ret.to_u32!)
+                {% else %}
+                  Errno.new(ret)
+                {% end %}
+        raise Error.from_os_error(nil, error, domain: domain, type: type, protocol: protocol, service: service)
       end
 
       begin
@@ -197,8 +233,17 @@ class Socket
     @ip_address : IPAddress?
 
     # Returns an `IPAddress` matching this addrinfo.
-    def ip_address
+    def ip_address : Socket::IPAddress
       @ip_address ||= IPAddress.from(to_unsafe, size)
+    end
+
+    def inspect(io : IO)
+      io << "Socket::Addrinfo("
+      io << ip_address << ", "
+      io << family << ", "
+      io << type << ", "
+      io << protocol
+      io << ")"
     end
 
     def to_unsafe

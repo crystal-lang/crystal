@@ -19,9 +19,13 @@ describe Symbol do
   end
 
   it "displays symbols that don't need quotes without quotes" do
-    a = %i(+ - * / == < <= > >= ! != =~ !~ & | ^ ~ ** >> << % [] <=> === []? []=)
-    b = "[:+, :-, :*, :/, :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~, :&, :|, :^, :~, :**, :>>, :<<, :%, :[], :<=>, :===, :[]?, :[]=]"
+    a = %i(+ - * / == < <= > >= ! != =~ !~ & | ^ ~ ** &** >> << % [] <=> === []? []=)
+    b = "[:+, :-, :*, :/, :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~, :&, :|, :^, :~, :**, :&**, :>>, :<<, :%, :[], :<=>, :===, :[]?, :[]=]"
     a.inspect.should eq(b)
+  end
+
+  it "displays the empty symbol with quotes" do
+    :"".inspect.should eq(%(:""))
   end
 
   describe "clone" do

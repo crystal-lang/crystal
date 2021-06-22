@@ -41,10 +41,10 @@ private def parse_scalar(ctx, node, type : T.class) forall T
       ctx.record_anchor(node, value)
       value
     else
-      node.raise "Expected #{T}, not #{node.value}"
+      node.raise "Expected #{T}, not #{node.value.inspect}"
     end
   else
-    node.raise "Expected #{T}, not #{node.class.name}"
+    node.raise "Expected scalar, not #{node.kind}"
   end
 end
 
@@ -72,7 +72,7 @@ def String.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     ctx.record_anchor(node, value)
     value
   else
-    node.raise "Expected String, not #{node.class.name}"
+    node.raise "Expected String, not #{node.kind}"
   end
 end
 
@@ -105,7 +105,7 @@ end
 
 def Array.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
-    node.raise "Expected sequence, not #{node.class}"
+    node.raise "Expected sequence, not #{node.kind}"
   end
 
   node.each do |value|
@@ -130,7 +130,7 @@ end
 
 def Set.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
-    node.raise "Expected sequence, not #{node.class}"
+    node.raise "Expected sequence, not #{node.kind}"
   end
 
   node.each do |value|
@@ -155,7 +155,7 @@ end
 
 def Hash.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Mapping)
-    node.raise "Expected mapping, not #{node.class}"
+    node.raise "Expected mapping, not #{node.kind}"
   end
 
   YAML::Schema::Core.each(node) do |key, value|
@@ -165,7 +165,7 @@ end
 
 def Tuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Sequence)
-    node.raise "Expected sequence, not #{node.class}"
+    node.raise "Expected sequence, not #{node.kind}"
   end
 
   if node.nodes.size != {{T.size}}
@@ -183,7 +183,7 @@ end
 
 def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   unless node.is_a?(YAML::Nodes::Mapping)
-    node.raise "Expected mapping, not #{node.class}"
+    node.raise "Expected mapping, not #{node.kind}"
   end
 
   {% begin %}
@@ -219,16 +219,45 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% end %}
 end
 
+# Reads a serialized enum member by name from *ctx* and *node*.
+#
+# See `#to_yaml` for reference.
+#
+# Raises `YAML::ParseException` if the deserialization fails.
 def Enum.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-  unless node.is_a?(YAML::Nodes::Scalar)
-    node.raise "Expected scalar, not #{node.class}"
+  {% if @type.annotation(Flags) %}
+    if node.is_a?(YAML::Nodes::Sequence)
+      value = {{ @type }}::None
+      node.each do |element|
+        string = parse_scalar(ctx, element, String)
+
+        value |= parse?(string) || element.raise "Unknown enum #{self} value: #{string.inspect}"
+      end
+
+      value
+    else
+      node.raise "Expected sequence, not #{node.kind}"
+    end
+  {% else %}
+    string = parse_scalar(ctx, node, String)
+    parse?(string) || node.raise "Unknown enum #{self} value: #{string.inspect}"
+  {% end %}
+end
+
+module Enum::ValueConverter(T)
+  def self.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    from_yaml(ctx, node)
   end
 
-  string = node.value
-  if value = string.to_i64?
-    from_value(value)
-  else
-    parse(string)
+  # Reads a serialized enum member by value from *ctx* and *node*.
+  #
+  # See `.to_yaml` for reference.
+  #
+  # Raises `YAML::ParseException` if the deserialization fails.
+  def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : T
+    value = parse_scalar ctx, node, Int64
+
+    T.from_value?(value) || node.raise "Unknown enum #{T} value: #{value}"
   end
 end
 
@@ -279,7 +308,7 @@ end
 struct Time::Format
   def from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
     unless node.is_a?(YAML::Nodes::Scalar)
-      node.raise "Expected scalar, not #{node.class}"
+      node.raise "Expected scalar, not #{node.kind}"
     end
 
     parse(node.value, Time::Location::UTC)
@@ -289,7 +318,7 @@ end
 module Time::EpochConverter
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
     unless node.is_a?(YAML::Nodes::Scalar)
-      node.raise "Expected scalar, not #{node.class}"
+      node.raise "Expected scalar, not #{node.kind}"
     end
 
     Time.unix(node.value.to_i)
@@ -299,7 +328,7 @@ end
 module Time::EpochMillisConverter
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Time
     unless node.is_a?(YAML::Nodes::Scalar)
-      node.raise "Expected scalar, not #{node.class}"
+      node.raise "Expected scalar, not #{node.kind}"
     end
 
     Time.unix_ms(node.value.to_i64)
@@ -309,7 +338,7 @@ end
 module YAML::ArrayConverter(Converter)
   def self.from_yaml(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : Array
     unless node.is_a?(YAML::Nodes::Sequence)
-      node.raise "Expected sequence, not #{node.class}"
+      node.raise "Expected sequence, not #{node.kind}"
     end
 
     ary = Array(typeof(Converter.from_yaml(ctx, node))).new
