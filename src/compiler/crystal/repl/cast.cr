@@ -56,6 +56,11 @@ class Crystal::Repl::Compiler
     put_reference_type_in_union(aligned_sizeof_type(to), node: nil)
   end
 
+  private def upcast_distinct(node : ASTNode, from : VirtualType, to : VirtualType)
+    # TODO: not tested
+    # Nothing to do
+  end
+
   private def upcast_distinct(node : ASTNode, from : ReferenceUnionType, to : VirtualType)
     # TODO: not tested
     # Nothing to do

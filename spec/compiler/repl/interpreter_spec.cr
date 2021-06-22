@@ -2950,6 +2950,25 @@ describe Crystal::Repl::Interpreter do
         b.call(41)
       CODE
     end
+
+    it "casts yield expression to block var type (not block arg type)" do
+      interpret(<<-CODE).should eq(42)
+        def foo
+          yield 42
+        end
+
+        def bar
+          foo do |x|
+            yield x
+            x = nil
+          end
+        end
+
+        a = 0
+        bar { |z| a = z }
+        a
+      CODE
+    end
   end
 
   context "casts" do

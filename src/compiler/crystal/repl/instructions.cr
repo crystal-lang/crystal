@@ -712,21 +712,23 @@ Crystal::Repl::Instructions =
 
     # <<< Local variables (2)
     set_local: {
-      operands:    [index : Int32, size : Int32],
-      pop_values:  [] of Nil,
-      push:        false,
-      code:        set_local_var(index, size),
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       set_local_var(index, size),
+      # TODO: how to know the local var name?
       disassemble: {
-        index: "#{node.is_a?(Var) ? node : node.not_nil!.as(Assign).target}@#{index}",
+        index: "#{node}@#{index}",
       },
     },
     get_local: {
-      operands:    [index : Int32, size : Int32],
-      pop_values:  [] of Nil,
-      push:        false,
-      code:        get_local_var(index, size),
+      operands:   [index : Int32, size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       get_local_var(index, size),
+      # TODO: how to know the local var name?
       disassemble: {
-        index: "#{node.not_nil!}@#{index}",
+        index: "#{node}@#{index}",
       },
     },
     # >>> Local variables (2)

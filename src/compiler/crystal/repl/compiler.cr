@@ -113,9 +113,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def compile_block(node : Block, target_def : Def) : Nil
     @compiling_block = CompilingBlock.new(node, target_def)
     node.args.reverse_each do |arg|
-      index = @local_vars.name_to_index(arg.name, @block_level)
+      block_var = node.vars.not_nil![arg.name]
+
+      index = @local_vars.name_to_index(block_var.name, @block_level)
       # Don't use location so we don't pry break on a block arg (useless)
-      set_local index, aligned_sizeof_type(arg), node: nil
+      set_local index, aligned_sizeof_type(block_var), node: nil
     end
 
     node.body.accept self
@@ -1301,6 +1303,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     request_value(arg)
 
+    # We need to cast the argument to the target_def variable
+    # corresponding to the argument. If for example we have this:
+    #
+    # ```
+    # def foo(x : Int32)
+    #   x = nil
+    # end
+    #
+    # foo(1)
+    # ```
+    #
+    # Then the actual type of `x` inside `foo` is (Int32 | Nil),
+    # and we must cast `1` to it.
     upcast arg, arg_type, target_def_var_type
   end
 
@@ -1606,7 +1621,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         request_value exp
       end
 
-      unpack_tuple exp, tuple_type, block.args.map(&.type)
+      # We need to cast to the block var, not arg
+      # (the var might have more types in it if it's assigned other values)
+      block_var_types = block.args.map do |arg|
+        block.vars.not_nil![arg.name].type
+      end
+
+      unpack_tuple exp, tuple_type, block_var_types
 
       # We need to discard the tuple value that comes before the unpacked values
       pop_obj = tuple_type
@@ -1616,7 +1637,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           dont_request_struct_pointer do
             request_value(exp)
           end
-          upcast exp, exp.type, block.args[i].type
+
+          # We need to cast to the block var, not arg
+          # (the var might have more types in it if it's assigned other values)
+          block_arg = block.args[i]
+          block_var = block.vars.not_nil![block_arg.name]
+
+          upcast exp, exp.type, block_var.type
         else
           discard_value(exp)
         end
