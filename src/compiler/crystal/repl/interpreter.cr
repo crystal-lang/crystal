@@ -331,6 +331,9 @@ class Crystal::Repl::Interpreter
 
     stack_top = interpreter.@stack_top
 
+    # Clear the proc's local vars area, just in case
+    stack_top.clear(compiled_def.local_vars.max_bytesize)
+
     compiled_def.def.args.each_with_index do |arg, i|
       args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
       stack_top += interpreter.aligned_sizeof_type(arg.type)

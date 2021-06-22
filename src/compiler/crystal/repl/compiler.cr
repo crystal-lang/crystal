@@ -1493,7 +1493,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @context.add_gc_reference(compiled_def)
 
     # Declare local variables for the newly compiled function
+
+    # First declare the proc arguments, so that the order matches the call
+    target_def.args.each do |arg|
+      var = target_def.vars.not_nil![arg.name]
+      var_type = var.type?
+      next unless var_type
+
+      compiled_def.local_vars.declare(arg.name, var_type)
+    end
+
+    # Then declare all variables
     target_def.vars.try &.each do |name, var|
+      # Skip arg because it was already declared above
+      next if target_def.args.any? { |arg| arg.name == name }
+
       var_type = var.type?
       next unless var_type
 
