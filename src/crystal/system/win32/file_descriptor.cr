@@ -161,7 +161,7 @@ module Crystal::System::FileDescriptor
       raise IO::Error.from_winerror "Error reading file", error
     end
 
-    bytes_read.to_i64!
+    bytes_read.to_i64
   end
 
   def self.from_stdio(fd)
