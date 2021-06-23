@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
@@ -1791,69 +1792,13 @@ describe "Array" do
     a.should eq([1, 2, 3, "hello"])
   end
 
-  describe "each iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
-    end
+  it_iterates "#each", [1, 2, 3], [1, 2, 3].each
+  it_iterates "#reverse_each", [3, 2, 1], [1, 2, 3].reverse_each
 
-    it "cycles" do
-      [1, 2, 3].cycle.first(8).join.should eq("12312312")
-    end
-  end
+  it_iterates "#cycle", [1, 2, 3, 1, 2, 3, 1, 2], [1, 2, 3].cycle, infinite: true
+  it_iterates "#cycle(limit)", [1, 2, 3, 1, 2, 3], [1, 2, 3].cycle(2), infinite: true
 
-  describe "each_index iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.each_index
-      iter.next.should eq(0)
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
-
-  describe "reverse_each iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
-
-  describe "cycle" do
-    it "cycles" do
-      a = [] of Int32
-      [1, 2, 3].cycle do |x|
-        a << x
-        break if a.size == 9
-      end
-      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles N times" do
-      a = [] of Int32
-      [1, 2, 3].cycle(2) do |x|
-        a << x
-      end
-      a.should eq([1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles with iterator" do
-      [1, 2, 3].cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
-    end
-
-    it "cycles with N and iterator" do
-      [1, 2, 3].cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
-    end
-  end
+  it_iterates "#each_index", [0, 1, 2], [1, 2, 3].each_index
 
   describe "transpose" do
     it "transposes elements" do

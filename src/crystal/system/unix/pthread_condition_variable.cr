@@ -18,17 +18,17 @@ class Thread
       LibC.pthread_condattr_destroy(pointerof(attributes))
     end
 
-    def signal
+    def signal : Nil
       ret = LibC.pthread_cond_signal(self)
       raise RuntimeError.from_os_error("pthread_cond_signal", Errno.new(ret)) unless ret == 0
     end
 
-    def broadcast
+    def broadcast : Nil
       ret = LibC.pthread_cond_broadcast(self)
       raise RuntimeError.from_os_error("pthread_cond_broadcast", Errno.new(ret)) unless ret == 0
     end
 
-    def wait(mutex : Thread::Mutex)
+    def wait(mutex : Thread::Mutex) : Nil
       ret = LibC.pthread_cond_wait(self, mutex)
       raise RuntimeError.from_os_error("pthread_cond_wait", Errno.new(ret)) unless ret == 0
     end

@@ -305,7 +305,10 @@ module Indexable(T)
   # 2 -- 3 --
   # ```
   def each_index(*, start : Int, count : Int)
-    raise ArgumentError.new "negative count: #{count}" if count < 0
+    # We cannot use `normalize_start_and_count` here because `self` may be
+    # mutated to contain enough elements during iteration even if there weren't
+    # initially `count` elements.
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     start += size if start < 0
     raise IndexError.new unless 0 <= start <= size
@@ -324,13 +327,13 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator : String | Char | Number = "")
+  def join(separator : String | Char | Number = "") : String
     return "" if empty?
 
     {% if T == String %}
       join_strings(separator)
     {% elsif String < T %}
-      if all?(&.is_a?(String))
+      if all?(String)
         join_strings(separator)
       else
         super(separator)
@@ -355,7 +358,7 @@ module Indexable(T)
 
       each_with_index do |elem, i|
         # elem is guaranteed to be a String, but the compiler doesn't know this
-        # if we enter via the all?(&.is_a?(String)) branch.
+        # if we enter via the all?(String) branch.
         elem = elem.to_s
 
         # Copy separator to buffer
@@ -388,7 +391,7 @@ module Indexable(T)
   # ```
   # {1, 2, 3}.to_a # => [1, 2, 3]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = Array(T).new(size)
     each { |e| ary << e }
     ary
@@ -400,7 +403,7 @@ module Indexable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
-  def empty?
+  def empty? : Bool
     size == 0
   end
 
@@ -483,7 +486,7 @@ module Indexable(T)
   # ([1, 2, 3]).last   # => 3
   # ([] of Int32).last # raises IndexError
   # ```
-  def last
+  def last : T
     last { raise IndexError.new }
   end
 
@@ -503,7 +506,7 @@ module Indexable(T)
   # ([1, 2, 3]).last?   # => 3
   # ([] of Int32).last? # => nil
   # ```
-  def last?
+  def last? : T?
     last { nil }
   end
 
@@ -529,7 +532,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1)
+  def rindex(value, offset = size - 1) : Int32?
     rindex(offset) { |elem| elem == value }
   end
 
@@ -570,7 +573,7 @@ module Indexable(T)
   end
 
   # :nodoc:
-  def sample(n : Int, random = Random::DEFAULT)
+  def sample(n : Int, random = Random::DEFAULT) : Array(T)
     return super unless n == 1
 
     if empty?
@@ -601,6 +604,31 @@ module Indexable(T)
     else
       yield
     end
+  end
+
+  private def normalize_start_and_count(start, count)
+    Indexable.normalize_start_and_count(start, count, size)
+  end
+
+  private def normalize_start_and_count(start, count)
+    Indexable.normalize_start_and_count(start, count, size) { yield }
+  end
+
+  # :nodoc:
+  def self.normalize_start_and_count(start, count, collection_size)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    start += collection_size if start < 0
+    if 0 <= start <= collection_size
+      count = {count, collection_size - start}.min
+      {start, count}
+    else
+      yield
+    end
+  end
+
+  # :nodoc:
+  def self.normalize_start_and_count(start, count, collection_size)
+    normalize_start_and_count(start, count, collection_size) { raise IndexError.new }
   end
 
   # :nodoc:
@@ -639,7 +667,7 @@ module Indexable(T)
   # a.permutations(0) # => [[]]
   # a.permutations(4) # => []
   # ```
-  def permutations(size : Int = self.size)
+  def permutations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_permutation(size) do |a|
       ary << a
@@ -783,7 +811,7 @@ module Indexable(T)
     CombinationIterator(self, T).new(self, size.to_i, check_reuse(reuse, size))
   end
 
-  def repeated_combinations(size : Int = self.size)
+  def repeated_combinations(size : Int = self.size) : Array(Array(T))
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a

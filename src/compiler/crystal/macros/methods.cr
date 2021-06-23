@@ -502,6 +502,8 @@ module Crystal
         end
       when "kind"
         SymbolLiteral.new(kind.to_s)
+      when "to_number"
+        MacroId.new(to_number.to_s)
       else
         super
       end
@@ -520,18 +522,17 @@ module Crystal
     end
 
     def int_bin_op(op, args)
-      if @kind == :f32 || @kind == :f64
-        raise "undefined method '#{op}' for float literal: #{self}"
-      end
-
-      NumberLiteral.new(bin_op(op, args) do |me, other|
-        other_kind = args.first.as(NumberLiteral).kind
-        if other_kind == :f32 || other_kind == :f64
+      result = bin_op(op, args) do |me, other|
+        if me.is_a?(Int) && other.is_a?(Int)
+          yield me, other
+        elsif me.is_a?(Float)
+          raise "undefined method '#{op}' for float literal: #{self}"
+        else
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
+      end
 
-        yield me.to_i, other.to_i
-      end)
+      NumberLiteral.new result
     end
 
     def bin_op(op, args)
@@ -2108,6 +2109,9 @@ module Crystal
           ArrayLiteral.map(@names) { |name| MacroId.new(name) }
         end
       when "global"
+        interpreter.report_warning_at(name_loc, "Deprecated Path#global. Use `#global?` instead")
+        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
+      when "global?"
         interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       when "resolve"
         interpret_argless_method(method, args) { interpreter.resolve(self) }
@@ -2158,17 +2162,6 @@ module Crystal
         interpret_argless_method(method, args) { obj }
       when "to"
         interpret_argless_method(method, args) { to }
-      else
-        super
-      end
-    end
-  end
-
-  class Splat
-    def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
-      case method
-      when "exp"
-        interpret_argless_method(method, args) { exp }
       else
         super
       end

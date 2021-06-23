@@ -15,12 +15,12 @@ class Thread
       LibC.pthread_mutexattr_destroy(pointerof(attributes))
     end
 
-    def lock
+    def lock : Nil
       ret = LibC.pthread_mutex_lock(self)
       raise RuntimeError.from_os_error("pthread_mutex_lock", Errno.new(ret)) unless ret == 0
     end
 
-    def try_lock
+    def try_lock : Bool
       case ret = Errno.new(LibC.pthread_mutex_trylock(self))
       when .none?
         true
@@ -31,7 +31,7 @@ class Thread
       end
     end
 
-    def unlock
+    def unlock : Nil
       ret = LibC.pthread_mutex_unlock(self)
       raise RuntimeError.from_os_error("pthread_mutex_unlock", Errno.new(ret)) unless ret == 0
     end

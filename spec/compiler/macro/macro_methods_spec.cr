@@ -213,6 +213,10 @@ module Crystal
         assert_macro "", "{{5 % 3}}", [] of ASTNode, "2"
       end
 
+      it "preserves integer size (#10713)" do
+        assert_macro "", "{{ 3000000000u64 % 2 }}", [] of ASTNode, "0_u64"
+      end
+
       it "executes &" do
         assert_macro "", "{{5 & 3}}", [] of ASTNode, "1"
       end
@@ -258,6 +262,12 @@ module Crystal
         assert_macro "", "{{1e-123_f32.kind}}", [] of ASTNode, ":f32"
         assert_macro "", "{{1.0.kind}}", [] of ASTNode, ":f64"
         assert_macro "", "{{0xde7ec7ab1e_u64.kind}}", [] of ASTNode, ":u64"
+      end
+
+      it "#to_number" do
+        assert_macro "", "{{ 4_u8.to_number }}", [] of ASTNode, "4"
+        assert_macro "", "{{ 2147483648.to_number }}", [] of ASTNode, "2147483648"
+        assert_macro "", "{{ 1_f32.to_number }}", [] of ASTNode, "1.0"
       end
     end
 
@@ -2513,6 +2523,22 @@ module Crystal
     end
 
     describe "path methods" do
+      it "executes names" do
+        assert_macro "x", %({{x.names}}), [Path.new("String")] of ASTNode, %([String])
+        assert_macro "x", %({{x.names}}), [Path.new(["Foo", "Bar"])] of ASTNode, %([Foo, Bar])
+      end
+
+      it "executes global?" do
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global?}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
+      # TODO: remove deprecated tests
+      it "executes global" do
+        assert_macro "x", %({{x.global}}), [Path.new("Foo")] of ASTNode, %(false)
+        assert_macro "x", %({{x.global}}), [Path.new("Foo", global: true)] of ASTNode, %(true)
+      end
+
       it "executes resolve" do
         assert_macro "x", %({{x.resolve}}), [Path.new("String")] of ASTNode, %(String)
 

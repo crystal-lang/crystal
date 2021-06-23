@@ -18,11 +18,11 @@ class File::Error < IO::Error
     end
   end
 
-  protected def self.build_message(message, *, file : String)
+  protected def self.build_message(message, *, file : String) : String
     "#{message}: '#{file.inspect_unquoted}'"
   end
 
-  protected def self.build_message(message, *, file : String, other : String)
+  protected def self.build_message(message, *, file : String, other : String) : String
     "#{message}: '#{file.inspect_unquoted}' -> '#{other.inspect_unquoted}'"
   end
 
