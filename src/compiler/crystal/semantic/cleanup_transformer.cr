@@ -211,7 +211,7 @@ module Crystal
 
     def has_enum_type?(type)
       if type.is_a?(UnionType)
-        type.union_types.any? &.is_a?(EnumType)
+        type.union_types.any?(EnumType)
       else
         type.is_a?(EnumType)
       end

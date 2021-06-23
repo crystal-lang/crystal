@@ -50,11 +50,11 @@ class JSON::Lexer::StringBased < JSON::Lexer
     @reader.pos
   end
 
-  def string_range(start_pos, end_pos)
+  def string_range(start_pos, end_pos) : String
     @reader.string.byte_slice(start_pos, end_pos - start_pos)
   end
 
-  def slice_range(start_pos, end_pos)
+  def slice_range(start_pos, end_pos) : Bytes
     @reader.string.to_slice[start_pos, end_pos - start_pos]
   end
 

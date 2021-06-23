@@ -6,12 +6,12 @@ module ECR
   DefaultBufferName = "__str__"
 
   # :nodoc:
-  def process_file(filename, buffer_name = DefaultBufferName)
+  def process_file(filename, buffer_name = DefaultBufferName) : String
     process_string File.read(filename), filename, buffer_name
   end
 
   # :nodoc:
-  def process_string(string, filename, buffer_name = DefaultBufferName)
+  def process_string(string, filename, buffer_name = DefaultBufferName) : String
     lexer = Lexer.new string
     token = lexer.next_token
 

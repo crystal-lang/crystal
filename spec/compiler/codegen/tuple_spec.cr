@@ -188,6 +188,13 @@ describe "Code gen: tuple" do
     run("#{range_new}; Tuple(Int32, Char)[3..2]?.nil?").to_b.should be_true
   end
 
+  it "codegens splats inside tuples" do
+    run("
+      x = {1, *{2, 4}, 8, *{16, 32, 64}, 128}
+      x[1] &+ x[2] &+ x[5] &+ x[7]
+      ").to_i.should eq(2 + 4 + 32 + 128)
+  end
+
   it "passed tuple to def" do
     run("
       def foo(t)

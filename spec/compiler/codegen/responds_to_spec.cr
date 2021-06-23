@@ -133,6 +133,40 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_false
   end
 
+  it "works with generic virtual superclass (1)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar.new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual superclass (2)" do
+    run(%(
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar(Int32).new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
   it "works with module" do
     run(%(
       module Moo
@@ -160,6 +194,42 @@ describe "Codegen: responds_to?" do
 
       moo = ptr.value
       moo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual module (1)" do
+    run(%(
+      module Foo(T)
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar.new.as(Foo(Int32))
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with generic virtual module (2) (#8334)" do
+    run(%(
+      module Foo(T)
+      end
+
+      class Bar(T)
+        include Foo(T)
+
+        def foo
+          1
+        end
+      end
+
+      foo = Bar(Int32).new.as(Foo(Int32))
+      foo.responds_to?(:foo)
       )).to_b.should be_true
   end
 
