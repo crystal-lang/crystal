@@ -13,7 +13,7 @@ class File::PReader < IO
     @pos = 0
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int64
     check_open
 
     count = slice.size
