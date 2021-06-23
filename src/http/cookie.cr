@@ -63,6 +63,8 @@ module HTTP
     # Sets the value of this cookie.
     #
     # Raises `IO::Error` if the value is invalid as per [RFC 6265 §4.1.1](https://tools.ietf.org/html/rfc6265#section-4.1.1).
+    # Contrary to the RFC, commonly used characters space (` `) and comma (`,`)
+    # are allowed and implicitly placed in quotes.
     def value=(value : String)
       validate_value(value)
       @value = value
@@ -71,8 +73,8 @@ module HTTP
     private def validate_value(value)
       value.each_byte do |byte|
         # valid characters for cookie-value per https://tools.ietf.org/html/rfc6265#section-4.1.1
-        # all printable ASCII characters except ' ', ',', '"', ';' and '\\'
-        unless (0x21...0x7f).includes?(byte) && byte != 0x22 && byte != 0x2c && byte != 0x3b && byte != 0x5c
+        # all printable ASCII characters except '"', ';' and '\\'
+        unless (0x20...0x7f).includes?(byte) && byte != 0x22 && byte != 0x3b && byte != 0x5c
           raise IO::Error.new("Invalid cookie value")
         end
       end
@@ -104,7 +106,11 @@ module HTTP
     def to_cookie_header(io)
       io << @name
       io << '='
+
+      quoted = @value.includes?(' ') || @value.includes?(',')
+      io << "\"" if quoted
       io << @value
+      io << "\"" if quoted
     end
 
     def expired? : Bool
@@ -120,7 +126,7 @@ module HTTP
       module Regex
         CookieName     = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
         CookieOctet    = /[!#-+\--:<-\[\]-~]/
-        CookieValue    = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
+        CookieValue    = /(?:"(?:#{CookieOctet}|[ ,])*"|#{CookieOctet}*)/
         CookiePair     = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
         DomainLabel    = /[A-Za-z0-9\-]+/
         DomainIp       = /(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
@@ -152,7 +158,7 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], pair["value"])
+          yield Cookie.new(pair["name"], unquote_value(pair["value"]))
         end
       end
 
@@ -173,7 +179,7 @@ module HTTP
                   end
 
         Cookie.new(
-          match["name"], match["value"],
+          match["name"], unquote_value(match["value"]),
           path: match["path"]?,
           expires: expires,
           domain: match["domain"]?,
@@ -182,6 +188,14 @@ module HTTP
           samesite: match["samesite"]?.try { |v| SameSite.parse? v },
           extension: match["extension"]?
         )
+      end
+
+      def unquote_value(value)
+        if value.starts_with?(%(")) && value.ends_with?(%("))
+          value.byte_slice(1, value.bytesize - 2)
+        else
+          value
+        end
       end
 
       private def parse_time(string)
