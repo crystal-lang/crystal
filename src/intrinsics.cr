@@ -82,7 +82,7 @@ lib LibIntrinsics
 end
 
 module Intrinsics
-  def self.debugtrap
+  macro debugtrap
     LibIntrinsics.debugtrap
   end
 
