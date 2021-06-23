@@ -143,10 +143,11 @@ class Crystal::Repl::Interpreter
     compiled_def = @compiled_def
 
     # Declare local variables
-    # TODO: reuse previously declared variables
 
     # Don't declare local variables again if we are in the middle of pry
     unless compiled_def
+      migrate_local_vars(@local_vars, @main_visitor.meta_vars)
+
       @main_visitor.meta_vars.each do |name, meta_var|
         meta_var_type = meta_var.type?
 
@@ -314,6 +315,85 @@ class Crystal::Repl::Interpreter
     end
 
     Value.new(@context, return_value, node_type)
+  end
+
+  private def migrate_local_vars(current_local_vars, next_meta_vars)
+    # Check if any existing local variable size changed.
+    # If so, it means we need to put them inside a union,
+    # or make the union bigger.
+    current_names = current_local_vars.names_at_block_level_zero
+    needs_migration = current_names.any? do |current_name|
+      current_type = current_local_vars.type(current_name, 0)
+      next_type = next_meta_vars[current_name].type
+      aligned_sizeof_type(current_type) != aligned_sizeof_type(next_type)
+    end
+
+    unless needs_migration
+      # Always start with fresh variables, because union types might have changed
+      @local_vars = LocalVars.new(@context)
+      return
+    end
+
+    current_memory = Pointer(UInt8).malloc(current_local_vars.current_bytesize)
+    @stack.copy_to(current_memory, current_local_vars.current_bytesize)
+
+    stack = @stack
+    current_names.each do |current_name|
+      current_type = current_local_vars.type(current_name, 0)
+      next_type = next_meta_vars[current_name].type
+      current_type_size = aligned_sizeof_type(current_type)
+      next_type_size = aligned_sizeof_type(next_type)
+
+      if current_type_size == next_type_size
+        # Doesn't need a migration, so we copy it as-is
+        stack.copy_from(current_memory, current_type_size)
+        stack += current_type_size
+        current_memory += current_type_size
+      else
+        # Needs a migration
+        case next_type
+        when MixedUnionType
+          case current_type
+          when PrimitiveType, NonGenericClassType, GenericClassInstanceType
+            stack.as(Int32*).value = type_id(current_type)
+            stack += type_id_bytesize
+            stack.copy_from(current_memory, current_type_size)
+            stack += next_type_size
+            current_memory += current_type_size
+          when ReferenceUnionType, NilableReferenceUnionType, VirtualType
+            reference = stack.as(UInt8**).value
+            if reference.null?
+              stack.clear(next_type_size)
+              stack += next_type_size
+            else
+              stack.as(Int32*).value = reference.as(Int32*).value
+              stack += type_id_bytesize
+              stack.copy_from(current_memory, current_type_size)
+              stack += next_type_size
+            end
+            current_memory += current_type_size
+          when MixedUnionType
+            # Copy the union type id
+            stack.as(Int32*).value = current_memory.as(Int32*).value
+            stack += type_id_bytesize
+            current_memory += type_id_bytesize
+            stack.copy_from(current_memory, current_type_size)
+            stack += next_type_size
+            current_memory += next_type_size - type_id_bytesize
+          else
+            # There might not be other cases to handle, but just in case...
+            raise "BUG: missing local var migration from #{current_type} to #{next_type} (#{current_type.class} to #{next_type.class})"
+          end
+        else
+          # I don't this a migration is ever needed unless the target type is a MixedUnionType,
+          # but just in case...
+          raise "BUG: missing local var migration from #{current_type} to #{next_type}"
+        end
+      end
+    end
+
+    # Need to start with fresh local variables
+    @local_vars = LocalVars.new(@context)
   end
 
   protected def self.ffi_closure_fun(cif, ret, args, user_data)
@@ -711,6 +791,10 @@ class Crystal::Repl::Interpreter
 
   def inner_sizeof_type(type : Type) : Int32
     @context.inner_sizeof_type(type)
+  end
+
+  private def type_id(type : Type) : Int32
+    @context.type_id(type)
   end
 
   private def type_from_type_id(id : Int32) : Type
