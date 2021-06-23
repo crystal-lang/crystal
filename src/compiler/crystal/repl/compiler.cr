@@ -107,7 +107,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def compile(node : ASTNode) : Nil
     node.accept self
 
-    leave aligned_sizeof_type(node), node: nil
+    # Use a dummy node so that pry stops at `end`
+    leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
   end
 
   def compile_block(node : Block, target_def : Def) : Nil
@@ -123,7 +124,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.body.accept self
     upcast node.body, node.body.type, node.type
 
-    leave aligned_sizeof_type(node), node: nil
+    # Use a dummy node so that pry stops at `end`
+    leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
   end
 
   def compile_def(node : Def) : Nil
@@ -142,7 +144,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node.body, node.body.type, final_type
     end
 
-    leave aligned_sizeof_type(final_type), node: nil
+    # Use a dummy node so that pry stops at `end`
+    leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     @instructions
   end
