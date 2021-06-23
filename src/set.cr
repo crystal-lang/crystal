@@ -186,7 +186,7 @@ struct Set(T)
   end
 
   # Yields each element of the set, and returns `nil`.
-  def each : Nil
+  def each(& : T ->) : Nil
     @hash.each_key do |key|
       yield key
     end

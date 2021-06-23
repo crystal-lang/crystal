@@ -103,7 +103,7 @@ module ENV
   #   puts "#{key} => #{value}"
   # end
   # ```
-  def self.each
+  def self.each(& : {String, String} ->)
     Crystal::System::Env.each do |key, value|
       yield({key, value})
     end

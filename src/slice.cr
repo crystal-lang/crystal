@@ -315,7 +315,7 @@ struct Slice(T)
   # slice.map! { |x| x * x }
   # slice # => Slice[1, 4, 9]
   # ```
-  def map!
+  def map!(& : T -> T)
     check_writable
 
     @pointer.map!(size) { |e| yield e }
@@ -328,7 +328,7 @@ struct Slice(T)
   # slice = Slice[1, 2.5, "a"]
   # slice.map &.to_s # => Slice["1", "2.5", "a"]
   # ```
-  def map(*, read_only = false, &block : T -> U) forall U
+  def map(*, read_only = false, & : T -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i] }
   end
 
@@ -336,7 +336,7 @@ struct Slice(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index!(offset = 0, &block : (T, Int32) -> T)
+  def map_with_index!(offset = 0, & : (T, Int32) -> T)
     check_writable
 
     @pointer.map_with_index!(size) { |e, i| yield e, offset + i }
@@ -347,7 +347,7 @@ struct Slice(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, *, read_only = false, &block : (T, Int32) -> U) forall U
+  def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
@@ -708,11 +708,7 @@ struct Slice(T)
   # b # => Slice[3, 2, 1]
   # a # => Slice[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Slice(T) forall U
-    {% unless U <= Int32? %}
-      {% raise "expected block to return Int32 or Nil, not #{U}" %}
-    {% end %}
-
+  def sort(&block : T, T -> Int32?) : Slice(T)
     dup.sort! &block
   end
 
