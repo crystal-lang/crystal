@@ -145,7 +145,9 @@ class Crystal::Repl::Compiler
       end
     when "tuple_indexer_known_index"
       obj = obj.not_nil!
-      obj.accept self
+      dont_request_struct_pointer do
+        obj.accept self
+      end
 
       return unless @wants_value
 

@@ -1763,6 +1763,23 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "puts struct pointer after tuple indexer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(1)
+        struct Point
+          def initialize(@x : Int64)
+          end
+
+          def x
+            @x
+          end
+        end
+      EXISTING
+        a = Point.new(1_u64)
+        t = {a}
+        t[0].x
+      CODE
+    end
+
     it "mutates call argument" do
       interpret(<<-CODE).should eq(9000)
         def foo(x)
@@ -3404,8 +3421,8 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
-  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
+  context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)
