@@ -37,13 +37,12 @@ class Crystal::Command
     if options.empty?
       repl.run
     else
-      options.each do |filename|
-        unless File.file?(filename)
-          error "File '#{filename}' doesn't exist"
-        end
+      filename = options.shift
+      unless File.file?(filename)
+        error "File '#{filename}' doesn't exist"
       end
 
-      repl.run_files(options)
+      repl.run_file(filename, options)
     end
   end
 end

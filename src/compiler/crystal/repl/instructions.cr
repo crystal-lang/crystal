@@ -1195,6 +1195,21 @@ Crystal::Repl::Instructions =
     },
     # >>> Proc (3)
 
+    # <<< ARGV (2)
+    argc_unsafe: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       true,
+      code:       argc_unsafe,
+    },
+    argv_unsafe: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       true,
+      code:       argv_unsafe,
+    },
+    # >>> ARGV (2)
+
     # <<< Overrides (6)
     interpreter_call_stack_unwind: {
       operands:   [] of Nil,

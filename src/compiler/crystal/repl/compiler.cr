@@ -707,6 +707,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if const = node.target_const
       if const.value.simple_literal?
         const.value.accept self
+      elsif const == @context.program.argc
+        argc_unsafe(node: node)
+      elsif const == @context.program.argv
+        argv_unsafe(node: node)
       else
         index = initialize_const_if_needed(const)
         if @wants_struct_pointer

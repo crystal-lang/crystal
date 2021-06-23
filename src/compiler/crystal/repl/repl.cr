@@ -95,12 +95,14 @@ class Crystal::Repl
     end
   end
 
-  def run_files(filenames)
+  def run_file(filename, argv)
+    @interpreter.argv = argv
+
     prelude_node = parse_prelude
 
-    other_nodes = filenames.map { |filename| parse_file(filename) }
+    other_node = parse_file(filename)
 
-    exps = Expressions.new([prelude_node, Expressions.new(other_nodes)] of ASTNode)
+    exps = Expressions.new([prelude_node, other_node] of ASTNode)
     node, main_visitor = semantic(exps)
 
     begin

@@ -47,6 +47,7 @@ class Crystal::Repl::Interpreter
   @stack_top : Pointer(UInt8)
 
   property decompile = true
+  property argv : Array(String)
 
   class ClosureContext
     getter interpreter : Interpreter
@@ -58,6 +59,7 @@ class Crystal::Repl::Interpreter
 
   def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
+    @argv = [] of String
 
     @instructions = [] of Instruction
     @nodes = {} of Int32 => ASTNode
@@ -86,6 +88,7 @@ class Crystal::Repl::Interpreter
   def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location?, stack : Pointer(UInt8))
     @context = interpreter.@context
     @local_vars = compiled_def.local_vars.dup
+    @argv = interpreter.@argv
 
     @instructions = [] of Instruction
     @nodes = {} of Int32 => ASTNode
@@ -811,6 +814,26 @@ class Crystal::Repl::Interpreter
 
   private def program
     @context.program
+  end
+
+  private def argc_unsafe
+    argv.size + 1
+  end
+
+  @argv_unsafe : Pointer(Pointer(UInt8))?
+
+  private def argv_unsafe
+    @argv_unsafe ||= begin
+      pointers = Pointer(Pointer(UInt8)).malloc(argc_unsafe)
+      # The program name
+      pointers[0] = "icr".to_unsafe
+
+      argv.each_with_index do |arg, i|
+        pointers[i + 1] = arg.to_unsafe
+      end
+
+      pointers
+    end
   end
 
   private def pry(ip, instructions, nodes, stack_bottom, stack)
