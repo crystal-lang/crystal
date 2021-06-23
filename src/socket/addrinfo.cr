@@ -66,7 +66,7 @@ class Socket
               if value.is_a?(Socket::ConnectError)
                 raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
               else
-                array = uninitialized StaticArray(UInt8, 0)
+                array = StaticArray(UInt8, 0).new(0)
 
                 raise value
               end
