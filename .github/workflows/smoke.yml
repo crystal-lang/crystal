@@ -50,12 +50,9 @@ jobs:
           - x86_64-netbsd
           - x86_64-openbsd
 
-    env:
-      TARGET: ${{ matrix.target }}
-
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v2
 
       - name: Run smoke test
-        run: bin/ci with_build_env make smoke_test target=$TARGET
+        run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}
