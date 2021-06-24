@@ -1,3 +1,5 @@
+require "readline"
+
 class Crystal::Repl
   def initialize(decompile : Bool, decompile_defs : Bool, trace : Bool, stats : Bool)
     @program = Program.new
@@ -18,12 +20,15 @@ class Crystal::Repl
     load_prelude
 
     while true
-      print "icr:#{@line_number}:#{@nest}"
-      print(@incomplete ? '*' : '>')
-      print ' '
-      print "  " * @nest if @nest > 0
+      prompt = String.build do |io|
+        io.print "icr:#{@line_number}:#{@nest}"
+        io.print(@incomplete ? '*' : '>')
+        io.print ' '
+        io.print "  " * @nest if @nest > 0
+      end
 
-      line = gets(chomp: false)
+      line = Readline.readline(prompt, add_history: true)
+
       break unless line
       break if line.strip.in?("exit", "quit")
 
