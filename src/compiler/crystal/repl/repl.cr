@@ -73,7 +73,9 @@ class Crystal::Repl
       end
 
       begin
-        value = @interpreter.interpret(node)
+        node = @program.semantic(node, main_visitor: @main_visitor)
+        value = @interpreter.interpret_with_main_already_visited(node, @main_visitor)
+
         print "=> "
         puts value
       rescue ex : Crystal::CodeError
