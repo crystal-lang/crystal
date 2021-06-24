@@ -18,7 +18,7 @@ class Crystal::Program
   # Runs semantic analysis on the given node, returning a node
   # that's typed. In the process types and methods are defined in
   # this program.
-  def semantic(node : ASTNode, cleanup = true) : ASTNode
+  def semantic(node : ASTNode, cleanup = true, main_visitor : MainVisitor = MainVisitor.new(self)) : ASTNode
     node, processor = top_level_semantic(node)
 
     @progress_tracker.stage("Semantic (ivars initializers)") do
@@ -36,7 +36,7 @@ class Crystal::Program
     processor.check_non_nilable_class_vars_without_initializers
 
     result = @progress_tracker.stage("Semantic (main)") do
-      visit_main(node, process_finished_hooks: true, cleanup: cleanup)
+      visit_main(node, process_finished_hooks: true, cleanup: cleanup, visitor: main_visitor)
     end
 
     @progress_tracker.stage("Semantic (cleanup)") do

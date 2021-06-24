@@ -9,6 +9,7 @@ class Crystal::Repl
     @nest = 0
     @incomplete = false
     @line_number = 1
+    @main_visitor = MainVisitor.new(@program)
     @interpreter = Interpreter.new(@context)
     @buffer = ""
   end
@@ -103,10 +104,10 @@ class Crystal::Repl
     other_node = parse_file(filename)
 
     exps = Expressions.new([prelude_node, other_node] of ASTNode)
-    node, main_visitor = semantic(exps)
+    node = @program.semantic(exps, main_visitor: @main_visitor)
 
     begin
-      @interpreter.interpret_with_main_already_visited(exps, main_visitor)
+      @interpreter.interpret_with_main_already_visited(exps, @main_visitor)
     rescue ex : Crystal::CodeError
       ex.color = true
       ex.error_trace = true
@@ -119,7 +120,7 @@ class Crystal::Repl
   end
 
   private def load_prelude
-    semantic(parse_prelude)
+    @program.semantic(parse_prelude, main_visitor: @main_visitor)
   end
 
   private def parse_prelude
@@ -133,30 +134,5 @@ class Crystal::Repl
     parser.filename = filename
     parsed_nodes = parser.parse
     @program.normalize(parsed_nodes, inside_exp: false)
-  end
-
-  # TODO: this is more or less a copy of semantic.cr
-  private def semantic(node : ASTNode, cleanup = true) : {ASTNode, MainVisitor}
-    node, processor = @program.top_level_semantic(node)
-
-    visitor = InstanceVarsInitializerVisitor.new(@program)
-    @program.visit_with_finished_hooks(node, visitor)
-    visitor.finish
-
-    @program.visit_class_vars_initializers(node)
-
-    # Check that class vars without an initializer are nilable,
-    # give an error otherwise
-    processor.check_non_nilable_class_vars_without_initializers
-
-    visitor = MainVisitor.new(@program)
-    result = @program.visit_main(node, visitor: visitor, process_finished_hooks: true, cleanup: cleanup)
-
-    @program.cleanup_types
-    @program.cleanup_files
-
-    RecursiveStructChecker.new(@program).run
-
-    {result, visitor}
   end
 end
