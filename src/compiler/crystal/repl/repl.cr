@@ -106,21 +106,25 @@ class Crystal::Repl
     exps = Expressions.new([prelude_node, other_node] of ASTNode)
     node = @program.semantic(exps, main_visitor: @main_visitor)
 
-    begin
-      @interpreter.interpret_with_main_already_visited(exps, @main_visitor)
-    rescue ex : Crystal::CodeError
-      ex.color = true
-      ex.error_trace = true
-      puts ex
-      exit 1
-    rescue ex : Exception
-      ex.inspect_with_backtrace(STDOUT)
-      exit 1
-    end
+    interpret_with_main_already_visited(node)
   end
 
   private def load_prelude
-    @program.semantic(parse_prelude, main_visitor: @main_visitor)
+    node = @program.semantic(parse_prelude, main_visitor: @main_visitor)
+
+    interpret_with_main_already_visited(node)
+  end
+
+  private def interpret_with_main_already_visited(node : ASTNode)
+    @interpreter.interpret_with_main_already_visited(node, @main_visitor)
+  rescue ex : Crystal::CodeError
+    ex.color = true
+    ex.error_trace = true
+    puts ex
+    exit 1
+  rescue ex : Exception
+    ex.inspect_with_backtrace(STDOUT)
+    exit 1
   end
 
   private def parse_prelude
