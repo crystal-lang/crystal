@@ -34,79 +34,28 @@ env:
   ARCH_CMD: linux64
 
 jobs:
-  aarch64-darwin:
-    env:
-      TARGET: aarch64-darwin
+  smoke-test:
+    name: ${{ matrix.target }}
     runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
 
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - aarch64-darwin
+          - arm-linux-gnueabihf
+          - i386-linux-musl
+          - x86_64-dragonfly
+          - x86_64-freebsd
+          - x86_64-netbsd
+          - x86_64-openbsd
 
-  arm-linux-gnueabihf:
     env:
-      TARGET: arm-linux-gnueabihf
-    runs-on: ubuntu-latest
+      TARGET: ${{ matrix.target }}
+
     steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
+      - name: Download Crystal source
+        uses: actions/checkout@v2
 
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
-
-  i386-linux-musl:
-    env:
-      TARGET: i386-linux-musl
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
-
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
-
-  x86_64-dragonfly:
-    env:
-      TARGET: x86_64-dragonfly
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
-
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
-
-  x86_64-freebsd:
-    env:
-      TARGET: x86_64-freebsd
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
-
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
-
-  x86_64-netbsd:
-    env:
-      TARGET: x86_64-netbsd
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
-
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
-
-  x86_64-openbsd:
-    env:
-      TARGET: x86_64-openbsd
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Crystal source
-      uses: actions/checkout@v2
-
-    - name: Build smoke test
-      run: bin/ci with_build_env make smoke_test target=$TARGET
+      - name: Run smoke test
+        run: bin/ci with_build_env make smoke_test target=$TARGET
