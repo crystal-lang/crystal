@@ -272,6 +272,10 @@ module Crystal::Macros
     # highlight this node in the error message.
     def raise(message) : NoReturn
     end
+
+    # Returns `true` if this node is a `NilLiteral` or `Nop`.
+    def __crystal_pseudo_nil? : BoolLiteral
+    end
   end
 
   # The empty node. Similar to a `NilLiteral` but its textual representation
