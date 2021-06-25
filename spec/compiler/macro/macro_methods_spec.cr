@@ -140,6 +140,20 @@ module Crystal
           assert_macro "x", "{{x.class_name}}", [ArrayLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "\"ArrayLiteral\""
         end
       end
+
+      describe "#nil?" do
+        it "NumberLiteral" do
+          assert_macro "", "{{ 1.nil? }}", [] of ASTNode, "false"
+        end
+
+        it "NilLiteral" do
+          assert_macro "", "{{ nil.nil? }}", [] of ASTNode, "true"
+        end
+
+        it "Nop" do
+          assert_macro "x", "{{ x.nil? }}", [Nop.new] of ASTNode, "true"
+        end
+      end
     end
 
     describe "number methods" do
