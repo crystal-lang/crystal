@@ -86,7 +86,7 @@ module Crystal::Repl::SyntaxHighlighter
                :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
                :with, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
-               :annotation, :verbatim
+               :annotation, :verbatim, "raise", "loop"
             highlight token, KEYWORD_COLOR, io
           when :true, :false, :nil
             highlight token, TRUE_FALSE_NIL_COLOR, io
