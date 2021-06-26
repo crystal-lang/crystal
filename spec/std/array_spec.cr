@@ -1498,6 +1498,33 @@ describe "Array" do
       a.@offset_to_buffer.should eq(0)
       a.@buffer.should eq(buffer)
     end
+
+    it "repeated unshift/shift does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.shift
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/pop does not exhaust memory (#10748)" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.pop
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/clear does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.clear
+      end
+      a.@capacity.should eq(3)
+    end
   end
 
   it "does update" do
