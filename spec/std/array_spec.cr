@@ -1501,7 +1501,7 @@ describe "Array" do
 
     it "repeated unshift/shift does not exhaust memory" do
       a = [] of Int32
-      3.times do
+      10.times do
         a.unshift(1)
         a.shift
       end
@@ -1510,7 +1510,7 @@ describe "Array" do
 
     it "repeated unshift/pop does not exhaust memory (#10748)" do
       a = [] of Int32
-      10000.times do
+      10.times do
         a.unshift(1)
         a.pop
       end
@@ -1519,7 +1519,7 @@ describe "Array" do
 
     it "repeated unshift/clear does not exhaust memory" do
       a = [] of Int32
-      10000.times do
+      10.times do
         a.unshift(1)
         a.clear
       end
