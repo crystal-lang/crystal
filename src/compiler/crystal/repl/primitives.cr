@@ -309,6 +309,18 @@ class Crystal::Repl::Compiler
       interpreter_raise_without_backtrace(node: node)
     when "interpreter_caller"
       interpreter_caller(node: node)
+    when "interpreter_current_fiber"
+      interpreter_current_fiber(node: node)
+    when "interpreter_spawn"
+      node.args.each do |arg|
+        request_value(arg)
+      end
+      interpreter_spawn(node: node)
+    when "interpreter_fiber_swapcontext"
+      node.args.each do |arg|
+        request_value(arg)
+      end
+      interpreter_fiber_swapcontext(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
       interpreter_intrinsics_memcpy(node: node)

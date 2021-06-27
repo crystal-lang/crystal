@@ -118,7 +118,16 @@ class Fiber
   # :nodoc:
   def initialize(@stack : Void*, thread)
     @proc = Proc(Void).new { }
-    @context = Context.new(_fiber_get_stack_top)
+
+    # TODO: should creating a new context for the main fiber also be platform specific?
+    # It's the same for all platforms except for the interpreted mode.
+    @context =
+      {% if flag?(:interpreted) %}
+        # In interpreted mode the stack_top variable actually points to a fiber
+        Context.new(Crystal::Interpreter.current_fiber)
+      {% else %}
+        Context.new(_fiber_get_stack_top)
+      {% end %}
     thread.gc_thread_handler, @stack_bottom = GC.current_thread_stack_bottom
     @name = "main"
     @current_thread.set(thread)

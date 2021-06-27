@@ -836,6 +836,61 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private def spawn_interpreter(fiber : Void*, fiber_main : Void*) : Void*
+    spawned_fiber = Fiber.new do
+      # `fiber_main` is the pointer type of a `Proc(Fiber, Nil)`.
+      # `fiber` is the fiber that we need to pass `fiber_main` to kick off the fiber.
+      #
+      # To make it work, we construct a call like this:
+      #
+      # ```
+      # fiber_main.call(fiber)
+      # ```
+
+      fiber_type = @context.program.types["Fiber"]
+      nil_type = @context.program.nil_type
+      proc_type = @context.program.proc_of([fiber_type, nil_type] of Type)
+
+      meta_vars = MetaVars.new
+      meta_vars["fiber_main"] = MetaVar.new("fiber_main", proc_type)
+      meta_vars["fiber"] = MetaVar.new("fiber", fiber_type)
+
+      call = Call.new(Var.new("fiber_main"), "call", Var.new("fiber"))
+      main_visitor = MainVisitor.new(@context.program, vars: meta_vars, meta_vars: meta_vars)
+      call.accept main_visitor
+
+      interpreter = Interpreter.new(@context, meta_vars: meta_vars)
+
+      # We also need to put the data for `fiber_main` and `fiber` on the stack.
+      stack = interpreter.stack
+
+      # Here comes `fiber_main`
+      # Put the proc pointer first
+      stack.as(Void**).value = fiber_main
+      stack += sizeof(Void*)
+
+      # Put the closure data, which is nil
+      stack.as(Void**).value = Pointer(Void).null
+      stack += sizeof(Void*)
+
+      # Now comes `fiber`
+      stack.as(Void**).value = fiber
+
+      interpreter.interpret_with_main_already_visited(call, main_visitor)
+      nil
+    end
+    spawned_fiber.as(Void*)
+  end
+
+  private def swapcontext(current_context : Void*, new_context : Void*)
+    # current_fiber = current_context.as(Fiber*).value
+    new_fiber = new_context.as(Fiber*).value
+
+    # We directly resume the next fiber.
+    # TODO: is this okay? We totally ignore the scheduler here!
+    new_fiber.resume
+  end
+
   private def pry(ip, instructions, nodes, stack_bottom, stack)
     call_frame = @call_stack.last
     compiled_def = call_frame.compiled_def

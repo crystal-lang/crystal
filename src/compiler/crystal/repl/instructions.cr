@@ -1236,6 +1236,24 @@ Crystal::Repl::Instructions =
         raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
       end,
     },
+    interpreter_current_fiber: {
+      operands:   [] of Nil,
+      pop_values: [] of Nil,
+      push:       true,
+      code:       Fiber.current.as(Void*),
+    },
+    interpreter_spawn: {
+      operands:   [] of Nil,
+      pop_values: [fiber : Void*, fiber_main : Void*] of Nil,
+      push:       true,
+      code:       spawn_interpreter(fiber, fiber_main),
+    },
+    interpreter_fiber_swapcontext: {
+      operands:   [] of Nil,
+      pop_values: [current_context : Void*, new_context : Void*] of Nil,
+      push:       false,
+      code:       swapcontext(current_context, new_context),
+    },
     # TODO: maybe avoid having one instruction per LLVM intrinsic (but how to do this efficiently?)
     # At least memcpy, memmove and memset could be a single instruction with an enum value
     interpreter_intrinsics_memcpy: {

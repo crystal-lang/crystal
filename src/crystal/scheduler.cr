@@ -87,8 +87,6 @@ class Crystal::Scheduler
     @lock.sync { @runnables.concat fibers }
   end
 
-  # TODO: maybe this is the single method that we need to override in the interpreter.
-  # It would switch from one interpreter to the other. Not sure!
   protected def resume(fiber : Fiber) : Nil
     validate_resumable(fiber)
     {% if flag?(:preview_mt) %}
@@ -100,10 +98,14 @@ class Crystal::Scheduler
 
     current, @current = @current, fiber
 
-    # TODO: this is obviously wrong for interpreted
-    {% unless flag?(:interpreted) %}
-      Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
+    {% if flag?(:interpreted) %}
+      # TODO: ideally we could set this in the interprter if the
+      # @context had a pointer back to the fiber.
+      # I also wonder why this isn't done always like that instead of in asm.
+      current.@context.resumable = 1
     {% end %}
+
+    Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
     {% if flag?(:preview_mt) %}
       GC.unlock_read
