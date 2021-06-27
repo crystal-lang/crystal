@@ -945,6 +945,28 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "pointerof read instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(2)
+        class Foo
+          def initialize(@x : Int32)
+          end
+
+          def x
+            @x
+          end
+
+          def x_ptr
+            pointerof(@x)
+          end
+        end
+      EXISTING
+        foo = Foo.new(1)
+        ptr = pointerof(foo.@x)
+        ptr.value = 2
+        foo.x
+      CODE
+    end
+
     it "interprets pointer set and get (union type)" do
       interpret(<<-CODE).should eq(10)
         ptr = Pointer(Int32 | Bool).malloc(1_u64)

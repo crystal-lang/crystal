@@ -782,6 +782,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compile_pointerof_ivar(node, exp.name)
     when ClassVar
       compile_pointerof_class_var(node, exp)
+    when ReadInstanceVar
+      # TODO: check struct
+      exp.obj.accept self
+
+      type = exp.obj.type
+
+      if type.passed_by_value?
+        node.raise "BUG: missing interpret for PointerOf with exp #{exp.class} for a pass-by-value"
+      end
+
+      ivar_offset = ivar_offset(type, exp.name)
+      ivar_size = inner_sizeof_type(type.lookup_instance_var(exp.name))
+
+      # At this point, at least for class types, we have a pointer on the stack,
+      # so we just need to offset it
+      put_i32 ivar_offset, node: nil
+      pointer_add 1, node: node
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
@@ -1890,35 +1907,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     put_i64 0_i64, node: node
   end
 
-  private def put_i8(value : Int8, *, node : ASTNode)
+  private def put_i8(value : Int8, *, node : ASTNode?)
     put_i64 value.to_i64!, node: node
   end
 
-  private def put_u8(value : UInt8, *, node : ASTNode)
+  private def put_u8(value : UInt8, *, node : ASTNode?)
     put_i64 value.to_u64!.to_i64!, node: node
   end
 
-  private def put_i16(value : Int16, *, node : ASTNode)
+  private def put_i16(value : Int16, *, node : ASTNode?)
     put_i64 value.to_i64!, node: node
   end
 
-  private def put_u16(value : UInt16, *, node : ASTNode)
+  private def put_u16(value : UInt16, *, node : ASTNode?)
     put_i64 value.to_u64!.to_i64!, node: node
   end
 
-  private def put_i32(value : Int32, *, node : ASTNode)
+  private def put_i32(value : Int32, *, node : ASTNode?)
     put_i64 value.to_i64!, node: node
   end
 
-  private def put_u32(value : UInt32, *, node : ASTNode)
+  private def put_u32(value : UInt32, *, node : ASTNode?)
     put_i64 value.to_u64!.to_i64!, node: node
   end
 
-  private def put_u64(value : UInt64, *, node : ASTNode)
+  private def put_u64(value : UInt64, *, node : ASTNode?)
     put_i64 value.to_i64!, node: node
   end
 
-  private def put_type(type : Type, *, node : ASTNode)
+  private def put_type(type : Type, *, node : ASTNode?)
     put_i32 type_id(type), node: node
   end
 
