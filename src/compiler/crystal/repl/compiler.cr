@@ -527,17 +527,33 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ReadInstanceVar)
-    raise_if_wants_struct_pointer(node)
+    if @wants_struct_pointer
+      # Remember to pad the pointer because it will be popped later on
+      push_zeros(aligned_sizeof_type(node), node: nil)
+    end
 
     # TODO: check struct
-    node.obj.accept self
+    dont_request_struct_pointer do
+      node.obj.accept self
+    end
 
     type = node.obj.type
+
+    if type.passed_by_value?
+      node.raise "BUG: missing interpret for ReadInstanceVar with pass-by-value"
+    end
 
     ivar_offset = ivar_offset(type, node.name)
     ivar_size = inner_sizeof_type(type.lookup_instance_var(node.name))
 
-    get_class_ivar ivar_offset, ivar_size, node: node
+    if @wants_struct_pointer
+      # At this point, at least for class types, we have a pointer on the stack,
+      # so we just need to offset it
+      put_i32 ivar_offset, node: nil
+      pointer_add 1, node: node
+    else
+      get_class_ivar ivar_offset, ivar_size, node: node
+    end
     false
   end
 

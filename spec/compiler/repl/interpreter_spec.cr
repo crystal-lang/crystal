@@ -1785,6 +1785,34 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does call on read instance var that's a struct, takes a pointer to instance var" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 42
+          end
+
+          def x
+            @x
+          end
+
+          def to_unsafe
+            pointerof(@x)
+          end
+        end
+
+        class Bar
+          def initialize(@foo : Foo)
+          end
+        end
+      EXISTING
+        foo = Foo.new
+        bar = Bar.new(foo)
+        c = bar.@foo.to_unsafe
+        c.value
+      CODE
+    end
+
     it "puts struct pointer after tuple indexer" do
       interpret(<<-EXISTING, <<-CODE).should eq(1)
         struct Point
