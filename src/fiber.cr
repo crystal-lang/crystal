@@ -87,7 +87,13 @@ class Fiber
   # *name* is an optional and used only as an internal reference.
   def initialize(@name : String? = nil, &@proc : ->)
     @context = Context.new
-    @stack, @stack_bottom = Fiber.stack_pool.checkout
+    @stack, @stack_bottom =
+      {% if flag?(:interpreted) %}
+        # For interpreted mode we don't need a new stack, the stack is held by the interpreter
+        {Pointer(Void).null, Pointer(Void).null}
+      {% else %}
+        Fiber.stack_pool.checkout
+      {% end %}
 
     fiber_main = ->(f : Fiber) { f.run }
 
@@ -149,6 +155,8 @@ class Fiber
   ensure
     {% if flag?(:preview_mt) %}
       Crystal::Scheduler.enqueue_free_stack @stack
+    {% elsif flag?(:interpreted) %}
+      # For interpreted mode we don't need a new stack, the stack is held by the interpreter
     {% else %}
       Fiber.stack_pool.release(@stack)
     {% end %}
