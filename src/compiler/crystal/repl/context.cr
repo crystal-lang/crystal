@@ -74,6 +74,14 @@ class Crystal::Repl::Context
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
     @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
 
+    # The set of all known interpreters.
+    # This set is useful because when we pry inside one interpreter we set
+    # all interpreter to that pry mode, so that if a `next` jumps to another
+    # fiber or to the C callback handling routine, they are already in pry
+    # mode. Existing pry also exists pry from all interpreters.
+    @interpreters = Set(Interpreter).new
+    @interpreters.compare_by_identity
+
     @type_instance_var_initializers = {} of Type => Array(CompiledDef)
 
     @constants = Constants.new(self)
@@ -82,6 +90,28 @@ class Crystal::Repl::Context
 
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
+  end
+
+  def register_interpreter(interpreter : Interpreter, &)
+    register_interpreter(interpreter)
+    yield
+  ensure
+    deregister_interpreter(interpreter)
+  end
+
+  def register_interpreter(interpreter : Interpreter)
+    @interpreters.add(interpreter)
+  end
+
+  def deregister_interpreter(interpreter : Interpreter)
+    @interpreters.delete(interpreter)
+  end
+
+  # Sets the given pry mode to all known interpreters.
+  def pry=(pry : Bool)
+    @interpreters.each do |interpreter|
+      interpreter.pry_non_recursive = pry
+    end
   end
 
   def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)

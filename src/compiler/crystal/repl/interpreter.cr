@@ -38,6 +38,7 @@ class Crystal::Repl::Interpreter
     # go back to just before that frame when a `return` happens.
     real_frame_index : Int32
 
+  getter context : Context
   getter? pry : Bool
   @pry_node : ASTNode?
   @pry_max_target_frame : Int32?
@@ -86,7 +87,7 @@ class Crystal::Repl::Interpreter
   end
 
   def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location?, stack : Pointer(UInt8))
-    @context = interpreter.@context
+    @context = interpreter.context
     @local_vars = compiled_def.local_vars.dup
     @argv = interpreter.@argv
 
@@ -109,7 +110,7 @@ class Crystal::Repl::Interpreter
     end
 
     @main_visitor = MainVisitor.new(
-      interpreter.@context.program,
+      interpreter.context.program,
       vars: meta_vars,
       meta_vars: meta_vars,
       typed_def: compiled_def.def)
@@ -423,14 +424,12 @@ class Crystal::Repl::Interpreter
     end
 
     sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
-    sub_interpreter.parent = interpreter
-    sub_interpreter.pry = interpreter.pry?
 
-    value = sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
+    value = interpreter.context.register_interpreter(sub_interpreter) do
+      sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
+    end
+
     value.copy_to(ret.as(UInt8*))
-  end
-
-  def parent=(@parent : Interpreter)
   end
 
   private def current_local_vars
@@ -715,15 +714,16 @@ class Crystal::Repl::Interpreter
   end
 
   def pry=(pry)
+    @context.pry = pry
+  end
+
+  def pry_non_recursive=(pry)
     @pry = pry
 
     unless pry
       @pry_node = nil
       @pry_max_target_frame = nil
     end
-
-    parent = @parent
-    parent.pry = pry if parent
   end
 
   private macro next_instruction(t)
@@ -876,7 +876,10 @@ class Crystal::Repl::Interpreter
       # Now comes `fiber`
       stack.as(Void**).value = fiber
 
-      interpreter.interpret_with_main_already_visited(call, main_visitor)
+      @context.register_interpreter(interpreter) do
+        interpreter.interpret_with_main_already_visited(call, main_visitor)
+      end
+
       nil
     end
     spawned_fiber.as(Void*)

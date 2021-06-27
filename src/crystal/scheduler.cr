@@ -92,6 +92,8 @@ class Crystal::Scheduler
     {% if flag?(:preview_mt) %}
       set_current_thread(fiber)
       GC.lock_read
+    {% elsif flag?(:interpreted) %}
+      # No need to change the stack bottom!
     {% else %}
       GC.set_stackbottom(fiber.@stack_bottom)
     {% end %}
