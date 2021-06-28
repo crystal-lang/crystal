@@ -1099,7 +1099,7 @@ module Enumerable(T)
   end
 
   # Like `minmax` but returns `{nil, nil}` if the collection is empty.
-  def minmax? : {T?, T?}
+  def minmax? : {T, T} | {Nil, Nil}
     minmax_by? &.itself
   end
 
