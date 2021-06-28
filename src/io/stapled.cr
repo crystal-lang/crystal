@@ -30,7 +30,7 @@ class IO::Stapled < IO
   end
 
   # Reads a slice from `reader`.
-  def read(slice : Bytes) : Int32
+  def read(slice : Bytes)
     check_open
 
     @reader.read(slice)

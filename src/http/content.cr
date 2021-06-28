@@ -26,7 +26,7 @@ module HTTP
   class FixedLengthContent < IO::Sized
     include Content
 
-    def read(slice : Bytes) : Int32
+    def read(slice : Bytes)
       ensure_send_continue
       super
     end
@@ -58,7 +58,7 @@ module HTTP
     def initialize(@io : IO)
     end
 
-    def read(slice : Bytes) : Int32
+    def read(slice : Bytes)
       ensure_send_continue
       @io.read(slice)
     end
@@ -112,7 +112,7 @@ module HTTP
       @received_final_chunk = false
     end
 
-    def read(slice : Bytes) : Int32
+    def read(slice : Bytes)
       ensure_send_continue
       count = slice.size
       return 0 if count == 0
