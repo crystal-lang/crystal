@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count) : Int32?
+    def skip(bytes_count) : Nil
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -164,7 +164,7 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count) : Int32?
+    def skip(bytes_count) : Nil
       ensure_send_continue
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
