@@ -760,7 +760,7 @@ Crystal::Repl::Instructions =
         # a, b, c
         # --|_|--
         (stack - total_size).move_from(stack - total_size + offset, size)
-        stack_shrink_by(total_size - size)
+        stack_shrink_by(total_size - align(size))
       end,
     },
     # >>> Instance vars (4)

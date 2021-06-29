@@ -443,6 +443,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : InstanceVar)
+    compile_instance_var(node)
+  end
+
+  private def compile_instance_var(node : InstanceVar)
     return false unless @wants_value
 
     if @wants_struct_pointer
@@ -527,22 +531,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ReadInstanceVar)
+    compile_read_instance_var(node, node.obj, node.name)
+  end
+
+  private def compile_read_instance_var(node, obj, name)
     unless @wants_value
-      discard_value(node.obj)
+      discard_value(obj)
       return false
     end
 
-    type = node.obj.type
+    type = obj.type
 
-    ivar_offset = ivar_offset(type, node.name)
-    ivar_size = inner_sizeof_type(type.lookup_instance_var(node.name))
+    ivar_offset = ivar_offset(type, name)
+    ivar_size = inner_sizeof_type(type.lookup_instance_var(name))
 
     unless @wants_struct_pointer
-      node.obj.accept self
+      obj.accept self
 
       if type.passed_by_value?
         # We have the struct in the stack, now we need to keep a part of it
-        get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(node.obj), node: node
+        get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(obj), node: node
       else
         get_class_ivar ivar_offset, ivar_size, node: node
       end
@@ -557,13 +565,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     unless type.passed_by_value?
       dont_request_struct_pointer do
-        node.obj.accept self
+        obj.accept self
       end
 
       # At this point, for class types, we have a pointer on the stack,
       # so we just need to offset it
       put_i32 ivar_offset, node: nil
-      pointer_add 1, node: node
+      pointer_add 1, node: nil
 
       return false
     end
@@ -571,11 +579,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # At this point the obj tye is a pass-by-value type so we can't just
     # put it on the stack to get a pointer to it.
     # We need to get a pointer to it and then offset it.
-    pop_obj = compile_struct_call_receiver(node.obj, node.obj.type)
+    pop_obj = compile_struct_call_receiver(obj, obj.type)
 
     # Now offset it
     put_i32 ivar_offset, node: nil
-    pointer_add 1, node: node
+    pointer_add 1, node: nil
 
     # And finally we need to pop the padding that was introduced by `compile_struct_call_receiver`, if any
     if pop_obj
@@ -1036,6 +1044,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(Primitive)
       visit_primitive(node, body)
       return false
+    end
+
+    if body.is_a?(InstanceVar)
+      # Inline the call, so that it also works fine when wanting to take a pointer through things
+      # (this is how the read Crystal works too
+      if obj
+        return compile_read_instance_var(node, obj, body.name)
+      else
+        return compile_instance_var(body)
+      end
     end
 
     if obj && (obj_type = obj.type).is_a?(LibType)
