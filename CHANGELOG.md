@@ -1,5 +1,7 @@
 # 1.1.0 (2021-06-19)
 
+**Note:** We mark with (*) those PRs that adds features to the language.
+
 ## Language changes
 
 - Support splat expansions inside tuple and array literals. ([#10429](https://github.com/crystal-lang/crystal/pull/10429), thanks @HertzDevil) (*)
@@ -28,23 +30,22 @@
   - Refactor `Socket::Addrinfo::Error` based on `os_error `. ([#10761](https://github.com/crystal-lang/crystal/pull/10761), thanks @straight-shoota)
   - Add `WinError.wsa_value` and specs for `WinError`. ([#10762](https://github.com/crystal-lang/crystal/pull/10762), thanks @straight-shoota)
   - Add specs for `Errno`. ([#10763](https://github.com/crystal-lang/crystal/pull/10763), thanks @straight-shoota)
+  - Refactor: Move win32 libc bindings from `winbase.cr` to approriate files. ([#10771](https://github.com/crystal-lang/crystal/pull/10771), thanks @straight-shoota)
+  - Refactor: Change protocol socket fd to `Socket::Handle`. ([#10772](https://github.com/crystal-lang/crystal/pull/10772), thanks @straight-shoota)
   - Fix `Socket::Connect` error in addrinfo inherit `os_error`. ([#10782](https://github.com/crystal-lang/crystal/pull/10782), thanks @straight-shoota)
 
 #### Type annotations
 
   - Add type restriction to private `Process` constructor. ([#7040](https://github.com/crystal-lang/crystal/pull/7040), thanks @z64)
-  - Add various return type restrictions (thanks @oprypin):
+  - Add various return type restrictions (thanks @oprypin, @straight-shoota, and @caspiano):
     [#10578](https://github.com/crystal-lang/crystal/pull/10578), [#10579](https://github.com/crystal-lang/crystal/pull/10579),
     [#10580](https://github.com/crystal-lang/crystal/pull/10580), [#10581](https://github.com/crystal-lang/crystal/pull/10581),
     [#10582](https://github.com/crystal-lang/crystal/pull/10582), [#10583](https://github.com/crystal-lang/crystal/pull/10583),
     [#10584](https://github.com/crystal-lang/crystal/pull/10584), [#10585](https://github.com/crystal-lang/crystal/pull/10585),
     [#10586](https://github.com/crystal-lang/crystal/pull/10586), [#10587](https://github.com/crystal-lang/crystal/pull/10587),
-    [#10588](https://github.com/crystal-lang/crystal/pull/10588)
+    [#10588](https://github.com/crystal-lang/crystal/pull/10588), [#10849](https://github.com/crystal-lang/crystal/pull/10849),
+    [#10856](https://github.com/crystal-lang/crystal/pull/10856)
   - Add type restrictions for splat-less overloads of some methods. ([#10594](https://github.com/crystal-lang/crystal/pull/10594), thanks @HertzDevil)
-  - Refactor: Move win32 libc bindings from `winbase.cr` to approriate files. ([#10771](https://github.com/crystal-lang/crystal/pull/10771), thanks @straight-shoota)
-  - Refactor: Change protocol socket fd to `Socket::Handle`. ([#10772](https://github.com/crystal-lang/crystal/pull/10772), thanks @straight-shoota)
-  - Revert removal of type restriction on `Random::Secure#next_u`. ([#10849](https://github.com/crystal-lang/crystal/pull/10849), thanks @straight-shoota)
-  - Revert type addition on `IO::Hexdump#read`. ([#10856](https://github.com/crystal-lang/crystal/pull/10856), thanks @caspiano)
 
 ### Numeric
 
@@ -122,7 +123,6 @@
 
 - Implement segfault handler in Crystal. ([#10463](https://github.com/crystal-lang/crystal/pull/10463), thanks @maxfierke)
 - Improve documentation for `Pointer.malloc` and `GC` methods. ([#10644](https://github.com/crystal-lang/crystal/pull/10644), thanks @straight-shoota)
-- Fix sentence structure in process.cr. ([#9259](https://github.com/crystal-lang/crystal/pull/9259), thanks @matthewmcgarvey)
 - Add links to literal types in the language reference. ([#10827](https://github.com/crystal-lang/crystal/pull/10827), thanks @straight-shoota)
 
 ### Serialization
@@ -137,10 +137,9 @@
 
 ### Specs
 
-- Add spec helper `it_iterates` for iteration methods. ([#10158](https://github.com/crystal-lang/crystal/pull/10158), thanks @straight-shoota)
+- Add spec helper `it_iterates` for iteration methods. ([#10158](https://github.com/crystal-lang/crystal/pull/10158), [#10797](https://github.com/crystal-lang/crystal/pull/10797), thanks @straight-shoota)
 - Add usage instructions for spec runner to compiler. ([#10046](https://github.com/crystal-lang/crystal/pull/10046), thanks @straight-shoota) (*)
 - Fix: Handle invalid option errors on `crystal spec`. ([#10787](https://github.com/crystal-lang/crystal/pull/10787), thanks @hugopl)
-- Add missing require to it_iterates spec. ([#10797](https://github.com/crystal-lang/crystal/pull/10797), thanks @straight-shoota)
 
 ## Compiler
 
@@ -183,27 +182,25 @@
 
 ### Doc generator
 
-- Fix escaping of argument lists in doc generator, expose JSON. ([#10109](https://github.com/crystal-lang/crystal/pull/10109), thanks @oprypin)
+- Fix escaping of argument lists in doc generator, expose JSON. ([#10109](https://github.com/crystal-lang/crystal/pull/10109), [#10821](https://github.com/crystal-lang/crystal/pull/10821), thanks @oprypin and @Sija)
 - Print named generic type arguments of type restrictions in docs. ([#10424](https://github.com/crystal-lang/crystal/pull/10424), thanks @HertzDevil)
 - Fix: respect overload order between methods. ([#10609](https://github.com/crystal-lang/crystal/pull/10609), thanks @HertzDevil)
 - Fix `PropagateDocVisitor` visit macro def. ([#10634](https://github.com/crystal-lang/crystal/pull/10634), thanks @straight-shoota)
 - Fix: remove superclass from `ASTNode` in API docs. ([#10664](https://github.com/crystal-lang/crystal/pull/10664), thanks @beta-ziliani)
 - **(breaking-change)** Remove deprecated `ditto` doc directive. ([#10755](https://github.com/crystal-lang/crystal/pull/10755), thanks @caspiano)
   (Note that it was scheduled for removal since 0.34)
-- Fix broken #10109 merge. ([#10821](https://github.com/crystal-lang/crystal/pull/10821), thanks @Sija)
 
 ## Others
 
 - CI: Update to use 1.0.0. ([#10533](https://github.com/crystal-lang/crystal/pull/10533), thanks @bcardiff)
-- Bump distribution-scripts. ([#10639](https://github.com/crystal-lang/crystal/pull/10639), thanks @straight-shoota)
+- Bump distribution-scripts. ([#10639](https://github.com/crystal-lang/crystal/pull/10639), [#10673](https://github.com/crystal-lang/crystal/pull/10673), [#10754](https://github.com/crystal-lang/crystal/pull/10754), thanks @straight-shoota and @bcardiff)
 - Fix contribution instructions. ([#10558](https://github.com/crystal-lang/crystal/pull/10558), thanks @straight-shoota)
 - Remove `.dockerignore`. ([#10642](https://github.com/crystal-lang/crystal/pull/10642), thanks @miry)
-- Update distribution scripts. ([#10673](https://github.com/crystal-lang/crystal/pull/10673), thanks @straight-shoota)
 - Add section about pull requests to the contributing guide. ([#10683](https://github.com/crystal-lang/crystal/pull/10683), thanks @straight-shoota)
 - Publish nightly builds to OBS. ([#10684](https://github.com/crystal-lang/crystal/pull/10684), thanks @straight-shoota)
-- Bump distribuion-scripts. ([#10754](https://github.com/crystal-lang/crystal/pull/10754), thanks @bcardiff)
 - Remove broken travis.yml config from crystal init. ([#10800](https://github.com/crystal-lang/crystal/pull/10800), thanks @straight-shoota)
 - Disable broken test_darwin job on circleci. ([#10823](https://github.com/crystal-lang/crystal/pull/10823), thanks @straight-shoota)
+
 
 # 1.0.0 (2021-03-22)
 
