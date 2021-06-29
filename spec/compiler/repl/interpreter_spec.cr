@@ -2281,25 +2281,25 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    # it "interprets read instance var" do
-    #   interpret(<<-EXISTING, <<-CODE).should eq(20)
-    #     struct Foo
-    #       @x = 0_i64
-    #       @y = 0_i64
+    it "interprets read instance var of struct" do
+      interpret(<<-EXISTING, <<-CODE).should eq(20)
+        struct Foo
+          @x = 0_i64
+          @y = 0_i64
 
-    #       def y=(@y)
-    #       end
+          def y=(@y)
+          end
 
-    #       def y
-    #         @y
-    #       end
-    #     end
-    #   EXISTING
-    #     foo = Foo.allocate
-    #     foo.y = 20_i64
-    #     foo.@y
-    #   CODE
-    # end
+          def y
+            @y
+          end
+        end
+      EXISTING
+        foo = Foo.allocate
+        foo.y = 20_i64
+        foo.@y
+      CODE
+    end
 
     it "casts def body to def type" do
       interpret(<<-EXISTING, <<-CODE).should eq(1)

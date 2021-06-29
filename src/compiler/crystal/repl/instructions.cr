@@ -733,7 +733,7 @@ Crystal::Repl::Instructions =
     },
     # >>> Local variables (2)
 
-    # <<< Instance vars (3)
+    # <<< Instance vars (4)
     get_self_ivar: {
       operands:   [offset : Int32, size : Int32],
       pop_values: [] of Nil,
@@ -752,7 +752,18 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_move_from(pointer + offset, size),
     },
-    # >>> Instance vars (3)
+    get_struct_ivar: {
+      operands:   [offset : Int32, size : Int32, total_size : Int32],
+      pop_values: [] of Nil,
+      push:       false,
+      code:       begin
+        # a, b, c
+        # --|_|--
+        (stack - total_size).move_from(stack - total_size + offset, size)
+        stack_shrink_by(total_size - size)
+      end,
+    },
+    # >>> Instance vars (4)
 
     # <<< Constants (4)
     const_initialized: {
