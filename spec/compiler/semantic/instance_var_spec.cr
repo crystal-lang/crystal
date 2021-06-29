@@ -297,6 +297,60 @@ describe "Semantic: instance var" do
       )) { static_array_of(uint8, 3) }
   end
 
+  it "declares instance var of generic type, with splat" do
+    assert_type(%(
+      class Gen(*T)
+      end
+
+      class Foo(*T)
+        @x : Gen(*T)
+
+        def initialize(@x : Gen(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Gen(Int32, String).new).x
+      )) { generic_class "Gen", int32, string }
+  end
+
+  it "declares instance var of generic type, with splat inside Tuple" do
+    assert_type(%(
+      class Foo(*T)
+        @x : Tuple(*T)
+
+        def initialize(@x : Tuple(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new({1, ""}).x
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "declares instance var of generic type, with splat inside Proc" do
+    assert_type(%(
+      class Foo(R, *T)
+        @x : Proc(*T, R)
+
+        def initialize(@x : Proc(*T, R))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(->(x : Int32, y : String) { true }).x
+      )) { proc_of([int32, string, bool]) }
+  end
+
   it "declares instance var with self, on generic" do
     assert_type(%(
       class Foo(T)
@@ -1998,6 +2052,34 @@ describe "Semantic: instance var" do
       end
 
       Some.new.a
+      )) { int32 }
+  end
+
+  it "doesn't error if not initializing variables but calling super and previous_def" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super()
+        end
+
+        def initialize(x)
+          previous_def(x)
+        end
+      end
+
+      Bar.new(10).x
       )) { int32 }
   end
 
@@ -5246,5 +5328,47 @@ describe "Semantic: instance var" do
       Foo.new
       ),
       "can't infer the type parameter T for the generic class Gen(T)"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        def initialize
+          @x = Gen.new('a')
+        end
+      end
+
+      Foo.new
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't infer unbound generic type on generic method called from generic's subclass, metaclass context" do
+    assert_error %(
+      class Gen(T)
+        def self.new(x : T)
+          Gen(T).build
+        end
+
+        def self.build : self
+          new
+        end
+      end
+
+      class Foo < Gen(Int32)
+        @x = Gen.new('a')
+      end
+      ),
+      "can't infer the type of instance variable '@x' of Foo"
   end
 end

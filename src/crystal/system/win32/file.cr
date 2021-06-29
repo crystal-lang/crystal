@@ -4,6 +4,7 @@ require "c/fileapi"
 require "c/sys/utime"
 require "c/sys/stat"
 require "c/winbase"
+require "c/handleapi"
 
 module Crystal::System::File
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions) : LibC::Int
@@ -51,7 +52,7 @@ module Crystal::System::File
     if NOT_FOUND_ERRORS.includes? error
       return nil
     else
-      raise ::File::Error.from_winerror(message, error, file: path)
+      raise ::File::Error.from_os_error(message, error, file: path)
     end
   end
 
@@ -179,7 +180,7 @@ module Crystal::System::File
     end
 
     unless exists? real_path
-      raise ::File::Error.from_errno("Error resolving real path", Errno::ENOENT, file: path)
+      raise ::File::Error.from_os_error("Error resolving real path", Errno::ENOENT, file: path)
     end
 
     real_path

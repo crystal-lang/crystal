@@ -923,6 +923,7 @@ module Crystal
     it_parses "macro foo\n{%\nif 1\n2\nelse\n3\nend\n%}end", Macro.new("foo", body: MacroExpression.new(If.new(1.int32, 2.int32, 3.int32), output: false))
 
     it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
+    it_parses "macro foo\n'\\''\nend", Macro.new("foo", body: Expressions.from(["'\\''\n".macro_literal] of ASTNode))
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
@@ -1405,6 +1406,39 @@ module Crystal
 
     it_parses "Set {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: "Set".path)
     it_parses "Set(Int32) {1, 2, 3}", ArrayLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode, name: Generic.new("Set".path, ["Int32".path] of ASTNode))
+
+    describe "single splats inside container literals" do
+      it_parses "{*1}", TupleLiteral.new([1.int32.splat] of ASTNode)
+      it_parses "{*1, 2}", TupleLiteral.new([1.int32.splat, 2.int32] of ASTNode)
+      it_parses "{1, *2}", TupleLiteral.new([1.int32, 2.int32.splat] of ASTNode)
+      it_parses "{*1, *2}", TupleLiteral.new([1.int32.splat, 2.int32.splat] of ASTNode)
+      it_parses "{1, *2, 3, *4, 5}", TupleLiteral.new([1.int32, 2.int32.splat, 3.int32, 4.int32.splat, 5.int32] of ASTNode)
+
+      it_parses "[*1]", ArrayLiteral.new([1.int32.splat] of ASTNode)
+      it_parses "[*1, 2]", ArrayLiteral.new([1.int32.splat, 2.int32] of ASTNode)
+      it_parses "[1, *2]", ArrayLiteral.new([1.int32, 2.int32.splat] of ASTNode)
+      it_parses "[*1, *2]", ArrayLiteral.new([1.int32.splat, 2.int32.splat] of ASTNode)
+      it_parses "[1, *2, 3, *4, 5]", ArrayLiteral.new([1.int32, 2.int32.splat, 3.int32, 4.int32.splat, 5.int32] of ASTNode)
+
+      it_parses "Set {*1, 2, *3}", ArrayLiteral.new([1.int32.splat, 2.int32, 3.int32.splat] of ASTNode, name: "Set".path)
+
+      it_parses "[*[*[1]], *[2]]", ArrayLiteral.new([ArrayLiteral.new([ArrayLiteral.new([1.int32] of ASTNode).splat] of ASTNode).splat, ArrayLiteral.new([2.int32] of ASTNode).splat] of ASTNode)
+
+      assert_syntax_error "{*1 => 2}"
+      assert_syntax_error "{*a: 1}"
+      assert_syntax_error "{1 => 2, *3}"
+      assert_syntax_error "{a: 1, *2}"
+
+      assert_syntax_error "case {*1}\nwhen {2}; 3; end", "splat is not allowed inside case expression"
+      assert_syntax_error "case {1}\nwhen {*2}; 3; end"
+      it_parses "case 1\nwhen {*2}; 3; end", Case.new(1.int32, [When.new([TupleLiteral.new([2.int32.splat] of ASTNode)] of ASTNode, 3.int32)], else: nil, exhaustive: false)
+
+      it_parses "x = {*1}", Assign.new("x".var, TupleLiteral.new([1.int32.splat] of ASTNode))
+
+      it_parses "{*1 * 2}", TupleLiteral.new([Call.new(1.int32, "*", 2.int32).splat] of ASTNode)
+      it_parses "[*1 ** 2]", ArrayLiteral.new([Call.new(1.int32, "**", 2.int32).splat] of ASTNode)
+      it_parses "Set {*{1} * 2}", ArrayLiteral.new([Call.new(TupleLiteral.new([1.int32] of ASTNode), "*", 2.int32).splat] of ASTNode, name: "Set".path)
+    end
 
     it_parses "foo(Bar) { 1 }", Call.new(nil, "foo", args: ["Bar".path] of ASTNode, block: Block.new(body: 1.int32))
     it_parses "foo Bar { 1 }", Call.new(nil, "foo", args: [ArrayLiteral.new([1.int32] of ASTNode, name: "Bar".path)] of ASTNode)
