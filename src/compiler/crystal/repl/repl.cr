@@ -39,7 +39,7 @@ class Crystal::Repl
         if @buffer.empty?
           line
         else
-          @buffer + line
+          "#{@buffer}\n#{line}"
         end
 
       if new_buffer.blank?
@@ -81,6 +81,7 @@ class Crystal::Repl
       end
 
       begin
+        node = @program.normalize(node)
         node = @program.semantic(node, main_visitor: @main_visitor)
         value = @interpreter.interpret_with_main_already_visited(node, @main_visitor)
 
@@ -114,13 +115,16 @@ class Crystal::Repl
     other_node = parse_file(filename)
 
     exps = Expressions.new([prelude_node, other_node] of ASTNode)
+    exps = @program.normalize(exps)
     node = @program.semantic(exps, main_visitor: @main_visitor)
 
     interpret_with_main_already_visited(node)
   end
 
   private def load_prelude
-    node = @program.semantic(parse_prelude, main_visitor: @main_visitor)
+    node = parse_prelude
+    node = @program.normalize(node)
+    node = @program.semantic(node, main_visitor: @main_visitor)
 
     interpret_with_main_already_visited(node)
   end
