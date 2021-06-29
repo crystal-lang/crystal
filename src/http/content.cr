@@ -26,7 +26,7 @@ module HTTP
   class FixedLengthContent < IO::Sized
     include Content
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : Int32
       ensure_send_continue
       super
     end
@@ -58,9 +58,9 @@ module HTTP
     def initialize(@io : IO)
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : Int32
       ensure_send_continue
-      @io.read(slice)
+      @io.read(slice).to_i32
     end
 
     def read_byte : UInt8?
@@ -112,7 +112,7 @@ module HTTP
       @received_final_chunk = false
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : Int32
       ensure_send_continue
       count = slice.size
       return 0 if count == 0
@@ -123,7 +123,7 @@ module HTTP
 
       to_read = Math.min(count, @chunk_remaining)
 
-      bytes_read = @io.read slice[0, to_read]
+      bytes_read = @io.read(slice[0, to_read]).to_i32
 
       if bytes_read == 0
         raise IO::EOFError.new("Invalid HTTP chunked content")
