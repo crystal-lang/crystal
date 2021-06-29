@@ -820,6 +820,7 @@ Crystal::Repl::Instructions =
       push:       false,
       code:       stack_shrink_by(size),
     },
+    # pops size bytes past offset from the stack
     pop_from_offset: {
       operands:   [size : Int32, offset : Int32] of Nil,
       pop_values: [] of Nil,

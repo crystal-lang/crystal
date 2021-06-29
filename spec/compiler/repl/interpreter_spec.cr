@@ -1813,6 +1813,39 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does ReadInstanceVar with wants_struct_pointer" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 1
+            @y = 10
+            @bar = Bar.new
+          end
+
+          def bar
+            @bar
+          end
+        end
+
+        struct Bar
+          def initialize
+            @x = 1
+            @y = 2
+            @z = 42
+          end
+
+          def to_unsafe
+            pointerof(@z)
+          end
+        end
+      EXISTING
+        entry = Pointer(Foo).malloc(1)
+        entry.value = Foo.new
+        ptr = entry.value.@bar.to_unsafe
+        ptr.value
+      CODE
+    end
+
     it "puts struct pointer after tuple indexer" do
       interpret(<<-EXISTING, <<-CODE).should eq(1)
         struct Point

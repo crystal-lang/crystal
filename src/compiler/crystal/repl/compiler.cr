@@ -527,36 +527,61 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ReadInstanceVar)
+    unless @wants_value
+      discard_value(node.obj)
+      return false
+    end
+
     type = node.obj.type
-
-    if @wants_struct_pointer
-      if type.passed_by_value?
-        node.raise "BUG: missing handling of @wants_struct_pointer for #{node} with a pass-by-value type"
-      end
-
-      # Remember to pad the pointer because it will be popped later on
-      push_zeros(aligned_sizeof_type(node), node: nil)
-    end
-
-    # TODO: check struct
-    dont_request_struct_pointer do
-      node.obj.accept self
-    end
 
     ivar_offset = ivar_offset(type, node.name)
     ivar_size = inner_sizeof_type(type.lookup_instance_var(node.name))
 
-    if @wants_struct_pointer
-      # At this point, at least for class types, we have a pointer on the stack,
+    unless @wants_struct_pointer
+      node.obj.accept self
+
+      if type.passed_by_value?
+        # We have the struct in the stack, now we need to keep a part of it
+        get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(node.obj), node: node
+      else
+        get_class_ivar ivar_offset, ivar_size, node: node
+      end
+
+      return false
+    end
+
+    # @wants_struct_pointer is true
+
+    # Remember to pad the pointer because it will be popped later on
+    push_zeros(aligned_sizeof_type(node), node: nil)
+
+    unless type.passed_by_value?
+      dont_request_struct_pointer do
+        node.obj.accept self
+      end
+
+      # At this point, for class types, we have a pointer on the stack,
       # so we just need to offset it
       put_i32 ivar_offset, node: nil
       pointer_add 1, node: node
-    elsif type.passed_by_value?
-      # We have the struct in the stack, now we need to keep a part of it
-      get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(node.obj), node: node
-    else
-      get_class_ivar ivar_offset, ivar_size, node: node
+
+      return false
     end
+
+    # At this point the obj tye is a pass-by-value type so we can't just
+    # put it on the stack to get a pointer to it.
+    # We need to get a pointer to it and then offset it.
+    pop_obj = compile_struct_call_receiver(node.obj, node.obj.type)
+
+    # Now offset it
+    put_i32 ivar_offset, node: nil
+    pointer_add 1, node: node
+
+    # And finally we need to pop the padding that was introduced by `compile_struct_call_receiver`, if any
+    if pop_obj
+      pop_from_offset aligned_sizeof_type(pop_obj), aligned_sizeof_type(node), node: nil
+    end
+
     false
   end
 
