@@ -186,11 +186,7 @@ struct Slice(T)
   def []=(index : Int, value : T)
     check_writable
 
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
-    end
-
+    index = check_index_out_of_bounds(index)
     @pointer[index] = value
   end
 
@@ -799,15 +795,11 @@ struct Slice(T)
 
   # :nodoc:
   def fast_index(object, offset) : Int32?
-    offset += size if offset < 0
-    if 0 <= offset < size
-      result = LibC.memchr(to_unsafe + offset, object, size - offset)
-      if result
-        return (result - to_unsafe.as(Void*)).to_i32
-      end
+    offset = check_index_out_of_bounds(offset) { return nil }
+    result = LibC.memchr(to_unsafe + offset, object, size - offset)
+    if result
+      return (result - to_unsafe.as(Void*)).to_i32
     end
-
-    nil
   end
 
   # See `Object#hash(hasher)`

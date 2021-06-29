@@ -133,6 +133,8 @@ describe "ASTNode#to_s" do
   expect_to_s %(1 <= (2 <= 3))
   expect_to_s %(case 1; when .foo?; 2; end), %(case 1\nwhen .foo?\n  2\nend)
   expect_to_s %(case 1; in .foo?; 2; end), %(case 1\nin .foo?\n  2\nend)
+  expect_to_s %(case 1; when .!; 2; when .< 0; 3; end), %(case 1\nwhen .!\n  2\nwhen .<(0)\n  3\nend)
+  expect_to_s %(case 1\nwhen .[](2)\n  3\nwhen .[]=(4)\n  5\nend)
   expect_to_s %({(1 + 2)})
   expect_to_s %({foo: (1 + 2)})
   expect_to_s %q("#{(1 + 2)}")
@@ -157,6 +159,14 @@ describe "ASTNode#to_s" do
   expect_to_s "1.&*"
   expect_to_s "1.&**"
   expect_to_s "1.~(2)"
+  expect_to_s "1.~(2) do\nend"
+  expect_to_s "1.+ do\nend"
+  expect_to_s "1.[](2) do\nend"
+  expect_to_s "1.[]="
+  expect_to_s "1.+(a: 2)"
+  expect_to_s "1.+(&block)"
+  expect_to_s "1.//(2, a: 3)"
+  expect_to_s "1.//(2, &block)"
   expect_to_s %({% verbatim do %}\n  1{{ 2 }}\n  3{{ 4 }}\n{% end %})
   expect_to_s %({% for foo in bar %}\n  {{ if true\n  foo\n  bar\nend }}\n{% end %})
   expect_to_s %(asm("nop" ::::))
