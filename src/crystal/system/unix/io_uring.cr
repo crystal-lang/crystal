@@ -574,7 +574,12 @@ class Crystal::System::IoUring
   # The entire write is atomic in the sense that it is garanteed that all buffers will be written into the file one after the other
   # even if other process is trying to write to the same file at the same time.
   def writev(fd : Int32, slices : Array(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map { |slice| LibC::IOVec.new(slice.to_unsafe, slice.size.to_u64) }
+    iov = slices.map do |slice|
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+      vec
+    end
     submit_and_wait :writev, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = iov.to_unsafe.address
@@ -585,7 +590,12 @@ class Crystal::System::IoUring
 
   # :ditto:
   def writev(fd : Int32, slices : Tuple(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map { |slice| LibC::IOVec.new(slice.to_unsafe, slice.size.to_u64) }
+    iov = slices.map do |slice|
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+      vec
+    end
     submit_and_wait :writev, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = pointerof(iov).address
@@ -612,7 +622,12 @@ class Crystal::System::IoUring
   # The entire read is atomic in the sense that it is garanteed that all buffers will be read from the file one after the other
   # even if other process is trying to read to the same file at the same time.
   def readv(fd : Int32, slices : Array(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map { |slice| LibC::IOVec.new(slice.to_unsafe, slice.size.to_u64) }
+    iov = slices.map do |slice|
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+      vec
+    end
     submit_and_wait :readv, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = iov.to_unsafe.address
@@ -623,7 +638,12 @@ class Crystal::System::IoUring
 
   # :ditto:
   def readv(fd : Int32, slices : Tuple(Bytes), offset : UInt64 = -1.to_u64!, *, timeout : ::Time::Span? = nil)
-    iov = slices.map { |slice| LibC::IOVec.new(slice.to_unsafe, slice.size.to_u64) }
+    iov = slices.map do |slice|
+      vec = LibC::IoVec.new
+      vec.iov_base = slice.to_unsafe
+      vec.iov_len = slice.size.to_u64
+      vec
+    end
     submit_and_wait :readv, timeout: timeout do |sqe|
       sqe.value.fd = fd
       sqe.value.addr = pointerof(iov).address
