@@ -59,6 +59,7 @@ module Crystal::Playground
       output_filename = Crystal.temp_executable "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       compiler.color = false
+      compiler.flags << "without_openssl"
       begin
         Log.info { "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})." }
         result = compiler.compile sources, output_filename
