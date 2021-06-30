@@ -919,8 +919,9 @@ class Crystal::Repl::Interpreter
       interpreter = Interpreter.new(self, compiled_def, location, stack_bottom)
 
       while @pry
-        print "pry> "
-        line = gets
+        # TODO: supoort multi-line expressions
+
+        line = Readline.readline("pry> ", add_history: true)
         unless line
           self.pry = false
           break
