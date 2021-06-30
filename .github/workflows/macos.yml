@@ -1,6 +1,12 @@
 name: macOS CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 env:
   SPEC_SPLIT_DOTS: 160

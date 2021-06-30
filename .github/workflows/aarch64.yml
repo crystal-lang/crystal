@@ -1,6 +1,12 @@
 name: AArch64 CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   musl-build:
