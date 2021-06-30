@@ -78,7 +78,7 @@ module HTTP
       end
     end
 
-    def to_set_cookie_header
+    def to_set_cookie_header : String
       path = @path
       expires = @expires
       domain = @domain
@@ -95,7 +95,7 @@ module HTTP
       end
     end
 
-    def to_cookie_header
+    def to_cookie_header : String
       String.build do |io|
         to_cookie_header(io)
       end
@@ -107,7 +107,7 @@ module HTTP
       io << @value
     end
 
-    def expired?
+    def expired? : Bool
       if e = expires
         e <= Time.utc
       else
@@ -152,17 +152,22 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], pair["value"])
+          value = pair["value"]
+          if value.starts_with?('"')
+            # Unwrap quoted cookie value
+            value = value.byte_slice(1, value.bytesize - 2)
+          end
+          yield Cookie.new(pair["name"], value)
         end
       end
 
-      def parse_cookies(header)
+      def parse_cookies(header) : Array(Cookie)
         cookies = [] of Cookie
         parse_cookies(header) { |cookie| cookies << cookie }
         cookies
       end
 
-      def parse_set_cookie(header)
+      def parse_set_cookie(header) : Cookie?
         match = header.match(SetCookieString)
         return unless match
 
@@ -224,7 +229,7 @@ module HTTP
     end
 
     # Filling cookies by parsing the `Cookie` headers in the given `HTTP::Headers`.
-    def fill_from_client_headers(headers)
+    def fill_from_client_headers(headers) : self
       if values = headers.get?("Cookie")
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
@@ -241,7 +246,7 @@ module HTTP
     end
 
     # Filling cookies by parsing the `Set-Cookie` headers in the given `HTTP::Headers`.
-    def fill_from_server_headers(headers)
+    def fill_from_server_headers(headers) : self
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
@@ -256,8 +261,8 @@ module HTTP
     end
 
     # Sets a new cookie in the collection with a string value.
-    # This creates a never expiring, insecure, not HTTP only cookie with
-    # no explicit domain restriction and the path `/`.
+    # This creates a never expiring, insecure, not HTTP-only cookie with
+    # no explicit domain restriction and no path.
     #
     # ```
     # require "http/client"
@@ -292,7 +297,7 @@ module HTTP
     # ```
     # request.cookies["foo"].value # => "bar"
     # ```
-    def [](key)
+    def [](key) : Cookie
       @cookies[key]
     end
 
@@ -306,7 +311,7 @@ module HTTP
     # request.cookies["foo"] = "bar"
     # request.cookies["foo"]?.try &.value # > "bar"
     # ```
-    def []?(key)
+    def []?(key) : Cookie?
       @cookies[key]?
     end
 
@@ -315,7 +320,7 @@ module HTTP
     # ```
     # request.cookies.has_key?("foo") # => true
     # ```
-    def has_key?(key)
+    def has_key?(key) : Bool
       @cookies.has_key?(key)
     end
 
@@ -330,14 +335,14 @@ module HTTP
     end
 
     # Clears the collection, removing all cookies.
-    def clear
+    def clear : Hash(String, HTTP::Cookie)
       @cookies.clear
     end
 
     # Deletes and returns the `HTTP::Cookie` for the specified *key*, or
     # returns `nil` if *key* cannot be found in the collection. Note that
     # *key* should match the name attribute of the desired `HTTP::Cookie`.
-    def delete(key)
+    def delete(key) : Cookie?
       @cookies.delete(key)
     end
 
@@ -354,12 +359,12 @@ module HTTP
     end
 
     # Returns the number of cookies contained in this collection.
-    def size
+    def size : Int32
       @cookies.size
     end
 
     # Whether the collection contains any cookies.
-    def empty?
+    def empty? : Bool
       @cookies.empty?
     end
 
@@ -393,7 +398,7 @@ module HTTP
     end
 
     # Returns this collection as a plain `Hash`.
-    def to_h
+    def to_h : Hash(String, Cookie)
       @cookies.dup
     end
   end

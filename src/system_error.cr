@@ -27,11 +27,16 @@
 #   Prepares the message that goes before the system error description.
 #   By default it returns the original message unchanged. But that could be
 #   customized based on the keyword arguments passed to `from_errno` or `from_winerror`.
-# * `protected def new_from_os_error(message : String, os_error, **opts)`
+# * `protected def new_from_os_error(message : String?, os_error, **opts)`
 #   Creates an instance of the exception that wraps a system error.
 #   This is a factory method and by default it creates an instance
 #   of the current class. It can be overridden to generate different
 #   classes based on the `os_error` value or keyword arguments.
+# * `protected def os_error_message(os_error : Errno | WinError | Nil, **opts) : String?`
+#   Returns the respective error message for *os_error*.
+#   By default it returns the result of `Errno#message` or `WinError#message`.
+#   This method can be overridden for customization of the error message based
+#   on *or_error*  and *opts*.
 module SystemError
   macro included
     extend ::SystemError::ClassMethods
@@ -53,9 +58,9 @@ module SystemError
       message = self.build_message(message, **opts)
       message =
         if message
-          "#{message}: #{os_error.message}"
+          "#{message}: #{os_error_message(os_error, **opts)}"
         else
-          os_error.message
+          os_error_message(os_error, **opts)
         end
 
       self.new_from_os_error(message, os_error, **opts).tap do |e|
@@ -80,8 +85,17 @@ module SystemError
     #
     # By default it returns the original message unchanged. But that could be
     # customized based on the keyword arguments passed to `from_errno` or `from_winerror`.
-    protected def build_message(message, **opts)
+    protected def build_message(message, **opts) : String
       message
+    end
+
+    # Returns the respective error message for *os_error*.
+    #
+    # By default it returns the result of `Errno#message` or `WinError#message`.
+    # This method can be overridden for customization of the error message based
+    # on *or_error*  and *\*\*opts*.
+    protected def os_error_message(os_error : Errno | WinError | Nil, **opts) : String?
+      os_error.try &.message
     end
 
     # Creates an instance of the exception that wraps a system error.
@@ -89,20 +103,20 @@ module SystemError
     # This is a factory method and by default it creates an instance
     # of the current class. It can be overridden to generate different
     # classes based on the `os_error` value or keyword arguments.
-    protected def new_from_os_error(message : String, os_error, **opts)
+    protected def new_from_os_error(message : String?, os_error, **opts)
       self.new(message, **opts)
     end
 
     # Builds an instance of the exception from the current windows error value (`WinError.value`).
+    #
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer `.new_from_os_error`.
     def from_winerror(message : String?, **opts)
       from_os_error(message, WinError.value, **opts)
     end
 
-    # Builds an instance of the exception from a `WinError`
+    # Builds an instance of the exception from the current Windows Socket API error value (`WinError.wsa_value`).
     #
-    # By default it takes the current `WinError` value (see `WinError.value`).
     # The system message corresponding to the OS error value amends the *message*.
     # Additional keyword arguments are forwarded to the exception initializer.
     def from_wsa_error(message : String? = nil, **opts)
