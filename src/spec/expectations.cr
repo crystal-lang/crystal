@@ -1,4 +1,97 @@
 module Spec
+  # A list of diff command candidates.
+  DIFF_COMMANDS = [
+    %w(git diff --no-index -U3),
+    %w(gdiff -u),
+    %w(diff -u),
+  ]
+
+  # A diff command path and options to use in diff computation.
+  class_property diff_command : Array(String)? do
+    DIFF_COMMANDS.each.compact_map { |cmd| check_diff_command(cmd) }.first?
+  end
+
+  # A flag whether it uses diff on generating a expectation message.
+  class_property? use_diff : Bool { diff_command != nil }
+
+  # Checks the given `diff` command works.
+  # It takes an array of strings as `diff` command and options,
+  # and it returns a new array with resolved path and options if it works,
+  # otherwise it returns `nil`.
+  private def self.check_diff_command(cmd)
+    name = Process.find_executable(cmd[0])
+    return unless name
+    opts = cmd[1..]
+
+    begin
+      tmp_file = File.tempfile { |f| f.puts "check_diff" }
+
+      # Try to invoke `diff` against a temporary file.
+      # When the `diff` exists with success status and its output is empty,
+      # we assume the `diff` command works.
+      output = String.build do |io|
+        status = Process.run(name, opts + [tmp_file.path, tmp_file.path], output: io)
+        return unless status.success?
+      end
+      return unless output.empty?
+    ensure
+      # Clean up temporary files!
+      tmp_file.try &.delete
+    end
+
+    [name] + opts
+  end
+
+  # Compute the difference between two values *expected_value* and *actual_value*
+  # by using `diff` command.
+  def self.diff_values(expected_value, actual_value)
+    expected = expected_value.pretty_inspect
+    actual = actual_value.pretty_inspect
+
+    result = diff expected, actual
+
+    # When the diff output is nothing even though the two values do not equal,
+    # it returns a fallback message so far.
+    if result && result.empty?
+      klass = expected_value.class
+      return <<-MSG
+        No visible difference in the `#{klass}#pretty_inspect` output.
+        You should look at the implementation of `#==` on #{klass} or its members.
+        MSG
+    end
+
+    result
+  end
+
+  # Compute the difference between two strings *expected* and *actual*
+  # by using `diff` command.
+  def self.diff(expected, actual)
+    return unless Spec.use_diff?
+
+    # If the diff command is available and outputs contain a newline,
+    # then it computes diff of them.
+    diff_command = Spec.diff_command
+    return unless diff_command && (expected.includes?('\n') || actual.includes?('\n'))
+    diff_command_name = diff_command[0]
+    diff_command_opts = diff_command[1..]
+
+    begin
+      expected_file = File.tempfile("expected") { |f| f.puts expected }
+      actual_file = File.tempfile("actual") { |f| f.puts actual }
+
+      # Invoke `diff` command and fix up its output.
+      output = String.build do |io|
+        Process.run(diff_command_name, diff_command_opts + [expected_file.path, actual_file.path], output: io)
+      end
+      # Remove `--- expected` and `+++ actual` lines.
+      output.chomp.gsub(/^(-{3}|\+{3}|diff --\w+|index) .+?\n/m, "")
+    ensure
+      # Clean up temporary files!
+      expected_file.try &.delete
+      actual_file.try &.delete
+    end
+  end
+
   # :nodoc:
   struct EqualExpectation(T)
     def initialize(@expected_value : T)
@@ -46,7 +139,19 @@ module Spec
           expected += " : #{@expected_value.class}"
           got += " : #{actual_value.class}"
         end
-        "Expected: #{expected}\n     got: #{got}"
+        msg = <<-MSG
+          Expected: #{expected}
+               got: #{got}
+          MSG
+        if diff = Spec.diff_values(expected_value, actual_value)
+          msg = <<-MSG
+            #{msg}
+
+            Difference:
+            #{diff}
+            MSG
+        end
+        msg
       end
     end
 

@@ -6,13 +6,43 @@ private def assert_format(input, output = input, strict = false, file = __FILE__
     output = "#{output}\n" unless strict
     result = Crystal.format(input)
     unless result == output
-      fail "Expected\n\n~~~\n#{input}\n~~~\nto format to:\n\n~~~\n#{output}\n~~~\n\nbut got:\n\n~~~\n#{result}\n~~~\n\n  assert_format #{input.inspect}, #{result.chomp.inspect}"
+      fail <<-MSG
+        Expected
+
+        ~~
+        #{input}
+        ~~~
+
+        to format to:
+
+        ~~~
+        #{output}
+        ~~~
+
+        but got:
+
+        ~~~
+        #{result}
+        ~~~
+
+        diff:
+
+        ~~~
+        #{Spec.diff(output, result)}
+        ~~~
+
+        assert_format #{input.inspect}, #{result.chomp.inspect}
+        MSG
     end
 
     # Check idempotency
     result2 = Crystal.format(result)
     unless result == result2
-      fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}"
+      fail <<-MSG
+        Idempotency failed:
+        Before: #{result.inspect}
+        After:  #{result2.inspect}
+        MSG
     end
   end
 end

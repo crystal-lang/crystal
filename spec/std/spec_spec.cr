@@ -1,4 +1,4 @@
-require "spec"
+require "./spec_helper"
 
 private class SpecException < Exception
   getter value : Int32
@@ -15,6 +15,34 @@ private class NilMimicker
 end
 
 describe "Spec matchers" do
+  describe "should eq" do
+    it "passes for the same value" do
+      1.should eq(1)
+    end
+
+    pending_diff "should raise an exception with diff when the values are long" do
+      xs = (1..100).to_a
+      ys = xs[0...50] + [-1] + xs[50...100]
+      msg = <<-MSG
+        Expected: #{xs.inspect}
+             got: #{ys.inspect}
+
+        Difference:
+        @@ -48,6 +48,7 @@
+          48,
+          49,
+          50,
+        + -1,
+          51,
+          52,
+          53,
+        MSG
+      expect_raises Spec::AssertionFailed, msg do
+        ys.should eq(xs)
+      end
+    end
+  end
+
   describe "should be_truthy" do
     it "passes for true" do
       true.should be_truthy
