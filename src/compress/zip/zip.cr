@@ -27,7 +27,17 @@ require "digest/crc32"
 # NOTE: only compression methods 0 (STORED) and 8 (DEFLATED) are
 # supported. Additionally, ZIP64 is not yet supported.
 module Compress::Zip
-  VERSION                                   =     20_u16
+  VERSION = 20_u16
+
+  {% if flag?(:unix) %}
+    FS_ORIGIN = 3_u8 # Unix
+  {% elsif flag?(:win32) %}
+    FS_ORIGIN = 0_u8 # # MS-DOS, OS/2, or NT FAT
+  {% else %}
+    {% raise "No FS_ORIGIN implementation available" %}
+  {% end %}
+  FS_EXTRACT = 0_u8 # MS-DOS, OS/2, or NT FAT
+
   CENTRAL_DIRECTORY_HEADER_SIGNATURE        = 0x02014b50
   END_OF_CENTRAL_DIRECTORY_HEADER_SIGNATURE = 0x06054b50
 
