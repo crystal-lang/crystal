@@ -118,9 +118,13 @@ module Compress::Zip::FileInfo
   protected def decompressor_for(io, is_sized = false)
     case compression_method
     when .stored?
-      io = IO::Sized.new(io, compressed_size) unless is_sized
+      if uncompressed_size == 0 && data_descriptor?
+        raise NotImplemented.new("can't use STORE with a 0 byte file")
+      else
+        io = IO::Sized.new(io, uncompressed_size) unless is_sized
+      end
     when .deflated?
-      if compressed_size == 0 && bit_3_set?
+      if compressed_size == 0 && data_descriptor?
         # Read until we end decompressing the deflate data,
         # which has an unknown size
       else
@@ -135,8 +139,18 @@ module Compress::Zip::FileInfo
     io
   end
 
-  protected def bit_3_set?
+  def data_descriptor?
     (general_purpose_bit_flag & 0b1000) != 0
+  end
+
+  def utf8_name=(val : Bool) : Bool
+    if val
+      @general_purpose_bit_flag |= (1_u32 << 11)
+    else
+      @general_purpose_bit_flag &= ~(1_u32 << 11)
+    end
+
+    val
   end
 
   # date is:

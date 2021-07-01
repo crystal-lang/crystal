@@ -108,7 +108,7 @@ class Compress::Zip::Reader
   end
 
   private def skip_data_descriptor(entry)
-    if entry.compression_method.deflated? && entry.bit_3_set?
+    if entry.data_descriptor?
       # The data descriptor signature is optional: if we
       # find it, we read the data descriptor info normally;
       # otherwise, the first four bytes are the crc32 value.
