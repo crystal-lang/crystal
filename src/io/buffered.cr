@@ -199,8 +199,8 @@ module IO::Buffered
             out_rem * -1
           end
 
-    if responds_to?(:unbuffered_pos)
-      unbuffered_pos - rem
+    if self.responds_to?(:unbuffered_pos)
+      self.unbuffered_pos - rem
     else
       super - rem
     end
