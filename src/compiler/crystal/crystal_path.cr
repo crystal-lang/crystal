@@ -14,7 +14,7 @@ module Crystal
     private DEFAULT_LIB_PATH = "lib"
 
     def self.default_path
-      ENV["CRYSTAL_PATH"]? || begin
+      path = ENV["CRYSTAL_PATH"]? || begin
         if Crystal::Config.path.blank?
           DEFAULT_LIB_PATH
         elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
@@ -23,6 +23,22 @@ module Crystal
           {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
         end
       end
+
+      # Expand `%{COMPILER_DIR}` in the CRYSTAL_PATH value to the directory
+      # where the compiler binary is located (at runtime).
+      # For install locations like
+      #    `/path/prefix/bin/crystal`         for the compiler
+      #    `/path/prefix/share/crystal/src`   for the stdandard library
+      # the path `%{COMPILER_DIR}/../share/crystal/src` resolves to
+      # the standard library location.
+      # This generic path can be passed into the compiler via CRYSTAL_CONFIG_PATH
+      # to produce a portable binary that resolves the standard library path
+      # relative to the compiler location, independent of the absolute path.
+      if executable_path = Process.executable_path
+        path %= {"COMPILER_DIR": File.dirname(executable_path)}
+      end
+
+      path
     end
 
     property entries : Array(String)
