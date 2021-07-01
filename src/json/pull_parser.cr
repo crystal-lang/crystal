@@ -126,6 +126,8 @@ class JSON::PullParser
       begin_array
     when .begin_object?
       begin_object
+    when .eof?
+      @kind = :eof
     else
       unexpected_token
     end
