@@ -179,6 +179,33 @@ module IO::Buffered
     end
   end
 
+  # Returns the current position (in bytes) in this `IO`.
+  #
+  # ```
+  # File.write("testfile", "hello")
+  #
+  # file = File.new("testfile")
+  # file.pos     # => 0
+  # file.gets(2) # => "he"
+  # file.pos     # => 2
+  # ```
+  def pos : Int64
+    in_rem = @in_buffer_rem.size
+    out_rem = @out_count
+    rem = if in_rem > 0
+            raise RuntimeError.new("can't mix read + write when .sync = false") if out_rem > 0
+            in_rem
+          else
+            out_rem * -1
+          end
+
+    if responds_to?(:unbuffered_pos)
+      unbuffered_pos - rem
+    else
+      super - rem
+    end
+  end
+
   # Turns on/off `IO` **write** buffering. When *sync* is set to `true`, no buffering
   # will be done (that is, writing to this `IO` is immediately synced to the
   # underlying `IO`).
