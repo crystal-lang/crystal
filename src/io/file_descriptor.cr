@@ -116,7 +116,15 @@ class IO::FileDescriptor < IO
   def pos : Int64
     check_open
 
-    system_pos - @in_buffer_rem.size
+    in_rem = @in_buffer_rem.size
+    out_rem = @out_count
+    rem = if in_rem > 0
+            raise RuntimeError.new("can't mix read + write when .sync = false") if out_rem > 0
+            in_rem
+          else
+            out_rem * -1
+          end
+    system_pos - rem
   end
 
   # Sets the current position (in bytes) in this `IO`.
