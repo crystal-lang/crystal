@@ -523,7 +523,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # Background loop to cleanup unused fiber stacks.
   spawn(name: "Fiber Clean Loop") do
     loop do

@@ -5,7 +5,7 @@ require "c/stdio"
 require "c/string"
 require "./lib_unwind"
 
-{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) %}
+{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) || flag?(:wasm32) %}
   require "./call_stack/dwarf"
 {% else %}
   require "./call_stack/null"
@@ -68,29 +68,31 @@ struct Exception::CallStack
 
   protected def self.unwind
     callstack = [] of Void*
-    backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
-      bt = data.as(typeof(callstack))
+    {% unless flag?(:wasm32) %}
+      backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+        bt = data.as(typeof(callstack))
 
-      ip = {% if flag?(:arm) %}
-             Pointer(Void).new(__crystal_unwind_get_ip(context))
-           {% else %}
-             Pointer(Void).new(LibUnwind.get_ip(context))
-           {% end %}
-      bt << ip
+        ip = {% if flag?(:arm) %}
+              Pointer(Void).new(__crystal_unwind_get_ip(context))
+            {% else %}
+              Pointer(Void).new(LibUnwind.get_ip(context))
+            {% end %}
+        bt << ip
 
-      {% if flag?(:gnu) && flag?(:i386) %}
-        # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
-        # The unwind info is corrupted when `makecontext` is used.
-        # Stop the backtrace here. There is nothing interest beyond this point anyway.
-        if CallStack.makecontext_range.includes?(ip)
-          return LibUnwind::ReasonCode::END_OF_STACK
-        end
-      {% end %}
+        {% if flag?(:gnu) && flag?(:i386) %}
+          # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
+          # The unwind info is corrupted when `makecontext` is used.
+          # Stop the backtrace here. There is nothing interest beyond this point anyway.
+          if CallStack.makecontext_range.includes?(ip)
+            return LibUnwind::ReasonCode::END_OF_STACK
+          end
+        {% end %}
 
-      LibUnwind::ReasonCode::NO_REASON
-    end
+        LibUnwind::ReasonCode::NO_REASON
+      end
 
-    LibUnwind.backtrace(backtrace_fn, callstack.as(Void*))
+      LibUnwind.backtrace(backtrace_fn, callstack.as(Void*))
+    {% end %}
     callstack
   end
 
@@ -107,27 +109,29 @@ struct Exception::CallStack
   end
 
   def self.print_backtrace
-    backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
-      last_frame = data.as(RepeatedFrame*)
+    {% unless flag?(:wasm32) %}
+      backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+        last_frame = data.as(RepeatedFrame*)
 
-      ip = {% if flag?(:arm) %}
-             Pointer(Void).new(__crystal_unwind_get_ip(context))
-           {% else %}
-             Pointer(Void).new(LibUnwind.get_ip(context))
-           {% end %}
+        ip = {% if flag?(:arm) %}
+              Pointer(Void).new(__crystal_unwind_get_ip(context))
+            {% else %}
+              Pointer(Void).new(LibUnwind.get_ip(context))
+            {% end %}
 
-      if last_frame.value.ip == ip
-        last_frame.value.incr
-      else
-        print_frame(last_frame.value) unless last_frame.value.ip.address == 0
-        last_frame.value = RepeatedFrame.new ip
+        if last_frame.value.ip == ip
+          last_frame.value.incr
+        else
+          print_frame(last_frame.value) unless last_frame.value.ip.address == 0
+          last_frame.value = RepeatedFrame.new ip
+        end
+        LibUnwind::ReasonCode::NO_REASON
       end
-      LibUnwind::ReasonCode::NO_REASON
-    end
 
-    rf = RepeatedFrame.new(Pointer(Void).null)
-    LibUnwind.backtrace(backtrace_fn, pointerof(rf).as(Void*))
-    print_frame(rf)
+      rf = RepeatedFrame.new(Pointer(Void).null)
+      LibUnwind.backtrace(backtrace_fn, pointerof(rf).as(Void*))
+      print_frame(rf)
+    {% end %}
   end
 
   private def self.print_frame(repeated_frame)
@@ -213,16 +217,18 @@ struct Exception::CallStack
   end
 
   protected def self.decode_frame(ip, original_ip = ip)
-    if LibC.dladdr(ip, out info) != 0
-      offset = original_ip - info.dli_saddr
+    {% unless flag?(:wasm32) %}
+      if LibC.dladdr(ip, out info) != 0
+        offset = original_ip - info.dli_saddr
 
-      if offset == 0
-        return decode_frame(ip - 1, original_ip)
-      end
+        if offset == 0
+          return decode_frame(ip - 1, original_ip)
+        end
 
-      unless info.dli_sname.null?
-        {offset, info.dli_sname}
+        unless info.dli_sname.null?
+          {offset, info.dli_sname}
+        end
       end
-    end
+    {% end %}
   end
 end

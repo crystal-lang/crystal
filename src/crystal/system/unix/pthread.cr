@@ -34,11 +34,18 @@ class Thread
     end
   end
 
+  @th : LibC::PthreadT
+
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
     @func = ->{}
-    @th = LibC.pthread_self
+    @th =
+      {% if flag?(:wasm32) %}
+        Pointer(Void).null.as(LibC::PthreadT)
+      {% else %}
+        LibC.pthread_self
+      {% end %}
     @main_fiber = Fiber.new(stack_address, self)
 
     Thread.threads.push(self)
