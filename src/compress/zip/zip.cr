@@ -27,7 +27,7 @@ require "digest/crc32"
 # NOTE: only compression methods 0 (STORED) and 8 (DEFLATED) are
 # supported. Additionally, ZIP64 is not yet supported.
 module Compress::Zip
-  VERSION = 20_u16
+  VERSION = 20_u8
 
   {% if flag?(:unix) %}
     FS_ORIGIN = 3_u8 # Unix

@@ -5,7 +5,9 @@ module Compress::Zip::FileInfo
 
   DEFLATE_END_SIGNATURE = Bytes[80, 75, 7, 8, read_only: true]
 
-  property version : UInt16 = Zip::VERSION
+  # :nodoc:
+  property version = 20_u8
+  # :nodoc:
   property general_purpose_bit_flag = 0_u16
   property compression_method = CompressionMethod::DEFLATED
   property time : Time
@@ -15,11 +17,13 @@ module Compress::Zip::FileInfo
   property filename = ""
   property extra = Bytes.empty
   property comment = ""
+  # :nodoc:
   property offset = 0_u32
 
   # :nodoc:
   def initialize(*, at_file_header io : IO)
-    @version = read(io, UInt16)
+    @version = read io, UInt8
+    read io, UInt8 # fs
     file_name_length, extra_field_length, time = initialize_meta(io)
     @time = time
     @filename = io.read_string(file_name_length)
@@ -31,8 +35,9 @@ module Compress::Zip::FileInfo
 
   # :nodoc:
   def initialize(*, at_central_directory_header io : IO)
-    read io, UInt16            # version made by
-    @version = read io, UInt16 # version needed to extract
+    read io, UInt16           # version made by
+    @version = read io, UInt8 # version needed to extract
+    read io, UInt8            # fs
     file_name_length, extra_field_length, time = initialize_meta(io)
     @time = time
     file_comment_length = read(io, UInt16) # file comment length
@@ -80,7 +85,8 @@ module Compress::Zip::FileInfo
 
   protected def to_io(io : IO)
     write io, SIGNATURE # 4
-    write io, @version  # 2
+    write io, @version  # 1
+    write io, FS_EXTRACT
     meta_count = meta_to_io(io)
     io << @filename
     io.write(extra)

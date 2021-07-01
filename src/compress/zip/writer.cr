@@ -195,8 +195,10 @@ class Compress::Zip::Writer
   private def write_central_directory
     @entries.each do |entry|
       write Zip::CENTRAL_DIRECTORY_HEADER_SIGNATURE # 4
-      write Zip::VERSION                            # version made by (2)
-      write Zip::VERSION                            # version needed to extract (2)
+      write VERSION                                 # version made by (1)
+      write FS_ORIGIN                               # file system or operating system origin (1)
+      write entry.version.to_u8                     # version needed to extract (1)
+      write FS_EXTRACT                              # minimum file system compatibility required (1)
       @written += 8                                 # the 8 bytes we just wrote
 
       @written += entry.meta_to_io(@io)
