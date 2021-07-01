@@ -4780,6 +4780,8 @@ module Crystal
         min_difference = (fix.start_line..fix.end_line).min_of do |line_number|
           leading_space_count(lines[line_number], fix.difference)
         end
+        indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
+        min_difference = Math.max(min_difference - indent_before_start, 0)
 
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
