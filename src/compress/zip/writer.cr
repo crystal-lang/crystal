@@ -76,30 +76,28 @@ class Compress::Zip::Writer
   #
   # You can choose the Entry's compression method before adding it.
   #
-  # * If the STORED compression method is used, its crc32, compressed
-  # size and uncompressed size **must** be set and be correct with
-  # respect to the data that will be written to the yielded `IO`.
-  # * If the DEFLATED compression method is used, crc32, compressed
-  # size and uncompressed size will be computed from the data
+  # * crc32, compressed size and uncompressed size will be computed from the data
   # written to the yielded IO.
   #
   # You can also set the Entry's time (which is `Time.utc` by default)
   #  and extra data before adding it to the zip stream.
   def add(entry : Entry)
-    # bit 3: unknown compression size (not needed for STORED, by if left out it doesn't work...)
+    # plan on using data descriptor.  may rewrite header later if IO#seek is available
     entry.general_purpose_bit_flag |= (1 << 3)
-    # bit 11: require UTF-8 set
-    entry.general_purpose_bit_flag |= (1 << 11)
+    entry.utf8_name = true
     entry.offset = @written
+
+    header_pos = nil
+    # need a better way to detect seek capability
+    begin
+      header_pos = @io.pos
+    rescue
+    end
 
     @written += entry.to_io(@io)
 
     case entry.compression_method
     when .stored?
-      if entry.compressed_size != entry.uncompressed_size
-        raise Error.new "Entry compressed size (#{entry.compressed_size}) is not equal to its uncompressed size (#{entry.uncompressed_size})"
-      end
-
       @uncompressed_size_counter.io = @io
       yield @uncompressed_size_counter
     when .deflated?
@@ -127,23 +125,19 @@ class Compress::Zip::Writer
       compressed_size = @compressed_size_counter.count
     end
 
-    if entry.compression_method.stored?
-      if entry.crc32 != crc32
-        raise Error.new("Entry CRC32 mismatch (#{entry.crc32} given but was #{crc32})")
-      end
+    entry.crc32 = crc32
+    entry.compressed_size = compressed_size
+    entry.uncompressed_size = uncompressed_size
 
-      if entry.uncompressed_size != uncompressed_size
-        raise Error.new("Entry uncompressed size mismatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
-      end
+    # rewrite the initial header and skip the data descriptor if the zip file is seekable
+    # if *_size == 0 keep the data descriptor because unzip chokes
+    if true && header_pos && entry.compressed_size != 0 && entry.uncompressed_size != 0
+      entry.general_purpose_bit_flag &= ~(1_u32 << 3)
+      cur_pos = @io.pos
+      @io.pos = header_pos
+      entry.to_io(@io)
+      @io.pos = cur_pos
     else
-      entry.crc32 = crc32
-      entry.compressed_size = compressed_size
-      entry.uncompressed_size = uncompressed_size
-    end
-
-    # A data descriptor is not needed for the STORED method
-    # (because we know how many bytes we need to read)
-    unless entry.compression_method.stored?
       @written += entry.write_data_descriptor(@io)
     end
 
