@@ -203,6 +203,8 @@ module Crystal
       has_paren = false
       has_begin = false
 
+      empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+
       if node.keyword == :"(" && @token.type == :"("
         write "("
         next_needs_indent = false
@@ -223,7 +225,7 @@ module Crystal
         next_token
         # Corner case: an empty `begin ... end`.
         # In this case, we should not skip space because it will do in the below loop.
-        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+        unless empty_expressions
           skip_space_or_newline
           if @token.type == :";"
             next_token_skip_space_or_newline
@@ -313,7 +315,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline && !last_found_comment
+      if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
         write_line
         write_indent
       end
