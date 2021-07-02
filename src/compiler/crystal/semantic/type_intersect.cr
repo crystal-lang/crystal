@@ -185,6 +185,12 @@ module Crystal
       type1
     end
 
+    def self.common_descendent(type1 : GenericClassType, type2 : GenericClassType)
+      return type1 if type1 == type2
+
+      common_descendent_instance_and_generic(type1, type2)
+    end
+
     def self.common_descendent(type1 : Type, type2 : AliasType)
       return type1 if type1 == type2
 
