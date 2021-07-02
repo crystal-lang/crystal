@@ -93,24 +93,27 @@ module Crystal
 
       filename_is_relative = filename.starts_with?('.')
 
-      if !filename_is_relative && (slash_index = filename.index('/'))
-        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
-        before_slash, after_slash = filename.split('/', 2)
+      shard_name, _, shard_path = filename.partition("/")
+      shard_path = shard_path.presence
 
-        yield "#{relative_to}/#{before_slash}/src/#{after_slash}.cr"
+      if !filename_is_relative && shard_path
+        shard_src = "#{relative_to}/#{shard_name}/src"
+
+        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
+        yield "#{shard_src}/#{shard_path}.cr"
 
         # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-        yield "#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr"
+        yield "#{shard_src}/#{shard_name}/#{shard_path}.cr"
 
         # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
         basename = File.basename(relative_filename)
-        yield "#{relative_to}/#{filename}/#{basename}.cr"
+        yield "#{relative_filename}/#{basename}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-        yield "#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr"
+        yield "#{shard_src}/#{shard_path}/#{shard_path}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-        yield "#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr"
+        yield "#{shard_src}/#{shard_name}/#{shard_path}/#{shard_path}.cr"
 
         return nil
       end
