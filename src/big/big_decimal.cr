@@ -161,7 +161,7 @@ struct BigDecimal < Number
     end
   end
 
-  def +(other : Int | Float) : BigDecimal
+  def +(other : Int | Float | BigRational | BigInt) : BigDecimal
     self + BigDecimal.new(other)
   end
 
@@ -177,7 +177,7 @@ struct BigDecimal < Number
     end
   end
 
-  def -(other : Int | Float) : BigDecimal
+  def -(other : Int | Float | BigRational | BigInt) : BigDecimal
     self - BigDecimal.new(other)
   end
 
@@ -185,7 +185,7 @@ struct BigDecimal < Number
     BigDecimal.new(@value * other.value, @scale + other.scale)
   end
 
-  def *(other : Int | Float) : BigDecimal
+  def *(other : Int | Float | BigRational | BigInt) : BigDecimal
     self * BigDecimal.new(other)
   end
 
@@ -291,7 +291,7 @@ struct BigDecimal < Number
   #
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
-  def **(other : Int) : BigDecimal
+  def **(other : Int | Float | BigRational | BigInt) : BigDecimal
     if other < 0
       raise ArgumentError.new("Negative exponent isn't supported")
     end
