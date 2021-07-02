@@ -27,7 +27,7 @@ struct Number
     if number.is_a?(Float)
       string = String.build do |io|
         # Make sure to avoid scientific notation of default Float#to_s
-        Float::Printer.print(number.abs, io, decimal_range: ..)
+        Float::Printer.print(number.abs, io, point_range: ..)
       end
     else
       string = number.abs.to_s
