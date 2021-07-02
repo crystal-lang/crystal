@@ -12,6 +12,8 @@ require "./regex/*"
 # /y/.match("haystack") # => Regex::MatchData("y")
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # Interpolation works in regular expression literals just as it does in string
 # literals. Be aware that using this feature will cause an exception to be
 # raised at runtime, if the resulting string would not be a valid regular
@@ -268,7 +270,7 @@ class Regex
   # Regex.error?("(foo|bar)") # => nil
   # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
-  def self.error?(source)
+  def self.error?(source) : String?
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK | Options::DUPNAMES), out errptr, out erroffset, nil)
     if re
       nil
@@ -369,7 +371,7 @@ class Regex
   # re.match("Skiing")   # => Regex::MatchData("Skiing")
   # re.match("sledding") # => Regex::MatchData("sledding")
   # ```
-  def +(other)
+  def +(other) : Regex
     Regex.union(self, other)
   end
 
@@ -422,7 +424,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other : String)
+  def =~(other : String) : Int32?
     match = self.match(other)
     $~ = match
     match.try &.begin(0)
@@ -434,7 +436,7 @@ class Regex
   # /at/ =~ "input data" # => 7
   # /ax/ =~ "input data" # => nil
   # ```
-  def =~(other)
+  def =~(other) : Nil
     nil
   end
 

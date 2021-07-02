@@ -1117,13 +1117,13 @@ class Crystal::Call
         when "proc_call"
           owner = owner.as(ProcInstanceType)
           proc_arg_type = owner.arg_types[index]
-          unless type.covariant?(proc_arg_type)
+          unless type.implements?(proc_arg_type)
             self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
           end
         when "pointer_set"
           owner = owner.remove_typedef.as(PointerInstanceType)
           pointer_type = owner.var.type
-          unless type.filter_by(pointer_type)
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
             self.args[index].raise "type must be #{pointer_type}, not #{type}"
           end
         end
