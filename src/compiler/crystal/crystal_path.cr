@@ -86,7 +86,7 @@ module Crystal
       nil
     end
 
-    private def each_file_expansion(filename, relative_to, &)
+    def each_file_expansion(filename, relative_to, &)
       relative_filename = "#{relative_to}/#{filename}"
       # Check if .cr file exists.
       yield relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
