@@ -191,6 +191,11 @@ struct BigRational < Number
     BigRational.new(numerator ** other, denominator ** other)
   end
 
+  # :nodoc:
+  def **(other : UInt8 | UInt16 | UInt32 | UInt64 | UInt128) : BigRational
+    BigRational.new(numerator ** other, denominator ** other)
+  end
+
   # Returns a new `BigRational` as 1/r.
   #
   # This will raise an exception if rational is 0.
