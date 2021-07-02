@@ -1,5 +1,5 @@
 require "./spec_helper"
-require "../../support/iterate"
+require "spec/helpers/iterate"
 
 CALENDAR_WEEK_TEST_DATA = [
   { {1981, 1, 1}, {1981, 1, 4} },

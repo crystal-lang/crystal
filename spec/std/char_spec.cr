@@ -1,6 +1,6 @@
 require "spec"
 require "unicode"
-require "../support/iterate"
+require "spec/helpers/iterate"
 
 describe "Char" do
   describe "upcase" do

@@ -25,7 +25,7 @@ class IO::Sized < IO
     @read_remaining = read_size.to_u64
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     check_open
 
     count = {slice.size.to_u64, @read_remaining}.min
@@ -34,7 +34,7 @@ class IO::Sized < IO
     bytes_read
   end
 
-  def read_byte
+  def read_byte : UInt8?
     check_open
 
     if @read_remaining > 0
@@ -46,7 +46,7 @@ class IO::Sized < IO
     end
   end
 
-  def peek
+  def peek : Bytes?
     check_open
 
     return Bytes.empty if @read_remaining == 0 # EOF
