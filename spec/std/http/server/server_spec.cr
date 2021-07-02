@@ -436,6 +436,7 @@ describe HTTP::Server do
         client = HTTP::Client.new(address.address, address.port, client_context)
         client.read_timeout = client.connect_timeout = 3
         client.get("/").body.should eq "ok"
+        client.close
       ensure
         ch.send nil
       end

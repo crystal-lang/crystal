@@ -131,6 +131,9 @@ require "log"
 class HTTP::Server
   Log = ::Log.for("http.server")
 
+  @client_connection_count = Atomic(UInt32).new 1
+  @stop_chan = Channel(Nil).new
+
   @sockets = [] of Socket::Server
 
   # Returns `true` if this server is closed.
@@ -465,6 +468,7 @@ class HTTP::Server
           if io
             # a non nillable version of the closured io
             _io = io
+            @client_connection_count.add 1
             spawn handle_client(_io)
           else
             break
@@ -476,11 +480,14 @@ class HTTP::Server
     end
 
     @sockets.size.times { done.receive }
+
+    client_connection_count_dec
+    @stop_chan.receive?
   end
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
-  def close
+  def close(*, timeout = nil)
     raise "Can't close server, it's already closed" if closed?
 
     @closed = true
@@ -494,6 +501,13 @@ class HTTP::Server
 
     @listening = false
     @sockets.clear
+
+    if timeout
+      spawn do
+        sleep timeout
+        @stop_chan.close
+      end
+    end
   end
 
   private def handle_client(io : IO)
@@ -514,6 +528,7 @@ class HTTP::Server
 
     @processor.process(io, io)
   ensure
+    client_connection_count_dec
     io.close rescue IO::Error
   end
 
@@ -523,6 +538,13 @@ class HTTP::Server
     # error and should be logged as such. Client malfunction should only be informational.
     # See https://github.com/crystal-lang/crystal/pull/9034#discussion_r407038999
     Log.error(exception: e) { "Error while connecting a new socket" }
+  end
+
+  # When previous count == 1 send stop.  May happen from any (including the listening) fiber
+  private def client_connection_count_dec
+    if @client_connection_count.sub(1) == 1
+      @stop_chan.close
+    end
   end
 
   # Builds all handlers as the middleware for `HTTP::Server`.
