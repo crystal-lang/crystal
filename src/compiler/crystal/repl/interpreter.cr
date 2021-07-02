@@ -352,8 +352,6 @@ class Crystal::Repl::Interpreter
       if current_type_size == next_type_size
         # Doesn't need a migration, so we copy it as-is
         stack.copy_from(current_memory, current_type_size)
-        stack += current_type_size
-        current_memory += current_type_size
       else
         # Needs a migration
         case next_type
@@ -361,30 +359,21 @@ class Crystal::Repl::Interpreter
           case current_type
           when PrimitiveType, NonGenericClassType, GenericClassInstanceType
             stack.as(Int32*).value = type_id(current_type)
-            stack += type_id_bytesize
-            stack.copy_from(current_memory, current_type_size)
-            stack += next_type_size
-            current_memory += current_type_size
+            (stack + type_id_bytesize).copy_from(current_memory, current_type_size)
           when ReferenceUnionType, NilableReferenceUnionType, VirtualType
             reference = stack.as(UInt8**).value
             if reference.null?
               stack.clear(next_type_size)
-              stack += next_type_size
             else
               stack.as(Int32*).value = reference.as(Int32*).value
-              stack += type_id_bytesize
-              stack.copy_from(current_memory, current_type_size)
-              stack += next_type_size
+              (stack + type_id_bytesize).copy_from(current_memory, current_type_size)
             end
-            current_memory += current_type_size
           when MixedUnionType
             # Copy the union type id
             stack.as(Int32*).value = current_memory.as(Int32*).value
-            stack += type_id_bytesize
-            current_memory += type_id_bytesize
-            stack.copy_from(current_memory, current_type_size)
-            stack += next_type_size
-            current_memory += next_type_size - type_id_bytesize
+
+            # Copy the value
+            (stack + type_id_bytesize).copy_from(current_memory + type_id_bytesize, current_type_size)
           else
             # There might not be other cases to handle, but just in case...
             raise "BUG: missing local var migration from #{current_type} to #{next_type} (#{current_type.class} to #{next_type.class})"
@@ -395,6 +384,9 @@ class Crystal::Repl::Interpreter
           raise "BUG: missing local var migration from #{current_type} to #{next_type}"
         end
       end
+
+      stack += next_type_size
+      current_memory += current_type_size
     end
 
     # Need to start with fresh local variables
