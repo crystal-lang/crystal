@@ -46,6 +46,14 @@ DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
+DESTDIR ?=
+PREFIX ?= /usr/local
+BINDIR ?= $(DESTDIR)$(PREFIX)/bin
+MANDIR ?= $(DESTDIR)$(PREFIX)/share/man
+LIBDIR ?= $(DESTDIR)$(PREFIX)/lib
+DATADIR ?= $(DESTDIR)$(PREFIX)/share/crystal
+INSTALL ?= /usr/bin/install
+
 ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
   EXPORT_CC ?= CC="cc -fuse-ld=lld"
 endif
@@ -98,6 +106,44 @@ crystal: $(O)/crystal ## Build the compiler
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
 llvm_ext: $(LLVM_EXT_OBJ)
+
+.PHONY: install
+install: $(O)/crystal ## Install the compiler at DESTDIR
+	$(INSTALL) -D -m 0755 "$(O)/crystal" "$(BINDIR)/crystal"
+
+	$(INSTALL) -d -m 0755 $(DATADIR)
+	cp -av src "$(DATADIR)/src"
+	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
+	cp -av samples "$(DATADIR)/examples"
+
+	$(INSTALL) -D -m 644 man/crystal.1 "$(MANDIR)/man1/crystal.1"
+	$(INSTALL) -D -m 644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
+
+	$(INSTALL) -D -m 644 etc/completion.bash "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
+	$(INSTALL) -D -m 644 etc/completion.zsh "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+
+.PHONY: uninstall
+uninstall: ## Uninstall the compiler from DESTDIR
+	rm -f "$(BINDIR)/crystal"
+
+	rm -rf "$(DATADIR)/src"
+	rm -rf "$(DATADIR)/examples"
+
+	rm -f "$(MANDIR)/man1/crystal.1"
+	rm -f "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
+
+	rm -f "$(DESTDIR)$(PREFIX)/share/bash-completion/completions/crystal"
+	rm -f "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
+
+.PHONY: install_docs
+install_docs: docs ## Install API docs at DESTDIR
+	$(INSTALL) -d -m 0755 $(DATADIR)
+
+	cp -av docs "$(DATADIR)/docs"
+
+.PHONY: uninstall_docs
+uninstall_docs: ## Uninstall API docs from DESTDIR
+	rm -rf "$(DATADIR)/docs"
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
