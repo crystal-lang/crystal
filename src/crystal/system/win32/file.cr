@@ -203,7 +203,7 @@ module Crystal::System::File
     raise NotImplementedError.new("readlink")
   end
 
-  def self.rename(old_path : String, new_path : String) : File::Error?
+  def self.rename(old_path : String, new_path : String) : ::File::Error?
     if LibC.MoveFileExW(to_windows_path(old_path), to_windows_path(new_path), LibC::MOVEFILE_REPLACE_EXISTING) == 0
       ::File::Error.from_winerror("Error renaming file", file: old_path, other: new_path)
     end
