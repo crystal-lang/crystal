@@ -14,13 +14,12 @@ module Crystal
     private DEFAULT_LIB_PATH = "lib"
 
     def self.default_path
-      path = ENV["CRYSTAL_PATH"]? || begin
-        if Crystal::Config.path.blank?
-          DEFAULT_LIB_PATH
-        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
-          Crystal::Config.path
-        else
-          {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
+      path = ENV["CRYSTAL_PATH"]?
+
+      unless path
+        path = Crystal::Config.path.presence || DEFAULT_LIB_PATH
+        unless path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
+          path = {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
         end
       end
 
