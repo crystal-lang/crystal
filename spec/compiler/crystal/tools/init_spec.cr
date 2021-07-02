@@ -169,12 +169,6 @@ module Crystal
           parsed["targets"].should eq({"example_app" => {"main" => "src/example_app.cr"}})
         end
 
-        with_file "example/.travis.yml" do |travis|
-          parsed = YAML.parse(travis)
-
-          parsed["language"].should eq("crystal")
-        end
-
         with_file "example/src/example.cr" do |example|
           example.should eq(<<-EOF
         # TODO: Write documentation for `Example`
@@ -221,6 +215,16 @@ module Crystal
   end
 
   describe "Init invocation" do
+    it "produces valid yaml file" do
+      within_temporary_directory do
+        exec_init("example", "example", "app")
+
+        with_file "example/shard.yml" do |file|
+          YAML.parse(file)
+        end
+      end
+    end
+
     it "prints error if a file is already present" do
       within_temporary_directory do
         existing_file = "existing-file"

@@ -103,8 +103,18 @@ module Crystal
     end
 
     def assign_distinct_union_types(target_pointer, target_type, value_type, value)
-      casted_value = cast_to_pointer value, target_type
-      store load(casted_value), target_pointer
+      # If we have:
+      # - target_pointer: Pointer(A | B | C)
+      # - target_type: A | B | C
+      # - value_type: A | B
+      # - value: Pointer(A | B)
+      #
+      # Then we:
+      # - load the value, we get A | B
+      # - cast the target pointer to Pointer(A | B)
+      # - store the A | B from the first pointer into the casted target pointer
+      casted_target_pointer = cast_to_pointer target_pointer, value_type
+      store load(value), casted_target_pointer
     end
 
     def downcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
@@ -112,7 +122,11 @@ module Crystal
     end
 
     def upcast_distinct_union_types(value, to_type : MixedUnionType, from_type : MixedUnionType)
-      cast_to_pointer value, to_type
+      # Because we are casting a union to a bigger union, we need new space
+      # for that, hence the alloca. Then we simply reuse `assign_distinct_union_types`.
+      target_pointer = alloca llvm_type(to_type)
+      assign_distinct_union_types target_pointer, to_type, from_type, value
+      target_pointer
     end
 
     private def type_id_impl(value, type : MixedUnionType)

@@ -45,7 +45,7 @@ module Crystal
     end
 
     # Returns the doc comment attached to this node. Not every node
-    # supports having doc domments, so by default this returns `nil`.
+    # supports having doc comments, so by default this returns `nil`.
     def doc
     end
 
@@ -97,7 +97,7 @@ module Crystal
     end
 
     # It yields `nil` always.
-    # (It is overrided by `Expressions` to implement `#single_expression`.)
+    # (It is overridden by `Expressions` to implement `#single_expression`.)
     def single_expression?
       nil
     end
@@ -1092,21 +1092,21 @@ module Crystal
 
   class OffsetOf < ASTNode
     property offsetof_type : ASTNode
-    property instance_var : ASTNode
+    property offset : ASTNode
 
-    def initialize(@offsetof_type, @instance_var)
+    def initialize(@offsetof_type, @offset)
     end
 
     def accept_children(visitor)
       @offsetof_type.accept visitor
-      @instance_var.accept visitor
+      @offset.accept visitor
     end
 
     def clone_without_location
-      OffsetOf.new(@offsetof_type.clone, @instance_var.clone)
+      OffsetOf.new(@offsetof_type.clone, @offset.clone)
     end
 
-    def_equals_and_hash @offsetof_type, @instance_var
+    def_equals_and_hash @offsetof_type, @offset
   end
 
   class VisibilityModifier < ASTNode

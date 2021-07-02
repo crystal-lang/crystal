@@ -265,7 +265,7 @@ struct BigInt < Int
     unsafe_truncated_mod(other)
   end
 
-  def divmod(number : BigInt)
+  def divmod(number : BigInt) : {BigInt, BigInt}
     check_division_by_zero number
 
     unsafe_floored_divmod(number)
@@ -276,7 +276,7 @@ struct BigInt < Int
     unsafe_floored_divmod(number)
   end
 
-  def divmod(number : Int::Signed)
+  def divmod(number : Int::Signed) : {BigInt, BigInt}
     check_division_by_zero number
     if number > 0 && number <= LibC::Long::MAX
       unsafe_floored_divmod(LibGMP::ULong.new(number))
@@ -320,13 +320,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i) }
   end
 
-  def unsafe_floored_divmod(number : BigInt)
+  def unsafe_floored_divmod(number : BigInt) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, number) }
     {the_q, the_r}
   end
 
-  def unsafe_floored_divmod(number : LibGMP::ULong)
+  def unsafe_floored_divmod(number : LibGMP::ULong) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, number) }
     {the_q, the_r}
@@ -382,19 +382,23 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
+  # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
   end
 
+  # :ditto:
   def gcd(other : Int) : Int
     result = LibGMP.gcd_ui(nil, self, other.abs.to_u64)
     result == 0 ? self : result
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.lcm(mpz, self, other) }
   end
 
+  # :ditto:
   def lcm(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.lcm_ui(mpz, self, other.abs.to_u64) }
   end
@@ -403,8 +407,8 @@ struct BigInt < Int
     LibGMP.sizeinbase(self, 2).to_i
   end
 
-  # TODO: improve this
-  def_hash to_u64
+  # TODO: check hash equality for numbers >= 2**63
+  def_hash to_i64!
 
   # Returns a string representation of self.
   #
@@ -450,35 +454,35 @@ struct BigInt < Int
     ary
   end
 
-  def popcount
+  def popcount : Int
     LibGMP.popcount(self)
   end
 
-  def trailing_zeros_count
+  def trailing_zeros_count : Int
     LibGMP.scan1(self, 0)
   end
 
-  def to_i
+  def to_i : Int32
     to_i32
   end
 
-  def to_i8
+  def to_i8 : Int8
     to_i32.to_i8
   end
 
-  def to_i16
+  def to_i16 : Int16
     to_i32.to_i16
   end
 
-  def to_i32
+  def to_i32 : Int32
     LibGMP.get_si(self).to_i32
   end
 
-  def to_i64
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
+  def to_i64 : Int64
+    if LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
       LibGMP.get_si(self).to_i64
     else
-      to_s.to_i64
+      to_s.to_i64 { raise OverflowError.new }
     end
   end
 
@@ -486,48 +490,43 @@ struct BigInt < Int
     to_i32!
   end
 
-  def to_i8!
+  def to_i8! : Int8
     LibGMP.get_si(self).to_i8!
   end
 
-  def to_i16!
+  def to_i16! : Int16
     LibGMP.get_si(self).to_i16!
   end
 
-  def to_i32!
+  def to_i32! : Int32
     LibGMP.get_si(self).to_i32!
   end
 
-  def to_i64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_si(self).to_i64!
-    else
-      to_s.to_i64
-    end
+  def to_i64! : Int64
+    (self % BITS64).to_u64.to_i64!
   end
 
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
-  def to_u8
+  def to_u8 : UInt8
     to_u32.to_u8
   end
 
-  def to_u16
+  def to_u16 : UInt16
     to_u32.to_u16
   end
 
-  def to_u32
+  def to_u32 : UInt32
     to_u64.to_u32
   end
 
-  def to_u64
-    raise OverflowError.new if self < 0
-    if LibGMP::ULong == UInt64 || (UInt32::MIN <= self <= UInt32::MAX)
+  def to_u64 : UInt64
+    if LibGMP::ULong::MIN <= self <= LibGMP::ULong::MAX
       LibGMP.get_ui(self).to_u64
     else
-      to_s.to_u64
+      to_s.to_u64 { raise OverflowError.new }
     end
   end
 
@@ -535,35 +534,33 @@ struct BigInt < Int
     to_u32!
   end
 
-  def to_u8!
+  def to_u8! : UInt8
     LibGMP.get_ui(self).to_u8!
   end
 
-  def to_u16!
+  def to_u16! : UInt16
     LibGMP.get_ui(self).to_u16!
   end
 
-  def to_u32!
+  def to_u32! : UInt32
     LibGMP.get_ui(self).to_u32!
   end
 
-  def to_u64!
-    if LibGMP::Long == Int64 || (Int32::MIN <= self <= Int32::MAX)
-      LibGMP.get_ui(self).to_u64!
-    else
-      to_s.to_u64
-    end
+  def to_u64! : UInt64
+    (self % BITS64).to_u64
   end
 
-  def to_f
+  private BITS64 = BigInt.new(1) << 64
+
+  def to_f : Float64
     to_f64
   end
 
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
-  def to_f64
+  def to_f64 : Float64
     LibGMP.get_d(self)
   end
 
@@ -579,19 +576,19 @@ struct BigInt < Int
     LibGMP.get_d(self)
   end
 
-  def to_big_i
+  def to_big_i : BigInt
     self
   end
 
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self)
   end
 
@@ -662,10 +659,12 @@ struct Int
     to_big_i % other
   end
 
-  def gcm(other : BigInt) : Int
-    other.gcm(self)
+  # Returns the greatest common divisor of `self` and *other*.
+  def gcd(other : BigInt) : Int
+    other.gcd(self)
   end
 
+  # Returns the least common multiple of `self` and *other*.
   def lcm(other : BigInt) : BigInt
     other.lcm(self)
   end
@@ -714,14 +713,14 @@ class String
 end
 
 module Math
-  # Returns the sqrt of a `BigInt`.
+  # Calculates the square root of *value*.
   #
   # ```
   # require "big"
   #
-  # Math.sqrt((1000_000_000_0000.to_big_i*1000_000_000_00000.to_big_i))
+  # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
-  def sqrt(value : BigInt)
+  def sqrt(value : BigInt) : BigFloat
     sqrt(value.to_big_f)
   end
 end

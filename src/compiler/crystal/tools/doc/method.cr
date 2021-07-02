@@ -119,8 +119,8 @@ class Crystal::Doc::Method
     nil
   end
 
-  def source_link
-    @generator.source_link(@def)
+  def location
+    @generator.relative_location(@def)
   end
 
   def prefix
@@ -184,7 +184,7 @@ class Crystal::Doc::Method
 
   def id
     String.build do |io|
-      io << to_s.gsub(/<.+?>/, "").delete(' ')
+      io << to_s.delete(' ')
       if @class_method
         io << "-class-method"
       else
@@ -194,7 +194,7 @@ class Crystal::Doc::Method
   end
 
   def html_id
-    id
+    HTML.escape(id)
   end
 
   def anchor
@@ -211,14 +211,14 @@ class Crystal::Doc::Method
   end
 
   def args_to_s(io : IO) : Nil
-    args_to_html(io, links: false)
+    args_to_html(io, html: :none)
   end
 
-  def args_to_html
-    String.build { |io| args_to_html io }
+  def args_to_html(html : HTMLOption = :all)
+    String.build { |io| args_to_html io, html }
   end
 
-  def args_to_html(io : IO, links : Bool = true) : Nil
+  def args_to_html(io : IO, html : HTMLOption = :all) : Nil
     return_type = self.return_type
 
     return unless has_args? || return_type
@@ -229,7 +229,7 @@ class Crystal::Doc::Method
       @def.args.each_with_index do |arg, i|
         io << ", " if printed
         io << '*' if @def.splat_index == i
-        arg_to_html arg, io, links: links
+        arg_to_html arg, io, html: html
         printed = true
       end
       if double_splat = @def.double_splat
@@ -241,7 +241,7 @@ class Crystal::Doc::Method
       if block_arg = @def.block_arg
         io << ", " if printed
         io << '&'
-        arg_to_html block_arg, io, links: links
+        arg_to_html block_arg, io, html: html
       elsif @def.yields
         io << ", " if printed
         io << '&'
@@ -254,10 +254,10 @@ class Crystal::Doc::Method
       # Nothing to do
     when ASTNode
       io << " : "
-      node_to_html return_type, io, links: links
+      node_to_html return_type, io, html: html
     when Crystal::Type
       io << " : "
-      @type.type_to_html return_type, io, links: links
+      @type.type_to_html return_type, io, html: html
     end
 
     if free_vars = @def.free_vars
@@ -268,13 +268,20 @@ class Crystal::Doc::Method
     io
   end
 
-  def arg_to_html(arg : Arg, io, links = true)
+  def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
-      name = arg.external_name.presence || "_"
-      if Symbol.needs_quotes? name
-        HTML.escape name.inspect, io
+      if name = arg.external_name.presence
+        if Symbol.needs_quotes_for_named_argument? name
+          if html.none?
+            name.inspect io
+          else
+            HTML.escape name.inspect, io
+          end
+        else
+          io << name
+        end
       else
-        io << name
+        io << "_"
       end
       io << ' '
     end
@@ -283,20 +290,24 @@ class Crystal::Doc::Method
 
     if restriction = arg.restriction
       io << " : "
-      node_to_html restriction, io, links: links
+      node_to_html restriction, io, html: html
     elsif type = arg.type?
       io << " : "
-      @type.type_to_html type, io, links: links
+      @type.type_to_html type, io, html: html
     end
 
     if default_value = arg.default_value
       io << " = "
-      io << Highlighter.highlight(default_value.to_s)
+      if html.highlight?
+        io << Highlighter.highlight(default_value.to_s)
+      else
+        io << default_value
+      end
     end
   end
 
-  def node_to_html(node, io, links = true)
-    @type.node_to_html node, io, links: links
+  def node_to_html(node, io, html : HTMLOption = :all)
+    @type.node_to_html node, io, html: html
   end
 
   def must_be_included?
@@ -309,15 +320,15 @@ class Crystal::Doc::Method
 
   def to_json(builder : JSON::Builder)
     builder.object do
-      builder.field "id", id
-      builder.field "html_id", html_id
+      builder.field "html_id", id
       builder.field "name", name
       builder.field "doc", doc
       builder.field "summary", formatted_summary
       builder.field "abstract", abstract?
       builder.field "args", args
       builder.field "args_string", args_to_s
-      builder.field "source_link", source_link
+      builder.field "args_html", args_to_html
+      builder.field "location", location
       builder.field "def", self.def
     end
   end

@@ -1,8 +1,23 @@
 require "spec"
 
+private record NamedTupleSpecObj, x : Int32 do
+  def_equals @x
+end
+
 describe "NamedTuple" do
-  it "does new" do
+  it "does NamedTuple.new, without type vars" do
     NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
+    NamedTuple.new(z: NamedTupleSpecObj.new(10)).should eq({z: NamedTupleSpecObj.new(10)})
+  end
+
+  it "does NamedTuple.new, with type vars" do
+    NamedTuple(foo: Int32, bar: String).new(foo: 1, bar: "a").should eq({foo: 1, bar: "a"})
+    NamedTuple(z: NamedTupleSpecObj).new(z: NamedTupleSpecObj.new(10)).should eq({z: NamedTupleSpecObj.new(10)})
+    typeof(NamedTuple.new).new.should eq(NamedTuple.new)
+
+    t = NamedTuple(foo: Int32 | String, bar: Int32 | String).new(foo: 1, bar: "a")
+    t.should eq({foo: 1, bar: "a"})
+    t.class.should_not eq(NamedTuple(foo: Int32, bar: String))
   end
 
   it "does NamedTuple.from" do
@@ -276,11 +291,6 @@ describe "NamedTuple" do
   end
 
   it "does to_a" do
-    tup = {a: 1, b: 'a'}
-    tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
-  end
-
-  it "does key_index" do
     tup = {a: 1, b: 'a'}
     tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
   end

@@ -2,6 +2,7 @@ require "./spec_helper"
 {% unless flag?(:win32) %}
   require "big"
 {% end %}
+require "spec/helpers/iterate"
 
 private def to_s_with_io(num)
   String.build { |io| num.to_s(io) }
@@ -9,8 +10,6 @@ end
 
 private def to_s_with_io(num, base, upcase = false)
   String.build { |io| num.to_s(io, base, upcase: upcase) }
-  # Test deprecated overload:
-  String.build { |io| num.to_s(base, io, upcase) }
 end
 
 describe "Int" do
@@ -163,6 +162,8 @@ describe "Int" do
     it { 4.lcm(6).should eq(12) }
     it { 0.lcm(2).should eq(0) }
     it { 2.lcm(0).should eq(0) }
+
+    it "doesn't silently overflow" { 2_000_000.lcm(3_000_000).should eq(6_000_000) }
   end
 
   describe "to_s in base" do
@@ -174,7 +175,6 @@ describe "Int" do
     it { 1234.to_s(36).should eq("ya") }
     it { -1234.to_s(36).should eq("-ya") }
     it { 1234.to_s(16, upcase: true).should eq("4D2") }
-    it { 1234.to_s(16, true).should eq("4D2") } # Deprecated test
     it { -1234.to_s(16, upcase: true).should eq("-4D2") }
     it { 1234.to_s(36, upcase: true).should eq("YA") }
     it { -1234.to_s(36, upcase: true).should eq("-YA") }
@@ -345,7 +345,7 @@ describe "Int" do
       a.should eq(6)
     end
 
-    it "does downards" do
+    it "does downwards" do
       a = 0
       4.to(2) { |i| a += i }.should be_nil
       a.should eq(9)
@@ -414,30 +414,82 @@ describe "Int" do
     end
   end
 
-  it "casts" do
-    Int8.new(1).should be_a(Int8)
-    Int8.new(1).should eq(1)
+  describe ".new" do
+    it "String overload" do
+      Int8.new("1").should be_a(Int8)
+      Int8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int8.new(" 1 ", whitespace: false)
+      end
 
-    Int16.new(1).should be_a(Int16)
-    Int16.new(1).should eq(1)
+      Int16.new("1").should be_a(Int16)
+      Int16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int16.new(" 1 ", whitespace: false)
+      end
 
-    Int32.new(1).should be_a(Int32)
-    Int32.new(1).should eq(1)
+      Int32.new("1").should be_a(Int32)
+      Int32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int32.new(" 1 ", whitespace: false)
+      end
 
-    Int64.new(1).should be_a(Int64)
-    Int64.new(1).should eq(1)
+      Int64.new("1").should be_a(Int64)
+      Int64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        Int64.new(" 1 ", whitespace: false)
+      end
 
-    UInt8.new(1).should be_a(UInt8)
-    UInt8.new(1).should eq(1)
+      UInt8.new("1").should be_a(UInt8)
+      UInt8.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt8.new(" 1 ", whitespace: false)
+      end
 
-    UInt16.new(1).should be_a(UInt16)
-    UInt16.new(1).should eq(1)
+      UInt16.new("1").should be_a(UInt16)
+      UInt16.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt16.new(" 1 ", whitespace: false)
+      end
 
-    UInt32.new(1).should be_a(UInt32)
-    UInt32.new(1).should eq(1)
+      UInt32.new("1").should be_a(UInt32)
+      UInt32.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt32.new(" 1 ", whitespace: false)
+      end
 
-    UInt64.new(1).should be_a(UInt64)
-    UInt64.new(1).should eq(1)
+      UInt64.new("1").should be_a(UInt64)
+      UInt64.new("1").should eq(1)
+      expect_raises ArgumentError do
+        UInt64.new(" 1 ", whitespace: false)
+      end
+    end
+
+    it "fallback overload" do
+      Int8.new(1).should be_a(Int8)
+      Int8.new(1).should eq(1)
+
+      Int16.new(1).should be_a(Int16)
+      Int16.new(1).should eq(1)
+
+      Int32.new(1).should be_a(Int32)
+      Int32.new(1).should eq(1)
+
+      Int64.new(1).should be_a(Int64)
+      Int64.new(1).should eq(1)
+
+      UInt8.new(1).should be_a(UInt8)
+      UInt8.new(1).should eq(1)
+
+      UInt16.new(1).should be_a(UInt16)
+      UInt16.new(1).should eq(1)
+
+      UInt32.new(1).should be_a(UInt32)
+      UInt32.new(1).should eq(1)
+
+      UInt64.new(1).should be_a(UInt64)
+      UInt64.new(1).should eq(1)
+    end
   end
 
   describe "arithmetic division /" do
@@ -529,32 +581,8 @@ describe "Int" do
     (53 % 532_000_782_588_491_410).should eq(53)
   end
 
-  it "does times" do
-    i = sum = 0
-    3.times do |n|
-      i += 1
-      sum += n
-    end.should be_nil
-    i.should eq(3)
-    sum.should eq(3)
-  end
-
-  it "gets times iterator" do
-    iter = 3.times
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "gets times iterator for UInt32 (#5019)" do
-    iter = 4_u32.times
-    iter.next.should be_a(UInt32)
-
-    ary = 4_u32.times.to_a
-    ary.should be_a(Array(UInt32))
-    ary.should eq([0, 1, 2, 3])
-  end
+  it_iterates "#times", [0, 1, 2], 3.times
+  it_iterates "#times for UInt32 (#5019)", [0_u32, 1_u32, 2_u32, 3_u32], 4_u32.times
 
   it "does %" do
     (7 % 5).should eq(2)
@@ -782,7 +810,7 @@ describe "Int" do
   end
 
   describe "#bit_length" do
-    it "for primitve integers" do
+    it "for primitive integers" do
       0.bit_length.should eq(0)
       0b1.bit_length.should eq(1)
       0b1001.bit_length.should eq(4)

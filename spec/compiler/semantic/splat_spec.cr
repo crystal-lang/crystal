@@ -405,9 +405,19 @@ describe "Semantic: splat" do
       )) { tuple_of([] of Type).metaclass }
   end
 
+  it "uses splat restriction after non-splat arguments (#5037)" do
+    assert_type(%(
+      def foo(x, *y : *T) forall T
+        T
+      end
+
+      foo 1, 'a', ""
+      )) { tuple_of([char, string]).metaclass }
+  end
+
   it "uses splat restriction with concrete type" do
     assert_error %(
-      struct Tuple(T)
+      struct Tuple(*T)
         def self.foo(*args : *T)
         end
       end
@@ -457,7 +467,7 @@ describe "Semantic: splat" do
       )) { no_return.metaclass }
   end
 
-  it "matches splat in geneic type" do
+  it "matches type splat with splat in generic type (1)" do
     assert_type(%(
       class Foo(*T)
       end
@@ -469,6 +479,108 @@ describe "Semantic: splat" do
       foo = Foo(Int32, Char, String, Bool).new
       method(foo)
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches type splat with splat in generic type (2)" do
+    assert_type(%(
+      class Foo(T, *U, V)
+        def t
+          {T, U, V}
+        end
+      end
+
+      def method(x : Foo(*A)) forall A
+        x.t
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, String))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { char }
+  end
+
+  it "doesn't match splat in generic type with unsplatted tuple (#10164)" do
+    assert_error %(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Tuple(Int32, String)))
+        'a'
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "no overload matches"
+  end
+
+  it "matches partially instantiated generic with splat in generic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(Int32, T)) forall T
+        T
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      )) { string.metaclass }
+  end
+
+  it "errors with too few non-splat type arguments (1)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(Int32))
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too few non-splat type arguments (2)" do
+    assert_error %(
+      class Foo(T, U, *V)
+      end
+
+      def method(x : Foo(A)) forall A
+      end
+
+      foo = Foo(Int32, String).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(T, U, *V) (given 1, expected 2+)"
+  end
+
+  it "errors with too many non-splat type arguments" do
+    assert_error %(
+      class Foo(A)
+      end
+
+      def method(x : Foo(T, U, *V)) forall T, U, V
+      end
+
+      foo = Foo(Int32).new
+      method(foo)
+      ),
+      "wrong number of type vars for Foo(A) (given 2+, expected 1)"
   end
 
   it "errors if using two splat indices on restriction" do
@@ -488,15 +600,132 @@ describe "Semantic: splat" do
 
   it "matches with splat" do
     assert_type(%(
-    def foo(&block : *{Int32, Int32} -> U) forall U
-      tup = {1, 2}
-      yield *tup
-    end
+      def foo(&block : *{Int32, Int32} -> U) forall U
+        tup = {1, 2}
+        yield *tup
+      end
 
-    foo do |x, y|
-      {x, y}
-    end
-    )) { tuple_of([int32, int32]) }
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, int32]) }
+  end
+
+  it "matches with tuple splat inside explicit Union" do
+    assert_type(%(
+      def foo(x : Union(*{Int32, String}))
+        x
+      end
+
+      foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var splat inside explicit Union" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var splat inside explicit Union (2)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo("")
+      )) { string }
+  end
+
+  it "matches with type var splat inside explicit Union, when all splat elements match" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T))
+          x
+        end
+      end
+
+      Foo(Int32 | Bool, Int32 | String, Int32 | Char).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var splat inside explicit Union, when one splat fails entirely" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T, Bool))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(true)
+      )) { bool }
+  end
+
+  it "matches with type var splat inside explicit Union, when non-splat vars fail" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(*T, Char, Bool))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo({1, ""})
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union (2)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo(1)
+      )) { int32 }
+  end
+
+  it "matches with type var and splat of itself inside explicit Union (3)" do
+    assert_type(%(
+      class Foo(*T)
+        def self.foo(x : Union(T, *T))
+          x
+        end
+      end
+
+      Foo(Int32, String).foo("")
+      )) { string }
+  end
+
+  it "doesn't match free var type splats inside explicit Union" do
+    assert_error %(
+      def foo(x : Union(*T)) forall T
+        x
+      end
+
+      foo(1)
+      ),
+      "no overload matches"
   end
 
   it "matches typed before non-typed (1) (#3134)" do
@@ -587,5 +816,22 @@ describe "Semantic: splat" do
       end
       i.should eq(4)
     end
+  end
+
+  it "doesn't shift a call's location" do
+    result = semantic <<-CR
+      class Foo
+        def bar(x)
+          bar(*{"test"})
+        end
+      end
+      Foo.new.bar("test")
+      CR
+    program = result.program
+    a_typ = program.types["Foo"].as(NonGenericClassType)
+    a_def = a_typ.def_instances.values[0]
+
+    a_def.location.should eq Location.new("", line_number: 2, column_number: 3)
+    a_def.body.location.should eq Location.new("", line_number: 3, column_number: 5)
   end
 end

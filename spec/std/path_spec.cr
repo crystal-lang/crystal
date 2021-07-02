@@ -47,10 +47,10 @@ end
 
 private def assert_paths_raw(path, posix, windows = posix, label = nil, file = __FILE__, line = __LINE__, &block : Path -> _)
   it %(#{label} "#{path}" (posix)), file, line do
-    block.call(Path.posix(path)).should eq(posix)
+    block.call(Path.posix(path)).should eq(posix), file: file, line: line
   end
   it %(#{label} "#{path}" (windows)), file, line do
-    block.call(Path.windows(path)).should eq(windows)
+    block.call(Path.windows(path)).should eq(windows), file: file, line: line
   end
 end
 
@@ -343,6 +343,11 @@ describe Path do
     assert_paths_raw("/foo/bar/foo.", "", &.extension)
     assert_paths_raw("test", "", &.extension)
     assert_paths_raw("test.ext/foo", "", &.extension)
+    assert_paths_raw("test.ext/foo/", "", &.extension)
+    assert_paths_raw("test.ext/", ".ext", &.extension)
+    assert_paths_raw("test/.", "", &.extension)
+    assert_paths_raw("test\\.", "", &.extension)
+    assert_paths_raw("test.ext\\", ".ext\\", ".ext", &.extension)
   end
 
   describe "#absolute?" do
@@ -628,7 +633,7 @@ describe Path do
       it_expands_path("../bin", {Dir.current.gsub('\\', '/'), "bin"}, {Path.windows(Dir.current).normalize.to_s, "bin"}, base: "x/../tmp", expand_base: true)
     end
 
-    describe "expand_path for commoms unix path give a full path" do
+    describe "expand_path for common unix path gives a full path" do
       it_expands_path("/tmp/", "/tmp/", "\\tmp\\")
       it_expands_path("/tmp/../../../tmp", "/tmp", "\\tmp")
       it_expands_path("", BASE_POSIX, BASE_WINDOWS)
@@ -730,8 +735,26 @@ describe Path do
 
   describe "#<=>" do
     it "case sensitivity" do
+      (Path.posix("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.windows("foo") <=> Path.windows("FOO")).should eq 0
+      (Path.windows("foo") <=> Path.posix("FOO")).should eq 1
+      (Path.posix("foo") <=> Path.windows("FOO")).should eq -1
+    end
+  end
+
+  describe "#==" do
+    it "simple" do
+      Path.posix("foo").should eq Path.posix("foo")
+      Path.windows("foo").should eq Path.windows("foo")
+      Path.windows("foo").should_not eq Path.posix("foo")
+      Path.posix("foo").should_not eq Path.windows("foo")
+    end
+
+    it "case sensitivity" do
       Path.posix("foo").should_not eq Path.posix("FOO")
       Path.windows("foo").should eq Path.windows("FOO")
+      Path.windows("foo").should_not eq Path.posix("FOO")
+      Path.posix("foo").should_not eq Path.windows("FOO")
     end
   end
 
@@ -831,5 +854,39 @@ describe Path do
       path = Path.windows(".")
       path.relative_to(Path.windows("C:cwd")).should eq path
     end
+  end
+
+  describe "#stem" do
+    assert_paths_raw("foo.txt", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw(".txt", ".txt", &.stem)
+    assert_paths_raw(".txt.txt", ".txt", &.stem)
+    assert_paths_raw("foo.", "foo.", &.stem)
+    assert_paths_raw("foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar/foo.txt", "foo", &.stem)
+    assert_paths_raw("bar/foo.txt.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar/.txt", ".txt", &.stem)
+    assert_paths_raw("bar/.txt.txt", ".txt", &.stem)
+    assert_paths_raw("bar/foo.", "foo.", &.stem)
+    assert_paths_raw("bar/foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar/foo..txt", "foo.", &.stem)
+
+    assert_paths_raw("bar\\foo.txt", "bar\\foo", "foo", &.stem)
+    assert_paths_raw("bar\\foo.txt.txt", "bar\\foo.txt", "foo.txt", &.stem)
+    assert_paths_raw("bar\\.txt", "bar\\", ".txt", &.stem)
+    assert_paths_raw("bar\\.txt.txt", "bar\\.txt", ".txt", &.stem)
+    assert_paths_raw("bar\\foo.", "bar\\foo.", "foo.", &.stem)
+    assert_paths_raw("bar\\foo.txt.", "bar\\foo.txt.", "foo.txt.", &.stem)
+    assert_paths_raw("bar\\foo..txt", "bar\\foo.", "foo.", &.stem)
+
+    assert_paths_raw("foo.txt/", "foo", &.stem)
+    assert_paths_raw("foo.txt.txt/", "foo.txt", &.stem)
+    assert_paths_raw(".txt/", ".txt", &.stem)
+    assert_paths_raw(".txt.txt/", ".txt", &.stem)
+    assert_paths_raw("foo./", "foo.", &.stem)
+    assert_paths_raw("foo.txt./", "foo.txt.", &.stem)
+    assert_paths_raw("foo..txt/", "foo.", &.stem)
   end
 end

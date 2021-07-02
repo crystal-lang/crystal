@@ -4,7 +4,12 @@ class File::PReader < IO
 
   getter? closed = false
 
-  def initialize(@file : File, @offset : Int32, @bytesize : Int32)
+  @offset : Int64
+  @bytesize : Int64
+
+  def initialize(@file : File, offset : Int, bytesize : Int)
+    @offset = offset.to_i64
+    @bytesize = bytesize.to_i64
     @pos = 0
   end
 
@@ -21,11 +26,11 @@ class File::PReader < IO
     bytes_read
   end
 
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new("Can't write to read-only IO")
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new("Can't flush read-only IO")
   end
 

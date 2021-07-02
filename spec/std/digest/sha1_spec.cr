@@ -1,4 +1,4 @@
-require "spec"
+require "../spec_helper"
 require "./spec_helper"
 require "digest/sha1"
 

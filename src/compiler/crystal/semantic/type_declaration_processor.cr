@@ -276,10 +276,10 @@ struct Crystal::TypeDeclarationProcessor
       remove_error owner, name
 
       if owner.is_a?(GenericType)
-        owner.generic_types.each_value do |generic_type|
-          new_type = type_decl.type.replace_type_parameters(generic_type)
+        owner.each_instantiated_type do |instance|
+          new_type = type_decl.type.replace_type_parameters(instance)
           new_type_decl = TypeDeclarationWithLocation.new(new_type, type_decl.location, type_decl.uninitialized, type_decl.annotations)
-          declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type_decl, instance_var: true, check_nilable: false)
+          declare_meta_type_var(instance.instance_vars, instance, name, new_type_decl, instance_var: true, check_nilable: false)
         end
       end
 
@@ -395,9 +395,9 @@ struct Crystal::TypeDeclarationProcessor
 
       declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true, annotations: type_info.annotations)
 
-      owner.generic_types.each_value do |generic_type|
-        new_type = type.replace_type_parameters(generic_type)
-        declare_meta_type_var(generic_type.instance_vars, generic_type, name, new_type, type_info.location, instance_var: true, annotations: type_info.annotations)
+      owner.each_instantiated_type do |instance|
+        new_type = type.replace_type_parameters(instance)
+        declare_meta_type_var(instance.instance_vars, instance, name, new_type, type_info.location, instance_var: true, annotations: type_info.annotations)
       end
 
       remove_error owner, name
@@ -443,10 +443,10 @@ struct Crystal::TypeDeclarationProcessor
 
       # We must also take into account those variables that are
       # initialized outside of an initializer
-      non_nilable_outisde = compute_non_nilable_outside(owner)
+      non_nilable_outside = compute_non_nilable_outside(owner)
 
       # And add them all into one array
-      non_nilable = merge_non_nilable_vars(non_nilable, non_nilable_outisde)
+      non_nilable = merge_non_nilable_vars(non_nilable, non_nilable_outside)
 
       if non_nilable
         @non_nilable_instance_vars[owner] = non_nilable
@@ -477,7 +477,7 @@ struct Crystal::TypeDeclarationProcessor
     # super or assign all of those variables
     if ancestor_non_nilable
       infos.each do |info|
-        unless info.def.calls_super? || info.def.calls_initialize? || info.def.macro_def?
+        unless info.def.calls_super? || info.def.calls_previous_def? || info.def.calls_initialize? || info.def.macro_def?
           ancestor_non_nilable.each do |name|
             # If the variable is initialized outside, it's OK
             next if initialized_outside?(owner, name)
@@ -550,23 +550,23 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def compute_non_nilable_outside(owner)
-    non_nilable_outisde = nil
-    non_nilable_outisde = compute_non_nilable_outside_single(owner, non_nilable_outisde)
+    non_nilable_outside = nil
+    non_nilable_outside = compute_non_nilable_outside_single(owner, non_nilable_outside)
     owner.ancestors.each do |ancestor|
       ancestor = uninstantiate(ancestor)
-      non_nilable_outisde = compute_non_nilable_outside_single(ancestor, non_nilable_outisde)
+      non_nilable_outside = compute_non_nilable_outside_single(ancestor, non_nilable_outside)
     end
-    non_nilable_outisde
+    non_nilable_outside
   end
 
-  private def compute_non_nilable_outside_single(owner, non_nilable_outisde)
+  private def compute_non_nilable_outside_single(owner, non_nilable_outside)
     if vars = @instance_vars_outside[owner]?
-      non_nilable_outisde ||= [] of String
+      non_nilable_outside ||= [] of String
       vars.each do |name|
-        non_nilable_outisde << name unless non_nilable_outisde.includes?(name)
+        non_nilable_outside << name unless non_nilable_outside.includes?(name)
       end
     end
-    non_nilable_outisde
+    non_nilable_outside
   end
 
   private def find_initialize_infos(owner)

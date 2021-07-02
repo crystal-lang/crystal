@@ -39,22 +39,6 @@ describe HTTP::LogHandler do
     logs.check(:info, %r(^- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
   end
 
-  it "logs to io" do
-    request = HTTP::Request.new("GET", "/")
-    response = HTTP::Server::Response.new(IO::Memory.new)
-    context = HTTP::Server::Context.new(request, response)
-
-    backend = Log::MemoryBackend.new
-    io = IO::Memory.new
-    handler = HTTP::LogHandler.new(io)
-    handler.next = ->(ctx : HTTP::Server::Context) {}
-    handler.call(context)
-
-    retry do
-      io.to_s.should match(%r(- - GET / HTTP/1.1 - 200 \(\d+(\.\d+)?[mµn]s\)$))
-    end
-  end
-
   it "log failed request" do
     io = IO::Memory.new
     request = HTTP::Request.new("GET", "/")

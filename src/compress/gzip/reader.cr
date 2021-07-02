@@ -43,7 +43,7 @@ class Compress::Gzip::Reader < IO
   # Creates a new reader from the given *io*.
   def initialize(@io : IO, @sync_close = false)
     # CRC32 of written data
-    @crc32 = Digest::CRC32.initial
+    @crc32 = ::Digest::CRC32.initial
 
     # Total size of the original (uncompressed) input data modulo 2^32.
     @isize = 0_u32
@@ -78,7 +78,7 @@ class Compress::Gzip::Reader < IO
   end
 
   # See `IO#read`.
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     return 0 if slice.empty?
@@ -101,7 +101,7 @@ class Compress::Gzip::Reader < IO
         end
 
         # Reset checksum and total size for next entry
-        @crc32 = Digest::CRC32.initial
+        @crc32 = ::Digest::CRC32.initial
         @isize = 0_u32
 
         # Check if another header with data comes
@@ -115,7 +115,7 @@ class Compress::Gzip::Reader < IO
         end
       else
         # Update CRC32 and total data size
-        @crc32 = Digest::CRC32.update(slice[0, read_bytes], @crc32)
+        @crc32 = ::Digest::CRC32.update(slice[0, read_bytes], @crc32)
 
         # Using wrapping addition here because isize is only 32 bits wide but
         # uncompressed data size can be bigger.
@@ -133,7 +133,7 @@ class Compress::Gzip::Reader < IO
     raise IO::Error.new("Can't write to Compress::Gzip::Reader")
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new "Can't flush Compress::Gzip::Reader"
   end
 

@@ -8,8 +8,7 @@ awk '
   BEGIN {
     print "{"
     print "  \"versions\": ["
-    getline current_version < "src/VERSION"
-    printf "    {\"name\": \"" current_version "\", \"url\": \"/api/master/\", \"released\": false}"
+    printf "    {\"name\": \"nightly\", \"url\": \"/api/master/\", \"released\": false}"
   }
 
   {

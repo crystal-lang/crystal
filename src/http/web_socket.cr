@@ -103,11 +103,6 @@ class HTTP::WebSocket
     end
   end
 
-  @[Deprecated("Use WebSocket#close(code, message) instead")]
-  def close(message)
-    close(nil, message)
-  end
-
   # Sends a close frame to the client, and closes the connection.
   # The close frame may contain a body (message) that indicates the reason for closing.
   def close(code : CloseCode | Int? = nil, message = nil)
@@ -121,7 +116,7 @@ class HTTP::WebSocket
   #
   # ```
   # # Open websocket connection
-  # ws = WebSocket.new(uri)
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
   #
   # # Set callback
   # ws.on_message do |msg|
@@ -131,7 +126,7 @@ class HTTP::WebSocket
   # # Start infinite loop
   # ws.run
   # ```
-  def run
+  def run : Nil
     loop do
       begin
         info = @ws.receive(@buffer)

@@ -26,7 +26,7 @@ class Log
     def initialize(@proc : (Log::Entry, IO) ->)
     end
 
-    def format(entry : Log::Entry, io : IO)
+    def format(entry : Log::Entry, io : IO) : Nil
       @proc.call(entry, io)
     end
   end
@@ -36,7 +36,9 @@ class Log
   #
   # This can be used to create efficient formatters:
   # ```
-  # struct MyFormat < Log::StaticFormat
+  # require "log"
+  #
+  # struct MyFormat < Log::StaticFormatter
   #   def run
   #     string "- "
   #     severity
@@ -80,7 +82,7 @@ class Log
     #
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
-    def severity
+    def severity : Nil
       @entry.severity.label.rjust(@io, 6)
     end
 
@@ -90,7 +92,9 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value.
     # ```
-    # source(before: '[', after: ']') # => [http.server]
+    # Log.define_formatter TestFormatter, "#{source(before: '[', after: "] ")}#{message}"
+    # Log.setup(:info, Log::IOBackend.new(formatter: TestFormatter))
+    # Log.for("foo.bar").info { "Hello" } # => - [foo.bar] Hello
     # ```
     def source(*, before = nil, after = nil)
       if @entry.source.size > 0

@@ -37,7 +37,7 @@ struct Time::Format
       @nanosecond_offset = 0_i64
     end
 
-    def time(location : Location? = nil)
+    def time(location : Location? = nil) : Time
       if @hour_is_12
         if @hour > 12
           raise ArgumentError.new("Invalid hour for 12-hour clock")
@@ -458,6 +458,25 @@ struct Time::Format
 
     def time_zone_gmt_or_rfc2822(**options)
       time_zone_rfc2822
+    end
+
+    def time_zone_name(zone = false)
+      case char = current_char
+      when '-', '+'
+        time_zone_offset
+      else
+        start_pos = @reader.pos
+        while @reader.has_next? && (!current_char.whitespace? || current_char == Char::ZERO)
+          next_char
+        end
+        zone_name = @reader.string.byte_slice(start_pos, @reader.pos - start_pos)
+
+        if zone_name.in?("Z", "UTC")
+          @location = Time::Location::UTC
+        else
+          @location = Time::Location.load(zone_name)
+        end
+      end
     end
 
     def char?(char, *alternatives)
