@@ -487,6 +487,9 @@ class HTTP::Server
 
   # Gracefully terminates the server. It will process currently accepted
   # requests, but it won't accept new connections.
+  #
+  # If *timeout* is specified #listen will stop waiting for client connections to close after *timeout* seconds
+  # Otherwise it waits for all connections to close.
   def close(*, timeout = nil)
     raise "Can't close server, it's already closed" if closed?
 
