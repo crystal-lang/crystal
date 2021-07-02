@@ -14,8 +14,8 @@ module Float::Printer
   # It is used by `Float64#to_s` and it is probably not necessary to use
   # this directly.
   #
-  # decimal_range designate the boundaries for scientific notation
-  # which is used for all values outside the range `(10 ** min_point)..(10 ** max_point)`
+  # *decimal_range* designate the exponents for the boundaries of scientific notation
+  # which is used for all values outside the range `(10 ** decimal_range.begin)..(10 ** decimal_range.end)`.
   def print(v : Float64 | Float32, io : IO, *, decimal_range = -3..15) : Nil
     d = IEEE.to_uint(v)
 

@@ -23,7 +23,16 @@ struct Number
     if decimal_places
       number = number.round(decimal_places)
     end
-    string = number.abs.to_s
+
+    if number.is_a?(Float)
+      string = String.build do |io|
+        # Make sure to avoid scientific notation of default Float#to_s
+        Float::Printer.print(number.abs, io, decimal_range: ..)
+      end
+    else
+      string = number.abs.to_s
+    end
+
     integer, _, decimals = string.partition('.')
 
     int_size = integer.size
