@@ -98,7 +98,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       local_vars: compiled_def.local_vars,
       instructions: compiled_def.instructions,
       nodes: compiled_def.nodes,
-      scope: compiled_def.def.owner,
+      scope: compiled_def.owner,
       def: compiled_def.def,
       top_level: top_level,
     )
@@ -502,7 +502,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       fake_def = Def.new(def_name)
       fake_def.owner = var.owner
 
-      compiled_def = CompiledDef.new(@context, fake_def, 0)
+      compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
       # Declare local variables for the constant initializer
       initializer.meta_vars.each do |name, var|
@@ -790,7 +790,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     fake_def = const.fake_def.not_nil!
     fake_def.owner = const.visitor.not_nil!.current_type
 
-    compiled_def = CompiledDef.new(@context, fake_def, 0)
+    compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
     # Declare local variables for the constant initializer
     fake_def.vars.try &.each do |name, var|
@@ -1062,7 +1062,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     compiled_def = @context.defs[target_def]? ||
-                   create_compiled_def(node, target_def)
+                   begin
+                     create_compiled_def(node, target_def)
+                   rescue ex : Crystal::TypeException
+                     node.raise ex, inner: ex
+                   end
 
     pop_obj = dont_request_struct_pointer do
       compile_call_args(node, target_def)
@@ -1227,7 +1231,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += sizeof(Proc(Void))
     end
 
-    compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
+    # See line 19 in codegen call
+    owner = node.super? ? node.scope : target_def.owner
+
+    compiled_def = CompiledDef.new(@context, target_def, owner, args_bytesize)
 
     # We don't cache defs that yield because we inline the block's contents
     if block
@@ -1573,7 +1580,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # 1. Compile def
     args_bytesize = args.sum { |arg| aligned_sizeof_type(arg) }
-    compiled_def = CompiledDef.new(@context, target_def, args_bytesize)
+    compiled_def = CompiledDef.new(@context, target_def, target_def.owner, args_bytesize)
 
     # 2. Store it in context
     @context.add_gc_reference(compiled_def)
@@ -1850,7 +1857,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     a_def.owner = @context.program
     a_def.type = @context.program.nil_type
 
-    compiled_def = CompiledDef.new(@context, a_def, 0)
+    compiled_def = CompiledDef.new(@context, a_def, a_def.owner, 0)
 
     file_module.vars.each do |name, var|
       var_type = var.type?

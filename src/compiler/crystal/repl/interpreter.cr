@@ -114,8 +114,8 @@ class Crystal::Repl::Interpreter
       vars: meta_vars,
       meta_vars: meta_vars,
       typed_def: compiled_def.def)
-    @main_visitor.scope = compiled_def.def.owner
-    @main_visitor.path_lookup = compiled_def.def.owner # TODO: this is probably not right
+    @main_visitor.scope = compiled_def.owner
+    @main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
 
     @top_level_visitor = interpreter.@top_level_visitor
     @cleanup_transformer = interpreter.@cleanup_transformer
@@ -173,7 +173,7 @@ class Crystal::Repl::Interpreter
     # TODO: top_level or not
     compiler =
       if compiled_def
-        Compiler.new(@context, @local_vars, scope: compiled_def.def.owner, def: compiled_def.def)
+        Compiler.new(@context, @local_vars, scope: compiled_def.owner, def: compiled_def.def)
       else
         Compiler.new(@context, @local_vars)
       end
@@ -185,7 +185,7 @@ class Crystal::Repl::Interpreter
 
     if @decompile && @context.decompile
       if compiled_def
-        puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
+        puts "=== #{compiled_def.owner}##{compiled_def.def.name} ==="
       else
         puts "=== top-level ==="
       end
@@ -193,7 +193,7 @@ class Crystal::Repl::Interpreter
       puts Disassembler.disassemble(@context, @instructions, @nodes, @local_vars)
 
       if compiled_def
-        puts "=== #{compiled_def.def.owner}##{compiled_def.def.name} ==="
+        puts "=== #{compiled_def.owner}##{compiled_def.def.name} ==="
       else
         puts "=== top-level ==="
       end
@@ -245,6 +245,7 @@ class Crystal::Repl::Interpreter
       compiled_def: CompiledDef.new(
         context: @context,
         def: a_def,
+        owner: compiled_def.try(&.owner) || a_def.owner,
         args_bytesize: 0,
         instructions: instructions,
         nodes: @nodes,

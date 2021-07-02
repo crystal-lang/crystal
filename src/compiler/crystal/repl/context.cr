@@ -128,7 +128,7 @@ class Crystal::Repl::Context
       initializers.map do |initializer|
         a_def = create_instance_var_initializer_def(type, initializer)
 
-        compiled_def = CompiledDef.new(self, a_def, sizeof(Pointer(Void)))
+        compiled_def = CompiledDef.new(self, a_def, a_def.owner, sizeof(Pointer(Void)))
         compiled_def.local_vars.declare("self", type)
 
         initializer.meta_vars.each do |name, var|
