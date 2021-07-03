@@ -39,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      max-parallel: 2
       fail-fast: false
       matrix:
         target:
