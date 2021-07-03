@@ -165,7 +165,7 @@ class Crystal::Call
           unless missing.empty?
             msg << "\nCouldn't find overloads for these types:"
 
-            missing.each.first(MAX_RENDERED_OVERLOADS) do |missing_types|
+            missing.each.first(MAX_RENDERED_OVERLOADS).each do |missing_types|
               if uniq_arg_names
                 signature_names = missing_types.map_with_index do |missing_type, i|
                   if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
