@@ -523,4 +523,32 @@ describe "Semantic: def" do
     ex.column_number.should eq(3)
     ex.size.should eq(6)
   end
+
+  it "types setter" do
+    assert_type(%(
+      class Foo
+        def x=(y)
+          'a'
+        end
+      end
+
+      foo = Foo.new
+      z = foo.x = 1
+      z
+    )) { int32 }
+  end
+
+  it "types []= setter" do
+    assert_type(%(
+      class Foo
+        def []=(x, y)
+          'a'
+        end
+      end
+
+      foo = Foo.new
+      z = foo[1] = 1
+      z
+    )) { int32 }
+  end
 end

@@ -613,6 +613,20 @@ module Crystal
       Location.new(loc.filename, loc.line_number, loc.column_number + name_size)
     end
 
+    def setter?
+      (
+        (
+          args.size == 1 &&
+            name.ends_with?('=') &&
+            !(33 <= name.byte_at(0) <= 64) # first letter must not be a symbol like `=` or `!`
+        ) ||
+          (
+            name == "[]=" &&
+              args.size == 2
+          )
+      ) && !named_args && !block && !block_arg
+    end
+
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
   end
 
