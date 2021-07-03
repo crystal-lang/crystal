@@ -1697,7 +1697,7 @@ class Array(T)
   end
 
   # Returns a new array with all elements sorted based on the return value of
-  # their comparison method `#<=>`
+  # their comparison method `#<=>`.
   #
   # ```
   # a = [3, 1, 2]
@@ -1731,7 +1731,7 @@ class Array(T)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `#<=>`
+  # comparison method `#<=>`.
   #
   # ```
   # a = [3, 1, 2]

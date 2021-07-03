@@ -683,7 +683,7 @@ struct Slice(T)
   end
 
   # Returns a new slice with all elements sorted based on the return value of
-  # their comparison method `<=>`
+  # their comparison method `<=>`.
   #
   # ```
   # a = Slice[3, 1, 2]
@@ -717,7 +717,7 @@ struct Slice(T)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
-  # comparison method `<=>`
+  # comparison method `<=>`.
   #
   # ```
   # a = Slice[3, 1, 2]
