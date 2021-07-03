@@ -4,6 +4,7 @@ class Crystal::Doc::Markdown::Parser
   record CodeFence, language : String
 
   @lines : Array(String)
+  @anchor_map = Hash(String, Int32).new(0)
 
   def initialize(text : String, @renderer : Renderer)
     @lines = text.lines
@@ -114,6 +115,12 @@ class Crystal::Doc::Markdown::Parser
       .gsub(/[^\w\d\s\-.~]/, "") # Delete unsafe URL characters
       .strip                     # Strip leading/trailing whitespace
       .gsub(/[\s_-]+/, '-')      # Replace `_` and leftover whitespace with `-`
+
+    seen_count = @anchor_map[anchor] += 1
+
+    if seen_count > 1
+      anchor += "-#{seen_count - 1}"
+    end
 
     @renderer.begin_header level, anchor
     process_line line
