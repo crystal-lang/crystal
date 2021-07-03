@@ -399,13 +399,13 @@ Crystal::Repl::Instructions =
     },
     unsafe_div_u64: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
+      pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a.unsafe_div(b),
     },
     unsafe_mod_u64: {
       operands:   [] of Nil,
-      pop_values: [a : Int64, b : Int64],
+      pop_values: [a : UInt64, b : UInt64],
       push:       true,
       code:       a.unsafe_mod(b),
     },

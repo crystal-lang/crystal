@@ -477,6 +477,14 @@ describe Crystal::Repl::Interpreter do
       interpret("1.2 < 2.3").should be_true
     end
 
+    it "interprets UInt64.unsafe_mod(UInt64)" do
+      interpret(<<-CODE).should eq(906272454103984)
+        a = 10097976637018756016_u64
+        b = 9007199254740992_u64
+        a.unsafe_mod(b)
+        CODE
+    end
+
     it "discards comparison" do
       interpret("1 < 2; 3").should eq(3)
     end
