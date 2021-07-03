@@ -1205,6 +1205,12 @@ module Crystal
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
+      when "all_annotations"
+        interpret_argless_method(method, args) do
+          annotations = self.var.all_annotations
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end
@@ -1397,6 +1403,12 @@ module Crystal
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
+      when "all_annotations"
+        interpret_argless_method(method, args) do
+          annotations = self.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -1636,6 +1648,12 @@ module Crystal
       when "annotations"
         fetch_annotation(self, method, args) do |type|
           annotations = self.type.annotations(type)
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
+      when "all_annotations"
+        interpret_argless_method(method, args) do
+          annotations = self.type.all_annotations
           return ArrayLiteral.new if annotations.nil?
           ArrayLiteral.map(annotations, &.itself)
         end
@@ -2202,6 +2220,10 @@ module Crystal
   class Annotation
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
+      when "name"
+        interpret_argless_method(method, args) do
+          MacroId.new self.path.to_s
+        end
       when "[]"
         interpret_one_arg_method(method, args) do |arg|
           case arg

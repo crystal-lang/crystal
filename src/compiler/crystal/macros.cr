@@ -935,6 +935,11 @@ module Crystal::Macros
     # attached to this variable, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
     end
+
+    # Returns an array of all annotations attached to this
+    # variable, or an empty `ArrayLiteral` if there are none.
+    def all_annotations : ArrayLiteral(Annotation)
+    end
   end
 
   # An annotation on top of a type or variable.
@@ -952,6 +957,10 @@ module Crystal::Macros
 
     # Returns a `TupleLiteral` representing the positional arguments on `self`.
     def args : TupleLiteral
+    end
+
+    # Returns the name of this annotation.
+    def name : MacroId
     end
 
     # Returns a `NamedTupleLiteral` representing the named arguments on `self`.
@@ -1199,13 +1208,18 @@ module Crystal::Macros
     end
 
     # Returns the last `Annotation` with the given `type`
-    # attached to this variable or `NilLiteral` if there are none.
+    # attached to this method or `NilLiteral` if there are none.
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
     # Returns an array of annotations with the given `type`
-    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    # attached to this method, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # method, or an empty `ArrayLiteral` if there are none.
+    def all_annotations : ArrayLiteral(Annotation)
     end
   end
 
@@ -1942,13 +1956,18 @@ module Crystal::Macros
     end
 
     # Returns the last `Annotation` with the given `type`
-    # attached to this variable or `NilLiteral` if there are none.
+    # attached to this type or `NilLiteral` if there are none.
     def annotation(type : TypeNode) : Annotation | NilLiteral
     end
 
     # Returns an array of annotations with the given `type`
-    # attached to this variable, or an empty `ArrayLiteral` if there are none.
+    # attached to this type, or an empty `ArrayLiteral` if there are none.
     def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # type, or an empty `ArrayLiteral` if there are none.
+    def all_annotations : ArrayLiteral(Annotation)
     end
 
     # Returns the number of elements in this tuple type or tuple metaclass type.
