@@ -192,7 +192,7 @@ struct BigRational < Number
   end
 
   # :nodoc:
-  def **(other : UInt8 | UInt16 | UInt32 | UInt64 | UInt128) : BigRational
+  def **(other : Int::Unsigned) : BigRational
     BigRational.new(numerator ** other, denominator ** other)
   end
 
