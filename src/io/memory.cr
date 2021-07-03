@@ -188,7 +188,7 @@ class IO::Memory < IO
   def peek : Bytes
     check_open
 
-    Slice.new(@buffer + @pos, @bytesize - @pos)
+    Slice.new(@buffer + @pos, @bytesize - @pos, read_only: !@writeable)
   end
 
   # :nodoc:
