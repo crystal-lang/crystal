@@ -186,13 +186,8 @@ struct BigRational < Number
   # ```
   def **(other : Int) : BigRational
     if other < 0
-      return (self ** -other).inv
+      return (self ** other.abs).inv
     end
-    BigRational.new(numerator ** other, denominator ** other)
-  end
-
-  # :nodoc:
-  def **(other : Int::Unsigned) : BigRational
     BigRational.new(numerator ** other, denominator ** other)
   end
 
