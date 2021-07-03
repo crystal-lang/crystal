@@ -238,7 +238,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].count { |i| i % 2 == 0 } # => 2
   # ```
-  def count
+  def count(& : T -> _) : Int32
     count = 0
     each { |e| count += 1 if yield e }
     count
@@ -624,7 +624,7 @@ module Enumerable(T)
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any element.
-  def index
+  def index(& : T -> _) : Int32?
     each_with_index do |e, i|
       return i if yield e
     end
@@ -638,7 +638,7 @@ module Enumerable(T)
   # ```
   #
   # Returns `nil` if *obj* is not in the collection.
-  def index(obj)
+  def index(obj) : Int32?
     index { |e| e == obj }
   end
 

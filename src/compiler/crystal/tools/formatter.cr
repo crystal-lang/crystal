@@ -4752,7 +4752,7 @@ module Crystal
       result = to_s.rstrip
 
       lines = result.split('\n')
-      fix_heredocs(lines, @heredoc_fixes)
+      fix_heredocs(lines)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -4775,15 +4775,24 @@ module Crystal
       result
     end
 
-    def fix_heredocs(lines, @heredoc_fixes)
+    def fix_heredocs(lines)
       @heredoc_fixes.each do |fix|
+        min_difference = (fix.start_line..fix.end_line).min_of do |line_number|
+          leading_space_count(lines[line_number], fix.difference)
+        end
+
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
-            lines[line_number] = line[fix.difference..-1]
-          end
+          lines[line_number] = line[min_difference..]
         end
       end
+    end
+
+    def leading_space_count(line, max_count)
+      max_count.times do |index|
+        return index unless line.byte_at?(index) == 0x20 # ' '
+      end
+      max_count
     end
 
     # Align series of successive inline when/else (in a case),
