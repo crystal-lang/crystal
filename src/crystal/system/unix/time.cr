@@ -63,6 +63,13 @@ module Crystal::System::Time
     end
   end
 
+  def self.to_timespec(time : ::Time) : LibC::Timespec
+    t = uninitialized LibC::Timespec
+    t.tv_sec = typeof(t.tv_sec).new(time.to_unix)
+    t.tv_nsec = typeof(t.tv_nsec).new(time.nanosecond)
+    t
+  end
+
   {% if flag?(:darwin) %}
     @@mach_timebase_info : LibC::MachTimebaseInfo?
 
