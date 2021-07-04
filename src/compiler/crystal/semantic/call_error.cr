@@ -38,7 +38,7 @@ end
 
 class Crystal::Call
   # :nodoc:
-  MAX_RENDERED_OVERLOADS = 500
+  MAX_RENDERED_OVERLOADS = 20
 
   def raise_matches_not_found(owner, def_name, arg_types, named_args_types, matches = nil, with_literals = false)
     obj = @obj
