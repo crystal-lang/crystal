@@ -450,6 +450,11 @@ describe Time do
 
       Time.local(2020, 2, 5, 0, 13, location: zone).shift(months: 3).should eq Time.local(2020, 5, 5, 0, 13, location: zone)
     end
+
+    it "covers date boundaries with zone offset (#10869)" do
+      location = Time::Location.fixed(2 * 3600)
+      Time.local(2021, 7, 1, location: location).shift(months: 1).should eq Time.local(2021, 8, 1, location: location)
+    end
   end
 
   it "#time_of_day" do
