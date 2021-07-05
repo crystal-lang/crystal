@@ -1,3 +1,5 @@
+require "comparable"
+
 # Bool has only two possible values: `true` and `false`. They are constructed using these literals:
 #
 # ```
@@ -7,6 +9,8 @@
 #
 # See [`Bool` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/bool.html) in the language reference.
 struct Bool
+  include Comparable(self)
+
   # Bitwise OR. Returns `true` if this bool or *other* is `true`, otherwise returns `false`.
   #
   # ```
@@ -41,6 +45,18 @@ struct Bool
   # ```
   def ^(other : Bool) : Bool
     self != other
+  end
+
+  # Compares this bool against another, according to their underlying value.
+  #
+  # ```
+  # false <=> true  # => -1
+  # true <=> false  # => 1
+  # true <=> true   # => 0
+  # false <=> false # => 0
+  # ```
+  def <=>(other : Bool) : Int32
+    self == other ? 0 : (self ? 1 : -1)
   end
 
   # See `Object#hash(hasher)`
