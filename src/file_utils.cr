@@ -305,7 +305,8 @@ module FileUtils
   end
 
   # Moves *src_path* to *dest_path*.
-  # If *src_path* and *dest_path* exist on different mounted filesystems,
+  #
+  # NOTE: If *src_path* and *dest_path* exist on different mounted filesystems,
   # the file at *src_path* is copied to *dest_path* and then removed.
   #
   # ```
@@ -313,7 +314,6 @@ module FileUtils
   #
   # FileUtils.mv("afile", "afile.cr")
   # ```
-  #
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
     if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
       raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
