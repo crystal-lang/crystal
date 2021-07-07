@@ -344,7 +344,7 @@ describe "Semantic: abstract def" do
   end
 
   it "doesn't error if implements with parent class" do
-    semantic %(
+    assert_no_errors %(
       class Parent; end
       class Child < Parent; end
 
@@ -359,8 +359,64 @@ describe "Semantic: abstract def" do
       )
   end
 
+  it "doesn't error if implements with generic parent class instance" do
+    assert_no_errors %(
+      class Parent(T); end
+      class Child(T) < Parent(T); end
+
+      abstract class Foo
+        abstract def foo(x : Child(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Parent(Int32))
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with included module" do
+    assert_no_errors %(
+      module Moo
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2)
+      end
+
+      class Bar < Foo
+        def foo(x : Moo)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with generic included module instance" do
+    assert_no_errors %(
+      module Moo(T)
+      end
+
+      module Moo2(T)
+        include Moo(T)
+      end
+
+      abstract class Foo
+        abstract def foo(x : Moo2(Int32))
+      end
+
+      class Bar < Foo
+        def foo(x : Moo(Int32))
+        end
+      end
+      )
+  end
+
   it "doesn't error if implements with parent module" do
-    semantic %(
+    assert_no_errors %(
       module Moo
       end
 
