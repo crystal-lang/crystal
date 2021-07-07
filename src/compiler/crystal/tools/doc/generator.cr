@@ -8,6 +8,7 @@ class Crystal::Doc::Generator
   FLAG_COLORS = {
     "BUG"          => "red",
     "DEPRECATED"   => "red",
+    "WARNING"      => "red",
     "EXPERIMENTAL" => "lime",
     "FIXME"        => "yellow",
     "NOTE"         => "purple",
