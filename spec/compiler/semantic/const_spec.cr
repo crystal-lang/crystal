@@ -165,6 +165,29 @@ describe "Semantic: const" do
       )) { int32 }
   end
 
+  it "doesn't count parent types as current type" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar
+        class Foo
+          def foo
+            1
+          end
+        end
+
+        class Baz < Foo
+          def self.bar
+            Foo.new
+          end
+        end
+      end
+
+      Bar::Baz.bar.foo
+      )) { int32 }
+  end
+
   it "finds current type only for first path item (1)" do
     assert_error %(
       class Foo

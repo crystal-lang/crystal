@@ -44,7 +44,7 @@ module Crystal
       names.each_with_index do |name, i|
         # The search must continue in the namespace only for the first path
         # item: for subsequent path items only the parents must be looked up
-        type = type.lookup_path_item(name, i == 0, lookup_in_namespace, include_private, location)
+        type = type.lookup_path_item(name, i == 0, lookup_in_namespace && i == 0, i == 0 || include_private, location)
         return unless type
 
         # Stop if this is the last name
@@ -60,16 +60,20 @@ module Crystal
 
     # Looks up a single path item relative to *self`.
     #
-    # If *lookup_in_namespace* and *first_item* are `true`, if the type is not
-    # found in `self` or `self`'s parents, the path item is searched in this
+    # If *lookup_in_namespace* is `true`, if the type is not found
+    # in `self` or `self`'s parents, the path item is searched in this
     # type's namespace. This parameter is useful because when writing
     # `Foo::Bar::Baz`, `Foo` should be searched in enclosing namespaces,
     # but `Bar` and `Baz` not.
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location) : Type | ASTNode | Nil
+    #
+    # If *lookup_self* is `true`, if the type is not found under `self` but has
+    # the same name as `self`, then `self` is returned. This has higher
+    # precedence than ancestors and the enclosing namespace.
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location) : Type | ASTNode | Nil
       # First search in our types
       type = types?.try &.[name]?
       if type
-        if type.private? && !include_private && !first_item
+        if type.private? && !include_private
           return nil
         end
 
@@ -77,7 +81,7 @@ module Crystal
       end
 
       # Try ourself for the first path item, unless we are the top-level
-      if first_item && self != program
+      if lookup_self && self != program
         if self.is_a?(NamedType) && name == self.name
           return self
         end
@@ -85,13 +89,13 @@ module Crystal
 
       # Then try out parents, but don't search in our parents namespace
       parents.try &.each do |parent|
-        match = parent.lookup_path_item(name, first_item, false, include_private, location)
+        match = parent.lookup_path_item(name, false, false, include_private, location)
         return match if match
       end
 
       # Try our namespace, unless we are the top-level
-      if lookup_in_namespace && first_item && self != program
-        return namespace.lookup_path_item(name, first_item, lookup_in_namespace, include_private, location)
+      if lookup_in_namespace && self != program
+        return namespace.lookup_path_item(name, false, lookup_in_namespace, include_private, location)
       end
 
       nil
@@ -99,7 +103,7 @@ module Crystal
   end
 
   class Program
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location)
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location)
       # Check if there's a private type in location
       if location && (original_filename = location.original_filename) &&
          (file_module = file_module?(original_filename)) &&
@@ -112,7 +116,7 @@ module Crystal
   end
 
   module GenericType
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location)
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location)
       # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
       # know what type T is, and we don't want to continue search in the namespace
       if type_vars.includes?(name)
@@ -123,7 +127,7 @@ module Crystal
   end
 
   class GenericInstanceType
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location)
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location)
       # Check if *name* is a type variable
       if type_var = type_vars[name]?
         if type_var.is_a?(Var)
@@ -132,26 +136,26 @@ module Crystal
           type_var
         end
       else
-        generic_type.lookup_path_item(name, first_item, lookup_in_namespace, include_private, location)
+        generic_type.lookup_path_item(name, lookup_self, lookup_in_namespace, include_private, location)
       end
     end
   end
 
   class UnionType
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location)
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location)
       # Union type does not currently inherit GenericClassInstanceType,
       # so we check if *name* is the only type variable of Union(*T)
       if name == "T"
         return program.tuple_of(union_types)
       end
-      program.lookup_path_item(name, first_item, lookup_in_namespace, include_private, location)
+      program.lookup_path_item(name, lookup_self, lookup_in_namespace, include_private, location)
     end
   end
 
   class AliasType
-    def lookup_path_item(name : String, first_item, lookup_in_namespace, include_private, location)
+    def lookup_path_item(name : String, lookup_self, lookup_in_namespace, include_private, location)
       if aliased_type = aliased_type?
-        aliased_type.lookup_path_item(name, first_item, lookup_in_namespace, include_private, location)
+        aliased_type.lookup_path_item(name, lookup_self, lookup_in_namespace, include_private, location)
       else
         super
       end
