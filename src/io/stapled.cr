@@ -33,7 +33,7 @@ class IO::Stapled < IO
   def read(slice : Bytes) : Int32
     check_open
 
-    @reader.read(slice)
+    @reader.read(slice).to_i32
   end
 
   # Gets a string from `reader`.
