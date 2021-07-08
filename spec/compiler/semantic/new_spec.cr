@@ -225,7 +225,7 @@ describe "Semantic: new" do
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
 
-  it "uses correct receiver for `initialize` in namespaced classes (#4086)" do
+  it "uses correct receiver for `initialize` in namespaced generic classes (#4086)" do
     assert_type %(
       class Foo
         class Baz(T)
