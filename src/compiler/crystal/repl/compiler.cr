@@ -779,10 +779,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def get_const_index_and_compiled_def(const : Const) : {Int32, CompiledDef}
-    index = @context.const_index?(const)
-    if index
-      return index, @context.const_compiled_def(index)
-    end
+    index_and_compiled_def = @context.const_index_and_compiled_def?(const)
+    return index_and_compiled_def if index_and_compiled_def
 
     # TODO: support magic constants like ARGV_UNSAFE
     fake_def = const.fake_def.not_nil!

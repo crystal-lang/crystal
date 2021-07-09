@@ -216,12 +216,13 @@ class Crystal::Repl::Context
     constants.declare(const, compiled_def)
   end
 
-  def const_index?(const : Const) : Int32?
-    constants.const_to_index?(const)
-  end
-
-  def const_compiled_def(index : Int32) : CompiledDef
-    constants.index_to_compiled_def(index)
+  def const_index_and_compiled_def?(const : Const) : {Int32, CompiledDef}?
+    value = constants.fetch?(const)
+    if value
+      {value.index, value.compiled_def}
+    else
+      nil
+    end
   end
 
   def declare_class_var(owner : Type, name : String, type : Type, compiled_def : CompiledDef?) : Int32
