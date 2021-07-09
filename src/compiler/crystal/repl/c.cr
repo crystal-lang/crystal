@@ -2,15 +2,19 @@ require "../types"
 require "./value"
 require "./repl"
 
+# In this file we define how each Crystal type that can be passed to C
+# is mapped to C for libffi.
+
 module Crystal
   class Type
-    def ffi_type
+    # Must return an FFI::Type for this type.
+    def ffi_type : FFI::Type
       raise "BUG: missing ffi_type for #{self} (#{self.class})"
     end
   end
 
   class IntegerType
-    def ffi_type
+    def ffi_type : FFI::Type
       case kind
       when :i8  then FFI::Type.sint8
       when :u8  then FFI::Type.uint8
@@ -29,7 +33,7 @@ module Crystal
   end
 
   class FloatType
-    def ffi_type
+    def ffi_type : FFI::Type
       case kind
       when :f32 then FFI::Type.float
       when :f64 then FFI::Type.double
@@ -40,23 +44,24 @@ module Crystal
   end
 
   class EnumType
-    def ffi_type
+    def ffi_type : FFI::Type
       base_type.ffi_type
     end
   end
 
   class PointerInstanceType
-    def ffi_type
+    def ffi_type : FFI::Type
       FFI::Type.pointer
     end
   end
 
   class ProcInstanceType
-    def ffi_type
+    def ffi_type : FFI::Type
       FFI::Type.pointer
     end
 
-    def ffi_call_interface
+    # Returns a FFI::CallInterface for this proc, suitable for calling it.
+    def ffi_call_interface : FFI::CallInterface
       FFI::CallInterface.new(
         abi: FFI::ABI::DEFAULT,
         args: arg_types.map(&.ffi_type),
@@ -66,26 +71,26 @@ module Crystal
   end
 
   class NilType
-    def ffi_type
+    def ffi_type : FFI::Type
       # Nil is used to pass a null pointer
       FFI::Type.pointer
     end
   end
 
   class NoReturnType
-    def ffi_type
+    def ffi_type : FFI::Type
       FFI::Type.void
     end
   end
 
   class TypeDefType
-    def ffi_type
+    def ffi_type : FFI::Type
       typedef.ffi_type
     end
   end
 
   class NonGenericClassType
-    def ffi_type
+    def ffi_type : FFI::Type
       FFI::Type.struct(all_instance_vars.map do |name, var|
         var.type.ffi_type
       end)
@@ -93,17 +98,11 @@ module Crystal
   end
 
   class StaticArrayInstanceType
-    def ffi_type
+    def ffi_type : FFI::Type
       element_ffi_type = element_type.ffi_type
       FFI::Type.struct(
         Array.new(size.as(NumberLiteral).value.to_i, element_ffi_type)
       )
     end
-  end
-end
-
-struct Crystal::Repl::Value
-  def ffi_value(pointer : Pointer(Void)) : Nil
-    pointer.as(Void**).value = @pointer
   end
 end
