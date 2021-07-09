@@ -1,4 +1,4 @@
-require "readline"
+require "../../../crystal/readline"
 
 class Crystal::Repl
   def initialize(decompile : Bool, decompile_defs : Bool, trace : Bool, stats : Bool)

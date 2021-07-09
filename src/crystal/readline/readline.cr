@@ -7,7 +7,8 @@ private def malloc_match(match)
   match_ptr
 end
 
-module Readline
+# :nodoc:
+module Crystal::Readline
   VERSION = "0.1.0"
 
   extend self
