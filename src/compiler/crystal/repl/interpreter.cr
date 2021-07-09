@@ -140,19 +140,19 @@ class Crystal::Repl::Interpreter
 
     node = node.transform(@cleanup_transformer)
 
-    interpret_with_main_already_visited(node, @main_visitor)
+    interpret(node, @main_visitor.meta_vars)
   end
 
-  def interpret_with_main_already_visited(node : ASTNode, main_visitor : MainVisitor) : Value
+  def interpret(node : ASTNode, meta_vars : MetaVars) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
 
     # Don't declare local variables again if we are in the middle of pry
     unless compiled_def
-      migrate_local_vars(@local_vars, @main_visitor.meta_vars)
+      migrate_local_vars(@local_vars, meta_vars)
 
-      @main_visitor.meta_vars.each do |name, meta_var|
+      meta_vars.each do |name, meta_var|
         meta_var_type = meta_var.type?
 
         # A meta var might end up without a type if it's assigned a value
@@ -419,7 +419,7 @@ class Crystal::Repl::Interpreter
     sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
 
     value = interpreter.context.register_interpreter(sub_interpreter) do
-      sub_interpreter.interpret_with_main_already_visited(compiled_def.def.body, interpreter.@main_visitor)
+      sub_interpreter.interpret(compiled_def.def.body, interpreter.@main_visitor.meta_vars)
     end
 
     value.copy_to(ret.as(UInt8*))
@@ -889,7 +889,7 @@ class Crystal::Repl::Interpreter
       stack.as(Void**).value = fiber
 
       @context.register_interpreter(interpreter) do
-        interpreter.interpret_with_main_already_visited(call, main_visitor)
+        interpreter.interpret(call, main_visitor.meta_vars)
       end
 
       nil

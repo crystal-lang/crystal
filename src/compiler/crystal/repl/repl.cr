@@ -81,9 +81,7 @@ class Crystal::Repl
       end
 
       begin
-        node = @program.normalize(node)
-        node = @program.semantic(node, main_visitor: @main_visitor)
-        value = @interpreter.interpret_with_main_already_visited(node, @main_visitor)
+        value = interpret(node)
 
         print "=> "
         puts value
@@ -111,26 +109,26 @@ class Crystal::Repl
     @interpreter.argv = argv
 
     prelude_node = parse_prelude
-
     other_node = parse_file(filename)
-
     exps = Expressions.new([prelude_node, other_node] of ASTNode)
-    exps = @program.normalize(exps)
-    node = @program.semantic(exps, main_visitor: @main_visitor)
 
-    interpret_with_main_already_visited(node)
+    interpret_and_exit_on_error(exps)
   end
 
   private def load_prelude
     node = parse_prelude
-    node = @program.normalize(node)
-    node = @program.semantic(node, main_visitor: @main_visitor)
 
-    interpret_with_main_already_visited(node)
+    interpret_and_exit_on_error(node)
   end
 
-  private def interpret_with_main_already_visited(node : ASTNode)
-    @interpreter.interpret_with_main_already_visited(node, @main_visitor)
+  private def interpret(node : ASTNode)
+    node = @program.normalize(node)
+    node = @program.semantic(node, main_visitor: @main_visitor)
+    @interpreter.interpret(node, @main_visitor.meta_vars)
+  end
+
+  private def interpret_and_exit_on_error(node : ASTNode)
+    interpret(node)
   rescue ex : Crystal::CodeError
     ex.color = true
     ex.error_trace = true
