@@ -809,7 +809,7 @@ class Crystal::Repl::Compiler
     left_node.accept self
     right_node.accept self
 
-    cmp_u8(node: node)
+    cmp_i32(node: node)
     primitive_binary_op_cmp_op(node, op)
   end
 
@@ -833,10 +833,6 @@ class Crystal::Repl::Compiler
     kind = extend_int(left_type, right_type, left_node, right_node, node)
     if kind
       case kind
-      when :i8  then cmp_i8(node: node)
-      when :u8  then cmp_u8(node: node)
-      when :i16 then cmp_i16(node: node)
-      when :u16 then cmp_u16(node: node)
       when :i32 then cmp_i32(node: node)
       when :u32 then cmp_u32(node: node)
       when :i64 then cmp_i64(node: node)
