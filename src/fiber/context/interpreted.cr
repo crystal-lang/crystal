@@ -1,3 +1,5 @@
+{% skip_file unless flag?(:interpreted) %}
+
 require "crystal/interpreter"
 
 class Fiber
