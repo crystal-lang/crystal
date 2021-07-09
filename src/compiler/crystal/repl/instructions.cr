@@ -1375,4 +1375,4 @@ require "./repl"
     }
 {% end %}
 
-{% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
+# {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
