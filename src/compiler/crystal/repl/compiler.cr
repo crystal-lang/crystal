@@ -491,10 +491,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "BUG: missing interpret class var for virtual metaclass type"
     end
 
-    index = @context.class_var_index?(var.owner, var.name)
-    if index
-      return index, @context.class_var_compiled_def(index)
-    end
+    index_and_compiled_def = @context.class_var_index_and_compiled_def(var.owner, var.name)
+    return index_and_compiled_def if index_and_compiled_def
 
     initializer = var.initializer
     if initializer
