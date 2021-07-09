@@ -497,12 +497,12 @@ class Crystal::Call
       printed = true
     end
 
-    if block_arg = a_def.block_arg
+    if a_def.yields
       str << ", " if printed
-      str << '&' << block_arg.name
-    elsif a_def.yields
-      str << ", " if printed
-      str << "&block"
+      str << '&'
+      if block_arg = a_def.block_arg
+        str << block_arg
+      end
     end
     str << ')'
 
