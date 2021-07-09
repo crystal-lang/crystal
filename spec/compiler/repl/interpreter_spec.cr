@@ -1883,6 +1883,40 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "inlines method that just reads an instance var, but produces side effects of args" do
+      interpret(<<-EXISTING, <<-CODE).should eq(42)
+        struct Foo
+          def initialize
+            @x = 1
+            @y = 10
+            @bar = Bar.new
+          end
+
+          def bar(x)
+            @bar
+          end
+        end
+
+        struct Bar
+          def initialize
+            @x = 1
+            @y = 2
+            @z = 32
+          end
+
+          def to_unsafe
+            pointerof(@z)
+          end
+        end
+      EXISTING
+        entry = Pointer(Foo).malloc(1)
+        entry.value = Foo.new
+        a = 1
+        ptr = entry.value.bar(a = 10).to_unsafe
+        ptr.value + a
+      CODE
+    end
+
     it "puts struct pointer after tuple indexer" do
       interpret(<<-EXISTING, <<-CODE).should eq(1)
         struct Point
@@ -3541,8 +3575,8 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  # context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
-  context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
+  context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
+  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)

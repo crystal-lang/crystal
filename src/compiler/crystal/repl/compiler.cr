@@ -1050,10 +1050,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Inline the call, so that it also works fine when wanting to take a pointer through things
       # (this is how the read Crystal works too
       if obj
-        return compile_read_instance_var(node, obj, body.name)
+        compile_read_instance_var(node, obj, body.name)
       else
-        return compile_instance_var(body)
+        compile_instance_var(body)
       end
+
+      # We still have to accept the call arguments, but discard their values
+      node.args.each { |arg| discard_value(arg) }
+      node.named_args.try &.each { |arg| discard_value(arg.value) }
+
+      return false
     end
 
     if obj && (obj_type = obj.type).is_a?(LibType)
