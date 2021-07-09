@@ -1,5 +1,10 @@
 require "./compiler"
 
+# In this file we define the operations that cast types to other types,
+# be it to expand them to fit "bigger" types (upcast) or to shrink them
+# when a type is restricted, like when using `is_a?` (downcast).
+# This is similar to codegen/cast.cr except that instead of producing
+# LLVM code it works on the value on the top of the stack.
 class Crystal::Repl::Compiler
   private def upcast(node : ASTNode, from : Type, to : Type)
     from = from.remove_indirection
@@ -58,12 +63,12 @@ class Crystal::Repl::Compiler
 
   private def upcast_distinct(node : ASTNode, from : VirtualType, to : VirtualType)
     # TODO: not tested
-    # Nothing to do
+    # Nothing to do: both are represented as pointers which already carry the type ID
   end
 
   private def upcast_distinct(node : ASTNode, from : ReferenceUnionType, to : VirtualType)
     # TODO: not tested
-    # Nothing to do
+    # Nothing to do: both are represented as pointers which already carry the type ID
   end
 
   private def upcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : MixedUnionType)
@@ -72,29 +77,28 @@ class Crystal::Repl::Compiler
   end
 
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableType)
-    # TODO: pointer sizes
     put_i64 0_i64, node: nil
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : NilableType)
-    # Nothing
+    # Nothing: both are represented as pointers
   end
 
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableReferenceUnionType)
-    # TODO: pointer sizes
+    # Transform nil (nothing) into a null pointer
     put_i64 0_i64, node: nil
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : NilableReferenceUnionType)
-    # Nothing
+    # Nothing: both are represented as pointers
   end
 
   private def upcast_distinct(node : ASTNode, from : Type, to : ReferenceUnionType)
-    # Nothing
+    # Nothing: both are represented as pointers
   end
 
   private def upcast_distinct(node : ASTNode, from : NonGenericClassType, to : VirtualType)
-    # Nothing
+    # Nothing: both are represented as pointers
   end
 
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableProcType)
