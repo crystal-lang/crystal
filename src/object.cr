@@ -1283,7 +1283,11 @@ class Object
   # ```
   macro delegate(*methods, to object)
     {% for method in methods %}
-      {% if method.id.ends_with?('=') && method.id != "[]=" %}
+      {% if method.id == "[]=" %}
+        def {{method.id}}(arg, *args, **options)
+          {{object.id}}.{{method.id}}(arg, *args, **options)
+        end
+      {% elsif method.id.ends_with?('=') %}
         def {{method.id}}(arg)
           {{object.id}}.{{method.id}} arg
         end
@@ -1292,13 +1296,11 @@ class Object
           {{object.id}}.{{method.id}}(*args, **options)
         end
 
-        {% if method.id != "[]=" %}
-          def {{method.id}}(*args, **options)
-            {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-              yield *yield_args
-            end
+        def {{method.id}}(*args, **options)
+          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+            yield *yield_args
           end
-        {% end %}
+        end
       {% end %}
     {% end %}
   end
