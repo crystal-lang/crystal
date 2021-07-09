@@ -132,7 +132,7 @@ module Float::Printer::Dragonbox
 
     def self.floor_log10_pow2_minus_log10_4_over_3(e : Int)
       # Precondition: `-1700 <= e <= 1700`
-      (e &* 1262611 &- 52) >> 22
+      (e &* 1262611 &- 524031) >> 22
     end
   end
 
@@ -291,14 +291,17 @@ module Float::Printer::Dragonbox
     KAPPA =   1
     MIN_K = -31
     # MAX_K = 46
-    CACHE_BITS                           =  64
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD    =  39
-    CASE_FC_PM_HALF_LOWER_THRESHOLD      =  -1
-    CASE_FC_PM_HALF_UPPER_THRESHOLD      =   6
-    CASE_FC_LOWER_THRESHOLD              =  -2
-    CASE_FC_UPPER_THRESHOLD              =   6
-    SHORTER_INTERVAL_TIE_LOWER_THRESHOLD = -35
-    SHORTER_INTERVAL_TIE_UPPER_THRESHOLD = -35
+    CACHE_BITS = 64
+
+    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  39
+    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -1
+    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   6
+    CASE_FC_LOWER_THRESHOLD                             =  -2
+    CASE_FC_UPPER_THRESHOLD                             =   6
+    SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -35
+    SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -35
+    CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
+    CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_UPPER_THRESHOLD =   3
 
     BIG_DIVISOR   = 10_u32 ** (KAPPA + 1)
     SMALL_DIVISOR = 10_u32 ** KAPPA
@@ -403,14 +406,17 @@ module Float::Printer::Dragonbox
     KAPPA =    2
     MIN_K = -292
     # MAX_K = 326
-    CACHE_BITS                           = 128
-    DIVISIBILITY_CHECK_BY_5_THRESHOLD    =  86
-    CASE_FC_PM_HALF_LOWER_THRESHOLD      =  -2
-    CASE_FC_PM_HALF_UPPER_THRESHOLD      =   9
-    CASE_FC_LOWER_THRESHOLD              =  -4
-    CASE_FC_UPPER_THRESHOLD              =   9
-    SHORTER_INTERVAL_TIE_LOWER_THRESHOLD = -77
-    SHORTER_INTERVAL_TIE_UPPER_THRESHOLD = -77
+    CACHE_BITS = 128
+
+    DIVISIBILITY_CHECK_BY_5_THRESHOLD                   =  86
+    CASE_FC_PM_HALF_LOWER_THRESHOLD                     =  -2
+    CASE_FC_PM_HALF_UPPER_THRESHOLD                     =   9
+    CASE_FC_LOWER_THRESHOLD                             =  -4
+    CASE_FC_UPPER_THRESHOLD                             =   9
+    SHORTER_INTERVAL_TIE_LOWER_THRESHOLD                = -77
+    SHORTER_INTERVAL_TIE_UPPER_THRESHOLD                = -77
+    CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD =   2
+    CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_UPPER_THRESHOLD =   3
 
     BIG_DIVISOR   = 10_u32 ** (KAPPA + 1)
     SMALL_DIVISOR = 10_u32 ** KAPPA
@@ -1084,8 +1090,8 @@ module Float::Printer::Dragonbox
           significand -= 1
           r = big_divisor
         else
-          exponent = minus_k + ImplInfo::KAPPA + 1
-          return {significand, exponent}
+          ret_exponent = minus_k + ImplInfo::KAPPA + 1
+          return {significand, ret_exponent}
         end
       else
         # r == deltai; compare fractional parts.
@@ -1093,14 +1099,14 @@ module Float::Printer::Dragonbox
         # to take advantage of short-circuiting.
         two_fl = two_fc - 1
         unless (!is_closed || !is_product_integer_pm_half?(two_fl, exponent, minus_k)) && !compute_mul_parity(two_fl, cache, beta_minus_1)
-          exponent = minus_k + ImplInfo::KAPPA + 1
-          return {significand, exponent}
+          ret_exponent = minus_k + ImplInfo::KAPPA + 1
+          return {significand, ret_exponent}
         end
       end
 
       # Step 3: Find the significand with the smaller divisor
       significand *= 10
-      exponent = minus_k + ImplInfo::KAPPA
+      ret_exponent = minus_k + ImplInfo::KAPPA
 
       dist = r - deltai // 2 + small_divisor // 2
       approx_y_parity = ((dist ^ (small_divisor // 2)) & 1) != 0
@@ -1128,7 +1134,7 @@ module Float::Printer::Dragonbox
         end
       end
 
-      {significand, exponent}
+      {significand, ret_exponent}
     end
 
     def self.compute_nearest_shorter(exponent)
@@ -1142,27 +1148,31 @@ module Float::Printer::Dragonbox
       xi = compute_left_endpoint_for_shorter_interval_case(cache, beta_minus_1)
       zi = compute_right_endpoint_for_shorter_interval_case(cache, beta_minus_1)
 
+      # If we don't accept the left endpoint or
+      # if the left endpoint is not an integer, increase it.
+      xi += 1 if !is_left_endpoint_integer_shorter_interval?(exponent)
+
       # Try bigger divisor.
       significand = zi // 10
 
       # If succeed, return.
       if significand * 10 >= xi
-        exponent = minus_k + 1
-        return {significand, exponent}
+        ret_exponent = minus_k + 1
+        return {significand, ret_exponent}
       end
 
       # Otherwise, compute the round-up of y
       significand = compute_round_up_for_shorter_interval_case(cache, beta_minus_1)
-      exponent = minus_k
+      ret_exponent = minus_k
 
       # When tie occurs, choose one of them according to the rule.
-      if exponent >= ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD && exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD
+      if ImplInfo::SHORTER_INTERVAL_TIE_LOWER_THRESHOLD <= exponent <= ImplInfo::SHORTER_INTERVAL_TIE_UPPER_THRESHOLD
         significand = break_rounding_tie(significand)
       elsif significand < xi
         significand += 1
       end
 
-      {significand, exponent}
+      {significand, ret_exponent}
     end
 
     def self.compute_mul(u, cache)
@@ -1227,6 +1237,11 @@ module Float::Printer::Dragonbox
         # F == Float64
         ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta_minus_1)) + 1) // 2
       {% end %}
+    end
+
+    def self.is_left_endpoint_integer_shorter_interval?(exponent)
+      ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_LOWER_THRESHOLD <=
+        exponent <= ImplInfo::CASE_SHORTER_INTERVAL_LEFT_ENDPOINT_UPPER_THRESHOLD
     end
 
     def self.is_product_integer_pm_half?(two_f, exponent, minus_k)
