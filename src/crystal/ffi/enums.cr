@@ -1,5 +1,7 @@
-module FFI
+module Crystal::FFI
   # TODO: define well based on architecture
+
+  # :nodoc:
   enum ABI
     FIRST   = 1
     UNIX64
@@ -10,12 +12,14 @@ module FFI
     DEFAULT = UNIX64
   end
 
+  # :nodoc:
   enum Status
     OK          = 0
     BAD_TYPEDEF
     BAD_ABI
   end
 
+  # :nodoc:
   enum TypeEnum : UInt16
     VOID       =  0
     INT        =  1

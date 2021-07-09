@@ -1,6 +1,6 @@
 require "./ffi"
 
-module FFI
+module Crystal::FFI
   struct Type
     def initialize(@type : LibFFI::Type*, @elements : Array(Type)? = nil)
       # TODO: we store @elements here to avoid the GC,

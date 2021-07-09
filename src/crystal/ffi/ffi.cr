@@ -4,5 +4,6 @@ require "./type"
 require "./call_interface"
 require "./closure"
 
-module FFI
+# :nodoc:
+module Crystal::FFI
 end

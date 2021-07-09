@@ -1,6 +1,7 @@
 require "./ffi"
 
-module FFI
+module Crystal::FFI
+  # :nodoc:
   struct Closure
     def initialize(call_interface : CallInterface, closure_fun : LibFFI::ClosureFun, user_data : Void*)
       @closure = LibFFI.closure_alloc(sizeof(LibFFI::Closure), out @code)

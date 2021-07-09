@@ -1,4 +1,5 @@
-module FFI
+module Crystal::FFI
+  # :nodoc:
   struct CallInterface
     def self.new(abi : FFI::ABI, args : Array(FFI::Type), return_type : FFI::Type) : CallInterface
       # TODO: is there a way to avoid this malloc?

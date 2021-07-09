@@ -1,5 +1,5 @@
 require "./repl"
-require "ffi"
+require "../../../crystal/ffi"
 require "colorize"
 
 class Crystal::Repl::Interpreter
