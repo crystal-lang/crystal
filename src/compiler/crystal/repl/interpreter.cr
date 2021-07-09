@@ -982,14 +982,18 @@ class Crystal::Repl::Interpreter
     end
 
     puts
-    case filename
-    in String
-      lines = File.read_lines(filename)
-    in VirtualFile
-      lines = filename.source.lines.to_a
-    in Nil
-      return
-    end
+
+    lines =
+      case filename
+      in String
+        File.read_lines(filename)
+      in VirtualFile
+        filename.source.lines.to_a
+      in Nil
+        nil
+      end
+
+    return unless lines
 
     min_line_number = {location.line_number - 5, 1}.max
     max_line_number = {location.line_number + 5, lines.size}.min
