@@ -333,7 +333,10 @@ class Crystal::Repl::Compiler
     when "interpreter_intrinsics_debugtrap"
       interpreter_intrinsics_debugtrap(node: node)
     when "interpreter_intrinsics_pause"
-      interpreter_intrinsics_pause(node: node)
+      # TODO: given that this is interpreted, maybe `pause` can be nop instead of a real pause?
+      {% if flag?(:i386) || flag?(:x86_64) %}
+        interpreter_intrinsics_pause(node: node)
+      {% end %}
     when "interpreter_intrinsics_bswap32"
       interpreter_intrinsics_bswap32(node: node)
     when "interpreter_intrinsics_bswap16"
