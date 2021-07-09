@@ -308,7 +308,7 @@ struct YAML::Any
   def_hash raw
 
   # :nodoc:
-  def to_yaml(io)
+  def to_yaml(io) : Nil
     raw.to_yaml(io)
   end
 
@@ -332,7 +332,7 @@ struct YAML::Any
 
   # Forwards `to_json_object_key` to `raw` if it responds to that method,
   # raises `JSON::Error` otherwise.
-  def to_json_object_key
+  def to_json_object_key : String
     raw = @raw
     if raw.responds_to?(:to_json_object_key)
       raw.to_json_object_key

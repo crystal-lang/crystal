@@ -30,8 +30,8 @@ class IO::Digest < IO
   def initialize(@io : IO, @digest_algorithm : ::Digest, @mode = DigestMode::Read)
   end
 
-  def read(slice : Bytes)
-    read_bytes = io.read(slice)
+  def read(slice : Bytes) : Int32
+    read_bytes = io.read(slice).to_i32
     if @mode.read?
       digest_algorithm.update(slice[0, read_bytes])
     end

@@ -29,7 +29,7 @@ abstract class JSON::Lexer
   private abstract def append_number_char
   private abstract def number_string
 
-  def next_token
+  def next_token : JSON::Token
     skip_whitespace
 
     @token.line_number = @line_number

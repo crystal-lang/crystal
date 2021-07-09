@@ -71,7 +71,7 @@ class Socket
 
           unless addrinfo = addrinfo.try(&.next?)
             if error.is_a?(Socket::ConnectError)
-              raise Socket::ConnectError.from_errno("Error connecting to '#{domain}:#{service}'")
+              raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", error.os_error)
             else
               raise error if error
             end
@@ -96,7 +96,7 @@ class Socket
         new error_code, nil, domain: domain
       end
 
-      protected def self.new_from_os_error(message : String, os_error, *, domain, type, service, protocol, **opts)
+      protected def self.new_from_os_error(message : String?, os_error, *, domain, type, service, protocol, **opts)
         new(message, **opts)
       end
 
@@ -151,6 +151,13 @@ class Socket
 
       ret = LibC.getaddrinfo(domain, service.to_s, pointerof(hints), out ptr)
       unless ret.zero?
+        {% if flag?(:posix) %}
+          # EAI_SYSTEM is not defined on win32
+          if ret == LibC::EAI_SYSTEM
+            raise Error.from_errno message, domain: domain
+          end
+        {% end %}
+
         error = {% if flag?(:win32) %}
                   WinError.new(ret.to_u32!)
                 {% else %}
@@ -226,7 +233,7 @@ class Socket
     @ip_address : IPAddress?
 
     # Returns an `IPAddress` matching this addrinfo.
-    def ip_address
+    def ip_address : Socket::IPAddress
       @ip_address ||= IPAddress.from(to_unsafe, size)
     end
 

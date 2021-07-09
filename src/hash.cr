@@ -1098,7 +1098,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key)
+  def has_key?(key) : Bool
     !!find_entry(key)
   end
 
@@ -1109,7 +1109,7 @@ class Hash(K, V)
   # h.has_value?("foo") # => false
   # h.has_value?("bar") # => true
   # ```
-  def has_value?(val)
+  def has_value?(val) : Bool
     each_value do |value|
       return true if value == val
     end
@@ -1159,7 +1159,7 @@ class Hash(K, V)
   # hash.key_for("qux")    # => "baz"
   # hash.key_for("foobar") # raises KeyError (Missing hash key for value: foobar)
   # ```
-  def key_for(value)
+  def key_for(value) : K
     key_for(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
@@ -1171,7 +1171,7 @@ class Hash(K, V)
   # hash.key_for?("qux")    # => "baz"
   # hash.key_for?("foobar") # => nil
   # ```
-  def key_for?(value)
+  def key_for?(value) : K?
     key_for(value) { nil }
   end
 
@@ -1222,7 +1222,7 @@ class Hash(K, V)
   # h = {"foo" => "bar"}
   # h.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @size == 0
   end
 
@@ -1453,7 +1453,7 @@ class Hash(K, V)
   # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
-  def reject(*keys)
+  def reject(*keys) : Hash(K, V)
     hash = self.dup
     hash.reject!(*keys)
   end
@@ -1464,12 +1464,12 @@ class Hash(K, V)
   # h = {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject!("a", "c")
   # h # => {"b" => 2, "d" => 4}
   # ```
-  def reject!(keys : Array | Tuple)
+  def reject!(keys : Array | Tuple) : self
     keys.each { |k| delete(k) }
     self
   end
 
-  def reject!(*keys)
+  def reject!(*keys) : self
     reject!(keys)
   end
 
@@ -1480,14 +1480,14 @@ class Hash(K, V)
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select("a", "c")   # => {"a" => 1, "c" => 3}
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.select(["a", "c"]) # => {"a" => 1, "c" => 3}
   # ```
-  def select(keys : Array | Tuple)
+  def select(keys : Array | Tuple) : Hash(K, V)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
   end
 
   # :ditto:
-  def select(*keys)
+  def select(*keys) : Hash(K, V)
     self.select(keys)
   end
 
@@ -1500,13 +1500,13 @@ class Hash(K, V)
   # h1 == h2 == h3 # => true
   # h1             # => {"a" => 1, "c" => 3}
   # ```
-  def select!(keys : Array | Tuple)
+  def select!(keys : Array | Tuple) : self
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end
 
   # :ditto:
-  def select!(*keys)
+  def select!(*keys) : self
     select!(keys)
   end
 
@@ -1528,7 +1528,7 @@ class Hash(K, V)
   # hash = {"hello" => "world", "foo" => nil}
   # hash.compact! # => {"hello" => "world"}
   # ```
-  def compact!
+  def compact! : self
     reject! { |key, value| value.nil? }
   end
 
@@ -1602,7 +1602,7 @@ class Hash(K, V)
   # hash.clear
   # hash.first_key? # => nil
   # ```
-  def first_key?
+  def first_key? : K?
     first_entry?.try &.key
   end
 
@@ -1685,7 +1685,7 @@ class Hash(K, V)
   # hash = {} of String => String
   # hash.shift? # => nil
   # ```
-  def shift?
+  def shift? : {K, V}?
     shift { nil }
   end
 
@@ -1894,7 +1894,7 @@ class Hash(K, V)
   end
 
   # Returns `self`.
-  def to_h
+  def to_h : self
     self
   end
 
@@ -1913,7 +1913,7 @@ class Hash(K, V)
   # {"foo" => "bar"}.invert                 # => {"bar" => "foo"}
   # {"foo" => "bar", "baz" => "bar"}.invert # => {"bar" => "baz"}
   # ```
-  def invert
+  def invert : Hash(V, K)
     hash = Hash(V, K).new(initial_capacity: @size)
     self.each do |k, v|
       hash[v] = k
@@ -1933,7 +1933,7 @@ class Hash(K, V)
       new(0_u32, key, value)
     end
 
-    def deleted?
+    def deleted? : Bool
       @hash == 0_u32
     end
 
