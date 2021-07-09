@@ -1251,11 +1251,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, align, true)
+                LibIntrinsics.memcpy(dest, src, len, 0, true)
               else
-                LibIntrinsics.memcpy(dest, src, len, align, false)
+                LibIntrinsics.memcpy(dest, src, len, 0, false)
               end
             end,
           },
@@ -1264,11 +1267,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt64, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memmove(dest, src, len, align, true)
+                LibIntrinsics.memmove(dest, src, len, 0, true)
               else
-                LibIntrinsics.memmove(dest, src, len, align, false)
+                LibIntrinsics.memmove(dest, src, len, 0, false)
               end
             end,
           },
@@ -1277,11 +1283,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), val : UInt8, len : UInt64, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memset(dest, val, len, align, true)
+                LibIntrinsics.memset(dest, val, len, 0, true)
               else
-                LibIntrinsics.memset(dest, val, len, align, false)
+                LibIntrinsics.memset(dest, val, len, 0, false)
               end
             end,
           },
@@ -1333,11 +1342,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memcpy` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memcpy(dest, src, len, align, true)
+                LibIntrinsics.memcpy(dest, src, len, 0, true)
               else
-                LibIntrinsics.memcpy(dest, src, len, align, false)
+                LibIntrinsics.memcpy(dest, src, len, 0, false)
               end
             end,
           },
@@ -1346,11 +1358,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), src : Pointer(Void), len : UInt32, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memmove` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memmove(dest, src, len, align, true)
+                LibIntrinsics.memmove(dest, src, len, 0, true)
               else
-                LibIntrinsics.memmove(dest, src, len, align, false)
+                LibIntrinsics.memmove(dest, src, len, 0, false)
               end
             end,
           },
@@ -1359,11 +1374,14 @@ require "./repl"
             pop_values: [dest : Pointer(Void), val : UInt8, len : UInt32, align : UInt32, is_volatile : Bool] of Nil,
             push:       false,
             code:       begin
+              # In the std, align is alway set to 0. Let's worry about this if really needed.
+              raise "BUG: memcpy with align != 0 is not supported" if align != 0
+
               # This is a pretty weird `if`, but the `memset` intrinsic requires the last argument to be a constant
               if is_volatile
-                LibIntrinsics.memset(dest, val, len, align, true)
+                LibIntrinsics.memset(dest, val, len, 0, true)
               else
-                LibIntrinsics.memset(dest, val, len, align, false)
+                LibIntrinsics.memset(dest, val, len, 0, false)
               end
             end,
           },
