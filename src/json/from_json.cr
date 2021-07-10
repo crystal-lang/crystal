@@ -237,7 +237,7 @@ def NamedTuple.new(pull : JSON::PullParser)
 
     {
       {% for key, type in T %}
-        {{key}}: (%var{key.id}).as({{type}}),
+        "{{key}}": (%var{key.id}).as({{type}}),
       {% end %}
     }
   {% end %}
