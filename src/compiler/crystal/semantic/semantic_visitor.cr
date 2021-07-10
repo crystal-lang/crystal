@@ -32,15 +32,15 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     old_in_lib = @in_lib
     old_in_c_struct_or_union = @in_c_struct_or_union
     old_in_is_a = @in_is_a
-
-    yield
-
-    @current_type = old_current_type
-    @scope = old_scope
-    @exp_nest = old_exp_nest
-    @in_lib = old_in_lib
-    @in_c_struct_or_union = old_in_c_struct_or_union
-    @in_is_a = old_in_is_a
+    begin
+      yield
+    ensure
+      @current_type = old_current_type
+      @scope = old_scope
+      @exp_nest = old_exp_nest
+      @in_lib = old_in_lib
+      @in_c_struct_or_union = old_in_c_struct_or_union
+      @in_is_a = old_in_is_a
   end
 
   # Transform require to its source code.
