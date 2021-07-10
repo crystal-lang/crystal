@@ -193,6 +193,29 @@ module Colorize
     def back(io : IO) : Nil
       (to_i + 10).to_s io
     end
+
+    def self.from_lscolors?(color : Char) : Color?
+      case color
+      when 'a' then Black
+      when 'b' then Red
+      when 'c' then Green
+      when 'd' then Yellow
+      when 'e' then Blue
+      when 'f' then Magenta
+      when 'g' then Cyan
+      when 'h' then LightGray
+      when 'A' then DarkGray
+      when 'B' then LightRed
+      when 'C' then LightGreen
+      when 'D' then LightYellow
+      when 'E' then LightBlue
+      when 'F' then LightMagenta
+      when 'G' then LightCyan
+      when 'H' then White
+      when 'x' then Default
+      else          nil
+      end
+    end
   end
 
   record Color256,
