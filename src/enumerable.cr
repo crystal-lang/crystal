@@ -1692,8 +1692,10 @@ module Enumerable(T)
   # ["a", "A", "b", "B"].tally(&.downcase) # => {"a" => 2, "b" => 2}
   # ```
   def tally(& : T -> U) : Hash(U, Int32) forall U
-    each_with_object(Hash(U, Int32).new(0)) do |item, hash|
-      hash[yield item] += 1
+    each_with_object(Hash(U, Int32).new) do |item, hash|
+      value = yield item
+      count = hash[value]?
+      hash[value] = count ? count + 1 : 1
     end
   end
 
