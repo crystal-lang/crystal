@@ -40,14 +40,20 @@ require "./spec_helper"
 # code, except possibly omitting the `_f32` suffix for `Float32` literals.
 private macro it_converts_to_s(v)
   it {{ "converts #{v} to \"#{v.id.gsub(/_f32$/, "")}\"" }} do
-    ({{ v }}).to_s.should eq("{{ v.id.gsub(/_f32$/, "") }}")
+    v = {{ v }}
+    str = "{{ v.id.gsub(/_f32$/, "") }}"
+    v.to_s.should eq(str)
+    String.build { |io| v.to_s(io) }.should eq(str)
   end
 end
 
 # Tests that `v.to_s == str`.
 private macro it_converts_to_s(v, str)
   it {{ "converts #{v.id.gsub(/^hexfloat\("(.*)"\)$/, "\\1")} to #{str}" }} do
-    ({{ v }}).to_s.should eq({{ str }})
+    v = {{ v }}
+    str = {{ str }}
+    v.to_s.should eq(str)
+    String.build { |io| v.to_s(io) }.should eq(str)
   end
 end
 

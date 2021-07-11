@@ -36,7 +36,7 @@ module Float::Printer
   private def internal(v : Float64 | Float32, io : IO)
     significand, decimal_exponent = Dragonbox.to_decimal(v)
 
-    # generate `significand.to_s` in a reasonable fast manner
+    # generate `significand.to_s` in a reasonably fast manner
     str = StaticArray(UInt8, BUFFER_SIZE).new(0_u8)
     ptr = str.to_unsafe + BUFFER_SIZE
     while significand > 0
