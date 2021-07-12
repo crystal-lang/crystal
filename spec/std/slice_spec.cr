@@ -127,6 +127,57 @@ describe "Slice" do
     slice.to_s.should eq("Bytes[1, 2, 3]")
   end
 
+  describe "#fill" do
+    it "replaces all values, without block" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice.new(4, 7)
+      slice.fill(7).should eq(expected)
+      slice.should eq(expected)
+
+      expected = Slice.new(4, 5)
+      slice.fill(5).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "works with primitive number types and 0" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice.new(4, 0)
+      slice.fill(0).should eq(expected)
+      slice.should eq(expected)
+
+      slice = Slice.new(4, &.to_f64)
+      expected = Slice.new(4, 0.0)
+      slice.fill(0.0).should eq(expected)
+      slice.should eq(expected)
+
+      slice = Slice.new(4, &.to_u8)
+      expected = Slice.new(4, 0_u8)
+      slice.fill(0).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "works with Bytes" do
+      slice = Bytes[1, 2, 3]
+      expected = Slice.new(3, 7_u8)
+      slice.fill(7).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "replaces all values, with block" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice[0, 1, 4, 9]
+      slice.fill { |i| i * i }.should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "replaces all values, with block and offset" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice[9, 16, 25, 36]
+      slice.fill(offset: 3) { |i| i * i }.should eq(expected)
+      slice.should eq(expected)
+    end
+  end
+
   it "does copy_from pointer" do
     pointer = Pointer.malloc(4) { |i| i + 1 }
     slice = Slice.new(4, 0)
@@ -486,6 +537,7 @@ describe "Slice" do
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
