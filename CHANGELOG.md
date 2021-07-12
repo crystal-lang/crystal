@@ -145,7 +145,7 @@
 
 - Add support for type var splats inside Tuple during generic parameter substitution. ([#10232](https://github.com/crystal-lang/crystal/pull/10232), thanks @HertzDevil) (*)
 - Fix: consider free vars in parameters of abstract def implementations before existing types, in particular fixing the creation of empty types. ([#10503](https://github.com/crystal-lang/crystal/pull/10503), thanks @HertzDevil)
-- Replace `Crystal::Type#covariant?` with `#implements?`. ([#10507](https://github.com/crystal-lang/crystal/pull/10507), thanks @HertzDevil)
+- Fix variance checks between generic instances for `Proc#call` and abstract defs. ([#10507](https://github.com/crystal-lang/crystal/pull/10507), [#10899](https://github.com/crystal-lang/crystal/pull/10899), thanks @HertzDevil)
 - Fix error message when default parameter value doesn't match non-type restriction. ([#10515](https://github.com/crystal-lang/crystal/pull/10515), thanks @HertzDevil)
 - Fix type restriction logic for generic module instances. ([#10519](https://github.com/crystal-lang/crystal/pull/10519), thanks @HertzDevil)
 - Fix logic for subclass restricted against uninstantiated nested generic superclass. ([#10522](https://github.com/crystal-lang/crystal/pull/10522), thanks @HertzDevil)
