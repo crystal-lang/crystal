@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%= HeadTemplate.new(project_info, "") %>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <title>API Index - <%= project_info.name %> <%= project_info.version %></title>
+  <script type="text/javascript">
+  CrystalDocs.base_path = "";
+  </script>
+</head>
+<body>
+
+<%= Crystal::Doc::SVG_DEFS %>
+<%= SidebarTemplate.new(project_info, types, nil) %>
+
+<div class="main-content">
+  <h1 class="type-name">
+    API Index
+  </h1>
+
+  <div class="api-reference">
+    <% iterate_types do |type| %>
+      <div class="api-reference__entry" id="<%= type.html_id %>">
+        <h3 class="type-name">
+          <% unless type.program? %>
+          <span class="kind"><%= type.abstract? ? "abstract " : ""%><%= type.kind %></span>
+          <% end %>
+          <a href="<%= type.path %>">
+            <%= type.full_name %>
+          </a>
+        </h3>
+
+        <div class="entry-content">
+          <%= type.formatted_summary %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+</body>
+</html>
