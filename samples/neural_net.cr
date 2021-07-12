@@ -77,12 +77,12 @@ class NeuralNetwork
     @hidden_layer = (1..hidden).map { Neuron.new }
     @output_layer = (1..outputs).map { Neuron.new }
 
-    @input_layer.product(@hidden_layer) do |source, dest|
+    @input_layer.each_cartesian(@hidden_layer) do |source, dest|
       synapse = Synapse.new(source, dest)
       source.synapses_out << synapse
       dest.synapses_in << synapse
     end
-    @hidden_layer.product(@output_layer) do |source, dest|
+    @hidden_layer.each_cartesian(@output_layer) do |source, dest|
       synapse = Synapse.new(source, dest)
       source.synapses_out << synapse
       dest.synapses_in << synapse
