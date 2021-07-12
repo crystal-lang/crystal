@@ -65,7 +65,71 @@ describe "Semantic: generic class" do
       end
 
       Bar(Int32).new.u
-      )) { int32.metaclass }
+      ), inject_primitives: false) { int32.metaclass }
+  end
+
+  it "accesses generic type argument from superclass, def context (#10834)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        def t
+          T
+        end
+      end
+
+      Bar(Int32).new.t
+      ), inject_primitives: false) { int32.metaclass }
+  end
+
+  it "accesses generic type argument from superclass, metaclass context" do
+    assert_type(%(
+      struct Int32
+        def self.new(x : Int32)
+          x
+        end
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        @x = T.new(0)
+      end
+
+      Bar(Int32).new.@x
+      ), inject_primitives: false) { int32 }
+  end
+
+  it "accesses generic type argument from superclass, macro context" do
+    assert_type(%(
+      class Foo(M)
+      end
+
+      class Bar(N) < Foo(N)
+        def t
+          {{ M == 1 ? 'a' : "" }}
+        end
+      end
+
+      Bar(1).new.t
+      ), inject_primitives: false) { char }
+  end
+
+  it "accesses generic type argument from superclass, def restriction" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar(U) < Foo(U)
+        def foo(x : T)
+          x
+        end
+      end
+
+      Bar(Int32).new.foo(1)
+      ), inject_primitives: false) { int32 }
   end
 
   it "inherits from generic with instantiation with instance var" do
