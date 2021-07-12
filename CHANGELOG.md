@@ -44,7 +44,8 @@
     [#10584](https://github.com/crystal-lang/crystal/pull/10584), [#10585](https://github.com/crystal-lang/crystal/pull/10585),
     [#10586](https://github.com/crystal-lang/crystal/pull/10586), [#10587](https://github.com/crystal-lang/crystal/pull/10587),
     [#10588](https://github.com/crystal-lang/crystal/pull/10588), [#10849](https://github.com/crystal-lang/crystal/pull/10849),
-    [#10856](https://github.com/crystal-lang/crystal/pull/10856)
+    [#10856](https://github.com/crystal-lang/crystal/pull/10856), [#10857](https://github.com/crystal-lang/crystal/pull/10857),
+    [#10858](https://github.com/crystal-lang/crystal/pull/10858), [#10905](https://github.com/crystal-lang/crystal/pull/10905)
   - Add type restrictions for splat-less overloads of some methods. ([#10594](https://github.com/crystal-lang/crystal/pull/10594), thanks @HertzDevil)
 
 ### Numeric
@@ -59,6 +60,7 @@
 - Fix return type restriction for `Number#humanize` overload. ([#10633](https://github.com/crystal-lang/crystal/pull/10633), thanks @HertzDevil)
 - Fix `printf` float with with many digits. ([#10719](https://github.com/crystal-lang/crystal/pull/10719), thanks @straight-shoota)
 - Add `BigDecimal`'s missing rounding modes. ([#10798](https://github.com/crystal-lang/crystal/pull/10798), thanks @HertzDevil) (*)
+- Add support for using big rational `#**` with unsigned ints. ([#10887](https://github.com/crystal-lang/crystal/pull/10887), thanks @stakach)
 
 ### Text
 
@@ -80,6 +82,7 @@
 - Apply `Array#push`'s resizing heuristic to `#unshift`. ([#10750](https://github.com/crystal-lang/crystal/pull/10750), thanks @HertzDevil)
 - Refactor index / count normalization in range-like methods. ([#10753](https://github.com/crystal-lang/crystal/pull/10753), thanks @HertzDevil)
 - Add methods for cumulative folding and prefix sums. ([#10789](https://github.com/crystal-lang/crystal/pull/10789), thanks @HertzDevil)
+- Fix: Pass read-only flag to peeked slice in IO::Memory. ([#10891](https://github.com/crystal-lang/crystal/pull/10891), thanks @z64)
 
 ### Crypto
 
@@ -93,6 +96,7 @@
 
 - Improve error handling for `load_localtime` on unix. ([#10654](https://github.com/crystal-lang/crystal/pull/10654), thanks @straight-shoota)
 - Fix broken call to `Time#to_s`. ([#10778](https://github.com/crystal-lang/crystal/pull/10778), thanks @straight-shoota)
+- Fix `Time#shift` cover date boundaries with zone offset. ([#10871](https://github.com/crystal-lang/crystal/pull/10871), thanks @straight-shoota)
 
 ### Files
 
@@ -140,6 +144,7 @@
 - Add spec helper `it_iterates` for iteration methods. ([#10158](https://github.com/crystal-lang/crystal/pull/10158), [#10797](https://github.com/crystal-lang/crystal/pull/10797), thanks @straight-shoota)
 - Add usage instructions for spec runner to compiler. ([#10046](https://github.com/crystal-lang/crystal/pull/10046), thanks @straight-shoota) (*)
 - Fix: Handle invalid option errors on `crystal spec`. ([#10787](https://github.com/crystal-lang/crystal/pull/10787), thanks @hugopl)
+- Include `spec/**` in docs_main. ([#10863](https://github.com/crystal-lang/crystal/pull/10863), thanks @straight-shoota)
 
 ## Compiler
 
@@ -172,6 +177,7 @@
 - Expand named macro expression arguments before outer macro call expansion. ([#10819](https://github.com/crystal-lang/crystal/pull/10819), thanks @HertzDevil)
 - Be more strict about printing operator calls as short forms. ([#10825](https://github.com/crystal-lang/crystal/pull/10825), thanks @HertzDevil)
 - Fix union logic between metaclasses of uninstantiated generic classes in same hierarchy. ([#10832](https://github.com/crystal-lang/crystal/pull/10832), thanks @HertzDevil)
+- Fix uninstantiated generic classes casting to themselves. ([#10883](https://github.com/crystal-lang/crystal/pull/10883), thanks @HertzDevil)
 
 ## Tools
 
@@ -179,6 +185,7 @@
 
 - Fix: allow trailing space in parenthesized unions. ([#10595](https://github.com/crystal-lang/crystal/pull/10595), thanks @HertzDevil)
 - Fix: don't consume newline after endless range literals. ([#10596](https://github.com/crystal-lang/crystal/pull/10596), thanks @HertzDevil)
+- Fix heredoc indent with outer indent. ([#10867](https://github.com/crystal-lang/crystal/pull/10867), thanks @straight-shoota)
 
 ### Doc generator
 
@@ -189,6 +196,8 @@
 - Fix: remove superclass from `ASTNode` in API docs. ([#10664](https://github.com/crystal-lang/crystal/pull/10664), thanks @beta-ziliani)
 - **(breaking-change)** Remove deprecated `ditto` doc directive. ([#10755](https://github.com/crystal-lang/crystal/pull/10755), thanks @caspiano)
   (Note that it was scheduled for removal since 0.34)
+- Fix docs generator search use `html_id`. ([#10875](https://github.com/crystal-lang/crystal/pull/10875), thanks @straight-shoota)
+- Fix `--sitemap-priority`, `--sitemap-changefreq`. ([#10906](https://github.com/crystal-lang/crystal/pull/10906), thanks @HertzDevil)
 
 ## Others
 
@@ -200,7 +209,7 @@
 - Publish nightly builds to OBS. ([#10684](https://github.com/crystal-lang/crystal/pull/10684), thanks @straight-shoota)
 - Remove broken travis.yml config from crystal init. ([#10800](https://github.com/crystal-lang/crystal/pull/10800), thanks @straight-shoota)
 - Disable broken test_darwin job on circleci. ([#10823](https://github.com/crystal-lang/crystal/pull/10823), thanks @straight-shoota)
-
+- Update distribution-scripts for shards 0.15.0. ([#10862](https://github.com/crystal-lang/crystal/pull/10862), thanks @straight-shoota)
 
 # 1.0.0 (2021-03-22)
 
