@@ -656,7 +656,7 @@ describe "Semantic: proc" do
       "no overload matches"
   end
 
-  it "allows invoking a function with a generic subtype" do
+  it "allows invoking a function with a generic subtype (1)" do
     assert_type(%(
       module Moo
         def foo
@@ -669,6 +669,28 @@ describe "Semantic: proc" do
       end
 
       def func(&block : Moo -> _)
+        block
+      end
+
+      foo = Foo(Int32).new
+      f = func { |moo| moo.foo }
+      f.call foo
+      )) { int32 }
+  end
+
+  it "allows invoking a function with a generic subtype (2)" do
+    assert_type(%(
+      module Moo(T)
+        def foo
+          1
+        end
+      end
+
+      class Foo(T)
+        include Moo(T)
+      end
+
+      def func(&block : Moo(Int32) -> _)
         block
       end
 
