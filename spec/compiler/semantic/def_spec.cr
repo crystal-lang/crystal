@@ -376,6 +376,48 @@ describe "Semantic: def" do
       "no overload matches 'foo'"
   end
 
+  it "gives correct error for methods in Class" do
+    assert_error %(
+      class Class
+        def foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
+  end
+
+  it "gives correct error for methods in Class (2)" do
+    assert_error %(
+      class Class
+        def self.foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo(1)
+      ),
+      <<-ERROR
+      wrong number of arguments for 'Foo.foo' (given 1, expected 0)
+
+      Overloads are:
+       - Class#foo()
+      ERROR
+  end
+
   it "errors if declares def inside if" do
     assert_error %(
       if 1 == 2
