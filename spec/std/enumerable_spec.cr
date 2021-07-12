@@ -932,6 +932,12 @@ describe "Enumerable" do
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
     end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
   end
 
   describe "sample" do
@@ -1168,6 +1174,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do
