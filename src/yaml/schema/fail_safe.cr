@@ -50,19 +50,19 @@ module YAML::Schema::FailSafe
       Any.new(@pull_parser.value)
     end
 
-    def add_to_documents(documents, document)
+    def add_to_documents(documents, document) : Nil
       documents << document
     end
 
-    def add_to_document(document, node)
+    def add_to_document(document, node) : Nil
       document.as_a << node
     end
 
-    def add_to_sequence(sequence, node)
+    def add_to_sequence(sequence, node) : Nil
       sequence.as_a << node
     end
 
-    def add_to_mapping(mapping, key, value)
+    def add_to_mapping(mapping, key, value) : Nil
       mapping.as_h[key] = value
     end
   end
