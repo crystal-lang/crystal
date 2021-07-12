@@ -801,6 +801,18 @@ describe "File" do
     end
   end
 
+  it "returns the current write position with tell" do
+    with_tempfile("delete-file.txt") do |filename|
+      File.open(filename, "w") do |file|
+        file.tell.should eq(0)
+        file.write "12345".to_slice
+        file.tell.should eq(5)
+        file.sync = true
+        file.tell.should eq(5)
+      end
+    end
+  end
+
   it "can navigate with pos" do
     File.open(datapath("test_file.txt")) do |file|
       file.pos = 3
