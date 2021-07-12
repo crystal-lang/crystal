@@ -12,8 +12,14 @@ end
 
 struct BigInt
   def self.new(pull : JSON::PullParser)
-    pull.read_int
-    new(pull.raw_value)
+    case pull.kind
+    when .int?
+      value = pull.raw_value
+      pull.read_next
+    else
+      value = pull.read_string
+    end
+    new(value)
   end
 
   def self.from_json_object_key?(key : String) : BigInt?
@@ -34,12 +40,9 @@ end
 struct BigFloat
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when .int?
-      pull.read_int
+    when .int?, .float?
       value = pull.raw_value
-    when .float?
-      pull.read_float
-      value = pull.raw_value
+      pull.read_next
     else
       value = pull.read_string
     end
@@ -64,12 +67,9 @@ end
 struct BigDecimal
   def self.new(pull : JSON::PullParser)
     case pull.kind
-    when .int?
-      pull.read_int
+    when .int?, .float?
       value = pull.raw_value
-    when .float?
-      pull.read_float
-      value = pull.raw_value
+      pull.read_next
     else
       value = pull.read_string
     end
