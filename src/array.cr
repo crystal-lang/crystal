@@ -47,7 +47,6 @@
 # ```
 class Array(T)
   include Indexable(T)
-  include Comparable(Array)
 
   # Size of an Array that we consider small to do linear scans or other optimizations.
   private SMALL_ARRAY_SIZE = 16
@@ -195,48 +194,6 @@ class Array(T)
   # [:foo, :bar].size # => 2
   # ```
   getter size : Int32
-
-  # Equality. Returns `true` if each element in `self` is equal to each
-  # corresponding element in *other*.
-  #
-  # ```
-  # ary = [1, 2, 3]
-  # ary == [1, 2, 3] # => true
-  # ary == [2, 3]    # => false
-  # ```
-  def ==(other : Array)
-    equals?(other) { |x, y| x == y }
-  end
-
-  # :nodoc:
-  def ==(other)
-    false
-  end
-
-  # Combined comparison operator.
-  #
-  # Returns `-1`, `0` or `1` depending on whether `self` is less than *other*, equals *other*
-  # or is greater than *other*.
-  #
-  # It compares the elements of both arrays in the same position using the
-  # `<=>` operator. As soon as one of such comparisons returns a non-zero
-  # value, that result is the return value of the comparison.
-  #
-  # If all elements are equal, the comparison is based on the size of the arrays.
-  #
-  # ```
-  # [8] <=> [1, 2, 3] # => 1
-  # [2] <=> [4, 2, 3] # => -1
-  # [1, 2] <=> [1, 2] # => 0
-  # ```
-  def <=>(other : Array)
-    min_size = Math.min(size, other.size)
-    0.upto(min_size - 1) do |i|
-      n = @buffer[i] <=> other.to_unsafe[i]
-      return n if n != 0
-    end
-    size <=> other.size
-  end
 
   # Set intersection: returns a new `Array` containing elements common to `self`
   # and *other*, excluding any duplicates. The order is preserved from `self`.

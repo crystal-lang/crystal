@@ -75,7 +75,6 @@
 # ```
 struct Tuple
   include Indexable(Union(*T))
-  include Comparable(Tuple)
 
   # Creates a tuple that will contain the given values.
   #
@@ -279,20 +278,6 @@ struct Tuple
     true
   end
 
-  # :ditto:
-  def ==(other : Tuple)
-    return false unless size == other.size
-
-    size.times do |i|
-      return false unless self[i] == other[i]
-    end
-    true
-  end
-
-  def ==(other)
-    false
-  end
-
   # Returns `true` if case equality holds for the elements in `self` and *other*.
   #
   # ```
@@ -352,18 +337,9 @@ struct Tuple
     0
   end
 
-  # :ditto:
-  def <=>(other : Tuple)
-    min_size = Math.min(size, other.size)
-    min_size.times do |i|
-      cmp = self[i] <=> other[i]
-      return cmp unless cmp == 0
-    end
-    size <=> other.size
-  end
-
-  # See `Object#hash(hasher)`
+  # Optimized implementation of `Indexable#hash(hasher)`.
   def hash(hasher)
+    hasher = {{ T.size }}.hash(hasher)
     {% for i in 0...T.size %}
       hasher = self[{{i}}].hash(hasher)
     {% end %}

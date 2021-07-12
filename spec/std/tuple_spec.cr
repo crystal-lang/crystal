@@ -105,6 +105,10 @@ describe "Tuple" do
     {1, 2}.should_not eq(1)
   end
 
+  it "#hash" do
+    {1, 2, 3}.hash.should eq [1, 2, 3].hash
+  end
+
   it "does compare" do
     a = {1, 2}
     b = {3, 4}
