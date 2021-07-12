@@ -8,7 +8,7 @@ class HTTP::LogHandler
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context)
+  def call(context) : Nil
     start = Time.monotonic
 
     begin

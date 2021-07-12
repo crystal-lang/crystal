@@ -7,7 +7,7 @@ class Log::MemoryBackend < Log::Backend
     super(:direct)
   end
 
-  def write(entry : Log::Entry)
+  def write(entry : Log::Entry) : Nil
     @entries << entry
   end
 end

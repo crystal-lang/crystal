@@ -64,17 +64,17 @@ class Log
     end
 
     # Write the entry timestamp in RFC3339 format
-    def timestamp
+    def timestamp : Nil
       @entry.timestamp.to_rfc3339(@io, fraction_digits: 6)
     end
 
     # Write a fixed string
-    def string(str)
+    def string(str) : Nil
       @io << str
     end
 
     # Write the message of the entry
-    def message
+    def message : Nil
       @io << @entry.message
     end
 
@@ -107,7 +107,7 @@ class Log
     # It doesn't write any output if the entry data is empty.
     # Parameters `before` and `after` can be provided to be written around
     # the value.
-    def data(*, before = nil, after = nil)
+    def data(*, before = nil, after = nil) : Nil
       unless @entry.data.empty?
         @io << before << @entry.data << after
       end
@@ -130,7 +130,7 @@ class Log
     # Parameters `before` and `after` can be provided to be written around
     # the value. `before` defaults to `'\n'` so the exception is written
     # on a separate line
-    def exception(*, before = '\n', after = nil)
+    def exception(*, before = '\n', after = nil) : Nil
       if ex = @entry.exception
         @io << before
         ex.inspect_with_backtrace(@io)
@@ -139,7 +139,7 @@ class Log
     end
 
     # Write the program name. See `Log.progname`.
-    def progname
+    def progname : Nil
       @io << Log.progname
     end
 
@@ -149,7 +149,7 @@ class Log
     end
 
     # Write the `Log::Entry` to the `IO` using this pattern
-    def self.format(entry, io)
+    def self.format(entry, io) : Nil
       new(entry, io).run
     end
 

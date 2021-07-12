@@ -14,7 +14,7 @@ class Log::IOBackend < Log::Backend
     end
   {% end %}
 
-  def write(entry : Entry)
+  def write(entry : Entry) : Nil
     format(entry)
     io.puts
     io.flush
@@ -22,7 +22,7 @@ class Log::IOBackend < Log::Backend
 
   # Emits the *entry* to the given *io*.
   # It uses the `#formatter` to convert.
-  def format(entry : Entry)
+  def format(entry : Entry) : Nil
     @formatter.format(entry, io)
   end
 end
