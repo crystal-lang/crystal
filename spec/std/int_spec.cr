@@ -231,6 +231,53 @@ describe "Int" do
         expect_raises(ArgumentError, "upcase must be false for base 62") { 123.to_s(IO::Memory.new, 62, upcase: true) }
       end
     end
+
+    context "precision parameter" do
+      it_converts_to_s 0, "", precision: 0
+      it_converts_to_s 0, "0", precision: 1
+      it_converts_to_s 0, "00", precision: 2
+      it_converts_to_s 0, "00000", precision: 5
+      it_converts_to_s 0, "0" * 200, precision: 200
+
+      it_converts_to_s 1, "1", precision: 0
+      it_converts_to_s 1, "1", precision: 1
+      it_converts_to_s 1, "01", precision: 2
+      it_converts_to_s 1, "00001", precision: 5
+      it_converts_to_s 1, "#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 2, "2", precision: 0
+      it_converts_to_s 2, "2", precision: 1
+      it_converts_to_s 2, "02", precision: 2
+      it_converts_to_s 2, "00002", precision: 5
+      it_converts_to_s 2, "#{"0" * 199}2", precision: 200
+
+      it_converts_to_s -1, "-1", precision: 0
+      it_converts_to_s -1, "-1", precision: 1
+      it_converts_to_s -1, "-01", precision: 2
+      it_converts_to_s -1, "-00001", precision: 5
+      it_converts_to_s -1, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 123, "123", precision: 0
+      it_converts_to_s 123, "123", precision: 1
+      it_converts_to_s 123, "123", precision: 2
+      it_converts_to_s 123, "00123", precision: 5
+      it_converts_to_s 123, "#{"0" * 197}123", precision: 200
+
+      it_converts_to_s 9223372036854775807_i64, "#{"1" * 63}", base: 2, precision: 62
+      it_converts_to_s 9223372036854775807_i64, "#{"1" * 63}", base: 2, precision: 63
+      it_converts_to_s 9223372036854775807_i64, "0#{"1" * 63}", base: 2, precision: 64
+      it_converts_to_s 9223372036854775807_i64, "#{"0" * 137}#{"1" * 63}", base: 2, precision: 200
+
+      it_converts_to_s -9223372036854775808_i64, "-1#{"0" * 63}", base: 2, precision: 63
+      it_converts_to_s -9223372036854775808_i64, "-1#{"0" * 63}", base: 2, precision: 64
+      it_converts_to_s -9223372036854775808_i64, "-01#{"0" * 63}", base: 2, precision: 65
+      it_converts_to_s -9223372036854775808_i64, "-#{"0" * 136}1#{"0" * 63}", base: 2, precision: 200
+
+      it "raises on negative precision" do
+        expect_raises(ArgumentError, "Precision must be non-negative") { 123.to_s(precision: -1) }
+        expect_raises(ArgumentError, "Precision must be non-negative") { 123.to_s(IO::Memory.new, precision: -1) }
+      end
+    end
   end
 
   describe "#inspect" do
