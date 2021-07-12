@@ -124,7 +124,7 @@ module Crystal::System::File
   end
 
   def self.executable?(path) : Bool
-    raise NotImplementedError.new("File.executable?")
+    LibC.GetBinaryTypeW(to_windows_path(path), out result) != 0
   end
 
   private def self.accessible?(path, mode)
