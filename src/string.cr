@@ -4302,6 +4302,35 @@ class String
     regex.matches? self, pos
   end
 
+  # Matches the regular expression *regex* against the entire string and returns
+  # the resulting `MatchData`.
+  # It also updates `$~` with the result.
+  #
+  # ```
+  # "foo".match_full(/foo/)   # => Regex::MatchData("foo")
+  # $~                        # => Regex::MatchData("foo")
+  # "fooo".match_full(/foo/)  # => nil
+  # $~                        # raises Exception
+  # ```
+  def match_full(regex : Regex) : Regex::MatchData?
+    match = /(?:#{regex})\z/.match_at_byte_index(self, 0, Regex::Options::ANCHORED)
+    $~ = match
+    match
+  end
+
+  # Returns `true` if the regular expression *regex* matches this string entirely.
+  #
+  # ```
+  # "foo".matches_full?(/foo/)  # => true
+  # "fooo".matches_full?(/foo/) # => false
+  #
+  # # `$~` is not set even if last match succeeds.
+  # $~ # raises Exception
+  # ```
+  def matches_full?(regex : Regex) : Bool
+    starts_with?(/(?:#{regex})\z/)
+  end
+
   # Searches the string for instances of *pattern*,
   # yielding a `Regex::MatchData` for each match.
   def scan(pattern : Regex)
