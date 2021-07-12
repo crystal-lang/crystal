@@ -83,6 +83,8 @@ lib LibGMP
   fun pow_ui = __gmpz_pow_ui(rop : MPZ*, base : MPZ*, exp : ULong)
   fun fac_ui = __gmpz_fac_ui(rop : MPZ*, n : ULong)
 
+  fun sqrt = __gmpz_sqrt(rop : MPZ*, op : MPZ*)
+
   # # Bitwise operations
 
   fun and = __gmpz_and(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)

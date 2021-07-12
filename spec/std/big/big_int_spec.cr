@@ -543,4 +543,8 @@ describe "BigInt Math" do
   it "sqrt" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
   end
+
+  it "isqrt" do
+    Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
+  end
 end

@@ -723,6 +723,11 @@ module Math
   def sqrt(value : BigInt) : BigFloat
     sqrt(value.to_big_f)
   end
+
+  # Calculates the integer square root of *value*.
+  def isqrt(value : BigInt)
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
+  end
 end
 
 module Random
