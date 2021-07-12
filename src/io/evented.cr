@@ -165,11 +165,11 @@ module IO::Evented
     event.add timeout
   end
 
-  def evented_reopen
+  def evented_reopen : Nil
     evented_close
   end
 
-  def evented_close
+  def evented_close : Nil
     @read_event.consume_each &.free
 
     @write_event.consume_each &.free

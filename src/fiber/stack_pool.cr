@@ -29,7 +29,7 @@ class Fiber
     end
 
     # Appends a stack to the bottom of the pool.
-    def release(stack)
+    def release(stack) : Nil
       @mutex.synchronize { @deque.push(stack) }
     end
 

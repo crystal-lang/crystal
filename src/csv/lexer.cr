@@ -39,7 +39,7 @@ abstract class CSV::Lexer
   end
 
   # Rewinds this lexer to the beginning
-  def rewind
+  def rewind : Nil
     @column_number = 1
     @line_number = 1
     @last_empty_column = false

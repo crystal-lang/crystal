@@ -51,7 +51,7 @@ class IO::FileDescriptor < IO
   # doing line wise editing by the terminal and only sending the input to
   # the program on a newline.
   # Only call this when this IO is a TTY, such as a not redirected stdin.
-  def cooked!
+  def cooked! : Nil
     if LibC.tcgetattr(fd, out mode) != 0
       raise IO::Error.from_errno "can't set IO#cooked!"
     end

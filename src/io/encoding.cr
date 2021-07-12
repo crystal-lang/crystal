@@ -224,17 +224,17 @@ class IO
       string
     end
 
-    def write(io)
+    def write(io) : Nil
       io.write @out_slice
       @out_slice = Bytes.empty
     end
 
-    def write(io, numbytes)
+    def write(io, numbytes) : Nil
       io.write @out_slice[0, numbytes]
       @out_slice += numbytes
     end
 
-    def advance(numbytes)
+    def advance(numbytes) : Nil
       @out_slice += numbytes
     end
 
