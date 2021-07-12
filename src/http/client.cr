@@ -892,7 +892,7 @@ class HTTP::Client
     protected def around_exec(%request)
       previous_def do
         {% if block.args.size != 1 %}
-          {% raise "Wrong number of block arguments (given #{block.args.size}, expected: 1)" %}
+          {% raise "Wrong number of block parameters for macro 'def_around_exec' (given #{block.args.size}, expected 1)" %}
         {% end %}
 
         {{ block.args.first.id }} = %request

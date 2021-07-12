@@ -714,7 +714,7 @@ module Crystal
         if block_arg_type
           arg_type = Type.merge(block_arg_type) || @program.nil
           if i == block.splat_index && !arg_type.is_a?(TupleInstanceType)
-            arg.raise "block splat argument must be a tuple type, not #{arg_type}"
+            arg.raise "yield argument to block splat parameter must be a Tuple, not #{arg_type}"
           end
           arg.type = arg_type
         else
@@ -752,7 +752,7 @@ module Crystal
       if splat_index
         # Error if there are less expressions than the number of block arguments
         if exps_types.size < (args_size - 1)
-          block.raise "too many block arguments (given #{args_size - 1}+, expected maximum #{exps_types.size})"
+          block.raise "too many block parameters (given #{args_size - 1}+, expected maximum #{exps_types.size})"
         end
         splat_range = (splat_index..splat_index - args_size)
         exps_types[splat_range] = @program.tuple_of(exps_types[splat_range])
@@ -785,7 +785,7 @@ module Crystal
 
       # Now move exps_types to block_arg_types
       if block.args.size > exps_types.size
-        block.raise "too many block arguments (given #{block.args.size}, expected maximum #{exps_types.size})"
+        block.raise "too many block parameters (given #{block.args.size}, expected maximum #{exps_types.size})"
       end
 
       exps_types.each_with_index do |exp_type, i|

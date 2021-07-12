@@ -351,7 +351,7 @@ describe "Semantic: proc" do
       alias Alias = Int32 -> Int32
       Alias.new { |x, y| }
       ",
-      "wrong number of block arguments (given 2, expected 1)"
+      "wrong number of block parameters (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do
@@ -366,7 +366,7 @@ describe "Semantic: proc" do
 
   it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
-      "function argument 'x' must have a type"
+      "parameter 'x' of Proc literal must have a type"
   end
 
   it "allows passing function to LibC without specifying types" do
