@@ -256,6 +256,79 @@ struct StaticArray(T, N)
     self
   end
 
+  # Returns a new `StaticArray` with all elements sorted based on the return
+  # value of their comparison method `<=>`.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # a.sort # => StaticArray[1, 2, 3]
+  # a      # => StaticArray[3, 1, 2]
+  # ```
+  def sort : StaticArray(T, N)
+    # the return value of `dup` must be assigned to a variable first, otherwise
+    # `self` will be mutated if the `sort!` call is chained directly
+    ary = dup
+    ary.sort!
+  end
+
+  # Returns a new `StaticArray` with all elements sorted based on the comparator
+  # in the given block.
+  #
+  # The block must implement a comparison between two elements *a* and *b*,
+  # where `a < b` returns `-1`, `a == b` returns `0`, and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # b = a.sort { |a, b| b <=> a }
+  #
+  # b # => StaticArray[3, 2, 1]
+  # a # => StaticArray[3, 1, 2]
+  # ```
+  def sort(&block : T, T -> U) : StaticArray(T, N) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    ary = dup
+    ary.sort! &block
+  end
+
+  # Modifies `self` by sorting all elements based on the return value of their
+  # comparison method `<=>`.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # a.sort!
+  # a # => StaticArray[1, 2, 3]
+  # ```
+  def sort! : self
+    to_slice.sort!
+    self
+  end
+
+  # Modifies `self` by sorting all elements based on the comparator in the given
+  # block.
+  #
+  # The given block must implement a comparison between two elements
+  # *a* and *b*, where `a < b` returns `-1`, `a == b` returns `0`,
+  # and `a > b` returns `1`.
+  # The comparison operator `<=>` can be used for this.
+  #
+  # ```
+  # a = StaticArray[3, 1, 2]
+  # a.sort! { |a, b| b <=> a }
+  # a # => StaticArray[3, 2, 1]
+  # ```
+  def sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    to_slice.sort!(&block)
+    self
+  end
+
   # Returns a slice that points to the elements of this static array.
   # Changes made to the returned slice also affect this static array.
   #
