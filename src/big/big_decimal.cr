@@ -292,9 +292,7 @@ struct BigDecimal < Number
   # BigDecimal.new(1234, 2) ** 2 # => 152.2756
   # ```
   def **(other : Int) : BigDecimal
-    if other < 0
-      raise ArgumentError.new("Negative exponent isn't supported")
-    end
+    return (to_big_r ** other).to_big_d if other < 0
     BigDecimal.new(@value ** other, @scale * other)
   end
 
