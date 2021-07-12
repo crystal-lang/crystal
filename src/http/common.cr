@@ -387,7 +387,7 @@ module HTTP
     String.build do |io|
       while quoted_pair_index
         io.write(data[0, quoted_pair_index])
-        io << data[quoted_pair_index + 1].chr
+        io << data[quoted_pair_index + 1].unsafe_chr
 
         data += quoted_pair_index + 2
         quoted_pair_index = data.index('\\'.ord)

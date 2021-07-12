@@ -286,12 +286,6 @@ describe "Char" do
     it "does for unicode" do
       '青'.bytesize.should eq(3)
     end
-
-    it "raises on codepoint bigger than 0x10ffff" do
-      expect_raises InvalidByteSequenceError do
-        (0x10ffff + 1).unsafe_chr.bytesize
-      end
-    end
   end
 
   describe "in_set?" do
@@ -335,12 +329,6 @@ describe "Char" do
       expect_raises(ArgumentError, "Invalid range c-a") do
         'a'.in_set?("c-a")
       end
-    end
-  end
-
-  it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
-    expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
     end
   end
 
