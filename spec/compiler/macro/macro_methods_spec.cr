@@ -977,6 +977,32 @@ module Crystal
           end
         end
       end
+
+      describe "#delete" do
+        it "with String key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete "1"}}),
+            [] of ASTNode,
+            %({1 => 1, :"1" => :"1", true => true})
+          )
+        end
+
+        it "with Symbol key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true}.delete :"1"}}),
+            [] of ASTNode,
+            %({"1" => "1", 1 => 1, true => true})
+          )
+        end
+
+        it "with Array key" do
+          assert_macro("",
+            %({{{"1" => "1", 1 => 1, :"1" => :"1", true => true, [1, 2] => "arr"}.delete [1, 2]}}),
+            [] of ASTNode,
+            %({"1" => "1", 1 => 1, :"1" => :"1", true => true})
+          )
+        end
+      end
     end
 
     describe NamedTupleLiteral do
@@ -1085,6 +1111,32 @@ module Crystal
               %([{"k3", "v3"}, {"k3", "v3"}])
             )
           end
+        end
+      end
+
+      describe "#delete" do
+        it "quoted key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete "key-hyphen"}}),
+            [] of ASTNode,
+            %({foo: "bar"})
+          )
+        end
+
+        it "unquoted key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete "foo"}}),
+            [] of ASTNode,
+            %({"key-hyphen": "value"})
+          )
+        end
+
+        it "symbol key" do
+          assert_macro("",
+            %({{{foo: "bar", "key-hyphen": "value"}.delete :foo}}),
+            [] of ASTNode,
+            %({"key-hyphen": "value"})
+          )
         end
       end
     end
