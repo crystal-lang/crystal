@@ -224,4 +224,26 @@ describe "Semantic: new" do
       ),
       "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
+
+  it "uses correct receiver for `initialize` in namespaced generic classes (#4086)" do
+    assert_type %(
+      class Foo
+        class Baz(T)
+        end
+
+        module Bar
+          class Baz(T) < Foo
+            def initialize(x)
+            end
+
+            def foo
+              'a'
+            end
+          end
+        end
+      end
+
+      Foo::Bar::Baz(Int32).new(1).foo
+      ) { char }
+  end
 end
