@@ -21,7 +21,7 @@ class String
         if i == bytesize
           0_u16
         else
-          unsafe_byte_at(i).to_u16
+          to_unsafe[i].to_u16
         end
       end
       return slice[0, bytesize]
