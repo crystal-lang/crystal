@@ -612,6 +612,19 @@ describe "Hash" do
     h3.should eq({1 => "foobar", "fizz" => "buzz"})
   end
 
+  it "merges with union of hashes" do
+    h1 = {1 => 'a'}
+    h2 = {2.0 => "b"} || {true => :c}
+
+    h3 = h1.merge(h2)
+    h3.should eq({1 => 'a', 2.0 => "b"})
+    typeof(h3).should eq(Hash(Int32 | Float64 | Bool, Char | String | Symbol))
+
+    h4 = h1.merge(h2) { |k, v1, v2| true ? v2 : v1 }
+    h4.should eq({1 => 'a', 2.0 => "b"})
+    typeof(h4).should eq(Hash(Int32 | Float64 | Bool, Char | String | Symbol))
+  end
+
   it "merges!" do
     h1 = {1 => 2, 3 => 4}
     h2 = {1 => 5, 2 => 3}

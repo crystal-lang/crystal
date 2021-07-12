@@ -148,6 +148,12 @@ describe "Set" do
     set3.should eq(Set{1, 2, 3, 4, 5, "3"})
   end
 
+  it "does | with union of sets" do
+    set = Set{1, 'a'} | (Set{1, true} || Set{1, ""})
+    set.should eq(Set{1, 'a', true})
+    typeof(set).should eq(Set(Int32 | Char | Bool | String))
+  end
+
   it "aliases + to |" do
     set1 = Set{1, 1, 2, 3}
     set2 = Set{3, 4, 5}
@@ -238,6 +244,12 @@ describe "Set" do
     set2 = [2, 4, 5]
     set3 = set1 ^ set2
     set3.should eq(Set{1, 3, 5, 'b'})
+  end
+
+  it "does ^ with union of sets" do
+    set = Set{1, 'a'} ^ (Set{1, true} || Set{1, ""})
+    set.should eq(Set{'a', true})
+    typeof(set).should eq(Set(Int32 | Char | Bool | String))
   end
 
   it "does subtract" do
