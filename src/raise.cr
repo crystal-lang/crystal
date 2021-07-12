@@ -169,6 +169,32 @@ end
 
     __crystal_continue_unwind
   end
+{% elsif flag?(:wasm32) %}
+  # :nodoc:
+  fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
+    LibC.printf("EXITING: __crystal_personality called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  @[Raises]
+  fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
+    LibC.printf("EXITING: __crystal_raise called")
+    LibC.exit(1)
+  end
+
+  # :nodoc:
+  fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
+    LibC.printf("EXITING: __crystal_get_exception called")
+    LibC.exit(1)
+  end
+
+  def raise(exception : Exception) : NoReturn
+    STDERR.puts
+    STDERR.puts "EXITING: Attempting to raise: "
+    exception.inspect_with_backtrace(STDERR)
+    LibC.exit(1)
+  end
 {% else %}
   # :nodoc:
   fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exception_class : UInt64, exception_object : LibUnwind::Exception*, context : Void*) : LibUnwind::ReasonCode
@@ -188,7 +214,7 @@ end
   end
 {% end %}
 
-{% unless flag?(:win32) %}
+{% unless flag?(:win32) || flag?(:wasm32) %}
   # :nodoc:
   @[Raises]
   fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn

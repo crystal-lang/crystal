@@ -12,17 +12,19 @@ struct Exception::CallStack
 
   # :nodoc:
   def self.load_dwarf
-    unless @@dwarf_loaded
-      @@dwarf_loaded = true
-      begin
-        return if ENV["CRYSTAL_LOAD_DWARF"]? == "0"
-        load_dwarf_impl
-      rescue ex
-        @@dwarf_line_numbers = nil
-        @@dwarf_function_names = nil
-        Crystal::System.print_exception "Unable to load dwarf information", ex
+    {% unless flag?(:wasm32) %}
+      unless @@dwarf_loaded
+        @@dwarf_loaded = true
+        begin
+          return if ENV["CRYSTAL_LOAD_DWARF"]? == "0"
+          load_dwarf_impl
+        rescue ex
+          @@dwarf_line_numbers = nil
+          @@dwarf_function_names = nil
+          Crystal::System.print_exception "Unable to load dwarf information", ex
+        end
       end
-    end
+    {% end %}
   end
 
   protected def self.decode_line_number(pc)
