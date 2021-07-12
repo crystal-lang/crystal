@@ -89,7 +89,7 @@ module FileUtils
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : Path | String, dest : Path | String) : Nil
-    dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+    dest = Path[dest, File.basename(src_path)] if Dir.exists?(dest)
     File.copy(src_path, dest)
   end
 
@@ -306,15 +306,20 @@ module FileUtils
 
   # Moves *src_path* to *dest_path*.
   #
+  # NOTE: If *src_path* and *dest_path* exist on different mounted filesystems,
+  # the file at *src_path* is copied to *dest_path* and then removed.
+  #
   # ```
   # require "file_utils"
   #
   # FileUtils.mv("afile", "afile.cr")
   # ```
-  #
-  # NOTE: Alias of `File.rename`
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
-    File.rename(src_path, dest_path)
+    if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
+      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      cp_r(src_path, dest_path)
+      rm_r(src_path)
+    end
   end
 
   # Moves every *srcs* to *dest*.
