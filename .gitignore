@@ -14,3 +14,4 @@ all_spec
 /src/llvm/ext/llvm_ext.o
 /src/llvm/ext/llvm_ext.obj
 /src/llvm/ext/llvm_ext.dwo
+/man/*.gz
