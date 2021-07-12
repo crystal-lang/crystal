@@ -181,4 +181,12 @@ describe "Semantic: return" do
       z
       )) { float64 }
   end
+
+  it "forms a tuple from multiple return values" do
+    assert_type("def foo; return 1, 1.0; end; foo") { tuple_of([int32, float64]) }
+  end
+
+  it "flattens splats inside multiple return values" do
+    assert_type("def foo; return 1, *{1.0, 'a'}, true; end; foo") { tuple_of([int32, float64, char, bool]) }
+  end
 end

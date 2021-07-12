@@ -81,4 +81,26 @@ describe "Code gen: return" do
       bar
       )).to_i.should eq(123)
   end
+
+  it "forms a tuple from multiple return values" do
+    run(%(
+      def foo
+        return 5, 3
+      end
+
+      v = foo
+      v[0] &- v[1]
+      )).to_i.should eq(2)
+  end
+
+  it "flattens splats inside multiple return values" do
+    run(%(
+      def foo
+        return 1, *{3, 9}, 27
+      end
+
+      v = foo
+      v[3] &- v[2]
+      )).to_i.should eq(18)
+  end
 end
