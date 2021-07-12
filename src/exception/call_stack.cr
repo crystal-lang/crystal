@@ -13,6 +13,7 @@ require "./lib_unwind"
 
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_caller)] {% end %}
 def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
@@ -66,6 +67,7 @@ struct Exception::CallStack
     end
   {% end %}
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
   protected def self.unwind
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do

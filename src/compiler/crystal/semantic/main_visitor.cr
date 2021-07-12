@@ -2,7 +2,7 @@ require "./semantic_visitor"
 
 module Crystal
   class Program
-    def visit_main(node, visitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
+    def visit_main(node, visitor : MainVisitor = MainVisitor.new(self), process_finished_hooks = false, cleanup = true)
       node.accept visitor
       program.process_finished_hooks(visitor) if process_finished_hooks
 
@@ -2362,6 +2362,10 @@ module Crystal
         node.type = program.pointer_of(program.void)
       when "va_arg"
         visit_va_arg node
+      when "interpreter_call_stack_unwind"
+        node.type = program.array_of(program.pointer_of(program.void))
+      when "interpreter_raise_without_backtrace"
+        node.type = program.no_return
       else
         node.raise "BUG: unhandled primitive in MainVisitor: #{node.name}"
       end
