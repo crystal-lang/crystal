@@ -278,6 +278,14 @@ module Crystal
         assert_macro "", "{{0xde7ec7ab1e_u64.kind}}", [] of ASTNode, ":u64"
       end
 
+      it "executes zero?" do
+        assert_macro "", "{{0.zero?}}", [] of ASTNode, "true"
+        assert_macro "", "{{1.zero?}}", [] of ASTNode, "false"
+
+        assert_macro "", "{{0.0.zero?}}", [] of ASTNode, "true"
+        assert_macro "", "{{0.1.zero?}}", [] of ASTNode, "false"
+      end
+
       it "#to_number" do
         assert_macro "", "{{ 4_u8.to_number }}", [] of ASTNode, "4"
         assert_macro "", "{{ 2147483648.to_number }}", [] of ASTNode, "2147483648"
