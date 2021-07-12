@@ -168,6 +168,18 @@ describe "YAML serialization" do
       tuple.should be_a(NamedTuple(x: Int32?, y: String))
     end
 
+    it "does for named tuple with spaces in key (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz b-23": Int32).from_yaml %{{"a": 1, "xyz b-23": 2}}
+      tuple.should eq({a: 1, "xyz b-23": 2})
+      tuple.should be_a NamedTuple(a: Int32, "xyz b-23": Int32)
+    end
+
+    it "does for named tuple with spaces in key and quote char (#10918)" do
+      tuple = NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32).from_yaml %{{"a": 1, "xyz \\"foo\\" b-23": 2}}
+      tuple.should eq({a: 1, "xyz \"foo\" b-23": 2})
+      tuple.should be_a NamedTuple(a: Int32, "xyz \"foo\" b-23": Int32)
+    end
+
     pending_win32 "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
