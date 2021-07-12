@@ -1187,6 +1187,22 @@ describe "Semantic: proc" do
       Foo.foo
     )) { proc_of int32 }
   end
+
+  it "doesn't cause upcast bug (#8428)" do
+    assert_type(%(
+      def foo
+        if true
+          begin
+             ->(){""}
+          rescue
+            return ->(){}
+          end
+        end
+      end
+
+      foo.not_nil!
+    )) { proc_of string, nil_type }
+  end
 end
 
 private def proc_new
