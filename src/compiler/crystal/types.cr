@@ -294,8 +294,8 @@ module Crystal
       end
     end
 
-    def filter_by(other_type)
-      restrict other_type, MatchContext.new(self, self, strict: true)
+    def filter_by(other_type : Type)
+      Type.common_descendent(self, other_type)
     end
 
     def filter_by_responds_to(name)
