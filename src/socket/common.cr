@@ -7,22 +7,7 @@
   require "c/netinet/in"
 {% end %}
 
-class Socket
-  {% if flag?(:win32) %}
-    begin
-      # Initialize Windows Socket API and expect version 2.2
-      wsa_version = 0x202
-      err = LibC.WSAStartup(wsa_version, out wsadata)
-      unless err.zero?
-        raise IO::Error.from_os_error("WSAStartup", WinError.new(err.to_u32))
-      end
-
-      if wsadata.wVersion != wsa_version
-        raise IO::Error.new("Unsuitable version of the Windows Socket API: 0x#{wsadata.wVersion.to_s(16)}")
-      end
-    end
-  {% end %}
-
+class Socket < IO
   enum Protocol
     IP = LibC::IPPROTO_IP
     {% if flag?(:win32) %}
