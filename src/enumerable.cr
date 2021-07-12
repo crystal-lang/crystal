@@ -1689,9 +1689,9 @@ module Enumerable(T)
   # that correspond to the key after transformation by the given block.
   #
   # ```
-  # ["a", "A", "b", "B"].tally(&.downcase) # => {"a" => 2, "b" => 2}
+  # ["a", "A", "b", "B"].tally_by(&.downcase) # => {"a" => 2, "b" => 2}
   # ```
-  def tally(& : T -> U) : Hash(U, Int32) forall U
+  def tally_by(& : T -> U) : Hash(U, Int32) forall U
     each_with_object(Hash(U, Int32).new) do |item, hash|
       value = yield item
       count = hash[value]?
@@ -1707,7 +1707,7 @@ module Enumerable(T)
   # ["a", "b", "c", "b"].tally # => {"a"=>1, "b"=>2, "c"=>1}
   # ```
   def tally : Hash(T, Int32)
-    tally { |item| item }
+    tally_by { |item| item }
   end
 
   # Returns an `Array` with all the elements in the collection.
