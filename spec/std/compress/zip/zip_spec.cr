@@ -18,9 +18,7 @@ describe Compress::Zip do
       entry.dir?.should be_false
       entry.filename.should eq("foo.txt")
       entry.compression_method.should eq(Compress::Zip::CompressionMethod::DEFLATED)
-      entry.crc32.should eq(0)
-      entry.compressed_size.should eq(0)
-      entry.uncompressed_size.should eq(0)
+      entry.uncompressed_size.should eq(15)
       entry.extra.empty?.should be_true
       entry.io.gets_to_end.should eq("contents of foo")
 
@@ -64,10 +62,10 @@ describe Compress::Zip do
     Compress::Zip::Writer.open(io) do |zip|
       entry = Compress::Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
-      entry.crc32 = crc32
-      entry.compressed_size = text.bytesize.to_u32
-      entry.uncompressed_size = text.bytesize.to_u32
       zip.add entry, &.print(text)
+      entry.crc32.should eq(crc32)
+      entry.compressed_size.should eq(text.bytesize.to_u32)
+      entry.uncompressed_size.should eq(text.bytesize.to_u32)
 
       entry = Compress::Zip::Writer::Entry.new("bar.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
@@ -103,9 +101,6 @@ describe Compress::Zip do
     Compress::Zip::Writer.open(io) do |zip|
       entry = Compress::Zip::Writer::Entry.new("foo.txt")
       entry.compression_method = Compress::Zip::CompressionMethod::STORED
-      entry.crc32 = crc32
-      entry.compressed_size = text.bytesize.to_u32
-      entry.uncompressed_size = text.bytesize.to_u32
       zip.add entry, &.print(text)
     end
 
