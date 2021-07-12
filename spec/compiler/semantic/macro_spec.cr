@@ -264,6 +264,18 @@ describe "Semantic: macro" do
       )) { int32 }
   end
 
+  it "expands macro with empty block" do
+    assert_type(%(
+      macro foo
+        x = {{yield}}
+      end
+
+      x = 1
+      foo { }
+      x
+      )) { nil_type }
+  end
+
   it "errors if find macros but wrong arguments" do
     assert_error %(
       macro foo
