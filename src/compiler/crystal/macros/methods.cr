@@ -1382,6 +1382,14 @@ module Crystal
         interpret_argless_method(method, args) { BoolLiteral.new(@yields != nil) }
       when "return_type"
         interpret_argless_method(method, args) { @return_type || Nop.new }
+      when "free_vars"
+        interpret_argless_method(method, args) do
+          if (free_vars = @free_vars) && !free_vars.empty?
+            ArrayLiteral.map(free_vars) { |free_var| MacroId.new(free_var) }
+          else
+            empty_no_return_array
+          end
+        end
       when "body"
         interpret_argless_method(method, args) { @body }
       when "receiver"
@@ -1390,6 +1398,8 @@ module Crystal
         interpret_argless_method(method, args) do
           visibility_to_symbol(@visibility)
         end
+      when "abstract?"
+        interpret_argless_method(method, args) { BoolLiteral.new(@abstract) }
       when "annotation"
         fetch_annotation(self, method, args) do |type|
           self.annotation(type)
@@ -1951,6 +1961,8 @@ module Crystal
         interpret_argless_method(method, args) { self.block || Nop.new }
       when "block_arg"
         interpret_argless_method(method, args) { self.block_arg || Nop.new }
+      when "global?"
+        interpret_argless_method(method, args) { BoolLiteral.new(@global) }
       else
         super
       end
@@ -2002,6 +2014,8 @@ module Crystal
         interpret_argless_method(method, args) { ArrayLiteral.map whens, &.itself }
       when "else"
         interpret_argless_method(method, args) { self.else || Nop.new }
+      when "exhaustive?"
+        interpret_argless_method(method, args) { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -2015,6 +2029,8 @@ module Crystal
         interpret_argless_method(method, args) { ArrayLiteral.new(conds) }
       when "body"
         interpret_argless_method(method, args) { body }
+      when "exhaustive?"
+        interpret_argless_method(method, args) { BoolLiteral.new(@exhaustive) }
       else
         super
       end
@@ -2202,6 +2218,8 @@ module Crystal
   class Annotation
     def interpret(method : String, args : Array(ASTNode), named_args : Hash(String, ASTNode)?, block : Crystal::Block?, interpreter : Crystal::MacroInterpreter, name_loc : Location?)
       case method
+      when "name"
+        interpret_argless_method(method, args) { @path }
       when "[]"
         interpret_one_arg_method(method, args) do |arg|
           case arg
