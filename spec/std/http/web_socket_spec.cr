@@ -423,6 +423,26 @@ describe HTTP::WebSocket do
     end
   end
 
+  it "sends correct HTTP basic auth header" do
+    ws_handler = HTTP::WebSocketHandler.new do |ws, ctx|
+      ws.send ctx.request.headers["Authorization"]
+      ws.close
+    end
+    http_server = HTTP::Server.new([ws_handler])
+    address = http_server.bind_unused_port
+
+    run_server(http_server) do
+      client = HTTP::WebSocket.new("ws://test_username:test_password@#{address}")
+      message = nil
+      client.on_message do |msg|
+        message = msg
+      end
+      client.run
+      message.should eq(
+        "Basic #{Base64.strict_encode("test_username:test_password")}")
+    end
+  end
+
   it "handshake fails if server does not switch protocols" do
     http_server = HTTP::Server.new do |context|
       context.response.status_code = 200
