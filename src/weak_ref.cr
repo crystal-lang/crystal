@@ -4,8 +4,9 @@
 # require "weak_ref"
 #
 # ref = WeakRef.new("oof".reverse)
-# p ref.value # => "foo"
+# p ref # => #<WeakRef(String):0x7f83406eafa0 @target=Pointer(Void)@0x7f83406eafc0>
 # GC.collect
+# p ref       # => #<WeakRef(String):0x7f83406eafa0 @target=Pointer(Void).null>
 # p ref.value # => nil
 # ```
 class WeakRef(T)
