@@ -392,6 +392,36 @@ describe IO::Memory do
     io.gets_to_end.should eq("")
   end
 
+  it "truncate shrink" do
+    io = IO::Memory.new
+
+    io.write "foofoo".to_slice
+    io.truncate 3
+    io.pos.should eq 6
+    io.to_slice.should eq("foo".to_slice)
+
+    io.write "bar".to_slice
+    io.to_slice.should eq("foo\0\0\0bar".to_slice)
+  end
+
+  it "truncate extend" do
+    io = IO::Memory.new
+
+    io.write "foobar".to_slice
+    io.truncate 9
+    io.pos.should eq 6
+    io.bytesize.should eq 9
+    io.to_slice.should eq("foobar\0\0\0".to_slice)
+  end
+
+  it "can't truncate nonresizable" do
+    io = IO::Memory.new("hello")
+
+    expect_raises(IO::Error, "Non-resizeable stream") do
+      io.truncate
+    end
+  end
+
   pending_win32 describe: "encoding" do
     describe "decode" do
       it "gets_to_end" do
