@@ -132,6 +132,12 @@ describe "Spec matchers" do
       UndefinedConstant.undefined_method
     end
   end
+
+  it "skip!" do
+    expect_raises Spec::ExampleSkipped, "foo bar" do
+      skip! "foo bar"
+    end
+  end
 end
 
 describe "Spec" do

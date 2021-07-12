@@ -82,22 +82,22 @@ module Spec::Methods
     raise Spec::AssertionFailed.new(msg, file, line)
   end
 
-  # Marks the current example pending
+  # Skips the current example.
   #
-  # In case an example needs to be pending on some condition that requires executing it,
-  # this allows to mark it as such  rather than letting it fail or never run.
+  # In case an example needs to be skipped on some condition that requires executing it,
+  # this allows to mark it as such rather than letting it fail or never run.
   #
   # ```
   # require "spec"
   #
   # it "test git" do
   #   cmd = Process.find_executable("git")
-  #   pending!("git is not available") unless cmd
+  #   skip!("git is not available") unless cmd
   #   cmd.ends_with?("git").should be_true
   # end
   # ```
-  def pending!(msg = "Cannot run example", file = __FILE__, line = __LINE__)
-    raise Spec::ExamplePending.new(msg, file, line)
+  def skip!(msg = "Cannot run example", file = __FILE__, line = __LINE__)
+    raise Spec::ExampleSkipped.new(msg, file, line)
   end
 
   # Executes the given block before each spec in the current context runs.
