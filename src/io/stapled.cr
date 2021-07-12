@@ -65,7 +65,7 @@ class IO::Stapled < IO
   end
 
   # Writes a byte to `writer`.
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_open
 
     @writer.write_byte(byte)

@@ -75,7 +75,7 @@ class Compress::Zip::File
   end
 
   # Closes this zip file.
-  def close
+  def close : Nil
     return if @closed
     @closed = true
     if @sync_close

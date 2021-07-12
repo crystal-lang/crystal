@@ -89,7 +89,7 @@ class Compress::Zlib::Reader < IO
     raise IO::Error.new "Can't flush Compress::Zlib::Reader"
   end
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -97,7 +97,7 @@ class Compress::Zlib::Reader < IO
     @io.close if @sync_close
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     check_open
 
     @io.rewind
