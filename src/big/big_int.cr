@@ -440,15 +440,14 @@ struct BigInt < Int
           # "_____12345678\0" for positive
           # "_____-12345678\0" for negative
           LibGMP.get_str(buffer + precision - count, upcase ? -base : base, self)
+          base62_swapcase(Slice.new(buffer + len - count, count)) if base == 62
 
           if negative
             buffer.value = '-'.ord.to_u8
-            Intrinsics.memset(buffer + 1, '0'.ord.to_u8, precision - count, false)
-          else
-            Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
+            buffer += 1
           end
+          Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
 
-          base62_swapcase(Slice.new(buffer, len)) if base == 62
           {len, len}
         end
       end
@@ -474,11 +473,12 @@ struct BigInt < Int
 
       if precision <= count
         buffer = Slice.new(ptr, count + (negative ? 1 : 0))
-      elsif negative
-        io << '-'
-        (precision - count).times { io << '0' }
-        buffer = Slice.new(ptr + 1, count) # this is the absolute value
       else
+        if negative
+          io << '-'
+          ptr += 1 # this becomes the absolute value
+        end
+
         (precision - count).times { io << '0' }
         buffer = Slice.new(ptr, count)
       end
@@ -490,9 +490,11 @@ struct BigInt < Int
 
   private def base62_swapcase(buffer)
     buffer.map! do |x|
-      if x & 0x40 != 0 # A..Z, a..z
+      # for ASCII integers as returned by GMP the only possible characters are
+      # '\0', '-', '0'..'9', 'A'..'Z', and 'a'..'z'
+      if x & 0x40 != 0 # 'A'..'Z', 'a'..'z'
         x ^ 0x20
-      else # 0..9
+      else # '\0', '-', '0'..'9'
         x
       end
     end
