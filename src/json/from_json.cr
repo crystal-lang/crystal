@@ -250,7 +250,7 @@ end
 # Raises `JSON::ParseException` if the deserialization fails.
 def Enum.new(pull : JSON::PullParser)
   {% if @type.annotation(Flags) %}
-    value = {{ @type }}::None
+    value = {{ @type }}.new(0)
     pull.read_array do
       value |= parse?(pull.read_string) || pull.raise "Unknown enum #{self} value: #{pull.string_value.inspect}"
     end

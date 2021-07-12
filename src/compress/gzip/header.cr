@@ -9,6 +9,7 @@ class Compress::Gzip::Header
   # :nodoc:
   @[Flags]
   enum Flg : UInt8
+    None    = 0
     TEXT
     HCRC
     EXTRA
