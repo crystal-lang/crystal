@@ -755,7 +755,7 @@ module Crystal::Macros
     def map : ArrayLiteral
     end
 
-    # Similar to `Hash#[]`
+    # Similar to `Hash#[]?`
     def [](key : ASTNode) : ASTNode
     end
 
