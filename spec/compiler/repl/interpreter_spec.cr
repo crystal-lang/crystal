@@ -3611,7 +3611,10 @@ private def interpret_full(existing_code, string, *, prelude = "primitives")
   load_prelude(program, prelude, existing_code)
   interpreter = Crystal::Repl::Interpreter.new(context)
 
-  {program, interpreter.interpret(node)}
+  main_visitor = MainVisitor.new(program)
+  node = program.semantic(node, main_visitor: main_visitor)
+
+  {program, interpreter.interpret(node, main_visitor.meta_vars)}
 end
 
 private def load_prelude(program, prelude, existing_code)

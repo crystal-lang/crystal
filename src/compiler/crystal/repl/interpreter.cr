@@ -45,7 +45,7 @@ class Crystal::Repl::Interpreter
 
   getter local_vars : LocalVars
   getter stack : Pointer(UInt8)
-  @stack_top : Pointer(UInt8)
+  getter stack_top : Pointer(UInt8)
 
   property decompile = true
   property argv : Array(String)
@@ -70,9 +70,6 @@ class Crystal::Repl::Interpreter
     @stack_top = @stack
     @call_stack = [] of CallFrame
 
-    @main_visitor = MainVisitor.new(program, meta_vars: meta_vars)
-    @top_level_visitor = TopLevelVisitor.new(program)
-    @cleanup_transformer = CleanupTransformer.new(program)
     @block_level = 0
 
     @ffi_closure_fun = LibFFI::ClosureFun.new do |cif, ret, args, user_data|
@@ -86,7 +83,7 @@ class Crystal::Repl::Interpreter
     @pry_max_target_frame = nil
   end
 
-  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, location : Location?, stack : Pointer(UInt8))
+  def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), @block_level : Int32)
     @context = interpreter.context
     @local_vars = compiled_def.local_vars.dup
     @argv = interpreter.@argv
@@ -99,48 +96,12 @@ class Crystal::Repl::Interpreter
     # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
 
-    if location
-      gatherer = LocalVarsGatherer.new(location, compiled_def.def)
-      gatherer.gather
-      meta_vars = gatherer.meta_vars
-      @block_level = gatherer.block_level
-    else
-      meta_vars = compiled_def.def.vars || MetaVars.new
-      @block_level = 0
-    end
-
-    @main_visitor = MainVisitor.new(
-      interpreter.context.program,
-      vars: meta_vars,
-      meta_vars: meta_vars,
-      typed_def: compiled_def.def)
-    @main_visitor.scope = compiled_def.owner
-    @main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
-
-    @top_level_visitor = interpreter.@top_level_visitor
-    @cleanup_transformer = interpreter.@cleanup_transformer
     @ffi_closure_fun = interpreter.@ffi_closure_fun
 
     @compiled_def = compiled_def
     @pry = false
     @pry_node = nil
     @pry_max_target_frame = nil
-  end
-
-  def interpret(node : ASTNode) : Value
-    node = program.normalize(node)
-
-    @top_level_visitor.backup do
-      node.accept @top_level_visitor
-    end
-
-    @main_visitor.backup do
-      node.accept @main_visitor
-    end
-
-    node = node.transform(@cleanup_transformer)
-
-    interpret(node, @main_visitor.meta_vars)
   end
 
   def interpret(node : ASTNode, meta_vars : MetaVars) : Value
@@ -416,9 +377,9 @@ class Crystal::Repl::Interpreter
       stack_top += interpreter.aligned_sizeof_type(arg.type)
     end
 
-    sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
+    sub_interpreter = Interpreter.new(interpreter, compiled_def, interpreter.@stack_top, 0)
 
-    value = sub_interpreter.interpret(compiled_def.def.body, interpreter.@main_visitor.meta_vars)
+    value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
 
     value.copy_to(ret.as(UInt8*))
   end
@@ -920,7 +881,20 @@ class Crystal::Repl::Interpreter
       data = Pointer(Void).malloc(data_size).as(UInt8*)
       data.copy_from(stack_bottom + local_vars.max_bytesize, data_size)
 
-      interpreter = Interpreter.new(self, compiled_def, location, stack_bottom)
+      gatherer = LocalVarsGatherer.new(location, a_def)
+      gatherer.gather
+      meta_vars = gatherer.meta_vars
+      block_level = gatherer.block_level
+
+      main_visitor = MainVisitor.new(
+        @context.program,
+        vars: meta_vars,
+        meta_vars: meta_vars,
+        typed_def: a_def)
+      main_visitor.scope = compiled_def.owner
+      main_visitor.path_lookup = compiled_def.owner # TODO: this is probably not right
+
+      interpreter = Interpreter.new(self, compiled_def, stack_bottom, block_level)
 
       while @pry
         # TODO: supoort multi-line expressions
@@ -963,7 +937,10 @@ class Crystal::Repl::Interpreter
           )
           line_node = parser.parse
 
-          value = interpreter.interpret(line_node)
+          line_node = @context.program.normalize(line_node)
+          line_node = @context.program.semantic(line_node, main_visitor: main_visitor)
+
+          value = interpreter.interpret(line_node, meta_vars)
           puts value
         rescue ex : Crystal::CodeError
           ex.color = true
