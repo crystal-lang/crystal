@@ -189,7 +189,7 @@ module Crystal
         @personality_name = "__crystal_personality"
       end
 
-      emit_main_def_debug_metadata(@main, "??") unless @debug.none?
+      emit_fun_debug_metadata(@main, MAIN_NAME, nil) unless @debug.none?
 
       @context = Context.new @main, @program
       @context.return_type = @main_ret_type

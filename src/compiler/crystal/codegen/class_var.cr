@@ -121,6 +121,8 @@ class Crystal::CodeGenVisitor
       discard = false
       new_func = in_main do
         define_main_function(init_function_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
+          emit_fun_debug_metadata(func, init_function_name, node.location) unless @debug.none?
+
           with_cloned_context do
             # "self" in a constant is the class_var owner
             context.type = class_var.owner

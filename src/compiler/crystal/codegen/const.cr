@@ -146,6 +146,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
+        emit_fun_debug_metadata(func, fun_name, const.locations.try &.first?) unless @debug.none?
+
         with_cloned_context do
           # "self" in a constant is the constant's namespace
           context.type = const.namespace
