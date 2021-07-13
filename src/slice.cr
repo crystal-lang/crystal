@@ -761,7 +761,7 @@ struct Slice(T)
   # b # => Slice["fig", "pear", "apple"]
   # a # => Slice["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Slice(T)
+  def sort_by(&block : T ->) : Slice(T)
     dup.sort_by! { |e| yield(e) }
   end
 
@@ -774,7 +774,7 @@ struct Slice(T)
   # a.sort_by! { |word| word.size }
   # a # => Slice["fig", "pear", "apple"]
   # ```
-  def sort_by!(&block : T -> _) : Slice(T)
+  def sort_by!(&block : T ->) : Slice(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     size.times do |i|
       to_unsafe[i] = sorted.to_unsafe[i][0]

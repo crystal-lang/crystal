@@ -351,7 +351,7 @@ class JSON::PullParser
   # All the other object keys are skipped.
   #
   # Returns the return value of the block or `Nil` if the key was not read.
-  def on_key(key, & : self -> _)
+  def on_key(key, & : self ->)
     result = nil
     read_object do |some_key|
       if some_key == key
@@ -368,7 +368,7 @@ class JSON::PullParser
   # All the other object keys are skipped.
   #
   # Returns the return value of the block.
-  def on_key!(key, & : self -> _)
+  def on_key!(key, & : self ->)
     found = false
     value = uninitialized typeof(yield self)
 

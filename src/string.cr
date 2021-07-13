@@ -1792,7 +1792,7 @@ class String
   # ```
   # "bcadefcba".strip { |c| 'a' <= c <= 'c' } # => "def"
   # ```
-  def strip(&block : Char -> _)
+  def strip(&block : Char ->)
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -1851,7 +1851,7 @@ class String
   # ```
   # "bcadefcba".rstrip { |c| 'a' <= c <= 'c' } # => "bcadef"
   # ```
-  def rstrip(&block : Char -> _)
+  def rstrip(&block : Char ->)
     return self if empty?
 
     excess_right = calc_excess_right { |c| yield c }
@@ -1905,7 +1905,7 @@ class String
   # ```
   # "bcadefcba".lstrip { |c| 'a' <= c <= 'c' } # => "defcba"
   # ```
-  def lstrip(&block : Char -> _)
+  def lstrip(&block : Char ->)
     return self if empty?
 
     excess_left = calc_excess_left { |c| yield c }
@@ -2076,7 +2076,7 @@ class String
   # "hello".sub { |char| char + 1 } # => "iello"
   # "hello".sub { "hi" }            # => "hiello"
   # ```
-  def sub(&block : Char -> _)
+  def sub(&block : Char ->)
     return self if empty?
 
     String.build(bytesize) do |buffer|
@@ -2429,7 +2429,7 @@ class String
   # "hello".gsub { |char| char + 1 } # => "ifmmp"
   # "hello".gsub { "hi" }            # => "hihihihihi"
   # ```
-  def gsub(&block : Char -> _)
+  def gsub(&block : Char ->)
     String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << yield my_char
@@ -3498,7 +3498,7 @@ class String
   # old_pond.split(3) { |s| ary << s }
   # ary # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit : Int32? = nil, &block : String -> _)
+  def split(limit : Int32? = nil, &block : String ->)
     if limit && limit <= 1
       yield self
       return
@@ -3630,7 +3630,7 @@ class String
   # "foo,bar,baz".split(',', 2) { |string| ary << string }
   # ary # => ["foo", "bar,baz"]
   # ```
-  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Char, limit = nil, *, remove_empty = false, &block : String ->)
     if empty?
       yield "" unless remove_empty
       return
@@ -3712,7 +3712,7 @@ class String
   # long_river_name.split("") { |s| ary << s }
   # ary # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : String, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : String, limit = nil, *, remove_empty = false, &block : String ->)
     if empty?
       yield "" unless remove_empty
       return
@@ -3801,7 +3801,7 @@ class String
   # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
   # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
-  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String -> _)
+  def split(separator : Regex, limit = nil, *, remove_empty = false, &block : String ->)
     if empty?
       yield "" unless remove_empty
       return
@@ -3851,7 +3851,7 @@ class String
     yield byte_slice(slice_offset) unless remove_empty && slice_offset == bytesize
   end
 
-  private def split_by_empty_separator(limit, &block : String -> _)
+  private def split_by_empty_separator(limit, &block : String ->)
     yielded = 0
 
     each_char do |c|

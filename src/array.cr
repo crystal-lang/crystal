@@ -1775,7 +1775,7 @@ class Array(T)
   # b # => ["fig", "pear", "apple"]
   # a # => ["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Array(T)
+  def sort_by(&block : T ->) : Array(T)
     dup.sort_by! { |e| yield(e) }
   end
 
@@ -1788,7 +1788,7 @@ class Array(T)
   # a.sort_by! { |word| word.size }
   # a # => ["fig", "pear", "apple"]
   # ```
-  def sort_by!(&block : T -> _) : Array(T)
+  def sort_by!(&block : T ->) : Array(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
       @buffer[i] = sorted.to_unsafe[i][0]
@@ -1949,7 +1949,7 @@ class Array(T)
   # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
-  def uniq(&block : T -> _)
+  def uniq(&block : T ->)
     if size <= 1
       dup
     else

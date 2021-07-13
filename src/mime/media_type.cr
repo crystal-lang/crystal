@@ -89,12 +89,12 @@ module MIME
     # MIME::MediaType.parse("x-application/example").fetch("foo") { |key| key }          # => "foo"
     # MIME::MediaType.parse("x-application/example; foo=bar").fetch("foo") { |key| key } # => "bar"
     # ```
-    def fetch(key : String, &block : String -> _)
+    def fetch(key : String, &block : String ->)
       @params.fetch(key) { |key| yield key }
     end
 
     # Calls the given block for each parameter and passes in the key and the value.
-    def each_parameter(&block : String, String -> _) : Nil
+    def each_parameter(&block : String, String ->) : Nil
       @params.each do |key, value|
         yield key, value
       end
