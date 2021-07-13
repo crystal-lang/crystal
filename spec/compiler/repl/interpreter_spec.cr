@@ -3119,6 +3119,33 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "clears block local variables when calling block (2)" do
+      interpret(<<-CODE).should eq(20)
+        def foo
+          yield
+        end
+
+        a = 0
+
+        foo do
+          x = 1
+        end
+
+        foo do
+          if 1 == 2
+            x = 1
+          end
+          a = x
+        end
+
+        if a
+          a
+        else
+          20
+        end
+        CODE
+    end
+
     it "captures non-closure block" do
       interpret(<<-CODE).should eq(42)
         def capture(&block : Int32 -> Int32)

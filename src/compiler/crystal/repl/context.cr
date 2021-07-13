@@ -1,20 +1,42 @@
 require "./repl"
 
+# This class contains all of the global data used to interpret a single
+# program. For example, it includes the memory region to store constants
+# and class variables, what are all the know symbols, and a few more things.
 class Crystal::Repl::Context
   record MultidispatchKey, obj_type : Type, call_signature : CallSignature
 
   getter program : Program
+
+  # A hash of Def to their compiled representation, so we don't compile
+  # a single method multiple times.
+  # The exceptions are methods with non-captured blocks.
   getter defs : Hash(Def, CompiledDef)
+
+  # Information about all known constants.
   getter! constants : Constants
+
+  # Information about all known class variables.
   getter! class_vars : ClassVars
+
+  # libffi information about external functions.
   getter lib_functions : Hash(External, LibFunction)
-  getter decompile, decompile_defs, trace, stats
   getter procs_f32_f32 : Hash(Symbol, Proc(Float32, Float32))
   getter procs_f64_f64 : Hash(Symbol, Proc(Float64, Float64))
+
+  # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
 
+  # The memory where constants are stored. Refer to `Constants` for more on this.
   property constants_memory : Pointer(UInt8)
+
+  # The memory where class vars are stored. Refer to `ClassVars` for more on this.
   property class_vars_memory : Pointer(UInt8)
+
+  # Some tracing/stats options. These should be eventually removed
+  # (they slow down the interpreter a lot!) and be replaced with
+  # compile-time checks.
+  getter decompile, decompile_defs, trace, stats
 
   def initialize(@program : Program, @decompile : Bool, @decompile_defs : Bool, @trace : Bool, @stats : Bool)
     @program.flags << "interpreted"
@@ -74,44 +96,19 @@ class Crystal::Repl::Context
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
     @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
 
-    # The set of all known interpreters.
-    # This set is useful because when we pry inside one interpreter we set
-    # all interpreter to that pry mode, so that if a `next` jumps to another
-    # fiber or to the C callback handling routine, they are already in pry
-    # mode. Existing pry also exists pry from all interpreters.
-    @interpreters = Set(Interpreter).new
-    @interpreters.compare_by_identity
-
     @type_instance_var_initializers = {} of Type => Array(CompiledDef)
 
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
   end
 
+  # Many reference values we create when compiling nodes to bytecode
+  # must not be collected by the GC. Ideally they should be referenced
+  # in the bytecode itself. The problem is that the bytecode isn't
+  # always aligned to 8 bytes boundaries. So until we figure out what's
+  # the proper way to do it, we just retain these references here.
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
-  end
-
-  def register_interpreter(interpreter : Interpreter, &)
-    register_interpreter(interpreter)
-    yield
-  ensure
-    deregister_interpreter(interpreter)
-  end
-
-  def register_interpreter(interpreter : Interpreter)
-    @interpreters.add(interpreter)
-  end
-
-  def deregister_interpreter(interpreter : Interpreter)
-    @interpreters.delete(interpreter)
-  end
-
-  # Sets the given pry mode to all known interpreters.
-  def pry=(pry : Bool)
-    @interpreters.each do |interpreter|
-      interpreter.pry_non_recursive = pry
-    end
   end
 
   def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)

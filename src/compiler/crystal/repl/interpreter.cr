@@ -418,9 +418,7 @@ class Crystal::Repl::Interpreter
 
     sub_interpreter = Interpreter.new(interpreter, compiled_def, nil, interpreter.@stack_top)
 
-    value = interpreter.context.register_interpreter(sub_interpreter) do
-      sub_interpreter.interpret(compiled_def.def.body, interpreter.@main_visitor.meta_vars)
-    end
+    value = sub_interpreter.interpret(compiled_def.def.body, interpreter.@main_visitor.meta_vars)
 
     value.copy_to(ret.as(UInt8*))
   end
@@ -725,11 +723,7 @@ class Crystal::Repl::Interpreter
     self.pry = true
   end
 
-  def pry=(pry)
-    @context.pry = pry
-  end
-
-  def pry_non_recursive=(pry)
+  def pry=(@pry)
     @pry = pry
 
     unless pry
@@ -888,9 +882,7 @@ class Crystal::Repl::Interpreter
       # Now comes `fiber`
       stack.as(Void**).value = fiber
 
-      @context.register_interpreter(interpreter) do
-        interpreter.interpret(call, main_visitor.meta_vars)
-      end
+      interpreter.interpret(call, main_visitor.meta_vars)
 
       nil
     end

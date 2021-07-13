@@ -14,6 +14,12 @@ require "./repl"
 #   modify the stack.
 # - disassemble: a named tupled where operands can be mapped to a nicer
 #   string representation, when disassembling code.
+#
+# The instructions here are just "macro code" that's injected into several places:
+# - the `Compiler` will define one method per instruction that receive the specified operands
+# - the `Interpreter` will define code that reads operands and pops values, and executes `code`,
+#   optionally pushing things to the stack if `push` is true.
+# - the `Disassembler` will show a human friendly representation of the bytecode
 {% begin %}
   Crystal::Repl::Instructions =
     {

@@ -1,5 +1,7 @@
 require "./repl"
 
+# Allows showing bytecode in a human-readable way.
+# TODO: right now local variables are not very nicely.
 module Crystal::Repl::Disassembler
   def self.disassemble(context : Context, compiled_def : CompiledDef) : String
     disassemble(context, compiled_def.instructions, compiled_def.nodes, compiled_def.local_vars)

@@ -161,6 +161,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     )
   end
 
+  # Compile bytecode instructions for the given node.
   def compile(node : ASTNode) : Nil
     node.accept self
 
@@ -168,8 +169,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
   end
 
+  # Compile bytecode instructions for the given block, where `target_def`
+  # is the method that will yield to the block.
   def compile_block(node : Block, target_def : Def) : Nil
     @compiling_block = CompilingBlock.new(node, target_def)
+
+    # Right when we enter a block we have the block arguments in the stack:
+    # we need to copy the values to the respective block arguments, which
+    # are really local variables inside the enclosing method.
+    # And we have to do them starting from the end because it's a stack.
     node.args.reverse_each do |arg|
       block_var = node.vars.not_nil![arg.name]
 
@@ -185,6 +193,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(node), node: Nop.new.at(node.end_location)
   end
 
+  # Compile bytecode instructions for the given method.
   def compile_def(node : Def) : Nil
     node.body.accept self
 
@@ -301,6 +310,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : TupleLiteral)
     type = node.type.as(TupleInstanceType)
 
+    # A tuple potentially has the values packed (unaligned).
+    # The values in the stack are aligned, so we must adjust that:
+    # if the value in the stack has more bytes than needed, we pop
+    # the extra ones; if it has less bytes that needed we pad the value
+    # with zeros.
     current_offset = 0
     node.elements.each_with_index do |element, i|
       element.accept self
@@ -328,6 +342,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : NamedTupleLiteral)
     type = node.type.as(NamedTupleInstanceType)
 
+    # This logic is similar to TupleLiteral.
     current_offset = 0
     node.entries.each_with_index do |entry, i|
       entry.value.accept self
@@ -387,6 +402,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     case target
     when Var
       request_value(node.value)
+
+      # If it's the case of `x = a = 1` then we need to preserve the value
+      # of 1 in the stack because it will be assigned to `x` too
+      # (set_local removes the value from the stack)
       dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
       index, type = lookup_local_var_index_and_type(target.name)
@@ -397,6 +416,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     when InstanceVar
       if inside_method?
         request_value(node.value)
+
+        # Why we dup: check the Var case (it's similar)
         dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
         ivar_offset = ivar_offset(scope, target.name)
@@ -419,6 +440,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         end
 
         request_value(node.value)
+
+        # Why we dup: check the Var case (it's similar)
         dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
         var = target.var
@@ -435,8 +458,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.value.accept self
     when Path
       const = target.target_const.not_nil!
+
+      # We inline simple constants.
       if const.value.simple_literal?
         const.value.accept self
+
+        # Not all non-trivial constants have a corresponding def:
+        # for example ARGV_UNSAFE.
       elsif const.fake_def
         index, compiled_def = get_const_index_and_compiled_def const
 
@@ -445,6 +473,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         pop(sizeof(Pointer(Void)), node: nil) # pop the bool value
 
         call compiled_def, node: nil
+
+        # Why we dup: check the Var case (it's similar)
         dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
         set_const index, aligned_sizeof_type(const.value), node: nil
       elsif @wants_value
@@ -568,6 +598,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       value = initializer.node
+
+      # It seems class variables initializers aren't cleaned up...
       value = @context.program.cleanup(value)
 
       compiler = Compiler.new(@context, compiled_def, top_level: true)
@@ -1943,6 +1975,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.raise "BUG: missing interpret for #{node.class}"
   end
 
+  # This is where we define one method per instruction/opcode.
   {% for name, instruction in Crystal::Repl::Instructions %}
     {% operands = instruction[:operands] %}
 
@@ -2138,12 +2171,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @instructions << value
   end
 
-  private def patch_location
-    @instructions.size - 4
-  end
-
+  # Many times we need to jump or branch to an instruction for which we don't
+  # know the offset/index yet.
+  # In those cases we generate a jump to zero, but remember where that "zero"
+  # is in the bytecode. Once we know where we have to jump, we modify the
+  # bytecode to patch it with the correct jump offset.
   private def patch_jump(offset : Int32)
     (@instructions.to_unsafe + offset).as(Int32*).value = @instructions.size
+  end
+
+  # After we emit bytecode for a branch or jump, the last four bytes
+  # are always for the jump offset.
+  private def patch_location
+    @instructions.size - 4
   end
 
   private def aligned_sizeof_type(node : ASTNode) : Int32

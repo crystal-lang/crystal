@@ -1,13 +1,25 @@
 require "./repl"
 
 class Crystal::Repl
+  # A block that's been compiled to bytecode.
   class CompiledDef
-    getter instructions
-    getter nodes
-    getter local_vars
+    # The def that was compiled.
     getter def : Def
+
+    # The bytecode to execute the method.
+    getter instructions : Array(Instruction)
+
+    # The nodes to refer from the instructions (by index)
+    getter nodes : Hash(Int32, ASTNode)
+
+    # Local variables for the method.
+    getter local_vars : LocalVars
+
+    # What's `self` for this method.
     getter owner : Type
-    getter args_bytesize
+
+    # How many bytes occupy the method arguments.
+    getter args_bytesize : Int32
 
     def initialize(
       context : Context,

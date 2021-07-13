@@ -41,6 +41,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       @in_lib = old_in_lib
       @in_c_struct_or_union = old_in_c_struct_or_union
       @in_is_a = old_in_is_a
+    end
   end
 
   # Transform require to its source code.
