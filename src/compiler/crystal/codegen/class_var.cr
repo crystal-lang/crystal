@@ -92,6 +92,7 @@ class Crystal::CodeGenVisitor
       global = declare_class_var(class_var)
       global = ensure_class_var_in_this_module(global, class_var)
       if init_func
+        set_current_debug_location initializer.node if @debug.line_numbers?
         call init_func
       end
       return global

@@ -188,6 +188,22 @@ describe "Code gen: debug" do
           @@x
         end
       end
-    ), debug: Crystal::Debug::All)
+      ), debug: Crystal::Debug::All)
+  end
+
+  it "stores and restores debug location after jumping to main (2)" do
+    codegen(%(
+      module Foo
+        @@x : Int32 = begin
+          y = 1
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      ), debug: Crystal::Debug::All)
   end
 end
