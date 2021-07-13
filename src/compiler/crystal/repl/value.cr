@@ -71,12 +71,19 @@ struct Crystal::Repl::Value
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin
-      interpreter = Interpreter.new(@context, meta_vars: MetaVars.new)
+      meta_vars = MetaVars.new
+
+      interpreter = Interpreter.new(@context, meta_vars: meta_vars)
       interpreter.decompile = false
       # TODO: make stack private? Does it matter?
       interpreter.stack.copy_from(@pointer, @context.inner_sizeof_type(@type))
 
-      value = interpreter.interpret(exps)
+      main_visitor = MainVisitor.new(@context.program, meta_vars: meta_vars)
+
+      exps = @context.program.normalize(exps)
+      exps = @context.program.semantic(exps, main_visitor: main_visitor)
+
+      value = interpreter.interpret(exps, main_visitor.meta_vars)
 
       if value.type == @context.program.string
         value.pointer.as(UInt8**).value.unsafe_as(String).to_s(io)

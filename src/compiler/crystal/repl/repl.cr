@@ -14,7 +14,6 @@ class Crystal::Repl
     @main_visitor = MainVisitor.new(@program)
 
     @interpreter = Interpreter.new(@context)
-    @context.register_interpreter(@interpreter)
 
     @buffer = ""
   end
