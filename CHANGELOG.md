@@ -71,7 +71,7 @@
 
 ### Collections 
 
-- Add sub/superset checking methods to Hash. ([#7500](https://github.com/crystal-lang/crystal/pull/7500), thanks @Sija)
+- Add sub/superset checking methods to `Hash`. ([#7500](https://github.com/crystal-lang/crystal/pull/7500), thanks @Sija)
 - Improve documentation of `Array#[](Range)`. ([#10243](https://github.com/crystal-lang/crystal/pull/10243), thanks @straight-shoota)
 - Add `Steppable` module as generalized `Number#step`. ([#10279](https://github.com/crystal-lang/crystal/pull/10279), thanks @straight-shoota)
 - Add docs for `#map_with_index`. ([#10512](https://github.com/crystal-lang/crystal/pull/10512), thanks @wontruefree)
@@ -80,11 +80,11 @@
 - Apply `Array#push`'s resizing heuristic to `#unshift`. ([#10750](https://github.com/crystal-lang/crystal/pull/10750), thanks @HertzDevil)
 - Refactor index / count normalization in range-like methods. ([#10753](https://github.com/crystal-lang/crystal/pull/10753), thanks @HertzDevil)
 - Add methods for cumulative folding and prefix sums. ([#10789](https://github.com/crystal-lang/crystal/pull/10789), thanks @HertzDevil)
-- Fix: Pass read-only flag to peeked slice in IO::Memory. ([#10891](https://github.com/crystal-lang/crystal/pull/10891), thanks @z64)
+- Fix: Pass read-only flag to peeked slice in `IO::Memory`. ([#10891](https://github.com/crystal-lang/crystal/pull/10891), thanks @z64)
 
 ### Crypto
 
-- Add methods for getting peer certificates and signatures in OpenSSL. ([#8005](https://github.com/crystal-lang/crystal/pull/8005), thanks @will)
+- Add methods for getting peer certificates and signatures in `OpenSSL`. ([#8005](https://github.com/crystal-lang/crystal/pull/8005), thanks @will)
 - Add docs for `OpenSSL::Cipher`. ([#9934](https://github.com/crystal-lang/crystal/pull/9934), thanks @sol-vin)
 - Fix format of `src/openssl/cipher.cr`. ([#10705](https://github.com/crystal-lang/crystal/pull/10705), thanks @straight-shoota)
 - Refine documentation for `Random#urlsafe_base64`. ([#10724](https://github.com/crystal-lang/crystal/pull/10724), thanks @straight-shoota)
@@ -119,6 +119,7 @@
 - Fix `HTTP::Cookie` parse quoted cookie value. ([#10853](https://github.com/crystal-lang/crystal/pull/10853), thanks @straight-shoota)
 
 ### System
+
 - Fix sentence structure in `process.cr`. ([#9259](https://github.com/crystal-lang/crystal/pull/9259), thanks @matthewmcgarvey)
 
 ### Runtime
@@ -133,8 +134,8 @@
 - Add `UUID.from_json_object_key?`. ([#10517](https://github.com/crystal-lang/crystal/pull/10517), thanks @kalinon)
 - Fix `JSON::Lexer`'s UTF-16 escape sequence parsing. ([#10450](https://github.com/crystal-lang/crystal/pull/10450), thanks @HertzDevil)
 - Fix `YAML::Serializable.use_yaml_discriminator` with typed enum. ([#10460](https://github.com/crystal-lang/crystal/pull/10460), thanks @straight-shoota)
-- Fix YAML to not parse empty string as null. ([#10608](https://github.com/crystal-lang/crystal/pull/10608), thanks @straight-shoota)
-- Add UUID to yaml parsing. ([#10715](https://github.com/crystal-lang/crystal/pull/10715), thanks @kalinon)
+- Fix YAML to not parse empty string as `nil`. ([#10608](https://github.com/crystal-lang/crystal/pull/10608), thanks @straight-shoota)
+- Add `UUID` to yaml parsing. ([#10715](https://github.com/crystal-lang/crystal/pull/10715), thanks @kalinon)
 - Fix double flushing json/yaml builders. ([#10716](https://github.com/crystal-lang/crystal/pull/10716), thanks @matthewmcgarvey)
 
 ### Specs
@@ -146,7 +147,7 @@
 
 ## Compiler
 
-- Add support for type var splats inside Tuple during generic parameter substitution. ([#10232](https://github.com/crystal-lang/crystal/pull/10232), thanks @HertzDevil)
+- Add support for type var splats inside `Tuple` during generic parameter substitution. ([#10232](https://github.com/crystal-lang/crystal/pull/10232), thanks @HertzDevil)
 - Fix: consider free vars in parameters of abstract def implementations before existing types, in particular fixing the creation of empty types. ([#10503](https://github.com/crystal-lang/crystal/pull/10503), thanks @HertzDevil)
 - Fix variance checks between generic instances for `Proc#call` and abstract defs. ([#10507](https://github.com/crystal-lang/crystal/pull/10507), [#10899](https://github.com/crystal-lang/crystal/pull/10899), thanks @HertzDevil)
 - Fix error message when default parameter value doesn't match non-type restriction. ([#10515](https://github.com/crystal-lang/crystal/pull/10515), thanks @HertzDevil)
@@ -205,8 +206,8 @@
 - Remove `.dockerignore`. ([#10642](https://github.com/crystal-lang/crystal/pull/10642), thanks @miry)
 - Add section about pull requests to the contributing guide. ([#10683](https://github.com/crystal-lang/crystal/pull/10683), thanks @straight-shoota)
 - Publish nightly builds to OBS. ([#10684](https://github.com/crystal-lang/crystal/pull/10684), thanks @straight-shoota)
-- Remove broken travis.yml config from crystal init. ([#10800](https://github.com/crystal-lang/crystal/pull/10800), thanks @straight-shoota)
-- Disable broken test_darwin job on circleci. ([#10823](https://github.com/crystal-lang/crystal/pull/10823), thanks @straight-shoota)
+- Remove broken travis.yml config from `crystal init`. ([#10800](https://github.com/crystal-lang/crystal/pull/10800), thanks @straight-shoota)
+- Disable broken `test_darwin` job on circleci. ([#10823](https://github.com/crystal-lang/crystal/pull/10823), thanks @straight-shoota)
 - Update distribution-scripts for shards 0.15.0. ([#10862](https://github.com/crystal-lang/crystal/pull/10862), thanks @straight-shoota)
 
 # 1.0.0 (2021-03-22)
