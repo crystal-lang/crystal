@@ -1,46 +1,47 @@
 require "./repl"
 
-# Summary:
-# - Put: 7
-# - Conversions: 21
-# - Math: 36 / 76?
-# - Comparison: 26 / 40?
-# - Not: 1
-# - Pointers: 9
-# - Local variables: 2
-# - Stack manipulation: 5
-# - Jumps: 3
-# - Pointerof: 2
-# - Calls: 5
-# - Allocate: 2
-# - Instance vars: 3
-# - Unions: 4
-# - Tuples: 1
-# - Procs: 1
-# - Overrides: 5
-# ------------------------
-# - Total: 132
-# - Remaining: 124
-
+# This is the list of every VM instruction.
+#
+# An instruction consists of:
+# - a name/opcode: the name is only for debugging purpsoes, in the bytecode
+#   (bytes) it's just a number (a byte)
+# - operands: values in the bytecode following the opcode.
+#   For example a `pop` instruction has an operand that tells it how many
+#   bytes to pop from the stack.
+# - pop_values: the (typed) values to pop from the stack.
+# - push: if true, the return value of `code` will be pushed to the stack.
+#   Some instructions have `push` set to false and manually push or
+#   modify the stack.
+# - disassemble: a named tupled where operands can be mapped to a nicer
+#   string representation, when disassembling code.
 {% begin %}
   Crystal::Repl::Instructions =
     {
-      # <<< Put (7)
+      # <<< Put (2)
+
+      # Puts a nil value at the top of the stack.
+      # In reality, this doesn't push anything to the stack because
+      # nil doesn't occupy any bytes, but it's still useful to have
+      # this instruction so that `pry` stops on a `nil` value.
+      # TODO: maybe not? We could reduce the bytecode then.
       put_nil: {
         operands:   [] of Nil,
         pop_values: [] of Nil,
         push:       false,
         code:       nil,
       },
+
+      # Puts an Int64 at the top of the stack.
       put_i64: {
         operands:   [value : Int64],
         pop_values: [] of Nil,
         push:       true,
         code:       value,
       },
-      # >>> Put (7)
+      # >>> Put (2)
 
       # <<< Conversions (21)
+      # These convert a value in the stack into another value.
       i8_to_f32: {
         operands:   [] of Nil,
         pop_values: [value : Int8],
@@ -161,6 +162,9 @@ require "./repl"
         push:       true,
         code:       value.to_f32!,
       },
+      # Extend the sign of a signed number.
+      # For example when converting an Int8 into an Int16, we actually
+      # extend it to Int64 by changing the 7 bytes the follow the initial byte.
       sign_extend: {
         operands:   [amount : Int32] of Nil,
         pop_values: [] of Nil,
@@ -173,6 +177,8 @@ require "./repl"
           end
         end,
       },
+
+      # Extend an unsigned number by filling it with zeros.
       zero_extend: {
         operands:   [amount : Int32] of Nil,
         pop_values: [] of Nil,
@@ -677,7 +683,7 @@ require "./repl"
         push:       true,
         code:       pointer.null?,
       },
-      # TODO: remove this and use logical_not
+      # TODO: maybe remove this and use logical_not
       pointer_is_not_null: {
         operands:   [] of Nil,
         pop_values: [pointer : Pointer(UInt8)],

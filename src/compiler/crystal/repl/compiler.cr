@@ -1,15 +1,72 @@
 require "./repl"
 require "./instructions"
 
+# The compiler is in charge of turning Crystal AST into bytecode,
+# which is just a stream of bytes that tells the interpreter what to do.
 class Crystal::Repl::Compiler < Crystal::Visitor
+  # A block that's being compiled: what's the block,
+  # and which def will invoke it.
   record CompilingBlock, block : Block, target_def : Def
 
+  # What's `self` when compiling a node.
   private getter scope : Type
+
+  # The method that's being compiled, if any
+  # (if `nil`, the node happens at the top-level)
   private getter def : Def?
 
+  # The block we are in, if any.
+  # This is different than `compiling_block`. Consider this code:
+  #
+  # ```
+  # def foo
+  #   # When this is called from the top-level, `compiled_block`
+  #   # will be the block given to `foo`, but `compiling_block`
+  #   # will be `nil` because we are not compiling a block.
+  #
+  #   bar do
+  #     # Now we are compiling `bar`, so `compiling_block` will
+  #     # have this block and `bar` as a value.
+  #     # And also, `compiled_block` is still the block given to `foo`.
+  #     # This is the point where you can see their difference.
+  #     yield
+  #   end
+  # end
+  #
+  # def bar
+  #   yield
+  # end
+  #
+  # # Here `compiling_block` and `compiled_block` are `nil`.
+  #
+  # foo do
+  #   # When this block is compiled, `compiling_block` will have
+  #   # the block and `foo`.
+  #   a = 1
+  # end
+  # ```
   property compiled_block : CompiledBlock?
-  getter instructions
-  getter nodes
+
+  @compiling_block : CompilingBlock?
+
+  # The instructions that are being generated.
+  getter instructions : Array(Instruction)
+
+  # AST nodes associated to each instruction (this is {index => node}).
+  getter nodes : Hash(Int32, ASTNode)
+
+  # In which block level we are in.
+  # Right when we enter a def we are at block level 0.
+  # When entering a block, the block level is incremented.
+  #
+  # This is useful to distinguish a same variable in multiple
+  # scopes, for example:
+  #
+  # ```
+  # a = 0      # has block_level = 0
+  # foo do |a| # <- this is a different variable, has block_level = 1
+  # end
+  # ```
   property block_level = 0
 
   def initialize(
