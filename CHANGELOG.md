@@ -59,6 +59,7 @@
 - Fix `printf` float with with many digits. ([#10719](https://github.com/crystal-lang/crystal/pull/10719), thanks @straight-shoota)
 - Add `BigDecimal`'s missing rounding modes. ([#10798](https://github.com/crystal-lang/crystal/pull/10798), thanks @HertzDevil)
 - Add support for using big rational `#**` with unsigned ints. ([#10887](https://github.com/crystal-lang/crystal/pull/10887), thanks @stakach)
+- Add overflow detection to `BigFloat#to_i64` and `#to_u64`. ([#10630](https://github.com/crystal-lang/crystal/pull/10630), thanks @HertzDevil)
 
 ### Text
 
@@ -69,7 +70,7 @@
 - Fix `Base64#encode`, exclude last 3 bytes from bswap. ([#10752](https://github.com/crystal-lang/crystal/pull/10752), thanks @kostya)
 - Refactor: avoid union type in `Char::Reader#decode_char_at`. ([#10758](https://github.com/crystal-lang/crystal/pull/10758), thanks @asterite)
 
-### Collections 
+### Collections
 
 - Add sub/superset checking methods to `Hash`. ([#7500](https://github.com/crystal-lang/crystal/pull/7500), thanks @Sija)
 - Improve documentation of `Array#[](Range)`. ([#10243](https://github.com/crystal-lang/crystal/pull/10243), thanks @straight-shoota)
@@ -184,6 +185,7 @@
 
 - Fix: allow trailing space in parenthesized unions. ([#10595](https://github.com/crystal-lang/crystal/pull/10595), thanks @HertzDevil)
 - Fix: don't consume newline after endless range literals. ([#10596](https://github.com/crystal-lang/crystal/pull/10596), thanks @HertzDevil)
+- Fix indentation of heredocs relative to delimiter. ([#10806](https://github.com/crystal-lang/crystal/pull/10806), thanks @HertzDevil)
 - Fix heredoc indent with outer indent. ([#10867](https://github.com/crystal-lang/crystal/pull/10867), thanks @straight-shoota)
 
 ### Doc generator
@@ -195,6 +197,7 @@
 - Fix: remove superclass from `ASTNode` in API docs. ([#10664](https://github.com/crystal-lang/crystal/pull/10664), thanks @beta-ziliani)
 - **(breaking-change)** Remove deprecated `ditto` doc directive. ([#10755](https://github.com/crystal-lang/crystal/pull/10755), thanks @caspiano)
   (Note that it was scheduled for removal since 0.34)
+- Fix: Restrict macro types' ancestors to `ASTNode`. ([#10722](https://github.com/crystal-lang/crystal/pull/10722), thanks @HertzDevil)
 - Fix docs generator search use `html_id`. ([#10875](https://github.com/crystal-lang/crystal/pull/10875), thanks @straight-shoota)
 - Fix `--sitemap-priority`, `--sitemap-changefreq`. ([#10906](https://github.com/crystal-lang/crystal/pull/10906), thanks @HertzDevil)
 
