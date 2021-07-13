@@ -68,15 +68,32 @@ module GC
     bytes_reclaimed_since_gc : LibC::ULong,
     reclaimed_bytes_before_gc : LibC::ULong
 
-  def self.malloc(size : Int)
+  # Allocates and clears *size* bytes of memory.
+  #
+  # The resulting object may contain pointers and they will be tracked by the GC.
+  #
+  # The memory will be automatically deallocated when unreferenced.
+  def self.malloc(size : Int) : Void*
     malloc(LibC::SizeT.new(size))
   end
 
-  def self.malloc_atomic(size : Int)
+  # Allocates *size* bytes of pointer-free memory.
+  #
+  # The client promises that the resulting object will never contain any pointers.
+  #
+  # The memory is not cleared. It will be automatically deallocated when unreferenced.
+  def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
   end
 
-  def self.realloc(pointer : Void*, size : Int)
+  # Changes the allocated memory size of *pointer* to *size*.
+  # If this can't be done in place, it allocates *size* bytes of memory and
+  # copies the content of *pointer* to the new location.
+  #
+  # If *pointer* was allocated with `malloc_atomic`, the same constraints apply.
+  #
+  # The return value is a pointer that may be identical to *pointer* or different.
+  def self.realloc(pointer : Void*, size : Int) : Void*
     realloc(pointer, LibC::SizeT.new(size))
   end
 end

@@ -8,6 +8,8 @@
 # :"symbol with spaces"
 # ```
 #
+# See [`Symbol` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/symbol.html) in the language reference.
+#
 # Internally a symbol is represented as an `Int32`, so it's very efficient.
 #
 # You can't dynamically create symbols. When you compile your program, each symbol
@@ -76,7 +78,7 @@ struct Symbol
   # :nodoc:
   # Determines if a string needs to be quoted to be used for an external
   # parameter name or a named argument's key.
-  def self.needs_quotes_for_named_argument?(string)
+  def self.needs_quotes_for_named_argument?(string) : Bool
     case string
     when "", "_"
       true
