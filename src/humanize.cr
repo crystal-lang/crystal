@@ -25,9 +25,14 @@ struct Number
     end
 
     if number.is_a?(Float)
-      string = String.build do |io|
-        # Make sure to avoid scientific notation of default Float#to_s
-        Float::Printer.print(number.abs, io, point_range: ..)
+
+      if decimal_places
+        string = "%.*f" % {decimal_places, number.abs}
+      else
+        string = String.build do |io|
+          # Make sure to avoid scientific notation of default Float#to_s
+          Float::Printer.print(number.abs, io, point_range: ..)
+        end
       end
     else
       string = number.abs.to_s
@@ -53,8 +58,11 @@ struct Number
     decimal_places ||= dec_size
 
     if decimal_places > 0
-      io << separator << decimals
-      unless only_significant
+      io << separator
+      if only_significant
+        io << decimals.rstrip('0')
+      else
+        io << decimals
         (decimal_places - dec_size).times do
           io << '0'
         end
