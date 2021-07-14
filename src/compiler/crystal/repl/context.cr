@@ -27,6 +27,11 @@ class Crystal::Repl::Context
   # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
 
+  # The single closure function that we use for all function pointers (procs)
+  # passed to C. This closure function knows all the information about
+  # the callback being passed, and is able to run the code associated to it.
+  getter ffi_closure_fun : LibFFI::ClosureFun
+
   # The memory where constants are stored. Refer to `Constants` for more on this.
   property constants_memory : Pointer(UInt8)
 
@@ -56,7 +61,7 @@ class Crystal::Repl::Context
 
     @multidispatchs = {} of MultidispatchKey => Def
 
-    @ffi_closure_contexts = {} of {UInt64, UInt64} => Interpreter::ClosureContext
+    @ffi_closure_contexts = {} of {UInt64, UInt64} => FFIClosureContext
 
     # TODO: finish porting all of LibM instrinsics
 
@@ -98,6 +103,11 @@ class Crystal::Repl::Context
 
     @type_instance_var_initializers = {} of Type => Array(CompiledDef)
 
+    @ffi_closure_fun = LibFFI::ClosureFun.new do |cif, ret, args, user_data|
+      Context.ffi_closure_fun(cif, ret, args, user_data)
+      nil
+    end
+
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
   end
@@ -109,12 +119,6 @@ class Crystal::Repl::Context
   # the proper way to do it, we just retain these references here.
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
-  end
-
-  def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
-    # Keep the closure contexts in a Hash by the compiled def so we don't
-    # lose a reference to it in the GC.
-    @ffi_closure_contexts[{interpreter.object_id, compiled_def.object_id}] ||= Interpreter::ClosureContext.new(interpreter, compiled_def)
   end
 
   def type_instance_var_initializers(type : Type)
@@ -233,6 +237,43 @@ class Crystal::Repl::Context
     else
       nil
     end
+  end
+
+  def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
+    # Keep the closure contexts in a Hash by the compiled def so we don't
+    # lose a reference to it in the GC.
+    @ffi_closure_contexts[{interpreter.object_id, compiled_def.object_id}] ||= FFIClosureContext.new(interpreter, compiled_def)
+  end
+
+  protected def self.ffi_closure_fun(cif : LibFFI::Cif*, ret : Void*, args : Void**, user_data : Void*)
+    # This is the generic callback that gets called on any C callback.
+    closure_context = user_data.as(FFIClosureContext)
+    interpreter = closure_context.interpreter
+    compiled_def = closure_context.compiled_def
+
+    # What to do:
+    #   - create a new interpreter that uses the same stack
+    #     (call the second initialize overload)
+    #   - copy args into the stack, starting from stack_top
+    #   - call interpret on the compiled_def.def.body
+    #   - copy the value back to ret
+
+    stack_top = interpreter.stack_top
+
+    # Clear the proc's local vars area, just in case
+    stack_top.clear(compiled_def.local_vars.max_bytesize)
+
+    compiled_def.def.args.each_with_index do |arg, i|
+      args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
+      stack_top += interpreter.aligned_sizeof_type(arg.type)
+    end
+
+    # TODO: maybe we don't need a new interpreter for this?
+    sub_interpreter = Interpreter.new(interpreter, compiled_def, interpreter.@stack_top, 0)
+
+    value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
+
+    value.copy_to(ret.as(UInt8*))
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32

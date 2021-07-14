@@ -50,14 +50,6 @@ class Crystal::Repl::Interpreter
   property decompile = true
   property argv : Array(String)
 
-  class ClosureContext
-    getter interpreter : Interpreter
-    getter compiled_def : CompiledDef
-
-    def initialize(@interpreter : Interpreter, @compiled_def : CompiledDef)
-    end
-  end
-
   def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -71,11 +63,6 @@ class Crystal::Repl::Interpreter
     @call_stack = [] of CallFrame
 
     @block_level = 0
-
-    @ffi_closure_fun = LibFFI::ClosureFun.new do |cif, ret, args, user_data|
-      Interpreter.ffi_closure_fun(cif, ret, args, user_data)
-      nil
-    end
 
     @compiled_def = nil
     @pry = false
@@ -95,8 +82,6 @@ class Crystal::Repl::Interpreter
     @stack_top = @stack
     # TODO: copy the call stack from the main interpreter
     @call_stack = [] of CallFrame
-
-    @ffi_closure_fun = interpreter.@ffi_closure_fun
 
     @compiled_def = compiled_def
     @pry = false
@@ -354,36 +339,6 @@ class Crystal::Repl::Interpreter
     @local_vars = LocalVars.new(@context)
   end
 
-  protected def self.ffi_closure_fun(cif, ret, args, user_data)
-    # This is the generic callback that gets called on any C callback.
-    closure_context = user_data.as(ClosureContext)
-    interpreter = closure_context.interpreter
-    compiled_def = closure_context.compiled_def
-
-    # What to do:
-    #   - create a new interpreter that uses the same stack
-    #     (call the second initialize overload)
-    #   - copy args into the stack, starting from stack_top
-    #   - call interpret on the compiled_def.def.body
-    #   - copy the value back to ret
-
-    stack_top = interpreter.@stack_top
-
-    # Clear the proc's local vars area, just in case
-    stack_top.clear(compiled_def.local_vars.max_bytesize)
-
-    compiled_def.def.args.each_with_index do |arg, i|
-      args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
-      stack_top += interpreter.aligned_sizeof_type(arg.type)
-    end
-
-    sub_interpreter = Interpreter.new(interpreter, compiled_def, interpreter.@stack_top, 0)
-
-    value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
-
-    value.copy_to(ret.as(UInt8*))
-  end
-
   private def current_local_vars
     if call_frame = @call_stack.last?
       call_frame.compiled_def.local_vars
@@ -506,14 +461,14 @@ class Crystal::Repl::Interpreter
       # TODO: check that closure_data is null and raise otherwise
       # We need to wrap the Proc in an FFI::Closure. proc_args[%i] will have
       # the CallInterface for the Proc.
-      # We copy the CompiledDef from the stack and into a ClosureContext,
+      # We copy the CompiledDef from the stack and into a FFIClosureContext,
       # include also the interpreter, and put that in the stack to later
       # pass it to the FFI call below.
       if %proc_arg_cif = %proc_args[%i]
         proc_compiled_def = (stack - %offset - arg_bytesize).as(CompiledDef*).value
         closure_context = @context.ffi_closure_context(self, proc_compiled_def)
 
-        %closure = FFI::Closure.new(%proc_arg_cif, @ffi_closure_fun, closure_context.as(Void*))
+        %closure = FFI::Closure.new(%proc_arg_cif, @context.ffi_closure_fun, closure_context.as(Void*))
         (stack - %offset - arg_bytesize).as(Int64*).value = %closure.to_unsafe.unsafe_as(Int64)
       end
 
