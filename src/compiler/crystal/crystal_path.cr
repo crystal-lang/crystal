@@ -13,22 +13,28 @@ module Crystal
 
     private DEFAULT_LIB_PATH = "lib"
 
-    def self.default_path
-      ENV["CRYSTAL_PATH"]? || begin
-        if Crystal::Config.path.blank?
-          DEFAULT_LIB_PATH
-        elsif Crystal::Config.path.split(Process::PATH_DELIMITER).includes?(DEFAULT_LIB_PATH)
-          Crystal::Config.path
-        else
-          {DEFAULT_LIB_PATH, Crystal::Config.path}.join(Process::PATH_DELIMITER)
+    def self.default_paths : Array(String)
+      if path = ENV["CRYSTAL_PATH"]?
+        path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
+      elsif path = Crystal::Config.path.presence
+        path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
+        unless path_array.includes?(DEFAULT_LIB_PATH)
+          path_array.unshift DEFAULT_LIB_PATH
         end
+      else
+        path_array = [DEFAULT_LIB_PATH]
       end
+
+      path_array
+    end
+
+    def self.default_path : String
+      default_paths.join(Process::PATH_DELIMITER)
     end
 
     property entries : Array(String)
 
-    def initialize(path = CrystalPath.default_path, codegen_target = Config.host_target)
-      @entries = path.split(Process::PATH_DELIMITER).reject &.empty?
+    def initialize(@entries : Array(String) = CrystalPath.default_paths, codegen_target = Config.host_target)
       add_target_path(codegen_target)
     end
 
