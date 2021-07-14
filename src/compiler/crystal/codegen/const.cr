@@ -155,6 +155,7 @@ class Crystal::CodeGenVisitor
           # Start with fresh variables
           context.vars = LLVMVars.new
 
+          set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
           alloca_vars const.fake_def.try(&.vars), const.fake_def
 
           request_value do
