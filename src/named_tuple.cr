@@ -495,9 +495,9 @@ struct NamedTuple
   # tuple.to_a # => [{:name, "Crystal"}, {:year, 2011}]
   # ```
   def to_a
-    ary = Array({typeof(first_key_internal), typeof(first_value_internal)}).new(size)
+    ary = Array({Symbol, typeof(first_value_internal)}).new(size)
     each do |key, value|
-      ary << {key.as(typeof(first_key_internal)), value.as(typeof(first_value_internal))}
+      ary << {key.as(Symbol), value.as(typeof(first_value_internal))}
     end
     ary
   end
@@ -510,7 +510,7 @@ struct NamedTuple
   # ```
   def to_h
     {% if T.size == 0 %}
-      {} of NoReturn => NoReturn
+      {} of Symbol => NoReturn
     {% else %}
       {
         {% for key in T %}
@@ -582,7 +582,7 @@ struct NamedTuple
     {% end %}
   end
 
-  private def first_key_internal
+  private def first_key_internal : Symbol
     i = 0
     keys[i]
   end
