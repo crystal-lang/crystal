@@ -34,8 +34,6 @@ class Thread
     end
   end
 
-  @th : LibC::PthreadT
-
   # Used once to initialize the thread object representing the main thread of
   # the process (that already exists).
   def initialize
