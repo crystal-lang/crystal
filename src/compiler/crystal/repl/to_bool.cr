@@ -1,5 +1,7 @@
 require "./compiler"
 
+# Logic to transform a value in the stack to a boolean value.
+
 class Crystal::Repl::Compiler
   private def value_to_bool(node : ASTNode, type : NilType)
     put_false node: nil

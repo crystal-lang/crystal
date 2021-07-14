@@ -1,5 +1,8 @@
 require "./repl"
 
+# A value produced by the interpreter, essentially
+# a pointer to some data coupled with type information.
+# Based on the type we know how to interprter the data in `pointer`.
 struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
@@ -7,6 +10,8 @@ struct Crystal::Repl::Value
   def initialize(@context : Context, @pointer : Pointer(UInt8), @type : Type)
   end
 
+  # This is a fail-safe way of getting a Crystal value for well-known
+  # types like ints, floats, chars, tuples, classes and pointers.
   def value
     type = @type
     case type
@@ -58,10 +63,14 @@ struct Crystal::Repl::Value
     end
   end
 
+  # Copies the contents of this value to another pointer.
   def copy_to(pointer : Pointer(UInt8))
     @pointer.copy_to(pointer, @context.inner_sizeof_type(@type))
   end
 
+  # Appends the string representation of this value to the given *io*.
+  # This is done by interpreting a call to `inspect` (not `to_s`)
+  # on this value.
   def to_s(io : IO)
     decl = UninitializedVar.new(
       Var.new("x"),
@@ -96,6 +105,8 @@ struct Crystal::Repl::Value
     end
   end
 
+  # A way to compute a string representation of a value for _some_
+  # types, if computing `inspect` fails for some reason.
   def fallback_to_s(io : IO)
     type = @type
     case type

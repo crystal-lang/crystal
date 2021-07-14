@@ -1,5 +1,42 @@
 require "./repl"
 
+# Non-interprted Crystal does multidispatch by essentially
+# inlining `is_a?` calls and performing the appropriate casting
+# and calling.
+#
+# For the interpreter this is a bit hard to do because it's a stack-based VM,
+# so it's hard to get access to stack values that are not at the top
+# of the stack.
+#
+# So, for interprted mode, when there's a dispatch, we actually create
+# a method that will do the dispatch, and we call that method.
+# For example, if we have this code:
+#
+# ```
+# def foo(x : Int32)
+# end
+#
+# def foo(x : Char)
+# end
+#
+# a = 1 || 'a'
+# foo(a)
+# ```
+#
+# The call to `foo` is actually delegated to another `foo` method
+# that will do the dispatch, created in this file:
+#
+# ```
+# def foo(x)
+#   if x.is_a?(Int32)
+#     foo(x)
+#   elsif x.is_a?(Char)
+#     foo(x)
+#   else
+#     unreachable
+#   end
+# end
+# ```
 module Crystal::Repl::Multidispatch
   def self.create_def(context : Context, node : Call, target_defs : Array(Def))
     if node.block

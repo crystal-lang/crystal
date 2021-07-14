@@ -2,6 +2,7 @@ require "./repl"
 require "../../../crystal/ffi"
 require "colorize"
 
+# The ones that understands Crystal bytecode.
 class Crystal::Repl::Interpreter
   record CallFrame,
     # The CompiledDef related to this call frame
@@ -39,16 +40,38 @@ class Crystal::Repl::Interpreter
     real_frame_index : Int32
 
   getter context : Context
-  getter? pry : Bool
+
+  # Are we in pry mode?
+  getter? pry : Bool = false
+
+  # What's the last node we went over pry? This is useful to know
+  # because when doing `next` or `step` we want to stop at a node
+  # that has a different file/line number than this node
   @pry_node : ASTNode?
+
+  # What's the maximum call stack frame index we want to stop at
+  # when doing `next`, `step` or `finish`:
+  # - when doing `next`, we want to continue in the same frame, or
+  #   the one above us (we don't want to go deeper)
+  # - when doing `step`, there's no maximum frame
+  # - when doing `finish`, we'd like to exit the current frame
   @pry_max_target_frame : Int32?
 
+  # The set of local variables for interpreting code.
   getter local_vars : LocalVars
+
+  # Memory for the stack.
   getter stack : Pointer(UInt8)
+
+  # The point of the stack we were at right before doing a C call.
+  # If there's a C callback that is called because of this C call
+  # we'd like to continue using the stack at this point.
   getter stack_top : Pointer(UInt8)
 
-  property decompile = true
+  # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
+
+  property decompile = true
 
   def initialize(@context : Context, meta_vars : MetaVars? = nil)
     @local_vars = LocalVars.new(@context)
@@ -65,9 +88,6 @@ class Crystal::Repl::Interpreter
     @block_level = 0
 
     @compiled_def = nil
-    @pry = false
-    @pry_node = nil
-    @pry_max_target_frame = nil
   end
 
   def initialize(interpreter : Interpreter, compiled_def : CompiledDef, stack : Pointer(UInt8), @block_level : Int32)
@@ -84,17 +104,19 @@ class Crystal::Repl::Interpreter
     @call_stack = [] of CallFrame
 
     @compiled_def = compiled_def
-    @pry = false
-    @pry_node = nil
-    @pry_max_target_frame = nil
   end
 
+  # compiles the given code to bytecode, then interprets it by assuming the local variables
+  # are defined in `meta_vars`.
   def interpret(node : ASTNode, meta_vars : MetaVars) : Value
     compiled_def = @compiled_def
 
     # Declare local variables
 
     # Don't declare local variables again if we are in the middle of pry
+    # TODO: this needs to be cleaned up. Local variables should always be
+    # declared, but migrating local variables should only be done for
+    # variables that aren't already declared duing a pry session.
     unless compiled_def
       migrate_local_vars(@local_vars, meta_vars)
 
@@ -129,7 +151,7 @@ class Crystal::Repl::Interpreter
     @instructions = compiler.instructions
     @nodes = compiler.nodes
 
-    if @decompile && @context.decompile
+    if @context.decompile
       if compiled_def
         puts "=== #{compiled_def.owner}##{compiled_def.def.name} ==="
       else
@@ -155,20 +177,32 @@ class Crystal::Repl::Interpreter
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
+    # The stack is used like this:
+    #
+    # [.........., ...........]
+    # ^----------^ ^----------^
+    #  local vars   other data
+    #
+    # That is, there's a space right at the beginning where local variables
+    # are stored (local variables live in the stack.)
+
+    # This is the true beginning fo the stack, and a reference to where local
+    # variables for the current call frame begin.
     stack_bottom = @stack
 
-    # Shift stack to leave ream for local vars
+    # Shift stack to leave roomm for local vars.
     # Previous runs that wrote to local vars would have those values
-    # written to @stack alreay
+    # written to @stack alreay (or property migrated thanks to `migrate_local_vars`)
     stack_bottom_after_local_vars = stack_bottom + @local_vars.max_bytesize
     stack = stack_bottom_after_local_vars
 
-    # Reserve space for constants
+    # Reserve space for constants (there might be new constants now)
     @context.constants_memory = @context.constants_memory.realloc(@context.constants.bytesize)
 
-    # Reserve space for class vars
+    # Reserve space for class vars (there might be new class vars now)
     @context.class_vars_memory = @context.class_vars_memory.realloc(@context.class_vars.bytesize)
 
+    # Class variables that don't have an initializer are trivially initialized (with `nil`)
     @context.class_vars.each_initialized_index do |index|
       @context.class_vars_memory[index] = 1_u8
     end
@@ -187,6 +221,7 @@ class Crystal::Repl::Interpreter
       a_def.vars = program.vars
     end
 
+    # Push an initial call frame
     @call_stack << CallFrame.new(
       compiled_def: CompiledDef.new(
         context: @context,
@@ -229,8 +264,12 @@ class Crystal::Repl::Interpreter
         end
       end
 
+      # This is the main interpreter logic:
+      # 1. Read the next opcode
       op_code = next_instruction OpCode
 
+      # 2. Do something depending on the opcode.
+      #    The code for each opcode is defined in Crystal::Repl::Instructions
       {% begin %}
         case op_code
           {% for name, instruction in Crystal::Repl::Instructions %}
@@ -238,15 +277,18 @@ class Crystal::Repl::Interpreter
             {% pop_values = instruction[:pop_values] %}
 
             in .{{name.id}}?
+              # Read operands for this instruction
               {% for operand in operands %}
                 {{operand.var}} = next_instruction {{operand.type}}
               {% end %}
 
+              # Pop any values
               {% for pop_value, i in pop_values %}
                 {% pop = pop_values[pop_values.size - i - 1] %}
                 {{ pop.var }} = stack_pop({{pop.type}})
               {% end %}
 
+              # Execute the instruction and push the value to the stack, if needed
               {% if instruction[:push] %}
                 stack_push({{instruction[:code]}})
               {% else %}
@@ -346,6 +388,17 @@ class Crystal::Repl::Interpreter
       @local_vars
     end
   end
+
+  # All of these are helper functions called from the interpreter
+  # or from Crystal::Repl::Instructions.
+  #
+  # Most of these are macros because the stack, nodes, instructions, etc.
+  # are all local variables inside the interpreter loop.
+  #
+  # TODO: I'm not sure all of these need to be local variables.
+  # I think for example Ruby invokes a different function per opcode and
+  # passes some data to these functions, for example the stack pointer, etc.,
+  # not sure.
 
   private macro call(compiled_def,
                      block_caller_frame_index = -1)
@@ -726,6 +779,7 @@ class Crystal::Repl::Interpreter
     @context.type_from_id(id)
   end
 
+  # How many bytes the `type_id` portion of a union type occupy.
   private macro type_id_bytesize
     8
   end

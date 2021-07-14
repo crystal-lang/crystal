@@ -1,5 +1,10 @@
 require "./compiler"
 
+# Code to produce bytecode to interpter all the language primitives.
+# It's usually the case that every primitive needs an opcode,
+# and some regular crystal functions are also done as primitives
+# (for example `caller`, or doing a fiber context switch.)
+
 class Crystal::Repl::Compiler
   private def visit_primitive(node, body)
     obj = node.obj
@@ -932,6 +937,9 @@ class Crystal::Repl::Compiler
   end
 
   private def extend_int(left_type : IntegerType, right_type : IntegerType, left_node : ASTNode?, right_node : ASTNode, node : ASTNode)
+    # We don't do operations "below" Int32, we always cast the values
+    # to at least Int32. This might be slightly slower, but it allows
+    # us to need less opcodes in the bytecode.
     if left_type.rank <= 5 && right_type.rank <= 5
       # If both fit in an Int32
       # Convert them to Int32 first, then do the comparison

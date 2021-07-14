@@ -1,9 +1,38 @@
 require "./repl"
 
+# Gathers known local varialbes during a pry session.
+# For example, if we have code like this:
+#
+# ```
+# a = 1
+#
+# foo do |x|
+#   b = 2
+#   debugger
+#
+#   c = 3
+# end
+#
+# d = 4
+# ```
+#
+# When semantic analysis runs for the entire code, there will
+# be local variables for a, b, c, d and x. However, at the
+# point of `debugger` only a, b and x have a real, usable value
+# (c and d will still be in the stack memory, but have garbage
+# values.)
+#
+# This class is responsible for figuring out which local variables
+# can be accessed when a `debugger` call is issued: essentially,
+# any variable that is assigned or created before the `debugger` call.
 class Crystal::Repl::LocalVarsGatherer < Crystal::Visitor
   @block : Block?
 
+  # The meta vars that can be accessed at the location given
+  # in the `initialize` method.
   getter meta_vars : MetaVars
+
+  # What's the block level the `debugger` is currently in.
   getter block_level : Int32
 
   def initialize(@location : Location, @def : Def)
