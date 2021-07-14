@@ -31,6 +31,7 @@
   - Refactor: Move win32 libc bindings from `winbase.cr` to approriate files. ([#10771](https://github.com/crystal-lang/crystal/pull/10771), thanks @straight-shoota)
   - Refactor: Change protocol socket fd to `Socket::Handle`. ([#10772](https://github.com/crystal-lang/crystal/pull/10772), thanks @straight-shoota)
   - Fix `Socket::Connect` error in addrinfo inherit `os_error`. ([#10782](https://github.com/crystal-lang/crystal/pull/10782), thanks @straight-shoota)
+  - Reorganize some win32 libc bindings ([#10776](https://github.com/crystal-lang/crystal/pull/10776), thanks @straight-shoota)
 
 #### Type annotations
 
@@ -102,6 +103,7 @@
 - Fix and unify documentation for `puts`. ([#10614](https://github.com/crystal-lang/crystal/pull/10614), thanks @straight-shoota)
 - Fix `Path#sibling` return type. ([#10655](https://github.com/crystal-lang/crystal/pull/10655), thanks @Sija)
 - Add `Path` in `FileUtils`'s methods to match the interfaces it's wrapping. ([#10747](https://github.com/crystal-lang/crystal/pull/10747), thanks @yb66)
+- Fix `FileDescriptor#pos` return `Int64` on armv6 ([#10845](https://github.com/crystal-lang/crystal/pull/10845), thanks @straight-shoota)
 
 ### Fibers
 
@@ -118,6 +120,7 @@
 - **(performance)** Cache `socket.local_address` and `socket.remote_address`. ([#10765](https://github.com/crystal-lang/crystal/pull/10765), thanks @lbguilherme)
 - Fix: `IO::ARGF#read` should always return `i32`. ([#10828](https://github.com/crystal-lang/crystal/pull/10828), thanks @stakach)
 - Fix `HTTP::Cookie` parse quoted cookie value. ([#10853](https://github.com/crystal-lang/crystal/pull/10853), thanks @straight-shoota)
+- Add `Socket::Addrinfo#inspect` ([#10775](https://github.com/crystal-lang/crystal/pull/10775), thanks @straight-shoota)
 
 ### System
 
@@ -153,7 +156,7 @@
 - Fix variance checks between generic instances for `Proc#call` and abstract defs. ([#10507](https://github.com/crystal-lang/crystal/pull/10507), [#10899](https://github.com/crystal-lang/crystal/pull/10899), thanks @HertzDevil)
 - Fix error message when default parameter value doesn't match non-type restriction. ([#10515](https://github.com/crystal-lang/crystal/pull/10515), thanks @HertzDevil)
 - Fix type restriction logic for generic module instances. ([#10519](https://github.com/crystal-lang/crystal/pull/10519), thanks @HertzDevil)
-- Fix logic for subclass restricted against uninstantiated nested generic superclass. ([#10522](https://github.com/crystal-lang/crystal/pull/10522), thanks @HertzDevil)
+- Fix logic for subclass restricted against uninstantiated nested generic superclass. ([#10522](https://github.com/crystal-lang/crystal/pull/10522), [#10560](https://github.com/crystal-lang/crystal/pull/10560), thanks @HertzDevil)
 - Fix: eliminate extraneous types in certain non-commutative unions. ([#10527](https://github.com/crystal-lang/crystal/pull/10527), thanks @HertzDevil)
 - Fix: exclude variables' final types inside `while true` if re-assigned before first break. ([#10538](https://github.com/crystal-lang/crystal/pull/10538), thanks @HertzDevil)
 - Make `Pointer(T)#value=` even stricter for generic arguments. ([#10553](https://github.com/crystal-lang/crystal/pull/10553), thanks @HertzDevil)
@@ -178,6 +181,8 @@
 - Be more strict about printing operator calls as short forms. ([#10825](https://github.com/crystal-lang/crystal/pull/10825), thanks @HertzDevil)
 - Fix union logic between metaclasses of uninstantiated generic classes in same hierarchy. ([#10832](https://github.com/crystal-lang/crystal/pull/10832), thanks @HertzDevil)
 - Fix uninstantiated generic classes casting to themselves. ([#10883](https://github.com/crystal-lang/crystal/pull/10883), thanks @HertzDevil)
+- Allow underscore in block return type even if the type can't be computed ([#10933](https://github.com/crystal-lang/crystal/pull/10933), thanks @asterite)
+- Fix parser identifies call with named args as var ([#10842](https://github.com/crystal-lang/crystal/pull/10842), thanks @straight-shoota)
 
 ## Tools
 
@@ -212,6 +217,7 @@
 - Remove broken travis.yml config from `crystal init`. ([#10800](https://github.com/crystal-lang/crystal/pull/10800), thanks @straight-shoota)
 - Disable broken `test_darwin` job on circleci. ([#10823](https://github.com/crystal-lang/crystal/pull/10823), thanks @straight-shoota)
 - Update distribution-scripts for shards 0.15.0. ([#10862](https://github.com/crystal-lang/crystal/pull/10862), thanks @straight-shoota)
+- Add smoke tests for platforms where we don't run full tests ([#10848](https://github.com/crystal-lang/crystal/pull/10848), thanks @straight-shoota)
 
 # 1.0.0 (2021-03-22)
 
