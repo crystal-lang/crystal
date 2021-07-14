@@ -9,30 +9,13 @@ class Crystal::Command
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal repl [options] [files]\n\nOptions:"
 
-      opts.on("-d", "--decompile", "Show decompilation") do
-        decompile = true
-      end
-
-      opts.on("-s", "--status", "Show time taken to execute") do
-        stats = true
-      end
-
-      opts.on("-t", "--trace", "Trace execution") do
-        trace = true
-      end
-
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit
       end
     end
 
-    repl = Repl.new(
-      decompile: decompile,
-      decompile_defs: false,
-      trace: trace,
-      stats: stats,
-    )
+    repl = Repl.new
 
     if options.empty?
       repl.run

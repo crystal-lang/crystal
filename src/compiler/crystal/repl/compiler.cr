@@ -605,11 +605,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler = Compiler.new(@context, compiled_def, top_level: true)
       compiler.compile(value)
 
-      if @context.decompile_defs
+      {% if Debug::DECOMPILE %}
         puts "=== #{def_name} ==="
         puts Disassembler.disassemble(@context, compiled_def)
         puts "=== #{def_name} ==="
-      end
+      {% end %}
     end
 
     index = @context.declare_class_var(var.owner, var.name, var.type, compiled_def)
@@ -891,11 +891,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     compiler = Compiler.new(@context, compiled_def, top_level: true)
     compiler.compile(value)
 
-    if @context.decompile_defs
+    {% if Debug::DECOMPILE %}
       puts "=== #{const} ==="
       puts Disassembler.disassemble(@context, compiled_def)
       puts "=== #{const} ==="
-    end
+    {% end %}
 
     {@context.declare_const(const, compiled_def), compiled_def}
   end
@@ -1351,12 +1351,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "compiling #{node}", inner: ex
     end
 
-    if @context.decompile_defs
+    {% if Debug::DECOMPILE %}
       puts "=== #{target_def.owner}##{target_def.name} ==="
       puts compiled_def.local_vars
       puts Disassembler.disassemble(@context, compiled_def)
       puts "=== #{target_def.owner}##{target_def.name} ==="
-    end
+    {% end %}
 
     compiled_def
   end
@@ -1397,11 +1397,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiler.block_level = block_level + 1
       compiler.compile_block(block, target_def)
 
-      if @context.decompile_defs
+      {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
         puts Disassembler.disassemble(@context, compiled_block.instructions, compiled_block.nodes, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
-      end
+      {% end %}
     ensure
       @local_vars.pop_block
     end
@@ -1708,11 +1708,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "compiling #{node}", inner: ex
     end
 
-    if @context.decompile_defs
+    {% if Debug::DECOMPILE %}
       puts "=== ProcLiteral ==="
       puts Disassembler.disassemble(@context, compiled_def)
       puts "=== ProcLiteral ==="
-    end
+    {% end %}
 
     # 3. Push compiled_def id to stack
     put_i64 compiled_def.object_id.to_i64!, node: node
@@ -1962,11 +1962,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     @context.add_gc_reference(compiled_def)
 
-    if @context.decompile_defs
+    {% if Debug::DECOMPILE %}
       puts "=== #{node.filename} ==="
       puts Disassembler.disassemble(@context, compiled_def)
       puts "=== #{node.filename} ==="
-    end
+    {% end %}
 
     call compiled_def, node: node
   end

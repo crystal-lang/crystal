@@ -1,13 +1,9 @@
 require "../../../crystal/readline"
 
 class Crystal::Repl
-  def initialize(decompile : Bool, decompile_defs : Bool, trace : Bool, stats : Bool)
+  def initialize
     @program = Program.new
-    @context = Context.new(@program,
-      decompile: decompile,
-      decompile_defs: decompile_defs,
-      trace: trace,
-      stats: stats)
+    @context = Context.new(@program)
     @nest = 0
     @incomplete = false
     @line_number = 1

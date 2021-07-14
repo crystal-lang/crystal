@@ -151,7 +151,7 @@ class Crystal::Repl::Interpreter
     @instructions = compiler.instructions
     @nodes = compiler.nodes
 
-    if @context.decompile
+    {% if Debug::DECOMPILE %}
       if compiled_def
         puts "=== #{compiled_def.owner}##{compiled_def.def.name} ==="
       else
@@ -165,15 +165,9 @@ class Crystal::Repl::Interpreter
       else
         puts "=== top-level ==="
       end
-    end
+    {% end %}
 
-    time = Time.monotonic
-    value = interpret(node, node.type)
-    if @context.stats
-      puts "Elapsed: #{Time.monotonic - time}"
-    end
-
-    value
+    interpret(node, node.type)
   end
 
   private def interpret(node : ASTNode, node_type : Type) : Value
@@ -242,7 +236,7 @@ class Crystal::Repl::Interpreter
     )
 
     while true
-      if @context.trace
+      {% if Debug::TRACE %}
         puts
 
         call_frame = @call_stack.last
@@ -255,7 +249,7 @@ class Crystal::Repl::Interpreter
 
         Disassembler.disassemble_one(@context, instructions, offset, nodes, current_local_vars, STDOUT)
         puts
-      end
+      {% end %}
 
       if @pry
         pry_max_target_frame = @pry_max_target_frame
@@ -298,9 +292,9 @@ class Crystal::Repl::Interpreter
         end
       {% end %}
 
-      if @context.trace
+      {% if Debug::TRACE %}
         puts Slice.new(@stack, stack - @stack).hexdump
-      end
+      {% end %}
     end
 
     if stack != stack_bottom_after_local_vars

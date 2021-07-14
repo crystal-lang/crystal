@@ -38,12 +38,7 @@ class Crystal::Repl::Context
   # The memory where class vars are stored. Refer to `ClassVars` for more on this.
   property class_vars_memory : Pointer(UInt8)
 
-  # Some tracing/stats options. These should be eventually removed
-  # (they slow down the interpreter a lot!) and be replaced with
-  # compile-time checks.
-  getter decompile, decompile_defs, trace, stats
-
-  def initialize(@program : Program, @decompile : Bool, @decompile_defs : Bool, @trace : Bool, @stats : Bool)
+  def initialize(@program : Program)
     @program.flags << "interpreted"
 
     @gc_references = [] of Void*
@@ -142,11 +137,11 @@ class Crystal::Repl::Context
         compiler = Compiler.new(self, compiled_def, top_level: false)
         compiler.compile_def(a_def)
 
-        if @decompile_defs
+        {% if Debug::DECOMPILE %}
           puts "=== #{a_def.name} ==="
           puts Disassembler.disassemble(self, compiled_def)
           puts "=== #{a_def.name} ==="
-        end
+        {% end %}
 
         compiled_def
       end

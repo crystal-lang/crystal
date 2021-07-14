@@ -3602,8 +3602,7 @@ end
 
 private def interpret_full(existing_code, string, *, prelude = "primitives")
   program = Crystal::Program.new
-  context = Crystal::Repl::Context.new(program, decompile: false, decompile_defs: false, trace: false, stats: false)
-  # context = Crystal::Repl::Context.new(program, decompile: true, decompile_defs: true, trace: true, stats: false)
+  context = Crystal::Repl::Context.new(program)
 
   node = Crystal::Parser.parse(string)
   node = program.normalize(node, inside_exp: false)
