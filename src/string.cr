@@ -817,7 +817,7 @@ class String
   # s[-2..-4] # => ""
   # s[-2..1]  # => ""
   # s[3..-4]  # => ""
-  # ``` : String
+  # ```
   def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
@@ -5010,7 +5010,7 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte(name = nil) : String
+  def check_no_null_byte(name = nil) : self
     if byte_index(0)
       name = "`#{name}` " if name
       raise ArgumentError.new("String #{name}contains null byte")

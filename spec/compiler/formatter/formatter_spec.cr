@@ -1314,6 +1314,12 @@ describe Crystal::Formatter do
   assert_format "x =  <<-EOF\n 1\nEOF", "x = <<-EOF\n 1\nEOF"
   assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
 
+  # #10735
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n  foo => true,\n}"
+  assert_format "{\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}", "{\n  query => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "begin\n  query = <<-HEREDOC\n    foo\n  HEREDOC\nend"
+
   assert_format "begin 0[1] rescue 2 end"
   assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
 
