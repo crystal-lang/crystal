@@ -499,7 +499,7 @@ struct NamedTuple
   def to_a
     ary = Array({Symbol, typeof(first_value_internal)}).new(size)
     each do |key, value|
-      ary << {key.as(Symbol), value.as(typeof(first_value_internal))}
+      ary << {key, value}
     end
     ary
   end
