@@ -19,6 +19,15 @@ describe Number do
       123.format.should eq "123"
       1234.format.should eq "1,234"
 
+      1.format(decimal_places: 1).should eq "1.0"
+      1.format(decimal_places: 1, only_significant: true).should eq "1.0"
+
+      0.format(decimal_places: 1).should eq "0.0"
+      0.format(decimal_places: 1, only_significant: true).should eq "0.0"
+
+      0.0.format(decimal_places: 1).should eq "0.0"
+      0.0.format(decimal_places: 1, only_significant: true).should eq "0.0"
+
       123.45.format.should eq "123.45"
       123.45.format(separator: ',').should eq "123,45"
       123.45.format(decimal_places: 3).should eq "123.450"

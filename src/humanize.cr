@@ -36,7 +36,7 @@ struct Number
         return
       end
 
-      if decimal_places
+      if decimal_places && decimal_places >= 0
         string = "%.*f" % {decimal_places, number.abs}
       else
         string = String.build do |io|
@@ -70,7 +70,12 @@ struct Number
     if decimal_places > 0
       io << separator
       if only_significant
-        io << decimals.rstrip('0')
+        decimals = decimals.rstrip('0')
+        if decimals.empty?
+          io << '0'
+        else
+          io << decimals
+        end
       else
         io << decimals
         (decimal_places - dec_size).times do
