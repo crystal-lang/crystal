@@ -123,6 +123,7 @@ class Crystal::CodeGenVisitor
       new_func = in_main do
         define_main_function(init_function_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
           emit_fun_debug_metadata(func, init_function_name, node.location) unless @debug.none?
+          set_current_debug_location node if @debug.line_numbers?
 
           with_cloned_context do
             # "self" in a constant is the class_var owner
@@ -131,7 +132,6 @@ class Crystal::CodeGenVisitor
             # Start with fresh variables
             context.vars = LLVMVars.new
 
-            set_current_debug_location node if @debug.line_numbers?
             alloca_vars initializer.meta_vars
 
             request_value do
@@ -317,6 +317,10 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(class_var.type).pointer) do |func|
+        location = initializer.node.location
+        emit_fun_debug_metadata(func, fun_name, location) unless @debug.none?
+        set_current_debug_location(location) if @debug.line_numbers?
+
         init_func = check_main_fun init_func.name, init_func
         ret lazy_initialize_class_var(initializer.node, init_func, global, initialized_flag)
       end

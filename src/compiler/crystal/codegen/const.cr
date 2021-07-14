@@ -146,7 +146,9 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
-        emit_fun_debug_metadata(func, fun_name, const.locations.try &.first?) unless @debug.none?
+        location = const.locations.try &.first?
+        emit_fun_debug_metadata(func, fun_name, location) unless @debug.none?
+        set_current_debug_location(location) if @debug.line_numbers?
 
         with_cloned_context do
           # "self" in a constant is the constant's namespace
@@ -155,7 +157,6 @@ class Crystal::CodeGenVisitor
           # Start with fresh variables
           context.vars = LLVMVars.new
 
-          set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
           alloca_vars const.fake_def.try(&.vars), const.fake_def
 
           request_value do
@@ -231,6 +232,10 @@ class Crystal::CodeGenVisitor
   def create_read_const_function(fun_name, const)
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_type(const.value.type).pointer) do |func|
+        location = const.locations.try &.first?
+        emit_fun_debug_metadata(func, fun_name, location) unless @debug.none?
+        set_current_debug_location(location) if @debug.line_numbers?
+
         global = initialize_const(const)
         ret global
       end
