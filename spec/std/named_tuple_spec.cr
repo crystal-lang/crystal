@@ -148,7 +148,7 @@ describe "NamedTuple" do
     typeof(val).should eq(Int32 | Char | Nil)
   end
 
-  describe "dig?" do
+  describe "#dig?" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b"}}
 
@@ -165,7 +165,7 @@ describe "NamedTuple" do
     end
   end
 
-  describe "dig" do
+  describe "#dig" do
     it "gets the value at given path given splat" do
       h = {a: {b: {c: [10, 20]}}, x: {a: "b", c: nil}}
 
@@ -290,7 +290,7 @@ describe "NamedTuple" do
     NamedTuple.new.empty?.should be_true
   end
 
-  describe "to_a" do
+  describe "#to_a" do
     it "creates an array of key-value pairs" do
       tup = {a: 1, b: 'a'}
       tup.to_a.should eq([{:a, 1}, {:b, 'a'}])
@@ -336,7 +336,7 @@ describe "NamedTuple" do
     u.should_not eq(v)
   end
 
-  describe "to_h" do
+  describe "#to_h" do
     it "creates a hash" do
       tup1 = {a: 1, b: "hello"}
       hash = tup1.to_h
