@@ -33,6 +33,8 @@ require "./thread_linked_list"
   require "./unix/pthread_condition_variable"
 {% elsif flag?(:win32) %}
   require "./win32/thread"
+{% elsif flag?(:wasm32) %}
+  require "./wasm/thread"
 {% else %}
   {% raise "thread not supported" %}
 {% end %}

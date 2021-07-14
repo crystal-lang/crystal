@@ -1,5 +1,3 @@
-{% skip_file unless flag?(:wasm32) %}
-
 require "c/unistd"
 
 lib LibC

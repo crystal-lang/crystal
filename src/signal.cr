@@ -191,7 +191,7 @@ module Crystal::Signal
 
   alias Handler = ::Signal ->
 
-  @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
+  private class_getter(pipe) { IO.pipe(read_blocking: false, write_blocking: true) }
   @@handlers = {} of ::Signal => Handler
   @@child_handler : Handler?
   @@mutex = Mutex.new(:unchecked)
@@ -267,7 +267,7 @@ module Crystal::Signal
   # Replaces the signal pipe so the child process won't share the file
   # descriptors of the parent process and send it received signals.
   def self.after_fork
-    @@pipe.each(&.file_descriptor_close)
+    pipe.each(&.file_descriptor_close)
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
@@ -290,16 +290,16 @@ module Crystal::Signal
     end
   ensure
     {% unless flag?(:preview_mt) %}
-      @@pipe.each(&.file_descriptor_close)
+      pipe.each(&.file_descriptor_close)
     {% end %}
   end
 
   private def self.reader
-    @@pipe[0]
+    pipe[0]
   end
 
   private def self.writer
-    @@pipe[1]
+    pipe[1]
   end
 
   private def self.fatal(message : String)

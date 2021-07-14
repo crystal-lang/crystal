@@ -40,12 +40,7 @@ class Thread
   # the process (that already exists).
   def initialize
     @func = ->{}
-    @th =
-      {% if flag?(:wasm32) %}
-        Pointer(Void).null.as(LibC::PthreadT)
-      {% else %}
-        LibC.pthread_self
-      {% end %}
+    @th = LibC.pthread_self
     @main_fiber = Fiber.new(stack_address, self)
 
     Thread.threads.push(self)

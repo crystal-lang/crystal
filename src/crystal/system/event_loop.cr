@@ -29,7 +29,7 @@ struct Crystal::Event
 end
 
 {% if flag?(:wasm32) %}
-  require "./unix/event_loop_libevent_wasm32"
+  require "./wasm/event_loop"
 {% elsif flag?(:unix) %}
   require "./unix/event_loop_libevent"
 {% elsif flag?(:win32) %}

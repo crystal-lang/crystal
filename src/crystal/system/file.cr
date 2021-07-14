@@ -49,7 +49,7 @@ module Crystal::System::File
   # def file_descriptor_close
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:unix) || flag?(:wasm32) %}
   require "./unix/file"
 {% elsif flag?(:win32) %}
   require "./win32/file"

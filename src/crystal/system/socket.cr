@@ -76,7 +76,7 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count=(val : Int)
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:unix) || flag?(:wasm32) %}
   require "./unix/socket"
 {% else %}
   {% raise "No Crystal::System::Socket implementation available" %}

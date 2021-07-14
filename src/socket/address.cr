@@ -242,7 +242,7 @@ class Socket
     private def ipv6_addr8(addr : LibC::In6Addr)
       {% if flag?(:darwin) || flag?(:bsd) %}
         addr.__u6_addr.__u6_addr8
-      {% elsif flag?(:linux) && flag?(:musl) %}
+      {% elsif flag?(:wasm32) || flag?(:linux) && flag?(:musl) %}
         addr.__in6_union.__s6_addr
       {% elsif flag?(:linux) %}
         addr.__in6_u.__u6_addr8

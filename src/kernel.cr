@@ -502,7 +502,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% unless flag?(:preview_mt) %}
+{% unless flag?(:preview_mt) || flag?(:wasm32) %}
   class Process
     # :nodoc:
     #

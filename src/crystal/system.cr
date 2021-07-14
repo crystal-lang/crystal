@@ -19,6 +19,9 @@ end
 {% elsif flag?(:win32) %}
   require "./system/win32/hostname"
   require "./system/win32/cpucount"
+{% elsif flag?(:wasm32) %}
+  require "./system/wasm/hostname"
+  require "./system/wasm/cpucount"
 {% else %}
   {% raise "No Crystal::System implementation available" %}
 {% end %}

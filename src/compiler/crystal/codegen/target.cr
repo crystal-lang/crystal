@@ -105,7 +105,7 @@ class Crystal::Codegen::Target
   end
 
   def unix?
-    macos? || bsd? || linux? || wasm?
+    macos? || bsd? || linux?
   end
 
   def gnu?

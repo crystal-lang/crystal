@@ -70,7 +70,7 @@ require "range"
 require "reference"
 require "regex"
 require "set"
-{% unless flag?(:win32) || flag?(:wasm32) %}
+{% unless flag?(:win32) %}
   require "signal"
 {% end %}
 require "slice"

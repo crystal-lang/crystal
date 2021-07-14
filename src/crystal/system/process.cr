@@ -74,6 +74,8 @@ end
   require "./unix/process"
 {% elsif flag?(:win32) %}
   require "./win32/process"
+{% elsif flag?(:wasm32) %}
+  require "./wasm/process"
 {% else %}
   {% raise "No Crystal::System::Process implementation available" %}
 {% end %}
