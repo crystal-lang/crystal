@@ -25,6 +25,16 @@ struct Number
     end
 
     if number.is_a?(Float)
+      if number.infinite?
+        if number < 0
+          io << '-'
+        end
+        io << "Infinity"
+        return
+      elsif number.nan?
+        io << "NaN"
+        return
+      end
 
       if decimal_places
         string = "%.*f" % {decimal_places, number.abs}
