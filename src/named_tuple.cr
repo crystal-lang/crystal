@@ -497,11 +497,15 @@ struct NamedTuple
   #
   # NOTE: `to_a` on an empty named tuple produces an `Array(Tuple(Symbol, NoReturn))`
   def to_a
-    ary = Array({Symbol, typeof(first_value_internal)}).new(size)
-    each do |key, value|
-      ary << {key, value}
-    end
-    ary
+    {% if T.size == 0 %}
+      [] of {Symbol, NoReturn}
+    {% else %}
+      [
+        {% for key in T %}
+          { {{key.symbolize}}, self[{{key.symbolize}}] },
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a `Hash` with the keys and values in this named tuple.
