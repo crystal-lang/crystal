@@ -586,7 +586,7 @@ struct NamedTuple
     {% end %}
   end
 
-  private def first_key_internal : Symbol
+  private def first_key_internal
     i = 0
     keys[i]
   end
