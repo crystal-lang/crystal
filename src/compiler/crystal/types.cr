@@ -3152,6 +3152,9 @@ module Crystal
     property? used = false
     property? visited = false
 
+    # Was this const's value cleaned up by CleanupTransformer yet?
+    property? cleaned_up = false
+
     # Is this constant accessed with pointerof(...)?
     property? pointer_read = false
 
