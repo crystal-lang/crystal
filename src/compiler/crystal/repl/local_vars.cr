@@ -100,13 +100,6 @@ class Crystal::Repl::LocalVars
     @name_to_index[Key.new(name, block_level)]?
   end
 
-  # def index_to_name(index : Int32) : String
-  #   @name_to_index.each do |name, i|
-  #     return name if i == index
-  #   end
-  #   raise KeyError.new
-  # end
-
   def type(name : String, block_level : Int32) : Type
     @types[Key.new(name, block_level)]
   end
@@ -114,12 +107,6 @@ class Crystal::Repl::LocalVars
   def type?(name : String, block_level : Int32) : Type?
     @types[Key.new(name, block_level)]?
   end
-
-  # def each_name_and_type
-  #   @types.each do |name, type|
-  #     yield name, type
-  #   end
-  # end
 
   def to_s(io : IO) : Nil
     return if @max_bytesize == 0
