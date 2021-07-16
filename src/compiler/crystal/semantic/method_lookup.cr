@@ -120,6 +120,7 @@ module Crystal
           # type lookup for arguments.
           macro_owner = item.def.macro_owner?
           context.defining_type = macro_owner if macro_owner
+          context.self_restriction_type = item.def.self_restriction_type
           context.def_free_vars = item.def.free_vars
           context.free_vars.try &.clear
 
@@ -143,6 +144,7 @@ module Crystal
             context = MatchContext.new(owner, path_lookup)
           else
             context.defining_type = path_lookup if macro_owner
+            context.self_restriction_type = nil
             context.def_free_vars = nil
             context.free_vars.try &.clear
           end
@@ -444,6 +446,13 @@ module Crystal
 
           base_type_matches.each do |base_type_match|
             if base_type_match.def.macro_def?
+              # We need to force any `self` restrictions in the base type match
+              # to refer to that base type, instead of whichever subtype is
+              # currently used to evaluate the copied def. We must do this even
+              # before any def is actually copied.
+              old_self = base_type_match.def.self_restriction_type
+              base_type_match.def.self_restriction_type = base_type
+
               # We need to copy each submatch if it's a macro def
               full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup, analyze_all: analyze_all)
               full_subtype_matches.each do |full_subtype_match|
@@ -468,6 +477,9 @@ module Crystal
                 new_subtype_matches ||= [] of Match
                 new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
               end
+
+              # Reset the `self` restriction override
+              base_type_match.def.self_restriction_type = old_self
             end
           end
 
