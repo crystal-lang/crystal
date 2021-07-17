@@ -206,4 +206,19 @@ describe "Code gen: debug" do
       Foo.x
       ), debug: Crystal::Debug::All)
   end
+
+  it "stores and restores debug location after jumping to main (3)" do
+    codegen(%(
+      def raise(exception)
+        x = uninitialized NoReturn
+        x
+      end
+
+      lib LibFoo
+        $foo : ->
+      end
+
+      LibFoo.foo = ->{ }
+      ), debug: Crystal::Debug::All)
+  end
 end
