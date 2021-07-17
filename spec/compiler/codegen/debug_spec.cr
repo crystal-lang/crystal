@@ -171,6 +171,12 @@ describe "Code gen: debug" do
       ), debug: Crystal::Debug::All)
   end
 
+  it "doesn't emit debug info for unused variable declarations (#9882)" do
+    codegen(%(
+      x : Int32
+      ), debug: Crystal::Debug::All)
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(%(
       require "prelude"
