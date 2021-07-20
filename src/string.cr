@@ -3035,7 +3035,7 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
