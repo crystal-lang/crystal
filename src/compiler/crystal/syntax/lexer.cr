@@ -1636,7 +1636,7 @@ module Crystal
 
         check_value_fits_in_uint64 string_value, num_size, start
       when :i128
-        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: UInt128
+        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: Int128
       when :u128
         if negative
           raise "Invalid negative value #{string_value} for UInt128"
