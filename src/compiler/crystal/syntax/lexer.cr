@@ -1578,9 +1578,9 @@ module Crystal
     macro gen_check_int_fits_in_size(type, method, size, *, actual_type = nil)
       if num_size >= 20
         {% if actual_type.nil? %}
-        raise_value_doesnt_fit_in "{{type}}", string_value, start
+          raise_value_doesnt_fit_in "{{type}}", string_value, start
         {% else %}
-        raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
         {% end %}
       end
       if num_size >= {{size}}
@@ -1590,9 +1590,9 @@ module Crystal
 
         if int_value > max
           {% if actual_type.nil? %}
-          raise_value_doesnt_fit_in "{{type}}", string_value, start
+            raise_value_doesnt_fit_in "{{type}}", string_value, start
           {% else %}
-          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+            raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
           {% end %}
         end
       end
