@@ -1627,8 +1627,10 @@ module Crystal
         end
 
         check_value_fits_in_uint64 string_value, num_size, start
-      else
-        # TODO: handle i128 and u128
+      when :u128
+        if negative
+          raise "Invalid negative value #{string_value} for UInt128"
+        end
       end
     end
 
