@@ -1,4 +1,7 @@
 require "./spec_helper"
+{% unless flag?(:win32) %}
+  require "big"
+{% end %}
 
 describe "::sprintf" do
   it "works" do
@@ -8,76 +11,330 @@ describe "::sprintf" do
     sprintf("foo %d bar %s baz %d goo", [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
   end
 
+  it "doesn't format %%" do
+    sprintf("%%%d", 1).should eq("%1")
+    sprintf("%%*%%", [1, 2, 3]).should eq("%*%")
+  end
+
   context "integers" do
-    it "works" do
-      sprintf("foo %d", 1).should eq("foo 1")
-      sprintf("%d", 123).should eq("123")
-      sprintf("%+d", 123).should eq("+123")
-      sprintf("%+d", -123).should eq("-123")
-      sprintf("% d", 123).should eq(" 123")
-      sprintf("%i", 123).should eq("123")
-      sprintf("%+i", 123).should eq("+123")
-      sprintf("%+i", -123).should eq("-123")
-      sprintf("% i", 123).should eq(" 123")
-      sprintf("%20d", 123).should eq("                 123")
-      sprintf("%20d", -123).should eq("                -123")
-      sprintf("%20d", 0).should eq("                   0")
-      sprintf("%+20d", 123).should eq("                +123")
-      sprintf("%+20d", -123).should eq("                -123")
-      sprintf("%+20d", 0).should eq("                  +0")
-      sprintf("% 20d", 123).should eq("                 123")
-      sprintf("%020d", 123).should eq("00000000000000000123")
-      sprintf("%020d", -123).should eq("0000000000000000-123")
-      sprintf("%020d", 0).should eq("00000000000000000000")
-      sprintf("%+020d", 123).should eq("+0000000000000000123")
-      sprintf("%+020d", -123).should eq("-0000000000000000123")
-      sprintf("%+020d", 0).should eq("+0000000000000000000")
-      sprintf("% 020d", 123).should eq(" 0000000000000000123")
-      sprintf("% 020d", 0).should eq(" 0000000000000000000")
-      sprintf("%-d", 123).should eq("123")
-      sprintf("%-d", 0).should eq("0")
-      sprintf("%-20d", 123).should eq("123                 ")
-      sprintf("%-20d", -123).should eq("-123                ")
-      sprintf("%-20d", 0).should eq("0                   ")
-      sprintf("%-+20d", 123).should eq("+123                ")
-      sprintf("%-+20d", -123).should eq("-123                ")
-      sprintf("%-+20d", 0).should eq("+0                  ")
-      sprintf("%- 20d", 123).should eq(" 123                ")
-      sprintf("%- 20d", -123).should eq("-123                ")
-      sprintf("%- 20d", 0).should eq(" 0                  ")
+    context "base specifier" do
+      it "supports base 2" do
+        sprintf("%b", 123).should eq("1111011")
+        sprintf("%+b", 123).should eq("+1111011")
+        sprintf("% b", 123).should eq(" 1111011")
+        sprintf("%-b", 123).should eq("1111011")
+        sprintf("%10b", 123).should eq("   1111011")
+        sprintf("%-10b", 123).should eq("1111011   ")
+      end
 
-      sprintf("%%%d", 1).should eq("%1")
+      it "supports base 8" do
+        sprintf("%o", 123).should eq("173")
+        sprintf("%+o", 123).should eq("+173")
+        sprintf("% o", 123).should eq(" 173")
+        sprintf("%-o", 123).should eq("173")
+        sprintf("%6o", 123).should eq("   173")
+        sprintf("%-6o", 123).should eq("173   ")
+      end
 
-      sprintf("%b", 123).should eq("1111011")
-      sprintf("%+b", 123).should eq("+1111011")
-      sprintf("% b", 123).should eq(" 1111011")
-      sprintf("%-b", 123).should eq("1111011")
-      sprintf("%10b", 123).should eq("   1111011")
-      sprintf("%-10b", 123).should eq("1111011   ")
+      it "supports base 10" do
+        sprintf("%d", 123).should eq("123")
+        sprintf("%+d", 123).should eq("+123")
+        sprintf("% d", 123).should eq(" 123")
+        sprintf("%-d", 123).should eq("123")
+        sprintf("%6d", 123).should eq("   123")
+        sprintf("%-6d", 123).should eq("123   ")
 
-      sprintf("%o", 123).should eq("173")
-      sprintf("%+o", 123).should eq("+173")
-      sprintf("% o", 123).should eq(" 173")
-      sprintf("%-o", 123).should eq("173")
-      sprintf("%6o", 123).should eq("   173")
-      sprintf("%-6o", 123).should eq("173   ")
+        sprintf("%i", 123).should eq("123")
+        sprintf("%+i", 123).should eq("+123")
+        sprintf("% i", 123).should eq(" 123")
+        sprintf("%-i", 123).should eq("123")
+        sprintf("%6i", 123).should eq("   123")
+        sprintf("%-6i", 123).should eq("123   ")
+      end
 
-      sprintf("%x", 123).should eq("7b")
-      sprintf("%+x", 123).should eq("+7b")
-      sprintf("% x", 123).should eq(" 7b")
-      sprintf("%-x", 123).should eq("7b")
-      sprintf("%6x", 123).should eq("    7b")
-      sprintf("%-6x", 123).should eq("7b    ")
+      it "supports base 16" do
+        sprintf("%x", 123).should eq("7b")
+        sprintf("%+x", 123).should eq("+7b")
+        sprintf("% x", 123).should eq(" 7b")
+        sprintf("%-x", 123).should eq("7b")
+        sprintf("%6x", 123).should eq("    7b")
+        sprintf("%-6x", 123).should eq("7b    ")
 
-      sprintf("%X", 123).should eq("7B")
-      sprintf("%+X", 123).should eq("+7B")
-      sprintf("% X", 123).should eq(" 7B")
-      sprintf("%-X", 123).should eq("7B")
-      sprintf("%6X", 123).should eq("    7B")
-      sprintf("%-6X", 123).should eq("7B    ")
+        sprintf("%X", 123).should eq("7B")
+        sprintf("%+X", 123).should eq("+7B")
+        sprintf("% X", 123).should eq(" 7B")
+        sprintf("%-X", 123).should eq("7B")
+        sprintf("%6X", 123).should eq("    7B")
+        sprintf("%-6X", 123).should eq("7B    ")
 
-      sprintf("こんに%xちは", 123).should eq("こんに7bちは")
-      sprintf("こんに%Xちは", 123).should eq("こんに7Bちは")
+        sprintf("こんに%xちは", 123).should eq("こんに7bちは")
+        sprintf("こんに%Xちは", 123).should eq("こんに7Bちは")
+      end
+    end
+
+    context "width specifier" do
+      it "sets the minimum length of the string" do
+        sprintf("%20d", 123).should eq("                 123")
+        sprintf("%20d", -123).should eq("                -123")
+        sprintf("%20d", 0).should eq("                   0")
+
+        sprintf("%4d", 123).should eq(" 123")
+        sprintf("%4d", -123).should eq("-123")
+        sprintf("%4d", 0).should eq("   0")
+
+        sprintf("%2d", 123).should eq("123")
+        sprintf("%2d", -123).should eq("-123")
+        sprintf("%2d", 0).should eq(" 0")
+
+        sprintf("%*d", [20, 123]).should eq("                 123")
+        sprintf("%*d", [20, -123]).should eq("                -123")
+        sprintf("%*d", [20, 0]).should eq("                   0")
+
+        sprintf("%*d", [0, 123]).should eq("123")
+        sprintf("%*d", [0, -123]).should eq("-123")
+        sprintf("%*d", [0, 0]).should eq("0")
+      end
+
+      it "left-justifies on negative width" do
+        sprintf("%*d", [-20, 123]).should eq("123                 ")
+        sprintf("%*d", [-20, -123]).should eq("-123                ")
+        sprintf("%*d", [-20, 0]).should eq("0                   ")
+
+        sprintf("%*d", [-4, 123]).should eq("123 ")
+        sprintf("%*d", [-4, -123]).should eq("-123")
+        sprintf("%*d", [-4, 0]).should eq("0   ")
+
+        sprintf("%*d", [-2, 123]).should eq("123")
+        sprintf("%*d", [-2, -123]).should eq("-123")
+        sprintf("%*d", [-2, 0]).should eq("0 ")
+
+        sprintf("%-*d", [-20, 123]).should eq("123                 ")
+        sprintf("%-*d", [-20, -123]).should eq("-123                ")
+        sprintf("%-*d", [-20, 0]).should eq("0                   ")
+      end
+    end
+
+    context "precision specifier" do
+      it "sets the minimum length of the number part" do
+        sprintf("%.12d", 123).should eq("000000000123")
+        sprintf("%.12d", -123).should eq("-000000000123")
+        sprintf("%.12d", 0).should eq("000000000000")
+
+        sprintf("%.4d", 123).should eq("0123")
+        sprintf("%.4d", -123).should eq("-0123")
+        sprintf("%.4d", 0).should eq("0000")
+
+        sprintf("%.2d", 123).should eq("123")
+        sprintf("%.2d", -123).should eq("-123")
+        sprintf("%.2d", 0).should eq("00")
+
+        sprintf("%.0d", 123).should eq("123")
+        sprintf("%.0d", -123).should eq("-123")
+        sprintf("%.0d", 0).should eq("")
+      end
+
+      it "can be used with width" do
+        sprintf("%20.12d", 123).should eq("        000000000123")
+        sprintf("%20.12d", -123).should eq("       -000000000123")
+        sprintf("%20.12d", 0).should eq("        000000000000")
+
+        sprintf("%-20.12d", 123).should eq("000000000123        ")
+        sprintf("%-20.12d", -123).should eq("-000000000123       ")
+        sprintf("%-20.12d", 0).should eq("000000000000        ")
+
+        sprintf("%8.12d", 123).should eq("000000000123")
+        sprintf("%8.12d", -123).should eq("-000000000123")
+        sprintf("%8.12d", 0).should eq("000000000000")
+
+        sprintf("%+13.12d", 123).should eq("+000000000123")
+        sprintf("%+13.12d", -123).should eq("-000000000123")
+        sprintf("%+13.12d", 0).should eq("+000000000000")
+
+        sprintf("%- 20.12d", 123).should eq(" 000000000123       ")
+        sprintf("%- 20.12d", -123).should eq("-000000000123       ")
+        sprintf("%- 20.12d", 0).should eq(" 000000000000       ")
+
+        sprintf("%*.*d", [20, 12, 123]).should eq("        000000000123")
+        sprintf("%*.*d", [20, 12, -123]).should eq("       -000000000123")
+        sprintf("%*.*d", [20, 12, 0]).should eq("        000000000000")
+
+        sprintf("%*.*d", [-20, -12, 123]).should eq("123                 ")
+        sprintf("%*.*d", [-20, -12, -123]).should eq("-123                ")
+        sprintf("%*.*d", [-20, -12, 0]).should eq("0                   ")
+      end
+
+      it "is ignored if precision argument is negative" do
+        sprintf("%.*d", [-2, 123]).should eq("123")
+        sprintf("%.*d", [-2, -123]).should eq("-123")
+        sprintf("%.*d", [-2, 0]).should eq("0")
+
+        sprintf("%020.*d", [-2, 123]).should eq("00000000000000000123")
+        sprintf("%020.*d", [-2, -123]).should eq("-0000000000000000123")
+        sprintf("%020.*d", [-2, 0]).should eq("00000000000000000000")
+      end
+    end
+
+    context "sharp flag" do
+      it "adds a base prefix" do
+        sprintf("%#b", 123).should eq("0b1111011")
+        sprintf("%#o", 123).should eq("0o173")
+        sprintf("%#x", 123).should eq("0x7b")
+        sprintf("%#X", 123).should eq("0X7B")
+
+        sprintf("%#b", -123).should eq("-0b1111011")
+        sprintf("%#o", -123).should eq("-0o173")
+        sprintf("%#x", -123).should eq("-0x7b")
+        sprintf("%#X", -123).should eq("-0X7B")
+      end
+
+      it "omits the base prefix for 0" do
+        sprintf("%#b", 0).should eq("0")
+        sprintf("%#o", 0).should eq("0")
+        sprintf("%#x", 0).should eq("0")
+        sprintf("%#X", 0).should eq("0")
+      end
+    end
+
+    context "plus flag" do
+      it "writes a plus sign for positive integers" do
+        sprintf("%+d", 123).should eq("+123")
+        sprintf("%+d", -123).should eq("-123")
+        sprintf("%+d", 0).should eq("+0")
+      end
+
+      it "writes plus sign after left space-padding" do
+        sprintf("%+20d", 123).should eq("                +123")
+        sprintf("%+20d", -123).should eq("                -123")
+        sprintf("%+20d", 0).should eq("                  +0")
+      end
+
+      it "writes plus sign before left zero-padding" do
+        sprintf("%+020d", 123).should eq("+0000000000000000123")
+        sprintf("%+020d", -123).should eq("-0000000000000000123")
+        sprintf("%+020d", 0).should eq("+0000000000000000000")
+      end
+    end
+
+    context "space flag" do
+      it "writes a space for positive integers" do
+        sprintf("% d", 123).should eq(" 123")
+        sprintf("% d", -123).should eq("-123")
+        sprintf("% d", 0).should eq(" 0")
+      end
+
+      it "writes space before left padding" do
+        sprintf("% 20d", 123).should eq("                 123")
+        sprintf("% 20d", -123).should eq("                -123")
+        sprintf("% 20d", 0).should eq("                   0")
+
+        sprintf("% 020d", 123).should eq(" 0000000000000000123")
+        sprintf("% 020d", -123).should eq("-0000000000000000123")
+        sprintf("% 020d", 0).should eq(" 0000000000000000000")
+      end
+
+      it "is ignored if plus flag is also specified" do
+        sprintf("%+ d", 123).should eq("+123")
+        sprintf("% +d", 123).should eq("+123")
+        sprintf("%+ 20d", 123).should eq("                +123")
+        sprintf("% +20d", 123).should eq("                +123")
+        sprintf("%+ 020d", 123).should eq("+0000000000000000123")
+        sprintf("% +020d", 123).should eq("+0000000000000000123")
+      end
+    end
+
+    context "zero flag" do
+      it "left-pads the result with zeros" do
+        sprintf("%020d", 123).should eq("00000000000000000123")
+        sprintf("%020d", -123).should eq("-0000000000000000123")
+        sprintf("%020d", 0).should eq("00000000000000000000")
+
+        sprintf("%+020d", 123).should eq("+0000000000000000123")
+        sprintf("%+020d", -123).should eq("-0000000000000000123")
+        sprintf("%+020d", 0).should eq("+0000000000000000000")
+
+        sprintf("% 020d", 123).should eq(" 0000000000000000123")
+        sprintf("% 020d", -123).should eq("-0000000000000000123")
+        sprintf("% 020d", 0).should eq(" 0000000000000000000")
+      end
+
+      it "is ignored if string is right-justified" do
+        sprintf("%-020d", 123).should eq("123                 ")
+        sprintf("%-020d", -123).should eq("-123                ")
+        sprintf("%-020d", 0).should eq("0                   ")
+
+        sprintf("%0-20d", 123).should eq("123                 ")
+        sprintf("%0-20d", -123).should eq("-123                ")
+        sprintf("%0-20d", 0).should eq("0                   ")
+
+        sprintf("%0*d", [-20, 123]).should eq("123                 ")
+        sprintf("%0*d", [-20, -123]).should eq("-123                ")
+        sprintf("%0*d", [-20, 0]).should eq("0                   ")
+
+        sprintf("%-0*d", [-20, 123]).should eq("123                 ")
+        sprintf("%-0*d", [-20, -123]).should eq("-123                ")
+        sprintf("%-0*d", [-20, 0]).should eq("0                   ")
+      end
+
+      it "is ignored if precision is specified" do
+        sprintf("%020.12d", 123).should eq("        000000000123")
+        sprintf("%020.12d", -123).should eq("       -000000000123")
+        sprintf("%020.12d", 0).should eq("        000000000000")
+
+        sprintf("%020.*d", [12, 123]).should eq("        000000000123")
+        sprintf("%020.*d", [12, -123]).should eq("       -000000000123")
+        sprintf("%020.*d", [12, 0]).should eq("        000000000000")
+
+        sprintf("%020.*d", [-12, 123]).should eq("00000000000000000123")
+        sprintf("%020.*d", [-12, -123]).should eq("-0000000000000000123")
+        sprintf("%020.*d", [-12, 0]).should eq("00000000000000000000")
+      end
+    end
+
+    context "minus flag" do
+      it "left-justifies the string" do
+        sprintf("%-d", 123).should eq("123")
+        sprintf("%-d", -123).should eq("-123")
+        sprintf("%-d", 0).should eq("0")
+
+        sprintf("%-20d", 123).should eq("123                 ")
+        sprintf("%-20d", -123).should eq("-123                ")
+        sprintf("%-20d", 0).should eq("0                   ")
+
+        sprintf("%-4d", 123).should eq("123 ")
+        sprintf("%-4d", -123).should eq("-123")
+        sprintf("%-4d", 0).should eq("0   ")
+
+        sprintf("%-2d", 123).should eq("123")
+        sprintf("%-2d", -123).should eq("-123")
+        sprintf("%-2d", 0).should eq("0 ")
+      end
+
+      it "reserves space for the number prefix" do
+        sprintf("%-+20d", 123).should eq("+123                ")
+        sprintf("%-+20d", -123).should eq("-123                ")
+        sprintf("%-+20d", 0).should eq("+0                  ")
+
+        sprintf("%- 20d", 123).should eq(" 123                ")
+        sprintf("%- 20d", -123).should eq("-123                ")
+        sprintf("%- 20d", 0).should eq(" 0                  ")
+
+        sprintf("%-#20b", 123).should eq("0b1111011           ")
+        sprintf("%-#20b", -123).should eq("-0b1111011          ")
+        sprintf("%-#20b", 0).should eq("0                   ")
+      end
+    end
+
+    it "works with Int*::MIN" do
+      sprintf("%d", Int8::MIN).should eq("-128")
+      sprintf("%d", Int16::MIN).should eq("-32768")
+      sprintf("%d", Int32::MIN).should eq("-2147483648")
+      sprintf("%d", Int64::MIN).should eq("-9223372036854775808")
+    end
+
+    pending_win32 "works with BigInt" do
+      sprintf("%d", 123.to_big_i).should eq("123")
+      sprintf("%300.250d", 10.to_big_i ** 200).should eq("#{" " * 50}#{"0" * 49}1#{"0" * 200}")
+      sprintf("%- #300.250X", 16.to_big_i ** 200 - 1).should eq(" 0X#{"0" * 50}#{"F" * 200}#{" " * 47}")
     end
   end
 
