@@ -889,7 +889,7 @@ describe "String" do
         it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
         it { "日本語日本語".index("本", 2_i64).should eq(4) }
         it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
-        it { "日本語日本語".index("", 2_i64).should eq 2}
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
         it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
