@@ -1687,7 +1687,7 @@ module Crystal
         i = 1 # skip '-'
         "9223372036854775808".each_byte do |byte|
           string_byte = string_value.byte_at(i)
-          if
+          if string_byte > byte
             raise_value_doesnt_fit_in "Int64", string_value, start
           elsif string_byte < byte
             break
