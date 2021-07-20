@@ -1575,9 +1575,13 @@ module Crystal
       set_token_raw_from_start(start)
     end
 
-    macro gen_check_int_fits_in_size(type, method, size)
+    macro gen_check_int_fits_in_size(type, method, size, *, actual_type = nil)
       if num_size >= 20
+        {% if actual_type.nil? %}
         raise_value_doesnt_fit_in "{{type}}", string_value, start
+        {% else %}
+        raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+        {% end %}
       end
       if num_size >= {{size}}
         int_value = absolute_integer_value(string_value, negative)
@@ -1585,7 +1589,11 @@ module Crystal
         max += 1 if negative
 
         if int_value > max
+          {% if actual_type.nil? %}
           raise_value_doesnt_fit_in "{{type}}", string_value, start
+          {% else %}
+          raise_value_restricted_by "{{actual_type}}", "{{type}}", string_value, start
+          {% end %}
         end
       end
     end
@@ -1627,10 +1635,14 @@ module Crystal
         end
 
         check_value_fits_in_uint64 string_value, num_size, start
+      when :i128
+        gen_check_int_fits_in_size Int64, to_u64, 19, actual_type: UInt128
       when :u128
         if negative
           raise "Invalid negative value #{string_value} for UInt128"
         end
+
+        check_value_fits_in_uint64 string_value, num_size, start, actual_type: UInt128
       end
     end
 
@@ -1675,7 +1687,7 @@ module Crystal
         i = 1 # skip '-'
         "9223372036854775808".each_byte do |byte|
           string_byte = string_value.byte_at(i)
-          if string_byte > byte
+          if
             raise_value_doesnt_fit_in "Int64", string_value, start
           elsif string_byte < byte
             break
@@ -1685,9 +1697,13 @@ module Crystal
       end
     end
 
-    def check_value_fits_in_uint64(string_value, num_size, start)
+    def check_value_fits_in_uint64(string_value, num_size, start, actual_type = UInt64)
       if num_size > 20
-        raise_value_doesnt_fit_in "UInt64", string_value, start
+        if actual_type == UInt64
+          raise_value_doesnt_fit_in "UInt64", string_value, start
+        else
+          raise_value_restricted_by actual_type, "UInt64", string_value, start
+        end
       end
 
       if num_size == 20
@@ -1695,7 +1711,11 @@ module Crystal
         "18446744073709551615".each_byte do |byte|
           string_byte = string_value.byte_at(i)
           if string_byte > byte
-            raise_value_doesnt_fit_in "UInt64", string_value, start
+            if actual_type == UInt64
+              raise_value_doesnt_fit_in "UInt64", string_value, start
+            else
+              raise_value_restricted_by actual_type, "UInt64", string_value, start
+            end
           elsif string_byte < byte
             break
           end
@@ -1706,6 +1726,10 @@ module Crystal
 
     def raise_value_doesnt_fit_in(type, string_value, start)
       raise "#{string_value} doesn't fit in an #{type}", @token, (current_pos - start)
+    end
+
+    def raise_value_restricted_by(type, restricted_by_type, string_value, start)
+      raise "#{string_value} doesn't fit in an #{restricted_by_type}. #{type} literals that don't fit in an #{restricted_by_type} are currently not supported", @token, (current_pos - start)
     end
 
     def scan_zero_number(start, negative = false)
