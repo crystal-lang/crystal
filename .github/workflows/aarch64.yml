@@ -102,6 +102,6 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
-        uses: docker://jhass/crystal:1.35.0-build
+        uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make compiler_spec
