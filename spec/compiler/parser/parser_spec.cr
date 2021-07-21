@@ -167,6 +167,8 @@ module Crystal
     it_parses "@a, b = 1, 2", MultiAssign.new(["@a".instance_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
     it_parses "@@a, b = 1, 2", MultiAssign.new(["@@a".class_var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
+    it_parses "あ.い, う.え.お = 1, 2", MultiAssign.new([Call.new("あ".call, "い"), Call.new(Call.new("う".call, "え"), "お")] of ASTNode, [1.int32, 2.int32] of ASTNode)
+
     assert_syntax_error "b? = 1", "unexpected token: ="
     assert_syntax_error "b! = 1", "unexpected token: ="
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
