@@ -199,7 +199,7 @@ class Deque(T)
   # a.delete("b") # => true
   # a             # => Deque{"a", "c"}
   # ```
-  def delete(obj)
+  def delete(obj) : Bool
     match = internal_delete { |i| i == obj }
     !match.nil?
   end
@@ -228,7 +228,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#select`.
-  def select!(pattern)
+  def select!(pattern) : self
     self.select! { |elem| pattern === elem }
   end
 
@@ -257,7 +257,7 @@ class Deque(T)
   # ```
   #
   # See also: `Deque#reject`.
-  def reject!(pattern)
+  def reject!(pattern) : self
     reject! { |elem| pattern === elem }
     self
   end
@@ -288,7 +288,7 @@ class Deque(T)
   # a.delete_at(1) # => 2
   # a              # => Deque{1, 3}
   # ```
-  def delete_at(index : Int)
+  def delete_at(index : Int) : T
     if index < 0
       index += @size
     end
@@ -360,7 +360,7 @@ class Deque(T)
   # a = Deque{0, 1, 2}
   # a.insert(1, 7) # => Deque{0, 7, 1, 2}
   # ```
-  def insert(index : Int, value : T)
+  def insert(index : Int, value : T) : self
     if index < 0
       index += @size + 1
     end
@@ -429,7 +429,7 @@ class Deque(T)
   # ```
   # Deque{:foo, :bar}.size # => 2
   # ```
-  def size
+  def size : Int32
     @size
   end
 
@@ -440,7 +440,7 @@ class Deque(T)
   # a.pop # => 3
   # a     # => Deque{1, 2}
   # ```
-  def pop
+  def pop : T
     pop { raise IndexError.new }
   end
 
@@ -460,12 +460,12 @@ class Deque(T)
   end
 
   # Removes and returns the last item, if not empty, otherwise `nil`.
-  def pop?
+  def pop? : T?
     pop { nil }
   end
 
   # Removes the last *n* (at most) items in the deque.
-  def pop(n : Int)
+  def pop(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
     end
@@ -546,7 +546,7 @@ class Deque(T)
   end
 
   # Removes the first *n* (at most) items in the deque.
-  def shift(n : Int)
+  def shift(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
     end
@@ -556,7 +556,7 @@ class Deque(T)
   end
 
   # Swaps the items at the indices *i* and *j*.
-  def swap(i, j)
+  def swap(i, j) : self
     self[i], self[j] = self[j], self[i]
     self
   end
@@ -571,7 +571,7 @@ class Deque(T)
   # a = Deque{1, 2}
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
-  def unshift(value : T)
+  def unshift(value : T) : self
     increase_capacity if @size >= @capacity
     @start -= 1
     @start += @capacity if @start < 0

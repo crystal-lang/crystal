@@ -2320,7 +2320,16 @@ module Crystal
       open("array literal") do
         next_token_skip_space_or_newline
         while @token.type != :"]"
-          exps << parse_op_assign_no_control
+          exp_location = @token.location
+
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
+          end
+
+          exps << exp
           end_location = token_end_location
           skip_space
 
@@ -2368,9 +2377,17 @@ module Crystal
           end
           return parse_named_tuple(location)
         else
+          if @token.type == :"*"
+            first_is_splat = true
+            next_token_skip_space_or_newline
+          end
+
           first_key = parse_op_assign_no_control
+          first_key = Splat.new(first_key).at(location) if first_is_splat
           case @token.type
           when :":"
+            unexpected_token if first_is_splat
+
             # Check that there's no space before the ':'
             if @token.column_number != first_key.end_location.not_nil!.column_number + 1
               raise "space not allowed between named argument name and ':'"
@@ -2396,6 +2413,7 @@ module Crystal
             check :"}"
             return parse_tuple first_key, location
           else
+            unexpected_token if first_is_splat
             check :"=>"
           end
         end
@@ -2472,8 +2490,18 @@ module Crystal
       open("tuple literal", location) do
         exps << first_exp
         while @token.type != :"}"
-          exps << parse_op_assign_no_control
+          exp_location = @token.location
+
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            exp = Splat.new(parse_op_assign_no_control).at(exp_location)
+          else
+            exp = parse_op_assign_no_control
+          end
+
+          exps << exp
           skip_space
+
           if @token.type == :","
             next_token_skip_space_or_newline
           else
@@ -2628,6 +2656,8 @@ module Crystal
             when_conds = [] of ASTNode
 
             if cond.is_a?(TupleLiteral)
+              raise "splat is not allowed inside case expression" if cond.elements.any?(Splat)
+
               while true
                 if @token.type == :"{"
                   curly_location = @token.location
@@ -4117,6 +4147,7 @@ module Crystal
         block_arg = call_args.block_arg
         named_args = call_args.named_args
         has_parentheses = call_args.has_parentheses
+        force_call ||= has_parentheses || (args.try(&.empty?) == false) || (named_args.try(&.empty?) == false)
       else
         has_parentheses = false
       end
@@ -4159,8 +4190,8 @@ module Crystal
           call
         else
           if args
-            maybe_var = !force_call && is_var && !has_parentheses
-            if maybe_var && args.size == 0
+            maybe_var = !force_call && is_var
+            if maybe_var
               Var.new(name)
             else
               call = Call.new(nil, name, args, nil, nil, named_args, global)
@@ -4179,7 +4210,7 @@ module Crystal
               end
               Var.new(name)
             else
-              if !force_call && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+              if !force_call && !named_args && !global && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 

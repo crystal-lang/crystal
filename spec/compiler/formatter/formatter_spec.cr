@@ -6,13 +6,35 @@ private def assert_format(input, output = input, strict = false, file = __FILE__
     output = "#{output}\n" unless strict
     result = Crystal.format(input)
     unless result == output
-      fail "Expected\n\n~~~\n#{input}\n~~~\nto format to:\n\n~~~\n#{output}\n~~~\n\nbut got:\n\n~~~\n#{result}\n~~~\n\n  assert_format #{input.inspect}, #{result.chomp.inspect}"
+      message = <<-ERROR
+        Expected
+
+        ~~~
+        #{input}
+        ~~~
+
+        to format to:
+
+        ~~~
+        #{output}
+        ~~~
+
+        but got:
+
+        ~~~
+        #{result}
+        ~~~
+
+          assert_format #{input.inspect}, #{result.chomp.inspect}
+        ERROR
+
+      fail message, file: file, line: line
     end
 
     # Check idempotency
     result2 = Crystal.format(result)
     unless result == result2
-      fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}"
+      fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}", file: file, line: line
     end
   end
 end
@@ -87,6 +109,9 @@ describe Crystal::Formatter do
   assert_format "{ {1, 2, 3} => 4 }"
   assert_format "{ {foo: 2} }"
   assert_format "{ # foo\n  1,\n}"
+
+  assert_format "{ * 1 * 2,\n*\n3, 4 }", "{*1 * 2,\n *3, 4}"
+  assert_format "[ * [ * [ 1 ] ], *    \n[ 2] ]", "[*[*[1]], *[2]]"
 
   assert_format "{  } of  A   =>   B", "{} of A => B"
   assert_format "{ 1   =>   2 }", "{1 => 2}"
@@ -1003,7 +1028,7 @@ describe Crystal::Formatter do
   assert_format "  <<-HTML\n   foo\n  HTML", "<<-HTML\n foo\nHTML"
   assert_format "  <<-HTML\n   \#{1}\n  HTML", "<<-HTML\n \#{1}\nHTML"
   assert_format "  <<-HTML\n  \#{1} \#{2}\n  HTML", "<<-HTML\n\#{1} \#{2}\nHTML"
-  assert_format "  <<-HTML\n  foo\nHTML", "<<-HTML\nfoo\nHTML"
+  assert_format "  <<-HTML\n  foo\nHTML", "<<-HTML\n  foo\nHTML"
 
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
@@ -1282,6 +1307,18 @@ describe Crystal::Formatter do
   assert_format "Hash{\n  foo => <<-EOF,\n  foo\n  EOF\n  bar => <<-BAR,\n  bar\n  BAR\n}"
   assert_format "Hash{\n  foo => <<-EOF\n  foo\n  EOF\n}"
   assert_format "{\n  <<-KEY => 1,\n  key\n  KEY\n}"
+
+  # #10734
+  assert_format " <<-EOF\n 1\nEOF", "<<-EOF\n 1\nEOF"
+  assert_format "  <<-EOF\n   1\n EOF", "<<-EOF\n  1\nEOF"
+  assert_format "x =  <<-EOF\n 1\nEOF", "x = <<-EOF\n 1\nEOF"
+  assert_format "  <<-EOF\n 1\n  2\n EOF", "<<-EOF\n1\n 2\nEOF"
+
+  # #10735
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "{\n  variables => true,\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n  foo => true,\n}"
+  assert_format "{\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}", "{\n  query => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
+  assert_format "begin\n  query = <<-HEREDOC\n    foo\n  HEREDOC\nend"
 
   assert_format "begin 0[1] rescue 2 end"
   assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"

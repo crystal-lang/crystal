@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
@@ -1336,6 +1337,58 @@ describe "Array" do
     end
   end
 
+  describe "#truncate" do
+    it "truncates with index and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 3).should be(a)
+      a.should eq([4, 9, 16])
+    end
+
+    it "truncates with index and count == 0" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2, 0).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index and count, not enough elements" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(4, 4).should be(a)
+      a.should eq([16, 25])
+    end
+
+    it "truncates with index == size and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(6, 1).should be(a)
+      a.empty?.should be_true
+    end
+
+    it "truncates with index < 0 and count" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(-5, 3).should be(a)
+      a.should eq([1, 4, 9])
+    end
+
+    it "raises on out of bound index" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(IndexError) { a.truncate(-7, 1) }
+    end
+
+    it "raises on negative count" do
+      a = [0, 1, 4, 9, 16, 25]
+      expect_raises(ArgumentError) { a.truncate(0, -1) }
+    end
+
+    it "truncates with range" do
+      a = [0, 1, 4, 9, 16, 25]
+      a.truncate(2..4).should be(a)
+      a.should eq([4, 9, 16])
+
+      b = [0, 1, 4, 9, 16, 25]
+      b.truncate(-5..-3).should be(b)
+      b.should eq([1, 4, 9])
+    end
+  end
+
   describe "uniq" do
     it "uniqs without block" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
@@ -1444,6 +1497,33 @@ describe "Array" do
       a.should eq([10, 20, 30, 4, 5, 6, 7, 8])
       a.@offset_to_buffer.should eq(0)
       a.@buffer.should eq(buffer)
+    end
+
+    it "repeated unshift/shift does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.shift
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/pop does not exhaust memory (#10748)" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.pop
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/clear does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.clear
+      end
+      a.@capacity.should eq(3)
     end
   end
 
@@ -1739,69 +1819,13 @@ describe "Array" do
     a.should eq([1, 2, 3, "hello"])
   end
 
-  describe "each iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.each
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should eq(3)
-      iter.next.should be_a(Iterator::Stop)
-    end
+  it_iterates "#each", [1, 2, 3], [1, 2, 3].each
+  it_iterates "#reverse_each", [3, 2, 1], [1, 2, 3].reverse_each
 
-    it "cycles" do
-      [1, 2, 3].cycle.first(8).join.should eq("12312312")
-    end
-  end
+  it_iterates "#cycle", [1, 2, 3, 1, 2, 3, 1, 2], [1, 2, 3].cycle, infinite: true
+  it_iterates "#cycle(limit)", [1, 2, 3, 1, 2, 3], [1, 2, 3].cycle(2), infinite: true
 
-  describe "each_index iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.each_index
-      iter.next.should eq(0)
-      iter.next.should eq(1)
-      iter.next.should eq(2)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
-
-  describe "reverse_each iterator" do
-    it "does next" do
-      a = [1, 2, 3]
-      iter = a.reverse_each
-      iter.next.should eq(3)
-      iter.next.should eq(2)
-      iter.next.should eq(1)
-      iter.next.should be_a(Iterator::Stop)
-    end
-  end
-
-  describe "cycle" do
-    it "cycles" do
-      a = [] of Int32
-      [1, 2, 3].cycle do |x|
-        a << x
-        break if a.size == 9
-      end
-      a.should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles N times" do
-      a = [] of Int32
-      [1, 2, 3].cycle(2) do |x|
-        a << x
-      end
-      a.should eq([1, 2, 3, 1, 2, 3])
-    end
-
-    it "cycles with iterator" do
-      [1, 2, 3].cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
-    end
-
-    it "cycles with N and iterator" do
-      [1, 2, 3].cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
-    end
-  end
+  it_iterates "#each_index", [0, 1, 2], [1, 2, 3].each_index
 
   describe "transpose" do
     it "transposes elements" do

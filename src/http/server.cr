@@ -444,7 +444,7 @@ class HTTP::Server
   end
 
   # Starts the server. Blocks until the server is closed.
-  def listen
+  def listen : Nil
     raise "Can't re-start closed server" if closed?
     raise "Can't start server with no sockets to listen to, use HTTP::Server#bind first" if @sockets.empty?
     raise "Can't start running server" if listening?
@@ -454,18 +454,20 @@ class HTTP::Server
 
     @sockets.each do |socket|
       spawn do
-        until closed?
+        loop do
           io = begin
             socket.accept?
           rescue e
             handle_exception(e)
-            nil
+            next
           end
 
           if io
             # a non nillable version of the closured io
             _io = io
             spawn handle_client(_io)
+          else
+            break
           end
         end
       ensure
