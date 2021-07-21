@@ -11,7 +11,7 @@ struct Crystal::System::Process
   end
 
   def release
-    raise NotImplementedError.new("Process#wait")
+    raise NotImplementedError.new("Process#release")
   end
 
   def wait
