@@ -372,7 +372,7 @@ module Crystal
       elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
+      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -385,7 +385,7 @@ module Crystal
           in_parenthesis(need_parens, node_obj)
           @str << '.'
         end
-        if setter?(node.name)
+        if Lexer.setter?(node.name)
           @str << decorate_call(node, node.name.rchop)
           @str << " = "
           node.args.join(@str, ", ", &.accept self)
@@ -461,7 +461,7 @@ module Crystal
       when Call
         case obj.args.size
         when 0
-          !ident?(obj.name)
+          !Lexer.ident?(obj.name)
         else
           case obj.name
           when "[]", "[]?", "<", "<=", ">", ">="
@@ -554,16 +554,6 @@ module Crystal
 
     def decorate_class_var(node, str)
       str
-    end
-
-    def ident?(name)
-      name[0]?.try do |char|
-        char.ascii_letter? || char == '_' || char.ord > 0x9F
-      end
-    end
-
-    def setter?(name)
-      ident?(name) && name.ends_with?('=')
     end
 
     def visit(node : Assign)

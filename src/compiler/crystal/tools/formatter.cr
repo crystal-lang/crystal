@@ -2609,7 +2609,7 @@ module Crystal
         return false
       end
 
-      assignment = setter?(node.name)
+      assignment = Lexer.setter?(node.name)
 
       if assignment
         write node.name.rchop
@@ -2903,10 +2903,6 @@ module Crystal
         next_token
       end
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
-    end
-
-    def setter?(name)
-      name[0]?.try { |char| @lexer.ident_start?(char) } && name.ends_with?('=')
     end
 
     def visit(node : NamedArgument)

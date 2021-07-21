@@ -212,10 +212,6 @@ module Crystal
       parse_expression_suffix multi, @token.location
     end
 
-    def setter?(name)
-      name[0]?.try { |char| ident_start?(char) } && name.ends_with?('=')
-    end
-
     def multi_assign_target?(exp)
       case exp
       when Underscore, Var, InstanceVar, ClassVar, Global, Assign
@@ -223,7 +219,7 @@ module Crystal
       when Call
         !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
-            setter?(exp.name) ||
+            Lexer.setter?(exp.name) ||
             exp.name == "[]" || exp.name == "[]="
         )
       else
