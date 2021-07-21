@@ -11,6 +11,7 @@ struct Crystal::System::Process
   end
 
   def release
+    raise NotImplementedError.new("Process#wait")
   end
 
   def wait
@@ -30,6 +31,7 @@ struct Crystal::System::Process
   end
 
   def self.pid
+    # TODO: WebAssembly doesn't have the concept of processes.
     1
   end
 

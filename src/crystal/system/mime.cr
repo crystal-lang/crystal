@@ -3,12 +3,10 @@ module Crystal::System::MIME
   # def self.load
 end
 
-{% if flag?(:unix) %}
+{% if flag?(:unix) || flag?(:wasm32) %}
   require "./unix/mime"
 {% elsif flag?(:win32) %}
   require "./win32/mime"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/mime"
 {% else %}
   {% raise "No Crystal::System::Mime implementation available" %}
 {% end %}

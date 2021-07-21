@@ -27,9 +27,11 @@ class Thread
   end
 
   def join : Nil
+    raise NotImplementedError.new("Thread#join")
   end
 
   def self.yield : Nil
+    raise NotImplementedError.new("Thread.yield")
   end
 
   @@current : Thread? = nil
@@ -75,10 +77,12 @@ class Thread
   end
 
   private def stack_address : Void*
+    # TODO: Implement
     Pointer(Void).null
   end
 
   # :nodoc:
+  # TODO: Implement
   class ConditionVariable
     def signal : Nil
     end
