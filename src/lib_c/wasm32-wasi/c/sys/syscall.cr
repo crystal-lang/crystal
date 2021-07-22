@@ -1,0 +1,2 @@
+lib LibC
+end
