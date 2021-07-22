@@ -27,9 +27,9 @@ request = {
                   login
                 }
                 labels(first: 20) {
-                nodes {
-                  name
-                }
+                  nodes {
+                    name
+                  }
                 }
               }
             }
