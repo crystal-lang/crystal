@@ -12,9 +12,7 @@ end
 
 {% if flag?(:linux) %}
   require "./unix/getrandom"
-{% elsif flag?(:wasm32) %}
-  require "./wasm/getentropy"
-{% elsif flag?(:openbsd) || flag?(:netbsd) %}
+{% elsif flag?(:openbsd) || flag?(:netbsd) || flag?(:wasm32) %}
   require "./unix/arc4random"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
