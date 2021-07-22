@@ -43,7 +43,12 @@ request = {
   }
 }
 
-response = HTTP::Client.post("https://api.github.com/graphql", body: request.to_json, headers: HTTP::Headers{"Authorization" => "bearer #{api_token}"})
+response = HTTP::Client.post("https://api.github.com/graphql",
+  body: request.to_json,
+  headers: HTTP::Headers{
+    "Authorization" => "Bearer #{api_token}"
+  }
+)
 
 module LabelNameConverter
   def self.from_json(pull : JSON::PullParser)
