@@ -888,6 +888,7 @@ describe "Code gen: proc" do
       )).to_i.should eq(1)
   end
 
+  # FIXME: JIT compilation of this spec is broken, forcing normal compilation (#10961)
   it "doesn't crash when taking a proc pointer to a virtual type (#9823)" do
     run(%(
       abstract struct Parent
@@ -911,7 +912,7 @@ describe "Code gen: proc" do
       end
 
       Child1.new.as(Parent).get
-    ))
+    ), flags: [] of String)
   end
 
   it "doesn't crash when taking a proc pointer that multidispatches on the top-level (#3822)" do
