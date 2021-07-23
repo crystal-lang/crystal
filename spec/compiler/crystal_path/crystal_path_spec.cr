@@ -105,7 +105,7 @@ describe Crystal::CrystalPath do
   # Don't find relative filenames in src or shards
   assert_doesnt_find "../../src/file_three", relative_to: Path["test_files", "test_folder", "test_folder.cr"].to_s, expected_relative_to: Path["test_files", "test_folder"].to_s
 
-  describe "#each_file_expansion", focus: true do
+  describe "#each_file_expansion" do
     path = Crystal::CrystalPath.new
 
     it "foo.cr" do
