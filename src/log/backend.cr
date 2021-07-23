@@ -15,7 +15,7 @@ abstract class Log::Backend
   abstract def write(entry : Entry)
 
   # Closes underlying resources used by this backend.
-  def close
+  def close : Nil
     @dispatcher.close
   end
 

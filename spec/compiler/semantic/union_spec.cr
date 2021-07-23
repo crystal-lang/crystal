@@ -115,6 +115,16 @@ describe "Semantic: union" do
         end
         )) { [types["A"], types["B"], types["A"].virtual_type!] }
     end
+
+    it "uninstantiated generic super-metaclass v.s. uninstantiated generic sub-metaclass" do
+      assert_commutes(%(
+        class A(T)
+        end
+
+        class B(T) < A(T)
+        end
+        )) { [types["A"].metaclass, types["B"].metaclass, types["A"].metaclass.virtual_type!] }
+    end
   end
 
   it "types union when obj is union" do

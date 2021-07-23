@@ -10,7 +10,7 @@ class IO::ARGF < IO
     @read_from_stdin = false
   end
 
-  def read(slice : Bytes)
+  def read(slice : Bytes) : Int32
     first_initialize unless @initialized
 
     if current_io = @current_io
@@ -25,11 +25,11 @@ class IO::ARGF < IO
       read_count = 0
     end
 
-    read_count
+    read_count.to_i32
   end
 
   # :nodoc:
-  def peek
+  def peek : Bytes?
     first_initialize unless @initialized
 
     if current_io = @current_io
@@ -57,7 +57,7 @@ class IO::ARGF < IO
     raise IO::Error.new "Can't write to ARGF"
   end
 
-  def path
+  def path : String
     @path || @argv.first? || "-"
   end
 

@@ -367,6 +367,10 @@ module Crystal
       # `SomeGeneric` is never a restriction of `SomeGeneric(X)`
       false
     end
+
+    def restrict(other : GenericClassType, context)
+      self == other ? self : super
+    end
   end
 
   class GenericClassInstanceType
