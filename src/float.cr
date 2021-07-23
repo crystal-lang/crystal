@@ -34,6 +34,8 @@ require "./float/printer"
 # ```
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
+#
+# See [`Float` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/floats.html) in the language reference.
 struct Float
   alias Primitive = Float32 | Float64
 
@@ -49,11 +51,11 @@ struct Float
     modulo(other)
   end
 
-  def nan?
+  def nan? : Bool
     !(self == self)
   end
 
-  def infinite?
+  def infinite? : Int32?
     if nan? || self == 0 || self != 2 * self
       nil
     else
@@ -61,7 +63,7 @@ struct Float
     end
   end
 
-  def finite?
+  def finite? : Bool
     !nan? && !infinite?
   end
 
@@ -146,24 +148,24 @@ struct Float32
   end
 
   # Returns a `Float32` by invoking `to_f32!` on *value*.
-  def self.new!(value)
+  def self.new!(value) : self
     value.to_f32!
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float32
   Number.expand_div [Float64], Float64
 
-  def ceil
+  def ceil : Float32
     LibM.ceil_f32(self)
   end
 
-  def floor
+  def floor : Float32
     LibM.floor_f32(self)
   end
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
-  def round_even : self
+  def round_even : Float32
     # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
     # rint in the future.
     LibM.rint_f32(self)
@@ -171,11 +173,11 @@ struct Float32
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds away from zero.
-  def round_away
+  def round_away : Float32
     LibM.round_f32(self)
   end
 
-  def trunc
+  def trunc : Float32
     LibM.trunc_f32(self)
   end
 
@@ -187,11 +189,11 @@ struct Float32
     {% end %}
   end
 
-  def **(other : Float32)
+  def **(other : Float32) : Float32
     LibM.pow_f32(self, other)
   end
 
-  def **(other)
+  def **(other) : Float32
     self ** other.to_f32
   end
 
@@ -253,24 +255,24 @@ struct Float64
   end
 
   # Returns a `Float64` by invoking `to_f64!` on *value*.
-  def Float64.new!(value)
+  def Float64.new!(value) : Float64
     value.to_f64!
   end
 
   Number.expand_div [Int8, UInt8, Int16, UInt16, Int32, UInt32, Int64, UInt64, Int128, UInt128], Float64
   Number.expand_div [Float32], Float64
 
-  def ceil
+  def ceil : Float64
     LibM.ceil_f64(self)
   end
 
-  def floor
+  def floor : Float64
     LibM.floor_f64(self)
   end
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds towards the even neighbor (Banker's rounding).
-  def round_even : self
+  def round_even : Float64
     # TODO: LLVM 11 introduced llvm.roundeven.* intrinsics which may replace
     # rint in the future.
     LibM.rint_f64(self)
@@ -278,11 +280,11 @@ struct Float64
 
   # Rounds towards the nearest integer. If both neighboring integers are equidistant,
   # rounds away from zero.
-  def round_away
+  def round_away : Float64
     LibM.round_f64(self)
   end
 
-  def trunc
+  def trunc : Float64
     LibM.trunc_f64(self)
   end
 
@@ -294,11 +296,11 @@ struct Float64
     {% end %}
   end
 
-  def **(other : Float64)
+  def **(other : Float64) : Float64
     LibM.pow_f64(self, other)
   end
 
-  def **(other)
+  def **(other) : Float64
     self ** other.to_f64
   end
 

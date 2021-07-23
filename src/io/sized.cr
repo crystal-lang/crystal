@@ -29,7 +29,7 @@ class IO::Sized < IO
     check_open
 
     count = {slice.size.to_u64, @read_remaining}.min
-    bytes_read = @io.read slice[0, count]
+    bytes_read = @io.read(slice[0, count]).to_i32
     @read_remaining -= bytes_read
     bytes_read
   end

@@ -12,6 +12,8 @@
 # [1, "hello", 'x'] # Array(Int32 | String | Char)
 # ```
 #
+# See [`Array` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/array.html) in the language reference.
+#
 # An `Array` can have mixed types, meaning T will be a union of types, but these are determined
 # when the array is created, either by specifying T or by using an array literal. In the latter
 # case, T will be set to the union of the array literal elements' types.
@@ -445,16 +447,7 @@ class Array(T)
   # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(index : Int, count : Int, value : T)
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-
-    # We allow index == size because the range to replace
-    # can start at exactly the end of the array.
-    # So, we can't use check_index_out_of_bounds.
-    raise IndexError.new unless 0 <= index <= size
-
-    count = index + count <= size ? count : size - index
+    index, count = normalize_start_and_count(index, count)
 
     case count
     when 0
@@ -530,16 +523,7 @@ class Array(T)
   # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(index : Int, count : Int, values : Array(T))
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-
-    # We allow index == size because the range to replace
-    # can start at exactly the end of the array.
-    # So, we can't use check_index_out_of_bounds.
-    raise IndexError.new unless 0 <= index <= size
-
-    count = index + count <= size ? count : size - index
+    index, count = normalize_start_and_count(index, count)
     diff = values.size - count
 
     if diff == 0
@@ -674,20 +658,12 @@ class Array(T)
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of range.
   def []?(start : Int, count : Int) : Array(T)?
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-    return Array(T).new if start == size
+    start, count = normalize_start_and_count(start, count) { return nil }
+    return Array(T).new if count == 0
 
-    start += size if start < 0
-
-    if 0 <= start <= size
-      return Array(T).new if count == 0
-
-      count = Math.min(count, size - start)
-
-      Array(T).build(count) do |buffer|
-        buffer.copy_from(@buffer + start, count)
-        count
-      end
+    Array(T).build(count) do |buffer|
+      buffer.copy_from(@buffer + start, count)
+      count
     end
   end
 
@@ -868,13 +844,9 @@ class Array(T)
   # a.delete_at(99, 1) # raises IndexError
   # ```
   def delete_at(index : Int, count : Int) : self
-    index += size if index < 0
-    unless 0 <= index <= size
-      raise IndexError.new
-    end
+    index, count = normalize_start_and_count(index, count)
 
     val = self[index, count]
-    count = index + count <= size ? count : size - index
     (@buffer + index).move_from(@buffer + index + count, size - index - count)
     @size -= count
     (@buffer + @size).clear(count)
@@ -1836,12 +1808,8 @@ class Array(T)
   # a.swap(2, 3)  # => raises "Index out of bounds (IndexError)"
   # ```
   def swap(index0, index1) : Array(T)
-    index0 += size if index0 < 0
-    index1 += size if index1 < 0
-
-    unless (0 <= index0 < size) && (0 <= index1 < size)
-      raise IndexError.new
-    end
+    index0 = check_index_out_of_bounds(index0)
+    index1 = check_index_out_of_bounds(index1)
 
     @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
 
@@ -1921,11 +1889,7 @@ class Array(T)
   #
   # See also: `#pop`, `#shift`.
   def truncate(start : Int, count : Int) : self
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
-    count = {count, size - start}.min
+    start, count = normalize_start_and_count(start, count)
 
     if count == 0
       clear
@@ -2067,17 +2031,7 @@ class Array(T)
   # a.unshift(1)   # => [1, "c", "a", "b"]
   # ```
   def unshift(object : T) : self
-    # If we have no more room left before the beginning of the array
-    # we make the array larger, but point the buffer to start at the middle
-    # of the entire allocated memory. In this way, if more elements are unshift
-    # later we won't need a reallocation right away. This is similar to what
-    # happens when we push and we don't have more room, except that toward
-    # the beginning.
-    if @offset_to_buffer == 0
-      double_capacity_for_unshift
-    end
-
-    # At this point we are sure @offset_to_buffer is greater than zero
+    check_needs_resize_for_unshift
     shift_buffer_by(-1)
     @buffer.value = object
     @size += 1
@@ -2167,6 +2121,34 @@ class Array(T)
     @size == remaining_capacity
   end
 
+  private def check_needs_resize_for_unshift
+    return unless @offset_to_buffer == 0
+
+    # If we have no more room left before the beginning of the array
+    # we make the array larger, but point the buffer to start at the middle
+    # of the entire allocated memory. In this way, if more elements are unshift
+    # later we won't need a reallocation right away. This is similar to what
+    # happens when we push and we don't have more room, except that toward
+    # the beginning.
+
+    half_capacity = @capacity // 2
+    if @capacity != 0 && half_capacity != 0 && @size <= half_capacity
+      # Apply the same heuristic as the case for pushing elements to the array,
+      # but in backwards: (note that `@size` can be 0 here)
+
+      # `['c', 'd', -, -, -, -] (@size = 2)`
+      (root_buffer + half_capacity).copy_from(@buffer, @size)
+
+      # `['c', 'd', -, 'c', 'd', -]`
+      root_buffer.clear(@size)
+
+      # `[-, -, -, 'c', 'd', -]`
+      shift_buffer_by(half_capacity)
+    else
+      double_capacity_for_unshift
+    end
+  end
+
   def remaining_capacity : Int32
     @capacity - @offset_to_buffer
   end
@@ -2249,7 +2231,7 @@ class Array(T)
   end
 
   # :nodoc:
-  def index(object, offset : Int = 0) : Int32?
+  def index(object, offset : Int = 0)
     # Optimize for the case of looking for a byte in a byte slice
     if T.is_a?(UInt8.class) &&
        (object.is_a?(UInt8) || (object.is_a?(Int) && 0 <= object < 256))

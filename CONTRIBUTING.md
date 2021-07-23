@@ -114,12 +114,15 @@ If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/install/).
 
 Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
-Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out
-the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
-These set-up LLVM 3.6 and its required libraries.
+Now you can setup your environment to compile Crystal itself, which is itself written in Crystal.
 
-Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
-the specs. All specs should pass. You can use `make help` for a list of available make targets.
+The compiler needs [LLVM](https://llvm.org) and some other libraries. See [list of all required libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
+
+Executing `make crystal` builds the compiler into `.build/compiler` and you can run it using the wrapper script at `bin/crystal`.
+The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
+
+`make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+You can use `make help` for a list of available make targets.
 
 ## This guide
 

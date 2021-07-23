@@ -110,20 +110,11 @@ struct BitArray
   # ba[5, 1]  # => BitArray[]
   # ```
   def [](start : Int, count : Int) : BitArray
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    if start == size
-      return BitArray.new(0)
-    end
-
-    start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
+    start, count = normalize_start_and_count(start, count)
 
     if count == 0
       return BitArray.new(0)
     end
-
-    count = Math.min(count, size - start)
 
     if size <= 32
       # Result *and* original fit in a single int32, we can use only bitshifts

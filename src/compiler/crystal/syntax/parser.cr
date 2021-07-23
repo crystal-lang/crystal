@@ -1883,45 +1883,34 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token
-        if @token.type == :"="
+        if consume_def_equals_sign_skip_space
           name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-          if @token.type == :"."
-            second_name = consume_def_or_macro_name
-            if name != "self" && !var_in_scope?(name)
-              raise "undefined variable '#{name}'", location.line_number, location.column_number
-            end
-            obj = Var.new(name)
-            name = second_name
-            next_token
-            if @token.type == :"="
-              name = "#{name}="
-              next_token_skip_space
-            else
-              skip_space
-            end
+        elsif @token.type == :"."
+          if name != "self" && !var_in_scope?(name)
+            raise "undefined variable '#{name}'", location.line_number, location.column_number
           end
+          obj = Var.new(name)
+
+          name = consume_def_or_macro_name
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         end
       when :CONST
         obj = parse_generic
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         unexpected_token
       end
@@ -3000,12 +2989,7 @@ module Crystal
           raise "macro can't have a receiver"
         when :IDENT
           check_valid_def_name
-          next_token
-          if @token.type == :"="
-            name += '='
-            next_token
-          end
-          skip_space
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         else
           check_valid_def_op_name
           next_token_skip_space
@@ -3436,14 +3420,7 @@ module Crystal
       elsif @token.type == :IDENT
         check_valid_def_name
         name = @token.value.to_s
-
-        next_token
-        if @token.type == :"="
-          name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-        end
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         check_valid_def_op_name
         name = @token.type.to_s
@@ -3470,13 +3447,7 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          next_token
-          if @token.type == :"="
-            name = "#{name}="
-            next_token_skip_space
-          else
-            skip_space
-          end
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
@@ -4142,6 +4113,7 @@ module Crystal
         block_arg = call_args.block_arg
         named_args = call_args.named_args
         has_parentheses = call_args.has_parentheses
+        force_call ||= has_parentheses || (args.try(&.empty?) == false) || (named_args.try(&.empty?) == false)
       else
         has_parentheses = false
       end
@@ -4184,8 +4156,8 @@ module Crystal
           call
         else
           if args
-            maybe_var = !force_call && is_var && !has_parentheses
-            if maybe_var && args.size == 0
+            maybe_var = !force_call && is_var
+            if maybe_var
               Var.new(name)
             else
               call = Call.new(nil, name, args, nil, nil, named_args, global)
@@ -4204,7 +4176,7 @@ module Crystal
               end
               Var.new(name)
             else
-              if !force_call && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+              if !force_call && !named_args && !global && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
@@ -5966,6 +5938,17 @@ module Crystal
       check DefOrMacroCheck1
       @wants_def_or_macro_name = false
       @token.to_s
+    end
+
+    def consume_def_equals_sign_skip_space
+      next_token
+      if @token.type == :"="
+        next_token_skip_space
+        true
+      else
+        skip_space
+        false
+      end
     end
 
     # If *create_scope* is true, creates an isolated variable scope and returns
