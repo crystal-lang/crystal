@@ -2337,6 +2337,8 @@ module Crystal
         write " "
         skip_space_or_newline
         accept output
+      else
+        skip_space
       end
 
       check_close_paren
