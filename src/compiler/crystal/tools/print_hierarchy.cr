@@ -112,15 +112,13 @@ module Crystal
   end
 
   class TextHierarchyPrinter < HierarchyPrinter
-    private getter io
-
     def initialize(program : Program, @io : IO, exp : String?)
       super(program, exp)
       @indents = [] of Bool
     end
 
     def print_all
-      with_color.light_gray.bold.surround(io) do
+      with_color.light_gray.bold.surround(@io) do
         print_type @program.object
       end
     end
@@ -140,7 +138,7 @@ module Crystal
 
       unless @indents.empty?
         print_indent
-        io << "|\n"
+        @io << "|\n"
       end
 
       print_type type
@@ -148,16 +146,16 @@ module Crystal
 
     def print_type_name(type)
       print_indent
-      io << "+" unless @indents.empty?
-      io << "- " << (type.struct? ? "struct" : "class") << " " << type
+      @io << "+" unless @indents.empty?
+      @io << "- " << (type.struct? ? "struct" : "class") << " " << type
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        with_color.light_gray.surround(io) do
-          io << " (" << type_size(type) << " bytes)"
+        with_color.light_gray.surround(@io) do
+          @io << " (" << type_size(type) << " bytes)"
         end
       end
-      io << '\n'
+      @io << '\n'
     end
 
     def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType)
@@ -183,13 +181,13 @@ module Crystal
 
       instance_vars.each do |name, var|
         print_indent
-        io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
+        @io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
 
-        with_color.light_gray.surround(io) do
-          name.ljust(io, max_name_size)
-          io << " : " << var
+        with_color.light_gray.surround(@io) do
+          name.ljust(@io, max_name_size)
+          @io << " : " << var
         end
-        io << '\n'
+        @io << '\n'
       end
     end
 
@@ -207,35 +205,35 @@ module Crystal
 
       instance_vars.each do |ivar|
         print_indent
-        io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
+        @io << (@indents.last ? "|" : " ") << (has_subtypes ? "  .   " : "      ")
 
-        with_color.light_gray.surround(io) do
-          ivar.name.ljust(io, max_name_size)
-          io << " : "
+        with_color.light_gray.surround(@io) do
+          ivar.name.ljust(@io, max_name_size)
+          @io << " : "
           if ivar_type = ivar.type?
-            ivar_type.to_s.ljust(io, max_type_size)
-            with_color.light_gray.surround(io) do
-              io << " ("
-              ivar_size(ivar).to_s.rjust(io, max_bytes_size)
-              io << " bytes)"
+            ivar_type.to_s.ljust(@io, max_type_size)
+            with_color.light_gray.surround(@io) do
+              @io << " ("
+              ivar_size(ivar).to_s.rjust(@io, max_bytes_size)
+              @io << " bytes)"
             end
           else
-            io << "MISSING".colorize.red.bright
+            @io << "MISSING".colorize.red.bright
           end
         end
-        io << '\n'
+        @io << '\n'
       end
     end
 
     def print_indent
       unless @indents.empty?
-        io << "  "
+        @io << "  "
         0.upto(@indents.size - 2) do |i|
           indent = @indents[i]
           if indent
-            io << "|  "
+            @io << "|  "
           else
-            io << "   "
+            @io << "   "
           end
         end
       end
@@ -253,16 +251,14 @@ module Crystal
   end
 
   class JSONHierarchyPrinter < HierarchyPrinter
-    private getter json
-
     def initialize(program : Program, io : IO, exp : String?)
       super(program, exp)
       @json = JSON::Builder.new(io)
     end
 
     def print_all
-      json.document do
-        json.object do
+      @json.document do
+        @json.object do
           print_type(@program.object)
         end
       end
@@ -271,11 +267,11 @@ module Crystal
     def print_subtypes(types)
       types = types.sort_by &.to_s
 
-      json.field "sub_types" do
-        json.array do
+      @json.field "sub_types" do
+        @json.array do
           types.each_with_index do |type, index|
             if must_print? type
-              json.object do
+              @json.object do
                 print_type(type)
               end
             end
@@ -285,12 +281,12 @@ module Crystal
     end
 
     def print_type_name(type)
-      json.field "name", type.to_s
-      json.field "kind", type.struct? ? "struct" : "class"
+      @json.field "name", type.to_s
+      @json.field "kind", type.struct? ? "struct" : "class"
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        json.field "size_in_bytes", type_size(type)
+        @json.field "size_in_bytes", type_size(type)
       end
     end
 
@@ -310,12 +306,12 @@ module Crystal
       instance_vars = type.instance_vars
       return if instance_vars.empty?
 
-      json.field "instance_vars" do
-        json.array do
+      @json.field "instance_vars" do
+        @json.array do
           instance_vars.each do |name, var|
-            json.object do
-              json.field "name", name.to_s
-              json.field "type", var.to_s
+            @json.object do
+              @json.field "name", name.to_s
+              @json.field "type", var.to_s
             end
           end
         end
@@ -327,14 +323,14 @@ module Crystal
       return if instance_vars.empty?
 
       instance_vars = instance_vars.values
-      json.field "instance_vars" do
-        json.array do
+      @json.field "instance_vars" do
+        @json.array do
           instance_vars.each do |instance_var|
             if ivar_type = instance_var.type?
-              json.object do
-                json.field "name", instance_var.name.to_s
-                json.field "type", ivar_type.to_s
-                json.field "size_in_bytes", ivar_size(instance_var)
+              @json.object do
+                @json.field "name", instance_var.name.to_s
+                @json.field "type", ivar_type.to_s
+                @json.field "size_in_bytes", ivar_size(instance_var)
               end
             end
           end
