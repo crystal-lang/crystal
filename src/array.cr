@@ -955,7 +955,7 @@ class Array(T)
   # a.fill(9) # => [9, 9, 9]
   # ```
   def fill(value : T)
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
         return self
@@ -974,7 +974,7 @@ class Array(T)
   # a.fill(9, 2) # => [1, 2, 9, 9, 9]
   # ```
   def fill(value : T, from : Int)
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         from += size if from < 0
 
@@ -1001,7 +1001,7 @@ class Array(T)
   # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, from : Int, count : Int)
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         return self if count <= 0
 
@@ -1029,7 +1029,7 @@ class Array(T)
   # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
   # ```
   def fill(value : T, range : Range)
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         fill(value, *Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
 
