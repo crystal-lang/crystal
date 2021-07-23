@@ -89,7 +89,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass unless type.full_name == Crystal::Macros::ASTNode.name
+      superclass = type.superclass unless ast_node?
     when GenericClassInstanceType
       superclass = type.superclass
     end
@@ -103,11 +103,21 @@ class Crystal::Doc::Type
 
   def ancestors
     ancestors = [] of self
-    @type.ancestors.each do |ancestor|
-      ancestors << @generator.type(ancestor)
-      break if ancestor == @generator.program.object
+
+    unless ast_node?
+      @type.ancestors.each do |ancestor|
+        doc_type = @generator.type(ancestor)
+        ancestors << doc_type
+        break if ancestor == @generator.program.object || doc_type.ast_node?
+      end
     end
+
     ancestors
+  end
+
+  def ast_node?
+    type = @type
+    type.is_a?(ClassType) && type.full_name == Crystal::Macros::ASTNode.name
   end
 
   def locations
@@ -577,7 +587,7 @@ class Crystal::Doc::Type
   end
 
   def type_to_html(type : Crystal::UnionType, io, text = nil, html : HTMLOption = :all)
-    has_type_splat = type.union_types.any? &.is_a?(TypeSplat)
+    has_type_splat = type.union_types.any?(TypeSplat)
 
     if !has_type_splat && type.union_types.size == 2
       if type.union_types[0].nil_type?

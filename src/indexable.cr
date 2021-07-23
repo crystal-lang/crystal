@@ -333,7 +333,7 @@ module Indexable(T)
     {% if T == String %}
       join_strings(separator)
     {% elsif String < T %}
-      if all?(&.is_a?(String))
+      if all?(String)
         join_strings(separator)
       else
         super(separator)
@@ -358,7 +358,7 @@ module Indexable(T)
 
       each_with_index do |elem, i|
         # elem is guaranteed to be a String, but the compiler doesn't know this
-        # if we enter via the all?(&.is_a?(String)) branch.
+        # if we enter via the all?(String) branch.
         elem = elem.to_s
 
         # Copy separator to buffer
@@ -532,7 +532,7 @@ module Indexable(T)
   # [1, 2, 3, 2, 3].rindex(2)            # => 3
   # [1, 2, 3, 2, 3].rindex(2, offset: 2) # => 1
   # ```
-  def rindex(value, offset = size - 1) : Int32?
+  def rindex(value, offset = size - 1)
     rindex(offset) { |elem| elem == value }
   end
 

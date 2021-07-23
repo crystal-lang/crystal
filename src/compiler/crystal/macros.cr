@@ -272,6 +272,10 @@ module Crystal::Macros
     # highlight this node in the error message.
     def raise(message) : NoReturn
     end
+
+    # Returns `true` if this node is a `NilLiteral` or `Nop`.
+    def __crystal_pseudo_nil? : BoolLiteral
+    end
   end
 
   # The empty node. Similar to a `NilLiteral` but its textual representation
@@ -374,6 +378,10 @@ module Crystal::Macros
 
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
     def kind : SymbolLiteral
+    end
+
+    # Returns the value of this number without a type suffix.
+    def to_number : MacroId
     end
   end
 

@@ -19,7 +19,7 @@ module Random::Secure
   extend Random
   extend self
 
-  def next_u : UInt8
+  def next_u
     Crystal::System::Random.next_u
   end
 

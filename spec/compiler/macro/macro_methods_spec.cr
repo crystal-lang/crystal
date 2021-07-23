@@ -140,6 +140,20 @@ module Crystal
           assert_macro "x", "{{x.class_name}}", [ArrayLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "\"ArrayLiteral\""
         end
       end
+
+      describe "#nil?" do
+        it "NumberLiteral" do
+          assert_macro "", "{{ 1.nil? }}", [] of ASTNode, "false"
+        end
+
+        it "NilLiteral" do
+          assert_macro "", "{{ nil.nil? }}", [] of ASTNode, "true"
+        end
+
+        it "Nop" do
+          assert_macro "x", "{{ x.nil? }}", [Nop.new] of ASTNode, "true"
+        end
+      end
     end
 
     describe "number methods" do
@@ -262,6 +276,12 @@ module Crystal
         assert_macro "", "{{1e-123_f32.kind}}", [] of ASTNode, ":f32"
         assert_macro "", "{{1.0.kind}}", [] of ASTNode, ":f64"
         assert_macro "", "{{0xde7ec7ab1e_u64.kind}}", [] of ASTNode, ":u64"
+      end
+
+      it "#to_number" do
+        assert_macro "", "{{ 4_u8.to_number }}", [] of ASTNode, "4"
+        assert_macro "", "{{ 2147483648.to_number }}", [] of ASTNode, "2147483648"
+        assert_macro "", "{{ 1_f32.to_number }}", [] of ASTNode, "1.0"
       end
     end
 
