@@ -152,7 +152,12 @@ module HTTP
 
       def parse_cookies(header)
         header.scan(CookieString).each do |pair|
-          yield Cookie.new(pair["name"], pair["value"])
+          value = pair["value"]
+          if value.starts_with?('"')
+            # Unwrap quoted cookie value
+            value = value.byte_slice(1, value.bytesize - 2)
+          end
+          yield Cookie.new(pair["name"], value)
         end
       end
 

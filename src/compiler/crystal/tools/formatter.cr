@@ -203,6 +203,8 @@ module Crystal
       has_paren = false
       has_begin = false
 
+      empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+
       if node.keyword == :"(" && @token.type == :"("
         write "("
         next_needs_indent = false
@@ -223,7 +225,7 @@ module Crystal
         next_token
         # Corner case: an empty `begin ... end`.
         # In this case, we should not skip space because it will do in the below loop.
-        unless node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+        unless empty_expressions
           skip_space_or_newline
           if @token.type == :";"
             next_token_skip_space_or_newline
@@ -313,7 +315,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline && !last_found_comment
+      if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
         write_line
         write_indent
       end
@@ -4752,7 +4754,7 @@ module Crystal
       result = to_s.rstrip
 
       lines = result.split('\n')
-      fix_heredocs(lines, @heredoc_fixes)
+      fix_heredocs(lines)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -4775,15 +4777,26 @@ module Crystal
       result
     end
 
-    def fix_heredocs(lines, @heredoc_fixes)
+    def fix_heredocs(lines)
       @heredoc_fixes.each do |fix|
+        min_difference = (fix.start_line..fix.end_line).min_of do |line_number|
+          leading_space_count(lines[line_number], fix.difference)
+        end
+        indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
+        min_difference = Math.max(min_difference - indent_before_start, 0)
+
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
-            lines[line_number] = line[fix.difference..-1]
-          end
+          lines[line_number] = line[min_difference..]
         end
       end
+    end
+
+    def leading_space_count(line, max_count)
+      max_count.times do |index|
+        return index unless line.byte_at?(index) == 0x20 # ' '
+      end
+      max_count
     end
 
     # Align series of successive inline when/else (in a case),

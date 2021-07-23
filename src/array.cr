@@ -2031,17 +2031,7 @@ class Array(T)
   # a.unshift(1)   # => [1, "c", "a", "b"]
   # ```
   def unshift(object : T) : self
-    # If we have no more room left before the beginning of the array
-    # we make the array larger, but point the buffer to start at the middle
-    # of the entire allocated memory. In this way, if more elements are unshift
-    # later we won't need a reallocation right away. This is similar to what
-    # happens when we push and we don't have more room, except that toward
-    # the beginning.
-    if @offset_to_buffer == 0
-      double_capacity_for_unshift
-    end
-
-    # At this point we are sure @offset_to_buffer is greater than zero
+    check_needs_resize_for_unshift
     shift_buffer_by(-1)
     @buffer.value = object
     @size += 1
@@ -2129,6 +2119,34 @@ class Array(T)
 
   private def needs_resize?
     @size == remaining_capacity
+  end
+
+  private def check_needs_resize_for_unshift
+    return unless @offset_to_buffer == 0
+
+    # If we have no more room left before the beginning of the array
+    # we make the array larger, but point the buffer to start at the middle
+    # of the entire allocated memory. In this way, if more elements are unshift
+    # later we won't need a reallocation right away. This is similar to what
+    # happens when we push and we don't have more room, except that toward
+    # the beginning.
+
+    half_capacity = @capacity // 2
+    if @capacity != 0 && half_capacity != 0 && @size <= half_capacity
+      # Apply the same heuristic as the case for pushing elements to the array,
+      # but in backwards: (note that `@size` can be 0 here)
+
+      # `['c', 'd', -, -, -, -] (@size = 2)`
+      (root_buffer + half_capacity).copy_from(@buffer, @size)
+
+      # `['c', 'd', -, 'c', 'd', -]`
+      root_buffer.clear(@size)
+
+      # `[-, -, -, 'c', 'd', -]`
+      shift_buffer_by(half_capacity)
+    else
+      double_capacity_for_unshift
+    end
   end
 
   def remaining_capacity : Int32

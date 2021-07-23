@@ -4147,6 +4147,7 @@ module Crystal
         block_arg = call_args.block_arg
         named_args = call_args.named_args
         has_parentheses = call_args.has_parentheses
+        force_call ||= has_parentheses || (args.try(&.empty?) == false) || (named_args.try(&.empty?) == false)
       else
         has_parentheses = false
       end
@@ -4189,8 +4190,8 @@ module Crystal
           call
         else
           if args
-            maybe_var = !force_call && is_var && !has_parentheses
-            if maybe_var && args.size == 0
+            maybe_var = !force_call && is_var
+            if maybe_var
               Var.new(name)
             else
               call = Call.new(nil, name, args, nil, nil, named_args, global)
@@ -4209,7 +4210,7 @@ module Crystal
               end
               Var.new(name)
             else
-              if !force_call && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+              if !force_call && !named_args && !global && @assigned_vars.includes?(name)
                 raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 

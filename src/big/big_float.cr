@@ -194,6 +194,7 @@ struct BigFloat < Float
   end
 
   def to_i64
+    raise OverflowError.new unless LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
     LibGMP.mpf_get_si(self)
   end
 
@@ -234,7 +235,7 @@ struct BigFloat < Float
   end
 
   def to_u64
-    raise OverflowError.new if self < 0
+    raise OverflowError.new unless 0 <= self <= LibGMP::ULong::MAX
     LibGMP.mpf_get_ui(self)
   end
 
