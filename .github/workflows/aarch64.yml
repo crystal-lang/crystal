@@ -10,7 +10,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Build Crystal
-        uses: docker://jhass/crystal:0.35.0-alpine-build
+        uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make crystal
       - name: Upload Crystal executable
@@ -51,7 +51,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
-        uses: docker://jhass/crystal:0.35.0-alpine-build
+        uses: docker://jhass/crystal:1.0.0-alpine-build
         with:
           args: make compiler_spec
   gnu-build:
@@ -61,7 +61,7 @@ jobs:
       - name: Download Crystal source
         uses: actions/checkout@v2
       - name: Build Crystal
-        uses: docker://jhass/crystal:0.35.0-build
+        uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make crystal
       - name: Upload Crystal executable
@@ -84,7 +84,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
-        uses: docker://jhass/crystal:0.35.0-build
+        uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make std_spec
   gnu-test-compiler:
@@ -102,6 +102,6 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
-        uses: docker://jhass/crystal:0.35.0-build
+        uses: docker://jhass/crystal:1.0.0-build
         with:
           args: make compiler_spec

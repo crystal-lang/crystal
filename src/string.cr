@@ -817,7 +817,7 @@ class String
   # s[-2..-4] # => ""
   # s[-2..1]  # => ""
   # s[3..-4]  # => ""
-  # ``` : String
+  # ```
   def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
@@ -3035,7 +3035,7 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -3051,7 +3051,7 @@ class String
   end
 
   # :ditto:
-  def index(search : String, offset = 0) : Int32?
+  def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
 
@@ -3127,7 +3127,7 @@ class String
   # "Hello, World".rindex("o", 5) # => 4
   # "Hello, World".rindex("W", 2) # => nil
   # ```
-  def rindex(search : Char, offset = size - 1) : Int32?
+  def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
@@ -5010,7 +5010,7 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte(name = nil) : String
+  def check_no_null_byte(name = nil) : self
     if byte_index(0)
       name = "`#{name}` " if name
       raise ArgumentError.new("String #{name}contains null byte")
