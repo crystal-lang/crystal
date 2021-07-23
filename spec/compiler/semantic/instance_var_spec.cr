@@ -297,6 +297,60 @@ describe "Semantic: instance var" do
       )) { static_array_of(uint8, 3) }
   end
 
+  it "declares instance var of generic type, with splat" do
+    assert_type(%(
+      class Gen(*T)
+      end
+
+      class Foo(*T)
+        @x : Gen(*T)
+
+        def initialize(@x : Gen(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Gen(Int32, String).new).x
+      )) { generic_class "Gen", int32, string }
+  end
+
+  it "declares instance var of generic type, with splat inside Tuple" do
+    assert_type(%(
+      class Foo(*T)
+        @x : Tuple(*T)
+
+        def initialize(@x : Tuple(*T))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new({1, ""}).x
+      )) { tuple_of([int32, string]) }
+  end
+
+  it "declares instance var of generic type, with splat inside Proc" do
+    assert_type(%(
+      class Foo(R, *T)
+        @x : Proc(*T, R)
+
+        def initialize(@x : Proc(*T, R))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(->(x : Int32, y : String) { true }).x
+      )) { proc_of([int32, string, bool]) }
+  end
+
   it "declares instance var with self, on generic" do
     assert_type(%(
       class Foo(T)

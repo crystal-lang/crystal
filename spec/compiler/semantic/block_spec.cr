@@ -1475,4 +1475,20 @@ describe "Block inference" do
       end
       )) { tuple_of([int32, int32]) }
   end
+
+  it "allows underscore in block return type even if the return type can't be computed" do
+    semantic(%(
+      def foo(& : -> _)
+        yield
+      end
+
+      def recursive
+        if true
+          foo { recursive }
+        end
+      end
+
+      recursive
+      ))
+  end
 end

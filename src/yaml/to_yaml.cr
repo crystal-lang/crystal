@@ -1,11 +1,11 @@
 class Object
-  def to_yaml
+  def to_yaml : String
     String.build do |io|
       to_yaml(io)
     end
   end
 
-  def to_yaml(io : IO)
+  def to_yaml(io : IO) : Nil
     # First convert the object to an in-memory tree.
     # With this, `to_yaml` will be invoked just once
     # on every object and we can use anchors and aliases
@@ -21,7 +21,7 @@ class Object
 end
 
 class Hash
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.mapping(reference: self) do
       each do |key, value|
         key.to_yaml(yaml)
@@ -32,7 +32,7 @@ class Hash
 end
 
 class Array
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.sequence(reference: self) do
       each &.to_yaml(yaml)
     end
@@ -40,7 +40,7 @@ class Array
 end
 
 struct Tuple
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.sequence do
       each &.to_yaml(yaml)
     end
@@ -59,7 +59,7 @@ struct NamedTuple
 end
 
 class String
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     if YAML::Schema::Core.reserved_string?(self)
       yaml.scalar self, style: YAML::ScalarStyle::DOUBLE_QUOTED
     else
@@ -69,19 +69,19 @@ class String
 end
 
 struct Path
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     @name.to_yaml(yaml)
   end
 end
 
 struct Number
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar self.to_s
   end
 end
 
 struct Float
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     infinite = self.infinite?
     if infinite == 1
       yaml.scalar(".inf")
@@ -96,19 +96,19 @@ struct Float
 end
 
 struct Nil
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar ""
   end
 end
 
 struct Bool
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar self
   end
 end
 
 struct Set
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.sequence do
       each &.to_yaml(yaml)
     end
@@ -116,7 +116,7 @@ struct Set
 end
 
 struct Symbol
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar self
   end
 end
@@ -221,25 +221,25 @@ module Enum::ValueConverter(T)
 end
 
 struct Time
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar Time::Format::YAML_DATE.format(self)
   end
 end
 
 struct Time::Format
-  def to_yaml(value : Time, yaml : YAML::Nodes::Builder)
+  def to_yaml(value : Time, yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar format(value)
   end
 end
 
 module Time::EpochConverter
-  def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder)
+  def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar value.to_unix
   end
 end
 
 module Time::EpochMillisConverter
-  def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder)
+  def self.to_yaml(value : Time, yaml : YAML::Nodes::Builder) : Nil
     yaml.scalar value.to_unix_ms
   end
 end
@@ -272,7 +272,7 @@ module YAML::ArrayConverter(Converter)
 end
 
 struct Slice
-  def to_yaml(yaml : YAML::Nodes::Builder)
+  def to_yaml(yaml : YAML::Nodes::Builder) : Nil
     {% if T != UInt8 %}
       {% raise "Can only serialize Slice(UInt8), not #{@type}}" %}
     {% end %}

@@ -249,7 +249,7 @@ class Dir
   end
 
   # Removes the directory at the given path.
-  def self.delete(path : Path | String)
+  def self.delete(path : Path | String) : Nil
     Crystal::System::Dir.delete(path.to_s)
   end
 
