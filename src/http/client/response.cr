@@ -33,6 +33,10 @@ class HTTP::Client::Response
     @body
   end
 
+  def body_io? : IO?
+    @body_io
+  end
+
   # Returns `true` if the response status code is between 200 and 299.
   def success? : Bool
     @status.success?
