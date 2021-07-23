@@ -90,7 +90,7 @@ class Crystal::Doc::Generator
 
   def generate_sitemap(types)
     if sitemap_base_url = @sitemap_base_url
-      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, "1.0", "never")
+      File.write File.join(@output_dir, "sitemap.xml"), SitemapTemplate.new(types, sitemap_base_url, @sitemap_priority, @sitemap_changefreq)
     end
   end
 
