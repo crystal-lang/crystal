@@ -526,6 +526,7 @@ describe Crystal::Formatter do
   assert_format "x  :   Int32[ 8 ]", "x : Int32[8]"
   assert_format "x  :   (A | B)", "x : (A | B)"
   assert_format "x  :   (A -> B)", "x : (A -> B)"
+  assert_format "x  :   (A -> )", "x : (A ->)"
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
   assert_format "x  :   {A, B}", "x : {A, B}"
   assert_format "x : { {A, B}, {C, D} }"
