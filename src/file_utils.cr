@@ -89,7 +89,7 @@ module FileUtils
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
   def cp(src_path : Path | String, dest : Path | String) : Nil
-    dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+    dest = Path[dest, File.basename(src_path)] if Dir.exists?(dest)
     File.copy(src_path, dest)
   end
 
