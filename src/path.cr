@@ -194,29 +194,29 @@ struct Path
   def dirname : String
     return "." if @name.empty?
     slice = @name.to_slice
-    sep = separators.map &.ord
+    sep = self.separators.map &.ord
     pos = slice.size - 1
     stage = 0
 
     slice.reverse_each do |byte|
-      is_seperator = byte.in? sep
+      is_separator = byte.in? sep
       # The stages are ordered like this to improve performance
-      # Trailing seperators are possible but unlikely (stage 0)
-      # There will probably only be one seperator between filename and dirname (stage 2)
+      # Trailing separators are possible but unlikely (stage 0)
+      # There will probably only be one separator between filename and dirname (stage 2)
       # There will probably be multiple characters in the filename which need to be skipped (stage 1)
       case stage
-      when 1 # Wait until seperator
-        stage += 1 if is_seperator
-      when 2 # Remove trailing seperators
-        break unless is_seperator
-      when 0 # Wait until past trailing seperators
-        stage += 1 unless is_seperator
+      when 1 # Wait until separator
+        stage += 1 if is_separator
+      when 2 # Remove trailing separators
+        break unless is_separator
+      when 0 # Wait until past trailing separators
+        stage += 1 unless is_separator
       end
       pos -= 1
     end
 
     case stage
-    when 0 # Path only consists of seperators
+    when 0 # Path only consists of separators
       String.new(slice[0, 1])
     when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
       return anchor.to_s if windows? && windows_drive?
@@ -353,21 +353,21 @@ struct Path
   def extension : String
     return "" if @name.bytesize < 3
     bytes = @name.to_slice
-    separators = separators().map &.ord
+    separators = self.separators.map &.ord
 
-    # Ignore trailing seperators
+    # Ignore trailing separators
     offset = bytes.size - 1
     while bytes.unsafe_fetch(offset).in? separators
       return "" if offset == 0
       offset -= 1
     end
 
-    # Get the first occurance of a seperator or a '.' past the trailing seperators (or return "")
-    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators } || return ""
+    # Get the first occurrence of a separator or a '.' past the trailing separators (or return "")
+    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators } || 0
 
     # Return "" if '.' is the first character (ex. ".dotfile"),
-    # or if the '.' character follows after a seperator (ex. "pathto/.dotfile")
-    # or if the character at the returned index is a seperator (ex. "no/extension")
+    # or if the '.' character follows after a separator (ex. "pathto/.dotfile")
+    # or if the character at the returned index is a separator (ex. "no/extension")
     # or if the filename ends with a '.'
     return "" if dot_index == 0 ||
                  dot_index == offset ||
