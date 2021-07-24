@@ -1603,6 +1603,8 @@ module Crystal
     end
 
     def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
+      return if instance.unbound?
+
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance.metaclass
