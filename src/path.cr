@@ -369,10 +369,10 @@ struct Path
     # or if the '.' character follows after a separator (ex. "pathto/.dotfile")
     # or if the character at the returned index is a separator (ex. "no/extension")
     # or if the filename ends with a '.'
-    return "" if dot_index == 0 ||
-                 dot_index == offset ||
-                 bytes.unsafe_fetch(dot_index - 1).in?(separators) ||
-                 bytes.unsafe_fetch(dot_index).in?(separators)
+    return "" if dot_index == 0
+    return "" if dot_index == offset
+    return "" if bytes.unsafe_fetch(dot_index - 1).in?(separators)
+    return "" if bytes.unsafe_fetch(dot_index).in?(separators)
 
     String.new(bytes[dot_index, offset - dot_index + 1])
   end
