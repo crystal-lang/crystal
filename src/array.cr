@@ -1704,8 +1704,8 @@ class Array(T)
   # a.sort # => [1, 2, 3]
   # a      # => [3, 1, 2]
   # ```
-  def sort : Array(T)
-    dup.sort!
+  def sort(*, stable : Bool = true) : Array(T)
+    dup.sort!(stable: stable)
   end
 
   # Returns a new array with all elements sorted based on the comparator in the
@@ -1722,12 +1722,12 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Array(T) forall U
+  def sort(*, stable : Bool = true, &block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    dup.sort! &block
+    dup.sort!(stable: stable, &block)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
@@ -1738,8 +1738,8 @@ class Array(T)
   # a.sort!
   # a # => [1, 2, 3]
   # ```
-  def sort! : Array(T)
-    Slice.new(to_unsafe, size).sort!
+  def sort!(*, stable : Bool = true) : Array(T)
+    Slice.new(to_unsafe, size).sort!(stable: stable)
     self
   end
 
@@ -1756,12 +1756,12 @@ class Array(T)
   # a.sort! { |a, b| b <=> a }
   # a # => [3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : Array(T) forall U
+  def sort!(*, stable : Bool = true, &block : T, T -> U) : Array(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    Slice.new(to_unsafe, size).sort!(&block)
+    Slice.new(to_unsafe, size).sort!(stable: stable, &block)
     self
   end
 
@@ -1775,8 +1775,8 @@ class Array(T)
   # b # => ["fig", "pear", "apple"]
   # a # => ["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Array(T)
-    dup.sort_by! { |e| yield(e) }
+  def sort_by(*, stable : Bool = true, &block : T -> _) : Array(T)
+    dup.sort_by!(stable: stable) { |e| yield(e) }
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
@@ -1788,8 +1788,8 @@ class Array(T)
   # a.sort_by! { |word| word.size }
   # a # => ["fig", "pear", "apple"]
   # ```
-  def sort_by!(&block : T -> _) : Array(T)
-    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+  def sort_by!(*, stable : Bool = true, &block : T -> _) : Array(T)
+    sorted = map { |e| {e, yield(e)} }.sort!(stable: stable) { |x, y| x[1] <=> y[1] }
     @size.times do |i|
       @buffer[i] = sorted.to_unsafe[i][0]
     end
