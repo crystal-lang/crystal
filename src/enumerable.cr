@@ -654,7 +654,7 @@ module Enumerable(T)
   # ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
   # # => {4 => "Anna", 3 => "Bob", 5 => "Alice"}
   # ```
-  def index_by(&block : T -> U) forall U
+  def index_by(&block : T -> U) : Hash(U, T) forall U
     hash = {} of U => T
     each do |elem|
       hash[yield elem] = elem
