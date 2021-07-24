@@ -393,6 +393,43 @@ class String
 end
 
 module Math
+  # Returns the unbiased base 2 exponent of the given floating-point *value*.
+  def ilogb(value : BigFloat) : Int64
+    LibGMP.mpf_get_d_2exp(out exp, value)
+    (exp - 1).to_i64
+  end
+
+  # Returns the unbiased radix-independent exponent of the given floating-point *value*.
+  #
+  # For `BigFloat` this is equivalent to `ilogb`.
+  def logb(value : BigFloat) : BigFloat
+    LibGMP.mpf_get_d_2exp(out exp, value)
+    (exp - 1).to_big_f
+  end
+
+  # Multiplies the given floating-point *value* by 2 raised to the power *exp*.
+  def ldexp(value : BigFloat, exp : Int) : BigFloat
+    BigFloat.new do |mpf|
+      if exp >= 0
+        LibGMP.mpf_mul_2exp(mpf, value, exp.to_u64)
+      else
+        LibGMP.mpf_div_2exp(mpf, value, exp.abs.to_u64)
+      end
+    end
+  end
+
+  # Returns the floating-point *value* with its exponent raised by *exp*.
+  #
+  # For `BigFloat` this is equivalent to `ldexp`.
+  def scalbn(value : BigFloat, exp : Int) : BigFloat
+    ldexp(value, exp)
+  end
+
+  # :ditto:
+  def scalbln(value : BigFloat, exp : Int) : BigFloat
+    ldexp(value, exp)
+  end
+
   # Decomposes the given floating-point *value* into a normalized fraction and an integral power of two.
   def frexp(value : BigFloat) : {BigFloat, Int32 | Int64}
     LibGMP.mpf_get_d_2exp(out exp, value) # we need BigFloat frac, so will skip Float64 one.
@@ -404,6 +441,17 @@ module Math
       end
     end
     {frac, exp}
+  end
+
+  # Returns the floating-point value with the magnitude of *value1* and the sign of *value2*.
+  #
+  # `BigFloat` does not support signed zeros; if `value2 == 0`, the returned value is non-negative.
+  def copysign(value1 : BigFloat, value2 : BigFloat) : BigFloat
+    if value1.negative? != value2.negative? # opposite signs
+      -value1
+    else
+      value1
+    end
   end
 
   # Calculates the square root of *value*.
