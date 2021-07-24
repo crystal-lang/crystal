@@ -168,6 +168,6 @@ lib LibLLVMExt
 
   {% unless LibLLVM::IS_38 %}
     # LLVMCreateTypeAttribute is implemented in LLVM 13, but needed in 12
-    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef): LibLLVM::AttributeRef
+    fun create_type_attribute = LLVMExtCreateTypeAttribute(ctx : LibLLVM::ContextRef, kind_id : LibC::UInt, ty : LibLLVM::TypeRef) : LibLLVM::AttributeRef
   {% end %}
 end
