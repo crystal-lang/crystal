@@ -351,22 +351,30 @@ struct Path
   # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
-    return @name if @name.empty?
+    return "" if @name.bytesize < 3
     bytes = @name.to_slice
-    sep = separators.map &.ord
+    separators = separators().map &.ord
 
     # Ignore trailing seperators
-    pos = bytes.size - 1
-    while bytes.unsafe_fetch(pos).in? sep
-      return "" if pos == 0
-      pos -= 1
+    offset = bytes.size - 1
+    while bytes.unsafe_fetch(offset).in? separators
+      return "" if offset == 0
+      offset -= 1
     end
 
-    # 46_u8 is the ascii code of '.'
-    dot_index = bytes.rindex(46_u8, offset: pos) || return ""
-    return "" if dot_index == 0 || dot_index == pos || bytes.unsafe_fetch(dot_index - 1).in? sep
+    # Get the first occurance of a seperator or a '.' past the trailing seperators (or return "")
+    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators } || return ""
 
-    String.new(bytes[dot_index, pos - dot_index + 1])
+    # Return "" if '.' is the first character (ex. ".dotfile"),
+    # or if the '.' character follows after a seperator (ex. "pathto/.dotfile")
+    # or if the character at the returned index is a seperator (ex. "no/extension")
+    # or if the filename ends with a '.'
+    return "" if dot_index == 0 ||
+                 dot_index == offset ||
+                 bytes.unsafe_fetch(dot_index - 1).in?(separators) ||
+                 bytes.unsafe_fetch(dot_index).in?(separators)
+
+    String.new(bytes[dot_index, offset - dot_index + 1])
   end
 
   # Returns the last component of this path without the extension.
