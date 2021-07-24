@@ -223,11 +223,7 @@ struct BitArray
   # ba.to_s # => "BitArray[01110]"
   # ```
   def toggle(start : Int, count : Int)
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    start += size if start < 0
-    raise IndexError.new unless 0 <= start <= size
-    count = {count, size - start}.min
+    start, count = normalize_start_and_count(start, count)
 
     start_bit_index, start_sub_index = start.divmod(32)
     end_bit_index, end_sub_index = (start + count - 1).divmod(32)
