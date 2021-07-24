@@ -329,6 +329,38 @@ struct StaticArray(T, N)
     self
   end
 
+  # Returns a new `StaticArray` with all elements sorted. The given block is
+  # called for each element, then the comparison method `#<=>` is called on the
+  # object returned from the block to determine sort order.
+  #
+  # ```
+  # a = StaticArray["apple", "pear", "fig"]
+  # b = a.sort_by { |word| word.size }
+  # b # => StaticArray["fig", "pear", "apple"]
+  # a # => StaticArray["apple", "pear", "fig"]
+  # ```
+  def sort_by(*, stable : Bool = true, &block : T -> _) : StaticArray(T, N)
+    ary = dup
+    ary.sort_by!(stable: stable) { |e| yield(e) }
+  end
+
+  # Modifies `self` by sorting all elements. The given block is called for
+  # each element, then the comparison method `#<=>` is called on the object
+  # returned from the block to determine sort order.
+  #
+  # ```
+  # a = StaticArray["apple", "pear", "fig"]
+  # a.sort_by! { |word| word.size }
+  # a # => StaticArray["fig", "pear", "apple"]
+  # ```
+  def sort_by!(*, stable : Bool = true, &block : T -> _) : self
+    sorted = map { |e| {e, yield(e)} }.sort!(stable: stable) { |x, y| x[1] <=> y[1] }
+    N.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
   # Returns a slice that points to the elements of this static array.
   # Changes made to the returned slice also affect this static array.
   #

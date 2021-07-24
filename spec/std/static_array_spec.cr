@@ -213,6 +213,38 @@ describe "StaticArray" do
     end
   end
 
+  describe "sort_by" do
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by" do
+          a = StaticArray["foo", "a", "hello"]
+          b = a.sort_by(stable: stable, &.size)
+          b.to_a.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+      end
+    end
+  end
+
+  describe "sort_by!" do
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by!" do
+          a = StaticArray["foo", "a", "hello"]
+          a.sort_by!(stable: stable, &.size)
+          a.to_a.should eq(["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = StaticArray["foo", "a", "hello"]
+          a.sort_by!(stable: stable) { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
+      end
+    end
+  end
+
   it_iterates "#each", [1, 2, 3], StaticArray[1, 2, 3].each
   it_iterates "#reverse_each", [3, 2, 1], StaticArray[1, 2, 3].reverse_each
   it_iterates "#each_index", [0, 1, 2], StaticArray[1, 2, 3].each_index
