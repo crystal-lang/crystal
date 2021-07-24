@@ -13,6 +13,8 @@
 # tuple[2]                  # => 'x'
 # ```
 #
+# See [`Tuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/tuple.html) in the language reference.
+#
 # The compiler knows what types are in each position, so when indexing
 # a tuple with an integer literal the compiler will return
 # the value in that index and with the expected type, like in the above

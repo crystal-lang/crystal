@@ -61,24 +61,40 @@ private class SafeRecursiveIndexable
 end
 
 describe Indexable do
-  it "does index with big negative offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.index(0, -100).should be_nil
+  describe "#index" do
+    it "does index with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(0, -100).should be_nil
+    end
+
+    it "does index with big offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(0, 100).should be_nil
+    end
+
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.index(1, 0_i64).should eq 1
+      indexable.index(1, 0_i64).should be_a(Int64)
+    end
   end
 
-  it "does index with big offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.index(0, 100).should be_nil
-  end
+  describe "#rindex" do
+    it "does rindex with big negative offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(0, -100).should be_nil
+    end
 
-  it "does rindex with big negative offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.rindex(0, -100).should be_nil
-  end
+    it "does rindex with big offset" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(0, 100).should be_nil
+    end
 
-  it "does rindex with big offset" do
-    indexable = SafeIndexable.new(3)
-    indexable.rindex(0, 100).should be_nil
+    it "offset type" do
+      indexable = SafeIndexable.new(3)
+      indexable.rindex(1, 2_i64).should eq 1
+      indexable.rindex(1, 2_i64).should be_a(Int64)
+    end
   end
 
   it "does each" do

@@ -1,6 +1,9 @@
+require "c/int_safe"
+
 lib LibC
   alias BOOLEAN = BYTE
   alias LONG = Int32
+  alias LARGE_INTEGER = Int64
 
   alias CHAR = UChar
   alias WCHAR = UInt16

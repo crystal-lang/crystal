@@ -50,7 +50,7 @@ abstract class CSV::Lexer
   private abstract def current_char
 
   # Returns the next `Token` in this CSV.
-  def next_token
+  def next_token : CSV::Token
     if @last_empty_column
       @last_empty_column = false
       @token.kind = Token::Kind::Cell

@@ -55,13 +55,13 @@ class Log::Metadata
 
   # Returns a `Metadata` with the information of the argument.
   # Used to handle `Log::Context#set` and `Log#Emitter.emit` overloads.
-  def self.build(value : NamedTuple | Hash)
+  def self.build(value : NamedTuple | Hash) : self
     return @@empty if value.empty?
     Metadata.new(nil, value)
   end
 
   # :ditto:
-  def self.build(value : Metadata)
+  def self.build(value : Metadata) : Metadata
     value
   end
 
@@ -74,7 +74,7 @@ class Log::Metadata
     Metadata.new(self, other)
   end
 
-  def empty?
+  def empty? : Bool
     parent = @parent
 
     @size == 0 && (parent.nil? || parent.empty?)
@@ -213,7 +213,7 @@ class Log::Metadata
     end
 
     # :nodoc:
-    def self.to_metadata_value(value)
+    def self.to_metadata_value(value) : Metadata::Value
       value.is_a?(Value) ? value : Value.new(value)
     end
   end
