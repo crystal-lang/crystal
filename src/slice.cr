@@ -83,7 +83,7 @@ struct Slice(T)
   # slice # => Bytes[0, 0, 0]
   # ```
   def self.new(size : Int, *, read_only = false)
-    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+    {% unless Number::Primitive.union_types.includes?(T) %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
