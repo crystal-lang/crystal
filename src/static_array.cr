@@ -264,11 +264,11 @@ struct StaticArray(T, N)
   # a.sort # => StaticArray[1, 2, 3]
   # a      # => StaticArray[3, 1, 2]
   # ```
-  def sort : StaticArray(T, N)
+  def sort(*, stable : Bool = true) : StaticArray(T, N)
     # the return value of `dup` must be assigned to a variable first, otherwise
     # `self` will be mutated if the `sort!` call is chained directly
     ary = dup
-    ary.sort!
+    ary.sort!(stable: stable)
   end
 
   # Returns a new `StaticArray` with all elements sorted based on the comparator
@@ -285,13 +285,13 @@ struct StaticArray(T, N)
   # b # => StaticArray[3, 2, 1]
   # a # => StaticArray[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : StaticArray(T, N) forall U
+  def sort(*, stable : Bool = true, &block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     ary = dup
-    ary.sort! &block
+    ary.sort!(stable: stable, &block)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
@@ -302,8 +302,8 @@ struct StaticArray(T, N)
   # a.sort!
   # a # => StaticArray[1, 2, 3]
   # ```
-  def sort! : self
-    to_slice.sort!
+  def sort!(*, stable : Bool = true) : self
+    to_slice.sort!(stable: stable)
     self
   end
 
@@ -320,12 +320,12 @@ struct StaticArray(T, N)
   # a.sort! { |a, b| b <=> a }
   # a # => StaticArray[3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : self forall U
+  def sort!(*, stable : Bool = true, &block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    to_slice.sort!(&block)
+    to_slice.sort!(stable: stable, &block)
     self
   end
 
