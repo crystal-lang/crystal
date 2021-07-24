@@ -481,11 +481,15 @@ struct NamedTuple
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
   def map
-    array = Array(typeof(yield first_key_internal, first_value_internal)).new(size)
-    each do |k, v|
-      array.push yield k, v
-    end
-    array
+    {% if T.size == 0 %}
+      [] of NoReturn
+    {% else %}
+      [
+        {% for key in T %}
+          (yield {{ key.symbolize }}, self[{{ key.symbolize }}]),
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a new `Array` of tuples populated with each key-value pair.

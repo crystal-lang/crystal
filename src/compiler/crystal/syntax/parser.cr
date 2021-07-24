@@ -1886,45 +1886,34 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token
-        if @token.type == :"="
+        if consume_def_equals_sign_skip_space
           name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-          if @token.type == :"."
-            second_name = consume_def_or_macro_name
-            if name != "self" && !@def_vars.last.includes?(name)
-              raise "undefined variable '#{name}'", location.line_number, location.column_number
-            end
-            obj = Var.new(name)
-            name = second_name
-            next_token
-            if @token.type == :"="
-              name = "#{name}="
-              next_token_skip_space
-            else
-              skip_space
-            end
+        elsif @token.type == :"."
+          if name != "self" && !@def_vars.last.includes?(name)
+            raise "undefined variable '#{name}'", location.line_number, location.column_number
           end
+          obj = Var.new(name)
+
+          name = consume_def_or_macro_name
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         end
       when :CONST
         obj = parse_generic
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         unexpected_token
       end
@@ -3002,12 +2991,7 @@ module Crystal
         raise "macro can't have a receiver"
       when :IDENT
         check_valid_def_name
-        next_token
-        if @token.type == :"="
-          name += '='
-          next_token
-        end
-        skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         check_valid_def_op_name
         next_token_skip_space
@@ -3440,14 +3424,7 @@ module Crystal
       elsif @token.type == :IDENT
         check_valid_def_name
         name = @token.value.to_s
-
-        next_token
-        if @token.type == :"="
-          name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-        end
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         check_valid_def_op_name
         name = @token.type.to_s
@@ -3474,13 +3451,7 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          next_token
-          if @token.type == :"="
-            name = "#{name}="
-            next_token_skip_space
-          else
-            skip_space
-          end
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
@@ -5975,6 +5946,17 @@ module Crystal
       check DefOrMacroCheck1
       @wants_def_or_macro_name = false
       @token.to_s
+    end
+
+    def consume_def_equals_sign_skip_space
+      next_token
+      if @token.type == :"="
+        next_token_skip_space
+        true
+      else
+        skip_space
+        false
+      end
     end
 
     def push_def
