@@ -1864,7 +1864,7 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_string.should eq("top_level")
+      )).to_string.should eq("main")
   end
 
   it "responds correctly to has_constant? with @top_level" do
