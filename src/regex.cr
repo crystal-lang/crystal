@@ -12,6 +12,8 @@ require "./regex/*"
 # /y/.match("haystack") # => Regex::MatchData("y")
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # Interpolation works in regular expression literals just as it does in string
 # literals. Be aware that using this feature will cause an exception to be
 # raised at runtime, if the resulting string would not be a valid regular

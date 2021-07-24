@@ -14,6 +14,8 @@
 # language[:other] # compile time error
 # ```
 #
+# See [`NamedTuple` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/named_tuple.html) in the language reference.
+#
 # The compiler knows what types are in each key, so when indexing a named tuple
 # with a symbol literal the compiler will return the value for that key and
 # with the expected type, like in the above snippet. Indexing with a symbol
@@ -479,11 +481,15 @@ struct NamedTuple
   # tuple.map { |k, v| "#{k}: #{v}" } # => ["name: Crystal", "year: 2011"]
   # ```
   def map
-    array = Array(typeof(yield first_key_internal, first_value_internal)).new(size)
-    each do |k, v|
-      array.push yield k, v
-    end
-    array
+    {% if T.size == 0 %}
+      [] of NoReturn
+    {% else %}
+      [
+        {% for key in T %}
+          (yield {{ key.symbolize }}, self[{{ key.symbolize }}]),
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a new `Array` of tuples populated with each key-value pair.

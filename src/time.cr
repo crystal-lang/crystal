@@ -704,7 +704,7 @@ struct Time
       # are applied to the equivalent UTC representation of this local time.
       seconds += offset_seconds
     else
-      year, month, day, _ = to_utc.year_month_day_day_year
+      year, month, day, _ = year_month_day_day_year
 
       year += years
 
@@ -723,8 +723,7 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += @seconds % SECONDS_PER_DAY
-      seconds += offset
+      seconds += offset_seconds % SECONDS_PER_DAY
     end
 
     # FIXME: These operations currently don't have overflow checks applied.

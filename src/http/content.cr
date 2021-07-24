@@ -60,7 +60,7 @@ module HTTP
 
     def read(slice : Bytes) : Int32
       ensure_send_continue
-      @io.read(slice)
+      @io.read(slice).to_i32
     end
 
     def read_byte : UInt8?
@@ -73,7 +73,7 @@ module HTTP
       @io.peek
     end
 
-    def skip(bytes_count) : Int32?
+    def skip(bytes_count) : Nil
       ensure_send_continue
       @io.skip(bytes_count)
     end
@@ -123,7 +123,7 @@ module HTTP
 
       to_read = Math.min(count, @chunk_remaining)
 
-      bytes_read = @io.read slice[0, to_read]
+      bytes_read = @io.read(slice[0, to_read]).to_i32
 
       if bytes_read == 0
         raise IO::EOFError.new("Invalid HTTP chunked content")
@@ -164,7 +164,7 @@ module HTTP
       peek
     end
 
-    def skip(bytes_count) : Int32?
+    def skip(bytes_count) : Nil
       ensure_send_continue
       if bytes_count <= @chunk_remaining
         @io.skip(bytes_count)
