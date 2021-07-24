@@ -192,40 +192,40 @@ struct Path
   # Path["/foo/bar/file.cr"].dirname # => "/foo/bar"
   # ```
   def dirname : String
-    reader = Char::Reader.new(at_end: @name)
-    separators = self.separators
-    # skip trailing separators
-    while separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
-    end
+    return "." if @name.empty?
+    slice = @name.to_slice
+    sep = separators.map &.ord
+    pos = slice.size - 1
+    stage = 0
 
-    # skip last component
-    while !separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
-    end
-
-    if reader.pos == 0 && !separators.includes?(reader.current_char)
-      if windows? && windows_drive?
-        return anchor.to_s
-      else
-        return "."
+    slice.reverse_each do |byte|
+      is_seperator = byte.in? sep
+      # The stages are ordered like this to improve performance
+      # Trailing seperators are possible but unlikely (stage 0)
+      # There will probably only be one seperator between filename and dirname (stage 2)
+      # There will probably be multiple characters in the filename which need to be skipped (stage 1)
+      case stage
+      when 1 # Wait until seperator
+        stage += 1 if is_seperator
+      when 2 # Remove trailing seperators
+        break unless is_seperator
+      when 0 # Wait until past trailing seperators
+        stage += 1 unless is_seperator
       end
+      pos -= 1
     end
 
-    # strip trailing separators
-    while separators.includes?(reader.current_char) && reader.pos > 0
-      reader.previous_char
+    case stage
+    when 0 # Path only consists of seperators
+      String.new(slice[0,1])
+    when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
+      return anchor.to_s if windows? && windows_drive?
+      "."
+    else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
+      return String.new(slice[0,1]) if pos == -1
+      return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
+      String.new(slice[0, pos + 1])
     end
-
-    if reader.pos == 0
-      return reader.current_char.to_s
-    end
-
-    if windows? && reader.current_char == ':' && reader.pos == 1 && (anchor = self.anchor)
-      return anchor.to_s
-    end
-
-    @name.byte_slice(0, reader.pos + reader.current_char_width)
   end
 
   # Returns the parent path of this path.
@@ -351,49 +351,22 @@ struct Path
   # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
+    return @name if @name.empty?
     bytes = @name.to_slice
+    sep = separators.map &.ord
 
-    return "" if bytes.empty?
-
-    slice_end = bytes.size
-    current = slice_end - 1
-
-    separators = self.separators.map &.ord
-
-    # ignore trailing separators
-    while separators.includes?(bytes[current]) && current > 0
-      current -= 1
-      slice_end -= 1
+    # Ignore trailing seperators
+    pos = bytes.size - 1
+    while bytes.unsafe_fetch(pos).in? sep
+      return "" if pos == 0
+      pos -= 1
     end
 
-    # if the pattern is `foo.`, it has no extension
-    return "" if bytes[current] == '.'.ord
+    # 46_u8 is the ascii code of '.'
+    dot_index = bytes.rindex(46_u8, offset: pos) || return ""
+    return "" if dot_index == 0 || dot_index == pos || bytes.unsafe_fetch(dot_index-1).in? sep
 
-    # position the reader at the last `.` or SEPARATOR
-    # that is not the first char
-    while !separators.includes?(bytes[current]) &&
-          bytes[current] != '.'.ord &&
-          current > 0
-      current -= 1
-    end
-
-    # if we are the beginning of the string there is no extension
-    # `/foo` and `.foo` have no extension
-    return "" unless current > 0
-
-    # otherwise we are not at the beginning, and there is a previous char.
-    # if current is '/', then the pattern is prefix/foo and has no extension
-    return "" if separators.includes?(bytes[current])
-
-    # otherwise the current_char is '.'
-    # if previous is '/', then the pattern is `prefix/.foo`  and has no extension
-    return "" if separators.includes?(bytes[current - 1])
-
-    # So the current char is '.',
-    # we are not at the beginning,
-    # the previous char is not a '/',
-    # and we have an extension
-    String.new(bytes[current, slice_end - current])
+    String.new(bytes[dot_index, pos - dot_index + 1])
   end
 
   # Returns the last component of this path without the extension.
