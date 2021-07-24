@@ -217,12 +217,12 @@ struct Path
 
     case stage
     when 0 # Path only consists of seperators
-      String.new(slice[0,1])
+      String.new(slice[0, 1])
     when 1 # Path has no parent (ex. "hello/", "C:/", "crystal")
       return anchor.to_s if windows? && windows_drive?
       "."
     else # Path has a parent (ex. "a/a", "/home/user//", "C://Users/mmm")
-      return String.new(slice[0,1]) if pos == -1
+      return String.new(slice[0, 1]) if pos == -1
       return anchor.to_s if windows? && pos == 1 && slice.unsafe_fetch(pos) === ':' && (anchor = self.anchor)
       String.new(slice[0, pos + 1])
     end
@@ -364,7 +364,7 @@ struct Path
 
     # 46_u8 is the ascii code of '.'
     dot_index = bytes.rindex(46_u8, offset: pos) || return ""
-    return "" if dot_index == 0 || dot_index == pos || bytes.unsafe_fetch(dot_index-1).in? sep
+    return "" if dot_index == 0 || dot_index == pos || bytes.unsafe_fetch(dot_index - 1).in? sep
 
     String.new(bytes[dot_index, pos - dot_index + 1])
   end
