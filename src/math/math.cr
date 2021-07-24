@@ -586,6 +586,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def ilogb(value)
     ilogb(value.to_f)
   end
@@ -603,6 +604,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def logb(value)
     logb(value.to_f)
   end
@@ -618,6 +620,12 @@ module Math
   end
 
   # :ditto:
+  def ldexp(value : Float32 | Float64, exp : Int)
+    ldexp(value, exp.to_i32)
+  end
+
+  # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def ldexp(value, exp)
     ldexp(value.to_f, exp.to_i32)
   end
@@ -635,6 +643,12 @@ module Math
   end
 
   # :ditto:
+  def scalbn(value : Float32 | Float64, exp : Int)
+    scalbn(value, exp.to_i32)
+  end
+
+  # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def scalbn(value, exp)
     scalbn(value.to_f, exp.to_i32)
   end
@@ -650,6 +664,12 @@ module Math
   end
 
   # :ditto:
+  def scalbln(value : Float32 | Float64, exp : Int)
+    scalbln(value, exp.to_i64)
+  end
+
+  # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def scalbln(value, exp) : Float64
     scalbln(value.to_f, exp.to_i64)
   end
@@ -667,6 +687,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def frexp(value)
     frexp(value.to_f)
   end
@@ -682,6 +703,7 @@ module Math
   end
 
   # :ditto:
+  @[Deprecated("Convert arguments to appropriate types at the call site instead")]
   def copysign(value1, value2)
     copysign(value1.to_f, value2.to_f)
   end
