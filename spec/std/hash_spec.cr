@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 private alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
@@ -494,6 +495,16 @@ describe "Hash" do
       clone = h.clone
       clone.should be(clone.first[1])
     end
+
+    it "retains default block on clone" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.clone
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.clone
+      h3[0].should eq("a")
+    end
   end
 
   describe "dup" do
@@ -535,6 +546,16 @@ describe "Hash" do
 
       h1.delete(0)
       h2[0].should eq([0])
+    end
+
+    it "retains default block on dup" do
+      h1 = Hash(Int32, String).new("a")
+      h2 = h1.dup
+      h2[0].should eq("a")
+
+      h1[1] = "b"
+      h3 = h1.dup
+      h3[0].should eq("a")
     end
   end
 
@@ -984,52 +1005,15 @@ describe "Hash" do
     vs.should eq([1, 2])
   end
 
-  it "gets each iterator" do
-    iter = {:a => 1, :b => 2}.each
-    iter.next.should eq({:a, 1})
-    iter.next.should eq({:b, 2})
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [{:a, 1}, {:b, 2}], {:a => 1, :b => 2}.each
+  it_iterates "#each_key", [:a, :b], {:a => 1, :b => 2}.each_key
+  it_iterates "#each_value", [1, 2], {:a => 1, :b => 2}.each_value
 
-  it "gets each key iterator" do
-    iter = {:a => 1, :b => 2}.each_key
-    iter.next.should eq(:a)
-    iter.next.should eq(:b)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each_with_index", [{ {:a, 1}, 0 }, { {:b, 2}, 1 }], {:a => 1, :b => 2}.each_with_index, tuple: true
+  it_iterates "#each_with_index(offset)", [{ {:a, 1}, 2 }, { {:b, 2}, 3 }], {:a => 1, :b => 2}.each_with_index(2), tuple: true
 
-  it "gets each value iterator" do
-    iter = {:a => 1, :b => 2}.each_value
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  describe "each_with_index" do
-    it "pass key, value, index values into block" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [6, 16, 23]
-    end
-
-    it "can be used with offset" do
-      hash = {2 => 4, 5 => 10, 7 => 14}
-      results = [] of Int32
-      hash.each_with_index(3) { |(k, v), i| results << k + v + i }.should be_nil
-      results.should eq [9, 19, 26]
-    end
-  end
-
-  describe "each_with_object" do
-    it "passes memo, key and value into block" do
-      hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |(k, v), memo|
-        memo.should eq(:memo)
-        k.should eq(:a)
-        v.should eq('b')
-      end.should eq(:memo)
-    end
+  describe "#each_with_object" do
+    it_iterates "passes memo, key and value into block", [{ {:a, 1}, :memo }, { {:b, 2}, :memo }], {:a => 1, :b => 2}.each_with_object(:memo), tuple: true
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}

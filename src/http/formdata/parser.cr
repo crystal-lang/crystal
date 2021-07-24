@@ -38,7 +38,7 @@ module HTTP::FormData
     end
 
     # True if `#next` can be called legally.
-    def has_next?
+    def has_next? : Bool
       @multipart.has_next?
     end
   end

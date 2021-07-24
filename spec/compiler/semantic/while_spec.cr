@@ -334,4 +334,118 @@ describe "Semantic: while" do
       x
       )) { int32 }
   end
+
+  it "finds all while cond assign targets in expressions (#10350)" do
+    assert_type(%(
+      a = 1
+      while ((b = 1); a)
+        a = nil
+        b = "hello"
+      end
+      b
+      )) { int32 }
+  end
+
+  it "finds all while cond assign targets in expressions (2)" do
+    assert_type(%(
+      def foo(x, y)
+        true ? 1 : nil
+      end
+
+      while foo(a = 1, b = 1)
+        a = nil
+        b = "hello"
+      end
+
+      {a, b}
+      )) { tuple_of [int32, int32] }
+  end
+
+  it "finds all while cond assign targets in expressions (3)" do
+    assert_type(%(
+      while 1 == 1 ? (x = 1; 1 == 1) : false
+        x = 'a'
+      end
+      x
+      )) { nilable union_of(int32, char) }
+  end
+
+  it "finds all while cond assign targets in expressions (4)" do
+    assert_type(%(
+      x = ""
+      while 1 == 1 ? (x = 1; 1 == 1) : false
+        x = 'a'
+      end
+      x
+      )) { union_of(int32, char, string) }
+  end
+
+  it "finds all while cond assign targets in expressions (5)" do
+    assert_type(%(
+      while 1 == 1 ? (x = 1; 1 == 1) : false
+        x
+        x = 'a'
+      end
+      x
+      )) { nilable union_of(int32, char) }
+  end
+
+  it "finds all while cond assign targets in expressions (6)" do
+    assert_type(%(
+       while (x = true ? (y = 1) : 1; y = x; 1 == 1)
+         x = 'a'
+       end
+       {x, y}
+      )) { tuple_of [int32, int32] }
+  end
+
+  it "doesn't fail on new variables inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(x = 1)
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on nested conditionals inside typeof condition" do
+    assert_type(%(
+      def foo
+        while typeof(1 || 'a')
+          return ""
+        end
+      end
+
+      foo
+      )) { nilable string }
+  end
+
+  it "doesn't fail on Expressions condition (1)" do
+    assert_type(%(
+      def foo
+        while (v = 1; true)
+          return typeof(v)
+        end
+        'a'
+      end
+
+      foo
+      )) { union_of int32.metaclass, char }
+  end
+
+  it "doesn't fail on Expressions condition (2)" do
+    assert_type(%(
+      def foo
+        while (v = nil; true)
+          return typeof(v)
+        end
+        'a'
+      end
+
+      foo
+      )) { union_of nil_type.metaclass, char }
+  end
 end

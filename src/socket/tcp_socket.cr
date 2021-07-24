@@ -38,12 +38,12 @@ class TCPSocket < IPSocket
     super family, type, protocol
   end
 
-  protected def initialize(fd : Int32, family : Family, type : Type, protocol : Protocol)
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol)
     super fd, family, type, protocol
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
-  def initialize(*, fd : Int32, family : Family = Family::INET)
+  def initialize(*, fd : Handle, family : Family = Family::INET)
     super fd, family, Type::STREAM, Protocol::TCP
   end
 
@@ -61,7 +61,7 @@ class TCPSocket < IPSocket
   end
 
   # Returns `true` if the Nagle algorithm is disabled.
-  def tcp_nodelay?
+  def tcp_nodelay? : Bool
     getsockopt_bool LibC::TCP_NODELAY, level: Protocol::TCP
   end
 
