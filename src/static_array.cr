@@ -168,7 +168,7 @@ struct StaticArray(T, N)
   # array                               # => StaticArray[2, 2, 2]
   # ```
   def fill(value : T) : self
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
         return self

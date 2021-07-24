@@ -6,6 +6,7 @@ class File::PReader < IO
 
   @offset : Int64
   @bytesize : Int64
+  @pos : Int64
 
   def initialize(@file : File, offset : Int, bytesize : Int)
     @offset = offset.to_i64
@@ -13,7 +14,7 @@ class File::PReader < IO
     @pos = 0
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int64
     check_open
 
     count = slice.size

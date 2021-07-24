@@ -31,7 +31,7 @@ class Crystal::CodeGenVisitor
 
     has_nil = union_types.any? &.nil_type?
     has_bool = union_types.any? &.bool_type?
-    has_pointer = union_types.any? &.is_a?(PointerInstanceType)
+    has_pointer = union_types.any?(PointerInstanceType)
 
     cond = llvm_true
 

@@ -3,6 +3,40 @@ require "spec/helpers/iterate"
 
 private alias RecursiveArray = Array(RecursiveArray)
 
+private class Spaceship
+  getter value : Float64
+
+  def initialize(@value : Float64, @return_nil = false)
+  end
+
+  def <=>(other : Spaceship)
+    return nil if @return_nil
+
+    value <=> other.value
+  end
+end
+
+private def is_stable_sort(*, mutable, &block)
+  n = 42
+  # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+  arr = Array.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+  # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+  expected = Array.new(n * 2) { |i| arr[i % 2 * n + i // 2] }
+
+  if mutable
+    yield arr
+    result = arr
+  else
+    result = yield arr
+    result.should_not eq(arr)
+  end
+
+  result.size.should eq(expected.size)
+  expected.zip(result) do |exp, res|
+    res.should be(exp) # reference-equality is necessary to check sorting is stable.
+  end
+end
+
 describe "Array" do
   describe "new" do
     it "creates with default value" do
@@ -1237,63 +1271,127 @@ describe "Array" do
   end
 
   describe "sort" do
-    it "sort without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      b = a.sort
-      b.should eq([1, 2, 3, 4, 5, 6])
-      a.should_not eq(b)
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sort without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          b = a.sort(stable: stable)
+          b.should eq([1, 2, 3, 4, 5, 6])
+          a.should_not eq(b)
+        end
+
+        it "sort with a block" do
+          a = ["foo", "a", "hello"]
+          b = a.sort(stable: stable) { |x, y| x.size <=> y.size }
+          b.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+      end
     end
 
-    it "sort with a block" do
-      a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.size <=> y.size }
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
+    it "stable sort without block" do
+      is_stable_sort(mutable: false, &.sort(stable: true))
+    end
+
+    it "stable sort with a block" do
+      is_stable_sort(mutable: false, &.sort(stable: true) { |a, b| a.value <=> b.value })
+    end
+
+    it "default is stable (without block)" do
+      is_stable_sort(mutable: false, &.sort)
+    end
+
+    it "default is stable (with a block)" do
+      is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
     end
   end
 
   describe "sort!" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sort! without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          a.sort!(stable: stable)
+          a.should eq([1, 2, 3, 4, 5, 6])
+        end
+
+        it "sort! with a block" do
+          a = ["foo", "a", "hello"]
+          a.sort!(stable: stable) { |x, y| x.size <=> y.size }
+          a.should eq(["a", "foo", "hello"])
+        end
+      end
     end
 
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.size <=> y.size }
-      a.should eq(["a", "foo", "hello"])
+    it "stable sort! without block" do
+      is_stable_sort(mutable: true, &.sort!(stable: true))
+    end
+
+    it "stable sort! with a block" do
+      is_stable_sort(mutable: true, &.sort!(stable: true) { |a, b| a.value <=> b.value })
+    end
+
+    it "default is stable (without block)" do
+      is_stable_sort(mutable: true, &.sort!)
+    end
+
+    it "default is stable (with a block)" do
+      is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
     end
   end
 
   describe "sort_by" do
-    it "sorts by" do
-      a = ["foo", "a", "hello"]
-      b = a.sort_by &.size
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by" do
+          a = ["foo", "a", "hello"]
+          b = a.sort_by(stable: stable, &.size)
+          b.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+
+        it "unpacks tuple" do
+          a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
+          b = a.sort_by(stable: stable) { |x, y| y }
+          b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
+          a.should_not eq(b)
+        end
+      end
     end
 
-    it "unpacks tuple" do
-      a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
-      b = a.sort_by { |x, y| y }
-      b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
-      a.should_not eq(b)
+    it "stable sort by" do
+      is_stable_sort(mutable: false, &.sort_by(stable: true, &.value))
+    end
+
+    it "default is stable" do
+      is_stable_sort(mutable: false, &.sort_by(&.value))
     end
   end
 
   describe "sort_by!" do
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.size
-      a.should eq(["a", "foo", "hello"])
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by!" do
+          a = ["foo", "a", "hello"]
+          a.sort_by!(stable: stable, &.size)
+          a.should eq(["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = ["foo", "a", "hello"]
+          a.sort_by!(stable: stable) { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
+      end
     end
 
-    it "calls given block exactly once for each element" do
-      calls = Hash(String, Int32).new(0)
-      a = ["foo", "a", "hello"]
-      a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    it "stable sort by!" do
+      is_stable_sort(mutable: true, &.sort_by!(stable: true, &.value))
+    end
+
+    it "default is stable" do
+      is_stable_sort(mutable: true, &.sort_by!(&.value))
     end
   end
 
@@ -1497,6 +1595,33 @@ describe "Array" do
       a.should eq([10, 20, 30, 4, 5, 6, 7, 8])
       a.@offset_to_buffer.should eq(0)
       a.@buffer.should eq(buffer)
+    end
+
+    it "repeated unshift/shift does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.shift
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/pop does not exhaust memory (#10748)" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.pop
+      end
+      a.@capacity.should eq(3)
+    end
+
+    it "repeated unshift/clear does not exhaust memory" do
+      a = [] of Int32
+      10.times do
+        a.unshift(1)
+        a.clear
+      end
+      a.@capacity.should eq(3)
     end
   end
 
