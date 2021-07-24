@@ -365,7 +365,7 @@ struct Slice(T)
       Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
       self
     {% else %}
-      {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+      {% if Number::Primitive.union_types.includes?(T) %}
         if value == 0
           to_unsafe.clear(size)
           return self
