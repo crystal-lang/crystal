@@ -144,6 +144,113 @@ module Iterator(T)
   # are no more elements.
   abstract def next
 
+  # Returns an iterator that returns the prefix sums of the original iterator's
+  # elements.
+  #
+  # Expects `T` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate
+  # iter.next # => 3
+  # iter.next # => 7
+  # iter.next # => 12
+  # iter.next # => 18
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate
+    accumulate { |x, y| x + y }
+  end
+
+  # Returns an iterator that returns *initial* and its prefix sums with the
+  # original iterator's elements.
+  #
+  # Expects `U` to respond to the `#+` method.
+  #
+  # ```
+  # iter = (3..6).each.accumulate(7)
+  # iter.next # => 7
+  # iter.next # => 10
+  # iter.next # => 14
+  # iter.next # => 19
+  # iter.next # => 25
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U) forall U
+    accumulate(initial) { |x, y| x + y }
+  end
+
+  # Returns an iterator that accumulates the original iterator's elements by
+  # the given *block*.
+  #
+  # For each element of the original iterator the block is passed an accumulator
+  # value and the element. The result becomes the new value for the accumulator
+  # and is then returned. The initial value for the accumulator is the first
+  # element of the original iterator.
+  #
+  # ```
+  # iter = %w(the quick brown fox).each.accumulate { |x, y| "#{x}, #{y}" }
+  # iter.next # => "the"
+  # iter.next # => "the, quick"
+  # iter.next # => "the, quick, brown"
+  # iter.next # => "the, quick, brown, fox"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(&block : T, T -> T)
+    Accumulate(typeof(self), T).new(self, block)
+  end
+
+  # Returns an iterator that accumulates *initial* with the original iterator's
+  # elements by the given *block*.
+  #
+  # Similar to `#accumulate(&block : T, T -> T)`, except the initial value is
+  # provided by an argument and needs not have the same type as the elements of
+  # the original iterator. This initial value is returned first.
+  #
+  # ```
+  # iter = [4, 3, 2].each.accumulate("X") { |x, y| x * y }
+  # iter.next # => "X"
+  # iter.next # => "XXXX"
+  # iter.next # => "XXXXXXXXXXXX"
+  # iter.next # => "XXXXXXXXXXXXXXXXXXXXXXXX"
+  # iter.next # => Iterator::Stop::INSTANCE
+  # ```
+  def accumulate(initial : U, &block : U, T -> U) forall U
+    AccumulateInit(typeof(self), T, U).new(self, initial, block)
+  end
+
+  private class AccumulateInit(I, T, U)
+    include Iterator(U)
+
+    @acc : U | Iterator::Stop
+
+    def initialize(@iterator : I, @acc : U, @func : U, T -> U)
+    end
+
+    def next
+      old_acc = @acc
+      return old_acc if old_acc.is_a?(Iterator::Stop)
+      elem = @iterator.next
+      @acc = elem.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+      old_acc
+    end
+  end
+
+  private class Accumulate(I, T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    @acc : T | Iterator::Stop = Iterator::Stop::INSTANCE
+
+    def initialize(@iterator : I, @func : T, T -> T)
+    end
+
+    def next
+      elem = wrapped_next
+      old_acc = @acc
+      @acc = old_acc.is_a?(Iterator::Stop) ? elem : @func.call(old_acc, elem)
+    end
+  end
+
   # Returns an iterator that returns elements from the original iterator until
   # it is exhausted and then returns the elements of the second iterator.
   # Compared to `.chain(Iterator(Iter))`, it has better performance when the quantity of
@@ -483,7 +590,7 @@ module Iterator(T)
   # iter = ["a", "b", "c"].each
   # iter.each { |x| print x, " " } # Prints "a b c"
   # ```
-  def each : Nil
+  def each(& : T -> _) : Nil
     while true
       value = self.next
       break if value.is_a?(Stop)

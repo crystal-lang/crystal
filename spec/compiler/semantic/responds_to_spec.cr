@@ -40,4 +40,56 @@ describe "Semantic: responds_to?" do
       end
       ") { int32 }
   end
+
+  it "restricts virtual generic superclass to subtypes" do
+    assert_type(%(
+      module Foo(T)
+      end
+
+      class Bar
+        include Foo(Int32)
+
+        def foo
+          'a'
+        end
+      end
+
+      class Baz(T)
+        include Foo(T)
+
+        def foo
+          ""
+        end
+      end
+
+      x = Baz(Int32).new.as(Foo(Int32))
+      if x.responds_to?(:foo)
+        x.foo
+      end
+      )) { nilable union_of(char, string) }
+  end
+
+  it "restricts virtual generic module to including types (#8334)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      class Bar < Foo(Int32)
+        def foo
+          'a'
+        end
+      end
+
+      class Baz(T) < Foo(T)
+        def foo
+          ""
+        end
+      end
+
+      x = Baz(Int32).new.as(Foo(Int32))
+      if x.responds_to?(:foo)
+        x.foo
+      end
+      )) { nilable union_of(char, string) }
+  end
 end

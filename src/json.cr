@@ -125,7 +125,7 @@ module JSON
       super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
-    def location
+    def location : {Int32, Int32}
       {line_number, column_number}
     end
   end

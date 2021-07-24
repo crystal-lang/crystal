@@ -156,7 +156,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
-  def size
+  def size : Int32
     N
   end
 
@@ -168,7 +168,7 @@ struct StaticArray(T, N)
   # array                               # => StaticArray[2, 2, 2]
   # ```
   def fill(value : T) : self
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
+    {% if Number::Primitive.union_types.includes?(T) %}
       if value == 0
         to_unsafe.clear(size)
         return self
@@ -265,7 +265,7 @@ struct StaticArray(T, N)
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice
+  def to_slice : Slice(T)
     Slice.new(to_unsafe, size)
   end
 

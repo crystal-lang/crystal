@@ -83,7 +83,7 @@ struct Slice(T)
   # slice # => Bytes[0, 0, 0]
   # ```
   def self.new(size : Int, *, read_only = false)
-    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+    {% unless Number::Primitive.union_types.includes?(T) %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
@@ -150,7 +150,7 @@ struct Slice(T)
   # slice = Slice(UInt8).empty
   # slice.size # => 0
   # ```
-  def self.empty
+  def self.empty : self
     new(Pointer(T).null, 0)
   end
 
@@ -163,7 +163,7 @@ struct Slice(T)
   # slice2 = slice + 2
   # slice2 # => Slice[12, 13, 14]
   # ```
-  def +(offset : Int)
+  def +(offset : Int) : Slice(T)
     check_size(offset)
 
     Slice.new(@pointer + offset, @size - offset, read_only: @read_only)
@@ -186,11 +186,7 @@ struct Slice(T)
   def []=(index : Int, value : T)
     check_writable
 
-    index += size if index < 0
-    unless 0 <= index < size
-      raise IndexError.new
-    end
-
+    index = check_index_out_of_bounds(index)
     @pointer[index] = value
   end
 
@@ -206,7 +202,7 @@ struct Slice(T)
   # slice[1, 3]?  # => Slice[11, 12, 13]
   # slice[1, 33]? # => nil
   # ```
-  def []?(start : Int, count : Int)
+  def []?(start : Int, count : Int) : Slice(T)?
     return unless 0 <= start <= @size
     return unless 0 <= count <= @size - start
 
@@ -225,7 +221,7 @@ struct Slice(T)
   # slice[1, 3]  # => Slice[11, 12, 13]
   # slice[1, 33] # raises IndexError
   # ```
-  def [](start : Int, count : Int)
+  def [](start : Int, count : Int) : Slice(T)
     self[start, count]? || raise IndexError.new
   end
 
@@ -277,18 +273,18 @@ struct Slice(T)
   # slice[1..3]  # => Slice[11, 12, 13]
   # slice[1..33] # raises IndexError
   # ```
-  def [](range : Range) : self
+  def [](range : Range) : Slice(T)
     start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     self[start, count]
   end
 
   @[AlwaysInline]
-  def unsafe_fetch(index : Int)
+  def unsafe_fetch(index : Int) : T
     @pointer[index]
   end
 
   # Reverses in-place all the elements of `self`.
-  def reverse!
+  def reverse! : self
     check_writable
 
     return self if size <= 1
@@ -448,7 +444,7 @@ struct Slice(T)
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexstring # => "613e3f08ff"
   # ```
-  def hexstring
+  def hexstring : String
     self.as(Slice(UInt8))
 
     str_size = size * 2
@@ -459,7 +455,7 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def hexstring(buffer)
+  def hexstring(buffer) : Nil
     self.as(Slice(UInt8))
 
     offset = 0
@@ -480,7 +476,7 @@ struct Slice(T)
   # slice = UInt8.slice(97, 62, 63, 8, 255)
   # slice.hexdump # => "00000000  61 3e 3f 08 ff                                    a>?..\n"
   # ```
-  def hexdump
+  def hexdump : String
     self.as(Slice(UInt8))
 
     return "" if empty?
@@ -592,7 +588,7 @@ struct Slice(T)
     ((c < 10 ? 48_u8 : 87_u8) + c)
   end
 
-  def bytesize
+  def bytesize : Int32
     sizeof(T) * size
   end
 
@@ -647,7 +643,7 @@ struct Slice(T)
     {% end %}
   end
 
-  def to_slice
+  def to_slice : self
     self
   end
 
@@ -694,8 +690,8 @@ struct Slice(T)
   # a.sort # => Slice[1, 2, 3]
   # a      # => Slice[3, 1, 2]
   # ```
-  def sort : Slice(T)
-    dup.sort!
+  def sort(*, stable : Bool = true) : Slice(T)
+    dup.sort!(stable: stable)
   end
 
   # Returns a new slice with all elements sorted based on the comparator in the
@@ -712,12 +708,12 @@ struct Slice(T)
   # b # => Slice[3, 2, 1]
   # a # => Slice[3, 1, 2]
   # ```
-  def sort(&block : T, T -> U) : Slice(T) forall U
+  def sort(*, stable : Bool = true, &block : T, T -> U) : Slice(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    dup.sort! &block
+    dup.sort!(stable: stable, &block)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
@@ -728,8 +724,12 @@ struct Slice(T)
   # a.sort!
   # a # => Slice[1, 2, 3]
   # ```
-  def sort! : Slice(T)
-    Slice.intro_sort!(to_unsafe, size)
+  def sort!(*, stable : Bool = true) : Slice(T)
+    if stable
+      Slice.merge_sort!(self)
+    else
+      Slice.intro_sort!(to_unsafe, size)
+    end
     self
   end
 
@@ -746,12 +746,16 @@ struct Slice(T)
   # a.sort! { |a, b| b <=> a }
   # a # => Slice[3, 2, 1]
   # ```
-  def sort!(&block : T, T -> U) : Slice(T) forall U
+  def sort!(*, stable : Bool = true, &block : T, T -> U) : Slice(T) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    Slice.intro_sort!(to_unsafe, size, block)
+    if stable
+      Slice.merge_sort!(self, block)
+    else
+      Slice.intro_sort!(to_unsafe, size, block)
+    end
     self
   end
 
@@ -765,8 +769,8 @@ struct Slice(T)
   # b # => Slice["fig", "pear", "apple"]
   # a # => Slice["apple", "pear", "fig"]
   # ```
-  def sort_by(&block : T -> _) : Slice(T)
-    dup.sort_by! { |e| yield(e) }
+  def sort_by(*, stable : Bool = true, &block : T -> _) : Slice(T)
+    dup.sort_by!(stable: stable) { |e| yield(e) }
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
@@ -778,8 +782,8 @@ struct Slice(T)
   # a.sort_by! { |word| word.size }
   # a # => Slice["fig", "pear", "apple"]
   # ```
-  def sort_by!(&block : T -> _) : Slice(T)
-    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+  def sort_by!(*, stable : Bool = true, &block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.sort!(stable: stable) { |x, y| x[1] <=> y[1] }
     size.times do |i|
       to_unsafe[i] = sorted.to_unsafe[i][0]
     end
@@ -798,16 +802,12 @@ struct Slice(T)
   end
 
   # :nodoc:
-  def fast_index(object, offset)
-    offset += size if offset < 0
-    if 0 <= offset < size
-      result = LibC.memchr(to_unsafe + offset, object, size - offset)
-      if result
-        return (result - to_unsafe.as(Void*)).to_i32
-      end
+  def fast_index(object, offset) : Int32?
+    offset = check_index_out_of_bounds(offset) { return nil }
+    result = LibC.memchr(to_unsafe + offset, object, size - offset)
+    if result
+      return (result - to_unsafe.as(Void*)).to_i32
     end
-
-    nil
   end
 
   # See `Object#hash(hasher)`

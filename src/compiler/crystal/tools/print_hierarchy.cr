@@ -58,7 +58,7 @@ module Crystal
 
       compute_targets type.types, exp, false
 
-      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) }
+      subtypes = type.subclasses.reject(GenericClassInstanceType)
       must_include |= compute_targets subtypes, exp, must_include
       if must_include
         @targets << type
@@ -75,7 +75,7 @@ module Crystal
       compute_targets type.types, exp, false
       compute_targets type.instantiated_types, exp, must_include
 
-      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) }
+      subtypes = type.subclasses.reject(GenericClassInstanceType)
       must_include |= compute_targets subtypes, exp, must_include
       if must_include
         @targets << type
