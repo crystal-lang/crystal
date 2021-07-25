@@ -10,7 +10,10 @@ private def assert_sprintf(format, *args_and_result, file = __FILE__, line = __L
 
   sprintf(format, *args).should eq(result), file: file, line: line
   String.build { |io| io.printf(format, *args) }.should eq(result), file: file, line: line
-  string_build_via_utf16 { |io| io.printf(format, *args) }.should eq(result), file: file, line: line
+
+  {% unless flag?(:win32) %}
+    string_build_via_utf16 { |io| io.printf(format, *args) }.should eq(result), file: file, line: line
+  {% end %}
 end
 
 describe "::sprintf" do
