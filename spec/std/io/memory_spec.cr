@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/string"
 
 describe IO::Memory do
   it "writes" do
@@ -49,6 +50,8 @@ describe IO::Memory do
     s2 = IO::Memory.new
     s1.to_s(s2)
     s2.to_s.should eq("hello")
+
+    assert_prints IO::Memory.new("foo").to_s, "foo"
   end
 
   it "reads single line content" do
