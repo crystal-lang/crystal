@@ -22,7 +22,7 @@ end
 # * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to *str*.
 # * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should be equal
 #   to *str*; that is, the `IO` overload should not fail when the `IO` argument
-#   uses a non-default encoding.
+#   uses a non-default encoding. This case is skipped on Windows systems.
 macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
   %str = ({{ str }}).as(String)
   %file = {{ file }}
@@ -40,11 +40,13 @@ macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
     ) {{ call.block }}
   end.should eq(%str), file: %file, line: %line
 
-  string_build_via_utf16 do |io|
-    {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
-      io,
-      {% for arg in call.args %} ({{ arg }}), {% end %}
-      {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
-    ) {{ call.block }}
-  end.should eq(%str), file: %file, line: %line
+  {% unless flag?(:win32) %}
+    string_build_via_utf16 do |io|
+      {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
+        io,
+        {% for arg in call.args %} ({{ arg }}), {% end %}
+        {% if call.named_args %} {% for narg in call.named_args %} {{ narg.name }}: ({{ narg.value }}), {% end %} {% end %}
+      ) {{ call.block }}
+    end.should eq(%str), file: %file, line: %line
+  {% end %}
 end
