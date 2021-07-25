@@ -532,7 +532,7 @@ struct Slice(T)
     pos = 0
     while pos < size
       line_bytes = hexdump_line(line_slice, pos)
-      io.write(line_slice[0, line_bytes])
+      io.write_utf8(line_slice[0, line_bytes])
       count += line_bytes
       pos += 16
     end
