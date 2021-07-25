@@ -34,7 +34,7 @@ module Enumerable(T)
   end
 
   # Must yield this collection's elements to the block.
-  abstract def each(&block : T -> _)
+  abstract def each(&block : T ->)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil`
   # for all elements of the collection.
