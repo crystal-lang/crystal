@@ -141,12 +141,9 @@ module LLVM
       private def self.load_llvm_typed_attributes
         typed_attrs = [] of Attribute
 
-        unless LibLLVM::IS_LT_90
-          typed_attrs << ByVal
-        end
-
         unless LibLLVM::IS_LT_120
           # LLVM 12 introduced mandatory type parameters for byval and sret
+          typed_attrs << ByVal
           typed_attrs << StructRet
         end
 
