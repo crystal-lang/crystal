@@ -308,7 +308,7 @@ describe "Slice" do
     io.to_s.should eq("")
   end
 
-  it "does hexdump", focus: true do
+  it "does hexdump" do
     slice = Bytes.new(96) { |i| i.to_u8 + 32 }
     assert_prints slice.hexdump, <<-EOF
       00000000  20 21 22 23 24 25 26 27  28 29 2a 2b 2c 2d 2e 2f   !"#$%&'()*+,-./
