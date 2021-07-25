@@ -362,13 +362,14 @@ struct Path
       offset -= 1
     end
 
-    # Get the first occurrence of a separator or a '.' past the trailing separators (or return "")
-    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators } || 0
+    # Get the first occurrence of a separator or a '.' past the trailing separators
+    dot_index = bytes.rindex(offset: offset) { |byte| byte === '.' || byte.in? separators }
 
     # Return "" if '.' is the first character (ex. ".dotfile"),
     # or if the '.' character follows after a separator (ex. "pathto/.dotfile")
     # or if the character at the returned index is a separator (ex. "no/extension")
     # or if the filename ends with a '.'
+    return "" unless dot_index
     return "" if dot_index == 0
     return "" if dot_index == offset
     return "" if bytes.unsafe_fetch(dot_index - 1).in?(separators)
