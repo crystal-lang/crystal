@@ -696,53 +696,73 @@ describe "Array" do
     a.equals?(d, &f).should be_false
   end
 
-  describe "fill" do
+  describe "#fill" do
     it "replaces all values" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'x']
-      a.fill('x').should eq(expected)
+      a.fill('x').should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
+      a.fill(0).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
+      expected = [0.0, 0.0, 0.0]
+      a.fill(0.0).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values between index and size" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', 0, 2).should eq(expected)
+      a.fill('x', 0, 2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
+      a.fill(0, 0, 2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
+      a.fill(0, 0, 2).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values between index and size (2)" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', 1, 2).should eq(expected)
+      a.fill('x', 1, 2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
+      a.fill(0, 1, 2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
+      a.fill(0, 1, 2).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces all values from index onwards" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', -2).should eq(expected)
+      a.fill('x', -2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
+      a.fill(0, -2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
+      a.fill(0, -2).should be(a)
+      a.should eq(expected)
     end
 
     it "raises when given big negative number (#4539)" do
@@ -760,13 +780,18 @@ describe "Array" do
     it "replaces only values between negative index and size" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
-      a.fill('x', -1, 1).should eq(expected)
+      a.fill('x', -1, 1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
+      a.fill(0, -1, 1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
+      a.fill(0, -1, 1).should be(a)
+      a.should eq(expected)
     end
 
     it "raises when given big negative number in from/count (#4539)" do
@@ -784,37 +809,52 @@ describe "Array" do
     it "replaces only values in range" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', -3..1).should eq(expected)
+      a.fill('x', -3..1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
+      a.fill(0, -3..1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
+      a.fill(0, -3..1).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values in range without end" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', 1..nil).should eq(expected)
+      a.fill('x', 1..nil).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
+      a.fill(0, 1..nil).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
+      a.fill(0, 1..nil).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values in range begin" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', nil..1).should eq(expected)
+      a.fill('x', nil..1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
+      a.fill(0, nil..1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
+      a.fill(0, nil..1).should be(a)
+      a.should eq(expected)
     end
 
     it "works with a block" do
