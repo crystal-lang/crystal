@@ -186,7 +186,7 @@ struct BigRational < Number
   # ```
   def **(other : Int) : BigRational
     if other < 0
-      return (self ** -other).inv
+      return (self ** other.abs).inv
     end
     BigRational.new(numerator ** other, denominator ** other)
   end

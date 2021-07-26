@@ -22,6 +22,27 @@ private class Spaceship
   end
 end
 
+private def is_stable_sort(mutable, &block)
+  n = 42
+  # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
+  slice = Slice.new(n * 2) { |i| Spaceship.new((i % n).to_f) }
+  # [Spaceship.new(0), Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(n - 1)]
+  expected = Slice.new(n * 2) { |i| slice[i % 2 * n + i // 2] }
+
+  if mutable
+    yield slice
+    result = slice
+  else
+    result = yield slice
+    result.should_not eq(slice)
+  end
+
+  result.size.should eq(expected.size)
+  expected.zip(result) do |exp, res|
+    res.should be(exp) # reference-equality is necessary to check sorting is stable.
+  end
+end
+
 describe "Slice" do
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
@@ -125,6 +146,57 @@ describe "Slice" do
   it "does to_s for bytes" do
     slice = Bytes[1, 2, 3]
     slice.to_s.should eq("Bytes[1, 2, 3]")
+  end
+
+  describe "#fill" do
+    it "replaces all values, without block" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice.new(4, 7)
+      slice.fill(7).should eq(expected)
+      slice.should eq(expected)
+
+      expected = Slice.new(4, 5)
+      slice.fill(5).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "works with primitive number types and 0" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice.new(4, 0)
+      slice.fill(0).should eq(expected)
+      slice.should eq(expected)
+
+      slice = Slice.new(4, &.to_f64)
+      expected = Slice.new(4, 0.0)
+      slice.fill(0.0).should eq(expected)
+      slice.should eq(expected)
+
+      slice = Slice.new(4, &.to_u8)
+      expected = Slice.new(4, 0_u8)
+      slice.fill(0).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "works with Bytes" do
+      slice = Bytes[1, 2, 3]
+      expected = Slice.new(3, 7_u8)
+      slice.fill(7).should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "replaces all values, with block" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice[0, 1, 4, 9]
+      slice.fill { |i| i * i }.should eq(expected)
+      slice.should eq(expected)
+    end
+
+    it "replaces all values, with block and offset" do
+      slice = Slice.new(4) { |i| i + 1 }
+      expected = Slice[9, 16, 25, 36]
+      slice.fill(offset: 3) { |i| i * i }.should eq(expected)
+      slice.should eq(expected)
+    end
   end
 
   it "does copy_from pointer" do
@@ -486,6 +558,7 @@ describe "Slice" do
   it "creates read-only slice" do
     slice = Slice.new(3, 0, read_only: true)
     expect_raises(Exception, "Can't write to read-only Slice") { slice[0] = 1 }
+    expect_raises(Exception, "Can't write to read-only Slice") { slice.fill(0) }
     expect_raises(Exception, "Can't write to read-only Slice") { slice.copy_from(slice) }
 
     subslice = slice[0, 1]
@@ -559,93 +632,157 @@ describe "Slice" do
   end
 
   describe "sort" do
-    it "sort without block" do
-      slice = Slice[3, 4, 1, 2, 5, 6]
-      sorted_slice = slice.sort
-      sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
-      slice.should_not eq(sorted_slice)
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sort without block" do
+          slice = Slice[3, 4, 1, 2, 5, 6]
+          sorted_slice = slice.sort(stable: stable)
+          sorted_slice.to_a.should eq([1, 2, 3, 4, 5, 6])
+          slice.should_not eq(sorted_slice)
+        end
+
+        it "sort with a block" do
+          a = Slice["foo", "a", "hello"]
+          b = a.sort(stable: stable) { |x, y| x.size <=> y.size }
+          b.to_a.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+      end
     end
 
-    it "sort with a block" do
-      a = Slice["foo", "a", "hello"]
-      b = a.sort { |x, y| x.size <=> y.size }
-      b.to_a.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
+    it "stable sort without block" do
+      is_stable_sort(mutable: false, &.sort(stable: true))
+    end
+
+    it "stable sort with a block" do
+      is_stable_sort(mutable: false, &.sort(stable: true) { |a, b| a.value <=> b.value })
+    end
+
+    it "default is stable (without block)" do
+      is_stable_sort(mutable: false, &.sort)
+    end
+
+    it "default is stable (with a block)" do
+      is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
     end
   end
 
   describe "sort!" do
-    it "sort! without block" do
-      a = [3, 4, 1, 2, 5, 6]
-      a.sort!
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sort! without block" do
+          a = [3, 4, 1, 2, 5, 6]
+          a.sort!(stable: stable)
+          a.should eq([1, 2, 3, 4, 5, 6])
+        end
 
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.size <=> y.size }
-      a.should eq(["a", "foo", "hello"])
-    end
+        it "sort! with a block" do
+          a = ["foo", "a", "hello"]
+          a.sort!(stable: stable) { |x, y| x.size <=> y.size }
+          a.should eq(["a", "foo", "hello"])
+        end
 
-    it "sorts with invalid block (#4379)" do
-      a = [1] * 17
-      b = a.sort { -1 }
-      a.should eq(b)
-    end
+        it "sorts with invalid block (#4379)" do
+          a = [1] * 17
+          b = a.sort(stable: stable) { -1 }
+          a.should eq(b)
+        end
 
-    it "can sort! just by using <=> (#6608)" do
-      spaceships = Slice[
-        Spaceship.new(2),
-        Spaceship.new(0),
-        Spaceship.new(1),
-        Spaceship.new(3),
-      ]
+        it "can sort! just by using <=> (#6608)" do
+          spaceships = Slice[
+            Spaceship.new(2),
+            Spaceship.new(0),
+            Spaceship.new(1),
+            Spaceship.new(3),
+          ]
 
-      spaceships.sort!
-      4.times do |i|
-        spaceships[i].value.should eq(i)
+          spaceships.sort!(stable: stable)
+          4.times do |i|
+            spaceships[i].value.should eq(i)
+          end
+        end
+
+        it "raises if <=> returns nil" do
+          spaceships = Slice[
+            Spaceship.new(2, return_nil: true),
+            Spaceship.new(0, return_nil: true),
+          ]
+
+          expect_raises(ArgumentError) do
+            spaceships.sort!(stable: stable)
+          end
+        end
+
+        it "raises if sort! block returns nil" do
+          expect_raises(ArgumentError) do
+            Slice[1, 2].sort!(stable: stable) { nil }
+          end
+        end
       end
     end
 
-    it "raises if <=> returns nil" do
-      spaceships = Slice[
-        Spaceship.new(2, return_nil: true),
-        Spaceship.new(0, return_nil: true),
-      ]
-
-      expect_raises(ArgumentError) do
-        spaceships.sort!
-      end
+    it "stable sort! without block" do
+      is_stable_sort(mutable: true, &.sort!(stable: true))
     end
 
-    it "raises if sort! block returns nil" do
-      expect_raises(ArgumentError) do
-        Slice[1, 2].sort! { nil }
-      end
+    it "stable sort! with a block" do
+      is_stable_sort(mutable: true, &.sort!(stable: true) { |a, b| a.value <=> b.value })
+    end
+
+    it "default is stable (without block)" do
+      is_stable_sort(mutable: true, &.sort!)
+    end
+
+    it "default is stable (with a block)" do
+      is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
     end
   end
 
   describe "sort_by" do
-    it "sorts by" do
-      a = Slice["foo", "a", "hello"]
-      b = a.sort_by &.size
-      b.to_a.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by" do
+          a = Slice["foo", "a", "hello"]
+          b = a.sort_by(stable: stable, &.size)
+          b.to_a.should eq(["a", "foo", "hello"])
+          a.should_not eq(b)
+        end
+      end
+    end
+
+    it "stable sort by" do
+      is_stable_sort(mutable: false, &.sort_by(stable: true, &.value))
+    end
+
+    it "default is stable" do
+      is_stable_sort(mutable: false, &.sort_by(&.value))
     end
   end
 
   describe "sort_by!" do
-    it "sorts by!" do
-      a = Slice["foo", "a", "hello"]
-      a.sort_by! &.size
-      a.to_a.should eq(["a", "foo", "hello"])
+    [true, false].each do |stable|
+      describe "stable: #{stable}" do
+        it "sorts by!" do
+          a = Slice["foo", "a", "hello"]
+          a.sort_by!(stable: stable, &.size)
+          a.to_a.should eq(["a", "foo", "hello"])
+        end
+
+        it "calls given block exactly once for each element" do
+          calls = Hash(String, Int32).new(0)
+          a = Slice["foo", "a", "hello"]
+          a.sort_by!(stable: stable) { |e| calls[e] += 1; e.size }
+          calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+        end
+      end
     end
 
-    it "calls given block exactly once for each element" do
-      calls = Hash(String, Int32).new(0)
-      a = Slice["foo", "a", "hello"]
-      a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
+    it "stable sort by!" do
+      is_stable_sort(mutable: true, &.sort_by!(stable: true, &.value))
+    end
+
+    it "default is stable" do
+      is_stable_sort(mutable: true, &.sort_by!(&.value))
     end
   end
 
