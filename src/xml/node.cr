@@ -440,7 +440,7 @@ class XML::Node
 
       save_ctx = LibXML.xmlSaveToIO(
         ->(ctx, buffer, len) {
-          Box(IO).unbox(ctx).write Slice.new(buffer, len)
+          Box(IO).unbox(ctx).write_utf8 Slice.new(buffer, len)
           len
         },
         ->(ctx) {
