@@ -162,6 +162,10 @@ describe JSON::PullParser do
   assert_pull_parse_error %({"name": "John", "age", 1})
   assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
 
+  it "parses when the input IO is already empty" do
+    JSON::PullParser.new(IO::Memory.new).kind.should eq JSON::PullParser::Kind::EOF
+  end
+
   it "prevents stack overflow for arrays" do
     parser = JSON::PullParser.new(("[" * 513) + ("]" * 513))
     expect_raises JSON::ParseException, "Nesting of 513 is too deep" do
