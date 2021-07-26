@@ -351,6 +351,53 @@ struct Slice(T)
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
   end
 
+  # Replaces every element in `self` with the given *value*. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3, 4]
+  # slice.fill(2) # => Slice[2, 2, 2, 2]
+  # slice         # => Slice[2, 2, 2, 2]
+  # ```
+  def fill(value : T) : self
+    check_writable
+
+    {% if T == UInt8 %}
+      Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          to_unsafe.clear(size)
+          return self
+        end
+      {% end %}
+
+      fill { value }
+    {% end %}
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # Accepts an optional *offset* parameter, which tells the block to start
+  # counting from there.
+  #
+  # ```
+  # slice = Slice[2, 1, 1, 1]
+  # slice.fill { |i| i * i }            # => Slice[0, 1, 4, 9]
+  # slice                               # => Slice[0, 1, 4, 9]
+  # slice.fill(offset: 3) { |i| i * i } # => Slice[9, 16, 25, 36]
+  # slice                               # => Slice[9, 16, 25, 36]
+  # ```
+  def fill(*, offset : Int = 0, & : Int32 -> T) : self
+    check_writable
+
+    size.times do |i|
+      to_unsafe[i] = yield offset + i
+    end
+    self
+  end
+
   def copy_from(source : Pointer(T), count)
     check_writable
     check_size(count)

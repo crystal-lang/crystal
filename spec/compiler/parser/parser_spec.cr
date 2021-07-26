@@ -927,6 +927,9 @@ module Crystal
 
     it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
     it_parses "macro foo\n'\\''\nend", Macro.new("foo", body: Expressions.from(["'\\''\n".macro_literal] of ASTNode))
+    it_parses "macro foo\n'\\\\'\nend", Macro.new("foo", body: Expressions.from(["'\\\\'\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\'"\nend), Macro.new("foo", body: Expressions.from([%("\\'"\n).macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\\\"\nend), Macro.new("foo", body: Expressions.from([%("\\\\"\n).macro_literal] of ASTNode))
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"

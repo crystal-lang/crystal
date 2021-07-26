@@ -125,8 +125,8 @@ struct Char
   # Performs a `#step` in the direction of the _limit_. For instance:
   #
   # ```
-  # 'd'.step(to: 'a').to_a  # => ['d', 'c', 'b', 'a']
-  # 'a'.step(to: 'd').to_a  # => ['a', 'b', 'c', 'd']
+  # 'd'.step(to: 'a').to_a # => ['d', 'c', 'b', 'a']
+  # 'a'.step(to: 'd').to_a # => ['a', 'b', 'c', 'd']
   # ```
   def step(*, to limit = nil, exclusive : Bool = false, &)
     if limit
