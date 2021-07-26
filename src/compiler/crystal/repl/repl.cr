@@ -1,6 +1,9 @@
 require "../../../crystal/readline"
 
 class Crystal::Repl
+  property prelude : String = "prelude"
+  getter program : Program
+
   def initialize
     @program = Program.new
     @context = Context.new(@program)
@@ -110,6 +113,16 @@ class Crystal::Repl
     interpret_and_exit_on_error(exps)
   end
 
+  def run_code(code, argv = [] of String)
+    @interpreter.argv = argv
+
+    prelude_node = parse_prelude
+    other_node = parse_code(code)
+    exps = Expressions.new([prelude_node, other_node] of ASTNode)
+
+    interpret(exps)
+  end
+
   private def load_prelude
     node = parse_prelude
 
@@ -135,13 +148,17 @@ class Crystal::Repl
   end
 
   private def parse_prelude
-    filenames = @program.find_in_path("prelude")
+    filenames = @program.find_in_path(prelude)
     parsed_nodes = filenames.map { |filename| parse_file(filename) }
     Expressions.new(parsed_nodes)
   end
 
   private def parse_file(filename)
-    parser = Parser.new File.read(filename), @program.string_pool
+    parse_code File.read(filename), filename
+  end
+
+  private def parse_code(code, filename = "")
+    parser = Parser.new code, @program.string_pool
     parser.filename = filename
     parsed_nodes = parser.parse
     @program.normalize(parsed_nodes, inside_exp: false)

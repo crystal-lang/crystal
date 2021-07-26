@@ -568,20 +568,20 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for generic class instance type" do
-      interpret(<<-EXISTING, <<-CODE).should eq(false)
+      interpret(<<-CODE).should eq(false)
         class Foo(T)
         end
-        EXISTING
+
         foo = Foo(Int32).new
         !foo
         CODE
     end
 
     it "interprets not for nilable type (false)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(false)
+      interpret(<<-CODE).should eq(false)
         class Foo
         end
-        EXISTING
+
         a =
           if 1 == 1
             "a"
@@ -595,10 +595,10 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets not for nilable type (true)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(true)
+      interpret(<<-CODE).should eq(true)
         class Foo
         end
-        EXISTING
+
         a =
           if 1 == 1
             nil
@@ -910,7 +910,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "pointerof instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           def initialize(@x : Int32)
           end
@@ -923,7 +923,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@x)
           end
         end
-      EXISTING
+
         foo = Foo.new(1)
         ptr = foo.x_ptr
         ptr.value = 2
@@ -932,7 +932,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "pointerof class var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           @@x : Int32?
 
@@ -944,7 +944,7 @@ describe Crystal::Repl::Interpreter do
             @@x
           end
         end
-      EXISTING
+
         ptr = Foo.x_ptr
         v = ptr.value
         ptr.value = 2
@@ -954,7 +954,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "pointerof read instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           def initialize(@x : Int32)
           end
@@ -967,7 +967,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@x)
           end
         end
-      EXISTING
+
         foo = Foo.new(1)
         ptr = pointerof(foo.@x)
         ptr.value = 2
@@ -1157,7 +1157,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "put and remove from union in instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           @x : Int32 | Char
 
@@ -1173,7 +1173,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new
         z = foo.x
         if z.is_a?(Int32)
@@ -1239,7 +1239,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from NilableType to GenericClassInstanceType (true)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(1)
+      interpret(<<-CODE).should eq(1)
         class Foo(T)
           def initialize(@x : T)
           end
@@ -1249,7 +1249,6 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-        EXISTING
         a = Foo.new(1) || nil
         if a.is_a?(Foo)
           a.x
@@ -1260,7 +1259,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from NilableType to GenericClassInstanceType (false)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo(T)
           def initialize(@x : T)
           end
@@ -1270,7 +1269,6 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-        EXISTING
         a = 1 == 1 ? nil : Foo.new(1)
         if a.is_a?(Foo)
           a.x
@@ -1282,10 +1280,10 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from NilableReferenceUnionType to NonGenericClassType (true)" do
-      interpret(<<-EXISTING, <<-CODE).should eq("hello")
+      interpret(<<-CODE).should eq("hello")
         class Foo
         end
-        EXISTING
+
         a = 1 == 1 ? "hello" : (1 == 1 ? Foo.new : nil)
         if a.is_a?(String)
           a
@@ -1296,10 +1294,10 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from NilableReferenceUnionType to NonGenericClassType (false)" do
-      interpret(<<-EXISTING, <<-CODE).should eq("baz")
+      interpret(<<-CODE).should eq("baz")
         class Foo
         end
-        EXISTING
+
         a = 1 == 1 ? "hello" : (1 == 1 ? Foo.new : nil)
         if a.is_a?(Foo)
           "bar"
@@ -1310,7 +1308,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from VirtualType to NonGenericClassType (true)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           def x
             1
@@ -1322,7 +1320,7 @@ describe Crystal::Repl::Interpreter do
             2
           end
         end
-        EXISTING
+
         foo = Bar.new || Foo.new
         if foo.is_a?(Bar)
           foo.x
@@ -1333,7 +1331,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does is_a? from VirtualType to NonGenericClassType (false)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(20)
+      interpret(<<-CODE).should eq(20)
         class Foo
           def x
             1
@@ -1345,7 +1343,7 @@ describe Crystal::Repl::Interpreter do
             2
           end
         end
-        EXISTING
+
         foo = Foo.new || Bar.new
         if foo.is_a?(Bar)
           foo.x
@@ -1358,22 +1356,22 @@ describe Crystal::Repl::Interpreter do
 
   context "types" do
     it "interprets path to type" do
-      program, repl_value = interpret_full("String")
+      program, repl_value = interpret_with_program("String")
       repl_value.value.should eq(program.string.metaclass)
     end
 
     it "interprets typeof instance type" do
-      program, repl_value = interpret_full("typeof(1)")
+      program, repl_value = interpret_with_program("typeof(1)")
       repl_value.value.should eq(program.int32.metaclass)
     end
 
     it "interprets typeof metaclass type" do
-      program, repl_value = interpret_full("typeof(Int32)")
+      program, repl_value = interpret_with_program("typeof(Int32)")
       repl_value.value.should eq(program.class_type)
     end
 
     it "interprets class for non-union type" do
-      program, repl_value = interpret_full("1.class")
+      program, repl_value = interpret_with_program("1.class")
       repl_value.value.should eq(program.int32)
     end
 
@@ -1382,7 +1380,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets crystal_type_id for non-nil" do
-      program, repl_value = interpret_full("1.crystal_type_id")
+      program, repl_value = interpret_with_program("1.crystal_type_id")
       repl_value.value.should eq(program.llvm_id.type_id(program.int32))
     end
 
@@ -1521,7 +1519,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call with struct as obj" do
-      interpret(<<-EXISTING, <<-CODE).should eq(3)
+      interpret(<<-CODE).should eq(3)
         struct Foo
           def initialize(@x : Int64)
           end
@@ -1534,7 +1532,7 @@ describe Crystal::Repl::Interpreter do
             @x + 2_i64
           end
         end
-      EXISTING
+
         def foo
           Foo.new(1_i64)
         end
@@ -1544,19 +1542,19 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call with struct as obj (2)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         struct Foo
           def two
             2
           end
         end
-      EXISTING
+
         Foo.new.two
       CODE
     end
 
     it "does call on instance var that's a struct, from a class" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
         class Foo
           def initialize
             @x = 0_i64
@@ -1583,13 +1581,13 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         Foo.new.foo
       CODE
     end
 
     it "does call on instance var that's a struct, from a struct" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
         struct Foo
           def initialize
             @x = 0_i64
@@ -1616,13 +1614,13 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         Foo.new.foo
       CODE
     end
 
     it "discards call with struct as obj" do
-      interpret(<<-EXISTING, <<-CODE).should eq(4)
+      interpret(<<-CODE).should eq(4)
         struct Foo
           def initialize(@x : Int64)
           end
@@ -1635,7 +1633,7 @@ describe Crystal::Repl::Interpreter do
             @x + 2_i64
           end
         end
-      EXISTING
+
         def foo
           Foo.new(1_i64)
         end
@@ -1646,7 +1644,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call on constant that's a struct, takes a pointer to instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1661,14 +1659,13 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-      EXISTING
         CONST = Foo.new
         CONST.to_unsafe.value
       CODE
     end
 
     it "does call on constant that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1683,7 +1680,6 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-      EXISTING
         CONST = Foo.new
         c = (1 == 1 ? CONST : CONST).to_unsafe
         c.value
@@ -1691,7 +1687,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call on var that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1706,7 +1702,6 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-      EXISTING
         a = Foo.new
         c = (1 == 1 ? a : a).to_unsafe
         c.value
@@ -1714,7 +1709,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call on ivar that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1740,13 +1735,12 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-      EXISTING
         Bar.new.do_it
       CODE
     end
 
     it "does call on self that's a struct, takes a pointer to instance var, inside if" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1765,13 +1759,13 @@ describe Crystal::Repl::Interpreter do
             c.value
           end
         end
-      EXISTING
+
         Foo.new.do_it
       CODE
     end
 
     it "does call on Pointer#value that's a struct, takes a pointer to instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1785,7 +1779,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@x)
           end
         end
-      EXISTING
+
         foo = Foo.new
         ptr = pointerof(foo)
         c = ptr.value.to_unsafe
@@ -1794,7 +1788,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does call on read instance var that's a struct, takes a pointer to instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 42
@@ -1813,7 +1807,7 @@ describe Crystal::Repl::Interpreter do
           def initialize(@foo : Foo)
           end
         end
-      EXISTING
+
         foo = Foo.new
         bar = Bar.new(foo)
         c = bar.@foo.to_unsafe
@@ -1822,7 +1816,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does ReadInstanceVar with wants_struct_pointer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -1842,7 +1836,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@z)
           end
         end
-      EXISTING
+
         entry = Pointer(Foo).malloc(1)
         entry.value = Foo.new
         ptr = entry.value.@bar.to_unsafe
@@ -1851,7 +1845,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "inlines method that just reads an instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -1875,7 +1869,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@z)
           end
         end
-      EXISTING
+
         entry = Pointer(Foo).malloc(1)
         entry.value = Foo.new
         ptr = entry.value.bar.to_unsafe
@@ -1884,7 +1878,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "inlines method that just reads an instance var, but produces side effects of args" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize
             @x = 1
@@ -1908,7 +1902,7 @@ describe Crystal::Repl::Interpreter do
             pointerof(@z)
           end
         end
-      EXISTING
+
         entry = Pointer(Foo).malloc(1)
         entry.value = Foo.new
         a = 1
@@ -1918,7 +1912,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "puts struct pointer after tuple indexer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(1)
+      interpret(<<-CODE).should eq(1)
         struct Point
           def initialize(@x : Int64)
           end
@@ -1927,7 +1921,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         a = Point.new(1_u64)
         t = {a}
         t[0].x
@@ -2088,7 +2082,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does dispatch on one argument with struct receiver, and modifies it" do
-      interpret(<<-EXISTING, <<-CODE).should eq(32)
+      interpret(<<-CODE).should eq(32)
         struct Foo
           def initialize
             @x = 2_i64
@@ -2110,7 +2104,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new
 
         a = 20 || 'a'
@@ -2120,7 +2114,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "downcasts self from union to struct (pass pointer to self)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           def initialize
             @x = 1_i64
@@ -2140,14 +2134,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         obj = Point.new || Foo.new
         obj.x
       CODE
     end
 
     it "does dispatch on virtual type" do
-      interpret(<<-EXISTING, <<-CODE).should eq(4)
+      interpret(<<-CODE).should eq(4)
         abstract class Foo
           def foo
             1
@@ -2165,7 +2159,7 @@ describe Crystal::Repl::Interpreter do
 
         class Qux < Foo
         end
-      EXISTING
+
         foo = Bar.new || Baz.new
         x = foo.foo
 
@@ -2216,7 +2210,7 @@ describe Crystal::Repl::Interpreter do
 
   context "classes" do
     it "does allocate, set instance var and get instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         class Foo
           @x = 0
 
@@ -2227,7 +2221,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.x = 42
         foo.x
@@ -2235,7 +2229,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does constructor" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         class Foo
           def initialize(@x : Int32)
           end
@@ -2244,7 +2238,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new(42)
         foo.x
       CODE
@@ -2255,17 +2249,17 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "discards allocate" do
-      interpret(<<-EXISTING, <<-CODE).should eq(3)
+      interpret(<<-CODE).should eq(3)
         class Foo
         end
-      EXISTING
+
         Foo.allocate
         3
       CODE
     end
 
     it "calls implicit class self method" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
         class Foo
           def initialize
             @x = 10
@@ -2279,14 +2273,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new
         foo.foo
       CODE
     end
 
     it "calls explicit struct self method" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
         struct Foo
           def initialize
             @x = 10
@@ -2300,14 +2294,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new
         foo.foo
       CODE
     end
 
     it "calls implicit struct self method" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
         struct Foo
           def initialize
             @x = 10
@@ -2321,17 +2315,17 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new
         foo.foo
       CODE
     end
 
     it "does object_id" do
-      interpret(<<-EXISTING, <<-CODE).should be_true
+      interpret(<<-CODE).should be_true
         class Foo
         end
-      EXISTING
+
         foo = Foo.allocate
         object_id = foo.object_id
         address = foo.as(Void*).address
@@ -2342,7 +2336,7 @@ describe Crystal::Repl::Interpreter do
 
   context "structs" do
     it "does allocate, set instance var and get instance var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           @x = 0_i64
           @y = 0_i64
@@ -2361,7 +2355,7 @@ describe Crystal::Repl::Interpreter do
             @y
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.x = 22_i64
         foo.y = 20_i64
@@ -2370,7 +2364,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does constructor" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           def initialize(@x : Int32)
           end
@@ -2379,14 +2373,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.new(42)
         foo.x
       CODE
     end
 
     it "interprets read instance var of struct" do
-      interpret(<<-EXISTING, <<-CODE).should eq(20)
+      interpret(<<-CODE).should eq(20)
         struct Foo
           @x = 0_i64
           @y = 0_i64
@@ -2398,7 +2392,7 @@ describe Crystal::Repl::Interpreter do
             @y
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.y = 20_i64
         foo.@y
@@ -2406,7 +2400,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "casts def body to def type" do
-      interpret(<<-EXISTING, <<-CODE).should eq(1)
+      interpret(<<-CODE).should eq(1)
         struct Foo
           def foo
             return nil if 1 == 2
@@ -2414,24 +2408,24 @@ describe Crystal::Repl::Interpreter do
             self
           end
         end
-      EXISTING
+
         value = Foo.new.foo
         value ? 1 : 2
       CODE
     end
 
     it "discards allocate" do
-      interpret(<<-EXISTING, <<-CODE).should eq(3)
+      interpret(<<-CODE).should eq(3)
         struct Foo
         end
-      EXISTING
+
         Foo.allocate
         3
       CODE
     end
 
     it "mutates struct inside union" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         struct Foo
           def initialize
             @x = 1
@@ -2445,7 +2439,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = 1 == 1 ? Foo.new : nil
         if foo
           foo.inc
@@ -2460,7 +2454,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "mutates struct stored in class var" do
-      interpret(<<-EXISTING, <<-CODE).should eq(3)
+      interpret(<<-CODE).should eq(3)
         struct Foo
           def initialize
             @x = 1
@@ -2486,7 +2480,7 @@ describe Crystal::Repl::Interpreter do
             @@foo
           end
         end
-      EXISTING
+
         before = Moo.foo.x
         Moo.mutate
         after = Moo.foo.x
@@ -2495,7 +2489,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does simple class instance var initializer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         class Foo
           @x = 42
 
@@ -2503,14 +2497,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.x
       CODE
     end
 
     it "does complex class instance var initializer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         class Foo
           @x : Int32 = begin
             a = 20
@@ -2522,14 +2516,14 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.x
       CODE
     end
 
     it "does class instance var initializer inheritance" do
-      interpret(<<-EXISTING, <<-CODE).should eq(6)
+      interpret(<<-CODE).should eq(6)
         module Moo
           @z = 3
 
@@ -2555,14 +2549,14 @@ describe Crystal::Repl::Interpreter do
             @y
           end
         end
-      EXISTING
+
         bar = Bar.allocate
         bar.x + bar.y + bar.z
       CODE
     end
 
     it "does simple struct instance var initializer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         struct Foo
           @x = 42
 
@@ -2570,7 +2564,7 @@ describe Crystal::Repl::Interpreter do
             @x
           end
         end
-      EXISTING
+
         foo = Foo.allocate
         foo.x
       CODE
@@ -2579,25 +2573,25 @@ describe Crystal::Repl::Interpreter do
 
   context "enum" do
     it "does enum value" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         enum Color
           Red
           Green
           Blue
         end
-      EXISTING
+
         Color::Blue.value
       CODE
     end
 
     it "does enum new" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         enum Color
           Red
           Green
           Blue
         end
-      EXISTING
+
         blue = Color.new(2)
         blue.value
       CODE
@@ -3263,7 +3257,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts to module type" do
-      interpret(<<-EXISTING, <<-CODE).should eq(1)
+      interpret(<<-CODE).should eq(1)
         module Moo
         end
 
@@ -3283,7 +3277,6 @@ describe Crystal::Repl::Interpreter do
           end
         end
 
-      EXISTING
         moo = (1 == 1 ? Foo.new : Bar.new).as(Moo)
         if moo.is_a?(Foo)
           moo.foo
@@ -3294,7 +3287,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "upcasts virtual type to union" do
-      interpret(<<-EXISTING, <<-CODE).should eq(2)
+      interpret(<<-CODE).should eq(2)
         class Foo
           def foo
             1
@@ -3306,7 +3299,7 @@ describe Crystal::Repl::Interpreter do
             2
           end
         end
-      EXISTING
+
         foo = 1 == 1 ? Bar.new : Foo.new
         a = 1 == 1 ? foo : 10
         if a.is_a?(Foo)
@@ -3354,7 +3347,7 @@ describe Crystal::Repl::Interpreter do
 
   context "class vars" do
     it "interprets class var without initializer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(41)
+      interpret(<<-CODE).should eq(41)
         class Foo
           @@x : Int32?
 
@@ -3366,7 +3359,7 @@ describe Crystal::Repl::Interpreter do
             @@x
           end
         end
-      EXISTING
+
         foo = Foo.new
 
         a = 0
@@ -3384,7 +3377,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets class var with initializer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(42)
+      interpret(<<-CODE).should eq(42)
         class Foo
           @@x = 10
 
@@ -3396,7 +3389,7 @@ describe Crystal::Repl::Interpreter do
             @@x
           end
         end
-      EXISTING
+
         foo = Foo.new
 
         a = 0
@@ -3485,14 +3478,14 @@ describe Crystal::Repl::Interpreter do
 
   context "extern" do
     it "interprets primitive struct_or_union_set and get (struct)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(30)
+      interpret(<<-CODE).should eq(30)
           lib LibFoo
             struct Foo
               x : Int32
               y : Int32
             end
           end
-        EXISTING
+
           foo = LibFoo::Foo.new
           foo.x = 10
           foo.y = 20
@@ -3501,21 +3494,21 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "discards primitive struct_or_union_set and get (struct)" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
           lib LibFoo
             struct Foo
               x : Int32
               y : Int32
             end
           end
-        EXISTING
+
           foo = LibFoo::Foo.new
           foo.y = 10
         CODE
     end
 
     it "discards primitive struct_or_union_set because it's a copy" do
-      interpret(<<-EXISTING, <<-CODE).should eq(10)
+      interpret(<<-CODE).should eq(10)
           lib LibFoo
             struct Foo
               x : Int32
@@ -3526,7 +3519,7 @@ describe Crystal::Repl::Interpreter do
           def copy
             LibFoo::Foo.new
           end
-        EXISTING
+
           copy.y = 10
         CODE
     end
@@ -3534,7 +3527,7 @@ describe Crystal::Repl::Interpreter do
 
   context "autocast" do
     it "autocasts symbol to enum" do
-      interpret(<<-EXISTING, <<-CODE).should eq(1)
+      interpret(<<-CODE).should eq(1)
           enum Color
             Red
             Green
@@ -3544,28 +3537,28 @@ describe Crystal::Repl::Interpreter do
           def foo(x : Color)
             x
           end
-        EXISTING
+
           c = foo :green
           c.value
         CODE
     end
 
     it "autocasts number literal to integer" do
-      interpret(<<-EXISTING, <<-CODE).should eq(12)
+      interpret(<<-CODE).should eq(12)
           def foo(x : UInt8)
             x
           end
-        EXISTING
+
           foo(12)
         CODE
     end
 
     it "autocasts number literal to float" do
-      interpret(<<-EXISTING, <<-CODE).should eq(12.0)
+      interpret(<<-CODE).should eq(12.0)
           def foo(x : Float64)
             x
           end
-        EXISTING
+
           foo(12)
         CODE
     end
@@ -3586,47 +3579,17 @@ describe Crystal::Repl::Interpreter do
   # end
 end
 
-private def interpret(string, *, prelude = "primitives")
-  program, return_value = interpret_full("", string, prelude: prelude)
+private def interpret(code, *, prelude = "primitives")
+  program, return_value = interpret_with_program(code, prelude: prelude)
   return_value.value
 end
 
-private def interpret(existing_code, string, *, prelude = "primitives")
-  program, return_value = interpret_full(existing_code, string, prelude: prelude)
-  return_value.value
+private def interpret_with_program(code, *, prelude = "primitives")
+  interpret_with_program("", code, prelude: prelude)
 end
 
-private def interpret_full(string, *, prelude = "primitives")
-  interpret_full("", string, prelude: prelude)
-end
-
-private def interpret_full(existing_code, string, *, prelude = "primitives")
-  program = Crystal::Program.new
-  context = Crystal::Repl::Context.new(program)
-
-  node = Crystal::Parser.parse(string)
-  node = program.normalize(node, inside_exp: false)
-
-  load_prelude(program, prelude, existing_code)
-  interpreter = Crystal::Repl::Interpreter.new(context)
-
-  main_visitor = MainVisitor.new(program)
-  node = program.semantic(node, main_visitor: main_visitor)
-
-  {program, interpreter.interpret(node, main_visitor.meta_vars)}
-end
-
-private def load_prelude(program, prelude, existing_code)
-  filenames = program.find_in_path(prelude)
-  filenames.each do |filename|
-    parser = Crystal::Parser.new File.read(filename), program.string_pool
-    parser.filename = filename
-    prelude_node = parser.parse
-    prelude_node = program.normalize(prelude_node, inside_exp: false)
-
-    existing_node = Crystal::Parser.parse(existing_code)
-    existing_node = program.normalize(existing_node, inside_exp: false)
-
-    program.semantic(Expressions.new([prelude_node, existing_node]))
-  end
+private def interpret_with_program(code, *, prelude = "primitives")
+  repl = Crystal::Repl.new
+  repl.prelude = prelude
+  {repl.program, repl.run_code(code)}
 end
