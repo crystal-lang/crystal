@@ -3564,32 +3564,62 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
-  # context "integration" do
-  #   it "does Int32#to_s" do
-  #     interpret(<<-CODE, prelude: "prelude").should eq("123456789")
-  #       123456789.to_s
-  #     CODE
-  #   end
+  context "integration" do
+    it "does Int32#to_s" do
+      interpret(<<-CODE, prelude: "prelude").should eq("123456789")
+        123456789.to_s
+      CODE
+    end
 
-  #   it "does Float64#to_s" do
-  #     interpret(<<-CODE, prelude: "prelude").should eq("123456789.12345")
-  #       123456789.12345.to_s
-  #     CODE
-  #   end
-  # end
+    it "does Float64#to_s (simple)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("1.5")
+        1.5.to_s
+      CODE
+    end
+
+    it "does Float64#to_s (complex)" do
+      interpret(<<-CODE, prelude: "prelude").should eq("123456789.12345")
+        123456789.12345.to_s
+      CODE
+    end
+
+    it "does Range#to_a, Array#to_s" do
+      interpret(<<-CODE, prelude: "prelude").should eq("[1, 2, 3, 4, 5]")
+        (1..5).to_a.to_s
+      CODE
+    end
+
+    it "does some Hash methods" do
+      interpret(<<-CODE, prelude: "prelude").should eq(90)
+        h = {} of Int32 => Int32
+        10.times do |i|
+          h[i] = i * 2
+        end
+        h.values.sum
+      CODE
+    end
+  end
 end
 
 private def interpret(code, *, prelude = "primitives")
-  program, return_value = interpret_with_program(code, prelude: prelude)
-  return_value.value
-end
-
-private def interpret_with_program(code, *, prelude = "primitives")
-  interpret_with_program("", code, prelude: prelude)
+  program, value = interpret_with_program(code, prelude: prelude)
+  value.value
 end
 
 private def interpret_with_program(code, *, prelude = "primitives")
   repl = Crystal::Repl.new
   repl.prelude = prelude
-  {repl.program, repl.run_code(code)}
+
+  # We disable the GC for programs that use the prelude because
+  # finalizers might kick off after the Context has been finalized,
+  # leading to segfaults.
+  # This is a bit tricky to solve: the finalizers will run once the
+  # context has been destroyed (it's memory is no longer allocated
+  # so the objects in the program won't be referenced anymore),
+  # but for finalizers to be able to run the context needs to be
+  # there! :/
+  code = "GC.disable\n#{code}" if prelude == "prelude"
+
+  value = repl.run_code(code)
+  {repl.program, value}
 end

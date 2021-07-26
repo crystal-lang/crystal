@@ -301,7 +301,7 @@ class Crystal::Repl::Interpreter
       raise "BUG: data left on stack (#{stack - stack_bottom_after_local_vars} bytes): #{Slice.new(@stack, stack - @stack)}"
     end
 
-    Value.new(@context, return_value, node_type)
+    Value.new(self, return_value, node_type)
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)

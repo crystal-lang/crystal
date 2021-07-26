@@ -7,7 +7,7 @@ struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
 
-  def initialize(@context : Context, @pointer : Pointer(UInt8), @type : Type)
+  def initialize(@interpreter : Interpreter, @pointer : Pointer(UInt8), @type : Type)
   end
 
   # This is a fail-safe way of getting a Crystal value for well-known
@@ -57,7 +57,7 @@ struct Crystal::Repl::Value
       @pointer.as(UInt8**).value
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
-      @context.type_from_id(type_id)
+      context.type_from_id(type_id)
     else
       @pointer
     end
@@ -65,7 +65,7 @@ struct Crystal::Repl::Value
 
   # Copies the contents of this value to another pointer.
   def copy_to(pointer : Pointer(UInt8))
-    @pointer.copy_to(pointer, @context.inner_sizeof_type(@type))
+    @pointer.copy_to(pointer, context.inner_sizeof_type(@type))
   end
 
   # Appends the string representation of this value to the given *io*.
@@ -82,19 +82,19 @@ struct Crystal::Repl::Value
     begin
       meta_vars = MetaVars.new
 
-      interpreter = Interpreter.new(@context, meta_vars: meta_vars)
+      interpreter = Interpreter.new(context, meta_vars: meta_vars)
       interpreter.decompile = false
       # TODO: make stack private? Does it matter?
-      interpreter.stack.copy_from(@pointer, @context.inner_sizeof_type(@type))
+      interpreter.stack.copy_from(@pointer, context.inner_sizeof_type(@type))
 
-      main_visitor = MainVisitor.new(@context.program, meta_vars: meta_vars)
+      main_visitor = MainVisitor.new(context.program, meta_vars: meta_vars)
 
-      exps = @context.program.normalize(exps)
-      exps = @context.program.semantic(exps, main_visitor: main_visitor)
+      exps = context.program.normalize(exps)
+      exps = context.program.semantic(exps, main_visitor: main_visitor)
 
       value = interpreter.interpret(exps, main_visitor.meta_vars)
 
-      if value.type == @context.program.string
+      if value.type == context.program.string
         value.pointer.as(UInt8**).value.unsafe_as(String).to_s(io)
       else
         value.fallback_to_s(io)
@@ -160,18 +160,18 @@ struct Crystal::Repl::Value
     when TupleInstanceType
       io << "{"
       type.tuple_types.each_with_index do |tuple_type, i|
-        io << Value.new(@context, @pointer + @context.offset_of(type, i), tuple_type)
+        io << Value.new(@interpreter, @pointer + context.offset_of(type, i), tuple_type)
         io << ", " unless i == type.tuple_types.size - 1
       end
       io << "}"
     when MetaclassType, GenericClassInstanceMetaclassType
       type_id = @pointer.as(Int32*).value
-      type = @context.type_from_id(type_id)
+      type = context.type_from_id(type_id)
       io << type
     when MixedUnionType
       type_id = @pointer.as(Int32*).value
-      type = @context.type_from_id(type_id)
-      io << Value.new(@context, @pointer + sizeof(Pointer(UInt8)), type)
+      type = context.type_from_id(type_id)
+      io << Value.new(@interpreter, @pointer + sizeof(Pointer(UInt8)), type)
     when InstanceVarContainer
       if type.struct?
         ptr = @pointer
@@ -179,32 +179,36 @@ struct Crystal::Repl::Value
         io << "("
         all_instance_vars = type.all_instance_vars
         all_instance_vars.each_with_index do |(name, ivar), index|
-          offset = @context.offset_of(type, index)
+          offset = context.offset_of(type, index)
           io << name
           io << '='
-          io << Value.new(@context, ptr + offset, ivar.type)
+          io << Value.new(@interpreter, ptr + offset, ivar.type)
           io << ' ' unless index == all_instance_vars.size - 1
         end
         io << ")"
       else
         ptr = @pointer.as(UInt8**).value
         type_id = ptr.as(Int32*).value
-        type = @context.type_from_id(type_id)
+        type = context.type_from_id(type_id)
         io << "#<"
         io << type
         io << ":0x"
         ptr.address.to_s(io, 16)
         type.all_instance_vars.each_with_index do |(name, ivar), index|
-          offset = @context.instance_offset_of(type, index)
+          offset = context.instance_offset_of(type, index)
           io << ' '
           io << name
           io << '='
-          io << Value.new(@context, ptr + offset, ivar.type)
+          io << Value.new(@interpreter, ptr + offset, ivar.type)
         end
         io << ">"
       end
     else
       io << "BUG: missing handling of Repl::Value#to_s(io) for #{type}"
     end
+  end
+
+  private def context
+    @interpreter.context
   end
 end
