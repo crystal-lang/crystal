@@ -368,10 +368,8 @@ module Crystal
       # new ones when there are free vars.
       context = context.clone if context.free_vars
 
-      if matched_literals
-        matched_literals.try &.each do |(arg, restriction)|
-          arg.add_literal_matches(restriction, context)
-        end
+      matched_literals.try &.each do |(arg, restriction)|
+        arg.add_literal_matches(restriction, context)
       end
 
       Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
