@@ -206,7 +206,7 @@ module Indexable(T)
   # ```
   def self.cartesian_product(indexables : Indexable(Indexable))
     capacity = indexables.product(&.size)
-    result = Array(typeof(indexables.to_a.map &.first)).new(capacity)
+    result = Array(Array(typeof(Enumerable.element_type Enumerable.element_type indexables))).new(capacity)
     each_cartesian(indexables) do |product|
       result << product
     end
@@ -304,7 +304,7 @@ module Indexable(T)
     return if lens.any? &.zero?
 
     n = indexables.size
-    pool = Array.new(n) { |i| indexables.unsafe_fetch(i).first }
+    pool = Array.new(n) { |i| indexables.unsafe_fetch(i).unsafe_fetch(0) }
     indices = Array.new(n, 0)
     reuse = Indexable(typeof(pool.first)).check_reuse(reuse, n)
 
@@ -350,7 +350,7 @@ module Indexable(T)
     {% begin %}
       CartesianProductIteratorT(U, Tuple(
         {% for i in 0...U.size %}
-          typeof(indexables[{{ i }}].to_a.first),
+          typeof(Enumerable.element_type(indexables[{{ i }}])),
         {% end %}
       )).new(indexables)
     {% end %}
@@ -385,7 +385,7 @@ module Indexable(T)
     if indexables.any? &.empty?
       Iterator.of(Iterator.stop)
     else
-      CartesianProductIteratorN(typeof(indexables), typeof(indexables.to_a.map &.first)).new(indexables, reuse)
+      CartesianProductIteratorN(typeof(indexables), typeof(Enumerable.element_type Enumerable.element_type indexables)).new(indexables, reuse)
     end
   end
 
@@ -420,24 +420,24 @@ module Indexable(T)
     end
   end
 
-  private class CartesianProductIteratorN(Is, Ts)
-    include Iterator(Ts)
+  private class CartesianProductIteratorN(Is, T)
+    include Iterator(Array(T))
 
     @indices : Array(Int32)
-    @pool : Ts
-    @reuse : Ts?
+    @pool : Array(T)
+    @reuse : Array(T)?
 
     def initialize(@indexables : Is, reuse)
       n = @indexables.size
-      @pool = Array.new(n) { |i| indexables.unsafe_fetch(i).first }
+      @pool = Array.new(n) { |i| indexables.unsafe_fetch(i).unsafe_fetch(0) }
       @indices = Array.new({1, n}.max, 0)
       @indices[-1] -= 1
 
       if reuse
-        if reuse.is_a?(Ts)
+        if reuse.is_a?(Array(T))
           @reuse = reuse
         else
-          @reuse = Ts.new(n)
+          @reuse = Array(T).new(n)
         end
       end
     end

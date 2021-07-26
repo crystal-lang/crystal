@@ -333,6 +333,12 @@ describe Indexable do
       elems = Indexable.cartesian_product(SafeNestedIndexable.new(0, 0))
       elems.should eq([[] of Int32])
     end
+
+    it "does with a Tuple of Tuples with mixed types" do
+      elems = Indexable.cartesian_product({ {1, 'a'}, {"", 4}, {5, 6} })
+      elems.should be_a(Array(Array(Int32 | Char | String)))
+      elems.should eq([[1, "", 5], [1, "", 6], [1, 4, 5], [1, 4, 6], ['a', "", 5], ['a', "", 6], ['a', 4, 5], ['a', 4, 6]])
+    end
   end
 
   describe "#each_cartesian" do
