@@ -476,10 +476,35 @@ module Crystal
     def visit(node : TupleLiteral)
       request_value do
         type = node.type.as(TupleInstanceType)
-        @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.elements[i]
-          accept exp
-          {exp.type, @last}
+
+        if node.elements.any?(Splat)
+          tuple_size = node.elements.sum do |exp|
+            exp.is_a?(Splat) ? exp.type.as(TupleInstanceType).tuple_types.size : 1
+          end
+          exp_values = Array({Type, LLVM::Value}).new(tuple_size)
+
+          node.elements.each do |exp|
+            accept exp
+
+            if exp.is_a?(Splat)
+              tuple_type = exp.type.as(TupleInstanceType)
+              tuple_type.tuple_types.each_with_index do |subtype, j|
+                exp_values << {subtype, codegen_tuple_indexer(tuple_type, @last, j)}
+              end
+            else
+              exp_values << {exp.type, @last}
+            end
+          end
+
+          @last = allocate_tuple(type) do |_, i|
+            exp_values[i]
+          end
+        else
+          @last = allocate_tuple(type) do |tuple_type, i|
+            exp = node.elements[i]
+            accept exp
+            {exp.type, @last}
+          end
         end
       end
       false
@@ -512,7 +537,7 @@ module Crystal
                 end
                 get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
-                get_global node_exp.name, node_exp.type, node_exp.var
+                node.raise "BUG: there should be no use of global variables other than $~ and $?"
               when Path
                 # Make sure the constant is initialized before taking a pointer of it
                 const = node_exp.target_const.not_nil!
@@ -992,7 +1017,7 @@ module Crystal
             when InstanceVar
               instance_var_ptr context.type, target.name, llvm_self_ptr
             when Global
-              get_global target.name, target_type, target.var
+              node.raise "BUG: there should be no use of global variables other than $~ and $?"
             when ClassVar
               read_class_var_ptr(target)
             when Var
@@ -1118,15 +1143,7 @@ module Crystal
           codegen_assign(var, value, node)
         end
       when Global
-        if value = node.value
-          request_value do
-            accept value
-          end
-
-          ptr = get_global var.name, var.type, var.var
-          assign ptr, var.type, value.type, @last
-          return false
-        end
+        node.raise "BUG: there should be no use of global variables other than $~ and $?"
       when ClassVar
         # This is the case of a class var initializer
         initialize_class_var(var)
@@ -1183,16 +1200,11 @@ module Crystal
     end
 
     def visit(node : Global)
-      read_global node.name.to_s, node.type, node.var
+      node.raise "BUG: there should be no use of global variables other than $~ and $?"
     end
 
     def visit(node : ClassVar)
       @last = read_class_var(node)
-    end
-
-    def read_global(name, type, real_var)
-      @last = get_global name, type, real_var
-      @last = to_lhs @last, type
     end
 
     def visit(node : InstanceVar)
@@ -1200,7 +1212,32 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node.type, node.obj.type, node.name, @last
+      obj_type = node.obj.type
+      if obj_type.is_a?(UnionType)
+        union_ptr = @last
+        union_type_id = type_id(union_ptr, obj_type)
+
+        Phi.open(self, node, @needs_value) do |phi|
+          obj_type.union_types.each do |union_type|
+            id_matches = match_type_id(node.type, union_type, union_type_id)
+
+            current_match_label, next_match_label = new_blocks "current_match", "next_match"
+            cond id_matches, current_match_label, next_match_label
+            position_at_end current_match_label
+
+            value_ptr = downcast union_ptr, union_type, obj_type, true
+            ivar_type = union_type.lookup_instance_var(node.name).type
+            read_instance_var ivar_type, union_type, node.name, value_ptr
+
+            phi.add @last, ivar_type
+
+            position_at_end next_match_label
+          end
+          unreachable
+        end
+      else
+        read_instance_var node.type, node.obj.type, node.name, @last
+      end
     end
 
     def read_instance_var(node_type, type, name, value)
@@ -1480,7 +1517,7 @@ module Crystal
           block.args.each_with_index do |arg, i|
             block_var = block_context.vars[arg.name]
             if i == splat_index
-              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do
                 exp_value2, exp_type = exp_values[j]
                 j += 1
                 {exp_type, exp_value2}
@@ -2205,7 +2242,7 @@ module Crystal
     end
 
     def visit(node : ExpandableNode)
-      raise "BUG: #{node} at #{node.location} should have been expanded"
+      raise "BUG: #{node} (#{node.class}) at #{node.location} should have been expanded"
     end
 
     def visit(node : ASTNode)

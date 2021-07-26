@@ -7,7 +7,7 @@ class LLVM::TargetMachine
     target ? Target.new(target) : raise "Couldn't get target"
   end
 
-  def data_layout
+  def data_layout : LLVM::TargetData
     @layout ||= begin
       layout = {% if LibLLVM::IS_38 %}
                  LibLLVM.get_target_machine_data(self)
@@ -19,7 +19,7 @@ class LLVM::TargetMachine
     end
   end
 
-  def triple
+  def triple : String
     triple_c = LibLLVM.get_target_machine_triple(self)
     LLVM.string_and_dispose(triple_c)
   end

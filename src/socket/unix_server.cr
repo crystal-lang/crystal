@@ -46,7 +46,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Creates a UNIXServer from an already configured raw file descriptor
-  def initialize(*, fd : Int32, type : Type = Type::STREAM, @path : String? = nil)
+  def initialize(*, fd : Handle, type : Type = Type::STREAM, @path : String? = nil)
     super(fd: fd, type: type, path: @path)
   end
 
@@ -76,7 +76,7 @@ class UNIXServer < UNIXSocket
   end
 
   # Closes the socket, then deletes the filesystem pathname if it exists.
-  def close(delete = true)
+  def close(delete = true) : Nil
     super()
   ensure
     if delete && (path = @path)

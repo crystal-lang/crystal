@@ -33,7 +33,7 @@ module MIME::Multipart
     # builder = MIME::Multipart::Builder.new(io, "a4VF")
     # builder.content_type("mixed") # => "multipart/mixed; boundary=a4VF"
     # ```
-    def content_type(subtype = "mixed")
+    def content_type(subtype = "mixed") : String
       MIME::MediaType.new("multipart/#{subtype}", {"boundary" => @boundary}).to_s
     end
 

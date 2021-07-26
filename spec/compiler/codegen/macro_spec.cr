@@ -1272,28 +1272,6 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "solves macro expression arguments before macro expansion (type)" do
-    run(%(
-      macro name(x)
-        {{x.name.stringify}}
-      end
-
-      name({{String}})
-      )).to_string.should eq("String")
-  end
-
-  it "solves macro expression arguments before macro expansion (constant)" do
-    run(%(
-      CONST = 1
-
-      macro id(x)
-        {{x}}
-      end
-
-      id({{CONST}})
-      )).to_i.should eq(1)
-  end
-
   it "can use macro inside array literal" do
     run(%(
       require "prelude"
@@ -1886,7 +1864,7 @@ describe "Code gen: macro" do
       end
 
       Foo.new.bar
-      )).to_string.should eq("top_level")
+      )).to_string.should eq("main")
   end
 
   it "responds correctly to has_constant? with @top_level" do

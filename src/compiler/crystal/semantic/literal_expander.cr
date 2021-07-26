@@ -4,7 +4,7 @@ module Crystal
       @regexes = [] of {String, Regex::Options}
     end
 
-    # Convert an array literal to creating an Array and storing the values:
+    # Converts an array literal to creating an Array and storing the values:
     #
     # From:
     #
@@ -20,24 +20,56 @@ module Crystal
     #
     # To:
     #
-    #     Array(typeof(1, 2, 3)).new(3) do |buffer|
-    #       buffer[0] = 1
-    #       buffer[1] = 2
-    #       buffer[2] = 3
-    #       3
-    #     end
+    #     ary = ::Array(typeof(1, 2, 3)).unsafe_build(3)
+    #     buf = ary.to_unsafe
+    #     buf[0] = 1
+    #     buf[1] = 2
+    #     buf[2] = 3
+    #     ary
+    #
+    # From:
+    #
+    #     [1, *exp2, *exp3, 4]
+    #
+    # To:
+    #
+    #     ary = ::Array(typeof(1, ::Enumerable.element_type(exp2), ::Enumerable.element_type(exp3), 4)).new(2)
+    #     ary << 1
+    #     ary.concat(exp2)
+    #     ary.concat(exp3)
+    #     ary << 4
+    #     ary
     def expand(node : ArrayLiteral)
       if node_of = node.of
         type_var = node_of
       else
-        type_var = TypeOf.new(node.elements.clone)
+        type_var = typeof_exp(node)
       end
 
-      capacity = node.elements.size
+      capacity = node.elements.count { |elem| !elem.is_a?(Splat) }
 
       generic = Generic.new(Path.global("Array"), type_var).at(node)
 
-      if capacity.zero?
+      if node.elements.any?(Splat)
+        ary_var = new_temp_var.at(node)
+
+        ary_instance = Call.new(generic, "new", args: [NumberLiteral.new(capacity).at(node)] of ASTNode).at(node)
+
+        exps = Array(ASTNode).new(node.elements.size + 2)
+        exps << Assign.new(ary_var.clone, ary_instance).at(node)
+
+        node.elements.each do |elem|
+          if elem.is_a?(Splat)
+            exps << Call.new(ary_var.clone, "concat", elem.exp.clone).at(node)
+          else
+            exps << Call.new(ary_var.clone, "<<", elem.clone).at(node)
+          end
+        end
+
+        exps << ary_var.clone
+
+        Expressions.new(exps).at(node)
+      elsif capacity.zero?
         Call.new(generic, "new").at(node)
       else
         ary_var = new_temp_var.at(node)
@@ -61,6 +93,47 @@ module Crystal
       end
     end
 
+    def typeof_exp(node : ArrayLiteral)
+      type_exps = node.elements.map do |elem|
+        if elem.is_a?(Splat)
+          Call.new(Path.global("Enumerable").at(node), "element_type", elem.exp.clone).at(node)
+        else
+          elem.clone
+        end
+      end
+
+      TypeOf.new(type_exps).at(node.location)
+    end
+
+    # Converts an array-like literal to creating a container and storing the values:
+    #
+    # From:
+    #
+    #     T{1, 2, 3}
+    #
+    # To:
+    #
+    #     ary = T.new
+    #     ary << 1
+    #     ary << 2
+    #     ary << 3
+    #     ary
+    #
+    # From:
+    #
+    #     T{1, *exp2, *exp3, 4}
+    #
+    # To:
+    #
+    #     ary = T.new
+    #     ary << 1
+    #     exp2.each { |v| ary << v }
+    #     exp3.each { |v| ary << v }
+    #     ary << 4
+    #     ary
+    #
+    # If `T` is an uninstantiated generic type, its type argument is injected by
+    # `MainVisitor` with a `typeof`.
     def expand_named(node : ArrayLiteral)
       temp_var = new_temp_var
 
@@ -73,33 +146,21 @@ module Crystal
       exps = Array(ASTNode).new(node.elements.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.elements.each do |elem|
-        exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+        if elem.is_a?(Splat)
+          yield_var = new_temp_var
+          each_body = Call.new(temp_var.clone, "<<", yield_var.clone)
+          each_block = Block.new(args: [yield_var], body: each_body)
+          exps << Call.new(elem.exp.clone, "each", block: each_block).at(node)
+        else
+          exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
+        end
       end
       exps << temp_var.clone
 
       Expressions.new(exps).at(node)
     end
 
-    def expand_named(node : HashLiteral)
-      constructor = Call.new(node.name, "new").at(node)
-
-      if node.entries.empty?
-        return constructor
-      end
-
-      temp_var = new_temp_var
-
-      exps = Array(ASTNode).new(node.entries.size + 2)
-      exps << Assign.new(temp_var.clone, constructor).at(node)
-      node.entries.each do |entry|
-        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
-      end
-      exps << temp_var.clone
-
-      Expressions.new(exps).at(node)
-    end
-
-    # Convert a HashLiteral into creating a Hash and assigning keys and values:
+    # Converts a hash literal into creating a Hash and assigning keys and values:
     #
     # From:
     #
@@ -115,7 +176,7 @@ module Crystal
     #
     # To:
     #
-    #     hash = Hash(typeof(a, c), typeof(b, d)).new
+    #     hash = ::Hash(typeof(a, c), typeof(b, d)).new
     #     hash[a] = b
     #     hash[c] = d
     #     hash
@@ -146,22 +207,62 @@ module Crystal
       end
     end
 
+    # Converts a hash-like literal into creating a Hash and assigning keys and values:
+    #
+    # From:
+    #
+    #     T{}
+    #
+    # To:
+    #
+    #     T.new
+    #
+    # From:
+    #
+    #     T{a => b, c => d}
+    #
+    # To:
+    #
+    #     hash = T.new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
+    #
+    # If `T` is an uninstantiated generic type, its type arguments are injected
+    # by `MainVisitor` with `typeof`s.
+    def expand_named(node : HashLiteral)
+      constructor = Call.new(node.name, "new").at(node)
+
+      if node.entries.empty?
+        return constructor
+      end
+
+      temp_var = new_temp_var
+
+      exps = Array(ASTNode).new(node.entries.size + 2)
+      exps << Assign.new(temp_var.clone, constructor).at(node)
+      node.entries.each do |entry|
+        exps << Call.new(temp_var.clone, "[]=", [entry.key.clone, entry.value.clone] of ASTNode).at(node)
+      end
+      exps << temp_var.clone
+
+      Expressions.new(exps).at(node)
+    end
+
     # From:
     #
     #     /regex/flags
     #
-    # To:
+    # To declaring a constant with this value (if not already declared):
     #
-    #     if temp_var = $some_global
-    #       temp_var
-    #     else
-    #       $some_global = Regex.new("regex", Regex::Options.new(flags))
-    #     end
+    # ```
+    # Regex.new("regex", Regex::Options.new(flags))
+    # ```
     #
-    # That is, cache the regex in a global variable.
+    # and then reading from that constant.
+    # That is, we cache regex literals to avoid recompiling them all of the time.
     #
     # Only do this for regex literals that don't contain interpolation.
-    #
     # If there's an interpolation, expand to: Regex.new(interpolation, flags)
     def expand(node : RegexLiteral)
       node_value = node.value
@@ -170,30 +271,19 @@ module Crystal
         string = node_value.value
 
         key = {string, node.options}
-        index = @regexes.index key
-        unless index
-          index = @regexes.size
+        index = @regexes.index(key) || @regexes.size
+        const_name = "$Regex:#{index}"
+
+        if index == @regexes.size
           @regexes << key
+
+          const_value = regex_new_call(node, StringLiteral.new(string).at(node))
+          const = Const.new(@program, @program, const_name, const_value)
+
+          @program.types[const_name] = const
         end
 
-        global_name = "$Regex:#{index}"
-        temp_name = @program.new_temp_var_name
-
-        global_var = MetaTypeVar.new(global_name)
-        global_var.owner = @program
-        type = @program.nilable(@program.regex)
-        global_var.freeze_type = type
-        global_var.type = type
-
-        # TODO: need to bind with nil_var for codegen, but shouldn't be needed
-        global_var.bind_to(@program.nil_var)
-
-        @program.global_vars[global_name] = global_var
-
-        first_assign = Assign.new(Var.new(temp_name).at(node), Global.new(global_name).at(node)).at(node)
-        regex = regex_new_call(node, StringLiteral.new(string).at(node))
-        second_assign = Assign.new(Global.new(global_name).at(node), regex).at(node)
-        If.new(first_assign, Var.new(temp_name).at(node), second_assign).at(node)
+        Path.new(const_name)
       else
         regex_new_call(node, node_value)
       end

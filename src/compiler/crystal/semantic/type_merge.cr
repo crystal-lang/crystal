@@ -128,8 +128,8 @@ module Crystal
 
       types.each do |t2|
         not_found = all_types.all? do |t1|
-          ancestor = t1.common_ancestor(t2)
-          if ancestor
+          ancestor = Type.least_common_ancestor(t1.devirtualize, t2.devirtualize)
+          if ancestor && virtual_root?(ancestor)
             all_types.delete t1
             all_types << ancestor.virtual_type
             false
@@ -143,6 +143,29 @@ module Crystal
       end
 
       all_types
+    end
+
+    # Returns true if *type* can be used as a virtual root; that is, it must not
+    # be one of Object, Reference, Value, Struct, Number, Int, Float, or their
+    # corresponding metaclasses.
+    def virtual_root?(type)
+      # This discards Object, Reference and Value
+      return false if type.is_a?(ClassType) && type.depth <= 1
+
+      case type
+      when self.struct, self.number, self.int, self.float
+        false
+      else
+        true
+      end
+    end
+
+    def virtual_root?(type : VirtualType | VirtualMetaclassType)
+      virtual_root?(type.base_type)
+    end
+
+    def virtual_root?(type : MetaclassType | GenericClassInstanceMetaclassType | GenericModuleInstanceMetaclassType)
+      virtual_root?(type.instance_type)
     end
   end
 
@@ -167,132 +190,105 @@ module Crystal
       merge!([type1, type2])
     end
 
-    def common_ancestor(other)
+    # Given two non-union types T and U, returns their least common ancestor
+    # LCA(T, U) such that the following properties are satisfied:
+    #
+    # * LCA(T, U) is never a union;
+    # * LCA(T, U) is never virtual, since `#type_combine` takes care of this;
+    # * T <= LCA(T, U) and U <= LCA(T, U);
+    # * for any type V, if T <= V and U <= V, then LCA(T, U) <= V;
+    # * LCA is commutative up to equivalence; that is, if V = LCA(T, U) and
+    #   W = LCA(U, T), then V <= W and W <= V;
+    # * LCA is associative up to equivalence.
+    #
+    # If such a type exists and this type can be used as a virtual root (see
+    # `Program#virtual_root?`), then T | U is precisely the virtual type of
+    # LCA(T, U). Otherwise, T | U is an irreducible union and this method should
+    # return `nil`.
+    #
+    # The above applies only if T and U are unequal; this is guaranteed by
+    # `Program#add_type`, so T | T produces a non-virtual type. However, this
+    # method should not break in case it recursively calls itself with two
+    # identical types.
+    def self.least_common_ancestor(type1 : Type, type2 : Type)
       nil
     end
-  end
 
-  class NonGenericModuleType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
-      else
-        nil
-      end
-    end
-  end
+    def self.least_common_ancestor(
+      type1 : MetaclassType | GenericClassInstanceMetaclassType,
+      type2 : MetaclassType | GenericClassInstanceMetaclassType
+    )
+      return nil unless unifiable_metaclass?(type1) && unifiable_metaclass?(type2)
 
-  class GenericModuleInstanceType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
-      else
-        nil
-      end
-    end
-  end
-
-  class GenericClassType
-    def common_ancestor(other : Type)
-      if other.implements?(self)
-        self
-      else
-        nil
-      end
-    end
-  end
-
-  class ClassType
-    def common_ancestor(other : ClassType | GenericClassInstanceType)
-      class_common_ancestor(self, other)
-    end
-
-    def common_ancestor(other : VirtualType)
-      common_ancestor(other.base_type)
-    end
-
-    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
-      other.common_ancestor(self)
-    end
-  end
-
-  class GenericClassInstanceType
-    def common_ancestor(other : ClassType | GenericClassInstanceType)
-      class_common_ancestor(self, other)
-    end
-
-    def common_ancestor(other : VirtualType)
-      common_ancestor(other.base_type)
-    end
-
-    def common_ancestor(other : NonGenericModuleType | GenericModuleInstanceType)
-      other.common_ancestor(self)
-    end
-  end
-
-  class MetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      if instance_type.module? || other.instance_type.module?
-        nil
-      else
-        common = instance_type.common_ancestor(other.instance_type)
-        common.try &.metaclass
-      end
-    end
-  end
-
-  class GenericClassInstanceMetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType | GenericClassInstanceMetaclassType)
-      # Modules are never unified
-      return nil if instance_type.module? || other.instance_type.module?
-
-      # Tuple instances might be unified, but never tuple metaclasses
-      return nil if instance_type.is_a?(TupleInstanceType) || other.instance_type.is_a?(TupleInstanceType)
-
-      # NamedTuple instances might be unified, but never named tuple metaclasses
-      return nil if instance_type.is_a?(NamedTupleInstanceType) || other.instance_type.is_a?(NamedTupleInstanceType)
-
-      common = instance_type.common_ancestor(other.instance_type)
+      common = least_common_ancestor(type1.instance_type, type2.instance_type)
       common.try &.metaclass
     end
-  end
 
-  class PrimitiveType
-    def common_ancestor(other)
+    def self.least_common_ancestor(type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType, type2 : Type)
+      type1 if type2.implements?(type1)
+    end
+
+    def self.least_common_ancestor(type1 : Type, type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType)
+      type2 if type1.implements?(type2)
+    end
+
+    def self.least_common_ancestor(
+      type1 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType,
+      type2 : NonGenericModuleType | GenericModuleInstanceType | GenericClassType
+    )
+      return type2 if type1.implements?(type2)
+      return type1 if type2.implements?(type1)
+    end
+
+    def self.least_common_ancestor(type1 : GenericClassType, type2 : ClassType | GenericClassInstanceType)
+      return type2 if type1.implements?(type2)
+      return type1 if type2.implements?(type1)
+    end
+
+    def self.least_common_ancestor(type1 : ClassType | GenericClassInstanceType, type2 : GenericClassType)
+      return type1 if type2.implements?(type1)
+      return type2 if type1.implements?(type2)
+    end
+
+    def self.least_common_ancestor(type1 : ClassType | GenericClassInstanceType, type2 : ClassType | GenericClassInstanceType)
+      return type1 if type1 == type2
+
+      if type1.depth == type2.depth
+        t1_superclass = type1.superclass
+        t2_superclass = type2.superclass
+
+        if t1_superclass && t2_superclass
+          return least_common_ancestor(t1_superclass, t2_superclass)
+        end
+      elsif type1.depth > type2.depth
+        t1_superclass = type1.superclass
+        if t1_superclass
+          return least_common_ancestor(t1_superclass, type2)
+        end
+      elsif type1.depth < type2.depth
+        t2_superclass = type2.superclass
+        if t2_superclass
+          return least_common_ancestor(type1, t2_superclass)
+        end
+      end
+
       nil
     end
-  end
 
-  class VirtualType
-    def common_ancestor(other)
-      base_type.common_ancestor(other)
-    end
-  end
+    def self.least_common_ancestor(type1 : TupleInstanceType, type2 : TupleInstanceType)
+      return nil unless type1.size == type2.size
 
-  class VirtualMetaclassType
-    def common_ancestor(other : MetaclassType | VirtualMetaclassType)
-      common = instance_type.base_type.metaclass.common_ancestor(other)
-      common.try &.virtual_type!
-    end
-  end
-
-  class TupleInstanceType
-    def common_ancestor(other : TupleInstanceType)
-      return nil unless self.size == other.size
-
-      result_types = tuple_types.map_with_index do |self_tuple_type, index|
-        Type.merge!(self_tuple_type, other.tuple_types[index]).as(Type)
+      result_types = type1.tuple_types.map_with_index do |self_tuple_type, index|
+        merge!(self_tuple_type, type2.tuple_types[index]).as(Type)
       end
-      program.tuple_of(result_types)
+      type1.program.tuple_of(result_types)
     end
-  end
 
-  class NamedTupleInstanceType
-    def common_ancestor(other : NamedTupleInstanceType)
-      return nil if self.size != other.size
+    def self.least_common_ancestor(type1 : NamedTupleInstanceType, type2 : NamedTupleInstanceType)
+      return nil if type1.size != type2.size
 
-      self_entries = self.entries.sort_by &.name
-      other_entries = other.entries.sort_by &.name
+      self_entries = type1.entries.sort_by &.name
+      other_entries = type2.entries.sort_by &.name
 
       # First check if the names are the same
       self_entries.zip(other_entries) do |self_entry, other_entry|
@@ -301,49 +297,29 @@ module Crystal
 
       # If the names are the same we now merge the types for each key
       # NOTE: we use self's order to preserve the order of the tuple on the left hand side
-      merged_entries = self.entries.map_with_index do |self_entry, i|
+      merged_entries = type1.entries.map_with_index do |self_entry, i|
         name = self_entry.name
-        other_type = other.name_type(name)
-        merged_type = Type.merge!(self_entry.type, other_type).as(Type)
+        other_type = type2.name_type(name)
+        merged_type = merge!(self_entry.type, other_type).as(Type)
         NamedArgumentType.new(name, merged_type)
       end
 
-      program.named_tuple_of(merged_entries)
-    end
-  end
-end
-
-private def class_common_ancestor(t1, t2)
-  # This discards Object, Reference and Value
-  if t1.depth <= 1
-    return nil
-  end
-
-  case t1
-  when t1.program.struct, t1.program.number, t1.program.int, t1.program.float
-    nil
-  when t2
-    t1
-  else
-    if t1.depth == t2.depth
-      t1_superclass = t1.superclass
-      t2_superclass = t2.superclass
-
-      if t1_superclass && t2_superclass
-        return t1_superclass.common_ancestor(t2_superclass)
-      end
-    elsif t1.depth > t2.depth
-      t1_superclass = t1.superclass
-      if t1_superclass
-        return t1_superclass.common_ancestor(t2)
-      end
-    elsif t1.depth < t2.depth
-      t2_superclass = t2.superclass
-      if t2_superclass
-        return t1.common_ancestor(t2_superclass)
-      end
+      type1.program.named_tuple_of(merged_entries)
     end
 
-    nil
+    private def self.unifiable_metaclass?(type)
+      case type.instance_type
+      when .module?
+        false # Module metaclasses are never unified
+      when UnionType
+        false # Union metaclasses are never unified
+      when TupleInstanceType
+        false # Tuple instances might be unified, but never tuple metaclasses
+      when NamedTupleInstanceType
+        false # Named tuple instances might be unified, but never named tuple metaclasses
+      else
+        true
+      end
+    end
   end
 end
