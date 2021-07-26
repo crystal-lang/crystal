@@ -413,7 +413,7 @@ class IO::Memory < IO
 
   # Appends this internal buffer to the given `IO`.
   def to_s(io : IO) : Nil
-    io.write_utf8(to_slice)
+    io.write(to_slice)
   end
 
   private def check_writeable
