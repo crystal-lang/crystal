@@ -156,7 +156,7 @@ struct StaticArray(T, N)
   # array = StaticArray(Int32, 3).new { |i| i + 1 }
   # array.size # => 3
   # ```
-  def size
+  def size : Int32
     N
   end
 
@@ -168,14 +168,8 @@ struct StaticArray(T, N)
   # array                               # => StaticArray[2, 2, 2]
   # ```
   def fill(value : T) : self
-    {% if Int::Primitive.union_types.includes?(T) || Float::Primitive.union_types.includes?(T) %}
-      if value == 0
-        to_unsafe.clear(size)
-        return self
-      end
-    {% end %}
-
-    fill { value }
+    to_slice.fill(value)
+    self
   end
 
   # Yields each index of `self` to the given block and then assigns
@@ -187,9 +181,7 @@ struct StaticArray(T, N)
   # array                    # => StaticArray[0, 1, 4, 9]
   # ```
   def fill(& : Int32 -> T) : self
-    size.times do |i|
-      to_unsafe[i] = yield i
-    end
+    to_slice.fill { |i| yield i }
     self
   end
 
@@ -265,7 +257,7 @@ struct StaticArray(T, N)
   # slice[0] = 3
   # array # => StaticArray[3, 2, 2]
   # ```
-  def to_slice
+  def to_slice : Slice(T)
     Slice.new(to_unsafe, size)
   end
 

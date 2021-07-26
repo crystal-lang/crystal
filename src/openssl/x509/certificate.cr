@@ -28,7 +28,7 @@ module OpenSSL::X509
       @cert
     end
 
-    def subject
+    def subject : X509::Name
       subject = LibCrypto.x509_get_subject_name(@cert)
       raise Error.new("X509_get_subject_name") if subject.null?
       Name.new(subject)
@@ -47,7 +47,7 @@ module OpenSSL::X509
       subject
     end
 
-    def extensions
+    def extensions : Array(X509::Extension)
       count = LibCrypto.x509_get_ext_count(@cert)
       Array(Extension).new(count) do |i|
         Extension.new(LibCrypto.x509_get_ext(@cert, i))
@@ -58,6 +58,37 @@ module OpenSSL::X509
       ret = LibCrypto.x509_add_ext(@cert, extension, -1)
       raise Error.new("X509_add_ext") if ret.null?
       extension
+    end
+
+    # Returns the name of the signature algorithm.
+    def signature_algorithm : String
+      {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.0.2") >= 0 %}
+        sigid = LibCrypto.x509_get_signature_nid(@cert)
+        result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
+        raise "Could not determine certificate signature algorithm" if result == 0
+
+        sn = LibCrypto.obj_nid2sn(algo_nid)
+        raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
+        String.new sn
+      {% else %}
+        raise "Missing OpenSSL function for certificate signature algorithm (requires OpenSSL 1.0.2)"
+      {% end %}
+    end
+
+    # Returns the digest of the certificate using *algorithm_name*
+    #
+    # ```
+    # cert.digest("SHA1").hexstring   # => "6f608752059150c9b3450a9fe0a0716b4f3fa0ca"
+    # cert.digest("SHA256").hexstring # => "51d80c865cc717f181cd949f0b23b5e1e82c93e01db53f0836443ec908b83748"
+    # ```
+    def digest(algorithm_name : String) : Bytes
+      algo_type = LibCrypto.evp_get_digestbyname algorithm_name
+      raise ArgumentError.new "Could not find digest for #{algorithm_name.inspect}" if algo_type.null?
+      hash = Bytes.new(64) # EVP_MAX_MD_SIZE for SHA512
+      result = LibCrypto.x509_digest(@cert, algo_type, hash, out size)
+      raise "Could not generate certificate hash" unless result == 1
+
+      hash[0, size]
     end
   end
 end

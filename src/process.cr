@@ -289,7 +289,7 @@ class Process
   end
 
   # Sends *signal* to this process.
-  def signal(signal : Signal)
+  def signal(signal : Signal) : Nil
     Crystal::System::Process.signal(@process_info.pid, signal)
   end
 
@@ -310,17 +310,17 @@ class Process
 
   # Whether the process is still registered in the system.
   # Note that this returns `true` for processes in the zombie or similar state.
-  def exists?
+  def exists? : Bool
     @process_info.exists?
   end
 
   # Whether this process is already terminated.
-  def terminated?
+  def terminated? : Bool
     !exists?
   end
 
   # Closes any system resources (e.g. pipes) held for the child process.
-  def close
+  def close : Nil
     close_io @input
     close_io @output
     close_io @error
@@ -328,7 +328,7 @@ class Process
   end
 
   # Asks this process to terminate gracefully
-  def terminate
+  def terminate : Nil
     @process_info.terminate
   end
 
@@ -424,11 +424,14 @@ end
 # Standard input, and error are inherited.
 # The special `$?` variable is set to a `Process::Status` associated with this execution.
 #
-# Example:
+# It is impossible to call this method with any regular call syntax. There is an associated literal type which calls the method with the literal content as command:
 #
 # ```
-# `echo hi` # => "hi\n"
+# `echo hi`   # => "hi\n"
+# $?.success? # => true
 # ```
+#
+# See [`Command` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/command.html) in the language reference.
 def `(command) : String
   process = Process.new(command, shell: true, input: Process::Redirect::Inherit, output: Process::Redirect::Pipe, error: Process::Redirect::Inherit)
   output = process.output.gets_to_end

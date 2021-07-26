@@ -46,14 +46,12 @@ module Crystal
     # Any instance variables associated with the method instantiation
     getter free_vars : Hash(String, TypeVar)?
 
-    getter? strict : Bool
-
     # Def free variables, unbound (`def (X, Y) ...`)
     property def_free_vars : Array(String)?
 
     getter? autocast_allowed : Bool
 
-    def initialize(@instantiated_type, @defining_type, *, @free_vars = nil, @strict = false, @def_free_vars = nil, @autocast_allowed = false)
+    def initialize(@instantiated_type, @defining_type, @free_vars = nil, @def_free_vars = nil, @autocast_allowed = false)
     end
 
     def get_free_var(name)
@@ -95,7 +93,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@instantiated_type, @defining_type, free_vars: @free_vars.dup, strict: @strict, def_free_vars: @def_free_vars.dup, autocast_allowed: @autocast_allowed)
+      MatchContext.new(@instantiated_type, @defining_type, @free_vars.dup, @def_free_vars.dup, @autocast_allowed)
     end
   end
 
