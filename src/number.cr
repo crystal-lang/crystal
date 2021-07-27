@@ -5,6 +5,36 @@ struct Number
 
   alias Primitive = Int::Primitive | Float::Primitive
 
+  # Specifies rounding behaviour for numerical operations capable of discarding
+  # precision.
+  enum RoundingMode
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds towards the even neighbor (Banker's rounding).
+    TIES_EVEN
+
+    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
+    # rounds away from zero.
+    TIES_AWAY
+
+    # Rounds towards zero (truncate).
+    TO_ZERO
+
+    # Rounds towards positive infinity (ceil).
+    TO_POSITIVE
+
+    # Rounds towards negative infinity (floor).
+    TO_NEGATIVE
+  end
+
+  # Determines what happens when a result must be rounded in order to fit
+  # in the appropriate number of significant digits when *mode* argument
+  # is not explicitly given (see `#round`).
+  #
+  # The default is `RoundingMode::TIES_EVEN` which rounds to the nearest integer,
+  # with ties# (fractional value of `0.5`) being rounded to the even neighbor
+  # (Banker's rounding).
+  class_property rounding_mode : RoundingMode = :ties_even
+
   # Returns the value zero in the respective type.
   #
   # ```
@@ -250,19 +280,60 @@ struct Number
     self.class.new(value)
   end
 
+  # Executes the provided block, preserving the rounding mode:
+  #
+  # ```
+  # Number.rounding_mode = :to_zero
+  #
+  # Number.save_rounding_mode do
+  #   Number.rounding_mode = :ties_away
+  #   Number.rounding_mode # => Number::RoundingMode::TIES_AWAY
+  # end
+  #
+  # Number.rounding_mode # => Number::RoundingMode::TO_ZERO
+  # ```
+  def self.save_rounding_mode
+    prev_rounding_mode = @@rounding_mode
+    begin
+      yield
+    ensure
+      @@rounding_mode = prev_rounding_mode
+    end
+  end
+
+  # Executes the provided block, preserving the rounding mode; *mode* argument
+  # is set as `Number.rounding_mode` inside the block.
+  #
+  # ```
+  # Number.rounding_mode = :to_zero
+  #
+  # Number.with_rounding_mode(:ties_away) do
+  #   Number.rounding_mode # => Number::RoundingMode::TIES_AWAY
+  # end
+  #
+  # Number.rounding_mode # => Number::RoundingMode::TO_ZERO
+  # ```
+  #
+  # NOTE: Uses `save_rounding_mode` internally.
+  def self.with_rounding_mode(mode : RoundingMode)
+    save_rounding_mode do
+      @@rounding_mode = mode
+      yield
+    end
+  end
+
   # Rounds this number to a given precision.
   #
   # Rounds to the specified number of *digits* after the decimal place,
   # (or before if negative), in base *base*.
   #
   # The rounding *mode* controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
+  # controlled by the `Number.rounding_mode` property.
   #
   # ```
   # -1763.116.round(2) # => -1763.12
   # ```
-  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even)
+  def round(digits : Number, base = 10, *, mode : RoundingMode = Number.rounding_mode)
     if digits < 0
       multiplier = base.to_f ** digits.abs
       shifted = self / multiplier
@@ -282,33 +353,11 @@ struct Number
     self.class.new result
   end
 
-  # Specifies rounding behaviour for numerical operations capable of discarding
-  # precision.
-  enum RoundingMode
-    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
-    # rounds towards the even neighbor (Banker's rounding).
-    TIES_EVEN
-
-    # Rounds towards the nearest integer. If both neighboring integers are equidistant,
-    # rounds away from zero.
-    TIES_AWAY
-
-    # Rounds towards zero (truncate).
-    TO_ZERO
-
-    # Rounds towards positive infinity (ceil).
-    TO_POSITIVE
-
-    # Rounds towards negative infinity (floor).
-    TO_NEGATIVE
-  end
-
   # Rounds `self` to an integer value using rounding *mode*.
   #
   # The rounding *mode* controls the direction of the rounding. The default is
-  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
-  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
-  def round(mode : RoundingMode = :ties_even) : self
+  # controlled by the `Number.rounding_mode` property.
+  def round(mode : RoundingMode = Number.rounding_mode) : self
     case mode
     in .to_zero?
       trunc

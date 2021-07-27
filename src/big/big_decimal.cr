@@ -352,7 +352,7 @@ struct BigDecimal < Number
     BigDecimal.new(mantissa, 0)
   end
 
-  def round(digits : Number, base = 10, *, mode : RoundingMode = :ties_even) : BigDecimal
+  def round(digits : Number, base = 10, *, mode : RoundingMode = Number.rounding_mode) : BigDecimal
     return self if (base == 10 && @scale <= digits) || zero?
 
     # the following is same as the overload in `Number` except `base.to_f`

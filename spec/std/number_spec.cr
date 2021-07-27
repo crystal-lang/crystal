@@ -304,6 +304,70 @@ describe "Number" do
     end
   end
 
+  describe ".save_rounding_mode" do
+    it "saves `.rounding_mode` and sets it back on block exit" do
+      prev_rounding_mode = Number.rounding_mode
+      begin
+        Number.rounding_mode = :ties_away
+        Number.save_rounding_mode do
+          Number.rounding_mode = :ties_even
+          Number.rounding_mode.should eq(Number::RoundingMode::TIES_EVEN)
+        end
+        Number.rounding_mode.should eq(Number::RoundingMode::TIES_AWAY)
+      ensure
+        Number.rounding_mode = prev_rounding_mode
+      end
+    end
+  end
+
+  describe ".with_rounding_mode" do
+    it "sets `.rounding_mode` to the given value and sets it back on block exit" do
+      prev_rounding_mode = Number.rounding_mode
+      begin
+        Number.rounding_mode = :ties_away
+        Number.with_rounding_mode(:ties_even) do
+          Number.rounding_mode.should eq(Number::RoundingMode::TIES_EVEN)
+          Number.rounding_mode = :to_zero
+        end
+        Number.rounding_mode.should eq(Number::RoundingMode::TIES_AWAY)
+      ensure
+        Number.rounding_mode = prev_rounding_mode
+      end
+    end
+  end
+
+  describe ".rounding_mode" do
+    it "is used as a default :mode argument for #round" do
+      prev_rounding_mode = Number.rounding_mode
+      begin
+        Number.rounding_mode = :to_zero
+        Number.with_rounding_mode(:ties_even) do
+          2.5.round.should eq(2.0)
+          3.5.round.should eq(4.0)
+          2.25.round(1).should eq(2.2)
+          3.35.round(1).should eq(3.4)
+        end
+      ensure
+        Number.rounding_mode = prev_rounding_mode
+      end
+    end
+
+    it "is not used when :mode argument for #round is given" do
+      prev_rounding_mode = Number.rounding_mode
+      begin
+        Number.rounding_mode = :to_zero
+        Number.with_rounding_mode(:ties_even) do
+          2.5.round(mode: :ties_away).should eq(3.0)
+          3.5.round(mode: :ties_away).should eq(4.0)
+          2.25.round(1, mode: :ties_away).should eq(2.3)
+          3.35.round(1, mode: :ties_away).should eq(3.4)
+        end
+      ensure
+        Number.rounding_mode = prev_rounding_mode
+      end
+    end
+  end
+
   describe "#round_even" do
     -2.5.round_even.should eq -2.0
     -1.5.round_even.should eq -2.0
