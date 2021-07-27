@@ -82,7 +82,11 @@ module Crystal
 
   class CrystalLibraryPath
     def self.default_paths : Array(String)
-      ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
+      paths = ENV.fetch("CRYSTAL_LIBRARY_PATH", Crystal::Config.library_path).split(Process::PATH_DELIMITER, remove_empty: true)
+
+      CrystalPath.expand_paths(paths)
+
+      paths
     end
 
     def self.default_path : String
