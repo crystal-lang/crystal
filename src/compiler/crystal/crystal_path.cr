@@ -25,6 +25,8 @@ module Crystal
         path_array = [DEFAULT_LIB_PATH]
       end
 
+      expand_paths(path_array)
+
       path_array
     end
 
