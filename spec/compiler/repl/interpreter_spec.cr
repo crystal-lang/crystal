@@ -3617,6 +3617,19 @@ describe Crystal::Repl::Interpreter do
           x
         CODE
     end
+
+    it "does closure inside def" do
+      interpret(<<-CODE).should eq(42)
+          def foo
+            a = 0
+            proc = -> { a = 42 }
+            proc.call
+            a
+          end
+
+          foo
+        CODE
+    end
   end
 
   context "integration" do

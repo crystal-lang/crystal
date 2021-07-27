@@ -231,6 +231,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       @closure_context = parent_closure_context
     end
 
+    closured_vars, closured_vars_bytesize = compute_closured_vars(node.vars, node)
+
+    unless closured_vars.empty?
+      closure_context = ClosureContext.new(
+        vars: closured_vars,
+        bytesize: closured_vars_bytesize,
+      )
+      @closure_context = closure_context
+
+      # Allocate closure heap memory
+      put_i32 closure_context.bytesize, node: nil
+      pointer_malloc 1, node: nil
+
+      # Store the pointer in the closure context local variable
+      index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+      set_local index, sizeof(Void*), node: nil
+    end
+
     node.body.accept self
 
     final_type = node.type
@@ -1450,6 +1468,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Declare local variables for the newly compiled function
+
+    # First check if we need a closure context
+    needs_closure_context = target_def.vars.try &.any? do |name, var|
+      var.type? && var.closure_in?(target_def)
+    end
+
+    if needs_closure_context
+      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+    end
+
     target_def.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
