@@ -360,6 +360,16 @@ describe IO::Memory do
     io.peek.should eq(Bytes.empty)
   end
 
+  it "peek readonly" do
+    str = "hello world"
+    io = IO::Memory.new(str)
+
+    slice = io.peek
+    expect_raises(Exception) do
+      slice[0] = 0
+    end
+  end
+
   it "skips" do
     io = IO::Memory.new("hello")
     io.skip(2)

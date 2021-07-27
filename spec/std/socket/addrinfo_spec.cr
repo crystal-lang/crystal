@@ -72,4 +72,15 @@ describe Socket::Addrinfo do
     addrinfos = Socket::Addrinfo.udp("127.0.0.1", 12345)
     addrinfos.first.inspect.should eq "Socket::Addrinfo(127.0.0.1:12345, INET, DGRAM, UDP)"
   end
+
+  describe "Error" do
+    {% unless flag?(:win32) %}
+      # This method is not available on windows because windows support was introduced after deprecation.
+      it ".new (deprecated)" do
+        error = Socket::Addrinfo::Error.new(LibC::EAI_NONAME, "No address found", "foobar.com")
+        error.os_error.should eq Errno.new(LibC::EAI_NONAME)
+        error.message.not_nil!.should eq "Hostname lookup for foobar.com failed: No address found"
+      end
+    {% end %}
+  end
 end
