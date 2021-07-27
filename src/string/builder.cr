@@ -64,6 +64,16 @@ class String::Builder < IO
     nil
   end
 
+  def write_utf8(slice : Bytes) : Nil
+    write(slice)
+  end
+
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
+    unless utf8_encoding?(encoding, invalid)
+      raise "Can't change encoding of String::Builder"
+    end
+  end
+
   def buffer : Pointer(UInt8)
     @buffer + String::HEADER_SIZE
   end
