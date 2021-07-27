@@ -192,7 +192,7 @@ module Base64
   # Returns the base64-decoded version of *data* as a `Bytes`.
   # This will decode either the normal or urlsafe alphabets.
   #
-  # WARN: The method does not raise when reading an invalid character.
+  # WARNING: The method does not raise when reading an invalid character.
   # Only use this if you are certain the input is valid base64!
   def decode!(data) : Bytes
     slice = data.to_slice
@@ -205,7 +205,7 @@ module Base64
   # Writes the base64-decoded version of *data* to *io*.
   # This will decode either the normal or urlsafe alphabets.
   #
-  # WARN: The method does not raise when reading an invalid character.
+  # WARNING: The method does not raise when reading an invalid character.
   # Only use this if you are certain the input is valid base64!
   def decode!(data, io : IO)
     count = 0
@@ -220,7 +220,7 @@ module Base64
   # Returns the base64-decoded version of *data* as a string.
   # This will decode either the normal or urlsafe alphabets.
   #
-  # WARN: The method does not raise when reading an invalid character.
+  # WARNING: The method does not raise when reading an invalid character.
   # Only use this if you are certain the input is valid base64!
   def decode_string!(data) : String
     slice = data.to_slice
