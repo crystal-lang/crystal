@@ -201,7 +201,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given block, where `target_def`
   # is the method that will yield to the block.
-  def compile_block(node : Block, target_def : Def) : Nil
+  def compile_block(node : Block, target_def : Def, parent_closure_context : ClosureContext?) : Nil
+    @closure_context = parent_closure_context
+
     @compiling_block = CompilingBlock.new(node, target_def)
 
     # Right when we enter a block we have the block arguments in the stack:
@@ -1508,7 +1510,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         scope: @scope, def: @def, top_level: false)
       compiler.compiled_block = @compiled_block
       compiler.block_level = block_level + 1
-      compiler.compile_block(block, target_def)
+
+      compiler.compile_block(block, target_def, @closure_context)
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="

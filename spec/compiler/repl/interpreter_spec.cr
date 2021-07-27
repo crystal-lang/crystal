@@ -3599,6 +3599,24 @@ describe Crystal::Repl::Interpreter do
           a - b
         CODE
     end
+
+    it "does closure and accesses it inside block" do
+      interpret(<<-CODE).should eq(42)
+          def foo
+            yield
+          end
+
+          a = 0
+          proc = -> { a = 42 }
+
+          x = foo do
+            proc.call
+            a
+          end
+
+          x
+        CODE
+    end
   end
 
   context "integration" do
