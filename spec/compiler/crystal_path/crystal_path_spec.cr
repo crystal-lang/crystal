@@ -188,4 +188,24 @@ describe Crystal::CrystalPath do
       crystal_path.entries.should eq(%w(foo bar))
     end
   end
+
+  it ".expand_paths" do
+    paths = ["$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["/usr/bin/../foo"]
+    paths = ["./$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["./$ORIGIN/../foo"]
+    paths = ["$ORIGINfoo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["$ORIGINfoo"]
+    paths = ["lib", "$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["lib", "/usr/bin/../foo"]
+
+    paths = ["$ORIGIN/../foo"]
+    expect_raises(Exception, "Missing executable path to expand $ORIGIN path") do
+      Crystal::CrystalPath.expand_paths(paths, nil)
+    end
+  end
 end

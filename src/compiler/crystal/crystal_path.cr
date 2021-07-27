@@ -32,6 +32,37 @@ module Crystal
       default_paths.join(Process::PATH_DELIMITER)
     end
 
+    # Expand `$ORIGIN` in the paths to the directory where the compiler binary
+    # is located (at runtime).
+    # For install locations like
+    #    `/path/prefix/bin/crystal`         for the compiler
+    #    `/path/prefix/share/crystal/src`   for the standard library
+    # the path `$ORIGIN/../share/crystal/src` resolves to
+    # the standard library location.
+    # This generic path can be passed into the compiler via CRYSTAL_CONFIG_PATH
+    # to produce a portable binary that resolves the standard library path
+    # relative to the compiler location, independent of the absolute path.
+    def self.expand_paths(paths, origin)
+      paths.map! do |path|
+        if (chopped = path.lchop?("$ORIGIN")) && chopped[0].in?(::Path::SEPARATORS)
+          if origin.nil?
+            raise "Missing executable path to expand $ORIGIN path"
+          end
+          File.join(origin, chopped)
+        else
+          path
+        end
+      end
+    end
+
+    def self.expand_paths(paths)
+      origin = nil
+      if executable_path = Process.executable_path
+        origin = File.dirname(executable_path)
+      end
+      expand_paths(paths, origin)
+    end
+
     property entries : Array(String)
 
     def initialize(@entries : Array(String) = CrystalPath.default_paths, codegen_target = Config.host_target)
