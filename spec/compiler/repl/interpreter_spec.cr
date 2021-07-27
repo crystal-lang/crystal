@@ -3564,6 +3564,43 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "closures" do
+    it "does closure without args that captures and modifies one local variable" do
+      interpret(<<-CODE).should eq(42)
+          a = 0
+          proc = -> { a = 42 }
+          proc.call
+          a
+        CODE
+    end
+
+    it "does closure without args that captures and modifies two local variables" do
+      interpret(<<-CODE).should eq(7)
+          a = 0
+          b = 0
+          proc = ->{
+            a = 10
+            b = 3
+          }
+          proc.call
+          a - b
+        CODE
+    end
+
+    it "does closure with two args that captures and modifies two local variables" do
+      interpret(<<-CODE).should eq(7)
+          a = 0
+          b = 0
+          proc = ->(x : Int32, y : Int32) {
+            a = x
+            b = y
+          }
+          proc.call(10, 3)
+          a - b
+        CODE
+    end
+  end
+
   context "integration" do
     it "does Int32#to_s" do
       interpret(<<-CODE, prelude: "prelude").should eq("123456789")

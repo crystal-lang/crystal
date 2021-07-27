@@ -120,12 +120,22 @@ class Crystal::Repl::Interpreter
     unless compiled_def
       migrate_local_vars(@local_vars, meta_vars)
 
+      # TODO: is it okay to assume this is always the program? Probably not.
+      # Check if we need a local variable for the closure context
+      if @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
+        # The closure context is always a pointer to some memory
+        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+      end
+
       meta_vars.each do |name, meta_var|
         meta_var_type = meta_var.type?
 
         # A meta var might end up without a type if it's assigned a value
         # in a branch that's never executed/typed, and never read afterwards
         next unless meta_var_type
+
+        # Closured vars don't belong in the local variables table
+        next if meta_var.closured?
 
         existing_type = @local_vars.type?(name, 0)
         if existing_type

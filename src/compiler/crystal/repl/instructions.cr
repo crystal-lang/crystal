@@ -1113,7 +1113,12 @@ require "./repl"
         operands:   [] of Nil,
         pop_values: [compiled_def : CompiledDef, closure_data : Pointer(Void)] of Nil,
         push:       true,
-        code:       call(compiled_def),
+        code:       begin
+          # Push closure data, if any, as the last call argument
+          stack_push(closure_data) unless closure_data.null?
+
+          call(compiled_def)
+        end
       },
       # >>> Proc (1)
 

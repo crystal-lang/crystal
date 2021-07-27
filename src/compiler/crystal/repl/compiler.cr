@@ -8,6 +8,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # and which def will invoke it.
   record CompilingBlock, block : Block, target_def : Def
 
+  record ClosureContext, vars : Hash(String, {Int32, Type}), bytesize : Int32
+
   # What's `self` when compiling a node.
   private getter scope : Type
 
@@ -68,6 +70,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # end
   # ```
   property block_level = 0
+
+  @closure_context : ClosureContext?
+
+  record LocalVar, index : Int32, type : Type
+  record ClosuredVar, index : Int32, type : Type
 
   def initialize(
     @context : Context,
@@ -163,6 +170,29 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given node.
   def compile(node : ASTNode) : Nil
+    if !@def
+      # If at the top-level, check if there's closure data
+      program = @context.program
+
+      closured_vars, closured_vars_bytesize = compute_closured_vars(program.vars, program)
+
+      unless closured_vars.empty?
+        closure_context = ClosureContext.new(
+          vars: closured_vars,
+          bytesize: closured_vars_bytesize,
+        )
+        @closure_context = closure_context
+
+        # Allocate closure heap memory
+        put_i32 closure_context.bytesize, node: nil
+        pointer_malloc 1, node: nil
+
+        # Store the pointer in the closure context local variable
+        index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+        set_local index, sizeof(Void*), node: nil
+      end
+    end
+
     node.accept self
 
     # Use a dummy node so that pry stops at `end`
@@ -194,7 +224,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   # Compile bytecode instructions for the given method.
-  def compile_def(node : Def) : Nil
+  def compile_def(node : Def, parent_closure_context : ClosureContext? = nil) : Nil
+    if parent_closure_context
+      @closure_context = parent_closure_context
+    end
+
     node.body.accept self
 
     final_type = node.type
@@ -214,6 +248,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     @instructions
+  end
+
+  private def compute_closured_vars(vars, context)
+    closured_vars = {} of String => {Int32, Type}
+    closure_var_index = 0
+
+    vars.try &.each do |name, var|
+      if var.type? && var.closure_in?(context)
+        closured_vars[name] = {closure_var_index, var.type}
+        closure_var_index += aligned_sizeof_type(var)
+      end
+    end
+
+    {closured_vars, closure_var_index}
   end
 
   private def inside_method?
@@ -408,11 +456,34 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # (set_local removes the value from the stack)
       dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
-      index, type = lookup_local_var_index_and_type(target.name)
+      local_var = lookup_local_var(target.name)
+      case local_var
+      in LocalVar
+        index, type = local_var.index, local_var.type
 
-      # Before assigning to the var we must potentially box inside a union
-      upcast node.value, node.value.type, type
-      set_local index, aligned_sizeof_type(type), node: node
+        # Before assigning to the var we must potentially box inside a union
+        upcast node.value, node.value.type, type
+        set_local index, aligned_sizeof_type(type), node: node
+      in ClosuredVar
+        index, type = local_var.index, local_var.type
+
+        # Before assigning to the var we must potentially box inside a union
+        upcast node.value, node.value.type, type
+
+        # First load the closure pointer
+        closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+        get_local closure_var_index, sizeof(Void*), node: nil
+
+        # Now offset the pointer if needed
+        if index > 0
+          put_i32 index, node: nil
+          pointer_add 1, node: nil
+        end
+
+        # Now we have the value in the stack, and the pointer.
+        # This is the correct order for pointer_set
+        pointer_set(aligned_sizeof_type(type), node: node)
+      end
     when InstanceVar
       if inside_method?
         request_value(node.value)
@@ -489,38 +560,74 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Var)
     return false unless @wants_value
 
-    index, type = lookup_local_var_index_and_type(node.name)
+    local_var = lookup_local_var(node.name)
+    case local_var
+    in LocalVar
+      index, type = local_var.index, local_var.type
 
-    if node.name == "self" && type.passed_by_value?
-      if @wants_struct_pointer
-        push_zeros aligned_sizeof_type(scope), node: nil
-        put_self(node: node)
-        return false
+      if node.name == "self" && type.passed_by_value?
+        if @wants_struct_pointer
+          push_zeros aligned_sizeof_type(scope), node: nil
+          put_self(node: node)
+          return false
+        else
+          # Load the entire self from the pointer that's self
+          get_self_ivar 0, aligned_sizeof_type(type), node: node
+        end
       else
-        # Load the entire self from the pointer that's self
-        get_self_ivar 0, aligned_sizeof_type(type), node: node
+        if @wants_struct_pointer
+          push_zeros aligned_sizeof_type(node), node: nil
+          pointerof_var index, node: node
+        else
+          get_local index, aligned_sizeof_type(type), node: node
+        end
       end
-    else
-      if @wants_struct_pointer
-        push_zeros aligned_sizeof_type(node), node: nil
-        pointerof_var index, node: node
+
+      downcast node, type, node.type
+    in ClosuredVar
+      index, type = local_var.index, local_var.type
+
+      if node.name == "self" && type.passed_by_value?
+        if @wants_struct_pointer
+          node.raise "BUG: missing interpret read closured var with self wants_struct_pointer"
+        else
+          node.raise "BUG: missing interpret read closured var with self"
+        end
       else
-        get_local index, aligned_sizeof_type(type), node: node
+        if @wants_struct_pointer
+          node.raise "BUG: missing interpret read closured var with wants_struct_pointer"
+        else
+          # First load the closure pointer
+          closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+          get_local closure_var_index, sizeof(Void*), node: nil
+
+          # Now offset the pointer if needed
+          if index > 0
+            put_i32 index, node: nil
+            pointer_add 1, node: nil
+          end
+
+          # Now read from the pointer
+          pointer_get inner_sizeof_type(type), node: node
+        end
       end
     end
-
-    downcast node, type, node.type
 
     false
   end
 
-  def lookup_local_var_index_and_type(name : String) : {Int32, Type}
+  def lookup_local_var(name : String) : LocalVar | ClosuredVar
+    closure_context = @closure_context
+    if closure_context && (closured_var = closure_context.vars[name]?)
+      return ClosuredVar.new(closured_var[0], closured_var[1])
+    end
+
     block_level = @block_level
     while block_level >= 0
       index = @local_vars.name_to_index?(name, block_level)
       if index
         type = @local_vars.type(name, block_level)
-        return {index, type}
+        return LocalVar.new(index, type)
       end
 
       block_level -= 1
@@ -913,8 +1020,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      index, type = lookup_local_var_index_and_type(exp.name)
-      pointerof_var(index, node: node)
+      local_var = lookup_local_var(exp.name)
+      case local_var
+      in LocalVar
+        index, type = local_var.index, local_var.type
+        pointerof_var(index, node: node)
+      in ClosuredVar
+        node.raise "BUG: missing interpter pointerof closured var"
+      end
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when ClassVar
@@ -1523,20 +1636,26 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           pop_obj = obj
         end
       else
-        ptr_index, var_type = lookup_local_var_index_and_type(obj.name)
-        if obj.type == var_type
-          pointerof_var(ptr_index, node: obj)
-        elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
-          # Get pointer of var
-          pointerof_var(ptr_index, node: obj)
+        local_var = lookup_local_var(obj.name)
+        case local_var
+        in LocalVar
+          ptr_index, var_type = local_var.index, local_var.type
+          if obj.type == var_type
+            pointerof_var(ptr_index, node: obj)
+          elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
+            # Get pointer of var
+            pointerof_var(ptr_index, node: obj)
 
-          # Add 8 to it, to reach the union value
-          put_i64 8_i64, node: nil
-          pointer_add 1_i64, node: nil
-        elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
-          pointerof_var(ptr_index, node: obj)
-        else
-          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
+            # Add 8 to it, to reach the union value
+            put_i64 8_i64, node: nil
+            pointer_add 1_i64, node: nil
+          elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
+            pointerof_var(ptr_index, node: obj)
+          else
+            obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
+          end
+        in ClosuredVar
+          obj.raise "BUG: missing interpter struct call receiver with closured var"
         end
       end
     when InstanceVar
@@ -1633,8 +1752,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Out)
     case exp = node.exp
     when Var
-      index, type = lookup_local_var_index_and_type(exp.name)
-      pointerof_var(index, node: node)
+      local_var = lookup_local_var(exp.name)
+      case local_var
+      in LocalVar
+        index, type = local_var.index, local_var.type
+        pointerof_var(index, node: node)
+      in ClosuredVar
+        node.raise "BUG: missing interpter out closured var"
+      end
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when Underscore
@@ -1649,9 +1774,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : ProcLiteral)
     is_closure = node.def.closure?
-    if is_closure
-      node.raise "BUG: closures not yet supported"
-    end
 
     # TODO: This was copied from Codegen. Why is it not in CleanupTransformer?
     # If we don't care about a proc literal's return type then we mark the associated
@@ -1671,6 +1793,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # 1. Compile def
     args_bytesize = args.sum { |arg| aligned_sizeof_type(arg) }
+    args_bytesize += sizeof(Void*) if is_closure
+
     compiled_def = CompiledDef.new(@context, target_def, target_def.owner, args_bytesize)
 
     # 2. Store it in context
@@ -1685,6 +1809,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       next unless var_type
 
       compiled_def.local_vars.declare(arg.name, var_type)
+    end
+
+    # Declare the closure context, if any
+    if is_closure
+      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
 
     # Then declare all variables
@@ -1703,13 +1832,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiler = Compiler.new(@context, compiled_def, top_level: false)
     begin
-      compiler.compile_def(target_def)
+      compiler.compile_def(target_def, is_closure ? @closure_context : nil)
     rescue ex : Crystal::CodeError
       node.raise "compiling #{node}", inner: ex
     end
 
     {% if Debug::DECOMPILE %}
       puts "=== ProcLiteral ==="
+      puts compiled_def.local_vars
       puts Disassembler.disassemble(@context, compiled_def)
       puts "=== ProcLiteral ==="
     {% end %}
@@ -1717,8 +1847,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # 3. Push compiled_def id to stack
     put_i64 compiled_def.object_id.to_i64!, node: node
 
-    # 4. Push context to stack (null for now, so i64 0)
-    put_i64 0, node: node
+    # 4. Push closure context to stack
+    if @closure_context
+      # If it's a closure, we push the pointer that holds the closure data
+      closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+      get_local closure_var_index, sizeof(Void*), node: node
+    else
+      # Otherwise, it's a null pointer
+      put_i64 0, node: node
+    end
 
     false
   end
