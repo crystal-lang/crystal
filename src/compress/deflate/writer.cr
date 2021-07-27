@@ -90,7 +90,7 @@ class Compress::Deflate::Writer < IO
       @stream.next_out = @buf.to_unsafe
       @stream.avail_out = @buf.size.to_u32
       LibZ.deflate(pointerof(@stream), flush) # no bad return value
-      @output.write(@buf.to_slice[0, @buf.size - @stream.avail_out])
+      @output.write(@buf.to_unsafe_slice[0, @buf.size - @stream.avail_out])
       break if @stream.avail_out != 0
     end
   end

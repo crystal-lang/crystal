@@ -49,7 +49,7 @@ module Random::Secure
           (result << 8) | byte
         end
       else
-        random_bytes(buf.to_slice)
+        random_bytes(buf.to_unsafe_slice)
         buf.unsafe_as({{type}})
       end
     end

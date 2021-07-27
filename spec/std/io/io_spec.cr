@@ -696,9 +696,9 @@ describe IO do
           io.set_encoding("EUC-JP")
 
           buffer = uninitialized UInt8[1024]
-          bytes_read = io.read_utf8(buffer.to_slice) # => 3
+          bytes_read = io.read_utf8(buffer.to_unsafe_slice) # => 3
           bytes_read.should eq(3)
-          buffer.to_slice[0, bytes_read].to_a.should eq("好".bytes)
+          buffer.to_unsafe_slice[0, bytes_read].to_a.should eq("好".bytes)
         end
 
         it "raises on incomplete byte sequence" do

@@ -102,7 +102,7 @@ struct UUID
     raise ArgumentError.new "Invalid bytes length #{slice.size}, expected 16" unless slice.size == 16
 
     bytes = uninitialized UInt8[16]
-    slice.copy_to(bytes.to_slice)
+    slice.copy_to(bytes.to_unsafe_slice)
 
     new(bytes, variant, version)
   end
@@ -207,7 +207,7 @@ struct UUID
   # *random*, such as `Random::Secure`.
   def self.random(random : Random = Random::Secure, variant : Variant = :rfc4122, version : Version = :v4) : self
     new_bytes = uninitialized UInt8[16]
-    random.random_bytes(new_bytes.to_slice)
+    random.random_bytes(new_bytes.to_unsafe_slice)
 
     new(new_bytes, variant, version)
   end
@@ -237,17 +237,17 @@ struct UUID
     time_hi |= 0x1000 # Version 1
 
     uuid = uninitialized UInt8[16]
-    IO::ByteFormat::BigEndian.encode(time_low, uuid.to_slice[0..3])
-    IO::ByteFormat::BigEndian.encode(time_mid, uuid.to_slice[4..5])
-    IO::ByteFormat::BigEndian.encode(time_hi, uuid.to_slice[6..7])
-    IO::ByteFormat::BigEndian.encode(seq, uuid.to_slice[8..9])
+    IO::ByteFormat::BigEndian.encode(time_low, uuid.to_unsafe_slice[0..3])
+    IO::ByteFormat::BigEndian.encode(time_mid, uuid.to_unsafe_slice[4..5])
+    IO::ByteFormat::BigEndian.encode(time_hi, uuid.to_unsafe_slice[6..7])
+    IO::ByteFormat::BigEndian.encode(seq, uuid.to_unsafe_slice[8..9])
 
     if node_id
       6.times do |i|
-        uuid.to_slice[10 + i] = node_id[i]
+        uuid.to_unsafe_slice[10 + i] = node_id[i]
       end
     else
-      Random::Secure.random_bytes(uuid.to_slice[10..15])
+      Random::Secure.random_bytes(uuid.to_unsafe_slice[10..15])
       # set multicast bit as recommended per section 4.5 of the RFC 4122 spec
       # to not conflict with real MAC addresses
       uuid[10] |= 0x01_u8
@@ -271,7 +271,7 @@ struct UUID
     uuid = v1(node_id: node_id).bytes
     uuid[6] = (uuid[6] & 0x0f) | 0x20 # Version 2
     uuid[9] = domain.to_u8
-    IO::ByteFormat::BigEndian.encode(id, uuid.to_slice[0..3])
+    IO::ByteFormat::BigEndian.encode(id, uuid.to_unsafe_slice[0..3])
     new(uuid, version: UUID::Version::V2, variant: UUID::Variant::RFC4122)
   end
 
@@ -280,7 +280,7 @@ struct UUID
   def self.v3(name : String, namespace : UUID) : self
     klass = {% if flag?(:without_openssl) %}::Crystal::Digest::MD5{% else %}::Digest::MD5{% end %}
     hash = klass.digest do |ctx|
-      ctx.update namespace.bytes
+      ctx.update namespace.bytes.to_unsafe_slice
       ctx.update name
     end
     new(hash[0...16], version: UUID::Version::V3, variant: UUID::Variant::RFC4122)
@@ -299,7 +299,7 @@ struct UUID
   def self.v5(name : String, namespace : UUID) : self
     klass = {% if flag?(:without_openssl) %}::Crystal::Digest::SHA1{% else %}::Digest::SHA1{% end %}
     hash = klass.digest do |ctx|
-      ctx.update namespace.bytes
+      ctx.update namespace.bytes.to_unsafe_slice
       ctx.update name
     end
     new(hash[0...16], version: UUID::Version::V5, variant: UUID::Variant::RFC4122)
@@ -399,7 +399,7 @@ struct UUID
   end
 
   def to_s(io : IO) : Nil
-    slice = @bytes.to_slice
+    slice = @bytes.to_unsafe_slice
 
     buffer = uninitialized UInt8[36]
     buffer_ptr = buffer.to_unsafe
@@ -411,11 +411,11 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write_string(buffer.to_slice)
+    io.write_string(buffer.to_unsafe_slice)
   end
 
   def hexstring : String
-    @bytes.to_slice.hexstring
+    @bytes.to_unsafe_slice.hexstring
   end
 
   # Returns a `String` that is a valid urn of *self*

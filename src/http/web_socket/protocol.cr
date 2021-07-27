@@ -138,7 +138,7 @@ class HTTP::WebSocket::Protocol
 
     key = Random::DEFAULT.next_int
     mask_array = key.unsafe_as(StaticArray(UInt8, 4))
-    @io.write mask_array.to_slice
+    @io.write mask_array.to_unsafe_slice
 
     write_masked_data(data, mask_array)
   end
@@ -162,7 +162,7 @@ class HTTP::WebSocket::Protocol
       end
 
       # Write the masked data
-      @io.write(masked_data.to_slice[0, chunk_size])
+      @io.write(masked_data.to_unsafe_slice[0, chunk_size])
 
       # Discard the written data
       remaining_data = remaining_data[chunk_size..]
@@ -172,14 +172,14 @@ class HTTP::WebSocket::Protocol
   private def read_header
     # First byte: FIN (1 bit), RSV1,2,3 (3 bits), Opcode (4 bits)
     # Second byte: MASK (1 bit), Payload Length (7 bits)
-    @io.read_fully(@header.to_slice)
+    @io.read_fully(@header.to_unsafe_slice)
 
     opcode = read_opcode
     @remaining = read_size
 
     # Read mask, if needed
     if masked?
-      @io.read_fully(@mask.to_slice)
+      @io.read_fully(@mask.to_unsafe_slice)
       @mask_offset = 0
     end
 
@@ -308,7 +308,7 @@ class HTTP::WebSocket::Protocol
         end
       {% end %}
 
-      random_key = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+      random_key = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 }.to_unsafe_slice)
 
       headers["Host"] = "#{host}:#{port}"
       headers["Connection"] = "Upgrade"
@@ -356,7 +356,7 @@ class HTTP::WebSocket::Protocol
     {% if flag?(:without_openssl) %}
       ::Crystal::Digest::SHA1.base64digest(key + GUID)
     {% else %}
-      Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID))
+      Base64.strict_encode(OpenSSL::SHA1.hash(key + GUID).to_unsafe_slice)
     {% end %}
   end
 end
