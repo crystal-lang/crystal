@@ -1894,6 +1894,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(name, var_type)
     end
 
+    # Also check if we need a closure context
+    needs_closure_context = target_def.vars.try &.any? do |name, var|
+      var.type? && var.closure_in?(target_def)
+    end
+
+    if needs_closure_context
+      if is_closure
+        node.raise "BUG: missing interpter proc with local closure and parent closure"
+      end
+
+      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+    end
+
     compiler = Compiler.new(@context, compiled_def, top_level: false)
     begin
       compiler.compile_def(target_def, is_closure ? @closure_context : nil)

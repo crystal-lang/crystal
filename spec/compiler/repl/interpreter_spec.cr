@@ -3643,7 +3643,7 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    pending "does closure inside proc" do
+    it "does closure inside proc" do
       interpret(<<-CODE).should eq(42)
           proc = ->{
             a = 0
