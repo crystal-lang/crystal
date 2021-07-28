@@ -170,28 +170,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given node.
   def compile(node : ASTNode) : Nil
-    if !@def
-      # If at the top-level, check if there's closure data
-      program = @context.program
-
-      closured_vars, closured_vars_bytesize = compute_closured_vars(program.vars, program)
-
-      unless closured_vars.empty?
-        closure_context = ClosureContext.new(
-          vars: closured_vars,
-          bytesize: closured_vars_bytesize,
-        )
-        @closure_context = closure_context
-
-        # Allocate closure heap memory
-        put_i32 closure_context.bytesize, node: nil
-        pointer_malloc 1, node: nil
-
-        # Store the pointer in the closure context local variable
-        index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
-        set_local index, sizeof(Void*), node: nil
-      end
-    end
+    # If at the top-level, check if there's closure data
+    prepare_closure_context(@context.program) unless @def
 
     node.accept self
 
@@ -231,23 +211,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       @closure_context = parent_closure_context
     end
 
-    closured_vars, closured_vars_bytesize = compute_closured_vars(node.vars, node)
-
-    unless closured_vars.empty?
-      closure_context = ClosureContext.new(
-        vars: closured_vars,
-        bytesize: closured_vars_bytesize,
-      )
-      @closure_context = closure_context
-
-      # Allocate closure heap memory
-      put_i32 closure_context.bytesize, node: nil
-      pointer_malloc 1, node: nil
-
-      # Store the pointer in the closure context local variable
-      index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
-      set_local index, sizeof(Void*), node: nil
-    end
+    prepare_closure_context(node)
 
     # If any def argument is closured, we need to store it in the closure
     node.args.each do |arg|
@@ -280,20 +244,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     leave aligned_sizeof_type(final_type), node: Nop.new.at(node.end_location)
 
     @instructions
-  end
-
-  private def compute_closured_vars(vars, context)
-    closured_vars = {} of String => {Int32, Type}
-    closure_var_index = 0
-
-    vars.try &.each do |name, var|
-      if var.type? && var.closure_in?(context)
-        closured_vars[name] = {closure_var_index, var.type}
-        closure_var_index += aligned_sizeof_type(var)
-      end
-    end
-
-    {closured_vars, closure_var_index}
   end
 
   private def inside_method?
@@ -657,6 +607,40 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     nil
+  end
+
+  private def prepare_closure_context(owner)
+    closured_vars, closured_vars_bytesize = compute_closured_vars(owner.vars, owner)
+
+    unless closured_vars.empty?
+      closure_context = ClosureContext.new(
+        vars: closured_vars,
+        bytesize: closured_vars_bytesize,
+      )
+      @closure_context = closure_context
+
+      # Allocate closure heap memory
+      put_i32 closure_context.bytesize, node: nil
+      pointer_malloc 1, node: nil
+
+      # Store the pointer in the closure context local variable
+      index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+      set_local index, sizeof(Void*), node: nil
+    end
+  end
+
+  private def compute_closured_vars(vars, context)
+    closured_vars = {} of String => {Int32, Type}
+    closure_var_index = 0
+
+    vars.try &.each do |name, var|
+      if var.type? && var.closure_in?(context)
+        closured_vars[name] = {closure_var_index, var.type}
+        closure_var_index += aligned_sizeof_type(var)
+      end
+    end
+
+    {closured_vars, closure_var_index}
   end
 
   private def assign_to_closured_var(closured_var : ClosuredVar, *, node : ASTNode?)
