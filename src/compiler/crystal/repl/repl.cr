@@ -108,7 +108,8 @@ class Crystal::Repl
 
     prelude_node = parse_prelude
     other_node = parse_file(filename)
-    exps = Expressions.new([prelude_node, other_node] of ASTNode)
+    file_node = FileNode.new(other_node, filename)
+    exps = Expressions.new([prelude_node, file_node] of ASTNode)
 
     interpret_and_exit_on_error(exps)
   end

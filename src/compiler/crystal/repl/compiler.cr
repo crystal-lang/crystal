@@ -2143,14 +2143,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     a_def.body = node.node
     a_def.owner = @context.program
     a_def.type = @context.program.nil_type
+    a_def.vars = file_module.vars
 
     compiled_def = CompiledDef.new(@context, a_def, a_def.owner, 0)
+
+    needs_closure_context = false
 
     file_module.vars.each do |name, var|
       var_type = var.type?
       next unless var_type
 
+      # We move closured vars inside FileModule to the Def we are going to use
+      if var.closure_in?(file_module)
+        var.context = a_def
+        needs_closure_context = true
+      end
+
       compiled_def.local_vars.declare(name, var_type)
+    end
+
+    if needs_closure_context
+      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
