@@ -320,6 +320,9 @@ class HTTP::WebSocket::Protocol
 
     if (host = uri.hostname) && (path = uri.request_target)
       tls = uri.scheme.in?("https", "wss")
+      if (user = uri.user) && (password = uri.password)
+        headers["Authorization"] ||= "Basic #{Base64.strict_encode("#{user}:#{password}")}"
+      end
       return new(host, path, uri.port, tls, headers)
     end
 
