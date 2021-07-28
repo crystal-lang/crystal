@@ -575,24 +575,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def assign_to_closured_var(closured_var : ClosuredVar, *, node : ASTNode?)
-    index, type = closured_var.index, closured_var.type
-
-    # First load the closure pointer
-    closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
-    get_local closure_var_index, sizeof(Void*), node: nil
-
-    # Now offset the pointer if needed
-    if index > 0
-      put_i32 index, node: nil
-      pointer_add 1, node: nil
-    end
-
-    # Now we have the value in the stack, and the pointer.
-    # This is the correct order for pointer_set
-    pointer_set(aligned_sizeof_type(type), node: node)
-  end
-
   def visit(node : Var)
     return false unless @wants_value
 
@@ -621,9 +603,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       downcast node, type, node.type
     in ClosuredVar
-      index, type = local_var.index, local_var.type
-
-      if node.name == "self" && type.passed_by_value?
+      if node.name == "self" && local_var.type.passed_by_value?
         if @wants_struct_pointer
           node.raise "BUG: missing interpret read closured var with self wants_struct_pointer"
         else
@@ -633,18 +613,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if @wants_struct_pointer
           node.raise "BUG: missing interpret read closured var with wants_struct_pointer"
         else
-          # First load the closure pointer
-          closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
-          get_local closure_var_index, sizeof(Void*), node: nil
-
-          # Now offset the pointer if needed
-          if index > 0
-            put_i32 index, node: nil
-            pointer_add 1, node: nil
-          end
-
-          # Now read from the pointer
-          pointer_get inner_sizeof_type(type), node: node
+          read_from_closured_var(local_var, node: node)
         end
       end
     end
@@ -688,6 +657,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     nil
+  end
+
+  private def assign_to_closured_var(closured_var : ClosuredVar, *, node : ASTNode?)
+    read_closured_var_pointer(closured_var, node: nil)
+
+    # Now we have the value in the stack, and the pointer.
+    # This is the correct order for pointer_set
+    pointer_set(aligned_sizeof_type(closured_var.type), node: node)
+  end
+
+  private def read_from_closured_var(closured_var : ClosuredVar, *, node : ASTNode?)
+    read_closured_var_pointer(closured_var, node: nil)
+
+    # Now read from the pointer
+    pointer_get inner_sizeof_type(closured_var.type), node: node
+  end
+
+  private def read_closured_var_pointer(closured_var : ClosuredVar, *, node : ASTNode?)
+    index, type = closured_var.index, closured_var.type
+
+    # First load the closure pointer
+    closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+    get_local closure_var_index, sizeof(Void*), node: nil
+
+    # Now offset the pointer if needed
+    if index > 0
+      put_i32 index, node: nil
+      pointer_add 1, node: nil
+    end
   end
 
   def visit(node : InstanceVar)
