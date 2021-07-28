@@ -33,7 +33,7 @@ class Mutex
   end
 
   @[AlwaysInline]
-  def lock
+  def lock : Nil
     if @state.swap(1) == 0
       @mutex_fiber = Fiber.current unless @protection.unchecked?
       return
@@ -89,7 +89,7 @@ class Mutex
     true
   end
 
-  def unlock
+  def unlock : Nil
     unless @protection.unchecked?
       if mutex_fiber = @mutex_fiber
         unless mutex_fiber == Fiber.current

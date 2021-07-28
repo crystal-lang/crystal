@@ -69,7 +69,7 @@ class HTTP::Server
     end
 
     # Convenience method to retrieve the HTTP status code.
-    def status_code
+    def status_code : Int32
       status.code
     end
 
@@ -87,12 +87,12 @@ class HTTP::Server
     end
 
     # Convenience method to set cookies, see `HTTP::Cookies`.
-    def cookies
+    def cookies : HTTP::Cookies
       @cookies ||= HTTP::Cookies.new
     end
 
     # :nodoc:
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "Can't read from HTTP::Server::Response"
     end
 
@@ -117,7 +117,7 @@ class HTTP::Server
     end
 
     # Returns `true` if this response has been closed.
-    def closed?
+    def closed? : Bool
       @output.closed?
     end
 

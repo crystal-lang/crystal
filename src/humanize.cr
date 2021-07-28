@@ -82,7 +82,7 @@ struct Number
   end
 
   # :nodoc:
-  def self.prefix_index(i, group = 3)
+  def self.prefix_index(i : Int32, group : Int32 = 3) : Int32
     ((i - (i > 0 ? 1 : 0)) // group) * group
   end
 
@@ -239,7 +239,7 @@ struct Number
   end
 
   # :ditto:
-  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : Nil
+  def humanize(precision = 3, separator = '.', delimiter = ',', *, base = 10 ** 3, significant = true, prefixes : Proc) : String
     String.build do |io|
       humanize(io, precision, separator, delimiter, base: base, significant: significant, prefixes: prefixes)
     end

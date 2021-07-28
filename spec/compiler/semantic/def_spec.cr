@@ -487,6 +487,21 @@ describe "Semantic: def" do
       )) { int32.metaclass }
   end
 
+  it "shows free variables if no overload matches" do
+    assert_error %(
+      class Foo(T)
+        def foo(x : T, y : U, z : V) forall U, V
+        end
+      end
+
+      Foo(Int32).new.foo("", "", "")
+      ),
+      <<-ERROR
+      Overloads are:
+       - Foo(T)#foo(x : T, y : U, z : V) forall U, V
+      ERROR
+  end
+
   it "can't use self in toplevel method" do
     assert_error %(
       def foo

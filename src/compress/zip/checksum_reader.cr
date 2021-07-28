@@ -8,7 +8,7 @@ module Compress::Zip
     def initialize(@io : IO, @filename : String, verify @expected_crc32 : UInt32? = nil)
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : Int32
       read_bytes = @io.read(slice)
       if read_bytes == 0
         if (expected_crc32 = @expected_crc32) && crc32 != expected_crc32
@@ -20,7 +20,7 @@ module Compress::Zip
       read_bytes
     end
 
-    def peek
+    def peek : Bytes?
       @io.peek
     end
 

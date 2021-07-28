@@ -52,12 +52,12 @@ class Compress::Deflate::Reader < IO
   end
 
   # Always raises `IO::Error` because this is a read-only `IO`.
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : NoReturn
     raise IO::Error.new "Can't write to Compress::Deflate::Reader"
   end
 
   # See `IO#read`.
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     return 0 if slice.empty?
@@ -125,7 +125,7 @@ class Compress::Deflate::Reader < IO
     end
   end
 
-  def unbuffered_flush
+  def unbuffered_flush : NoReturn
     raise IO::Error.new "Can't flush Compress::Deflate::Reader"
   end
 
