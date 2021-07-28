@@ -7,3 +7,17 @@ module Crystal::Doc::Item
     @generator.summary(self)
   end
 end
+
+enum Crystal::Doc::HTMLOption
+  None
+  Highlight
+  All
+
+  def highlight? : Bool
+    self >= Highlight
+  end
+
+  def links? : Bool
+    self >= All
+  end
+end

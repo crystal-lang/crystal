@@ -130,10 +130,10 @@ module Crystal::System::File
     raise ::File::Error.from_os_error("Cannot read link", Errno::ENAMETOOLONG, file: path)
   end
 
-  def self.rename(old_filename, new_filename)
+  def self.rename(old_filename, new_filename) : ::File::Error?
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
-      raise ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
+      ::File::Error.from_errno("Error renaming file", file: old_filename, other: new_filename)
     end
   end
 
