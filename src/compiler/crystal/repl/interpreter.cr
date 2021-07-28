@@ -73,7 +73,7 @@ class Crystal::Repl::Interpreter
 
   property decompile = true
 
-  def initialize(@context : Context, meta_vars : MetaVars? = nil)
+  def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
 
@@ -824,22 +824,28 @@ class Crystal::Repl::Interpreter
       # To make it work, we construct a call like this:
       #
       # ```
+      # fiber_main = uninitialized Proc(Fiber, Nil)
+      # fiber = uninitialized Fiber
       # fiber_main.call(fiber)
       # ```
+      #
+      # And we inject their values in the stack.
 
       fiber_type = @context.program.types["Fiber"]
       nil_type = @context.program.nil_type
       proc_type = @context.program.proc_of([fiber_type, nil_type] of Type)
 
-      meta_vars = MetaVars.new
-      meta_vars["fiber_main"] = MetaVar.new("fiber_main", proc_type)
-      meta_vars["fiber"] = MetaVar.new("fiber", fiber_type)
-
+      fiber_main_decl = UninitializedVar.new(Var.new("fiber_main"), TypeNode.new(proc_type))
+      fiber_decl = UninitializedVar.new(Var.new("fiber"), TypeNode.new(fiber_type))
       call = Call.new(Var.new("fiber_main"), "call", Var.new("fiber"))
-      main_visitor = MainVisitor.new(@context.program, vars: meta_vars, meta_vars: meta_vars)
-      call.accept main_visitor
+      exps = Expressions.new([fiber_main_decl, fiber_decl, call] of ASTNode)
 
-      interpreter = Interpreter.new(@context, meta_vars: meta_vars)
+      meta_vars = MetaVars.new
+
+      main_visitor = MainVisitor.new(@context.program, vars: meta_vars, meta_vars: meta_vars)
+      exps.accept main_visitor
+
+      interpreter = Interpreter.new(@context)
 
       # We also need to put the data for `fiber_main` and `fiber` on the stack.
       stack = interpreter.stack
@@ -856,7 +862,7 @@ class Crystal::Repl::Interpreter
       # Now comes `fiber`
       stack.as(Void**).value = fiber
 
-      interpreter.interpret(call, main_visitor.meta_vars)
+      interpreter.interpret(exps, main_visitor.meta_vars)
 
       nil
     end

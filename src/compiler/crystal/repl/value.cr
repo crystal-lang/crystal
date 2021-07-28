@@ -72,17 +72,14 @@ struct Crystal::Repl::Value
   # This is done by interpreting a call to `inspect` (not `to_s`)
   # on this value.
   def to_s(io : IO)
-    decl = UninitializedVar.new(
-      Var.new("x"),
-      TypeNode.new(@type),
-    )
+    decl = UninitializedVar.new(Var.new("x"), TypeNode.new(@type))
     call = Call.new(Var.new("x"), "inspect")
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin
       meta_vars = MetaVars.new
 
-      interpreter = Interpreter.new(context, meta_vars: meta_vars)
+      interpreter = Interpreter.new(context)
       interpreter.decompile = false
       # TODO: make stack private? Does it matter?
       interpreter.stack.copy_from(@pointer, context.inner_sizeof_type(@type))
