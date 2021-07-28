@@ -70,7 +70,7 @@ class HTTP::WebSocket::Protocol
       end
     end
 
-    def read(slice : Bytes)
+    def read(slice : Bytes) : NoReturn
       raise "This IO is write-only"
     end
 
@@ -106,7 +106,7 @@ class HTTP::WebSocket::Protocol
     @io.flush if flush
   end
 
-  def receive(buffer : Bytes)
+  def receive(buffer : Bytes) : PacketInfo
     if @remaining == 0
       opcode = read_header
     else
@@ -320,6 +320,9 @@ class HTTP::WebSocket::Protocol
 
     if (host = uri.hostname) && (path = uri.request_target)
       tls = uri.scheme.in?("https", "wss")
+      if (user = uri.user) && (password = uri.password)
+        headers["Authorization"] ||= "Basic #{Base64.strict_encode("#{user}:#{password}")}"
+      end
       return new(host, path, uri.port, tls, headers)
     end
 

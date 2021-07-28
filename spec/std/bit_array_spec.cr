@@ -1,5 +1,6 @@
 require "spec"
 require "bit_array"
+require "spec/helpers/iterate"
 
 private def from_int(size : Int32, int : Int)
   ba = BitArray.new(size)
@@ -242,15 +243,83 @@ describe "BitArray" do
     end
   end
 
-  it "toggles a bit" do
-    ary = BitArray.new(32)
-    ary[3].should be_false
+  describe "#toggle" do
+    it "toggles a bit" do
+      ary = BitArray.new(32)
+      ary[3].should be_false
 
-    ary.toggle(3)
-    ary[3].should be_true
+      ary.toggle(3)
+      ary[3].should be_true
 
-    ary.toggle(3)
-    ary[3].should be_false
+      ary.toggle(3)
+      ary[3].should be_false
+    end
+
+    it "toggles with index and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(1, 2)
+      ary.should eq(from_int(4, 0b0101))
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30, 6)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+
+      ary = from_int(32, 0b10000000_00000000_00000000_00000001)
+      ary.toggle(0, 32)
+      ary.should eq(from_int(32, 0b01111111_11111111_11111111_11111110))
+    end
+
+    it "toggles with index and count, not enough bits" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(1, 5)
+      ary.should eq(from_int(4, 0b0100))
+      (4..31).each { |i| ary.unsafe_fetch(i).should be_false }
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30, 12)
+      ary[24..].should eq(from_int(16, 0b00110000_10101010))
+      (40..63).each { |i| ary.unsafe_fetch(i).should be_false }
+    end
+
+    it "toggles with index == size and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(4, 2)
+      ary.should eq(from_int(4, 0b0011))
+      (4..31).each { |i| ary.unsafe_fetch(i).should be_false }
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(40, 6)
+      ary[24..].should eq(from_int(16, 0b00110011_01010101))
+      (40..63).each { |i| ary.unsafe_fetch(i).should be_false }
+    end
+
+    it "toggles with index < 0 and count" do
+      ary = from_int(4, 0b0011)
+      ary.toggle(-3, 2)
+      ary.should eq(from_int(4, 0b0101))
+
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(-10, 6)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+    end
+
+    it "raises on out of bound index" do
+      expect_raises(IndexError) { BitArray.new(2).toggle(2) }
+      expect_raises(IndexError) { BitArray.new(2).toggle(-3) }
+
+      expect_raises(IndexError) { BitArray.new(2).toggle(3, 1) }
+      expect_raises(IndexError) { BitArray.new(2).toggle(-3, 1) }
+    end
+
+    it "raises on negative count" do
+      expect_raises(ArgumentError) { BitArray.new(2).toggle(0, -1) }
+    end
+
+    it "toggles with range" do
+      ary = from_int(40, 0b00110011_01010101)
+      ary.toggle(30..35)
+      ary[24..].should eq(from_int(16, 0b00110000_10100101))
+    end
   end
 
   it "inverts all bits" do
@@ -328,36 +397,13 @@ describe "BitArray" do
     end
   end
 
-  it "provides an iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
+  ary = BitArray.new(2)
+  ary[0] = true
+  ary[1] = false
 
-    iter = ary.each
-    iter.next.should be_true
-    iter.next.should be_false
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides an index iterator" do
-    ary = BitArray.new(2)
-
-    iter = ary.each_index
-    iter.next.should eq(0)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "provides a reverse iterator" do
-    ary = BitArray.new(2)
-    ary[0] = true
-    ary[1] = false
-
-    iter = ary.reverse_each
-    iter.next.should be_false
-    iter.next.should be_true
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [true, false], ary.each
+  it_iterates "#each_index", [0, 1], ary.each_index
+  it_iterates "#reverse_each", [false, true], ary.reverse_each
 
   it "provides dup" do
     a = BitArray.new(2)

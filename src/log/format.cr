@@ -26,7 +26,7 @@ class Log
     def initialize(@proc : (Log::Entry, IO) ->)
     end
 
-    def format(entry : Log::Entry, io : IO)
+    def format(entry : Log::Entry, io : IO) : Nil
       @proc.call(entry, io)
     end
   end
@@ -82,7 +82,7 @@ class Log
     #
     # This writes the severity in uppercase and left padded
     # with enough space so all the severities fit
-    def severity
+    def severity : Nil
       @entry.severity.label.rjust(@io, 6)
     end
 

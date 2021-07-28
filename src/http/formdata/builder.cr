@@ -29,7 +29,7 @@ module HTTP::FormData
     # builder = HTTP::FormData::Builder.new(io, "a4VF")
     # builder.content_type # => "multipart/form-data; boundary=\"a4VF\""
     # ```
-    def content_type
+    def content_type : String
       String.build do |str|
         str << "multipart/form-data; boundary=\""
         HTTP.quote_string(@boundary, str)

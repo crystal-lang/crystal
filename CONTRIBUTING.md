@@ -114,17 +114,19 @@ If you want to add/change something in the compiler,
 the first thing you will need to do is to [install the compiler](https://crystal-lang.org/install/).
 
 Once you have a compiler up and running, check that executing `crystal` on the command line prints its usage.
-Now you can setup your environment to compile Crystal itself, which is itself written in Crystal. Check out
-the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
-These set-up LLVM 3.6 and its required libraries.
+Now you can setup your environment to compile Crystal itself, which is itself written in Crystal.
 
-Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
-the specs. All specs should pass. You can use `make help` for a list of available make targets.
+The compiler needs [LLVM](https://llvm.org) and some other libraries. See [list of all required libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
+
+Executing `make crystal` builds the compiler into `.build/compiler` and you can run it using the wrapper script at `bin/crystal`.
+The script sets up the proper environment variables that the compiler can find the standard library source files in `src/`.
+
+`make compiler_spec` runs the compiler specs. `make std_spec` runs the standard library specs.
+You can use `make help` for a list of available make targets.
 
 ## This guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
-
 
 ## Making good pull requests
 
@@ -138,6 +140,35 @@ fixup commits. Please do not amend previous commits and force push to the PR bra
 because reference to previous state is hidden.
 
 If changes introduced to `master` branch result in conflicts, it should be merged with a merge commit (`git fetch upstream/master; git merge upstream/master`).
+
+### Minimum requirements
+
+1. Describe reasons and result of the change in the pull request comment.
+2. Do not force push to a pull request. The development history should be easily traceable.
+3. Any change to a public API requires appropriate documentation: params (and particularly interesting combinations of them if the method is complex), results, interesting, self-contained examples.
+4. Any change to behaviour needs to be reflected and validated with specs.
+5. Any change affecting the compiler or performance-critical features in the standard library
+   should be checked with benchmarks how it affects performance.
+
+### Approval Process
+
+1. To be accepted, a pull request requires recent approvals from at least two core team members; if the author is a core team
+   member, this counts as one approval. Approvals only count when based on the current code version (except for minor changes like fixing a typo).
+2. When the required approvals are given and CI is satisfied, a core team member can add the pull request to the
+   current development milestone. This signals that it is scheduled to be merged soon and gives another chance for final reviews.
+3. The wait time in this state depends on the gravity of the change and the activity of the previous discussion,
+   but it should at least be a full business day after the milestone was added.
+4. Before merging, make sure the pull request is properly labeled and its title appropriately describes the change.
+4. Finally, the pull request can be merged. Use squash merge to not pollute the version history of the main branch with
+   details of the pull request process. For non-trivial changes, the merge commit should contain a short description.
+
+This process is a guideline and not a strict rule so there might be occasional exceptions within reason.
+Urgent infrastructure fixes for example can be expected to skip the line.
+
+### For maintainers with push access
+
+1. Do not directly commit to the `master` branch. Always create a feature branch and pull request.
+2. Feature branches should typically be created in your fork. The main repo should only contain essential branches.
 
 ## Git pre-commit hook
 

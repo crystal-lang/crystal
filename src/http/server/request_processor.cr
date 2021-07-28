@@ -22,7 +22,7 @@ class HTTP::Server::RequestProcessor
     @wants_close = true
   end
 
-  def process(input, output)
+  def process(input, output) : Nil
     response = Response.new(output)
 
     begin
