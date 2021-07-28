@@ -80,7 +80,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_pos
-    pos = LibC.lseek(fd, 0, IO::Seek::Current)
+    pos = LibC.lseek(fd, 0, IO::Seek::Current).to_i64
     raise IO::Error.from_errno "Unable to tell" if pos == -1
     pos
   end
@@ -122,7 +122,7 @@ module Crystal::System::FileDescriptor
     file_descriptor_close
   end
 
-  def file_descriptor_close
+  def file_descriptor_close : Nil
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
     _fd = @volatile_fd.swap(-1)
@@ -153,7 +153,7 @@ module Crystal::System::FileDescriptor
   end
 
   def self.pread(fd, buffer, offset)
-    bytes_read = LibC.pread(fd, buffer, buffer.size, offset)
+    bytes_read = LibC.pread(fd, buffer, buffer.size, offset).to_i64
 
     if bytes_read == -1
       raise IO::Error.from_errno "Error reading file"

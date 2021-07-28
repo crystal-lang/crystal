@@ -79,7 +79,7 @@ module MIME::Multipart
     end
 
     # True if `#next` can be called legally.
-    def has_next?
+    def has_next? : Bool
       @state != :FINISHED && @state != :ERRORED
     end
 

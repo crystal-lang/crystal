@@ -4,7 +4,6 @@ module Crystal
   def self.check_type_can_be_stored(node, type, msg)
     return if type.can_be_stored?
 
-    type = type.union_types.find { |t| !t.can_be_stored? } if type.is_a?(UnionType)
     node.raise "#{msg} yet, use a more specific type"
   end
 

@@ -314,7 +314,7 @@ class OptionParser
   end
 
   # Parses the passed *args* (defaults to `ARGV`), running the handlers associated to each option.
-  def parse(args = ARGV)
+  def parse(args = ARGV) : Nil
     with_preserved_state do
       # List of indexes in `args` which have been handled and must be deleted
       handled_args = [] of Int32

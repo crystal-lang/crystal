@@ -118,7 +118,12 @@ struct Number
     %array
   end
 
-  # :ditto:
+  # Performs a `#step` in the direction of the _limit_. For instance:
+  #
+  # ```
+  # 10.step(to: 5).to_a # => [10, 9, 8, 7, 6, 5]
+  # 5.step(to: 10).to_a # => [5, 6, 7, 8, 9, 10]
+  # ```
   def step(*, to limit = nil, exclusive : Bool = false, &) : Nil
     if limit
       direction = limit <=> self
@@ -146,7 +151,7 @@ struct Number
   # 123.abs  # => 123
   # -123.abs # => 123
   # ```
-  def abs
+  def abs : self
     self < 0 ? -self : self
   end
 
@@ -170,7 +175,7 @@ struct Number
   # 0.sign   # => 0
   # -42.sign # => -1
   # ```
-  def sign
+  def sign : Int32
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 
@@ -225,15 +230,24 @@ struct Number
       return x
     end
 
-    y = if base == 10
-          10 ** ((Math.log10(self.abs) - digits + 1).floor)
-        elsif base == 2
-          2 ** ((Math.log2(self.abs) - digits + 1).floor)
-        else
-          base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
-        end
+    if base == 10
+      log = Math.log10(self.abs)
+    elsif base == 2
+      log = Math.log2(self.abs)
+    else
+      log = Math.log2(self.abs) / Math.log2(base)
+    end
 
-    self.class.new((x / y).round * y)
+    exponent = (log - digits + 1).floor
+    if exponent < 0
+      y = base ** -exponent
+      value = (x * y).round / y
+    else
+      y = base ** exponent
+      value = (x / y).round * y
+    end
+
+    self.class.new(value)
   end
 
   # Rounds this number to a given precision.
@@ -309,7 +323,7 @@ struct Number
     end
   end
 
-  # Returns `true` if value is equal to zero.
+  # Returns `true` if `self` is equal to zero.
   #
   # ```
   # 0.zero? # => true
@@ -317,5 +331,27 @@ struct Number
   # ```
   def zero? : Bool
     self == 0
+  end
+
+  # Returns `true` if `self` is greater than zero.
+  #
+  # ```
+  # -1.positive? # => false
+  # 0.positive?  # => false
+  # 1.positive?  # => true
+  # ```
+  def positive? : Bool
+    self > 0
+  end
+
+  # Returns `true` if `self` is less than zero.
+  #
+  # ```
+  # -1.negative? # => true
+  # 0.negative?  # => false
+  # 1.negative?  # => false
+  # ```
+  def negative? : Bool
+    self < 0
   end
 end

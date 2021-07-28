@@ -29,17 +29,17 @@ class XML::Reader
   end
 
   # Moves the reader to the next node.
-  def read
+  def read : Bool
     LibXML.xmlTextReaderRead(@reader) == 1
   end
 
   # Moves the reader to the next node while skipping subtrees.
-  def next
+  def next : Bool
     LibXML.xmlTextReaderNext(@reader) == 1
   end
 
   # Moves the reader to the next sibling node while skipping subtrees.
-  def next_sibling
+  def next_sibling : Bool
     result = LibXML.xmlTextReaderNextSibling(@reader)
     # Work around libxml2 with incomplete xmlTextReaderNextSibling()
     # see: https://gitlab.gnome.org/GNOME/libxml2/issues/7
@@ -63,38 +63,38 @@ class XML::Reader
   end
 
   # Returns the name of the node.
-  def name
+  def name : String
     value = LibXML.xmlTextReaderConstName(@reader)
     value ? String.new(value) : ""
   end
 
   # Checks if the node is an empty element.
-  def empty_element?
+  def empty_element? : Bool
     LibXML.xmlTextReaderIsEmptyElement(@reader) == 1
   end
 
   # Checks if the node has any attributes.
-  def has_attributes?
+  def has_attributes? : Bool
     LibXML.xmlTextReaderHasAttributes(@reader) == 1
   end
 
   # Returns attribute count of the node.
-  def attributes_count
+  def attributes_count : Int32
     LibXML.xmlTextReaderAttributeCount(@reader)
   end
 
   # Moves to the first `XML::Reader::Type::ATTRIBUTE` of the node.
-  def move_to_first_attribute
+  def move_to_first_attribute : Bool
     LibXML.xmlTextReaderMoveToFirstAttribute(@reader) == 1
   end
 
   # Moves to the next `XML::Reader::Type::ATTRIBUTE` of the node.
-  def move_to_next_attribute
+  def move_to_next_attribute : Bool
     LibXML.xmlTextReaderMoveToNextAttribute(@reader) == 1
   end
 
   # Moves to the `XML::Reader::Type::ATTRIBUTE` with the specified name.
-  def move_to_attribute(name : String)
+  def move_to_attribute(name : String) : Bool
     LibXML.xmlTextReaderMoveToAttribute(@reader, name) == 1
   end
 
@@ -112,23 +112,23 @@ class XML::Reader
   end
 
   # Moves from the `XML::Reader::Type::ATTRIBUTE` to its containing `XML::Reader::Type::ELEMENT`.
-  def move_to_element
+  def move_to_element : Bool
     LibXML.xmlTextReaderMoveToElement(@reader) == 1
   end
 
   # Returns the current nesting depth of the reader.
-  def depth
+  def depth : Int32
     LibXML.xmlTextReaderDepth(@reader)
   end
 
   # Returns the node's XML content including subtrees.
-  def read_inner_xml
+  def read_inner_xml : String
     xml = LibXML.xmlTextReaderReadInnerXml(@reader)
     xml ? String.new(xml) : ""
   end
 
   # Returns the XML for the node and its content including subtrees.
-  def read_outer_xml
+  def read_outer_xml : String
     # On a NONE type libxml2 2.9.9 is giving a segfault:
     #
     #   https://gitlab.gnome.org/GNOME/libxml2/issues/43
@@ -161,7 +161,7 @@ class XML::Reader
   end
 
   # Returns the text content of the node.
-  def value
+  def value : String
     value = LibXML.xmlTextReaderConstValue(@reader)
     value ? String.new(value) : ""
   end

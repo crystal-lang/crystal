@@ -550,7 +550,7 @@ struct Time
   # tokyo.inspect    # => "2019-01-01 00:00:00.0 +09:00 Asia/Tokyo"
   # new_york.inspect # => "2019-01-01 00:00:00.0 -05:00 America/New_York"
   # ```
-  def to_local_in(location : Location)
+  def to_local_in(location : Location) : Time
     local_seconds = offset_seconds
     local_seconds -= Time.zone_offset_at(local_seconds, location)
 
@@ -704,7 +704,7 @@ struct Time
       # are applied to the equivalent UTC representation of this local time.
       seconds += offset_seconds
     else
-      year, month, day, _ = to_utc.year_month_day_day_year
+      year, month, day, _ = year_month_day_day_year
 
       year += years
 
@@ -723,8 +723,7 @@ struct Time
       end
 
       seconds += Time.absolute_days(year, month, day).to_i64 * SECONDS_PER_DAY
-      seconds += @seconds % SECONDS_PER_DAY
-      seconds += offset
+      seconds += offset_seconds % SECONDS_PER_DAY
     end
 
     # FIXME: These operations currently don't have overflow checks applied.
@@ -1119,7 +1118,7 @@ struct Time
   end
 
   # Parse time format specified by [RFC 3339](https://tools.ietf.org/html/rfc3339) ([ISO 8601](http://xml.coverpages.org/ISO-FDIS-8601.pdf) profile).
-  def self.parse_rfc3339(time : String)
+  def self.parse_rfc3339(time : String) : self
     Format::RFC_3339.parse(time)
   end
 
@@ -1140,7 +1139,7 @@ struct Time
   # ```
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def to_rfc2822
+  def to_rfc2822 : String
     Format::RFC_2822.format(to_utc)
   end
 
@@ -1155,7 +1154,7 @@ struct Time
   # Parse time format specified by [RFC 2822](https://www.ietf.org/rfc/rfc2822.txt).
   #
   # This is also compatible to [RFC 882](https://tools.ietf.org/html/rfc882) and [RFC 1123](https://tools.ietf.org/html/rfc1123#page-55).
-  def self.parse_rfc2822(time : String)
+  def self.parse_rfc2822(time : String) : self
     Format::RFC_2822.parse(time)
   end
 
@@ -1394,12 +1393,12 @@ struct Time
   def_at_end(hour) { Time.local(year, month, day, hour, 59, 59, nanosecond: 999_999_999, location: location) }
 
   # Returns a copy of this `Time` representing the end of the minute.
-  def at_end_of_minute
+  def at_end_of_minute : Time
     Time.new(seconds: total_seconds - second + 59, nanoseconds: 999_999_999, location: location)
   end
 
   # Returns a copy of this `Time` representing the end of the second.
-  def at_end_of_second
+  def at_end_of_second : Time
     Time.new(seconds: total_seconds, nanoseconds: 999_999_999, location: location)
   end
 

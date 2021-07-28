@@ -46,7 +46,8 @@ class Crystal::AbstractDefChecker
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
           if a_def.abstract?
-            check_implemented_in_subtypes(type, a_def)
+            free_vars = free_var_nodes(a_def)
+            check_implemented_in_subtypes(type, a_def, free_vars)
           end
         end
       end
@@ -55,11 +56,11 @@ class Crystal::AbstractDefChecker
     check_types(type)
   end
 
-  def check_implemented_in_subtypes(type, method)
-    check_implemented_in_subtypes(type, type, method)
+  def check_implemented_in_subtypes(type, method, free_vars)
+    check_implemented_in_subtypes(type, type, method, free_vars)
   end
 
-  def check_implemented_in_subtypes(base, type, method)
+  def check_implemented_in_subtypes(base, type, method, free_vars)
     subtypes = case type
                when NonGenericModuleType
                  type.raw_including_types
@@ -70,13 +71,13 @@ class Crystal::AbstractDefChecker
                end
 
     subtypes.try &.each do |subtype|
-      next if implements_with_ancestors?(subtype, method, base)
+      next if implements_with_ancestors?(subtype, method, base, free_vars)
 
       # Union doesn't need a hash, dup, to_s, etc., methods because it's special
       next if subtype == @program.union
 
       if subtype.abstract? || subtype.module?
-        check_implemented_in_subtypes(base, subtype, method)
+        check_implemented_in_subtypes(base, subtype, method, free_vars)
       else
         msg = "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
         if location = subtype.locations.try &.first?
@@ -88,22 +89,23 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def implements_with_ancestors?(type : Type, method : Def, base : Type)
-    return true if implements?(type, type, method, base)
+  def implements_with_ancestors?(type : Type, method : Def, base : Type, free_vars)
+    return true if implements?(type, type, method, base, free_vars)
 
     type.ancestors.any? do |ancestor|
-      implements?(type, ancestor, method, base)
+      implements?(type, ancestor, method, base, free_vars)
     end
   end
 
   # Returns `true` if `ancestor_type` implements `method` of `base` when computing
   # that information to check whether `target_type` implements `method` of `base`.
-  def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type)
+  def implements?(target_type : Type, ancestor_type : Type, method : Def, base : Type, method_free_vars)
     ancestor_type.defs.try &.each_value do |defs_with_metadata|
       defs_with_metadata.each do |def_with_metadata|
         a_def = def_with_metadata.def
+        def_free_vars = free_var_nodes(a_def)
 
-        if implements?(target_type, ancestor_type, a_def, base, method)
+        if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
           check_return_type(target_type, ancestor_type, a_def, base, method)
           return true
         end
@@ -115,7 +117,7 @@ class Crystal::AbstractDefChecker
   # Returns `true` if the method `t1#m1` implements `t2#m2` when computing
   # that to check whether `target_type` implements `t2#m2`
   # (`t1` is an ancestor of `target_type`).
-  def implements?(target_type : Type, t1 : Type, m1 : Def, t2 : Type, m2 : Def)
+  def implements?(target_type : Type, t1 : Type, m1 : Def, free_vars1, t2 : Type, m2 : Def, free_vars2)
     return false if m1.abstract?
     return false unless m1.name == m2.name
     return false unless m1.yields == m2.yields
@@ -169,7 +171,7 @@ class Crystal::AbstractDefChecker
       end
 
       if a1 && a2
-        return false unless check_arg(t1, a1, t2, a2)
+        return false unless check_arg(t1, a1, free_vars1, t2, a2, free_vars2)
       end
 
       # Move next, unless we're on the splat already or at the end of the arguments
@@ -195,7 +197,7 @@ class Crystal::AbstractDefChecker
     # Check double splat
     if m2_double_splat = m2.double_splat
       if m1_double_splat = m1.double_splat
-        return false unless check_arg(t1, m1_double_splat, t2, m2_double_splat)
+        return false unless check_arg(t1, m1_double_splat, free_vars1, t2, m2_double_splat, free_vars2)
       else
         return false
       end
@@ -206,7 +208,7 @@ class Crystal::AbstractDefChecker
     m2_kargs.each do |i|
       a2 = m2.args[i]
       if a1 = kargs.delete(a2.name) || m1.double_splat
-        return false unless check_arg(t1, a1, t2, a2)
+        return false unless check_arg(t1, a1, free_vars1, t2, a2, free_vars2)
       else
         return false
       end
@@ -217,7 +219,7 @@ class Crystal::AbstractDefChecker
     kargs.each_value do |a1|
       return false unless a1.default_value
       if m2_double_splat = m2.double_splat
-        return false unless check_arg(t1, a1, t2, m2_double_splat)
+        return false unless check_arg(t1, a1, free_vars1, t2, m2_double_splat, free_vars2)
       end
     end
 
@@ -236,7 +238,7 @@ class Crystal::AbstractDefChecker
     end
   end
 
-  def check_arg(t1 : Type, a1 : Arg, t2 : Type, a2 : Arg)
+  def check_arg(t1 : Type, a1 : Arg, free_vars1, t2 : Type, a2 : Arg, free_vars2)
     if a2.default_value
       return false unless a1.default_value == a2.default_value
     end
@@ -247,8 +249,8 @@ class Crystal::AbstractDefChecker
     if r2 && r1 && r1 != r2
       # Check if a1.restriction is contravariant with a2.restriction
       begin
-        rt1 = t1.lookup_type(r1)
-        rt2 = t2.lookup_type(r2)
+        rt1 = t1.lookup_type(r1, free_vars: free_vars1)
+        rt2 = t2.lookup_type(r2, free_vars: free_vars2)
         return false unless rt2.implements?(rt1)
       rescue Crystal::TypeException
         # Ignore if we can't find a type (assume the method is implemented)
@@ -329,6 +331,17 @@ class Crystal::AbstractDefChecker
 
   private def report_error(node, message)
     node.raise(message, nil)
+  end
+
+  # Fictitious nodes for a given def's free vars, used to override type lookup
+  # so that they are never shadowed by existing types. Type lookup will find
+  # these Paths and raise because a Path isn't a type. (`#check_arg` relies on
+  # ignoring undefined types for free vars to work, this should be improved in
+  # the future.)
+  private def free_var_nodes(a_def : Def)
+    a_def.free_vars.try &.to_h do |var|
+      {var, Path.new(var).as(TypeVar)}
+    end
   end
 
   class ReplacePathWithTypeVar < Visitor
