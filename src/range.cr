@@ -10,6 +10,8 @@
 # ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
@@ -274,7 +276,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
-  def excludes_end?
+  def excludes_end? : Bool
     @exclusive
   end
 
@@ -288,7 +290,7 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
-  def includes?(value)
+  def includes?(value) : Bool
     begin_value = @begin
     end_value = @end
 

@@ -16,13 +16,13 @@ struct BigInt
     new(pull.raw_value)
   end
 
-  def self.from_json_object_key?(key : String)
+  def self.from_json_object_key?(key : String) : BigInt?
     new(key)
   rescue ArgumentError
     nil
   end
 
-  def to_json_object_key
+  def to_json_object_key : String
     to_s
   end
 
@@ -46,7 +46,7 @@ struct BigFloat
     new(value)
   end
 
-  def self.from_json_object_key?(key : String)
+  def self.from_json_object_key?(key : String) : BigFloat?
     new(key)
   rescue ArgumentError
     nil
@@ -76,7 +76,7 @@ struct BigDecimal
     new(value)
   end
 
-  def self.from_json_object_key?(key : String)
+  def self.from_json_object_key?(key : String) : BigDecimal?
     new(key)
   rescue InvalidBigDecimalException
     nil

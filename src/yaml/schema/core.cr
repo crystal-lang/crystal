@@ -4,14 +4,14 @@ module YAML::Schema::Core
   # Deserializes a YAML document.
   #
   # Same as `YAML.parse`.
-  def self.parse(data : String | IO)
+  def self.parse(data : String | IO) : YAML::Any
     Parser.new data, &.parse
   end
 
   # Deserializes multiple YAML documents.
   #
   # Same as `YAML.parse_all`.
-  def self.parse_all(data : String | IO)
+  def self.parse_all(data : String | IO) : Array(YAML::Any)
     Parser.new data, &.parse_all
   end
 

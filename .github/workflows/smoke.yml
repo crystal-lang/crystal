@@ -1,0 +1,59 @@
+# These jobs are smoke tests for platforms where we don't rund full tests.
+# They ensure that std_spec, compiler_spec and the compiler itself at least
+# compile for the target with --cross-compile. But the binaries are not linked
+# and executed. So this does not validate correct behaviour.
+#
+# The list of supported platforms is extracted from the lib_c bindings:
+#
+# ```terminal-session
+# $ find src/lib_c -maxdepth 1 -mindepth 1 -type d -printf '%P\n' | sort
+# aarch64-darwin
+# aarch64-linux-gnu
+# aarch64-linux-musl
+# arm-linux-gnueabihf
+# i386-linux-gnu
+# i386-linux-musl
+# x86_64-darwin
+# x86_64-dragonfly
+# x86_64-freebsd
+# x86_64-linux-gnu
+# x86_64-linux-musl
+# x86_64-netbsd
+# x86_64-openbsd
+# x86_64-windows-msvc
+# ```
+#
+# Platforms for which we currently run full tests are excluded from this workflow.
+name: Smoke tests
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_OS_NAME: linux
+  ARCH: x86_64
+  ARCH_CMD: linux64
+
+jobs:
+  smoke-test:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        target:
+          - aarch64-darwin
+          - arm-linux-gnueabihf
+          - i386-linux-musl
+          - x86_64-dragonfly
+          - x86_64-freebsd
+          - x86_64-netbsd
+          - x86_64-openbsd
+
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v2
+
+      - name: Run smoke test
+        run: bin/ci with_build_env make smoke_test target=${{ matrix.target }}

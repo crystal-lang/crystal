@@ -22,7 +22,8 @@
 # `Array`, etc., use the `as_` methods, such as `#as_s`, `#as_a`, which perform
 # a type check against the raw underlying value. This means that invoking `#as_s`
 # when the underlying value is not a `String` will raise: the value won't automatically
-# be converted (parsed) to a `String`.
+# be converted (parsed) to a `String`. There are also nil-able variants (`#as_i?`, `#as_s?`, ...),
+# which return `nil` when the underlying value type won't match.
 struct YAML::Any
   # All valid YAML core schema types.
   alias Type = Nil | Bool | Int64 | Float64 | String | Time | Bytes | Array(Any) | Hash(Any, Any) | Set(Any)
@@ -307,7 +308,7 @@ struct YAML::Any
   def_hash raw
 
   # :nodoc:
-  def to_yaml(io)
+  def to_yaml(io) : Nil
     raw.to_yaml(io)
   end
 
@@ -331,7 +332,7 @@ struct YAML::Any
 
   # Forwards `to_json_object_key` to `raw` if it responds to that method,
   # raises `JSON::Error` otherwise.
-  def to_json_object_key
+  def to_json_object_key : String
     raw = @raw
     if raw.responds_to?(:to_json_object_key)
       raw.to_json_object_key

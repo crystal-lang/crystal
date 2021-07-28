@@ -265,7 +265,7 @@ struct BigInt < Int
     unsafe_truncated_mod(other)
   end
 
-  def divmod(number : BigInt)
+  def divmod(number : BigInt) : {BigInt, BigInt}
     check_division_by_zero number
 
     unsafe_floored_divmod(number)
@@ -276,7 +276,7 @@ struct BigInt < Int
     unsafe_floored_divmod(number)
   end
 
-  def divmod(number : Int::Signed)
+  def divmod(number : Int::Signed) : {BigInt, BigInt}
     check_division_by_zero number
     if number > 0 && number <= LibC::Long::MAX
       unsafe_floored_divmod(LibGMP::ULong.new(number))
@@ -320,13 +320,13 @@ struct BigInt < Int
     BigInt.new { |mpz| LibGMP.tdiv_r_ui(mpz, self, other.abs.to_big_i) }
   end
 
-  def unsafe_floored_divmod(number : BigInt)
+  def unsafe_floored_divmod(number : BigInt) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr(the_q, r, self, number) }
     {the_q, the_r}
   end
 
-  def unsafe_floored_divmod(number : LibGMP::ULong)
+  def unsafe_floored_divmod(number : LibGMP::ULong) : {BigInt, BigInt}
     the_q = BigInt.new
     the_r = BigInt.new { |r| LibGMP.fdiv_qr_ui(the_q, r, self, number) }
     {the_q, the_r}
@@ -410,36 +410,94 @@ struct BigInt < Int
   # TODO: check hash equality for numbers >= 2**63
   def_hash to_i64!
 
-  # Returns a string representation of self.
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
-  # ```
-  def to_s : String
-    String.new(to_cstr)
+  def to_s(base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : String
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      ""
+    when {0, 1}
+      "0"
+    when {1, 1}
+      "1"
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      negative = self < 0
+
+      if precision <= count
+        len = count + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer| # null terminator required by GMP
+          LibGMP.get_str(buffer, upcase ? -base : base, self)
+          base62_swapcase(Slice.new(buffer, len)) if base == 62
+          {len, len}
+        end
+      else
+        len = precision + (negative ? 1 : 0)
+        String.new(len + 1) do |buffer|
+          # e.g. precision = 13, count = 8
+          # "_____12345678\0" for positive
+          # "_____-12345678\0" for negative
+          LibGMP.get_str(buffer + precision - count, upcase ? -base : base, self)
+          base62_swapcase(Slice.new(buffer + len - count, count)) if base == 62
+
+          if negative
+            buffer.value = '-'.ord.to_u8
+            buffer += 1
+          end
+          Intrinsics.memset(buffer, '0'.ord.to_u8, precision - count, false)
+
+          {len, len}
+        end
+      end
+    end
   end
 
-  # :ditto:
-  def to_s(io : IO) : Nil
-    str = to_cstr
-    io.write_utf8 Slice.new(str, LibC.strlen(str))
+  def to_s(io : IO, base : Int = 10, *, precision : Int = 1, upcase : Bool = false) : Nil
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
+    raise ArgumentError.new("Precision must be non-negative") unless precision >= 0
+
+    case {self, precision}
+    when {0, 0}
+      # do nothing
+    when {0, 1}
+      io << '0'
+    when {1, 1}
+      io << '1'
+    else
+      count = LibGMP.sizeinbase(self, base).to_i
+      ptr = LibGMP.get_str(nil, upcase ? -base : base, self)
+      negative = self < 0
+
+      if precision <= count
+        buffer = Slice.new(ptr, count + (negative ? 1 : 0))
+      else
+        if negative
+          io << '-'
+          ptr += 1 # this becomes the absolute value
+        end
+
+        (precision - count).times { io << '0' }
+        buffer = Slice.new(ptr, count)
+      end
+
+      base62_swapcase(buffer) if base == 62
+      io.write_utf8 buffer
+    end
   end
 
-  # Returns a string containing the representation of big radix base (2 through 36).
-  #
-  # ```
-  # require "big"
-  #
-  # BigInt.new("123456789101101987654321").to_s(8)  # => "32111154373025463465765261"
-  # BigInt.new("123456789101101987654321").to_s(16) # => "1a249b1f61599cd7eab1"
-  # BigInt.new("123456789101101987654321").to_s(36) # => "k3qmt029k48nmpd"
-  # ```
-  def to_s(base : Int) : String
-    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36
-    cstr = LibGMP.get_str(nil, base, self)
-    String.new(cstr)
+  private def base62_swapcase(buffer)
+    buffer.map! do |x|
+      # for ASCII integers as returned by GMP the only possible characters are
+      # '\0', '-', '0'..'9', 'A'..'Z', and 'a'..'z'
+      if x & 0x40 != 0 # 'A'..'Z', 'a'..'z'
+        x ^ 0x20
+      else # '\0', '-', '0'..'9'
+        x
+      end
+    end
   end
 
   # :nodoc:
@@ -454,31 +512,31 @@ struct BigInt < Int
     ary
   end
 
-  def popcount
+  def popcount : Int
     LibGMP.popcount(self)
   end
 
-  def trailing_zeros_count
+  def trailing_zeros_count : Int
     LibGMP.scan1(self, 0)
   end
 
-  def to_i
+  def to_i : Int32
     to_i32
   end
 
-  def to_i8
+  def to_i8 : Int8
     to_i32.to_i8
   end
 
-  def to_i16
+  def to_i16 : Int16
     to_i32.to_i16
   end
 
-  def to_i32
+  def to_i32 : Int32
     LibGMP.get_si(self).to_i32
   end
 
-  def to_i64
+  def to_i64 : Int64
     if LibGMP::Long::MIN <= self <= LibGMP::Long::MAX
       LibGMP.get_si(self).to_i64
     else
@@ -490,39 +548,39 @@ struct BigInt < Int
     to_i32!
   end
 
-  def to_i8!
+  def to_i8! : Int8
     LibGMP.get_si(self).to_i8!
   end
 
-  def to_i16!
+  def to_i16! : Int16
     LibGMP.get_si(self).to_i16!
   end
 
-  def to_i32!
+  def to_i32! : Int32
     LibGMP.get_si(self).to_i32!
   end
 
-  def to_i64!
+  def to_i64! : Int64
     (self % BITS64).to_u64.to_i64!
   end
 
-  def to_u
+  def to_u : UInt32
     to_u32
   end
 
-  def to_u8
+  def to_u8 : UInt8
     to_u32.to_u8
   end
 
-  def to_u16
+  def to_u16 : UInt16
     to_u32.to_u16
   end
 
-  def to_u32
+  def to_u32 : UInt32
     to_u64.to_u32
   end
 
-  def to_u64
+  def to_u64 : UInt64
     if LibGMP::ULong::MIN <= self <= LibGMP::ULong::MAX
       LibGMP.get_ui(self).to_u64
     else
@@ -534,33 +592,33 @@ struct BigInt < Int
     to_u32!
   end
 
-  def to_u8!
+  def to_u8! : UInt8
     LibGMP.get_ui(self).to_u8!
   end
 
-  def to_u16!
+  def to_u16! : UInt16
     LibGMP.get_ui(self).to_u16!
   end
 
-  def to_u32!
+  def to_u32! : UInt32
     LibGMP.get_ui(self).to_u32!
   end
 
-  def to_u64!
+  def to_u64! : UInt64
     (self % BITS64).to_u64
   end
 
   private BITS64 = BigInt.new(1) << 64
 
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
-  def to_f64
+  def to_f64 : Float64
     LibGMP.get_d(self)
   end
 
@@ -576,19 +634,19 @@ struct BigInt < Int
     LibGMP.get_d(self)
   end
 
-  def to_big_i
+  def to_big_i : BigInt
     self
   end
 
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_set_z(mpf, mpz) }
   end
 
-  def to_big_d
+  def to_big_d : BigDecimal
     BigDecimal.new(self)
   end
 
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self)
   end
 
@@ -604,10 +662,6 @@ struct BigInt < Int
 
   private def mpz
     pointerof(@mpz)
-  end
-
-  private def to_cstr
-    LibGMP.get_str(nil, 10, mpz)
   end
 
   def to_unsafe
@@ -720,8 +774,13 @@ module Math
   #
   # Math.sqrt(1_000_000_000_000.to_big_i * 1_000_000_000_000.to_big_i) # => 1000000000000.0
   # ```
-  def sqrt(value : BigInt)
+  def sqrt(value : BigInt) : BigFloat
     sqrt(value.to_big_f)
+  end
+
+  # Calculates the integer square root of *value*.
+  def isqrt(value : BigInt)
+    BigInt.new { |mpz| LibGMP.sqrt(mpz, value) }
   end
 end
 
