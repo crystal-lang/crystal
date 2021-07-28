@@ -1199,6 +1199,31 @@ require "./repl"
           end
         end,
       },
+      cmpxchg: {
+        operands:   [element_size : Int32] of Nil,
+        pop_values: [ptr : Pointer(UInt8), cmp : UInt64, new : UInt64, success_ordering : Symbol, failure_ordering : Symbol],
+        push:       false,
+        code:       begin
+          # TODO: don't assume ordering is :sequentially_consistent
+          # TODO: not tested
+          case element_size
+          when 1
+            i8 = Atomic::Ops.cmpxchg(ptr, cmp.to_u8!, new.to_u8!, :sequentially_consistent, :sequentially_consistent)
+            stack_push(i8)
+          when 2
+            i16 = Atomic::Ops.cmpxchg(ptr.as(Int16*), cmp.to_i16!, new.to_i16!, :sequentially_consistent, :sequentially_consistent)
+            stack_push(i16)
+          when 4
+            i32 = Atomic::Ops.cmpxchg(ptr.as(Int32*), cmp.to_i32!, new.to_i32!, :sequentially_consistent, :sequentially_consistent)
+            stack_push(i32)
+          when 8
+            i64 = Atomic::Ops.cmpxchg(ptr.as(Int64*), cmp.to_i64!, new.to_i64!, :sequentially_consistent, :sequentially_consistent)
+            stack_push(i64)
+          else
+            raise "BUG: unhandled element size for cmpxchg instruction: #{element_size}"
+          end
+        end,
+      },
       # >>> Proc (3)
 
       # <<< ARGV (2)

@@ -231,6 +231,14 @@ class Crystal::Repl::Compiler
       element_size = inner_sizeof_type(element_type)
 
       atomicrmw(element_size, node: node)
+    when "cmpxchg"
+      node.args.each { |arg| request_value(arg) }
+
+      pointer_instance_type = node.args[0].type.as(PointerInstanceType)
+      element_type = pointer_instance_type.element_type
+      element_size = inner_sizeof_type(element_type)
+
+      cmpxchg(element_size, node: node)
     when "external_var_get"
       raise_if_wants_struct_pointer(node, body)
 
