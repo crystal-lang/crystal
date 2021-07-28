@@ -3656,6 +3656,18 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does closure inside proc, capture proc argument" do
+      interpret(<<-CODE).should eq(42)
+          proc = ->(a : Int32) {
+            proc2 = -> { a += 1 }
+            proc2.call
+            a
+          }
+
+          proc.call(41)
+        CODE
+    end
+
     pending "does nested closure" do
       interpret(<<-CODE).should eq(21)
           a = 0
