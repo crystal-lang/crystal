@@ -3630,6 +3630,56 @@ describe Crystal::Repl::Interpreter do
           foo
         CODE
     end
+
+    it "closures def argument" do
+      interpret(<<-CODE).should eq(42)
+          def foo(a)
+            proc = -> { a += 1 }
+            proc.call
+            a
+          end
+
+          foo(41)
+        CODE
+    end
+
+    pending "does closure inside proc" do
+      interpret(<<-CODE).should eq(42)
+          proc = ->{
+            a = 0
+            proc2 = -> { a = 42 }
+            proc2.call
+            a
+          }
+
+          proc.call
+        CODE
+    end
+
+    pending "does nested closure" do
+      interpret(<<-CODE).should eq(21)
+          a = 0
+
+          proc1 = ->{
+            a = 21
+            b = 21
+
+            proc2 = ->{
+              a += b
+            }
+          }
+
+          proc2 = proc1.call
+
+          x = a
+
+          proc2.call
+
+          y = a
+
+          y - x
+        CODE
+    end
   end
 
   context "integration" do

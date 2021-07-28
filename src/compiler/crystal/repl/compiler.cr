@@ -249,6 +249,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       set_local index, sizeof(Void*), node: nil
     end
 
+    # If any def argument is closured, we need to store it in the closure
+    node.args.each do |arg|
+      var = node.vars.not_nil![arg.name]
+      if var.type? && var.closure_in?(node)
+        local_var = lookup_local_var(var.name)
+        closured_var = lookup_closured_var(var.name)
+
+        get_local local_var.index, aligned_sizeof_type(local_var.type), node: nil
+        assign_to_closured_var(closured_var, node: nil)
+      end
+    end
+
     node.body.accept self
 
     final_type = node.type
@@ -476,33 +488,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # (set_local removes the value from the stack)
       dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
 
-      local_var = lookup_local_var(target.name)
-      case local_var
+      var = lookup_closured_var_or_local_var(target.name)
+      case var
       in LocalVar
-        index, type = local_var.index, local_var.type
+        index, type = var.index, var.type
 
         # Before assigning to the var we must potentially box inside a union
         upcast node.value, node.value.type, type
         set_local index, aligned_sizeof_type(type), node: node
       in ClosuredVar
-        index, type = local_var.index, local_var.type
-
         # Before assigning to the var we must potentially box inside a union
-        upcast node.value, node.value.type, type
+        upcast node.value, node.value.type, var.type
 
-        # First load the closure pointer
-        closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
-        get_local closure_var_index, sizeof(Void*), node: nil
-
-        # Now offset the pointer if needed
-        if index > 0
-          put_i32 index, node: nil
-          pointer_add 1, node: nil
-        end
-
-        # Now we have the value in the stack, and the pointer.
-        # This is the correct order for pointer_set
-        pointer_set(aligned_sizeof_type(type), node: node)
+        assign_to_closured_var(var, node: node)
       end
     when InstanceVar
       if inside_method?
@@ -577,10 +575,28 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  private def assign_to_closured_var(closured_var : ClosuredVar, *, node : ASTNode?)
+    index, type = closured_var.index, closured_var.type
+
+    # First load the closure pointer
+    closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+    get_local closure_var_index, sizeof(Void*), node: nil
+
+    # Now offset the pointer if needed
+    if index > 0
+      put_i32 index, node: nil
+      pointer_add 1, node: nil
+    end
+
+    # Now we have the value in the stack, and the pointer.
+    # This is the correct order for pointer_set
+    pointer_set(aligned_sizeof_type(type), node: node)
+  end
+
   def visit(node : Var)
     return false unless @wants_value
 
-    local_var = lookup_local_var(node.name)
+    local_var = lookup_closured_var_or_local_var(node.name)
     case local_var
     in LocalVar
       index, type = local_var.index, local_var.type
@@ -636,12 +652,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  def lookup_local_var(name : String) : LocalVar | ClosuredVar
-    closure_context = @closure_context
-    if closure_context && (closured_var = closure_context.vars[name]?)
-      return ClosuredVar.new(closured_var[0], closured_var[1])
-    end
+  def lookup_closured_var_or_local_var(name : String) : LocalVar | ClosuredVar
+    lookup_closured_var?(name) ||
+      lookup_local_var?(name) ||
+      raise("BUG: can't find closured var or local var #{name}")
+  end
 
+  def lookup_local_var(name : String) : LocalVar
+    lookup_local_var?(name) || raise("BUG: can't find local var #{name}")
+  end
+
+  def lookup_local_var?(name : String) : LocalVar?
     block_level = @block_level
     while block_level >= 0
       index = @local_vars.name_to_index?(name, block_level)
@@ -653,7 +674,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       block_level -= 1
     end
 
-    raise "BUG: can't find local var #{name}"
+    nil
+  end
+
+  def lookup_closured_var(name : String) : ClosuredVar
+    lookup_closured_var?(name) || raise("BUG: can't find closured var #{name}")
+  end
+
+  def lookup_closured_var?(name : String) : ClosuredVar?
+    closure_context = @closure_context
+    if closure_context && (closured_var = closure_context.vars[name]?)
+      return ClosuredVar.new(closured_var[0], closured_var[1])
+    end
+
+    nil
   end
 
   def visit(node : InstanceVar)
@@ -1040,7 +1074,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      local_var = lookup_local_var(exp.name)
+      local_var = lookup_closured_var_or_local_var(exp.name)
       case local_var
       in LocalVar
         index, type = local_var.index, local_var.type
@@ -1468,21 +1502,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Declare local variables for the newly compiled function
+    target_def.vars.try &.each do |name, var|
+      var_type = var.type?
+      next unless var_type
 
-    # First check if we need a closure context
+      compiled_def.local_vars.declare(name, var_type)
+    end
+
+    # Also check if we need a closure context
     needs_closure_context = target_def.vars.try &.any? do |name, var|
       var.type? && var.closure_in?(target_def)
     end
 
     if needs_closure_context
       compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
-    end
-
-    target_def.vars.try &.each do |name, var|
-      var_type = var.type?
-      next unless var_type
-
-      compiled_def.local_vars.declare(name, var_type)
     end
 
     compiler = Compiler.new(@context, compiled_def, top_level: false)
@@ -1667,7 +1700,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           pop_obj = obj
         end
       else
-        local_var = lookup_local_var(obj.name)
+        local_var = lookup_closured_var_or_local_var(obj.name)
         case local_var
         in LocalVar
           ptr_index, var_type = local_var.index, local_var.type
@@ -1783,7 +1816,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Out)
     case exp = node.exp
     when Var
-      local_var = lookup_local_var(exp.name)
+      local_var = lookup_closured_var_or_local_var(exp.name)
       case local_var
       in LocalVar
         index, type = local_var.index, local_var.type
@@ -1842,7 +1875,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(arg.name, var_type)
     end
 
-    # Declare the closure context, if any
+    # Declare the closure context arg, if any
     if is_closure
       compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
