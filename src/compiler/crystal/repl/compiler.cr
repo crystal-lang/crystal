@@ -426,17 +426,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Assign)
-    raise_if_wants_struct_pointer(node)
-
     target = node.target
     case target
     when Var
-      request_value(node.value)
+      dont_request_struct_pointer do
+        request_value(node.value)
+      end
 
       # If it's the case of `x = a = 1` then we need to preserve the value
       # of 1 in the stack because it will be assigned to `x` too
       # (set_local removes the value from the stack)
-      dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
+      if @wants_value && !@wants_struct_pointer
+        dup(aligned_sizeof_type(node.value), node: nil)
+      end
 
       var = lookup_closured_var_or_local_var(target.name)
       case var
@@ -446,7 +448,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # Before assigning to the var we must potentially box inside a union
         upcast node.value, node.value.type, type
         set_local index, aligned_sizeof_type(type), node: node
+
+        # If this assignment is part of a call that needs a struct pointer, produce it now
+        if @wants_struct_pointer
+          push_zeros aligned_sizeof_type(node), node: nil
+          pointerof_var index, node: node
+        end
       in ClosuredVar
+        raise_if_wants_struct_pointer(node)
+
         # Before assigning to the var we must potentially box inside a union
         upcast node.value, node.value.type, var.type
 
@@ -454,10 +464,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     when InstanceVar
       if inside_method?
-        request_value(node.value)
+        dont_request_struct_pointer do
+          request_value(node.value)
+        end
 
         # Why we dup: check the Var case (it's similar)
-        dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
+        if @wants_value && !@wants_struct_pointer
+          dup(aligned_sizeof_type(node.value), node: nil)
+        end
 
         ivar_offset = ivar_offset(scope, target.name)
         ivar = scope.lookup_instance_var(target.name)
@@ -466,6 +480,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         upcast node.value, node.value.type, ivar.type
 
         set_self_ivar ivar_offset, ivar_size, node: node
+
+        # If this assignment is part of a call that needs a struct pointer, produce it now
+        if @wants_struct_pointer
+          push_zeros aligned_sizeof_type(node), node: nil
+          compile_pointerof_ivar(node, target.name)
+
+          # In case the instance variable is a union, offset the pointer
+          # to where the union value is
+          if ivar.type.is_a?(MixedUnionType)
+            put_i32 sizeof(Void*), node: nil
+            pointer_add 1, node: nil
+          end
+        end
       else
         node.type = @context.program.nil_type
         put_nil node: nil if @wants_value
@@ -478,16 +505,33 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           initialize_class_var_if_needed(target.var, index, compiled_def)
         end
 
-        request_value(node.value)
+        dont_request_struct_pointer do
+          request_value(node.value)
+        end
 
         # Why we dup: check the Var case (it's similar)
-        dup(aligned_sizeof_type(node.value), node: nil) if @wants_value
+        if @wants_value && !@wants_struct_pointer
+          dup(aligned_sizeof_type(node.value), node: nil)
+        end
 
         var = target.var
 
         upcast node.value, node.value.type, var.type
 
         set_class_var index, aligned_sizeof_type(var), node: node
+
+        # If this assignment is part of a call that needs a struct pointer, produce it now
+        if @wants_struct_pointer
+          push_zeros aligned_sizeof_type(node), node: nil
+          pointerof_class_var(index, node: node)
+
+          # In case the class variable is a union, offset the pointer
+          # to where the union value is
+          if var.type.is_a?(MixedUnionType)
+            put_i32 sizeof(Void*), node: nil
+            pointer_add 1, node: nil
+          end
+        end
       else
         # TODO: eagerly initialize the class var?
         node.type = @context.program.nil_type

@@ -1844,6 +1844,82 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does Assign var with wants_struct_pointer" do
+      interpret(<<-CODE).should eq(42)
+        struct Bar
+          def initialize
+            @x = 1
+            @y = 2
+            @z = 42
+          end
+
+          def to_unsafe
+            pointerof(@z)
+          end
+        end
+
+        bar = Bar.new
+        ptr = (x = bar).to_unsafe
+        ptr.value
+      CODE
+    end
+
+    it "does Assign instance var with wants_struct_pointer" do
+      interpret(<<-CODE).should eq(42)
+        struct Bar
+          def initialize
+            @x = 1
+            @y = 2
+            @z = 42
+          end
+
+          def to_unsafe
+            pointerof(@z)
+          end
+        end
+
+        class Foo
+          @x : Bar?
+
+          def foo
+            bar = Bar.new
+            ptr = (@x = bar).to_unsafe
+            ptr.value
+          end
+        end
+
+        Foo.new.foo
+      CODE
+    end
+
+    it "does Assign class var with wants_struct_pointer" do
+      interpret(<<-CODE).should eq(42)
+        struct Bar
+          def initialize
+            @x = 1
+            @y = 2
+            @z = 42
+          end
+
+          def to_unsafe
+            pointerof(@z)
+          end
+        end
+
+        class Foo
+          @@x : Bar?
+
+          def foo
+            bar = Bar.new
+            ptr = (@@x = bar).to_unsafe
+            ptr.value
+          end
+        end
+
+        Foo.new.foo
+      CODE
+    end
+
     it "inlines method that just reads an instance var" do
       interpret(<<-CODE).should eq(42)
         struct Foo
