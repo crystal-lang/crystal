@@ -107,6 +107,11 @@ class Crystal::Repl::Compiler
     put_i64 0, node: nil
   end
 
+  private def upcast_distinct(node : ASTNode, from : ProcInstanceType, to : ProcInstanceType)
+    # TODO: not tested (happens for example with Proc(NoReturn) to Proc(Nil))
+    # Nothing
+  end
+
   private def upcast_distinct(node : ASTNode, from : ProcInstanceType, to : NilableProcType)
     # Nothing
   end
