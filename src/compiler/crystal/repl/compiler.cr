@@ -1064,23 +1064,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
-    needs_closure_context = false
-
-    # Declare local variables for the constant initializer
-    fake_def.vars.try &.each do |name, var|
-      var_type = var.type?
-      next unless var_type
-
-      if var.closure_in?(fake_def)
-        needs_closure_context = true
-      end
-
-      compiled_def.local_vars.declare(name, var_type)
-    end
-
-    if needs_closure_context
-      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
-    end
+    declare_local_vars(fake_def, compiled_def.local_vars)
 
     value = const.value
     value = @context.program.cleanup(value)
@@ -1540,22 +1524,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       @context.defs[target_def] = compiled_def
     end
 
-    # Declare local variables for the newly compiled function
-    target_def.vars.try &.each do |name, var|
-      var_type = var.type?
-      next unless var_type
-
-      compiled_def.local_vars.declare(name, var_type)
-    end
-
-    # Also check if we need a closure context
-    needs_closure_context = target_def.vars.try &.any? do |name, var|
-      var.type? && var.closure_in?(target_def)
-    end
-
-    if needs_closure_context
-      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
-    end
+    declare_local_vars(target_def, compiled_def.local_vars)
 
     compiler = Compiler.new(@context, compiled_def, top_level: false)
     compiler.compiled_block = compiled_block
@@ -1787,6 +1756,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pop_obj
   end
 
+  private def declare_local_vars(owner, local_vars : LocalVars)
+    needs_closure_context = false
+
+    owner.vars.try &.each do |name, var|
+      var_type = var.type?
+      next unless var_type
+
+      # TODO (optimization): don't declare local var if it's closured,
+      # but we need to be careful to support def args being closured
+      if var.closure_in?(owner)
+        needs_closure_context = true
+      end
+
+      local_vars.declare(name, var_type)
+    end
+
+    if needs_closure_context
+      local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
+    end
+  end
+
   private def initialize_const_if_needed(const)
     index, compiled_def = get_const_index_and_compiled_def const
 
@@ -1920,22 +1910,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     # Then declare all variables
-    target_def.vars.try &.each do |name, var|
-      # Skip arg because it was already declared above
-      next if target_def.args.any? { |arg| arg.name == name }
+    needs_closure_context = false
 
+    target_def.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
+
+      if var.closure_in?(target_def)
+        needs_closure_context = true
+      end
+
+      # Skip arg because it was already declared above
+      next if target_def.args.any? { |arg| arg.name == name }
 
       # TODO: closures!
       next if var.context != target_def
 
       compiled_def.local_vars.declare(name, var_type)
-    end
-
-    # Also check if we need a closure context
-    needs_closure_context = target_def.vars.try &.any? do |name, var|
-      var.type? && var.closure_in?(target_def)
     end
 
     if needs_closure_context
@@ -2204,20 +2195,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = CompiledDef.new(@context, a_def, a_def.owner, 0)
 
-    needs_closure_context = false
-
-    file_module.vars.each do |name, var|
-      var_type = var.type?
-      next unless var_type
-
-      needs_closure_context = true if var.closure_in?(file_module)
-
-      compiled_def.local_vars.declare(name, var_type)
-    end
-
-    if needs_closure_context
-      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
-    end
+    declare_local_vars(a_def, compiled_def.local_vars)
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
     compiler.compile_def(a_def, closure_owner: file_module)
