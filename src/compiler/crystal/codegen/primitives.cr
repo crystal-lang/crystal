@@ -610,7 +610,7 @@ class Crystal::CodeGenVisitor
     when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-      if checked
+      if from_type.kind != to_type.kind && checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end

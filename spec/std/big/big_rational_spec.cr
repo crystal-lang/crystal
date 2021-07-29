@@ -194,6 +194,10 @@ describe BigRational do
       result = br(17, 11) ** 5
       result.should be_a(BigRational)
       result.should eq(br(1419857, 161051))
+
+      result = br(17, 11) ** 5_u8
+      result.should be_a(BigRational)
+      result.should eq(br(1419857, 161051))
     end
 
     it "exponentiates with negative powers" do

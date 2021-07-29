@@ -2411,7 +2411,10 @@ module Crystal
         when '\\'
           char = next_char
           if delimiter_state
-            if char == delimiter_state.end
+            case char
+            when delimiter_state.end
+              char = next_char
+            when '\\'
               char = next_char
             end
             whitespace = false
