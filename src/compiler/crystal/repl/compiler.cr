@@ -770,27 +770,35 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     initializer = var.initializer
     if initializer
-      def_name = "#{var.owner}::#{var.name}}"
-      fake_def = Def.new(def_name)
-      fake_def.owner = var.owner
-
-      compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
-
-      # Declare local variables for the constant initializer
-      initializer.meta_vars.each do |name, var|
-        var_type = var.type?
-        next unless var_type
-
-        compiled_def.local_vars.declare(name, var_type)
-      end
-
       value = initializer.node
 
       # It seems class variables initializers aren't cleaned up...
       value = @context.program.cleanup(value)
 
+      def_name = "#{var.owner}::#{var.name}}"
+
+      fake_def = Def.new(def_name)
+      fake_def.owner = var.owner
+      fake_def.vars = initializer.meta_vars
+      fake_def.body = value
+      fake_def.bind_to(value)
+
+      compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
+
+      # TODO: it's wrong that class variable initializer variables go to the
+      # program, but this needs to be fixed in the main compiler first
+      declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
+
+      # Declare local variables for the constant initializer
+      # initializer.meta_vars.each do |name, var|
+      #   var_type = var.type?
+      #   next unless var_type
+
+      #   compiled_def.local_vars.declare(name, var_type)
+      # end
+
       compiler = Compiler.new(@context, compiled_def, top_level: true)
-      compiler.compile(value)
+      compiler.compile_def(fake_def, closure_owner: @context.program)
 
       {% if Debug::DECOMPILE %}
         puts "=== #{def_name} ==="
@@ -1058,19 +1066,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     index_and_compiled_def = @context.const_index_and_compiled_def?(const)
     return index_and_compiled_def if index_and_compiled_def
 
-    # TODO: support magic constants like ARGV_UNSAFE
+    value = const.value
+    value = @context.program.cleanup(value)
+
     fake_def = const.fake_def.not_nil!
     fake_def.owner = const.visitor.not_nil!.current_type
+    fake_def.body = value
+    fake_def.bind_to(value)
 
     compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
     declare_local_vars(fake_def, compiled_def.local_vars)
-
-    value = const.value
-    value = @context.program.cleanup(value)
-
-    fake_def.body = value
-    fake_def.bind_to(value)
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
     compiler.compile_def(fake_def)
@@ -1756,10 +1762,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pop_obj
   end
 
-  private def declare_local_vars(owner, local_vars : LocalVars)
+  private def declare_local_vars(vars_owner, local_vars : LocalVars, owner = vars_owner)
     needs_closure_context = false
 
-    owner.vars.try &.each do |name, var|
+    vars_owner.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
 
@@ -2195,7 +2201,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = CompiledDef.new(@context, a_def, a_def.owner, 0)
 
-    declare_local_vars(a_def, compiled_def.local_vars)
+    declare_local_vars(file_module, compiled_def.local_vars)
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
     compiler.compile_def(a_def, closure_owner: file_module)

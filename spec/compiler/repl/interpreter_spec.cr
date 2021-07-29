@@ -3758,6 +3758,26 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does closure inside class variable initializer" do
+      interpret(<<-CODE).should eq(42)
+          class Foo
+            @@foo : Int32 =
+              begin
+                a = 0
+                proc = -> { a = 42 }
+                proc.call
+                a
+              end
+
+            def self.foo
+              @@foo
+            end
+          end
+
+          Foo.foo
+        CODE
+    end
+
     pending "does nested closure" do
       interpret(<<-CODE).should eq(21)
           a = 0
