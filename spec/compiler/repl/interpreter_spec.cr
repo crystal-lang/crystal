@@ -3744,6 +3744,20 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does closure inside const" do
+      interpret(<<-CODE).should eq(42)
+          FOO =
+            begin
+              a = 0
+              proc = -> { a = 42 }
+              proc.call
+              a
+            end
+
+          FOO
+        CODE
+    end
+
     pending "does nested closure" do
       interpret(<<-CODE).should eq(21)
           a = 0

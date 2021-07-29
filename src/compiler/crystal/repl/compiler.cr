@@ -1064,19 +1064,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     compiled_def = CompiledDef.new(@context, fake_def, fake_def.owner, 0)
 
+    needs_closure_context = false
+
     # Declare local variables for the constant initializer
     fake_def.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
 
+      if var.closure_in?(fake_def)
+        needs_closure_context = true
+      end
+
       compiled_def.local_vars.declare(name, var_type)
+    end
+
+    if needs_closure_context
+      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
 
     value = const.value
     value = @context.program.cleanup(value)
 
+    fake_def.body = value
+    fake_def.bind_to(value)
+
     compiler = Compiler.new(@context, compiled_def, top_level: true)
-    compiler.compile(value)
+    compiler.compile_def(fake_def)
 
     {% if Debug::DECOMPILE %}
       puts "=== #{const} ==="
