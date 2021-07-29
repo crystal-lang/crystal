@@ -140,11 +140,9 @@ module Crystal
         decorator = line_number_decorator(line_number)
         lstripped_line = line.lstrip
         space_delta = line.chars.size - lstripped_line.chars.size
-        final_column_number = if column_number < space_delta
-                                1
-                              else
-                                column_number - space_delta
-                              end
+        # Column number should start at `1`. We're using `0` to track bogus passed
+        # `column_number`.
+        final_column_number = (column_number - space_delta).clamp(0..)
 
         io << "\n\n"
         io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
