@@ -273,11 +273,11 @@ class YAML::PullParser
   end
 
   def end_line : Int32
-    @event.end_mark.line + 1
+    @event.end_mark.line.to_i32 + 1
   end
 
   def end_column : Int32
-    @event.end_mark.column + 1
+    @event.end_mark.column.to_i32 + 1
   end
 
   private def problem_line_number
