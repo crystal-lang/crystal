@@ -206,12 +206,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   # Compile bytecode instructions for the given method.
-  def compile_def(node : Def, parent_closure_context : ClosureContext? = nil) : Nil
+  def compile_def(node : Def, parent_closure_context : ClosureContext? = nil, closure_owner = node) : Nil
     if parent_closure_context
       @closure_context = parent_closure_context
     end
 
-    prepare_closure_context(node)
+    prepare_closure_context(node, closure_owner: closure_owner)
 
     # If any def argument is closured, we need to store it in the closure
     node.args.each do |arg|
@@ -609,8 +609,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     nil
   end
 
-  private def prepare_closure_context(owner)
-    closured_vars, closured_vars_bytesize = compute_closured_vars(owner.vars, owner)
+  private def prepare_closure_context(vars_owner, closure_owner = vars_owner)
+    closured_vars, closured_vars_bytesize = compute_closured_vars(vars_owner.vars, closure_owner)
 
     unless closured_vars.empty?
       closure_context = ClosureContext.new(
@@ -629,12 +629,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def compute_closured_vars(vars, context)
+  private def compute_closured_vars(vars, closure_owner)
     closured_vars = {} of String => {Int32, Type}
     closure_var_index = 0
 
     vars.try &.each do |name, var|
-      if var.type? && var.closure_in?(context)
+      if var.type? && var.closure_in?(closure_owner)
         closured_vars[name] = {closure_var_index, var.type}
         closure_var_index += aligned_sizeof_type(var)
       end
@@ -2153,11 +2153,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       var_type = var.type?
       next unless var_type
 
-      # We move closured vars inside FileModule to the Def we are going to use
-      if var.closure_in?(file_module)
-        var.context = a_def
-        needs_closure_context = true
-      end
+      needs_closure_context = true if var.closure_in?(file_module)
 
       compiled_def.local_vars.declare(name, var_type)
     end
@@ -2167,7 +2163,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     compiler = Compiler.new(@context, compiled_def, top_level: true)
-    compiler.compile_def(a_def)
+    compiler.compile_def(a_def, closure_owner: file_module)
 
     @context.add_gc_reference(compiled_def)
 
