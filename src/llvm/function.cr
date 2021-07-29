@@ -24,7 +24,7 @@ struct LLVM::Function
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       context = LibLLVM.get_module_context(LibLLVM.get_global_parent(self))
       attribute.each_kind do |kind|
-        if LLVM::Attribute.requires_type?(kind) && type
+        if type && LLVM::Attribute.requires_type?(kind)
           attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
         else
           attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)

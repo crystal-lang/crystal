@@ -18,7 +18,7 @@ module LLVM::ValueMethods
     return if attribute.value == 0
     {% if LibLLVM.has_constant?(:AttributeRef) %}
       attribute.each_kind do |kind|
-        if LLVM::Attribute.requires_type?(kind) && type
+        if type && LLVM::Attribute.requires_type?(kind)
           attribute_ref = LibLLVMExt.create_type_attribute(context, kind, type)
         else
           attribute_ref = LibLLVM.create_enum_attribute(context, kind, 0)
