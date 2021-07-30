@@ -3804,6 +3804,22 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "struct set" do
+    it "does automatic C cast" do
+      interpret(<<-CODE).should eq(1)
+          lib LibFoo
+            struct Foo
+              x : UInt8
+            end
+          end
+
+          foo = LibFoo::Foo.new
+          foo.x = 257
+          foo.x
+        CODE
+    end
+  end
+
   context "integration" do
     it "does Int32#to_s" do
       interpret(<<-CODE, prelude: "prelude").should eq("123456789")

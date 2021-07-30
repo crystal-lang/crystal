@@ -278,6 +278,16 @@ class Crystal::Repl::Compiler
       obj = obj.not_nil!
       arg = node.args.first
 
+      # Check if we need an extra conversion like `to_i32!` or `to_unsafe`
+      extra = body.extra
+      if extra
+        # It seems extra is always a Call, so this is always safe
+        # TODO: consider changing Primitive#@extra to be `Call?`
+        call = extra.as(Call)
+        call.obj = arg
+        arg = call
+      end
+
       case obj
       when Var, InstanceVar, ClassVar
         # all good
