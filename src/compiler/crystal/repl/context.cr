@@ -38,6 +38,8 @@ class Crystal::Repl::Context
   # The memory where class vars are stored. Refer to `ClassVars` for more on this.
   property class_vars_memory : Pointer(UInt8)
 
+  @pkg_config_path : String?
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
@@ -49,7 +51,7 @@ class Crystal::Repl::Context
     @lib_functions = {} of External => LibFunction
     @lib_functions.compare_by_identity
 
-    @dl_handles = {} of String? => Void*
+    @dl_handles = {} of LibType => Void*
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -102,6 +104,8 @@ class Crystal::Repl::Context
       Context.ffi_closure_fun(cif, ret, args, user_data)
       nil
     end
+
+    @pkg_config_path = Process.find_executable("pkg-config")
 
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
@@ -328,11 +332,9 @@ class Crystal::Repl::Context
   end
 
   def c_function(lib_type : LibType, name : String)
-    # TODO: check lib_type @[Link], lookup library name, etc.
-    path = nil
-    handle = @dl_handles[path] ||= LibC.dlopen(path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
-    if handle.null?
-      raise "dlopen failed for lib_type: #{lib_type}"
+    handle = lib_type_handle(lib_type)
+    unless handle
+      raise "Can't find dynamic library for #{lib_type}"
     end
 
     fn = LibC.dlsym(handle, name)
@@ -349,5 +351,106 @@ class Crystal::Repl::Context
     else
       size + (8 - rem)
     end
+  end
+
+  private def lib_type_handle(lib_type)
+    pkg_config_path = @pkg_config_path
+
+    handle = @dl_handles[lib_type]?
+    return handle if handle
+
+    lib_type.link_annotations.try &.each do |link_annotation|
+      if ld_flags = link_annotation.ldflags
+        if ld_flags.starts_with?('`') && ld_flags.ends_with?('`')
+          handle = handle_from_ld_flags_command(ld_flags[1...-1])
+        else
+          handle = handle_from_ld_flags(ld_flags)
+        end
+      elsif (pkg_config_name = link_annotation.pkg_config) && pkg_config_path
+        handle = handle_from_pkg_config(pkg_config_path, pkg_config_name)
+      elsif (lib_name = link_annotation.lib) && pkg_config_path
+        handle = handle_from_pkg_config(pkg_config_path, lib_name)
+      end
+
+      break if handle
+    end
+
+    # If we can't find a handle, let's use one for the current binary
+    unless handle
+      handle = LibC.dlopen(nil, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+      handle = nil if handle.null?
+    end
+
+    @dl_handles[lib_type] = handle if handle
+
+    handle
+  end
+
+  # Returns the result of running `pkg-config mod` but returns nil if
+  # the module does not exist.
+  private def pkg_config(pkg_config_path : String, mod : String) : String?
+    return unless (Process.run(pkg_config_path, {mod}).success? rescue nil)
+
+    args = ["--libs"]
+    args << mod
+
+    process = Process.new(pkg_config_path, args, input: :close, output: :pipe, error: :inherit)
+    flags = process.output.gets_to_end.chomp
+    status = process.wait
+    return unless status.success?
+
+    flags
+  end
+
+  private def handle_from_pkg_config(pkg_config_path, pkg_config_name)
+    ld_flags = pkg_config(pkg_config_path, pkg_config_name)
+    return unless ld_flags
+
+    handle_from_ld_flags(ld_flags)
+  end
+
+  private def handle_from_ld_flags_command(command : String)
+    process = Process.new(command, shell: true, output: :pipe)
+    output = process.output.gets_to_end.chomp
+    status = process.wait
+    return unless status.success?
+
+    handle_from_ld_flags(output)
+  end
+
+  private def handle_from_ld_flags(flags : String)
+    # I don't know if this is the correct way to do this, but it works!
+    # For example:
+    #
+    # ```
+    # $ pkg-config --libs gmp
+    # -L/usr/local/Cellar/gmp/6.2.1/lib -lgmp
+    # ```
+    #
+    # So, in Mac we search for a file named
+    # /usr/local/Cellar/gmp/6.2.1/lib/libgmp.dylib
+    args = Process.parse_arguments(flags)
+
+    path = nil
+    name = nil
+
+    args.each do |arg|
+      if piece = arg.lchop?("-L")
+        path = piece
+      elsif piece = arg.lchop?("-l")
+        name = piece
+      end
+    end
+
+    return unless path && name
+
+    # TODO: obviously support other platforms than darwin
+    lib_path = File.join(path, "lib#{name}.dylib")
+    return unless File.exists?(lib_path)
+
+    handle = LibC.dlopen(lib_path, LibC::RTLD_LAZY | LibC::RTLD_GLOBAL)
+    return if handle.null?
+
+    handle
   end
 end
