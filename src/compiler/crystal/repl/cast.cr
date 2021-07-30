@@ -76,6 +76,13 @@ class Crystal::Repl::Compiler
     put_reference_type_in_union(aligned_sizeof_type(to), node: nil)
   end
 
+  private def upcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : NilType)
+    # TODO: not tested
+    # TODO: this is actually a downcast so it's not right, but this is also present
+    # in the main compiler so something should be fixed there first
+    pop aligned_sizeof_type(from), node: nil
+  end
+
   private def upcast_distinct(node : ASTNode, from : NilType, to : NilableType)
     put_i64 0_i64, node: nil
   end
@@ -215,6 +222,11 @@ class Crystal::Repl::Compiler
   end
 
   private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType | NilableType)
+    # Nothing to do
+  end
+
+  private def downcast_distinct(node : ASTNode, from : NilableReferenceUnionType, to : ReferenceUnionType)
+    # TODO: not tested
     # Nothing to do
   end
 
