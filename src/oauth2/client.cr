@@ -148,6 +148,15 @@ class OAuth2::Client
       form.add("scope", scope) unless scope.nil?
     end
   end
+  
+  def get_access_token_using_client_credentials(client_id : String, secret : String, scope = nil) : AccessToken
+    get_access_token do |form|
+      form.add("grant_type", "client_credentials")
+      form.add("client_id", client_id)
+      form.add("client_secret", secret)
+      form.add("scope", scope) unless scope.nil?
+    end
+  end
 
   # Gets an access token using a refresh token, as specified by
   # [RFC 6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6).
