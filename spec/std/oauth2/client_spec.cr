@@ -110,6 +110,25 @@ describe OAuth2::Client do
           token.access_token.should eq "access_token"
         end
       end
+      
+      it "#get_access_token_using_client_credentials" do
+        handler = HTTP::Handler::HandlerProc.new do |context|
+          body = context.request.body.not_nil!.gets_to_end
+          response = {access_token: "access_token", body: body}
+          context.response.print response.to_json
+        end
+
+        run_handler(handler) do |http_client|
+          client_id = "example_client"
+          client_secret = "example_client_secret"
+          client = OAuth2::Client.new "127.0.0.1", "client_id", "client_secret", scheme: "http"
+          client.http_client = http_client
+
+          token = client.get_access_token_using_client_credentials(client_id, client_secret, scope: "read_posts")
+          token.extra.not_nil!["body"].should eq %("grant_type=client_credentials&client_id=example_client&client_secret=example_client_secret&scope=read_posts")
+          token.access_token.should eq "access_token"
+        end
+      end
 
       it "#get_access_token_using_refresh_token" do
         handler = HTTP::Handler::HandlerProc.new do |context|
