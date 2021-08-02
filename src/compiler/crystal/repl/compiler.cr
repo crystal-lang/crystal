@@ -182,7 +182,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # Compile bytecode instructions for the given block, where `target_def`
   # is the method that will yield to the block.
   def compile_block(node : Block, target_def : Def, parent_closure_context : ClosureContext?) : Nil
-    @closure_context = parent_closure_context
+    if parent_closure_context
+      @closure_context = parent_closure_context
+    end
+
+    prepare_closure_context(node)
 
     @compiling_block = CompilingBlock.new(node, target_def)
 
@@ -668,7 +672,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       pointer_malloc 1, node: nil
 
       # Store the pointer in the closure context local variable
-      index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+      index = @local_vars.name_to_index(Closure::VAR_NAME, @block_level)
       set_local index, sizeof(Void*), node: nil
     end
   end
@@ -706,7 +710,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     index, type = closured_var.index, closured_var.type
 
     # First load the closure pointer
-    closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+    closure_var_index = get_closure_var_index
     get_local closure_var_index, sizeof(Void*), node: nil
 
     # Now offset the pointer if needed
@@ -714,6 +718,20 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       put_i32 index, node: nil
       pointer_add 1, node: nil
     end
+  end
+
+  private def get_closure_var_index
+    # It might be that there's no closure in the current block,
+    # so we must search in parent blocks or the enclosing method
+    block_level = @block_level
+    while block_level >= 0
+      closure_var_index = @local_vars.name_to_index?(Closure::VAR_NAME, block_level)
+      return closure_var_index if closure_var_index
+
+      block_level -= 1
+    end
+
+    raise "BUG: can't find closure var index starting from block level #{@block_level}"
   end
 
   def visit(node : InstanceVar)
@@ -1557,13 +1575,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     @local_vars.push_block
 
     begin
+      needs_closure_context = false
+
       block.vars.try &.each do |name, var|
         var_type = var.type?
         next unless var_type
 
+        if var.closure_in?(block)
+          needs_closure_context = true
+        end
+
         next if var.context != block
 
         @local_vars.declare(name, var_type)
+      end
+
+      if needs_closure_context
+        if @closure_context
+          block.raise "BUG: missing interpter block with local closure and parent closure"
+        end
+
+        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
       end
 
       bytesize_after_block_local_vars = @local_vars.current_bytesize
@@ -1963,7 +1995,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # 4. Push closure context to stack
     if @closure_context
       # If it's a closure, we push the pointer that holds the closure data
-      closure_var_index = @local_vars.name_to_index(Closure::VAR_NAME, 0)
+      closure_var_index = get_closure_var_index
       get_local closure_var_index, sizeof(Void*), node: node
     else
       # Otherwise, it's a null pointer
