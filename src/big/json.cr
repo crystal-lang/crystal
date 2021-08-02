@@ -3,7 +3,7 @@ require "big"
 
 class JSON::Builder
   # Writes a big decimal.
-  def number(number : BigDecimal)
+  def number(number : BigDecimal) : Nil
     scalar do
       @io << number
     end
@@ -26,7 +26,7 @@ struct BigInt
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end
@@ -56,7 +56,7 @@ struct BigFloat
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end
@@ -86,7 +86,7 @@ struct BigDecimal
     to_s
   end
 
-  def to_json(json : JSON::Builder)
+  def to_json(json : JSON::Builder) : Nil
     json.number(self)
   end
 end
