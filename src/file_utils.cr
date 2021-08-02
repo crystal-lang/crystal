@@ -10,7 +10,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd`
-  def cd(path : Path | String)
+  def cd(path : Path | String) : Nil
     Dir.cd(path)
   end
 
@@ -147,7 +147,7 @@ module FileUtils
   # # Create a hard link, pointing from /tmp/foo.c to foo.c
   # FileUtils.ln("foo.c", "/tmp")
   # ```
-  def ln(src_path : Path | String, dest_path : Path | String)
+  def ln(src_path : Path | String, dest_path : Path | String) : Nil
     if Dir.exists?(dest_path)
       File.link(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -183,7 +183,7 @@ module FileUtils
   # # Create a symbolic link pointing from /tmp/src to src
   # FileUtils.ln_s("src", "/tmp")
   # ```
-  def ln_s(src_path : Path | String, dest_path : Path | String)
+  def ln_s(src_path : Path | String, dest_path : Path | String) : Nil
     if Dir.exists?(dest_path)
       File.symlink(src_path, File.join(dest_path, File.basename(src_path)))
     else
@@ -217,7 +217,7 @@ module FileUtils
   # # Create a symbolic link pointing from bar.c to foo.c, even if bar.c already exists
   # FileUtils.ln_sf("foo.c", "bar.c")
   # ```
-  def ln_sf(src_path : Path | String, dest_path : Path | String)
+  def ln_sf(src_path : Path | String, dest_path : Path | String) : Nil
     if File.directory?(dest_path)
       dest_path = File.join(dest_path, File.basename(src_path))
     end

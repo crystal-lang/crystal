@@ -365,7 +365,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
 
       if attr = abi_arg_type.attr
-        context.fun.add_attribute(attr, i + offset + 1)
+        context.fun.add_attribute(attr, i + offset + 1, abi_arg_type.type)
       end
 
       i += 1 unless abi_arg_type.kind == LLVM::ABI::ArgKind::Ignore
@@ -373,7 +373,7 @@ class Crystal::CodeGenVisitor
 
     # This is for sret
     if (attr = abi_info.return_type.attr) && attr == LLVM::Attribute::StructRet
-      context.fun.add_attribute(attr, 1)
+      context.fun.add_attribute(attr, 1, abi_info.return_type.type)
     end
 
     args

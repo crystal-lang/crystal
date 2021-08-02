@@ -75,7 +75,7 @@ class HTTP::WebSocket
   end
 
   # Sends a message payload (message) to the client.
-  def send(message)
+  def send(message) : Nil
     check_open
     @ws.send(message)
   end
@@ -93,7 +93,7 @@ class HTTP::WebSocket
   # Server can send an unsolicited PONG frame which the client should not respond to.
   #
   # See `#ping`.
-  def pong(message = nil)
+  def pong(message = nil) : Nil
     check_open
     @ws.pong(message)
   end
@@ -107,7 +107,7 @@ class HTTP::WebSocket
 
   # Sends a close frame to the client, and closes the connection.
   # The close frame may contain a body (message) that indicates the reason for closing.
-  def close(code : CloseCode | Int? = nil, message = nil)
+  def close(code : CloseCode | Int? = nil, message = nil) : Nil
     return if closed?
     @closed = true
     @ws.close(code, message)

@@ -180,7 +180,7 @@ struct BitArray
   # ba.toggle(3)
   # ba[3] # => true
   # ```
-  def toggle(index)
+  def toggle(index) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
   end
@@ -257,7 +257,7 @@ struct BitArray
   # ba.invert
   # ba # => BitArray[11001]
   # ```
-  def invert
+  def invert : Nil
     malloc_size.times do |i|
       @bits[i] = ~@bits[i]
     end
