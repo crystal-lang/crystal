@@ -840,7 +840,7 @@ describe "String" do
     it { "hello".presence.should eq("hello") }
   end
 
-  describe "index" do
+  describe "#index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
       it { "foo".index('g').should be_nil }
@@ -855,6 +855,12 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+
+        # Check offset type
+        it { "foobarbaz".index('a', 5_i64).should eq(7) }
+        it { "foobarbaz".index('a', 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index('本', 2_i64).should eq(4) }
+        it { "日本語日本語".index('本', 2_i64).should be_a(Int32) }
       end
     end
 
@@ -877,6 +883,14 @@ describe "String" do
         it { "日本語日本語".index("本語", 2).should eq(4) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
+
+        # Check offset type
+        it { "foobarbaz".index("a", 5_i64).should eq(7) }
+        it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4) }
+        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
+        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
 
@@ -899,7 +913,7 @@ describe "String" do
     end
   end
 
-  describe "rindex" do
+  describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
@@ -918,6 +932,12 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+
+        # Check offset type
+        it { "bbbb".rindex('b', 2_i64).should eq(2) }
+        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
+        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
       end
     end
 
@@ -939,6 +959,14 @@ describe "String" do
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
         it { "日本語日本語".rindex("日本", 2).should eq(0) }
+
+        # Check offset type
+        it { "bbbb".rindex("b", 2_i64).should eq(2) }
+        it { "bbbb".rindex("b", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("本", 3_i64).should eq(1) }
+        it { "日本語日本語".rindex("本", 3_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("", 3_i64).should eq(3) }
+        it { "日本語日本語".rindex("", 3_i64).should be_a(Int32) }
       end
     end
 

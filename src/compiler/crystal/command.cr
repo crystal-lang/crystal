@@ -190,7 +190,7 @@ class Crystal::Command
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     @progress_tracker.stage("Tool (hierarchy)") do
-      Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
+      Crystal.print_hierarchy result.program, STDOUT, config.hierarchy_exp, config.output_format
     end
   end
 

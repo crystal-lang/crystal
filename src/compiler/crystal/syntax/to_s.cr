@@ -848,8 +848,9 @@ module Crystal
         inputs.join(@str, ", ", &.accept self)
         @str << ' '
       end
-      @str << "-> "
+      @str << "->"
       if output = node.output
+        @str << ' '
         output.accept self
       end
       @str << ')'

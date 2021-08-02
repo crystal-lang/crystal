@@ -923,8 +923,7 @@ class Hash(K, V)
     {% if K == Bool ||
             K == Char ||
             K == Symbol ||
-            K < Int::Primitive ||
-            K < Float::Primitive ||
+            K < Number::Primitive ||
             K < Enum %}
       entry.key == key && entry.hash != 0_u32
     {% else %}

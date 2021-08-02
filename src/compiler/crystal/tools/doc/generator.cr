@@ -1,3 +1,5 @@
+require "../../../../../lib/markd/src/markd"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -8,6 +10,7 @@ class Crystal::Doc::Generator
   FLAG_COLORS = {
     "BUG"          => "red",
     "DEPRECATED"   => "red",
+    "WARNING"      => "yellow",
     "EXPERIMENTAL" => "lime",
     "FIXME"        => "yellow",
     "NOTE"         => "purple",
@@ -309,10 +312,15 @@ class Crystal::Doc::Generator
   def doc(context, string)
     string = isolate_flag_lines string
     string += build_flag_lines_from_annotations context
-    markdown = String.build do |io|
-      Markdown.parse string, Markdown::DocRenderer.new(context, io)
-    end
+    markdown = render_markdown(context, string)
     generate_flags markdown
+  end
+
+  private def render_markdown(context, source)
+    options = ::Markd::Options.new
+    document = ::Markd::Parser.parse(source, options)
+    renderer = MarkdDocRenderer.new(context, options)
+    renderer.render(document).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
