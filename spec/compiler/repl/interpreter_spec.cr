@@ -3807,18 +3807,47 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    pending "does nested closure" do
+    it "does nested closure inside proc" do
       interpret(<<-CODE).should eq(21)
           a = 0
 
           proc1 = ->{
             a = 21
-            b = 21
+            b = 10
 
             proc2 = ->{
-              a += b
+              a += b + 11
             }
           }
+
+          proc2 = proc1.call
+
+          x = a
+
+          proc2.call
+
+          y = a
+
+          y - x
+        CODE
+    end
+
+    it "does nested closure inside captured blocks" do
+      interpret(<<-CODE).should eq(21)
+          def capture(&block : -> _)
+            block
+          end
+
+          a = 0
+
+          proc1 = capture do
+            a = 21
+            b = 10
+
+            proc2 = capture do
+              a += b + 11
+            end
+          end
 
           proc2 = proc1.call
 

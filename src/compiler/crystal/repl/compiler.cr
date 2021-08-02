@@ -8,7 +8,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # and which def will invoke it.
   record CompilingBlock, block : Block, target_def : Def
 
-  record ClosureContext, vars : Hash(String, {Int32, Type}), bytesize : Int32
+  # A local variable: the index in the stack where it's located, and its type
+  record LocalVar, index : Int32, type : Type
+
+  # A closured variable: the array of indexes to traverse the closure context,
+  # and possibly parent context, to reach the variable with the given type.
+  record ClosuredVar, indexes : Array(Int32), type : Type
+
+  class ClosureContext
+    getter vars : Hash(String, {Int32, Type})
+    getter parent : ClosureContext?
+    getter bytesize : Int32
+
+    def initialize(@vars : Hash(String, {Int32, Type}), @parent : ClosureContext?, @bytesize : Int32)
+    end
+  end
 
   # What's `self` when compiling a node.
   private getter scope : Type
@@ -72,9 +86,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   property block_level = 0
 
   @closure_context : ClosureContext?
-
-  record LocalVar, index : Int32, type : Type
-  record ClosuredVar, index : Int32, type : Type
 
   def initialize(
     @context : Context,
@@ -182,11 +193,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # Compile bytecode instructions for the given block, where `target_def`
   # is the method that will yield to the block.
   def compile_block(node : Block, target_def : Def, parent_closure_context : ClosureContext?) : Nil
-    if parent_closure_context
-      @closure_context = parent_closure_context
-    end
-
-    prepare_closure_context(node)
+    prepare_closure_context(node, parent_closure_context: parent_closure_context)
 
     @compiling_block = CompilingBlock.new(node, target_def)
 
@@ -217,11 +224,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given method.
   def compile_def(node : Def, parent_closure_context : ClosureContext? = nil, closure_owner = node) : Nil
-    if parent_closure_context
-      @closure_context = parent_closure_context
-    end
-
-    prepare_closure_context(node, closure_owner: closure_owner)
+    prepare_closure_context(node, closure_owner: closure_owner, parent_closure_context: parent_closure_context)
 
     # If any def argument is closured, we need to store it in the closure
     node.args.each do |arg|
@@ -656,30 +659,73 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def lookup_closured_var?(name : String) : ClosuredVar?
     closure_context = @closure_context
-    if closure_context && (closured_var = closure_context.vars[name]?)
-      return ClosuredVar.new(closured_var[0], closured_var[1])
-    end
+    return unless closure_context
 
-    nil
+    indexes = [] of Int32
+
+    type = lookup_closured_var?(name, closure_context, indexes)
+
+    return nil if indexes.empty? || !type
+
+    ClosuredVar.new(indexes, type)
   end
 
-  private def prepare_closure_context(vars_owner, closure_owner = vars_owner)
+  def lookup_closured_var?(name : String, closure_context : ClosureContext, indexes : Array(Int32))
+    closured_var = closure_context.vars[name]?
+    if closured_var
+      indexes << closured_var[0]
+      return closured_var[1]
+    end
+
+    parent_context = closure_context.parent
+    return nil unless parent_context
+
+    indexes << closure_context.bytesize - sizeof(Void*)
+    lookup_closured_var?(name, parent_context, indexes)
+  end
+
+  private def prepare_closure_context(vars_owner, closure_owner = vars_owner, parent_closure_context = nil)
+    if parent_closure_context
+      @closure_context = parent_closure_context
+    end
+
     closured_vars, closured_vars_bytesize = compute_closured_vars(vars_owner.vars, closure_owner)
 
-    unless closured_vars.empty?
-      closure_context = ClosureContext.new(
-        vars: closured_vars,
-        bytesize: closured_vars_bytesize,
-      )
-      @closure_context = closure_context
+    # If there's no closure in this context, we might still have a closure
+    # if the parent formed a closure
+    if closured_vars.empty?
+      @closure_context = parent_closure_context
+      return
+    end
 
-      # Allocate closure heap memory
-      put_i32 closure_context.bytesize, node: nil
-      pointer_malloc 1, node: nil
+    if parent_closure_context
+      closured_vars_bytesize += sizeof(Void*)
+    end
 
-      # Store the pointer in the closure context local variable
-      index = @local_vars.name_to_index(Closure::VAR_NAME, @block_level)
-      set_local index, sizeof(Void*), node: nil
+    closure_context = ClosureContext.new(
+      vars: closured_vars,
+      parent: parent_closure_context,
+      bytesize: closured_vars_bytesize,
+    )
+    @closure_context = closure_context
+
+    # Allocate closure heap memory
+    put_i32 closure_context.bytesize, node: nil
+    pointer_malloc 1, node: nil
+
+    # Store the pointer in the closure context local variable
+    index = @local_vars.name_to_index(Closure::VAR_NAME, @block_level)
+    set_local index, sizeof(Void*), node: nil
+
+    if parent_closure_context
+      arg_index = @local_vars.name_to_index(Closure::ARG_NAME, @block_level)
+
+      get_local arg_index, sizeof(Void*), node: nil
+      read_closured_var_pointer ClosuredVar.new(
+        indexes: [closured_vars_bytesize - sizeof(Void*)] of Int32,
+        type: @context.program.pointer_of(@context.program.void),
+      ), node: nil
+      pointer_set(sizeof(Void*), node: nil)
     end
   end
 
@@ -713,16 +759,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def read_closured_var_pointer(closured_var : ClosuredVar, *, node : ASTNode?)
-    index, type = closured_var.index, closured_var.type
+    indexes, type = closured_var.indexes, closured_var.type
 
     # First load the closure pointer
     closure_var_index = get_closure_var_index
     get_local closure_var_index, sizeof(Void*), node: nil
 
-    # Now offset the pointer if needed
-    if index > 0
-      put_i32 index, node: nil
-      pointer_add 1, node: nil
+    # Now find the var through the pointer
+    indexes.each_with_index do |index, i|
+      if i == indexes.size - 1
+        # We reached the context where the var is.
+        # No need to offset if index is 0
+        if index > 0
+          put_i32 index, node: nil
+          pointer_add 1, node: nil
+        end
+      else
+        # The var is in the parent context, so load that first
+        put_i32 index, node: nil
+        pointer_add 1, node: nil
+        pointer_get sizeof(Void*), node: nil
+      end
     end
   end
 
@@ -1948,14 +2005,19 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(arg.name, var_type)
     end
 
-    # Declare the closure context arg, if any
-    if is_closure
+    needs_closure_context =
+      target_def.vars.try &.any? { |name, var| var.type? && var.closure_in?(target_def) }
+
+    # Declare the closure context arg and var, if any
+    if is_closure || needs_closure_context
+      if is_closure && needs_closure_context
+        compiled_def.local_vars.declare(Closure::ARG_NAME, @context.program.pointer_of(@context.program.void))
+      end
+
       compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
 
     # Then declare all variables
-    needs_closure_context = false
-
     target_def.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
@@ -1971,14 +2033,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       next if var.context != target_def
 
       compiled_def.local_vars.declare(name, var_type)
-    end
-
-    if needs_closure_context
-      if is_closure
-        node.raise "BUG: missing interpter proc with local closure and parent closure"
-      end
-
-      compiled_def.local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
 
     compiler = Compiler.new(@context, compiled_def, top_level: false)
