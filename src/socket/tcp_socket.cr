@@ -34,12 +34,12 @@ class TCPSocket < IPSocket
     end
   end
 
-  protected def initialize(family : Family, type : Type, protocol : Protocol)
-    super family, type, protocol
+  protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super family, type, protocol, blocking
   end
 
-  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol)
-    super fd, family, type, protocol
+  protected def initialize(fd : Handle, family : Family, type : Type, protocol : Protocol = Protocol::IP, blocking = false)
+    super fd, family, type, protocol, blocking
   end
 
   # Creates a TCPSocket from an already configured raw file descriptor
