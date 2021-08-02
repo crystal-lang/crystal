@@ -3860,6 +3860,27 @@ describe Crystal::Repl::Interpreter do
           y - x
         CODE
     end
+
+    it "does nested closure inside methods and blocks" do
+      interpret(<<-CODE).should eq(12)
+          def foo
+            yield
+          end
+
+          a = 0
+          proc1 = ->{ a += 10 }
+
+          foo do
+            b = 1
+            proc2 = ->{ b += a + 1 }
+
+            proc1.call
+            proc2.call
+
+            b
+          end
+        CODE
+    end
   end
 
   context "struct set" do

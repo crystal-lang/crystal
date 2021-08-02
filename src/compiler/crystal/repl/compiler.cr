@@ -718,9 +718,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     set_local index, sizeof(Void*), node: nil
 
     if parent_closure_context
-      arg_index = @local_vars.name_to_index(Closure::ARG_NAME, @block_level)
+      # Find the closest parent closure
+      block_level = @block_level
+      while true
+        # Only at block level 0 we have a proc closure data
+        if block_level == 0
+          parent_index = @local_vars.name_to_index?(Closure::ARG_NAME, block_level)
+          break if parent_index
+        end
 
-      get_local arg_index, sizeof(Void*), node: nil
+        block_level -= 1
+        break if block_level < 0
+
+        parent_index = @local_vars.name_to_index?(Closure::VAR_NAME, block_level)
+        break if parent_index
+      end
+
+      unless parent_index
+        raise "Can't find parent closure index"
+      end
+
+      get_local parent_index, sizeof(Void*), node: nil
       read_closured_var_pointer ClosuredVar.new(
         indexes: [closured_vars_bytesize - sizeof(Void*)] of Int32,
         type: @context.program.pointer_of(@context.program.void),
@@ -1654,10 +1672,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       if needs_closure_context
-        if @closure_context
-          block.raise "BUG: missing interpter block with local closure and parent closure"
-        end
-
         @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
       end
 
