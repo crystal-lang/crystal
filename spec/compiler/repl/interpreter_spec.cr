@@ -3793,6 +3793,20 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does closure inside block, capture block arg" do
+      interpret(<<-CODE).should eq(42)
+          def foo
+            yield 21
+          end
+
+          foo do |a|
+            proc = ->{ a += 21 }
+            proc.call
+            a
+          end
+        CODE
+    end
+
     pending "does nested closure" do
       interpret(<<-CODE).should eq(21)
           a = 0

@@ -197,9 +197,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     node.args.reverse_each do |arg|
       block_var = node.vars.not_nil![arg.name]
 
-      index = @local_vars.name_to_index(block_var.name, @block_level)
-      # Don't use location so we don't pry break on a block arg (useless)
-      set_local index, aligned_sizeof_type(block_var), node: nil
+      # If any block argument is closured, we need to store it in the closure
+      if block_var.type? && block_var.closure_in?(node)
+        closured_var = lookup_closured_var(arg.name)
+        assign_to_closured_var(closured_var, node: nil)
+      else
+        index = @local_vars.name_to_index(block_var.name, @block_level)
+        # Don't use location so we don't pry break on a block arg (useless)
+        set_local index, aligned_sizeof_type(block_var), node: nil
+      end
     end
 
     node.body.accept self
