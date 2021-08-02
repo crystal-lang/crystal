@@ -463,8 +463,9 @@ abstract class IO
     nil
   end
 
-  # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes) : Nil
+  # Writes a slice of UTF-8 or ASCII encoded bytes to this `IO`, using the
+  # current encoding.
+  def write_string(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
     else
@@ -472,6 +473,12 @@ abstract class IO
     end
 
     nil
+  end
+
+  # :ditto:
+  @[Deprecated("Use `#write_string` instead.")]
+  def write_utf8(slice : Bytes) : Nil
+    write_string(slice)
   end
 
   private def encoder

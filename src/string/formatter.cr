@@ -273,7 +273,7 @@ struct String::Formatter(A)
       temp_buf = temp_buf(len)
       LibC.snprintf(temp_buf, len, format_buf, float)
 
-      @io.write_utf8 Slice.new(temp_buf, len - 1)
+      @io.write_string Slice.new(temp_buf, len - 1)
     else
       raise ArgumentError.new("Expected a float, not #{arg.inspect}")
     end
