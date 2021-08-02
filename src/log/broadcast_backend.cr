@@ -15,7 +15,7 @@ class Log::BroadcastBackend < Log::Backend
     super(:direct)
   end
 
-  def append(backend : Log::Backend, level : Severity)
+  def append(backend : Log::Backend, level : Severity) : Nil
     @backends[backend] = level
   end
 
@@ -47,7 +47,7 @@ class Log::BroadcastBackend < Log::Backend
   end
 
   # :nodoc:
-  def remove(backend : Log::Backend)
+  def remove(backend : Log::Backend) : Nil
     @backends.delete(backend)
   end
 end
