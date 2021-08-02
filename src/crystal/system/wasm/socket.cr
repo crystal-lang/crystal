@@ -35,7 +35,7 @@ module Crystal::System::Socket
   end
 
   private def system_accept
-    raise NotImplementedError.new "Crystal::System::Socket#system_accept"
+    (raise NotImplementedError.new "Crystal::System::Socket#system_accept").as(Int32)
   end
 
   private def system_send(bytes : Bytes) : Int32
