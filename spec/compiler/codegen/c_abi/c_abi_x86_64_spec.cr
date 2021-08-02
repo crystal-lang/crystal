@@ -153,7 +153,12 @@ require "../../../spec_helper"
         ))
       str = mod.to_s
       str.scan(/sret/).size.should eq(2)
-      str.should contain("sret, i32") # sret goes as first argument
+
+      if LibLLVM::IS_LT_120
+        str.should contain("sret, i32") # sret goes as first argument
+      else
+        str.should contain("sret(%\"struct.LibFoo::Struct\") %0, i32") # sret goes as first argument
+      end
     end
   end
 {% end %}
