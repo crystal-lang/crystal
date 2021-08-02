@@ -20,6 +20,8 @@ class Thread
   def initialize
     @main_fiber = Fiber.new(stack_address, self)
     @@threads.push(self)
+
+    # TODO: Create thread
   end
 
   def initialize(&@func : ->)
