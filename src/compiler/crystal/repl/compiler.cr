@@ -15,9 +15,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # and possibly parent context, to reach the variable with the given type.
   record ClosuredVar, indexes : Array(Int32), type : Type
 
+  # Information about closured variables in a given context.
   class ClosureContext
+    # The variables closures in the closest context
     getter vars : Hash(String, {Int32, Type})
+
+    # The parent context, if any, where more closured variables might be reached
     getter parent : ClosureContext?
+
+    # The total bytesize to hold all the immediate closure data.
+    # If this context has a parent context, it will come at the end of this
+    # data and occupy 8 bytes.
     getter bytesize : Int32
 
     def initialize(@vars : Hash(String, {Int32, Type}), @parent : ClosureContext?, @bytesize : Int32)
