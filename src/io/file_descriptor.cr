@@ -25,7 +25,7 @@ class IO::FileDescriptor < IO
         end
     end
 
-    unless blocking || {{flag?(:win32)}}
+    unless blocking || {{ flag?(:win32) || flag?(:wasm32) }}
       self.blocking = false
     end
   end

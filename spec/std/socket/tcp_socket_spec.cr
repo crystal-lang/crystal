@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "./spec_helper"
 
 describe TCPSocket do

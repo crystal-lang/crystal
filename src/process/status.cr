@@ -48,6 +48,13 @@ class Process::Status
     {% end %}
   end
 
+  {% if flag?(:wasm32) %}
+    # wasm32 does not define `Signal`
+    def exit_signal
+      raise NotImplementedError.new("Process::Status#exit_signal")
+    end
+  {% end %}
+
   # If `normal_exit?` is `true`, returns the exit code of the process.
   def exit_code : Int32
     {% if flag?(:unix) %}

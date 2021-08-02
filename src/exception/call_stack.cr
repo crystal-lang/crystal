@@ -1,6 +1,8 @@
 {% skip_file if flag?(:win32) %}
 
-require "c/dlfcn"
+{% unless flag?(:wasm32) %}
+  require "c/dlfcn"
+{% end %}
 require "c/stdio"
 require "c/string"
 require "./lib_unwind"

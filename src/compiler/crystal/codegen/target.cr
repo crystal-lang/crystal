@@ -96,10 +96,6 @@ class Crystal::Codegen::Target
     @environment.starts_with?("linux")
   end
 
-  def wasm?
-    @architecture.starts_with?("wasm")
-  end
-
   def bsd?
     freebsd? || netbsd? || openbsd? || dragonfly?
   end

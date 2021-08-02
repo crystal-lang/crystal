@@ -1,23 +1,23 @@
 require "../abi"
 
-class LLVM::ABI::WebAssembly32 < LLVM::ABI
-  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
+class LLVM::ABI::Wasm32 < LLVM::ABI
+  def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)
   end
 
-  def align(type : Type) : Int32
-    align(type, 4)
+  def align(type : Type)
+    target_data.abi_alignment(type).to_i32
   end
 
-  def size(type : Type) : Int32
-    size(type, 4)
+  def size(type : Type)
+    target_data.abi_size(type).to_i32
   end
 
-  def register?(type) : Bool
+  private def aggregate?(type)
     case type.kind
-    when Type::Kind::Integer, Type::Kind::Float, Type::Kind::Double, Type::Kind::Pointer
+    when .struct?, .array?
       true
     else
       false
@@ -25,40 +25,20 @@ class LLVM::ABI::WebAssembly32 < LLVM::ABI
   end
 
   private def compute_return_type(rty, ret_def, context)
-    if !ret_def
-      ArgType.direct(context.void)
-    elsif register?(rty)
-      non_struct(rty, context)
+    if aggregate?(rty)
+      ArgType.indirect(rty, LLVM::Attribute::ByVal)
     else
-      case size(rty)
-      when 1
-        ArgType.direct(rty, context.int8)
-      when 2
-        ArgType.direct(rty, context.int16)
-      when 3, 4
-        ArgType.direct(rty, context.int32)
-      else
-        ArgType.indirect(rty, LLVM::Attribute::StructRet)
-      end
+      ArgType.direct(rty)
     end
   end
 
   private def compute_arg_types(atys, context)
-    atys.map do |aty|
-      if register?(aty)
-        non_struct(aty, context)
+    atys.map do |t|
+      if aggregate?(t)
+        ArgType.indirect(t, LLVM::Attribute::ByVal)
       else
-        if align(aty) <= 4
-          ArgType.direct(aty, context.int32.array(((size(aty) + 3) // 4).to_u64))
-        else
-          ArgType.direct(aty, context.int64.array(((size(aty) + 7) // 8).to_u64))
-        end
+        ArgType.direct(t)
       end
     end
-  end
-
-  private def non_struct(type, context)
-    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
-    ArgType.direct(type, attr: attr)
   end
 end

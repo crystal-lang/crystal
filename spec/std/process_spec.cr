@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasm32) %}
+
 require "spec"
 require "process"
 require "./spec_helper"

@@ -190,9 +190,7 @@ end
   end
 
   def raise(exception : Exception) : NoReturn
-    STDERR.puts
-    STDERR.puts "EXITING: Attempting to raise: "
-    exception.inspect_with_backtrace(STDERR)
+    LibC.printf("EXITING: Attempting to raise:\n#{exception.inspect_with_backtrace}")
     LibC.exit(1)
   end
 {% else %}
