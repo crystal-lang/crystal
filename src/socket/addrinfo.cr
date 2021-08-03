@@ -66,7 +66,10 @@ class Socket
               if value.is_a?(Socket::ConnectError)
                 raise Socket::ConnectError.from_os_error("Error connecting to '#{domain}:#{service}'", value.os_error)
               else
-                array = StaticArray(UInt8, 0).new(0)
+                {% if flag?(:win32) %}
+                  # FIXME: Workardound for https://github.com/crystal-lang/crystal/issues/11047
+                  array = StaticArray(UInt8, 0).new(0)
+                {% end %}
 
                 raise value
               end
