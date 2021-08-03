@@ -7,10 +7,7 @@ class Crystal::Repl
     getter block : Block
 
     # The bytecode to execute the block.
-    getter instructions : Array(Instruction)
-
-    # The nodes to refer from the instructions (by index)
-    getter nodes : Hash(Int32, ASTNode)
+    getter instructions : CompiledInstructions
 
     # Local variables for the block (they might reference variables outside of the block)
     getter local_vars : LocalVars
@@ -29,8 +26,7 @@ class Crystal::Repl
                    @args_bytesize : Int32,
                    @locals_bytesize_start : Int32,
                    @locals_bytesize_end : Int32)
-      @instructions = [] of Instruction
-      @nodes = {} of Int32 => ASTNode
+      @instructions = CompiledInstructions.new
     end
   end
 end

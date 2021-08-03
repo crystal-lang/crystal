@@ -8,9 +8,7 @@ class Crystal::Repl::Interpreter
     # The CompiledDef related to this call frame
     compiled_def : CompiledDef,
     # Instructions for this frame
-    instructions : Array(UInt8),
-    # Nodes to related instructions indexes back to ASTNodes (mainly for location purposes)
-    nodes : Hash(Int32, ASTNode),
+    instructions : CompiledInstructions,
     # The pointer to the current instruction for this call frame.
     # This value changes as the program goes, and when a call is made
     # this value is useful to know where we need to continue after
@@ -77,8 +75,7 @@ class Crystal::Repl::Interpreter
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
 
-    @instructions = [] of Instruction
-    @nodes = {} of Int32 => ASTNode
+    @instructions = CompiledInstructions.new
 
     # TODO: what if the stack is exhausted?
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
@@ -95,8 +92,7 @@ class Crystal::Repl::Interpreter
     @local_vars = compiled_def.local_vars.dup
     @argv = interpreter.@argv
 
-    @instructions = [] of Instruction
-    @nodes = {} of Int32 => ASTNode
+    @instructions = CompiledInstructions.new
 
     @stack = stack
     @stack_top = @stack
@@ -159,7 +155,6 @@ class Crystal::Repl::Interpreter
     compiler.compile(node)
 
     @instructions = compiler.instructions
-    @nodes = compiler.nodes
 
     {% if Debug::DECOMPILE %}
       if compiled_def
@@ -168,7 +163,7 @@ class Crystal::Repl::Interpreter
         puts "=== top-level ==="
       end
       puts @local_vars
-      puts Disassembler.disassemble(@context, @instructions, @nodes, @local_vars)
+      puts Disassembler.disassemble(@context, @instructions, @local_vars)
 
       if compiled_def
         puts "=== #{compiled_def.owner}##{compiled_def.def.name} ==="
@@ -211,9 +206,8 @@ class Crystal::Repl::Interpreter
       @context.class_vars_memory[index] = 1_u8
     end
 
-    instructions = @instructions
-    nodes = @nodes
-    ip = instructions.to_unsafe
+    instructions : CompiledInstructions = @instructions
+    ip = instructions.instructions.to_unsafe
     return_value = Pointer(UInt8).null
 
     compiled_def = @compiled_def
@@ -233,11 +227,9 @@ class Crystal::Repl::Interpreter
         owner: compiled_def.try(&.owner) || a_def.owner,
         args_bytesize: 0,
         instructions: instructions,
-        nodes: @nodes,
         local_vars: @local_vars,
       ),
       instructions: instructions,
-      nodes: nodes,
       ip: ip,
       stack: stack,
       stack_bottom: stack_bottom,
@@ -253,18 +245,18 @@ class Crystal::Repl::Interpreter
         a_def = call_frame.compiled_def.def
         offset = (ip - instructions.to_unsafe).to_i32
         puts "In: #{a_def.owner}##{a_def.name}"
-        node = nodes[offset]?
+        node = instructions.nodes[offset]?
         puts "Node: #{node}" if node
         puts Slice.new(@stack, stack - @stack).hexdump
 
-        Disassembler.disassemble_one(@context, instructions, offset, nodes, current_local_vars, STDOUT)
+        Disassembler.disassemble_one(@context, instructions, offset, current_local_vars, STDOUT)
         puts
       {% end %}
 
       if @pry
         pry_max_target_frame = @pry_max_target_frame
         if !pry_max_target_frame || @call_stack.last.real_frame_index <= pry_max_target_frame
-          pry(ip, instructions, nodes, stack_bottom, stack)
+          pry(ip, instructions, stack_bottom, stack)
         end
       end
 
@@ -396,7 +388,7 @@ class Crystal::Repl::Interpreter
   # All of these are helper functions called from the interpreter
   # or from Crystal::Repl::Instructions.
   #
-  # Most of these are macros because the stack, nodes, instructions, etc.
+  # Most of these are macros because the stack, instructions, etc.
   # are all local variables inside the interpreter loop.
   #
   # TODO: I'm not sure all of these need to be local variables.
@@ -436,8 +428,7 @@ class Crystal::Repl::Interpreter
     %call_frame = CallFrame.new(
       compiled_def: {{compiled_def}},
       instructions: {{compiled_def}}.instructions,
-      nodes: {{compiled_def}}.nodes,
-      ip: {{compiled_def}}.instructions.to_unsafe,
+      ip: {{compiled_def}}.instructions.instructions.to_unsafe,
       # We need to adjust the call stack to start right
       # after the target def's local variables.
       stack: %stack_before_call_args + {{compiled_def}}.local_vars.max_bytesize,
@@ -449,7 +440,6 @@ class Crystal::Repl::Interpreter
     @call_stack << %call_frame
 
     instructions = %call_frame.compiled_def.instructions
-    nodes = %call_frame.compiled_def.nodes
     ip = %call_frame.ip
     stack = %call_frame.stack
     stack_bottom = %call_frame.stack_bottom
@@ -472,14 +462,12 @@ class Crystal::Repl::Interpreter
 
     copied_call_frame = @call_stack[%block_caller_frame_index].copy_with(
       instructions: {{compiled_block}}.instructions,
-      nodes: {{compiled_block}}.nodes,
-      ip: {{compiled_block}}.instructions.to_unsafe,
+      ip: {{compiled_block}}.instructions.instructions.to_unsafe,
       stack: stack,
     )
     @call_stack << copied_call_frame
 
     instructions = copied_call_frame.instructions
-    nodes = copied_call_frame.nodes
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
 
@@ -595,7 +583,6 @@ class Crystal::Repl::Interpreter
 
       # Restore ip, instructions and stack bottom
       instructions = %call_frame.instructions
-      nodes = %call_frame.nodes
       ip = %call_frame.ip
       stack_bottom = %call_frame.stack_bottom
       stack = %call_frame.stack
@@ -608,7 +595,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro set_ip(ip)
-    ip = instructions.to_unsafe + {{ip}}
+    ip = instructions.instructions.to_unsafe + {{ip}}
   end
 
   private macro set_local_var(index, size)
@@ -878,13 +865,13 @@ class Crystal::Repl::Interpreter
     new_fiber.resume
   end
 
-  private def pry(ip, instructions, nodes, stack_bottom, stack)
+  private def pry(ip, instructions, stack_bottom, stack)
     call_frame = @call_stack.last
     compiled_def = call_frame.compiled_def
     a_def = compiled_def.def
     local_vars = compiled_def.local_vars
-    offset = (ip - instructions.to_unsafe).to_i32
-    node = nodes[offset]?
+    offset = (ip - instructions.instructions.to_unsafe).to_i32
+    node = instructions.nodes[offset]?
     pry_node = @pry_node
     if node && (location = node.location) && different_node_line?(node, pry_node)
       whereami(a_def, location)

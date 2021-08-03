@@ -74,10 +74,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   @compiling_block : CompilingBlock?
 
   # The instructions that are being generated.
-  getter instructions : Array(Instruction)
-
-  # AST nodes associated to each instruction (this is {index => node}).
-  getter nodes : Hash(Int32, ASTNode)
+  getter instructions : CompiledInstructions
 
   # In which block level we are in.
   # Right when we enter a def we are at block level 0.
@@ -98,8 +95,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def initialize(
     @context : Context,
     @local_vars : LocalVars,
-    @instructions : Array(Instruction) = [] of Instruction,
-    @nodes : Hash(Int32, ASTNode) = {} of Int32 => ASTNode,
+    @instructions : CompiledInstructions = CompiledInstructions.new,
     scope : Type? = nil,
     @def = nil,
     @top_level = true
@@ -180,7 +176,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       context: context,
       local_vars: compiled_def.local_vars,
       instructions: compiled_def.instructions,
-      nodes: compiled_def.nodes,
       scope: compiled_def.owner,
       def: compiled_def.def,
       top_level: top_level,
@@ -1049,7 +1044,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     jump 0, node: nil
     cond_jump_location = patch_location
 
-    body_index = @instructions.size
+    body_index = @instructions.instructions.size
 
     old_while = @while
     old_while_breaks = @while_breaks
@@ -1699,7 +1694,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       compiler = Compiler.new(@context, @local_vars,
         instructions: compiled_block.instructions,
-        nodes: compiled_block.nodes,
         scope: @scope, def: @def, top_level: false)
       compiler.compiled_block = @compiled_block
       compiler.block_level = block_level + 1
@@ -2347,7 +2341,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         {{*operands}}, *, node : ASTNode?
       {% end %}
     ) : Nil
-      @nodes[@instructions.size] = node if node
+      @instructions.nodes[@instructions.instructions.size] = node if node
 
       append OpCode::{{ name.id.upcase }}
       {% for operand in operands %}
@@ -2529,7 +2523,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def append(value : UInt8)
-    @instructions << value
+    @instructions.instructions << value
   end
 
   # Many times we need to jump or branch to an instruction for which we don't
@@ -2538,13 +2532,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # is in the bytecode. Once we know where we have to jump, we modify the
   # bytecode to patch it with the correct jump offset.
   private def patch_jump(offset : Int32)
-    (@instructions.to_unsafe + offset).as(Int32*).value = @instructions.size
+    (@instructions.instructions.to_unsafe + offset).as(Int32*).value = @instructions.instructions.size
   end
 
   # After we emit bytecode for a branch or jump, the last four bytes
   # are always for the jump offset.
   private def patch_location
-    @instructions.size - 4
+    @instructions.instructions.size - 4
   end
 
   private def aligned_sizeof_type(node : ASTNode) : Int32

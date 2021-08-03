@@ -4,23 +4,23 @@ require "./repl"
 # TODO: right now local variables are not very nicely.
 module Crystal::Repl::Disassembler
   def self.disassemble(context : Context, compiled_def : CompiledDef) : String
-    disassemble(context, compiled_def.instructions, compiled_def.nodes, compiled_def.local_vars)
+    disassemble(context, compiled_def.instructions, compiled_def.local_vars)
   end
 
-  def self.disassemble(context : Context, instructions : Array(Instruction), nodes : Hash(Int32, ASTNode), local_vars : LocalVars) : String
+  def self.disassemble(context : Context, instructions : CompiledInstructions, local_vars : LocalVars) : String
     String.build do |io|
       ip = 0
-      while ip < instructions.size
-        ip = disassemble_one(context, instructions, ip, nodes, local_vars, io)
+      while ip < instructions.instructions.size
+        ip = disassemble_one(context, instructions, ip, local_vars, io)
       end
     end
   end
 
-  def self.disassemble_one(context : Context, instructions : Array(Instruction), ip : Int32, nodes : Hash(Int32, ASTNode), local_vars : LocalVars, io : IO) : Int32
+  def self.disassemble_one(context : Context, instructions : CompiledInstructions, ip : Int32, local_vars : LocalVars, io : IO) : Int32
     io.print ip.to_s.rjust(4, '0')
     io.print ' '
 
-    node = nodes[ip]?
+    node = instructions.nodes[ip]?
     op_code, ip = next_instruction instructions, ip, OpCode
 
     {% begin %}
@@ -52,7 +52,7 @@ module Crystal::Repl::Disassembler
 
   private def self.next_instruction(instructions, ip, t : T.class) forall T
     {
-      (instructions.to_unsafe + ip).as(T*).value,
+      (instructions.instructions.to_unsafe + ip).as(T*).value,
       ip + sizeof(T),
     }
   end
