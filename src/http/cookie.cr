@@ -101,7 +101,7 @@ module HTTP
       end
     end
 
-    def to_cookie_header(io)
+    def to_cookie_header(io) : Nil
       io << @name
       io << '='
       io << @value

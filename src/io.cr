@@ -1010,10 +1010,7 @@ abstract class IO
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
   def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
-    if invalid != :skip && (
-         encoding.compare("UTF-8", case_insensitive: true) == 0 ||
-         encoding.compare("UTF8", case_insensitive: true) == 0
-       )
+    if utf8_encoding?(encoding, invalid)
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
@@ -1028,6 +1025,13 @@ abstract class IO
   # Returns this `IO`'s encoding. The default is `UTF-8`.
   def encoding : String
     @encoding.try(&.name) || "UTF-8"
+  end
+
+  private def utf8_encoding?(encoding : String, invalid : Symbol? = nil) : Bool
+    invalid.nil? && (
+      encoding.compare("UTF-8", case_insensitive: true) == 0 ||
+        encoding.compare("UTF8", case_insensitive: true) == 0
+    )
   end
 
   # :nodoc:

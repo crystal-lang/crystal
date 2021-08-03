@@ -586,12 +586,12 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context, abi_arg_type.type)
       end
     end
 
     if sret
-      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context, abi_info.return_type.type)
     end
   end
 
@@ -605,7 +605,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       if abi_info && (abi_arg_type = abi_info.arg_types[i]?) && (attr = abi_arg_type.attr)
-        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context)
+        @last.add_instruction_attribute(i + arg_offset, attr, llvm_context, abi_arg_type.type)
       end
     end
   end

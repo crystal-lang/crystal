@@ -12,7 +12,7 @@ class HTTP::ErrorHandler
   def initialize(@verbose : Bool = false, @log = Log.for("http.server"))
   end
 
-  def call(context)
+  def call(context) : Nil
     begin
       call_next(context)
     rescue ex : HTTP::Server::ClientError
