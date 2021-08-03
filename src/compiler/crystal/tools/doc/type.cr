@@ -176,7 +176,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by!(stable: true, &.name.downcase)
+        defs.sort_by!(&.name.downcase)
       end
     end
   end
@@ -201,7 +201,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by!(stable: true, &.name.downcase)
+      class_methods.sort_by!(&.name.downcase)
     end
   end
 
@@ -225,7 +225,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by!(stable: true, &.name.downcase)
+      macros.sort_by!(&.name.downcase)
     end
   end
 
