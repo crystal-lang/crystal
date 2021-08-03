@@ -256,11 +256,20 @@ struct StaticArray(T, N)
   # a.sort # => StaticArray[1, 2, 3]
   # a      # => StaticArray[3, 1, 2]
   # ```
-  def sort(*, stable : Bool = true) : StaticArray(T, N)
+  def sort : StaticArray(T, N)
     # the return value of `dup` must be assigned to a variable first, otherwise
     # `self` will be mutated if the `sort!` call is chained directly
     ary = dup
-    ary.sort!(stable: stable)
+    ary.sort!
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort : StaticArray(T, N)
+    ary = dup
+    ary.unstable_sort!
   end
 
   # Returns a new `StaticArray` with all elements sorted based on the comparator
@@ -277,13 +286,26 @@ struct StaticArray(T, N)
   # b # => StaticArray[3, 2, 1]
   # a # => StaticArray[3, 1, 2]
   # ```
-  def sort(*, stable : Bool = true, &block : T, T -> U) : StaticArray(T, N) forall U
+  def sort(&block : T, T -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
     ary = dup
-    ary.sort!(stable: stable, &block)
+    ary.sort!(&block)
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    ary = dup
+    ary.unstable_sort!(&block)
   end
 
   # Modifies `self` by sorting all elements based on the return value of their
@@ -294,8 +316,17 @@ struct StaticArray(T, N)
   # a.sort!
   # a # => StaticArray[1, 2, 3]
   # ```
-  def sort!(*, stable : Bool = true) : self
-    to_slice.sort!(stable: stable)
+  def sort! : self
+    to_slice.sort!
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort! : self
+    to_slice.unstable_sort!
     self
   end
 
@@ -312,12 +343,25 @@ struct StaticArray(T, N)
   # a.sort! { |a, b| b <=> a }
   # a # => StaticArray[3, 2, 1]
   # ```
-  def sort!(*, stable : Bool = true, &block : T, T -> U) : self forall U
+  def sort!(&block : T, T -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
-    to_slice.sort!(stable: stable, &block)
+    to_slice.sort!(&block)
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort!(&block : T, T -> U) : self forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    to_slice.unstable_sort!(&block)
     self
   end
 
@@ -331,9 +375,18 @@ struct StaticArray(T, N)
   # b # => StaticArray["fig", "pear", "apple"]
   # a # => StaticArray["apple", "pear", "fig"]
   # ```
-  def sort_by(*, stable : Bool = true, &block : T -> _) : StaticArray(T, N)
+  def sort_by(&block : T -> _) : StaticArray(T, N)
     ary = dup
-    ary.sort_by!(stable: stable) { |e| yield(e) }
+    ary.sort_by! { |e| yield(e) }
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by(&block : T -> _) : StaticArray(T, N)
+    ary = dup
+    ary.unstable_sort_by! { |e| yield(e) }
   end
 
   # Modifies `self` by sorting all elements. The given block is called for
@@ -345,8 +398,20 @@ struct StaticArray(T, N)
   # a.sort_by! { |word| word.size }
   # a # => StaticArray["fig", "pear", "apple"]
   # ```
-  def sort_by!(*, stable : Bool = true, &block : T -> _) : self
-    sorted = map { |e| {e, yield(e)} }.sort!(stable: stable) { |x, y| x[1] <=> y[1] }
+  def sort_by!(&block : T -> _) : self
+    sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    N.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by!(&block : T -> _) : self
+    sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
     N.times do |i|
       to_unsafe[i] = sorted.to_unsafe[i][0]
     end
