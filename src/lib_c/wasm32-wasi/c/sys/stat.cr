@@ -2,8 +2,8 @@ require "./types"
 require "../time"
 
 lib LibC
-  S_IFMT = S_IFBLK | S_IFCHR | S_IFDIR | S_IFIFO | S_IFLNK | S_IFREG | S_IFSOCK
-  S_IFBLK = 0x6000
+  S_IFMT   = S_IFBLK | S_IFCHR | S_IFDIR | S_IFIFO | S_IFLNK | S_IFREG | S_IFSOCK
+  S_IFBLK  = 0x6000
   S_IFCHR  = 0x2000
   S_IFIFO  = 0xc000
   S_IFREG  = 0x8000
