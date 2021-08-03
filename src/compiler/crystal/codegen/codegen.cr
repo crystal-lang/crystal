@@ -1718,7 +1718,7 @@ module Crystal
       set_current_debug_location(location) if @debug.line_numbers?
     end
 
-    private UNKNOWN_LOCATION = Location.new("??", 1, 1)
+    private UNKNOWN_LOCATION = Location.new("??", 0, 0)
 
     def llvm_self(type = context.type)
       self_var = context.vars["self"]?
