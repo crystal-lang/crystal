@@ -18,30 +18,52 @@
 struct BitArray
   include Indexable(Bool)
 
+  @size : Int32
+  @bits : UInt32*
+
   # The number of bits the BitArray stores
-  getter size : Int32
+  def size
+    # Optimization: the actual size must be non-negative, so we use negative
+    # values to indicate small arrays that don't use the heap
+    @size.abs
+  end
 
   # Creates a new `BitArray` of *size* bits.
   #
   # *initial* optionally sets the starting value, `true` or `false`, for all bits
   # in the array.
-  def initialize(@size, initial : Bool = false)
-    value = initial ? UInt32::MAX : UInt32::MIN
-    @bits = Pointer(UInt32).malloc(malloc_size, value)
-    clear_unused_bits if initial
+  def initialize(size, initial : Bool = false)
+    raise ArgumentError.new("Negative bit array size: #{size}") if size < 0
+
+    # Optimization: if the bits fit into a pointer, we use the pointer itself to
+    # store the bits directly
+    if size <= sizeof(typeof(@bits))
+      @size = -size
+      @bits = Pointer(UInt32).new(initial ? ~(UInt64::MAX << size) : 0_u64)
+    else
+      @size = size
+      value = initial ? UInt32::MAX : UInt32::MIN
+      @bits = Pointer(UInt32).malloc(malloc_size, value)
+      clear_unused_bits if initial
+    end
   end
 
   def ==(other : BitArray)
-    return false if size != other.size
-    # NOTE: If BitArray implements resizing, there may be more than 1 binary
-    # representation and their hashes for equivalent BitArrays after a downsize as the
-    # discarded bits may not have been zeroed.
-    return LibC.memcmp(@bits, other.@bits, bytesize) == 0
+    return false if @size != other.@size
+
+    if small?
+      @bits == other.@bits
+    else
+      # NOTE: If BitArray implements resizing, there may be more than 1 binary
+      # representation and their hashes for equivalent BitArrays after a downsize as the
+      # discarded bits may not have been zeroed.
+      return LibC.memcmp(buffer, other.buffer, bytesize) == 0
+    end
   end
 
   def unsafe_fetch(index : Int) : Bool
     bit_index, sub_index = index.divmod(32)
-    (@bits[bit_index] & (1 << sub_index)) > 0
+    (buffer[bit_index] & (1 << sub_index)) > 0
   end
 
   # Sets the bit at the given *index*.
@@ -57,9 +79,9 @@ struct BitArray
   def []=(index, value : Bool)
     bit_index, sub_index = bit_index_and_sub_index(index)
     if value
-      @bits[bit_index] |= 1 << sub_index
+      buffer[bit_index] |= 1 << sub_index
     else
-      @bits[bit_index] &= ~(1 << sub_index)
+      buffer[bit_index] &= ~(1 << sub_index)
     end
   end
 
@@ -111,57 +133,57 @@ struct BitArray
   # ```
   def [](start : Int, count : Int) : BitArray
     start, count = normalize_start_and_count(start, count)
+    ba = BitArray.new(count)
+    return ba if count == 0
 
-    if count == 0
-      return BitArray.new(0)
-    end
+    buffer = self.buffer
 
     if size <= 32
       # Result *and* original fit in a single int32, we can use only bitshifts
-      bits = @bits[0]
+      bits = buffer[0]
 
       bits >>= start
       bits &= (1 << count) - 1
 
-      BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
+      ba.buffer[0] = bits
     elsif size <= 64
       # Original fits in int64, we can use bitshifts
-      bits = @bits.as(UInt64*)[0]
+      bits = buffer.as(UInt64*)[0]
 
       bits >>= start
       bits &= (1 << count) - 1
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        ba.buffer[0] = bits.to_u32
       else
-        BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
+        ba.buffer.as(UInt64*)[0] = bits
       end
     else
-      ba = BitArray.new(count)
       start_bit_index, start_sub_index = start.divmod(32)
       end_bit_index = (start + count) // 32
 
       i = 0
-      bits = @bits[start_bit_index]
+      bits = buffer[start_bit_index]
       while start_bit_index + i <= end_bit_index
         low_bits = bits
         low_bits >>= start_sub_index
 
-        bits = @bits[start_bit_index + i + 1]
+        bits = buffer[start_bit_index + i + 1]
 
         high_bits = bits
         high_bits &= (1 << start_sub_index) - 1
         high_bits <<= 32 - start_sub_index
 
-        ba.@bits[i] = low_bits | high_bits
+        ba.buffer[i] = low_bits | high_bits
         i += 1
       end
 
       # The last assignment to `bits` might refer to a `UInt32` in the middle of
       # the buffer, so the last `UInt32` of `ba` might contain unused bits.
       ba.clear_unused_bits
-      ba
     end
+
+    ba
   end
 
   # Toggles the bit at the given *index*. A `false` bit becomes a `true` bit,
@@ -182,7 +204,7 @@ struct BitArray
   # ```
   def toggle(index) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
-    @bits[bit_index] ^= 1 << sub_index
+    buffer[bit_index] ^= 1 << sub_index
   end
 
   # Toggles all bits that are within the given *range*. A `false` bit becomes a
@@ -227,16 +249,17 @@ struct BitArray
 
     start_bit_index, start_sub_index = start.divmod(32)
     end_bit_index, end_sub_index = (start + count - 1).divmod(32)
+    buffer = self.buffer
 
     if start_bit_index == end_bit_index
       # same UInt32, don't perform the loop at all
-      @bits[start_bit_index] ^= uint32_mask(start_sub_index, end_sub_index)
+      buffer[start_bit_index] ^= uint32_mask(start_sub_index, end_sub_index)
     else
-      @bits[start_bit_index] ^= uint32_mask(start_sub_index, 31)
+      buffer[start_bit_index] ^= uint32_mask(start_sub_index, 31)
       (start_bit_index + 1..end_bit_index - 1).each do |i|
-        @bits[i] = ~@bits[i]
+        buffer[i] = ~buffer[i]
       end
-      @bits[end_bit_index] ^= uint32_mask(0, end_sub_index)
+      buffer[end_bit_index] ^= uint32_mask(0, end_sub_index)
     end
   end
 
@@ -258,8 +281,9 @@ struct BitArray
   # ba # => BitArray[11001]
   # ```
   def invert : Nil
+    buffer = self.buffer
     malloc_size.times do |i|
-      @bits[i] = ~@bits[i]
+      buffer[i] = ~buffer[i]
     end
     clear_unused_bits
   end
@@ -292,7 +316,7 @@ struct BitArray
   # WARNING: It is undefined behaviour to set any of the unused bits of a bit array to
   # `true` via a slice.
   def to_slice : Bytes
-    Slice.new(@bits.as(Pointer(UInt8)), bytesize)
+    Slice.new(buffer.as(Pointer(UInt8)), bytesize)
   end
 
   # See `Object#hash(hasher)`
@@ -304,6 +328,8 @@ struct BitArray
 
   # Returns a new `BitArray` with all of the same elements.
   def dup
+    return super if small?
+
     bit_array = BitArray.new(@size)
     @bits.copy_to(bit_array.@bits, malloc_size)
     bit_array
@@ -322,15 +348,23 @@ struct BitArray
 
   protected def clear_unused_bits
     # There are no unused bits if `size` is a multiple of 32.
-    bit_index, sub_index = @size.divmod(32)
-    @bits[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+    bit_index, sub_index = size.divmod(32)
+    buffer[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+  end
+
+  protected def buffer
+    small? ? pointerof(@bits).unsafe_as(Pointer(UInt32)) : @bits
+  end
+
+  private def small?
+    @size <= 0
   end
 
   private def bytesize
-    (@size - 1) // 8 + 1
+    (size - 1) // 8 + 1
   end
 
   private def malloc_size
-    (@size - 1) // 32 + 1
+    (size - 1) // 32 + 1
   end
 end
