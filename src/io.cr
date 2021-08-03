@@ -463,8 +463,20 @@ abstract class IO
     nil
   end
 
-  # Writes a slice of UTF-8 or ASCII encoded bytes to this `IO`, using the
+  # Writes the contents of *slice*, interpreted as a sequence of UTF-8 or ASCII
+  # characters, into this `IO`. The contents are transcoded into this `IO`'s
   # current encoding.
+  #
+  # ```
+  # bytes = "你".to_slice # => Bytes[228, 189, 160]
+  #
+  # io = IO::Memory.new
+  # io.set_encoding("GB2312")
+  # io.write_string(bytes)
+  # io.to_slice # => Bytes[196, 227]
+  #
+  # "你".encode("GB2312") # => Bytes[196, 227]
+  # ```
   def write_string(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
