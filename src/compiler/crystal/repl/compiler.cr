@@ -422,6 +422,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: rescues, else, etc.
 
     node.body.accept self
+    upcast node.body, node.body.type, node.type
 
     if node_ensure = node.ensure
       discard_value node_ensure

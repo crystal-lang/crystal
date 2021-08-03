@@ -3899,6 +3899,24 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "exceptions" do
+    it "does rescue when nothing is raised" do
+      interpret(<<-CODE).should eq(1)
+          a = begin
+            1
+          rescue
+            'a'
+          end
+
+          if a.is_a?(Int32)
+            a
+          else
+            10
+          end
+        CODE
+    end
+  end
+
   context "integration" do
     it "does Int32#to_s" do
       interpret(<<-CODE, prelude: "prelude").should eq("123456789")
