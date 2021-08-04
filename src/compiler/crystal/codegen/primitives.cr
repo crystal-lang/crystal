@@ -916,6 +916,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
         arg = func.params.first
 
         current_block = insert_block

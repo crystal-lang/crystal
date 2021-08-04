@@ -189,8 +189,6 @@ module Crystal
         @personality_name = "__crystal_personality"
       end
 
-      emit_main_def_debug_metadata(@main, "??") unless @debug.none?
-
       @context = Context.new @main, @program
       @context.return_type = @main_ret_type
 
@@ -206,6 +204,8 @@ module Crystal
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
       @modules = {"" => @main_module_info} of String => ModuleInfo
       @types_to_modules = {} of Type => ModuleInfo
+
+      set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
 
@@ -574,6 +574,7 @@ module Crystal
       the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module_info: @main_module_info, is_fun_literal: true, is_closure: is_closure
       the_fun = check_main_fun fun_literal_name, the_fun
 
+      set_current_debug_location(node) if @debug.line_numbers?
       fun_ptr = bit_cast(the_fun, llvm_context.void_pointer)
       if is_closure
         ctx_ptr = bit_cast(context.closure_ptr.not_nil!, llvm_context.void_pointer)
@@ -1119,6 +1120,7 @@ module Crystal
       unless thread_local_fun
         thread_local_fun = in_main do
           define_main_function(fun_name, [llvm_type(type).pointer.pointer], llvm_context.void) do |func|
+            set_internal_fun_debug_location(func, fun_name, real_var.location)
             builder.store get_global_var(name, type, real_var), func.params[0]
             builder.ret
           end
@@ -1595,6 +1597,8 @@ module Crystal
     def create_check_proc_is_not_closure_fun(fun_name)
       in_main do
         define_main_function(fun_name, [llvm_typer.proc_type], llvm_context.void_pointer) do |func|
+          set_internal_fun_debug_location(func, fun_name)
+
           param = func.params.first
 
           fun_ptr = extract_value param, 0
@@ -1692,6 +1696,16 @@ module Crystal
         end
       end
     end
+
+    # used for generated internal functions like `~metaclass` and `~match`
+    def set_internal_fun_debug_location(func, name, location = nil)
+      return if @debug.none?
+      location ||= UNKNOWN_LOCATION
+      emit_fun_debug_metadata(func, name, location)
+      set_current_debug_location(location) if @debug.line_numbers?
+    end
+
+    private UNKNOWN_LOCATION = Location.new("??", 0, 0)
 
     def llvm_self(type = context.type)
       self_var = context.vars["self"]?
