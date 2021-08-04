@@ -392,11 +392,27 @@ describe "BigInt" do
       it_converts_to_s 2.to_big_i, "00002", precision: 5
       it_converts_to_s 2.to_big_i, "#{"0" * 199}2", precision: 200
 
-      it_converts_to_s -1.to_big_i, "-1", precision: 0
-      it_converts_to_s -1.to_big_i, "-1", precision: 1
-      it_converts_to_s -1.to_big_i, "-01", precision: 2
-      it_converts_to_s -1.to_big_i, "-00001", precision: 5
-      it_converts_to_s -1.to_big_i, "-#{"0" * 199}1", precision: 200
+      it_converts_to_s (-1).to_big_i, "-1", precision: 0
+      it_converts_to_s (-1).to_big_i, "-1", precision: 1
+      it_converts_to_s (-1).to_big_i, "-01", precision: 2
+      it_converts_to_s (-1).to_big_i, "-00001", precision: 5
+      it_converts_to_s (-1).to_big_i, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 85.to_big_i, "85", precision: 0
+      it_converts_to_s 85.to_big_i, "85", precision: 1
+      it_converts_to_s 85.to_big_i, "85", precision: 2
+      it_converts_to_s 85.to_big_i, "085", precision: 3
+      it_converts_to_s 85.to_big_i, "0085", precision: 4
+      it_converts_to_s 85.to_big_i, "00085", precision: 5
+      it_converts_to_s 85.to_big_i, "#{"0" * 198}85", precision: 200
+
+      it_converts_to_s (-85).to_big_i, "-85", precision: 0
+      it_converts_to_s (-85).to_big_i, "-85", precision: 1
+      it_converts_to_s (-85).to_big_i, "-85", precision: 2
+      it_converts_to_s (-85).to_big_i, "-085", precision: 3
+      it_converts_to_s (-85).to_big_i, "-0085", precision: 4
+      it_converts_to_s (-85).to_big_i, "-00085", precision: 5
+      it_converts_to_s (-85).to_big_i, "-#{"0" * 198}85", precision: 200
 
       it_converts_to_s 123.to_big_i, "123", precision: 0
       it_converts_to_s 123.to_big_i, "123", precision: 1
