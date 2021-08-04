@@ -415,13 +415,68 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : ExceptionHandler)
     # TODO: rescues, else, etc.
+    rescues = node.rescues
+    node_ensure = node.ensure
 
+    # If there are no rescues, it's just the body + optional ensure
+    unless rescues
+      node.body.accept self
+      upcast node.body, node.body.type, node.type
+
+      discard_value node_ensure if node_ensure
+
+      return false
+    end
+
+    # Accept the body, recording where it starts and ends
+    body_start_index = instructions_index
     node.body.accept self
     upcast node.body, node.body.type, node.type
+    body_end_index = instructions_index
 
-    if node_ensure = node.ensure
-      discard_value node_ensure
+    # Now we'll write the catch tables so we want to skip this
+    jump 0, node: nil
+    jump_location = patch_location
+
+    # Assume we have only rescue for now
+    rescue_locations = [] of Int32
+
+    rescues.each do |a_rescue|
+      name = a_rescue.name
+      types = a_rescue.types
+      if types
+        exception_types = types.map(&.type.instance_type)
+      else
+        exception_types = [@context.program.exception] of Type
+      end
+
+      instructions.add_rescue(body_start_index, body_end_index, exception_types, instructions_index)
+
+      if name
+        # The exception is in the stack, so we copy it to the corresponding local variable
+        name_type = @context.program.type_merge_union_of(exception_types).not_nil!
+
+        assign_to_var(name, name_type, node: a_rescue)
+      else
+        # The exception is in the stack but we don't use it
+        pop sizeof(Void*), node: nil
+      end
+
+      a_rescue.body.accept self
+      upcast a_rescue.body, a_rescue.body.type, node.type
+
+      jump 0, node: nil
+      rescue_locations << patch_location
     end
+
+    # Now we are at the exit
+    patch_jump(jump_location)
+
+    rescue_locations.each do |location|
+      patch_jump(location)
+    end
+
+    discard_value node_ensure if node_ensure
 
     false
   end
@@ -457,28 +512,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         dup(aligned_sizeof_type(node.value), node: nil)
       end
 
-      var = lookup_closured_var_or_local_var(target.name)
-      case var
-      in LocalVar
-        index, type = var.index, var.type
-
-        # Before assigning to the var we must potentially box inside a union
-        upcast node.value, node.value.type, type
-        set_local index, aligned_sizeof_type(type), node: node
-
-        # If this assignment is part of a call that needs a struct pointer, produce it now
-        if @wants_struct_pointer
-          push_zeros aligned_sizeof_type(node), node: nil
-          pointerof_var index, node: node
-        end
-      in ClosuredVar
-        raise_if_wants_struct_pointer(node)
-
-        # Before assigning to the var we must potentially box inside a union
-        upcast node.value, node.value.type, var.type
-
-        assign_to_closured_var(var, node: node)
-      end
+      assign_to_var(target.name, node.value.type, node: node)
     when InstanceVar
       if inside_method?
         dont_request_struct_pointer do
@@ -584,6 +618,31 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node.raise "BUG: missing interpret for #{node.class} with target #{node.target.class}"
     end
     false
+  end
+
+  private def assign_to_var(name : String, value_type : Type, *, node : ASTNode?)
+    var = lookup_closured_var_or_local_var(name)
+    case var
+    in LocalVar
+      index, type = var.index, var.type
+
+      # Before assigning to the var we must potentially box inside a union
+      upcast node, value_type, type
+      set_local index, aligned_sizeof_type(type), node: node
+
+      # If this assignment is part of a call that needs a struct pointer, produce it now
+      if @wants_struct_pointer
+        push_zeros aligned_sizeof_type(node), node: nil
+        pointerof_var index, node: node
+      end
+    in ClosuredVar
+      raise_if_wants_struct_pointer(node)
+
+      # Before assigning to the var we must potentially box inside a union
+      upcast node, value_type, var.type
+
+      assign_to_closured_var(var, node: node)
+    end
   end
 
   def visit(node : Var)
@@ -1044,7 +1103,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     jump 0, node: nil
     cond_jump_location = patch_location
 
-    body_index = @instructions.instructions.size
+    body_index = instructions_index
 
     old_while = @while
     old_while_breaks = @while_breaks
@@ -2341,7 +2400,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         {{*operands}}, *, node : ASTNode?
       {% end %}
     ) : Nil
-      @instructions.nodes[@instructions.instructions.size] = node if node
+      @instructions.nodes[instructions_index] = node if node
 
       append OpCode::{{ name.id.upcase }}
       {% for operand in operands %}
@@ -2532,13 +2591,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   # is in the bytecode. Once we know where we have to jump, we modify the
   # bytecode to patch it with the correct jump offset.
   private def patch_jump(offset : Int32)
-    (@instructions.instructions.to_unsafe + offset).as(Int32*).value = @instructions.instructions.size
+    (@instructions.instructions.to_unsafe + offset).as(Int32*).value = instructions_index
   end
 
   # After we emit bytecode for a branch or jump, the last four bytes
   # are always for the jump offset.
   private def patch_location
-    @instructions.instructions.size - 4
+    instructions_index - 4
+  end
+
+  private def instructions_index
+    @instructions.instructions.size
   end
 
   private def aligned_sizeof_type(node : ASTNode) : Int32

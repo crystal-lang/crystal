@@ -3550,6 +3550,120 @@ describe Crystal::Repl::Interpreter do
         x + y
       CODE
     end
+
+    it "does rescue when nothing is raised" do
+      interpret(<<-CODE).should eq(1)
+          a = begin
+            1
+          rescue
+            'a'
+          end
+
+          if a.is_a?(Int32)
+            a
+          else
+            10
+          end
+        CODE
+    end
+
+    it "raises and rescues anything" do
+      interpret(<<-CODE, prelude: "prelude").should eq(2)
+          a = begin
+            if 1 == 1
+              raise "OH NO"
+            else
+              'a'
+            end
+          rescue
+            2
+          end
+
+          if a.is_a?(Int32)
+            a
+          else
+            10
+          end
+        CODE
+    end
+
+    it "raises and rescues anything, does ensure when an exception is rescued" do
+      interpret(<<-CODE, prelude: "prelude").should eq(3)
+          a = 0
+          b = 0
+
+          begin
+            raise "OH NO"
+          rescue
+            a = 1
+          ensure
+            b = 2
+          end
+
+          a + b
+        CODE
+    end
+
+    it "raises and rescues specific exception type" do
+      interpret(<<-CODE, prelude: "prelude").should eq(2)
+          class Ex1 < Exception; end
+          class Ex2 < Exception; end
+
+          a = 0
+
+          begin
+            raise Ex2.new
+          rescue Ex1
+            a = 1
+          rescue Ex2
+            a = 2
+          end
+
+          a
+        CODE
+    end
+
+    it "captures exception in variable" do
+      interpret(<<-CODE, prelude: "prelude").should eq(10)
+          class Ex1 < Exception
+            getter value
+
+            def initialize(@value : Int32)
+            end
+          end
+
+          a = 0
+
+          begin
+            raise Ex1.new(10)
+          rescue ex : Ex1
+            a = ex.value
+          end
+
+          a
+        CODE
+    end
+
+    pending "raises and rescues anything, does ensure when an exception is raised inside rescue" do
+      interpret(<<-CODE, prelude: "prelude").should eq(3)
+          a = 0
+          b = 0
+
+          begin
+            begin
+              raise "OH NO"
+            rescue
+              a = 1
+              raise "OH NO"
+            ensure
+              b = 2
+            end
+          rescue
+          end
+
+          a + b
+        CODE
+    end
   end
 
   context "extern" do
@@ -3895,24 +4009,6 @@ describe Crystal::Repl::Interpreter do
           foo = LibFoo::Foo.new
           foo.x = 257
           foo.x
-        CODE
-    end
-  end
-
-  context "exceptions" do
-    it "does rescue when nothing is raised" do
-      interpret(<<-CODE).should eq(1)
-          a = begin
-            1
-          rescue
-            'a'
-          end
-
-          if a.is_a?(Int32)
-            a
-          else
-            10
-          end
         CODE
     end
   end

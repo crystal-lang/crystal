@@ -69,8 +69,6 @@ class Crystal::Repl::Interpreter
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
-  property decompile = true
-
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -591,6 +589,40 @@ class Crystal::Repl::Interpreter
       stack_move_from(%old_stack - {{size}}, {{size}})
 
       # TODO: clean up stack
+    end
+  end
+
+  private macro raise_exception(exception)
+    while true
+      %rescues = instructions.rescues
+      %found_rescue = false
+
+      if %rescues
+        %index = ip - instructions.instructions.to_unsafe
+        %exception_type_id = {{exception}}.as(Int32*).value
+        %exception_type = @context.type_from_id(%exception_type_id)
+
+        %rescues.each do |a_rescue|
+          if a_rescue.start_index <= %index <= a_rescue.end_index &&
+            a_rescue.exception_types.any? { |ex_type| %exception_type.implements?(ex_type) }
+            stack_push(exception)
+            set_ip(a_rescue.jump_index)
+            %found_rescue = true
+            break
+          end
+        end
+      end
+
+      break if %found_rescue
+
+      %old_stack = stack
+      %previous_call_frame = @call_stack.pop
+
+      if @call_stack.empty?
+        raise EscapingException.new(self, exception)
+      end
+
+      leave_after_pop_call_frame(%old_stack, %previous_call_frame, 0)
     end
   end
 

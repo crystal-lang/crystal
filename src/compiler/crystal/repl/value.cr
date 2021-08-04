@@ -80,7 +80,6 @@ struct Crystal::Repl::Value
       meta_vars = MetaVars.new
 
       interpreter = Interpreter.new(context)
-      interpreter.decompile = false
       # TODO: make stack private? Does it matter?
       interpreter.stack.copy_from(@pointer, context.inner_sizeof_type(@type))
 

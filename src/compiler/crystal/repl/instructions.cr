@@ -1260,12 +1260,9 @@ require "./repl"
       },
       interpreter_raise_without_backtrace: {
         operands:   [] of Nil,
-        pop_values: [] of Nil,
+        pop_values: [exception : Void*] of Nil,
         push:       false,
-        code:       begin
-          # TODO: actually raise and interpret things
-          raise "An exception was raised, but the interpret doesn't know how to raise exceptions yet"
-        end,
+        code:       raise_exception(exception),
       },
       interpreter_current_fiber: {
         operands:   [] of Nil,

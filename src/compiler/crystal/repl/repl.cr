@@ -83,6 +83,12 @@ class Crystal::Repl
 
         print "=> "
         puts value
+      rescue ex : EscapingException
+        @nest = 0
+        @buffer = ""
+        @line_number += 1
+
+        puts ex
       rescue ex : Crystal::CodeError
         @nest = 0
         @buffer = ""
@@ -91,14 +97,12 @@ class Crystal::Repl
         ex.color = true
         ex.error_trace = true
         puts ex
-        next
       rescue ex : Exception
         @nest = 0
         @buffer = ""
         @line_number += 1
 
         ex.inspect_with_backtrace(STDOUT)
-        next
       end
     end
   end
@@ -138,6 +142,9 @@ class Crystal::Repl
 
   private def interpret_and_exit_on_error(node : ASTNode)
     interpret(node)
+  rescue ex : EscapingException
+    puts ex
+    exit 1
   rescue ex : Crystal::CodeError
     ex.color = true
     ex.error_trace = true

@@ -329,6 +329,9 @@ class Crystal::Repl::Compiler
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"
+      node.args.each do |arg|
+        request_value(arg)
+      end
       interpreter_raise_without_backtrace(node: node)
     when "interpreter_caller"
       interpreter_caller(node: node)
