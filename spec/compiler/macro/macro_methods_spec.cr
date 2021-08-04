@@ -771,6 +771,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{[1, 2, 3].is_a?(ArrayLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{[1, 2, 3].is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{[1, 2, 3].is_a?(NumberLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -883,6 +884,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{{:a => 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{{:a => 1}.is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{{:a => 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -1018,6 +1020,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{{a: 1}.is_a?(NamedTupleLiteral)}}), [] of ASTNode, "true"
+        assert_macro "", %({{{a: 1}.is_a?(ASTNode)}}), [] of ASTNode, "true"
         assert_macro "", %({{{a: 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
       end
 
@@ -1264,6 +1267,7 @@ module Crystal
 
       it "executes is_a?" do
         assert_macro "", %({{ {1, 2, 3}.is_a?(TupleLiteral) }}), [] of ASTNode, "true"
+        assert_macro "", %({{ {1, 2, 3}.is_a?(ASTNode) }}), [] of ASTNode, "true"
         assert_macro "", %({{ {1, 2, 3}.is_a?(ArrayLiteral) }}), [] of ASTNode, "false"
       end
 
@@ -2188,6 +2192,14 @@ module Crystal
     describe "unary expression methods" do
       it "executes exp" do
         assert_macro "x", %({{x.exp}}), [Not.new("some_call".call)] of ASTNode, "some_call"
+      end
+
+      it "executes is_a?" do
+        assert_macro "x", %({{ x.is_a?(Not) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(Splat) }}), [Not.new("some_call".call)] of ASTNode, "false"
+        assert_macro "x", %({{ x.is_a?(UnaryExpression) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(ASTNode) }}), [Not.new("some_call".call)] of ASTNode, "true"
+        assert_macro "x", %({{ x.is_a?(TypeNode) }}), [Not.new("some_call".call)] of ASTNode, "false"
       end
     end
 
