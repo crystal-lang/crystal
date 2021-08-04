@@ -418,16 +418,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     rescues = node.rescues
     node_ensure = node.ensure
 
-    # If there are no rescues, it's just the body + optional ensure
-    unless rescues
-      node.body.accept self
-      upcast node.body, node.body.type, node.type
-
-      discard_value node_ensure if node_ensure
-
-      return false
-    end
-
     # Accept the body, recording where it starts and ends
     body_start_index = instructions_index
     node.body.accept self
@@ -441,7 +431,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Assume we have only rescue for now
     rescue_locations = [] of Int32
 
-    rescues.each do |a_rescue|
+    rescues.try &.each do |a_rescue|
       name = a_rescue.name
       types = a_rescue.types
       if types
@@ -450,7 +440,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         exception_types = [@context.program.exception] of Type
       end
 
-      instructions.add_rescue(body_start_index, body_end_index, exception_types, instructions_index)
+      instructions.add_rescue(
+        body_start_index,
+        body_end_index,
+        exception_types,
+        jump_index: instructions_index)
 
       if name
         # The exception is in the stack, so we copy it to the corresponding local variable
@@ -467,6 +461,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       jump 0, node: nil
       rescue_locations << patch_location
+    end
+
+    if node_ensure
+      # If there's an ensure block we also generate another ensure
+      # clause to be executed when an exception is raised inside the body
+      # or any of the rescue clauses, which does the ensure, then reraises
+      rescues_end_index = instructions_index
+
+      instructions.add_ensure(
+        body_start_index,
+        rescues_end_index,
+        jump_index: instructions_index)
+
+      discard_value node_ensure
+
+      # TODO: instead of having a reraise instruction and storing the exception
+      # in a global variable (like in Ruby), we could have a dedicated local
+      # variable slot for it.
+      reraise node: nil
     end
 
     # Now we are at the exit

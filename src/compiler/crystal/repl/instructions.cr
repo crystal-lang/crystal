@@ -1264,6 +1264,12 @@ require "./repl"
         push:       false,
         code:       raise_exception(exception),
       },
+      reraise: {
+        operands:   [] of Nil,
+        pop_values: [] of Nil,
+        push:       false,
+        code:       raise_exception(last_exception),
+      },
       interpreter_current_fiber: {
         operands:   [] of Nil,
         pop_values: [] of Nil,

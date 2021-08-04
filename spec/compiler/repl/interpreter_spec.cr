@@ -3644,24 +3644,39 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
-    pending "raises and rescues anything, does ensure when an exception is raised inside rescue" do
-      interpret(<<-CODE, prelude: "prelude").should eq(3)
+    it "excutes ensure when exception is raised in body" do
+      interpret(<<-CODE, prelude: "prelude").should eq(10)
           a = 0
-          b = 0
+
+          begin
+            begin
+              raise "OH NO"
+            ensure
+              a = 10
+            end
+          rescue
+          end
+
+          a
+        CODE
+    end
+
+    it "excutes ensure when exception is raised in rescue" do
+      interpret(<<-CODE, prelude: "prelude").should eq(10)
+          a = 0
 
           begin
             begin
               raise "OH NO"
             rescue
-              a = 1
-              raise "OH NO"
+              raise "OOPS"
             ensure
-              b = 2
+              a = 10
             end
           rescue
           end
 
-          a + b
+          a
         CODE
     end
   end

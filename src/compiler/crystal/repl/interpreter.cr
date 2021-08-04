@@ -69,6 +69,10 @@ class Crystal::Repl::Interpreter
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
+  # Last exception thrown. Useful to do a re-raise on an `ensure`
+  # that needs to re-raise the last exception.
+  getter! last_exception : Void*
+
   def initialize(@context : Context)
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
@@ -593,33 +597,50 @@ class Crystal::Repl::Interpreter
   end
 
   private macro raise_exception(exception)
-    while true
-      %rescues = instructions.rescues
-      %found_rescue = false
+    %exception = {{exception}}
 
-      if %rescues
+    # Store exception in case it's needed in a re-raise
+    @last_exception = %exception
+
+    while true
+      %handlers = instructions.exception_handlers
+      %found_handler = false
+
+      if %handlers
         %index = ip - instructions.instructions.to_unsafe
-        %exception_type_id = {{exception}}.as(Int32*).value
+        %exception_type_id = %exception.as(Int32*).value
         %exception_type = @context.type_from_id(%exception_type_id)
 
-        %rescues.each do |a_rescue|
-          if a_rescue.start_index <= %index <= a_rescue.end_index &&
-            a_rescue.exception_types.any? { |ex_type| %exception_type.implements?(ex_type) }
-            stack_push(exception)
-            set_ip(a_rescue.jump_index)
-            %found_rescue = true
+        # Check if any handler should handle the current exception
+        %handlers.each do |handler|
+          %exception_types = handler.exception_types
+
+          # That is, if the instruction index/offset is within the handler's range,
+          # and if there are no specific exception types to rescue (this is an ensure clause)
+          # or if the raised exception is any of the exceptions to handle.
+          if handler.start_index <= %index <= handler.end_index &&
+            (!%exception_types || %exception_types.any? { |ex_type| %exception_type.implements?(ex_type) })
+
+            # Push the exception so that it can be assigned to the rescue variable,
+            # but don't push it for `ensure` handlers.
+            stack_push(%exception) if %exception_types
+
+            # Jump to the handler's logic
+            set_ip(handler.jump_index)
+
+            %found_handler = true
             break
           end
         end
       end
 
-      break if %found_rescue
+      break if %found_handler
 
       %old_stack = stack
       %previous_call_frame = @call_stack.pop
 
       if @call_stack.empty?
-        raise EscapingException.new(self, exception)
+        raise EscapingException.new(self, %exception)
       end
 
       leave_after_pop_call_frame(%old_stack, %previous_call_frame, 0)
