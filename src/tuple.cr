@@ -530,6 +530,34 @@ struct Tuple
     nil
   end
 
+  # :inherit:
+  def reduce
+    {% if T.empty? %}
+      raise Enumerable::EmptyError.new
+    {% else %}
+      memo = self[0]
+      {% for i in 1...T.size %}
+        memo = yield memo, self[{{ i }}]
+      {% end %}
+      memo
+    {% end %}
+  end
+
+  # :inherit:
+  def reduce(memo)
+    {% for i in 0...T.size %}
+      memo = yield memo, self[{{ i }}]
+    {% end %}
+    memo
+  end
+
+  # :inherit:
+  def reduce?
+    {% unless T.empty? %}
+      reduce { |memo, elem| yield memo, elem }
+    {% end %}
+  end
+
   # Returns the first element of this tuple. Doesn't compile
   # if the tuple is empty.
   #

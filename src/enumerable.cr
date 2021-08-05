@@ -675,7 +675,7 @@ module Enumerable(T)
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
   # ```
   def reduce
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -706,7 +706,7 @@ module Enumerable(T)
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
   def reduce?
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
