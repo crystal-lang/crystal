@@ -281,7 +281,7 @@ struct Slice(T)
   # Raises if this slice is read-only.
   def update(index : Int, & : T -> T) : T
     check_writable
-    super
+    super { |elem| yield elem }
   end
 
   # :inherit:
