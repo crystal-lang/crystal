@@ -948,7 +948,11 @@ class Crystal::Repl::Interpreter
       # Now comes `fiber`
       stack.as(Void**).value = fiber
 
-      interpreter.interpret(exps, main_visitor.meta_vars)
+      begin
+        interpreter.interpret(exps, main_visitor.meta_vars)
+      rescue ex : EscapingException
+        print ex
+      end
 
       nil
     end
