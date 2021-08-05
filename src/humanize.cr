@@ -43,6 +43,9 @@ struct Number
           # Make sure to avoid scientific notation of default Float#to_s
           Float::Printer.print(number.abs, io, point_range: ..)
         end
+        _, _, decimals = string.partition(".")
+        integer, _, _ = ("%f" % number.abs).partition(".")
+        string = "#{integer}.#{decimals}"
       end
     else
       string = number.abs.to_s
