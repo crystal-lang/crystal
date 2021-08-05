@@ -426,13 +426,21 @@ struct BigInt < Int
       count = LibGMP.sizeinbase(self, base).to_i
       negative = self < 0
 
-      len = Math.max(count, precision) + (negative ? 1 : 0)
+      if precision > count
+        len = precision
+        offset = precision - count
+      else
+        len = count
+        offset = 0
+      end
+
+      len += 1 if negative
+
       String.new(len + 1) do |buffer|
         # e.g. precision = 13, count = 8
         # "_____12345678\0" for positive
         # "_____-12345678\0" for negative
         buffer[len - 1] = 0
-        offset = (precision - count).clamp(0..)
         start = buffer + offset
         LibGMP.get_str(start, upcase ? -base : base, self)
 
