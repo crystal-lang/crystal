@@ -497,6 +497,60 @@ struct Slice(T)
     to_s(io)
   end
 
+  # Returns a new `Slice` pointing at the same contents as `self`, but
+  # reinterpreted as elements of the given *type*.
+  #
+  # The returned slice never refers to more memory than `self`; if the last
+  # bytes of `self` do not fit into a `U`, they are excluded from the returned
+  # slice.
+  #
+  # WARNING: This method is **unsafe**: elements are reinterpreted using
+  # `#unsafe_as`, and the resulting slice may not be properly aligned.
+  #
+  # ```
+  # # assume little-endian system
+  # bytes = Bytes[0x01, 0x02, 0x03, 0x04, 0xFF, 0xFE]
+  # bytes.unsafe_slice_of(Int8)  # => Slice[1_i8, 2_i8, 3_i8, 4_i8, -1_i8, -2_i8]
+  # bytes.unsafe_slice_of(Int16) # => Slice[513_i16, 1027_i16, -257_i16]
+  # bytes.unsafe_slice_of(Int32) # => Slice[0x04030201]
+  # ```
+  def unsafe_slice_of(type : U.class) : Slice(U) forall U
+    Slice.new(to_unsafe.unsafe_as(Pointer(U)), bytesize // sizeof(U), read_only: @read_only)
+  end
+
+  # Returns a new `Bytes` pointing at the same contents as `self`.
+  #
+  # WARNING: This method is **unsafe**: the returned slice is writable if `self`
+  # is also writable, and modifications through the returned slice may violate
+  # the binary representations of Crystal objects.
+  #
+  # ```
+  # # assume little-endian system
+  # ints = Slice[0x01020304, 0x05060708]
+  # bytes = ints.to_unsafe_bytes # => Bytes[0x04, 0x03, 0x02, 0x01, 0x08, 0x07, 0x06, 0x05]
+  # bytes[2] = 0xAD
+  # ints # => Slice[0x01AD0304, 0x05060708]
+  # ```
+  def to_unsafe_bytes : Bytes
+    unsafe_slice_of(UInt8)
+  end
+
+  # Returns a new read-only `Bytes` pointing at the same contents as `self`.
+  #
+  # This method is always safe to call; if `self` refers to a valid memory
+  # region, then it is always possible to address the individual bytes of that
+  # memory region.
+  #
+  # ```
+  # # assume little-endian system
+  # ints = Slice[0x01020304, 0x05060708]
+  # bytes = ints.to_bytes # => Bytes[0x04, 0x03, 0x02, 0x01, 0x08, 0x07, 0x06, 0x05]
+  # bytes[2] = 0xAD       # raises Exception
+  # ```
+  def to_bytes : Bytes
+    Slice.new(to_unsafe.as(UInt8*), bytesize, read_only: true)
+  end
+
   # Returns a hexstring representation of this slice, assuming it's
   # a `Slice(UInt8)`.
   #

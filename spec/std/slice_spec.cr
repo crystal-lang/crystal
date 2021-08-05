@@ -346,6 +346,57 @@ describe "Slice" do
     end
   end
 
+  describe "#unsafe_slice_of" do
+    it "reinterprets a slice's elements" do
+      slice = Bytes.new(10) { |i| i.to_u8 + 1 }
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        slice.unsafe_slice_of(Int16).should eq(Int16.slice(0x0201, 0x0403, 0x0605, 0x0807, 0x0A09))
+        slice.unsafe_slice_of(Int32).should eq(Int32.slice(0x04030201, 0x08070605))
+
+        slice.unsafe_slice_of(UInt64)[0] = 0x1122_3344_5566_7788_u64
+        slice.should eq(Bytes[0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x09, 0x0A])
+      {% else %}
+        slice.unsafe_slice_of(Int16).should eq(Int16.slice(0x0102, 0x0304, 0x0506, 0x0708, 0x090A))
+        slice.unsafe_slice_of(Int32).should eq(Int32.slice(0x01020304, 0x05060708))
+
+        slice.unsafe_slice_of(UInt64)[0] = 0x1122_3344_5566_7788_u64
+        slice.should eq(Bytes[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x09, 0x0A])
+      {% end %}
+    end
+  end
+
+  describe "#to_unsafe_bytes" do
+    it "reinterprets a slice's elements as bytes" do
+      slice = Slice[0x01020304, -0x01020304]
+      bytes = slice.to_unsafe_bytes
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        bytes.should eq(Bytes[0x04, 0x03, 0x02, 0x01, 0xFC, 0xFC, 0xFD, 0xFE])
+        bytes[3] = 0x55
+        slice[0].should eq(0x55020304)
+      {% else %}
+        bytes.should eq(Bytes[0x01, 0x02, 0x03, 0x04, 0xFE, 0xFD, 0xFC, 0xFC])
+        bytes[3] = 0x55
+        slice[0].should eq(0x01020355)
+      {% end %}
+    end
+  end
+
+  describe "#to_bytes" do
+    it "reinterprets a slice's elements as read-only bytes" do
+      slice = Slice[0x01020304, -0x01020304]
+      bytes = slice.to_bytes
+      bytes.read_only?.should be_true
+
+      {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian %}
+        bytes.should eq(Bytes[0x04, 0x03, 0x02, 0x01, 0xFC, 0xFC, 0xFD, 0xFE])
+      {% else %}
+        bytes.should eq(Bytes[0x01, 0x02, 0x03, 0x04, 0xFE, 0xFD, 0xFC, 0xFC])
+      {% end %}
+    end
+  end
+
   it "does hexstring" do
     slice = Bytes.new(4) { |i| i.to_u8 + 1 }
     slice.hexstring.should eq("01020304")
