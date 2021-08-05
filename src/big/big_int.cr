@@ -451,7 +451,6 @@ struct BigInt < Int
             # "____85\0\0" -> "____885\0" for positive
             # "____-85\0\0" -> "____-885\0" for negative
             # `start` will be zero-filled later
-            start += 1 if negative
             start.move_to(start + 1, len)
             offset += 1
           else
