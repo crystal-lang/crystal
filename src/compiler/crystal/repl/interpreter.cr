@@ -596,6 +596,51 @@ class Crystal::Repl::Interpreter
     end
   end
 
+  private macro backtrace
+    # Note: this won't work if Array's internal representation is changed,
+    # but that's unlikely to happen.
+    %bt = [] of String
+
+    @call_stack.each_with_index do |call_frame, index|
+      call_frame_instructions = call_frame.instructions.instructions
+      call_frame_nodes = call_frame.instructions.nodes
+
+      # All calls have 1 byte for the opcode and sizeof(Void*) bytes
+      # for the target call, so we go back to that point to find the relevant node.
+      # However, we don't need to do that for the top-most call frame.
+      call_frame_ip =
+        if index == @call_stack.size - 1
+          call_frame.ip
+        else
+          call_frame.ip - sizeof(Void*) - 1
+        end
+
+      call_frame_index = call_frame_ip - call_frame_instructions.to_unsafe
+      node = call_frame_nodes[call_frame_index]?
+      if node && (location = node.location)
+        location = location.macro_location || location
+        def_name = call_frame.compiled_def.def.name
+        filename = location.filename
+        line_number = location.line_number
+        column_number = location.column_number
+
+        # We could devise a way to encode this information more efficiently,
+        # but for now this works.
+        %bt << "#{def_name}|#{line_number}|#{column_number}|#{filename}"
+      end
+    end
+
+    %bt.reverse!
+
+    # Make sure the type ID of the returned array is the same
+    # as the one in the interpreted program.
+    # This is totally unsafe, but this value won't be used anymore in this program,
+    # only in the interpreted program.
+    %bt.as(Int32*).value = @context.type_id(@context.program.array_of(@context.program.string))
+
+    %bt
+  end
+
   private macro raise_exception(exception)
     %exception = {{exception}}
 

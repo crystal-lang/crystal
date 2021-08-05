@@ -13,7 +13,6 @@ require "./lib_unwind"
 
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
-{% if flag?(:interpreted) %} @[Primitive(:interpreter_caller)] {% end %}
 def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
@@ -68,7 +67,7 @@ struct Exception::CallStack
   {% end %}
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
-  protected def self.unwind
+  protected def self.unwind : Array(Void*)
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
       bt = data.as(typeof(callstack))
@@ -166,52 +165,68 @@ struct Exception::CallStack
   end
 
   private def decode_backtrace
-    show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
+    {% if flag?(:interpreted) %}
+      # The interpreter prepares the callstack like an array of strings
+      # that are in the format def_name|line|column|file
+      backtrace = @callstack.unsafe_as(Array(String))
 
-    @callstack.compact_map do |ip|
-      pc = CallStack.decode_address(ip)
-
-      file, line, column = CallStack.decode_line_number(pc)
-
-      if file && file != "??"
+      backtrace.compact_map do |frame|
+        def_name, line, column, file = frame.split("|", 4)
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
         file = file.lchop(CURRENT_DIR)
 
-        file_line_column = "#{file}:#{line}:#{column}"
+        "#{file}:#{line}:#{column} in '#{def_name}'"
       end
+    {% else %}
+      show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
-      if name = CallStack.decode_function_name(pc)
-        function = name
-      elsif frame = CallStack.decode_frame(ip)
-        _, sname = frame
-        function = String.new(sname)
+      @callstack.compact_map do |ip|
+        pc = CallStack.decode_address(ip)
 
-        # Crystal methods (their mangled name) start with `*`, so
-        # we remove that to have less clutter in the output.
-        function = function.lchop('*')
-      else
-        function = "???"
-      end
+        file, line, column = CallStack.decode_line_number(pc)
 
-      if file_line_column
-        if show_full_info && (frame = CallStack.decode_frame(ip))
-          _, sname = frame
-          line = "#{file_line_column} in '#{String.new(sname)}'"
-        else
-          line = "#{file_line_column} in '#{function}'"
+        if file && file != "??"
+          next if @@skip.includes?(file)
+
+          # Turn to relative to the current dir, if possible
+          file = file.lchop(CURRENT_DIR)
+
+          file_line_column = "#{file}:#{line}:#{column}"
         end
-      else
-        line = function
-      end
 
-      if show_full_info
-        line = "#{line} at 0x#{ip.address.to_s(16)}"
-      end
+        if name = CallStack.decode_function_name(pc)
+          function = name
+        elsif frame = CallStack.decode_frame(ip)
+          _, sname = frame
+          function = String.new(sname)
 
-      line
-    end
+          # Crystal methods (their mangled name) start with `*`, so
+          # we remove that to have less clutter in the output.
+          function = function.lchop('*')
+        else
+          function = "???"
+        end
+
+        if file_line_column
+          if show_full_info && (frame = CallStack.decode_frame(ip))
+            _, sname = frame
+            line = "#{file_line_column} in '#{String.new(sname)}'"
+          else
+            line = "#{file_line_column} in '#{function}'"
+          end
+        else
+          line = function
+        end
+
+        if show_full_info
+          line = "#{line} at 0x#{ip.address.to_s(16)}"
+        end
+
+        line
+      end
+    {% end %}
   end
 
   protected def self.decode_frame(ip, original_ip = ip)

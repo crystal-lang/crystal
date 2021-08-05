@@ -1246,17 +1246,7 @@ require "./repl"
         operands:   [] of Nil,
         pop_values: [] of Nil,
         push:       true,
-        code:       begin
-          # TODO: compute interpreter call stack
-          Pointer(UInt8).null
-        end,
-      },
-      # TODO: maybe redefine Exception::CallStack#decode_backtrace
-      interpreter_caller: {
-        operands:   [] of Nil,
-        pop_values: [] of Nil,
-        push:       false,
-        code:       raise "TODO: interpreter_caller",
+        code:       backtrace,
       },
       interpreter_raise_without_backtrace: {
         operands:   [] of Nil,

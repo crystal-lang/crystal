@@ -333,8 +333,6 @@ class Crystal::Repl::Compiler
         request_value(arg)
       end
       interpreter_raise_without_backtrace(node: node)
-    when "interpreter_caller"
-      interpreter_caller(node: node)
     when "interpreter_current_fiber"
       interpreter_current_fiber(node: node)
     when "interpreter_spawn"

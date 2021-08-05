@@ -88,7 +88,7 @@ class Crystal::Repl
         @buffer = ""
         @line_number += 1
 
-        puts ex
+        print ex
       rescue ex : Crystal::CodeError
         @nest = 0
         @buffer = ""
@@ -143,7 +143,7 @@ class Crystal::Repl
   private def interpret_and_exit_on_error(node : ASTNode)
     interpret(node)
   rescue ex : EscapingException
-    puts ex
+    print ex
     exit 1
   rescue ex : Crystal::CodeError
     ex.color = true
