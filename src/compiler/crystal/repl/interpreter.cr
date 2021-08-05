@@ -83,6 +83,7 @@ class Crystal::Repl::Interpreter
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
     @stack_top = @stack
     @call_stack = [] of CallFrame
+    @call_stack_leave_index = 0
 
     @block_level = 0
 
@@ -98,8 +99,8 @@ class Crystal::Repl::Interpreter
 
     @stack = stack
     @stack_top = @stack
-    # TODO: copy the call stack from the main interpreter
-    @call_stack = [] of CallFrame
+    @call_stack = interpreter.@call_stack.dup
+    @call_stack_leave_index = @call_stack.size
 
     @compiled_def = compiled_def
   end
@@ -573,7 +574,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
-    if @call_stack.empty?
+    if @call_stack.size == @call_stack_leave_index
       return_value = Pointer(Void).malloc({{size}}).as(UInt8*)
       return_value.copy_from(stack_bottom_after_local_vars, {{size}})
       stack_shrink_by({{size}})
@@ -684,7 +685,7 @@ class Crystal::Repl::Interpreter
       %old_stack = stack
       %previous_call_frame = @call_stack.pop
 
-      if @call_stack.empty?
+      if @call_stack.size == @call_stack_leave_index
         raise EscapingException.new(self, %exception)
       end
 
