@@ -114,7 +114,6 @@ install: $(O)/crystal man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 $(DATADIR)
 	cp -av src "$(DATADIR)/src"
 	rm -rf "$(DATADIR)/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
-	cp -av samples "$(DATADIR)/examples"
 
 	$(INSTALL) -D -m 644 man/crystal.1.gz "$(MANDIR)/man1/crystal.1.gz"
 	$(INSTALL) -D -m 644 LICENSE "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
@@ -127,7 +126,6 @@ uninstall: ## Uninstall the compiler from DESTDIR
 	rm -f "$(BINDIR)/crystal"
 
 	rm -rf "$(DATADIR)/src"
-	rm -rf "$(DATADIR)/examples"
 
 	rm -f "$(MANDIR)/man1/crystal.1.gz"
 	rm -f "$(DESTDIR)$(PREFIX)/share/licenses/crystal/LICENSE"
@@ -136,14 +134,16 @@ uninstall: ## Uninstall the compiler from DESTDIR
 	rm -f "$(DESTDIR)$(PREFIX)/share/zsh/site-functions/_crystal"
 
 .PHONY: install_docs
-install_docs: docs ## Install API docs at DESTDIR
+install_docs: docs ## Install docs at DESTDIR
 	$(INSTALL) -d -m 0755 $(DATADIR)
 
 	cp -av docs "$(DATADIR)/docs"
+	cp -av samples "$(DATADIR)/examples"
 
 .PHONY: uninstall_docs
-uninstall_docs: ## Uninstall API docs from DESTDIR
+uninstall_docs: ## Uninstall docs from DESTDIR
 	rm -rf "$(DATADIR)/docs"
+	rm -rf "$(DATADIR)/examples"
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
