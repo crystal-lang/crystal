@@ -242,6 +242,9 @@ describe "FileUtils" do
         FileUtils.mv(path1, path2).should be_nil
         File.exists?(path1).should be_false
         File.exists?(path2).should be_true
+        FileUtils.mv(Path[path2], Path[path1]).should be_nil
+        File.exists?(path2).should be_false
+        File.exists?(path1).should be_true
       end
     end
 

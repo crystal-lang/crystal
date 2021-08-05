@@ -188,11 +188,11 @@ class IO::Memory < IO
   def peek : Bytes
     check_open
 
-    Slice.new(@buffer + @pos, @bytesize - @pos)
+    Slice.new(@buffer + @pos, @bytesize - @pos, read_only: !@writeable)
   end
 
   # :nodoc:
-  def skip(bytes_count)
+  def skip(bytes_count) : Nil
     check_open
 
     available = @bytesize - @pos
@@ -242,7 +242,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -372,7 +372,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 

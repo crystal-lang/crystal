@@ -47,6 +47,7 @@ class Crystal::CodeGenVisitor
   private def create_match_fun(name, type)
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int1) do |func|
+        set_internal_fun_debug_location(func, name)
         type_id = func.params.first
         create_match_fun_body(type, type_id)
       end

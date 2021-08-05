@@ -89,7 +89,7 @@ class Crystal::Doc::Type
   def superclass
     case type = @type
     when ClassType
-      superclass = type.superclass unless type.full_name == Crystal::Macros::ASTNode.name
+      superclass = type.superclass unless ast_node?
     when GenericClassInstanceType
       superclass = type.superclass
     end
@@ -103,11 +103,21 @@ class Crystal::Doc::Type
 
   def ancestors
     ancestors = [] of self
-    @type.ancestors.each do |ancestor|
-      ancestors << @generator.type(ancestor)
-      break if ancestor == @generator.program.object
+
+    unless ast_node?
+      @type.ancestors.each do |ancestor|
+        doc_type = @generator.type(ancestor)
+        ancestors << doc_type
+        break if ancestor == @generator.program.object || doc_type.ast_node?
+      end
     end
+
     ancestors
+  end
+
+  def ast_node?
+    type = @type
+    type.is_a?(ClassType) && type.full_name == Crystal::Macros::ASTNode.name
   end
 
   def locations
@@ -166,7 +176,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        stable_sort! defs, &.name.downcase
+        defs.sort_by!(&.name.downcase)
       end
     end
   end
@@ -191,7 +201,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      stable_sort! class_methods, &.name.downcase
+      class_methods.sort_by!(&.name.downcase)
     end
   end
 
@@ -215,7 +225,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      stable_sort! macros, &.name.downcase
+      macros.sort_by!(&.name.downcase)
     end
   end
 
@@ -776,7 +786,7 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { superclass.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "superclass" { (s = superclass) ? s.to_json_simple(builder) : builder.null }
       builder.field "ancestors" do
         builder.array do
           ancestors.each &.to_json_simple(builder)
@@ -811,7 +821,7 @@ class Crystal::Doc::Type
           including_types.each &.to_json_simple(builder)
         end
       end
-      builder.field "namespace" { namespace.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
       builder.field "doc", doc
       builder.field "summary", formatted_summary
       builder.field "class_methods", class_methods
@@ -833,11 +843,5 @@ class Crystal::Doc::Type
 
   def annotations(annotation_type)
     @type.annotations(annotation_type)
-  end
-
-  private def stable_sort!(list)
-    # TODO: use #10163 instead
-    i = 0
-    list.sort_by! { |elem| {yield(elem), i += 1} }
   end
 end

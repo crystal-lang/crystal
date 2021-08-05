@@ -33,7 +33,7 @@ class IO::Stapled < IO
   def read(slice : Bytes) : Int32
     check_open
 
-    @reader.read(slice)
+    @reader.read(slice).to_i32
   end
 
   # Gets a string from `reader`.
@@ -65,7 +65,7 @@ class IO::Stapled < IO
   end
 
   # Writes a byte to `writer`.
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     check_open
 
     @writer.write_byte(byte)

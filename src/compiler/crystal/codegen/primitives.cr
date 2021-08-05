@@ -610,7 +610,7 @@ class Crystal::CodeGenVisitor
     when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-      if checked
+      if from_type.kind != to_type.kind && checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
@@ -916,6 +916,8 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
         arg = func.params.first
 
         current_block = insert_block
