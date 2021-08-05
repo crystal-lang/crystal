@@ -5,10 +5,11 @@ private class SafeIndexableMutable
 
   getter size
 
-  @values : Array(Tuple(Int32))
+  # prevents `@values` from being interpretable as a raw slice of elements
+  @values : Array(Array(Int32))
 
   def initialize(@size : Int32, *, offset = 0)
-    @values = Array.new(size) { |i| {i + offset} }
+    @values = Array.new(size) { |i| [i + offset] }
   end
 
   def unsafe_fetch(i)
@@ -18,7 +19,7 @@ private class SafeIndexableMutable
 
   def unsafe_put(i, value : Int32)
     raise IndexError.new unless 0 <= i < size
-    @values[i] = {value}
+    @values[i] = [value]
   end
 end
 
@@ -30,10 +31,10 @@ private class SafeIndexableMutableFoo
 
   getter size
 
-  @values : Array(Tuple(Foo))
+  @values : Array(Array(Foo))
 
   def initialize(@size : Int32)
-    @values = Array.new(size) { {Foo.new} }
+    @values = Array.new(size) { [Foo.new] }
   end
 
   def unsafe_fetch(i)
@@ -43,7 +44,7 @@ private class SafeIndexableMutableFoo
 
   def unsafe_put(i, value : Foo)
     raise IndexError.new unless 0 <= i < size
-    @values[i] = {value}
+    @values[i] = [value]
   end
 end
 
