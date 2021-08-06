@@ -1491,29 +1491,347 @@ require "./repl"
         push:       true,
         code:       LibIntrinsics.bswap16(id),
       },
-      repl_proc_f32_f32: {
-        operands:   [name : Symbol],
-        pop_values: [a : Float32] of Nil,
+      interpreter_intrinsics_read_cycle_counter: {
+        operands:   [] of Nil,
+        pop_values: [] of Nil,
         push:       true,
-        code:       @context.procs_f32_f32[name].call(a),
+        code:       LibIntrinsics.read_cycle_counter,
       },
-      repl_proc_f64_f64: {
-        operands:   [name : Symbol],
-        pop_values: [a : Float64] of Nil,
+      interpreter_intrinsics_popcount8: {
+        operands:   [] of Nil,
+        pop_values: [value : Int8] of Nil,
         push:       true,
-        code:       @context.procs_f64_f64[name].call(a),
+        code:       LibIntrinsics.popcount8(value),
       },
-      repl_powi_f32: {
-        operands:   [name : Symbol],
+      interpreter_intrinsics_popcount16: {
+        operands:   [] of Nil,
+        pop_values: [value : Int16] of Nil,
+        push:       true,
+        code:       LibIntrinsics.popcount16(value),
+      },
+      interpreter_intrinsics_popcount32: {
+        operands:   [] of Nil,
+        pop_values: [value : Int32] of Nil,
+        push:       true,
+        code:       LibIntrinsics.popcount32(value),
+      },
+      interpreter_intrinsics_popcount64: {
+        operands:   [] of Nil,
+        pop_values: [value : Int64] of Nil,
+        push:       true,
+        code:       LibIntrinsics.popcount64(value),
+      },
+      interpreter_intrinsics_countleading8: {
+        operands:   [] of Nil,
+        pop_values: [src : Int8, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.countleading8(src, false)
+          else
+            LibIntrinsics.countleading8(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_countleading16: {
+        operands:   [] of Nil,
+        pop_values: [src : Int16, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.countleading16(src, false)
+          else
+            LibIntrinsics.countleading16(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_countleading32: {
+        operands:   [] of Nil,
+        pop_values: [src : Int32, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.countleading32(src, false)
+          else
+            LibIntrinsics.countleading32(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_countleading64: {
+        operands:   [] of Nil,
+        pop_values: [src : Int64, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.countleading64(src, false)
+          else
+            LibIntrinsics.countleading64(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_counttrailing8: {
+        operands:   [] of Nil,
+        pop_values: [src : Int8, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.counttrailing8(src, false)
+          else
+            LibIntrinsics.counttrailing8(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_counttrailing16: {
+        operands:   [] of Nil,
+        pop_values: [src : Int16, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.counttrailing16(src, false)
+          else
+            LibIntrinsics.counttrailing16(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_counttrailing32: {
+        operands:   [] of Nil,
+        pop_values: [src : Int32, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.counttrailing32(src, false)
+          else
+            LibIntrinsics.counttrailing32(src, true)
+          end
+        end,
+      },
+      interpreter_intrinsics_counttrailing64: {
+        operands:   [] of Nil,
+        pop_values: [src : Int64, zero_is_undef : Bool] of Nil,
+        push:       true,
+        code:       begin
+          if zero_is_undef
+            LibIntrinsics.counttrailing64(src, false)
+          else
+            LibIntrinsics.counttrailing64(src, true)
+          end
+        end,
+      },
+      libm_ceil_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.ceil_f32(value),
+      },
+      libm_ceil_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.ceil_f64(value),
+      },
+      libm_cos_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.cos_f32(value),
+      },
+      libm_cos_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.cos_f64(value),
+      },
+      libm_exp_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.exp_f32(value),
+      },
+      libm_exp_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.exp_f64(value),
+      },
+      libm_exp2_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.exp2_f32(value),
+      },
+      libm_exp2_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.exp2_f64(value),
+      },
+      libm_floor_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.floor_f32(value),
+      },
+      libm_floor_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.floor_f64(value),
+      },
+      libm_log_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.log_f32(value),
+      },
+      libm_log_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.log_f64(value),
+      },
+      libm_log2_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.log2_f32(value),
+      },
+      libm_log2_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.log2_f64(value),
+      },
+      libm_log10_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.log10_f32(value),
+      },
+      libm_log10_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.log10_f64(value),
+      },
+      libm_round_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.round_f32(value),
+      },
+      libm_round_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.round_f64(value),
+      },
+      libm_rint_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.rint_f32(value),
+      },
+      libm_rint_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.rint_f64(value),
+      },
+      libm_sin_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.sin_f32(value),
+      },
+      libm_sin_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.sin_f64(value),
+      },
+      libm_sqrt_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.sqrt_f32(value),
+      },
+      libm_sqrt_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.sqrt_f64(value),
+      },
+      libm_trunc_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32] of Nil,
+        push:       true,
+        code:       LibM.trunc_f32(value),
+      },
+      libm_trunc_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64] of Nil,
+        push:       true,
+        code:       LibM.trunc_f64(value),
+      },
+      libm_powi_f32: {
+        operands:   [] of Nil,
         pop_values: [value : Float32, power : Int32] of Nil,
         push:       true,
         code:       LibM.powi_f32(value, power),
       },
-      repl_powi_f64: {
-        operands:   [name : Symbol],
+      libm_powi_f64: {
+        operands:   [] of Nil,
         pop_values: [value : Float64, power : Int32] of Nil,
         push:       true,
         code:       LibM.powi_f64(value, power),
+      },
+      libm_min_f32: {
+        operands:   [] of Nil,
+        pop_values: [value1 : Float32, value2 : Float32] of Nil,
+        push:       true,
+        code:       LibM.min_f32(value1, value2),
+      },
+      libm_min_f64: {
+        operands:   [] of Nil,
+        pop_values: [value1 : Float64, value2 : Float64] of Nil,
+        push:       true,
+        code:       LibM.min_f64(value1, value2),
+      },
+      libm_max_f32: {
+        operands:   [] of Nil,
+        pop_values: [value1 : Float32, value2 : Float32] of Nil,
+        push:       true,
+        code:       LibM.max_f32(value1, value2),
+      },
+      libm_max_f64: {
+        operands:   [] of Nil,
+        pop_values: [value1 : Float64, value2 : Float64] of Nil,
+        push:       true,
+        code:       LibM.max_f64(value1, value2),
+      },
+      libm_pow_f32: {
+        operands:   [] of Nil,
+        pop_values: [value : Float32, power : Float32] of Nil,
+        push:       true,
+        code:       LibM.pow_f32(value, power),
+      },
+      libm_pow_f64: {
+        operands:   [] of Nil,
+        pop_values: [value : Float64, power : Float64] of Nil,
+        push:       true,
+        code:       LibM.pow_f64(value, power),
+      },
+      libm_copysign_f32: {
+        operands:   [] of Nil,
+        pop_values: [magnitude : Float32, sign : Float32] of Nil,
+        push:       true,
+        code:       LibM.copysign_f32(magnitude, sign),
+      },
+      libm_copysign_f64: {
+        operands:   [] of Nil,
+        pop_values: [magnitude : Float64, sign : Float64] of Nil,
+        push:       true,
+        code:       LibM.copysign_f64(magnitude, sign),
       },
       unreachable: {
         operands:   [message : String] of Nil,
@@ -1526,4 +1844,4 @@ require "./repl"
     }
 {% end %}
 
-# {% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
+{% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}

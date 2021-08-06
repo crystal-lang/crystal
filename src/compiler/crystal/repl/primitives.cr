@@ -329,21 +329,15 @@ class Crystal::Repl::Compiler
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"
-      node.args.each do |arg|
-        request_value(arg)
-      end
+      accept_call_args(node)
       interpreter_raise_without_backtrace(node: node)
     when "interpreter_current_fiber"
       interpreter_current_fiber(node: node)
     when "interpreter_spawn"
-      node.args.each do |arg|
-        request_value(arg)
-      end
+      accept_call_args(node)
       interpreter_spawn(node: node)
     when "interpreter_fiber_swapcontext"
-      node.args.each do |arg|
-        request_value(arg)
-      end
+      accept_call_args(node)
       interpreter_fiber_swapcontext(node: node)
     when "interpreter_intrinsics_memcpy"
       accept_call_args(node)
@@ -365,90 +359,152 @@ class Crystal::Repl::Compiler
       interpreter_intrinsics_bswap32(node: node)
     when "interpreter_intrinsics_bswap16"
       interpreter_intrinsics_bswap16(node: node)
+    when "interpreter_intrinsics_read_cycle_counter"
+      interpreter_intrinsics_read_cycle_counter(node: node)
+    when "interpreter_intrinsics_popcount8"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount8(node: node)
+    when "interpreter_intrinsics_popcount16"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount16(node: node)
+    when "interpreter_intrinsics_popcount32"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount32(node: node)
+    when "interpreter_intrinsics_popcount64"
+      accept_call_args(node)
+      interpreter_intrinsics_popcount64(node: node)
+    when "interpreter_intrinsics_countleading8"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading8(node: node)
+    when "interpreter_intrinsics_countleading16"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading16(node: node)
+    when "interpreter_intrinsics_countleading32"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading32(node: node)
+    when "interpreter_intrinsics_countleading64"
+      accept_call_args(node)
+      interpreter_intrinsics_countleading64(node: node)
+    when "interpreter_intrinsics_counttrailing8"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing8(node: node)
+    when "interpreter_intrinsics_counttrailing16"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing16(node: node)
+    when "interpreter_intrinsics_counttrailing32"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing32(node: node)
+    when "interpreter_intrinsics_counttrailing64"
+      accept_call_args(node)
+      interpreter_intrinsics_counttrailing64(node: node)
     when "interpreter_libm_ceil_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :ceil, node: node
+      libm_ceil_f32 node: node
     when "interpreter_libm_ceil_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :ceil, node: node
+      libm_ceil_f64 node: node
     when "interpreter_libm_cos_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :cos, node: node
+      libm_cos_f32 node: node
     when "interpreter_libm_cos_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :cos, node: node
+      libm_cos_f64 node: node
     when "interpreter_libm_exp_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :exp, node: node
+      libm_exp_f32 node: node
     when "interpreter_libm_exp_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :exp, node: node
+      libm_exp_f64 node: node
     when "interpreter_libm_exp2_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :exp2, node: node
+      libm_exp2_f32 node: node
     when "interpreter_libm_exp2_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :exp2, node: node
+      libm_exp2_f64 node: node
     when "interpreter_libm_floor_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :floor, node: node
+      libm_floor_f32 node: node
     when "interpreter_libm_floor_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :floor, node: node
+      libm_floor_f64 node: node
     when "interpreter_libm_log_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :log, node: node
+      libm_log_f32 node: node
     when "interpreter_libm_log_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :log, node: node
+      libm_log_f64 node: node
     when "interpreter_libm_log2_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :log2, node: node
+      libm_log2_f32 node: node
     when "interpreter_libm_log2_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :log2, node: node
+      libm_log2_f64 node: node
     when "interpreter_libm_log10_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :log10, node: node
+      libm_log10_f32 node: node
     when "interpreter_libm_log10_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :log10, node: node
+      libm_log10_f64 node: node
     when "interpreter_libm_round_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :round, node: node
+      libm_round_f32 node: node
     when "interpreter_libm_round_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :round, node: node
+      libm_round_f64 node: node
     when "interpreter_libm_rint_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :rint, node: node
+      libm_rint_f32 node: node
     when "interpreter_libm_rint_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :rint, node: node
+      libm_rint_f64 node: node
     when "interpreter_libm_sin_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :sin, node: node
+      libm_sin_f32 node: node
     when "interpreter_libm_sin_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :sin, node: node
+      libm_sin_f64 node: node
     when "interpreter_libm_sqrt_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :sqrt, node: node
+      libm_sqrt_f32 node: node
     when "interpreter_libm_sqrt_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :sqrt, node: node
+      libm_sqrt_f64 node: node
     when "interpreter_libm_trunc_f32"
       accept_call_args(node)
-      repl_proc_f32_f32 :trunc, node: node
+      libm_trunc_f32 node: node
     when "interpreter_libm_trunc_f64"
       accept_call_args(node)
-      repl_proc_f64_f64 :trunc, node: node
+      libm_trunc_f64 node: node
     when "interpreter_libm_powi_f32"
       accept_call_args(node)
-      repl_powi_f32 :powi, node: node
+      libm_powi_f32 node: node
     when "interpreter_libm_powi_f64"
       accept_call_args(node)
-      repl_powi_f64 :powi, node: node
+      libm_powi_f64 node: node
+    when "interpreter_libm_min_f32"
+      accept_call_args(node)
+      libm_min_f32 node: node
+    when "interpreter_libm_min_f64"
+      accept_call_args(node)
+      libm_min_f64 node: node
+    when "interpreter_libm_max_f32"
+      accept_call_args(node)
+      libm_max_f32 node: node
+    when "interpreter_libm_max_f64"
+      accept_call_args(node)
+      libm_max_f64 node: node
+    when "interpreter_libm_pow_f32"
+      accept_call_args(node)
+      libm_pow_f32 node: node
+    when "interpreter_libm_pow_f64"
+      accept_call_args(node)
+      libm_pow_f64 node: node
+    when "interpreter_libm_copysign_f32"
+      accept_call_args(node)
+      libm_copysign_f32 node: node
+    when "interpreter_libm_copysign_f64"
+      accept_call_args(node)
+      libm_copysign_f64 node: node
     else
       node.raise "BUG: missing handling of primitive #{body.name}"
     end

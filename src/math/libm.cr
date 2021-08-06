@@ -10,7 +10,10 @@ lib LibM
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_ceil_f64)] {% end %}
   fun ceil_f64 = "llvm.ceil.f64"(value : Float64) : Float64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_copysign_f32)] {% end %}
   fun copysign_f32 = "llvm.copysign.f32"(magnitude : Float32, sign : Float32) : Float32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_copysign_f64)] {% end %}
   fun copysign_f64 = "llvm.copysign.f64"(magnitude : Float64, sign : Float64) : Float64
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_cos_f32)] {% end %}
@@ -55,11 +58,22 @@ lib LibM
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_log10_f64)] {% end %}
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
 
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_min_f32)] {% end %}
   fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_min_f64)] {% end %}
   fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_max_f32)] {% end %}
   fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_max_f64)] {% end %}
   fun max_f64 = "llvm.maxnum.f64"(value1 : Float64, value2 : Float64) : Float64
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_pow_f32)] {% end %}
   fun pow_f32 = "llvm.pow.f32"(value : Float32, power : Float32) : Float32
+
+  {% if flag?(:interpreted) %} @[Primitive(:interpreter_libm_pow_f64)] {% end %}
   fun pow_f64 = "llvm.pow.f64"(value : Float64, power : Float64) : Float64
 
   {% unless flag?(:win32) %}
