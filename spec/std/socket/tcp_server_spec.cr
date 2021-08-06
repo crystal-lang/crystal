@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-describe TCPServer do
+describe TCPServer, tags: "network" do
   describe ".new" do
     each_ip_family do |family, address|
       it "listens on local address" do

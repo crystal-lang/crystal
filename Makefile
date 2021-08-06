@@ -31,13 +31,16 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
-CRYSTAL_CONFIG_LIBRARY_PATH := $(shell bin/crystal env CRYSTAL_LIBRARY_PATH 2> /dev/null)
+CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD 2> /dev/null)
+CRYSTAL_CONFIG_PATH := '$$ORIGIN/../share/crystal/src'
 SOURCE_DATE_EPOCH := $(shell (git show -s --format=%ct HEAD || stat -c "%Y" Makefile || stat -f "%m" Makefile) 2> /dev/null)
 EXPORTS := \
-  CRYSTAL_CONFIG_LIBRARY_PATH="$(CRYSTAL_CONFIG_LIBRARY_PATH)" \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
+	CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
 	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
+EXPORTS_BUILD := \
+	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
@@ -116,7 +119,7 @@ $(O)/compiler_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 
 $(O)/crystal: $(DEPS) $(SOURCES)
 	@mkdir -p $(O)
-	$(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
+	$(EXPORTS) $(EXPORTS_BUILD) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)

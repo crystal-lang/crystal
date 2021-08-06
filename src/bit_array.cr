@@ -164,10 +164,13 @@ struct BitArray
     end
   end
 
-  # Toggles the bit at the given *index*. A false bit becomes a `true` bit, and
-  # vice versa.
-  # Negative indices can be used to start counting from the end of the array.
-  # Raises `IndexError` if trying to access a bit outside the array's range.
+  # Toggles the bit at the given *index*. A `false` bit becomes a `true` bit,
+  # and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if *index* is out of range.
   #
   # ```
   # require "bit_array"
@@ -177,9 +180,70 @@ struct BitArray
   # ba.toggle(3)
   # ba[3] # => true
   # ```
-  def toggle(index)
+  def toggle(index) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
+  end
+
+  # Toggles all bits that are within the given *range*. A `false` bit becomes a
+  # `true` bit, and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if the starting index is out of range.
+  #
+  # ```
+  # require "bit_array"
+  #
+  # ba = BitArray.new(5)
+  # ba.to_s # => "BitArray[00000]"
+  # ba.toggle(1..-2)
+  # ba.to_s # => "BitArray[01110]"
+  # ```
+  def toggle(range : Range)
+    toggle(*Indexable.range_to_index_and_count(range, size) || raise IndexError.new)
+  end
+
+  # Toggles *count* or less (if there aren't enough) bits starting at the given
+  # *start* index. A `false` bit becomes a `true` bit, and vice versa.
+  #
+  # Negative indices count backward from the end of the array (-1 is the last
+  # element).
+  #
+  # Raises `IndexError` if *index* is out of range.
+  # Raises `ArgumentError` if *count* is a negative number.
+  #
+  # ```
+  # require "bit_array"
+  #
+  # ba = BitArray.new(5)
+  # ba.to_s # => "BitArray[00000]"
+  # ba.toggle(1, 3)
+  # ba.to_s # => "BitArray[01110]"
+  # ```
+  def toggle(start : Int, count : Int)
+    start, count = normalize_start_and_count(start, count)
+
+    start_bit_index, start_sub_index = start.divmod(32)
+    end_bit_index, end_sub_index = (start + count - 1).divmod(32)
+
+    if start_bit_index == end_bit_index
+      # same UInt32, don't perform the loop at all
+      @bits[start_bit_index] ^= uint32_mask(start_sub_index, end_sub_index)
+    else
+      @bits[start_bit_index] ^= uint32_mask(start_sub_index, 31)
+      (start_bit_index + 1..end_bit_index - 1).each do |i|
+        @bits[i] = ~@bits[i]
+      end
+      @bits[end_bit_index] ^= uint32_mask(0, end_sub_index)
+    end
+  end
+
+  # returns (1 << from) | (1 << (from + 1)) | ... | (1 << to)
+  @[AlwaysInline]
+  private def uint32_mask(from, to)
+    (Int32::MIN >> (to - from)).to_u32! >> (31 - to)
   end
 
   # Inverts all bits in the array. Falses become `true` and vice versa.
@@ -193,7 +257,7 @@ struct BitArray
   # ba.invert
   # ba # => BitArray[11001]
   # ```
-  def invert
+  def invert : Nil
     malloc_size.times do |i|
       @bits[i] = ~@bits[i]
     end
