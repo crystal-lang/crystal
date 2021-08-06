@@ -1,7 +1,7 @@
 require "./spec_helper"
 require "socket"
 
-describe UDPSocket do
+describe UDPSocket, tags: "network" do
   # Note: This spec fails with a IPv6 address. See pending below.
   it "#remote_address resets after connect" do
     socket = UDPSocket.new

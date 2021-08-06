@@ -157,7 +157,7 @@ abstract class YAML::Parser
   end
 
   # Closes this parser, freeing up resources.
-  def close
+  def close : Nil
     @pull_parser.close
   end
 

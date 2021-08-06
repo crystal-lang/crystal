@@ -4,7 +4,7 @@ require "spec/helpers/iterate"
 
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new(path)
+    crystal_path = Crystal::CrystalPath.new([path])
     results = results.map { |result| ::Path[__DIR__, result].normalize.to_s }
     Dir.cd(__DIR__) do
       matches = crystal_path.find search, relative_to: relative_to
@@ -15,7 +15,7 @@ end
 
 private def assert_doesnt_find(search, relative_to = nil, path = __DIR__, expected_relative_to = nil, file = __FILE__, line = __LINE__)
   it "doesn't finds #{search.inspect}", file, line do
-    crystal_path = Crystal::CrystalPath.new(path)
+    crystal_path = Crystal::CrystalPath.new([path])
     Dir.cd(__DIR__) do
       error = expect_raises Crystal::CrystalPath::NotFoundError do
         crystal_path.find search, relative_to: relative_to
@@ -186,6 +186,26 @@ describe Crystal::CrystalPath do
     with_env("CRYSTAL_PATH": "foo#{Process::PATH_DELIMITER}bar") do
       crystal_path = Crystal::CrystalPath.new
       crystal_path.entries.should eq(%w(foo bar))
+    end
+  end
+
+  it ".expand_paths" do
+    paths = ["$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["/usr/bin/../foo"]
+    paths = ["./$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["./$ORIGIN/../foo"]
+    paths = ["$ORIGINfoo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["$ORIGINfoo"]
+    paths = ["lib", "$ORIGIN/../foo"]
+    Crystal::CrystalPath.expand_paths(paths, "/usr/bin/")
+    paths.should eq ["lib", "/usr/bin/../foo"]
+
+    paths = ["$ORIGIN/../foo"]
+    expect_raises(Exception, "Missing executable path to expand $ORIGIN path") do
+      Crystal::CrystalPath.expand_paths(paths, nil)
     end
   end
 end

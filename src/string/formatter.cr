@@ -323,7 +323,7 @@ struct String::Formatter(A)
     pad size, flags
   end
 
-  def char(char)
+  def char(char) : Nil
     @io << char
   end
 

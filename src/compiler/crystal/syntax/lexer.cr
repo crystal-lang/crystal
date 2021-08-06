@@ -637,6 +637,8 @@ module Crystal
       when '~'
         next_char :"~"
       when '.'
+        line = @line_number
+        column = @column_number
         case next_char
         when '.'
           case next_char
@@ -645,6 +647,8 @@ module Crystal
           else
             @token.type = :".."
           end
+        when .ascii_number?
+          raise ".1 style number literal is not supported, put 0 before dot", line, column
         else
           @token.type = :"."
         end
@@ -2412,7 +2416,10 @@ module Crystal
         when '\\'
           char = next_char
           if delimiter_state
-            if char == delimiter_state.end
+            case char
+            when delimiter_state.end
+              char = next_char
+            when '\\'
               char = next_char
             end
             whitespace = false
