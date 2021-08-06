@@ -8,6 +8,13 @@ private def from_int(size : Int32, int : Int)
   ba
 end
 
+private def assert_no_unused_bits(ba : BitArray, *, file = __FILE__, line = __LINE__)
+  bit_count = 32 * ((ba.size - 1) // 32 + 1)
+  (ba.size...bit_count).each do |index|
+    ba.unsafe_fetch(index).should be_false, file: file, line: line
+  end
+end
+
 describe "BitArray" do
   it "has size" do
     ary = BitArray.new(100)
@@ -241,6 +248,33 @@ describe "BitArray" do
 
       ba[28..40].should eq(from_int(13, 0b11111_11111111))
     end
+
+    it "does not cause overflow (#8494)" do
+      ba = BitArray.new(64, true)
+      ba[0] = false
+      ba[33] = false
+      ba[0, 32].should eq(from_int(32, 0b01111111_11111111_11111111_11111111_u32))
+      ba[1, 32].should eq(from_int(32, 0b11111111_11111111_11111111_11111111_u32))
+      ba[2, 32].should eq(from_int(32, 0b11111111_11111111_11111111_11111110_u32))
+    end
+
+    it "zeroes unused bits" do
+      ba = BitArray.new(32, true)
+      assert_no_unused_bits ba[0, 26]
+      assert_no_unused_bits ba[7, 11]
+
+      ba = BitArray.new(64, true)
+      assert_no_unused_bits ba[0, 26]
+      assert_no_unused_bits ba[0, 33]
+      assert_no_unused_bits ba[7, 53]
+
+      ba = BitArray.new(100, true)
+      assert_no_unused_bits ba[60, 26]
+      assert_no_unused_bits ba[0, 97]
+
+      ba = BitArray.new(38, true)
+      ba[0, 34].should eq(BitArray.new(34, true))
+    end
   end
 
   describe "#toggle" do
@@ -328,7 +362,7 @@ describe "BitArray" do
 
     ary.invert
     ary.all?.should be_true
-    (100..127).each { |i| ary.unsafe_fetch(i).should be_false }
+    assert_no_unused_bits ary
 
     ary[50] = false
     ary[33] = false
@@ -361,7 +395,7 @@ describe "BitArray" do
 
   it "initializes with unused bits cleared" do
     ary = BitArray.new(3, true)
-    (0...32).each { |i| ary.unsafe_fetch(i).should eq(i < ary.size) }
+    assert_no_unused_bits ary
   end
 
   it "reads bits from slice" do
