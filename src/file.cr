@@ -398,7 +398,7 @@ class File < IO::FileDescriptor
     File.expand_brace_pattern(pattern, expanded_patterns)
 
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path)
+      return true if match_single_pattern(expanded_pattern, path.to_s)
     end
     false
   end
