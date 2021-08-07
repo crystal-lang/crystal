@@ -1,6 +1,13 @@
 require "spec"
 require "big"
 
+private def it_converts_to_s(num, str, *, file = __FILE__, line = __LINE__, **opts)
+  it file: file, line: line do
+    num.to_s(**opts).should eq(str), file: file, line: line
+    String.build { |io| num.to_s(io, **opts) }.should eq(str), file: file, line: line
+  end
+end
+
 describe "BigInt" do
   it "creates with a value of zero" do
     BigInt.new.to_s.should eq("0")
@@ -328,14 +335,86 @@ describe "BigInt" do
     result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
   end
 
-  it "does to_s in the given base" do
-    a = BigInt.new("1234567890123456789")
-    b = "1000100100010000100001111010001111101111010011000000100010101"
-    c = "112210f47de98115"
-    d = "128gguhuuj08l"
-    a.to_s(2).should eq(b)
-    a.to_s(16).should eq(c)
-    a.to_s(32).should eq(d)
+  describe "#to_s" do
+    context "base and upcase parameters" do
+      a = BigInt.new("1234567890123456789")
+      it_converts_to_s a, "1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s a, "112210f47de98115", base: 16
+      it_converts_to_s a, "112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s a, "128gguhuuj08l", base: 32
+      it_converts_to_s a, "128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s a, "1tckI1NfUnH", base: 62
+
+      # ensure case is same as for primitive integers
+      it_converts_to_s 10.to_big_i, 10.to_s(62), base: 62
+
+      it_converts_to_s (-a), "-1000100100010000100001111010001111101111010011000000100010101", base: 2
+      it_converts_to_s (-a), "-112210f47de98115", base: 16
+      it_converts_to_s (-a), "-112210F47DE98115", base: 16, upcase: true
+      it_converts_to_s (-a), "-128gguhuuj08l", base: 32
+      it_converts_to_s (-a), "-128GGUHUUJ08L", base: 32, upcase: true
+      it_converts_to_s (-a), "-1tckI1NfUnH", base: 62
+
+      it_converts_to_s 16.to_big_i ** 1000, "1#{"0" * 1000}", base: 16
+
+      it "raises on base 1" do
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(1) }
+        expect_raises(ArgumentError, "Invalid base 1") { a.to_s(IO::Memory.new, 1) }
+      end
+
+      it "raises on base 37" do
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(37) }
+        expect_raises(ArgumentError, "Invalid base 37") { a.to_s(IO::Memory.new, 37) }
+      end
+
+      it "raises on base 62 with upcase" do
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(62, upcase: true) }
+        expect_raises(ArgumentError, "upcase must be false for base 62") { a.to_s(IO::Memory.new, 62, upcase: true) }
+      end
+    end
+
+    context "precision parameter" do
+      it_converts_to_s 0.to_big_i, "", precision: 0
+      it_converts_to_s 0.to_big_i, "0", precision: 1
+      it_converts_to_s 0.to_big_i, "00", precision: 2
+      it_converts_to_s 0.to_big_i, "00000", precision: 5
+      it_converts_to_s 0.to_big_i, "0" * 200, precision: 200
+
+      it_converts_to_s 1.to_big_i, "1", precision: 0
+      it_converts_to_s 1.to_big_i, "1", precision: 1
+      it_converts_to_s 1.to_big_i, "01", precision: 2
+      it_converts_to_s 1.to_big_i, "00001", precision: 5
+      it_converts_to_s 1.to_big_i, "#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 2.to_big_i, "2", precision: 0
+      it_converts_to_s 2.to_big_i, "2", precision: 1
+      it_converts_to_s 2.to_big_i, "02", precision: 2
+      it_converts_to_s 2.to_big_i, "00002", precision: 5
+      it_converts_to_s 2.to_big_i, "#{"0" * 199}2", precision: 200
+
+      it_converts_to_s -1.to_big_i, "-1", precision: 0
+      it_converts_to_s -1.to_big_i, "-1", precision: 1
+      it_converts_to_s -1.to_big_i, "-01", precision: 2
+      it_converts_to_s -1.to_big_i, "-00001", precision: 5
+      it_converts_to_s -1.to_big_i, "-#{"0" * 199}1", precision: 200
+
+      it_converts_to_s 123.to_big_i, "123", precision: 0
+      it_converts_to_s 123.to_big_i, "123", precision: 1
+      it_converts_to_s 123.to_big_i, "123", precision: 2
+      it_converts_to_s 123.to_big_i, "00123", precision: 5
+      it_converts_to_s 123.to_big_i, "#{"0" * 197}123", precision: 200
+
+      a = 2.to_big_i ** 1024 - 1
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s a, "#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s a, "0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s a, "#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1023
+      it_converts_to_s (-a), "-#{"1" * 1024}", base: 2, precision: 1024
+      it_converts_to_s (-a), "-0#{"1" * 1024}", base: 2, precision: 1025
+      it_converts_to_s (-a), "-#{"0" * 976}#{"1" * 1024}", base: 2, precision: 2000
+    end
   end
 
   it "does to_big_f" do
@@ -542,5 +621,9 @@ end
 describe "BigInt Math" do
   it "sqrt" do
     Math.sqrt(BigInt.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
+  end
+
+  it "isqrt" do
+    Math.isqrt(BigInt.new("1" + "0"*48)).should eq(BigInt.new("1" + "0"*24))
   end
 end

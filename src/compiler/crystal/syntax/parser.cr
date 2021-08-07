@@ -26,7 +26,6 @@ module Crystal
 
     def initialize(str, string_pool : StringPool? = nil, @def_vars = [Set(String).new])
       super(str, string_pool)
-      @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
       @calls_super = false
       @calls_initialize = false
@@ -624,12 +623,7 @@ module Crystal
           end
 
           # Allow '.' after newline for chaining calls
-          old_pos, old_line, old_column = current_pos, @line_number, @column_number
-          @temp_token.copy_from @token
-          next_token_skip_space_or_newline
-          unless @token.type == :"."
-            self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-            @token.copy_from @temp_token
+          unless lookahead(preserve_token_on_fail: true) { next_token_skip_space_or_newline; @token.type == :"." }
             break
           end
         when :"."
@@ -965,21 +959,10 @@ module Crystal
         location = @token.location
         var = Var.new(@token.to_s).at(location)
 
-        old_pos, old_line, old_column = current_pos, @line_number, @column_number
-        @temp_token.copy_from(@token)
-
-        next_token_skip_space
-
-        if @token.type == :"="
-          @token.copy_from(@temp_token)
-          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-
+        if peek_ahead { next_token_skip_space; @token.type == :"=" }
           push_var var
           node_and_next_token var
         else
-          @token.copy_from(@temp_token)
-          self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
-
           node_and_next_token Global.new(var.name).at(location)
         end
       when :GLOBAL_MATCH_DATA_INDEX
@@ -1886,45 +1869,34 @@ module Crystal
       case @token.type
       when :IDENT
         name = @token.value.to_s
-        next_token
-        if @token.type == :"="
+        if consume_def_equals_sign_skip_space
           name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-          if @token.type == :"."
-            second_name = consume_def_or_macro_name
-            if name != "self" && !@def_vars.last.includes?(name)
-              raise "undefined variable '#{name}'", location.line_number, location.column_number
-            end
-            obj = Var.new(name)
-            name = second_name
-            next_token
-            if @token.type == :"="
-              name = "#{name}="
-              next_token_skip_space
-            else
-              skip_space
-            end
+        elsif @token.type == :"."
+          if name != "self" && !@def_vars.last.includes?(name)
+            raise "undefined variable '#{name}'", location.line_number, location.column_number
           end
+          obj = Var.new(name)
+
+          name = consume_def_or_macro_name
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         end
       when :CONST
         obj = parse_generic
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :INSTANCE_VAR
         obj = InstanceVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       when :CLASS_VAR
         obj = ClassVar.new(@token.value.to_s)
         next_token_skip_space
         check :"."
         name = consume_def_or_macro_name
-        next_token_skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         unexpected_token
       end
@@ -3002,12 +2974,7 @@ module Crystal
         raise "macro can't have a receiver"
       when :IDENT
         check_valid_def_name
-        next_token
-        if @token.type == :"="
-          name += '='
-          next_token
-        end
-        skip_space
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         check_valid_def_op_name
         next_token_skip_space
@@ -3440,14 +3407,7 @@ module Crystal
       elsif @token.type == :IDENT
         check_valid_def_name
         name = @token.value.to_s
-
-        next_token
-        if @token.type == :"="
-          name = "#{name}="
-          next_token_skip_space
-        else
-          skip_space
-        end
+        name = "#{name}=" if consume_def_equals_sign_skip_space
       else
         check_valid_def_op_name
         name = @token.type.to_s
@@ -3474,13 +3434,7 @@ module Crystal
           name = @token.value.to_s
 
           name_location = @token.location
-          next_token
-          if @token.type == :"="
-            name = "#{name}="
-            next_token_skip_space
-          else
-            skip_space
-          end
+          name = "#{name}=" if consume_def_equals_sign_skip_space
         else
           check DefOrMacroCheck2
           check_valid_def_op_name
@@ -5114,20 +5068,18 @@ module Crystal
 
     # Looks ahead next tokens to check whether they indicate type.
     def type_start?(*, consume_newlines)
-      old_pos, old_line, old_column = current_pos, @line_number, @column_number
-      @temp_token.copy_from(@token)
+      peek_ahead do
+        begin
+          if consume_newlines
+            next_token_skip_space_or_newline
+          else
+            next_token_skip_space
+          end
 
-      begin
-        if consume_newlines
-          next_token_skip_space_or_newline
-        else
-          next_token_skip_space
+          type_start?
+        rescue
+          false
         end
-
-        type_start?
-      ensure
-        @token.copy_from(@temp_token)
-        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
       end
     end
 
@@ -5975,6 +5927,17 @@ module Crystal
       check DefOrMacroCheck1
       @wants_def_or_macro_name = false
       @token.to_s
+    end
+
+    def consume_def_equals_sign_skip_space
+      next_token
+      if @token.type == :"="
+        next_token_skip_space
+        true
+      else
+        skip_space
+        false
+      end
     end
 
     def push_def

@@ -83,7 +83,7 @@ struct Slice(T)
   # slice # => Bytes[0, 0, 0]
   # ```
   def self.new(size : Int, *, read_only = false)
-    {% unless T <= Int::Primitive || T <= Float::Primitive %}
+    {% unless Number::Primitive.union_types.includes?(T) %}
       {% raise "Can only use primitive integers and floats with Slice.new(size), not #{T}" %}
     {% end %}
 
@@ -349,6 +349,53 @@ struct Slice(T)
   # from there.
   def map_with_index(offset = 0, *, read_only = false, & : (T, Int32) -> U) forall U
     Slice.new(size, read_only: read_only) { |i| yield @pointer[i], offset + i }
+  end
+
+  # Replaces every element in `self` with the given *value*. Returns `self`.
+  #
+  # ```
+  # slice = Slice[1, 2, 3, 4]
+  # slice.fill(2) # => Slice[2, 2, 2, 2]
+  # slice         # => Slice[2, 2, 2, 2]
+  # ```
+  def fill(value : T) : self
+    check_writable
+
+    {% if T == UInt8 %}
+      Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
+      self
+    {% else %}
+      {% if Number::Primitive.union_types.includes?(T) %}
+        if value == 0
+          to_unsafe.clear(size)
+          return self
+        end
+      {% end %}
+
+      fill { value }
+    {% end %}
+  end
+
+  # Yields each index of `self` to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # Accepts an optional *offset* parameter, which tells the block to start
+  # counting from there.
+  #
+  # ```
+  # slice = Slice[2, 1, 1, 1]
+  # slice.fill { |i| i * i }            # => Slice[0, 1, 4, 9]
+  # slice                               # => Slice[0, 1, 4, 9]
+  # slice.fill(offset: 3) { |i| i * i } # => Slice[9, 16, 25, 36]
+  # slice                               # => Slice[9, 16, 25, 36]
+  # ```
+  def fill(*, offset : Int = 0, & : Int32 -> T) : self
+    check_writable
+
+    size.times do |i|
+      to_unsafe[i] = yield offset + i
+    end
+    self
   end
 
   def copy_from(source : Pointer(T), count)
@@ -694,6 +741,14 @@ struct Slice(T)
     dup.sort!
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort : Slice(T)
+    dup.unstable_sort!
+  end
+
   # Returns a new slice with all elements sorted based on the comparator in the
   # given block.
   #
@@ -712,6 +767,18 @@ struct Slice(T)
     dup.sort! &block
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
+    dup.unstable_sort!(&block)
+  end
+
   # Modifies `self` by sorting all elements based on the return value of their
   # comparison method `<=>`
   #
@@ -721,7 +788,18 @@ struct Slice(T)
   # a # => Slice[1, 2, 3]
   # ```
   def sort! : Slice(T)
+    Slice.merge_sort!(self)
+
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort! : Slice(T)
     Slice.intro_sort!(to_unsafe, size)
+
     self
   end
 
@@ -743,7 +821,22 @@ struct Slice(T)
       {% raise "expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
 
+    Slice.merge_sort!(self, block)
+
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort!(&block : T, T -> U) : Slice(T) forall U
+    {% unless U <= Int32? %}
+      {% raise "expected block to return Int32 or Nil, not #{U}" %}
+    {% end %}
+
     Slice.intro_sort!(to_unsafe, size, block)
+
     self
   end
 
@@ -761,6 +854,14 @@ struct Slice(T)
     dup.sort_by! { |e| yield(e) }
   end
 
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by(&block : T -> _) : Slice(T)
+    dup.unstable_sort_by! { |e| yield(e) }
+  end
+
   # Modifies `self` by sorting all elements. The given block is called for
   # each element, then the comparison method `<=>` is called on the object
   # returned from the block to determine sort order.
@@ -772,6 +873,18 @@ struct Slice(T)
   # ```
   def sort_by!(&block : T -> _) : Slice(T)
     sorted = map { |e| {e, yield(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    size.times do |i|
+      to_unsafe[i] = sorted.to_unsafe[i][0]
+    end
+    self
+  end
+
+  # :ditto:
+  #
+  # This method does not guarantee stability between equally sorting elements.
+  # Which results in a performance advantage over stable sort.
+  def unstable_sort_by!(&block : T -> _) : Slice(T)
+    sorted = map { |e| {e, yield(e)} }.unstable_sort! { |x, y| x[1] <=> y[1] }
     size.times do |i|
       to_unsafe[i] = sorted.to_unsafe[i][0]
     end

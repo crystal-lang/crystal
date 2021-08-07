@@ -3035,7 +3035,7 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -3051,7 +3051,7 @@ class String
   end
 
   # :ditto:
-  def index(search : String, offset = 0) : Int32?
+  def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
 
@@ -3127,7 +3127,7 @@ class String
   # "Hello, World".rindex("o", 5) # => 4
   # "Hello, World".rindex("W", 2) # => nil
   # ```
-  def rindex(search : Char, offset = size - 1) : Int32?
+  def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
