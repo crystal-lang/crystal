@@ -4078,6 +4078,20 @@ describe Crystal::Repl::Interpreter do
         h.values.sum
       CODE
     end
+
+    it "does YAML" do
+      interpret(<<-CODE, prelude: "prelude").should eq(6)
+        require "yaml"
+
+        yaml = YAML.parse <<-YAML
+          a:
+            - 1
+            - 2
+            - 3
+          YAML
+        yaml.as_h["a"].as_a.sum(&.as_i)
+      CODE
+    end
   end
 end
 
