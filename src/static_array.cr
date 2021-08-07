@@ -168,14 +168,8 @@ struct StaticArray(T, N)
   # array                               # => StaticArray[2, 2, 2]
   # ```
   def fill(value : T) : self
-    {% if Number::Primitive.union_types.includes?(T) %}
-      if value == 0
-        to_unsafe.clear(size)
-        return self
-      end
-    {% end %}
-
-    fill { value }
+    to_slice.fill(value)
+    self
   end
 
   # Yields each index of `self` to the given block and then assigns
@@ -187,9 +181,7 @@ struct StaticArray(T, N)
   # array                    # => StaticArray[0, 1, 4, 9]
   # ```
   def fill(& : Int32 -> T) : self
-    size.times do |i|
-      to_unsafe[i] = yield i
-    end
+    to_slice.fill { |i| yield i }
     self
   end
 
