@@ -3728,6 +3728,22 @@ describe Crystal::Repl::Interpreter do
           copy.y = 10
         CODE
     end
+
+    it "interprets primitive struct_or_union_set and get (union)" do
+      interpret(<<-CODE).should eq(-2045911175)
+          lib LibFoo
+            union Foo
+              a : Bool
+              x : Int64
+              y : Int32
+            end
+          end
+
+          foo = LibFoo::Foo.new
+          foo.x = 123456789012345
+          foo.y
+        CODE
+    end
   end
 
   context "autocast" do

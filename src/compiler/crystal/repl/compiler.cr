@@ -2638,7 +2638,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def ivar_offset(type : Type, name : String) : Int32
-    @context.ivar_offset(type, name)
+    if type.extern_union?
+      0
+    else
+      @context.ivar_offset(type, name)
+    end
   end
 
   private def type_id(type : Type)

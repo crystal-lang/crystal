@@ -301,9 +301,6 @@ class Crystal::Repl::Compiler
       end
 
       type = obj.type.as(NonGenericClassType)
-      if type.extern_union?
-        node.raise "BUG: missing struct_or_union_set for unions"
-      end
 
       ivar_name = '@' + node.name.rchop # remove the '=' suffix
       ivar = type.lookup_instance_var(ivar_name)
