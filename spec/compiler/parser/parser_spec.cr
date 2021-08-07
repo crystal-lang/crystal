@@ -927,6 +927,9 @@ module Crystal
 
     it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
     it_parses "macro foo\n'\\''\nend", Macro.new("foo", body: Expressions.from(["'\\''\n".macro_literal] of ASTNode))
+    it_parses "macro foo\n'\\\\'\nend", Macro.new("foo", body: Expressions.from(["'\\\\'\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\'"\nend), Macro.new("foo", body: Expressions.from([%("\\'"\n).macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\\\"\nend), Macro.new("foo", body: Expressions.from([%("\\\\"\n).macro_literal] of ASTNode))
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"
@@ -1275,18 +1278,20 @@ module Crystal
     it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), ProcLiteral.new(Def.new("->", body: "x".var))]
     it_parses "f ->{ a do\n end\n }", Call.new(nil, "f", ProcLiteral.new(Def.new("->", body: Call.new(nil, "a", block: Block.new))))
 
-    it_parses "->foo", ProcPointer.new(nil, "foo")
-    it_parses "->Foo.foo", ProcPointer.new("Foo".path, "foo")
+    %w(foo foo= foo? foo!).each do |method|
+      it_parses "->#{method}", ProcPointer.new(nil, method)
+      it_parses "foo = 1; ->foo.#{method}", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, method)]
+      it_parses "->Foo.#{method}", ProcPointer.new("Foo".path, method)
+      it_parses "->@foo.#{method}", ProcPointer.new("@foo".instance_var, method)
+      it_parses "->@@foo.#{method}", ProcPointer.new("@@foo".class_var, method)
+    end
+
     it_parses "->Foo::Bar::Baz.foo", ProcPointer.new(["Foo", "Bar", "Baz"].path, "foo")
     it_parses "->foo(Int32, Float64)", ProcPointer.new(nil, "foo", ["Int32".path, "Float64".path] of ASTNode)
     it_parses "foo = 1; ->foo.bar(Int32)", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "bar", ["Int32".path] of ASTNode)]
     it_parses "->foo(Void*)", ProcPointer.new(nil, "foo", ["Void".path.pointer_of] of ASTNode)
     it_parses "call ->foo", Call.new(nil, "call", ProcPointer.new(nil, "foo"))
     it_parses "[] of ->\n", ArrayLiteral.new(of: ProcNotation.new)
-    it_parses "->foo=", ProcPointer.new(nil, "foo=")
-    it_parses "foo = 1; ->foo.foo=", [Assign.new("foo".var, 1.int32), ProcPointer.new("foo".var, "foo=")]
-    it_parses "->@foo.foo", [ProcPointer.new("@foo".instance_var, "foo")]
-    it_parses "->@@foo.foo", [ProcPointer.new("@@foo".class_var, "foo")]
 
     it_parses "foo &->bar", Call.new(nil, "foo", block_arg: ProcPointer.new(nil, "bar"))
 

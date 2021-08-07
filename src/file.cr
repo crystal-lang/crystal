@@ -587,12 +587,12 @@ class File < IO::FileDescriptor
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
-  def self.link(old_path : Path | String, new_path : Path | String)
+  def self.link(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.link(old_path.to_s, new_path.to_s)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
-  def self.symlink(old_path : Path | String, new_path : Path | String)
+  def self.symlink(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.symlink(old_path.to_s, new_path.to_s)
   end
 
@@ -773,7 +773,9 @@ class File < IO::FileDescriptor
   # File.exists?("afile.cr") # => true
   # ```
   def self.rename(old_filename : Path | String, new_filename : Path | String) : Nil
-    Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+    if error = Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+      raise error
+    end
   end
 
   # Sets the access and modification times of *filename*.
