@@ -298,11 +298,10 @@ class XML::Node
   def namespace_definitions : Array(Namespace)
     namespaces = [] of Namespace
 
-    if ns = @node.value.ns_def
-      while ns
-        namespaces << Namespace.new(document, ns)
-        ns = ns.value.next
-      end
+    ns = @node.value.ns_def
+    while ns
+      namespaces << Namespace.new(document, ns)
+      ns = ns.value.next
     end
 
     namespaces
