@@ -4079,6 +4079,17 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does JSON" do
+      interpret(<<-CODE, prelude: "prelude").should eq(6)
+        require "json"
+
+        json = JSON.parse <<-JSON
+          {"a": [1, 2, 3]}
+          JSON
+        json.as_h["a"].as_a.sum(&.as_i)
+      CODE
+    end
+
     it "does YAML" do
       interpret(<<-CODE, prelude: "prelude").should eq(6)
         require "yaml"
