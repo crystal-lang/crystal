@@ -260,7 +260,7 @@ struct Crystal::TypeDeclarationProcessor
 
     if owner.is_a?(NonGenericModuleType) || owner.is_a?(GenericModuleType)
       if extender = find_extending_type(owner)
-        raise TypeException.new("can't declare instance variables in #{owner} because it is extended by #{extender}", type_decl.location)
+        raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_decl.location)
       end
     elsif owner.metaclass?
       raise TypeException.new("can't declare instance variables in #{owner}", type_decl.location)
@@ -374,7 +374,7 @@ struct Crystal::TypeDeclarationProcessor
 
     if owner.is_a?(NonGenericModuleType) || owner.is_a?(GenericModuleType)
       if extender = find_extending_type(owner)
-        raise TypeException.new("can't declare instance variables in #{owner} because it is extended by #{extender}", type_info.location)
+        raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_info.location)
       end
     elsif owner.metaclass?
       raise TypeException.new("can't declare instance variables in #{owner}", type_info.location)

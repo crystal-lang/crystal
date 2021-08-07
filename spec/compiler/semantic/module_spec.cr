@@ -1426,7 +1426,7 @@ describe "Semantic: module" do
         extend Foo
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Bar"
+      "can't declare instance variables in Foo because Bar extends it"
   end
 
   it "errors when extending module that defines instance vars (2) (#4065)" do
@@ -1439,7 +1439,7 @@ describe "Semantic: module" do
         extend Foo
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Bar"
+      "can't declare instance variables in Foo because Bar extends it"
   end
 
   it "errors when extending generic module that defines instance vars" do
@@ -1452,7 +1452,7 @@ describe "Semantic: module" do
         extend Foo(T)
       end
       ),
-      "can't declare instance variables in Foo(T) because it is extended by Bar(T)"
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
   end
 
   it "errors when extending generic module that defines instance vars (2)" do
@@ -1465,7 +1465,7 @@ describe "Semantic: module" do
         extend Foo(T)
       end
       ),
-      "can't declare instance variables in Foo(T) because it is extended by Bar(T)"
+      "can't declare instance variables in Foo(T) because Bar(T) extends it"
   end
 
   it "errors when recursively extending module that defines instance vars" do
@@ -1482,7 +1482,7 @@ describe "Semantic: module" do
         extend Bar
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Baz"
+      "can't declare instance variables in Foo because Baz extends it"
   end
 
   it "errors when recursively extending module that defines instance vars (2)" do
@@ -1499,7 +1499,7 @@ describe "Semantic: module" do
         extend Bar
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Baz"
+      "can't declare instance variables in Foo because Baz extends it"
   end
 
   it "errors when extending self and self defines instance vars (#9568)" do
@@ -1510,7 +1510,7 @@ describe "Semantic: module" do
         @x = 0
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Foo"
+      "can't declare instance variables in Foo because Foo extends it"
   end
 
   it "errors when extending self and self defines instance vars (2) (#9568)" do
@@ -1521,7 +1521,7 @@ describe "Semantic: module" do
         @x : Int32?
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Foo"
+      "can't declare instance variables in Foo because Foo extends it"
   end
 
   it "errors when extending self and self defines instance vars (3) (#9568)" do
@@ -1534,7 +1534,7 @@ describe "Semantic: module" do
         end
       end
       ),
-      "can't declare instance variables in Foo because it is extended by Foo"
+      "can't declare instance variables in Foo because Foo extends it"
   end
 
   it "can't pass module class to virtual metaclass (#6113)" do
