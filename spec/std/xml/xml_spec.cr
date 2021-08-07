@@ -197,6 +197,29 @@ describe XML do
           namespace.prefix.should be_nil
         end
       end
+
+      describe "without an explicit declaration on the node" do
+        it "returns the related namespace" do
+          doc = XML.parse(<<-XML
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom" xmlns:a="https://a-namespace">
+              <name></name>
+              <a:age></a:age>
+            </feed>
+            XML
+          )
+
+          root = doc.root.not_nil!
+
+          namespace = root.children[1].namespace.should_not be_nil
+          namespace.href.should eq "http://www.w3.org/2005/Atom"
+          namespace.prefix.should be_nil
+
+          namespace = root.children[3].namespace.should_not be_nil
+          namespace.href.should eq "https://a-namespace"
+          namespace.prefix.should eq "a"
+        end
+      end
     end
 
     describe "when the node does not have namespace" do
