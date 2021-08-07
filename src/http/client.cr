@@ -259,7 +259,7 @@ class HTTP::Client
 
   # Configures this client to perform basic authentication in every
   # request.
-  def basic_auth(username, password)
+  def basic_auth(username, password) : Nil
     header = "Basic #{Base64.strict_encode("#{username}:#{password}")}"
     before_request do |request|
       request.headers["Authorization"] = header
@@ -398,7 +398,7 @@ class HTTP::Client
   # end
   # client.get "/"
   # ```
-  def before_request(&callback : HTTP::Request ->)
+  def before_request(&callback : HTTP::Request ->) : Nil
     before_request = @before_request ||= [] of (HTTP::Request ->)
     before_request << callback
   end
@@ -759,7 +759,7 @@ class HTTP::Client
   end
 
   # Closes this client. If used again, a new connection will be opened.
-  def close
+  def close : Nil
     @io.try &.close
     @io = nil
   end

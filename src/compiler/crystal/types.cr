@@ -294,23 +294,8 @@ module Crystal
       end
     end
 
-    def covariant?(other_type : Type)
-      return true if self == other_type
-
-      other_type = other_type.remove_alias
-
-      case other_type
-      when UnionType
-        other_type.union_types.any? do |union_type|
-          covariant?(union_type)
-        end
-      else
-        false
-      end
-    end
-
-    def filter_by(other_type)
-      restrict other_type, MatchContext.new(self, self, strict: true)
+    def filter_by(other_type : Type)
+      Type.common_descendent(self, other_type)
     end
 
     def filter_by_responds_to(name)
@@ -971,10 +956,6 @@ module Crystal
       end
     end
 
-    def covariant?(other_type)
-      super || parents.any? &.covariant?(other_type)
-    end
-
     def type_desc
       "module"
     end
@@ -1270,11 +1251,6 @@ module Crystal
 
     def class?
       true
-    end
-
-    def covariant?(other_type)
-      other_type = other_type.base_type if other_type.is_a?(VirtualType)
-      implements?(other_type) || super
     end
   end
 
@@ -1961,17 +1937,26 @@ module Crystal
       generic_type.instantiate(new_type_vars)
     end
 
+    def implements?(other_type : GenericInstanceType)
+      if other_type.is_a?(GenericInstanceType) && generic_type == other_type.generic_type
+        type_vars.each do |name, type_var|
+          other_type_var = other_type.type_vars[name]
+          if type_var.is_a?(Var) && other_type_var.is_a?(Var)
+            # type vars are invariant here; (Named)TupleInstanceType have their own logic
+            return super unless type_var.type.devirtualize == other_type_var.type.devirtualize
+          else
+            return super unless type_var == other_type_var
+          end
+        end
+        return true
+      end
+
+      super
+    end
+
     def implements?(other_type)
       other_type = other_type.remove_alias
       super || generic_type.implements?(other_type)
-    end
-
-    def covariant?(other_type)
-      if other_type.is_a?(GenericInstanceType)
-        super
-      else
-        implements?(other_type)
-      end
     end
 
     def has_in_type_vars?(type)
@@ -2156,7 +2141,7 @@ module Crystal
     end
 
     def filter_by_responds_to(name)
-      @generic_type.filter_by_responds_to(name) ? self : nil
+      including_types.try &.filter_by_responds_to(name)
     end
 
     def module?
@@ -2402,7 +2387,19 @@ module Crystal
     end
 
     def replace_type_parameters(instance)
-      new_tuple_types = tuple_types.map &.replace_type_parameters(instance)
+      new_tuple_types = [] of Type
+      tuple_types.each do |tuple_type|
+        if tuple_type.is_a?(TypeSplat)
+          type = tuple_type.splatted_type.replace_type_parameters(instance)
+          if type.is_a?(TupleInstanceType)
+            new_tuple_types.concat(type.tuple_types)
+          else
+            raise "expected type to be a tuple type, not #{type}"
+          end
+        else
+          new_tuple_types << tuple_type.replace_type_parameters(instance)
+        end
+      end
       program.tuple_of(new_tuple_types)
     end
 
@@ -3003,10 +3000,6 @@ module Crystal
       union_types.any? &.includes_type?(other_type)
     end
 
-    def covariant?(other_type)
-      union_types.all? &.covariant? other_type
-    end
-
     def filter_by_responds_to(name)
       filtered_types = union_types.compact_map &.filter_by_responds_to(name)
       program.type_merge_union_of filtered_types
@@ -3159,6 +3152,9 @@ module Crystal
     property? used = false
     property? visited = false
 
+    # Was this const's value cleaned up by CleanupTransformer yet?
+    property? cleaned_up = false
+
     # Is this constant accessed with pointerof(...)?
     property? pointer_read = false
 
@@ -3236,8 +3232,8 @@ module Crystal
     delegate leaf?, superclass, lookup_first_def, lookup_defs,
       lookup_defs_with_modules, lookup_instance_var, lookup_instance_var?,
       index_of_instance_var, lookup_macro, lookup_macros, all_instance_vars,
-      abstract?, implements?, covariant?, ancestors, struct?,
-      type_var?, to: base_type
+      abstract?, implements?, ancestors, struct?,
+      type_var?, unbound?, to: base_type
 
     def remove_indirection
       if struct?

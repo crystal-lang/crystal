@@ -948,7 +948,8 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      if output
+      # If the return type is an underscore, we just ignore any return type checking.
+      if output && !output.is_a?(Underscore)
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
@@ -983,8 +984,9 @@ class Crystal::Call
               end
             end
           end
+
+          block.freeze_type = block_type
         end
-        block.freeze_type = block_type
       end
     end
 
@@ -1117,13 +1119,13 @@ class Crystal::Call
         when "proc_call"
           owner = owner.as(ProcInstanceType)
           proc_arg_type = owner.arg_types[index]
-          unless type.covariant?(proc_arg_type)
+          unless type.implements?(proc_arg_type)
             self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
           end
         when "pointer_set"
           owner = owner.remove_typedef.as(PointerInstanceType)
           pointer_type = owner.var.type
-          unless type.filter_by(pointer_type)
+          unless (type.nil_type? && pointer_type.void?) || type.implements?(pointer_type)
             self.args[index].raise "type must be #{pointer_type}, not #{type}"
           end
         end

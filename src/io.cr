@@ -110,7 +110,7 @@ abstract class IO
   # Returns `true` if this `IO` is closed.
   #
   # `IO` defines returns `false`, but including types may override.
-  def closed?
+  def closed? : Bool
     false
   end
 
@@ -184,7 +184,7 @@ abstract class IO
   # io.print "Crystal"
   # io.to_s # => "1-Crystal"
   # ```
-  def print(obj) : Nil
+  def print(obj : _) : Nil
     self << obj
     nil
   end
@@ -204,7 +204,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given string to this `IO` followed by a newline character
+  # Writes *string* to this `IO`, followed by a newline character
   # unless the string already ends with one.
   #
   # ```
@@ -219,7 +219,7 @@ abstract class IO
     nil
   end
 
-  # Writes the given object to this `IO` followed by a newline character.
+  # Writes *obj* to this `IO`, followed by a newline character.
   #
   # ```
   # io = IO::Memory.new
@@ -227,7 +227,7 @@ abstract class IO
   # io.puts "Crystal"
   # io.to_s # => "1\nCrystal\n"
   # ```
-  def puts(obj) : Nil
+  def puts(obj : _) : Nil
     self << obj
     puts
   end
@@ -244,7 +244,8 @@ abstract class IO
     nil
   end
 
-  # Writes the given objects, each followed by a newline character.
+  # Writes *objects* to this `IO`, each followed by a newline character unless
+  # the object is a `String` and already ends with a newline.
   #
   # ```
   # io = IO::Memory.new
@@ -388,7 +389,7 @@ abstract class IO
   #
   # "你".bytes # => [228, 189, 160]
   # ```
-  def read_utf8_byte
+  def read_utf8_byte : UInt8?
     if decoder = decoder()
       decoder.read_byte(self)
     else
@@ -463,7 +464,7 @@ abstract class IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this `IO`, using the current encoding.
-  def write_utf8(slice : Bytes)
+  def write_utf8(slice : Bytes) : Nil
     if encoder = encoder()
       encoder.write(self, slice)
     else
@@ -499,7 +500,7 @@ abstract class IO
   # slice                # => Bytes[49, 50, 51, 52, 53]
   # io.read_fully(slice) # raises IO::EOFError
   # ```
-  def read_fully(slice : Bytes)
+  def read_fully(slice : Bytes) : Int32
     read_fully?(slice) || raise(EOFError.new)
   end
 
@@ -514,7 +515,7 @@ abstract class IO
   # slice                 # => Bytes[49, 50, 51, 52, 53]
   # io.read_fully?(slice) # => nil
   # ```
-  def read_fully?(slice : Bytes)
+  def read_fully?(slice : Bytes) : Int32?
     count = slice.size
     while slice.size > 0
       read_bytes = read slice
@@ -838,7 +839,7 @@ abstract class IO
   # io.write_byte 97_u8
   # io.to_s # => "a"
   # ```
-  def write_byte(byte : UInt8)
+  def write_byte(byte : UInt8) : Nil
     x = byte
     write Slice.new(pointerof(x), 1)
   end
@@ -857,7 +858,7 @@ abstract class IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian) : Nil
     object.to_io(self, format)
   end
 
@@ -1008,11 +1009,8 @@ abstract class IO
   #
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
-  def set_encoding(encoding : String, invalid : Symbol? = nil)
-    if invalid != :skip && (
-         encoding.compare("UTF-8", case_insensitive: true) == 0 ||
-         encoding.compare("UTF8", case_insensitive: true) == 0
-       )
+  def set_encoding(encoding : String, invalid : Symbol? = nil) : Nil
+    if utf8_encoding?(encoding, invalid)
       @encoding = nil
     else
       @encoding = EncodingOptions.new(encoding, invalid)
@@ -1029,8 +1027,15 @@ abstract class IO
     @encoding.try(&.name) || "UTF-8"
   end
 
+  private def utf8_encoding?(encoding : String, invalid : Symbol? = nil) : Bool
+    invalid.nil? && (
+      encoding.compare("UTF-8", case_insensitive: true) == 0 ||
+        encoding.compare("UTF8", case_insensitive: true) == 0
+    )
+  end
+
   # :nodoc:
-  def has_non_utf8_encoding?
+  def has_non_utf8_encoding? : Bool
     !!@encoding
   end
 
@@ -1156,7 +1161,7 @@ abstract class IO
   # stream2 = IO::Memory.new("123")
   # IO.same_content?(stream1, stream2) # => true
   # ```
-  def self.same_content?(stream1 : IO, stream2 : IO)
+  def self.same_content?(stream1 : IO, stream2 : IO) : Bool
     buf1 = uninitialized UInt8[1024]
     buf2 = uninitialized UInt8[1024]
 

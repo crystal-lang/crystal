@@ -351,14 +351,19 @@ enum YAMLVariableDiscriminatorEnumFoo
   Foo = 4
 end
 
+enum YAMLVariableDiscriminatorEnumFoo8 : UInt8
+  Foo = 1_8
+end
+
 class YAMLVariableDiscriminatorValueType
   include YAML::Serializable
 
   use_yaml_discriminator "type", {
-                                        0 => YAMLVariableDiscriminatorNumber,
-    "1"                                   => YAMLVariableDiscriminatorString,
-    true                                  => YAMLVariableDiscriminatorBool,
-    YAMLVariableDiscriminatorEnumFoo::Foo => YAMLVariableDiscriminatorEnum,
+                                         0 => YAMLVariableDiscriminatorNumber,
+    "1"                                    => YAMLVariableDiscriminatorString,
+    true                                   => YAMLVariableDiscriminatorBool,
+    YAMLVariableDiscriminatorEnumFoo::Foo  => YAMLVariableDiscriminatorEnum,
+    YAMLVariableDiscriminatorEnumFoo8::Foo => YAMLVariableDiscriminatorEnum8,
   }
 end
 
@@ -372,6 +377,9 @@ class YAMLVariableDiscriminatorBool < YAMLVariableDiscriminatorValueType
 end
 
 class YAMLVariableDiscriminatorEnum < YAMLVariableDiscriminatorValueType
+end
+
+class YAMLVariableDiscriminatorEnum8 < YAMLVariableDiscriminatorValueType
 end
 
 describe "YAML::Serializable" do
@@ -735,6 +743,13 @@ describe "YAML::Serializable" do
       yaml = YAMLAttrWithDefaults.from_yaml(%({"a":null,"b":null}))
       yaml.a.should eq 11
       yaml.b.should eq "Haha"
+
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":""}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":''}))
+      yaml.b.should eq ""
+      yaml = YAMLAttrWithDefaults.from_yaml(%({"b":}))
+      yaml.b.should eq "Haha"
     end
 
     it "bool" do
@@ -931,6 +946,9 @@ describe "YAML::Serializable" do
 
       object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 4}))
       object_enum.should be_a(YAMLVariableDiscriminatorEnum)
+
+      object_enum = YAMLVariableDiscriminatorValueType.from_yaml(%({"type": 18}))
+      object_enum.should be_a(YAMLVariableDiscriminatorEnum8)
     end
   end
 

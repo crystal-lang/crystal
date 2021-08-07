@@ -687,6 +687,78 @@ describe "Codegen: is_a?" do
       )).to_i.should eq(2)
   end
 
+  it "does is_a?(generic type) for nested generic inheritance (1) (#9660)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Cxx)
+      end
+
+      Baz.new.is_a?(Foo)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance (2)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Cxx).new.is_a?(Foo)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance, through upcast (1)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Cxx)
+      end
+
+      Baz.new.as(Foo(Cxx)).is_a?(Bar)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
+  it "does is_a?(generic type) for nested generic inheritance, through upcast (2)" do
+    run(%(
+      class Cxx
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Cxx).new.as(Foo(Cxx)).is_a?(Bar)
+      ), inject_primitives: false).to_b.should be_true
+  end
+
   it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
     run(%(
       class Gen(T)

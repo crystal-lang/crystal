@@ -80,11 +80,11 @@ struct BigRational < Number
     new(mpq)
   end
 
-  def numerator
+  def numerator : BigInt
     BigInt.new { |mpz| LibGMP.mpq_get_num(mpz, self) }
   end
 
-  def denominator
+  def denominator : BigInt
     BigInt.new { |mpz| LibGMP.mpq_get_den(mpz, self) }
   end
 
@@ -104,47 +104,47 @@ struct BigRational < Number
     LibGMP.mpq_cmp(mpq, other.to_big_r)
   end
 
-  def +(other : BigRational)
+  def +(other : BigRational) : BigRational
     BigRational.new { |mpq| LibGMP.mpq_add(mpq, self, other) }
   end
 
-  def +(other : Int)
+  def +(other : Int) : BigRational
     self + other.to_big_r
   end
 
-  def -(other : BigRational)
+  def -(other : BigRational) : BigRational
     BigRational.new { |mpq| LibGMP.mpq_sub(mpq, self, other) }
   end
 
-  def -(other : Int)
+  def -(other : Int) : BigRational
     self - other.to_big_r
   end
 
-  def *(other : BigRational)
+  def *(other : BigRational) : BigRational
     BigRational.new { |mpq| LibGMP.mpq_mul(mpq, self, other) }
   end
 
-  def *(other : Int)
+  def *(other : Int) : BigRational
     self * other.to_big_r
   end
 
-  def /(other : BigRational)
+  def /(other : BigRational) : BigRational
     check_division_by_zero other
     BigRational.new { |mpq| LibGMP.mpq_div(mpq, self, other) }
   end
 
   Number.expand_div [BigInt, BigFloat, BigDecimal], BigRational
 
-  def ceil
+  def ceil : BigRational
     diff = (denominator - numerator % denominator) % denominator
     BigRational.new(numerator + diff, denominator)
   end
 
-  def floor
+  def floor : BigRational
     BigRational.new(numerator - numerator % denominator, denominator)
   end
 
-  def trunc
+  def trunc : BigRational
     self < 0 ? ceil : floor
   end
 
@@ -155,7 +155,7 @@ struct BigRational < Number
   #
   # BigRational.new(2, 3) >> 2 # => 1/6
   # ```
-  def >>(other : Int)
+  def >>(other : Int) : BigRational
     BigRational.new { |mpq| LibGMP.mpq_div_2exp(mpq, self, other) }
   end
 
@@ -166,11 +166,11 @@ struct BigRational < Number
   #
   # BigRational.new(2, 3) << 2 # => 8/3
   # ```
-  def <<(other : Int)
+  def <<(other : Int) : BigRational
     BigRational.new { |mpq| LibGMP.mpq_mul_2exp(mpq, self, other) }
   end
 
-  def -
+  def - : BigRational
     BigRational.new { |mpq| LibGMP.mpq_neg(mpq, self) }
   end
 
@@ -186,7 +186,7 @@ struct BigRational < Number
   # ```
   def **(other : Int) : BigRational
     if other < 0
-      return (self ** -other).inv
+      return (self ** other.abs).inv
     end
     BigRational.new(numerator ** other, denominator ** other)
   end
@@ -194,12 +194,12 @@ struct BigRational < Number
   # Returns a new `BigRational` as 1/r.
   #
   # This will raise an exception if rational is 0.
-  def inv
+  def inv : BigRational
     check_division_by_zero self
     BigRational.new { |mpq| LibGMP.mpq_inv(mpq, self) }
   end
 
-  def abs
+  def abs : BigRational
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
@@ -207,37 +207,37 @@ struct BigRational < Number
   def_hash to_f64
 
   # Returns the `Float64` representing this rational.
-  def to_f
+  def to_f : Float64
     to_f64
   end
 
-  def to_f32
+  def to_f32 : Float32
     to_f64.to_f32
   end
 
-  def to_f64
+  def to_f64 : Float64
     LibGMP.mpq_get_d(mpq)
   end
 
-  def to_f32!
+  def to_f32! : Float32
     to_f64.to_f32!
   end
 
-  def to_f64!
+  def to_f64! : Float64
     to_f64
   end
 
-  def to_f!
+  def to_f! : Float64
     to_f64!
   end
 
   delegate to_i8, to_i16, to_i32, to_i64, to_u8, to_u16, to_u32, to_u64, to: to_f64
 
-  def to_big_f
+  def to_big_f : BigFloat
     BigFloat.new { |mpf| LibGMP.mpf_set_q(mpf, mpq) }
   end
 
-  def to_big_i
+  def to_big_i : BigInt
     BigInt.new { |mpz| LibGMP.set_q(mpz, mpq) }
   end
 
@@ -301,7 +301,7 @@ struct Int
   #
   # 123.to_big_r
   # ```
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self, 1)
   end
 
@@ -309,11 +309,11 @@ struct Int
     -(other <=> self)
   end
 
-  def +(other : BigRational)
+  def +(other : BigRational) : BigRational
     other + self
   end
 
-  def -(other : BigRational)
+  def -(other : BigRational) : BigRational
     self.to_big_r - other
   end
 
@@ -321,7 +321,7 @@ struct Int
     self.to_big_r / other
   end
 
-  def *(other : BigRational)
+  def *(other : BigRational) : BigRational
     other * self
   end
 end
@@ -335,7 +335,7 @@ struct Float
   #
   # 123.0.to_big_r
   # ```
-  def to_big_r
+  def to_big_r : BigRational
     BigRational.new(self)
   end
 
@@ -352,7 +352,7 @@ module Math
   #
   # Math.sqrt(1_000_000_000_000.to_big_r * 1_000_000_000_000.to_big_r) # => 1000000000000.0
   # ```
-  def sqrt(value : BigRational)
+  def sqrt(value : BigRational) : BigFloat
     sqrt(value.to_big_f)
   end
 end

@@ -19,7 +19,7 @@ class Log::Builder
   @bindings = Array(Binding).new
 
   # Binds a *source* pattern to a *backend* for all logs that are of severity equal or higher to *level*.
-  def bind(source : String, level : Severity, backend : Backend)
+  def bind(source : String, level : Severity, backend : Backend) : Nil
     # TODO validate source is a valid path
 
     @mutex.synchronize do
@@ -36,7 +36,7 @@ class Log::Builder
 
   # :nodoc:
   # Removes an existing bind. It assumes there was a single bind with that backend.
-  def unbind(source : String, level : Severity, backend : Backend)
+  def unbind(source : String, level : Severity, backend : Backend) : Nil
     @mutex.synchronize do
       binding = Binding.new(source: source, level: level, backend: backend)
       @bindings.delete(binding) || raise ArgumentError.new("Non-existing binding #{source}, #{level}, #{backend}")
@@ -50,7 +50,7 @@ class Log::Builder
   end
 
   # Removes all existing bindings.
-  def clear
+  def clear : Nil
     @mutex.synchronize do
       @bindings.clear
       each_log do |log|
@@ -144,7 +144,7 @@ class Log::Builder
   end
 
   # :nodoc:
-  def close
+  def close : Nil
     @bindings.each &.backend.close
   end
 

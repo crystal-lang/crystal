@@ -76,7 +76,7 @@ struct Set(T)
   # Returns `true` of this Set is comparing objects by `object_id`.
   #
   # See `compare_by_identity`.
-  def compare_by_identity?
+  def compare_by_identity? : Bool
     @hash.compare_by_identity?
   end
 
@@ -106,7 +106,7 @@ struct Set(T)
   # s.add? 8 # => true
   # s.add? 8 # => false
   # ```
-  def add?(object : T)
+  def add?(object : T) : Bool
     @hash.put(object, nil) { return true }
     false
   end
@@ -120,7 +120,7 @@ struct Set(T)
   # ```
   #
   # See also: `#|` to merge two sets and return a new one.
-  def concat(elems)
+  def concat(elems) : self
     elems.each { |elem| self << elem }
     self
   end
@@ -132,7 +132,7 @@ struct Set(T)
   # s.includes? 5 # => true
   # s.includes? 9 # => false
   # ```
-  def includes?(object)
+  def includes?(object) : Bool
     @hash.has_key?(object)
   end
 
@@ -156,7 +156,7 @@ struct Set(T)
   # s = Set{1, 5}
   # s.size # => 2
   # ```
-  def size
+  def size : Int32
     @hash.size
   end
 
@@ -168,7 +168,7 @@ struct Set(T)
   # s.clear
   # s.size # => 0
   # ```
-  def clear
+  def clear : self
     @hash.clear
     self
   end
@@ -181,7 +181,7 @@ struct Set(T)
   # s << 3
   # s.empty? # => false
   # ```
-  def empty?
+  def empty? : Bool
     @hash.empty?
   end
 
@@ -401,7 +401,7 @@ struct Set(T)
   # Set{1, 2, 3}.intersects? Set{4, 5} # => false
   # Set{1, 2, 3}.intersects? Set{3, 4} # => true
   # ```
-  def intersects?(other : Set)
+  def intersects?(other : Set) : Bool
     if size < other.size
       any? { |o| other.includes?(o) }
     else
@@ -425,7 +425,7 @@ struct Set(T)
   # Set{1, 5}.subset_of? Set{1, 3, 5}    # => true
   # Set{1, 3, 5}.subset_of? Set{1, 3, 5} # => true
   # ```
-  def subset_of?(other : Set)
+  def subset_of?(other : Set) : Bool
     return false if other.size < size
     all? { |value| other.includes?(value) }
   end
@@ -439,7 +439,7 @@ struct Set(T)
   # Set{1, 5}.proper_subset_of? Set{1, 3, 5}    # => true
   # Set{1, 3, 5}.proper_subset_of? Set{1, 3, 5} # => false
   # ```
-  def proper_subset_of?(other : Set)
+  def proper_subset_of?(other : Set) : Bool
     return false if other.size <= size
     all? { |value| other.includes?(value) }
   end
@@ -453,7 +453,7 @@ struct Set(T)
   # Set{1, 3, 5}.superset_of? Set{1, 5}    # => true
   # Set{1, 3, 5}.superset_of? Set{1, 3, 5} # => true
   # ```
-  def superset_of?(other : Set)
+  def superset_of?(other : Set) : Bool
     other.subset_of?(self)
   end
 
@@ -466,24 +466,24 @@ struct Set(T)
   # Set{1, 3, 5}.proper_superset_of? Set{1, 5}    # => true
   # Set{1, 3, 5}.proper_superset_of? Set{1, 3, 5} # => false
   # ```
-  def proper_superset_of?(other : Set)
+  def proper_superset_of?(other : Set) : Bool
     other.proper_subset_of?(self)
   end
 
   # :nodoc:
-  def object_id
+  def object_id : UInt64
     @hash.object_id
   end
 
   # :nodoc:
-  def same?(other : Set)
+  def same?(other : Set) : Bool
     @hash.same?(other.@hash)
   end
 end
 
 module Enumerable
   # Returns a new `Set` with each unique element in the enumerable.
-  def to_set
+  def to_set : Set(T)
     Set.new(self)
   end
 end

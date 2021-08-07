@@ -1191,7 +1191,7 @@ describe "Semantic: module" do
       )) { nilable int32 }
   end
 
-  it "declares and includes generic module" do
+  it "instantiates generic variadic module, accesses T from instance method" do
     assert_type(%(
       module Moo(*T)
         def t
@@ -1207,7 +1207,55 @@ describe "Semantic: module" do
       )) { tuple_of([int32, char]).metaclass }
   end
 
-  it "declares and includes generic module, more args" do
+  it "instantiates generic variadic module, accesses T from class method" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo
+        extend Moo(Int32, Char)
+      end
+
+      Foo.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        include Moo(*T)
+      end
+
+      Foo(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from class method through generic extend" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo(*T)
+        extend Moo(*T)
+      end
+
+      Foo(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method, more args" do
     assert_type(%(
       module Moo(A, *T, B)
         def t
@@ -1220,6 +1268,22 @@ describe "Semantic: module" do
       end
 
       Foo.new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
+  end
+
+  it "instantiates generic variadic module, accesses T from instance method through generic include, more args" do
+    assert_type(%(
+      module Moo(A, *T, B)
+        def t
+          {A, T, B}
+        end
+      end
+
+      class Foo(*T)
+        include Moo(Int32, *T, String)
+      end
+
+      Foo(Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64, char]).metaclass, string.metaclass]) }
   end
 

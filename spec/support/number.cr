@@ -1,3 +1,5 @@
+require "spec/helpers/iterate"
+
 # Helper methods to describe the behavior of numbers of different types
 {% if flag?(:darwin) %}
   BUILTIN_NUMBER_TYPES =

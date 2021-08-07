@@ -140,7 +140,7 @@ module Float::Printer::CachedPowers
 
   Pow10Cache = {0, 1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000}
 
-  def self.largest_pow10(n, n_bits)
+  def self.largest_pow10(n, n_bits) : {Int32, Int32}
     # 1233/4096 is approximately 1/lg(10).
     #  We increment to skip over the first entry in the powers cache.
     guess = ((n_bits + 1) * 1233 >> 12) + 1

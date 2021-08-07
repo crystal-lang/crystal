@@ -10,6 +10,8 @@
 # ...y  # a beginless exclusive range, in mathematics: < y
 # ```
 #
+# See [`Range` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/range.html) in the language reference.
+#
 # An easy way to remember which one is inclusive and which one is exclusive it
 # to think of the extra dot as if it pushes *y* further away, thus leaving it outside of the range.
 #
@@ -219,8 +221,7 @@ struct Range(B, E)
   # (1...4).step(by: 1).to_a # => [1, 2, 3]
   # ```
   #
-  # The implementation is based on `B#step` method if available. The interface
-  # is defined at `Number#step`.
+  # If `B` is a `Steppable`, implementation is delegated to `Steppable#step`.
   # Otherwise `#succ` method is expected to be defined on `begin` and its
   # successors and iteration is based on calling `#succ` sequentially
   # (*step* times per iteration).
@@ -232,7 +233,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if current.responds_to?(:step)
+    if current.is_a?(Steppable)
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
         yield x
       end
@@ -262,7 +263,7 @@ struct Range(B, E)
       raise ArgumentError.new("Can't step beginless range")
     end
 
-    if start.responds_to?(:step)
+    if start.is_a?(Steppable)
       start.step(to: @end, by: by, exclusive: @exclusive)
     else
       StepIterator(self, B, typeof(by)).new(self, by)
@@ -275,7 +276,7 @@ struct Range(B, E)
   # (1..10).excludes_end?  # => false
   # (1...10).excludes_end? # => true
   # ```
-  def excludes_end?
+  def excludes_end? : Bool
     @exclusive
   end
 
@@ -289,7 +290,7 @@ struct Range(B, E)
   # (1...10).includes?(9)  # => true
   # (1...10).includes?(10) # => false
   # ```
-  def includes?(value)
+  def includes?(value) : Bool
     begin_value = @begin
     end_value = @end
 

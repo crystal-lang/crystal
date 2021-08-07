@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "spec/helpers/iterate"
 
 describe "String" do
   describe "[]" do
@@ -839,7 +840,7 @@ describe "String" do
     it { "hello".presence.should eq("hello") }
   end
 
-  describe "index" do
+  describe "#index" do
     describe "by char" do
       it { "foo".index('o').should eq(1) }
       it { "foo".index('g').should be_nil }
@@ -854,6 +855,12 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+
+        # Check offset type
+        it { "foobarbaz".index('a', 5_i64).should eq(7) }
+        it { "foobarbaz".index('a', 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index('本', 2_i64).should eq(4) }
+        it { "日本語日本語".index('本', 2_i64).should be_a(Int32) }
       end
     end
 
@@ -876,6 +883,14 @@ describe "String" do
         it { "日本語日本語".index("本語", 2).should eq(4) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 2).should eq(3) }
         it { "\xFD\x9A\xAD\x50NG".index("PNG", 4).should be_nil }
+
+        # Check offset type
+        it { "foobarbaz".index("a", 5_i64).should eq(7) }
+        it { "foobarbaz".index("a", 5_i64).should be_a(Int32) }
+        it { "日本語日本語".index("本", 2_i64).should eq(4) }
+        it { "日本語日本語".index("本", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".index("", 2_i64).should eq 2 }
+        it { "日本語日本語".index("", 2_i64).should be_a(Int64) }
       end
     end
 
@@ -898,7 +913,7 @@ describe "String" do
     end
   end
 
-  describe "rindex" do
+  describe "#rindex" do
     describe "by char" do
       it { "bbbb".rindex('b').should eq(3) }
       it { "foobar".rindex('a').should eq(4) }
@@ -917,6 +932,12 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+
+        # Check offset type
+        it { "bbbb".rindex('b', 2_i64).should eq(2) }
+        it { "bbbb".rindex('b', 2_i64).should be_a(Int64) }
+        it { "日本語日本語".rindex('本', 3_i64).should eq(1) }
+        it { "日本語日本語".rindex('本', 3_i64).should be_a(Int64) }
       end
     end
 
@@ -938,6 +959,14 @@ describe "String" do
         it { "foo".rindex("", 3).should eq(3) }
         it { "foo".rindex("", 4).should eq(3) }
         it { "日本語日本語".rindex("日本", 2).should eq(0) }
+
+        # Check offset type
+        it { "bbbb".rindex("b", 2_i64).should eq(2) }
+        it { "bbbb".rindex("b", 2_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("本", 3_i64).should eq(1) }
+        it { "日本語日本語".rindex("本", 3_i64).should be_a(Int32) }
+        it { "日本語日本語".rindex("", 3_i64).should eq(3) }
+        it { "日本語日本語".rindex("", 3_i64).should be_a(Int32) }
       end
     end
 
@@ -2280,6 +2309,8 @@ describe "String" do
 
   pending_win32 "formats floats (#1562)" do
     sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
+
+    sprintf("%f", 1e15).should eq("1000000000000000.000000")
   end
 
   it "does each_char" do
@@ -2319,53 +2350,9 @@ describe "String" do
     values.should eq([{'a', 10}, {'b', 11}, {'c', 12}])
   end
 
-  it "gets each_char iterator" do
-    iter = "abc".each_char
-    iter.next.should eq('a')
-    iter.next.should eq('b')
-    iter.next.should eq('c')
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "gets each_char with empty string" do
-    iter = "".each_char
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "cycles chars" do
-    "abc".each_char.cycle.first(8).join.should eq("abcabcab")
-  end
-
-  it "does each_byte" do
-    s = "abc"
-    i = 0
-    s.each_byte do |b|
-      case i
-      when 0
-        b.should eq('a'.ord)
-      when 1
-        b.should eq('b'.ord)
-      when 2
-        b.should eq('c'.ord)
-      else
-        fail "shouldn't happen"
-      end
-      i += 1
-    end.should be_nil
-    i.should eq(3)
-  end
-
-  it "gets each_byte iterator" do
-    iter = "abc".each_byte
-    iter.next.should eq('a'.ord)
-    iter.next.should eq('b'.ord)
-    iter.next.should eq('c'.ord)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "cycles bytes" do
-    "abc".each_byte.cycle.first(8).join.should eq("9798999798999798")
-  end
+  it_iterates "#each_char", ['a', 'b', 'c'], "abc".each_char
+  it_iterates "#each_char with empty string", [] of Char, "".each_char
+  it_iterates "#each_byte", ['a'.ord.to_u8, 'b'.ord.to_u8, 'c'.ord.to_u8], "abc".each_byte
 
   it "gets lines" do
     "".lines.should eq([] of String)
@@ -2401,36 +2388,10 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
-  it "gets each_line iterator" do
-    iter = "foo\nbar\r\nbaz\r\n".each_line
-    iter.next.should eq("foo")
-    iter.next.should eq("bar")
-    iter.next.should eq("baz")
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
+  it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
 
-  it "gets each_line iterator with chomp = false" do
-    iter = "foo\nbar\nbaz\n".each_line(chomp: false)
-    iter.next.should eq("foo\n")
-    iter.next.should eq("bar\n")
-    iter.next.should eq("baz\n")
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "has yields to each_codepoint" do
-    codepoints = [] of Int32
-    "ab☃".each_codepoint do |codepoint|
-      codepoints << codepoint
-    end.should be_nil
-    codepoints.should eq [97, 98, 9731]
-  end
-
-  it "has the each_codepoint iterator" do
-    iter = "ab☃".each_codepoint
-    iter.next.should eq 97
-    iter.next.should eq 98
-    iter.next.should eq 9731
-  end
+  it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
   it "has codepoints" do
     "ab☃".codepoints.should eq [97, 98, 9731]

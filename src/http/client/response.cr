@@ -25,26 +25,26 @@ class HTTP::Client::Response
     new(HTTP::Status.new(status_code), body, headers, status_message, version, body_io)
   end
 
-  def body
+  def body : String
     @body || ""
   end
 
-  def body?
+  def body? : String?
     @body
   end
 
   # Returns `true` if the response status code is between 200 and 299.
-  def success?
+  def success? : Bool
     @status.success?
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
-  def cookies
+  def cookies : HTTP::Cookies
     @cookies ||= Cookies.from_server_headers(headers)
   end
 
-  def keep_alive?
+  def keep_alive? : Bool
     HTTP.keep_alive?(self)
   end
 
@@ -53,7 +53,7 @@ class HTTP::Client::Response
   end
 
   # Convenience method to retrieve the HTTP status code.
-  def status_code
+  def status_code : Int32
     status.code
   end
 
@@ -75,7 +75,7 @@ class HTTP::Client::Response
   end
 
   # :nodoc:
-  def consume_body_io
+  def consume_body_io : Nil
     if io = @body_io
       @body = io.gets_to_end
       @body_io = nil
@@ -98,7 +98,7 @@ class HTTP::Client::Response
   # Parses an `HTTP::Client::Response` from the given `IO`.
   # Might return `nil` if there's no data in the `IO`,
   # which probably means that the connection was closed.
-  def self.from_io?(io, ignore_body = false, decompress = true)
+  def self.from_io?(io, ignore_body = false, decompress = true) : self?
     from_io?(io, ignore_body: ignore_body, decompress: decompress) do |response|
       if response
         response.consume_body_io

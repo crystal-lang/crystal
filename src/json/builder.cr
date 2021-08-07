@@ -28,7 +28,7 @@ class JSON::Builder
   end
 
   # Starts a document.
-  def start_document
+  def start_document : Nil
     case state = @state.last
     when StartState
       @state[-1] = DocumentStartState.new
@@ -53,7 +53,7 @@ class JSON::Builder
     when DocumentEndState
       # okay
     end
-    @io.flush
+    flush
   end
 
   def document
@@ -62,28 +62,28 @@ class JSON::Builder
   end
 
   # Writes a `null` value.
-  def null
+  def null : Nil
     scalar do
       @io << "null"
     end
   end
 
   # Writes a boolean value.
-  def bool(value : Bool)
+  def bool(value : Bool) : Nil
     scalar do
       @io << value
     end
   end
 
   # Writes an integer.
-  def number(number : Int)
+  def number(number : Int) : Nil
     scalar do
       @io << number
     end
   end
 
   # Writes a float.
-  def number(number : Float)
+  def number(number : Float) : Nil
     scalar do
       case number
       when .nan?
@@ -100,7 +100,7 @@ class JSON::Builder
   # by invoking `to_s` on it.
   #
   # This method can also be used to write the name of an object field.
-  def string(value)
+  def string(value) : Nil
     string = value.to_s
 
     scalar(string: true) do
@@ -157,14 +157,14 @@ class JSON::Builder
   # the IO without processing. This is the only method that
   # might lead to invalid JSON being generated, so you must
   # be sure that *string* contains a valid JSON string.
-  def raw(string : String)
+  def raw(string : String) : Nil
     scalar do
       @io << string
     end
   end
 
   # Writes the start of an array.
-  def start_array
+  def start_array : Nil
     start_scalar
     increase_indent
     @state.push ArrayState.new(empty: true)
@@ -172,7 +172,7 @@ class JSON::Builder
   end
 
   # Writes the end of an array.
-  def end_array
+  def end_array : Nil
     case state = @state.last
     when ArrayState
       @state.pop
@@ -193,7 +193,7 @@ class JSON::Builder
   end
 
   # Writes the start of an object.
-  def start_object
+  def start_object : Nil
     start_scalar
     increase_indent
     @state.push ObjectState.new(empty: true, name: true)
@@ -201,7 +201,7 @@ class JSON::Builder
   end
 
   # Writes the end of an object.
-  def end_object
+  def end_object : Nil
     case state = @state.last
     when ObjectState
       unless state.name
@@ -235,12 +235,12 @@ class JSON::Builder
   end
 
   # :ditto:
-  def scalar(value : Int | Float)
+  def scalar(value : Int | Float) : Nil
     number(value)
   end
 
   # :ditto:
-  def scalar(value : String)
+  def scalar(value : String) : Nil
     string(value)
   end
 
@@ -415,6 +415,5 @@ module JSON
     builder.document do
       yield builder
     end
-    io.flush
   end
 end

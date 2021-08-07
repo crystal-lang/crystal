@@ -625,6 +625,42 @@ describe "Enumerable" do
     end
   end
 
+  describe "#accumulate" do
+    context "prefix sums" do
+      it { SpecEnumerable.new.accumulate.should eq([1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate.should eq([1.5, 5.25, 11.375]) }
+      it { Array(Int32).new.accumulate.should eq(Array(Int32).new) }
+    end
+
+    context "prefix sums, with init" do
+      it { SpecEnumerable.new.accumulate(0).should eq([0, 1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate(0.5).should eq([0.5, 2.0, 5.75, 11.875]) }
+      it { Array(Int32).new.accumulate(7).should eq([7]) }
+
+      it "preserves initial type" do
+        x = SpecEnumerable.new.accumulate(4.0)
+        x.should be_a(Array(Float64))
+        x.should eq([4.0, 5.0, 7.0, 10.0])
+      end
+    end
+
+    context "generic cumulative fold" do
+      it { SpecEnumerable.new.accumulate { |x, y| x * 10 + y }.should eq([1, 12, 123]) }
+      it { Array(Int32).new.accumulate { raise "" }.should eq(Array(Int32).new) }
+    end
+
+    context "generic cumulative fold, with init" do
+      it { SpecEnumerable.new.accumulate(4) { |x, y| x * 10 + y }.should eq([4, 41, 412, 4123]) }
+      it { Array(Int32).new.accumulate(7) { raise "" }.should eq([7]) }
+
+      it "preserves initial type" do
+        x = [4, 3, 2].accumulate("X") { |x, y| x * y }
+        x.should be_a(Array(String))
+        x.should eq(%w(X XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXX))
+      end
+    end
+  end
+
   describe "#join" do
     it "()" do
       [1, 2, 3].join.should eq("123")
@@ -896,6 +932,12 @@ describe "Enumerable" do
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
     end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
   end
 
   describe "sample" do
@@ -1132,6 +1174,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do
