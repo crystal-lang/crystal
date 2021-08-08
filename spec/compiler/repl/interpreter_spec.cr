@@ -4088,6 +4088,26 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does CSV" do
+      interpret(<<-CODE, prelude: "prelude").should eq((1..6).sum)
+        require "csv"
+
+        csv = CSV.new <<-CSV, headers: true
+          a, b, c
+          1, 2, 3
+          4, 5, 6
+        CSV
+
+        sum = 0
+        csv.each do
+          {"a", "b", "c"}.each do |name|
+            sum += csv[name].to_i
+          end
+        end
+        sum
+      CODE
+    end
+
     it "does JSON" do
       interpret(<<-CODE, prelude: "prelude").should eq(6)
         require "json"
@@ -4096,6 +4116,21 @@ describe Crystal::Repl::Interpreter do
           {"a": [1, 2, 3]}
           JSON
         json.as_h["a"].as_a.sum(&.as_i)
+      CODE
+    end
+
+    it "does JSON::Serializable" do
+      interpret(<<-CODE, prelude: "prelude").should eq(3)
+        require "json"
+
+        record Point, x : Int32, y : Int32 do
+          include JSON::Serializable
+        end
+
+        point = Point.from_json <<-JSON
+          {"x": 1, "y": 2}
+        JSON
+        point.x + point.y
       CODE
     end
 
