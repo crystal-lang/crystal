@@ -1384,6 +1384,15 @@ describe Crystal::Repl::Interpreter do
       repl_value.value.should eq(program.llvm_id.type_id(program.int32))
     end
 
+    it "interprets class_crystal_instance_type_id" do
+      interpret(<<-CODE, prelude: "prelude").should be_true
+        class Foo
+        end
+
+        Foo.new.crystal_type_id == Foo.crystal_instance_type_id
+        CODE
+    end
+
     it "discards Path" do
       interpret("String; 1").should eq(1)
     end

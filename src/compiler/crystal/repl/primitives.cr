@@ -106,6 +106,18 @@ class Crystal::Repl::Compiler
       return unless @wants_value
 
       put_i32 type_id(type), node: node
+    when "class_crystal_instance_type_id"
+      type =
+        if obj
+          discard_value(obj)
+          obj.type
+        else
+          scope
+        end
+
+      return unless @wants_value
+
+      put_i32 type_id(type.instance_type), node: node
     when "allocate"
       raise_if_wants_struct_pointer(node, body)
 
