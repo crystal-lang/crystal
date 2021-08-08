@@ -251,7 +251,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     if node.type.nil_type?
-      pop aligned_sizeof_type(node.body), node: nil
+      if node.body.type?
+        pop aligned_sizeof_type(node.body), node: nil
+      else
+        # Nothing to do, there's no body type which probably means
+        # the last expression in the body is unreachable, and given
+        # that this already returns nil, the value was already "casted" to nil
+      end
     else
       upcast node.body, node.body.type, final_type
     end

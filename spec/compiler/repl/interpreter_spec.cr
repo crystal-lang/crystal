@@ -4113,6 +4113,22 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "does YAML::Serializable" do
+      interpret(<<-CODE, prelude: "prelude").should eq(3)
+        require "yaml"
+
+        record Point, x : Int32, y : Int32 do
+          include YAML::Serializable
+        end
+
+        point = Point.from_yaml <<-YAML
+          x: 1
+          y: 2
+        YAML
+        point.x + point.y
+      CODE
+    end
+
     it "does XML" do
       interpret(<<-CODE, prelude: "prelude").should eq(3)
         require "xml"
