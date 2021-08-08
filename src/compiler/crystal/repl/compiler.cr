@@ -250,7 +250,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       final_type = merge_block_break_type(final_type, compiled_block.block)
     end
 
-    if node.type.nil_type?
+    if final_type.nil_type?
+      # Cast whatever was returned to Nil, which means just popping it from the stack
       if node.body.type?
         pop aligned_sizeof_type(node.body), node: nil
       else
@@ -258,6 +259,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # the last expression in the body is unreachable, and given
         # that this already returns nil, the value was already "casted" to nil
       end
+    elsif final_type.no_return?
+      # Nothing to do, the body never returns so there's nothing to upcast
     else
       upcast node.body, node.body.type, final_type
     end
