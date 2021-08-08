@@ -1566,7 +1566,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     proc_args = [] of FFI::CallInterface?
 
     dont_request_struct_pointer do
-      node.args.each do |arg|
+      node.args.each_with_index do |arg, i|
         arg_type = arg.type
 
         if arg.is_a?(NilLiteral)
@@ -1580,7 +1580,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         if arg_type.is_a?(ProcInstanceType)
           args_bytesizes << aligned_sizeof_type(arg)
           args_ffi_types << FFI::Type.pointer
-          proc_args << arg_type.ffi_call_interface
+
+          # We need to use the type in the lib fun definition
+          external_arg = external.args[i]
+          proc_args << external_arg.type.as(ProcInstanceType).ffi_call_interface
         else
           case arg
           when NilLiteral

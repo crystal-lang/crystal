@@ -4112,6 +4112,26 @@ describe Crystal::Repl::Interpreter do
         yaml.as_h["a"].as_a.sum(&.as_i)
       CODE
     end
+
+    it "does XML" do
+      interpret(<<-CODE, prelude: "prelude").should eq(3)
+        require "xml"
+
+        doc = XML.parse(<<-XML
+          <?xml version='1.0' encoding='UTF-8'?>
+          <people>
+            <person id="1" id2="2">
+              <name>John</name>
+            </person>
+          </people>
+          XML
+        )
+        attrs = doc.root.not_nil!.children[1].attributes
+        id = attrs["id"].content.to_i
+        id2 = attrs["id2"].content.to_i
+        id + id2
+        CODE
+    end
   end
 end
 
