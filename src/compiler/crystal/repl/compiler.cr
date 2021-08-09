@@ -20,6 +20,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # The variables closures in the closest context
     getter vars : Hash(String, {Int32, Type})
 
+    # The self type, if captured, otherwise nil.
+    # Comes after vars, at the end of the closure (this closure never has a parent closure).
+    getter self_type : Type?
+
     # The parent context, if any, where more closured variables might be reached
     getter parent : ClosureContext?
 
@@ -28,7 +32,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # data and occupy 8 bytes.
     getter bytesize : Int32
 
-    def initialize(@vars : Hash(String, {Int32, Type}), @parent : ClosureContext?, @bytesize : Int32)
+    def initialize(
+      @vars : Hash(String, {Int32, Type}),
+      @self_type : Type?,
+      @parent : ClosureContext?,
+      @bytesize : Int32
+    )
     end
   end
 
@@ -227,7 +236,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # Compile bytecode instructions for the given method.
   def compile_def(node : Def, parent_closure_context : ClosureContext? = nil, closure_owner = node) : Nil
-    prepare_closure_context(node, closure_owner: closure_owner, parent_closure_context: parent_closure_context)
+    prepare_closure_context(
+      node,
+      closure_owner: closure_owner,
+      parent_closure_context: parent_closure_context,
+    )
 
     # If any def argument is closured, we need to store it in the closure
     node.args.each do |arg|
@@ -756,6 +769,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_closured_var?(name : String, closure_context : ClosureContext, indexes : Array(Int32))
+    if name == "self" && (closure_self_type = closure_context.self_type)
+      indexes << closure_context.bytesize - aligned_sizeof_type(closure_self_type)
+      return closure_self_type
+    end
+
     closured_var = closure_context.vars[name]?
     if closured_var
       indexes << closured_var[0]
@@ -770,6 +788,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def prepare_closure_context(vars_owner, closure_owner = vars_owner, parent_closure_context = nil)
+    closure_self_type = nil
+    if closure_owner.is_a?(Def) && closure_owner.self_closured?
+      closure_self_type = closure_owner.owner
+    end
+
     if parent_closure_context
       @closure_context = parent_closure_context
     end
@@ -778,7 +801,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # If there's no closure in this context, we might still have a closure
     # if the parent formed a closure
-    if closured_vars.empty?
+    if closured_vars.empty? && !closure_self_type
       @closure_context = parent_closure_context
       return
     end
@@ -787,9 +810,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       closured_vars_bytesize += sizeof(Void*)
     end
 
+    if closure_self_type
+      closured_vars_bytesize += aligned_sizeof_type(closure_self_type)
+    end
+
     closure_context = ClosureContext.new(
       vars: closured_vars,
       parent: parent_closure_context,
+      self_type: closure_self_type,
       bytesize: closured_vars_bytesize,
     )
     @closure_context = closure_context
@@ -801,6 +829,27 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Store the pointer in the closure context local variable
     index = @local_vars.name_to_index(Closure::VAR_NAME, @block_level)
     set_local index, sizeof(Void*), node: nil
+
+    # If there's a closured self type, store it now
+    if closure_self_type
+      # Load self
+      # (pointer_set expects the value to come before the pointer)
+      local_self_index = @local_vars.name_to_index("self", 0)
+      get_local local_self_index, aligned_sizeof_type(closure_self_type), node: nil
+
+      # Get the closure pointer
+      get_local index, sizeof(Void*), node: nil
+
+      # Offset pointer to reach self pointer
+      closure_self_index = closure_context.bytesize - aligned_sizeof_type(closure_self_type)
+      if closure_self_index > 0
+        put_i32 closure_self_index, node: nil
+        pointer_add 1, node: nil
+      end
+
+      # Store self in closure
+      pointer_set aligned_sizeof_type(closure_self_type), node: nil
+    end
 
     if parent_closure_context
       # Find the closest parent closure
@@ -1808,7 +1857,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       {% if Debug::DECOMPILE %}
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
-        puts Disassembler.disassemble(@context, compiled_block.instructions, compiled_block.nodes, @local_vars)
+        puts Disassembler.disassemble(@context, compiled_block.instructions, @local_vars)
         puts "=== #{target_def.owner}##{target_def.name}#block ==="
       {% end %}
     ensure
@@ -1996,6 +2045,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       local_vars.declare(name, var_type)
     end
 
+    needs_closure_context ||= owner.is_a?(Def) && owner.self_closured?
+
     if needs_closure_context
       local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
     end
@@ -2128,8 +2179,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compiled_def.local_vars.declare(arg.name, var_type)
     end
 
-    needs_closure_context =
-      target_def.vars.try &.any? { |name, var| var.type? && var.closure_in?(target_def) }
+    a_def = @def
+
+    needs_closure_context = (target_def.vars.try &.any? { |name, var| var.type? && var.closure_in?(target_def) })
 
     # Declare the closure context arg and var, if any
     if is_closure || needs_closure_context
@@ -2565,6 +2617,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   private def put_self(*, node : ASTNode)
+    closured_self = lookup_closured_var?("self")
+    if closured_self
+      read_from_closured_var(closured_self, node: node)
+      return
+    end
+
     if scope.struct?
       if scope.passed_by_value?
         get_local 0, sizeof(Pointer(UInt8)), node: node

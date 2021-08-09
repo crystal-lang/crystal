@@ -4075,6 +4075,62 @@ describe Crystal::Repl::Interpreter do
           end
         CODE
     end
+
+    it "closures self in proc literal" do
+      interpret(<<-CODE).should eq(3)
+        class Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+
+          def closure
+            ->{ self.inc }
+          end
+        end
+
+        foo = Foo.new
+        proc = foo.closure
+        proc.call
+        proc.call
+        foo.x
+        CODE
+    end
+
+    it "closures self in proc literal (implicit self)" do
+      interpret(<<-CODE).should eq(3)
+        class Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+
+          def closure
+            ->{ inc }
+          end
+        end
+
+        foo = Foo.new
+        proc = foo.closure
+        proc.call
+        proc.call
+        foo.x
+        CODE
+    end
   end
 
   context "struct set" do

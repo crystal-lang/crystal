@@ -246,7 +246,7 @@ class Crystal::Repl::Interpreter
 
         call_frame = @call_stack.last
         a_def = call_frame.compiled_def.def
-        offset = (ip - instructions.to_unsafe).to_i32
+        offset = (ip - instructions.instructions.to_unsafe).to_i32
         puts "In: #{a_def.owner}##{a_def.name}"
         node = instructions.nodes[offset]?
         puts "Node: #{node}" if node
