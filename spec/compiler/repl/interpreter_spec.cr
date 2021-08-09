@@ -1352,6 +1352,28 @@ describe Crystal::Repl::Interpreter do
         end
         CODE
     end
+
+    it "does is_a? from NilableProcType to Nil" do
+      interpret(<<-CODE).should eq(10)
+        proc = 1 == 1 ? nil : ->{ 1 }
+        if proc.nil?
+          10
+        else
+          20
+        end
+        CODE
+    end
+
+    it "does is_a? from NilableProcType to non-Nil" do
+      interpret(<<-CODE).should eq(10)
+        proc = 1 == 2 ? nil : ->{ 10 }
+        if proc.is_a?(Proc)
+          proc.call
+        else
+          20
+        end
+        CODE
+    end
   end
 
   context "responds_to?" do

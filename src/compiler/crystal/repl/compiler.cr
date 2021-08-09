@@ -1591,6 +1591,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: maybe missing checking against another reference union type?
         reference_is_a(type_id(filtered_type), node: node)
       end
+    when NilableProcType
+      # Remove the closure data
+      pop sizeof(Void*), node: nil
+
+      if filtered_type.nil_type?
+        pointer_is_null(node: node)
+      else
+        pointer_is_not_null(node: node)
+      end
     when ReferenceUnionType
       case filtered_type
       when NonGenericClassType
@@ -1602,10 +1611,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: not tested
         reference_is_a(type_id(filtered_type), node: node)
       else
-        node.raise "BUG: missing IsA from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
+        node.raise "BUG: missing filter type from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
       end
     else
-      node.raise "BUG: missing IsA from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
+      node.raise "BUG: missing filter type from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
     end
   end
 
