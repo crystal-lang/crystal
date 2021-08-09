@@ -1336,13 +1336,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      local_var = lookup_closured_var_or_local_var(exp.name)
-      case local_var
+      var = lookup_closured_var_or_local_var(exp.name)
+      case var
       in LocalVar
-        index, type = local_var.index, local_var.type
+        index, type = var.index, var.type
         pointerof_var(index, node: node)
       in ClosuredVar
-        node.raise "BUG: missing interpter pointerof closured var"
+        read_closured_var_pointer(var, node: node)
       end
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)

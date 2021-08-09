@@ -4076,6 +4076,18 @@ describe Crystal::Repl::Interpreter do
         CODE
     end
 
+    it "does closure with pointerof local var" do
+      interpret(<<-CODE).should eq(42)
+          a = 0
+          proc = ->do
+            ptr = pointerof(a)
+            ptr.value = 42
+          end
+          proc.call
+          a
+        CODE
+    end
+
     it "closures self in proc literal" do
       interpret(<<-CODE).should eq(3)
         class Foo
