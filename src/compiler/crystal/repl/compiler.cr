@@ -1554,7 +1554,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     type = type.remove_indirection
     filtered_type = type.filter_by(target_type).not_nil!
 
-    filter_type(node, type, target_type)
+    filter_type(node, type, filtered_type)
   end
 
   private def responds_to(node : ASTNode, type : Type, name : String)
