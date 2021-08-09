@@ -1697,7 +1697,7 @@ class Array(T)
   # b # => [3, 2, 1]
   # a # => [3, 1, 2]
   # ```
-  def sort(&block : T, T -> Int32?) : Array(T) forall U
+  def sort(&block : T, T -> Int32?) : Array(T)
     dup.sort! &block
   end
 
