@@ -559,13 +559,38 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           dup(aligned_sizeof_type(node.value), node: nil)
         end
 
-        ivar_offset = ivar_offset(scope, target.name)
-        ivar = scope.lookup_instance_var(target.name)
-        ivar_size = inner_sizeof_type(ivar.type)
+        closure_self = lookup_closured_var?("self")
+        if closure_self
+          if closure_self.type.passed_by_value?
+            node.raise "BUG: missing interpret assig closured instance var of pass-by-value"
+          else
+            ivar_offset = ivar_offset(closure_self.type, target.name)
+            ivar = closure_self.type.lookup_instance_var(target.name)
+            ivar_size = inner_sizeof_type(ivar.type)
 
-        upcast node.value, node.value.type, ivar.type
+            upcast node.value, node.value.type, ivar.type
 
-        set_self_ivar ivar_offset, ivar_size, node: node
+            # Read self pointer
+            read_from_closured_var(closure_self, node: nil)
+
+            # Now offset it to reach the instance var
+            if ivar_offset > 0
+              put_i32 ivar_offset, node: nil
+              pointer_add 1, node: nil
+            end
+
+            # Finally set it
+            pointer_set ivar_size, node: nil
+          end
+        else
+          ivar_offset = ivar_offset(scope, target.name)
+          ivar = scope.lookup_instance_var(target.name)
+          ivar_size = inner_sizeof_type(ivar.type)
+
+          upcast node.value, node.value.type, ivar.type
+
+          set_self_ivar ivar_offset, ivar_size, node: node
+        end
 
         # If this assignment is part of a call that needs a struct pointer, produce it now
         if @wants_struct_pointer
@@ -960,10 +985,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       push_zeros aligned_sizeof_type(node), node: nil
       compile_pointerof_ivar(node, node.name)
     else
-      ivar_offset = ivar_offset(scope, node.name)
-      ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+      closure_self = lookup_closured_var?("self")
+      if closure_self
+        ivar_offset = ivar_offset(closure_self.type, node.name)
+        ivar_size = inner_sizeof_type(closure_self.type.lookup_instance_var(node.name))
 
-      get_self_ivar ivar_offset, ivar_size, node: node
+        if closure_self.type.passed_by_value?
+          node.raise "BUG: missing interpret read closured instance var of pass-by-value"
+        else
+          # Read self pointer
+          read_from_closured_var(closure_self, node: node)
+
+          # Now offset it to reach the instance var
+          if ivar_offset > 0
+            put_i32 ivar_offset, node: node
+            pointer_add 1, node: node
+          end
+
+          # Finally read it
+          pointer_get ivar_size, node: node
+        end
+      else
+        ivar_offset = ivar_offset(scope, node.name)
+        ivar_size = inner_sizeof_type(scope.lookup_instance_var(node.name))
+
+        get_self_ivar ivar_offset, ivar_size, node: node
+      end
     end
 
     false

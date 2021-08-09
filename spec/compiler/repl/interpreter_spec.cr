@@ -4143,6 +4143,30 @@ describe Crystal::Repl::Interpreter do
         foo.x
         CODE
     end
+
+    it "closures self and modifies instance var" do
+      interpret(<<-CODE).should eq(3)
+        class Foo
+          def initialize
+            @x = 1
+          end
+
+          def x
+            @x
+          end
+
+          def closure
+            ->{ @x += 1 }
+          end
+        end
+
+        foo = Foo.new
+        proc = foo.closure
+        proc.call
+        proc.call
+        foo.x
+        CODE
+    end
   end
 
   context "struct set" do
