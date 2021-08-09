@@ -98,15 +98,13 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
+  std_spec
 
   case $ARCH in
     i386)
       with_build_env 'make crystal threads=1'
-      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1 junit_output=.junit/std_spec.0.xml'
-      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1 junit_output=.junit/std_spec.1.xml'
-      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1 junit_output=.junit/std_spec.2.xml'
-      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1 junit_output=.junit/std_spec.3.xml'
+
+      run_specs_in_batches spec/std 4 std_spec
 
       parts=16
       i=0
@@ -123,6 +121,37 @@ build() {
   esac
 
   with_build_env 'find samples -name "*.cr" | xargs -tn 1 ./bin/crystal build --no-codegen'
+}
+
+std_spec() {
+  case $ARCH in
+    i386)
+      with_build_env 'make deps'
+
+      run_specs_in_batches spec/std 4 std_spec
+      ;;
+    *)
+      with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
+      ;;
+  esac
+}
+
+run_specs_in_batches() {
+  path=$1
+  parts=$2
+  junit_filename=$3
+
+  spec_files=$(find $path -mindepth 1 -maxdepth 1)
+  num_files=$(echo "$spec_files" | wc -l)
+  batch_size=$(( $num_files / $parts + 1 ))
+
+  i=0
+  while [ $i -lt $parts ]; do
+    batch_files=$(echo "$spec_files" | tail -n +$(( $batch_size * $i + 1 )) | head -$batch_size)
+
+    with_build_env "echo \"$batch_files\" | xargs bin/crystal spec --junit_output=.junit/$junit_filename.$i.xml"
+    i=$((i + 1))
+  done
 }
 
 format() {
@@ -256,6 +285,9 @@ case $command in
     ;;
   build)
     build
+    ;;
+  std_spec)
+    std_spec
     ;;
   format)
     format

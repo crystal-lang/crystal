@@ -60,7 +60,7 @@ jobs:
       - run: bin/ci prepare_system
       - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
       - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'make std_spec threads=1 junit_output=.junit/std_spec.xml'
+      - run: bin/ci std_spec
       - run:
           when: always
           command: |

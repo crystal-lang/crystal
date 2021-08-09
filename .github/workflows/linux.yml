@@ -41,7 +41,7 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: bin/ci with_build_env 'make std_spec threads=1'
+        run: bin/ci std_spec
 
   test_alpine:
     env:
