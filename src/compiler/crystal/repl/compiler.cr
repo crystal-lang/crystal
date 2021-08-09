@@ -1443,10 +1443,32 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def is_a(node, type, target_type)
+  def visit(node : RespondsTo)
+    node.obj.accept self
+    return false unless @wants_value
+
+    obj_type = node.obj.type
+
+    responds_to(node, obj_type, node.name)
+
+    false
+  end
+
+  private def is_a(node : ASTNode, type : Type, target_type : Type)
     type = type.remove_indirection
     filtered_type = type.filter_by(target_type).not_nil!
 
+    filter_type(node, type, target_type)
+  end
+
+  private def responds_to(node : ASTNode, type : Type, name : String)
+    type = type.remove_indirection
+    filtered_type = type.filter_by_responds_to(name).not_nil!
+
+    filter_type(node, type, filtered_type)
+  end
+
+  private def filter_type(node : ASTNode, type : Type, filtered_type : Type)
     if type == filtered_type
       # TODO: not tested
       pop aligned_sizeof_type(type), node: nil
@@ -1484,10 +1506,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: not tested
         reference_is_a(type_id(filtered_type), node: node)
       else
-        node.raise "BUG: missing IsA from #{type} to #{target_type} (#{type.class} to #{target_type.class})"
+        node.raise "BUG: missing IsA from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
       end
     else
-      node.raise "BUG: missing IsA from #{type} to #{target_type} (#{type.class} to #{target_type.class})"
+      node.raise "BUG: missing IsA from #{type} to #{filtered_type} (#{type.class} to #{filtered_type.class})"
     end
   end
 
