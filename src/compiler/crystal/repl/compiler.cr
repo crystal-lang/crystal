@@ -969,6 +969,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
+  private def pointerof_local_var_or_closured_var(var : LocalVar | ClosuredVar, *, node : ASTNode?)
+    case var
+    in LocalVar
+      pointerof_var(var.index, node: node)
+    in ClosuredVar
+      read_closured_var_pointer(var, node: node)
+    end
+  end
+
   private def get_closure_var_index
     # It might be that there's no closure in the current block,
     # so we must search in parent blocks or the enclosing method
@@ -2054,26 +2063,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           pop_obj = obj
         end
       else
-        local_var = lookup_closured_var_or_local_var(obj.name)
-        case local_var
-        in LocalVar
-          ptr_index, var_type = local_var.index, local_var.type
-          if obj.type == var_type
-            pointerof_var(ptr_index, node: obj)
-          elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
-            # Get pointer of var
-            pointerof_var(ptr_index, node: obj)
+        var = lookup_closured_var_or_local_var(obj.name)
+        var_type = var.type
 
-            # Add 8 to it, to reach the union value
-            put_i64 8_i64, node: nil
-            pointer_add 1_i64, node: nil
-          elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
-            pointerof_var(ptr_index, node: obj)
-          else
-            obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
-          end
-        in ClosuredVar
-          obj.raise "BUG: missing interpter struct call receiver with closured var"
+        if obj.type == var_type
+          pointerof_local_var_or_closured_var(var, node: obj)
+        elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
+          # Get pointer of var
+          pointerof_local_var_or_closured_var(var, node: obj)
+
+          # Add 8 to it, to reach the union value
+          put_i64 8_i64, node: nil
+          pointer_add 1_i64, node: nil
+        elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
+          pointerof_local_var_or_closured_var(var, node: obj)
+        else
+          obj.raise "BUG: missing call receiver by value cast from #{var_type} to #{obj.type} (#{var_type.class} to #{obj.type.class})"
         end
       end
     when InstanceVar

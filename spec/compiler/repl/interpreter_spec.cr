@@ -4227,6 +4227,29 @@ describe Crystal::Repl::Interpreter do
         foo.x
         CODE
     end
+
+    it "closures struct and calls method on it" do
+      interpret(<<-CODE).should eq(2)
+        struct Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+        end
+
+        foo = Foo.new
+        proc = ->{ foo.inc }
+        proc.call
+        foo.x
+      CODE
+    end
   end
 
   context "struct set" do
