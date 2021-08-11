@@ -136,6 +136,26 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets at the class level" do
+      interpret(<<-CODE).should eq(1)
+        x = 0
+
+        class Foo
+          x = self.foo
+
+          def self.foo
+            bar
+          end
+
+          def self.bar
+            1
+          end
+        end
+
+        x
+      CODE
+    end
   end
 
   context "conversion" do
@@ -3488,6 +3508,24 @@ describe Crystal::Repl::Interpreter do
         end
 
         x
+      CODE
+    end
+
+    it "interprets self inside constant inside class" do
+      interpret(<<-CODE).should eq(1)
+        class Foo
+          X = self.foo
+
+          def self.foo
+            bar
+          end
+
+          def self.bar
+            1
+          end
+        end
+
+        Foo::X
       CODE
     end
   end

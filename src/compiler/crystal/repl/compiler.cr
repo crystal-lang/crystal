@@ -708,12 +708,21 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   def visit(node : Var)
     return false unless @wants_value
 
+    is_self = node.name == "self"
+
+    # This is the case of "self" that refers to a metaclass,
+    # particularly when outside of a method.
+    if is_self && !scope.is_a?(Program) && !scope.passed_as_self?
+      put_type scope, node: node
+      return
+    end
+
     local_var = lookup_closured_var_or_local_var(node.name)
     case local_var
     in LocalVar
       index, type = local_var.index, local_var.type
 
-      if node.name == "self" && type.passed_by_value?
+      if is_self && type.passed_by_value?
         if @wants_struct_pointer
           push_zeros aligned_sizeof_type(scope), node: nil
           put_self(node: node)
@@ -733,7 +742,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       downcast node, type, node.type
     in ClosuredVar
-      if node.name == "self" && local_var.type.passed_by_value?
+      if is_self && local_var.type.passed_by_value?
         if @wants_struct_pointer
           node.raise "BUG: missing interpret read closured var with self wants_struct_pointer"
         else
@@ -1350,7 +1359,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     value = @context.program.cleanup(value)
 
     fake_def = const.fake_def.not_nil!
-    fake_def.owner = const.visitor.not_nil!.current_type
+    fake_def.owner = const.namespace.metaclass
     fake_def.body = value
     fake_def.bind_to(value)
 
@@ -2438,8 +2447,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ClassDef)
-    # TODO: change scope
-    discard_value node.body
+    with_scope(node.resolved_type.metaclass) do
+      discard_value node.body
+    end
 
     return false unless @wants_value
 
@@ -2448,13 +2458,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : ModuleDef)
-    # TODO: change scope
-    discard_value node.body
+    with_scope(node.resolved_type.metaclass) do
+      discard_value node.body
+    end
 
     return false unless @wants_value
 
     put_nil(node: node)
     false
+  end
+
+  private def with_scope(scope : Type)
+    old_scope = @scope
+    @scope = scope
+    begin
+      yield
+    ensure
+      @scope = old_scope
+    end
   end
 
   def visit(node : EnumDef)
