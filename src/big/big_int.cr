@@ -436,15 +436,21 @@ struct BigInt < Int
 
       len += 1 if negative
 
+      # Allocate a buffer with capacity `len + 1` for the number of
+      # expected/requested digits plus sign (if negative) and null terminator
+      # (required by libgmp).
       String.new(len + 1) do |buffer|
-        # e.g. precision = 13, count = 8
-        # "_____12345678\0" for positive
-        # "_____-12345678\0" for negative
+        # Explicitly clear the memory of the second-to last byte because that
+        # migt not be overriden by `LibGMP.get_str` because the value returned
+        # by `LibGMP.sizeinbase` can be 1 too big.
         buffer[len - 1] = 0
+
         start = buffer + offset
         LibGMP.get_str(start, upcase ? -base : base, self)
 
-        # `sizeinbase` may be 1 greater than the exact value
+        # `LibGMP.sizeinbase` may be 1 greater than the exact value, in which
+        # case the last byte of the buffer was not overriden and still
+        # has the initial value `0`.
         if buffer[len - 1] == 0
           if precision >= count
             # e.g. precision = 7, count = 3, exact count = 2
