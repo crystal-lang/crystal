@@ -5349,7 +5349,7 @@ module Crystal
       args = call_args.args if call_args
 
       if args && !args.empty?
-        if args.size == 1
+        if args.size == 1 && !args.first.is_a?(Splat)
           node = klass.new(args.first)
         else
           tuple = TupleLiteral.new(args).at(args.last)
