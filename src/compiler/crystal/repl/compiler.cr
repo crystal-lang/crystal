@@ -1208,7 +1208,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     cond_jump_location = patch_location
 
     node.then.accept self
-    upcast node.then, node.then.type, node.type if @wants_value
+
+    # TODO: for some reason the semantic pass might leave this as nil
+    if @wants_value && (then_type = node.then.type?)
+      upcast node.then, then_type, node.type
+    end
 
     jump 0, node: nil
     then_jump_location = patch_location
@@ -1216,7 +1220,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     patch_jump(cond_jump_location)
 
     node.else.accept self
-    upcast node.else, node.else.type, node.type if @wants_value
+
+    # TODO: for some reason the semantic pass might leave this as nil
+    if @wants_value && (else_type = node.else.type?)
+      upcast node.else, else_type, node.type
+    end
 
     patch_jump(then_jump_location)
 
