@@ -4268,6 +4268,18 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "magic constants" do
+    it "does line number" do
+      interpret(<<-CODE).should eq(6)
+          def foo(x, line = __LINE__)
+            x + line
+          end
+
+          foo(1)
+        CODE
+    end
+  end
+
   context "integration" do
     it "does Int32#to_s" do
       interpret(<<-CODE, prelude: "prelude").should eq("123456789")

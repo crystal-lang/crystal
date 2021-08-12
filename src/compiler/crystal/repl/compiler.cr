@@ -362,7 +362,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     return false unless @wants_value
 
     # TODO: use a string pool?
-    put_i64 node.value.object_id.unsafe_as(Int64), node: node
+    put_string node.value, node: node
     false
   end
 
@@ -1826,10 +1826,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       args_bytesize += aligned_sizeof_type(obj_type)
     end
 
+    multidispatch_self = target_def.args.first?.try &.name == "self"
+
     i = 0
 
     # This is the case of a multidispatch with an explicit "self" being passed
-    i += 1 if target_def.args.first?.try &.name == "self"
+    i += 1 if multidispatch_self
 
     args.each do
       target_def_arg = target_def.args[i]
@@ -1838,6 +1840,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       i += 1
     end
+
+    node_args_size = node.args.size
+
+    # Don't count "self" arg in multidispatch
+    node_args_size += 1 if multidispatch_self
+
+    # Also take magic constants into account.
+    # Every magic constant is either an int or a string, and that's
+    # always 8 bytes when aligned.
+    args_bytesize += 8 * (target_def.args.size - node_args_size)
 
     # If the block is captured there's an extra argument
     if block && block.fun_literal
@@ -1952,11 +1964,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
 
     target_def_args = target_def.args
+    multidispatch_self = target_def_args.first?.try &.name == "self"
 
     i = 0
 
     # This is the case of a multidispatch with an explicit "self" being passed
-    i += 1 if target_def.args.first?.try &.name == "self"
+    i += 1 if multidispatch_self
 
     node.args.each do |arg|
       arg_type = arg.type
@@ -1966,6 +1979,34 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       compile_call_arg(arg, arg_type, target_def_var_type)
 
       i += 1
+    end
+
+    # Then magic constants (__LINE__, __FILE__, __DIR__)
+    node_args_size = node.args.size
+
+    # Don't count "self" arg in multidispatch
+    node_args_size += 1 if multidispatch_self
+
+    node_args_size.upto(target_def.args.size - 1) do |index|
+      arg = target_def.args[index]
+      default_value = arg.default_value.as(MagicConstant)
+      location = node.location
+      end_location = node.end_location
+      case default_value.name
+      when :__LINE__
+        put_i32 MagicConstant.expand_line(location), node: node
+      when :__END_LINE__
+        # TODO: not tested
+        put_i32 MagicConstant.expand_line(end_location), node: node
+      when :__FILE__
+        # TODO: not tested
+        put_string MagicConstant.expand_file(location), node: node
+      when :__DIR__
+        # TODO: not tested
+        put_string MagicConstant.expand_dir(location), node: node
+      else
+        default_value.raise "BUG: unknown magic constant: #{default_value.name}"
+      end
     end
 
     if fun_literal = node.block.try(&.fun_literal)
@@ -2671,6 +2712,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def put_u64(value : UInt64, *, node : ASTNode?)
     put_i64 value.to_i64!, node: node
+  end
+
+  private def put_string(value : String, *, node : ASTNode?)
+    put_i64 value.object_id.unsafe_as(Int64), node: node
   end
 
   private def put_type(type : Type, *, node : ASTNode?)
