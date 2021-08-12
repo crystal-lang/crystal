@@ -398,7 +398,7 @@ class File < IO::FileDescriptor
     File.expand_brace_pattern(pattern, expanded_patterns)
 
     expanded_patterns.each do |expanded_pattern|
-      return true if match_single_pattern(expanded_pattern, path)
+      return true if match_single_pattern(expanded_pattern, path.to_s)
     end
     false
   end
@@ -587,12 +587,12 @@ class File < IO::FileDescriptor
 
   # Creates a new link (also known as a hard link) at *new_path* to an existing file
   # given by *old_path*.
-  def self.link(old_path : Path | String, new_path : Path | String)
+  def self.link(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.link(old_path.to_s, new_path.to_s)
   end
 
   # Creates a symbolic link at *new_path* to an existing file given by *old_path*.
-  def self.symlink(old_path : Path | String, new_path : Path | String)
+  def self.symlink(old_path : Path | String, new_path : Path | String) : Nil
     Crystal::System::File.symlink(old_path.to_s, new_path.to_s)
   end
 

@@ -121,7 +121,7 @@ struct BitArray
       bits = @bits[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt32::MAX << count)
 
       BitArray.new(count).tap { |ba| ba.@bits[0] = bits }
     elsif size <= 64
@@ -129,10 +129,10 @@ struct BitArray
       bits = @bits.as(UInt64*)[0]
 
       bits >>= start
-      bits &= (1 << count) - 1
+      bits &= ~(UInt64::MAX << count)
 
       if count <= 32
-        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32 }
+        BitArray.new(count).tap { |ba| ba.@bits[0] = bits.to_u32! }
       else
         BitArray.new(count).tap { |ba| ba.@bits.as(UInt64*)[0] = bits }
       end
@@ -150,7 +150,7 @@ struct BitArray
         bits = @bits[start_bit_index + i + 1]
 
         high_bits = bits
-        high_bits &= (1 << start_sub_index) - 1
+        high_bits &= ~(UInt32::MAX << start_sub_index)
         high_bits <<= 32 - start_sub_index
 
         ba.@bits[i] = low_bits | high_bits
@@ -180,7 +180,7 @@ struct BitArray
   # ba.toggle(3)
   # ba[3] # => true
   # ```
-  def toggle(index)
+  def toggle(index) : Nil
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
   end
@@ -257,7 +257,7 @@ struct BitArray
   # ba.invert
   # ba # => BitArray[11001]
   # ```
-  def invert
+  def invert : Nil
     malloc_size.times do |i|
       @bits[i] = ~@bits[i]
     end
@@ -323,7 +323,7 @@ struct BitArray
   protected def clear_unused_bits
     # There are no unused bits if `size` is a multiple of 32.
     bit_index, sub_index = @size.divmod(32)
-    @bits[bit_index] &= (1 << sub_index) - 1 unless sub_index == 0
+    @bits[bit_index] &= ~(UInt32::MAX << sub_index) unless sub_index == 0
   end
 
   private def bytesize

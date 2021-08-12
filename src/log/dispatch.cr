@@ -51,7 +51,7 @@ class Log
       spawn write_logs
     end
 
-    def dispatch(entry : Entry, backend : Backend)
+    def dispatch(entry : Entry, backend : Backend) : Nil
       @channel.send({entry, backend})
     end
 
