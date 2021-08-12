@@ -519,7 +519,7 @@ struct BigInt < Int
       end
 
       base62_swapcase(buffer) if base == 62
-      io.write_utf8 buffer
+      io.write_string buffer
     end
   end
 
