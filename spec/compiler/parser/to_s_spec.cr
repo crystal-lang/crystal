@@ -92,6 +92,7 @@ describe "ASTNode#to_s" do
   expect_to_s "def foo(x, **args)\nend"
   expect_to_s "def foo(x, **args, &block)\nend"
   expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
+  expect_to_s "def foo(& : (->))\nend"
   expect_to_s "macro foo(**args)\nend"
   expect_to_s "macro foo(x, **args)\nend"
   expect_to_s "def foo(x y)\nend"

@@ -80,18 +80,24 @@ describe "StaticArray" do
     a.to_s.should eq("StaticArray[1, 2, 3]")
   end
 
-  it "does #fill, without block" do
-    a = StaticArray(Int32, 3).new { |i| i + 1 }
-    a.fill(0).should eq(StaticArray[0, 0, 0])
-    a.should eq(StaticArray[0, 0, 0])
-    a.fill(2).should eq(StaticArray[2, 2, 2])
-    a.should eq(StaticArray[2, 2, 2])
-  end
+  describe "#fill" do
+    it "replaces all values, without block" do
+      a = StaticArray(Int32, 3).new { |i| i + 1 }
+      expected = StaticArray[0, 0, 0]
+      a.fill(0).should eq(expected)
+      a.should eq(expected)
 
-  it "does #fill, with block" do
-    a = StaticArray(Int32, 4).new { |i| i + 1 }
-    a.fill { |i| i * i }.should eq(StaticArray[0, 1, 4, 9])
-    a.should eq(StaticArray[0, 1, 4, 9])
+      expected = StaticArray[2, 2, 2]
+      a.fill(2).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "replaces all values, with block" do
+      a = StaticArray(Int32, 4).new { |i| i + 1 }
+      expected = StaticArray[0, 1, 4, 9]
+      a.fill { |i| i * i }.should eq(expected)
+      a.should eq(expected)
+    end
   end
 
   it "shuffles" do
