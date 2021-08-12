@@ -92,7 +92,7 @@ class HTTP::Client::Response
 
   def self.from_io(io, ignore_body = false, decompress = true)
     from_io?(io, ignore_body, decompress) ||
-      raise("Unexpected end of http request")
+      raise IO::EOFError.new("Unexpected end of http request")
   end
 
   # Parses an `HTTP::Client::Response` from the given `IO`.
@@ -114,7 +114,7 @@ class HTTP::Client::Response
       if response
         yield response
       else
-        raise("Unexpected end of http request")
+        raise IO::EOFError.new("Unexpected end of http request")
       end
     end
   end
@@ -149,6 +149,6 @@ class HTTP::Client::Response
       return yield new status, nil, headers, status_message, http_version, body
     end
 
-    nil
+    yield nil
   end
 end

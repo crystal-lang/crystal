@@ -584,20 +584,18 @@ class HTTP::Client
 
   private def exec_internal(request)
     response = exec_internal_single(request)
-    return handle_response(response) if response
-
+    handle_response(response)
+  rescue IO::Error
     # Server probably closed the connection, so retry one
     close
     request.body.try &.rewind
     response = exec_internal_single(request)
-    return handle_response(response) if response
-
-    raise "Unexpected end of http response"
+    handle_response(response)
   end
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
+    HTTP::Client::Response.from_io(io, ignore_body: request.ignore_body?, decompress: decompress)
   end
 
   private def handle_response(response)
@@ -626,27 +624,20 @@ class HTTP::Client
 
   private def exec_internal(request, &block : Response -> T) : T forall T
     exec_internal_single(request) do |response|
-      if response
-        return handle_response(response) { yield response }
-      end
-
-      # Server probably closed the connection, so retry once
-      close
-      request.body.try &.rewind
-      exec_internal_single(request) do |response|
-        if response
-          return handle_response(response) do
-            yield response
-          end
-        end
-      end
+      return handle_response(response) { yield response }
     end
-    raise "Unexpected end of http response"
+  rescue IO::Error
+    # Server probably closed the connection, so retry once
+    close
+    request.body.try &.rewind
+    exec_internal_single(request) do |response|
+      return handle_response(response) { yield response }
+    end
   end
 
   private def exec_internal_single(request)
     decompress = send_request(request)
-    HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
+    HTTP::Client::Response.from_io(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
   end
@@ -761,6 +752,9 @@ class HTTP::Client
   # Closes this client. If used again, a new connection will be opened.
   def close : Nil
     @io.try &.close
+  rescue IO::Error
+    nil # Ignore already closed socket errors, otherwise `exec_internal` won't retry
+  ensure
     @io = nil
   end
 
