@@ -149,6 +149,6 @@ class HTTP::Client::Response
       return yield new status, nil, headers, status_message, http_version, body
     end
 
-    return yield nil
+    yield nil
   end
 end
