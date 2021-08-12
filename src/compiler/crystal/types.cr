@@ -3342,6 +3342,10 @@ module Crystal
 
     delegate lookup_first_def, to: instance_type.metaclass
 
+    def replace_type_parameters(instance)
+      base_type.replace_type_parameters(instance).virtual_type.metaclass
+    end
+
     def each_concrete_type
       instance_type.subtypes.each do |type|
         yield type.metaclass

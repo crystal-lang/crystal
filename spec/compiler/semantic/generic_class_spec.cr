@@ -1221,4 +1221,23 @@ describe "Semantic: generic class" do
       foo(Gen(Int32).new)
       )) { generic_class "Gen", int32 }
   end
+
+  it "replaces type parameters in virtual metaclasses (#10691)" do
+    assert_type(%(
+      class Parent(T)
+      end
+
+      class Child < Parent(Int32)
+      end
+
+      class Foo(T)
+      end
+
+      class Bar(T)
+        @foo = Foo(Parent(T).class).new
+      end
+
+      Bar(Int32).new.@foo
+      ), inject_primitives: false) { generic_class("Foo", generic_class("Parent", int32).virtual_type.metaclass) }
+  end
 end
