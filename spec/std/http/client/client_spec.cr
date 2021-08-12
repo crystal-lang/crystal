@@ -179,37 +179,13 @@ module HTTP
       end
     end
 
-    it "can close a broken socket" do
-      server = HTTP::Server.new do |context|
-        context.response.output.print "foo"
-        io = context.response.@io.as(Socket)
-        spawn do
-          io.linger = 0 # with linger 0 the socket will be RST on close
-          io.close
-        end
-      end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
-        client.get(path: "/").body.should eq "foo"
-        begin
-          client.get(path: "/") # will raise a broken socket error
-        rescue IO::Error
-          client.close rescue nil
-        end
-        client.get(path: "/").body.should eq "foo"
-      end
-    end
-
     it "will retry a broken socket" do
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
+        context.response.output.close
         io = context.response.@io.as(Socket)
-        spawn do
-          io.linger = 0 # with linger 0 the socket will be RST on close
-          io.close
-        end
+        io.linger = 0 # with linger 0 the socket will be RST on close
+        io.close
       end
       address = server.bind_unused_port "127.0.0.1"
 
@@ -232,10 +208,8 @@ module HTTP
 
       run_server(server) do
         client = HTTP::Client.new("127.0.0.1", address.port)
-        begin
+        expect_raises(Exception, "Unexpected end of http response") do
           client.get(path: "/")
-        rescue ex
-          ex.message.should eq "Unexpected end of http response"
         end
         requests.should eq 2
       end
