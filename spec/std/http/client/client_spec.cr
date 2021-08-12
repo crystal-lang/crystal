@@ -208,7 +208,7 @@ module HTTP
 
       run_server(server) do
         client = HTTP::Client.new("127.0.0.1", address.port)
-        expect_raises(Exception, "Unexpected end of http response") do
+        expect_raises(IO::Error) do
           client.get(path: "/")
         end
         requests.should eq 2
