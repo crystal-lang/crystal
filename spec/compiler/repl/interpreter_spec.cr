@@ -1553,7 +1553,7 @@ describe Crystal::Repl::Interpreter do
           x - y
         end
 
-        foo(x: 10, y: 25)
+        foo(y: 25, x: 10)
         CODE
     end
 

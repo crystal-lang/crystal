@@ -1675,7 +1675,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       # We still have to accept the call arguments, but discard their values
       node.args.each { |arg| discard_value(arg) }
-      node.named_args.try &.each { |arg| discard_value(arg.value) }
 
       return false
     end
@@ -1764,10 +1763,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     end
 
-    if node.named_args
-      node.raise "BUG: missing lib call with named args"
-    end
-
     if external.varargs?
       lib_function = LibFunction.new(
         def: external,
@@ -1821,7 +1816,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     obj = node.obj
     args = node.args
-    named_args = node.named_args
     obj_type = obj.try(&.type) || target_def.owner
 
     if obj_type == @context.program
@@ -1838,14 +1832,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     i += 1 if target_def.args.first?.try &.name == "self"
 
     args.each do
-      target_def_arg = target_def.args[i]
-      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
-      args_bytesize += aligned_sizeof_type(target_def_var_type)
-
-      i += 1
-    end
-
-    named_args.try &.each do
       target_def_arg = target_def.args[i]
       target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
       args_bytesize += aligned_sizeof_type(target_def_var_type)
@@ -1973,17 +1959,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     i += 1 if target_def.args.first?.try &.name == "self"
 
     node.args.each do |arg|
-      arg_type = arg.type
-      target_def_arg = target_def_args[i]
-      target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
-
-      compile_call_arg(arg, arg_type, target_def_var_type)
-
-      i += 1
-    end
-
-    node.named_args.try &.each do |n|
-      arg = n.value
       arg_type = arg.type
       target_def_arg = target_def_args[i]
       target_def_var_type = target_def.vars.not_nil![target_def_arg.name].type
@@ -2191,7 +2166,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       node.args.each &.accept(self)
-      node.named_args.try &.each &.value.accept(self)
     end
   end
 

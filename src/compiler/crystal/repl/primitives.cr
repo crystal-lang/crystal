@@ -522,7 +522,6 @@ class Crystal::Repl::Compiler
   private def accept_call_args(node : Call)
     dont_request_struct_pointer do
       node.args.each { |arg| request_value(arg) }
-      node.named_args.try &.each { |arg| request_value(arg.value) }
     end
   end
 
@@ -658,7 +657,6 @@ class Crystal::Repl::Compiler
     unless @wants_value
       node.obj.try &.accept self
       node.args.each &.accept self
-      node.named_args.try &.each &.value.accept self
       return
     end
 

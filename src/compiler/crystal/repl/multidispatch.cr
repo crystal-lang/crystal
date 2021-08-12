@@ -54,10 +54,8 @@ module Crystal::Repl::Multidispatch
     signature = CallSignature.new(
       name: node.name,
       arg_types: node.args.map(&.type),
+      named_args: nil,
       block: node.block,
-      named_args: node.named_args.try &.map do |named_arg|
-        NamedArgumentType.new(named_arg.name, named_arg.value.type)
-      end,
     )
 
     cache_key = Context::MultidispatchKey.new(obj_type, signature)
@@ -92,13 +90,6 @@ module Crystal::Repl::Multidispatch
       i += 1
     end
 
-    node.named_args.try &.each do |named_arg|
-      def_arg = Arg.new("arg#{i}").at(node)
-      def_arg.type = named_arg.value.type
-      a_def.args << def_arg
-      i += 1
-    end
-
     block = node.block
     if block
       a_def.block_arg = Arg.new("")
@@ -127,25 +118,12 @@ module Crystal::Repl::Multidispatch
         i += 1
       end
 
-      node.named_args.try &.each do |named_arg|
-        arg = named_arg.value
-        target_def_arg = target_def.args[i]
-        condition = add_arg_condition(arg, target_def_arg, i, condition)
-
-        i += 1
-      end
-
       condition ||= BoolLiteral.new(true)
 
       call_args = [] of ASTNode
 
       i = 0
       node.args.each do
-        call_args << Var.new("arg#{i}")
-        i += 1
-      end
-
-      node.named_args.try &.each do
         call_args << Var.new("arg#{i}")
         i += 1
       end
@@ -198,11 +176,6 @@ module Crystal::Repl::Multidispatch
 
     node.args.each do |arg|
       def_args["arg#{i}"] = MetaVar.new("arg#{i}", arg.type)
-      i += 1
-    end
-
-    node.named_args.try &.each do |named_arg|
-      def_args["arg#{i}"] = MetaVar.new("arg#{i}", named_arg.value.type)
       i += 1
     end
 
