@@ -598,6 +598,8 @@ class HTTP::Client
   private def exec_internal_single(request)
     decompress = send_request(request)
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress)
+  rescue IO::Error
+    nil # let `exec_internal` retry the request
   end
 
   private def handle_response(response)
@@ -649,6 +651,8 @@ class HTTP::Client
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
+  rescue IO::Error
+    nil # let `exec_internal` retry the request
   end
 
   private def handle_response(response)
@@ -760,7 +764,10 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close : Nil
-    @io.try &.close rescue nil
+    @io.try &.close
+  rescue IO::Error
+    nil # Ignore already closed socket errors, otherwise `exec_internal` won't retry
+  ensure
     @io = nil
   end
 
