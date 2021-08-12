@@ -13,7 +13,7 @@ private def with_precision(precision)
 end
 
 describe "BigFloat" do
-  describe "new" do
+  describe ".new" do
     string_of_integer_value = "123456789012345678901"
     string_of_integer_value_as_float = "123456789012345678901.0"
     bigfloat_of_integer_value = BigFloat.new(string_of_integer_value)
@@ -79,7 +79,7 @@ describe "BigFloat" do
     end
   end
 
-  describe "-@" do
+  describe "unary #-" do
     it do
       bf = "0.12345".to_big_f
       (-bf).to_s.should eq("-0.12345")
@@ -96,28 +96,28 @@ describe "BigFloat" do
     end
   end
 
-  describe "+" do
+  describe "#+" do
     it { ("1.0".to_big_f + "2.0".to_big_f).to_s.should eq("3.0") }
     it { ("0.04".to_big_f + "89.0001".to_big_f).to_s.should eq("89.0401") }
     it { ("-5.5".to_big_f + "5.5".to_big_f).to_s.should eq("0.0") }
     it { ("5.5".to_big_f + "-5.5".to_big_f).to_s.should eq("0.0") }
   end
 
-  describe "-" do
+  describe "#-" do
     it { ("1.0".to_big_f - "2.0".to_big_f).to_s.should eq("-1.0") }
     it { ("0.04".to_big_f - "89.0001".to_big_f).to_s.should eq("-88.9601") }
     it { ("-5.5".to_big_f - "5.5".to_big_f).to_s.should eq("-11.0") }
     it { ("5.5".to_big_f - "-5.5".to_big_f).to_s.should eq("11.0") }
   end
 
-  describe "*" do
+  describe "#*" do
     it { ("1.0".to_big_f * "2.0".to_big_f).to_s.should eq("2.0") }
     it { ("0.04".to_big_f * "89.0001".to_big_f).to_s.should eq("3.560004") }
     it { ("-5.5".to_big_f * "5.5".to_big_f).to_s.should eq("-30.25") }
     it { ("5.5".to_big_f * "-5.5".to_big_f).to_s.should eq("-30.25") }
   end
 
-  describe "/" do
+  describe "#/" do
     it { ("1.0".to_big_f / "2.0".to_big_f).to_s.should eq("0.5") }
     it { ("0.04".to_big_f / "89.0001".to_big_f).to_s.should eq("0.000449437697261014313467") }
     it { ("-5.5".to_big_f / "5.5".to_big_f).to_s.should eq("-1.0") }
@@ -127,7 +127,7 @@ describe "BigFloat" do
     it { ("5.5".to_big_f / 16_u8).to_s.should eq("0.34375") }
   end
 
-  describe "//" do
+  describe "#//" do
     it { ("1.0".to_big_f // "2.0".to_big_f).to_s.should eq("0.0") }
     it { ("0.04".to_big_f // "89.0001".to_big_f).to_s.should eq("0.0") }
     it { ("-5.5".to_big_f // "5.5".to_big_f).to_s.should eq("-1.0") }
@@ -139,63 +139,77 @@ describe "BigFloat" do
     it { ("-1".to_big_f // 2_u8).to_s.should eq("-1.0") }
   end
 
-  describe "**" do
+  describe "#**" do
     # TODO: investigate why in travis this gives ""1.79559999999999999991"
     # it { ("1.34".to_big_f ** 2).to_s.should eq("1.79559999999999999994") }
     it { ("-0.05".to_big_f ** 10).to_s.should eq("0.00000000000009765625") }
     it { (0.1234567890.to_big_f ** 3).to_s.should eq("0.00188167637178915473909") }
   end
 
-  describe "abs" do
+  describe "#abs" do
     it { -5.to_big_f.abs.should eq(5) }
     it { 5.to_big_f.abs.should eq(5) }
     it { "-0.00001".to_big_f.abs.to_s.should eq("0.00001") }
     it { "0.00000000001".to_big_f.abs.to_s.should eq("0.00000000001") }
   end
 
-  describe "ceil" do
+  describe "#ceil" do
     it { 2.0.to_big_f.ceil.should eq(2) }
     it { 2.1.to_big_f.ceil.should eq(3) }
     it { 2.9.to_big_f.ceil.should eq(3) }
   end
 
-  describe "floor" do
+  describe "#floor" do
     it { 2.1.to_big_f.floor.should eq(2) }
     it { 2.9.to_big_f.floor.should eq(2) }
     it { -2.9.to_big_f.floor.should eq(-3) }
   end
 
-  describe "trunc" do
+  describe "#trunc" do
     it { 2.1.to_big_f.trunc.should eq(2) }
     it { 2.9.to_big_f.trunc.should eq(2) }
     it { -2.9.to_big_f.trunc.should eq(-2) }
   end
 
-  describe "to_f" do
+  describe "#to_f" do
     it { 1.34.to_big_f.to_f.should eq(1.34) }
     it { 0.0001304.to_big_f.to_f.should eq(0.0001304) }
     it { 1.234567.to_big_f.to_f32.should eq(1.234567_f32) }
   end
 
-  describe "to_f!" do
+  describe "#to_f!" do
     it { 1.34.to_big_f.to_f!.should eq(1.34) }
     it { 0.0001304.to_big_f.to_f!.should eq(0.0001304) }
     it { 1.234567.to_big_f.to_f32!.should eq(1.234567_f32) }
   end
 
-  describe "to_i" do
+  describe "#to_i" do
     it { 1.34.to_big_f.to_i.should eq(1) }
     it { 123.to_big_f.to_i.should eq(123) }
     it { -4321.to_big_f.to_i.should eq(-4321) }
   end
 
-  describe "to_i!" do
+  describe "#to_i!" do
     it { 1.34.to_big_f.to_i!.should eq(1) }
     it { 123.to_big_f.to_i!.should eq(123) }
     it { -4321.to_big_f.to_i!.should eq(-4321) }
   end
 
-  describe "to_u" do
+  describe "#to_i64" do
+    it { expect_raises(OverflowError) { (2.0 ** 63).to_big_f.to_i64 } }
+    it { expect_raises(OverflowError) { (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64 } }
+    it { expect_raises(OverflowError) { (-9.223372036854778e+18).to_big_f.to_i64 } } # (-(2.0 ** 63)).prev_float
+  end
+
+  describe "#to_i64!" do
+    it "doesn't raise on overflow" do
+      (2.0 ** 63).to_big_f.to_i64!
+      (BigFloat.new(2.0 ** 63, precision: 128) - 0.9999).to_i64!
+      (-9.223372036854778e+18).to_big_f.to_i64! # (-(2.0 ** 63)).prev_float
+    end
+  end
+
+  describe "#to_u" do
     it { 1.34.to_big_f.to_u.should eq(1) }
     it { 123.to_big_f.to_u.should eq(123) }
     it { 4321.to_big_f.to_u.should eq(4321) }
@@ -204,13 +218,27 @@ describe "BigFloat" do
     end
   end
 
-  describe "to_u!" do
+  describe "#to_u!" do
     it { 1.34.to_big_f.to_u!.should eq(1) }
     it { 123.to_big_f.to_u!.should eq(123) }
     it { 4321.to_big_f.to_u!.should eq(4321) }
   end
 
-  describe "to_s" do
+  describe "#to_u64" do
+    it { expect_raises(OverflowError) { (2.0 ** 64).to_big_f.to_u64 } }
+    it { expect_raises(OverflowError) { (-1).to_big_f.to_u64 } }
+    it { expect_raises(OverflowError) { (-0.0001).to_big_f.to_u64 } }
+  end
+
+  describe "#to_u64!" do
+    it "doesn't raise on overflow" do
+      (2.0 ** 64).to_big_f.to_u64!
+      (-1).to_big_f.to_u64!
+      (-0.0001).to_big_f.to_u64!
+    end
+  end
+
+  describe "#to_s" do
     it { "0".to_big_f.to_s.should eq("0.0") }
     it { "0.000001".to_big_f.to_s.should eq("0.000001") }
     it { "48600000".to_big_f.to_s.should eq("48600000.0") }
@@ -428,11 +456,11 @@ describe "BigFloat" do
 end
 
 describe "BigFloat Math" do
-  it "frexp" do
+  it ".frexp" do
     Math.frexp(0.2.to_big_f).should eq({0.8, -2})
   end
 
-  it "sqrt" do
+  it ".sqrt" do
     Math.sqrt(BigFloat.new("1" + "0"*48)).should eq(BigFloat.new("1" + "0"*24))
   end
 end

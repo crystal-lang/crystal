@@ -13,6 +13,8 @@ require "c/string"
 # "hello world"
 # ```
 #
+# See [`String` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/string.html) in the language reference.
+#
 # A backslash can be used to denote some characters inside the string:
 #
 # ```
@@ -815,7 +817,7 @@ class String
   # s[-2..-4] # => ""
   # s[-2..1]  # => ""
   # s[3..-4]  # => ""
-  # ``` : String
+  # ```
   def [](range : Range) : String
     self[*Indexable.range_to_index_and_count(range, size) || raise IndexError.new]
   end
@@ -842,26 +844,19 @@ class String
   end
 
   # Like `#[](Int, Int)` but returns `nil` if the *start* index is out of bounds.
-  def []?(start : Int, count : Int) : String?
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
+  def []?(start : Int, count : Int)
     return byte_slice?(start, count) if single_byte_optimizable?
 
-    start += size if start < 0
+    start, count = Indexable.normalize_start_and_count(start, count, size) { return nil }
+    return "" if count == 0
+    return self if count == size
 
-    start_pos, end_pos, end_index = find_start_end_and_index(start, count)
+    start_pos, end_pos = find_start_and_end(start, count)
+    byte_count = end_pos - start_pos
 
-    if start_pos
-      return "" if count == 0
-
-      count = end_pos - start_pos
-      return self if count == bytesize
-
-      String.new(count) do |buffer|
-        buffer.copy_from(to_unsafe + start_pos, count)
-        {count, 0}
-      end
-    elsif start == end_index
-      ""
+    String.new(byte_count) do |buffer|
+      buffer.copy_from(to_unsafe + start_pos, byte_count)
+      {byte_count, 0}
     end
   end
 
@@ -1033,14 +1028,7 @@ class String
   # "abcd".delete_at(4, 3) # => "abcd"
   # ```
   def delete_at(index : Int, count : Int) : String
-    raise ArgumentError.new "Negative count: #{count}" if count < 0
-
-    index += size if index < 0
-    unless 0 <= index <= size
-      raise IndexError.new
-    end
-
-    count = Math.min(count, size - index)
+    index, count = Indexable.normalize_start_and_count(index, count, size)
 
     case count
     when 0
@@ -1073,16 +1061,11 @@ class String
   end
 
   private def unicode_delete_at(start, count)
-    start_pos, end_pos, _ = find_start_end_and_index(start, count)
-
-    # That start is in bounds was already verified in `delete_at`
-    start_pos = start_pos.not_nil!
-
-    byte_count = end_pos - start_pos.not_nil!
-    byte_delete_at(start_pos, count, byte_count)
+    start_pos, end_pos = find_start_and_end(start, count)
+    byte_delete_at(start_pos, count, end_pos - start_pos)
   end
 
-  private def find_start_end_and_index(start, count)
+  private def find_start_and_end(start, count)
     start_pos = nil
     end_pos = nil
 
@@ -1100,9 +1083,9 @@ class String
       i += 1
     end
 
-    end_pos ||= reader.pos
+    end_pos = reader.pos if i == start + count
 
-    {start_pos, end_pos, i}
+    {start_pos.not_nil!, end_pos.not_nil!}
   end
 
   # Returns a new string built from *count* bytes starting at *start* byte.
@@ -1152,23 +1135,16 @@ class String
   # "hello".byte_slice?(0, -2)  # raises ArgumentError
   # ```
   def byte_slice?(start : Int, count : Int) : String | Nil
-    raise ArgumentError.new "Negative count" if count < 0
+    start, count = Indexable.normalize_start_and_count(start, count, bytesize) { return nil }
+    return "" if count == 0
+    return self if count == bytesize
 
-    start += bytesize if start < 0
     single_byte_optimizable = single_byte_optimizable?
 
-    if 0 <= start < bytesize
-      count = bytesize - start if start + count > bytesize
-      return "" if count == 0
-      return self if count == bytesize
-
-      String.new(count) do |buffer|
-        buffer.copy_from(to_unsafe + start, count)
-        slice_size = single_byte_optimizable ? count : 0
-        {count, slice_size}
-      end
-    elsif start == bytesize
-      ""
+    String.new(count) do |buffer|
+      buffer.copy_from(to_unsafe + start, count)
+      slice_size = single_byte_optimizable ? count : 0
+      {count, slice_size}
     end
   end
 
@@ -3059,7 +3035,7 @@ class String
   def index(search : Char, offset = 0) : Int32?
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
-      return to_slice.index(search.ord.to_u8, offset)
+      return to_slice.fast_index(search.ord.to_u8, offset)
     end
 
     offset += size if offset < 0
@@ -3075,7 +3051,7 @@ class String
   end
 
   # :ditto:
-  def index(search : String, offset = 0) : Int32?
+  def index(search : String, offset = 0)
     offset += size if offset < 0
     return if offset < 0
 
@@ -3151,7 +3127,7 @@ class String
   # "Hello, World".rindex("o", 5) # => 4
   # "Hello, World".rindex("W", 2) # => nil
   # ```
-  def rindex(search : Char, offset = size - 1) : Int32?
+  def rindex(search : Char, offset = size - 1)
     # If it's ASCII we can delegate to slice
     if search.ascii? && single_byte_optimizable?
       return to_slice.rindex(search.ord.to_u8, offset)
@@ -4982,7 +4958,7 @@ class String
 
   # Appends `self` to *io*.
   def to_s(io : IO) : Nil
-    io.write_utf8(to_slice)
+    io.write_string(to_slice)
   end
 
   # Returns the underlying bytes of this String.
@@ -5034,7 +5010,7 @@ class String
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
   #
   # This method should sometimes be called before passing a `String` to a C function.
-  def check_no_null_byte(name = nil) : String
+  def check_no_null_byte(name = nil) : self
     if byte_index(0)
       name = "`#{name}` " if name
       raise ArgumentError.new("String #{name}contains null byte")

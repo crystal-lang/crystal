@@ -299,7 +299,11 @@ end
         end
 
         # Returns `self` converted to `{{type}}`.
-        # In case of overflow a wrapping is performed.
+        # In case of overflow
+        # {% if ints.includes?(num) %} a wrapping is performed.
+        # {% elsif type < Int %} the result is undefined.
+        # {% else %} infinity is returned.
+        # {% end %}
         @[Primitive(:unchecked_convert)]
         def {{name.id}}! : {{type}}
         end

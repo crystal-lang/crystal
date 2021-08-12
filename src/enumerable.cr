@@ -34,7 +34,7 @@ module Enumerable(T)
   end
 
   # Must yield this collection's elements to the block.
-  abstract def each(&block : T -> _)
+  abstract def each(&block : T ->)
 
   # Returns `true` if the passed block returns a value other than `false` or `nil`
   # for all elements of the collection.
@@ -222,7 +222,7 @@ module Enumerable(T)
   # ["Alice", "Bob"].compact_map { |name| name.match(/^A./) } # => [Regex::MatchData("Al")]
   # ```
   def compact_map
-    ary = [] of typeof((yield first).not_nil!)
+    ary = [] of typeof((yield Enumerable.element_type(self)).not_nil!)
     each do |e|
       v = yield e
       unless v.is_a?(Nil)
@@ -238,7 +238,7 @@ module Enumerable(T)
   # ```
   # [1, 2, 3, 4].count { |i| i % 2 == 0 } # => 2
   # ```
-  def count
+  def count(& : T -> _) : Int32
     count = 0
     each { |e| count += 1 if yield e }
     count
@@ -525,7 +525,7 @@ module Enumerable(T)
   # array # => ['A', 'l', 'i', 'c', 'e', 'B', 'o', 'b']
   # ```
   def flat_map(&block : T -> _)
-    ary = [] of typeof(flat_map_type(yield first))
+    ary = [] of typeof(flat_map_type(yield Enumerable.element_type(self)))
     each do |e|
       case v = yield e
       when Array, Iterator
@@ -624,7 +624,7 @@ module Enumerable(T)
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any element.
-  def index
+  def index(& : T -> _) : Int32?
     each_with_index do |e, i|
       return i if yield e
     end
@@ -638,7 +638,7 @@ module Enumerable(T)
   # ```
   #
   # Returns `nil` if *obj* is not in the collection.
-  def index(obj)
+  def index(obj) : Int32?
     index { |e| e == obj }
   end
 
@@ -654,7 +654,7 @@ module Enumerable(T)
   # ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
   # # => {4 => "Anna", 3 => "Bob", 5 => "Alice"}
   # ```
-  def index_by(&block : T -> U) forall U
+  def index_by(&block : T -> U) : Hash(U, T) forall U
     hash = {} of U => T
     each do |elem|
       hash[yield elem] = elem
@@ -668,12 +668,26 @@ module Enumerable(T)
   # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
+  # If the collection has only one element, that element is returned.
+  #
+  # Raises `Enumerable::EmptyError` if the collection is empty.
   #
   # ```
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
+  # [1].reduce { |acc, i| acc + i }             # => 1
+  # ([] of Int32).reduce { |acc, i| acc + i }   # raises Enumerable::EmptyError
+  # ```
+  #
+  # The block is not required to return a `T`, in which case the accumulator's
+  # type includes whatever the block returns.
+  #
+  # ```
+  # # `acc` is an `Int32 | String`
+  # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
+  # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
   def reduce
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -704,7 +718,7 @@ module Enumerable(T)
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
   def reduce?
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -713,6 +727,75 @@ module Enumerable(T)
     end
 
     found ? memo : nil
+  end
+
+  # Returns an array of the prefix sums of the elements in this collection. The
+  # first element of the returned array is same as the first element of `self`.
+  #
+  # Expects all element types to respond to the `#+` method.
+  #
+  # ```
+  # [1, 2, 3, 4, 5, 6].accumulate # => [1, 3, 6, 10, 15, 21]
+  # ```
+  def accumulate : Array(T)
+    accumulate { |x, y| x + y }
+  end
+
+  # Returns an array containing *initial* and its prefix sums with the elements
+  # in this collection.
+  #
+  # Expects `U` to respond to the `#+` method.
+  #
+  # ```
+  # [1, 2, 3, 4, 5].accumulate(6) # => [6, 7, 9, 12, 16, 21]
+  # ```
+  def accumulate(initial : U) : Array(U) forall U
+    accumulate(initial) { |x, y| x + y }
+  end
+
+  # Returns an array containing the successive values of applying a binary
+  # operation, specified by the given *block*, to this collection's elements.
+  #
+  # For each element in the collection the block is passed an accumulator value
+  # and the element. The result becomes the new value for the accumulator and is
+  # also appended to the returned array. The initial value for the accumulator
+  # is the first element in the collection.
+  #
+  # ```
+  # [2, 3, 4, 5].accumulate { |x, y| x * y } # => [2, 6, 24, 120]
+  # ```
+  def accumulate(&block : T, T -> T) : Array(T)
+    values = [] of T
+    memo = uninitialized T
+
+    each do |elem|
+      memo = values.empty? ? elem : (yield memo, elem)
+      values << memo
+    end
+
+    values
+  end
+
+  # Returns an array containing *initial* and the successive values of applying
+  # a binary operation, specified by the given *block*, to this collection's
+  # elements.
+  #
+  # Similar to `#accumulate(&block : T, T -> T)`, except the initial value is
+  # provided by an argument and needs not have the same type as the elements in
+  # the collection. This initial value is always present in the returned array.
+  #
+  # ```
+  # [1, 3, 5, 7].accumulate(9) { |x, y| x * y } # => [9, 9, 27, 135, 945]
+  # ```
+  def accumulate(initial : U, &block : U, T -> U) : Array(U) forall U
+    values = [initial]
+
+    each do |elem|
+      initial = yield initial, elem
+      values << initial
+    end
+
+    values
   end
 
   # Returns a `String` created by concatenating the elements in the collection,
@@ -1233,7 +1316,7 @@ module Enumerable(T)
   # ```
   def reject(type : U.class) forall U
     ary = [] of typeof(begin
-      e = first
+      e = Enumerable.element_type(self)
       e.is_a?(U) ? raise("") : e
     end)
     each { |e| ary << e unless e.is_a?(U) }
@@ -1480,7 +1563,7 @@ module Enumerable(T)
   # ([] of Int32).sum { |x| x + 1 } # => 0
   # ```
   def sum(&block)
-    sum(additive_identity(Reflect(typeof(yield first)))) do |value|
+    sum(additive_identity(Reflect(typeof(yield Enumerable.element_type(self))))) do |value|
       yield value
     end
   end
@@ -1559,7 +1642,7 @@ module Enumerable(T)
   # ([] of Int32).product { |x| x + 1 } # => 1
   # ```
   def product(&block)
-    product(Reflect(typeof(yield first)).first.multiplicative_identity) do |value|
+    product(Reflect(typeof(yield Enumerable.element_type(self))).first.multiplicative_identity) do |value|
       yield value
     end
   end
@@ -1650,7 +1733,7 @@ module Enumerable(T)
   # Tuple.new({:a, 1}, {:c, 2}).to_h # => {:a => 1, :c => 2}
   # ```
   def to_h
-    each_with_object(Hash(typeof(first[0]), typeof(first[1])).new) do |item, hash|
+    each_with_object(Hash(typeof(Enumerable.element_type(self)[0]), typeof(Enumerable.element_type(self)[1])).new) do |item, hash|
       hash[item[0]] = item[1]
     end
   end
