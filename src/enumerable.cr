@@ -668,14 +668,26 @@ module Enumerable(T)
   # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
+  # If the collection has only one element, that element is returned.
   #
   # Raises `Enumerable::EmptyError` if the collection is empty.
   #
   # ```
   # [1, 2, 3, 4, 5].reduce { |acc, i| acc + i } # => 15
+  # [1].reduce { |acc, i| acc + i }             # => 1
+  # ([] of Int32).reduce { |acc, i| acc + i }   # raises Enumerable::EmptyError
+  # ```
+  #
+  # The block is not required to return a `T`, in which case the accumulator's
+  # type includes whatever the block returns.
+  #
+  # ```
+  # # `acc` is an `Int32 | String`
+  # [1, 2, 3, 4, 5].reduce { |acc, i| "#{acc}-#{i}" } # => "1-2-3-4-5"
+  # [1].reduce { |acc, i| "#{acc}-#{i}" }             # => 1
   # ```
   def reduce
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|
@@ -706,7 +718,7 @@ module Enumerable(T)
   # ([] of Int32).reduce? { |acc, i| acc + i } # => nil
   # ```
   def reduce?
-    memo = uninitialized T
+    memo = uninitialized typeof(reduce(Enumerable.element_type(self)) { |acc, i| yield acc, i })
     found = false
 
     each do |elem|

@@ -294,6 +294,19 @@ class XML::Node
     end
   end
 
+  # Returns namespaces defined on self element directly.
+  def namespace_definitions : Array(Namespace)
+    namespaces = [] of Namespace
+
+    ns = @node.value.ns_def
+    while ns
+      namespaces << Namespace.new(document, ns)
+      ns = ns.value.next
+    end
+
+    namespaces
+  end
+
   # Returns namespaces in scope for self – those defined on self element
   # directly or any ancestor node – as an `Array` of `XML::Namespace` objects.
   #
@@ -304,13 +317,8 @@ class XML::Node
   def namespace_scopes : Array(Namespace)
     scopes = [] of Namespace
 
-    ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
-
-    if ns_list
-      while ns_list.value
-        scopes << Namespace.new(document, ns_list.value)
-        ns_list += 1
-      end
+    each_namespace do |namespace|
+      scopes << namespace
     end
 
     scopes

@@ -615,6 +615,20 @@ describe "Enumerable" do
       result = ([] of Int32).reduce(10) { |memo, i| memo + i }
       result.should eq 10
     end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce { |x, y| "#{x}-#{y}" }.should eq(1)
+
+      expect_raises Enumerable::EmptyError do
+        ([] of Int32).reduce { |x, y| "#{x}-#{y}" }
+      end
+
+      expect_raises Enumerable::EmptyError do
+        Tuple.new.reduce { |x, y| "#{x}-#{y}" }
+      end
+    end
   end
 
   describe "reduce?" do
@@ -622,6 +636,14 @@ describe "Enumerable" do
 
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+
+    it "allows block return type to be different from element type" do
+      [1, 2, 3].reduce? { |x, y| "#{x}-#{y}" }.should eq("1-2-3")
+      [1].reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      {1}.reduce? { |x, y| "#{x}-#{y}" }.should eq(1)
+      ([] of Int32).reduce? { |x, y| "#{x}-#{y}" }.should be_nil
+      Tuple.new.reduce? { |x, y| "#{x}-#{y}" }.should be_nil
     end
   end
 

@@ -696,53 +696,73 @@ describe "Array" do
     a.equals?(d, &f).should be_false
   end
 
-  describe "fill" do
+  describe "#fill" do
     it "replaces all values" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'x']
-      a.fill('x').should eq(expected)
+      a.fill('x').should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
+      a.fill(0).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
-      expected = [0, 0, 0]
-      a.fill(0).should eq(expected)
+      expected = [0.0, 0.0, 0.0]
+      a.fill(0.0).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values between index and size" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', 0, 2).should eq(expected)
+      a.fill('x', 0, 2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
+      a.fill(0, 0, 2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, 0, 2).should eq(expected)
+      a.fill(0, 0, 2).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values between index and size (2)" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', 1, 2).should eq(expected)
+      a.fill('x', 1, 2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
+      a.fill(0, 1, 2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, 1, 2).should eq(expected)
+      a.fill(0, 1, 2).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces all values from index onwards" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', -2).should eq(expected)
+      a.fill('x', -2).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
+      a.fill(0, -2).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, -2).should eq(expected)
+      a.fill(0, -2).should be(a)
+      a.should eq(expected)
     end
 
     it "raises when given big negative number (#4539)" do
@@ -760,13 +780,18 @@ describe "Array" do
     it "replaces only values between negative index and size" do
       a = ['a', 'b', 'c']
       expected = ['a', 'b', 'x']
-      a.fill('x', -1, 1).should eq(expected)
+      a.fill('x', -1, 1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
+      a.fill(0, -1, 1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 2, 0]
-      a.fill(0, -1, 1).should eq(expected)
+      a.fill(0, -1, 1).should be(a)
+      a.should eq(expected)
     end
 
     it "raises when given big negative number in from/count (#4539)" do
@@ -784,37 +809,52 @@ describe "Array" do
     it "replaces only values in range" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', -3..1).should eq(expected)
+      a.fill('x', -3..1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
+      a.fill(0, -3..1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, -3..1).should eq(expected)
+      a.fill(0, -3..1).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values in range without end" do
       a = ['a', 'b', 'c']
       expected = ['a', 'x', 'x']
-      a.fill('x', 1..nil).should eq(expected)
+      a.fill('x', 1..nil).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
+      a.fill(0, 1..nil).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [1, 0, 0]
-      a.fill(0, 1..nil).should eq(expected)
+      a.fill(0, 1..nil).should be(a)
+      a.should eq(expected)
     end
 
     it "replaces only values in range begin" do
       a = ['a', 'b', 'c']
       expected = ['x', 'x', 'c']
-      a.fill('x', nil..1).should eq(expected)
+      a.fill('x', nil..1).should be(a)
+      a.should eq(expected)
+
       a = [1, 2, 3]
       expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
+      a.fill(0, nil..1).should be(a)
+      a.should eq(expected)
+
       a = [1.0, 2.0, 3.0]
       expected = [0, 0, 3]
-      a.fill(0, nil..1).should eq(expected)
+      a.fill(0, nil..1).should be(a)
+      a.should eq(expected)
     end
 
     it "works with a block" do
@@ -1271,128 +1311,100 @@ describe "Array" do
   end
 
   describe "sort" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sort without block" do
+    {% for sort in ["sort".id, "unstable_sort".id] %}
+      describe {{ "##{sort}" }} do
+        it "without block" do
           a = [3, 4, 1, 2, 5, 6]
-          b = a.sort(stable: stable)
+          b = a.{{ sort }}
           b.should eq([1, 2, 3, 4, 5, 6])
           a.should_not eq(b)
         end
 
-        it "sort with a block" do
+        it "with a block" do
           a = ["foo", "a", "hello"]
-          b = a.sort(stable: stable) { |x, y| x.size <=> y.size }
+          b = a.{{ sort }} { |x, y| x.size <=> y.size }
           b.should eq(["a", "foo", "hello"])
           a.should_not eq(b)
         end
+
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: false, &.sort)
+          end
+
+          it "stable sort with a block" do
+            is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort without block" do
-      is_stable_sort(mutable: false, &.sort(stable: true))
-    end
-
-    it "stable sort with a block" do
-      is_stable_sort(mutable: false, &.sort(stable: true) { |a, b| a.value <=> b.value })
-    end
-
-    it "default is stable (without block)" do
-      is_stable_sort(mutable: false, &.sort)
-    end
-
-    it "default is stable (with a block)" do
-      is_stable_sort(mutable: false, &.sort { |a, b| a.value <=> b.value })
-    end
-  end
-
-  describe "sort!" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sort! without block" do
+      describe {{ "##{sort}!" }} do
+        it "without block" do
           a = [3, 4, 1, 2, 5, 6]
-          a.sort!(stable: stable)
+          a.{{ sort.id }}!
           a.should eq([1, 2, 3, 4, 5, 6])
         end
 
-        it "sort! with a block" do
+        it "with a block" do
           a = ["foo", "a", "hello"]
-          a.sort!(stable: stable) { |x, y| x.size <=> y.size }
+          a.{{ sort.id }}! { |x, y| x.size <=> y.size }
           a.should eq(["a", "foo", "hello"])
         end
+
+        {% if sort == "sort" %}
+          it "stable sort without a block" do
+            is_stable_sort(mutable: true, &.sort!)
+          end
+
+          it "stable sort with a block" do
+            is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort! without block" do
-      is_stable_sort(mutable: true, &.sort!(stable: true))
-    end
-
-    it "stable sort! with a block" do
-      is_stable_sort(mutable: true, &.sort!(stable: true) { |a, b| a.value <=> b.value })
-    end
-
-    it "default is stable (without block)" do
-      is_stable_sort(mutable: true, &.sort!)
-    end
-
-    it "default is stable (with a block)" do
-      is_stable_sort(mutable: true, &.sort! { |a, b| a.value <=> b.value })
-    end
-  end
-
-  describe "sort_by" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sorts by" do
+      describe {{ "##{sort}_by" }} do
+        it "sorts" do
           a = ["foo", "a", "hello"]
-          b = a.sort_by(stable: stable, &.size)
+          b = a.{{ sort }}_by(&.size)
           b.should eq(["a", "foo", "hello"])
           a.should_not eq(b)
         end
 
         it "unpacks tuple" do
           a = [{"d", 4}, {"a", 1}, {"c", 3}, {"e", 5}, {"b", 2}]
-          b = a.sort_by(stable: stable) { |x, y| y }
+          b = a.{{ sort }}_by { |x, y| y }
           b.should eq([{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}, {"e", 5}])
           a.should_not eq(b)
         end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: false, &.sort_by(&.value))
+          end
+        {% end %}
       end
-    end
 
-    it "stable sort by" do
-      is_stable_sort(mutable: false, &.sort_by(stable: true, &.value))
-    end
-
-    it "default is stable" do
-      is_stable_sort(mutable: false, &.sort_by(&.value))
-    end
-  end
-
-  describe "sort_by!" do
-    [true, false].each do |stable|
-      describe "stable: #{stable}" do
-        it "sorts by!" do
+      describe {{ "##{sort}_by!" }} do
+        it "sorts" do
           a = ["foo", "a", "hello"]
-          a.sort_by!(stable: stable, &.size)
+          a.{{ sort }}_by!(&.size)
           a.should eq(["a", "foo", "hello"])
         end
 
         it "calls given block exactly once for each element" do
           calls = Hash(String, Int32).new(0)
           a = ["foo", "a", "hello"]
-          a.sort_by!(stable: stable) { |e| calls[e] += 1; e.size }
+          a.{{ sort }}_by! { |e| calls[e] += 1; e.size }
           calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
         end
+
+        {% if sort == "sort" %}
+          it "stable sort" do
+            is_stable_sort(mutable: true, &.sort_by!(&.value))
+          end
+        {% end %}
       end
-    end
-
-    it "stable sort by!" do
-      is_stable_sort(mutable: true, &.sort_by!(stable: true, &.value))
-    end
-
-    it "default is stable" do
-      is_stable_sort(mutable: true, &.sort_by!(&.value))
-    end
+    {% end %}
   end
 
   describe "swap" do

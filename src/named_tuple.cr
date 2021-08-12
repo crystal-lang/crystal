@@ -498,12 +498,18 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_a # => [{:name, "Crystal"}, {:year, 2011}]
   # ```
+  #
+  # NOTE: `to_a` on an empty named tuple produces an `Array(Tuple(Symbol, NoReturn))`
   def to_a
-    ary = Array({typeof(first_key_internal), typeof(first_value_internal)}).new(size)
-    each do |key, value|
-      ary << {key.as(typeof(first_key_internal)), value.as(typeof(first_value_internal))}
-    end
-    ary
+    {% if T.size == 0 %}
+      [] of {Symbol, NoReturn}
+    {% else %}
+      [
+        {% for key in T %}
+          { {{key.symbolize}}, self[{{key.symbolize}}] },
+        {% end %}
+      ]
+    {% end %}
   end
 
   # Returns a `Hash` with the keys and values in this named tuple.
@@ -512,9 +518,11 @@ struct NamedTuple
   # tuple = {name: "Crystal", year: 2011}
   # tuple.to_h # => {:name => "Crystal", :year => 2011}
   # ```
+  #
+  # NOTE: `to_h` on an empty named tuple produces a `Hash(Symbol, NoReturn)`
   def to_h
     {% if T.size == 0 %}
-      {} of NoReturn => NoReturn
+      {} of Symbol => NoReturn
     {% else %}
       {
         {% for key in T %}
