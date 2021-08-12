@@ -638,7 +638,7 @@ class HTTP::Client
   private def exec_internal_single(request)
     decompress = send_request(request)
     HTTP::Client::Response.from_io(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
-      return yield response
+      yield response
     end
   end
 
