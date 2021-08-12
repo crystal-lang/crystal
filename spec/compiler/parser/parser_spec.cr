@@ -707,6 +707,11 @@ module Crystal
       it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
       it_parses "#{keyword} if true", If.new(true.bool, klass.new)
 
+      it_parses "#{keyword} *1", klass.new(TupleLiteral.new([1.int32.splat] of ASTNode))
+      it_parses "#{keyword} *1, 2", klass.new(TupleLiteral.new([1.int32.splat, 2.int32]))
+      it_parses "#{keyword} 1, *2", klass.new(TupleLiteral.new([1.int32, 2.int32.splat]))
+      it_parses "#{keyword} *{1, 2}", klass.new(TupleLiteral.new([TupleLiteral.new([1.int32, 2.int32] of ASTNode).splat] of ASTNode))
+
       assert_syntax_error "a = #{keyword}", "void value expression"
       assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
       assert_syntax_error "yield #{keyword}", "void value expression"
@@ -927,6 +932,9 @@ module Crystal
 
     it_parses "macro foo\neenum\nend", Macro.new("foo", body: Expressions.from(["eenum\n".macro_literal] of ASTNode))
     it_parses "macro foo\n'\\''\nend", Macro.new("foo", body: Expressions.from(["'\\''\n".macro_literal] of ASTNode))
+    it_parses "macro foo\n'\\\\'\nend", Macro.new("foo", body: Expressions.from(["'\\\\'\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\'"\nend), Macro.new("foo", body: Expressions.from([%("\\'"\n).macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\\\\"\nend), Macro.new("foo", body: Expressions.from([%("\\\\"\n).macro_literal] of ASTNode))
 
     assert_syntax_error "macro foo; {% foo = 1 }; end"
     assert_syntax_error "macro def foo : String; 1; end"

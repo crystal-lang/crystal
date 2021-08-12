@@ -3568,7 +3568,16 @@ module Crystal
         write " " unless has_parentheses
         skip_space
 
-        if exp.is_a?(TupleLiteral) && @token.type != :"{"
+        # If the number of consecutive `{`s starting a tuple literal is 1 less
+        # than the level of tuple nesting in the actual AST node, this means the
+        # parser synthesized a TupleLiteral from multiple expressions, e.g.
+        #
+        #     return {1, 2}, 3, 4
+        #     return { {1, 2}, 3, 4 }
+        #
+        # The tuple depth is 2 in both cases but only 1 leading curly brace is
+        # present on the first return.
+        if exp.is_a?(TupleLiteral) && opening_curly_brace_count < leading_tuple_depth(exp)
           format_args(exp.elements, has_parentheses)
           skip_space if has_parentheses
         else
@@ -3580,6 +3589,26 @@ module Crystal
       write_token :")" if has_parentheses
 
       false
+    end
+
+    def opening_curly_brace_count
+      @lexer.peek_ahead do
+        count = 0
+        while @lexer.token.type == :"{"
+          count += 1
+          @lexer.next_token_skip_space_or_newline
+        end
+        count
+      end
+    end
+
+    def leading_tuple_depth(exp)
+      count = 0
+      while exp.is_a?(TupleLiteral)
+        count += 1
+        exp = exp.elements.first?
+      end
+      count
     end
 
     def visit(node : Yield)
