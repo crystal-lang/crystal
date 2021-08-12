@@ -4,13 +4,20 @@
 # UTF-16 encoding, and the written contents are decoded back into a UTF-8
 # `String`. This method is mainly used by `assert_prints` to test the behaviour
 # of string-generating methods under different encodings.
+#
+# This method cannot be used on Windows systems, because IO encoding is not
+# supported yet.
 def string_build_via_utf16(& : IO -> _)
-  io = IO::Memory.new
-  io.set_encoding(IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian ? "UTF-16LE" : "UTF-16BE")
-  yield io
-  byte_slice = io.to_slice
-  utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
-  String.from_utf16(utf16_slice)
+  {% if flag?(:win32) %}
+    raise NotImplementedError.new("string_build_via_utf16")
+  {% else %}
+    io = IO::Memory.new
+    io.set_encoding(IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian ? "UTF-16LE" : "UTF-16BE")
+    yield io
+    byte_slice = io.to_slice
+    utf16_slice = Slice.new(byte_slice.to_unsafe.unsafe_as(Pointer(UInt16)), byte_slice.size // sizeof(UInt16))
+    String.from_utf16(utf16_slice)
+  {% end %}
 end
 
 # Asserts that the given *call* and its `IO`-accepting variants produce the
@@ -22,7 +29,8 @@ end
 # * `String.build { |io| foo.bar(io, *args, **opts) }` should be equal to *str*.
 # * `string_build_via_utf16 { |io| foo.bar(io, *args, **opts) }` should be equal
 #   to *str*; that is, the `IO` overload should not fail when the `IO` argument
-#   uses a non-default encoding. This case is skipped on Windows systems.
+#   uses a non-default encoding. This case is skipped on Windows systems,
+#   because IO encoding is not supported yet.
 macro assert_prints(call, str, *, file = __FILE__, line = __LINE__)
   %str = ({{ str }}).as(String)
   %file = {{ file }}
