@@ -760,7 +760,7 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close : Nil
-    @io.try &.close
+    @io.try &.close rescue nil
     @io = nil
   end
 
