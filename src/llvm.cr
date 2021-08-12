@@ -103,7 +103,7 @@ module LLVM
   end
 
   def self.to_io(chars, io) : Nil
-    io.write_utf8 Slice.new(chars, LibC.strlen(chars))
+    io.write_string Slice.new(chars, LibC.strlen(chars))
     LibLLVM.dispose_message(chars)
   end
 

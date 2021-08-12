@@ -193,7 +193,7 @@ struct UUID
     slice[8, 2].hexstring(buffer_ptr + 19)
     slice[10, 6].hexstring(buffer_ptr + 24)
 
-    io.write_utf8(buffer.to_slice)
+    io.write_string(buffer.to_slice)
   end
 
   def hexstring : String

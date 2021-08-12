@@ -42,7 +42,7 @@ class YAML::Builder
     LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
-      data_io.write_utf8(Slice.new(buffer, size))
+      data_io.write_string(Slice.new(buffer, size))
       1
     }, @box)
   end
