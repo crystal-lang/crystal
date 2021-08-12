@@ -631,16 +631,14 @@ class HTTP::Client
     close
     request.body.try &.rewind
     exec_internal_single(request) do |response|
-      return handle_response(response) do
-        yield response
-      end
+      return handle_response(response) { yield response }
     end
   end
 
-  private def exec_internal_single(request) : HTTP::Client::Response
+  private def exec_internal_single(request)
     decompress = send_request(request)
     HTTP::Client::Response.from_io(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
-      yield response
+      return yield response
     end
   end
 

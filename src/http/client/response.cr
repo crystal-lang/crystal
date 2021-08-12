@@ -116,7 +116,7 @@ class HTTP::Client::Response
       else
         raise IO::EOFError.new("Unexpected end of http request")
       end
-    end || raise IO::EOFError.new("Unexpected end of http request")
+    end
   end
 
   # Parses an `HTTP::Client::Response` from the given `IO` and yields
@@ -149,6 +149,6 @@ class HTTP::Client::Response
       return yield new status, nil, headers, status_message, http_version, body
     end
 
-    nil
+    return yield nil
   end
 end
