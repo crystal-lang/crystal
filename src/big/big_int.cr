@@ -441,7 +441,7 @@ struct BigInt < Int
       # (required by libgmp).
       String.new(len + 1) do |buffer|
         # Explicitly clear the memory of the second-to last byte because that
-        # migt not be overriden by `LibGMP.get_str` because the value returned
+        # might not be overriden by `LibGMP.get_str` because the value returned
         # by `LibGMP.sizeinbase` can be 1 too big.
         buffer[len - 1] = 0
 
