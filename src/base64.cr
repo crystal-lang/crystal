@@ -189,6 +189,12 @@ module Base64
     end
   end
 
+  private def encode_size(str_size, new_lines = false)
+    size = (str_size * 4 / 3.0).to_i + 4
+    size += size // LINE_SIZE if new_lines
+    size
+  end
+
   private def decode_size(str_size)
     (str_size * 3 / 4.0).to_i + 4
   end
