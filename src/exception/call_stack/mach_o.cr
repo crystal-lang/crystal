@@ -9,9 +9,8 @@ end
 struct Exception::CallStack
   @@image_slide : LibC::Long?
 
-  protected def self.load_dwarf
+  protected def self.load_dwarf_impl
     read_dwarf_sections
-    @@dwarf_loaded = true
   end
 
   protected def self.read_dwarf_sections

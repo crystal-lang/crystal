@@ -4,6 +4,14 @@ private def method_with_named_args(chan, x = 1, y = 2)
   chan.send(x + y)
 end
 
+private def method_returning_2tuple(x, y)
+  {x, y}
+end
+
+private def method_returning_3tuple(chan, x = 1, y = 2)
+  {chan, x, y}
+end
+
 private def method_named(expected_named, chan)
   Fiber.current.name.should eq(expected_named)
   chan.close
@@ -21,6 +29,21 @@ describe "concurrent" do
       chan.receive.should eq(21)
 
       spawn method_with_named_args(chan, x: 10, y: 20)
+      chan.receive.should eq(30)
+
+      spawn method_with_named_args(*method_returning_3tuple(chan))
+      chan.receive.should eq(3)
+
+      spawn method_with_named_args(*method_returning_3tuple(chan, 30, 40))
+      chan.receive.should eq(70)
+
+      spawn method_with_named_args(*method_returning_2tuple(chan, 10))
+      chan.receive.should eq(12)
+
+      spawn method_with_named_args(chan, *method_returning_2tuple(10, 20))
+      chan.receive.should eq(30)
+
+      spawn method_with_named_args(*method_returning_2tuple(chan, 10), 20)
       chan.receive.should eq(30)
     end
 

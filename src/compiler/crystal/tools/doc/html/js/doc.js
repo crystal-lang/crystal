@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var repositoryName = document.querySelector('#repository-name').getAttribute('content');
+  var repositoryName = document.querySelector('[name=repository-name]').getAttribute('content');
   var typesList = document.querySelector('.types-list');
   var searchInput = document.querySelector('.search-input');
   var parents = document.querySelectorAll('.types-list li.parent');

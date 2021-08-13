@@ -43,6 +43,8 @@ module Crystal
     # This is useful to know because if a type doesn't have
     # inner pointers we can use `malloc_atomic` instead of
     # `malloc` in `Pointer.malloc` for a tiny performance boost.
+    #
+    # This behaviour is documented in Pointer.malloc
     def has_inner_pointers?
       case self
       when .void?
@@ -148,7 +150,7 @@ module Crystal
 
   class UnionType
     def expand_union_types
-      if union_types.any?(&.is_a?(NonGenericModuleType))
+      if union_types.any?(NonGenericModuleType)
         types = [] of Type
         union_types.each &.append_to_expand_union_types(types)
         types
@@ -183,7 +185,15 @@ module Crystal
     # Returns `true` if this constant's value is a simple literal, like
     # `nil`, a number, char, string or symbol literal.
     def simple?
+      return false if pointer_read?
+
       value.simple_literal?
+    end
+
+    def needs_init_flag?
+      return true if pointer_read?
+
+      !(initializer || no_init_flag? || simple?)
     end
 
     @compile_time_value : (Int16 | Int32 | Int64 | Int8 | UInt16 | UInt32 | UInt64 | UInt8 | Bool | Char | Nil)
@@ -201,12 +211,10 @@ module Crystal
         when CharLiteral
           @compile_time_value = value.value
         else
-          case type = value.type?
+          case value.type?
           when IntegerType, EnumType
             interpreter = MathInterpreter.new(namespace, visitor)
             @compile_time_value = interpreter.interpret(value) rescue nil
-          else
-            # go on
           end
         end
       end

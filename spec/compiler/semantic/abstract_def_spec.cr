@@ -94,7 +94,12 @@ describe "Semantic: abstract def" do
 
       Bar.new.foo(1 || 'a')
       ),
-      "no overload matches"
+      <<-MSG
+      Overloads are:
+       - Bar#foo(x : Int32)
+      Couldn't find overloads for these types:
+       - Bar#foo(x : Char)
+      MSG
   end
 
   it "errors if using abstract def on non-abstract class" do
@@ -116,15 +121,17 @@ describe "Semantic: abstract def" do
   end
 
   it "errors if abstract method is not implemented by subclass" do
-    assert_error %(
+    exc = assert_error <<-CR,
       abstract class Foo
         abstract def foo
       end
 
       class Bar < Foo
       end
-      ),
+      CR
       "abstract `def Foo#foo()` must be implemented by Bar"
+    exc.line_number.should eq 5
+    exc.column_number.should eq 1
   end
 
   it "errors if abstract method with arguments is not implemented by subclass" do
@@ -371,6 +378,19 @@ describe "Semantic: abstract def" do
 
       class Bar < Foo
         def foo(x : Moo)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements a NoReturn param" do
+    assert_no_errors %(
+      abstract class Foo
+        abstract def foo(x : NoReturn)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
         end
       end
       )
@@ -716,6 +736,19 @@ describe "Semantic: abstract def" do
       "abstract `def Foo#foo(x = 1)` must be implemented by Bar"
   end
 
+  it "errors if implementation adds type restriction" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+        end
+      end
+    ), "abstract `def Foo#foo(x)` must be implemented by Bar"
+  end
+
   it "errors if implementation doesn't have keyword arguments" do
     assert_error %(
       abstract class Foo
@@ -980,5 +1013,24 @@ describe "Semantic: abstract def" do
         end
       end
     ), "abstract `def Foo#foo(*, foo : Int32)` must be implemented by Bar"
+  end
+
+  it "doesn't error if free var in arg restriction shadows another type (#10153)" do
+    assert_no_errors %(
+      module Foo
+        abstract def foo(x : Int32, y : Array(Int32))
+      end
+
+      class Bar
+        include Foo
+
+        def foo(x : Quux, y : Array(Quux)) forall Quux
+          x
+        end
+      end
+
+      class Quux
+      end
+      )
   end
 end

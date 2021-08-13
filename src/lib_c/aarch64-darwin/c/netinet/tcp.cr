@@ -1,0 +1,6 @@
+lib LibC
+  TCP_NODELAY   =  0x01
+  TCP_KEEPINTVL = 0x101
+  TCP_KEEPCNT   = 0x102
+  TCP_KEEPALIVE =  0x10
+end

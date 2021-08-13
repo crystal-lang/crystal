@@ -7,7 +7,7 @@ class Crystal::CodeGenVisitor
     # In this codegen, we assume that LLVM only provides us with a basic try/catch abstraction with no
     # type restrictions on the exception caught. The basic strategy is to codegen this
     #
-    # ```cr
+    # ```
     # begin
     #   body
     # else
@@ -25,7 +25,7 @@ class Crystal::CodeGenVisitor
     #
     # Into something like (assuming goto is implemented in crystal):
     #
-    # ```cr
+    # ```
     # begin
     #   body
     # rescue ex

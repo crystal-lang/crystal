@@ -19,6 +19,14 @@ end
 
 # :nodoc:
 struct Exception::CallStack
+  # Compute current directory at the beginning so filenames
+  # are always shown relative to the *starting* working directory.
+  CURRENT_DIR = begin
+    dir = Process::INITIAL_PWD
+    dir += File::SEPARATOR unless dir.ends_with?(File::SEPARATOR)
+    dir
+  end
+
   @@skip = [] of String
 
   def self.skip(filename)
@@ -34,7 +42,7 @@ struct Exception::CallStack
     @callstack = CallStack.unwind
   end
 
-  def printable_backtrace
+  def printable_backtrace : Array(String)
     @backtrace ||= decode_backtrace
   end
 
@@ -167,7 +175,7 @@ struct Exception::CallStack
         next if @@skip.includes?(file)
 
         # Turn to relative to the current dir, if possible
-        file = Path.new(file).relative_to(Process::INITIAL_PWD)
+        file = file.lchop(CURRENT_DIR)
 
         file_line_column = "#{file}:#{line}:#{column}"
       end
@@ -217,10 +225,4 @@ struct Exception::CallStack
       end
     end
   end
-
-  {% if flag?(:debug) %}
-    # load dwarf on start up of the program when compiled with --debug
-    # this will make dwarf available on print_frame that is used on __crystal_sigfault_handler
-    load_dwarf
-  {% end %}
 end

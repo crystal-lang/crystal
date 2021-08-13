@@ -1250,7 +1250,7 @@ describe "Block inference" do
         {x, y, z, w}
       end
       ),
-      "too many block arguments (given 3+, expected maximum 1+)"
+      "too many block arguments (given 3+, expected maximum 1)"
   end
 
   it "errors if splat argument becomes a union" do
@@ -1441,6 +1441,54 @@ describe "Block inference" do
       foo do
         typeof(bar)
       end
+      ))
+  end
+
+  it "respects block arg restriction when block has a splat parameter (#6473)" do
+    assert_type(%(
+      def foo(&block : Int32 ->)
+        yield 1
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { int32 }
+  end
+
+  it "respects block arg restriction when block has a splat parameter (2) (#9524)" do
+    assert_type(%(
+      def foo(&block : {Int32, Int32} ->)
+        yield({1, 2})
+      end
+
+      def bar(x)
+        x
+      end
+
+      foo do |*x|
+        bar(*x)
+      end
+      )) { tuple_of([int32, int32]) }
+  end
+
+  it "allows underscore in block return type even if the return type can't be computed" do
+    semantic(%(
+      def foo(& : -> _)
+        yield
+      end
+
+      def recursive
+        if true
+          foo { recursive }
+        end
+      end
+
+      recursive
       ))
   end
 end

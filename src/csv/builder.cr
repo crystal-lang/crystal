@@ -139,14 +139,14 @@ class CSV::Builder
     end
 
     # Appends the given values to this row.
-    def concat(values : Enumerable)
+    def concat(values : Enumerable) : Nil
       values.each do |value|
         self << value
       end
     end
 
     # :ditto:
-    def concat(*values)
+    def concat(*values) : Nil
       concat values
     end
 

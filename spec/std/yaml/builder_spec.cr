@@ -190,16 +190,4 @@ describe YAML::Builder do
       end
     end.should eq 1.to_yaml
   end
-
-  it ".new (with block)" do
-    String.build do |io|
-      YAML::Builder.new(io) do |builder|
-        builder.stream do
-          builder.document do
-            builder.scalar(1)
-          end
-        end
-      end
-    end.should eq 1.to_yaml
-  end
 end

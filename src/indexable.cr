@@ -137,7 +137,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #
@@ -156,7 +156,7 @@ module Indexable(T)
   #
   # If the block returns `false`, the finding element exists
   # behind. If the block returns `true`, the finding element
-  # is itself or exists infront.
+  # is itself or exists in front.
   #
   # Binary search needs sorted array, so `self` has to be sorted.
   #
@@ -245,7 +245,7 @@ module Indexable(T)
   # b -- c -- d --
   # ```
   def each(*, within range : Range)
-    start, count = Indexable.range_to_index_and_count(range, size)
+    start, count = Indexable.range_to_index_and_count(range, size) || raise IndexError.new
     each(start: start, count: count) { |element| yield element }
   end
 
@@ -305,7 +305,10 @@ module Indexable(T)
   # 2 -- 3 --
   # ```
   def each_index(*, start : Int, count : Int)
-    raise ArgumentError.new "negative count: #{count}" if count < 0
+    # We cannot use `normalize_start_and_count` here because `self` may be
+    # mutated to contain enough elements during iteration even if there weren't
+    # initially `count` elements.
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
 
     start += size if start < 0
     raise IndexError.new unless 0 <= start <= size
@@ -324,13 +327,13 @@ module Indexable(T)
   # all of the elements in this indexable are strings: the total string
   # bytesize to return can be computed before creating the final string,
   # which performs better because there's no need to do reallocations.
-  def join(separator = "")
+  def join(separator : String | Char | Number = "") : String
     return "" if empty?
 
     {% if T == String %}
       join_strings(separator)
     {% elsif String < T %}
-      if all?(&.is_a?(String))
+      if all?(String)
         join_strings(separator)
       else
         super(separator)
@@ -355,7 +358,7 @@ module Indexable(T)
 
       each_with_index do |elem, i|
         # elem is guaranteed to be a String, but the compiler doesn't know this
-        # if we enter via the all?(&.is_a?(String)) branch.
+        # if we enter via the all?(String) branch.
         elem = elem.to_s
 
         # Copy separator to buffer
@@ -388,7 +391,7 @@ module Indexable(T)
   # ```
   # {1, 2, 3}.to_a # => [1, 2, 3]
   # ```
-  def to_a
+  def to_a : Array(T)
     ary = Array(T).new(size)
     each { |e| ary << e }
     ary
@@ -400,7 +403,7 @@ module Indexable(T)
   # ([] of Int32).empty? # => true
   # ([1]).empty?         # => false
   # ```
-  def empty?
+  def empty? : Bool
     size == 0
   end
 
@@ -483,7 +486,7 @@ module Indexable(T)
   # ([1, 2, 3]).last   # => 3
   # ([] of Int32).last # raises IndexError
   # ```
-  def last
+  def last : T
     last { raise IndexError.new }
   end
 
@@ -503,7 +506,7 @@ module Indexable(T)
   # ([1, 2, 3]).last?   # => 3
   # ([] of Int32).last? # => nil
   # ```
-  def last?
+  def last? : T?
     last { nil }
   end
 
@@ -556,18 +559,28 @@ module Indexable(T)
     nil
   end
 
-  # Returns a random element from `self`, using the given *random* number generator.
-  # Raises `IndexError` if `self` is empty.
+  # Optimized version of `Enumerable#sample` that runs in O(1) time.
   #
   # ```
   # a = [1, 2, 3]
-  # a.sample                # => 2
+  # a.sample                # => 3
   # a.sample                # => 1
-  # a.sample(Random.new(1)) # => 3
+  # a.sample(Random.new(1)) # => 2
   # ```
   def sample(random = Random::DEFAULT)
-    raise IndexError.new if size == 0
+    raise IndexError.new("Can't sample empty collection") if size == 0
     unsafe_fetch(random.rand(size))
+  end
+
+  # :nodoc:
+  def sample(n : Int, random = Random::DEFAULT) : Array(T)
+    return super unless n == 1
+
+    if empty?
+      [] of T
+    else
+      [sample(random)]
+    end
   end
 
   # Returns a `Tuple` populated with the elements at the given indexes.
@@ -593,6 +606,31 @@ module Indexable(T)
     end
   end
 
+  private def normalize_start_and_count(start, count)
+    Indexable.normalize_start_and_count(start, count, size)
+  end
+
+  private def normalize_start_and_count(start, count)
+    Indexable.normalize_start_and_count(start, count, size) { yield }
+  end
+
+  # :nodoc:
+  def self.normalize_start_and_count(start, count, collection_size)
+    raise ArgumentError.new "Negative count: #{count}" if count < 0
+    start += collection_size if start < 0
+    if 0 <= start <= collection_size
+      count = {count, collection_size - start}.min
+      {start, count}
+    else
+      yield
+    end
+  end
+
+  # :nodoc:
+  def self.normalize_start_and_count(start, count, collection_size)
+    normalize_start_and_count(start, count, collection_size) { raise IndexError.new }
+  end
+
   # :nodoc:
   def self.range_to_index_and_count(range, collection_size)
     start_index = range.begin
@@ -600,7 +638,9 @@ module Indexable(T)
       start_index = 0
     else
       start_index += collection_size if start_index < 0
-      raise IndexError.new if start_index < 0
+      if start_index < 0
+        return nil
+      end
     end
 
     end_index = range.end
@@ -614,6 +654,220 @@ module Indexable(T)
     count = 0 if count < 0
 
     {start_index, count}
+  end
+
+  # Returns an `Array` with all possible permutations of *size*.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.permutations    # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  # a.permutations(1) # => [[1],[2],[3]]
+  # a.permutations(2) # => [[1,2],[1,3],[2,1],[2,3],[3,1],[3,2]]
+  # a.permutations(3) # => [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+  # a.permutations(0) # => [[]]
+  # a.permutations(4) # => []
+  # ```
+  def permutations(size : Int = self.size) : Array(Array(T))
+    ary = [] of Array(T)
+    each_permutation(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  # Yields each possible permutation of *size* of `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # sums = [] of Int32
+  # a.each_permutation(2) { |p| sums << p.sum } # => nil
+  # sums                                        # => [3, 4, 3, 5, 4, 5]
+  # ```
+  #
+  # By default, a new array is created and yielded for each permutation.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_permutation(size : Int = self.size, reuse = false) : Nil
+    n = self.size
+    return if size > n
+
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    reuse = check_reuse(reuse, size)
+    pool = dup_as_array(self)
+    cycles = (n - size + 1..n).to_a.reverse!
+    yield pool_slice(pool, size, reuse)
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        ci = (cycles[i] -= 1)
+        if ci == 0
+          e = pool[i]
+          (i + 1).upto(n - 1) { |j| pool[j - 1] = pool[j] }
+          pool[n - 1] = e
+          cycles[i] = n - i
+        else
+          pool.swap i, -ci
+          yield pool_slice(pool, size, reuse)
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return if stop
+    end
+  end
+
+  # Returns an `Iterator` over each possible permutation of *size* of `self`.
+  #
+  # ```
+  # iter = [1, 2, 3].each_permutation
+  # iter.next # => [1, 2, 3]
+  # iter.next # => [1, 3, 2]
+  # iter.next # => [2, 1, 3]
+  # iter.next # => [2, 3, 1]
+  # iter.next # => [3, 1, 2]
+  # iter.next # => [3, 2, 1]
+  # iter.next # => #<Iterator::Stop>
+  # ```
+  #
+  # By default, a new array is created and returned for each permutation.
+  # If *reuse* is given, the array can be reused: if *reuse* is
+  # an `Array`, this array will be reused; if *reuse* if truthy,
+  # the method will create a new array and reuse it. This can be
+  # used to prevent many memory allocations when each slice of
+  # interest is to be used in a read-only fashion.
+  def each_permutation(size : Int = self.size, reuse = false)
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    PermutationIterator(self, T).new(self, size.to_i, check_reuse(reuse, size))
+  end
+
+  def combinations(size : Int = self.size)
+    ary = [] of Array(T)
+    each_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_combination(size : Int = self.size, reuse = false) : Nil
+    n = self.size
+    return if size > n
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    reuse = check_reuse(reuse, size)
+    copy = self.dup
+    pool = dup_as_array(self)
+
+    indices = (0...size).to_a
+
+    yield pool_slice(pool, size, reuse)
+
+    while true
+      stop = true
+      i = size - 1
+      while i >= 0
+        if indices[i] != i + n - size
+          stop = false
+          break
+        end
+        i -= 1
+      end
+
+      return if stop
+
+      indices[i] += 1
+      pool[i] = copy[indices[i]]
+
+      (i + 1).upto(size - 1) do |j|
+        indices[j] = indices[j - 1] + 1
+        pool[j] = copy[indices[j]]
+      end
+
+      yield pool_slice(pool, size, reuse)
+    end
+  end
+
+  private def each_combination_piece(pool, size, reuse)
+    if reuse
+      reuse.clear
+      size.times { |i| reuse << pool[i] }
+      reuse
+    else
+      pool[0, size]
+    end
+  end
+
+  def each_combination(size : Int = self.size, reuse = false)
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    CombinationIterator(self, T).new(self, size.to_i, check_reuse(reuse, size))
+  end
+
+  def repeated_combinations(size : Int = self.size) : Array(Array(T))
+    ary = [] of Array(T)
+    each_repeated_combination(size) do |a|
+      ary << a
+    end
+    ary
+  end
+
+  def each_repeated_combination(size : Int = self.size, reuse = false) : Nil
+    n = self.size
+    return if size > n && n == 0
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    reuse = check_reuse(reuse, size)
+    copy = self.dup
+    indices = Array.new(size, 0)
+    pool = indices.map { |i| copy[i] }
+
+    yield pool_slice(pool, size, reuse)
+
+    while true
+      stop = true
+
+      i = size - 1
+      while i >= 0
+        if indices[i] != n - 1
+          stop = false
+          break
+        end
+        i -= 1
+      end
+      return if stop
+
+      ii = indices[i] + 1
+      tmp = copy[ii]
+      indices.fill(i, size - i) { ii }
+      pool.fill(i, size - i) { tmp }
+
+      yield pool_slice(pool, size, reuse)
+    end
+  end
+
+  def each_repeated_combination(size : Int = self.size, reuse = false)
+    raise ArgumentError.new("Size must be positive") if size < 0
+
+    RepeatedCombinationIterator(self, T).new(self, size.to_i, check_reuse(reuse, size))
+  end
+
+  private def check_reuse(reuse, size)
+    if reuse
+      unless reuse.is_a?(Array)
+        reuse = Array(T).new(size)
+      end
+    else
+      reuse = nil
+    end
+    reuse
   end
 
   private class ItemIterator(A, T)
@@ -666,4 +920,171 @@ module Indexable(T)
       end
     end
   end
+
+  private class PermutationIterator(A, T)
+    include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @cycles : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
+    @reuse : Array(T)?
+
+    def initialize(a : A, @size, @reuse : Array(T)?)
+      @n = a.size
+      @cycles = (@n - @size + 1..@n).to_a.reverse!
+      @pool = dup_as_array(a)
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return pool_slice(@pool, @size, @reuse)
+      end
+
+      while @i >= 0
+        ci = (@cycles[@i] -= 1)
+        if ci == 0
+          e = @pool[@i]
+          (@i + 1).upto(@n - 1) { |j| @pool[j - 1] = @pool[j] }
+          @pool[@n - 1] = e
+          @cycles[@i] = @n - @i
+        else
+          @pool.swap @i, -ci
+          value = pool_slice(@pool, @size, @reuse)
+          @i = @size - 1
+          return value
+        end
+        @i -= 1
+      end
+
+      @stop = true
+      stop
+    end
+  end
+
+  private class CombinationIterator(A, T)
+    include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : Array(T)
+    @pool : Array(T)
+    @indices : Array(Int32)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
+    @reuse : Array(T)?
+
+    def initialize(a : A, @size, @reuse : Array(T)?)
+      @n = a.size
+      @copy = a.dup
+      @pool = dup_as_array(a)
+      @indices = (0...@size).to_a
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return pool_slice(@pool, @size, @reuse)
+      end
+
+      while @i >= 0
+        if @indices[@i] != @i + @n - @size
+          @indices[@i] += 1
+          @pool[@i] = @copy[@indices[@i]]
+
+          (@i + 1).upto(@size - 1) do |j|
+            @indices[j] = @indices[j - 1] + 1
+            @pool[j] = @copy[@indices[j]]
+          end
+
+          value = pool_slice(@pool, @size, @reuse)
+          @i = @size - 1
+          return value
+        end
+        @i -= 1
+      end
+
+      @stop = true
+      stop
+    end
+  end
+
+  private class RepeatedCombinationIterator(A, T)
+    include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : A
+    @indices : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
+    @reuse : Array(T)?
+
+    def initialize(array : A, @size, @reuse : Array(T)?)
+      @n = array.size
+      @copy = array.dup
+      @indices = Array.new(@size, 0)
+      @pool = @indices.map { |i| @copy[i] }
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return pool_slice(@pool, @size, @reuse)
+      end
+
+      while @i >= 0
+        if @indices[@i] != @n - 1
+          ii = @indices[@i] + 1
+          tmp = @copy[ii]
+          @indices.fill(@i, @size - @i) { ii }
+          @pool.fill(@i, @size - @i) { tmp }
+
+          value = pool_slice(@pool, @size, @reuse)
+          @i = @size - 1
+          return value
+        end
+        @i -= 1
+      end
+
+      @stop = true
+      stop
+    end
+  end
+end
+
+private def pool_slice(pool, size, reuse)
+  if reuse
+    reuse.clear
+    size.times { |i| reuse << pool[i] }
+    reuse
+  else
+    pool[0, size]
+  end
+end
+
+private def dup_as_array(a)
+  a.is_a?(Array) ? a.dup : a.to_a
 end

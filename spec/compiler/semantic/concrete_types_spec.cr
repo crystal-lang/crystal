@@ -75,7 +75,7 @@ describe "Semantic: concrete_types" do
       class Bar < Base
       end
     )) do |t|
-      # abstract base class are required because the metaclass can allways be used: Base.method
+      # abstract base class are required because the metaclass can always be used: Base.method
       {t["Base"].virtual_type.metaclass, [t["Base"].metaclass, t["Foo"].metaclass, t["Bar"].metaclass]}
     end
   end

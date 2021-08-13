@@ -1,4 +1,5 @@
 require "spec"
+require "spec/helpers/iterate"
 
 describe "StaticArray" do
   it "creates with new" do
@@ -77,6 +78,26 @@ describe "StaticArray" do
   it "does to_s" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.to_s.should eq("StaticArray[1, 2, 3]")
+  end
+
+  describe "#fill" do
+    it "replaces all values, without block" do
+      a = StaticArray(Int32, 3).new { |i| i + 1 }
+      expected = StaticArray[0, 0, 0]
+      a.fill(0).should eq(expected)
+      a.should eq(expected)
+
+      expected = StaticArray[2, 2, 2]
+      a.fill(2).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "replaces all values, with block" do
+      a = StaticArray(Int32, 4).new { |i| i + 1 }
+      expected = StaticArray[0, 1, 4, 9]
+      a.fill { |i| i * i }.should eq(expected)
+      a.should eq(expected)
+    end
   end
 
   it "shuffles" do
@@ -168,21 +189,7 @@ describe "StaticArray" do
     b[0].should_not be(a[0])
   end
 
-  it "iterates with each" do
-    a = StaticArray(Int32, 3).new { |i| i + 1 }
-    iter = a.each
-    iter.next.should eq(1)
-    iter.next.should eq(2)
-    iter.next.should eq(3)
-    iter.next.should be_a(Iterator::Stop)
-  end
-
-  it "iterates with reverse each" do
-    a = StaticArray(Int32, 3).new { |i| i + 1 }
-    iter = a.reverse_each
-    iter.next.should eq(3)
-    iter.next.should eq(2)
-    iter.next.should eq(1)
-    iter.next.should be_a(Iterator::Stop)
-  end
+  it_iterates "#each", [1, 2, 3], StaticArray[1, 2, 3].each
+  it_iterates "#reverse_each", [3, 2, 1], StaticArray[1, 2, 3].reverse_each
+  it_iterates "#each_index", [0, 1, 2], StaticArray[1, 2, 3].each_index
 end

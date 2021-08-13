@@ -71,9 +71,36 @@ describe HTTP::Headers do
     headers.empty?.should be_true
   end
 
-  it "equals another hash" do
-    headers = HTTP::Headers{"Foo" => "bar"}
-    headers.should eq({"foo" => "bar"})
+  describe "#==" do
+    it "equals other instance" do
+      a = HTTP::Headers{"Foo" => "bar"}
+      b = HTTP::Headers{"Foo" => "bar"}
+      c = HTTP::Headers{"Foo" => "baz"}
+      a.should eq b
+      a.hash.should eq b.hash
+      a.should_not eq c
+      a.hash.should_not eq c.hash
+    end
+
+    it "case-insensitive keys" do
+      a = HTTP::Headers{"Foo" => "bar"}
+      b = HTTP::Headers{"foo" => "bar"}
+      c = HTTP::Headers{"voo" => "bar"}
+      a.should eq b
+      a.hash.should eq b.hash
+      a.should_not eq c
+      a.hash.should_not eq c.hash
+    end
+
+    it "different internal representation" do
+      a = HTTP::Headers{"Foo" => "bar"}
+      b = HTTP::Headers{"Foo" => ["bar"]}
+      c = HTTP::Headers{"Foo" => ["bar", "baz"]}
+      a.should eq b
+      a.hash.should eq b.hash
+      a.should_not eq c
+      a.hash.should_not eq c.hash
+    end
   end
 
   it "dups" do

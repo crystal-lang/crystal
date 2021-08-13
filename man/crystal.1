@@ -76,7 +76,7 @@ Creates a library skeleton
 Creates an application skeleton
 .El
 
-This initializes the lib/app project folder as a git repository, with a license file, a README file, a .travis.yml file for Travis CI integration, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
+This initializes the lib/app project folder as a git repository, with a license file, a README file, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 .Bd -literal -offset
 DIR  - directory where project will be generated
 .Pp
@@ -129,6 +129,7 @@ Dump LLVM assembly file to output directory.
 Pass additional flags to the linker. Though you can specify those flags on the source code, this is useful for passing environment specific information directly to the linker, like non-standard library paths or names. For more information on specifying linker flags on source, you can read the "C bindings" section of the documentation available on the official web site.
 .It Fl -mcpu Ar CPU
 Specify a specific CPU to generate code for. This will pass a -mcpu flag to LLVM, and is only intended to be used for cross-compilation. For a list of available CPUs, invoke "llvm-as < /dev/null | llc -march=xyz -mcpu=help".
+Passing --mcpu native will pass the host CPU name to tune performance for the host.
 .It Fl -mattr Ar CPU
 Override or control specific attributes of the target, such as whether SIMD operations are enabled or not. The default set of attributes is set by the current CPU. This will pass a -mattr flag to LLVM, and is only intended to be used for cross-compilation. For a list of available attributes, invoke "llvm-as < /dev/null | llc -march=xyz -mattr=help".
 .It Fl -mcmodel default|kernel|small|medium|large
@@ -208,6 +209,8 @@ line number
 If this option is missing and can't be automatically determined, the generator can't produce source code links.
 .It Fl o Ar DIR, Fl -output Ar DIR
 Set the output directory (default: ./docs).
+.It Fl b Ar URL, Fl -canonical-base-url Ar URL
+Indicate the preferred URL with rel="canonical" link element.
 .It Fl b Ar URL, Fl -sitemap-base-url Ar URL
 Set the sitemap base URL. Sitemap will only be generated when this option is set.
 .It Fl -sitemap-priority Ar PRIO

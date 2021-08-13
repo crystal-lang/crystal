@@ -1,9 +1,9 @@
 require "./config"
-require "./exception"
+require "./error"
 
 module Crystal
   struct CrystalPath
-    class NotFoundError < LocationlessException
+    class NotFoundError < Crystal::Error
       getter filename
       getter relative_to
 
@@ -78,39 +78,42 @@ module Crystal
         return nil
       end
 
-      relative_filename = "#{relative_to}/#{filename}"
-
-      # Check if .cr file exists.
-      relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
-      if File.exists?(relative_filename_cr)
-        return File.expand_path(relative_filename_cr)
+      each_file_expansion(filename, relative_to) do |path|
+        absolute_path = File.expand_path(path)
+        return absolute_path if File.exists?(absolute_path)
       end
+
+      nil
+    end
+
+    def each_file_expansion(filename, relative_to, &)
+      relative_filename = "#{relative_to}/#{filename}"
+      # Check if .cr file exists.
+      yield relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
 
       filename_is_relative = filename.starts_with?('.')
 
-      if !filename_is_relative && (slash_index = filename.index('/'))
-        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
-        before_slash, after_slash = filename.split('/', 2)
+      shard_name, _, shard_path = filename.partition("/")
+      shard_path = shard_path.presence
 
-        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+      if !filename_is_relative && shard_path
+        shard_src = "#{relative_to}/#{shard_name}/src"
+
+        # If it's "foo/bar/baz", check if "foo/src/bar/baz.cr" exists (for a shard, non-namespaced structure)
+        yield "#{shard_src}/#{shard_path}.cr"
 
         # Then check if "foo/src/foo/bar/baz.cr" exists (for a shard, namespaced structure)
-        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+        yield "#{shard_src}/#{shard_name}/#{shard_path}.cr"
 
         # If it's "foo/bar/baz", check if "foo/bar/baz/baz.cr" exists (std, nested)
         basename = File.basename(relative_filename)
-        absolute_filename = File.expand_path("#{relative_to}/#{filename}/#{basename}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+        yield "#{relative_filename}/#{basename}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, non-namespaced, nested)
-        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{after_slash}/#{after_slash}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+        yield "#{shard_src}/#{shard_path}/#{shard_path}.cr"
 
         # If it's "foo/bar/baz", check if "foo/src/foo/bar/baz/baz.cr" exists (shard, namespaced, nested)
-        absolute_filename = File.expand_path("#{relative_to}/#{before_slash}/src/#{before_slash}/#{after_slash}/#{after_slash}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+        yield "#{shard_src}/#{shard_name}/#{shard_path}/#{shard_path}.cr"
 
         return nil
       end
@@ -118,16 +121,12 @@ module Crystal
       basename = File.basename(relative_filename)
 
       # If it's "foo", check if "foo/foo.cr" exists (for the std, nested)
-      absolute_filename = File.expand_path("#{relative_filename}/#{basename}.cr")
-      return absolute_filename if File.exists?(absolute_filename)
+      yield "#{relative_filename}/#{basename}.cr"
 
       unless filename_is_relative
         # If it's "foo", check if "foo/src/foo.cr" exists (for a shard)
-        absolute_filename = File.expand_path("#{relative_filename}/src/#{basename}.cr")
-        return absolute_filename if File.exists?(absolute_filename)
+        yield "#{relative_filename}/src/#{basename}.cr"
       end
-
-      nil
     end
 
     private def gather_dir_files(dir, files_accumulator, recursive)

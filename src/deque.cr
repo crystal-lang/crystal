@@ -124,6 +124,13 @@ class Deque(T)
     dup.concat other
   end
 
+  # Returns the additive identity of this type.
+  #
+  # This is an empty deque.
+  def self.additive_identity : self
+    self.new
+  end
+
   # Alias for `push`.
   def <<(value : T)
     push(value)
@@ -163,7 +170,18 @@ class Deque(T)
   #
   # Use `#dup` if you want a shallow copy.
   def clone
-    Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% if T == ::Bool || T == ::Char || T == ::String || T == ::Symbol || T < ::Number::Primitive %}
+      Deque(T).new(size) { |i| self[i].clone.as(T) }
+    {% else %}
+      exec_recursive_clone do |hash|
+        clone = Deque(T).new(size)
+        hash[object_id] = clone.object_id
+        each do |element|
+          clone << element.clone
+        end
+        clone
+      end
+    {% end %}
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
@@ -181,22 +199,84 @@ class Deque(T)
   # a.delete("b") # => true
   # a             # => Deque{"a", "c"}
   # ```
-  def delete(obj)
-    delete_if { |i| i == obj }
+  def delete(obj) : Bool
+    match = internal_delete { |i| i == obj }
+    !match.nil?
   end
 
-  def delete_if
-    found = false
+  # Modifies `self`, keeping only the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.select! { |x| x > 3 }
+  # a # => Deque{6, 4, 8}
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!
+    reject! { |elem| !yield(elem) }
+  end
+
+  # Modifies `self`, keeping only the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # ary = [1, 6, 2, 4, 8]
+  # ary.select!(3..7)
+  # ary # => [6, 4]
+  # ```
+  #
+  # See also: `Deque#select`.
+  def select!(pattern) : self
+    self.select! { |elem| pattern === elem }
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which the
+  # passed block returns `true`. Returns `self`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject! { |x| x > 3 }
+  # a # => Deque{1, 2}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!
+    internal_delete { |e| yield e }
+    self
+  end
+
+  # Modifies `self`, deleting the elements in the collection for which
+  # `pattern === element`.
+  #
+  # ```
+  # a = Deque{1, 6, 2, 4, 8}
+  # a.reject!(3..7)
+  # a # => Deque{1, 2, 8}
+  # ```
+  #
+  # See also: `Deque#reject`.
+  def reject!(pattern) : self
+    reject! { |elem| pattern === elem }
+    self
+  end
+
+  # `reject!` and `delete` implementation:
+  # returns the last matching element, or nil
+  private def internal_delete
+    match = nil
     i = 0
     while i < @size
-      if yield self[i]
+      e = self[i]
+      if yield e
+        match = e
         delete_at(i)
-        found = true
       else
         i += 1
       end
     end
-    found
+    match
   end
 
   # Deletes the item that is present at the *index*. Items to the right
@@ -208,7 +288,7 @@ class Deque(T)
   # a.delete_at(1) # => 2
   # a              # => Deque{1, 3}
   # ```
-  def delete_at(index : Int)
+  def delete_at(index : Int) : T
     if index < 0
       index += @size
     end
@@ -280,7 +360,7 @@ class Deque(T)
   # a = Deque{0, 1, 2}
   # a.insert(1, 7) # => Deque{0, 7, 1, 2}
   # ```
-  def insert(index : Int, value : T)
+  def insert(index : Int, value : T) : self
     if index < 0
       index += @size + 1
     end
@@ -349,7 +429,7 @@ class Deque(T)
   # ```
   # Deque{:foo, :bar}.size # => 2
   # ```
-  def size
+  def size : Int32
     @size
   end
 
@@ -360,7 +440,7 @@ class Deque(T)
   # a.pop # => 3
   # a     # => Deque{1, 2}
   # ```
-  def pop
+  def pop : T
     pop { raise IndexError.new }
   end
 
@@ -380,12 +460,12 @@ class Deque(T)
   end
 
   # Removes and returns the last item, if not empty, otherwise `nil`.
-  def pop?
+  def pop? : T?
     pop { nil }
   end
 
   # Removes the last *n* (at most) items in the deque.
-  def pop(n : Int)
+  def pop(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't pop negative count")
     end
@@ -466,7 +546,7 @@ class Deque(T)
   end
 
   # Removes the first *n* (at most) items in the deque.
-  def shift(n : Int)
+  def shift(n : Int) : Nil
     if n < 0
       raise ArgumentError.new("Can't shift negative count")
     end
@@ -476,7 +556,7 @@ class Deque(T)
   end
 
   # Swaps the items at the indices *i* and *j*.
-  def swap(i, j)
+  def swap(i, j) : self
     self[i], self[j] = self[j], self[i]
     self
   end
@@ -491,7 +571,7 @@ class Deque(T)
   # a = Deque{1, 2}
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
-  def unshift(value : T)
+  def unshift(value : T) : self
     increase_capacity if @size >= @capacity
     @start -= 1
     @start += @capacity if @start < 0

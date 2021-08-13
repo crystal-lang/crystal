@@ -1,4 +1,5 @@
 require "uri/punycode"
+require "log"
 
 # An `SSL::Context` represents a generic secure socket protocol configuration.
 #
@@ -165,7 +166,7 @@ abstract class OpenSSL::SSL::Context
     # unidirectionally, the server connects, then sends a ticket
     # after the connect handshake, the ticket send can fail with Broken Pipe.
     # So if you have that kind of behavior (clients that never read) call this method.
-    def disable_session_resume_tickets
+    def disable_session_resume_tickets : Nil
       add_options(OpenSSL::SSL::Options::NO_TICKET) # TLS v1.2 and below
       {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
         ret = LibSSL.ssl_ctx_set_num_tickets(self, 0) # TLS v1.3
@@ -255,7 +256,8 @@ abstract class OpenSSL::SSL::Context
 
   # Specify a list of TLS ciphers to use or discard.
   #
-  # This affects only TLSv1.2 and below.
+  # This affects only TLSv1.2 and below. See `#security_level=` for some
+  # sensible system configuration.
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
@@ -263,20 +265,23 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Specify a list of TLS cipher suites to use or discard.
+  #
+  # See `#security_level=` for some sensible system configuration.
   def cipher_suites=(cipher_suites : String)
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       ret = LibSSL.ssl_ctx_set_ciphersuites(@handle, cipher_suites)
       raise OpenSSL::Error.new("SSL_CTX_set_ciphersuites") if ret == 0
-      cipher_suites
     {% else %}
-      raise "SSL_CTX_set_ciphersuites not supported"
+      Log.warn { "SSL_CTX_set_ciphersuites not supported" }
     {% end %}
+    cipher_suites
   end
 
   # Sets the current ciphers and ciphers suites to **modern** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`.
+  # recommendations. See `CIPHERS_MODERN` and `CIPHER_SUITES_MODERN`. See `#security_level=` for some
+  # sensible system configuration.
   def set_modern_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_MODERN
     {% else %}
       self.ciphers = CIPHERS_MODERN
@@ -284,9 +289,10 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Sets the current ciphers and ciphers suites to **intermediate** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`.
+  # recommendations. See `CIPHERS_INTERMEDIATE` and `CIPHER_SUITES_INTERMEDIATE`. See `#security_level=` for some
+  # sensible system configuration.
   def set_intermediate_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_INTERMEDIATE
     {% else %}
       self.ciphers = CIPHERS_INTERMEDIATE
@@ -294,18 +300,43 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Sets the current ciphers and ciphers suites to **old** compatibility level as per Mozilla
-  # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`.
+  # recommendations. See `CIPHERS_OLD` and `CIPHER_SUITES_OLD`. See `#security_level=` for some
+  # sensible system configuration.
   def set_old_ciphers
-    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.1") >= 0 %}
       self.cipher_suites = CIPHER_SUITES_OLD
     {% else %}
       self.ciphers = CIPHERS_OLD
     {% end %}
   end
 
+  # Returns the security level used by this TLS context.
+  def security_level : Int32
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_get_security_level(@handle)
+    {% else %}
+      Log.warn { "SSL_CTX_get_security_level not supported" }
+      0
+    {% end %}
+  end
+
+  # Sets the security level used by this TLS context. The default system
+  # security level might disable some ciphers.
+  #
+  # * https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_security_level.html
+  # * https://wiki.debian.org/ContinuousIntegration/TriagingTips/openssl-1.1.1
+  def security_level=(value : Int32)
+    {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
+      LibSSL.ssl_ctx_set_security_level(@handle, value)
+    {% else %}
+      Log.warn { "SSL_CTX_set_security_level not supported" }
+    {% end %}
+    value
+  end
+
   # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
-  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
+  def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1) : Nil
     key = LibCrypto.ec_key_new_by_curve_name(curve)
     raise OpenSSL::Error.new("ec_key_new_by_curve_name") if key.null?
     LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_SET_TMP_ECDH, 0, key)
@@ -313,7 +344,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current modes set on the TLS context.
-  def modes
+  def modes : LibSSL::Modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
@@ -328,7 +359,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current options set on the TLS context.
-  def options
+  def options : LibSSL::Options
     opts = {% if compare_versions(LibSSL::OPENSSL_VERSION, "1.1.0") >= 0 %}
              LibSSL.ssl_ctx_get_options(@handle)
            {% else %}
@@ -372,7 +403,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode
+  def verify_mode : LibSSL::VerifyMode
     LibSSL.ssl_ctx_get_verify_mode(@handle)
   end
 
@@ -424,9 +455,9 @@ abstract class OpenSSL::SSL::Context
       raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
     end
 
-    # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
+    # Sets the given `OpenSSL::SSL::X509VerifyFlags` in this context, additionally to
     # the already set ones.
-    def add_x509_verify_flags(flags : OpenSSL::X509VerifyFlags)
+    def add_x509_verify_flags(flags : OpenSSL::SSL::X509VerifyFlags)
       param = LibSSL.ssl_ctx_get0_param(@handle)
       ret = LibCrypto.x509_verify_param_set_flags(param, flags)
       raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1

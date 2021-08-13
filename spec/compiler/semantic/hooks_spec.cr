@@ -70,7 +70,7 @@ describe "Semantic: hooks" do
       ") { int32 }
   end
 
-  it "does not invoke 'method_added' hook recusively" do
+  it "does not invoke 'method_added' hook recursively" do
     assert_type("
       class Foo
         macro method_added(d)

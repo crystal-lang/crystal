@@ -102,20 +102,17 @@ describe "Semantic: did you mean" do
   end
 
   it "doesn't suggest for operator" do
-    nodes = parse %(
+    error = assert_error <<-CR,
       class Foo
         def +
         end
       end
 
       Foo.new.a
-      )
-    begin
-      semantic nodes
-      fail "TypeException wasn't raised"
-    rescue ex : Crystal::TypeException
-      ex.to_s.includes?("Did you mean").should be_false
-    end
+      CR
+      inject_primitives: false
+
+    error.to_s.should_not contain("Did you mean")
   end
 
   it "says did you mean for named argument" do
@@ -183,7 +180,7 @@ describe "Semantic: did you mean" do
       "If the variable was declared in a macro it's not visible outside it"
   end
 
-  it "suggest that there might be a type for an initialize method" do
+  it "suggest that there might be a typo for an initialize method" do
     assert_error %(
       class Foo
         def intialize(x)
@@ -195,7 +192,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method in inherited class" do
+  it "suggest that there might be a typo for an initialize method in inherited class" do
     assert_error %(
       class Foo
         def initialize
@@ -212,7 +209,7 @@ describe "Semantic: did you mean" do
       "do you maybe have a typo in this 'intialize' method?"
   end
 
-  it "suggest that there might be a type for an initialize method with overload" do
+  it "suggest that there might be a typo for an initialize method with overload" do
     assert_error %(
       class Foo
         def initialize(x : Int32)

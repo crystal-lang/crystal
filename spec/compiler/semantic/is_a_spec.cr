@@ -224,4 +224,20 @@ describe "Semantic: is_a?" do
       end
       )) { bool }
   end
+
+  it "doesn't fail on untyped is_a (#10317)" do
+    assert_no_errors(%(
+      require "prelude"
+
+      def foo(&block)
+      end
+
+      class Sup
+      end
+
+      foo do
+        Sup.new.is_a?(Sup)
+      end
+      ))
+  end
 end

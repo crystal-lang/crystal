@@ -172,11 +172,7 @@ class Crystal::Doc::Markdown::Parser
   def render_fenced_code(language : String)
     line = @lines[@line]
 
-    if language.empty?
-      @renderer.begin_code nil
-    else
-      @renderer.begin_code language
-    end
+    @renderer.begin_code language.presence
 
     @line += 1
 
@@ -398,8 +394,7 @@ class Crystal::Doc::Markdown::Parser
         end
       when '['
         unless in_link
-          link = check_link str, (pos + 1), bytesize
-          if link
+          if link = check_link str, (pos + 1), bytesize
             @renderer.text line.byte_slice(cursor, pos - cursor)
             cursor = pos + 1
             @renderer.begin_link link
@@ -416,8 +411,6 @@ class Crystal::Doc::Markdown::Parser
           cursor = pos + 1
           in_link = false
         end
-      else
-        # Nothing
       end
       last_is_space = pos < bytesize && str[pos].unsafe_chr.ascii_whitespace?
       pos += 1
@@ -455,8 +448,6 @@ class Crystal::Doc::Markdown::Parser
         if bracket_count == 0
           break
         end
-      else
-        # nothing to do
       end
       pos += 1
     end

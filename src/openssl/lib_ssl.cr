@@ -1,5 +1,9 @@
 require "./lib_crypto"
 
+{% if flag?(:without_openssl) %}
+  {% raise "The `without_openssl` flag is preventing you to use the LibSSL module" %}
+{% end %}
+
 {% begin %}
   lib LibSSL
     {% from_libressl = (`hash pkg-config 2> /dev/null || printf %s false` != "false") &&
@@ -198,6 +202,8 @@ lib LibSSL
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
+  fun ssl_get_peer_certificate = SSL_get_peer_certificate(handle : SSL) : LibCrypto::X509
+
   {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
     fun ssl_ctx_get_options = SSL_CTX_get_options(ctx : SSLContext) : ULong
     fun ssl_ctx_set_options = SSL_CTX_set_options(ctx : SSLContext, larg : ULong) : ULong
@@ -240,6 +246,11 @@ lib LibSSL
     fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
     fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
     fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+  {% end %}
+
+  {% if compare_versions(OPENSSL_VERSION, "1.1.0") >= 0 %}
+    fun ssl_ctx_set_security_level = SSL_CTX_set_security_level(ctx : SSLContext, level : Int) : Void
+    fun ssl_ctx_get_security_level = SSL_CTX_get_security_level(ctx : SSLContext) : Int
   {% end %}
 end
 

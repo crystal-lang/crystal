@@ -53,7 +53,7 @@ describe "Semantic: macro" do
 
       Foo.new.foo
       ),
-      "method must return Int32 but it is returning Char"
+      "method Foo#foo must return Int32 but it is returning Char"
   end
 
   it "allows subclasses of return type for macro def" do
@@ -143,7 +143,7 @@ describe "Semantic: macro" do
       end
 
       Bar.new.bar
-    }, "method must return Foo(String) but it is returning Foo(Int32)",
+    }, "method Bar#bar must return Foo(String) but it is returning Foo(Int32)",
       inject_primitives: false
   end
 
@@ -470,19 +470,16 @@ describe "Semantic: macro" do
   end
 
   it "can't define new variables (#466)" do
-    nodes = parse(%(
+    error = assert_error <<-CR,
       macro foo
         hello = 1
       end
 
       foo
       hello
-      ))
-    begin
-      semantic nodes
-    rescue ex : TypeException
-      ex.to_s.should_not match(/did you mean/)
-    end
+      CR
+      inject_primitives: false
+    error.to_s.should_not contain("did you mean")
   end
 
   it "finds macro in included generic module" do
@@ -842,6 +839,64 @@ describe "Semantic: macro" do
       foo(x: 1)
       ),
       "missing argument: z"
+  end
+
+  it "solves macro expression arguments before macro expansion (type)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(TypeNode) && x.name == "String" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      foo({{ String }})
+      )) { int32 }
+  end
+
+  it "solves macro expression arguments before macro expansion (constant)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(NumberLiteral) && x == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      CONST = 1
+      foo({{ CONST }})
+      )) { int32 }
+  end
+
+  it "solves named macro expression arguments before macro expansion (type) (#2423)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(TypeNode) && x.name == "String" %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      foo(x: {{ String }})
+      )) { int32 }
+  end
+
+  it "solves named macro expression arguments before macro expansion (constant) (#2423)" do
+    assert_type(%(
+      macro foo(x)
+        {% if x.is_a?(NumberLiteral) && x == 1 %}
+          1
+        {% else %}
+          'a'
+        {% end %}
+      end
+
+      CONST = 1
+      foo(x: {{ CONST }})
+      )) { int32 }
   end
 
   it "finds generic type argument of included module" do
@@ -1447,21 +1502,21 @@ describe "Semantic: macro" do
   end
 
   it "has correct location after expanding assignment after instance var" do
-    result = semantic(%( #  1
-      macro foo(x)       #  2
-        @{{x}}           #  3
-                         #  4
-        def bar          #  5
-        end              #  6
-      end                #  7
-                         #  8
-      class Foo          #  9
-        foo(x = 1)       # 10
+    result = semantic <<-CR, inject_primitives: false
+      macro foo(x)       #  1
+        @{{x}}           #  2
+                         #  3
+        def bar          #  4
+        end              #  5
+      end                #  6
+                         #  7
+      class Foo          #  8
+        foo(x = 1)       #  9
       end
-    ), inject_primitives: false)
+      CR
 
     method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
-    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(10)
+    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
   end
 
   it "executes OpAssign (#9356)" do
@@ -1476,5 +1531,24 @@ describe "Semantic: macro" do
         {% end %}
       {% end %}
       )) { int32 }
+  end
+
+  it "executes MultiAssign" do
+    assert_type(%(
+      {% begin %}
+        {% a, b = 1, 2 %}
+        { {{a}}, {{b}} }
+      {% end %}
+      )) { tuple_of([int32, int32] of Type) }
+  end
+
+  it "executes MultiAssign with ArrayLiteral value" do
+    assert_type(%(
+      {% begin %}
+        {% xs = [1, 2] %}
+        {% a, b = xs %}
+        { {{a}}, {{b}} }
+      {% end %}
+      )) { tuple_of([int32, int32] of Type) }
   end
 end

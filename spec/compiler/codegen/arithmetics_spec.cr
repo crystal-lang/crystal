@@ -17,7 +17,7 @@ require "../../spec_helper"
   }
 {% end %}
 
-describe "Code gen: arithmetics primitives" do
+describe "Code gen: arithmetic primitives" do
   describe "&+ addition" do
     {% for type in SupportedInts %}
       it "wrap around for {{type}}" do
@@ -200,6 +200,23 @@ describe "Code gen: arithmetics primitives" do
             require "prelude"
 
             v = Int64.new({{type}}::MIN) - 1_i64
+
+            begin
+              v.{{method}}
+              0
+            rescue OverflowError
+              1
+            end
+          )).to_i.should eq(1)
+        end
+      {% end %}
+
+      {% if [UInt16, UInt32, UInt64].includes?(type) %}
+        it "raises overflow if lower than {{type}}::MIN (#9997)" do
+          run(%(
+            require "prelude"
+
+            v = -1_i8
 
             begin
               v.{{method}}

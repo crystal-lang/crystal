@@ -104,7 +104,7 @@ def assert_expand_third(from : String, to, *, file = __FILE__, line = __LINE__)
   assert_expand node, to, file: file, line: line
 end
 
-def assert_error(str, message, *, inject_primitives = true, file = __FILE__, line = __LINE__)
+def assert_error(str, message = nil, *, inject_primitives = true, file = __FILE__, line = __LINE__)
   expect_raises TypeException, message, file, line do
     semantic str, inject_primitives: inject_primitives
   end
@@ -131,8 +131,8 @@ end
 
 def assert_warning(code, message, *, file = __FILE__, line = __LINE__)
   warning_failures = warnings_result(code, file: file)
-  warning_failures.size.should eq(1), file, line
-  warning_failures[0].should start_with(message), file, line
+  warning_failures.size.should eq(1), file: file, line: line
+  warning_failures[0].should start_with(message), file: file, line: line
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected, expected_pragmas = nil, flags = nil, file = __FILE__, line = __LINE__)

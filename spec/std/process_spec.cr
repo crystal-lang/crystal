@@ -452,6 +452,9 @@ describe Process do
     it { Process.parse_arguments(%q('foo\ bar')).should eq(["foo\\ bar"]) }
     it { Process.parse_arguments("\\").should eq(["\\"]) }
     it { Process.parse_arguments(%q["foo bar" '\hello/' Fizz\ Buzz]).should eq(["foo bar", "\\hello/", "Fizz Buzz"]) }
+    it { Process.parse_arguments(%q[foo"bar"baz]).should eq(["foobarbaz"]) }
+    it { Process.parse_arguments(%q[foo'bar'baz]).should eq(["foobarbaz"]) }
+    it { Process.parse_arguments(%(this 'is a "'very wei"rd co"m"mand please" don't do t'h'a't p"leas"e)).should eq(["this", "is a \"very", "weird command please", "dont do that", "please"]) }
 
     it "raises an error when double quote is unclosed" do
       expect_raises ArgumentError, "Unmatched quote" do

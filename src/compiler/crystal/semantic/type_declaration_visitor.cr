@@ -36,7 +36,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
 
     # A hash of all defined funs, so we can detect when
-    # a fun is redefined with a different signautre
+    # a fun is redefined with a different signature
     @externals = {} of String => External
   end
 

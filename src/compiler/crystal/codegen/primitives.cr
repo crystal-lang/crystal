@@ -128,13 +128,11 @@ class Crystal::CodeGenVisitor
     when ">=" then return codegen_binary_op_gte(t1, t2, p1, p2)
     when "==" then return codegen_binary_op_eq(t1, t2, p1, p2)
     when "!=" then return codegen_binary_op_ne(t1, t2, p1, p2)
-    else # go on
     end
 
     case op
     when "+", "-", "*"
       return codegen_binary_op_with_overflow(op, t1, t2, p1, p2)
-    else # go on
     end
 
     tmax, p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
@@ -293,10 +291,14 @@ class Crystal::CodeGenVisitor
 
   private def codegen_out_of_range(target_type : FloatType, arg_type : FloatType, arg)
     min_value, max_value = target_type.range
-    # arg < min_value || arg > max_value
-    or(
-      builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
-      builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+    # checks for arg being outside of range and not infinity
+    # (arg < min_value || arg > max_value) && arg != 2 * arg
+    and(
+      or(
+        builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+      ),
+      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg))
     )
   end
 
@@ -608,12 +610,20 @@ class Crystal::CodeGenVisitor
     when from_type.normal_rank == to_type.normal_rank
       # if the normal_rank is the same (eg: UInt64 / Int64)
       # there is still chance for overflow
-      if checked
+      if from_type.kind != to_type.kind && checked
         overflow = codegen_out_of_range(to_type, from_type, arg)
         codegen_raise_overflow_cond(overflow)
       end
       arg
     when from_type.rank < to_type.rank
+      # extending a signed integer to an unsigned one (eg: Int8 to UInt16)
+      # may still lead to underflow
+      if checked
+        if from_type.signed? && to_type.unsigned?
+          overflow = codegen_out_of_range(to_type, from_type, arg)
+          codegen_raise_overflow_cond(overflow)
+        end
+      end
       extend_int from_type, to_type, arg
     else
       if checked
@@ -986,6 +996,7 @@ class Crystal::CodeGenVisitor
       else
         null_fun_ptr, null_args = real_fun_ptr, closure_args
       end
+      null_fun_ptr = LLVM::Function.from_value(null_fun_ptr)
 
       value = codegen_call_or_invoke(node, target_def, nil, null_fun_ptr, null_args, true, target_def.type, false, proc_type)
       phi.add value, node.type
@@ -996,6 +1007,7 @@ class Crystal::CodeGenVisitor
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
+      real_fun_ptr = LLVM::Function.from_value(real_fun_ptr)
       closure_args.insert(0, ctx_ptr)
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, closure_args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
@@ -1032,7 +1044,7 @@ class Crystal::CodeGenVisitor
 
       abi_arg_type = abi_info.arg_types[index]
       case abi_arg_type.kind
-      when LLVM::ABI::ArgKind::Direct
+      in .direct?
         call_arg = codegen_direct_abi_call(call_arg, abi_arg_type)
         if cast = abi_arg_type.cast
           null_fun_types << cast
@@ -1040,11 +1052,11 @@ class Crystal::CodeGenVisitor
           null_fun_types << abi_arg_type.type
         end
         null_args << call_arg
-      when LLVM::ABI::ArgKind::Indirect
+      in .indirect?
         # Pass argument as is (will be passed byval)
         null_args << call_arg
         null_fun_types << abi_arg_type.type.pointer
-      when LLVM::ABI::ArgKind::Ignore
+      in .ignore?
         # Ignore
       end
     end
@@ -1068,7 +1080,27 @@ class Crystal::CodeGenVisitor
     codegen_tuple_indexer(context.type, call_args[0], index)
   end
 
-  def codegen_tuple_indexer(type, value, index)
+  def codegen_tuple_indexer(type, value, index : Range)
+    case type
+    when TupleInstanceType
+      tuple_types = type.tuple_types[index].map &.as(Type)
+      allocate_tuple(@program.tuple_of(tuple_types).as(TupleInstanceType)) do |tuple_type, i|
+        ptr = aggregate_index value, index.begin + i
+        tuple_value = to_lhs ptr, tuple_type
+        {tuple_type, tuple_value}
+      end
+    else
+      type = type.instance_type
+      case type
+      when TupleInstanceType
+        type_id(@program.tuple_of(type.tuple_types[index].map &.as(Type)).metaclass)
+      else
+        raise "BUG: unsupported codegen for tuple_indexer"
+      end
+    end
+  end
+
+  def codegen_tuple_indexer(type, value, index : Int32)
     case type
     when TupleInstanceType
       ptr = aggregate_index value, index

@@ -12,7 +12,7 @@ module Crystal
   # around in every step of a compilation to record and query this information.
   #
   # In a way, a Program is an alternative implementation to having global variables
-  # for all of this data, but modelled this way one can easily test and exercise
+  # for all of this data, but modeled this way one can easily test and exercise
   # programs because each one has its own definition of the types created,
   # methods instantiated, etc.
   #
@@ -25,10 +25,6 @@ module Crystal
 
     # All symbols (:foo, :bar) found in the program
     getter symbols = Set(String).new
-
-    # All global variables in the program ($foo, $bar), indexed by their name.
-    # The names includes the `$` sign.
-    getter global_vars = {} of String => MetaTypeVar
 
     # Hash that prevents recursive splat expansions. For example:
     #
@@ -117,6 +113,10 @@ module Crystal
     property progress_tracker = ProgressTracker.new
 
     property codegen_target = Config.host_target
+
+    getter predefined_constants = Array(Const).new
+
+    property compiler : Compiler?
 
     def initialize
       super(self, self, "main")
@@ -209,6 +209,12 @@ module Crystal
       types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new("argc", int32)
       types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new("argv", pointer_of(pointer_of(uint8)))
 
+      argc_unsafe.no_init_flag = true
+      argv_unsafe.no_init_flag = true
+
+      predefined_constants << argc_unsafe
+      predefined_constants << argv_unsafe
+
       # Make sure to initialize `ARGC_UNSAFE` and `ARGV_UNSAFE` as soon as the program starts
       const_initializers << argc_unsafe
       const_initializers << argv_unsafe
@@ -275,7 +281,9 @@ module Crystal
     end
 
     private def define_crystal_constant(name, value)
-      crystal.types[name] = Const.new self, crystal, name, value
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.no_init_flag = true
+      predefined_constants << const
     end
 
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
@@ -315,9 +323,10 @@ module Crystal
     # Returns the `Type` for `type | Nil`
     def nilable(type)
       case type
-      when self.nil
-        # Nil | Nil # => Nil
-        return self.nil
+      when self.nil, self.no_return
+        # Nil | Nil      # => Nil
+        # NoReturn | Nil # => Nil
+        self.nil
       when UnionType
         types = Array(Type).new(type.union_types.size + 1)
         types.concat type.union_types
@@ -364,8 +373,6 @@ module Crystal
             untyped_type = other_type.remove_typedef
             if untyped_type.proc?
               return NilableProcType.new(self, other_type)
-            elsif untyped_type.is_a?(PointerInstanceType)
-              return NilablePointerType.new(self, other_type)
             end
           end
         end

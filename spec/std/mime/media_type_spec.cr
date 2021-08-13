@@ -8,7 +8,7 @@ private def parse(string)
 end
 
 private def assert_format(string, format = string, file = __FILE__, line = __LINE__)
-  MIME::MediaType.parse(string).to_s.should eq(format), file, line
+  MIME::MediaType.parse(string).to_s.should eq(format), file: file, line: line
 end
 
 describe MIME::MediaType do

@@ -1,5 +1,6 @@
 require "../../spec_helper"
 require "../../support/env"
+require "spec/helpers/iterate"
 
 private def assert_finds(search, results, relative_to = nil, path = __DIR__, file = __FILE__, line = __LINE__)
   it "finds #{search.inspect}", file, line do
@@ -103,6 +104,76 @@ describe Crystal::CrystalPath do
 
   # Don't find relative filenames in src or shards
   assert_doesnt_find "../../src/file_three", relative_to: Path["test_files", "test_folder", "test_folder.cr"].to_s, expected_relative_to: Path["test_files", "test_folder"].to_s
+
+  describe "#each_file_expansion" do
+    path = Crystal::CrystalPath.new
+
+    it "foo.cr" do
+      assert_iterates_yielding [
+        "x/foo.cr",
+        "x/foo.cr/foo.cr.cr",
+        "x/foo.cr/src/foo.cr.cr",
+      ], path.each_file_expansion("foo.cr", "x")
+    end
+
+    it "foo" do
+      assert_iterates_yielding [
+        "x/foo.cr",
+        "x/foo/foo.cr",
+        "x/foo/src/foo.cr",
+      ], path.each_file_expansion("foo", "x")
+    end
+
+    it "./foo" do
+      assert_iterates_yielding [
+        "x/./foo.cr",
+        "x/./foo/foo.cr",
+      ], path.each_file_expansion("./foo", "x")
+    end
+
+    it "./foo.cr" do
+      assert_iterates_yielding [
+        "x/./foo.cr",
+        "x/./foo/foo.cr",
+      ], path.each_file_expansion("./foo", "x")
+    end
+
+    it "foo/bar" do
+      assert_iterates_yielding [
+        "x/foo/bar.cr",
+        "x/foo/src/bar.cr",
+        "x/foo/src/foo/bar.cr",
+        "x/foo/bar/bar.cr",
+        "x/foo/src/bar/bar.cr",
+        "x/foo/src/foo/bar/bar.cr",
+      ], path.each_file_expansion("foo/bar", "x")
+    end
+
+    it "./foo/bar" do
+      assert_iterates_yielding [
+        "x/./foo/bar.cr",
+        "x/./foo/bar/bar.cr",
+      ], path.each_file_expansion("./foo/bar", "x")
+    end
+
+    it "foo/bar/baz" do
+      assert_iterates_yielding [
+        "x/foo/bar/baz.cr",
+        "x/foo/src/bar/baz.cr",
+        "x/foo/src/foo/bar/baz.cr",
+        "x/foo/bar/baz/baz.cr",
+        "x/foo/src/bar/baz/bar/baz.cr",
+        "x/foo/src/foo/bar/baz/bar/baz.cr",
+      ], path.each_file_expansion("foo/bar/baz", "x")
+    end
+
+    it "./foo/bar/baz" do
+      assert_iterates_yielding [
+        "x/./foo/bar/baz.cr",
+        "x/./foo/bar/baz/baz.cr",
+      ], path.each_file_expansion("./foo/bar/baz", "x")
+    end
+  end
 
   it "includes 'lib' by default" do
     with_env("CRYSTAL_PATH": nil) do
