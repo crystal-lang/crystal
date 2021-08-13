@@ -396,6 +396,30 @@ describe "String" do
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end
 
+    describe "to_i128" do
+      it { "170141183460469231731687303715884105727".to_i128.should eq(Int128::MAX) }
+      it { "-170141183460469231731687303715884105728".to_i128.should eq(Int128::MIN) }
+      it { expect_raises(ArgumentError) { "170141183460469231731687303715884105728".to_i128 } }
+      it { expect_raises(ArgumentError) { "-170141183460469231731687303715884105729".to_i128 } }
+
+      it { "170141183460469231731687303715884105727".to_i128?.should eq(Int128::MAX) }
+      it { "170141183460469231731687303715884105728".to_i128?.should be_nil }
+      it { "170141183460469231731687303715884105728".to_i128 { 0 }.should eq(0) }
+
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_i128 } }
+    end
+
+    describe "to_u128" do
+      it { "340282366920938463463374607431768211455".to_u128.should eq(UInt128::MAX) }
+      it { "0".to_u128.should eq(0) }
+      it { expect_raises(ArgumentError) { "340282366920938463463374607431768211456".to_u128 } }
+      it { expect_raises(ArgumentError) { "-1".to_u128 } }
+
+      it { "340282366920938463463374607431768211455".to_u128?.should eq(UInt128::MAX) }
+      it { "340282366920938463463374607431768211456".to_u128?.should be_nil }
+      it { "340282366920938463463374607431768211456".to_u128 { 0 }.should eq(0) }
+    end
+
     it { "1234".to_i32.should eq(1234) }
     it { "1234123412341234".to_i64.should eq(1234123412341234_i64) }
     it { "9223372036854775808".to_u64.should eq(9223372036854775808_u64) }
