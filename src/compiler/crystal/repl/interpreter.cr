@@ -951,6 +951,7 @@ class Crystal::Repl::Interpreter
       begin
         interpreter.interpret(exps, main_visitor.meta_vars)
       rescue ex : EscapingException
+        print "Unhandled exception in spawn: "
         print ex
       end
 

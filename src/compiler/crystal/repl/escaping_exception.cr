@@ -1,6 +1,8 @@
 require "./repl"
 
 class Crystal::Repl::EscapingException < Exception
+  getter exception_pointer : Void*
+
   def initialize(@interpreter : Interpreter, @exception_pointer : Void*)
   end
 

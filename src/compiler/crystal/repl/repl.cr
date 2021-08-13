@@ -3,6 +3,7 @@ require "../../../crystal/readline"
 class Crystal::Repl
   property prelude : String = "prelude"
   getter program : Program
+  private getter context
 
   def initialize
     @program = Program.new
@@ -29,9 +30,11 @@ class Crystal::Repl
       end
 
       line = Readline.readline(prompt, add_history: true)
-
-      break unless line
-      break if line.strip.in?("exit", "quit")
+      unless line
+        # Explicitly call exit on ctrl+D so at_exit handlers run
+        interpret_exit
+        break
+      end
 
       new_buffer =
         if @buffer.empty?
@@ -88,6 +91,7 @@ class Crystal::Repl
         @buffer = ""
         @line_number += 1
 
+        print "Unhandled exception: "
         print ex
       rescue ex : Crystal::CodeError
         @nest = 0
@@ -116,6 +120,9 @@ class Crystal::Repl
     exps = Expressions.new([prelude_node, file_node] of ASTNode)
 
     interpret_and_exit_on_error(exps)
+
+    # Explicitly call exit at the end so at_exit handlers run
+    interpret_exit
   end
 
   def run_code(code, argv = [] of String)
@@ -143,7 +150,8 @@ class Crystal::Repl
   private def interpret_and_exit_on_error(node : ASTNode)
     interpret(node)
   rescue ex : EscapingException
-    print ex
+    # First run at_exit handlers by calling Crystal.exit
+    interpret_crystal_exit(ex)
     exit 1
   rescue ex : Crystal::CodeError
     ex.color = true
@@ -170,5 +178,32 @@ class Crystal::Repl
     parser.filename = filename
     parsed_nodes = parser.parse
     @program.normalize(parsed_nodes, inside_exp: false)
+  end
+
+  private def interpret_exit
+    interpret(Call.new(nil, "exit", global: true))
+  end
+
+  private def interpret_crystal_exit(exception : EscapingException)
+    decl = UninitializedVar.new(Var.new("ex"), TypeNode.new(@context.program.exception.virtual_type))
+    call = Call.new(Path.global("Crystal"), "exit", [NumberLiteral.new(1), Var.new("ex")] of ASTNode)
+    exps = Expressions.new([decl, call] of ASTNode)
+
+    begin
+      meta_vars = MetaVars.new
+
+      interpreter = Interpreter.new(context)
+      # TODO: make stack private? Does it matter?
+      interpreter.stack.as(Void**).value = exception.exception_pointer
+
+      main_visitor = MainVisitor.new(context.program, meta_vars: meta_vars)
+
+      exps = context.program.normalize(exps)
+      exps = context.program.semantic(exps, main_visitor: main_visitor)
+
+      interpreter.interpret(exps, main_visitor.meta_vars)
+    rescue ex
+      puts "Error while calling Crystal.exit: #{ex.message}"
+    end
   end
 end
