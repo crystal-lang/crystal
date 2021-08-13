@@ -3788,6 +3788,59 @@ describe Crystal::Repl::Interpreter do
           a
         CODE
     end
+
+    it "does else" do
+      interpret(<<-CODE).should eq(3)
+          a =
+            begin
+              'a'
+            rescue
+              1
+            else
+              2
+            end
+
+          a + 1
+        CODE
+    end
+
+    it "does ensure for else" do
+      interpret(<<-CODE).should eq(2 + ((1 * 2) + 3))
+          x = 1
+
+          a =
+            begin
+              'a'
+            rescue
+              1
+            else
+              x *= 2
+              2
+            ensure
+              x += 3
+            end
+
+          a + x
+        CODE
+    end
+
+    it "does ensure for else when else raises" do
+      interpret(<<-CODE, prelude: "prelude").should eq(2)
+          x = 1
+
+            begin
+              1
+            rescue
+              1
+            else
+              raise "OH NO"
+            ensure
+              x += 1
+            end
+
+          x
+        CODE
+    end
   end
 
   context "extern" do
@@ -4277,6 +4330,84 @@ describe Crystal::Repl::Interpreter do
 
           foo(1)
         CODE
+    end
+  end
+
+  context "special vars" do
+    it "does special var that's a reference" do
+      interpret(<<-CODE).should eq("hey")
+        class Object; def not_nil!; self; end; end
+
+        def foo(x)
+          $? = "hey"
+        end
+
+        foo(2)
+        $? || "oops"
+      CODE
+    end
+
+    it "does special var that's a struct" do
+      interpret(<<-CODE).should eq(3)
+        class Object; def not_nil!; self; end; end
+
+        def foo(x)
+          $? = 3
+        end
+
+        foo(2)
+        $? || 4
+      CODE
+    end
+
+    it "does special var that's a reference inside block" do
+      interpret(<<-CODE).should eq("hey")
+        class Object; def not_nil!; self; end; end
+
+        def bar
+          yield
+        end
+
+        def foo(x)
+          bar do
+            $? = "hey"
+          end
+        end
+
+        foo(2)
+        $? || "oops"
+      CODE
+    end
+
+    it "does special var that's a reference when there are optional arguments" do
+      interpret(<<-CODE).should eq("hey")
+        class Object; def not_nil!; self; end; end
+
+        def foo(x = 1)
+          $? = "hey"
+        end
+
+        foo
+        $? || "oops"
+      CODE
+    end
+
+    pending "does special var that's a reference for multidispatch" do
+      interpret(<<-CODE).should eq("hey")
+        class Object; def not_nil!; self; end; end
+
+        def foo(x : Int32)
+          $? = "hey"
+        end
+
+        def foo(x : String)
+          $? = "ho"
+        end
+
+        a = 1 || "a"
+        foo(a)
+        $? || "oops"
+      CODE
     end
   end
 

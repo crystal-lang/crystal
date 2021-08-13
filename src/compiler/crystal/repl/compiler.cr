@@ -439,11 +439,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # TODO: rescues, else, etc.
     rescues = node.rescues
     node_ensure = node.ensure
+    node_else = node.else
 
     # Accept the body, recording where it starts and ends
     body_start_index = instructions_index
-    node.body.accept self
-    upcast node.body, node.body.type, node.type
+
+    if node_else
+      discard_value node.body
+    else
+      node.body.accept self
+      upcast node.body, node.body.type, node.type if @wants_value
+    end
+
     body_end_index = instructions_index
 
     # Now we'll write the catch tables so we want to skip this
@@ -479,7 +486,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
       a_rescue.body.accept self
-      upcast a_rescue.body, a_rescue.body.type, node.type
+      upcast a_rescue.body, a_rescue.body.type, node.type if @wants_value
 
       jump 0, node: nil
       rescue_locations << patch_location
@@ -489,12 +496,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # If there's an ensure block we also generate another ensure
       # clause to be executed when an exception is raised inside the body
       # or any of the rescue clauses, which does the ensure, then reraises
-      rescues_end_index = instructions_index
+      ensure_index = instructions_index - 8 # Exclude the last jump
 
       instructions.add_ensure(
         body_start_index,
-        rescues_end_index,
-        jump_index: instructions_index)
+        ensure_index,
+        jump_index: ensure_index)
 
       discard_value node_ensure
 
@@ -507,6 +514,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Now we are at the exit
     patch_jump(jump_location)
 
+    # If there's an else, do it now
+    if node_else
+      else_start_index = instructions_index
+
+      node_else.accept self
+      upcast node_else, node_else.type, node.type if @wants_value
+
+      if ensure_index
+        instructions.add_ensure(
+          else_start_index,
+          instructions_index,
+          jump_index: ensure_index,
+        )
+      end
+    end
+
+    # Now comes the ensure part.
+    # We jump here from all the rescue blocks.
     rescue_locations.each do |location|
       patch_jump(location)
     end
@@ -547,7 +572,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         dup(aligned_sizeof_type(node.value), node: nil)
       end
 
-      assign_to_var(target.name, node.value.type, node: node)
+      if target.special_var?
+        # We need to assign through the special var pointer
+        var = lookup_local_var("#{target.name}*")
+        var_type = var.type.as(PointerInstanceType).element_type
+
+        upcast node.value, node.value.type, var_type
+
+        get_local var.index, sizeof(Void*), node: node
+        pointer_set inner_sizeof_type(var_type), node: node
+      else
+        assign_to_var(target.name, node.value.type, node: node)
+      end
     when InstanceVar
       if inside_method?
         dont_request_struct_pointer do
@@ -1086,14 +1122,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # TODO: it's wrong that class variable initializer variables go to the
       # program, but this needs to be fixed in the main compiler first
       declare_local_vars(fake_def, compiled_def.local_vars, @context.program)
-
-      # Declare local variables for the constant initializer
-      # initializer.meta_vars.each do |name, var|
-      #   var_type = var.type?
-      #   next unless var_type
-
-      #   compiled_def.local_vars.declare(name, var_type)
-      # end
 
       compiler = Compiler.new(@context, compiled_def, top_level: true)
       compiler.compile_def(fake_def, closure_owner: @context.program)
@@ -1851,6 +1879,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # always 8 bytes when aligned.
     args_bytesize += 8 * (target_def.args.size - node_args_size)
 
+    # Also consider special vars
+    special_vars = target_def.special_vars
+    if special_vars
+      # Each special var argument is a hidden pointer
+      args_bytesize += special_vars.size * sizeof(Void*)
+    end
+
     # If the block is captured there's an extra argument
     if block && block.fun_literal
       args_bytesize += sizeof(Proc(Void))
@@ -1983,6 +2018,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Then magic constants (__LINE__, __FILE__, __DIR__)
     node_args_size = node.args.size
+
+    # Then special vars
+    special_vars = target_def.special_vars
+    if special_vars
+      special_vars.each do |special_var|
+        var = lookup_local_var(special_var)
+        pointerof_var(var.index, node: nil)
+      end
+    end
 
     # Don't count "self" arg in multidispatch
     node_args_size += 1 if multidispatch_self
@@ -2125,10 +2169,49 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def declare_local_vars(vars_owner, local_vars : LocalVars, owner = vars_owner)
     needs_closure_context = false
+    special_vars = owner.is_a?(Def) ? owner.special_vars : nil
 
+    # First declare self, if there is one
+    self_var = vars_owner.vars.try &.["self"]?
+    if self_var
+      local_vars.declare("self", self_var.type)
+    end
+
+    # Then define def arguments because those will come in order from calls
+    if owner.is_a?(Def)
+      owner.args.each do |arg|
+        var = owner.vars.not_nil![arg.name]
+        var_type = var.type?
+        next unless var_type
+
+        # The self arg can appear if it's a multidispatch, and we don't want
+        # to declare it twice.
+        next if arg.name == "self"
+
+        if var.closure_in?(owner)
+          needs_closure_context = true
+        end
+
+        local_vars.declare(var.name, var_type)
+      end
+    end
+
+    # Now declare special vars, if any
+    if owner.is_a?(Def) && (special_vars = owner.special_vars)
+      special_vars.each do |special_var|
+        var = vars_owner.vars.not_nil![special_var]
+        local_vars.declare("#{var.name}*", @context.program.pointer_of(var.type))
+      end
+    end
+
+    # Next declare all remaining variables
     vars_owner.vars.try &.each do |name, var|
       var_type = var.type?
       next unless var_type
+
+      # Skip if the var was already declared because it's also an argument
+      next if name == "self"
+      next if owner.is_a?(Def) && owner.args.any? { |arg| arg.name == name }
 
       # TODO (optimization): don't declare local var if it's closured,
       # but we need to be careful to support def args being closured
