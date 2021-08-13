@@ -105,6 +105,22 @@ class Crystal::Repl::Interpreter
     @compiled_def = compiled_def
   end
 
+  # Interprets the give node under the given context.
+  # Yields the interpreter stack to potentially fill out any values in
+  # it before execution.
+  def self.interpret(context : Context, node : ASTNode, & : UInt8* -> _) : Repl::Value
+    interpreter = Interpreter.new(context)
+
+    yield interpreter.stack
+
+    main_visitor = MainVisitor.new(context.program, meta_vars: MetaVars.new)
+
+    node = context.program.normalize(node)
+    node = context.program.semantic(node, main_visitor: main_visitor)
+
+    interpreter.interpret(node, main_visitor.meta_vars)
+  end
+
   # compiles the given code to bytecode, then interprets it by assuming the local variables
   # are defined in `meta_vars`.
   def interpret(node : ASTNode, meta_vars : MetaVars) : Value

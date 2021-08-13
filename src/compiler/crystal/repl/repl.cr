@@ -190,18 +190,9 @@ class Crystal::Repl
     exps = Expressions.new([decl, call] of ASTNode)
 
     begin
-      meta_vars = MetaVars.new
-
-      interpreter = Interpreter.new(context)
-      # TODO: make stack private? Does it matter?
-      interpreter.stack.as(Void**).value = exception.exception_pointer
-
-      main_visitor = MainVisitor.new(context.program, meta_vars: meta_vars)
-
-      exps = context.program.normalize(exps)
-      exps = context.program.semantic(exps, main_visitor: main_visitor)
-
-      interpreter.interpret(exps, main_visitor.meta_vars)
+      Interpreter.interpret(@context, exps) do |stack|
+        stack.as(Void**).value = exception.exception_pointer
+      end
     rescue ex
       puts "Error while calling Crystal.exit: #{ex.message}"
     end
