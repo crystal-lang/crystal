@@ -1986,7 +1986,6 @@ module Crystal
           end
         end
       end
-
       describe "#nilable?" do
         it false do
           assert_macro("x", "{{x.nilable?}}", "false") do |program|
@@ -1997,28 +1996,6 @@ module Crystal
         it true do
           assert_macro("x", "{{x.nilable?}}", "true") do |program|
             [TypeNode.new(program.union_of(program.string, program.nil))] of ASTNode
-          end
-        end
-      end
-
-      describe "#enum_base_type" do
-        it "with Int32" do
-          assert_macro("e", "{{e.enum_base_type}}", "Int32") do |program|
-            [TypeNode.new(EnumType.new(program, program, "Color", program.int32))] of ASTNode
-          end
-        end
-
-        it "with UInt16" do
-          assert_macro("e", "{{e.enum_base_type}}", "UInt16") do |program|
-            [TypeNode.new(EnumType.new(program, program, "Color", program.uint16))] of ASTNode
-          end
-        end
-
-        it "with Non enum type" do
-          expect_raises(Crystal::TypeException, "undefined method 'enum_base_type' for TypeNode of type String (must be an enum type)") do
-            assert_macro("e", "{{e.enum_base_type}}", "UInt16") do |program|
-              [TypeNode.new(program.string)] of ASTNode
-            end
           end
         end
       end

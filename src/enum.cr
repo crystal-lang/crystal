@@ -110,29 +110,6 @@ struct Enum
     value
   end
 
-  # Returns the type of the underlying enum value.
-  #
-  # ```
-  # enum Color
-  #   Red
-  #   Green
-  #   Blue
-  # end
-  #
-  # enum IOMode : UInt16
-  #   Read
-  #   Write
-  #   Async
-  # end
-  #
-  # Color.base_type  # => Int32
-  # IOMode.base_type # => UInt16
-  # ```
-  def self.base_type : Int.class
-    # TODO: Update this to leverage `{{@type.enum_base_type}}` after the next release.
-    typeof(self.values.first.value)
-  end
-
   # Appends a `String` representation of this enum member to the given *io*.
   #
   # See also: `to_s`.

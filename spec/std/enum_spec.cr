@@ -44,11 +44,6 @@ enum SpecBigEnum : Int64
 end
 
 describe Enum do
-  describe ".base_type" do
-    it { SpecEnum2.base_type.should eq Int32 }
-    it { SpecEnum.base_type.should eq Int8 }
-  end
-
   describe "to_s" do
     it "for simple enum" do
       SpecEnum::One.to_s.should eq("One")
