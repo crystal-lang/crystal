@@ -133,7 +133,7 @@ struct StaticArray(T, N)
     N
   end
 
-  # :nodoc:
+  # :inherit:
   def fill(value : T) : self
     # enable memset optimization
     to_slice.fill(value)

@@ -922,7 +922,7 @@ class Array(T)
     end
   end
 
-  # :nodoc:
+  # :inherit:
   def fill(value : T) : self
     # enable memset optimization
     to_unsafe_slice.fill(value)
