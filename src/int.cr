@@ -716,7 +716,7 @@ struct Int
         if precision > count
           (precision - count).times { io << '0' }
         end
-        io.write_utf8 Slice.new(ptr, count)
+        io.write_string Slice.new(ptr, count)
       end
     end
   end

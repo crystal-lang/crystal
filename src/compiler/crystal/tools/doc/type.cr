@@ -176,7 +176,7 @@ class Crystal::Doc::Type
             defs << method(def_with_metadata.def, false)
           end
         end
-        defs.sort_by!(stable: true, &.name.downcase)
+        defs.sort_by!(&.name.downcase)
       end
     end
   end
@@ -201,7 +201,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      class_methods.sort_by!(stable: true, &.name.downcase)
+      class_methods.sort_by!(&.name.downcase)
     end
   end
 
@@ -225,7 +225,7 @@ class Crystal::Doc::Type
           end
         end
       end
-      macros.sort_by!(stable: true, &.name.downcase)
+      macros.sort_by!(&.name.downcase)
     end
   end
 
@@ -786,7 +786,7 @@ class Crystal::Doc::Type
       builder.field "full_name", full_name
       builder.field "name", name
       builder.field "abstract", abstract?
-      builder.field "superclass" { superclass.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "superclass" { (s = superclass) ? s.to_json_simple(builder) : builder.null }
       builder.field "ancestors" do
         builder.array do
           ancestors.each &.to_json_simple(builder)
@@ -821,7 +821,7 @@ class Crystal::Doc::Type
           including_types.each &.to_json_simple(builder)
         end
       end
-      builder.field "namespace" { namespace.try(&.to_json_simple(builder)) || builder.scalar(nil) }
+      builder.field "namespace" { (n = namespace) ? n.to_json_simple(builder) : builder.null }
       builder.field "doc", doc
       builder.field "summary", formatted_summary
       builder.field "class_methods", class_methods

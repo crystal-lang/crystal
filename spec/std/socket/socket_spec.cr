@@ -1,7 +1,7 @@
 require "./spec_helper"
 require "../../support/tempfile"
 
-describe Socket do
+describe Socket, tags: "network" do
   describe ".unix" do
     it "creates a unix socket" do
       sock = Socket.unix
