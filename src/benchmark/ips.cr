@@ -172,12 +172,12 @@ module Benchmark
         cycles.times { action.call }
       end
 
-      def set_cycles(duration, iterations)
+      def set_cycles(duration, iterations) : Nil
         @cycles = (iterations / duration.total_milliseconds * 100).to_i
         @cycles = 1 if cycles <= 0
       end
 
-      def calculate_stats(samples)
+      def calculate_stats(samples) : Nil
         @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
