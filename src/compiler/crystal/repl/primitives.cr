@@ -1078,6 +1078,8 @@ class Crystal::Repl::Compiler
     target_kind = integer_or_float_kind(arg_type)
 
     case {obj_kind, target_kind}
+    when {:f32, :f32}
+      div_f32(node: node)
     when {:f64, :f64}
       div_f64(node: node)
     else

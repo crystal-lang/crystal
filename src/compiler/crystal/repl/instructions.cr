@@ -440,6 +440,12 @@ require "./repl"
         push:       true,
         code:       a * b,
       },
+      div_f32: {
+        operands:   [] of Nil,
+        pop_values: [a : Float32, b : Float32],
+        push:       true,
+        code:       a / b,
+      },
       add_f64: {
         operands:   [] of Nil,
         pop_values: [a : Float64, b : Float64],
