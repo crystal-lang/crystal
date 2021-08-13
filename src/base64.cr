@@ -189,54 +189,6 @@ module Base64
     end
   end
 
-  # Returns the base64-decoded version of *data* as a `Bytes`.
-  # This will decode either the normal or urlsafe alphabets.
-  #
-  # WARNING: The method does not raise when reading an invalid character.
-  # Only use this if you are certain the input is valid base64!
-  def decode!(data) : Bytes
-    slice = data.to_slice
-    buf = Pointer(UInt8).malloc(decode_size(slice.size))
-    appender = buf.appender
-    from_base64!(slice) { |byte| appender << byte }
-    Slice.new(buf, appender.size.to_i32)
-  end
-
-  # Writes the base64-decoded version of *data* to *io*.
-  # This will decode either the normal or urlsafe alphabets.
-  #
-  # WARNING: The method does not raise when reading an invalid character.
-  # Only use this if you are certain the input is valid base64!
-  def decode!(data, io : IO)
-    count = 0
-    from_base64!(data.to_slice) do |byte|
-      io.write_byte byte
-      count += 1
-    end
-    io.flush
-    count
-  end
-
-  # Returns the base64-decoded version of *data* as a string.
-  # This will decode either the normal or urlsafe alphabets.
-  #
-  # WARNING: The method does not raise when reading an invalid character.
-  # Only use this if you are certain the input is valid base64!
-  def decode_string!(data) : String
-    slice = data.to_slice
-    String.new(decode_size(slice.size)) do |buf|
-      appender = buf.appender
-      from_base64!(slice) { |byte| appender << byte }
-      {appender.size, 0}
-    end
-  end
-
-  private def encode_size(str_size, new_lines = false)
-    size = (str_size * 4 / 3.0).to_i + 4
-    size += size // LINE_SIZE if new_lines
-    size
-  end
-
   private def decode_size(str_size)
     (str_size * 3 / 4.0).to_i + 4
   end
@@ -339,69 +291,6 @@ module Base64
     when 3
       decode_chunk(
         raise_error: true,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1], bytes[2]}
-      ) do |byte|
-        yield byte
-      end
-    end
-  end
-
-  # Processes the given data and yields each byte.
-  # The method does not raise when reading an invalid character.
-  # Only use this if you are certain the input is valid base64!
-  private def from_base64!(data : Bytes, &block : UInt8 -> Nil)
-    size = data.size
-    bytes = data.to_unsafe
-    bytes_begin = bytes
-
-    # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while size > 0 && (b = bytes[size - 1]) && (b == NL || b == NR || b == PAD)
-      size -= 1
-    end
-
-    # Process combinations of four characters until there aren't any left
-    fin = bytes + size - 4
-    while true
-      break if bytes > fin
-
-      # Move the pointer by one byte until there is a valid base64 character
-      while bytes.value == NL || bytes.value == NR
-        bytes += 1
-      end
-      break if bytes > fin
-
-      decode_chunk(
-        raise_error: false,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1], bytes[2], bytes[3]}
-      ) do |byte|
-        yield byte
-      end
-      bytes += 4
-    end
-
-    # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
-    while (bytes < fin + 4) && (bytes.value == NL || bytes.value == NR)
-      bytes += 1
-    end
-
-    # If the amount of base64 characters is not divisable by 4, the remainder of the previous loop is handled here
-    unread_bytes = (fin - bytes) % 4
-    case unread_bytes
-    when 1
-      raise Base64::Error.new("Wrong size")
-    when 2
-      decode_chunk(
-        raise_error: false,
-        chunk_pos: bytes - bytes_begin,
-        bytes: {bytes[0], bytes[1]}
-      ) do |byte|
-        yield byte
-      end
-    when 3
-      decode_chunk(
-        raise_error: false,
         chunk_pos: bytes - bytes_begin,
         bytes: {bytes[0], bytes[1], bytes[2]}
       ) do |byte|
