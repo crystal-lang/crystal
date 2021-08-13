@@ -193,6 +193,9 @@ module HTTP
         client = HTTP::Client.new("127.0.0.1", address.port)
         client.get(path: "/").body.should eq "foo"
         client.get(path: "/").body.should eq "foo"
+        client.get(path: "/") do |resp|
+          resp.body_io.gets_to_end.should eq "foo"
+        end
       end
     end
 
