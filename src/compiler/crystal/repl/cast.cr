@@ -53,7 +53,7 @@ class Crystal::Repl::Compiler
     push_zeros(aligned_sizeof_type(to), node: nil)
   end
 
-  private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | MetaclassType, to : MixedUnionType)
+  private def upcast_distinct(node : ASTNode, from : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | MetaclassType, to : MixedUnionType)
     put_in_union(type_id(from), aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -209,7 +209,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | NilableType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
+  private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
@@ -235,7 +235,7 @@ class Crystal::Repl::Compiler
     pop aligned_sizeof_type(from), node: nil
   end
 
-  private def downcast_distinct(node : ASTNode, from : ReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType)
+  private def downcast_distinct(node : ASTNode, from : ReferenceUnionType, to : VirtualType | NonGenericClassType | GenericClassInstanceType | ReferenceUnionType)
     # Nothing to do
   end
 
