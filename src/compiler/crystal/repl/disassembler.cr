@@ -9,6 +9,23 @@ module Crystal::Repl::Disassembler
 
   def self.disassemble(context : Context, instructions : CompiledInstructions, local_vars : LocalVars) : String
     String.build do |io|
+      exception_handlers = instructions.exception_handlers
+      if exception_handlers
+        io.puts "Catch table"
+        io.puts "==========="
+        exception_handlers.each do |handler|
+          io << "st: " << handler.start_index << ", "
+          io << "ed: " << handler.end_index << ", "
+          if exception_types = handler.exception_types
+            io << "ex: "
+            exception_types.join(io, ", ")
+            io << ", "
+          end
+          io << "cont: " << handler.jump_index
+          io.puts
+        end
+      end
+
       ip = 0
       while ip < instructions.instructions.size
         ip = disassemble_one(context, instructions, ip, local_vars, io)
