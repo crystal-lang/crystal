@@ -101,7 +101,7 @@
 # Color::Red.value # => UInt8
 # ```
 #
-# NOTE: Only `Int` based types are allowed.
+# NOTE: Only `Int::Primitive` based types are allowed.
 struct Enum
   include Comparable(self)
 
