@@ -48,6 +48,11 @@ abstract class OpenSSL::SSL::Socket < IO
         socket.close
       end
     end
+
+    # Returns the `OpenSSL::X509::Certificate` the peer presented.
+    def peer_certificate : OpenSSL::X509::Certificate
+      super.not_nil!
+    end
   end
 
   class Server < Socket
@@ -65,7 +70,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def accept
+    def accept : Nil
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
         @bio.io.close if @sync_close
@@ -115,7 +120,7 @@ abstract class OpenSSL::SSL::Socket < IO
     LibSSL.ssl_free(@ssl)
   end
 
-  def unbuffered_read(slice : Bytes)
+  def unbuffered_read(slice : Bytes) : Int32
     check_open
 
     count = slice.size
@@ -134,7 +139,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   end
 
-  def unbuffered_write(slice : Bytes)
+  def unbuffered_write(slice : Bytes) : Nil
     check_open
 
     return if slice.empty?
@@ -159,7 +164,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
   {% end %}
 
-  def unbuffered_close
+  def unbuffered_close : Nil
     return if @closed
     @closed = true
 
@@ -256,5 +261,18 @@ abstract class OpenSSL::SSL::Socket < IO
     else
       raise NotImplementedError.new("#{io.class}#write_timeout=")
     end
+  end
+
+  # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
+  # connection was esablished.
+  #
+  # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
+  # certificate, if present. A client will only send a certificate when
+  # explicitly requested to do so by the server (see `SSL_CTX_set_verify(3)`). If
+  # an anonymous cipher is used, no certificates are sent. That a certificate
+  # is returned does not indicate information about the verification state.
+  def peer_certificate : OpenSSL::X509::Certificate?
+    cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    OpenSSL::X509::Certificate.new cert if cert
   end
 end

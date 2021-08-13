@@ -88,7 +88,7 @@ describe "Dir" do
     with_tempfile("mkdir") do |path|
       Dir.mkdir(path, 0o700)
       Dir.exists?(path).should be_true
-      Dir.rmdir(path)
+      Dir.delete(path)
       Dir.exists?(path).should be_false
     end
   end
@@ -126,7 +126,7 @@ describe "Dir" do
   end
 
   it "tests delete with an nonexistent path" do
-    with_tempfile("nonexistant") do |path|
+    with_tempfile("nonexistent") do |path|
       expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do
         Dir.delete(path)
       end
@@ -306,6 +306,22 @@ describe "Dir" do
       ensure
         File.delete link
         File.delete non_link
+      end
+    end
+
+    pending_win32 "matches symlink dir" do
+      with_tempfile "symlink_dir" do |path|
+        Dir.mkdir_p(Path[path, "glob"])
+        target = Path[path, "target"]
+        Dir.mkdir_p(target)
+
+        File.write(target / "a.txt", "")
+        File.symlink(target, Path[path, "glob", "dir"])
+
+        Dir.glob("#{path}/glob/*/a.txt").sort.should eq [] of String
+        Dir.glob("#{path}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
+          "#{path}/glob/dir/a.txt",
+        ]
       end
     end
 

@@ -3,6 +3,10 @@ require "./value_methods"
 struct LLVM::Function
   include LLVM::ValueMethods
 
+  def self.from_value(value : LLVM::ValueMethods)
+    new(value.to_unsafe)
+  end
+
   def basic_blocks
     BasicBlockCollection.new self
   end

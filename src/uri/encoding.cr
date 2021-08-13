@@ -123,7 +123,7 @@ class URI
   #
   # The encoded string returned from this method can be used as name or value
   # components for a `application/x-www-form-urlencoded` format serialization.
-  # `HTTP::Params` provides a higher-level API for this use case.
+  # `URI::Params` provides a higher-level API for this use case.
   #
   # By default, the space character (`0x20`) is encoded as `+` and `+` is encoded
   # as `%2B`. If *space_to_plus* is `false`, space character is encoded as `%20`
@@ -187,7 +187,7 @@ class URI
   #
   # This method enables some customization, but typical use cases can be implemented
   # by either `.decode(string : String, *, plus_to_space : Bool = false) : String` or
-  # `.deode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
+  # `.decode_www_form(string : String, *, plus_to_space : Bool = true) : String`.
   def self.decode(string : String, io : IO, *, plus_to_space : Bool = false, &block) : Nil
     i = 0
     bytesize = string.bytesize

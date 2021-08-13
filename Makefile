@@ -28,7 +28,7 @@ static ?=       ## Enable static linking
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )
+override FLAGS += $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $(shell bin/crystal env CRYSTAL_LIBRARY_PATH 2> /dev/null)
@@ -42,11 +42,7 @@ SHELL = sh
 LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config)
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
-LIB_CRYSTAL_OBJS = $(subst .c,.o,$(LIB_CRYSTAL_SOURCES))
-LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
-DEPS = $(LLVM_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
-CFLAGS += -fPIC $(if $(debug),-g -O0)
+DEPS = $(LLVM_EXT_OBJ)
 CXXFLAGS += $(if $(debug),-g -O0)
 CRYSTAL_VERSION ?= $(shell cat src/VERSION)
 
@@ -55,7 +51,7 @@ ifeq ($(shell command -v ld.lld >/dev/null && uname -s),Linux)
 endif
 
 ifeq (${LLVM_CONFIG},)
-  $(error Could not locate llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG)
+  $(error Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt))
 else
   $(shell echo $(shell printf '\033[33m')Using $(LLVM_CONFIG) [version=$(shell $(LLVM_CONFIG) --version)]$(shell printf '\033[0m') >&2)
 endif
@@ -92,6 +88,9 @@ std_spec: $(O)/std_spec ## Run standard library specs
 compiler_spec: $(O)/compiler_spec ## Run compiler specs
 	$(O)/compiler_spec $(SPEC_FLAGS)
 
+.PHONY: smoke_test ## Build specs as a smoke test
+smoke_test: $(O)/std_spec $(O)/compiler_spec $(O)/crystal
+
 .PHONY: docs
 docs: ## Generate standard library documentation
 	./bin/crystal docs src/docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
@@ -99,11 +98,9 @@ docs: ## Generate standard library documentation
 .PHONY: crystal
 crystal: $(O)/crystal ## Build the compiler
 
-.PHONY: deps llvm_ext libcrystal
+.PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
-
 llvm_ext: $(LLVM_EXT_OBJ)
-libcrystal: $(LIB_CRYSTAL_TARGET)
 
 $(O)/all_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -124,13 +121,9 @@ $(O)/crystal: $(DEPS) $(SOURCES)
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(shell $(LLVM_CONFIG) --cxxflags)
 
-$(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
-	$(AR) -rcs $@ $^
-
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf $(LIB_CRYSTAL_OBJS) $(LIB_CRYSTAL_TARGET)
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files

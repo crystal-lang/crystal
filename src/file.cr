@@ -194,7 +194,7 @@ class File < IO::FileDescriptor
   # File.write("foo", "foo")
   # File.size("foo") # => 3
   # ```
-  def self.size(filename : Path | String) : UInt64
+  def self.size(filename : Path | String) : Int64
     info(filename).size
   end
 
@@ -315,7 +315,7 @@ class File < IO::FileDescriptor
   # File.chown("foo", gid: 100)                        # changes foo's gid
   # File.chown("foo", gid: 100, follow_symlinks: true) # changes baz's gid
   # ```
-  def self.chown(path : Path | String, uid : Int = -1, gid : Int = -1, follow_symlinks = false)
+  def self.chown(path : Path | String, uid : Int = -1, gid : Int = -1, follow_symlinks = false) : Nil
     Crystal::System::File.chown(path.to_s, uid, gid, follow_symlinks)
   end
 
@@ -331,7 +331,7 @@ class File < IO::FileDescriptor
   # File.chmod("foo", 0o700)
   # File.info("foo").permissions.value # => 0o700
   # ```
-  def self.chmod(path : Path | String, permissions : Int | Permissions)
+  def self.chmod(path : Path | String, permissions : Int | Permissions) : Nil
     Crystal::System::File.chmod(path.to_s, permissions)
   end
 
@@ -342,7 +342,7 @@ class File < IO::FileDescriptor
   # File.delete("./foo")
   # File.delete("./bar") # raises File::NotFoundError (No such file or directory)
   # ```
-  def self.delete(path : Path | String)
+  def self.delete(path : Path | String) : Nil
     Crystal::System::File.delete(path.to_s)
   end
 
@@ -393,7 +393,7 @@ class File < IO::FileDescriptor
   # * `\\` escapes the next character.
   #
   # NOTE: Only `/` is recognized as path separator in both *pattern* and *path*.
-  def self.match?(pattern : String, path : Path | String)
+  def self.match?(pattern : String, path : Path | String) : Bool
     expanded_patterns = [] of String
     File.expand_brace_pattern(pattern, expanded_patterns)
 
@@ -528,7 +528,7 @@ class File < IO::FileDescriptor
   end
 
   # :nodoc:
-  def self.expand_brace_pattern(pattern : String, expanded)
+  def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
     reader = Char::Reader.new(pattern)
 
     lbrace = nil
@@ -723,11 +723,12 @@ class File < IO::FileDescriptor
   # Permission bits are copied too.
   #
   # ```
+  # File.touch("afile")
   # File.chmod("afile", 0o600)
   # File.copy("afile", "afile_copy")
   # File.info("afile_copy").permissions.value # => 0o600
   # ```
-  def self.copy(src : String | Path, dst : String | Path)
+  def self.copy(src : String | Path, dst : String | Path) : Nil
     open(src) do |s|
       open(dst, "wb") do |d|
         # TODO use sendfile or copy_file_range syscall. See #8926, #8919
@@ -772,7 +773,9 @@ class File < IO::FileDescriptor
   # File.exists?("afile.cr") # => true
   # ```
   def self.rename(old_filename : Path | String, new_filename : Path | String) : Nil
-    Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+    if error = Crystal::System::File.rename(old_filename.to_s, new_filename.to_s)
+      raise error
+    end
   end
 
   # Sets the access and modification times of *filename*.
@@ -784,13 +787,13 @@ class File < IO::FileDescriptor
   # in the *filename* parameter to the value given in *time*.
   #
   # If the file does not exist, it will be created.
-  def self.touch(filename : Path | String, time : Time = Time.utc)
+  def self.touch(filename : Path | String, time : Time = Time.utc) : Nil
     open(filename, "a") { } unless exists?(filename)
     utime time, time, filename
   end
 
   # Returns the size in bytes of the currently opened file.
-  def size
+  def size : Int64
     info.size
   end
 
@@ -801,25 +804,9 @@ class File < IO::FileDescriptor
     system_truncate(size)
   end
 
-  # Flushes all data written to this File to the disk device so that
-  # all changed information can be retrieved even if the system
-  # crashes or is rebooted. The call blocks until the device reports that
-  # the transfer has completed.
-  # To reduce disk activity the *flush_metadata* parameter can be set to false,
-  # then the syscall *fdatasync* will be used and only data required for
-  # subsequent data retrieval is flushed. Metadata such as modified time and
-  # access time is not written.
-  #
-  # NOTE: Metadata is flushed even when *flush_metadata* is false on Windows
-  # and DragonFly BSD.
-  def fsync(flush_metadata = true) : Nil
-    flush
-    system_fsync(flush_metadata)
-  end
-
   # Yields an `IO` to read a section inside this file.
   # Multiple sections can be read concurrently.
-  def read_at(offset, bytesize, &block)
+  def read_at(offset, bytesize, & : IO ->)
     self_bytesize = self.size
 
     unless 0 <= offset <= self_bytesize
@@ -844,46 +831,8 @@ class File < IO::FileDescriptor
     io << '>'
   end
 
-  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-  # TODO: always use non-blocking locks, yield fiber until resource becomes available
-
-  def flock_shared(blocking = true)
-    flock_shared blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared(blocking = true)
-    system_flock_shared(blocking)
-  end
-
-  def flock_exclusive(blocking = true)
-    flock_exclusive blocking
-    begin
-      yield
-    ensure
-      flock_unlock
-    end
-  end
-
-  # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
-  # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive(blocking = true)
-    system_flock_exclusive(blocking)
-  end
-
-  # Removes an existing advisory lock held by this process.
-  def flock_unlock
-    system_flock_unlock
-  end
-
   # Deletes this file.
-  def delete
+  def delete : Nil
     File.delete(@path)
   end
 end

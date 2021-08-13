@@ -290,9 +290,15 @@ struct Path
   #
   # If *suffix* is given, it is stripped from the end.
   #
+  # In case the last component is the empty string (i.e. the path has a trailing
+  # separator), the second to last component is returned.
+  # For a path that only consists of an anchor, or an empty path, the base name
+  # is equivalent to the full path.
+  #
   # ```
   # Path["/foo/bar/file.cr"].basename # => "file.cr"
   # Path["/foo/bar/"].basename        # => "bar"
+  # Path["/foo/bar/."].basename       # => "."
   # Path["/"].basename                # => "/"
   # Path[""].basename                 # => ""
   # ```
@@ -340,20 +346,28 @@ struct Path
   # Returns the extension of this path, or an empty string if it has no extension.
   #
   # ```
-  # Path["foo.cr"].extension # => ".cr"
-  # Path["foo"].extension    # => ""
+  # Path["foo.cr"].extension     # => ".cr"
+  # Path["foo"].extension        # => ""
+  # Path["foo.tar.gz"].extension # => ".gz"
   # ```
   def extension : String
     bytes = @name.to_slice
 
     return "" if bytes.empty?
 
-    current = bytes.size - 1
+    slice_end = bytes.size
+    current = slice_end - 1
+
+    separators = self.separators.map &.ord
+
+    # ignore trailing separators
+    while separators.includes?(bytes[current]) && current > 0
+      current -= 1
+      slice_end -= 1
+    end
 
     # if the pattern is `foo.`, it has no extension
     return "" if bytes[current] == '.'.ord
-
-    separators = self.separators.map &.ord
 
     # position the reader at the last `.` or SEPARATOR
     # that is not the first char
@@ -379,7 +393,20 @@ struct Path
     # we are not at the beginning,
     # the previous char is not a '/',
     # and we have an extension
-    String.new(bytes[current, bytes.size - current])
+    String.new(bytes[current, slice_end - current])
+  end
+
+  # Returns the last component of this path without the extension.
+  #
+  # This is equivalent to `self.basename(self.extension)`.
+  #
+  # ```
+  # Path["file.cr"].stem     # => "file"
+  # Path["file.tar.gz"].stem # => "file.tar"
+  # Path["foo/file.cr"].stem # => "file"
+  # ```
+  def stem : String
+    basename(extension)
   end
 
   # Removes redundant elements from this path and returns the shortest equivalent path by purely lexical processing.
@@ -660,7 +687,7 @@ struct Path
   # Converts this path to the given *kind*.
   #
   # See `#to_windows` and `#to_posix` for details.
-  def to_kind(kind)
+  def to_kind(kind) : Path
     if kind.posix?
       to_posix
     else
@@ -772,6 +799,16 @@ struct Path
   # Path["foo/"].join("/bar")   # => Path["foo/bar"]
   # Path["/foo/"].join("/bar/") # => Path["/foo/bar/"]
   # ```
+  #
+  # Joining an empty string (`""`) appends a trailing path separator.
+  # In case the path already ends with a trailing separator, no additional
+  # separator is added.
+  #
+  # ```
+  # Path["a/b"].join("")   # => Path["a/b/"]
+  # Path["a/b/"].join("")  # => Path["a/b/"]
+  # Path["a/b/"].join("c") # => Path["a/b/c"]
+  # ```
   def join(part) : Path
     # If we are joining a single part we can use `String.new` instead of
     # `String.build` which avoids an extra allocation.
@@ -841,6 +878,8 @@ struct Path
   # Path["foo/"].join("/bar/", "/baz")   # => Path["foo/bar/baz"]
   # Path["/foo/"].join("/bar/", "/baz/") # => Path["/foo/bar/baz/"]
   # ```
+  #
+  # See `join(part)` for details.
   def join(*parts) : Path
     join parts
   end
@@ -859,6 +898,8 @@ struct Path
   # Path.posix("foo/bar").join(Path.windows("baz\\baq")) # => Path.posix("foo/bar/baz/baq")
   # Path.windows("foo\\bar").join(Path.posix("baz/baq")) # => Path.windows("foo\\bar\\baz/baq")
   # ```
+  #
+  # See `join(part)` for details.
   def join(parts : Enumerable) : Path
     if parts.is_a?(Indexable)
       return self if parts.empty?
@@ -931,6 +972,8 @@ struct Path
   # Path["foo"] / "bar" / "baz"     # => Path["foo/bar/baz"]
   # Path["foo/"] / Path["/bar/baz"] # => Path["foo/bar/baz"]
   # ```
+  #
+  # See `join(part)` for details.
   def /(part : Path | String) : Path
     join(part)
   end
@@ -938,7 +981,7 @@ struct Path
   # Resolves path *name* in this path's parent directory.
   #
   # Raises `Path::Error` if `#parent` is `nil`.
-  def sibling(name : Path | String) : Path?
+  def sibling(name : Path | String) : Path
     if parent = self.parent
       parent.join(name)
     else
@@ -1042,12 +1085,14 @@ struct Path
   # Compares this path to *other*.
   #
   # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
-  # treated as equal. To compare paths semantically, they need to be normalized
-  # and converted to the same kind.
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
   #
   # ```
   # Path["foo"] <=> Path["foo"]               # => 0
   # Path["foo"] <=> Path["./foo"]             # => 1
+  # Path["foo"] <=> Path["foo/"]              # => 1
   # Path.posix("foo") <=> Path.windows("foo") # => -1
   # ```
   #
@@ -1059,10 +1104,46 @@ struct Path
   # Path.windows("foo") <=> Path.windows("FOO") # => 0
   # ```
   def <=>(other : Path)
-    ord = @name.compare(other.@name, case_insensitive: windows?)
+    ord = @name.compare(other.@name, case_insensitive: windows? || other.windows?)
     return ord if ord != 0
 
     @kind <=> other.@kind
+  end
+
+  # Returns `true` if this path is considered equivalent to *other*.
+  #
+  # The comparison is performed strictly lexically: `foo` and `./foo` are *not*
+  # treated as equal. Nor are paths of different `kind`.
+  # To compare paths semantically, they need to be normalized and converted to
+  # the same kind.
+  #
+  # ```
+  # Path["foo"] == Path["foo"]               # => true
+  # Path["foo"] == Path["./foo"]             # => false
+  # Path["foo"] == Path["foo/"]              # => false
+  # Path.posix("foo") == Path.windows("foo") # => false
+  # ```
+  #
+  # Comparison is case-sensitive for POSIX paths and case-insensitive for
+  # Windows paths.
+  #
+  # ```
+  # Path.posix("foo") == Path.posix("FOO")     # => false
+  # Path.windows("foo") == Path.windows("FOO") # => true
+  # ```
+  def ==(other : self)
+    return false if @kind != other.@kind
+
+    @name.compare(other.@name, case_insensitive: windows? || other.windows?) == 0
+  end
+
+  def hash(hasher)
+    name = @name
+    if windows?
+      name = name.downcase
+    end
+    hasher = name.hash(hasher)
+    @kind.hash(hasher)
   end
 
   # Returns a path representing the drive component or `nil` if this path does not contain a drive.
@@ -1248,7 +1329,7 @@ struct Path
     Path.separators(@kind)
   end
 
-  def ends_with_separator?
+  def ends_with_separator? : Bool
     ends_with_separator?(@name)
   end
 

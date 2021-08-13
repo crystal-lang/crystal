@@ -7,11 +7,10 @@ module Crystal::Doc::Highlighter
     lexer.count_whitespace = true
     lexer.wants_raw = true
 
-    String.build do |io|
-      begin
-        highlight_normal_state lexer, io
-      rescue Crystal::SyntaxException
-      end
+    begin
+      String.build { |io| highlight_normal_state lexer, io }
+    rescue
+      code
     end
   end
 
@@ -28,9 +27,9 @@ module Crystal::Doc::Highlighter
           highlight_delimiter_state lexer, token, io, heredoc: true
           unless i == heredoc_stack.size - 1
             # Next token to heredoc's end is either NEWLINE or EOF.
-            # We can't continue highlighting when it is EOF even though
-            # heredoc tokens still remain.
-            break if lexer.next_token.type == :EOF
+            if lexer.next_token.type == :EOF
+              raise "Unterminated heredoc"
+            end
             io.puts
           end
         end
@@ -70,7 +69,7 @@ module Crystal::Doc::Highlighter
                :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
                :case, :when, :select, :then, :of, :abstract, :rescue, :ensure, :is_a?,
                :alias, :pointerof, :sizeof, :instance_sizeof, :offsetof, :as, :as?, :typeof, :for, :in,
-               :undef, :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
+               :with, :self, :super, :private, :asm, :nil?, :protected, :uninitialized, "new",
                :annotation, :verbatim
             highlight token, "k", io
           when :true, :false, :nil
@@ -90,6 +89,8 @@ module Crystal::Doc::Highlighter
         else
           io << token
         end
+      when :UNDERSCORE
+        io << '_'
       else
         io << token
       end
@@ -121,7 +122,7 @@ module Crystal::Doc::Highlighter
         HTML.escape(token.raw, io)
       end
     end
-  ensure # This ensure is necessary to handle unterminated string literal.
+
     end_highlight_class io
   end
 
@@ -139,7 +140,11 @@ module Crystal::Doc::Highlighter
         end_highlight_class io
         break
       when :EOF
-        raise "Unterminated symbol array literal"
+        if token.delimiter_state.kind == :string_array
+          raise "Unterminated string array literal"
+        else # == :symbol_array
+          raise "Unterminated symbol array literal"
+        end
       else
         raise "Bug: shouldn't happen"
       end

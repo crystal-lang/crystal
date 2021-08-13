@@ -51,7 +51,7 @@ module Crystal::Playground
       @tag = tag
       begin
         sources = self.class.instrument_and_prelude(@session_key, @port, tag, source)
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
       end
@@ -103,7 +103,7 @@ module Crystal::Playground
 
       begin
         value = Crystal.format source
-      rescue ex : Crystal::Exception
+      rescue ex : Crystal::CodeError
         send_exception ex, tag
         return
       end
@@ -148,7 +148,7 @@ module Crystal::Playground
     def append_exception(json, ex)
       json.object do
         json.field "message", ex.to_s
-        if ex.is_a?(Crystal::Exception)
+        if ex.is_a?(Crystal::CodeError)
           json.field "payload" do
             ex.to_json(json)
           end
@@ -445,7 +445,7 @@ module Crystal::Playground
     end
   end
 
-  class Error < Crystal::LocationlessException
+  class Error < Crystal::Error
   end
 
   class Server

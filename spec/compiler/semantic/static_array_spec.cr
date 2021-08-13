@@ -96,7 +96,7 @@ describe "Semantic: static array" do
       )) { static_array_of(char, 100) }
   end
 
-  it "types staic array new with size being a computed constant, and use N (bug)" do
+  it "types static array new with size being a computed constant, and use N (bug)" do
     assert_type(%(
       struct StaticArray(T, N)
         def size

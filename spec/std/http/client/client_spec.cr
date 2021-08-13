@@ -264,11 +264,11 @@ module HTTP
         client = TestClient.new "www.example.com"
         request = HTTP::Request.new("GET", "/")
         client.set_defaults(request)
-        request.host.should eq "www.example.com"
+        request.hostname.should eq "www.example.com"
 
         request = HTTP::Request.new("GET", "/", HTTP::Headers{"Host" => "other.example.com"})
         client.set_defaults(request)
-        request.host.should eq "other.example.com"
+        request.hostname.should eq "other.example.com"
       end
     end
 
@@ -288,7 +288,7 @@ module HTTP
 
       io_request.rewind
       request = HTTP::Request.from_io(io_request).as(HTTP::Request)
-      request.host.should eq("")
+      request.hostname.should eq("")
     end
 
     it "can specify host and port when initialized with IO" do
@@ -338,6 +338,19 @@ module HTTP
           end
         end
       end
+    end
+
+    it "can be subclassed" do
+      expect_raises(Exception, "from subclass") do
+        SubClient.get("http://localhost")
+      end
+    end
+  end
+
+  class SubClient < HTTP::Client
+    def around_exec(request)
+      raise "from subclass"
+      yield
     end
   end
 end

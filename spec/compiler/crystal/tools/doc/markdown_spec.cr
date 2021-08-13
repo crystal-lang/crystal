@@ -3,7 +3,7 @@ require "../../../../../src/compiler/crystal/tools/doc/markdown"
 
 private def assert_render(input, output, file = __FILE__, line = __LINE__)
   it "renders #{input.inspect}", file, line do
-    Crystal::Doc::Markdown.to_html(input).should eq(output), file, line
+    Crystal::Doc::Markdown.to_html(input).should eq(output), file: file, line: line
   end
 end
 
@@ -72,6 +72,8 @@ describe Crystal::Doc::Markdown do
   assert_render "    Hello\n\n\nWorld", "<pre><code>Hello</code></pre>\n\n<p>World</p>"
 
   assert_render "```crystal\nHello\nWorld\n```", %(<pre><code class="language-crystal">Hello\nWorld</code></pre>)
+  assert_render "```cr\nHello\nWorld\n```", %(<pre><code class="language-cr">Hello\nWorld</code></pre>)
+  assert_render "```\nHello\nWorld\n```", %(<pre><code>Hello\nWorld</code></pre>)
   assert_render "Hello\n```\nWorld\n```", "<p>Hello</p>\n\n<pre><code>World</code></pre>"
   assert_render "```\n---\n```", "<pre><code>---</code></pre>"
   assert_render "````\n---\n````", "<pre><code>---</code></pre>"

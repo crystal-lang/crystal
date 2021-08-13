@@ -43,10 +43,15 @@ module Crystal
       end
 
     status = Crystal::AtExitHandlers.run status, ex
+
+    if ex
+      STDERR.print "Unhandled exception: "
+      ex.inspect_with_backtrace(STDERR)
+    end
+
     ignore_stdio_errors { STDOUT.flush }
     ignore_stdio_errors { STDERR.flush }
 
-    raise ex if ex
     status
   end
 

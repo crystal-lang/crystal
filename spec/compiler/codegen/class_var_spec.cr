@@ -605,4 +605,37 @@ describe "Codegen: class var" do
       nil
     )).to_string.should eq("error: Recursion while initializing class variables and/or constants")
   end
+
+  it "runs class var side effects (#8862)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x = 0
+
+        def self.set
+          @@x = 3
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      a = Hello.value
+
+      class Hello
+        @@value : Int32 = begin
+          Foo.set
+          1 &+ 2
+        end
+
+        def self.value
+          @@value
+        end
+      end
+
+      a &+ Foo.x
+      )).to_i.should eq(6)
+  end
 end

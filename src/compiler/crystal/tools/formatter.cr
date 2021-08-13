@@ -203,6 +203,8 @@ module Crystal
       has_paren = false
       has_begin = false
 
+      empty_expressions = node.expressions.size == 1 && node.expressions[0].is_a?(Nop)
+
       if node.keyword == :"(" && @token.type == :"("
         write "("
         next_needs_indent = false
@@ -220,9 +222,14 @@ module Crystal
         write "begin"
         @indent += 2
         write_line
-        next_token_skip_space_or_newline
-        if @token.type == :";"
-          next_token_skip_space_or_newline
+        next_token
+        # Corner case: an empty `begin ... end`.
+        # In this case, we should not skip space because it will do in the below loop.
+        unless empty_expressions
+          skip_space_or_newline
+          if @token.type == :";"
+            next_token_skip_space_or_newline
+          end
         end
         has_begin = true
         base_indent = @indent
@@ -231,6 +238,7 @@ module Crystal
       end
 
       last_aligned_assign = nil
+      last_found_comment = false
       max_length = nil
       skip_space
 
@@ -283,7 +291,7 @@ module Crystal
         end
 
         if last?(i, node.expressions)
-          skip_space_or_newline last: true
+          last_found_comment = skip_space_or_newline last: true, next_comes_end: true
         else
           if needs_two_lines
             unless found_comment
@@ -307,7 +315,7 @@ module Crystal
 
       @indent = old_indent
 
-      if has_newline
+      if has_newline && !last_found_comment && (!@wrote_newline || empty_expressions)
         write_line
         write_indent
       end
@@ -1036,9 +1044,9 @@ module Crystal
 
     def visit(node : RangeLiteral)
       accept node.from
-      skip_space_or_newline
+      skip_space
       write_token(node.exclusive? ? :"..." : :"..")
-      skip_space_or_newline
+      skip_space
       accept node.to
       false
     end
@@ -1253,9 +1261,12 @@ module Crystal
         accept type
 
         last = last?(i, node.types)
-        skip_space_or_newline unless last
+        if last
+          skip_space
+        else
+          skip_space_or_newline
+        end
 
-        must_break = false
         while true
           case @token.type
           when :"|"
@@ -1278,7 +1289,6 @@ module Crystal
             break
           end
         end
-        break if must_break
       end
 
       check_close_paren
@@ -1667,6 +1677,11 @@ module Crystal
 
       write node.name
       next_token
+
+      if @token.type == :"=" && node.name.ends_with?('=')
+        next_token
+      end
+
       skip_space(consume_newline: false)
 
       format_def_args node
@@ -2052,7 +2067,7 @@ module Crystal
 
     # If we are formatting macro contents, if there are nested macro
     # control structures they are definitely escaped with `\`,
-    # because otherwise we wouln't be able to format the contents.
+    # because otherwise we wouldn't be able to format the contents.
     # So here we append those slashes. In theory the nesting can be
     # very deep but it's usually just one level.
     private def write_macro_slashes
@@ -2322,6 +2337,8 @@ module Crystal
         write " "
         skip_space_or_newline
         accept output
+      else
+        skip_space
       end
 
       check_close_paren
@@ -2544,7 +2561,9 @@ module Crystal
           return false
         end
 
+        @lexer.wants_def_or_macro_name = true
         next_token
+        @lexer.wants_def_or_macro_name = false
         skip_space
         if (@token.type == :NEWLINE) || @wrote_newline
           base_indent = @indent + 2
@@ -2674,11 +2693,11 @@ module Crystal
           if wrote_newline || @token.type == :NEWLINE
             unless wrote_newline
               next_token_skip_space_or_newline
-              write "," if @token.type != :")"
+              write ","
               write_line
             end
             needs_space = false
-            block_indent += 2
+            block_indent += 2 if @token.type != :")" # foo(1, ↵  &.foo) case
             write_indent(block_indent)
           else
             write "," if @token.type != :")" # foo(1, &.foo) case
@@ -2962,8 +2981,10 @@ module Crystal
         write " " if needs_space
         write_token :"&"
         skip_space_or_newline
-        write_token :"."
-        skip_space_or_newline
+        write :"."
+        @lexer.wants_def_or_macro_name = true
+        next_token_skip_space_or_newline
+        @lexer.wants_def_or_macro_name = false
 
         body = node.body
         case body
@@ -3069,8 +3090,6 @@ module Crystal
         else
           clear_object(node.exp)
         end
-      else
-        # nothing to do
       end
     end
 
@@ -3712,33 +3731,25 @@ module Crystal
         needs_indent = false
         write_indent
         write_keyword :when
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
         write " "
         a_when.condition.accept self
-        skip_space
-        if @token.type == :";"
-          next_token_skip_space
+        found_comment = skip_space(@indent + 2)
+        if @token.type == :";" || @token.keyword?(:then)
+          sep = @token.type == :";" ? "; " : " then "
+          next_token
+          skip_space(@indent + 2)
           if @token.type == :NEWLINE
             write_line
-            skip_space_or_newline
+            skip_space_or_newline(@indent + 2)
             needs_indent = true
           else
-            write "; "
-            skip_space_or_newline
-          end
-        elsif @token.keyword?(:then)
-          next_token_skip_space
-          if @token.type == :NEWLINE
-            write_line
-            skip_space_or_newline
-            needs_indent = true
-          else
-            write " then "
-            skip_space_or_newline
+            write sep
+            skip_space_or_newline(@indent + 2)
           end
         else
-          write_line
-          skip_space_or_newline
+          write_line unless found_comment
+          skip_space_or_newline(@indent + 2)
           needs_indent = true
         end
         if needs_indent
@@ -3747,15 +3758,17 @@ module Crystal
           a_when.body.accept self
           write_line
         end
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       if node_else = node.else
         write_indent
         write_keyword :else
-        skip_space_or_newline
+        found_comment = skip_space(@indent + 2)
+        write_line unless found_comment
+        skip_space_or_newline(@indent + 2)
         format_nested(node_else)
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2)
       end
 
       write_indent
@@ -3809,7 +3822,7 @@ module Crystal
     end
 
     def visit(node : OffsetOf)
-      visit Call.new(nil, "offsetof", [node.offsetof_type, node.instance_var])
+      visit Call.new(nil, "offsetof", [node.offsetof_type, node.offset])
     end
 
     def visit(node : PointerOf)
@@ -4587,8 +4600,14 @@ module Crystal
               @doc_comments << current_doc_comment if current_doc_comment.needs_format
               @current_doc_comment = nil
             else
+              # Normalize crystal language tag
+              if language == "cr" || language == "crystal"
+                value = value.rchop(language)
+                language = ""
+              end
+
               # We only format crystal code (empty by default means crystal)
-              needs_format = language.empty? || language == "crystal"
+              needs_format = language.empty?
               @current_doc_comment = CommentInfo.new(@line + 1, :backticks, needs_format)
             end
           end
@@ -4662,7 +4681,7 @@ module Crystal
     end
 
     def write_indent(indent, node)
-      write_indent(indent)
+      write_indent(indent) unless node.is_a?(Nop)
       indent(indent, node)
     end
 
@@ -4737,7 +4756,7 @@ module Crystal
       result = to_s.rstrip
 
       lines = result.split('\n')
-      fix_heredocs(lines, @heredoc_fixes)
+      fix_heredocs(lines)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -4760,15 +4779,26 @@ module Crystal
       result
     end
 
-    def fix_heredocs(lines, @heredoc_fixes)
+    def fix_heredocs(lines)
       @heredoc_fixes.each do |fix|
+        min_difference = (fix.start_line..fix.end_line).min_of do |line_number|
+          leading_space_count(lines[line_number], fix.difference)
+        end
+        indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
+        min_difference = Math.max(min_difference - indent_before_start, 0)
+
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          if (0...fix.difference).all? { |index| line[index]?.try &.ascii_whitespace? }
-            lines[line_number] = line[fix.difference..-1]
-          end
+          lines[line_number] = line[min_difference..]
         end
       end
+    end
+
+    def leading_space_count(line, max_count)
+      max_count.times do |index|
+        return index unless line.byte_at?(index) == 0x20 # ' '
+      end
+      max_count
     end
 
     # Align series of successive inline when/else (in a case),

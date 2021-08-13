@@ -38,7 +38,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # Always raises `IO::Error` because this is a write-only `IO`.
-  def read(slice : Bytes)
+  def read(slice : Bytes) : NoReturn
     raise "Can't read from Flate::Writer"
   end
 
@@ -77,7 +77,7 @@ class Compress::Deflate::Writer < IO
   end
 
   # Returns `true` if this IO is closed.
-  def closed?
+  def closed? : Bool
     @closed
   end
 

@@ -422,7 +422,7 @@ describe "Enumerable" do
       object = "a"
       (1..3).each_with_object(object) do |e, o|
         collection << {e, o}
-      end
+      end.should be(object)
       collection.should eq [{1, object}, {2, object}, {3, object}]
     end
 
@@ -501,6 +501,10 @@ describe "Enumerable" do
     it "flattens iterators" do
       [[1, 2], [3, 4]].flat_map(&.each).should eq([1, 2, 3, 4])
     end
+
+    it "accepts mixed element types" do
+      [[1, 2, 3], ['a', 'b'].each, "cde"].flat_map { |e| e }.should eq([1, 2, 3, 'a', 'b', "cde"])
+    end
   end
 
   describe "group_by" do
@@ -564,7 +568,7 @@ describe "Enumerable" do
   end
 
   describe "index with a block" do
-    it "returns the index of the first element where the blcok returns true" do
+    it "returns the index of the first element where the block returns true" do
       ["Alice", "Bob"].index { |name| name.size < 4 }.should eq 1
     end
 
@@ -618,6 +622,42 @@ describe "Enumerable" do
 
     it "returns nil if empty" do
       ([] of Int32).reduce? { |memo, i| memo + i }.should be_nil
+    end
+  end
+
+  describe "#accumulate" do
+    context "prefix sums" do
+      it { SpecEnumerable.new.accumulate.should eq([1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate.should eq([1.5, 5.25, 11.375]) }
+      it { Array(Int32).new.accumulate.should eq(Array(Int32).new) }
+    end
+
+    context "prefix sums, with init" do
+      it { SpecEnumerable.new.accumulate(0).should eq([0, 1, 3, 6]) }
+      it { [1.5, 3.75, 6.125].accumulate(0.5).should eq([0.5, 2.0, 5.75, 11.875]) }
+      it { Array(Int32).new.accumulate(7).should eq([7]) }
+
+      it "preserves initial type" do
+        x = SpecEnumerable.new.accumulate(4.0)
+        x.should be_a(Array(Float64))
+        x.should eq([4.0, 5.0, 7.0, 10.0])
+      end
+    end
+
+    context "generic cumulative fold" do
+      it { SpecEnumerable.new.accumulate { |x, y| x * 10 + y }.should eq([1, 12, 123]) }
+      it { Array(Int32).new.accumulate { raise "" }.should eq(Array(Int32).new) }
+    end
+
+    context "generic cumulative fold, with init" do
+      it { SpecEnumerable.new.accumulate(4) { |x, y| x * 10 + y }.should eq([4, 41, 412, 4123]) }
+      it { Array(Int32).new.accumulate(7) { raise "" }.should eq([7]) }
+
+      it "preserves initial type" do
+        x = [4, 3, 2].accumulate("X") { |x, y| x * y }
+        x.should be_a(Array(String))
+        x.should eq(%w(X XXXX XXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXX))
+      end
     end
   end
 
@@ -892,6 +932,93 @@ describe "Enumerable" do
       ints.should eq([1, 3])
       ints.should be_a(Array(Int32))
     end
+
+    it "with type, for tuples" do
+      ints = {1, true, false, 3}.reject(Int32)
+      ints.should eq([true, false])
+      ints.should be_a(Array(Bool))
+    end
+  end
+
+  describe "sample" do
+    describe "single-element" do
+      it "samples without random" do
+        [1].sample.should eq(1)
+
+        x = SpecEnumerable.new.sample
+        [1, 2, 3].includes?(x).should be_true
+      end
+
+      it "samples with random" do
+        SpecEnumerable.new.sample(Random.new(1)).should eq(1)
+        [1, 2, 3].sample(Random.new(1)).should eq(2)
+      end
+
+      it "raises on empty self" do
+        expect_raises(IndexError) { Array(Int32).new.sample }
+        expect_raises(IndexError) { SpecEmptyEnumerable.new.sample }
+      end
+    end
+
+    describe "multiple-element" do
+      it "samples 0 elements" do
+        ary = [1].sample(0)
+        ary.should eq([] of Int32)
+        ary.should be_a(Array(Int32))
+
+        ary = SpecEmptyEnumerable.new.sample(0)
+        ary.should eq([] of Int32)
+        ary.should be_a(Array(Int32))
+      end
+
+      it "samples 1 element" do
+        [1].sample(1).should eq([1])
+
+        x = [1, 2, 3].sample(1)
+        x.size.should eq(1)
+        x = x.first
+        [1, 2, 3].includes?(x).should be_true
+      end
+
+      it "samples k elements out of n" do
+        ary = [1].sample(1)
+        ary.should eq([1])
+
+        a = {1, 2, 3, 4, 5}
+        b = a.sample(3)
+        set = Set.new(b)
+        set.size.should eq(3)
+
+        set.each do |e|
+          a.includes?(e).should be_true
+        end
+      end
+
+      it "raises on k < 0" do
+        expect_raises(ArgumentError) { Array(Int32).new.sample(-1) }
+        expect_raises(ArgumentError) { SpecEnumerable.new.sample(-1) }
+      end
+
+      it "samples k elements out of n, where k > n" do
+        a = SpecEnumerable.new
+        b = a.sample(10)
+        b.size.should eq(3)
+        set = Set.new(b)
+        set.size.should eq(3)
+
+        set.each do |e|
+          a.includes?(e).should be_true
+        end
+
+        SpecEmptyEnumerable.new.sample(1).should eq([] of Int32)
+      end
+
+      it "samples k elements out of n, with random" do
+        a = (1..5)
+        b = a.sample(3, Random.new(1))
+        b.should eq([4, 3, 1])
+      end
+    end
   end
 
   describe "select" do
@@ -958,10 +1085,26 @@ describe "Enumerable" do
     it { (1..3).sum { |x| x * 2 }.should eq(12) }
     it { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
 
-    it "uses zero from type" do
+    it "uses additive_identity from type" do
       typeof([1, 2, 3].sum).should eq(Int32)
       typeof([1.5, 2.5, 3.5].sum).should eq(Float64)
       typeof([1, 2, 3].sum(&.to_f)).should eq(Float64)
+      typeof(([1, 2, 3] of Float32).sum).should eq(Float32)
+    end
+
+    it "array of arrays" do
+      [[1, 2, 3], [3, 4, 5]].sum.should eq [1, 2, 3, 3, 4, 5]
+      [[[1, 2], [3]], [[1, 2], [3, 4, 5]]].sum.should eq [[1, 2], [3], [1, 2], [3, 4, 5]]
+      Deque{[1, 2, 3], [3, 4, 5]}.sum.should eq [1, 2, 3, 3, 4, 5]
+    end
+
+    it "strings" do
+      ["foo", "bar"].sum.should eq "foobar"
+    end
+
+    it "float" do
+      [1.0, 2.0, 3.5, 4.5].sum.should eq 11.0
+      ([1.0, 2.0, 3.5, 4.5] of Float32).sum.should eq 11.0
     end
   end
 
@@ -1031,6 +1174,10 @@ describe "Enumerable" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
       hash.should eq({:a => 1, :c => 2})
+
+      hash = Tuple.new({1, 1.0}, {'a', "aaa"}).to_h
+      hash.should be_a(Hash(Int32 | Char, Float64 | String))
+      hash.should eq({1 => 1.0, 'a' => "aaa"})
     end
 
     it "for array" do

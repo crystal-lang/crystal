@@ -129,11 +129,11 @@ class Compress::Zip::Writer
 
     if entry.compression_method.stored?
       if entry.crc32 != crc32
-        raise Error.new("Entry CRC32 mistmacth (#{entry.crc32} given but was #{crc32})")
+        raise Error.new("Entry CRC32 mismatch (#{entry.crc32} given but was #{crc32})")
       end
 
       if entry.uncompressed_size != uncompressed_size
-        raise Error.new("Entry uncompressed size mistmatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
+        raise Error.new("Entry uncompressed size mismatch (#{entry.uncompressed_size} given but was #{uncompressed_size})")
       end
     else
       entry.crc32 = crc32

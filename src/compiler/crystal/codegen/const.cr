@@ -1,6 +1,6 @@
 require "./codegen"
 
-# Constants are repesented with two LLVM global variables: one has the constant's
+# Constants are represented with two LLVM global variables: one has the constant's
 # value and the other has a flag that indicates whether the constant was already
 # initialized.
 #
@@ -31,18 +31,12 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   @const_mutex : LLVM::Value?
 
-  # The special constants ARGC_UNSAFE and ARGV_UNSAFE need to be initialized
+  # The special constants ARGC_UNSAFE and ARGV_UNSAFE (and others) need to be initialized
   # as soon as the program starts, because we have access to argc and argv
-  # in the main function
-  def initialize_argv_and_argc
-    {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
-      const = @program.types[name].as(Const)
-      global = declare_const(const)
-      request_value do
-        accept const.value
-      end
-      store @last, global
-      global.initializer = @last.type.null
+  # in the main function.
+  def initialize_predefined_constants
+    @program.predefined_constants.each do |const|
+      initialize_no_init_flag_const(const)
     end
   end
 
@@ -96,9 +90,40 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def initialize_const(const)
-    # Maybe the constant was simple and doesn't need a real initialization
+  def initialize_no_init_flag_const(const)
+    global = declare_const(const)
 
+    with_cloned_context do
+      # "self" in a constant is the constant's namespace
+      context.type = const.namespace
+
+      # Start with fresh variables
+      context.vars = LLVMVars.new
+
+      alloca_vars const.fake_def.try(&.vars), const.fake_def
+      request_value do
+        accept const.value
+      end
+    end
+
+    const_type = const.value.type
+    if const_type.passed_by_value?
+      @last = load @last
+    end
+
+    store @last, global
+
+    global.initializer = @last.type.null
+
+    global
+  end
+
+  def initialize_const(const)
+    # If the constant wasn't read yet, we can initialize it right now and
+    # avoid checking an "initialized" flag every time we read it.
+    const.no_init_flag = true unless const.read?
+
+    # Maybe the constant was simple and doesn't need a real initialization
     global, initialized_flag = declare_const_and_initialized_flag(const)
     return global if const.initializer
 
@@ -107,7 +132,12 @@ class Crystal::CodeGenVisitor
     func = check_main_fun init_function_name, func
 
     set_current_debug_location const.locations.try &.first? if @debug.line_numbers?
-    run_once(initialized_flag, func)
+
+    if const.no_init_flag?
+      call func
+    else
+      run_once(initialized_flag, func)
+    end
     global
   end
 
@@ -123,7 +153,7 @@ class Crystal::CodeGenVisitor
           # Start with fresh variables
           context.vars = LLVMVars.new
 
-          alloca_vars const.vars
+          alloca_vars const.fake_def.try(&.vars), const.fake_def
 
           request_value do
             accept const.value
@@ -143,7 +173,9 @@ class Crystal::CodeGenVisitor
             end
           else
             global.initializer = llvm_type(const.value.type).null
-            store @last, global
+            unless const.value.type.nil_type? || const.value.type.void?
+              store @last, global
+            end
           end
 
           ret
@@ -173,7 +205,9 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const_pointer(const)
-    if const == @program.argc || const == @program.argv || const.initializer
+    const.read = true
+
+    if !const.needs_init_flag?
       global_name = const.llvm_name
       global = declare_const(const)
 

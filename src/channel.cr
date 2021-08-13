@@ -101,7 +101,7 @@ class Channel(T)
     def initialize(@state, @action : SelectAction(S))
     end
 
-    def activated?
+    def activated? : Bool
       @activated
     end
 
@@ -205,7 +205,7 @@ class Channel(T)
     true
   end
 
-  def closed?
+  def closed? : Bool
     @closed
   end
 
@@ -214,18 +214,18 @@ class Channel(T)
   # Otherwise, this method blocks the calling fiber until another fiber calls `#receive` on the channel.
   #
   # Raises `ClosedError` if the channel is closed or closes while waiting on a full channel.
-  def send(value : T)
+  def send(value : T) : self
     sender = Sender(T).new
 
     @lock.lock
 
     case send_internal(value)
-    when DeliveryState::Delivered
+    in .delivered?
       @lock.unlock
-    when DeliveryState::Closed
+    in .closed?
       @lock.unlock
       raise ClosedError.new
-    else
+    in .none?
       sender.fiber = Fiber.current
       sender.data = value
       @senders.push pointerof(sender)
@@ -234,11 +234,11 @@ class Channel(T)
       Crystal::Scheduler.reschedule
 
       case sender.state
-      when DeliveryState::Delivered
+      in .delivered?
         # ignore
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      else
+      in .none?
         raise "BUG: Fiber was awaken without channel delivery state set"
       end
     end
@@ -296,14 +296,14 @@ class Channel(T)
     state, value = receive_internal
 
     case state
-    when DeliveryState::Delivered
+    in .delivered?
       @lock.unlock
       raise "BUG: Unexpected UseDefault value for delivered receive" if value.is_a?(UseDefault)
       value
-    when DeliveryState::Closed
+    in .closed?
       @lock.unlock
       yield
-    else
+    in .none?
       receiver.fiber = Fiber.current
       @receivers.push pointerof(receiver)
       @lock.unlock
@@ -311,11 +311,11 @@ class Channel(T)
       Crystal::Scheduler.reschedule
 
       case receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         receiver.data
-      when DeliveryState::Closed
+      in .closed?
         yield
-      else
+      in .none?
         raise "BUG: Fiber was awaken without channel delivery state set"
       end
     end
@@ -389,11 +389,11 @@ class Channel(T)
     value
   end
 
-  def self.send_first(value, *channels)
+  def self.send_first(value, *channels) : Nil
     send_first value, channels
   end
 
-  def self.send_first(value, channels : Tuple | Array)
+  def self.send_first(value, channels : Tuple | Array) : Nil
     self.select(channels.map(&.send_select_action(value)))
     nil
   end
@@ -434,13 +434,13 @@ class Channel(T)
       state = op.execute
 
       case state
-      when DeliveryState::Delivered
+      in .delivered?
         ops_locks.each &.unlock
         return index, op.result
-      when DeliveryState::Closed
+      in .closed?
         ops_locks.each &.unlock
         return index, op.default_result
-      else
+      in .none?
         # do nothing
       end
     end
@@ -512,7 +512,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -520,14 +520,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(T))
       case @receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      when DeliveryState::None
+      in .none?
         raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 
@@ -537,15 +535,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -576,7 +574,7 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T))
+    def wait(context : SelectContext(T)) : Nil
       @receiver.fiber = Fiber.current
       @receiver.select_context = context
       @channel.@receivers.push pointerof(@receiver)
@@ -584,14 +582,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(T))
       case @receiver.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         nil
-      when DeliveryState::None
+      in .none?
         raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 
@@ -601,15 +597,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -635,7 +631,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @sender.fiber = Fiber.current
       @sender.select_context = context
       @channel.@senders.push pointerof(@sender)
@@ -643,14 +639,12 @@ class Channel(T)
 
     def wait_result_impl(context : SelectContext(Nil))
       case @sender.state
-      when DeliveryState::Delivered
+      in .delivered?
         context.action.result
-      when DeliveryState::Closed
+      in .closed?
         raise ClosedError.new
-      when DeliveryState::None
+      in .none?
         raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
-      else
-        raise "unreachable"
       end
     end
 
@@ -660,15 +654,15 @@ class Channel(T)
       end
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       @channel.object_id
     end
 
-    def lock
+    def lock : Nil
       @channel.@lock.lock
     end
 
-    def unlock
+    def unlock : Nil
       @channel.@lock.unlock
     end
 
@@ -696,7 +690,7 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil))
+    def wait(context : SelectContext(Nil)) : Nil
       @select_context = context
       Fiber.timeout(@timeout, self)
     end
@@ -709,7 +703,7 @@ class Channel(T)
       Fiber.cancel_timeout
     end
 
-    def lock_object_id
+    def lock_object_id : UInt64
       self.object_id
     end
 
@@ -739,9 +733,6 @@ end
 # ```
 #
 # NOTE: It won't trigger if the `select` has an `else` case (i.e.: a non-blocking select).
-#
-# NOTE: Using negative amounts will cause the timeout to not trigger.
-#
-def timeout_select_action(timeout : Time::Span)
+def timeout_select_action(timeout : Time::Span) : Channel::TimeoutAction
   Channel::TimeoutAction.new(timeout)
 end

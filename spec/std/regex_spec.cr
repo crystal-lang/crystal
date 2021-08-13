@@ -117,6 +117,15 @@ describe "Regex" do
     end
   end
 
+  describe "capture_count" do
+    it "returns the number of (named & non-named) capture groups" do
+      /(?:.)/x.capture_count.should eq(0)
+      /(?<foo>.+)/.capture_count.should eq(1)
+      /(.)?/x.capture_count.should eq(1)
+      /(.)|(.)/x.capture_count.should eq(2)
+    end
+  end
+
   it "raises exception with invalid regex" do
     expect_raises(ArgumentError) { Regex.new("+") }
   end

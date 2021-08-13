@@ -67,26 +67,38 @@ describe Time::Format do
       t.to_s("%z").should eq("+0000")
       t.to_s("%:z").should eq("+00:00")
       t.to_s("%::z").should eq("+00:00:00")
+      t.to_s("%^Z").should eq("UTC")
+      t.to_s("%Z").should eq("UTC")
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
-      zoned.to_s("%z").should eq("+0100")
-      zoned.to_s("%:z").should eq("+01:00")
-      zoned.to_s("%::z").should eq("+01:00:00")
+      with_zoneinfo do
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("Europe/Berlin"))
+        zoned.to_s("%z").should eq("+0100")
+        zoned.to_s("%:z").should eq("+01:00")
+        zoned.to_s("%::z").should eq("+01:00:00")
+        zoned.to_s("%^Z").should eq("CET")
+        zoned.to_s("%Z").should eq("Europe/Berlin")
 
-      zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
-      zoned.to_s("%z").should eq("-0300")
-      zoned.to_s("%:z").should eq("-03:00")
-      zoned.to_s("%::z").should eq("-03:00:00")
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+        zoned.to_s("%z").should eq("-0300")
+        zoned.to_s("%:z").should eq("-03:00")
+        zoned.to_s("%::z").should eq("-03:00:00")
+        zoned.to_s("%^Z").should eq("-03")
+        zoned.to_s("%Z").should eq("America/Buenos_Aires")
+      end
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
       offset.to_s("%z").should eq("+0230")
       offset.to_s("%:z").should eq("+02:30")
       offset.to_s("%::z").should eq("+02:30:00")
+      offset.to_s("%^Z").should eq("+02:30")
+      offset.to_s("%Z").should eq("+02:30")
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9001))
       offset.to_s("%z").should eq("+0230")
       offset.to_s("%:z").should eq("+02:30")
       offset.to_s("%::z").should eq("+02:30:01")
+      offset.to_s("%^Z").should eq("+02:30:01")
+      offset.to_s("%Z").should eq("+02:30:01")
 
       t.to_s("%A").to_s.should eq("Thursday")
       t.to_s("%^A").to_s.should eq("THURSDAY")
@@ -460,6 +472,44 @@ describe Time::Format do
     time.offset.should eq -1 * (4 * 3600 + 12 * 60 + 39)
     time.utc?.should be_false
     time.location.fixed?.should be_true
+  end
+
+  it "parses zone name" do
+    ["%^Z", "%Z"].each do |pattern|
+      time = Time.parse!("UTC", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_true
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("-00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("+00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      time = Time.parse!("+00:00:00", pattern)
+      time.offset.should eq 0
+      time.utc?.should be_false
+      time.location.fixed?.should be_true
+
+      with_zoneinfo do
+        time = Time.parse!("CET", pattern)
+        time.offset.should eq 3600
+        time.utc?.should be_false
+        time.location.fixed?.should be_false
+
+        time = Time.parse!("Europe/Berlin", pattern)
+        time.location.should eq Time::Location.load("Europe/Berlin")
+
+        expect_raises(Time::Location::InvalidLocationNameError) do
+          Time.parse!("INVALID", pattern)
+        end
+      end
+    end
   end
 
   it "raises when time zone missing" do
