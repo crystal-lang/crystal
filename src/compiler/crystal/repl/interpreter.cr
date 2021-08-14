@@ -258,7 +258,7 @@ class Crystal::Repl::Interpreter
 
     while true
       {% if Debug::TRACE %}
-        puts
+        puts "-" * 80
 
         call_frame = @call_stack.last
         a_def = call_frame.compiled_def.def
