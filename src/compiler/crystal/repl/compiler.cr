@@ -1369,6 +1369,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : TypeNode)
+    return false unless @wants_value
+
+    put_type node.type, node: node
+    false
+  end
+
   def visit(node : Path)
     return false unless @wants_value
 
