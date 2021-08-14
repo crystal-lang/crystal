@@ -1995,7 +1995,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      put_self(node: node) unless node.scope.is_a?(Program)
+      put_self(node: node) unless target_def.owner.is_a?(Program)
     end
 
     target_def_args = target_def.args

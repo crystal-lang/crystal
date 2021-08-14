@@ -4415,6 +4415,30 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "bugs" do
+    it "doesn't pass self to top-level method" do
+      interpret(<<-CODE).should eq(1)
+        struct Int32
+          def foo(x)
+            self
+          end
+        end
+
+        def value
+          1
+        end
+
+        module Moo
+          def self.moo
+            1.foo(value)
+          end
+        end
+
+        Moo.moo
+      CODE
+    end
+  end
+
   context "integration" do
     it "does Int32#to_s" do
       interpret(<<-CODE, prelude: "prelude").should eq("123456789")
