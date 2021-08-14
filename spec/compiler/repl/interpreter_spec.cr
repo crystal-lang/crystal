@@ -4437,6 +4437,48 @@ describe Crystal::Repl::Interpreter do
         Moo.moo
       CODE
     end
+
+    it "breaks from current block, not from outer block" do
+      interpret(<<-CODE).should eq(2)
+        def twice
+          # index: 1, block_caller: 0
+
+          yield
+          yield
+        end
+
+        def bar
+          # index: 4, block_caller: 3
+          yield
+        end
+
+        def foo
+          # index: 3, block_caller: 2
+          bar do
+            # index: 5, block_caller: 2
+            yield
+          end
+        end
+
+        # index: 0
+
+        x = 0
+
+        twice do
+          # index: 2
+          x += 1
+          foo do
+            # index: 6
+
+            # parent frame has block_caller: 2,
+            # that's where we have to go to
+            break
+          end
+        end
+
+        x
+      CODE
+    end
   end
 
   context "integration" do
