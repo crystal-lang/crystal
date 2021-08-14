@@ -2901,6 +2901,7 @@ module Crystal
 
         expand_named(node)
       else
+        check_container_literal_elements(node)
         expand(node)
       end
     end
@@ -2926,8 +2927,74 @@ module Crystal
 
         expand_named(node)
       else
+        check_container_literal_elements(node)
         expand(node)
       end
+    end
+
+    private def check_container_literal_elements(node : ArrayLiteral)
+      return if node.elements.empty?
+      return unless (elem_restriction = node.of)
+
+      cloned_elements = node.elements.clone
+      cloned_elements.each &.accept self
+
+      lookup_scope = @path_lookup || @scope || @current_type
+      expected_type = lookup_scope.lookup_type(elem_restriction, free_vars: free_vars)
+
+      node.elements.each_with_index do |elem, i|
+        cloned_elem = cloned_elements[i]
+        if type = cloned_elem.type?
+          if elem.is_a?(Splat)
+            unless compatible_enumerable?(type, expected_type)
+              elem.raise "splat element of typed array literal must be Enumerable(T) for some T <= #{expected_type}, not #{type}"
+            end
+          else
+            unless type.implements?(expected_type) || check_automatic_cast(cloned_elem, expected_type)
+              elem.raise "element of typed array literal must be #{expected_type}, not #{type}"
+            end
+          end
+        end
+      end
+    end
+
+    private def check_container_literal_elements(node : HashLiteral)
+      return if node.entries.empty?
+      return unless (entry_restriction = node.of)
+      key_restriction = entry_restriction.key
+      value_restriction = entry_restriction.value
+
+      cloned_entries = node.entries.clone
+      cloned_entries.each do |entry|
+        entry.key.accept self
+        entry.value.accept self
+      end
+
+      lookup_scope = @path_lookup || @scope || @current_type
+      expected_key_type = lookup_scope.lookup_type(key_restriction, free_vars: free_vars)
+      expected_value_type = lookup_scope.lookup_type(value_restriction, free_vars: free_vars)
+
+      node.entries.each_with_index do |entry, i|
+        cloned_entry = cloned_entries[i]
+        if type = cloned_entry.key.type?
+          unless type.implements?(expected_key_type) || check_automatic_cast(cloned_entry.key, expected_key_type)
+            entry.key.raise "key element of typed hash literal must be #{expected_key_type}, not #{type}"
+          end
+        end
+
+        if type = cloned_entry.value.type?
+          unless type.implements?(expected_value_type) || check_automatic_cast(cloned_entry.value, expected_value_type)
+            entry.value.raise "value element of typed hash literal must be #{expected_value_type}, not #{type}"
+          end
+        end
+      end
+    end
+
+    private def compatible_enumerable?(type, elem_type, enumerable = @program.enumerable)
+      (type.is_a?(GenericInstanceType) &&
+        type.generic_type == enumerable &&
+        type.type_vars["T"].as(Var).type.implements?(elem_type)) ||
+        !!type.parents.try &.any? { |t| compatible_enumerable?(t, elem_type, enumerable) }
     end
 
     def visit(node : And)
