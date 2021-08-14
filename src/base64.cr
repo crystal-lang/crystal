@@ -247,58 +247,58 @@ module Base64
   # Processes the given data and yields each byte.
   private def from_base64(data : Bytes, &block : UInt8 -> Nil)
     size = data.size
-    cstr = data.to_unsafe
-    start_cstr = cstr
+    bytes = data.to_unsafe
+    bytes_begin = bytes
 
     # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
-    while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+    while (size > 0) && (sym = bytes[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
     end
 
     # Process combinations of four characters until there aren't any left
-    endcstr = cstr + size - 4
+    fin = bytes + size - 4
     while true
-      break if cstr > endcstr
+      break if bytes > fin
 
       # Move the pointer by one byte until there is a valid base64 character
-      while cstr.value == NL || cstr.value == NR
-        cstr += 1
+      while bytes.value == NL || bytes.value == NR
+        bytes += 1
       end
-      break if cstr > endcstr
+      break if bytes > fin
 
       decode_chunk(
         raise_error: true,
-        chunk_pos: cstr - start_cstr,
-        bytes: {cstr[0], cstr[1], cstr[2], cstr[3]}
+        chunk_pos: bytes - bytes_begin,
+        bytes: {bytes[0], bytes[1], bytes[2], bytes[3]}
       ) do |byte|
         yield byte
       end
-      cstr += 4
+      bytes += 4
     end
 
     # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
-    while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
-      cstr += 1
+    while (bytes < fin + 4) && (bytes.value == NL || bytes.value == NR)
+      bytes += 1
     end
 
     # If the amount of base64 characters is not divisable by 4, the remainder of the previous loop is handled here
-    unread_bytes = (endcstr - cstr) % 4
+    unread_bytes = (fin - bytes) % 4
     case unread_bytes
     when 1
       raise Base64::Error.new("Wrong size")
     when 2
       decode_chunk(
         raise_error: true,
-        chunk_pos: cstr - start_cstr,
-        bytes: {cstr[0], cstr[1]}
+        chunk_pos: bytes - bytes_begin,
+        bytes: {bytes[0], bytes[1]}
       ) do |byte|
         yield byte
       end
     when 3
       decode_chunk(
         raise_error: true,
-        chunk_pos: cstr - start_cstr,
-        bytes: {cstr[0], cstr[1], cstr[2]}
+        chunk_pos: bytes - bytes_begin,
+        bytes: {bytes[0], bytes[1], bytes[2]}
       ) do |byte|
         yield byte
       end
