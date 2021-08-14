@@ -17,7 +17,7 @@ describe "Semantic: array" do
     assert_type("require \"prelude\"; [1, 2, 3] of Int32") { array_of(int32) }
   end
 
-  it "types non-empty typed array literal of int" do
+  it "types non-empty typed array literal of int, with autocast" do
     assert_type("require \"prelude\"; [1, 2, 3] of Int8") { array_of(int8) }
   end
 
