@@ -244,65 +244,96 @@ module Base64
     end
   end
 
-  private def from_base64(data)
+  # Processes the given data and yields each byte.
+  private def from_base64(data : Bytes, &block : UInt8 -> Nil)
     size = data.size
-    dt = DECODE_TABLE.to_unsafe
     cstr = data.to_unsafe
     start_cstr = cstr
+
+    # Get the position of the last valid base64 character (rstrip '\n', '\r' and '=')
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1
     end
-    endcstr = cstr + size - 4
 
+    # Process combinations of four characters until there aren't any left
+    endcstr = cstr + size - 4
     while true
       break if cstr > endcstr
+
+      # Move the pointer by one byte until there is a valid base64 character
       while cstr.value == NL || cstr.value == NR
         cstr += 1
       end
-
       break if cstr > endcstr
-      a, b, c, d = next_decoded_value, next_decoded_value, next_decoded_value, next_decoded_value
 
-      yield (a << 2 | b >> 4).to_u8!
-      yield (b << 4 | c >> 2).to_u8!
-      yield (c << 6 | d).to_u8!
+      decode_chunk(
+        raise_error: true,
+        chunk_pos: cstr - start_cstr,
+        bytes: {cstr[0], cstr[1], cstr[2], cstr[3]}
+      ) do |byte|
+        yield byte
+      end
+      cstr += 4
     end
 
+    # Move the pointer by one byte until there is a valid base64 character or the end of `bytes` was reached
     while (cstr < endcstr + 4) && (cstr.value == NL || cstr.value == NR)
       cstr += 1
     end
 
-    mod = (endcstr - cstr) % 4
-    if mod == 2
-      a, b = next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8!
-    elsif mod == 3
-      a, b, c = next_decoded_value, next_decoded_value, next_decoded_value
-      yield (a << 2 | b >> 4).to_u8!
-      yield (b << 4 | c >> 2).to_u8!
-    elsif mod != 0
-      raise Error.new("Wrong size")
+    # If the amount of base64 characters is not divisable by 4, the remainder of the previous loop is handled here
+    unread_bytes = (endcstr - cstr) % 4
+    case unread_bytes
+    when 1
+      raise Base64::Error.new("Wrong size")
+    when 2
+      decode_chunk(
+        raise_error: true,
+        chunk_pos: cstr - start_cstr,
+        bytes: {cstr[0], cstr[1]}
+      ) do |byte|
+        yield byte
+      end
+    when 3
+      decode_chunk(
+        raise_error: true,
+        chunk_pos: cstr - start_cstr,
+        bytes: {cstr[0], cstr[1], cstr[2]}
+      ) do |byte|
+        yield byte
+      end
     end
   end
 
-  private macro next_decoded_value
-    sym = cstr.value
-    res = dt[sym]
-    cstr += 1
-    if res < 0
-      raise Error.new("Unexpected byte 0x#{sym.to_s(16)} at #{cstr - start_cstr - 1}")
-    end
-    res
+  # This macro decodes the given chunk of (2-4) base64 characters.
+  # The first argument (raise_error) determines if the macro raises an error when an invalid character is processed.
+  # The second argument (chunk_pos) is only used for the resulting error message.
+  # The resulting bytes are then each yielded to the given block, using the variable `byte`.
+  private macro decode_chunk(raise_error, chunk_pos, bytes, &block)
+    %buffer = 0_u32
+    {% for byte, i in bytes %}
+      %decoded = DECODE_TABLE[ {{byte}} ]
+      %buffer = (%buffer << 6) + %decoded
+      {% if raise_error == true %}
+        raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+      {% end %}
+    {% end %}
+
+    # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8
+    {% for i in 2..(bytes.size) %}
+      byte = (%buffer >> {{ (4 - bytes.size) * 2 + (8 * (bytes.size - i)) }}).to_u8!
+      {{ yield }}
+    {% end %}
   end
 
-  private DECODE_TABLE = Array(Int8).new(256) do |i|
+  private DECODE_TABLE = StaticArray(UInt8, 256).new do |i|
     case i.unsafe_chr
-    when 'A'..'Z' then (i - 0x41).to_i8
-    when 'a'..'z' then (i - 0x47).to_i8
-    when '0'..'9' then (i + 0x04).to_i8
-    when '+', '-' then 0x3E_i8
-    when '/', '_' then 0x3F_i8
-    else               -1_i8
+    when 'A'..'Z' then (i - 0x41).to_u8
+    when 'a'..'z' then (i - 0x47).to_u8
+    when '0'..'9' then (i + 0x04).to_u8
+    when '+', '-' then 0x3E_u8
+    when '/', '_' then 0x3F_u8
+    else               255_u8
     end
   end
 end
