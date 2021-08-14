@@ -894,7 +894,7 @@ require "./repl"
         push:        false,
         code:        call(compiled_def),
         disassemble: {
-          compiled_def: "#{compiled_def.def.name}",
+          compiled_def: "#{compiled_def.owner}##{compiled_def.def.name}",
         },
       },
       call_with_block: {
@@ -903,7 +903,7 @@ require "./repl"
         push:        false,
         code:        call_with_block(compiled_def),
         disassemble: {
-          compiled_def: "#{compiled_def.def.name}",
+          compiled_def: "#{compiled_def.owner}##{compiled_def.def.name}",
         },
       },
       call_block: {
