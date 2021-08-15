@@ -15,17 +15,11 @@ class Crystal::Repl::LibFunction
   # Bytesize for each argument in the call
   getter args_bytesizes : Array(Int32)
 
-  # Each element is non-nil if the argument at that index
-  # is a Proc/callback, and it has the information of that
-  # Proc.
-  getter proc_args : Array(FFI::CallInterface?)
-
   def initialize(
     @def : Def,
     @symbol : Void*,
     @call_interface : FFI::CallInterface,
-    @args_bytesizes : Array(Int32),
-    @proc_args : Array(FFI::CallInterface?)
+    @args_bytesizes : Array(Int32)
   )
   end
 end

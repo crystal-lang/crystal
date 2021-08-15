@@ -325,6 +325,17 @@ class Crystal::Repl::Compiler
 
       upcast arg, arg.type, ivar.type
 
+      ivar_type = ivar.type
+      arg_type = arg.type
+      is_proc_type = false
+
+      # When assigning a proc to an extern struct field we need
+      # to remove the closure data part.
+      if ivar_type.is_a?(ProcInstanceType) && arg_type.is_a?(ProcInstanceType)
+        proc_to_c_fun arg_type.ffi_call_interface, node: nil
+        is_proc_type = true
+      end
+
       # With this we get a pointer to the struct
       compile_struct_call_receiver(obj, obj.type)
 
@@ -334,7 +345,11 @@ class Crystal::Repl::Compiler
         pointer_add(ivar_offset, node: node)
       end
 
-      pointer_set(inner_sizeof_type(ivar.type), node: node)
+      if is_proc_type
+        pointer_set(sizeof(Void*), node: node)
+      else
+        pointer_set(inner_sizeof_type(ivar.type), node: node)
+      end
     when "interpreter_call_stack_unwind"
       interpreter_call_stack_unwind(node: node)
     when "interpreter_raise_without_backtrace"

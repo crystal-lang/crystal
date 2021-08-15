@@ -1150,15 +1150,24 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     type = obj.type
 
+    ivar = type.lookup_instance_var(name)
     ivar_offset = ivar_offset(type, name)
-    ivar_size = inner_sizeof_type(type.lookup_instance_var(name))
+    ivar_size = inner_sizeof_type(ivar)
 
     unless @wants_struct_pointer
       obj.accept self
 
       if type.passed_by_value?
         # We have the struct in the stack, now we need to keep a part of it
-        get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(obj), node: node
+
+        # If it's an extern struct with a Proc field, we need to convert
+        # the FFI::Closure object into a Crystal Proc
+        if type.extern? && ivar.type.proc?
+          get_struct_ivar ivar_offset, sizeof(Void*), aligned_sizeof_type(obj), node: node
+          c_fun_to_proc node: node
+        else
+          get_struct_ivar ivar_offset, ivar_size, aligned_sizeof_type(obj), node: node
+        end
       else
         get_class_ivar ivar_offset, ivar_size, node: node
       end
@@ -1759,7 +1768,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     args_bytesizes = [] of Int32
     args_ffi_types = [] of FFI::Type
-    proc_args = [] of FFI::CallInterface?
 
     dont_request_struct_pointer do
       node.args.each_with_index do |arg, i|
@@ -1774,12 +1782,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         # TODO: upcast?
 
         if arg_type.is_a?(ProcInstanceType)
-          args_bytesizes << aligned_sizeof_type(arg)
+          external_arg = external.args[i]
+          args_bytesizes << sizeof(Void*)
           args_ffi_types << FFI::Type.pointer
 
-          # We need to use the type in the lib fun definition
-          external_arg = external.args[i]
-          proc_args << external_arg.type.as(ProcInstanceType).ffi_call_interface
+          proc_to_c_fun external_arg.type.as(ProcInstanceType).ffi_call_interface, node: nil
         else
           case arg
           when NilLiteral
@@ -1793,7 +1800,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
             args_bytesizes << aligned_sizeof_type(arg)
             args_ffi_types << arg.type.ffi_type
           end
-          proc_args << nil
         end
       end
     end
@@ -1810,7 +1816,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           total_args: node.args.size,
         ),
         args_bytesizes: args_bytesizes,
-        proc_args: proc_args,
       )
       @context.add_gc_reference(lib_function)
     else
@@ -1823,7 +1828,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           return_type: external.type.ffi_type,
         ),
         args_bytesizes: args_bytesizes,
-        proc_args: proc_args,
       )
     end
 
@@ -2847,6 +2851,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   private def append(lib_function : LibFunction)
     append(lib_function.object_id.unsafe_as(Int64))
+  end
+
+  private def append(ffi_call_interface : FFI::CallInterface)
+    append(ffi_call_interface.to_unsafe.unsafe_as(Int64))
   end
 
   private def append(call : Call)

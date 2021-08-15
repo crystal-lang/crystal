@@ -36,6 +36,14 @@ class Crystal::Repl::Context
   # The memory where class vars are stored. Refer to `ClassVars` for more on this.
   property class_vars_memory : Pointer(UInt8)
 
+  # Associated an FFI::Closure's code to a CompiledDef.
+  # When we set an extern struct's field that is a Proc, we create
+  # an FFI::Closure object and set that instead of a Proc.
+  # In case a user reads that field back we need to create a Proc,
+  # we can't use an FFI::Closure object. In that case we lookup
+  # the proc in this Hash.
+  getter ffi_closure_to_compiled_def : Hash(Void*, CompiledDef)
+
   @pkg_config_path : String?
 
   def initialize(@program : Program)
@@ -62,6 +70,8 @@ class Crystal::Repl::Context
 
     @constants_memory = Pointer(Void).malloc(1).as(UInt8*)
     @class_vars_memory = Pointer(Void).malloc(1).as(UInt8*)
+
+    @ffi_closure_to_compiled_def = {} of Void* => CompiledDef
 
     @type_instance_var_initializers = {} of Type => Array(CompiledDef)
 

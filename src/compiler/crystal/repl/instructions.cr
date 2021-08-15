@@ -1126,6 +1126,39 @@ require "./repl"
           call(compiled_def)
         end
       },
+      # Turns a Crystal proc into a C function pointer, using libffi's FFI::Closure
+      proc_to_c_fun: {
+        operands:   [ffi_call_interface : FFI::CallInterface] of Nil,
+        pop_values: [compiled_def : CompiledDef, closure_data : Void*] of Nil,
+        push:       true,
+        code:       begin
+          # TODO: check that the closure data is not null, otherwise raise
+          ffi_closure = FFI::Closure.new(
+            ffi_call_interface,
+            @context.ffi_closure_fun,
+            @context.ffi_closure_context(self, compiled_def).as(Void*),
+          )
+
+          # Associate the FFI::Closure's code pointer with a CompileDef
+          # in case we need to call it later.
+          # TODO: this probably leaks memory. Figure out what to do here...
+          @context.ffi_closure_to_compiled_def[ffi_closure.to_unsafe] = compiled_def
+
+          ffi_closure.to_unsafe.unsafe_as(Int64)
+        end,
+        disassemble: {
+          ffi_call_interface: "<ffi_call_interface>",
+        },
+      },
+      c_fun_to_proc: {
+        operands:   [] of Nil,
+        pop_values: [ffi_closure_code : Void*] of Nil,
+        push:       true,
+        code:       begin
+          compiled_def = @context.ffi_closure_to_compiled_def[ffi_closure_code]
+          {Pointer(Void).new(compiled_def.object_id), Pointer(Void).null}
+        end
+      },
       # >>> Proc (1)
 
       # <<< Atomic (3)

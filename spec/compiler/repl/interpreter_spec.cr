@@ -3910,6 +3910,22 @@ describe Crystal::Repl::Interpreter do
           foo.y
         CODE
     end
+
+    it "sets extern struct proc field" do
+      interpret(<<-CODE).should eq(13)
+          lib LibFoo
+            struct Foo
+              proc : Int32 -> Int32
+              field : Int32
+            end
+          end
+
+          foo = LibFoo::Foo.new
+          foo.field = 10
+          foo.proc = ->(x : Int32) { x + 1 }
+          foo.proc.call(2) + foo.field
+        CODE
+    end
   end
 
   context "autocast" do

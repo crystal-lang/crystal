@@ -511,7 +511,6 @@ class Crystal::Repl::Interpreter
     %cif = lib_function.call_interface
     %fn = lib_function.symbol
     %args_bytesizes = lib_function.args_bytesizes
-    %proc_args = lib_function.proc_args
 
     # Assume C calls don't have more than 100 arguments
     # TODO: use the stack for this?
@@ -520,22 +519,6 @@ class Crystal::Repl::Interpreter
 
     %i = %args_bytesizes.size - 1
     %args_bytesizes.reverse_each do |arg_bytesize|
-      # If an argument is a Proc, in the stack it's {pointer, closure_data},
-      # where pointer is actually the object_id of a CompiledDef.
-      # TODO: check that closure_data is null and raise otherwise
-      # We need to wrap the Proc in an FFI::Closure. proc_args[%i] will have
-      # the CallInterface for the Proc.
-      # We copy the CompiledDef from the stack and into a FFIClosureContext,
-      # include also the interpreter, and put that in the stack to later
-      # pass it to the FFI call below.
-      if %proc_arg_cif = %proc_args[%i]
-        proc_compiled_def = (stack - %offset - arg_bytesize).as(CompiledDef*).value
-        closure_context = @context.ffi_closure_context(self, proc_compiled_def)
-
-        %closure = FFI::Closure.new(%proc_arg_cif, @context.ffi_closure_fun, closure_context.as(Void*))
-        (stack - %offset - arg_bytesize).as(Int64*).value = %closure.to_unsafe.unsafe_as(Int64)
-      end
-
       %pointers[%i] = (stack - %offset - arg_bytesize).as(Void*)
       %offset += arg_bytesize
       %i -= 1
