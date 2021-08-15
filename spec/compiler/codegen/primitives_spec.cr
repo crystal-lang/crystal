@@ -34,6 +34,10 @@ describe "Code gen: primitives" do
       )).to_i.should eq(1)
   end
 
+  it "skips bounds checking when to_i produces same type" do
+    run("1.to_i32").to_i.should eq(1)
+  end
+
   it "codegens char" do
     run("'a'").to_i.should eq('a'.ord)
   end

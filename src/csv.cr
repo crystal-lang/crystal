@@ -296,7 +296,7 @@ class CSV
   end
 
   # Rewinds this CSV to the beginning, rewinding the underlying IO if any.
-  def rewind
+  def rewind : Nil
     @parser.rewind
     @parser.next_row if @headers
     @traversed = false

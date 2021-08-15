@@ -242,7 +242,7 @@ class IO::Memory < IO
   # io = IO::Memory.new "hello"
   # io.clear # raises IO::Error
   # ```
-  def clear
+  def clear : Nil
     check_open
     check_resizeable
     @bytesize = 0
@@ -372,7 +372,7 @@ class IO::Memory < IO
   # io.close
   # io.gets_to_end # raises IO::Error (closed stream)
   # ```
-  def close
+  def close : Nil
     @closed = true
   end
 
