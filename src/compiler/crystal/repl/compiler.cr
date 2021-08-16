@@ -2006,7 +2006,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
     else
       # Pass implicit self if needed
-      put_self(node: node) unless target_def.owner.is_a?(Program)
+      case target_def.owner
+      when Program, FileModule
+        # These types aren't passed as self
+      else
+        put_self(node: node)
+      end
     end
 
     target_def_args = target_def.args

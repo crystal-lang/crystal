@@ -4454,6 +4454,34 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "doesn't pass self to top-level method (FileNode)" do
+      interpret(<<-CODE).should eq(1)
+        enum Color
+          Red
+          Green
+          Blue
+        end
+
+        class Object
+          def should(expectation)
+            self
+          end
+        end
+
+        def eq(value)
+          value
+        end
+
+        private def t(type : Color)
+          type
+        end
+
+        other = 2
+        e = Color::Green.should eq(t :green)
+        e.value
+      CODE
+    end
+
     it "breaks from current block, not from outer block" do
       interpret(<<-CODE).should eq(2)
         def twice
