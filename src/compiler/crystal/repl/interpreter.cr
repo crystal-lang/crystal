@@ -68,14 +68,16 @@ class Crystal::Repl::Interpreter
   # that needs to re-raise the last exception.
   getter! last_exception : Void*
 
-  def initialize(@context : Context)
+  def initialize(
+    @context : Context,
+    # TODO: what if the stack is exhausted?
+    @stack : UInt8* = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+  )
     @local_vars = LocalVars.new(@context)
     @argv = [] of String
 
     @instructions = CompiledInstructions.new
 
-    # TODO: what if the stack is exhausted?
-    @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
     @call_stack = [] of CallFrame
     @call_stack_leave_index = 0
 
@@ -102,16 +104,18 @@ class Crystal::Repl::Interpreter
   # Yields the interpreter stack to potentially fill out any values in
   # it before execution.
   def self.interpret(context : Context, node : ASTNode, & : UInt8* -> _) : Repl::Value
-    interpreter = Interpreter.new(context)
+    context.checkout_stack do |stack|
+      interpreter = Interpreter.new(context, stack)
 
-    yield interpreter.stack
+      yield stack
 
-    main_visitor = MainVisitor.new(context.program, meta_vars: MetaVars.new)
+      main_visitor = MainVisitor.new(context.program, meta_vars: MetaVars.new)
 
-    node = context.program.normalize(node)
-    node = context.program.semantic(node, main_visitor: main_visitor)
+      node = context.program.normalize(node)
+      node = context.program.semantic(node, main_visitor: main_visitor)
 
-    interpreter.interpret(node, main_visitor.meta_vars)
+      interpreter.interpret(node, main_visitor.meta_vars)
+    end
   end
 
   # compiles the given code to bytecode, then interprets it by assuming the local variables
@@ -924,31 +928,32 @@ class Crystal::Repl::Interpreter
       main_visitor = MainVisitor.new(@context.program, vars: meta_vars, meta_vars: meta_vars)
       exps.accept main_visitor
 
-      interpreter = Interpreter.new(@context)
+      @context.checkout_stack do |stack|
+        interpreter = Interpreter.new(@context, stack)
 
-      # We also need to put the data for `fiber_main` and `fiber` on the stack.
-      stack = interpreter.stack
+        # We need to put the data for `fiber_main` and `fiber` on the stack.
 
-      # Here comes `fiber_main`
-      # Put the proc pointer first
-      stack.as(Void**).value = fiber_main
-      stack += sizeof(Void*)
+        # Here comes `fiber_main`
+        # Put the proc pointer first
+        stack.as(Void**).value = fiber_main
+        stack += sizeof(Void*)
 
-      # Put the closure data, which is nil
-      stack.as(Void**).value = Pointer(Void).null
-      stack += sizeof(Void*)
+        # Put the closure data, which is nil
+        stack.as(Void**).value = Pointer(Void).null
+        stack += sizeof(Void*)
 
-      # Now comes `fiber`
-      stack.as(Void**).value = fiber
+        # Now comes `fiber`
+        stack.as(Void**).value = fiber
 
-      begin
-        interpreter.interpret(exps, main_visitor.meta_vars)
-      rescue ex : EscapingException
-        print "Unhandled exception in spawn: "
-        print ex
+        begin
+          interpreter.interpret(exps, main_visitor.meta_vars)
+        rescue ex : EscapingException
+          print "Unhandled exception in spawn: "
+          print ex
+        end
+
+        nil
       end
-
-      nil
     end
     spawned_fiber.as(Void*)
   end

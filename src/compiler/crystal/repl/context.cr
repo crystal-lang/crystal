@@ -256,8 +256,8 @@ class Crystal::Repl::Context
     #   - call interpret on the compiled_def.def.body
     #   - copy the value back to ret
 
-    interpreter.context.checkout_stack do |stack_top|
-      stack_top_base = stack_top
+    interpreter.context.checkout_stack do |stack|
+      stack_top = stack
 
       # Clear the proc's local vars area, the stack might have garbage there
       stack_top.clear(compiled_def.local_vars.max_bytesize)
@@ -268,7 +268,7 @@ class Crystal::Repl::Context
       end
 
       # TODO: maybe we don't need a new interpreter for this?
-      sub_interpreter = Interpreter.new(interpreter, compiled_def, stack_top_base, 0)
+      sub_interpreter = Interpreter.new(interpreter, compiled_def, stack, 0)
 
       value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
 
