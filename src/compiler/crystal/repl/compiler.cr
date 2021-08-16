@@ -2690,7 +2690,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   # This is where we define one method per instruction/opcode.
   {% for name, instruction in Crystal::Repl::Instructions %}
-    {% operands = instruction[:operands] %}
+    {% operands = instruction[:operands] || [] of Nil %}
 
     def {{name.id}}(
       {% if operands.empty? %}

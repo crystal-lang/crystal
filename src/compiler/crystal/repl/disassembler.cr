@@ -45,7 +45,7 @@ module Crystal::Repl::Disassembler
         {% for name, instruction in Crystal::Repl::Instructions %}
           in .{{name.id}}?
             io.print "{{name}}"
-            {% for operand in instruction[:operands] %}
+            {% for operand in instruction[:operands] || [] of Nil %}
               {{operand.var}}, ip = next_instruction instructions, ip, {{operand.type}}
             {% end %}
 
@@ -55,7 +55,7 @@ module Crystal::Repl::Disassembler
               {% end %}
             {% end %}
 
-            {% for operand in instruction[:operands] %}
+            {% for operand in instruction[:operands] || [] of Nil %}
               io.print " "
               io.print {{operand.var}}
             {% end %}

@@ -285,8 +285,8 @@ class Crystal::Repl::Interpreter
       {% begin %}
         case op_code
           {% for name, instruction in Crystal::Repl::Instructions %}
-            {% operands = instruction[:operands] %}
-            {% pop_values = instruction[:pop_values] %}
+            {% operands = instruction[:operands] || [] of Nil %}
+            {% pop_values = instruction[:pop_values] || [] of Nil %}
 
             in .{{name.id}}?
               # Read operands for this instruction
