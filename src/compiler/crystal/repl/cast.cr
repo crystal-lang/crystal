@@ -188,6 +188,10 @@ class Crystal::Repl::Compiler
     # Nothing to do
   end
 
+  private def upcast_distinct(node : ASTNode, from : MetaclassType, to : VirtualMetaclassType)
+    # TODO: not tested
+  end
+
   private def upcast_distinct(node : ASTNode, from : Type, to : Type)
     node.raise "BUG: missing upcast_distinct from #{from} to #{to} (#{from.class} to #{to.class})"
   end
