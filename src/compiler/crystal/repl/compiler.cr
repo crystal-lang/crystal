@@ -863,10 +863,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       closure_self_type = closure_owner.owner
     end
 
-    if parent_closure_context
-      @closure_context = parent_closure_context
-    end
-
     closured_vars, closured_vars_bytesize = compute_closured_vars(vars_owner.vars, closure_owner)
 
     # If there's no closure in this context, we might still have a closure
@@ -2420,7 +2416,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     put_i64 compiled_def.object_id.to_i64!, node: node
 
     # 4. Push closure context to stack
-    if @closure_context
+    if is_closure
       # If it's a closure, we push the pointer that holds the closure data
       closure_var_index = get_closure_var_index
       get_local closure_var_index, sizeof(Void*), node: node

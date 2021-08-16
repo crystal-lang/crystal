@@ -4523,6 +4523,16 @@ describe Crystal::Repl::Interpreter do
         x
       CODE
     end
+
+    it "doesn't incorrectly consider a non-closure as closure" do
+      interpret(<<-CODE, prelude: "prelude").should eq(false)
+        c = 0
+        ->{
+          c
+          ->{}.closure?
+        }.call
+      CODE
+    end
   end
 
   context "integration" do
