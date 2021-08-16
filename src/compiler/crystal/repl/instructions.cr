@@ -712,7 +712,14 @@ require "./repl"
         code:       set_local_var(index, size),
         # TODO: how to know the local var name?
         disassemble: {
-          index: "#{node}@#{index}",
+          index: case node
+                 when Var
+                   "#{node}@#{index}"
+                 when Assign
+                   "#{node.target}@#{index}"
+                 else
+                   "@#{index}"
+                 end,
         },
       },
       get_local: {
@@ -722,7 +729,14 @@ require "./repl"
         code:       get_local_var(index, size),
         # TODO: how to know the local var name?
         disassemble: {
-          index: "#{node}@#{index}",
+          index: case node
+                 when Var
+                   "#{node}@#{index}"
+                 when Assign
+                   "#{node.target}@#{index}"
+                 else
+                   "@#{index}"
+                 end,
         },
       },
       # >>> Local variables (2)
