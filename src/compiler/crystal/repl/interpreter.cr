@@ -61,11 +61,6 @@ class Crystal::Repl::Interpreter
   # Memory for the stack.
   getter stack : Pointer(UInt8)
 
-  # The point of the stack we were at right before doing a C call.
-  # If there's a C callback that is called because of this C call
-  # we'd like to continue using the stack at this point.
-  getter stack_top : Pointer(UInt8)
-
   # Values for `argv`, set when using `crystal i file.cr arg1 arg2 ...`.
   property argv : Array(String)
 
@@ -81,7 +76,6 @@ class Crystal::Repl::Interpreter
 
     # TODO: what if the stack is exhausted?
     @stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
-    @stack_top = @stack
     @call_stack = [] of CallFrame
     @call_stack_leave_index = 0
 
@@ -98,7 +92,6 @@ class Crystal::Repl::Interpreter
     @instructions = CompiledInstructions.new
 
     @stack = stack
-    @stack_top = @stack
     @call_stack = interpreter.@call_stack.dup
     @call_stack_leave_index = @call_stack.size
 
@@ -523,11 +516,6 @@ class Crystal::Repl::Interpreter
       %offset += arg_bytesize
       %i -= 1
     end
-
-    # Remember the stack top so that if a callback is called from C
-    # and back to the interpreter, we can continue using the stack
-    # from this point.
-    @stack_top = stack
 
     %cif.call(%fn, %pointers.to_unsafe, stack.as(Void*))
 

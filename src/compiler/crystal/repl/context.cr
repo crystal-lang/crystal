@@ -82,6 +82,10 @@ class Crystal::Repl::Context
 
     @pkg_config_path = Process.find_executable("pkg-config")
 
+    # This is a stack pool, for checkout_stack.
+    @stacks = [] of UInt8*
+    @stacks_index = 0
+
     @constants = Constants.new(self)
     @class_vars = ClassVars.new(self)
   end
@@ -93,6 +97,26 @@ class Crystal::Repl::Context
   # the proper way to do it, we just retain these references here.
   def add_gc_reference(ref : Reference)
     @gc_references << ref.as(Void*)
+  end
+
+  # Checks out a stack from the stack pool and yields it to the given block.
+  # Once the block returns, the stack is returned to the pool.
+  # The stack is not cleared after or before it's used.
+  def checkout_stack(& : UInt8* -> _)
+    if @stacks_index < @stacks.size
+      stack = @stacks[@stacks_index]
+    else
+      stack = Pointer(Void).malloc(8 * 1024 * 1024).as(UInt8*)
+      @stacks << stack
+    end
+
+    @stacks_index += 1
+
+    begin
+      yield stack
+    ensure
+      @stacks_index -= 1
+    end
   end
 
   def type_instance_var_initializers(type : Type)
@@ -232,22 +256,24 @@ class Crystal::Repl::Context
     #   - call interpret on the compiled_def.def.body
     #   - copy the value back to ret
 
-    stack_top = interpreter.stack_top
+    interpreter.context.checkout_stack do |stack_top|
+      stack_top_base = stack_top
 
-    # Clear the proc's local vars area, just in case
-    stack_top.clear(compiled_def.local_vars.max_bytesize)
+      # Clear the proc's local vars area, the stack might have garbage there
+      stack_top.clear(compiled_def.local_vars.max_bytesize)
 
-    compiled_def.def.args.each_with_index do |arg, i|
-      args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
-      stack_top += interpreter.aligned_sizeof_type(arg.type)
+      compiled_def.def.args.each_with_index do |arg, i|
+        args[i].as(UInt8*).copy_to(stack_top, interpreter.inner_sizeof_type(arg.type))
+        stack_top += interpreter.aligned_sizeof_type(arg.type)
+      end
+
+      # TODO: maybe we don't need a new interpreter for this?
+      sub_interpreter = Interpreter.new(interpreter, compiled_def, stack_top_base, 0)
+
+      value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
+
+      value.copy_to(ret.as(UInt8*))
     end
-
-    # TODO: maybe we don't need a new interpreter for this?
-    sub_interpreter = Interpreter.new(interpreter, compiled_def, interpreter.@stack_top, 0)
-
-    value = sub_interpreter.interpret(compiled_def.def.body, compiled_def.def.vars.not_nil!)
-
-    value.copy_to(ret.as(UInt8*))
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32
