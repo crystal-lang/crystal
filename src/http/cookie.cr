@@ -141,7 +141,7 @@ module HTTP
         SameSiteAV     = /SameSite=(?<samesite>\w+)/i
         SecureAV       = /(?<secure>Secure)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
-        DomainAV       = /Domain=(?<domain>#{DomainValue})/i
+        DomainAV       = /Domain=\.?(?<domain>#{DomainValue})/i
         MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
         CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{SameSiteAV}|#{ExtensionAV})/

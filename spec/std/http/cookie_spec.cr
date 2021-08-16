@@ -245,6 +245,14 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com")
       end
 
+      it "leading dots in domain names are ignored" do
+        cookie = parse_set_cookie("key=value; domain=.example.com")
+        cookie.name.should eq("key")
+        cookie.value.should eq("value")
+        cookie.domain.should eq("example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=example.com")
+      end
+
       it "parses expires iis" do
         cookie = parse_set_cookie("key=value; expires=Sun, 06-Nov-1994 08:49:37 GMT")
         time = Time.utc(1994, 11, 6, 8, 49, 37)
