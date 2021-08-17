@@ -1940,7 +1940,7 @@ module Crystal
     end
 
     def implements?(other_type : GenericInstanceType)
-      if other_type.is_a?(GenericInstanceType) && generic_type == other_type.generic_type
+      if generic_type == other_type.generic_type
         type_vars.each do |name, type_var|
           other_type_var = other_type.type_vars[name]
           if type_var.is_a?(Var) && other_type_var.is_a?(Var)
@@ -2269,17 +2269,14 @@ module Crystal
       true
     end
 
-    def implements?(other : Type)
-      if other.is_a?(ProcInstanceType)
-        # - Proc(..., NoReturn) can be cast to Proc(..., T)
-        # - Anything can be cast to Proc(..., Void)
-        # - Anything can be cast to Proc(..., Nil)
-        if (self.return_type.no_return? || other.return_type.void? || other.return_type.nil_type?) &&
-           arg_types == other.arg_types
-          return true
-        end
-      end
-      super
+    def implements?(other_type : ProcInstanceType)
+      return true if self == other_type
+      return false unless self.arg_types == other_type.arg_types
+
+      # - Proc(..., NoReturn) can be cast to Proc(..., T)
+      # - Anything can be cast to Proc(..., Void)
+      # - Anything can be cast to Proc(..., Nil)
+      self.return_type.no_return? || other_type.return_type.void? || other_type.return_type.nil_type?
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
@@ -2364,20 +2361,15 @@ module Crystal
       end
     end
 
-    def implements?(other : Type)
-      return true if self == other
+    def implements?(other_type : TupleInstanceType)
+      return true if self == other_type
+      return false unless self.size == other_type.size
 
-      if other.is_a?(TupleInstanceType)
-        return false unless self.size == other.size
-
-        tuple_types.zip(other.tuple_types) do |self_tuple_type, other_tuple_type|
-          return false unless self_tuple_type.implements?(other_tuple_type)
-        end
-
-        return true
+      tuple_types.zip(other_type.tuple_types) do |self_tuple_type, other_tuple_type|
+        return false unless self_tuple_type.implements?(other_tuple_type)
       end
 
-      super
+      true
     end
 
     def var
@@ -2493,22 +2485,19 @@ module Crystal
       end
     end
 
-    def implements?(other)
-      if other.is_a?(NamedTupleInstanceType)
-        return nil unless self.size == other.size
+    def implements?(other_type : NamedTupleInstanceType)
+      return true if self == other_type
+      return false unless self.size == other_type.size
 
-        self_entries = self.entries.sort_by &.name
-        other_entries = other.entries.sort_by &.name
+      self_entries = self.entries.sort_by &.name
+      other_entries = other_type.entries.sort_by &.name
 
-        self_entries.zip(other_entries) do |self_entry, other_entry|
-          return nil unless self_entry.name == other_entry.name
-          return nil unless self_entry.type.implements?(other_entry.type)
-        end
-
-        self
-      else
-        super
+      self_entries.zip(other_entries) do |self_entry, other_entry|
+        return false unless self_entry.name == other_entry.name
+        return false unless self_entry.type.implements?(other_entry.type)
       end
+
+      true
     end
 
     def size
@@ -2805,6 +2794,12 @@ module Crystal
       program.class_type
     end
 
+    def implements?(other_type : Type)
+      other_type = other_type.remove_alias
+      return super unless other_type.metaclass?
+      instance_type.implements?(other_type.instance_type)
+    end
+
     delegate abstract?, generic_nest, lookup_new_in_ancestors?,
       type_var?, to: instance_type
 
@@ -2864,6 +2859,12 @@ module Crystal
       end
     end
 
+    def implements?(other_type : Type)
+      other_type = other_type.remove_alias
+      return super unless other_type.metaclass?
+      instance_type.implements?(other_type.instance_type)
+    end
+
     def replace_type_parameters(instance_type)
       self.instance_type.replace_type_parameters(instance_type).metaclass
     end
@@ -2919,6 +2920,12 @@ module Crystal
       instance_type.generic_type.metaclass.parents.try &.map do |parent|
         parent.replace_type_parameters(instance_type)
       end
+    end
+
+    def implements?(other_type : Type)
+      other_type = other_type.remove_alias
+      return super unless other_type.metaclass?
+      instance_type.implements?(other_type.instance_type)
     end
 
     def replace_type_parameters(instance_type)
@@ -3384,8 +3391,10 @@ module Crystal
       nil
     end
 
-    def implements?(other : VirtualMetaclassType)
-      base_type.implements?(other.base_type)
+    def implements?(other_type : Type)
+      other_type = other_type.remove_alias
+      return super unless other_type.metaclass?
+      instance_type.implements?(other_type.instance_type)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil

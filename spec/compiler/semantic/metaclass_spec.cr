@@ -69,4 +69,124 @@ describe "Semantic: metaclass" do
     bar_class = mod.generic_class("Bar", mod.int32).metaclass.as(GenericClassInstanceMetaclassType)
     bar_class.superclass.should eq(foo_class)
   end
+
+  describe "preserving subtyping relations of instance classes between metaclasses" do
+    it "classes" do
+      mod = semantic(%(
+        class Foo; end
+        class Bar < Foo; end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      bar_class.implements?(foo_class).should be_true
+    end
+
+    it "generic classes (1)" do
+      mod = semantic(%(
+        class Foo(T); end
+        class Bar < Foo(Int32); end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      foo_int32_class = mod.generic_class("Foo", mod.int32).metaclass
+      bar_class = mod.types["Bar"].metaclass
+
+      bar_class.implements?(foo_int32_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+      foo_int32_class.implements?(foo_class).should be_true
+    end
+
+    it "generic classes (2)" do
+      mod = semantic(%(
+        class Foo; end
+        class Bar(T) < Foo; end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      bar_int32_class = mod.generic_class("Bar", mod.int32).metaclass
+
+      bar_int32_class.implements?(bar_class).should be_true
+      bar_int32_class.implements?(foo_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+    end
+
+    it "generic classes (3)" do
+      mod = semantic(%(
+        class Foo(T); end
+        class Bar(T) < Foo(T); end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      foo_int32_class = mod.generic_class("Foo", mod.int32).metaclass
+      bar_int32_class = mod.generic_class("Bar", mod.int32).metaclass
+
+      bar_int32_class.implements?(bar_class).should be_true
+      bar_int32_class.implements?(foo_int32_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+      foo_int32_class.implements?(foo_class).should be_true
+      bar_int32_class.implements?(foo_class).should be_true
+    end
+
+    it "modules" do
+      mod = semantic(%(
+        module Foo; end
+        module Bar; include Foo; end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      bar_class.implements?(foo_class).should be_true
+    end
+
+    it "generic modules (1)" do
+      mod = semantic(%(
+        module Foo(T); end
+        module Bar; include Foo(Int32); end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      foo_int32_class = mod.generic_module("Foo", mod.int32).metaclass
+      bar_class = mod.types["Bar"].metaclass
+
+      bar_class.implements?(foo_int32_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+      foo_int32_class.implements?(foo_class).should be_true
+    end
+
+    it "generic modules (2)" do
+      mod = semantic(%(
+        module Foo; end
+        module Bar(T); include Foo; end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      bar_int32_class = mod.generic_module("Bar", mod.int32).metaclass
+
+      bar_int32_class.implements?(bar_class).should be_true
+      bar_int32_class.implements?(foo_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+    end
+
+    it "generic modules (3)" do
+      mod = semantic(%(
+        module Foo(T); end
+        module Bar(T); include Foo(T); end
+        )).program
+
+      foo_class = mod.types["Foo"].metaclass
+      bar_class = mod.types["Bar"].metaclass
+      foo_int32_class = mod.generic_module("Foo", mod.int32).metaclass
+      bar_int32_class = mod.generic_module("Bar", mod.int32).metaclass
+
+      bar_int32_class.implements?(bar_class).should be_true
+      bar_int32_class.implements?(foo_int32_class).should be_true
+      bar_class.implements?(foo_class).should be_true
+      foo_int32_class.implements?(foo_class).should be_true
+      bar_int32_class.implements?(foo_class).should be_true
+    end
+  end
 end
