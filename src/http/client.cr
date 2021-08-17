@@ -629,14 +629,10 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block : Response -> T) : T forall T
-    begin
-      exec_internal_single(request) do |response|
-        if response
-          return handle_response(response) { yield response }
-        end
+    exec_internal_single(request, ignore_io_error: true) do |response|
+      if response
+        return handle_response(response) { yield response }
       end
-    rescue IO::Error
-      # retry
     end
 
     # Server probably closed the connection, so retry once
@@ -650,8 +646,13 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request)
-    decompress = send_request(request)
+  private def exec_internal_single(request, ignore_io_error = false)
+    begin
+      decompress = send_request(request)
+    rescue ex : IO::Error
+      return yield nil if ignore_io_error
+      raise ex
+    end
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       yield response
     end
