@@ -2846,6 +2846,10 @@ module Crystal
       super(program)
     end
 
+    def metaclass
+      program.class_type
+    end
+
     def add_subclass(subclass)
       # Nothing
     end
@@ -2897,6 +2901,10 @@ module Crystal
 
     def initialize(program, @instance_type)
       super(program)
+    end
+
+    def metaclass
+      program.class_type
     end
 
     def add_subclass(subclass)
