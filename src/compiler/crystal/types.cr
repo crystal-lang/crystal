@@ -2854,6 +2854,10 @@ module Crystal
       # Nothing
     end
 
+    def superclass
+      instance_type.superclass.try(&.metaclass) || program.class_type
+    end
+
     def parents
       instance_type.generic_type.metaclass.parents.try &.map do |parent|
         parent.replace_type_parameters(instance_type)

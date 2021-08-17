@@ -33,14 +33,40 @@ describe "Semantic: metaclass" do
     assert_type("module Foo(T); end; Foo(Int32).class") { class_type }
   end
 
-  it "types metaclass parent" do
-    input = parse("
+  it "types metaclass superclass" do
+    mod = semantic(%(
       class Foo; end
       class Bar < Foo; end
-    ")
-    result = semantic input
-    mod = result.program
+      )).program
 
-    mod.types["Bar"].metaclass.as(ClassType).superclass.should eq(mod.types["Foo"].metaclass)
+    bar_class = mod.types["Bar"].metaclass.should be_a(MetaclassType)
+    bar_class.superclass.should eq(mod.types["Foo"].metaclass)
+  end
+
+  it "types generic metaclass superclass" do
+    mod = semantic(%(
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+      )).program
+
+    foo_class = mod.types["Foo"].metaclass.as(MetaclassType)
+    foo_class.superclass.should eq(mod.program.reference.metaclass)
+
+    bar = mod.types["Bar"].as(GenericClassType)
+    bar_class = bar.metaclass.as(MetaclassType)
+    bar_class.superclass.should eq(mod.generic_class("Foo", bar.type_parameter("T")).metaclass)
+  end
+
+  it "types generic instance metaclass superclass" do
+    mod = semantic(%(
+      class Foo(T); end
+      class Bar(T) < Foo(T); end
+      )).program
+
+    foo_class = mod.generic_class("Foo", mod.int32).metaclass.as(GenericClassInstanceMetaclassType)
+    foo_class.superclass.should eq(mod.program.reference.metaclass)
+
+    bar_class = mod.generic_class("Bar", mod.int32).metaclass.as(GenericClassInstanceMetaclassType)
+    bar_class.superclass.should eq(foo_class)
   end
 end
