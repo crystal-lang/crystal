@@ -81,6 +81,8 @@ module Crystal::Repl::Multidispatch
       a_def.args << self_arg
     end
 
+    all_special_vars = nil
+
     i = 0
 
     node.args.each do |arg|
@@ -146,7 +148,30 @@ module Crystal::Repl::Multidispatch
         call.block = Block.new(block_args, body: Yield.new(yield_args))
       end
 
-      target_def_if = If.new(condition, call)
+      exps = call
+
+      special_vars = target_def.special_vars
+      if special_vars
+        # What we do is something like this:
+        #
+        # ```
+        # .value = call(...)
+        # $~ = $~
+        # .value
+        # ```
+        all_special_vars ||= Set(String).new
+        all_special_vars.concat(special_vars)
+
+        assign = Assign.new(Var.new(".value"), call)
+        expressions = [assign] of ASTNode
+        special_vars.each do |special_var|
+          expressions << Assign.new(Var.new(special_var), Var.new(special_var))
+        end
+        expressions << Var.new(".value")
+        exps = Expressions.new(expressions)
+      end
+
+      target_def_if = If.new(condition, exps)
 
       if current_if
         current_if.else = target_def_if
@@ -162,6 +187,7 @@ module Crystal::Repl::Multidispatch
 
     main_if = main_if.not_nil!
     a_def.body = main_if
+    a_def.special_vars = all_special_vars
 
     a_def = context.program.normalize(a_def)
     a_def.owner = obj_type

@@ -293,7 +293,10 @@ module Crystal
         const.cleaned_up = true
       end
 
-      if node.target == node.value
+      if target == node.value &&
+         # This condition is because the interpreter will generate expressions
+         # like `$~ = $~` in multidispatches, and that's fine.
+         !(target.is_a?(Var) && target.special_var?)
         node.raise "expression has no effect"
       end
 

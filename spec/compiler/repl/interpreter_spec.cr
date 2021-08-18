@@ -4583,7 +4583,7 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
-    pending "does special var that's a reference for multidispatch" do
+    it "does special var that's a reference for multidispatch" do
       interpret(<<-CODE).should eq("hey")
         class Object; def not_nil!; self; end; end
 
