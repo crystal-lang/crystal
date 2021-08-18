@@ -4,6 +4,10 @@ require "./instructions"
 # The compiler is in charge of turning Crystal AST into bytecode,
 # which is just a stream of bytes that tells the interpreter what to do.
 class Crystal::Repl::Compiler < Crystal::Visitor
+  # The name we use for the variable where we store the
+  # `with ... yield` scope of calls without an `obj`.
+  WITH_SCOPE = ".with_scope"
+
   # A block that's being compiled: what's the block,
   # and which def will invoke it.
   record CompilingBlock, block : Block, target_def : Def
@@ -208,6 +212,14 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     prepare_closure_context(node, parent_closure_context: parent_closure_context)
 
     @compiling_block = CompilingBlock.new(node, target_def)
+
+    # If it's `with ... yield` we pass the "with" scope
+    # as the first block argument.
+    with_scope = node.scope
+    if with_scope
+      index = @local_vars.name_to_index(WITH_SCOPE, @block_level)
+      set_local index, aligned_sizeof_type(with_scope), node: nil
+    end
 
     # Right when we enter a block we have the block arguments in the stack:
     # we need to copy the values to the respective block arguments, which
@@ -1686,6 +1698,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
   def visit(node : Call)
     obj = node.obj
+    with_scope = node.with_scope
+
+    if !obj && with_scope && node.uses_with_scope?
+      obj = Var.new(WITH_SCOPE, with_scope)
+    end
 
     target_defs = node.target_defs
     unless target_defs
@@ -1939,6 +1956,13 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     begin
       needs_closure_context = false
 
+      # If it's `with ... yield` we pass the "with" scope
+      # as the first block argument.
+      with_scope = block.scope
+      if with_scope
+        @local_vars.declare(WITH_SCOPE, with_scope)
+      end
+
       block.vars.try &.each do |name, var|
         var_type = var.type?
         next unless var_type
@@ -1994,6 +2018,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     pop_obj = nil
 
     obj = node.obj
+    with_scope = node.with_scope
+
+    if !obj && with_scope && node.uses_with_scope?
+      obj = Var.new(WITH_SCOPE, with_scope)
+    end
+
     if obj
       if obj.type.passed_by_value?
         pop_obj = compile_struct_call_receiver(obj, target_def.owner)
@@ -2510,6 +2540,11 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if node.exps.any?(Splat)
       node.raise "BUG: splat inside yield not yet supported"
+    end
+
+    with_scope = node.scope
+    if with_scope
+      request_value(with_scope)
     end
 
     pop_obj = nil

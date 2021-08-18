@@ -3469,6 +3469,51 @@ describe Crystal::Repl::Interpreter do
         a
       CODE
     end
+
+    it "interprets with ... yield" do
+      interpret(<<-CODE).should eq(31)
+        struct Int32
+          def plus(x : Int32)
+            self + x
+          end
+        end
+
+        def foo
+          with 10 yield 20
+        end
+
+        foo do |x|
+          1 + (plus x)
+        end
+      CODE
+    end
+
+    it "interprets with ... yield with struct" do
+      interpret(<<-CODE).should eq(2)
+        struct Foo
+          def initialize
+            @x = 1
+          end
+
+          def inc
+            @x += 1
+          end
+
+          def x
+            @x
+          end
+        end
+
+        def foo
+          with Foo.new yield
+        end
+
+        foo do
+          inc
+          x
+        end
+      CODE
+    end
   end
 
   context "casts" do
