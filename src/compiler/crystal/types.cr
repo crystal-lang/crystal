@@ -2841,8 +2841,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      @instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
-      io << (instance_type.module? ? ":Module" : ".class")
+      if @name == "Class"
+        io << @name
+      else
+        @instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
+        io << (instance_type.module? ? ":Module" : ".class")
+      end
     end
   end
 
