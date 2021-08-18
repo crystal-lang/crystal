@@ -348,6 +348,30 @@ describe Crystal::Repl::Interpreter do
       assert_overflows -1_i64.to_u16
       assert_overflows -1_i64.to_u32
       assert_overflows -1_i64.to_u64
+
+      assert_overflows 256_f32.to_u8
+      assert_overflows 128_f32.to_i8
+      assert_overflows 65536_f32.to_u16
+      assert_overflows 32768_f32.to_i16
+
+      # TODO: uncomment these once they also overflow on compiled Crystal
+      # assert_overflows 4294967296_f32.to_u32
+      # assert_overflows 2147483648_f32.to_i32
+      # assert_overflows 18446744073709551616_f32.to_u64
+      # assert_overflows 9223372036854775808_f32.to_i64
+
+      assert_overflows 256_f64.to_u8
+      assert_overflows 128_f64.to_i8
+      assert_overflows 65536_f64.to_u16
+      assert_overflows 32768_f64.to_i16
+      assert_overflows 4294967296_f64.to_u32
+      assert_overflows 2147483648_f64.to_i32
+
+      # TODO: uncomment these once they also overflow on compiled Crystal
+      # assert_overflows 18446744073709551616_f64.to_u64
+      # assert_overflows 9223372036854775808_f64.to_i64
+
+      assert_overflows 1.7976931348623157e+308.to_f32
     end
   end
 

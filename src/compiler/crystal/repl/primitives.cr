@@ -599,13 +599,13 @@ class Crystal::Repl::Compiler
     when {:i8, :i16}  then sign_extend(7, node: node)
     when {:i8, :i32}  then sign_extend(7, node: node)
     when {:i8, :i64}  then sign_extend(7, node: node)
-    when {:i8, :u8}   then checked ? i8_to_u8(node: node) : nop
-    when {:i8, :u16}  then checked ? i8_to_u16(node: node) : sign_extend(7, node: node)
-    when {:i8, :u32}  then checked ? i8_to_u32(node: node) : sign_extend(7, node: node)
-    when {:i8, :u64}  then checked ? i8_to_u64(node: node) : sign_extend(7, node: node)
-    when {:i8, :f32}  then i8_to_f32(node: node)
-    when {:i8, :f64}  then i8_to_f64(node: node)
-    when {:u8, :i8}   then checked ? u8_to_i8(node: node) : zero_extend(7, node: node)
+    when {:i8, :u8}   then checked ? (sign_extend(7, node: node); i64_to_u8(node: node)) : nop
+    when {:i8, :u16}  then sign_extend(7, node: node); checked ? i64_to_u16(node: node) : nop
+    when {:i8, :u32}  then sign_extend(7, node: node); checked ? i64_to_u32(node: node) : nop
+    when {:i8, :u64}  then sign_extend(7, node: node); checked ? i64_to_u64(node: node) : nop
+    when {:i8, :f32}  then sign_extend(7, node: node); i64_to_f32(node: node)
+    when {:i8, :f64}  then sign_extend(7, node: node); i64_to_f64(node: node)
+    when {:u8, :i8}   then zero_extend(7, node: node); checked ? u64_to_i8(node: node) : nop
     when {:u8, :i16}  then zero_extend(7, node: node)
     when {:u8, :i32}  then zero_extend(7, node: node)
     when {:u8, :i64}  then zero_extend(7, node: node)
@@ -613,48 +613,48 @@ class Crystal::Repl::Compiler
     when {:u8, :u16}  then zero_extend(7, node: node)
     when {:u8, :u32}  then zero_extend(7, node: node)
     when {:u8, :u64}  then zero_extend(7, node: node)
-    when {:u8, :f32}  then u8_to_f32(node: node)
-    when {:u8, :f64}  then u8_to_f64(node: node)
-    when {:i16, :i8}  then checked ? i16_to_i8(node: node) : nop
+    when {:u8, :f32}  then zero_extend(7, node: node); u64_to_f32(node: node)
+    when {:u8, :f64}  then zero_extend(7, node: node); u64_to_f64(node: node)
+    when {:i16, :i8}  then checked ? (sign_extend(6, node: node); i64_to_i8(node: node)) : nop
     when {:i16, :i16} then nop
     when {:i16, :i32} then sign_extend(6, node: node)
     when {:i16, :i64} then sign_extend(6, node: node)
-    when {:i16, :u8}  then checked ? i16_to_u8(node: node) : nop
-    when {:i16, :u16} then checked ? i16_to_u16(node: node) : nop
-    when {:i16, :u32} then checked ? i16_to_u32(node: node) : sign_extend(6, node: node)
-    when {:i16, :u64} then checked ? i16_to_u64(node: node) : sign_extend(6, node: node)
-    when {:i16, :f32} then i16_to_f32(node: node)
-    when {:i16, :f64} then i16_to_f64(node: node)
-    when {:u16, :i8}  then checked ? u16_to_i8(node: node) : nop
-    when {:u16, :i16} then checked ? u16_to_i16(node: node) : nop
+    when {:i16, :u8}  then checked ? (sign_extend(6, node: node); i64_to_u8(node: node)) : nop
+    when {:i16, :u16} then checked ? (sign_extend(6, node: node); i64_to_u16(node: node)) : nop
+    when {:i16, :u32} then sign_extend(6, node: node); checked ? i64_to_u32(node: node) : nop
+    when {:i16, :u64} then sign_extend(6, node: node); checked ? i64_to_u64(node: node) : nop
+    when {:i16, :f32} then sign_extend(6, node: node); i64_to_f32(node: node)
+    when {:i16, :f64} then sign_extend(6, node: node); i64_to_f64(node: node)
+    when {:u16, :i8}  then checked ? (zero_extend(6, node: node); u64_to_i8(node: node)) : nop
+    when {:u16, :i16} then checked ? (zero_extend(6, node: node); u64_to_i16(node: node)) : nop
     when {:u16, :i32} then zero_extend(6, node: node)
     when {:u16, :i64} then zero_extend(6, node: node)
     when {:u16, :u8}  then nop
     when {:u16, :u16} then nop
     when {:u16, :u32} then zero_extend(6, node: node)
     when {:u16, :u64} then zero_extend(6, node: node)
-    when {:u16, :f32} then u16_to_f32(node: node)
-    when {:u16, :f64} then u16_to_f64(node: node)
-    when {:i32, :i8}  then checked ? i32_to_i8(node: node) : nop
-    when {:i32, :i16} then checked ? i32_to_i16(node: node) : nop
+    when {:u16, :f32} then zero_extend(6, node: node); u64_to_f32(node: node)
+    when {:u16, :f64} then zero_extend(6, node: node); u64_to_f64(node: node)
+    when {:i32, :i8}  then checked ? (sign_extend(4, node: node); i64_to_i8(node: node)) : nop
+    when {:i32, :i16} then checked ? (sign_extend(4, node: node); i64_to_i16(node: node)) : nop
     when {:i32, :i32} then nop
     when {:i32, :i64} then sign_extend(4, node: node)
-    when {:i32, :u8}  then checked ? i32_to_u8(node: node) : nop
-    when {:i32, :u16} then checked ? i32_to_u16(node: node) : nop
-    when {:i32, :u32} then checked ? i32_to_u32(node: node) : nop
-    when {:i32, :u64} then checked ? i32_to_u64(node: node) : sign_extend(4, node: node)
-    when {:i32, :f32} then i32_to_f32(node: node)
-    when {:i32, :f64} then i32_to_f64(node: node)
-    when {:u32, :i8}  then checked ? u32_to_i8(node: node) : nop
-    when {:u32, :i16} then checked ? u32_to_i16(node: node) : nop
-    when {:u32, :i32} then checked ? u32_to_i32(node: node) : nop
+    when {:i32, :u8}  then checked ? (sign_extend(4, node: node); i64_to_u8(node: node)) : nop
+    when {:i32, :u16} then checked ? (sign_extend(4, node: node); i64_to_u16(node: node)) : nop
+    when {:i32, :u32} then checked ? (sign_extend(4, node: node); i64_to_u32(node: node)) : nop
+    when {:i32, :u64} then checked ? (sign_extend(4, node: node); i64_to_u64(node: node)) : sign_extend(4, node: node)
+    when {:i32, :f32} then sign_extend(4, node: node); i64_to_f32(node: node)
+    when {:i32, :f64} then sign_extend(4, node: node); i64_to_f64(node: node)
+    when {:u32, :i8}  then checked ? (zero_extend(4, node: node); u64_to_i8(node: node)) : nop
+    when {:u32, :i16} then checked ? (zero_extend(4, node: node); u64_to_i16(node: node)) : nop
+    when {:u32, :i32} then checked ? (zero_extend(4, node: node); u64_to_i32(node: node)) : nop
     when {:u32, :i64} then zero_extend(4, node: node)
-    when {:u32, :u8}  then checked ? u32_to_u8(node: node) : nop
-    when {:u32, :u16} then checked ? u32_to_u16(node: node) : nop
+    when {:u32, :u8}  then checked ? (zero_extend(4, node: node); u64_to_u8(node: node)) : nop
+    when {:u32, :u16} then checked ? (zero_extend(4, node: node); u64_to_u16(node: node)) : nop
     when {:u32, :u32} then nop
     when {:u32, :u64} then zero_extend(4, node: node)
-    when {:u32, :f32} then u32_to_f32(node: node)
-    when {:u32, :f64} then u32_to_f64(node: node)
+    when {:u32, :f32} then zero_extend(4, node: node); u64_to_f32(node: node)
+    when {:u32, :f64} then zero_extend(4, node: node); u64_to_f64(node: node)
     when {:i64, :i8}  then checked ? i64_to_i8(node: node) : nop
     when {:i64, :i16} then checked ? i64_to_i16(node: node) : nop
     when {:i64, :i32} then checked ? i64_to_i32(node: node) : nop
@@ -675,14 +675,14 @@ class Crystal::Repl::Compiler
     when {:u64, :u64} then nop
     when {:u64, :f32} then u64_to_f32(node: node)
     when {:u64, :f64} then u64_to_f64(node: node)
-    when {:f32, :i8}  then checked ? f32_to_i8(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :i16} then checked ? f32_to_i16(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :i32} then checked ? f32_to_i32(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :i64} then checked ? f32_to_i64(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :u8}  then checked ? f32_to_u8(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :u16} then checked ? f32_to_u16(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :u32} then checked ? f32_to_u32(node: node) : f32_to_i64_bang(node: node)
-    when {:f32, :u64} then checked ? f32_to_u64(node: node) : f32_to_i64_bang(node: node)
+    when {:f32, :i8}  then f32_to_f64(node: node); checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :i16} then f32_to_f64(node: node); checked ? f64_to_i16(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :i32} then f32_to_f64(node: node); checked ? f64_to_i32(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :i64} then f32_to_f64(node: node); checked ? f64_to_i64(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :u8}  then f32_to_f64(node: node); checked ? f64_to_u8(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :u16} then f32_to_f64(node: node); checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :u32} then f32_to_f64(node: node); checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
+    when {:f32, :u64} then f32_to_f64(node: node); checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
     when {:f32, :f32} then nop
     when {:f32, :f64} then f32_to_f64(node: node)
     when {:f64, :i8}  then checked ? f64_to_i8(node: node) : f64_to_i64_bang(node: node)
@@ -693,7 +693,7 @@ class Crystal::Repl::Compiler
     when {:f64, :u16} then checked ? f64_to_u16(node: node) : f64_to_i64_bang(node: node)
     when {:f64, :u32} then checked ? f64_to_u32(node: node) : f64_to_i64_bang(node: node)
     when {:f64, :u64} then checked ? f64_to_u64(node: node) : f64_to_i64_bang(node: node)
-    when {:f64, :f32} then f64_to_f32_bang(node: node)
+    when {:f64, :f32} then checked ? f64_to_f32(node: node) : f64_to_f32_bang(node: node)
     when {:f64, :f64} then nop
     else                   node.raise "BUG: missing handling of unchecked_convert for #{from_kind} - #{to_kind}"
     end
