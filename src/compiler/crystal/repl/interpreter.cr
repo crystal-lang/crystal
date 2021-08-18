@@ -300,11 +300,30 @@ class Crystal::Repl::Interpreter
                 {{ pop.var }} = stack_pop({{pop.type}})
               {% end %}
 
+              {% if instruction[:overflow] %}
+                {{ "begin".id }}
+              {% end %}
+
               # Execute the instruction and push the value to the stack, if needed
               {% if instruction[:push] %}
                 stack_push({{instruction[:code]}})
               {% else %}
                 {{instruction[:code]}}
+              {% end %}
+
+              {% if instruction[:overflow] %}
+                {{ "rescue OverflowError".id }}
+                  # Adjust ip so it's correct for backtrace.
+                  # The ip has to end after the opcode and sizeof(Void*)
+                  # bytes after that, because backtrace will assume it was a call.
+                  {% for operand in operands %}
+                    ip -= sizeof({{operand.type}})
+                  {% end %}
+                  ip += sizeof(Void*)
+
+                  # On overflow, directly call __crystal_raise_overflow
+                  call(crystal_raise_overflow_compiled_def)
+                {{ "end".id }}
               {% end %}
           {% end %}
         end
@@ -320,6 +339,18 @@ class Crystal::Repl::Interpreter
     end
 
     Value.new(self, return_value, node_type)
+  end
+
+  # This returns the CompiledDef that correspnds to __crystal_raise_overflow
+  private getter(crystal_raise_overflow_compiled_def : CompiledDef) do
+    call = Call.new(nil, "__crystal_raise_overflow", global: true)
+    @context.program.semantic(call)
+
+    local_vars = LocalVars.new(@context)
+    compiler = Compiler.new(@context, local_vars)
+    compiler.compile(call)
+
+    @context.defs[call.target_def]
   end
 
   private def migrate_local_vars(current_local_vars, next_meta_vars)
@@ -607,10 +638,10 @@ class Crystal::Repl::Interpreter
       # for the target call, so we go back to that point to find the relevant node.
       # However, we don't need to do that for the top-most call frame.
       call_frame_ip =
-        if index == @call_stack.size - 1
+        if index == @call_stack.size - sizeof(OpCode)
           call_frame.ip
         else
-          call_frame.ip - sizeof(Void*) - 1
+          call_frame.ip - sizeof(Void*) - sizeof(OpCode)
         end
 
       call_frame_index = call_frame_ip - call_frame_instructions.to_unsafe

@@ -1,5 +1,28 @@
 require "../spec_helper"
 
+private macro assert_overflows(code, file = __FILE__, line = __LINE__)
+  it "overlows on {{code}}", file: {{file}}, line: {{line}} do
+    interpret(%(
+      class OverflowError < Exception; end
+
+      fun __crystal_raise_overflow : NoReturn
+        raise OverflowError.new
+      end
+
+      @[Primitive(:interpreter_raise_without_backtrace)]
+      def raise(exception : Exception) : NoReturn
+      end
+
+      begin
+        a = {{code}}
+        1
+      rescue OverflowError
+        2
+      end
+    )).should eq(2)
+  end
+end
+
 describe Crystal::Repl::Interpreter do
   context "literals" do
     it "interprets nil" do
@@ -254,6 +277,77 @@ describe Crystal::Repl::Interpreter do
       x.to_i8!
       3
       CODE
+    end
+  end
+
+  context "overflow" do
+    context "+" do
+      assert_overflows 1_u8 + 255
+      assert_overflows 1_i8 + 128
+      assert_overflows 1_u16 + 65535
+      assert_overflows 1_i16 + 32767
+      assert_overflows 1_u32 + 4294967295
+      assert_overflows 1_i32 + 2147483647
+      assert_overflows 1_u64 + 18446744073709551615
+      assert_overflows 1_i64 + 9223372036854775807
+    end
+
+    context "-" do
+      assert_overflows 1_u8 - 2
+      assert_overflows 1_i8 - 256
+      assert_overflows 1_u16 - 2
+      assert_overflows 1_i16 - 32770
+      assert_overflows 1_u32 - 2
+      assert_overflows 1_i32 - 2147483650
+      assert_overflows 1_u64 - 2
+      assert_overflows 1_i64 - 9223372036854775810
+    end
+
+    context "*" do
+      assert_overflows 10_u8 * 26
+      assert_overflows 10_i8 * 14
+      assert_overflows 10_u16 * 6600
+      assert_overflows 10_i16 * 3300
+      assert_overflows 20_u32 * 429496729
+      assert_overflows 20_i32 * 214748364
+      assert_overflows 20_u64 * 1844674407370955161
+      assert_overflows 20_i64 * 922337203685477580
+    end
+
+    context "conversion" do
+      assert_overflows 128_u8.to_i8
+
+      assert_overflows -1_i8.to_u8
+      assert_overflows -1_i8.to_u16
+      assert_overflows -1_i8.to_u32
+      assert_overflows -1_i8.to_u64
+
+      assert_overflows 128_u16.to_i8
+      assert_overflows 32768_u16.to_i16
+
+      assert_overflows -1_i16.to_u8
+      assert_overflows -1_i16.to_u16
+      assert_overflows -1_i16.to_u32
+      assert_overflows -1_i16.to_u64
+
+      assert_overflows 128_u32.to_i8
+      assert_overflows 32768_u32.to_i16
+      assert_overflows 2147483648_u32.to_i32
+
+      assert_overflows -1_i32.to_u8
+      assert_overflows -1_i32.to_u16
+      assert_overflows -1_i32.to_u32
+      assert_overflows -1_i32.to_u64
+
+      assert_overflows 128_u64.to_i8
+      assert_overflows 32768_u64.to_i16
+      assert_overflows 2147483648_u64.to_i32
+      assert_overflows 9223372036854775808_u64.to_i64
+
+      assert_overflows -1_i64.to_u8
+      assert_overflows -1_i64.to_u16
+      assert_overflows -1_i64.to_u32
+      assert_overflows -1_i64.to_u64
     end
   end
 

@@ -2884,6 +2884,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
+  private def append(value : UInt16)
+    value.unsafe_as(StaticArray(UInt8, 2)).each do |byte|
+      append byte
+    end
+  end
+
   private def append(value : Int8)
     append value.unsafe_as(UInt8)
   end

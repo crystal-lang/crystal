@@ -12,6 +12,9 @@ require "./repl"
 # - push: (default: false) if true, the return value of `code` will be pushed to the stack.
 #   Some instructions have `push` set to false and manually push or
 #   modify the stack.
+# - overflow: (default: false) if true, rescue any OverflowError exception
+#   in the interpreter and produce a call to raise an OverflowError in the
+#   interpreted program.
 # - disassemble: (optional) a named tupled where operands can be mapped to a nicer
 #   string representation, when disassembling code.
 #
@@ -44,6 +47,32 @@ require "./repl"
 
       # <<< Conversions (21)
       # These convert a value in the stack into another value.
+      i8_to_u8: {
+        pop_values: [value : Int8],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      i8_to_u16: {
+        pop_values: [value : Int8],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      i8_to_u32: {
+        pop_values: [value : Int8],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      i8_to_u64: {
+        pop_values: [value : Int8],
+        push:       true,
+        overflow:   true,
+        code:       begin
+          value.to_u64
+        end,
+      },
       i8_to_f32: {
         pop_values: [value : Int8],
         push:       true,
@@ -53,6 +82,12 @@ require "./repl"
         pop_values: [value : Int8],
         push:       true,
         code:       value.to_f64,
+      },
+      u8_to_i8: {
+        pop_values: [value : UInt8],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
       },
       u8_to_f32: {
         pop_values: [value : UInt8],
@@ -64,6 +99,36 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      i16_to_i8: {
+        pop_values: [value : Int16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      i16_to_u8: {
+        pop_values: [value : Int16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      i16_to_u16: {
+        pop_values: [value : Int16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      i16_to_u32: {
+        pop_values: [value : Int16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      i16_to_u64: {
+        pop_values: [value : Int16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
       i16_to_f32: {
         pop_values: [value : Int16],
         push:       true,
@@ -73,6 +138,24 @@ require "./repl"
         pop_values: [value : Int16],
         push:       true,
         code:       value.to_f64,
+      },
+      u16_to_u8: {
+        pop_values: [value : UInt16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      u16_to_i8: {
+        pop_values: [value : UInt16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      u16_to_i16: {
+        pop_values: [value : UInt16],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
       },
       u16_to_f32: {
         pop_values: [value : UInt16],
@@ -84,6 +167,42 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      i32_to_i8: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      i32_to_i16: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      i32_to_u8: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      i32_to_u16: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      i32_to_u32: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      i32_to_u64: {
+        pop_values: [value : Int32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
       i32_to_f32: {
         pop_values: [value : Int32],
         push:       true,
@@ -93,6 +212,36 @@ require "./repl"
         pop_values: [value : Int32],
         push:       true,
         code:       value.to_f64,
+      },
+      u32_to_i8: {
+        pop_values: [value : UInt32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      u32_to_i16: {
+        pop_values: [value : UInt32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      u32_to_i32: {
+        pop_values: [value : UInt32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      u32_to_u8: {
+        pop_values: [value : UInt32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      u32_to_u16: {
+        pop_values: [value : UInt32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
       },
       u32_to_f32: {
         pop_values: [value : UInt32],
@@ -104,6 +253,48 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      i64_to_i8: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      i64_to_i16: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      i64_to_i32: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      i64_to_u8: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      i64_to_u16: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      i64_to_u32: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      i64_to_u64: {
+        pop_values: [value : Int64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
       i64_to_f32: {
         pop_values: [value : Int64],
         push:       true,
@@ -113,6 +304,48 @@ require "./repl"
         pop_values: [value : Int64],
         push:       true,
         code:       value.to_f64,
+      },
+      u64_to_i8: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      u64_to_i16: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      u64_to_i32: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      u64_to_i64: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i64,
+      },
+      u64_to_u8: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      u64_to_u16: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      u64_to_u32: {
+        pop_values: [value : UInt64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
       },
       u64_to_f32: {
         pop_values: [value : UInt64],
@@ -124,6 +357,54 @@ require "./repl"
         push:       true,
         code:       value.to_f64,
       },
+      f32_to_i8: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      f32_to_i16: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      f32_to_i32: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      f32_to_i64: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i64,
+      },
+      f32_to_u8: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      f32_to_u16: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      f32_to_u32: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      f32_to_u64: {
+        pop_values: [value : Float32],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
+      },
       f32_to_i64_bang: {
         pop_values: [value : Float32],
         push:       true,
@@ -133,6 +414,54 @@ require "./repl"
         pop_values: [value : Float32],
         push:       true,
         code:       value.to_f64,
+      },
+      f64_to_i8: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i8,
+      },
+      f64_to_i16: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i16,
+      },
+      f64_to_i32: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i32,
+      },
+      f64_to_i64: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_i64,
+      },
+      f64_to_u8: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u8,
+      },
+      f64_to_u16: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u16,
+      },
+      f64_to_u32: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u32,
+      },
+      f64_to_u64: {
+        pop_values: [value : Float64],
+        push:       true,
+        overflow:   true,
+        code:       value.to_u64,
       },
       f64_to_i64_bang: {
         pop_values: [value : Float64],
@@ -169,6 +498,7 @@ require "./repl"
       add_i32: {
         pop_values: [a : Int32, b : Int32],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       add_wrap_i32: {
@@ -179,6 +509,7 @@ require "./repl"
       sub_i32: {
         pop_values: [a : Int32, b : Int32],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       sub_wrap_i32: {
@@ -189,6 +520,7 @@ require "./repl"
       mul_i32: {
         pop_values: [a : Int32, b : Int32],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       mul_wrap_i32: {
@@ -234,11 +566,13 @@ require "./repl"
       add_u32: {
         pop_values: [a : UInt32, b : UInt32],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       sub_u32: {
         pop_values: [a : UInt32, b : UInt32],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       mul_u32: {
@@ -264,6 +598,7 @@ require "./repl"
       add_i64: {
         pop_values: [a : Int64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       add_wrap_i64: {
@@ -274,6 +609,7 @@ require "./repl"
       sub_i64: {
         pop_values: [a : Int64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       sub_wrap_i64: {
@@ -284,6 +620,7 @@ require "./repl"
       mul_i64: {
         pop_values: [a : Int64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       mul_wrap_i64: {
@@ -329,16 +666,19 @@ require "./repl"
       add_u64: {
         pop_values: [a : UInt64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       sub_u64: {
         pop_values: [a : UInt64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       mul_u64: {
         pop_values: [a : UInt64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       unsafe_shr_u64: {
@@ -399,16 +739,19 @@ require "./repl"
       add_u64_i64: {
         pop_values: [a : UInt64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       sub_u64_i64: {
         pop_values: [a : UInt64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       mul_u64_i64: {
         pop_values: [a : UInt64, b : Int64],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       unsafe_shr_u64_i64: {
@@ -429,16 +772,19 @@ require "./repl"
       add_i64_u64: {
         pop_values: [a : Int64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a + b,
       },
       sub_i64_u64: {
         pop_values: [a : Int64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a - b,
       },
       mul_i64_u64: {
         pop_values: [a : Int64, b : UInt64],
         push:       true,
+        overflow:   true,
         code:       a * b,
       },
       unsafe_shr_i64_u64: {
@@ -1620,5 +1966,3 @@ require "./repl"
 
     }
 {% end %}
-
-{% puts "Remaining opcodes: #{256 - Crystal::Repl::Instructions.size}" %}
