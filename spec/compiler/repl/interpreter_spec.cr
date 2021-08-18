@@ -1034,6 +1034,14 @@ describe Crystal::Repl::Interpreter do
       CODE
     end
 
+    it "interprets pointer diff, negative" do
+      interpret(<<-CODE).should eq(-8_i64)
+        ptr1 = Pointer(Int32).new(133_u64)
+        ptr2 = Pointer(Int32).new(100_u64)
+        ptr2 - ptr1
+      CODE
+    end
+
     it "discards pointer malloc" do
       interpret(<<-CODE).should eq(1)
         Pointer(Int32).malloc(1_u64)

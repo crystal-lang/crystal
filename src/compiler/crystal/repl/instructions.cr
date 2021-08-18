@@ -576,7 +576,11 @@ require "./repl"
         operands:   [element_size : Int32],
         pop_values: [pointer1 : Pointer(UInt8), pointer2 : Pointer(UInt8)],
         push:       true,
-        code:       (pointer1.address - pointer2.address) // element_size,
+        code: if pointer1.address > pointer2.address
+          (pointer1 - pointer2) // element_size
+        else
+          -((pointer2.address - pointer1.address).to_i64! // element_size)
+        end,
       },
       pointer_add: {
         operands:   [element_size : Int32],
