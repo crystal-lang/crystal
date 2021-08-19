@@ -61,7 +61,7 @@ module Crystal
     end
 
     # Returns a FFI::CallInterface for this proc, suitable for calling it.
-    def ffi_call_interface : FFI::CallInterface
+    getter(ffi_call_interface : FFI::CallInterface) do
       FFI::CallInterface.new(
         abi: FFI::ABI::DEFAULT,
         args: arg_types.map(&.ffi_type),
