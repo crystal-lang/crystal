@@ -1123,16 +1123,25 @@ class Crystal::Repl::Compiler
     obj = node.obj.not_nil!
     arg = node.args.first
 
-    obj.accept self
-    arg.accept self
-
     obj_type = obj.type
     arg_type = arg.type
 
-    obj_kind = integer_or_float_kind(obj_type)
-    target_kind = integer_or_float_kind(arg_type)
+    obj_kind = integer_or_float_kind(obj_type).not_nil!
+    arg_kind = integer_or_float_kind(arg_type).not_nil!
 
-    case {obj_kind, target_kind}
+    obj.accept self
+    if obj_type.is_a?(IntegerType) && arg_type.is_a?(FloatType)
+      primitive_convert(obj, obj_kind, arg_kind, checked: false)
+      obj_kind = arg_kind
+    end
+
+    arg.accept self
+    if obj_type.is_a?(FloatType) && arg_type.is_a?(IntegerType)
+      primitive_convert(arg, arg_kind, obj_kind, checked: false)
+      arg_kind = obj_kind
+    end
+
+    case {obj_kind, arg_kind}
     when {:f32, :f32}
       div_f32(node: node)
     when {:f64, :f64}

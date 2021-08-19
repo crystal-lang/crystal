@@ -523,6 +523,10 @@ describe Crystal::Repl::Interpreter do
       interpret("1_u64 != 1").should be_false
     end
 
+    it "interprets Float32 / Int32" do
+      interpret("2.5_f32 / 2").should eq(2.5_f32 / 2)
+    end
+
     it "interprets Float32 / Float32" do
       interpret("2.5_f32 / 2.1_f32").should eq(2.5_f32 / 2.1_f32)
     end
