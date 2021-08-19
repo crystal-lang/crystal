@@ -134,6 +134,8 @@ module Crystal
       when name.index("__")                  then raise Error.new("NAME must not have consecutive underscores")
       when !name.each_char.all? { |c| c.alphanumeric? || c == '-' || c == '_' }
         raise Error.new("NAME must only contain alphanumerical characters, underscores or dashes")
+      when name.split('-').any? { |it| it.starts_with? /[0-9]/ }
+        raise Error.new("NAME musn't contain hyphen followed by a number")
       else
         # name is valid
       end

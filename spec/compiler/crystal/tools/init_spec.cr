@@ -387,5 +387,10 @@ module Crystal
       end
       Crystal::Init.validate_name("grüß-gott")
     end
+    it "hyphen followed by a number" do
+      expect_raises Crystal::Init::Error, "NAME musn't contain hyphen followed by a number" do
+        Crystal::Init.validate_name("foo-1")
+      end
+    end
   end
 end
