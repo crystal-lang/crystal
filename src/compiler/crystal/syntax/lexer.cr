@@ -1747,114 +1747,60 @@ module Crystal
     end
 
     def consume_int_suffix
-      case next_char
-      when '8'
-        next_char
-        @token.number_kind = :i8
-        2
+      suffix_info = case next_char
       when '1'
         case next_char
         when '2'
-          if next_char == '8'
-            next_char
-            @token.number_kind = :i128
-            4
-          else
-            raise "invalid int suffix"
-          end
+          {:i128, 4} if next_char == '8'
         when '6'
-          next_char
-          @token.number_kind = :i16
-          3
-        else
-          raise "invalid int suffix"
+          {:i16, 3}
         end
       when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :i32
-          3
-        else
-          raise "invalid int suffix"
-        end
+        {:i32, 3} if next_char == '2'
       when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :i64
-          3
-        else
-          raise "invalid int suffix"
-        end
-      else
-        raise "invalid int suffix"
+        {:i64, 3} if next_char == '4'
+      when '8'
+        {:i8, 2}
       end
+      raise "invalid int suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def consume_uint_suffix
-      case next_char
-      when '8'
-        next_char
-        @token.number_kind = :u8
-        2
+      suffix_info = case next_char
       when '1'
         case next_char
         when '2'
-          if next_char == '8'
-            next_char
-            @token.number_kind = :u128
-            4
-          else
-            raise "invalid uint suffix"
-          end
+          {:u128, 4} if next_char == '8'
         when '6'
-          next_char
-          @token.number_kind = :u16
-          3
-        else
-          raise "invalid uint suffix"
+          {:u16, 3}
         end
       when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :u32
-          3
-        else
-          raise "invalid uint suffix"
-        end
+        {:u32, 3} if next_char == '2'
       when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :u64
-          3
-        else
-          raise "invalid uint suffix"
-        end
-      else
-        raise "invalid uint suffix"
+        {:u64, 3} if next_char == '4'
+      when '8'
+        {:u8, 2}
       end
+      raise "invalid uint suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def consume_float_suffix
-      case next_char
+      suffix_info = case next_char
       when '3'
-        if next_char == '2'
-          next_char
-          @token.number_kind = :f32
-          3
-        else
-          raise "invalid float suffix"
-        end
+        {:f32, 3} if next_char == '2'
       when '6'
-        if next_char == '4'
-          next_char
-          @token.number_kind = :f64
-          3
-        else
-          raise "invalid float suffix"
-        end
-      else
-        raise "invalid float suffix"
+        {:f64, 3} if next_char == '4'
       end
+      raise "invalid float suffix" unless suffix_info
+      next_char
+      @token.number_kind = suffix_info[0]
+      suffix_info[1]
     end
 
     def next_string_token(delimiter_state)
