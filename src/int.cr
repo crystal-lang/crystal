@@ -1039,7 +1039,9 @@ struct Int64
 end
 
 struct Int128
-  # TODO: eventually update to literals once UInt128 bit support is finished
+  # TODO: eventually update to literals once Int128 bit support is finished
+  # MIN = -170141183460469231731687303715884105728_i128
+  # MAX = 170141183460469231731687303715884105727_i128
   MIN = new(1) << 127
   MAX = ~MIN
 
@@ -1313,6 +1315,8 @@ end
 
 struct UInt128
   # TODO: eventually update to literals once UInt128 bit support is finished
+  # MIN = 0_u128
+  # MAX = 340282366920938463463374607431768211455_u128
   MIN = new 0
   MAX = ~MIN
 

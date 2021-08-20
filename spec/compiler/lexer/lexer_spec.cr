@@ -299,11 +299,15 @@ describe "Lexer" do
   assert_syntax_error "18446744073709551616_i32", "18446744073709551616 doesn't fit in an Int32"
   assert_syntax_error "9999999999999999999_i32", "9999999999999999999 doesn't fit in an Int32"
 
-  assert_syntax_error "-9999999999999999999", "-9999999999999999999 doesn't fit in an Int64"
-  assert_syntax_error "-99999999999999999999", "-99999999999999999999 doesn't fit in an Int64"
-  assert_syntax_error "-11111111111111111111", "-11111111111111111111 doesn't fit in an Int64"
-  assert_syntax_error "-9223372036854775809", "-9223372036854775809 doesn't fit in an Int64"
-  assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
+  assert_syntax_error "-9999999999999999999_i64", "-9999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-99999999999999999999_i64", "-99999999999999999999 doesn't fit in an Int64"
+  assert_syntax_error "-11111111111111111111_i64", "-11111111111111111111 doesn't fit in an Int64"
+  assert_syntax_error "-9223372036854775809_i64", "-9223372036854775809 doesn't fit in an Int64"
+  assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
+
+  assert_syntax_error "340282366920938463463374607431768211456", "340282366920938463463374607431768211456 doesn't fit in an UInt128"
+  assert_syntax_error "-170141183460469231731687303715884105729", "-170141183460469231731687303715884105729 doesn't fit in an Int128"
+  assert_syntax_error "-999999999999999999999999999999999999999", "-999999999999999999999999999999999999999 doesn't fit in an Int128"
 
   assert_syntax_error "0xFF_i8", "255 doesn't fit in an Int8"
   assert_syntax_error "0o200_i8", "128 doesn't fit in an Int8"
