@@ -1614,29 +1614,29 @@ module Crystal
 
     def deduce_integer_kind(string_value, num_size, negative, start)
       @token.number_kind = case num_size
-      when 0..9 # Keep as i32
-        :i32
-      when 10
-        string_value.to_i32? ? :i32 : :i64
-      when 11..18
-        :i64
-      when 19
-        string_value.to_i64? ? :i64 : (negative ? :i128 : :u64)
-      when 20
-        string_value.to_u64? ? :u64 : :i128
-      when 20..38
-         :i128
-      when 39
-        if string_value.to_i128?
-          :i128
-        else
-          raise_value_doesnt_fit_in(Int128, string_value, start) if negative
-          raise_value_doesnt_fit_in(UInt128, string_value, start) unless string_value.to_u128?
-          :u128
-        end
-      else
-        raise_value_doesnt_fit_in Int128, string_value, start
-      end
+                           when 0..9 # Keep as i32
+                             :i32
+                           when 10
+                             string_value.to_i32? ? :i32 : :i64
+                           when 11..18
+                             :i64
+                           when 19
+                             string_value.to_i64? ? :i64 : (negative ? :i128 : :u64)
+                           when 20
+                             string_value.to_u64? ? :u64 : :i128
+                           when 20..38
+                             :i128
+                           when 39
+                             if string_value.to_i128?
+                               :i128
+                             else
+                               raise_value_doesnt_fit_in(Int128, string_value, start) if negative
+                               raise_value_doesnt_fit_in(UInt128, string_value, start) unless string_value.to_u128?
+                               :u128
+                             end
+                           else
+                             raise_value_doesnt_fit_in Int128, string_value, start
+                           end
     end
 
     def raise_value_doesnt_fit_in(type, string_value, start)
@@ -1681,9 +1681,9 @@ module Crystal
           @token.type = :NUMBER
           @token.number_kind = :i32
           @token.value = case first_byte
-                           when '+'; "+0"
-                           when '-'; "-0"
-                           else; "0"
+                         when '+'; "+0"
+                         when '-'; "-0"
+                         else      "0"
                          end
           set_token_raw_from_start(start)
         end
@@ -1748,20 +1748,20 @@ module Crystal
 
     def consume_int_suffix
       suffix_info = case next_char
-      when '1'
-        case next_char
-        when '2'
-          {:i128, 4} if next_char == '8'
-        when '6'
-          {:i16, 3}
-        end
-      when '3'
-        {:i32, 3} if next_char == '2'
-      when '6'
-        {:i64, 3} if next_char == '4'
-      when '8'
-        {:i8, 2}
-      end
+                    when '1'
+                      case next_char
+                      when '2'
+                        {:i128, 4} if next_char == '8'
+                      when '6'
+                        {:i16, 3}
+                      end
+                    when '3'
+                      {:i32, 3} if next_char == '2'
+                    when '6'
+                      {:i64, 3} if next_char == '4'
+                    when '8'
+                      {:i8, 2}
+                    end
       raise "invalid int suffix" unless suffix_info
       next_char
       @token.number_kind = suffix_info[0]
@@ -1770,20 +1770,20 @@ module Crystal
 
     def consume_uint_suffix
       suffix_info = case next_char
-      when '1'
-        case next_char
-        when '2'
-          {:u128, 4} if next_char == '8'
-        when '6'
-          {:u16, 3}
-        end
-      when '3'
-        {:u32, 3} if next_char == '2'
-      when '6'
-        {:u64, 3} if next_char == '4'
-      when '8'
-        {:u8, 2}
-      end
+                    when '1'
+                      case next_char
+                      when '2'
+                        {:u128, 4} if next_char == '8'
+                      when '6'
+                        {:u16, 3}
+                      end
+                    when '3'
+                      {:u32, 3} if next_char == '2'
+                    when '6'
+                      {:u64, 3} if next_char == '4'
+                    when '8'
+                      {:u8, 2}
+                    end
       raise "invalid uint suffix" unless suffix_info
       next_char
       @token.number_kind = suffix_info[0]
@@ -1792,11 +1792,11 @@ module Crystal
 
     def consume_float_suffix
       suffix_info = case next_char
-      when '3'
-        {:f32, 3} if next_char == '2'
-      when '6'
-        {:f64, 3} if next_char == '4'
-      end
+                    when '3'
+                      {:f32, 3} if next_char == '2'
+                    when '6'
+                      {:f64, 3} if next_char == '4'
+                    end
       raise "invalid float suffix" unless suffix_info
       next_char
       @token.number_kind = suffix_info[0]

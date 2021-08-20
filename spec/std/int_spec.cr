@@ -757,8 +757,8 @@ describe "Int" do
 
     it { 0_i128.popcount.should eq(0) }
     # TODO: PENDING
-    #it { 170141183460469231731687303715884105727_i128.popcount.should eq(127) }
-    #it { 340282366920938463463374607431768211455_u128.popcount.should eq(128) }
+    # it { 170141183460469231731687303715884105727_i128.popcount.should eq(127) }
+    # it { 340282366920938463463374607431768211455_u128.popcount.should eq(128) }
   end
 
   describe "#leading_zeros_count" do
