@@ -8,8 +8,8 @@ fun __divti3(a : Int128, b : Int128) : Int128
   s_b = b >> 127
   a = (a ^ s_a) - s_a
   b = (b ^ s_b) - s_b
-  quo, _ = _u128_div_rem(a, b)
-  (quo ^ s_a) - s_a
+  quo, _ = _u128_div_rem(a.to_u128!, b.to_u128!)
+  (quo.to_i128! ^ s_a) - s_a
 end
 
 # :nodoc:
@@ -20,7 +20,7 @@ fun __modti3(a : Int128, b : Int128) : Int128
   b = (b ^ s) - s
   s = a >> 127
   a = (a ^ s) - s
-  _, rem = _u128_div_rem(a, b)
+  _, rem = _u128_div_rem(a.to_u128!, b.to_u128!)
   (rem.to_i128! ^ s) - s
 end
 
