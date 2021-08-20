@@ -1736,6 +1736,23 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return false
     end
 
+    if body.is_a?(Var) && body.name == "self"
+      # We also inline calls that simply return "self"
+
+      if @wants_value
+        if obj
+          request_value(obj)
+        else
+          put_self(node: node)
+        end
+      end
+
+      # We still have to accept the call arguments, but discard their values
+      node.args.each { |arg| discard_value(arg) }
+
+      return false
+    end
+
     if obj && (obj_type = obj.type).is_a?(LibType)
       compile_lib_call(node, obj_type)
       return false

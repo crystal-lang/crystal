@@ -2246,6 +2246,36 @@ describe Crystal::Repl::Interpreter do
         foo 9000
       CODE
     end
+
+    it "inlines call that returns self" do
+      interpret(<<-CODE).should eq(10)
+        struct Foo
+          def initialize
+            @x = 0
+          end
+
+          def mutate
+            @x = 10
+          end
+
+          def x
+            @x
+          end
+
+          def mutate_itself
+            itself.mutate
+          end
+
+          def itself
+            self
+          end
+        end
+
+        foo = Foo.new
+        foo.mutate_itself
+        foo.x
+      CODE
+    end
   end
 
   context "multidispatch" do
