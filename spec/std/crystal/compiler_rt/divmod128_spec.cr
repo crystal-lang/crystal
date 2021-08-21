@@ -30,18 +30,6 @@ private def test__umodti3(a : UInt128, b : UInt128, expected : UInt128, file = _
   end
 end
 
-private def test_u128_div_rem(a : UInt128, b : UInt128, expected_quo : UInt128, expected_rem : UInt128, file = __FILE__, line = __LINE__)
-  it "passes compiler-rt builtins unit tests" do
-    actual_quo, actual_rem = _u128_div_rem(a, b)
-    actual_quo.should eq(expected_quo), file: file, line: line
-    actual_rem.should eq(expected_rem), file: file, line: line
-  end
-end
-
-# describe "_u128_div_rem" do
-# # TODO (compiler-rt's specs are 15.4 MB big)
-# end
-
 describe "__divti3" do
   test__divti3(0_i128, 1_i128, 0_i128)
   test__divti3(0_i128, -1_i128, 0_i128)
