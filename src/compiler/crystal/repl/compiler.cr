@@ -1068,7 +1068,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def compile_pointerof_read_instance_var(node, obj, name)
+  private def compile_pointerof_read_instance_var(obj, name)
     type = obj.type
 
     ivar = type.lookup_instance_var(name)
@@ -1077,7 +1077,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # Get a pointer to the object
     if type.passed_by_value?
-      compile_pointerof_node(obj, obj.type)
+      compile_pointerof_struct_to_be_passed_as_self(obj, obj.type)
     else
       request_value(obj)
     end
@@ -1319,57 +1319,43 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     exp = node.exp
     case exp
     when Var
-      var = lookup_closured_var_or_local_var(exp.name)
-      case var
-      in LocalVar
-        index, type = var.index, var.type
-        pointerof_var(index, node: node)
-      in ClosuredVar
-        read_closured_var_pointer(var, node: node)
-      end
+      compile_pointerof_var(node, exp.name)
     when InstanceVar
       compile_pointerof_ivar(node, exp.name)
     when ClassVar
       compile_pointerof_class_var(node, exp)
     when ReadInstanceVar
-      # TODO: check struct
-      exp.obj.accept self
-
-      type = exp.obj.type
-
-      if type.passed_by_value?
-        node.raise "BUG: missing interpret for PointerOf with exp #{exp.class} for a pass-by-value"
-      end
-
-      ivar_offset = ivar_offset(type, exp.name)
-      ivar_size = inner_sizeof_type(type.lookup_instance_var(exp.name))
-
-      # At this point, at least for class types, we have a pointer on the stack,
-      # so we just need to offset it
-      put_i32 ivar_offset, node: nil
-      pointer_add 1, node: node
+      compile_pointerof_read_instance_var(exp.obj, exp.name)
     else
       node.raise "BUG: missing interpret for PointerOf with exp #{exp.class}"
     end
     false
   end
 
+  private def compile_pointerof_var(node : ASTNode, name : String)
+    var = lookup_closured_var_or_local_var(name)
+    case var
+    in LocalVar
+      index, type = var.index, var.type
+      pointerof_var(index, node: node)
+    in ClosuredVar
+      read_closured_var_pointer(var, node: node)
+    end
+  end
+
   private def compile_pointerof_ivar(node : ASTNode, name : String)
     index = scope.index_of_instance_var(name).not_nil!
-    if scope.struct?
-      pointerof_ivar(@context.offset_of(scope, index), node: node)
-    else
-      pointerof_ivar(@context.instance_offset_of(scope, index), node: node)
-    end
+    offset = if scope.struct?
+               @context.offset_of(scope, index)
+             else
+               @context.instance_offset_of(scope, index)
+             end
+    pointerof_ivar(offset, node: node)
   end
 
   private def compile_pointerof_class_var(node : ASTNode, exp : ClassVar)
     index, compiled_def = class_var_index_and_compiled_def(exp)
-
-    if compiled_def
-      initialize_class_var_if_needed(exp.var, index, compiled_def)
-    end
-
+    initialize_class_var_if_needed(exp.var, index, compiled_def) if compiled_def
     pointerof_class_var(index, node: node)
   end
 
@@ -1885,7 +1871,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if obj
       if obj.type.passed_by_value?
-        compile_pointerof_node(obj, target_def.owner)
+        compile_pointerof_struct_to_be_passed_as_self(obj, target_def.owner)
       else
         request_value(obj)
       end
@@ -2002,7 +1988,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     upcast arg, arg_type, target_def_var_type
   end
 
-  private def compile_pointerof_node(obj : Var, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : Var, owner : Type) : Nil
     if obj.name == "self"
       self_type = @def.not_nil!.vars.not_nil!["self"].type
       if self_type == owner
@@ -2032,25 +2018,25 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     end
   end
 
-  private def compile_pointerof_node(obj : InstanceVar, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : InstanceVar, owner : Type) : Nil
     compile_pointerof_ivar(obj, obj.name)
   end
 
-  private def compile_pointerof_node(obj : ClassVar, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : ClassVar, owner : Type) : Nil
     compile_pointerof_class_var(obj, obj)
   end
 
-  private def compile_pointerof_node(obj : Path, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : Path, owner : Type) : Nil
     const = obj.target_const.not_nil!
     index = initialize_const_if_needed(const)
     get_const_pointer index, node: obj
   end
 
-  private def compile_pointerof_node(obj : ReadInstanceVar, owner : Type) : Nil
-    compile_pointerof_read_instance_var(obj, obj.obj, obj.name)
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : ReadInstanceVar, owner : Type) : Nil
+    compile_pointerof_read_instance_var(obj.obj, obj.name)
   end
 
-  private def compile_pointerof_node(call : Call, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(call : Call, owner : Type) : Nil
     call_obj = call.obj
     with_scope = call.with_scope
 
@@ -2086,7 +2072,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       # Inline the call, so that it also works fine when wanting to
       # take a pointer through things (this is how compiled Crystal works too
       if call_obj
-        compile_pointerof_read_instance_var(call, call_obj, body.name)
+        compile_pointerof_read_instance_var(call_obj, body.name)
       else
         compile_pointerof_ivar(body, body.name)
       end
@@ -2099,7 +2085,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if body.is_a?(Var) && body.name == "self"
       # We also inline calls that simply return "self"
       if call_obj
-        compile_pointerof_node(call_obj, owner)
+        compile_pointerof_struct_to_be_passed_as_self(call_obj, owner)
       else
         put_self(node: call)
       end
@@ -2112,7 +2098,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     assign_to_temporary_and_return_pointer(call)
   end
 
-  private def compile_pointerof_node(obj : ASTNode, owner : Type) : Nil
+  private def compile_pointerof_struct_to_be_passed_as_self(obj : ASTNode, owner : Type) : Nil
     assign_to_temporary_and_return_pointer(obj)
   end
 
