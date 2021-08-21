@@ -2828,7 +2828,8 @@ module Crystal
     end
 
     def replace_type_parameters(instance)
-      instance_type.replace_type_parameters(instance).metaclass
+      type = instance_type.replace_type_parameters(instance)
+      type == instance_type ? self : type.metaclass
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
@@ -2856,8 +2857,9 @@ module Crystal
       end
     end
 
-    def replace_type_parameters(instance_type)
-      self.instance_type.replace_type_parameters(instance_type).metaclass
+    def replace_type_parameters(instance)
+      type = instance_type.replace_type_parameters(instance)
+      type == instance_type ? self : type.metaclass
     end
 
     def virtual_type
@@ -2909,8 +2911,9 @@ module Crystal
       end
     end
 
-    def replace_type_parameters(instance_type)
-      self.instance_type.replace_type_parameters(instance_type).metaclass
+    def replace_type_parameters(instance)
+      type = instance_type.replace_type_parameters(instance)
+      type == instance_type ? self : type.metaclass
     end
 
     delegate defs, macros, to: instance_type.generic_type.metaclass
@@ -3345,7 +3348,8 @@ module Crystal
     delegate lookup_first_def, to: instance_type.metaclass
 
     def replace_type_parameters(instance)
-      base_type.replace_type_parameters(instance).virtual_type.metaclass
+      type = instance_type.replace_type_parameters(instance)
+      type == instance_type ? self : type.metaclass
     end
 
     def each_concrete_type

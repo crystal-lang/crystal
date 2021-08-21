@@ -29,4 +29,14 @@ describe "Semantic: reflection" do
 
     mod.types["Bar"].metaclass.as(ClassType).superclass.should eq(mod.types["Foo"].metaclass)
   end
+
+  it "doesn't put Object.class as the parent of generic module instance metaclasses (#11110)" do
+    mod = semantic(%(
+      module Foo(T); end
+      )).program
+
+    foo_int32_class = mod.generic_module("Foo", mod.int32).metaclass
+    foo_int32_class.parents.should eq([mod.class_type])
+    foo_int32_class.ancestors.should eq([mod.class_type, mod.value, mod.object])
+  end
 end
